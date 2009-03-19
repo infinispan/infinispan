@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<horizon xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:horizon:config:1.0">
+
+   <!-- *************************** -->
+   <!-- System-wide global settings -->
+   <!-- *************************** -->
+
+   <global>
+
+      <asyncListenerExecutor factory="org.horizon.executors.DefaultExecutorFactory">
+         <property name="maxThreads" value="${test.property.asyncListenerMaxThreads:5}"/>
+         <property name="threadNamePrefix" value="AsyncListenerThread"/>
+      </asyncListenerExecutor>
+
+      <transport transportClass="org.horizon.remoting.transport.jgroups.JGroupsTransport">
+         <property name="configurationFile" value="${test.property.jgroupsConfigFile:udp.xml}"/>
+      </transport>
+
+   </global>
+
+   <!-- *************************** -->
+   <!-- Default "template" settings -->
+   <!-- *************************** -->
+   <default>
+      <locking
+            isolationLevel="REPEATABLE_READ"
+            lockAcquisitionTimeout="${test.property.LockAcquisitionTimeout:15000}"
+            writeSkewCheck="false"
+            concurrencyLevel="500"/>
+
+      <transaction
+            transactionManagerLookupClass="org.horizon.transaction.GenericTransactionManagerLookup"
+            syncRollbackPhase="false"
+            syncCommitPhase="${test.property.SyncCommitPhase:true}"/>
+
+      <clustering mode="R">
+         <sync/>
+      </clustering>
+   </default>
+</horizon>

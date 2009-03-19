@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+   This package will build a ZIP containing the following:
+
+   * jbosscache-core.jar
+   * library dependencies
+   * sample config files
+   * conversion scripts
+   * license docs and readmes
+-->
+
+<assembly xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:maven:assembly:1.1.0-SNAPSHOT">
+   <id>bin</id>
+
+   <formats>
+      <format>zip</format>
+   </formats>
+
+   <includeBaseDirectory>true</includeBaseDirectory>
+
+   <fileSets>
+      <!-- code -->
+      <fileSet>
+         <directory>target</directory>
+         <outputDirectory/>
+         <includes>
+            <include>*.jar</include>
+         </includes>
+         <excludes>
+            <exclude>*test*.jar</exclude>
+            <exclude>*sources*.jar</exclude>
+         </excludes>
+      </fileSet>
+
+      <!-- resources -->
+      <fileSet>
+         <directory>src/main/resources</directory>
+         <outputDirectory>etc</outputDirectory>
+         <excludes>
+            <exclude>**/*.sh</exclude>
+         </excludes>
+      </fileSet>
+
+      <!-- Executable resources -->
+      <fileSet>
+         <directory>src/main/resources</directory>
+         <outputDirectory>etc</outputDirectory>
+         <includes>
+            <include>**/*.sh</include>
+         </includes>
+         <fileMode>0777</fileMode>
+      </fileSet>
+
+      <!-- Log4j XML -->
+      <fileSet>
+         <directory>src/test/resources</directory>
+         <outputDirectory>etc</outputDirectory>
+         <includes>
+            <include>log4j.xml</include>
+         </includes>
+      </fileSet>
+
+
+      <!-- EULAs and license files -->
+      <fileSet>
+         <directory>src/main/release</directory>
+         <outputDirectory/>
+         <includes>
+            <include>**/*.txt</include>
+         </includes>
+      </fileSet>
+
+   </fileSets>
+
+   <!-- Make sure we filter out the junk that jboss-common-core pulls in -->
+   <dependencySets>
+      <dependencySet>
+         <outputDirectory>lib</outputDirectory>
+         <outputFileNameMapping>${artifactId}.${extension}</outputFileNameMapping>
+         <unpack>false</unpack>
+         <scope>runtime</scope>
+      </dependencySet>
+   </dependencySets>
+</assembly>

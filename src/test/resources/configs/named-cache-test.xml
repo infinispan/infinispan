@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<horizon xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:horizon:config:1.0">
+
+   <global>
+
+      <asyncListenerExecutor factory="org.horizon.executors.DefaultExecutorFactory">
+         <property name="maxThreads" value="5"/>
+         <property name="threadNamePrefix" value="AsyncListenerThread"/>
+      </asyncListenerExecutor>
+
+      <asyncSerializationExecutor factory="org.horizon.executors.DefaultExecutorFactory">
+         <property name="maxThreads" value="25"/>
+         <property name="threadNamePrefix" value="AsyncSerializationThread"/>
+      </asyncSerializationExecutor>
+
+      <evictionScheduledExecutor factory="org.horizon.executors.DefaultScheduledExecutorFactory">
+         <property name="threadNamePrefix" value="EvictionThread"/>
+      </evictionScheduledExecutor>
+
+      <replicationQueueScheduledExecutor factory="org.horizon.executors.DefaultScheduledExecutorFactory">
+         <property name="threadNamePrefix" value="ReplicationQueueThread"/>
+      </replicationQueueScheduledExecutor>
+
+      <transport transportClass="org.horizon.remoting.transport.jgroups.JGroupsTransport"/>
+
+      <serialization marshallerClass="org.horizon.marshall.VersionAwareMarshaller" version="1.0"
+                     objectInputStreamPoolSize="100" objectOutputStreamPoolSize="100"/>
+
+   </global>
+
+   <default>
+      <locking concurrencyLevel="100" lockAcquisitionTimeout="1000"/>
+      <jmxStatistics enabled="false"/>
+   </default>
+
+   <namedCache name="transactional">
+      <transaction transactionManagerLookupClass="org.horizon.transaction.GenericTransactionManagerLookup"/>
+   </namedCache>
+
+   <namedCache name="syncRepl">
+      <clustering>
+         <stateRetrieval fetchInMemoryState="false" />
+         <sync replTimeout="15000"/>
+      </clustering>
+   </namedCache>
+
+   <namedCache name="asyncRepl">
+      <clustering>
+         <stateRetrieval fetchInMemoryState="false" />
+         <async useAsyncSerialization="false"/>
+      </clustering>
+   </namedCache>
+
+   <namedCache name="asyncReplQueue">
+      <clustering>
+         <stateRetrieval fetchInMemoryState="false" />
+         <async useReplQueue="true" replQueueInterval="1234" replQueueMaxElements="100"/>
+      </clustering>
+   </namedCache>
+
+   <namedCache name="txSyncRepl">
+      <transaction/>
+      <clustering>
+         <stateRetrieval fetchInMemoryState="false" />
+         <sync replTimeout="15000"/>
+      </clustering>
+   </namedCache>
+
+   <namedCache name="overriding">
+      <locking isolationLevel="REPEATABLE_READ" concurrencyLevel="1000" lockAcquisitionTimeout="20000" />         
+   </namedCache>
+
+   <namedCache name="lazyDeserialization">
+      <locking isolationLevel="REPEATABLE_READ" concurrencyLevel="1000" lockAcquisitionTimeout="20000" />
+      <lazyDeserialization enabled="true"/>
+   </namedCache>
+
+   <namedCache name="withLoader">
+      <loaders passivation="false" shared="false" preload="true">
+
+         <!--
+            We can have multiple cache loaders, which get chained
+         -->
+         <loader class="org.horizon.loader.jdbc.stringbased.JdbcStringBasedCacheStore" fetchPersistentState="true"
+                 ignoreModifications="true" purgeOnStartup="true">
+
+            <!-- See the documentation for more configuration examples and options. -->
+            <properties>
+               <property name="connectionFactoryClass" value="org.horizon.loader.jdbc.connectionfactory.PooledConnectionFactory"/>
+               <property name="connectionUrl" value="jdbc://some-url"/>
+               <property name="userName" value="root"/>
+               <property name="driverClass" value="org.dbms.Driver"/>
+               <property name="idColumnType" value="VARCHAR2(256)"/>
+               <property name="dataColumnType" value="BLOB"/>
+               <property name="dropTableOnExit" value="true"/>
+               <property name="createTableOnStart" value="false"/>
+            </properties>
+            <singletonStore enabled="true" pushStateWhenCoordinator="true" pushStateTimeout="20000"/>
+            <async enabled="true" batchSize="1000" threadPoolSize="5"/>
+         </loader>
+      </loaders>      
+   </namedCache>
+
+   <namedCache name="withJmxEnabled">
+      <clustering>
+         <async useReplQueue="true" replQueueInterval="100" replQueueMaxElements="200"/>
+      </clustering>
+      <jmxStatistics enabled="true" jmxNameBase="horizonDomain:aKey=aValue"/>
+   </namedCache>
+
+</horizon>

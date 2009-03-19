@@ -1,0 +1,63 @@
+<config>
+   <UDP mcast_addr="228.10.10.10"
+        mcast_port="45588"
+        tos="8"
+        ucast_recv_buf_size="20000000"
+        ucast_send_buf_size="640000"
+        mcast_recv_buf_size="25000000"
+        mcast_send_buf_size="640000"
+        loopback="false"
+        discard_incompatible_packets="true"
+        max_bundle_size="64000"
+        max_bundle_timeout="30"
+        use_incoming_packet_handler="true"
+        ip_ttl="2"
+        enable_bundling="false"
+        enable_diagnostics="true"
+
+        use_concurrent_stack="true"
+
+        thread_naming_pattern="pl"
+
+        thread_pool.enabled="true"
+        thread_pool.min_threads="1"
+        thread_pool.max_threads="25"
+        thread_pool.keep_alive_time="30000"
+        thread_pool.queue_enabled="false"
+        thread_pool.queue_max_size="100"
+        thread_pool.rejection_policy="Run"
+
+        oob_thread_pool.enabled="true"
+        oob_thread_pool.min_threads="1"
+        oob_thread_pool.max_threads="4"
+        oob_thread_pool.keep_alive_time="10000"
+        oob_thread_pool.queue_enabled="false"
+        oob_thread_pool.queue_max_size="10"
+        oob_thread_pool.rejection_policy="Run"/>
+
+   <PING timeout="2000" num_initial_members="3"/>
+   <MERGE2 max_interval="30000" min_interval="10000"/>
+   <FD_SOCK/>
+   <!--
+      Note that this is an atypically short timeout and a small number of retries
+      configured this way to speed up unit testing, since we know all nodes run in the same JVM
+      and hence failure detections will be very quick.
+   -->
+   <FD timeout="1000" max_tries="2" shun="true"/>
+   <VERIFY_SUSPECT timeout="250"/>
+   <!-- this is a more typical configuration of FD and VERIFY_SUSPECT-->
+   <!--<FD timeout="10000" max_tries="5" shun="true"/>-->
+   <!--<VERIFY_SUSPECT timeout="1500"/>-->
+   <pbcast.NAKACK use_mcast_xmit="false" gc_lag="0"
+                  retransmit_timeout="300,600,900,1200"
+                  discard_delivered_msgs="true"/>
+   <UNICAST timeout="300,600,900,1200"/>
+   <pbcast.STABLE stability_delay="1000" desired_avg_gossip="50000"
+                  max_bytes="400000"/>
+   <pbcast.GMS print_local_addr="false" join_timeout="1000" shun="false"
+               view_bundling="true" view_ack_collection_timeout="1000"/>
+   <FRAG2 frag_size="60000"/>
+   <pbcast.STREAMING_STATE_TRANSFER/>
+   <!-- <pbcast.STATE_TRANSFER/> -->
+   <pbcast.FLUSH timeout="0"/>
+</config>
