@@ -19,7 +19,7 @@ import java.util.Map;
 /**
  * @author Manik Surtani (<a href="mailto:manik AT jboss DOT org">manik AT jboss DOT org</a>)
  * @author Mircea.Markus@jboss.com
- * @since 1.0
+ * @since 4.0
  */
 @Test(groups = "functional", testName = "interceptors.MarshalledValueInterceptorTest")
 public class MarshalledValueInterceptorTest {

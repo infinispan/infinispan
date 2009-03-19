@@ -11,7 +11,7 @@ import java.io.ObjectOutput;
  * An encapsulation of a JGroups Address
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public class JGroupsAddress implements Address, Externalizable {
    org.jgroups.Address address;

@@ -34,7 +34,7 @@ import java.util.List;
  * Changes that have occured on an AtomicHashMap
  *
  * @author Manik Surtani (<a href="mailto:manik AT jboss DOT org">manik AT jboss DOT org</a>)
- * @since 1.0
+ * @since 4.0
  */
 public class AtomicHashMapDelta implements Delta {
    private List<Operation> changelog;

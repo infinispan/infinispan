@@ -15,7 +15,7 @@ import java.util.Set;
  * Common features of transaction and invocation contexts
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public abstract class AbstractContext {
 

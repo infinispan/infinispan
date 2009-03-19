@@ -9,7 +9,7 @@ import java.util.List;
  * Implementation of cache manager events
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChangedEvent {
 

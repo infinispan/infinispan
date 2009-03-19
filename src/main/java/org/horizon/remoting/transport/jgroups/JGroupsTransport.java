@@ -48,7 +48,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * An encapsulation of a JGroups transport
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public class JGroupsTransport implements Transport, ExtendedMembershipListener, ExtendedMessageListener {
    public static final String CONFIGURATION_STRING = "configurationString";

@@ -22,7 +22,7 @@ import java.util.concurrent.locks.LockSupport;
  * and finally deregistering itself in the end.
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public class SynchronizedRestarter {
    private AtomicBoolean restartInProgress = new AtomicBoolean(false);

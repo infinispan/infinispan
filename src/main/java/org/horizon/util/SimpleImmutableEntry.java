@@ -29,7 +29,7 @@ import java.util.Map.Entry;
  * Where is Java 1.6?
  *
  * @author (various)
- * @since 1.0
+ * @since 4.0
  */
 public class SimpleImmutableEntry<K, V> implements Map.Entry<K, V>, Serializable {
    private static final long serialVersionUID = -6092752114794052323L;

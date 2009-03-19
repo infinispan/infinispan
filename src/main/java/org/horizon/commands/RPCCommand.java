@@ -7,7 +7,7 @@ import org.horizon.interceptors.InterceptorChain;
  * {@link org.horizon.commands.ReplicableCommand} or a List of them.
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public interface RPCCommand extends ReplicableCommand {
 

@@ -9,7 +9,7 @@ package org.horizon.factories;
  * <p/>
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public interface AutoInstantiableFactory {
 }

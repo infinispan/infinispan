@@ -44,7 +44,7 @@ import java.io.ObjectOutputStream;
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
  * @author <a href="mailto:galder.zamarreno@jboss.com">Galder Zamarreno</a>
- * @since 1.0
+ * @since 4.0
  */
 public class VersionAwareMarshaller implements Marshaller {
    private static final Log log = LogFactory.getLog(VersionAwareMarshaller.class);

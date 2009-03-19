@@ -61,7 +61,7 @@ import java.lang.annotation.Target;
  * </pre>
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 // ensure this annotation is available at runtime.
 @Retention(RetentionPolicy.RUNTIME)

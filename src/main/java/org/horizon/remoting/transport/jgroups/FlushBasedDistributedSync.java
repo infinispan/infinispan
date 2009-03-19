@@ -17,7 +17,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * A DistributedSync based on JGroups' FLUSH protocol
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 @ThreadSafe
 public class FlushBasedDistributedSync implements DistributedSync {

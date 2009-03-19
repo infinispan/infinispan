@@ -9,7 +9,7 @@ import java.util.Set;
  * Responsible for loading cache data from an external source
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public interface CacheLoader {
 

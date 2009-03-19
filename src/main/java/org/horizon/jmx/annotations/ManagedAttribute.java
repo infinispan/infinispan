@@ -32,7 +32,7 @@ import java.lang.annotation.Target;
  * is optionally annotated with an @MBean annotation, or inherits such an annotation from a superclass.
  *
  * @author (various)
- * @since 1.0
+ * @since 4.0
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.FIELD})

@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit;
  * size of the blocking queue that backs the executor.
  *
  * @author Manik Surtani (<a href="mailto:manik AT jboss DOT org">manik AT jboss DOT org</a>)
- * @since 1.0
+ * @since 4.0
  */
 public class BoundedExecutors {
    /**

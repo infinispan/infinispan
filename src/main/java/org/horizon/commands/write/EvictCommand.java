@@ -27,7 +27,7 @@ import org.horizon.notifications.cachelistener.CacheNotifier;
 
 /**
  * @author Mircea.Markus@jboss.com
- * @since 1.0
+ * @since 4.0
  */
 public class EvictCommand extends RemoveCommand {
 

@@ -34,7 +34,7 @@ import org.horizon.CacheException;
  *         <p><b>Revisions:</b>
  *         <p/>
  *         <p>Dec 28 2002 Bela Ban: first implementation
- * @since 1.0
+ * @since 4.0
  */
 public class TimeoutException extends CacheException {
 

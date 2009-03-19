@@ -31,7 +31,7 @@ import org.horizon.eviction.algorithms.BaseEvictionAlgorithm;
  * First-in-first-out algorithm used to evict cache entries
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 @NotThreadSafe
 public class FIFOAlgorithm extends BaseEvictionAlgorithm {

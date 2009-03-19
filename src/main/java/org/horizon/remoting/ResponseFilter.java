@@ -7,7 +7,7 @@ import org.horizon.remoting.transport.Address;
  * org.horizon.commands.ReplicableCommand, ResponseMode, long, boolean, ResponseFilter)}
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public interface ResponseFilter {
    /**

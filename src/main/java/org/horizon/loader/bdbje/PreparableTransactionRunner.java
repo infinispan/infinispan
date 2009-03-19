@@ -16,7 +16,7 @@ import com.sleepycat.util.ExceptionUnwrapper;
  *
  * @author Adrian Cole
  * @version $Id: $
- * @since 1.0
+ * @since 4.0
  */
 public class PreparableTransactionRunner extends TransactionRunner {
    CurrentTransaction currentTxn;

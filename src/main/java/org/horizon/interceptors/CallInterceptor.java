@@ -43,7 +43,7 @@ import javax.transaction.Transaction;
  * transaction.
  *
  * @author Bela Ban
- * @since 1.0
+ * @since 4.0
  */
 public class CallInterceptor extends CommandInterceptor {
    @Override

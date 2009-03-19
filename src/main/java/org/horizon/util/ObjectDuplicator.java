@@ -12,7 +12,7 @@ import java.util.TreeSet;
  * A helper that efficiently duplicates known object types.
  *
  * @author (various)
- * @since 1.0
+ * @since 4.0
  */
 public class ObjectDuplicator {
    @SuppressWarnings("unchecked")

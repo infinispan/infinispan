@@ -6,7 +6,7 @@ package org.horizon.factories;
  * org.horizon.factories.annotations.Inject} annotated methods.
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public abstract class NamedComponentFactory extends AbstractComponentFactory {
 

@@ -34,7 +34,7 @@ import java.util.List;
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
  * @author Brian Stansberry
  * @author <a href="mailto:galder.zamarreno@jboss.com">Galder Zamarreno</a>
- * @since 1.0
+ * @since 4.0
  */
 public class CacheLoaderManagerConfig extends AbstractNamedCacheConfigurationBean {
    private static final long serialVersionUID = 2210349340378984424L;

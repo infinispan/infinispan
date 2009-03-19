@@ -41,7 +41,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * <p/>
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public class AsyncStore extends AbstractDelegatingStore {
 

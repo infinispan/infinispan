@@ -44,7 +44,7 @@ import java.util.Map;
 
 /**
  * @author Mircea.Markus@jboss.com
- * @since 1.0
+ * @since 4.0
  */
 @Scope(Scopes.NAMED_CACHE)
 public interface CommandsFactory {

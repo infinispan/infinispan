@@ -28,7 +28,7 @@ import org.horizon.eviction.algorithms.BaseEvictionAlgorithmConfig;
  * <p/>
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public class LRUAlgorithmConfig extends BaseEvictionAlgorithmConfig {
    /**

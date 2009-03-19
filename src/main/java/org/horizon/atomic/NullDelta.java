@@ -30,7 +30,7 @@ import java.io.ObjectOutput;
  * Represents no changes.
  *
  * @author Manik Surtani (<a href="mailto:manik AT jboss DOT org">manik AT jboss DOT org</a>)
- * @since 1.0
+ * @since 4.0
  */
 public class NullDelta implements Externalizable, Delta {
    static final NullDelta INSTANCE = new NullDelta();

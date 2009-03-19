@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Creates scheduled executors using the JDK Executors service
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public class DefaultScheduledExecutorFactory implements ScheduledExecutorFactory {
    public ScheduledExecutorService getScheduledExecutor(Properties p) {

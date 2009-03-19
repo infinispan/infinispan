@@ -20,7 +20,7 @@ import java.util.Properties;
  * Configuration component that encapsulates the global configuration.
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 @NonVolatile
 @Scope(Scopes.GLOBAL)

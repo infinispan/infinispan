@@ -12,7 +12,7 @@ import java.util.List;
  * Notifications for the cache manager
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 @NonVolatile
 @Scope(Scopes.GLOBAL)

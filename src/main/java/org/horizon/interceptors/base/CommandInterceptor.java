@@ -55,7 +55,7 @@ import org.horizon.logging.LogFactory;
  * @see org.horizon.commands.VisitableCommand
  * @see org.horizon.commands.Visitor
  * @see org.horizon.interceptors.InterceptorChain
- * @since 1.0
+ * @since 4.0
  */
 @Scope(Scopes.NAMED_CACHE)
 public abstract class CommandInterceptor extends AbstractVisitor {

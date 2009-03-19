@@ -39,7 +39,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * Captures cache management statistics
  *
  * @author Jerry Gauthier
- * @since 1.0
+ * @since 4.0
  */
 public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    private AtomicLong hitTimes = new AtomicLong(0);

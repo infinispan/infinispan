@@ -6,7 +6,7 @@ import org.horizon.config.AbstractNamedCacheConfigurationBean;
  * Configuration for the async cache loader
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public class AsyncStoreConfig extends AbstractNamedCacheConfigurationBean {
    boolean enabled;

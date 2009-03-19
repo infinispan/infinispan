@@ -20,7 +20,7 @@ import java.util.NoSuchElementException;
  * <p/>
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public class BidirectionalLinkedHashMap<K, V> extends AbstractMap<K, V> implements BidirectionalMap<K, V>, Cloneable {
 

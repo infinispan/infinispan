@@ -43,7 +43,7 @@ import java.util.Set;
  *
  * @author <a href="mailto:manik AT jboss DOT org">Manik Surtani (manik AT jboss DOT org)</a>
  * @see org.horizon.tree.TreeCache
- * @since 1.0
+ * @since 4.0
  */
 @ThreadSafe
 public interface Node<K, V> {

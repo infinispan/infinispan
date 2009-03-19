@@ -32,7 +32,7 @@ import java.util.Map;
  * General utility methods used throughout the JBC code base.
  *
  * @author <a href="brian.stansberry@jboss.com">Brian Stansberry</a>
- * @since 1.0
+ * @since 4.0
  */
 public final class Util {
    /**

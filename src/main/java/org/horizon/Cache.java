@@ -51,7 +51,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Mircea.Markus@jboss.com
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable {
    /**

@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * is used to set up the transport and provide lifecycle and dependency hooks into external transport implementations.
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 @MBean(objectName = "RPCManager")
 public class RPCManagerImpl implements RPCManager {

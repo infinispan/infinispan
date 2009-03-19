@@ -7,7 +7,7 @@ import org.testng.annotations.Test;
  * /** Tester class for {@link ResourceDMBean}.
  *
  * @author Mircea.Markus@jboss.com
- * @since 1.0
+ * @since 4.0
  */
 @Test(groups = "unit", testName = "jmx.ResourceDMBeanTest")
 public class ResourceDMBeanTest {

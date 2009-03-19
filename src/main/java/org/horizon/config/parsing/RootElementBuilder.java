@@ -40,7 +40,7 @@ import java.io.InputStream;
  * configured schema.
  *
  * @author Mircea.Markus@jboss.com
- * @since 1.0
+ * @since 4.0
  */
 public class RootElementBuilder {
 

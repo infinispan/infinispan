@@ -32,7 +32,7 @@ import org.horizon.config.ConfigurationException;
  * re-implement this interface to provide access to more config variables.
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
- * @since 1.0
+ * @since 4.0
  */
 public interface EvictionAlgorithmConfig extends CloneableConfigurationComponent {
    /**

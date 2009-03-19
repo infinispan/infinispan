@@ -29,7 +29,7 @@ import javax.transaction.TransactionManager;
  * Uses JNDI to look-up the {@link TransactionManager} instance from "java:/TransactionManager".
  *
  * @author Bela Ban, Aug 26 2003
- * @since 1.0
+ * @since 4.0
  */
 public class JBossTransactionManagerLookup implements TransactionManagerLookup {
 

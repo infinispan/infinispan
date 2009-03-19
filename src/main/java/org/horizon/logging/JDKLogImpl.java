@@ -7,7 +7,7 @@ import java.util.logging.Logger;
  * Logger that delivers messages to a JDK logger
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public class JDKLogImpl extends AbstractLogImpl {
 

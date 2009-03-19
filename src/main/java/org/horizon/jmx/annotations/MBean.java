@@ -33,7 +33,7 @@ import java.lang.annotation.Target;
  * org.horizon.jmx.annotations.ManagedOperation}
  *
  * @author Mircea.Markus@jboss.com
- * @since 1.0
+ * @since 4.0
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE})

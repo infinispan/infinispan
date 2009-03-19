@@ -27,7 +27,7 @@ import org.horizon.context.InvocationContext;
 
 /**
  * @author Mircea.Markus@jboss.com
- * @since 1.0
+ * @since 4.0
  */
 public class ClearCommand implements WriteCommand {
    private static final Object[] params = new Object[0];

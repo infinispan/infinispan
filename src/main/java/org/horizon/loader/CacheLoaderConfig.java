@@ -7,7 +7,7 @@ import org.horizon.loader.decorators.SingletonStoreConfig;
  * Configures individual cache loaders
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public interface CacheLoaderConfig extends Cloneable {
    boolean isPurgeOnStartup();

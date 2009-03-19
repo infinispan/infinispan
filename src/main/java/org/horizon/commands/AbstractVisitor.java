@@ -42,7 +42,7 @@ import java.util.Collection;
  *
  * @author Mircea.Markus@jboss.com
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public abstract class AbstractVisitor implements Visitor {
    // write commands

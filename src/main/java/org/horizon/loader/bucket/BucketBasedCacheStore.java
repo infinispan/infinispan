@@ -15,7 +15,7 @@ import org.horizon.loader.StoredEntry;
  * <p/>
  *
  * @author Mircea.Markus@jboss.com
- * @since 1.0
+ * @since 4.0
  */
 public abstract class BucketBasedCacheStore extends LockSupportCacheStore {
 

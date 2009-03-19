@@ -49,7 +49,7 @@ import org.horizon.context.InvocationContext;
  * <p/>
  *
  * @author Mircea.Markus@jboss.com
- * @since 1.0
+ * @since 4.0
  */
 public abstract class PrePostProcessingCommandInterceptor extends CommandInterceptor {
    @Override

@@ -9,7 +9,7 @@ import java.util.Set;
  * AbstractMap, there is no support for null keys.
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public abstract class AbstractMap<K, V> implements Map<K, V> {
    // views

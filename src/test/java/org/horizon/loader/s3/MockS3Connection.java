@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * @author Adrian Cole
  * @version $Id: $
- * @since 1.0
+ * @since 4.0
  */
 public class MockS3Connection implements S3Connection {
    private Map<String, S3Bucket> nameToS3Bucket = new ConcurrentHashMap<String, S3Bucket>();

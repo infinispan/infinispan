@@ -27,7 +27,7 @@ import org.horizon.eviction.algorithms.BaseEvictionAlgorithmConfig;
  * Configuration implementation for {@link LFUAlgorithm}.
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public class LFUAlgorithmConfig extends BaseEvictionAlgorithmConfig {
    /**

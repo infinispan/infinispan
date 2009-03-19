@@ -28,7 +28,7 @@ import org.horizon.remoting.ReplicationQueue;
  * Factory for ReplicationQueue.
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
- * @since 1.0
+ * @since 4.0
  */
 @DefaultFactoryFor(classes = ReplicationQueue.class)
 public class ReplicationQueueFactory extends EmptyConstructorNamedCacheFactory implements AutoInstantiableFactory {

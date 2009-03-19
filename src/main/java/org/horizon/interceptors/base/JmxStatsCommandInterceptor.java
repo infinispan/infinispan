@@ -30,7 +30,7 @@ import org.horizon.jmx.annotations.ManagedOperation;
  * Base class for all the interceptors exposing management statistics.
  *
  * @author Mircea.Markus@jboss.com
- * @since 1.0
+ * @since 4.0
  */
 public abstract class JmxStatsCommandInterceptor extends CommandInterceptor implements JmxStatisticsExposer {
    private boolean statsEnabled = false;

@@ -33,7 +33,7 @@ import java.util.Set;
  *
  * @author Adrian Cole
  * @link http://jets3t.s3.amazonaws.com/toolkit/configuration.html
- * @since 1.0
+ * @since 4.0
  */
 public class S3CacheStore extends BucketBasedCacheStore {
 

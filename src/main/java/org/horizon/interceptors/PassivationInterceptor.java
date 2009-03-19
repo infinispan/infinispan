@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Writes evicted entries back to the store on the way in through the CacheStore
  *
- * @since 1.0
+ * @since 4.0
  */
 public class PassivationInterceptor extends JmxStatsCommandInterceptor {
    private final AtomicLong passivations = new AtomicLong(0);

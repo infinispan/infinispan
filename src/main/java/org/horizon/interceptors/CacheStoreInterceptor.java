@@ -69,7 +69,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * after each method call (no TXs), or at TX commit.
  *
  * @author Bela Ban
- * @since 1.0
+ * @since 4.0
  */
 public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    private CacheLoaderManagerConfig loaderConfig = null;

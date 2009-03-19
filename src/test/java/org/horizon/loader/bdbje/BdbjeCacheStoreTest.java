@@ -29,7 +29,7 @@ import java.util.Collections;
 /**
  * @author Adrian Cole
  * @version $Id: $
- * @since 1.0
+ * @since 4.0
  */
 @Test(groups = "unit", enabled = true, testName = "loader.bdbje.BdbjeCacheStoreTest")
 public class BdbjeCacheStoreTest {

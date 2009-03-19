@@ -32,7 +32,7 @@ import javax.transaction.TransactionManager;
  * {@link org.horizon.Cache#endBatch(boolean)} calls.
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
- * @since 1.0
+ * @since 4.0
  */
 public class BatchContainer {
    TransactionManager transactionManager;

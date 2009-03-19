@@ -36,7 +36,7 @@ package org.horizon.eviction;
  * although implementations may choose to use a JDK {@link java.util.Queue} as an underlying data structure.
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public interface EvictionQueue extends Iterable<Object> {
 

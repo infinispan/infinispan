@@ -28,7 +28,7 @@ package org.horizon.notifications.cachelistener.event;
  * {@link #isPre()} being set to <tt>true</tt>.
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani</a>
- * @since 1.0
+ * @since 4.0
  */
 public interface TransactionCompletedEvent extends TransactionalEvent {
    /**

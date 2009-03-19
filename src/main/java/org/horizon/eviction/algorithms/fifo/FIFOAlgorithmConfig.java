@@ -27,7 +27,7 @@ import org.horizon.eviction.algorithms.BaseEvictionAlgorithmConfig;
  * Configuration for {@link FIFOAlgorithm}.
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public class FIFOAlgorithmConfig extends BaseEvictionAlgorithmConfig {
    /**

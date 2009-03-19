@@ -5,7 +5,7 @@ package org.horizon.factories;
  * annotation.
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public class KnownComponentNames {
    public static final String ASYNC_SERIALIZATION_EXECUTOR = "org.horizon.executors.serialization";

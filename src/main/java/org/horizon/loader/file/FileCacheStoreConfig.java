@@ -18,7 +18,7 @@ import org.horizon.loader.LockSupportCacheStoreConfig;
  * before timing out and throwing an exception.  By default, this is set to <tt>60000</tt>.</li> </ul>
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public class FileCacheStoreConfig extends LockSupportCacheStoreConfig {
    String location = "Horizon-FileCacheStore";

@@ -12,7 +12,7 @@ import java.util.Map;
  * Implementations of this interface are responsible for parsing XML configuration files.
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public interface XmlConfigurationParser {
    /**

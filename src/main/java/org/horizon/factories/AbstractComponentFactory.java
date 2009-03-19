@@ -40,7 +40,7 @@ import org.horizon.logging.LogFactory;
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @see Inject
  * @see ComponentRegistry
- * @since 1.0
+ * @since 4.0
  */
 @Scope(Scopes.GLOBAL)
 public abstract class AbstractComponentFactory {

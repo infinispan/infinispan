@@ -23,7 +23,7 @@ import org.horizon.loader.AbstractCacheStoreConfig;
  * 
  * @author Adrian Cole
  * @version $Id: $
- * @since 1.0
+ * @since 4.0
  */
 public class BdbjeCacheStoreConfig extends AbstractCacheStoreConfig {
    private String location = "Horizon-BdbjeCacheStore";

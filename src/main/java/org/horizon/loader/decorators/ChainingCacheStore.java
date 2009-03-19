@@ -27,7 +27,7 @@ import java.util.Set;
  * WRITE operations are propagated to ALL registered cache stores specified, that set ignoreModifications to false.
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public class ChainingCacheStore implements CacheStore {
 

@@ -9,7 +9,7 @@ import org.horizon.factories.scopes.Scopes;
  * A component factory for creating components scoped per-cache.
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 @Scope(Scopes.NAMED_CACHE)
 public abstract class AbstractNamedCacheComponentFactory extends AbstractComponentFactory {

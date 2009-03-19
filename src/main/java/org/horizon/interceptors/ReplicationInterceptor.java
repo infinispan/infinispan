@@ -41,7 +41,7 @@ import org.horizon.transaction.GlobalTransaction;
  * rollback() messages which are received 'side-ways' (see docs/design/Refactoring.txt).
  *
  * @author Bela Ban
- * @since 1.0
+ * @since 4.0
  */
 public class ReplicationInterceptor extends BaseRpcInterceptor {
 

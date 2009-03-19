@@ -51,7 +51,7 @@ import java.util.regex.Pattern;
  * dinalmically reused from there.
  *
  * @author Mircea.Markus@jboss.com
- * @since 1.0
+ * @since 4.0
  */
 public class ResourceDMBean implements DynamicMBean {
    private static final Class<?>[] primitives = {int.class,

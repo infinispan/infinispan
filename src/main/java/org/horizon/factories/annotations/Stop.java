@@ -32,7 +32,7 @@ import java.lang.annotation.Target;
  * <p/>
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
- * @since 1.0
+ * @since 4.0
  */
 @Target(METHOD)
 @Retention(RetentionPolicy.RUNTIME)
@@ -42,7 +42,7 @@ public @interface Stop {
     * the STARTED state.  Defaults to 10.
     *
     * @return execution priority
-    * @since 1.0
+    * @since 4.0
     */
    public abstract int priority() default 10;
 }

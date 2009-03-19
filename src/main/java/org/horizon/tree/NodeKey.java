@@ -31,7 +31,7 @@ import java.io.Serializable;
  * A class that represents the key to a node
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public class NodeKey implements Serializable {
    Fqn fqn;

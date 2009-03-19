@@ -11,7 +11,7 @@ import java.util.NoSuchElementException;
  * Static helpers for Horizon-specific collections
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public class HorizonCollections {
    private static final ReversibleOrderedSet EMPTY_ROS = new EmptyReversibleOrderedSet();

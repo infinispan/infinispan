@@ -35,7 +35,7 @@ import java.lang.annotation.Target;
  * to changes in the configuration.
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
- * @since 1.0
+ * @since 4.0
  */
 // ensure this annotation is available at runtime.
 @Retention(RetentionPolicy.RUNTIME)

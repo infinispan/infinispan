@@ -39,7 +39,7 @@ import java.util.Set;
  * @author (various)
  * @param <K>
  * @param <V>
- * @since 1.0
+ * @since 4.0
  */
 @NotThreadSafe
 public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneable {

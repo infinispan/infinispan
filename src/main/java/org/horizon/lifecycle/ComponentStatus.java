@@ -29,7 +29,7 @@ import org.horizon.logging.LogFactory;
  *
  * @author Manik Surtani
  * @see org.horizon.lifecycle.Lifecycle
- * @since 1.0
+ * @since 4.0
  */
 public enum ComponentStatus {
    /**

@@ -30,7 +30,7 @@ import org.horizon.logging.LogFactory;
  * An extension of {@link org.horizon.container.ReadCommittedEntry} that provides Repeatable Read semantics
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
- * @since 1.0
+ * @since 4.0
  */
 public class RepeatableReadEntry extends ReadCommittedEntry {
    private static final Log log = LogFactory.getLog(RepeatableReadEntry.class);

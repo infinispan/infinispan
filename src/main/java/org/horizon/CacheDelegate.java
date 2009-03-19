@@ -66,7 +66,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * @author Mircea.Markus@jboss.com
- * @since 1.0
+ * @since 4.0
  */
 @NonVolatile
 public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<K, V> {

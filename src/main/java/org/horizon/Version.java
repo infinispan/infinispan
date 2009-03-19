@@ -27,7 +27,7 @@ import net.jcip.annotations.Immutable;
  * Contains version information about this release of Horizon.
  *
  * @author Bela Ban
- * @since 1.0
+ * @since 4.0
  */
 @Immutable
 public class Version {

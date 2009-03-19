@@ -8,7 +8,7 @@ import org.jgroups.blocks.RspFilter;
  * Acts as a bridge between JGroups RspFilter and {@link org.horizon.remoting.ResponseFilter}.
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public class JGroupsResponseFilterAdapter implements RspFilter {
 

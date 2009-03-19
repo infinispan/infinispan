@@ -29,7 +29,7 @@ import org.horizon.eviction.EvictionAlgorithmConfig;
  * Configuration class for {@link NullEvictionAlgorithm}.
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public class NullEvictionAlgorithmConfig extends AbstractNamedCacheConfigurationBean implements EvictionAlgorithmConfig {
    private static final long serialVersionUID = -6591180473728241737L;

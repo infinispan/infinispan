@@ -33,7 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Note that values are stored as keys in the underlying Map, with a static dummy object as value.
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani</a>
- * @since 1.0
+ * @since 4.0
  */
 public class ConcurrentHashSet<E> extends AbstractSet<E> {
    protected ConcurrentHashMap<E, Object> map;

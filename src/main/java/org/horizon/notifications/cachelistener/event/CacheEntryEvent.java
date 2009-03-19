@@ -25,7 +25,7 @@ package org.horizon.notifications.cachelistener.event;
  * Transactional events that additionally expose a key as such events pertain to a specific cache entry.
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani</a>
- * @since 1.0
+ * @since 4.0
  */
 public interface CacheEntryEvent extends TransactionalEvent {
    /**

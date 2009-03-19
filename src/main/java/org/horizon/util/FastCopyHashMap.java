@@ -38,7 +38,7 @@ import java.util.Set;
  * Null keys are <i>not</i> supported.
  *
  * @author Jason T. Greene
- * @since 1.0
+ * @since 4.0
  */
 public class FastCopyHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V>, Cloneable, Serializable {
    /**

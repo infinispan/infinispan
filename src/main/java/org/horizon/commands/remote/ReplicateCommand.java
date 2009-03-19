@@ -40,7 +40,7 @@ import java.util.List;
  * <p/>
  *
  * @author Mircea.Markus@jboss.com
- * @since 1.0
+ * @since 4.0
  */
 public class ReplicateCommand implements RPCCommand {
    public static final byte METHOD_ID = 13;

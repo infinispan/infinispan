@@ -6,7 +6,7 @@ import org.horizon.util.ReflectionUtil;
  * Retrieves the declated scope of a component
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public class ScopeDetector {
    public static Scopes detectScope(Class clazz) {

@@ -77,7 +77,7 @@ import java.util.List;
  * cache.get(f, "key" + i); } </code>
  *
  * @author (various)
- * @since 1.0
+ * @since 4.0
  */
 @Immutable
 public class Fqn implements Comparable<Fqn>, Externalizable {
@@ -142,7 +142,7 @@ public class Fqn implements Comparable<Fqn>, Externalizable {
     *
     * @param names list of elements that comprise the Fqn
     * @return an Fqn
-    * @since 1.0
+    * @since 4.0
     */
    @SuppressWarnings("unchecked")
    public static Fqn fromList(List names) {
@@ -170,7 +170,7 @@ public class Fqn implements Comparable<Fqn>, Externalizable {
     *
     * @param elements array of elements that comprise the Fqn
     * @return an Fqn
-    * @since 1.0
+    * @since 4.0
     */
    public static Fqn fromElements(Object... elements) {
       return new Fqn(Arrays.asList(elements), true);
@@ -182,7 +182,7 @@ public class Fqn implements Comparable<Fqn>, Externalizable {
     * @param base     base Fqn
     * @param relative relative Fqn
     * @return an Fqn
-    * @since 1.0
+    * @since 4.0
     */
    public static Fqn fromRelativeFqn(Fqn base, Fqn relative) {
       return new Fqn(base, relative.elements);
@@ -194,7 +194,7 @@ public class Fqn implements Comparable<Fqn>, Externalizable {
     * @param base             base Fqn
     * @param relativeElements relative List<Object> of elements
     * @return an Fqn
-    * @since 1.0
+    * @since 4.0
     */
    public static Fqn fromRelativeList(Fqn base, List relativeElements) {
       return new Fqn(base, relativeElements);
@@ -206,7 +206,7 @@ public class Fqn implements Comparable<Fqn>, Externalizable {
     * @param base             base Fqn
     * @param relativeElements relative elements
     * @return an Fqn
-    * @since 1.0
+    * @since 4.0
     */
    public static Fqn fromRelativeElements(Fqn base, Object... relativeElements) {
       return new Fqn(base, Arrays.asList(relativeElements));
@@ -244,7 +244,7 @@ public class Fqn implements Comparable<Fqn>, Externalizable {
     * @return an Fqn
     * @throws IOException            in the event of a problem reading the stream
     * @throws ClassNotFoundException in the event of classes that comprise the element list of this Fqn not being found
-    * @since 1.0
+    * @since 4.0
     */
    public static Fqn fromExternalStream(ObjectInput in) throws IOException, ClassNotFoundException {
       Fqn f = new Fqn();

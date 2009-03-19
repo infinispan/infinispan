@@ -7,7 +7,7 @@ import java.io.ObjectInput;
  * A delegating {@link java.io.ObjectInput} that delegates all methods except {@link ObjectInput#close()}.
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public class UnclosableObjectInputStream implements ObjectInput {
    private final ObjectInput delegate;

@@ -27,7 +27,7 @@ import org.horizon.CacheException;
  * Thrown whenever operations are attempted on a node that is no longer valid.  See {@link Node#isValid()} for details.
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani</a>
- * @since 1.0
+ * @since 4.0
  */
 public class NodeNotValidException extends CacheException {
    public NodeNotValidException() {

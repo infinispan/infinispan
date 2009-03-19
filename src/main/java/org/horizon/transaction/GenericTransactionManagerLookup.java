@@ -36,7 +36,7 @@ import java.lang.reflect.Method;
  * {@link org.horizon.transaction.DummyTransactionManager}.
  *
  * @author Markus Plesser
- * @since 1.0
+ * @since 4.0
  */
 public class GenericTransactionManagerLookup implements TransactionManagerLookup {
 

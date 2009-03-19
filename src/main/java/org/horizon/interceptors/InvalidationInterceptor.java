@@ -63,7 +63,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * cache to look up the value in a shared cache loader which would have been updated with the changes.
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
- * @since 1.0
+ * @since 4.0
  */
 public class InvalidationInterceptor extends BaseRpcInterceptor {
    private final AtomicLong invalidations = new AtomicLong(0);

@@ -31,7 +31,7 @@ import java.lang.annotation.Target;
  * annotation allows you to define which components can be constructed by the annotated factory.
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
- * @since 1.0
+ * @since 4.0
  */
 @Target(TYPE)
 @Retention(RetentionPolicy.RUNTIME)

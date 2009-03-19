@@ -25,7 +25,7 @@ package org.horizon.notifications.cachelistener.event;
  * Notifies a listener of an invalidation event
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
- * @since 1.0
+ * @since 4.0
  */
 public interface CacheEntryInvalidatedEvent extends CacheEntryEvent {
 }

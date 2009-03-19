@@ -6,7 +6,7 @@ import org.horizon.commands.VisitableCommand;
  * A command that modifies the cache in some way
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public interface WriteCommand extends VisitableCommand {
    /**

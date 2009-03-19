@@ -35,7 +35,7 @@ import java.lang.annotation.Target;
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani</a>
  * @see org.horizon.notifications.Listener
- * @since 1.0
+ * @since 4.0
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)

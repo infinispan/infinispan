@@ -34,7 +34,7 @@ import javax.transaction.TransactionManager;
  * Interceptor that captures batched calls and attaches contexts.
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
- * @since 1.0
+ * @since 4.0
  */
 public class BatchingInterceptor extends CommandInterceptor {
    BatchContainer batchContainer;

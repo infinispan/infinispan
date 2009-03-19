@@ -9,7 +9,7 @@ import org.jgroups.util.Buffer;
  * Bridge between JGroups and Horizon marshallers
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public class MarshallerAdapter implements RpcDispatcher.Marshaller2 {
    Marshaller m;

@@ -40,7 +40,7 @@ import org.horizon.interceptors.base.CommandInterceptor;
  * This interceptor is used to handle eviction events.
  *
  * @author Mircea.Markus@jboss.com
- * @since 1.0
+ * @since 4.0
  */
 public class EvictionInterceptor extends CommandInterceptor {
    protected EvictionManager evictionManager;

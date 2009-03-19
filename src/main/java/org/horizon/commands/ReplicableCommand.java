@@ -29,7 +29,7 @@ import org.horizon.context.InvocationContext;
  *
  * @author Mircea.Markus@jboss.com
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public interface ReplicableCommand {
    /**

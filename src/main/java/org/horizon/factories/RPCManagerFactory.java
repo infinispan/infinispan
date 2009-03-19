@@ -29,7 +29,7 @@ import org.horizon.remoting.RPCManager;
  * An extension of the EmptyConstructorFactory that places a component in the {@link RuntimeConfig} after creating it.
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
- * @since 1.0
+ * @since 4.0
  */
 @DefaultFactoryFor(classes = RPCManager.class)
 public class RPCManagerFactory extends EmptyConstructorNamedCacheFactory implements AutoInstantiableFactory {

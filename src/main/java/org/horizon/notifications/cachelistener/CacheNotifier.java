@@ -33,7 +33,7 @@ import javax.transaction.Transaction;
  * Public interface with all allowed notifications.
  *
  * @author Mircea.Markus@jboss.com
- * @since 1.0
+ * @since 4.0
  */
 @NonVolatile
 @Scope(Scopes.NAMED_CACHE)

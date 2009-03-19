@@ -49,7 +49,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author <a href="mailto:galder.zamarreno@jboss.com">Galder Zamarreno</a>
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public abstract class BaseEvictionAlgorithm implements EvictionAlgorithm {
    private static final Log log = LogFactory.getLog(BaseEvictionAlgorithm.class);

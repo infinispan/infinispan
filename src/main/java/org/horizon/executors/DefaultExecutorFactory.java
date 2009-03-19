@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Default executor factory that creates executors using the JDK Executors service.
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public class DefaultExecutorFactory implements ExecutorFactory {
    public ExecutorService getExecutor(Properties p) {

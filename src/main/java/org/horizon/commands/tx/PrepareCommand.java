@@ -38,7 +38,7 @@ import java.util.Set;
  * // TODO: MANIK: Document this
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
- * @since 1.0
+ * @since 4.0
  */
 public class PrepareCommand extends AbstractTransactionBoundaryCommand {
    public static final byte METHOD_ID = 10;

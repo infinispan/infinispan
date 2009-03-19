@@ -48,7 +48,7 @@ import java.util.Set;
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @author Mircea.Markus@jboss.com
  * @see org.horizon.marshall.MarshalledValue
- * @since 1.0
+ * @since 4.0
  */
 public class MarshalledValueInterceptor extends CommandInterceptor {
    @Override

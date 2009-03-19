@@ -16,7 +16,7 @@ import org.jets3t.service.security.AWSCredentials;
  *
  * @author Adrian Cole
  * @link http://jets3t.s3.amazonaws.com/toolkit/configuration.html
- * @since 1.0
+ * @since 4.0
  */
 public class Jets3tS3Connection implements S3Connection {
    private S3Service s3Service;

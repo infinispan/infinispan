@@ -25,7 +25,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * Global, shared notifications on the cache manager.
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public class CacheManagerNotifierImpl extends AbstractListenerImpl implements CacheManagerNotifier {
 

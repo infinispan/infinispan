@@ -27,7 +27,7 @@ import java.io.Externalizable;
  * Represents changes made to a {@link DeltaAware} implementation.  Should be efficiently externalizable.
  *
  * @author Manik Surtani (<a href="mailto:manik AT jboss DOT org">manik AT jboss DOT org</a>)
- * @since 1.0
+ * @since 4.0
  */
 public interface Delta extends Externalizable {
    /**

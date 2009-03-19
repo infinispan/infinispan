@@ -6,7 +6,7 @@ import java.util.Map;
  * An extension of Map that returns ReversibleOrderedSets
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public interface BidirectionalMap<K, V> extends Map<K, V> {
 

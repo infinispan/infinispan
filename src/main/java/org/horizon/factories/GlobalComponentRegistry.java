@@ -21,7 +21,7 @@ import java.util.Map;
  * A global component registry where shared components are stored.
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 @Scope(Scopes.GLOBAL)
 @NonVolatile

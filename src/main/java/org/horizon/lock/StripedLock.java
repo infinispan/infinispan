@@ -43,7 +43,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani</a>
  * @author Mircea.Markus@jboss.com
- * @since 1.0
+ * @since 4.0
  */
 @ThreadSafe
 public class StripedLock {

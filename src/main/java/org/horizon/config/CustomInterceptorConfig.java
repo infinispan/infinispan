@@ -28,7 +28,7 @@ import org.horizon.interceptors.base.CommandInterceptor;
  * Holds information about the custom interceptors defined in the configuration file.
  *
  * @author Mircea.Markus@jboss.com
- * @since 1.0
+ * @since 4.0
  */
 @Immutable
 public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean {

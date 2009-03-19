@@ -48,7 +48,7 @@ import java.util.List;
  * </code>
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
- * @since 1.0
+ * @since 4.0
  */
 @Scope(Scopes.GLOBAL)
 @NonVolatile

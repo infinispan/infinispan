@@ -11,7 +11,7 @@ import java.util.concurrent.TimeoutException;
  * such as a start processing
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 @ThreadSafe
 public interface DistributedSync {

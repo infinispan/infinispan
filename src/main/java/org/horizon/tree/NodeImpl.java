@@ -39,7 +39,7 @@ import java.util.Set;
  * Implementation backed by an {@link AtomicMap}
  *
  * @author Manik Surtani (<a href="mailto:manik AT jboss DOT org">manik AT jboss DOT org</a>)
- * @since 1.0
+ * @since 4.0
  */
 public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    Fqn fqn;

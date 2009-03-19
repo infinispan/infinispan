@@ -9,7 +9,7 @@ import java.util.concurrent.locks.Lock;
  * An abstract lock container that creates and maintains a new lock per entry
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public abstract class AbstractPerEntryLockContainer implements LockContainer {
 

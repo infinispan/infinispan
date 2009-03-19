@@ -7,7 +7,7 @@ import org.apache.log4j.Logger;
  * Logger that delivers messages to a Log4J logger
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public class Log4JLogImpl extends AbstractLogImpl {
 

@@ -10,7 +10,7 @@ import java.util.Properties;
  * types, using default values if a conversion is not possible.
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public class TypedProperties extends Properties {
    private static final Log log = LogFactory.getLog(TypedProperties.class);

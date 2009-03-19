@@ -39,7 +39,7 @@ import java.util.Map;
  * A transaction context specially geared to dealing with MVCC.
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
- * @since 1.0
+ * @since 4.0
  */
 public class TransactionContextImpl extends AbstractContext implements TransactionContext {
    /**

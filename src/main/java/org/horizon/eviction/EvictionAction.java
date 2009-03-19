@@ -27,7 +27,7 @@ import org.horizon.Cache;
  * Performs an eviction on a given cache entry
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
- * @since 1.0
+ * @since 4.0
  */
 public interface EvictionAction {
    /**

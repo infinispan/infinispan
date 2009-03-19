@@ -39,7 +39,7 @@ import org.horizon.transaction.TransactionLog;
  * Simple factory that just uses reflection and an empty constructor of the component type.
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
- * @since 1.0
+ * @since 4.0
  */
 @DefaultFactoryFor(classes = {CacheNotifier.class, EntryFactory.class, CommandsFactory.class,
                               CacheLoaderManager.class, InvocationContextContainer.class,

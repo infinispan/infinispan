@@ -38,7 +38,7 @@ import org.horizon.manager.DefaultCacheManager;
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
  * @see AbstractComponentFactory
- * @since 1.0
+ * @since 4.0
  */
 public class DefaultCacheFactory<K, V> extends AbstractNamedCacheComponentFactory// implements CacheFactory<K, V>
 {

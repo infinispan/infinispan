@@ -31,7 +31,7 @@ import java.util.Map;
  * Serializable representation of an entry in the cache
  *
  * @author Bela Ban
- * @since 1.0
+ * @since 4.0
  */
 public class EntryData<K, V> implements Externalizable, Map.Entry<K, V> {
    private K key;

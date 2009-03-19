@@ -30,7 +30,7 @@ import java.util.Map;
  * Interface that can look up MVCC wrapped entries.
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
- * @since 1.0
+ * @since 4.0
  */
 public interface EntryLookup {
    /**

@@ -29,7 +29,7 @@ import org.horizon.logging.LogFactory;
  * An eviction action policy that calls {@link Cache#remove(Object)} to evict an entry.
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
- * @since 1.0
+ * @since 4.0
  */
 public class RemoveOnEvictActionPolicy implements EvictionAction {
    private Cache cache;

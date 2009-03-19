@@ -42,7 +42,7 @@ import java.util.List;
  * Knows how to build and manage an chain of interceptors. Also in charge with invoking methods on the chain.
  *
  * @author Mircea.Markus@jboss.com
- * @since 1.0 todo - if you add the same interceptor instance twice, things get really dirty. -- this should be treated
+ * @since 4.0 todo - if you add the same interceptor instance twice, things get really dirty. -- this should be treated
  *        as an missuse and an exception should be thrown
  */
 @Scope(Scopes.NAMED_CACHE)

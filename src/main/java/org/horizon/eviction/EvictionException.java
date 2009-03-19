@@ -25,7 +25,7 @@ import org.horizon.CacheException;
 
 /**
  * @author Ben Wang, Feb 11, 2004
- * @since 1.0
+ * @since 4.0
  */
 public class EvictionException extends CacheException {
 

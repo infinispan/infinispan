@@ -221,7 +221,7 @@ import java.lang.annotation.Target;
  * @see org.horizon.notifications.cachelistener.annotation.TransactionCompleted
  * @see org.horizon.notifications.cachelistener.annotation.TransactionRegistered
  * @see org.horizon.notifications.cachelistener.annotation.CacheEntryInvalidated
- * @since 1.0
+ * @since 4.0
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
@@ -232,7 +232,7 @@ public @interface Listener {
     *
     * @return true if the expectation is that callbacks are called using the caller's thread; false if they are to be
     *         made in a separate thread.
-    * @since 1.0
+    * @since 4.0
     */
    boolean sync() default true;
 }

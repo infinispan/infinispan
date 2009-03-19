@@ -37,7 +37,7 @@ import java.io.Serializable;
 
 /**
  * @author bela
- * @since 1.0
+ * @since 4.0
  */
 public class DummyBaseTransactionManager implements TransactionManager, Serializable {
    static ThreadLocal<DummyTransaction> thread_local = new ThreadLocal<DummyTransaction>();

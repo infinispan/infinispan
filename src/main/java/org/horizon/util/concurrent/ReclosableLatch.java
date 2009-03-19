@@ -31,7 +31,7 @@ import java.util.concurrent.locks.AbstractQueuedSynchronizer;
  * the latch.
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
- * @since 1.0
+ * @since 4.0
  */
 public class ReclosableLatch extends AbstractQueuedSynchronizer {
    // the following states are used in the AQS.

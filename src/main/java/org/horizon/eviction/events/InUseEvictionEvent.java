@@ -4,7 +4,7 @@ package org.horizon.eviction.events;
  * An eviction event used to mark an entry as in-use.
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public class InUseEvictionEvent extends EvictionEvent {
 

@@ -28,7 +28,7 @@ import javax.transaction.TransactionManager;
  * this class can be configured using {@link Configuration#setTransactionManagerLookupClass}.
  *
  * @author Bela Ban, Aug 26 2003
- * @since 1.0
+ * @since 4.0
  */
 public interface TransactionManagerLookup {
 

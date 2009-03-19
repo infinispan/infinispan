@@ -17,7 +17,7 @@ import org.horizon.commands.write.ReplaceCommand;
  * Specifically used to create un-initialized {@link org.horizon.commands.ReplicableCommand}s from a byte stream.
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public class RemoteCommandFactory {
 

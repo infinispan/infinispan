@@ -4,7 +4,7 @@ package org.horizon.logging;
  * Factory that creates {@link Log} instances.
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public class LogFactory {
 

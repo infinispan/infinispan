@@ -28,7 +28,7 @@ import org.horizon.CacheException;
  * org.horizon.notifications.Listenable#addListener(Object)} API.
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani</a>
- * @since 1.0
+ * @since 4.0
  */
 public class IncorrectListenerException extends CacheException {
 

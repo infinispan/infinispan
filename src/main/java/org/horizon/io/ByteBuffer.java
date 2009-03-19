@@ -28,7 +28,7 @@ import java.io.InputStream;
  * A byte buffer that exposes the internal byte array with minimal copying
  *
  * @author (various)
- * @since 1.0
+ * @since 4.0
  */
 public class ByteBuffer {
    private final byte[] buf;

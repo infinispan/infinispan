@@ -9,7 +9,7 @@ import java.lang.annotation.RetentionPolicy;
  *
  * @author Manik Surtani
  * @see Scopes
- * @since 1.0
+ * @since 4.0
  */
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Scope {

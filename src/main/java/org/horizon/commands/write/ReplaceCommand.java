@@ -29,7 +29,7 @@ import org.horizon.context.InvocationContext;
 
 /**
  * @author Mircea.Markus@jboss.com
- * @since 1.0
+ * @since 4.0
  */
 public class ReplaceCommand extends AbstractDataCommand implements DataWriteCommand {
    public static final byte METHOD_ID = 122;

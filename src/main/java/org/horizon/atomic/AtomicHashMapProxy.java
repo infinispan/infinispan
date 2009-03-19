@@ -37,7 +37,7 @@ import java.util.Set;
  * A layer of indirection around an {@link org.horizon.atomic.AtomicHashMap} to provide reader consistency
  *
  * @author Manik Surtani (<a href="mailto:manik AT jboss DOT org">manik AT jboss DOT org</a>)
- * @since 1.0
+ * @since 4.0
  */
 public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements AtomicMap<K, V> {
    private static final Log log = LogFactory.getLog(AtomicHashMapProxy.class);

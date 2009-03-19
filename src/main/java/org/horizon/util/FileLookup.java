@@ -37,7 +37,7 @@ import java.net.URL;
  * disck </li> </ol>
  *
  * @author Mircea.Markus@jboss.com
- * @since 1.0
+ * @since 4.0
  */
 public class FileLookup {
    private static final Log log = LogFactory.getLog(FileLookup.class);

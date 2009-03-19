@@ -9,7 +9,7 @@ import java.util.Set;
  * Interface that defines access to and manipulation of {@link Options}.
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public interface OptionContainer {
 

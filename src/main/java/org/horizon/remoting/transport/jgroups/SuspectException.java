@@ -27,7 +27,7 @@ import org.horizon.CacheException;
  * Thrown when a member is suspected during remote method invocation
  *
  * @author Bela Ban
- * @since 1.0
+ * @since 4.0
  */
 public class SuspectException extends CacheException {
 

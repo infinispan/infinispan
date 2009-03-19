@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * @author Mircea.Markus@jboss.com
- * @since 1.0
+ * @since 4.0
  */
 @ThreadSafe
 public class EvictionManagerImpl implements EvictionManager {

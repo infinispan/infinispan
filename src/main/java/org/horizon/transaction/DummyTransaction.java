@@ -37,7 +37,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * @author bela
- * @since 1.0
+ * @since 4.0
  */
 public class DummyTransaction implements Transaction {
    private int status = Status.STATUS_UNKNOWN;

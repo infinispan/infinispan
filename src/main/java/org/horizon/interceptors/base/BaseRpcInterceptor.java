@@ -44,7 +44,7 @@ import java.util.List;
  * Acts as a base for all RPC calls - subclassed by
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
- * @since 1.0
+ * @since 4.0
  */
 public abstract class BaseRpcInterceptor extends CommandInterceptor {
    private ReplicationQueue replicationQueue;

@@ -10,7 +10,7 @@ import java.util.Iterator;
  * visits.  To do this, this implementation exposes a {@link #visit(Object)} method to visit a key.
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public class VisitableBidirectionalLinkedHashSet<E> extends AbstractSet<E> implements ReversibleOrderedSet<E>, Cloneable {
 

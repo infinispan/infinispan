@@ -19,7 +19,7 @@ import java.util.Map;
  * Named cache specific components
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public class ComponentRegistry extends AbstractComponentRegistry {
 

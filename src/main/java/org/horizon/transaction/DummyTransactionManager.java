@@ -36,7 +36,7 @@ import java.util.Properties;
  * @author bela
  *         <p/>
  *         Date: May 15, 2003 Time: 4:11:37 PM
- * @since 1.0
+ * @since 4.0
  */
 public class DummyTransactionManager extends DummyBaseTransactionManager {
    protected static DummyTransactionManager instance = null;

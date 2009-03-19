@@ -31,7 +31,7 @@ import org.horizon.eviction.algorithms.BaseEvictionAlgorithm;
  * Most recently used algorithm. This algorithm will evict the most recently used cache entries from cache.
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 @NotThreadSafe
 public class MRUAlgorithm extends BaseEvictionAlgorithm {

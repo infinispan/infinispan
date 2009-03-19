@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
  * An advanced interface that exposes additional methods not available on {@link Cache}.
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public interface AdvancedCache<K, V> extends Cache<K, V> {
    /**

@@ -11,7 +11,7 @@ package org.horizon.loader;
  *
  * @author Mircea.Markus@jboss.com
  * @version $Id: AbstractCacheStoreConfig.java 7852 2009-03-05 00:22:03Z adriancole $
- * @since 1.0
+ * @since 4.0
  */
 public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig {
 

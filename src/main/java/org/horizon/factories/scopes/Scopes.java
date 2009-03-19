@@ -6,7 +6,7 @@ package org.horizon.factories.scopes;
  *
  * @author Manik Surtani
  * @see Scope
- * @since 1.0
+ * @since 4.0
  */
 public enum Scopes {
    /**

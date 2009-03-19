@@ -25,7 +25,7 @@ package org.horizon.config;
  * Thrown if an eviction configuration that cannot be translated to the new 3.x eviction interfaces is used.
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
- * @since 1.0
+ * @since 4.0
  */
 public class UnsupportedEvictionImplException extends ConfigurationException {
    public UnsupportedEvictionImplException(Exception e) {

@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit;
  * A base class used for configuring eviction algorithms.
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
- * @since 1.0
+ * @since 4.0
  */
 public abstract class BaseEvictionAlgorithmConfig extends AbstractNamedCacheConfigurationBean implements EvictionAlgorithmConfig {
    private static final long serialVersionUID = 4591691674370188932L;

@@ -22,7 +22,7 @@ import java.io.File;
  *
  * @author Adrian Cole
  * @version $Id: $
- * @since 1.0
+ * @since 4.0
  */
 public class BdbjeResourceFactory {
    private static final Log log = LogFactory.getLog(BdbjeResourceFactory.class);

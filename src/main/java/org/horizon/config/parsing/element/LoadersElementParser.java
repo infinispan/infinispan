@@ -43,7 +43,7 @@ import java.util.Properties;
  * </pre>
  *
  * @author Mircea.Markus@jboss.com
- * @since 1.0
+ * @since 4.0
  */
 public class LoadersElementParser extends XmlParserBase {
    public CacheLoaderManagerConfig parseLoadersElement(Element element) {

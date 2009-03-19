@@ -25,7 +25,7 @@ import org.horizon.commands.DataCommand;
 
 /**
  * @author Mircea.Markus@jboss.com
- * @since 1.0
+ * @since 4.0
  */
 public abstract class AbstractDataCommand implements DataCommand {
    protected Object key;

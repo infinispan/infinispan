@@ -31,7 +31,7 @@ import java.util.Set;
  * The main internal data structure which stores entries
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
- * @since 1.0
+ * @since 4.0
  */
 @Scope(Scopes.NAMED_CACHE)
 public interface DataContainer {

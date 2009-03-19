@@ -40,7 +40,7 @@ import java.util.List;
  * resources</li> </ul>
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 @Scope(Scopes.GLOBAL)
 @NonVolatile

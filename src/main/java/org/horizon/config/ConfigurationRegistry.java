@@ -28,7 +28,7 @@ import java.util.Set;
  * A registry for {@link Configuration}s.
  *
  * @author Brian Stansberry
- * @since 1.0
+ * @since 4.0
  */
 public interface ConfigurationRegistry {
    /**

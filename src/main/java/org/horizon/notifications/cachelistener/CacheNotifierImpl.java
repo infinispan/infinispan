@@ -43,7 +43,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * Helper class that handles all notifications to registered listeners.
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
- * @since 1.0
+ * @since 4.0
  */
 public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNotifier {
    private static final Log log = LogFactory.getLog(CacheNotifierImpl.class);

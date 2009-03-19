@@ -31,7 +31,7 @@ package org.horizon.lock;
  *
  * @author (various)
  * @see <a href="http://en.wikipedia.org/wiki/Isolation_%28computer_science%29">Isolation levels</a>
- * @since 1.0
+ * @since 4.0
  */
 public enum IsolationLevel {
    /**

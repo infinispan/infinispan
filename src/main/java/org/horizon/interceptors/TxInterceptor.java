@@ -67,7 +67,7 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
  * @author <a href="mailto:stevew@jofti.com">Steve Woodcock (stevew@jofti.com)</a>
- * @since 1.0
+ * @since 4.0
  */
 public class TxInterceptor extends BaseTransactionalContextInterceptor {
    protected CommandsFactory commandsFactory;

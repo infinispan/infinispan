@@ -48,7 +48,7 @@ import java.util.concurrent.locks.Lock;
  * Handles locks for the MVCC based LockingInterceptor
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
- * @since 1.0
+ * @since 4.0
  */
 public class LockManagerImpl implements LockManager {
    protected Configuration configuration;

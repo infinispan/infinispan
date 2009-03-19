@@ -147,7 +147,7 @@ public class InvocationContextImpl extends AbstractContext implements Invocation
    /**
     * @return the transaction entry associated with the current transaction, or null if the current thread is not
     *         associated with a transaction.
-    * @since 1.0
+    * @since 4.0
     */
    public TransactionContext getTransactionContext() {
       return transactionContext;
@@ -157,7 +157,7 @@ public class InvocationContextImpl extends AbstractContext implements Invocation
     * Sets the transaction context to be associated with the current thread.
     *
     * @param transactionContext transaction context to set
-    * @since 1.0
+    * @since 4.0
     */
    public void setTransactionContext(TransactionContext transactionContext) {
       this.transactionContext = transactionContext;

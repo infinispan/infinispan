@@ -4,7 +4,7 @@ package org.horizon.container;
  * A null entry that is read in for removal
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public class NullMarkerEntryForRemoval extends RepeatableReadEntry {
 

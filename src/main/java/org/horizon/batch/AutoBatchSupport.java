@@ -29,7 +29,7 @@ import org.horizon.config.ConfigurationException;
  * Enables for automatic batching.
  *
  * @author Manik Surtani (<a href="mailto:manik AT jboss DOT org">manik AT jboss DOT org</a>)
- * @since 1.0
+ * @since 4.0
  */
 @NotThreadSafe
 public abstract class AutoBatchSupport {

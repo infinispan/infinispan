@@ -13,7 +13,7 @@ import java.util.List;
  * methods.
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public class ReadOnlyStore extends AbstractDelegatingStore {
 

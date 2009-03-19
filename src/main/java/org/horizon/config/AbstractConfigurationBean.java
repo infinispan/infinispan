@@ -41,7 +41,7 @@ import java.util.Properties;
  *
  * @author <a href="brian.stansberry@jboss.com">Brian Stansberry</a>
  * @see #testImmutability(String)
- * @since 1.0
+ * @since 4.0
  */
 @Scope(Scopes.NAMED_CACHE)
 public abstract class AbstractConfigurationBean implements CloneableConfigurationComponent {

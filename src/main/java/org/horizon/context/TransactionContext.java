@@ -33,7 +33,7 @@ import java.util.List;
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @see InvocationContext
- * @since 1.0
+ * @since 4.0
  */
 public interface TransactionContext extends EntryLookup, OptionContainer {
    /**

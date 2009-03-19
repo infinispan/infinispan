@@ -4,7 +4,7 @@ package org.horizon.invocation;
  * Available options, which may be set on a per-invocation basis
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public enum Options {
    ZERO_LOCK_ACQUISITION_TIMEOUT,

@@ -8,7 +8,7 @@ import org.jets3t.service.model.S3Object;
  * This interface defines the interactons between the {@link S3CacheStore} and Amazon S3.
  *
  * @author Adrian Cole
- * @since 1.0
+ * @since 4.0
  */
 public interface S3Connection {
 

@@ -36,7 +36,7 @@ import java.util.Comparator;
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @author Steve Woodcock (<a href="mailto:stevew@jofti.com">stevew@jofti.com</a>)
- * @since 1.0
+ * @since 4.0
  */
 @Immutable
 public class FqnComparator implements Comparator<Fqn>, Serializable {

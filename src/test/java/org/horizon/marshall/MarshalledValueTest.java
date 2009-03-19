@@ -37,7 +37,7 @@ import java.util.Collections;
  *
  * @author Manik Surtani (<a href="mailto:manik AT jboss DOT org">manik AT jboss DOT org</a>)
  * @author Mircea.Markus@jboss.com
- * @since 1.0
+ * @since 4.0
  */
 @Test(groups = "functional", testName = "marshall.MarshalledValueTest")
 public class MarshalledValueTest extends MultipleCacheManagersTest {

@@ -45,7 +45,7 @@ import java.util.NoSuchElementException;
  * <p/>
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
- * @since 1.0
+ * @since 4.0
  */
 @Immutable
 public class ImmutableListCopy<E> extends AbstractList<E> implements Externalizable, Immutables.Immutable {

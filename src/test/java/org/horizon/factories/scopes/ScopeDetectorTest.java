@@ -4,7 +4,7 @@ import org.testng.annotations.Test;
 
 /**
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 @Test(groups = "unit", testName = "factories.scopes.ScopeDetectorTest")
 public class ScopeDetectorTest {

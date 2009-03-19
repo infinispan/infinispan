@@ -30,7 +30,7 @@ package org.horizon.atomic;
  *
  * @author Manik Surtani (<a href="mailto:manik AT jboss DOT org">manik AT jboss DOT org</a>)
  * @see Delta
- * @since 1.0
+ * @since 4.0
  */
 public interface DeltaAware {
    /**

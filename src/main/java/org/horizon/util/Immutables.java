@@ -37,7 +37,7 @@ import java.util.Set;
  * Factory for generating immutable type wrappers.
  *
  * @author Jason T. Greene
- * @since 1.0
+ * @since 4.0
  */
 public class Immutables {
    /**

@@ -22,7 +22,7 @@ import java.io.OutputStream;
  * Sets the cache interceptor chain on an RPCCommand before calling it to perform
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 @NonVolatile
 @Scope(Scopes.GLOBAL)

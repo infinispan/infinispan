@@ -34,7 +34,7 @@ import java.util.Set;
 
 /**
  * @author Manik Surtani (<a href="mailto:manik AT jboss DOT org">manik AT jboss DOT org</a>)
- * @since 1.0
+ * @since 4.0
  */
 public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCache<K, V> {
    private static final Log log = LogFactory.getLog(TreeCacheImpl.class);

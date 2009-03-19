@@ -46,7 +46,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * TransactionContext} instances under a given transaction.
  *
  * @author <a href="mailto:bela@jboss.org">Bela Ban</a> Apr 14, 2003
- * @since 1.0
+ * @since 4.0
  */
 @NonVolatile
 public class TransactionTable {

@@ -14,7 +14,7 @@ import org.horizon.remoting.InboundInvocationHandler;
  * Factory for building global-scope components which have default empty constructors
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 @DefaultFactoryFor(classes = {InboundInvocationHandler.class, CacheManagerNotifier.class, Marshaller.class, RemoteCommandFactory.class})
 @Scope(Scopes.GLOBAL)

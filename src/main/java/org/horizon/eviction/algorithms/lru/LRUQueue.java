@@ -31,7 +31,7 @@ import java.util.Iterator;
  * the iterator.
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public class LRUQueue extends BaseEvictionQueue {
 

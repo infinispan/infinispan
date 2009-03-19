@@ -9,7 +9,7 @@ import java.util.concurrent.locks.Lock;
  * // TODO: Manik: Document this!
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public class OwnableReentrantPerEntryLockContainer extends AbstractPerEntryLockContainer {
 

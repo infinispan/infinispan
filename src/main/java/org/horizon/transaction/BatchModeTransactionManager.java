@@ -31,7 +31,7 @@ import org.horizon.logging.LogFactory;
  * @author bela
  *         <p/>
  *         Date: May 15, 2003 Time: 4:11:37 PM
- * @since 1.0
+ * @since 4.0
  */
 public class BatchModeTransactionManager extends DummyBaseTransactionManager {
    static BatchModeTransactionManager instance = null;

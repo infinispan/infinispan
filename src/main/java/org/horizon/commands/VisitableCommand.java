@@ -28,7 +28,7 @@ import org.horizon.context.InvocationContext;
  * A type of command that can accept {@link Visitor}s, such as {@link org.horizon.interceptors.base.CommandInterceptor}s.
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
- * @since 1.0
+ * @since 4.0
  */
 public interface VisitableCommand extends ReplicableCommand {
    /**

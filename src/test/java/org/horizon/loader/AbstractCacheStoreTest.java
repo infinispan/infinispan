@@ -14,7 +14,7 @@ import java.util.concurrent.ExecutorService;
  *
  * @author Adrian Cole
  * @version $Id: $
- * @since 1.0
+ * @since 4.0
  */
 @Test(groups = "unit", testName = "loader.AbstractCacheStoreTest")
 public class AbstractCacheStoreTest {

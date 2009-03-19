@@ -14,7 +14,7 @@ import java.io.IOException;
 
 /**
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 @Test(groups = "functional", testName = "manager.CacheManagerXmlConfigurationTest")
 public class CacheManagerXmlConfigurationTest {

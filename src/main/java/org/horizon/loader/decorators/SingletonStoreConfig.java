@@ -6,7 +6,7 @@ import org.horizon.config.AbstractNamedCacheConfigurationBean;
  * Configuration for a singleton store
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public class SingletonStoreConfig extends AbstractNamedCacheConfigurationBean {
 

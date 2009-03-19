@@ -4,7 +4,7 @@ package org.horizon.loader.modifications;
  * Represents a {@link org.horizon.loader.CacheStore#remove(Object)} modification
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public class Remove implements Modification {
 

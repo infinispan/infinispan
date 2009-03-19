@@ -10,7 +10,7 @@ import org.horizon.lifecycle.ComponentStatus;
  * Adds named cache specific features to the {@link org.horizon.config.AbstractConfigurationBean}.
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 @Scope(Scopes.NAMED_CACHE)
 public abstract class AbstractNamedCacheConfigurationBean extends AbstractConfigurationBean {

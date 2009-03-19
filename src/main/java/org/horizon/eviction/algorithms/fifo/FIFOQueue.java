@@ -32,7 +32,7 @@ import java.util.LinkedHashSet;
  * count.
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public class FIFOQueue extends BaseEvictionQueue {
    private LinkedHashSet<Object> orderedKeys;

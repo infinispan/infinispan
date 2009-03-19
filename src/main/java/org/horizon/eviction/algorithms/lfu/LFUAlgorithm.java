@@ -31,7 +31,7 @@ import org.horizon.eviction.algorithms.BaseEvictionAlgorithm;
  * Least Frequently Used algorithm for cache eviction.
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 @NotThreadSafe
 public class LFUAlgorithm extends BaseEvictionAlgorithm {

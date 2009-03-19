@@ -33,7 +33,7 @@ import java.util.Arrays;
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @see ReentrantStripedLockContainer
  * @see org.horizon.util.concurrent.locks.OwnableReentrantLock
- * @since 1.0
+ * @since 4.0
  */
 @ThreadSafe
 public class OwnableReentrantStripedLockContainer extends AbstractStripedLockContainer {

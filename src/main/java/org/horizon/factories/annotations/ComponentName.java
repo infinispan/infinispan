@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
  * Mechanism for specifying the name of components to retrieve
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 @Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.RUNTIME)

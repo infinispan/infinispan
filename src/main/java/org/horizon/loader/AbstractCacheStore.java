@@ -23,7 +23,7 @@ import java.util.concurrent.Executors;
  * An abstract {@link org.horizon.loader.CacheStore} that holds common implementations for some methods
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public abstract class AbstractCacheStore extends AbstractCacheLoader implements CacheStore {
 

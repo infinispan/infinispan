@@ -32,7 +32,7 @@ import org.horizon.notifications.cachelistener.CacheNotifier;
  * The interceptor in charge of firing off notifications to cache listeners
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani</a>
- * @since 1.0
+ * @since 4.0
  */
 public class NotificationInterceptor extends BaseTransactionalContextInterceptor {
    private CacheNotifier notifier;

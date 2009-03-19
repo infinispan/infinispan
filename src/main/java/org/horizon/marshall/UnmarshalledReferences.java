@@ -29,7 +29,7 @@ import java.util.ArrayList;
  * An efficient array-based list of referenced objects, using the reference id as a subscript for the array.
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
- * @since 1.0
+ * @since 4.0
  */
 public class UnmarshalledReferences {
    private final ArrayList<Object> referencedObjects = new ArrayList<Object>();

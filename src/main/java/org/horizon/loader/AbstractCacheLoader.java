@@ -4,7 +4,7 @@ package org.horizon.loader;
  * An abstract {@link org.horizon.loader.CacheLoader} that holds common implementations for some methods
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public abstract class AbstractCacheLoader implements CacheLoader {
 

@@ -52,7 +52,7 @@ import java.io.ObjectOutput;
  * transferring state en-masse.
  *
  * @author <a href="mailto://manik@jboss.org">Manik Surtani</a>
- * @since 1.0
+ * @since 4.0
  */
 @Scope(Scopes.GLOBAL)
 public interface Marshaller {

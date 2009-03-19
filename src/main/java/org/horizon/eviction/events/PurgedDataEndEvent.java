@@ -6,7 +6,7 @@ import java.util.Set;
  * To be put on an eviction event queue after expired data has been purged
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public class PurgedDataEndEvent extends EvictionEvent {
    Set<Object> keysPurged;

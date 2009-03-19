@@ -30,7 +30,7 @@ import javax.transaction.UserTransaction;
  * Returns an instance of {@link org.horizon.transaction.DummyTransactionManager}.
  *
  * @author Bela Ban Sept 5 2003
- * @since 1.0
+ * @since 4.0
  */
 public class DummyTransactionManagerLookup implements TransactionManagerLookup {
 

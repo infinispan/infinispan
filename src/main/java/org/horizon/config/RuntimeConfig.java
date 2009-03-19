@@ -62,7 +62,7 @@ public class RuntimeConfig extends AbstractNamedCacheConfigurationBean {
     * <p/>
     *
     * @return the executor used for async replication.
-    * @since 1.0
+    * @since 4.0
     */
    public ExecutorService getAsyncSerializationExecutor() {
       return asyncSerializationExecutor;
@@ -74,7 +74,7 @@ public class RuntimeConfig extends AbstractNamedCacheConfigurationBean {
     * <p/>
     *
     * @param asyncSerializationExecutor executor to set
-    * @since 1.0
+    * @since 4.0
     */
    public void setAsyncSerializationExecutor(ExecutorService asyncSerializationExecutor) {
       this.asyncSerializationExecutor = asyncSerializationExecutor;
@@ -87,7 +87,7 @@ public class RuntimeConfig extends AbstractNamedCacheConfigurationBean {
     * <p/>
     *
     * @return the executor to use for async cache listeners
-    * @since 1.0
+    * @since 4.0
     */
    public ExecutorService getAsyncCacheListenerExecutor() {
       return asyncCacheListenerExecutor;
@@ -99,7 +99,7 @@ public class RuntimeConfig extends AbstractNamedCacheConfigurationBean {
     * <p/>
     *
     * @param asyncCacheListenerExecutor the executor to use for async cache listeners
-    * @since 1.0
+    * @since 4.0
     */
    public void setAsyncCacheListenerExecutor(ExecutorService asyncCacheListenerExecutor) {
       this.asyncCacheListenerExecutor = asyncCacheListenerExecutor;

@@ -12,7 +12,7 @@ import java.util.Set;
  * A specialization of the {@link CacheLoader} interface that can be written to.
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public interface CacheStore extends CacheLoader {
 

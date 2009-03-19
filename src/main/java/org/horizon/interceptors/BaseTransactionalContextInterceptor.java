@@ -38,7 +38,7 @@ import javax.transaction.TransactionManager;
  * contexts.
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani</a>
- * @since 1.0
+ * @since 4.0
  */
 public abstract class BaseTransactionalContextInterceptor extends CommandInterceptor {
    protected TransactionTable txTable;

@@ -39,7 +39,7 @@ import java.util.List;
  * @author bela
  *         <p/>
  *         Date: May 15, 2003 Time: 4:20:17 PM
- * @since 1.0
+ * @since 4.0
  */
 public class DummyUserTransaction implements UserTransaction, java.io.Serializable {
    static final Log logger_ = LogFactory.getLog(DummyUserTransaction.class);

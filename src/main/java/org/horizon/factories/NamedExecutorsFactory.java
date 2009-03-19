@@ -15,7 +15,7 @@ import java.util.concurrent.ScheduledExecutorService;
  * A factory that specifically knows how to create named executors.
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 @DefaultFactoryFor(classes = {ExecutorService.class, Executor.class, ScheduledExecutorService.class})
 public class NamedExecutorsFactory extends NamedComponentFactory implements AutoInstantiableFactory {

@@ -27,7 +27,7 @@ import org.horizon.CacheException;
  * Thrown when a replication problem occurred
  *
  * @author (various)
- * @since 1.0
+ * @since 4.0
  */
 public class ReplicationException extends CacheException {
 

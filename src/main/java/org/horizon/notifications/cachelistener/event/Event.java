@@ -27,7 +27,7 @@ import org.horizon.Cache;
  * An interface that defines common characteristics of events
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani</a>
- * @since 1.0
+ * @since 4.0
  */
 public interface Event {
    static enum Type {

@@ -7,7 +7,7 @@ import java.util.concurrent.locks.Lock;
  * A container for locks
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public interface LockContainer {
    /**

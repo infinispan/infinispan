@@ -53,7 +53,7 @@ import java.util.*;
  * Abstract marshaller
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
- * @since 1.0
+ * @since 4.0
  */
 public class HorizonMarshaller implements Marshaller {
    // magic numbers

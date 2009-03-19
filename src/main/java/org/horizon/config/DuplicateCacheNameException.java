@@ -4,7 +4,7 @@ package org.horizon.config;
  * Thrown if a duplicate named cache is detected
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public class DuplicateCacheNameException extends ConfigurationException {
    public DuplicateCacheNameException(Exception e) {

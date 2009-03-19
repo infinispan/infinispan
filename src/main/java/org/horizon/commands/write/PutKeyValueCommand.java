@@ -33,7 +33,7 @@ import org.horizon.notifications.cachelistener.CacheNotifier;
  * Implements functionality defined by {@link org.horizon.Cache#put(Object, Object)}
  *
  * @author Mircea.Markus@jboss.com
- * @since 1.0
+ * @since 4.0
  */
 public class PutKeyValueCommand extends AbstractDataCommand implements DataWriteCommand {
    public static final byte METHOD_ID = 3;

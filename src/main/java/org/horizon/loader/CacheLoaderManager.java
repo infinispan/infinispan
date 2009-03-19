@@ -6,7 +6,7 @@ import org.horizon.lifecycle.Lifecycle;
  * The cache loader manager interface
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public interface CacheLoaderManager extends Lifecycle {
 

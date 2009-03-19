@@ -8,7 +8,7 @@ import java.util.Set;
  * only really makes sense for ordered Set implementations, such as sets which are linked.
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public interface ReversibleOrderedSet<E> extends Set<E> {
    Iterator<E> reverseIterator();

@@ -30,7 +30,7 @@ import java.util.NoSuchElementException;
  * A queue that does nothing.
  *
  * @author Brian Stansberry
- * @since 1.0
+ * @since 4.0
  */
 public class NullEvictionQueue extends BaseEvictionQueue {
    /**

@@ -33,7 +33,7 @@ import java.util.List;
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
  * @see Configuration
  * @see org.horizon.manager.DefaultCacheManager
- * @since 1.0
+ * @since 4.0
  */
 public class ConfigurationException extends CacheException {
 

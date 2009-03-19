@@ -25,7 +25,7 @@ package org.horizon.notifications.cachelistener.event;
  * This event is passed in to any method annotated with {@link org.horizon.notifications.cachelistener.annotation.CacheEntryActivated}.
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani</a>
- * @since 1.0
+ * @since 4.0
  */
 public interface CacheEntryActivatedEvent extends CacheEntryEvent {
 }

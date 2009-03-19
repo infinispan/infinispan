@@ -41,7 +41,7 @@ import java.util.concurrent.locks.Lock;
  * <p/>
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
- * @since 1.0
+ * @since 4.0
  */
 @ThreadSafe
 public class OwnableReentrantLock extends AbstractQueuedSynchronizer implements Lock {

@@ -35,7 +35,7 @@ import java.util.List;
  * Factory class that builds an interceptor chain based on cache configuration.
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
- * @since 1.0
+ * @since 4.0
  */
 @DefaultFactoryFor(classes = InterceptorChain.class)
 public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {

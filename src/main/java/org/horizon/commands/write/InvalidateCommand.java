@@ -34,7 +34,7 @@ import java.util.Arrays;
  * Removes an entry from memory - never removes the entry.
  *
  * @author Mircea.Markus@jboss.com
- * @since 1.0
+ * @since 4.0
  */
 public class InvalidateCommand extends RemoveCommand {
    public static final int METHOD_ID = 47;

@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
  * A container for locks.  Used with lock striping.
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
- * @since 1.0
+ * @since 4.0
  */
 @ThreadSafe
 public abstract class AbstractStripedLockContainer implements LockContainer {

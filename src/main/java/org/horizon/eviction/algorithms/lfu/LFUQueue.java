@@ -39,7 +39,7 @@ import java.util.TreeMap;
  * // another potential is Bernard Chazelle's SoftHeap
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public class LFUQueue extends BaseEvictionQueue {
    Map<Object, Integer> visitLog = new HashMap<Object, Integer>();

@@ -44,7 +44,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author <a href="mailto:bela@jboss.org">Bela Ban</a>
  * @author Mircea.Markus@jboss.com
- * @since 1.0
+ * @since 4.0
  */
 public class ReplicationQueue {
    private static final Log log = LogFactory.getLog(ReplicationQueue.class);

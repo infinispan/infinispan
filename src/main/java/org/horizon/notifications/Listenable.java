@@ -6,7 +6,7 @@ import java.util.Set;
  * Interface that denotes that the implementation can have listeners attached to it.
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public interface Listenable {
 

@@ -31,7 +31,7 @@ import java.util.concurrent.locks.ReentrantLock;
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @see OwnableReentrantStripedLockContainer
- * @since 1.0
+ * @since 4.0
  */
 @ThreadSafe
 public class ReentrantStripedLockContainer extends AbstractStripedLockContainer {

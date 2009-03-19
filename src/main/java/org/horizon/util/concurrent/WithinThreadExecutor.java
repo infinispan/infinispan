@@ -38,7 +38,7 @@ import java.util.concurrent.TimeoutException;
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @see <a href="http://jcip.net/">Java Concurrency In Practice</a>
- * @since 1.0
+ * @since 4.0
  */
 public class WithinThreadExecutor implements ExecutorService {
    boolean shutDown = false;

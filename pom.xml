@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
    <modelVersion>4.0.0</modelVersion>
    <properties>
-      <horizon-version>1.0.0-SNAPSHOT</horizon-version>
+      <horizon-version>4.0.0-SNAPSHOT</horizon-version>
       <defaultTestGroup>functional,unit</defaultTestGroup>
       <!-- By default only generate Javadocs when we install the module. -->
       <javadocPhase>install</javadocPhase>
@@ -19,7 +19,7 @@
    <artifactId>horizon</artifactId>
    <version>${horizon-version}</version>
    <name>Horizon</name>
-   <description>Horizon - A Distributed Cache</description>
+   <description>Horizon - Open Source Data Grids</description>
    <url>http://www.horizon-project.org</url>
    <packaging>jar</packaging>
    <dependencies>

@@ -47,7 +47,7 @@ import java.util.Set;
  *
  * @author Manik Surtani (<a href="mailto:manik AT jboss DOT org">manik AT jboss DOT org</a>)
  * @see Node
- * @since 1.0
+ * @since 4.0
  */
 public interface TreeCache<K, V> extends Lifecycle {
    /**

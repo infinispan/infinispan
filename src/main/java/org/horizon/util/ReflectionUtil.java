@@ -37,7 +37,7 @@ import java.util.List;
  * Basic reflection utilities to enhance what the JDK provides.
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
- * @since 1.0
+ * @since 4.0
  */
 public class ReflectionUtil {
    private static final Log log = LogFactory.getLog(ReflectionUtil.class);

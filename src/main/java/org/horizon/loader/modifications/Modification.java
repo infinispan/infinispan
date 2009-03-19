@@ -4,7 +4,7 @@ package org.horizon.loader.modifications;
  * An interface that defines a {@link org.horizon.loader.CacheStore} modification
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public interface Modification {
    public static enum Type {

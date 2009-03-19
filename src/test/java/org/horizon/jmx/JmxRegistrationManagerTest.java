@@ -25,7 +25,7 @@ import java.util.Set;
  *
  * @author Mircea.Markus@jboss.com
  * @author <a href="mailto:galder.zamarreno@jboss.com">Galder Zamarreno</a>
- * @since 1.0
+ * @since 4.0
  */
 @Test(groups = "functional", testName = "jmx.JmxRegistrationManagerTest")
 public class JmxRegistrationManagerTest {

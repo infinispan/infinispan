@@ -29,7 +29,7 @@ import java.util.Map;
  * Helper class for holding attributes defined in configuration file.
  *
  * @author Mircea.Markus@jboss.com
- * @since 1.0
+ * @since 4.0
  */
 public class ParsedAttributes {
    public final Map<String, String> stringAttribs;

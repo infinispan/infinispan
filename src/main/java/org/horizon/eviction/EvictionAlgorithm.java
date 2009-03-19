@@ -35,7 +35,7 @@ import java.util.concurrent.BlockingQueue;
  * implementation at any given time.
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public interface EvictionAlgorithm extends Lifecycle {
    /**

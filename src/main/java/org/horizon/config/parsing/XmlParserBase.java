@@ -34,7 +34,7 @@ import java.util.Set;
  * Contains utility methods that might be useful to most of the parsers.
  *
  * @author Mircea.Markus@jboss.com
- * @since 1.0
+ * @since 4.0
  */
 public abstract class XmlParserBase {
 

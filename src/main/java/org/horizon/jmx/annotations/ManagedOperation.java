@@ -32,7 +32,7 @@ import java.lang.annotation.Target;
  * annotation from a superclass.
  *
  * @author (various)
- * @since 1.0
+ * @since 4.0
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})

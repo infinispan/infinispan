@@ -28,7 +28,7 @@ import org.horizon.CacheException;
  * Thrown when an operation is attempted on a non-existing node in the cache
  *
  * @author <a href="mailto:bela@jboss.com">Bela Ban</a>.
- * @since 1.0
+ * @since 4.0
  */
 
 public class NodeNotExistsException extends CacheException {

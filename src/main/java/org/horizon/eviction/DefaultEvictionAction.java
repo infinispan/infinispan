@@ -29,7 +29,7 @@ import org.horizon.logging.LogFactory;
  * Default eviction action policy that calls {@link Cache#evict(Object)} to evict an entry.
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
- * @since 1.0
+ * @since 4.0
  */
 public class DefaultEvictionAction implements EvictionAction {
    private static final Log log = LogFactory.getLog(DefaultEvictionAction.class);

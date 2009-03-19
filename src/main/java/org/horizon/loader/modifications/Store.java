@@ -6,7 +6,7 @@ import org.horizon.loader.StoredEntry;
  * Modification representing {@link org.horizon.loader.CacheStore#store(org.horizon.loader.StoredEntry)}
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public class Store implements Modification {
 

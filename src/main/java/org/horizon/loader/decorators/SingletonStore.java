@@ -47,7 +47,7 @@ import java.util.concurrent.TimeoutException;
  * @author Bela Ban
  * @author <a href="mailto:galder.zamarreno@jboss.com">Galder Zamarreno</a>
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public class SingletonStore extends AbstractDelegatingStore {
    private static final Log log = LogFactory.getLog(SingletonStore.class);

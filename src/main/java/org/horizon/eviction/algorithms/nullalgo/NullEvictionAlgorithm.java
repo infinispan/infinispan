@@ -37,7 +37,7 @@ import java.util.concurrent.BlockingQueue;
  * An eviction algorithm that does nothing - a no-op for everything.
  *
  * @author Brian Stansberry
- * @since 1.0
+ * @since 4.0
  */
 public class NullEvictionAlgorithm implements EvictionAlgorithm {
    /**

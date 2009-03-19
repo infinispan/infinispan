@@ -25,7 +25,7 @@ package org.horizon.eviction.events;
  * An eviction event records activity on entries in the cache.  These are recorded for processing later.
  *
  * @author (various)
- * @since 1.0
+ * @since 4.0
  */
 public class EvictionEvent {
    Object key;

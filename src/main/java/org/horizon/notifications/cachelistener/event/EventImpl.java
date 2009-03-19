@@ -29,7 +29,7 @@ import javax.transaction.Transaction;
  * Basic implementation of an event that covers all event types.
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani</a>
- * @since 1.0
+ * @since 4.0
  */
 public class EventImpl implements CacheEntryActivatedEvent, CacheEntryCreatedEvent, CacheEntryEvictedEvent, CacheEntryLoadedEvent, CacheEntryModifiedEvent,
                                   CacheEntryPassivatedEvent, CacheEntryRemovedEvent, CacheEntryVisitedEvent, TransactionCompletedEvent, TransactionRegisteredEvent,

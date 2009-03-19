@@ -31,7 +31,7 @@ import java.lang.annotation.Target;
  * Annotation that marks fields in {@link Configuration} as being modifiable even after the cache has started.
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani</a>
- * @since 1.0
+ * @since 4.0
  */
 
 // ensure this annotation is available at runtime.

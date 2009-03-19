@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit;
  * Encapsulates the configuration of a Cache.
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
- * @since 1.0
+ * @since 4.0
  */
 @NonVolatile
 public class Configuration extends AbstractNamedCacheConfigurationBean {
@@ -230,7 +230,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     * and {@link org.horizon.Cache#endBatch(boolean)} to demarcate the start and end of batches.
     *
     * @param enabled if true, batching is enabled.
-    * @since 1.0
+    * @since 4.0
     */
    public void setInvocationBatchingEnabled(boolean enabled) {
       testImmutability("invocationBatchingEnabled");
@@ -374,7 +374,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
    /**
     * @return true if invocation batching is enabled.
-    * @since 1.0
+    * @since 4.0
     */
    public boolean isInvocationBatchingEnabled() {
       return invocationBatchingEnabled;

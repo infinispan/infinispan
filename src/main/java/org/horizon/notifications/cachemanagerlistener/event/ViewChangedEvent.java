@@ -29,7 +29,7 @@ import java.util.List;
  * This event is passed in to any method annotated with {@link org.horizon.notifications.cachemanagerlistener.annotation.ViewChanged}.
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani</a>
- * @since 1.0
+ * @since 4.0
  */
 public interface ViewChangedEvent extends Event {
    /**

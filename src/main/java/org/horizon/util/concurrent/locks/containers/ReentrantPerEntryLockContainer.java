@@ -7,7 +7,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * // TODO: Manik: Document this!
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 public class ReentrantPerEntryLockContainer extends AbstractPerEntryLockContainer {
 

@@ -43,7 +43,7 @@ import java.util.concurrent.ConcurrentMap;
  * The basic container.  Accepts null keys.
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
- * @since 1.0
+ * @since 4.0
  */
 public class UnsortedDataContainer implements DataContainer {
    // TODO this should ideally have its own hash table rather than delegate to a concurrent map, which in turn will wrap things up in Entries again.  Remove this unneccessary delegation

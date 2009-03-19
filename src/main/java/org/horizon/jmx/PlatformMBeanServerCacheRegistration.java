@@ -44,7 +44,7 @@ import java.util.Set;
  *
  * @author Mircea.Markus@jboss.com
  * @see java.lang.management.ManagementFactory#getPlatformMBeanServer()
- * @since 1.0
+ * @since 4.0
  */
 @NonVolatile
 public class PlatformMBeanServerCacheRegistration {

@@ -32,7 +32,7 @@ import org.horizon.factories.annotations.NonVolatile;
  * Factory for setting up bootstrap components
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
- * @since 1.0
+ * @since 4.0
  */
 @DefaultFactoryFor(classes = {Cache.class, AdvancedCache.class, Configuration.class, ComponentRegistry.class})
 @NonVolatile

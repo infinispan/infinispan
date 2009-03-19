@@ -31,7 +31,7 @@ import java.util.Properties;
  * A configuration component where the implementation class can be specified, and comes with its own set of properties.
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
- * @since 1.0
+ * @since 4.0
  */
 public abstract class PluggableConfigurationComponent extends AbstractNamedCacheConfigurationBean {
    protected String className;

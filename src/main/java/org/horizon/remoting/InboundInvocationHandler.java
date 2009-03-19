@@ -14,7 +14,7 @@ import java.io.OutputStream;
  * and named-cache scoped components.
  *
  * @author Manik Surtani
- * @since 1.0
+ * @since 4.0
  */
 @Scope(Scopes.GLOBAL)
 public interface InboundInvocationHandler {

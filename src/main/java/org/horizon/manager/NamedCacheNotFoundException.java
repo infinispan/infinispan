@@ -4,7 +4,7 @@ package org.horizon.manager;
  * Thrown when a named cache cannot be found.
  *
  * @author (various)
- * @since 1.0
+ * @since 4.0
  */
 public class NamedCacheNotFoundException extends Exception {
    public NamedCacheNotFoundException() {

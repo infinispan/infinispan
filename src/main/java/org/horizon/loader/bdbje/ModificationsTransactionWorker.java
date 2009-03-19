@@ -14,7 +14,7 @@ import java.util.List;
  *
  * @author Adrian Cole
  * @version $Id: $
- * @since 1.0
+ * @since 4.0
  */
 public class ModificationsTransactionWorker implements TransactionWorker {
    private List<? extends Modification> mods;

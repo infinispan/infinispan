@@ -12,7 +12,7 @@ import org.horizon.loader.LockSupportCacheStoreConfig;
  * This is required and there is no default.</li> </ul>
  *
  * @author Adrian Cole
- * @since 1.0
+ * @since 4.0
  */
 public class S3CacheStoreConfig extends LockSupportCacheStoreConfig {
    private String awsAccessKey;
