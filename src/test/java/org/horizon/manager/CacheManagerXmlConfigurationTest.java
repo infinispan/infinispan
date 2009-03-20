@@ -59,7 +59,7 @@ public class CacheManagerXmlConfigurationTest {
 
    public void testNamedCacheXMLClashingNames() throws IOException {
       String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-            "<horizon xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:horizon:config:1.0\">\n" +
+            "<horizon xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:horizon:config:4.0\">\n" +
             "\n" +
             "    <default>\n" +
             "        <locking concurrencyLevel=\"100\" lockAcquisitionTimeout=\"1000\" />\n" +
@@ -90,7 +90,7 @@ public class CacheManagerXmlConfigurationTest {
 
    public void testNamedCacheXMLClashingNamesProgrammatic() throws IOException {
       String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-            "<horizon xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:horizon:config:1.0\">\n" +
+            "<horizon xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:horizon:config:4.0\">\n" +
             "\n" +
             "    <default>\n" +
             "        <locking concurrencyLevel=\"100\" lockAcquisitionTimeout=\"1000\" />\n" +

@@ -46,11 +46,11 @@ public class RootElementBuilder {
 
    private static final JBossEntityResolver resolver = new JBossEntityResolver();
 
-   public static final String HORIZON_NS = "urn:horizon:config:1.0";
+   public static final String HORIZON_NS = "urn:horizon:config:4.0";
 
    static {
       // Globally register this namespace
-      JBossEntityResolver.registerEntity(HORIZON_NS, "horizon-config-1.0.xsd");
+      JBossEntityResolver.registerEntity(HORIZON_NS, "horizon-config-4.0.xsd");
    }
 
    private static final Log log = LogFactory.getLog(RootElementBuilder.class);
