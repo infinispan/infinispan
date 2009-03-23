@@ -22,6 +22,7 @@
 package org.horizon.marshall;
 
 import org.horizon.CacheException;
+import org.horizon.loader.StoredEntry;
 import org.horizon.atomic.DeltaAware;
 import org.horizon.commands.RemoteCommandFactory;
 import org.horizon.commands.ReplicableCommand;
@@ -82,6 +83,7 @@ public class HorizonMarshaller implements Marshaller {
    protected static final int MAGICNUMBER_SINGLETON_LIST = 23;
    protected static final int MAGICNUMBER_COMMAND = 24;
    protected static final int MAGICNUMBER_TRANSACTION_LOG = 25;
+   protected static final int MAGICNUMBER_STORED_ENTRY = 26;
    protected static final int MAGICNUMBER_NULL = 99;
    protected static final int MAGICNUMBER_SERIALIZABLE = 100;
    protected static final int MAGICNUMBER_REF = 101;
@@ -149,6 +151,9 @@ public class HorizonMarshaller implements Marshaller {
          } else if (o instanceof JGroupsAddress) {
             out.writeByte(MAGICNUMBER_JG_ADDRESS);
             marshallJGroupsAddress((JGroupsAddress) o, out);
+         } else if (o instanceof StoredEntry) {
+            out.writeByte(MAGICNUMBER_STORED_ENTRY);
+            ((StoredEntry) o).writeExternal(out);
          } else if (o.getClass().equals(ArrayList.class)) {
             out.writeByte(MAGICNUMBER_ARRAY_LIST);
             marshallCollection((Collection) o, out, refMap);
@@ -304,6 +309,10 @@ public class HorizonMarshaller implements Marshaller {
             MarshalledValue mv = new MarshalledValue();
             mv.readExternal(in);
             return mv;
+         case MAGICNUMBER_STORED_ENTRY:
+            StoredEntry se = new StoredEntry();
+            se.readExternal(in);
+            return se;
          case MAGICNUMBER_COMMAND:
             retVal = unmarshallCommand(in, refMap);
             return retVal;
