@@ -1,7 +1,7 @@
 package org.horizon.remoting.transport.jgroups;
 
 import org.horizon.CacheException;
-import org.horizon.commands.RPCCommand;
+import org.horizon.commands.ReplicableCommand;
 import org.horizon.config.GlobalConfiguration;
 import org.horizon.config.parsing.XmlConfigHelper;
 import org.horizon.lock.TimeoutException;
@@ -28,6 +28,8 @@ import org.jgroups.Message;
 import org.jgroups.View;
 import org.jgroups.blocks.GroupRequest;
 import org.jgroups.blocks.RspFilter;
+import org.jgroups.protocols.pbcast.STREAMING_STATE_TRANSFER;
+import org.jgroups.stack.ProtocolStack;
 import org.jgroups.util.Rsp;
 import org.jgroups.util.RspList;
 
@@ -42,7 +44,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * An encapsulation of a JGroups transport
@@ -72,8 +73,6 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
    CacheManagerNotifier notifier;
    final ConcurrentMap<String, StateTransferMonitor> stateTransfersInProgress = new ConcurrentHashMap<String, StateTransferMonitor>();
    private final FlushBasedDistributedSync flushTracker = new FlushBasedDistributedSync();
-   volatile List<org.jgroups.Address> membersBlocked;
-   AtomicBoolean flushInProgress = new AtomicBoolean(false);
    long distributedSyncTimeout;
 
    // ------------------------------------------------------------------------------------------------------------------
@@ -99,8 +98,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
       //otherwise just connect
       try {
          channel.connect(c.getClusterName());
-      }
-      catch (ChannelException e) {
+      } catch (ChannelException e) {
          throw new CacheException("Unable to start JGroups Channel", e);
       }
       log.info("Cache local address is {0}", getAddress());
@@ -113,8 +111,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
             channel.disconnect();
             channel.close();
          }
-      }
-      catch (Exception toLog) {
+      } catch (Exception toLog) {
          log.error("Problem closing channel; setting it to null", toLog);
       }
 
@@ -244,66 +241,21 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
       return flushTracker;
    }
 
-   public void blockRPC(Address... addresses) {
-      if (flushInProgress.compareAndSet(false, true)) {
-         // TODO make these configurable!!
-         int retries = 5;
-         int sleepBetweenRetries = 250;
-         int sleepIncreaseFactor = 2;
-         if (trace) log.trace("Attempting a partial flush on members {0} with up to {1} retries.", members, retries);
 
-         boolean success = false;
-         int i;
-         for (i = 1; i <= retries; i++) {
-            if (trace) log.trace("Attempt number " + i);
-            try {
-
-               if (addresses == null) {
-                  success = channel.startFlush(false);
-               } else {
-                  membersBlocked = toJGroupsAddressList(addresses);
-                  success = channel.startFlush(membersBlocked, false);
-               }
-
-               if (success) break;
-               if (trace) log.trace("Channel.startFlush() returned false!");
-            } catch (Exception e) {
-               if (trace) log.trace("Caught exception attempting a partial flush", e);
-            }
-            try {
-               if (trace)
-                  log.trace("Partial state transfer failed.  Backing off for " + sleepBetweenRetries + " millis and retrying");
-               Thread.sleep(sleepBetweenRetries);
-               sleepBetweenRetries *= sleepIncreaseFactor;
-            } catch (InterruptedException ie) {
-               Thread.currentThread().interrupt();
-            }
-         }
-
-         if (success) {
-            if (log.isDebugEnabled()) log.debug("Partial flush between {0} succeeded!", membersBlocked);
-         } else {
-            flushInProgress.set(false);
-            throw new CacheException("Could initiate partial flush between " + membersBlocked + "!");
+   public boolean isSupportStateTransfer() {
+      // tests whether state transfer is supported.  We *need* STREAMING_STATE_TRANSFER.
+      ProtocolStack stack;
+      if (channel != null && (stack = channel.getProtocolStack()) != null) {
+         if (stack.findProtocol(STREAMING_STATE_TRANSFER.class) == null) {
+            log.error("Channel does not contain STREAMING_STATE_TRANSFER.  Cannot support state transfers!");
+            return false;
          }
       } else {
-         throw new CacheException("Cannot block RPC; a block is already in progress!");
+         log.warn("Channel not set up properly!");
+         return false;
       }
-   }
-
-   public void unblockRPC() {
-      if (flushInProgress.get()) {
-         try {
-            if (membersBlocked == null) {
-               channel.stopFlush();
-            } else {
-               channel.stopFlush(membersBlocked);
-               membersBlocked = null;
-            }
-         } finally {
-            flushInProgress.set(false);
-         }
-      }
+      
+      return true;
    }
 
    public Address getAddress() {
@@ -313,12 +265,11 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
       return address;
    }
 
-
    // ------------------------------------------------------------------------------------------------------------------
    // outbound RPC
    // ------------------------------------------------------------------------------------------------------------------
 
-   public List<Object> invokeRemotely(List<Address> recipients, RPCCommand rpcCommand, ResponseMode mode, long timeout,
+   public List<Object> invokeRemotely(List<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout,
                                       boolean usePriorityQueue, ResponseFilter responseFilter, boolean supportReplay)
          throws Exception {
 
@@ -513,18 +464,6 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
 
       Vector<org.jgroups.Address> retval = new Vector<org.jgroups.Address>(list.size());
       for (Address a : list) {
-         JGroupsAddress ja = (JGroupsAddress) a;
-         retval.add(ja.address);
-      }
-      return retval;
-   }
-
-   private List<org.jgroups.Address> toJGroupsAddressList(Address... addresses) {
-      if (addresses == null) return null;
-      if (addresses.length == 0) return Collections.emptyList();
-
-      List<org.jgroups.Address> retval = new ArrayList<org.jgroups.Address>(addresses.length);
-      for (Address a : addresses) {
          JGroupsAddress ja = (JGroupsAddress) a;
          retval.add(ja.address);
       }

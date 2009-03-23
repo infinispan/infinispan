@@ -3,7 +3,7 @@ package org.horizon.api.mvcc;
 import org.easymock.EasyMock;
 import static org.easymock.EasyMock.*;
 import org.horizon.Cache;
-import org.horizon.commands.RPCCommand;
+import org.horizon.commands.CacheRPCCommand;
 import org.horizon.commands.write.PutKeyValueCommand;
 import org.horizon.commands.write.RemoveCommand;
 import org.horizon.config.Configuration;
@@ -104,7 +104,7 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
          rpcManager.setTransport(mockTransport);
          // specify what we expectWithTx called on the mock Rpc Manager.  For params we don't care about, just use ANYTHING.
          // setting the mock object to expectWithTx the "sync" param to be false.
-         expect(mockTransport.invokeRemotely((List<Address>) anyObject(), (RPCCommand) anyObject(),
+         expect(mockTransport.invokeRemotely((List<Address>) anyObject(), (CacheRPCCommand) anyObject(),
                                              eq(ResponseMode.ASYNCHRONOUS), anyLong(), anyBoolean(), (ResponseFilter) isNull(), anyBoolean())).andReturn(null);
 
          replay(mockAddress1, mockAddress2, mockTransport);
@@ -158,7 +158,7 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
          rpcManager.setTransport(mockTransport);
 
 
-         expect(mockTransport.invokeRemotely(anyAddresses(), (RPCCommand) anyObject(), anyResponseMode(),
+         expect(mockTransport.invokeRemotely(anyAddresses(), (CacheRPCCommand) anyObject(), anyResponseMode(),
                                              anyLong(), anyBoolean(), (ResponseFilter) anyObject(), anyBoolean()))
                .andThrow(new RuntimeException("Barf!")).anyTimes();
 

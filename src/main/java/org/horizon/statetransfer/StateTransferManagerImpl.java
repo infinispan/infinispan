@@ -22,6 +22,8 @@
 package org.horizon.statetransfer;
 
 import org.horizon.AdvancedCache;
+import org.horizon.commands.CommandsFactory;
+import org.horizon.commands.control.StateTransferControlCommand;
 import org.horizon.commands.tx.PrepareCommand;
 import org.horizon.commands.write.WriteCommand;
 import org.horizon.config.Configuration;
@@ -42,8 +44,9 @@ import org.horizon.logging.Log;
 import org.horizon.logging.LogFactory;
 import org.horizon.marshall.Marshaller;
 import org.horizon.remoting.RPCManager;
+import org.horizon.remoting.ResponseMode;
+import org.horizon.remoting.transport.Address;
 import org.horizon.remoting.transport.DistributedSync;
-import org.horizon.remoting.transport.Transport;
 import org.horizon.transaction.TransactionLog;
 import org.horizon.util.Util;
 
@@ -54,6 +57,7 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Set;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -69,16 +73,20 @@ public class StateTransferManagerImpl implements StateTransferManager {
    TransactionLog transactionLog;
    InvocationContextContainer invocationContextContainer;
    InterceptorChain interceptorChain;
+   CommandsFactory commandsFactory;
    private static final Log log = LogFactory.getLog(StateTransferManagerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
    private static final Delimiter DELIMITER = new Delimiter();
 
    boolean transientState, persistentState;
+   volatile boolean needToUnblockRPC = false;
+   volatile Address stateSender;
 
    @Inject
    public void injectDependencies(RPCManager rpcManager, AdvancedCache cache, Configuration configuration,
                                   DataContainer dataContainer, CacheLoaderManager clm, Marshaller marshaller,
-                                  TransactionLog transactionLog, InterceptorChain interceptorChain, InvocationContextContainer invocationContextContainer) {
+                                  TransactionLog transactionLog, InterceptorChain interceptorChain, InvocationContextContainer invocationContextContainer,
+                                  CommandsFactory commandsFactory) {
       this.rpcManager = rpcManager;
       this.cache = cache;
       this.configuration = configuration;
@@ -88,6 +96,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
       this.transactionLog = transactionLog;
       this.invocationContextContainer = invocationContextContainer;
       this.interceptorChain = interceptorChain;
+      this.commandsFactory = commandsFactory;
    }
 
    @Start(priority = 55)
@@ -109,6 +118,14 @@ public class StateTransferManagerImpl implements StateTransferManager {
       if (log.isDebugEnabled()) {
          long duration = System.currentTimeMillis() - startTime;
          log.debug("State transfer process completed in {0}", Util.prettyPrintTime(duration));
+      }
+   }
+
+   @Start (priority = 1000) // needs to be the last thing that happens on this cache
+   public void releaseRPCBlock() throws Exception {
+      if (needToUnblockRPC) {
+         if (trace) log.trace("Stopping RPC block");
+         mimicPartialFlushViaRPC(stateSender, false);
       }
    }
 
@@ -193,11 +210,13 @@ public class StateTransferManagerImpl implements StateTransferManager {
    }
 
    private void processCommitLog(ObjectInputStream ois) throws Exception {
+      if (trace) log.trace("Applying commit log");
       Object object = marshaller.objectFromObjectStream(ois);
       while (object instanceof TransactionLog.LogEntry) {
          WriteCommand[] mods = ((TransactionLog.LogEntry) object).getModifications();
          if (trace) log.trace("Mods = {0}", Arrays.toString(mods));
          for (WriteCommand mod : mods) {
+            commandsFactory.initializeReplicableCommand(mod);
             InvocationContext ctx = invocationContextContainer.get();
             ctx.setOriginLocal(false);
             ctx.setOptions(Options.CACHE_MODE_LOCAL, Options.SKIP_CACHE_STATUS_CHECK);
@@ -208,14 +227,16 @@ public class StateTransferManagerImpl implements StateTransferManager {
       }
 
       assertDelimited(object);
+      if (trace) log.trace("Finished applying commit log");
    }
 
    private void applyTransactionLog(ObjectInputStream ois) throws Exception {
       if (trace) log.trace("Integrating transaction log");
 
       processCommitLog(ois);
-      Transport t = rpcManager.getTransport();
-      t.blockRPC(rpcManager.getTransport().getAddress(), rpcManager.getCurrentStateTransferSource());
+      stateSender = rpcManager.getCurrentStateTransferSource();
+      mimicPartialFlushViaRPC(stateSender, true);
+      needToUnblockRPC = true;
 
       try {
          if (trace)
@@ -227,20 +248,41 @@ public class StateTransferManagerImpl implements StateTransferManager {
          Object object = marshaller.objectFromObjectStream(ois);
          while (object instanceof PrepareCommand) {
             PrepareCommand command = (PrepareCommand) object;
+
             if (!transactionLog.hasPendingPrepare(command)) {
+               if (trace) log.trace("Applying pending prepare {0}", command);
+               commandsFactory.initializeReplicableCommand(command);
                InvocationContext ctx = invocationContextContainer.get();
                ctx.setOriginLocal(false);
                ctx.setOptions(Options.CACHE_MODE_LOCAL, Options.SKIP_CACHE_STATUS_CHECK);
                interceptorChain.invoke(ctx, command);
+            } else {
+               if (trace) log.trace("Prepare {0} not in tx log; not applying", command);
             }
             object = marshaller.objectFromObjectStream(ois);
          }
          assertDelimited(object);
+      } catch (Exception e) {
+         if (trace) log.trace("Stopping RPC block");
+         mimicPartialFlushViaRPC(stateSender, false);
+         needToUnblockRPC = false;
+         throw e;
       }
-      finally {
-         if (trace) log.trace("Stopping partial flush");
-         t.unblockRPC();
-      }
+   }
+
+   /**
+    * Mimics a partial flush between the current instance and the address to flush, by opening and closing the necessary
+    * latches on both ends.
+    *
+    * @param addressToFlush address to flush in addition to the current address
+    * @param block          if true, mimics setting a flush.  Otherwise, mimics un-setting a flush.
+    * @throws Exception if there are issues
+    */
+   private void mimicPartialFlushViaRPC(Address addressToFlush, boolean block) throws Exception {
+      StateTransferControlCommand cmd = commandsFactory.buildStateTransferControlCommand(block);
+      if (!block) rpcManager.getTransport().getDistributedSync().releaseSync();
+      rpcManager.invokeRemotely(Collections.singletonList(addressToFlush), cmd, ResponseMode.SYNCHRONOUS, configuration.getStateRetrievalTimeout(), true);
+      if (block) rpcManager.getTransport().getDistributedSync().acquireSync();
    }
 
    public void applyState(InputStream in) throws StateTransferException {

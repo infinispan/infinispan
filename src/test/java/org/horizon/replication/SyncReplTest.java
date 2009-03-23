@@ -8,7 +8,7 @@ package org.horizon.replication;
 
 import static org.easymock.EasyMock.*;
 import org.horizon.Cache;
-import org.horizon.commands.RPCCommand;
+import org.horizon.commands.CacheRPCCommand;
 import org.horizon.config.Configuration;
 import org.horizon.remoting.RPCManager;
 import org.horizon.remoting.RPCManagerImpl;
@@ -140,7 +140,7 @@ public class SyncReplTest extends MultipleCacheManagersTest {
          rpcManager = (RPCManagerImpl) TestingUtil.extractComponent(asyncCache1, RPCManager.class);
          rpcManager.setTransport(mockTransport);
 
-         expect(mockTransport.invokeRemotely((List<Address>) anyObject(), (RPCCommand) anyObject(), eq(ResponseMode.SYNCHRONOUS),
+         expect(mockTransport.invokeRemotely((List<Address>) anyObject(), (CacheRPCCommand) anyObject(), eq(ResponseMode.SYNCHRONOUS),
                                              anyLong(), anyBoolean(), (ResponseFilter) anyObject(), anyBoolean()))
                .andReturn(Collections.emptyList()).once();
 
@@ -152,7 +152,7 @@ public class SyncReplTest extends MultipleCacheManagersTest {
          reset(mockTransport);
          expect(mockTransport.getAddress()).andReturn(mockAddressOne).anyTimes();
          expect(mockTransport.getMembers()).andReturn(addresses).anyTimes();
-         expect(mockTransport.invokeRemotely((List<Address>) anyObject(), (RPCCommand) anyObject(), eq(ResponseMode.ASYNCHRONOUS),
+         expect(mockTransport.invokeRemotely((List<Address>) anyObject(), (CacheRPCCommand) anyObject(), eq(ResponseMode.ASYNCHRONOUS),
                                              anyLong(), anyBoolean(), (ResponseFilter) anyObject(), anyBoolean()))
                .andReturn(Collections.emptyList()).once();
 

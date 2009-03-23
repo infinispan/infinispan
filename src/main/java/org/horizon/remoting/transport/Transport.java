@@ -1,6 +1,6 @@
 package org.horizon.remoting.transport;
 
-import org.horizon.commands.RPCCommand;
+import org.horizon.commands.ReplicableCommand;
 import org.horizon.config.GlobalConfiguration;
 import org.horizon.factories.annotations.NonVolatile;
 import org.horizon.factories.scopes.Scope;
@@ -58,7 +58,7 @@ public interface Transport extends Lifecycle {
     * @return a list of responses from each member contacted.
     * @throws Exception in the event of problems.
     */
-   List<Object> invokeRemotely(List<Address> recipients, RPCCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter, boolean supportReplay) throws Exception;
+   List<Object> invokeRemotely(List<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter, boolean supportReplay) throws Exception;
 
    /**
     * @return true if the current Channel is the coordinator of the cluster.
@@ -105,14 +105,8 @@ public interface Transport extends Lifecycle {
    DistributedSync getDistributedSync();
 
    /**
-    * Blocks all RPC calls to and between a set of Addresses.  If a null is passed in, the entire cluster is blocked.
-    *
-    * @param addresses addresses to block
+    * Tests whether the transport supports state transfer
+    * @return true if the implementation supports state transfer, false otherwise.
     */
-   void blockRPC(Address... addresses);
-
-   /**
-    * Releases a block performed by calling {@link #blockRPC(Address[])}
-    */
-   void unblockRPC();
+   boolean isSupportStateTransfer();
 }

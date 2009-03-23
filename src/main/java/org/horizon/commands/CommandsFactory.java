@@ -21,6 +21,7 @@
  */
 package org.horizon.commands;
 
+import org.horizon.commands.control.StateTransferControlCommand;
 import org.horizon.commands.read.GetKeyValueCommand;
 import org.horizon.commands.read.SizeCommand;
 import org.horizon.commands.remote.ReplicateCommand;
@@ -94,4 +95,6 @@ public interface CommandsFactory {
    ReplicateCommand buildReplicateCommand(List<ReplicableCommand> toReplicate);
 
    ReplicateCommand buildReplicateCommand(ReplicableCommand call);
+
+   StateTransferControlCommand buildStateTransferControlCommand(boolean block);
 }

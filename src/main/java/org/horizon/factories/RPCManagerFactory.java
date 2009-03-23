@@ -32,7 +32,8 @@ import org.horizon.remoting.RPCManager;
  * @since 4.0
  */
 @DefaultFactoryFor(classes = RPCManager.class)
-public class RPCManagerFactory extends EmptyConstructorNamedCacheFactory implements AutoInstantiableFactory {
+public class RPCManagerFactory extends EmptyConstructorFactory implements AutoInstantiableFactory {
+   
    @Override
    public <T> T construct(Class<T> componentType) {
       // only do this if we have a transport configured!

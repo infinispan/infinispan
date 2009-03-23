@@ -1,6 +1,7 @@
 package org.horizon.commands;
 
 import org.horizon.CacheException;
+import org.horizon.commands.control.StateTransferControlCommand;
 import org.horizon.commands.read.GetKeyValueCommand;
 import org.horizon.commands.remote.ReplicateCommand;
 import org.horizon.commands.tx.CommitCommand;
@@ -12,6 +13,10 @@ import org.horizon.commands.write.PutKeyValueCommand;
 import org.horizon.commands.write.PutMapCommand;
 import org.horizon.commands.write.RemoveCommand;
 import org.horizon.commands.write.ReplaceCommand;
+import org.horizon.factories.annotations.Inject;
+import org.horizon.factories.scopes.Scope;
+import org.horizon.factories.scopes.Scopes;
+import org.horizon.remoting.RPCManager;
 
 /**
  * Specifically used to create un-initialized {@link org.horizon.commands.ReplicableCommand}s from a byte stream.
@@ -19,7 +24,14 @@ import org.horizon.commands.write.ReplaceCommand;
  * @author Manik Surtani
  * @since 4.0
  */
+@Scope(Scopes.GLOBAL)
 public class RemoteCommandFactory {
+   RPCManager rpcManager;
+   
+   @Inject
+   public void init(RPCManager rpcManager) {
+      this.rpcManager = rpcManager;
+   }
 
    /**
     * Creates an un-initialized command.  Un-initialized in the sense that parameters will be set, but any components
@@ -67,6 +79,10 @@ public class RemoteCommandFactory {
             break;
          case InvalidateCommand.METHOD_ID:
             command = new InvalidateCommand();
+            break;
+         case StateTransferControlCommand.METHOD_ID:
+            command = new StateTransferControlCommand();
+            ((StateTransferControlCommand) command).init(rpcManager);
             break;
          default:
             throw new CacheException("Unknown command id " + id + "!");

@@ -1,6 +1,6 @@
 package org.horizon.remoting;
 
-import org.horizon.commands.RPCCommand;
+import org.horizon.commands.CacheRPCCommand;
 import org.horizon.factories.scopes.Scope;
 import org.horizon.factories.scopes.Scopes;
 import org.horizon.statetransfer.StateTransferException;
@@ -26,7 +26,7 @@ public interface InboundInvocationHandler {
     * @return results, if any, from the invocation
     * @throws Throwable in the event of problems executing the command
     */
-   Object handle(RPCCommand command) throws Throwable;
+   Object handle(CacheRPCCommand command) throws Throwable;
 
    /**
     * Applies state onto a named cache.  State to be read from the stream.  Implementations should NOT close the stream

@@ -10,7 +10,7 @@ import org.horizon.manager.CacheManager;
 import org.horizon.test.TestingUtil;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "statetransfer.StateTransferCacheLoaderFunctionalTest", enabled = false)
+@Test(groups = "functional", testName = "statetransfer.StateTransferCacheLoaderFunctionalTest")
 public class StateTransferCacheLoaderFunctionalTest extends StateTransferFunctionalTest {
    int id;
    ThreadLocal<Boolean> sharedCacheLoader = new ThreadLocal<Boolean>() {

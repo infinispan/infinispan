@@ -21,9 +21,8 @@
  */
 package org.horizon.interceptors.base;
 
-import org.horizon.remoting.ReplicationQueue;
+import org.horizon.commands.CacheRPCCommand;
 import org.horizon.commands.CommandsFactory;
-import org.horizon.commands.RPCCommand;
 import org.horizon.commands.ReplicableCommand;
 import org.horizon.commands.remote.ReplicateCommand;
 import org.horizon.context.InvocationContext;
@@ -32,6 +31,7 @@ import org.horizon.factories.annotations.Inject;
 import org.horizon.factories.annotations.Start;
 import org.horizon.invocation.Options;
 import org.horizon.remoting.RPCManager;
+import org.horizon.remoting.ReplicationQueue;
 import org.horizon.remoting.ResponseMode;
 import org.horizon.remoting.transport.Address;
 import org.horizon.transaction.GlobalTransaction;
@@ -84,7 +84,7 @@ public abstract class BaseRpcInterceptor extends CommandInterceptor {
       }
    }
 
-   protected void replicateCall(InvocationContext ctx, RPCCommand call, boolean sync, boolean useOutOfBandMessage) throws Throwable {
+   protected void replicateCall(InvocationContext ctx, CacheRPCCommand call, boolean sync, boolean useOutOfBandMessage) throws Throwable {
       replicateCall(ctx, null, call, sync, useOutOfBandMessage);
    }
 
@@ -92,7 +92,7 @@ public abstract class BaseRpcInterceptor extends CommandInterceptor {
       replicateCall(ctx, null, call, sync, useOutOfBandMessage);
    }
 
-   protected void replicateCall(InvocationContext ctx, RPCCommand call, boolean sync) throws Throwable {
+   protected void replicateCall(InvocationContext ctx, CacheRPCCommand call, boolean sync) throws Throwable {
       replicateCall(ctx, null, call, sync, false);
    }
 

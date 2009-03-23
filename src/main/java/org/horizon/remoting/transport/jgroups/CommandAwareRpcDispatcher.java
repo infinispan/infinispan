@@ -22,7 +22,7 @@
 package org.horizon.remoting.transport.jgroups;
 
 import org.horizon.CacheException;
-import org.horizon.commands.RPCCommand;
+import org.horizon.commands.CacheRPCCommand;
 import org.horizon.commands.ReplicableCommand;
 import org.horizon.commands.remote.ClusteredGetCommand;
 import org.horizon.logging.Log;
@@ -127,7 +127,11 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
    public Object handle(Message req) {
       if (isValid(req)) {
          try {
-            return executeCommand((RPCCommand) req_marshaller.objectFromByteBuffer(req.getBuffer(), req.getOffset(), req.getLength()), req);
+            ReplicableCommand cmd = (ReplicableCommand) req_marshaller.objectFromByteBuffer(req.getBuffer(), req.getOffset(), req.getLength());
+            if (cmd instanceof CacheRPCCommand)
+               return executeCommand((CacheRPCCommand) cmd, req);
+            else
+               return cmd.perform(null);
          }
          catch (Throwable x) {
             if (trace) log.trace("Problems invoking command.", x);
@@ -138,7 +142,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       }
    }
 
-   protected Object executeCommand(RPCCommand cmd, Message req) throws Throwable {
+   protected Object executeCommand(CacheRPCCommand cmd, Message req) throws Throwable {
       if (cmd == null) throw new NullPointerException("Unable to execute a null command!  Message was " + req);
       if (trace) log.trace("Attempting to execute command: {0} [sender={1}]", cmd, req.getSrc());
 
@@ -148,7 +152,6 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          int flushCount = distributedSync.getSyncCount();
          distributedSync.acquireProcessingLock(false, distributedSyncTimeout, MILLISECONDS);
          unlock = true;
-
          distributedSync.blockUntilReleased(distributedSyncTimeout, MILLISECONDS);
 
          // If this thread blocked during a NBST flush, then inform the sender

@@ -9,7 +9,7 @@ import org.horizon.interceptors.InterceptorChain;
  * @author Manik Surtani
  * @since 4.0
  */
-public interface RPCCommand extends ReplicableCommand {
+public interface CacheRPCCommand extends ReplicableCommand {
 
    /**
     * @return true if this only wraps a single ReplicableCommand.  False if it wraps more than one.

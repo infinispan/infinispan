@@ -306,16 +306,19 @@ public class DefaultCacheManager implements CacheManager {
    }
 
    public List<Address> getMembers() {
+      if (globalComponentRegistry == null) return null;
       RPCManager rpcManager = globalComponentRegistry.getComponent(RPCManager.class);
       return rpcManager == null ? null : rpcManager.getTransport().getMembers();
    }
 
    public Address getAddress() {
+      if (globalComponentRegistry == null) return null;
       RPCManager rpcManager = globalComponentRegistry.getComponent(RPCManager.class);
       return rpcManager == null ? null : rpcManager.getTransport().getAddress();
    }
 
    public boolean isCoordinator() {
+      if (globalComponentRegistry == null) return false;
       RPCManager rpcManager = globalComponentRegistry.getComponent(RPCManager.class);
       return rpcManager != null && rpcManager.getTransport().isCoordinator();
    }

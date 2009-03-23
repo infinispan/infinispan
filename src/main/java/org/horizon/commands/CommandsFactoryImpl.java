@@ -22,6 +22,7 @@
 package org.horizon.commands;
 
 import org.horizon.Cache;
+import org.horizon.commands.control.StateTransferControlCommand;
 import org.horizon.commands.read.GetKeyValueCommand;
 import org.horizon.commands.read.SizeCommand;
 import org.horizon.commands.remote.ReplicateCommand;
@@ -133,6 +134,10 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    public ReplicateCommand buildReplicateCommand(ReplicableCommand call) {
       return new ReplicateCommand(call, cache.getName());
+   }
+
+   public StateTransferControlCommand buildStateTransferControlCommand(boolean block) {
+      return new StateTransferControlCommand(block);
    }
 
    public void initializeReplicableCommand(ReplicableCommand c) {

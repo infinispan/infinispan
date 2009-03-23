@@ -3,7 +3,7 @@ package org.horizon.invalidation;
 import static org.easymock.EasyMock.*;
 import org.horizon.AdvancedCache;
 import org.horizon.Cache;
-import org.horizon.commands.RPCCommand;
+import org.horizon.commands.CacheRPCCommand;
 import org.horizon.commands.write.ClearCommand;
 import org.horizon.commands.write.InvalidateCommand;
 import org.horizon.config.Configuration;
@@ -178,7 +178,7 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
 
          expect(mockTransport.getMembers()).andReturn(members).anyTimes();
          expect(mockTransport.getAddress()).andReturn(addressOne).anyTimes();
-         expect(mockTransport.invokeRemotely((List<Address>) anyObject(), (RPCCommand) anyObject(),
+         expect(mockTransport.invokeRemotely((List<Address>) anyObject(), (CacheRPCCommand) anyObject(),
                                              eq(isSync ? ResponseMode.SYNCHRONOUS : ResponseMode.ASYNCHRONOUS),
                                              anyLong(), anyBoolean(), (ResponseFilter) anyObject(), anyBoolean())).andReturn(null).anyTimes();
          replay(mockTransport);

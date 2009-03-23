@@ -21,7 +21,7 @@
  */
 package org.horizon.commands.remote;
 
-import org.horizon.commands.RPCCommand;
+import org.horizon.commands.CacheRPCCommand;
 import org.horizon.commands.ReplicableCommand;
 import org.horizon.commands.VisitableCommand;
 import org.horizon.context.InvocationContext;
@@ -42,7 +42,7 @@ import java.util.List;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public class ReplicateCommand implements RPCCommand {
+public class ReplicateCommand implements CacheRPCCommand {
    public static final byte METHOD_ID = 13;
 
    private InterceptorChain interceptorChain;

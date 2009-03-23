@@ -21,7 +21,7 @@
  */
 package org.horizon.remoting;
 
-import org.horizon.commands.RPCCommand;
+import org.horizon.commands.ReplicableCommand;
 import org.horizon.factories.annotations.NonVolatile;
 import org.horizon.factories.scopes.Scope;
 import org.horizon.factories.scopes.Scopes;
@@ -62,7 +62,7 @@ public interface RPCManager extends Lifecycle {
     * @return a list of responses from each member contacted.
     * @throws Exception in the event of problems.
     */
-   List<Object> invokeRemotely(List<Address> recipients, RPCCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter, boolean stateTransferEnabled) throws Exception;
+   List<Object> invokeRemotely(List<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter, boolean stateTransferEnabled) throws Exception;
 
    /**
     * Invokes an RPC call on other caches in the cluster.
@@ -79,7 +79,7 @@ public interface RPCManager extends Lifecycle {
     * @return a list of responses from each member contacted.
     * @throws Exception in the event of problems.
     */
-   List<Object> invokeRemotely(List<Address> recipients, RPCCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, boolean stateTransferEnabled) throws Exception;
+   List<Object> invokeRemotely(List<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, boolean stateTransferEnabled) throws Exception;
 
    /**
     * Invokes an RPC call on other caches in the cluster.
@@ -94,7 +94,7 @@ public interface RPCManager extends Lifecycle {
     * @return a list of responses from each member contacted.
     * @throws Exception in the event of problems.
     */
-   List<Object> invokeRemotely(List<Address> recipients, RPCCommand rpcCommand, ResponseMode mode, long timeout, boolean stateTransferEnabled) throws Exception;
+   List<Object> invokeRemotely(List<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean stateTransferEnabled) throws Exception;
 
    /**
     * Initiates a state retrieval process from neighbouring caches.  This method will block until it either times out,

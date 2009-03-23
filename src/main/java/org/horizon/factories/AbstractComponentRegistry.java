@@ -218,7 +218,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle {
       Class[] dependencies = m.getParameterTypes();
       Annotation[][] parameterAnnotations = m.getParameterAnnotations();
       Object[] params = new Object[dependencies.length];
-
+      if (getLog().isTraceEnabled()) getLog().trace("Injecting dependencies for method {0}.", m);
       for (int i = 0; i < dependencies.length; i++) {
          params[i] = getOrCreateComponent(dependencies[i], getComponentName(dependencies[i], parameterAnnotations, i));
       }
