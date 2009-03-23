@@ -10,7 +10,7 @@ import org.testng.annotations.Test;
 
 import java.util.List;
 
-@Test(groups = "functional", testName = "api.CacheClusterJoinTest", enabled = false)
+@Test(groups = "functional", testName = "api.CacheClusterJoinTest")
 public class CacheClusterJoinTest extends MultipleCacheManagersTest {
    Cache cache1, cache2;
    CacheManager cm1, cm2;

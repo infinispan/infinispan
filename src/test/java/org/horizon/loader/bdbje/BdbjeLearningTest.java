@@ -662,7 +662,6 @@ public class BdbjeLearningTest {
       assert expected.isEmpty();
    }
 
-   @Test (enabled = false)
    public void testConcurrency() throws Throwable {
       int numThreads = 3;
       final int loops = 500;
