@@ -446,7 +446,6 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
          inboundInvocationHandler.applyState(cacheName, istream);
          mon.notifyStateReceiptSucceeded();
       } catch (Exception e) {
-         log.error("Failed setting state", e);
          mon.notifyStateReceiptFailed(e instanceof StateTransferException ? (StateTransferException) e : new StateTransferException(e));
       } finally {
          Util.closeStream(istream);
