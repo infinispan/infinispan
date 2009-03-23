@@ -29,7 +29,7 @@ public interface DistributedSync {
     * @param timeUnit time unit
     * @throws TimeoutException if waiting for the sync times out.
     */
-   void blockUntilAcquired(long timeout, TimeUnit timeUnit) throws TimeoutException, InterruptedException;
+   void blockUntilAcquired(long timeout, TimeUnit timeUnit) throws TimeoutException;
 
    /**
     * Blocks until an ongoing sync ends.  This is returns immediately if there is no ongoing sync.
@@ -38,7 +38,7 @@ public interface DistributedSync {
     * @param timeUnit time unit
     * @throws TimeoutException if waiting for an ongoing sync to end times out.
     */
-   void blockUntilReleased(long timeout, TimeUnit timeUnit) throws TimeoutException, InterruptedException;
+   void blockUntilReleased(long timeout, TimeUnit timeUnit) throws TimeoutException;
 
    /**
     * Acquires the sync.  This could be from a local or remote source.
@@ -59,7 +59,7 @@ public interface DistributedSync {
     * @param timeUnit  time unit
     * @throws TimeoutException if waiting for the lock times out
     */
-   void acquireProcessingLock(boolean exclusive, long timeout, TimeUnit timeUnit) throws TimeoutException, InterruptedException;
+   void acquireProcessingLock(boolean exclusive, long timeout, TimeUnit timeUnit) throws TimeoutException;
 
    /**
     * Releases any processing locks that may be held by the current thread.

@@ -251,7 +251,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       int count = writerThread.result();
 
       for (int c = 0; c < count; c++)
-         assert cache2.get("test" + c).equals(c);
+         assert new Integer(c).equals(cache2.get("test" + c)) : "Entry under key [test" + c + "] was [" + cache2.get("test" + c) + "] but expected [" + c + "]";
    }
 
    protected void verifyInitialData(Cache<Object, Object> c) {

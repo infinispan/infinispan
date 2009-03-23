@@ -55,7 +55,6 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
@@ -76,7 +75,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
    CommandsFactory commandsFactory;
    private static final Log log = LogFactory.getLog(StateTransferManagerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
-   private static final Delimiter DELIMITER = new Delimiter();
+   private static final Byte DELIMITER = (byte) 123;
 
    boolean transientState, persistentState;
    volatile boolean needToUnblockRPC = false;
@@ -194,6 +193,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
          oos.flush();
          if (trace) log.trace("Waiting for a distributed sync block");
          distributedSync.blockUntilAcquired(flushTimeout, MILLISECONDS);
+
          if (trace) log.trace("Distributed sync block received, proceeding with writing commit log");
          // Write remaining transactions
          transactionLog.writeCommitLog(marshaller, oos);
@@ -372,12 +372,6 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
    private void assertDelimited(Object o) throws StateTransferException {
       if (o instanceof Exception) throw new StateTransferException((Exception) o);
-      if ((o == null) || !(o instanceof Delimiter))
-         throw new StateTransferException("Expected a delimiter, recieved " + o);
-   }
-
-   // used as a marker for streams.
-   private static final class Delimiter implements Serializable {
-
+      if (!DELIMITER.equals(o)) throw new StateTransferException("Expected a delimiter, recieved " + o);
    }
 }

@@ -204,6 +204,9 @@ public class HorizonMarshaller implements Marshaller {
          } else if (o instanceof Short) {
             out.writeByte(MAGICNUMBER_SHORT);
             out.writeShort(((Short) o).shortValue());
+         } else if (o instanceof Byte) {
+            out.writeByte(MAGICNUMBER_BYTE);
+            out.writeByte(((Byte) o).byteValue());
          } else if (o instanceof String) {
             out.writeByte(MAGICNUMBER_STRING);
             if (useRefs) writeReference(out, createReference(o, refMap));
@@ -369,6 +372,8 @@ public class HorizonMarshaller implements Marshaller {
             return unmarshallFastCopyHashMap(in, refMap);
          case MAGICNUMBER_BOOLEAN:
             return in.readBoolean() ? Boolean.TRUE : Boolean.FALSE;
+         case MAGICNUMBER_BYTE:
+            return in.readByte();
          case MAGICNUMBER_INTEGER:
             return in.readInt();
          case MAGICNUMBER_LONG:

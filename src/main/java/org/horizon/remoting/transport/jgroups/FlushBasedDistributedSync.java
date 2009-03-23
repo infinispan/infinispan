@@ -32,12 +32,28 @@ public class FlushBasedDistributedSync implements DistributedSync {
       return flushCompletionCount.get();
    }
 
-   public void blockUntilAcquired(long timeout, TimeUnit timeUnit) throws TimeoutException, InterruptedException {
-      if (!flushWaitGate.await(timeout, timeUnit)) throw new TimeoutException("Timed out waiting for a cluster-wide sync to be acquired. (timeout = " + Util.prettyPrintTime(timeout) + ")");
+   public void blockUntilAcquired(long timeout, TimeUnit timeUnit) throws TimeoutException {
+      while (true) {
+         try {
+            if (!flushWaitGate.await(timeout, timeUnit))
+               throw new TimeoutException("Timed out waiting for a cluster-wide sync to be acquired. (timeout = " + Util.prettyPrintTime(timeout) + ")");
+            break;
+         } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+         }
+      }
    }
 
-   public void blockUntilReleased(long timeout, TimeUnit timeUnit) throws TimeoutException, InterruptedException {
-      if (!flushBlockGate.await(timeout, timeUnit)) throw new TimeoutException("Timed out waiting for a cluster-wide sync to be released. (timeout = " + Util.prettyPrintTime(timeout) + ")");
+   public void blockUntilReleased(long timeout, TimeUnit timeUnit) throws TimeoutException {
+      while (true) {
+         try {
+            if (!flushBlockGate.await(timeout, timeUnit))
+               throw new TimeoutException("Timed out waiting for a cluster-wide sync to be released. (timeout = " + Util.prettyPrintTime(timeout) + ")");
+            break;
+         } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+         }
+      }
    }
 
    public void acquireSync() {
@@ -51,9 +67,17 @@ public class FlushBasedDistributedSync implements DistributedSync {
       flushBlockGate.open();
    }
 
-   public void acquireProcessingLock(boolean exclusive, long timeout, TimeUnit timeUnit) throws TimeoutException, InterruptedException {
-      Lock lock = exclusive ? processingLock.writeLock() : processingLock.readLock();
-      if (!lock.tryLock(timeout, timeUnit)) throw new TimeoutException("Could not obtain " + (exclusive ? "exclusive" : "shared") + " processing lock");
+   public void acquireProcessingLock(boolean exclusive, long timeout, TimeUnit timeUnit) throws TimeoutException {
+      while (true) {
+         try {
+            Lock lock = exclusive ? processingLock.writeLock() : processingLock.readLock();
+            if (!lock.tryLock(timeout, timeUnit))
+               throw new TimeoutException("Could not obtain " + (exclusive ? "exclusive" : "shared") + " processing lock");
+            break;
+         } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+         }
+      }
    }
 
    public void releaseProcessingLock() {

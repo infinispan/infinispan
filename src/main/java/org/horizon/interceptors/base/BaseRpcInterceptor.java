@@ -53,6 +53,7 @@ public abstract class BaseRpcInterceptor extends CommandInterceptor {
 
    protected RPCManager rpcManager;
    protected boolean defaultSynchronous;
+   private boolean stateTransferEnabled;
 
    @Inject
    public void injectComponents(RPCManager rpcManager, ReplicationQueue replicationQueue,
@@ -66,6 +67,7 @@ public abstract class BaseRpcInterceptor extends CommandInterceptor {
    @Start
    public void init() {
       defaultSynchronous = configuration.getCacheMode().isSynchronous();
+      stateTransferEnabled = configuration.isFetchInMemoryState();
    }
 
    /**
@@ -137,8 +139,7 @@ public abstract class BaseRpcInterceptor extends CommandInterceptor {
          List rsps = rpcManager.invokeRemotely(callRecipients,
                                                command,
                                                sync ? ResponseMode.SYNCHRONOUS : ResponseMode.ASYNCHRONOUS, // is synchronised?
-                                               timeout,
-                                               useOutOfBandMessage
+                                               timeout, useOutOfBandMessage, stateTransferEnabled
          );
          if (trace) log.trace("responses=" + rsps);
          if (sync) checkResponses(rsps);
