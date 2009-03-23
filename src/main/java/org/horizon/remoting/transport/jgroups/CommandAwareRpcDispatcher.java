@@ -60,7 +60,6 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
    DistributedSync distributedSync;
    long distributedSyncTimeout;
    private Log log = LogFactory.getLog(CommandAwareRpcDispatcher.class);
-   private static final RequestIgnoredResponse REQUEST_IGNORED_RESPONSE = new RequestIgnoredResponse();
 
    public CommandAwareRpcDispatcher() {
    }
@@ -164,13 +163,11 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          } catch (IllegalStateException ise) {
             if (trace) log.trace("Unable to execute command, cache not in a receptive state");
             // cache not in a started state, request replay
-            return REQUEST_IGNORED_RESPONSE;
+            return RequestIgnoredResponse.INSTANCE;
          }
 
          if (replayIgnored) {
-            ExtendedResponse extended = new ExtendedResponse(retval);
-            extended.setReplayIgnoredRequests(true);
-            return extended;
+            return new ExtendedResponse(retval, true);
          } else {
 
             // Do we really need a response?!?  The caller would only ever expect a response for certain types of

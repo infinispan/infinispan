@@ -21,27 +21,22 @@
 */
 package org.horizon.remoting.transport.jgroups;
 
-import java.io.Serializable;
-
 /**
  * A response with extended information
  *
  * @author Jason T. Greene
  */
-public class ExtendedResponse implements Serializable {
-   private boolean replayIgnoredRequests;
+public class ExtendedResponse {
+   private final boolean replayIgnoredRequests;
    private final Object response;
 
-   public ExtendedResponse(Object response) {
+   public ExtendedResponse(Object response, boolean replayIgnoredRequests) {
       this.response = response;
+      this.replayIgnoredRequests = replayIgnoredRequests;
    }
 
    public boolean isReplayIgnoredRequests() {
       return replayIgnoredRequests;
-   }
-
-   public void setReplayIgnoredRequests(boolean replayIgnoredRequests) {
-      this.replayIgnoredRequests = replayIgnoredRequests;
    }
 
    public Object getResponse() {

@@ -21,14 +21,17 @@
 */
 package org.horizon.remoting.transport.jgroups;
 
-import java.io.Serializable;
-
 /**
  * Indicates that the request was ignored,
  *
  * @author Jason T. Greene
  */
-public class RequestIgnoredResponse implements Serializable {
+public class RequestIgnoredResponse {
+   public static final RequestIgnoredResponse INSTANCE = new RequestIgnoredResponse();
+
+   private RequestIgnoredResponse() {
+   }
+
    @Override
    public String toString() {
       return "RequestIgnoredResponse";

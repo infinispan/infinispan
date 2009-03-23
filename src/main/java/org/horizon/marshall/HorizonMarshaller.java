@@ -22,17 +22,19 @@
 package org.horizon.marshall;
 
 import org.horizon.CacheException;
-import org.horizon.loader.StoredEntry;
 import org.horizon.atomic.DeltaAware;
 import org.horizon.commands.RemoteCommandFactory;
 import org.horizon.commands.ReplicableCommand;
 import org.horizon.commands.write.WriteCommand;
 import org.horizon.io.ByteBuffer;
 import org.horizon.io.ExposedByteArrayOutputStream;
+import org.horizon.loader.StoredEntry;
 import org.horizon.logging.Log;
 import org.horizon.logging.LogFactory;
 import org.horizon.remoting.transport.Address;
+import org.horizon.remoting.transport.jgroups.ExtendedResponse;
 import org.horizon.remoting.transport.jgroups.JGroupsAddress;
+import org.horizon.remoting.transport.jgroups.RequestIgnoredResponse;
 import org.horizon.transaction.GlobalTransaction;
 import org.horizon.transaction.TransactionLog;
 import org.horizon.util.FastCopyHashMap;
@@ -84,6 +86,8 @@ public class HorizonMarshaller implements Marshaller {
    protected static final int MAGICNUMBER_COMMAND = 24;
    protected static final int MAGICNUMBER_TRANSACTION_LOG = 25;
    protected static final int MAGICNUMBER_STORED_ENTRY = 26;
+   protected static final int MAGICNUMBER_REQUEST_IGNORED_RESPONSE = 27;
+   protected static final int MAGICNUMBER_EXTENDED_RESPONSE = 28;   
    protected static final int MAGICNUMBER_NULL = 99;
    protected static final int MAGICNUMBER_SERIALIZABLE = 100;
    protected static final int MAGICNUMBER_REF = 101;
@@ -151,6 +155,13 @@ public class HorizonMarshaller implements Marshaller {
          } else if (o instanceof JGroupsAddress) {
             out.writeByte(MAGICNUMBER_JG_ADDRESS);
             marshallJGroupsAddress((JGroupsAddress) o, out);
+         } else if (o instanceof RequestIgnoredResponse) {
+            out.writeByte(MAGICNUMBER_REQUEST_IGNORED_RESPONSE);
+         } else if (o instanceof ExtendedResponse) {
+            out.writeByte(MAGICNUMBER_EXTENDED_RESPONSE);
+            ExtendedResponse er = (ExtendedResponse) o;
+            out.writeBoolean(er.isReplayIgnoredRequests());
+            marshallObject(er.getResponse(), out, refMap);
          } else if (o instanceof StoredEntry) {
             out.writeByte(MAGICNUMBER_STORED_ENTRY);
             ((StoredEntry) o).writeExternal(out);
@@ -309,6 +320,12 @@ public class HorizonMarshaller implements Marshaller {
             MarshalledValue mv = new MarshalledValue();
             mv.readExternal(in);
             return mv;
+         case MAGICNUMBER_REQUEST_IGNORED_RESPONSE:
+            return RequestIgnoredResponse.INSTANCE;
+         case MAGICNUMBER_EXTENDED_RESPONSE:
+            boolean replayIgnoredRequests = in.readBoolean();
+            Object response = unmarshallObject(in, refMap);
+            return new ExtendedResponse(response, replayIgnoredRequests);
          case MAGICNUMBER_STORED_ENTRY:
             StoredEntry se = new StoredEntry();
             se.readExternal(in);
