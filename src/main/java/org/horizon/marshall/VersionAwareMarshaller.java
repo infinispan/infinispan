@@ -50,7 +50,7 @@ public class VersionAwareMarshaller implements Marshaller {
    private static final Log log = LogFactory.getLog(VersionAwareMarshaller.class);
    private boolean trace = log.isTraceEnabled();
 
-   private static final int VERSION_100 = 100;
+   private static final int VERSION_400 = 400;
    private static final int CUSTOM_MARSHALLER = 999;
 
    private HorizonMarshaller defaultMarshaller;
@@ -71,8 +71,8 @@ public class VersionAwareMarshaller implements Marshaller {
       ExposedByteArrayOutputStream baos = new ExposedByteArrayOutputStream(128);
       ObjectOutputStream out = new ObjectOutputStream(baos);
 
-      out.writeShort(VERSION_100);
-      log.trace("Wrote version {0}", VERSION_100);
+      out.writeShort(VERSION_400);
+      log.trace("Wrote version {0}", VERSION_400);
 
       //now marshall the contents of the object
       defaultMarshaller.objectToObjectStream(obj, out);
@@ -111,8 +111,8 @@ public class VersionAwareMarshaller implements Marshaller {
    }
 
    public void objectToObjectStream(Object obj, ObjectOutput out) throws IOException {
-      out.writeShort(VERSION_100);
-      log.trace("Wrote version {0}", VERSION_100);
+      out.writeShort(VERSION_400);
+      log.trace("Wrote version {0}", VERSION_400);
       defaultMarshaller.objectToObjectStream(obj, out);
    }
 
