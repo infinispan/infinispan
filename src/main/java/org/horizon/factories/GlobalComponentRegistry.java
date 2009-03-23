@@ -7,7 +7,7 @@ import static org.horizon.config.GlobalConfiguration.ShutdownHookBehavior.REGIST
 import org.horizon.factories.annotations.NonVolatile;
 import org.horizon.factories.scopes.Scope;
 import org.horizon.factories.scopes.Scopes;
-import org.horizon.jmx.PlatformMBeanServerGlobalRegistration;
+import org.horizon.jmx.CacheManagerJmxRegistration;
 import org.horizon.logging.Log;
 import org.horizon.logging.LogFactory;
 import org.horizon.manager.CacheManager;
@@ -55,7 +55,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          registerComponent(this, GlobalComponentRegistry.class);
          registerComponent(cacheManager, CacheManager.class);
          registerComponent(configuration, GlobalConfiguration.class);
-         registerComponent(new PlatformMBeanServerGlobalRegistration(), PlatformMBeanServerGlobalRegistration.class);
+         registerComponent(new CacheManagerJmxRegistration(), CacheManagerJmxRegistration.class);
       }
       catch (Exception e) {
          throw new CacheException("Unable to construct a GlobalComponentRegistry!", e);

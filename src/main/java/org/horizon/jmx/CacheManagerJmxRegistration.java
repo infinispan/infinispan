@@ -9,16 +9,16 @@ import org.horizon.factories.annotations.Start;
 import org.horizon.factories.annotations.Stop;
 
 import javax.management.MBeanServer;
-import java.lang.management.ManagementFactory;
 import java.util.Set;
 
 /**
- * // TODO: Mircea: Document this!
+ * Registers all the components from global component registry to the mbean server.
  *
- * @author
+ * @author Mircea.Markus@jboss.com
+ * @since 4.0
  */
 @NonVolatile
-public class PlatformMBeanServerGlobalRegistration {
+public class CacheManagerJmxRegistration {
 
    public static final String GLOBAL_JMX_GROUP = "[global]";
    private GlobalComponentRegistry registry;
@@ -31,10 +31,13 @@ public class PlatformMBeanServerGlobalRegistration {
       this.globalConfiguration = configuration;
    }
 
+   /**
+    * On start, the mbeans are registered.
+    */
    @Start(priority = 20)
    public void start() {
-      if (globalConfiguration.isExposeGlobalManagementStatistics()) {
-         ComponentGroupJmxRegistration registrator = buildRegistrator();
+      if (globalConfiguration.isExposeGlobalJmxStatistics()) {
+         ComponentsJmxRegistration registrator = buildRegistrator();
          registrator.registerMBeans();
       }
    }
@@ -43,30 +46,26 @@ public class PlatformMBeanServerGlobalRegistration {
       this.mBeanServer = mBeanServer;
    }
 
+   /**
+    * On stop, the mbeans are unregistered.
+    */
    @Stop
    public void stop() {
       //this method might get called several times.
       // After the first call the cache will become null, so we guard this
       if (registry == null) return;
-      if (globalConfiguration.isExposeGlobalManagementStatistics()) {
-         ComponentGroupJmxRegistration componentGroupJmxRegistration = buildRegistrator();
-         componentGroupJmxRegistration.unregisterCacheMBeans();
+      if (globalConfiguration.isExposeGlobalJmxStatistics()) {
+         ComponentsJmxRegistration componentsJmxRegistration = buildRegistrator();
+         componentsJmxRegistration.unregisterMBeans();
       }
       registry = null;
    }
 
-   private ComponentGroupJmxRegistration buildRegistrator() {
+   private ComponentsJmxRegistration buildRegistrator() {
       Set<AbstractComponentRegistry.Component> components = registry.getRegisteredComponents();
-      MBeanServer platformMBeanServer;
-      if (this.mBeanServer != null) {
-         platformMBeanServer = this.mBeanServer;
-      } else {
-         platformMBeanServer = ManagementFactory.getPlatformMBeanServer();
-      }
-      ComponentGroupJmxRegistration registrator = new ComponentGroupJmxRegistration(platformMBeanServer, components, GLOBAL_JMX_GROUP);
-      if (globalConfiguration.getJmxDomain() != null) {
-         registrator.setJmxDomain(globalConfiguration.getJmxDomain());
-      }
+      mBeanServer = CacheJmxRegistration.getMBeanServer(globalConfiguration);
+      ComponentsJmxRegistration registrator = new ComponentsJmxRegistration(mBeanServer, components, GLOBAL_JMX_GROUP);
+      CacheJmxRegistration.updateDomain(registrator, registry, mBeanServer);
       return registrator;
    }
 }

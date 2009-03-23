@@ -35,6 +35,7 @@ import javax.management.MBeanException;
 import javax.management.MBeanInfo;
 import javax.management.MBeanOperationInfo;
 import javax.management.ReflectionException;
+import javax.management.AttributeNotFoundException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -156,11 +157,14 @@ public class ResourceDMBean implements DynamicMBean {
                            null);
    }
 
-   public synchronized Object getAttribute(String name) {
+   public synchronized Object getAttribute(String name) throws AttributeNotFoundException {
       if (name == null || name.length() == 0)
          throw new NullPointerException("Invalid attribute requested " + name);
 
       Attribute attr = getNamedAttribute(name);
+      if (attr == null) {
+         throw new AttributeNotFoundException("Unknown attribute '" + name + "'. Known attributes names are: " + atts.keySet());
+      }
       return attr.getValue();
    }
 

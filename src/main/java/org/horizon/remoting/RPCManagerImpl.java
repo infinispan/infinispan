@@ -1,5 +1,6 @@
 package org.horizon.remoting;
 
+import org.horizon.CacheException;
 import org.horizon.commands.ReplicableCommand;
 import org.horizon.config.GlobalConfiguration;
 import org.horizon.factories.KnownComponentNames;
@@ -61,15 +62,22 @@ public class RPCManagerImpl implements RPCManager {
    }
 
    public List<Object> invokeRemotely(List<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter, boolean stateTransferEnabled) throws Exception {
-      return t.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue, responseFilter, stateTransferEnabled);
+      try {
+         List<Object> result = t.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue, responseFilter, stateTransferEnabled);
+         if (isStatisticsEnabled()) replicationCount.incrementAndGet();
+         return result;
+      } catch (Throwable e) {
+         if (isStatisticsEnabled()) replicationFailures.incrementAndGet();
+         throw new CacheException(e);
+      }
    }
 
    public List<Object> invokeRemotely(List<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, boolean stateTransferEnabled) throws Exception {
-      return t.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue, null, stateTransferEnabled);
+      return invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue, null, stateTransferEnabled);
    }
 
    public List<Object> invokeRemotely(List<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean stateTransferEnabled) throws Exception {
-      return t.invokeRemotely(recipients, rpcCommand, mode, timeout, false, null, stateTransferEnabled);
+      return invokeRemotely(recipients, rpcCommand, mode, timeout, false, null, stateTransferEnabled);
    }
 
    public void retrieveState(String cacheName, long timeout) throws StateTransferException {
@@ -150,13 +158,19 @@ public class RPCManagerImpl implements RPCManager {
    }
 
    @ManagedAttribute(description = "number of successful replications")
-   public long getReplicationCount() {
-      return replicationCount.get();
+   public String getReplicationCount() {
+      if (!isStatisticsEnabled()) {
+         return "N/A";
+      }
+      return String.valueOf(replicationCount.get());
    }
 
    @ManagedAttribute(description = "number of failed replications")
-   public long getReplicationFailures() {
-      return replicationFailures.get();
+   public String getReplicationFailures() {
+      if (!isStatisticsEnabled()) {
+         return "N/A";
+      }
+      return String.valueOf(replicationFailures.get());
    }
 
    @ManagedAttribute(description = "whether or not jmx statistics are enabled")
@@ -167,6 +181,20 @@ public class RPCManagerImpl implements RPCManager {
    @ManagedAttribute
    public void setStatisticsEnabled(boolean statisticsEnabled) {
       this.statisticsEnabled = statisticsEnabled;
+   }
+
+   @ManagedAttribute
+   public String getAddress() {
+      if (t == null || !isStatisticsEnabled()) return "N/A";
+      Address address = t.getAddress();
+      return address == null ? "N/A" : address.toString();
+   }
+
+   @ManagedAttribute
+   public String getMembers() {
+      if (t == null || !isStatisticsEnabled()) return "N/A";
+      List<Address> addressList = t.getMembers();
+      return addressList.toString();
    }
 
    @ManagedAttribute

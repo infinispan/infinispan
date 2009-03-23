@@ -286,10 +286,10 @@ public class XmlConfigurationParserImpl extends XmlParserBase implements XmlConf
       if (element != null) {
          String enabled = getAttributeValue(element, "enabled");
          if (existsAttribute(enabled)) {
-            config.setExposeManagementStatistics(getBoolean(enabled));
+            config.setExposeJmxStatistics(getBoolean(enabled));
          } else {
             // by default enable this since the element is present!
-            config.setExposeManagementStatistics(true);
+            config.setExposeJmxStatistics(true);
          }
          String jmxNameBase = getAttributeValue(element, "jmxNameBase");
          if (existsAttribute(jmxNameBase)) {

@@ -26,7 +26,7 @@ import org.horizon.Cache;
 import org.horizon.CacheDelegate;
 import org.horizon.config.Configuration;
 import org.horizon.config.ConfigurationException;
-import org.horizon.jmx.PlatformMBeanServerCacheRegistration;
+import org.horizon.jmx.CacheJmxRegistration;
 import org.horizon.manager.DefaultCacheManager;
 
 /**
@@ -87,7 +87,7 @@ public class DefaultCacheFactory<K, V> extends AbstractNamedCacheComponentFactor
       componentRegistry = new ComponentRegistry(cacheName, configuration, spi, globalComponentRegistry);
       componentRegistry.registerDefaultClassLoader(defaultClassLoader);
       componentRegistry.registerComponent(spi, AdvancedCache.class);
-      componentRegistry.registerComponent(new PlatformMBeanServerCacheRegistration(), PlatformMBeanServerCacheRegistration.class);
+      componentRegistry.registerComponent(new CacheJmxRegistration(), CacheJmxRegistration.class);
    }
 
    /**

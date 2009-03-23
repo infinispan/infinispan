@@ -102,7 +102,7 @@ public class TxInterceptor extends BaseTransactionalContextInterceptor {
       this.componentRegistry = componentRegistry;
       this.lockManager = lockManager;
       this.transactionLog = transactionLog;
-      setStatisticsEnabled(configuration.isExposeManagementStatistics());
+      setStatisticsEnabled(configuration.isExposeJmxStatistics());
    }
 
    @Override

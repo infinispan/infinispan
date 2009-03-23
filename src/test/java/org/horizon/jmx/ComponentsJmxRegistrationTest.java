@@ -21,14 +21,14 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Tester class for {@link ComponentGroupJmxRegistration}.
+ * Tester class for {@link ComponentsJmxRegistration}.
  *
  * @author Mircea.Markus@jboss.com
  * @author <a href="mailto:galder.zamarreno@jboss.com">Galder Zamarreno</a>
  * @since 4.0
  */
-@Test(groups = "functional", testName = "jmx.JmxRegistrationManagerTest")
-public class JmxRegistrationManagerTest {
+@Test(groups = "functional", testName = "jmx.ComponentsJmxRegistrationTest")
+public class ComponentsJmxRegistrationTest {
 
    private MBeanServer mBeanServer;
    private List<CacheManager> cacheManagers = new ArrayList<CacheManager>();
@@ -58,20 +58,20 @@ public class JmxRegistrationManagerTest {
       cm.defineCache("first", configuration);
       Cache first = cm.getCache("first");
 
-      ComponentGroupJmxRegistration regComponentGroup = buildRegistrator(first);
-      regComponentGroup.registerMBeans();
-      String name = regComponentGroup.getObjectName(CacheMgmtInterceptor.class.getSimpleName());
+      ComponentsJmxRegistration regComponents = buildRegistrator(first);
+      regComponents.registerMBeans();
+      String name = regComponents.getObjectName(CacheMgmtInterceptor.class.getSimpleName());
       ObjectName name1 = new ObjectName(name);
       assert mBeanServer.isRegistered(name1);
-      regComponentGroup.unregisterCacheMBeans();
+      regComponents.unregisterMBeans();
       assert !mBeanServer.isRegistered(name1);
       assertCorrectJmxName(name1, first);
    }
 
-   private ComponentGroupJmxRegistration buildRegistrator(Cache cache) {
+   private ComponentsJmxRegistration buildRegistrator(Cache cache) {
       AdvancedCache ac = (AdvancedCache) cache;
       Set<AbstractComponentRegistry.Component> components = ac.getComponentRegistry().getRegisteredComponents();
-      return new ComponentGroupJmxRegistration(mBeanServer, components, cache.getName());
+      return new ComponentsJmxRegistration(mBeanServer, components, cache.getName());
    }
 
    public void testRegisterReplicatedCache() throws Exception {
@@ -84,13 +84,13 @@ public class JmxRegistrationManagerTest {
       cm.defineCache("first", configurationOverride);
       Cache first = cm.getCache("first");
 
-      ComponentGroupJmxRegistration regComponentGroup = buildRegistrator(first);
-      regComponentGroup.registerMBeans();
-      String name = regComponentGroup.getObjectName(CacheMgmtInterceptor.class.getSimpleName());
+      ComponentsJmxRegistration regComponents = buildRegistrator(first);
+      regComponents.registerMBeans();
+      String name = regComponents.getObjectName(CacheMgmtInterceptor.class.getSimpleName());
       ObjectName name1 = new ObjectName(name);
       assertCorrectJmxName(name1, first);
       assert mBeanServer.isRegistered(name1);
-      regComponentGroup.unregisterCacheMBeans();
+      regComponents.unregisterMBeans();
       assert !mBeanServer.isRegistered(name1);
    }
 
@@ -108,13 +108,13 @@ public class JmxRegistrationManagerTest {
       Cache replicatedCache = cm.getCache("replicated");
       Cache localCache = cm.getCache("local");
 
-      ComponentGroupJmxRegistration replicatedRegComponentGroup = buildRegistrator(replicatedCache);
-      ComponentGroupJmxRegistration localRegComponentGroup = buildRegistrator(localCache);
-      replicatedRegComponentGroup.registerMBeans();
-      localRegComponentGroup.registerMBeans();
+      ComponentsJmxRegistration replicatedRegComponents = buildRegistrator(replicatedCache);
+      ComponentsJmxRegistration localRegComponents = buildRegistrator(localCache);
+      replicatedRegComponents.registerMBeans();
+      localRegComponents.registerMBeans();
 
-      String replicatedtCMgmtIntName = replicatedRegComponentGroup.getObjectName(CacheMgmtInterceptor.class.getSimpleName());
-      String localCMgmtIntName = localRegComponentGroup.getObjectName(CacheMgmtInterceptor.class.getSimpleName());
+      String replicatedtCMgmtIntName = replicatedRegComponents.getObjectName(CacheMgmtInterceptor.class.getSimpleName());
+      String localCMgmtIntName = localRegComponents.getObjectName(CacheMgmtInterceptor.class.getSimpleName());
       ObjectName replObjectName = new ObjectName(replicatedtCMgmtIntName);
       ObjectName localObjName = new ObjectName(localCMgmtIntName);
       assertCorrectJmxName(replObjectName, replicatedCache);
@@ -123,20 +123,21 @@ public class JmxRegistrationManagerTest {
       assert mBeanServer.isRegistered(localObjName);
       assert !localCMgmtIntName.equals(replicatedtCMgmtIntName);
 
-      replicatedRegComponentGroup.unregisterCacheMBeans();
-      localRegComponentGroup.unregisterCacheMBeans();
+      replicatedRegComponents.unregisterMBeans();
+      localRegComponents.unregisterMBeans();
       assert !mBeanServer.isRegistered(new ObjectName(localCMgmtIntName));
       assert !mBeanServer.isRegistered(new ObjectName(replicatedtCMgmtIntName));
    }
 
    private void assertCorrectJmxName(ObjectName objectName, Cache cache) {
-      assert objectName.getKeyProperty(ComponentGroupJmxRegistration.CACHE_NAME_KEY).startsWith(cache.getName());
-      assert objectName.getKeyProperty(ComponentGroupJmxRegistration.JMX_RESOURCE_KEY) != null;
+      assert objectName.getKeyProperty(ComponentsJmxRegistration.CACHE_NAME_KEY).startsWith(cache.getName());
+      assert objectName.getKeyProperty(ComponentsJmxRegistration.JMX_RESOURCE_KEY) != null;
    }
 
    private Configuration config() {
       Configuration configuration = new Configuration();
-      configuration.setExposeManagementStatistics(true);
+      configuration.setFetchInMemoryState(false);
+      configuration.setExposeJmxStatistics(true);
       return configuration;
    }
 }

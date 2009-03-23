@@ -62,7 +62,7 @@ public class ReplicationExceptionTest extends MultipleCacheManagersTest {
       }
       catch (RuntimeException runtime) {
          Throwable t = runtime.getCause();
-         if (t instanceof NotSerializableException) {
+         if (t instanceof NotSerializableException || t.getCause() instanceof NotSerializableException) {
             System.out.println("received NotSerializableException - as expected");
          } else {
             throw runtime;

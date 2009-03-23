@@ -69,7 +69,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     * not specified an object name will be created for you by default.
     *
     * @see javax.management.ObjectName
-    * @see #isExposeManagementStatistics()
+    * @see #isExposeJmxStatistics()
     */
    public void setJmxNameBase(String jmxObjectName) {
       testImmutability("JmxNameBase");
@@ -144,7 +144,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    private boolean useReplQueue = false;
    private int replQueueMaxElements = 1000;
    private long replQueueInterval = 5000;
-   private boolean exposeManagementStatistics = true;
+   private boolean exposeJmxStatistics = true;
    @Dynamic
    private boolean fetchInMemoryState = true;
    @Dynamic
@@ -220,9 +220,9 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    }
 
 
-   public void setExposeManagementStatistics(boolean useMbean) {
-      testImmutability("exposeManagementStatistics");
-      this.exposeManagementStatistics = useMbean;
+   public void setExposeJmxStatistics(boolean useMbean) {
+      testImmutability("exposeJmxStatistics");
+      this.exposeJmxStatistics = useMbean;
    }
 
    /**
@@ -368,8 +368,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       return replQueueInterval;
    }
 
-   public boolean isExposeManagementStatistics() {
-      return exposeManagementStatistics;
+   public boolean isExposeJmxStatistics() {
+      return exposeJmxStatistics;
    }
 
    /**
@@ -439,7 +439,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
       Configuration that = (Configuration) o;
 
-      if (exposeManagementStatistics != that.exposeManagementStatistics) return false;
+      if (exposeJmxStatistics != that.exposeJmxStatistics) return false;
       if (fetchInMemoryState != that.fetchInMemoryState) return false;
       if (lockAcquisitionTimeout != that.lockAcquisitionTimeout) return false;
       if (replQueueInterval != that.replQueueInterval) return false;
@@ -468,7 +468,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       result = 31 * result + (useReplQueue ? 1 : 0);
       result = 31 * result + replQueueMaxElements;
       result = 31 * result + (int) (replQueueInterval ^ (replQueueInterval >>> 32));
-      result = 31 * result + (exposeManagementStatistics ? 1 : 0);
+      result = 31 * result + (exposeJmxStatistics ? 1 : 0);
       result = 31 * result + (fetchInMemoryState ? 1 : 0);
       result = 31 * result + (int) (lockAcquisitionTimeout ^ (lockAcquisitionTimeout >>> 32));
       result = 31 * result + (int) (syncReplTimeout ^ (syncReplTimeout >>> 32));

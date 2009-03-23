@@ -73,7 +73,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          interceptorChain.appendIntereceptor(createInterceptor(InvocationContextInterceptor.class));
 
       // load the cache management interceptor next
-      if (configuration.isExposeManagementStatistics())
+      if (configuration.isExposeJmxStatistics())
          interceptorChain.appendIntereceptor(createInterceptor(CacheMgmtInterceptor.class));
 
       // load the tx interceptor

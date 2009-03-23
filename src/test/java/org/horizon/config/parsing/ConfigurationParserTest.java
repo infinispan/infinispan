@@ -76,7 +76,7 @@ public class ConfigurationParserTest {
       Configuration c = new Configuration();
       parser.configureJmxStatistics(e, c);
 
-      assert c.isExposeManagementStatistics();
+      assert c.isExposeJmxStatistics();
    }
 
    public void testLazyDeserialization() throws Exception {
@@ -87,7 +87,7 @@ public class ConfigurationParserTest {
       Configuration c = new Configuration();
       parser.configureLazyDeserialization(e, c);
 
-      assert c.isExposeManagementStatistics();
+      assert c.isExposeJmxStatistics();
    }
 
    public void testJmxStatisticsDefaults() throws Exception {
@@ -98,7 +98,7 @@ public class ConfigurationParserTest {
       Configuration c = new Configuration();
       parser.configureJmxStatistics(e, c);
 
-      assert c.isExposeManagementStatistics();
+      assert c.isExposeJmxStatistics();
    }
 
    public void testInvocationBatching() throws Exception {

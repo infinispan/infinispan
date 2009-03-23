@@ -78,7 +78,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
 
    @Start
    private void initTxMap() {
-      this.setStatisticsEnabled(configuration.isExposeManagementStatistics());
+      this.setStatisticsEnabled(configuration.isExposeJmxStatistics());
    }
 
    @Override

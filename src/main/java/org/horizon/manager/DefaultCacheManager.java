@@ -33,6 +33,8 @@ import org.horizon.factories.GlobalComponentRegistry;
 import org.horizon.factories.annotations.NonVolatile;
 import org.horizon.factories.scopes.Scope;
 import org.horizon.factories.scopes.Scopes;
+import org.horizon.jmx.annotations.MBean;
+import org.horizon.jmx.annotations.ManagedAttribute;
 import org.horizon.lifecycle.ComponentStatus;
 import org.horizon.lifecycle.Lifecycle;
 import org.horizon.notifications.cachemanagerlistener.CacheManagerNotifier;
@@ -86,6 +88,7 @@ import java.util.concurrent.ConcurrentMap;
  */
 @Scope(Scopes.GLOBAL)
 @NonVolatile
+@MBean(objectName = "CacheManager")
 public class DefaultCacheManager implements CacheManager {
    public static final String DEFAULT_CACHE_NAME = "org.horizon.manager.DefaultCacheManager.DEFAULT_CACHE_NAME";
    protected GlobalConfiguration globalConfiguration;
@@ -376,6 +379,27 @@ public class DefaultCacheManager implements CacheManager {
 
    public ComponentStatus getStatus() {
       return globalComponentRegistry.getStatus();
+   }
+
+   @ManagedAttribute (description = "the defined cache names and their status")
+   public String getDefinedCacheNames() {
+      StringBuilder result = new StringBuilder("[");
+      for (String cacheName : this.configurationOverrides.keySet()) {
+         boolean started = caches.containsKey(cacheName);
+         result.append(cacheName).append(started ? "(created)" : "(not created)");
+      }
+      result.append("]");
+      return result.toString();
+   }
+
+   @ManagedAttribute (description = "the total number of defined caches")
+   public String getDefinedCacheCount() {
+      return String.valueOf(this.configurationOverrides.keySet().size());
+   }
+
+   @ManagedAttribute (description = "number of running caches")
+   public String getCreatedCacheCount() {
+      return String.valueOf(this.caches.keySet().size());
    }
 
    @Override

@@ -2,6 +2,7 @@ package org.horizon.config;
 
 import org.horizon.CacheException;
 import org.horizon.Version;
+import org.horizon.jmx.PlatformMBeanServerLookup;
 import org.horizon.executors.DefaultExecutorFactory;
 import org.horizon.executors.DefaultScheduledExecutorFactory;
 import org.horizon.factories.GlobalComponentRegistry;
@@ -51,17 +52,18 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
 
    private GlobalComponentRegistry gcr;
    private long distributedSyncTimeout = 60000; // default
-   private boolean exposeGlobalManagementStatistics = true;
-   private String jmxDomain;
 
+   private boolean exposeGlobalJmxStatistics = true;
+   private String jmxDomain = "horizon";
+   private String mBeanServerLookup = PlatformMBeanServerLookup.class.getName();
 
-   public boolean isExposeGlobalManagementStatistics() {
-      return exposeGlobalManagementStatistics;
+   public boolean isExposeGlobalJmxStatistics() {
+      return exposeGlobalJmxStatistics;
    }
 
-   public void setExposeGlobalManagementStatistics(boolean exposeGlobalManagementStatistics) {
+   public void setExposeGlobalJmxStatistics(boolean exposeGlobalJmxStatistics) {
       testImmutability("exposeGlobalManagementStatistics");
-      this.exposeGlobalManagementStatistics = exposeGlobalManagementStatistics;
+      this.exposeGlobalJmxStatistics = exposeGlobalJmxStatistics;
    }
 
    /**
@@ -83,6 +85,14 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       return jmxDomain;
    }
 
+   public String getMBeanServerLookup() {
+      return mBeanServerLookup;
+   }
+
+   public void setMBeanServerLookup(String mBeanServerLookup) {
+      testImmutability("mBeanServerLookup");
+      this.mBeanServerLookup = mBeanServerLookup;
+   }
 
    /**
     * Behavior of the JVM shutdown hook registered by the cache

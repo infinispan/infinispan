@@ -35,26 +35,18 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Registers all the <b>MBean</b>s from an <b>Cache</b> instance to a <b>MBeanServer</b>. It iterates over all the
- * components within <b>ComponentRegistry</b> and registers all the components annotated with <b>ManagedAttribute</b>,
- * <b>ManagedOperation</b> or/and <b>MBean</b>. If no <b>MBean</b> server is provided, then the {@link
- * java.lang.management.ManagementFactory#getPlatformMBeanServer()} is being used. <p/> It is immutable: both cache
- * instance and MBeanServer are being passed as arguments to the constructor. <p /> <p> Note that by default object
- * names used are prefixed with <tt>jboss.cache:service=Horizon</tt>.  While this format works for and is consistent
- * with JBoss AS and the JMX console, it has been known to cause problems with other JMX servers such as Websphere.  To
- * work around this, you can provide the following VM system property to override this prefix with a prefix of your
- * choice: <tt><b>-Dhorizon.jmx.prefix=Horizon</b></tt> </p>
+ * Registers a set of {@link AbstractComponentRegistry.Component} to an Mbean server.
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public class ComponentGroupJmxRegistration {
+public class ComponentsJmxRegistration {
 
-   private static final Log log = LogFactory.getLog(ComponentGroupJmxRegistration.class);
+   private static final Log log = LogFactory.getLog(ComponentsJmxRegistration.class);
 
    private MBeanServer mBeanServer;
 
-   private String jmxDomain = "horizon:";
+   private String jmxDomain;
    private String groupName;
 
    private Set<AbstractComponentRegistry.Component> components;
@@ -72,13 +64,19 @@ public class ComponentGroupJmxRegistration {
     * @see <a href="http://java.sun.com/j2se/1.5.0/docs/guide/management/mxbeans.html#mbean_server">platform
     *      MBeanServer</a>
     */
-   public ComponentGroupJmxRegistration(MBeanServer mBeanServer, Set<AbstractComponentRegistry.Component> components, String groupName) {
+   public ComponentsJmxRegistration(MBeanServer mBeanServer, Set<AbstractComponentRegistry.Component> components, String groupName) {
       this.mBeanServer = mBeanServer;
       this.components = components;
       this.groupName = groupName;
    }
 
    public void setJmxDomain(String jmxDomain) {
+      String[] domains = mBeanServer.getDomains();
+      for (String domain : domains) {
+         if (domain.equals(jmxDomain)) {
+            log.warn("Jmx domain already in use");
+         }
+      }
       this.jmxDomain = jmxDomain;
    }
 
@@ -112,12 +110,12 @@ public class ComponentGroupJmxRegistration {
    /**
     * Unregisters all the MBeans registered through {@link #registerMBeans()}.
     */
-   public void unregisterCacheMBeans() throws CacheException {
+   public void unregisterMBeans() throws CacheException {
       log.trace("Unregistering jmx resources..");
       try {
          List<ResourceDMBean> resourceDMBeans = getResourceDMBeansFromComponents();
          for (ResourceDMBean resource : resourceDMBeans) {
-            String resourceName = resource.getObject().getClass().getSimpleName();
+            String resourceName = resource.getObjectName();
             ObjectName objectName = new ObjectName(getObjectName(resourceName));
             if (mBeanServer.isRegistered(objectName)) {
                mBeanServer.unregisterMBean(objectName);
@@ -145,6 +143,6 @@ public class ComponentGroupJmxRegistration {
    }
 
    public static String getObjectName(String jmxDomain, String groupName, String resourceName) {
-      return jmxDomain + CACHE_NAME_KEY + "=" + groupName + "," + JMX_RESOURCE_KEY + "=" + resourceName;
+      return jmxDomain + ":" + CACHE_NAME_KEY + "=" + groupName + "," + JMX_RESOURCE_KEY + "=" + resourceName;
    }
 }

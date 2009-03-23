@@ -95,7 +95,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    @Start(priority = 15)
    protected void start() {
       store = loaderManager.getCacheStore();
-      this.setStatisticsEnabled(configuration.isExposeManagementStatistics());
+      this.setStatisticsEnabled(configuration.isExposeJmxStatistics());
       loaderConfig = configuration.getCacheLoaderManagerConfig();
    }
 

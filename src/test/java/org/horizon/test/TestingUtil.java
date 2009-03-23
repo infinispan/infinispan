@@ -568,15 +568,18 @@ public class TestingUtil {
 
    /**
     * Extracts a component of a given type from the cache's internal component registry
-    *
-    * @param cache
-    * @param componentType
-    * @param <T>
-    * @return
     */
    public static <T> T extractComponent(Cache cache, Class<T> componentType) {
       ComponentRegistry cr = extractComponentRegistry(cache);
       return cr.getComponent(componentType);
+   }
+
+   /**
+    * Extracts a component of a given type from the cache's internal component registry
+    */
+   public static <T> T extractGlobalComponent(CacheManager cacheManager, Class<T> componentType) {
+      GlobalComponentRegistry gcr = extractGlobalComponentRegistry(cacheManager);
+      return gcr.getComponent(componentType);
    }
 
    public static TransactionManager getTransactionManager(Cache cache) {
