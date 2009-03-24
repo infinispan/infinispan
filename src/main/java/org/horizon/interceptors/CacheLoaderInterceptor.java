@@ -40,8 +40,6 @@ import org.horizon.loader.CacheLoaderManager;
 import org.horizon.loader.StoredEntry;
 import org.horizon.notifications.cachelistener.CacheNotifier;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
@@ -192,13 +190,5 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    public void resetStatistics() {
       cacheLoads.set(0);
       cacheMisses.set(0);
-   }
-
-   @ManagedOperation
-   public Map<String, Object> dumpStatistics() {
-      Map<String, Object> retval = new HashMap<String, Object>();
-      retval.put("CacheLoaderLoads", cacheLoads);
-      retval.put("CacheLoaderMisses", cacheMisses);
-      return retval;
    }
 }
