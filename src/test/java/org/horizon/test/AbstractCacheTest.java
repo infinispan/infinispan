@@ -2,6 +2,7 @@ package org.horizon.test;
 
 import org.horizon.AdvancedCache;
 import org.horizon.Cache;
+import org.horizon.config.Configuration;
 import org.horizon.container.DataContainer;
 import org.horizon.context.InvocationContext;
 import org.horizon.lifecycle.ComponentStatus;
@@ -95,5 +96,19 @@ public class AbstractCacheTest {
             // don't care
          }
       }
+   }
+
+   /**
+    * When multiple test merhods operate on same cluster, sync commit and rollback are mandatory. This is in order to
+    * make sure that an commit message will be dispatched in the same test method it was triggered and it will not
+    * interfere with further log messages.
+    */
+   protected Configuration getDefaultClusteredConfig(Configuration.CacheMode mode) {
+      Configuration configuration = new Configuration();
+      configuration.setCacheMode(mode);
+      configuration.setSyncCommitPhase(true);
+      configuration.setSyncRollbackPhase(true);
+      configuration.setFetchInMemoryState(false);
+      return configuration;
    }
 }

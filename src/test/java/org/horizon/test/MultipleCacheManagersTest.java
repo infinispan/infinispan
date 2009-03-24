@@ -170,20 +170,6 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    /**
-    * When multiple test merhods operate on same cluster, sync commit and rollback are mandatory. This is in order to
-    * make sure that an commit message will be dispatched in the same test method it was triggered and it will not
-    * interfere with further log messages.
-    */
-   protected Configuration getDefaultClusteredConfig(Configuration.CacheMode mode) {
-      Configuration configuration = new Configuration();
-      configuration.setCacheMode(mode);
-      configuration.setSyncCommitPhase(true);
-      configuration.setSyncRollbackPhase(true);
-      configuration.setFetchInMemoryState(false);
-      return configuration;
-   }
-
-   /**
     * Create the cache managers you need for your test.  Note that the cache managers you create *must* be created using
     * {@link #addClusterEnabledCacheManager()}
     */
