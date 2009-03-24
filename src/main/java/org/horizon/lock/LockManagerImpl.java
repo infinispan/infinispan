@@ -28,6 +28,8 @@ import org.horizon.factories.annotations.Inject;
 import org.horizon.factories.annotations.Start;
 import org.horizon.invocation.InvocationContextContainer;
 import org.horizon.invocation.Options;
+import org.horizon.jmx.annotations.ManagedAttribute;
+import org.horizon.jmx.annotations.MBean;
 import org.horizon.logging.Log;
 import org.horizon.logging.LogFactory;
 import org.horizon.util.ReversibleOrderedSet;
@@ -50,6 +52,7 @@ import java.util.concurrent.locks.Lock;
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @since 4.0
  */
+@MBean(objectName = "MvccLockManager")
 public class LockManagerImpl implements LockManager {
    protected Configuration configuration;
    LockContainer lockContainer;
@@ -144,5 +147,20 @@ public class LockManagerImpl implements LockManager {
 
    public final boolean possiblyLocked(MVCCEntry entry) {
       return entry == null || entry.isChanged() || entry.isNullEntry();
+   }
+
+   @ManagedAttribute(writable = false, description = "The concurrency level that the MVCC Lock Manager has been configured with.")
+   public int getConcurrencyLevel() {
+      return configuration.getConcurrencyLevel();
+   }
+
+   @ManagedAttribute(writable = false, description = "The number of exclusive locks that are held.")
+   public int getNumberOfLocksHeld() {
+      return lockContainer.getNumLocksHeld();
+   }
+
+   @ManagedAttribute(writable = false, description = "The number of exclusive locks that are available.")
+   public int getNumberOfLocksAvailable() {
+      return lockContainer.size() - lockContainer.getNumLocksHeld();
    }
 }
