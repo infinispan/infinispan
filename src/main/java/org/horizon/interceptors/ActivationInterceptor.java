@@ -66,7 +66,11 @@ public class ActivationInterceptor extends CacheLoaderInterceptor {
    }
 
    private void removeFromStore(Object... keys) throws CacheLoaderException {
-      for (Object k : keys) store.remove(k);
+      for (Object k : keys) {
+         if (store.remove(k) && getStatisticsEnabled()) {
+            activations.incrementAndGet();
+         }
+      }
    }
 
    @Override
@@ -76,8 +80,9 @@ public class ActivationInterceptor extends CacheLoaderInterceptor {
    }
 
    @ManagedAttribute(description = "number of activation events")
-   public long getActivations() {
-      return activations.get();
+   public String getActivations() {
+      if (!getStatisticsEnabled()) return "N/A";
+      return String.valueOf(activations.get());
    }
 
    @ManagedOperation
