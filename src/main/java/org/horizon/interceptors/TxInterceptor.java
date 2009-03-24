@@ -53,7 +53,6 @@ import javax.transaction.Synchronization;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -867,6 +866,10 @@ public class TxInterceptor extends BaseTransactionalContextInterceptor {
          }
          finally {
             ctx.setOptions(originalOptions);
+            if (getStatisticsEnabled()) {
+               if (status == Status.STATUS_ROLLEDBACK) rollbacks.incrementAndGet();
+               else if (status == Status.STATUS_COMMITTED) commits.incrementAndGet();
+            }
          }
       }
 
@@ -881,15 +884,6 @@ public class TxInterceptor extends BaseTransactionalContextInterceptor {
       prepares.set(0);
       commits.set(0);
       rollbacks.set(0);
-   }
-
-   @ManagedOperation
-   public Map<String, Object> dumpStatistics() {
-      Map<String, Object> retval = new HashMap<String, Object>(3);
-      retval.put("Prepares", prepares);
-      retval.put("Commits", commits);
-      retval.put("Rollbacks", rollbacks);
-      return retval;
    }
 
    @ManagedAttribute
