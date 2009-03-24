@@ -100,23 +100,14 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       if (configuration.isUsingCacheLoaders()) {
          if (configuration.getCacheLoaderManagerConfig().isPassivation()) {
             interceptorChain.appendIntereceptor(createInterceptor(ActivationInterceptor.class));
+            interceptorChain.appendIntereceptor(createInterceptor(PassivationInterceptor.class));
          } else {
             interceptorChain.appendIntereceptor(createInterceptor(CacheLoaderInterceptor.class));
+            interceptorChain.appendIntereceptor(createInterceptor(CacheStoreInterceptor.class));
          }
       }
       interceptorChain.appendIntereceptor(createInterceptor(LockingInterceptor.class));
-
-      if (configuration.isUsingCacheLoaders()) {
-         if (configuration.getCacheLoaderManagerConfig().isPassivation()) {
-
-            interceptorChain.appendIntereceptor(createInterceptor(PassivationInterceptor.class));
-
-         } else {
-
-            interceptorChain.appendIntereceptor(createInterceptor(CacheStoreInterceptor.class));
-
-         }
-      }
+      
 
       if (configuration.isUsingEviction()) {
          EvictionInterceptor evictionInterceptor = (EvictionInterceptor) createInterceptor(EvictionInterceptor.class);
