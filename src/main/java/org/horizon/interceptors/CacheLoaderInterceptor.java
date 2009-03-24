@@ -78,7 +78,9 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       Object key;
-      if ((key = command.getKey()) != null) loadIfNeeded(ctx, key);
+      if ((key = command.getKey()) != null) {
+         loadIfNeededAndUpdateStats(ctx, key);
+      }
       return invokeNextInterceptor(ctx, command);
    }
 
@@ -93,26 +95,26 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       Object key;
-      if ((key = command.getKey()) != null) loadIfNeeded(ctx, key);
+      if ((key = command.getKey()) != null) loadIfNeededAndUpdateStats(ctx, key);
       return invokeNextInterceptor(ctx, command);
    }
 
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       Object key;
-      if ((key = command.getKey()) != null) loadIfNeeded(ctx, key);
+      if ((key = command.getKey()) != null) loadIfNeededAndUpdateStats(ctx, key);
       return invokeNextInterceptor(ctx, command);
    }
 
-   private void loadIfNeeded(InvocationContext ctx, Object key) throws Throwable {
+   private boolean loadIfNeeded(InvocationContext ctx, Object key) throws Throwable {
       // first check if the container contains the key we need.  Try and load this into the context.
       MVCCEntry e = entryFactory.wrapEntryForReading(ctx, key);
       if (e == null || e.isNullEntry()) {
 
          // we *may* need to load this.
          if (!loader.containsKey(key)) {
-            log.trace("No need to load.  Key doesn't exist in the loader.");
-            return;
+            if (log.isTraceEnabled()) log.trace("No need to load.  Key doesn't exist in the loader.");
+            return false;
          }
 
          // Obtain a temporary lock to verify the key is not being concurrently added
@@ -122,14 +124,16 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
          if (dataContainer.containsKey(key)) {
             if (keyLocked) entryFactory.releaseLock(key);
             log.trace("No need to load.  Key exists in the data container.");
-            return;
+            return true;
          }
 
          // Reuse the lock and create a new entry for loading
          MVCCEntry n = entryFactory.wrapEntryForWriting(ctx, key, true, false, keyLocked, false);
          n = loadEntry(ctx, key, n);
          ctx.setContainsModifications(true);
+         return true;
       }
+      return false;
    }
 
    /**
@@ -140,7 +144,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
 
       StoredEntry storedEntry = loader.load(key);
       boolean entryExists = (storedEntry != null);
-      log.trace("Entry exists in loader? " + entryExists);
+      if (log.isTraceEnabled()) log.trace("Entry exists in loader? " + entryExists);
 
       if (getStatisticsEnabled()) {
          if (entryExists) {
@@ -165,6 +169,13 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
 
    protected void sendNotification(Object key, boolean pre, InvocationContext ctx) {
       notifier.notifyCacheEntryLoaded(key, pre, ctx);
+   }
+   
+   private void loadIfNeededAndUpdateStats(InvocationContext ctx, Object key) throws Throwable {
+      boolean found = loadIfNeeded(ctx, key);
+      if (!found && getStatisticsEnabled()) {
+         cacheMisses.incrementAndGet();
+      }
    }
 
    @ManagedAttribute(description = "number of cache loader loads")
