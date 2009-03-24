@@ -11,10 +11,9 @@ import org.horizon.jmx.annotations.ManagedAttribute;
 import org.horizon.jmx.annotations.ManagedOperation;
 import org.horizon.loader.CacheLoaderManager;
 import org.horizon.loader.CacheStore;
+import org.horizon.loader.StoredEntry;
 import org.horizon.notifications.cachelistener.CacheNotifier;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -50,9 +49,10 @@ public class PassivationInterceptor extends JmxStatsCommandInterceptor {
       Object key = command.getKey();
       notifier.notifyCacheEntryPassivated(key, true, ctx);
       log.trace("Passivating entry {0}", key);
-      cacheStore.store(dataContainer.createEntryForStorage(key));
+      StoredEntry entryForStorage = dataContainer.createEntryForStorage(key);
+      cacheStore.store(entryForStorage);
       notifier.notifyCacheEntryPassivated(key, false, ctx);
-      if (getStatisticsEnabled()) passivations.getAndIncrement();
+      if (getStatisticsEnabled() && entryForStorage != null) passivations.getAndIncrement();
       return invokeNextInterceptor(ctx, command);
    }
 
@@ -61,15 +61,9 @@ public class PassivationInterceptor extends JmxStatsCommandInterceptor {
       passivations.set(0);
    }
 
-   @ManagedOperation
-   public Map<String, Object> dumpStatistics() {
-      Map<String, Object> retval = new HashMap<String, Object>();
-      retval.put("Passivations", passivations.get());
-      return retval;
-   }
-
    @ManagedAttribute(description = "Number of passivation events")
-   public long getPassivations() {
-      return passivations.get();
+   public String getPassivations() {
+      if (!getStatisticsEnabled()) return "N/A";
+      return String.valueOf(passivations.get());
    }
 }
