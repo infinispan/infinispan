@@ -21,7 +21,7 @@
  */
 package org.horizon.context;
 
-import org.horizon.container.MVCCEntry;
+import org.horizon.container.entries.CacheEntry;
 import org.horizon.transaction.GlobalTransaction;
 import org.horizon.transaction.TransactionTable;
 import org.horizon.util.BidirectionalLinkedHashMap;
@@ -47,7 +47,7 @@ public class InvocationContextImpl extends AbstractContext implements Invocation
    }
 
    private void initLookedUpEntries() {
-      if (lookedUpEntries == null) lookedUpEntries = new BidirectionalLinkedHashMap<Object, MVCCEntry>(4);
+      if (lookedUpEntries == null) lookedUpEntries = new BidirectionalLinkedHashMap<Object, CacheEntry>(4);
    }
 
    @Override
@@ -57,7 +57,7 @@ public class InvocationContextImpl extends AbstractContext implements Invocation
    }
 
    @Override
-   public MVCCEntry lookupEntry(Object k) {
+   public CacheEntry lookupEntry(Object k) {
       if (transactionContext != null) {
          return transactionContext.lookupEntry(k);
       } else {
@@ -75,7 +75,7 @@ public class InvocationContextImpl extends AbstractContext implements Invocation
    }
 
    @Override
-   public void putLookedUpEntry(Object key, MVCCEntry e) {
+   public void putLookedUpEntry(Object key, CacheEntry e) {
       if (transactionContext != null)
          transactionContext.putLookedUpEntry(key, e);
       else {
@@ -85,7 +85,7 @@ public class InvocationContextImpl extends AbstractContext implements Invocation
    }
 
    @Override
-   public void putLookedUpEntries(Map<Object, MVCCEntry> lookedUpEntries) {
+   public void putLookedUpEntries(Map<Object, CacheEntry> lookedUpEntries) {
       if (transactionContext != null)
          transactionContext.putLookedUpEntries(lookedUpEntries);
       else {
@@ -100,9 +100,9 @@ public class InvocationContextImpl extends AbstractContext implements Invocation
    }
 
    @SuppressWarnings("unchecked")
-   public BidirectionalMap<Object, MVCCEntry> getLookedUpEntries() {
+   public BidirectionalMap<Object, CacheEntry> getLookedUpEntries() {
       if (transactionContext != null) return transactionContext.getLookedUpEntries();
-      return (BidirectionalMap<Object, MVCCEntry>)
+      return (BidirectionalMap<Object, CacheEntry>)
             (lookedUpEntries == null ? HorizonCollections.emptyBidirectionalMap() : lookedUpEntries);
    }
 

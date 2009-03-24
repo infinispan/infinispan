@@ -1,16 +1,16 @@
 package org.horizon.loader.jdbc.stringbased;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.horizon.Cache;
+import org.horizon.container.entries.InternalCacheEntry;
 import org.horizon.io.ByteBuffer;
 import org.horizon.loader.CacheLoaderConfig;
 import org.horizon.loader.CacheLoaderException;
 import org.horizon.loader.LockSupportCacheStore;
-import org.horizon.loader.StoredEntry;
 import org.horizon.loader.jdbc.JdbcUtil;
 import org.horizon.loader.jdbc.TableManipulation;
 import org.horizon.loader.jdbc.connectionfactory.ConnectionFactory;
+import org.horizon.logging.Log;
+import org.horizon.logging.LogFactory;
 import org.horizon.marshall.Marshaller;
 
 import java.io.IOException;
@@ -80,8 +80,8 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
       return key2StringMapper.getStringMapping(key);
    }
 
-   public void storeLockSafe(StoredEntry ed, String lockingKey) throws CacheLoaderException {
-      StoredEntry existingOne = loadLockSafe(ed, lockingKey);
+   public void storeLockSafe(InternalCacheEntry ed, String lockingKey) throws CacheLoaderException {
+      InternalCacheEntry existingOne = loadLockSafe(ed, lockingKey);
       String sql;
       if (existingOne == null) {
          sql = tableManipulation.getInsertRowSql();
@@ -140,7 +140,7 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
          int batchSize = config.getBatchSize();
          Object objFromStream = objectInput.readObject();
          while (!objFromStream.equals(STRING_STREAM_DELIMITER)) {
-            StoredEntry se = (StoredEntry) objFromStream;
+            InternalCacheEntry se = (InternalCacheEntry) objFromStream;
             readStoredEntries++;
             String key = key2StringMapper.getStringMapping(se.getKey());
             ByteBuffer buffer = JdbcUtil.marshall(getMarshaller(), se);
@@ -185,7 +185,7 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
          rs.setFetchSize(config.getFetchSize());
          while (rs.next()) {
             InputStream is = rs.getBinaryStream(1);
-            StoredEntry se = (StoredEntry) JdbcUtil.unmarshall(getMarshaller(), is);
+            InternalCacheEntry se = (InternalCacheEntry) JdbcUtil.unmarshall(getMarshaller(), is);
             objectOutput.writeObject(se);
          }
          objectOutput.writeObject(STRING_STREAM_DELIMITER);
@@ -240,7 +240,7 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
       }
    }
 
-   protected Set<StoredEntry> loadAllLockSafe() throws CacheLoaderException {
+   protected Set<InternalCacheEntry> loadAllLockSafe() throws CacheLoaderException {
       Connection conn = null;
       PreparedStatement ps = null;
       ResultSet rs = null;
@@ -250,10 +250,10 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
          ps = conn.prepareStatement(sql);
          rs = ps.executeQuery();
          rs.setFetchSize(config.getFetchSize());
-         Set<StoredEntry> result = new HashSet<StoredEntry>();
+         Set<InternalCacheEntry> result = new HashSet<InternalCacheEntry>();
          while (rs.next()) {
             InputStream inputStream = rs.getBinaryStream(1);
-            StoredEntry se = (StoredEntry) JdbcUtil.unmarshall(getMarshaller(), inputStream);
+            InternalCacheEntry se = (InternalCacheEntry) JdbcUtil.unmarshall(getMarshaller(), inputStream);
             result.add(se);
          }
          return result;
@@ -268,7 +268,7 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
       }
    }
 
-   protected StoredEntry loadLockSafe(Object key, String lockingKey) throws CacheLoaderException {
+   protected InternalCacheEntry loadLockSafe(Object key, String lockingKey) throws CacheLoaderException {
       Connection conn = null;
       PreparedStatement ps = null;
       ResultSet rs = null;
@@ -280,7 +280,7 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
          rs = ps.executeQuery();
          if (rs.next()) {
             InputStream inputStream = rs.getBinaryStream(2);
-            StoredEntry storedEntry = (StoredEntry) JdbcUtil.unmarshall(getMarshaller(), inputStream);
+            InternalCacheEntry storedEntry = (InternalCacheEntry) JdbcUtil.unmarshall(getMarshaller(), inputStream);
             if (storedEntry.isExpired()) {
                if (log.isTraceEnabled()) {
                   log.trace("Not returning '" + storedEntry + "' as it is expired. It will be removed from DB by purging thread!");

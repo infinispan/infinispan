@@ -3,7 +3,7 @@ package org.horizon.loader.decorators;
 import static org.easymock.EasyMock.*;
 import org.horizon.loader.CacheLoaderException;
 import org.horizon.loader.CacheStore;
-import org.horizon.loader.StoredEntry;
+import org.horizon.container.entries.InternalCacheEntry;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "loader.decorators.ReadOnlyCacheStoreTest")
@@ -11,7 +11,7 @@ public class ReadOnlyCacheStoreTest {
    public void testWriteMethods() throws CacheLoaderException {
       CacheStore mock = createMock(CacheStore.class);
       ReadOnlyStore store = new ReadOnlyStore(mock);
-      StoredEntry mockEntry = new StoredEntry();
+      InternalCacheEntry mockEntry = createNiceMock(InternalCacheEntry.class);
       expect(mock.load(eq("key"))).andReturn(mockEntry).once();
       replay(mock);
 

@@ -5,16 +5,13 @@ import org.horizon.config.Configuration;
 import org.horizon.config.ConfigurationException;
 import org.horizon.config.CustomInterceptorConfig;
 import org.horizon.config.DuplicateCacheNameException;
-import org.horizon.config.EvictionConfig;
 import org.horizon.config.GlobalConfiguration;
 import org.horizon.config.parsing.element.CustomInterceptorsElementParser;
 import org.horizon.config.parsing.element.LoadersElementParser;
-import org.horizon.eviction.EvictionAlgorithm;
-import org.horizon.eviction.EvictionAlgorithmConfig;
 import org.horizon.lock.IsolationLevel;
 import org.horizon.transaction.GenericTransactionManagerLookup;
 import org.horizon.util.FileLookup;
-import org.horizon.util.Util;
+import org.horizon.eviction.EvictionStrategy;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
@@ -246,40 +243,24 @@ public class XmlConfigurationParserImpl extends XmlParserBase implements XmlConf
       config.setCacheLoaderManagerConfig(cacheLoaderConfig);
    }
 
+   void configureExpiration(Element expirationElement, Configuration config) {
+      if (expirationElement != null) {
+         String tmp = getAttributeValue(expirationElement, "lifespan");
+         if (existsAttribute(tmp)) config.setExpirationLifespan(getLong(tmp));
+         tmp = getAttributeValue(expirationElement, "maxIdle");
+         if (existsAttribute(tmp)) config.setExpirationMaxIdle(getLong(tmp));
+      }
+   }
+
    void configureEviction(Element evictionElement, Configuration config) {
-      if (evictionElement == null) return; //no eviction might be configured
-      EvictionConfig evictionConfig = new EvictionConfig();
-      String tmp = getAttributeValue(evictionElement, "wakeUpInterval");
-      if (existsAttribute(tmp)) {
-         evictionConfig.setWakeUpInterval(getInt(tmp));
+      if (evictionElement != null) {
+         String tmp = getAttributeValue(evictionElement, "strategy");
+         if (existsAttribute(tmp)) config.setEvictionStrategy(EvictionStrategy.valueOf(tmp.trim().toUpperCase()));
+         tmp = getAttributeValue(evictionElement, "maxEntries");
+         if (existsAttribute(tmp)) config.setEvictionMaxEntries(getInt(tmp));
+         tmp = getAttributeValue(evictionElement, "wakeUpInterval");
+         if (existsAttribute(tmp)) config.setEvictionWakeupInterval(getLong(tmp));
       }
-
-      tmp = getAttributeValue(evictionElement, "actionPolicyClass");
-      if (existsAttribute(tmp)) evictionConfig.setActionPolicyClass(tmp);
-
-      tmp = getAttributeValue(evictionElement, "eventQueueSize");
-      if (existsAttribute(tmp)) evictionConfig.setEventQueueSize(getInt(tmp));
-
-      tmp = getAttributeValue(evictionElement, "algorithmClass");
-      if (!existsAttribute(tmp))
-         throw new ConfigurationException("Required attribute 'algorithmClass' is missing on the 'eviction' element!");
-
-      Properties p = XmlConfigHelper.extractProperties(evictionElement);
-
-      EvictionAlgorithmConfig cfg;
-
-      try {
-         EvictionAlgorithm algo = (EvictionAlgorithm) Util.getInstance(tmp);
-         Class<? extends EvictionAlgorithmConfig> cfgClass = algo.getConfigurationClass();
-         cfg = Util.getInstance(cfgClass);
-      } catch (Exception e) {
-         throw new ConfigurationException("Unable to configure eviction", e);
-      }
-
-      if (p != null && !p.isEmpty()) XmlConfigHelper.setValues(cfg, p, false, true);
-
-      evictionConfig.setAlgorithmConfig(cfg);
-      config.setEvictionConfig(evictionConfig);
    }
 
    void configureJmxStatistics(Element element, Configuration config) {

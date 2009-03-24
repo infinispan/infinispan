@@ -22,13 +22,14 @@
 package org.horizon.marshall;
 
 import org.horizon.CacheException;
+import org.horizon.container.entries.InternalCacheEntry;
+import org.horizon.container.entries.InternalEntryFactory;
 import org.horizon.atomic.DeltaAware;
 import org.horizon.commands.RemoteCommandFactory;
 import org.horizon.commands.ReplicableCommand;
 import org.horizon.commands.write.WriteCommand;
 import org.horizon.io.ByteBuffer;
 import org.horizon.io.ExposedByteArrayOutputStream;
-import org.horizon.loader.StoredEntry;
 import org.horizon.logging.Log;
 import org.horizon.logging.LogFactory;
 import org.horizon.remoting.transport.Address;
@@ -85,7 +86,7 @@ public class HorizonMarshaller implements Marshaller {
    protected static final int MAGICNUMBER_SINGLETON_LIST = 23;
    protected static final int MAGICNUMBER_COMMAND = 24;
    protected static final int MAGICNUMBER_TRANSACTION_LOG = 25;
-   protected static final int MAGICNUMBER_STORED_ENTRY = 26;
+   protected static final int MAGICNUMBER_INTERNAL_CACHED_ENTRY = 26;
    protected static final int MAGICNUMBER_REQUEST_IGNORED_RESPONSE = 27;
    protected static final int MAGICNUMBER_EXTENDED_RESPONSE = 28;   
    protected static final int MAGICNUMBER_NULL = 99;
@@ -162,9 +163,20 @@ public class HorizonMarshaller implements Marshaller {
             ExtendedResponse er = (ExtendedResponse) o;
             out.writeBoolean(er.isReplayIgnoredRequests());
             marshallObject(er.getResponse(), out, refMap);
-         } else if (o instanceof StoredEntry) {
-            out.writeByte(MAGICNUMBER_STORED_ENTRY);
-            ((StoredEntry) o).writeExternal(out);
+         } else if (o instanceof InternalCacheEntry) {
+            out.writeByte(MAGICNUMBER_INTERNAL_CACHED_ENTRY);
+            InternalCacheEntry ice = (InternalCacheEntry) o;
+            marshallObject(ice.getKey(), out, refMap);
+            marshallObject(ice.getValue(), out, refMap);
+            if (ice.canExpire()) {
+               out.writeBoolean(true);
+               writeUnsignedLong(out, ice.getCreated());
+               writeUnsignedLong(out, ice.getLifespan());
+               writeUnsignedLong(out, ice.getLastUsed());
+               writeUnsignedLong(out, ice.getMaxIdle());
+            } else {
+               out.writeBoolean(false);
+            }
          } else if (o.getClass().equals(ArrayList.class)) {
             out.writeByte(MAGICNUMBER_ARRAY_LIST);
             marshallCollection((Collection) o, out, refMap);
@@ -323,16 +335,25 @@ public class HorizonMarshaller implements Marshaller {
             MarshalledValue mv = new MarshalledValue();
             mv.readExternal(in);
             return mv;
+         case MAGICNUMBER_INTERNAL_CACHED_ENTRY:
+            Object k = unmarshallObject(in, refMap);
+            Object v = unmarshallObject(in, refMap);
+            boolean canExpire = in.readBoolean();
+            if (canExpire) {
+               long created = readUnsignedLong(in);
+               long lifespan = readUnsignedLong(in);
+               long lastUsed = readUnsignedLong(in);
+               long maxIdle = readUnsignedLong(in);
+               return InternalEntryFactory.create(k, v, created, lifespan, lastUsed, maxIdle);
+            } else {
+               return InternalEntryFactory.create(k, v);
+            }
          case MAGICNUMBER_REQUEST_IGNORED_RESPONSE:
             return RequestIgnoredResponse.INSTANCE;
          case MAGICNUMBER_EXTENDED_RESPONSE:
             boolean replayIgnoredRequests = in.readBoolean();
             Object response = unmarshallObject(in, refMap);
             return new ExtendedResponse(response, replayIgnoredRequests);
-         case MAGICNUMBER_STORED_ENTRY:
-            StoredEntry se = new StoredEntry();
-            se.readExternal(in);
-            return se;
          case MAGICNUMBER_COMMAND:
             retVal = unmarshallCommand(in, refMap);
             return retVal;
@@ -557,7 +578,7 @@ public class HorizonMarshaller implements Marshaller {
     * Reads an int stored in variable-length format.  Reads between one and nine bytes.  Smaller values take fewer
     * bytes.  Negative numbers are not supported.
     */
-   protected long readUnsignedLong(ObjectInput in) throws IOException {
+   protected final long readUnsignedLong(ObjectInput in) throws IOException {
       byte b = in.readByte();
       long i = b & 0x7F;
       for (int shift = 7; (b & 0x80) != 0; shift += 7) {
@@ -573,7 +594,7 @@ public class HorizonMarshaller implements Marshaller {
     *
     * @param i int to write
     */
-   protected void writeUnsignedLong(ObjectOutput out, long i) throws IOException {
+   protected final void writeUnsignedLong(ObjectOutput out, long i) throws IOException {
       while ((i & ~0x7F) != 0) {
          out.writeByte((byte) ((i & 0x7f) | 0x80));
          i >>>= 7;

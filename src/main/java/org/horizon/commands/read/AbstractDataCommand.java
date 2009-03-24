@@ -22,6 +22,8 @@
 package org.horizon.commands.read;
 
 import org.horizon.commands.DataCommand;
+import org.horizon.container.entries.MVCCEntry;
+import org.horizon.context.InvocationContext;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -63,6 +65,10 @@ public abstract class AbstractDataCommand implements DataCommand {
       if (key != null ? !key.equals(that.key) : that.key != null) return false;
 
       return true;
+   }
+
+   protected final MVCCEntry lookupMvccEntry(InvocationContext ctx, Object key) {
+      return (MVCCEntry) ctx.lookupEntry(key);
    }
 
    public int hashCode() {

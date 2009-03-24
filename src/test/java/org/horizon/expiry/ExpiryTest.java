@@ -2,7 +2,7 @@ package org.horizon.expiry;
 
 import org.horizon.Cache;
 import org.horizon.container.DataContainer;
-import org.horizon.loader.StoredEntry;
+import org.horizon.container.entries.InternalCacheEntry;
 import org.horizon.manager.CacheManager;
 import org.horizon.manager.DefaultCacheManager;
 import org.horizon.test.TestingUtil;
@@ -35,7 +35,7 @@ public class ExpiryTest {
       cache.put("k", "v", lifespan, TimeUnit.MILLISECONDS);
 
       DataContainer dc = cache.getAdvancedCache().getDataContainer();
-      StoredEntry se = dc.createEntryForStorage("k");
+      InternalCacheEntry se = dc.get("k");
       assert se.getKey().equals("k");
       assert se.getValue().equals("v");
       assert se.getLifespan() == lifespan;

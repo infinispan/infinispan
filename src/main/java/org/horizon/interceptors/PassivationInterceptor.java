@@ -3,6 +3,7 @@ package org.horizon.interceptors;
 import org.horizon.commands.write.EvictCommand;
 import org.horizon.config.ConfigurationException;
 import org.horizon.container.DataContainer;
+import org.horizon.container.entries.InternalCacheEntry;
 import org.horizon.context.InvocationContext;
 import org.horizon.factories.annotations.Inject;
 import org.horizon.factories.annotations.Start;
@@ -11,7 +12,6 @@ import org.horizon.jmx.annotations.ManagedAttribute;
 import org.horizon.jmx.annotations.ManagedOperation;
 import org.horizon.loader.CacheLoaderManager;
 import org.horizon.loader.CacheStore;
-import org.horizon.loader.StoredEntry;
 import org.horizon.notifications.cachelistener.CacheNotifier;
 
 import java.util.concurrent.atomic.AtomicLong;
@@ -49,7 +49,7 @@ public class PassivationInterceptor extends JmxStatsCommandInterceptor {
       Object key = command.getKey();
       notifier.notifyCacheEntryPassivated(key, true, ctx);
       log.trace("Passivating entry {0}", key);
-      StoredEntry entryForStorage = dataContainer.createEntryForStorage(key);
+      InternalCacheEntry entryForStorage = dataContainer.get(key);
       cacheStore.store(entryForStorage);
       notifier.notifyCacheEntryPassivated(key, false, ctx);
       if (getStatisticsEnabled() && entryForStorage != null) passivations.getAndIncrement();

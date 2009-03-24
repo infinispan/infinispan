@@ -22,14 +22,13 @@
 package org.horizon.factories;
 
 import org.horizon.config.Configuration;
-import org.horizon.container.CachedValue;
 import org.horizon.container.DataContainer;
-import org.horizon.container.MVCCEntry;
-import org.horizon.container.NullMarkerEntry;
-import org.horizon.container.NullMarkerEntryForRemoval;
-import org.horizon.container.ReadCommittedEntry;
-import org.horizon.container.RepeatableReadEntry;
-import org.horizon.container.UpdateableEntry;
+import org.horizon.container.entries.CacheEntry;
+import org.horizon.container.entries.MVCCEntry;
+import org.horizon.container.entries.NullMarkerEntry;
+import org.horizon.container.entries.NullMarkerEntryForRemoval;
+import org.horizon.container.entries.ReadCommittedEntry;
+import org.horizon.container.entries.RepeatableReadEntry;
 import org.horizon.context.InvocationContext;
 import org.horizon.factories.annotations.Inject;
 import org.horizon.factories.annotations.Start;
@@ -66,7 +65,7 @@ public class EntryFactoryImpl implements EntryFactory {
       writeSkewCheck = configuration.isWriteSkewCheck();
    }
 
-   private UpdateableEntry createWrappedEntry(Object key, Object value, boolean isForInsert, boolean forRemoval, long lifespan) {
+   private MVCCEntry createWrappedEntry(Object key, Object value, boolean isForInsert, boolean forRemoval, long lifespan) {
       if (value == null && !isForInsert) return useRepeatableRead ?
             forRemoval ? new NullMarkerEntryForRemoval(key) : NullMarkerEntry.getInstance()
             : null;
@@ -74,85 +73,90 @@ public class EntryFactoryImpl implements EntryFactory {
       return useRepeatableRead ? new RepeatableReadEntry(key, value, lifespan) : new ReadCommittedEntry(key, value, lifespan);
    }
 
-   public final MVCCEntry wrapEntryForReading(InvocationContext ctx, Object key) throws InterruptedException {
-      MVCCEntry mvccEntry;
+   public final CacheEntry wrapEntryForReading(InvocationContext ctx, Object key) throws InterruptedException {
+      CacheEntry cacheEntry;
       if (ctx.hasOption(Options.FORCE_WRITE_LOCK)) {
          if (trace) log.trace("Forcing lock on reading");
          return wrapEntryForWriting(ctx, key, false, false, false, false);
-      } else if ((mvccEntry = ctx.lookupEntry(key)) == null) {
-         if (trace) log.trace("Key " + key + " is not in context, fetching from container.");
+      } else if ((cacheEntry = ctx.lookupEntry(key)) == null) {
+         if (trace) log.trace("Key {0} is not in context, fetching from container.", key);
          // simple implementation.  Peek the entry, wrap it, put wrapped entry in the context.
-         CachedValue se = container.getEntry(key);
+         cacheEntry = container.get(key);
 
          // do not bother wrapping though if this is not in a tx.  repeatable read etc are all meaningless unless there is a tx.
          // TODO: Do we need to wrap for reading even IN a TX if we are using read-committed?
          if (ctx.getTransaction() == null) {
-            if (se != null) ctx.putLookedUpEntry(key, se);
+            if (cacheEntry != null) ctx.putLookedUpEntry(key, cacheEntry);
+            return cacheEntry;
          } else {
-            mvccEntry = se == null ?
+            MVCCEntry mvccEntry = cacheEntry == null ?
                   createWrappedEntry(key, null, false, false, -1) :
-                  createWrappedEntry(key, se.getValue(), false, false, se.getLifespan());
+                  createWrappedEntry(key, cacheEntry.getValue(), false, false, cacheEntry.getLifespan());
             if (mvccEntry != null) ctx.putLookedUpEntry(key, mvccEntry);
+            return mvccEntry;
          }
-
-         return mvccEntry;
       } else {
          if (trace) log.trace("Key is already in context");
-         return mvccEntry;
+         return cacheEntry;
       }
    }
 
    public final MVCCEntry wrapEntryForWriting(InvocationContext ctx, Object key, boolean createIfAbsent, boolean forceLockIfAbsent, boolean alreadyLocked, boolean forRemoval) throws InterruptedException {
-      MVCCEntry mvccEntry = ctx.lookupEntry(key);
-      if (createIfAbsent && mvccEntry != null && mvccEntry.isNullEntry()) mvccEntry = null;
-      if (mvccEntry != null) // exists in context!  Just acquire lock if needed, and wrap.
+      CacheEntry cacheEntry = ctx.lookupEntry(key);
+      MVCCEntry mvccEntry = null;
+      if (createIfAbsent && cacheEntry != null && cacheEntry.isNull()) cacheEntry = null;
+      if (cacheEntry != null) // exists in context!  Just acquire lock if needed, and wrap.
       {
+         if (trace) log.trace("Exists in context.");
          // acquire lock if needed
          if (alreadyLocked || acquireLock(ctx, key)) {
-            UpdateableEntry ue;
 
-            if (mvccEntry instanceof UpdateableEntry && (!forRemoval || !(mvccEntry instanceof NullMarkerEntry))) {
-               ue = (UpdateableEntry) mvccEntry;
+            if (cacheEntry instanceof MVCCEntry && (!forRemoval || !(cacheEntry instanceof NullMarkerEntry))) {
+               mvccEntry = (MVCCEntry) cacheEntry;
             } else {
                // this is a read-only entry that needs to be copied to a proper read-write entry!!
-               ue = createWrappedEntry(key, mvccEntry.getValue(), false, forRemoval, mvccEntry.getLifespan());
-               mvccEntry = ue;
-               ctx.putLookedUpEntry(key, mvccEntry);
+               mvccEntry = createWrappedEntry(key, cacheEntry.getValue(), false, forRemoval, cacheEntry.getLifespan());
+               cacheEntry = mvccEntry;
+               ctx.putLookedUpEntry(key, cacheEntry);
             }
 
             // create a copy of the underlying entry
-            ue.copyForUpdate(container, writeSkewCheck);
+            mvccEntry.copyForUpdate(container, writeSkewCheck);
          }
-         if (trace) log.trace("Exists in context.");
-         if (mvccEntry.isDeleted() && createIfAbsent) {
+
+         if (cacheEntry.isRemoved() && createIfAbsent) {
             if (trace) log.trace("Entry is deleted in current scope.  Need to un-delete.");
-            mvccEntry.setDeleted(false);
+            if (mvccEntry != cacheEntry) mvccEntry = (MVCCEntry) cacheEntry;
+            mvccEntry.setRemoved(false);
             mvccEntry.setValid(true);
-         }
+         }         
+
+         return mvccEntry;
+
       } else {
          // else, fetch from dataContainer.
-         CachedValue cachedValue = container.getEntry(key);
-         if (cachedValue != null) {
+         cacheEntry = container.get(key);
+         if (cacheEntry != null) {
             if (trace) log.trace("Retrieved from container.");
             // exists in cache!  Just acquire lock if needed, and wrap.
             // do we need a lock?
             boolean needToCopy = alreadyLocked || acquireLock(ctx, key) || ctx.hasOption(Options.SKIP_LOCKING); // even if we do not acquire a lock, if skip-locking is enabled we should copy
-            UpdateableEntry ue = createWrappedEntry(key, cachedValue.getValue(), false, false, cachedValue.getLifespan());
-            ctx.putLookedUpEntry(key, ue);
-            if (needToCopy) ue.copyForUpdate(container, writeSkewCheck);
-            mvccEntry = ue;
+            mvccEntry = createWrappedEntry(key, cacheEntry.getValue(), false, false, cacheEntry.getLifespan());
+            ctx.putLookedUpEntry(key, mvccEntry);
+            if (needToCopy) mvccEntry.copyForUpdate(container, writeSkewCheck);
+            cacheEntry = mvccEntry;
          } else if (createIfAbsent) {
             // this is the *only* point where new entries can be created!!
             if (trace) log.trace("Creating new entry.");
             // now to lock and create the entry.  Lock first to prevent concurrent creation!
             if (!alreadyLocked) acquireLock(ctx, key);
             notifier.notifyCacheEntryCreated(key, true, ctx);
-            UpdateableEntry ue = createWrappedEntry(key, null, true, false, -1);
-            ue.setCreated(true);
-            ctx.putLookedUpEntry(key, ue);
-            ue.copyForUpdate(container, writeSkewCheck);
+            mvccEntry = createWrappedEntry(key, null, true, false, -1);
+            mvccEntry.setCreated(true);
+            ctx.putLookedUpEntry(key, mvccEntry);
+            mvccEntry.copyForUpdate(container, writeSkewCheck);
             notifier.notifyCacheEntryCreated(key, false, ctx);
-            mvccEntry = ue;
+            cacheEntry = mvccEntry;
          }
       }
 

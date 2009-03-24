@@ -2,6 +2,8 @@ package org.horizon.loader;
 
 import org.easymock.EasyMock;
 import org.horizon.Cache;
+import org.horizon.container.entries.InternalCacheEntry;
+import org.horizon.container.entries.InternalEntryFactory;
 import org.horizon.io.UnclosableObjectInputStream;
 import org.horizon.io.UnclosableObjectOutputStream;
 import org.horizon.loader.modifications.Clear;
@@ -85,7 +87,7 @@ public abstract class BaseCacheStoreTest {
 
    public void testLoadAndStore() throws InterruptedException, CacheLoaderException {
       assert !cs.containsKey("k");
-      StoredEntry se = new StoredEntry("k", "v", -1, -1);
+      InternalCacheEntry se = InternalEntryFactory.create("k", "v", -1, -1);
       cs.store(se);
 
       assert cs.load("k").getValue().equals("v");
@@ -95,7 +97,7 @@ public abstract class BaseCacheStoreTest {
 
       long now = System.currentTimeMillis();
       long lifespan = 120000;
-      se = new StoredEntry("k", "v", now, now + lifespan);
+      se = InternalEntryFactory.create("k", "v", lifespan);
       cs.store(se);
 
       assert cs.load("k").getValue().equals("v");
@@ -105,7 +107,7 @@ public abstract class BaseCacheStoreTest {
 
       now = System.currentTimeMillis();
       lifespan = 1;
-      se = new StoredEntry("k", "v", now, now + lifespan);
+      se = InternalEntryFactory.create("k", "v", lifespan);
       cs.store(se);
       Thread.sleep(100);
       assert se.isExpired();
@@ -119,8 +121,8 @@ public abstract class BaseCacheStoreTest {
 
       long now = System.currentTimeMillis();
       long lifespan = 1;
-      StoredEntry se1 = new StoredEntry("k1", "v1", now, now + lifespan);
-      StoredEntry se2 = new StoredEntry("k2", "v2");
+      InternalCacheEntry se1 = InternalEntryFactory.create("k1", "v1", lifespan);
+      InternalCacheEntry se2 = InternalEntryFactory.create("k2", "v2");
 
       cs.store(se1);
       cs.store(se2);
@@ -139,8 +141,8 @@ public abstract class BaseCacheStoreTest {
 
    public void testOnePhaseCommit() throws CacheLoaderException {
       List<Modification> mods = new ArrayList<Modification>();
-      mods.add(new Store(new StoredEntry("k1", "v1", -1, -1)));
-      mods.add(new Store(new StoredEntry("k2", "v2", -1, -1)));
+      mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
+      mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
       mods.add(new Remove("k1"));
       Transaction tx = EasyMock.createNiceMock(Transaction.class);
       cs.prepare(mods, tx, true);
@@ -151,10 +153,10 @@ public abstract class BaseCacheStoreTest {
       cs.clear();
 
       mods = new ArrayList<Modification>();
-      mods.add(new Store(new StoredEntry("k1", "v1", -1, -1)));
-      mods.add(new Store(new StoredEntry("k2", "v2", -1, -1)));
+      mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
+      mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
       mods.add(new Clear());
-      mods.add(new Store(new StoredEntry("k3", "v3", -1, -1)));
+      mods.add(new Store(InternalEntryFactory.create("k3", "v3")));
 
       cs.prepare(mods, tx, true);
       assert !cs.containsKey("k1");
@@ -164,8 +166,8 @@ public abstract class BaseCacheStoreTest {
 
    public void testTwoPhaseCommit() throws CacheLoaderException {
       List<Modification> mods = new ArrayList<Modification>();
-      mods.add(new Store(new StoredEntry("k1", "v1", -1, -1)));
-      mods.add(new Store(new StoredEntry("k2", "v2", -1, -1)));
+      mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
+      mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
       mods.add(new Remove("k1"));
       Transaction tx = EasyMock.createNiceMock(Transaction.class);
       cs.prepare(mods, tx, false);
@@ -181,10 +183,10 @@ public abstract class BaseCacheStoreTest {
       cs.clear();
 
       mods = new ArrayList<Modification>();
-      mods.add(new Store(new StoredEntry("k1", "v1", -1, -1)));
-      mods.add(new Store(new StoredEntry("k2", "v2", -1, -1)));
+      mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
+      mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
       mods.add(new Clear());
-      mods.add(new Store(new StoredEntry("k3", "v3", -1, -1)));
+      mods.add(new Store(InternalEntryFactory.create("k3", "v3")));
 
       cs.prepare(mods, tx, false);
 
@@ -202,11 +204,11 @@ public abstract class BaseCacheStoreTest {
 
    public void testRollback() throws CacheLoaderException {
 
-      cs.store(new StoredEntry("old", "old", -1, -1));
+      cs.store(InternalEntryFactory.create("old", "old"));
 
       List<Modification> mods = new ArrayList<Modification>();
-      mods.add(new Store(new StoredEntry("k1", "v1", -1, -1)));
-      mods.add(new Store(new StoredEntry("k2", "v2", -1, -1)));
+      mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
+      mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
       mods.add(new Remove("k1"));
       mods.add(new Remove("old"));
       Transaction tx = EasyMock.createNiceMock(Transaction.class);
@@ -223,10 +225,10 @@ public abstract class BaseCacheStoreTest {
       assert cs.containsKey("old");
 
       mods = new ArrayList<Modification>();
-      mods.add(new Store(new StoredEntry("k1", "v1", -1, -1)));
-      mods.add(new Store(new StoredEntry("k2", "v2", -1, -1)));
+      mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
+      mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
       mods.add(new Clear());
-      mods.add(new Store(new StoredEntry("k3", "v3", -1, -1)));
+      mods.add(new Store(InternalEntryFactory.create("k3", "v3")));
 
       cs.prepare(mods, tx, false);
 
@@ -244,11 +246,11 @@ public abstract class BaseCacheStoreTest {
 
    public void testRollbackFromADifferentThreadReusingTransactionKey() throws CacheLoaderException, InterruptedException {
 
-      cs.store(new StoredEntry("old", "old", -1, -1));
+      cs.store(InternalEntryFactory.create("old", "old", -1, -1));
 
       List<Modification> mods = new ArrayList<Modification>();
-      mods.add(new Store(new StoredEntry("k1", "v1", -1, -1)));
-      mods.add(new Store(new StoredEntry("k2", "v2", -1, -1)));
+      mods.add(new Store(InternalEntryFactory.create("k1", "v1", -1, -1)));
+      mods.add(new Store(InternalEntryFactory.create("k2", "v2", -1, -1)));
       mods.add(new Remove("k1"));
       mods.add(new Remove("old"));
       final Transaction tx = EasyMock.createNiceMock(Transaction.class);
@@ -268,10 +270,10 @@ public abstract class BaseCacheStoreTest {
       assert cs.containsKey("old");
 
       mods = new ArrayList<Modification>();
-      mods.add(new Store(new StoredEntry("k1", "v1", -1, -1)));
-      mods.add(new Store(new StoredEntry("k2", "v2", -1, -1)));
+      mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
+      mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
       mods.add(new Clear());
-      mods.add(new Store(new StoredEntry("k3", "v3", -1, -1)));
+      mods.add(new Store(InternalEntryFactory.create("k3", "v3")));
 
       cs.prepare(mods, tx, false);
 
@@ -290,40 +292,40 @@ public abstract class BaseCacheStoreTest {
    }
 
    public void testCommitAndRollbackWithoutPrepare() throws CacheLoaderException {
-      cs.store(new StoredEntry("old", "old", -1, -1));
+      cs.store(InternalEntryFactory.create("old", "old"));
       Transaction tx = EasyMock.createNiceMock(Transaction.class);
       cs.commit(tx);
-      cs.store(new StoredEntry("old", "old", -1, -1));
+      cs.store(InternalEntryFactory.create("old", "old"));
       cs.rollback(tx);
 
       assert cs.containsKey("old");
    }
 
    public void testPreload() throws CacheLoaderException {
-      cs.store(new StoredEntry("k1", "v1", -1, -1));
-      cs.store(new StoredEntry("k2", "v2", -1, -1));
-      cs.store(new StoredEntry("k3", "v3", -1, -1));
+      cs.store(InternalEntryFactory.create("k1", "v1"));
+      cs.store(InternalEntryFactory.create("k2", "v2"));
+      cs.store(InternalEntryFactory.create("k3", "v3"));
 
-      Set<StoredEntry> set = cs.loadAll();
+      Set<InternalCacheEntry> set = cs.loadAll();
 
       assert set.size() == 3;
       Set expected = new HashSet();
       expected.add("k1");
       expected.add("k2");
       expected.add("k3");
-      for (StoredEntry se : set) assert expected.remove(se.getKey());
+      for (InternalCacheEntry se : set) assert expected.remove(se.getKey());
       assert expected.isEmpty();
    }
 
    @Test
    public void testStoreAndRemoveAll() throws CacheLoaderException {
-      cs.store(new StoredEntry("k1", "v1", -1, -1));
-      cs.store(new StoredEntry("k2", "v2", -1, -1));
-      cs.store(new StoredEntry("k3", "v3", -1, -1));
-      cs.store(new StoredEntry("k4", "v4", -1, -1));
+      cs.store(InternalEntryFactory.create("k1", "v1"));
+      cs.store(InternalEntryFactory.create("k2", "v2"));
+      cs.store(InternalEntryFactory.create("k3", "v3"));
+      cs.store(InternalEntryFactory.create("k4", "v4"));
 
 
-      Set<StoredEntry> set = cs.loadAll();
+      Set<InternalCacheEntry> set = cs.loadAll();
 
       assert set.size() == 4;
       Set expected = new HashSet();
@@ -331,7 +333,7 @@ public abstract class BaseCacheStoreTest {
       expected.add("k2");
       expected.add("k3");
       expected.add("k4");
-      for (StoredEntry se : set) assert expected.remove(se.getKey());
+      for (InternalCacheEntry se : set) assert expected.remove(se.getKey());
       assert expected.isEmpty();
 
       Set toRemove = new HashSet();
@@ -347,11 +349,10 @@ public abstract class BaseCacheStoreTest {
    }
 
    public void testPurgeExpired() throws Exception {
-      long now = System.currentTimeMillis();
       long lifespan = 1000;
-      cs.store(new StoredEntry("k1", "v1", now, now + lifespan));
-      cs.store(new StoredEntry("k2", "v2", now, now + lifespan));
-      cs.store(new StoredEntry("k3", "v3", now, now + lifespan));
+      cs.store(InternalEntryFactory.create("k1", "v1", lifespan));
+      cs.store(InternalEntryFactory.create("k2", "v2", lifespan));
+      cs.store(InternalEntryFactory.create("k3", "v3", lifespan));
       assert cs.containsKey("k1");
       assert cs.containsKey("k2");
       assert cs.containsKey("k3");
@@ -363,9 +364,9 @@ public abstract class BaseCacheStoreTest {
    }
 
    public void testStreamingAPI() throws IOException, ClassNotFoundException, CacheLoaderException {
-      cs.store(new StoredEntry("k1", "v1", -1, -1));
-      cs.store(new StoredEntry("k2", "v2", -1, -1));
-      cs.store(new StoredEntry("k3", "v3", -1, -1));
+      cs.store(InternalEntryFactory.create("k1", "v1"));
+      cs.store(InternalEntryFactory.create("k2", "v2"));
+      cs.store(InternalEntryFactory.create("k3", "v3"));
 
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       ObjectOutputStream oos = new ObjectOutputStream(out);
@@ -377,21 +378,21 @@ public abstract class BaseCacheStoreTest {
       ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(out.toByteArray()));
       cs.fromStream(new UnclosableObjectInputStream(ois));
 
-      Set<StoredEntry> set = cs.loadAll();
+      Set<InternalCacheEntry> set = cs.loadAll();
 
       assert set.size() == 3;
       Set expected = new HashSet();
       expected.add("k1");
       expected.add("k2");
       expected.add("k3");
-      for (StoredEntry se : set) assert expected.remove(se.getKey());
+      for (InternalCacheEntry se : set) assert expected.remove(se.getKey());
       assert expected.isEmpty();
    }
 
    public void testStreamingAPIReusingStreams() throws IOException, ClassNotFoundException, CacheLoaderException {
-      cs.store(new StoredEntry("k1", "v1", -1, -1));
-      cs.store(new StoredEntry("k2", "v2", -1, -1));
-      cs.store(new StoredEntry("k3", "v3", -1, -1));
+      cs.store(InternalEntryFactory.create("k1", "v1"));
+      cs.store(InternalEntryFactory.create("k2", "v2"));
+      cs.store(InternalEntryFactory.create("k3", "v3"));
 
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       byte[] dummyStartBytes = {1, 2, 3, 4, 5, 6, 7, 8};
@@ -416,14 +417,14 @@ public abstract class BaseCacheStoreTest {
       assert bytesRead == 8;
       for (int i = 8; i > 0; i--) assert dummy[8 - i] == i : "Start byte stream corrupted!";
 
-      Set<StoredEntry> set = cs.loadAll();
+      Set<InternalCacheEntry> set = cs.loadAll();
 
       assert set.size() == 3;
       Set expected = new HashSet();
       expected.add("k1");
       expected.add("k2");
       expected.add("k3");
-      for (StoredEntry se : set) assert expected.remove(se.getKey());
+      for (InternalCacheEntry se : set) assert expected.remove(se.getKey());
       assert expected.isEmpty();
    }
 
@@ -449,7 +450,7 @@ public abstract class BaseCacheStoreTest {
          public void run() {
             try {
                int randomInt = r.nextInt(10);
-               cs.store(new StoredEntry(keys[randomInt], values[randomInt]));
+               cs.store(InternalEntryFactory.create(keys[randomInt], values[randomInt]));
             } catch (Exception e) {
                exceptions.add(e);
             }
@@ -470,7 +471,7 @@ public abstract class BaseCacheStoreTest {
          public void run() {
             try {
                int randomInt = r.nextInt(10);
-               StoredEntry se = cs.load(keys[randomInt]);
+               InternalCacheEntry se = cs.load(keys[randomInt]);
                assert se == null || se.getValue().equals(values[randomInt]);
                cs.loadAll();
             } catch (Exception e) {

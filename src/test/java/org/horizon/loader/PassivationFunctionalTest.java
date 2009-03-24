@@ -1,6 +1,7 @@
 package org.horizon.loader;
 
 import org.horizon.Cache;
+import org.horizon.container.entries.InternalCacheEntry;
 import org.horizon.config.CacheLoaderManagerConfig;
 import org.horizon.config.Configuration;
 import org.horizon.loader.dummy.DummyInMemoryCacheStore;
@@ -63,7 +64,7 @@ public class PassivationFunctionalTest {
    }
 
    private void assertInCacheNotInStore(Object key, Object value, long lifespanMillis) throws CacheLoaderException {
-      StoredEntry se = cache.getAdvancedCache().getDataContainer().createEntryForStorage(key);
+      InternalCacheEntry se = cache.getAdvancedCache().getDataContainer().get(key);
       testStoredEntry(se, value, lifespanMillis, "Cache", key);
       assert !store.containsKey(key) : "Key " + key + " should not be in store!";
    }
@@ -73,13 +74,13 @@ public class PassivationFunctionalTest {
    }
 
    private void assertInStoreNotInCache(Object key, Object value, long lifespanMillis) throws CacheLoaderException {
-      StoredEntry se = store.load(key);
+      InternalCacheEntry se = store.load(key);
       testStoredEntry(se, value, lifespanMillis, "Store", key);
       assert !cache.getAdvancedCache().getDataContainer().containsKey(key) : "Key " + key + " should not be in cache!";
    }
 
 
-   private void testStoredEntry(StoredEntry entry, Object expectedValue, long expectedLifespan, String src, Object key) {
+   private void testStoredEntry(InternalCacheEntry entry, Object expectedValue, long expectedLifespan, String src, Object key) {
       assert entry != null : src + " entry for key " + key + " should NOT be null";
       assert entry.getValue().equals(expectedValue) : src + " should contain value " + expectedValue + " under key " + entry.getKey() + " but was " + entry.getValue() + ". Entry is " + entry;
       assert entry.getLifespan() == expectedLifespan : src + " expected lifespan for key " + key + " to be " + expectedLifespan + " but was " + entry.getLifespan() + ". Entry is " + entry;

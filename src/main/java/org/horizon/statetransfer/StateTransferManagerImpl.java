@@ -28,6 +28,7 @@ import org.horizon.commands.tx.PrepareCommand;
 import org.horizon.commands.write.WriteCommand;
 import org.horizon.config.Configuration;
 import org.horizon.container.DataContainer;
+import org.horizon.container.entries.InternalCacheEntry;
 import org.horizon.context.InvocationContext;
 import org.horizon.factories.annotations.Inject;
 import org.horizon.factories.annotations.Start;
@@ -39,7 +40,6 @@ import org.horizon.io.UnclosableObjectOutputStream;
 import org.horizon.loader.CacheLoaderException;
 import org.horizon.loader.CacheLoaderManager;
 import org.horizon.loader.CacheStore;
-import org.horizon.loader.StoredEntry;
 import org.horizon.logging.Log;
 import org.horizon.logging.LogFactory;
 import org.horizon.marshall.Marshaller;
@@ -58,6 +58,7 @@ import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
+import java.util.HashSet;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 public class StateTransferManagerImpl implements StateTransferManager {
@@ -317,9 +318,9 @@ public class StateTransferManagerImpl implements StateTransferManager {
    private void applyInMemoryState(ObjectInputStream i) throws StateTransferException {
       dataContainer.clear();
       try {
-         Set<StoredEntry> set = (Set<StoredEntry>) marshaller.objectFromObjectStream(i);
-         for (StoredEntry se : set)
-            cache.put(se.getKey(), se.getValue(), se.getLifespan(), MILLISECONDS, Options.CACHE_MODE_LOCAL);
+         Set<InternalCacheEntry> set = (Set<InternalCacheEntry>) marshaller.objectFromObjectStream(i);
+         for (InternalCacheEntry se : set)
+            cache.put(se.getKey(), se.getValue(), se.getLifespan(), MILLISECONDS, Options.CACHE_MODE_LOCAL); // TODO store maxIdle as well
       } catch (Exception e) {
          dataContainer.clear();
          throw new StateTransferException(e);
@@ -330,9 +331,12 @@ public class StateTransferManagerImpl implements StateTransferManager {
       // write all StoredEntries to the stream using the marshaller.
       // TODO is it safe enough to get these from the data container directly?
       try {
-         Set<StoredEntry> s = dataContainer.getAllEntriesForStorage();
-         if (log.isDebugEnabled()) log.debug("Writing {0} StoredEntries to stream", s.size());
-         marshaller.objectToObjectStream(s, o);
+         Set<InternalCacheEntry> entries = new HashSet<InternalCacheEntry>();
+         for (InternalCacheEntry e: dataContainer) {
+            if (!e.isExpired()) entries.add(e);
+         }
+         if (log.isDebugEnabled()) log.debug("Writing {0} StoredEntries to stream", entries.size());
+         marshaller.objectToObjectStream(entries, o);
       } catch (Exception e) {
          throw new StateTransferException(e);
       }

@@ -34,7 +34,7 @@ import org.horizon.commands.write.PutMapCommand;
 import org.horizon.commands.write.RemoveCommand;
 import org.horizon.commands.write.ReplaceCommand;
 import org.horizon.container.DataContainer;
-import org.horizon.container.MVCCEntry;
+import org.horizon.container.entries.CacheEntry;
 import org.horizon.context.InvocationContext;
 import org.horizon.factories.EntryFactory;
 import org.horizon.factories.annotations.Inject;
@@ -107,7 +107,8 @@ public class LockingInterceptor extends CommandInterceptor {
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       try {
          entryFactory.wrapEntryForReading(ctx, command.getKey());
-         return invokeNextInterceptor(ctx, command);
+         Object r = invokeNextInterceptor(ctx, command);
+         return r;
       } finally {
          doAfterCall(ctx);
       }
@@ -222,13 +223,13 @@ public class LockingInterceptor extends CommandInterceptor {
          }
       } else {
          if (useReadCommitted) {
-            Map<Object, MVCCEntry> lookedUpEntries = ctx.getLookedUpEntries();
+            Map<Object, CacheEntry> lookedUpEntries = ctx.getLookedUpEntries();
             if (!lookedUpEntries.isEmpty()) {
                // This should be a Set but we can use an ArrayList instead for efficiency since we know that the elements
                // will always be unique as they are keys from a Map.  Also, we know the maximum size so this ArrayList 
                // should never resize.
                List<Object> keysToRemove = new ArrayList<Object>(lookedUpEntries.size());
-               for (Map.Entry<Object, MVCCEntry> e : lookedUpEntries.entrySet()) {
+               for (Map.Entry<Object, CacheEntry> e : lookedUpEntries.entrySet()) {
                   if (!lockManager.possiblyLocked(e.getValue())) keysToRemove.add(e.getKey());
                }
 
@@ -246,19 +247,18 @@ public class LockingInterceptor extends CommandInterceptor {
    private void cleanupLocks(InvocationContext ctx, Object owner, boolean commit) {
       // clean up.
       // unlocking needs to be done in reverse order.
-      ReversibleOrderedSet entries = ctx.getLookedUpEntries().entrySet();
-      Iterator<Map.Entry<Object, MVCCEntry>> it = entries.reverseIterator();
+      ReversibleOrderedSet<Map.Entry<Object, CacheEntry>> entries = ctx.getLookedUpEntries().entrySet();
+      Iterator<Map.Entry<Object, CacheEntry>> it = entries.reverseIterator();
       if (trace) log.trace("Number of entries in context: {0}", entries.size());
 
       if (commit) {
          while (it.hasNext()) {
-            Map.Entry<Object, MVCCEntry> e = it.next();
-            MVCCEntry entry = e.getValue();
+            Map.Entry<Object, CacheEntry> e = it.next();
+            CacheEntry entry = e.getValue();
             Object key = e.getKey();
             boolean needToUnlock = lockManager.possiblyLocked(entry);
             // could be null with read-committed
-            if (entry != null)
-               entry.commitUpdate(dataContainer);
+            if (entry != null && entry.isChanged()) entry.commit(dataContainer);
             else {
                if (trace) log.trace("Entry for key {0} is null, not calling commitUpdate", key);
             }
@@ -271,13 +271,12 @@ public class LockingInterceptor extends CommandInterceptor {
          }
       } else {
          while (it.hasNext()) {
-            Map.Entry<Object, MVCCEntry> e = it.next();
-            MVCCEntry entry = e.getValue();
+            Map.Entry<Object, CacheEntry> e = it.next();
+            CacheEntry entry = e.getValue();
             Object key = e.getKey();
             boolean needToUnlock = lockManager.possiblyLocked(entry);
             // could be null with read-committed
-            if (entry != null)
-               entry.rollbackUpdate();
+            if (entry != null && entry.isChanged()) entry.rollback();
             else {
                if (trace) log.trace("Entry for key {0} is null, not calling rollbackUpdate", key);
             }

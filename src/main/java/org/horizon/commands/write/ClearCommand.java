@@ -22,7 +22,8 @@
 package org.horizon.commands.write;
 
 import org.horizon.commands.Visitor;
-import org.horizon.container.MVCCEntry;
+import org.horizon.container.entries.MVCCEntry;
+import org.horizon.container.entries.CacheEntry;
 import org.horizon.context.InvocationContext;
 
 /**
@@ -38,9 +39,12 @@ public class ClearCommand implements WriteCommand {
    }
 
    public Object perform(InvocationContext ctx) throws Throwable {
-      for (MVCCEntry e : ctx.getLookedUpEntries().values()) {
-         e.setDeleted(true);
-         e.setValid(false);
+      for (CacheEntry e : ctx.getLookedUpEntries().values()) {
+         if (e instanceof MVCCEntry) {
+            MVCCEntry me = (MVCCEntry) e;
+            me.setRemoved(true);
+            me.setValid(false);
+         }
       }
       return null;
    }

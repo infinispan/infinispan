@@ -27,7 +27,9 @@ import org.horizon.commands.write.PutKeyValueCommand;
 import org.horizon.commands.write.RemoveCommand;
 import org.horizon.commands.write.ReplaceCommand;
 import org.horizon.container.DataContainer;
-import org.horizon.container.MVCCEntry;
+import org.horizon.container.entries.InternalCacheEntry;
+import org.horizon.container.entries.MVCCEntry;
+import org.horizon.container.entries.CacheEntry;
 import org.horizon.context.InvocationContext;
 import org.horizon.factories.EntryFactory;
 import org.horizon.factories.annotations.Inject;
@@ -37,7 +39,6 @@ import org.horizon.jmx.annotations.ManagedAttribute;
 import org.horizon.jmx.annotations.ManagedOperation;
 import org.horizon.loader.CacheLoader;
 import org.horizon.loader.CacheLoaderManager;
-import org.horizon.loader.StoredEntry;
 import org.horizon.notifications.cachelistener.CacheNotifier;
 
 import java.util.concurrent.atomic.AtomicLong;
@@ -106,8 +107,8 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
 
    private boolean loadIfNeeded(InvocationContext ctx, Object key) throws Throwable {
       // first check if the container contains the key we need.  Try and load this into the context.
-      MVCCEntry e = entryFactory.wrapEntryForReading(ctx, key);
-      if (e == null || e.isNullEntry()) {
+      CacheEntry e = entryFactory.wrapEntryForReading(ctx, key);
+      if (e == null || e.isNull()) {
 
          // we *may* need to load this.
          if (!loader.containsKey(key)) {
@@ -130,8 +131,9 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
          n = loadEntry(ctx, key, n);
          ctx.setContainsModifications(true);
          return true;
+      } else {
+         return true;
       }
-      return false;
    }
 
    /**
@@ -140,7 +142,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    private MVCCEntry loadEntry(InvocationContext ctx, Object key, MVCCEntry entry) throws Exception {
       log.trace("Loading key {0}", key);
 
-      StoredEntry storedEntry = loader.load(key);
+      InternalCacheEntry storedEntry = loader.load(key);
       boolean entryExists = (storedEntry != null);
       if (log.isTraceEnabled()) log.trace("Entry exists in loader? " + entryExists);
 

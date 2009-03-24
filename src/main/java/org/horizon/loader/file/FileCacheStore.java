@@ -1,10 +1,10 @@
 package org.horizon.loader.file;
 
 import org.horizon.Cache;
+import org.horizon.container.entries.InternalCacheEntry;
 import org.horizon.config.ConfigurationException;
 import org.horizon.loader.CacheLoaderConfig;
 import org.horizon.loader.CacheLoaderException;
-import org.horizon.loader.StoredEntry;
 import org.horizon.loader.bucket.Bucket;
 import org.horizon.loader.bucket.BucketBasedCacheStore;
 import org.horizon.logging.Log;
@@ -45,8 +45,8 @@ public class FileCacheStore extends BucketBasedCacheStore {
       this.cache = cache;
    }
 
-   protected Set<StoredEntry> loadAllLockSafe() throws CacheLoaderException {
-      Set<StoredEntry> result = new HashSet<StoredEntry>();
+   protected Set<InternalCacheEntry> loadAllLockSafe() throws CacheLoaderException {
+      Set<InternalCacheEntry> result = new HashSet<InternalCacheEntry>();
       for (File bucketFile : root.listFiles()) {
          Bucket bucket = loadBucket(bucketFile);
          if (bucket != null) {

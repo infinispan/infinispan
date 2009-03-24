@@ -33,7 +33,9 @@ import org.horizon.commands.write.RemoveCommand;
 import org.horizon.commands.write.ReplaceCommand;
 import org.horizon.commands.write.WriteCommand;
 import org.horizon.config.CacheLoaderManagerConfig;
-import org.horizon.container.MVCCEntry;
+import org.horizon.container.entries.CacheEntry;
+import org.horizon.container.entries.InternalCacheEntry;
+import org.horizon.container.entries.InternalEntryFactory;
 import org.horizon.context.InvocationContext;
 import org.horizon.context.TransactionContext;
 import org.horizon.factories.annotations.Inject;
@@ -44,7 +46,6 @@ import org.horizon.jmx.annotations.ManagedAttribute;
 import org.horizon.jmx.annotations.ManagedOperation;
 import org.horizon.loader.CacheLoaderManager;
 import org.horizon.loader.CacheStore;
-import org.horizon.loader.StoredEntry;
 import org.horizon.loader.modifications.Clear;
 import org.horizon.loader.modifications.Modification;
 import org.horizon.loader.modifications.Remove;
@@ -195,7 +196,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       if (skip(ctx, command) || inTransaction() || !command.isSuccessful()) return returnValue;
 
       Object key = command.getKey();
-      StoredEntry se = getStoredEntry(key, ctx);
+      InternalCacheEntry se = getStoredEntry(key, ctx);
       store.store(se);
       log.trace("Stored entry {0} under key {1}", se, key);
       if (getStatisticsEnabled()) cacheStores.incrementAndGet();
@@ -209,7 +210,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       if (skip(ctx, command) || inTransaction() || !command.isSuccessful()) return returnValue;
 
       Object key = command.getKey();
-      StoredEntry se = getStoredEntry(key, ctx);
+      InternalCacheEntry se = getStoredEntry(key, ctx);
       store.store(se);
       log.trace("Stored entry {0} under key {1}", se, key);
       if (getStatisticsEnabled()) cacheStores.incrementAndGet();
@@ -224,7 +225,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
 
       Map<Object, Object> map = command.getMap();
       for (Object key : map.keySet()) {
-         StoredEntry se = getStoredEntry(key, ctx);
+         InternalCacheEntry se = getStoredEntry(key, ctx);
          store.store(se);
          log.trace("Stored entry {0} under key {1}", se, key);
       }
@@ -331,10 +332,12 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       return cacheStores.get();
    }
 
-   private StoredEntry getStoredEntry(Object key, InvocationContext ctx) {
-      MVCCEntry entry = ctx.lookupEntry(key);
-      StoredEntry se = new StoredEntry(key, entry.getValue());
-      se.setLifespan(entry.getLifespan());
-      return se;
+   private InternalCacheEntry getStoredEntry(Object key, InvocationContext ctx) {
+      CacheEntry entry = ctx.lookupEntry(key);
+      if (entry instanceof InternalCacheEntry) {
+         return (InternalCacheEntry) entry;
+      } else {
+         return InternalEntryFactory.create(entry.getKey(), entry.getValue(), entry.getLifespan(), entry.getMaxIdle());
+      }
    }
 }

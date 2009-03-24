@@ -2,6 +2,7 @@ package org.horizon.loader;
 
 import org.horizon.Cache;
 import org.horizon.CacheException;
+import org.horizon.container.entries.InternalCacheEntry;
 import org.horizon.config.CacheLoaderManagerConfig;
 import org.horizon.config.Configuration;
 import org.horizon.config.ConfigurationException;
@@ -114,15 +115,15 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
             log.debug("Preloading transient state from cache loader {0}", loader);
             long start = 0, stop = 0, total = 0;
             if (log.isDebugEnabled()) start = System.currentTimeMillis();
-            Set<StoredEntry> state;
+            Set<InternalCacheEntry> state;
             try {
                state = loader.loadAll();
             } catch (CacheLoaderException e) {
                throw new CacheException("Unable to preload!", e);
             }
 
-            for (StoredEntry se : state)
-               cache.getAdvancedCache().put(se.getKey(), se.getValue(), se.getLifespan(),
+            for (InternalCacheEntry e : state)
+               cache.getAdvancedCache().put(e.getKey(), e.getValue(), e.getLifespan(),
                                             TimeUnit.MILLISECONDS, Options.SKIP_CACHE_STATUS_CHECK);
 
             if (log.isDebugEnabled()) stop = System.currentTimeMillis();

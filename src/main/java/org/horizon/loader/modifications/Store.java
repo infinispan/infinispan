@@ -1,18 +1,18 @@
 package org.horizon.loader.modifications;
 
-import org.horizon.loader.StoredEntry;
+import org.horizon.container.entries.InternalCacheEntry;
 
 /**
- * Modification representing {@link org.horizon.loader.CacheStore#store(org.horizon.loader.StoredEntry)}
+ * Modification representing {@link org.horizon.loader.CacheStore#store(org.horizon.container.entries.InternalCacheEntry)}
  *
  * @author Manik Surtani
  * @since 4.0
  */
 public class Store implements Modification {
 
-   final StoredEntry storedEntry;
+   final InternalCacheEntry storedEntry;
 
-   public Store(StoredEntry storedEntry) {
+   public Store(InternalCacheEntry storedEntry) {
       this.storedEntry = storedEntry;
    }
 
@@ -20,7 +20,7 @@ public class Store implements Modification {
       return Type.STORE;
    }
 
-   public StoredEntry getStoredEntry() {
+   public InternalCacheEntry getStoredEntry() {
       return storedEntry;
    }
 

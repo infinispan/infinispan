@@ -3,10 +3,10 @@ package org.horizon.loader.jdbc.binary;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.horizon.Cache;
+import org.horizon.container.entries.InternalCacheEntry;
 import org.horizon.io.ByteBuffer;
 import org.horizon.loader.CacheLoaderConfig;
 import org.horizon.loader.CacheLoaderException;
-import org.horizon.loader.StoredEntry;
 import org.horizon.loader.bucket.Bucket;
 import org.horizon.loader.bucket.BucketBasedCacheStore;
 import org.horizon.loader.jdbc.JdbcUtil;
@@ -156,7 +156,7 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
       }
    }
 
-   public Set<StoredEntry> loadAllLockSafe() throws CacheLoaderException {
+   public Set<InternalCacheEntry> loadAllLockSafe() throws CacheLoaderException {
       Connection conn = null;
       PreparedStatement ps = null;
       ResultSet rs = null;
@@ -169,7 +169,7 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
          ps = conn.prepareStatement(sql);
          rs = ps.executeQuery();
          rs.setFetchSize(config.getFetchSize());
-         Set<StoredEntry> result = new HashSet<StoredEntry>();
+         Set<InternalCacheEntry> result = new HashSet<InternalCacheEntry>();
          while (rs.next()) {
             InputStream binaryStream = rs.getBinaryStream(1);
             Bucket bucket = (Bucket) JdbcUtil.unmarshall(getMarshaller(), binaryStream);

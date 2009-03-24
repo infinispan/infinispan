@@ -34,6 +34,7 @@ import org.horizon.marshall.VersionAwareMarshaller;
 import org.horizon.notifications.cachelistener.CacheNotifier;
 import org.horizon.transaction.TransactionTable;
 import org.horizon.transaction.TransactionLog;
+import org.horizon.eviction.EvictionManager;
 
 /**
  * Simple factory that just uses reflection and an empty constructor of the component type.
@@ -44,7 +45,7 @@ import org.horizon.transaction.TransactionLog;
 @DefaultFactoryFor(classes = {CacheNotifier.class, EntryFactory.class, CommandsFactory.class,
                               CacheLoaderManager.class, InvocationContextContainer.class,
                               TransactionTable.class, BatchContainer.class, ContextFactory.class,
-                              TransactionLog.class})
+                              TransactionLog.class, EvictionManager.class})
 public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
    @Override
    public <T> T construct(Class<T> componentType) {

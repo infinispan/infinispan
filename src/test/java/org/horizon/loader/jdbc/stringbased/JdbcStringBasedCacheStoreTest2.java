@@ -1,8 +1,9 @@
 package org.horizon.loader.jdbc.stringbased;
 
+import org.horizon.container.entries.InternalCacheEntry;
+import org.horizon.container.entries.InternalEntryFactory;
 import org.horizon.loader.CacheLoaderException;
 import org.horizon.loader.CacheStore;
-import org.horizon.loader.StoredEntry;
 import org.horizon.loader.jdbc.TableManipulation;
 import org.horizon.loader.jdbc.UnitTestDatabaseManager;
 import org.horizon.loader.jdbc.connectionfactory.ConnectionFactory;
@@ -60,20 +61,20 @@ public class JdbcStringBasedCacheStoreTest2 {
     */
    public void persistUnsupportedObject() throws Exception {
       try {
-         cacheStore.store(newStoredEntry("key", "value"));
+         cacheStore.store(InternalEntryFactory.create("key", "value"));
          assert false : "exception is expected as PersonKey2StringMapper does not support strings";
       } catch (UnsupportedKeyTypeException e) {
          assert true : "expected";
       }
       //just check that an person object will be persisted okay
-      cacheStore.store(newStoredEntry(MIRCEA, "Cluj Napoca"));
+      cacheStore.store(InternalEntryFactory.create(MIRCEA, "Cluj Napoca"));
    }
 
    public void testStoreLoadRemove() throws Exception {
       assert rowCount() == 0;
       assert cacheStore.load(MIRCEA) == null : "should not be present in the store";
       String value = "adsdsadsa";
-      cacheStore.store(newStoredEntry(MIRCEA, value));
+      cacheStore.store(InternalEntryFactory.create  (MIRCEA, value));
       assert rowCount() == 1;
       assert cacheStore.load(MIRCEA).getValue().equals(value);
       assert !cacheStore.remove(MANIK);
@@ -85,13 +86,13 @@ public class JdbcStringBasedCacheStoreTest2 {
 
    public void testRemoveAll() throws Exception {
       assert rowCount() == 0;
-      cacheStore.store(new StoredEntry(MIRCEA, "value"));
-      cacheStore.store(new StoredEntry(MANIK, "value"));
+      cacheStore.store(InternalEntryFactory.create(MIRCEA, "value"));
+      cacheStore.store(InternalEntryFactory.create(MANIK, "value"));
       assert rowCount() == 2;
       cacheStore.removeAll(Collections.singleton((Object)MIRCEA));
       cacheStore.load(MANIK).getValue().equals("value");
       assert rowCount() == 1;
-      cacheStore.store(new StoredEntry(MIRCEA,"value"));
+      cacheStore.store(InternalEntryFactory.create(MIRCEA,"value"));
       assert rowCount() == 2;
       Set toRemove = new HashSet();
       toRemove.add(MIRCEA);
@@ -102,16 +103,16 @@ public class JdbcStringBasedCacheStoreTest2 {
 
    public void testClear() throws Exception {
       assert rowCount() == 0;
-      cacheStore.store(new StoredEntry(MIRCEA, "value"));
-      cacheStore.store(new StoredEntry(MANIK, "value"));
+      cacheStore.store(InternalEntryFactory.create(MIRCEA, "value"));
+      cacheStore.store(InternalEntryFactory.create(MANIK, "value"));
       assert rowCount() == 2;
       cacheStore.clear();
       assert rowCount() == 0;
    }
 
    public void testPurgeExpired() throws Exception {
-      StoredEntry first = new StoredEntry(MIRCEA, "val",1000);
-      StoredEntry second = new StoredEntry(MANIK, "val2");
+      InternalCacheEntry first = InternalEntryFactory.create(MIRCEA, "val",1000);
+      InternalCacheEntry second = InternalEntryFactory.create(MANIK, "val2");
       cacheStore.store(first);
       cacheStore.store(second);
       assert rowCount() == 2;
@@ -122,16 +123,6 @@ public class JdbcStringBasedCacheStoreTest2 {
       assert cacheStore.load(MANIK).getValue().equals("val2");
    }
 
-//   private void printTableContent() throws Exception {
-//      String sql = "SELECT TIMESTAMP_COLUMN FROM HORIZON_JDBC";
-//      ConnectionFactory connectionFactory = getConnection();
-//      Connection conn = connectionFactory.getConnection();
-//      ResultSet rs = conn.createStatement().executeQuery(sql);
-//      while (rs.next()) {
-//         System.out.println(rs.getLong(1));
-//      }
-//   }
-
    private int rowCount() {
       ConnectionFactory connectionFactory = getConnection();
       String tableName = tableManipulation.getTableName();
@@ -141,9 +132,5 @@ public class JdbcStringBasedCacheStoreTest2 {
    private ConnectionFactory getConnection() {
       JdbcStringBasedCacheStore store = (JdbcStringBasedCacheStore) cacheStore;
       return store.getConnectionFactory();
-   }
-
-   private StoredEntry newStoredEntry(Object key, Object value) {
-      return new StoredEntry(key, value);
    }
 }

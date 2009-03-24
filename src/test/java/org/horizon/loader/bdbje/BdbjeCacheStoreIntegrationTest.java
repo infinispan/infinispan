@@ -4,12 +4,12 @@ import org.easymock.EasyMock;
 import org.horizon.loader.BaseCacheStoreTest;
 import org.horizon.loader.CacheLoaderException;
 import org.horizon.loader.CacheStore;
-import org.horizon.loader.StoredEntry;
 import org.horizon.loader.modifications.Clear;
 import org.horizon.loader.modifications.Modification;
 import org.horizon.loader.modifications.Remove;
 import org.horizon.loader.modifications.Store;
 import org.horizon.test.TestingUtil;
+import org.horizon.container.entries.InternalEntryFactory;
 import org.testng.annotations.Test;
 
 import javax.transaction.Transaction;
@@ -44,8 +44,8 @@ public class BdbjeCacheStoreIntegrationTest extends BaseCacheStoreTest {
    @Override
    public void testTwoPhaseCommit() throws CacheLoaderException {
       List<Modification> mods = new ArrayList<Modification>();
-      mods.add(new Store(new StoredEntry("k1", "v1", -1, -1)));
-      mods.add(new Store(new StoredEntry("k2", "v2", -1, -1)));
+      mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
+      mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
       mods.add(new Remove("k1"));
       Transaction tx = EasyMock.createNiceMock(Transaction.class);
       cs.prepare(mods, tx, false);
@@ -57,10 +57,10 @@ public class BdbjeCacheStoreIntegrationTest extends BaseCacheStoreTest {
       cs.clear();
 
       mods = new ArrayList<Modification>();
-      mods.add(new Store(new StoredEntry("k1", "v1", -1, -1)));
-      mods.add(new Store(new StoredEntry("k2", "v2", -1, -1)));
+      mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
+      mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
       mods.add(new Clear());
-      mods.add(new Store(new StoredEntry("k3", "v3", -1, -1)));
+      mods.add(new Store(InternalEntryFactory.create("k3", "v3")));
 
       cs.prepare(mods, tx, false);
       cs.commit(tx);
@@ -76,11 +76,11 @@ public class BdbjeCacheStoreIntegrationTest extends BaseCacheStoreTest {
    @Override
    public void testRollback() throws CacheLoaderException {
 
-      cs.store(new StoredEntry("old", "old", -1, -1));
+      cs.store(InternalEntryFactory.create("old", "old"));
 
       List<Modification> mods = new ArrayList<Modification>();
-      mods.add(new Store(new StoredEntry("k1", "v1", -1, -1)));
-      mods.add(new Store(new StoredEntry("k2", "v2", -1, -1)));
+      mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
+      mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
       mods.add(new Remove("k1"));
       mods.add(new Remove("old"));
       Transaction tx = EasyMock.createNiceMock(Transaction.class);
@@ -92,10 +92,10 @@ public class BdbjeCacheStoreIntegrationTest extends BaseCacheStoreTest {
       assert cs.containsKey("old");
 
       mods = new ArrayList<Modification>();
-      mods.add(new Store(new StoredEntry("k1", "v1", -1, -1)));
-      mods.add(new Store(new StoredEntry("k2", "v2", -1, -1)));
+      mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
+      mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
       mods.add(new Clear());
-      mods.add(new Store(new StoredEntry("k3", "v3", -1, -1)));
+      mods.add(new Store(InternalEntryFactory.create("k3", "v3")));
 
       cs.prepare(mods, tx, false);
       cs.rollback(tx);

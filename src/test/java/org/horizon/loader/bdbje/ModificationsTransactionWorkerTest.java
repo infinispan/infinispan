@@ -2,12 +2,13 @@ package org.horizon.loader.bdbje;
 
 import static org.easymock.classextension.EasyMock.*;
 import org.horizon.loader.CacheStore;
-import org.horizon.loader.StoredEntry;
 import org.horizon.loader.modifications.Clear;
 import org.horizon.loader.modifications.Modification;
 import org.horizon.loader.modifications.PurgeExpired;
 import org.horizon.loader.modifications.Remove;
 import org.horizon.loader.modifications.Store;
+import org.horizon.container.entries.InternalEntryFactory;
+import org.horizon.container.entries.InternalCacheEntry;
 import org.testng.annotations.Test;
 
 import java.util.Collections;
@@ -23,15 +24,10 @@ import java.util.Collections;
 public class ModificationsTransactionWorkerTest {
 
    @Test
-   public void testDoWorkOnUnsupportedModification() {
-      //TODO: we currently support all modifications...
-   }
-
-   @Test
    public void testDoWorkOnStore() throws Exception {
       CacheStore cs = createMock(CacheStore.class);
       Store store = createMock(Store.class);
-      StoredEntry entry = new StoredEntry("1", "2");
+      InternalCacheEntry entry = InternalEntryFactory.create("1", "2");
       expect(store.getType()).andReturn(Modification.Type.STORE);
       expect(store.getStoredEntry()).andReturn(entry);
       cs.store(entry);

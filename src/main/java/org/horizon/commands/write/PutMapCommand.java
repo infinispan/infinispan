@@ -22,7 +22,7 @@
 package org.horizon.commands.write;
 
 import org.horizon.commands.Visitor;
-import org.horizon.container.MVCCEntry;
+import org.horizon.container.entries.MVCCEntry;
 import org.horizon.context.InvocationContext;
 import org.horizon.notifications.cachelistener.CacheNotifier;
 
@@ -62,10 +62,14 @@ public class PutMapCommand implements WriteCommand {
       return visitor.visitPutMapCommand(ctx, this);
    }
 
+   private MVCCEntry lookupMvccEntry(InvocationContext ctx, Object key) {
+      return (MVCCEntry) ctx.lookupEntry(key);
+   }
+
    public Object perform(InvocationContext ctx) throws Throwable {
       for (Entry<Object, Object> e : map.entrySet()) {
          Object key = e.getKey();
-         MVCCEntry me = ctx.lookupEntry(key);
+         MVCCEntry me = lookupMvccEntry(ctx, key);
          notifier.notifyCacheEntryModified(key, me.getValue(), true, ctx);
          me.setValue(e.getValue());
          me.setLifespan(lifespanMillis);

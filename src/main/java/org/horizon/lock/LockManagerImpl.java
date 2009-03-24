@@ -22,7 +22,7 @@
 package org.horizon.lock;
 
 import org.horizon.config.Configuration;
-import org.horizon.container.MVCCEntry;
+import org.horizon.container.entries.CacheEntry;
 import org.horizon.context.InvocationContext;
 import org.horizon.factories.annotations.Inject;
 import org.horizon.factories.annotations.Start;
@@ -103,13 +103,13 @@ public class LockManagerImpl implements LockManager {
 
    @SuppressWarnings("unchecked")
    public void unlock(InvocationContext ctx) {
-      ReversibleOrderedSet<Map.Entry<Object, MVCCEntry>> entries = ctx.getLookedUpEntries().entrySet();
+      ReversibleOrderedSet<Map.Entry<Object, CacheEntry>> entries = ctx.getLookedUpEntries().entrySet();
       if (!entries.isEmpty()) {
          // unlocking needs to be done in reverse order.
-         Iterator<Map.Entry<Object, MVCCEntry>> it = entries.reverseIterator();
+         Iterator<Map.Entry<Object, CacheEntry>> it = entries.reverseIterator();
          while (it.hasNext()) {
-            Map.Entry<Object, MVCCEntry> e = it.next();
-            MVCCEntry entry = e.getValue();
+            Map.Entry<Object, CacheEntry> e = it.next();
+            CacheEntry entry = e.getValue();
             if (possiblyLocked(entry)) {
                // has been locked!
                Object k = e.getKey();
@@ -145,8 +145,8 @@ public class LockManagerImpl implements LockManager {
       return lockContainer.toString();
    }
 
-   public final boolean possiblyLocked(MVCCEntry entry) {
-      return entry == null || entry.isChanged() || entry.isNullEntry();
+   public final boolean possiblyLocked(CacheEntry entry) {
+      return entry == null || entry.isChanged() || entry.isNull();
    }
 
    @ManagedAttribute(writable = false, description = "The concurrency level that the MVCC Lock Manager has been configured with.")

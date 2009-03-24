@@ -11,8 +11,9 @@ import com.sleepycat.je.Environment;
 import com.sleepycat.util.RuntimeExceptionWrapper;
 import static org.easymock.classextension.EasyMock.*;
 import org.horizon.Cache;
+import org.horizon.container.entries.InternalEntryFactory;
+import org.horizon.container.entries.InternalCacheEntry;
 import org.horizon.loader.CacheLoaderException;
-import org.horizon.loader.StoredEntry;
 import org.horizon.loader.modifications.Store;
 import org.horizon.util.ReflectionUtil;
 import org.testng.annotations.AfterMethod;
@@ -263,7 +264,7 @@ public class BdbjeCacheStoreTest {
       replayAll();
       cs.start();
       try {
-         cs.applyModifications(Collections.singletonList(new Store(new StoredEntry("k", "v"))));
+         cs.applyModifications(Collections.singletonList(new Store(InternalEntryFactory.create("k", "v"))));
          assert false : "should have gotten an exception";
       } catch (CacheLoaderException e) {
          assert ex.equals(e.getCause());
@@ -289,7 +290,7 @@ public class BdbjeCacheStoreTest {
       try {
          txn = currentTransaction.beginTransaction(null);
          Transaction t = createMock(Transaction.class);
-         cs.prepare(Collections.singletonList(new Store(new StoredEntry("k", "v"))), t,false);
+         cs.prepare(Collections.singletonList(new Store(InternalEntryFactory.create("k", "v"))), t,false);
          cs.commit(t);
          assert false : "should have gotten an exception";
       } catch (CacheLoaderException e) {
@@ -310,7 +311,7 @@ public class BdbjeCacheStoreTest {
       replayAll();
       cs.start();
       try {
-         cs.prepare(Collections.singletonList(new Store(new StoredEntry("k", "v"))), createMock(Transaction.class),false);
+         cs.prepare(Collections.singletonList(new Store(InternalEntryFactory.create("k", "v"))), createMock(Transaction.class),false);
          assert false : "should have gotten an exception";
       } catch (CacheLoaderException e) {
          assert ex.equals(e.getCause());
@@ -324,7 +325,7 @@ public class BdbjeCacheStoreTest {
    @Test
    void testClearOnAbortFromStream() throws Exception {
       start();
-      StoredEntry entry = new StoredEntry();
+      InternalCacheEntry entry = InternalEntryFactory.create("key", "value");
       expect(cacheMap.put(entry.getKey(), entry)).andReturn(null);
       ObjectInput ois = createMock(ObjectInput.class);
       expect(ois.readLong()).andReturn(new Long(1));

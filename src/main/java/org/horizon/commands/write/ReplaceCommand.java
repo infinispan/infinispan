@@ -23,7 +23,7 @@ package org.horizon.commands.write;
 
 import org.horizon.commands.Visitor;
 import org.horizon.commands.read.AbstractDataCommand;
-import org.horizon.container.MVCCEntry;
+import org.horizon.container.entries.MVCCEntry;
 import org.horizon.context.InvocationContext;
 
 
@@ -60,10 +60,10 @@ public class ReplaceCommand extends AbstractDataCommand implements DataWriteComm
    }
 
    public Object perform(InvocationContext ctx) throws Throwable {
-      MVCCEntry e = ctx.lookupEntry(key);
+      MVCCEntry e = lookupMvccEntry(ctx, key);
       if (e != null) {
          if (ctx.isOriginLocal()) {
-            if (e.isNullEntry()) return returnValue(null, false);
+            if (e.isNull()) return returnValue(null, false);
 
             if (oldValue == null || oldValue.equals(e.getValue())) {
                Object old = e.setValue(newValue);

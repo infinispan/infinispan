@@ -1,7 +1,7 @@
 package org.horizon.loader.decorators;
 
 import org.horizon.CacheException;
-import org.horizon.loader.StoredEntry;
+import org.horizon.container.entries.InternalEntryFactory;
 import org.horizon.loader.CacheLoaderException;
 import org.horizon.loader.dummy.DummyInMemoryCacheStore;
 import org.horizon.test.TestingUtil;
@@ -42,10 +42,7 @@ public class AsyncTest {
    public void testRestrictionOnAddingToAsyncQueue() throws Exception {
       store.remove("blah");
 
-      store.store(new StoredEntry("one", "value"));
-      store.store(new StoredEntry("two", "value"));
-      store.store(new StoredEntry("three", "value"));
-      store.store(new StoredEntry("four", "value"));
+      for (int i=0; i<4; i++) store.store(InternalEntryFactory.create("k" + i, "v" + i));
 
       // stop the cache store
       store.stop();

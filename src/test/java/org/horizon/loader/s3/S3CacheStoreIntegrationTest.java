@@ -1,11 +1,12 @@
 package org.horizon.loader.s3;
 
+import org.horizon.container.entries.InternalCacheEntry;
+import org.horizon.container.entries.InternalEntryFactory;
 import org.horizon.io.UnclosableObjectInputStream;
 import org.horizon.io.UnclosableObjectOutputStream;
 import org.horizon.loader.BaseCacheStoreTest;
 import org.horizon.loader.CacheLoaderException;
 import org.horizon.loader.CacheStore;
-import org.horizon.loader.StoredEntry;
 import org.jets3t.service.model.S3Bucket;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterTest;
@@ -105,9 +106,9 @@ public class S3CacheStoreIntegrationTest extends BaseCacheStoreTest {
 
    @Override
    public void testStreamingAPI() throws IOException, ClassNotFoundException, CacheLoaderException {
-      cs.store(new StoredEntry("k1", "v1", -1, -1));
-      cs.store(new StoredEntry("k2", "v2", -1, -1));
-      cs.store(new StoredEntry("k3", "v3", -1, -1));
+      cs.store(InternalEntryFactory.create("k1", "v1", -1, -1));
+      cs.store(InternalEntryFactory.create("k2", "v2", -1, -1));
+      cs.store(InternalEntryFactory.create("k3", "v3", -1, -1));
 
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       ObjectOutputStream oos = new ObjectOutputStream(out);
@@ -119,22 +120,22 @@ public class S3CacheStoreIntegrationTest extends BaseCacheStoreTest {
       ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(out.toByteArray()));
       cs2.fromStream(new UnclosableObjectInputStream(ois));
 
-      Set<StoredEntry> set = cs2.loadAll();
+      Set<InternalCacheEntry> set = cs2.loadAll();
 
       assert set.size() == 3;
       Set expected = new HashSet();
       expected.add("k1");
       expected.add("k2");
       expected.add("k3");
-      for (StoredEntry se : set) assert expected.remove(se.getKey());
+      for (InternalCacheEntry se : set) assert expected.remove(se.getKey());
       assert expected.isEmpty();
    }
 
    @Override
    public void testStreamingAPIReusingStreams() throws IOException, ClassNotFoundException, CacheLoaderException {
-      cs.store(new StoredEntry("k1", "v1", -1, -1));
-      cs.store(new StoredEntry("k2", "v2", -1, -1));
-      cs.store(new StoredEntry("k3", "v3", -1, -1));
+      cs.store(InternalEntryFactory.create("k1", "v1", -1, -1));
+      cs.store(InternalEntryFactory.create("k2", "v2", -1, -1));
+      cs.store(InternalEntryFactory.create("k3", "v3", -1, -1));
 
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       byte[] dummyStartBytes = {1, 2, 3, 4, 5, 6, 7, 8};
@@ -159,14 +160,14 @@ public class S3CacheStoreIntegrationTest extends BaseCacheStoreTest {
       assert bytesRead == 8;
       for (int i = 8; i > 0; i--) assert dummy[8 - i] == i : "Start byte stream corrupted!";
 
-      Set<StoredEntry> set = cs2.loadAll();
+      Set<InternalCacheEntry> set = cs2.loadAll();
 
       assert set.size() == 3;
       Set expected = new HashSet();
       expected.add("k1");
       expected.add("k2");
       expected.add("k3");
-      for (StoredEntry se : set) assert expected.remove(se.getKey());
+      for (InternalCacheEntry se : set) assert expected.remove(se.getKey());
       assert expected.isEmpty();
    }
 }

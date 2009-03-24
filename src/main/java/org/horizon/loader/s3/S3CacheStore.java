@@ -1,9 +1,9 @@
 package org.horizon.loader.s3;
 
 import org.horizon.Cache;
+import org.horizon.container.entries.InternalCacheEntry;
 import org.horizon.loader.CacheLoaderConfig;
 import org.horizon.loader.CacheLoaderException;
-import org.horizon.loader.StoredEntry;
 import org.horizon.loader.bucket.Bucket;
 import org.horizon.loader.bucket.BucketBasedCacheStore;
 import org.horizon.loader.file.FileCacheStore;
@@ -89,8 +89,8 @@ public class S3CacheStore extends BucketBasedCacheStore {
       }
    }
 
-   protected Set<StoredEntry> loadAllLockSafe() throws CacheLoaderException {
-      Set<StoredEntry> result = new HashSet<StoredEntry>();
+   protected Set<InternalCacheEntry> loadAllLockSafe() throws CacheLoaderException {
+      Set<InternalCacheEntry> result = new HashSet<InternalCacheEntry>();
       try {
          for (S3Object s3Object : s3Connection.getAllObjectsInBucketWithoutTheirData(rootS3Bucket)) {
             Bucket bucket = loadBucket(s3Object);

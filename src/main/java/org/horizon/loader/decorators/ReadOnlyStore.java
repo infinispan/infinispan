@@ -1,8 +1,8 @@
 package org.horizon.loader.decorators;
 
 import org.horizon.loader.CacheStore;
-import org.horizon.loader.StoredEntry;
 import org.horizon.loader.modifications.Modification;
+import org.horizon.container.entries.InternalCacheEntry;
 
 import javax.transaction.Transaction;
 import java.io.ObjectInput;
@@ -22,7 +22,7 @@ public class ReadOnlyStore extends AbstractDelegatingStore {
    }
 
    @Override
-   public void store(StoredEntry ed) {
+   public void store(InternalCacheEntry ed) {
       // no-op
    }
 

@@ -11,9 +11,9 @@ import com.sleepycat.je.DatabaseException;
 import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
 import com.sleepycat.util.ExceptionUnwrapper;
-import org.horizon.loader.StoredEntry;
 import org.horizon.logging.Log;
 import org.horizon.logging.LogFactory;
+import org.horizon.container.entries.InternalCacheEntry;
 
 import java.io.File;
 
@@ -95,9 +95,9 @@ public class BdbjeResourceFactory {
       EntryBinding storedEntryKeyBinding =
             new SerialBinding(classCatalog, Object.class);
       EntryBinding storedEntryValueBinding =
-            new SerialBinding(classCatalog, StoredEntry.class);
+            new SerialBinding(classCatalog, InternalCacheEntry.class);
       try {
-         return new StoredMap<Object, StoredEntry>(database,
+         return new StoredMap<Object, InternalCacheEntry>(database,
                                                    storedEntryKeyBinding, storedEntryValueBinding, true);
       } catch (Exception caught) {
          caught = ExceptionUnwrapper.unwrap(caught);

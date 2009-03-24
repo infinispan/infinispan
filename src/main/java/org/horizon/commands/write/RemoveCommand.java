@@ -23,7 +23,7 @@ package org.horizon.commands.write;
 
 import org.horizon.commands.Visitor;
 import org.horizon.commands.read.AbstractDataCommand;
-import org.horizon.container.MVCCEntry;
+import org.horizon.container.entries.MVCCEntry;
 import org.horizon.context.InvocationContext;
 import org.horizon.logging.Log;
 import org.horizon.logging.LogFactory;
@@ -61,8 +61,8 @@ public class RemoveCommand extends AbstractDataCommand implements DataWriteComma
    }
 
    public Object perform(InvocationContext ctx) throws Throwable {
-      MVCCEntry e = ctx.lookupEntry(key);
-      if (e == null || e.isNullEntry()) {
+      MVCCEntry e = lookupMvccEntry(ctx, key);
+      if (e == null || e.isNull()) {
          log.trace("Nothing to remove since the entry is null or we have a null entry");
          if (value == null) {
             return null;
@@ -77,7 +77,7 @@ public class RemoveCommand extends AbstractDataCommand implements DataWriteComma
       }
 
       notify(ctx, e.getValue(), true);
-      e.setDeleted(true);
+      e.setRemoved(true);
       e.setValid(false);
       notify(ctx, null, false);
       return value == null ? e.getValue() : true;

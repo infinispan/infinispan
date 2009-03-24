@@ -21,9 +21,9 @@
  */
 package org.horizon.container;
 
+import org.horizon.container.entries.InternalCacheEntry;
 import org.horizon.factories.scopes.Scope;
 import org.horizon.factories.scopes.Scopes;
-import org.horizon.loader.StoredEntry;
 
 import java.util.Set;
 
@@ -34,33 +34,56 @@ import java.util.Set;
  * @since 4.0
  */
 @Scope(Scopes.NAMED_CACHE)
-public interface DataContainer {
-   Object get(Object k);
-
-   void put(Object k, Object v, long lifespan);
-
-   boolean containsKey(Object k);
-
-   Object remove(Object k);
-
-   int size();
-
-   void clear();
-
-   Set<Object> keySet();
-
-   long getModifiedTimestamp(Object key);
+public interface DataContainer extends Iterable<InternalCacheEntry> {
 
    /**
-    * Purges entries that have passed their expiry time, returning a set of keys that have been purged.
-    *
-    * @return set of keys that have been purged.
+    * Retrieves a cached entry
+    * @param k key under which entry is stored
+    * @return entry, if it exists and has not expired, or null if not
     */
-   Set<Object> purgeExpiredEntries();
+   InternalCacheEntry get(Object k);
 
-   StoredEntry createEntryForStorage(Object key);
+   /**
+    * Puts an entry in the cache along with a lifespan and a maxIdle time
+    * @param k key under which to store entry
+    * @param v value to store
+    * @param lifespan lifespan in milliseconds.  -1 means immortal.
+    * @param maxIdle max idle time for which to store entry.  -1 means forever.
+    */
+   void put(Object k, Object v, long lifespan, long maxIdle);
 
-   CachedValue getEntry(Object k);
+   /**
+    * Tests whether an entry exists in the container
+    * @param k key to test
+    * @return true if entry exists and has not expired; false otherwise
+    */
+   boolean containsKey(Object k);
 
-   Set<StoredEntry> getAllEntriesForStorage();
+   /**
+    * Removes an entry from the cache
+    * @param k key to remove
+    * @return entry removed, or null if it didn't exist or had expired
+    */
+   InternalCacheEntry remove(Object k);
+
+   /**
+    *
+    * @return count of the number of entries in the container
+    */
+   int size();
+
+   /**
+    * Removes all entries in the container
+    */
+   void clear();
+
+   /**
+    * @return a set of keys contained in the container
+    */
+   Set<Object> keySet();
+
+   /**
+    * Purges entries that have passed their expiry time
+    */
+   void purge();
 }

@@ -5,6 +5,8 @@ import static org.horizon.api.mvcc.LockAssert.assertNoLocks;
 import org.horizon.config.CacheLoaderManagerConfig;
 import org.horizon.config.Configuration;
 import org.horizon.container.DataContainer;
+import org.horizon.container.entries.InternalCacheEntry;
+import org.horizon.container.entries.InternalEntryFactory;
 import org.horizon.lifecycle.ComponentStatus;
 import org.horizon.loader.dummy.DummyInMemoryCacheStore;
 import org.horizon.manager.CacheManager;
@@ -73,13 +75,13 @@ public class CacheLoaderFunctionalTest {
    }
 
    private void assertInCacheAndStore(Cache cache, CacheStore store, Object key, Object value, long lifespanMillis) throws CacheLoaderException {
-      StoredEntry se = cache.getAdvancedCache().getDataContainer().createEntryForStorage(key);
+      InternalCacheEntry se = cache.getAdvancedCache().getDataContainer().get(key);
       testStoredEntry(se, value, lifespanMillis, "Cache", key);
       se = store.load(key);
       testStoredEntry(se, value, lifespanMillis, "Store", key);
    }
 
-   private void testStoredEntry(StoredEntry entry, Object expectedValue, long expectedLifespan, String src, Object key) {
+   private void testStoredEntry(InternalCacheEntry entry, Object expectedValue, long expectedLifespan, String src, Object key) {
       assert entry != null : src + " entry for key " + key + " should NOT be null";
       assert entry.getValue().equals(expectedValue) : src + " should contain value " + expectedValue + " under key " + entry.getKey() + " but was " + entry.getValue() + ". Entry is " + entry;
       assert entry.getLifespan() == expectedLifespan : src + " expected lifespan for key " + key + " to be " + expectedLifespan + " but was " + entry.getLifespan() + ". Entry is " + entry;
@@ -195,11 +197,7 @@ public class CacheLoaderFunctionalTest {
 
    public void testLoading() throws CacheLoaderException {
       assertNotInCacheAndStore("k1", "k2", "k3", "k4");
-      store.store(new StoredEntry("k1", "v1"));
-      store.store(new StoredEntry("k2", "v2"));
-      store.store(new StoredEntry("k3", "v3"));
-      store.store(new StoredEntry("k4", "v4"));
-
+      for (int i = 1; i < 5; i++) store.store(InternalEntryFactory.create("k"+i, "v"+i));
       for (int i = 1; i < 5; i++) assert cache.get("k" + i).equals("v" + i);
       // make sure we have no stale locks!!
       assertNoLocks(cache);

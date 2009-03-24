@@ -2,7 +2,7 @@ package org.horizon.loader.bucket;
 
 import org.horizon.loader.CacheLoaderException;
 import org.horizon.loader.LockSupportCacheStore;
-import org.horizon.loader.StoredEntry;
+import org.horizon.container.entries.InternalCacheEntry;
 
 /**
  * Base class for cache store that want to use the 'buckets approach' for storing data.
@@ -27,10 +27,10 @@ public abstract class BucketBasedCacheStore extends LockSupportCacheStore {
     * @param lockingKey the hash of the key, as returned by {@link super#getLockFromKey(Object)}. This is present here
     *                   in order to avoid hash recomputation.
     */
-   protected StoredEntry loadLockSafe(Object key, String lockingKey) throws CacheLoaderException {
+   protected InternalCacheEntry loadLockSafe(Object key, String lockingKey) throws CacheLoaderException {
       Bucket bucket = loadBucket(lockingKey);
       if (bucket == null) return null;
-      StoredEntry se = bucket.getEntry(key);
+      InternalCacheEntry se = bucket.getEntry(key);
       if (se != null && se.isExpired()) {
          return null;
       } else {
@@ -45,7 +45,7 @@ public abstract class BucketBasedCacheStore extends LockSupportCacheStore {
     * @param lockingKey the hash of the key, as returned by {@link super#getLockFromKey(Object)}. This is present here
     *                   in order to avoid hash recomputation.
     */
-   protected void storeLockSafe(StoredEntry ed, String lockingKey) throws CacheLoaderException {
+   protected void storeLockSafe(InternalCacheEntry ed, String lockingKey) throws CacheLoaderException {
       Bucket bucket = loadBucket(lockingKey);
       if (bucket != null) {
          bucket.addEntry(ed);

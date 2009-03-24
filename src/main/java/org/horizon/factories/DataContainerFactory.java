@@ -22,18 +22,25 @@
 package org.horizon.factories;
 
 import org.horizon.container.DataContainer;
-import org.horizon.container.UnsortedDataContainer;
+import org.horizon.container.SimpleDataContainer;
 import org.horizon.factories.annotations.DefaultFactoryFor;
 
 /**
- * // TODO: MANIK: Document this
+ * Constructs the data container
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @since 4.0
  */
 @DefaultFactoryFor(classes = DataContainer.class)
 public class DataContainerFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
+
+   @SuppressWarnings("unchecked")
    public <T> T construct(Class<T> componentType) {
-      return (T) new UnsortedDataContainer();
+      switch (configuration.getEvictionStrategy()) {
+         case NONE:
+            return (T) new SimpleDataContainer();
+         default:
+            throw new RuntimeException("Implement other containers for eviction policies!");
+      }
    }
 }

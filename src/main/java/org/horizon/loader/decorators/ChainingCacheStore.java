@@ -1,11 +1,11 @@
 package org.horizon.loader.decorators;
 
 import org.horizon.Cache;
+import org.horizon.container.entries.InternalCacheEntry;
 import org.horizon.loader.CacheLoader;
 import org.horizon.loader.CacheLoaderConfig;
 import org.horizon.loader.CacheLoaderException;
 import org.horizon.loader.CacheStore;
-import org.horizon.loader.StoredEntry;
 import org.horizon.loader.modifications.Modification;
 import org.horizon.marshall.Marshaller;
 
@@ -35,7 +35,7 @@ public class ChainingCacheStore implements CacheStore {
    LinkedHashMap<CacheLoader, CacheLoaderConfig> loaders = new LinkedHashMap<CacheLoader, CacheLoaderConfig>();
    LinkedHashMap<CacheStore, CacheLoaderConfig> stores = new LinkedHashMap<CacheStore, CacheLoaderConfig>();
 
-   public void store(StoredEntry ed) throws CacheLoaderException {
+   public void store(InternalCacheEntry ed) throws CacheLoaderException {
       for (CacheStore s : stores.keySet()) s.store(ed);
    }
 
@@ -97,8 +97,8 @@ public class ChainingCacheStore implements CacheStore {
       }
    }
 
-   public StoredEntry load(Object key) throws CacheLoaderException {
-      StoredEntry se = null;
+   public InternalCacheEntry load(Object key) throws CacheLoaderException {
+      InternalCacheEntry se = null;
       for (CacheLoader l : loaders.keySet()) {
          se = l.load(key);
          if (se != null) break;
@@ -106,8 +106,8 @@ public class ChainingCacheStore implements CacheStore {
       return se;
    }
 
-   public Set<StoredEntry> loadAll() throws CacheLoaderException {
-      Set<StoredEntry> set = new HashSet<StoredEntry>();
+   public Set<InternalCacheEntry> loadAll() throws CacheLoaderException {
+      Set<InternalCacheEntry> set = new HashSet<InternalCacheEntry>();
       for (CacheStore s : stores.keySet()) set.addAll(s.loadAll());
       return set;
    }

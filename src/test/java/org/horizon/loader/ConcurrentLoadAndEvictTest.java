@@ -6,6 +6,7 @@ import org.horizon.config.CacheLoaderManagerConfig;
 import org.horizon.config.Configuration;
 import org.horizon.config.CustomInterceptorConfig;
 import org.horizon.container.DataContainer;
+import org.horizon.container.entries.InternalCacheEntry;
 import org.horizon.context.InvocationContext;
 import org.horizon.interceptors.CacheLoaderInterceptor;
 import org.horizon.interceptors.base.CommandInterceptor;
@@ -59,7 +60,7 @@ public class ConcurrentLoadAndEvictTest extends SingleCacheManagerTest {
       assert cache.get("a").equals("b");
       CacheLoader cl = TestingUtil.getCacheLoader(cache);
       assert cl != null;
-      StoredEntry se = cl.load("a");
+      InternalCacheEntry se = cl.load("a");
       assert se != null;
       assert se.getValue().equals("b");
 

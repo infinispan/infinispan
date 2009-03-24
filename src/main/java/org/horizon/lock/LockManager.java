@@ -21,8 +21,8 @@
  */
 package org.horizon.lock;
 
-import org.horizon.container.MVCCEntry;
 import org.horizon.context.InvocationContext;
+import org.horizon.container.entries.CacheEntry;
 
 /**
  * An interface to deal with all aspects of acquiring and releasing locks for cache entries.
@@ -44,11 +44,7 @@ public interface LockManager {
    /**
     * Acquires a lock of type lockType, on a specific entry in the cache.  This method will try for a period of time and
     * give up if it is unable to acquire the required lock.  The period of time is specified in {@link
-    * org.horizon.config.Option#getLockAcquisitionTimeout()} and, if this is unset, the default timeout set in {@link
-    * org.horizon.config.Configuration#getLockAcquisitionTimeout()} is used.
-    * <p/>
-    * In addition, any locks acquired are added to the context OR transaction entry using {@link
-    * org.horizon.context.InvocationContext#addKeyLocked(Object)}
+    * org.horizon.config.Configuration#getLockAcquisitionTimeout()}.
     * <p/>
     * The owner for the lock is determined by passing the invocation context to {@link
     * #getLockOwner(InvocationContext)}.
@@ -121,5 +117,5 @@ public interface LockManager {
     * @param entry entry to inspect
     * @return true if the entry *might* be locked, false if the entry definitely is *not* locked.
     */
-   boolean possiblyLocked(MVCCEntry entry);
+   boolean possiblyLocked(CacheEntry entry);
 }

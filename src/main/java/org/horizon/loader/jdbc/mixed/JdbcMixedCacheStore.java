@@ -1,11 +1,11 @@
 package org.horizon.loader.jdbc.mixed;
 
 import org.horizon.Cache;
+import org.horizon.container.entries.InternalCacheEntry;
 import org.horizon.loader.AbstractCacheStore;
 import org.horizon.loader.CacheLoaderConfig;
 import org.horizon.loader.CacheLoaderException;
 import org.horizon.loader.CacheStore;
-import org.horizon.loader.StoredEntry;
 import org.horizon.loader.jdbc.binary.JdbcBinaryCacheStore;
 import org.horizon.loader.jdbc.connectionfactory.ConnectionFactory;
 import org.horizon.loader.jdbc.connectionfactory.ConnectionFactoryConfig;
@@ -22,8 +22,7 @@ import java.util.Set;
  * (sometimes both, see below) based on the passed in key. In order to determine which store to use it will rely on the
  * configured {@link org.horizon.loader.jdbc.stringbased.Key2StringMapper} )(see configuration).
  * <p/>
- * The advantage it brings is the possibility of effeciently storing string(able) keyd {@link
- * org.horizon.loader.StoredEntry}s, and at the same time being able to store any other keys, a la {@link
+ * The advantage it brings is the possibility of effeciently storing string(able) keyd {@link org.horizon.container.entries.InternalCacheEntry}s, and at the same time being able to store any other keys, a la {@link
  * org.horizon.loader.jdbc.binary.JdbcBinaryCacheStore}.
  * <p/>
  * There will only be a performance cost for the aggregate operations: loadAll, fromStream, toStream and clear. For
@@ -82,18 +81,18 @@ public class JdbcMixedCacheStore extends AbstractCacheStore {
       stringBasedCacheStore.purgeInternal();
    }
 
-   public StoredEntry load(Object key) throws CacheLoaderException {
+   public InternalCacheEntry load(Object key) throws CacheLoaderException {
       return getCacheStore(key).load(key);
    }
 
-   public Set<StoredEntry> loadAll() throws CacheLoaderException {
-      Set<StoredEntry> fromBuckets = binaryCacheStore.loadAll();
-      Set<StoredEntry> fromStrings = stringBasedCacheStore.loadAll();
+   public Set<InternalCacheEntry> loadAll() throws CacheLoaderException {
+      Set<InternalCacheEntry> fromBuckets = binaryCacheStore.loadAll();
+      Set<InternalCacheEntry> fromStrings = stringBasedCacheStore.loadAll();
       fromBuckets.addAll(fromStrings);
       return fromBuckets;
    }
 
-   public void store(StoredEntry ed) throws CacheLoaderException {
+   public void store(InternalCacheEntry ed) throws CacheLoaderException {
       getCacheStore(ed.getKey()).store(ed);
    }
 

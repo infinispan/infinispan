@@ -22,7 +22,7 @@
 package org.horizon.commands.read;
 
 import org.horizon.commands.Visitor;
-import org.horizon.container.MVCCEntry;
+import org.horizon.container.entries.CacheEntry;
 import org.horizon.context.InvocationContext;
 import org.horizon.logging.Log;
 import org.horizon.logging.LogFactory;
@@ -53,12 +53,12 @@ public class GetKeyValueCommand extends AbstractDataCommand {
    }
 
    public Object perform(InvocationContext ctx) throws Throwable {
-      MVCCEntry entry = ctx.lookupEntry(key);
-      if (entry == null || entry.isNullEntry()) {
+      CacheEntry entry = ctx.lookupEntry(key);
+      if (entry == null || entry.isNull()) {
          if (trace) log.trace("Entry not found");
          return null;
       }
-      if (entry.isDeleted()) {
+      if (entry.isRemoved()) {
          if (trace) log.trace("Entry has been deleted and is of type " + entry.getClass().getSimpleName());
          return null;
       }

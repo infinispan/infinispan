@@ -17,7 +17,6 @@ import com.sleepycat.je.EnvironmentConfig;
 import com.sleepycat.je.OperationStatus;
 import org.easymock.EasyMock;
 import org.horizon.loader.CacheLoaderException;
-import org.horizon.loader.StoredEntry;
 import org.horizon.loader.modifications.Clear;
 import org.horizon.loader.modifications.Modification;
 import org.horizon.loader.modifications.Remove;
@@ -25,6 +24,8 @@ import org.horizon.loader.modifications.Store;
 import org.horizon.logging.Log;
 import org.horizon.logging.LogFactory;
 import org.horizon.test.TestingUtil;
+import org.horizon.container.entries.InternalCacheEntry;
+import org.horizon.container.entries.InternalEntryFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -66,7 +67,7 @@ public class BdbjeLearningTest {
 
    private static final String STORED_ENTRIES = "storedEntriesDb";
    private Database storedEntriesDb;
-   private StoredMap<Object, StoredEntry> cacheMap;
+   private StoredMap<Object, InternalCacheEntry> cacheMap;
 
 
    @BeforeMethod
@@ -90,12 +91,12 @@ public class BdbjeLearningTest {
       EntryBinding storedEntryKeyBinding =
             new SerialBinding(javaCatalog, Object.class);
       EntryBinding storedEntryValueBinding =
-            new SerialBinding(javaCatalog, StoredEntry.class);
+            new SerialBinding(javaCatalog, InternalCacheEntry.class);
 
       storedEntriesDb = env.openDatabase(null, STORED_ENTRIES, dbConfig);
 
       cacheMap =
-            new StoredMap<Object, StoredEntry>(storedEntriesDb,
+            new StoredMap<Object, InternalCacheEntry>(storedEntriesDb,
                                                storedEntryKeyBinding, storedEntryValueBinding, true);
 
 
@@ -132,13 +133,13 @@ public class BdbjeLearningTest {
    }
 
 
-   private void store(StoredEntry se) {
+   private void store(InternalCacheEntry se) {
       cacheMap.put(se.getKey(), se);
    }
 
 
-   private StoredEntry load(Object key) {
-      StoredEntry s = cacheMap.get(key);
+   private InternalCacheEntry load(Object key) {
+      InternalCacheEntry s = cacheMap.get(key);
       if (s == null)
          return null;
       if (!s.isExpired())
@@ -153,7 +154,7 @@ public class BdbjeLearningTest {
    }
 
    private void purgeExpired() {
-      Iterator<Map.Entry<Object, StoredEntry>> i = cacheMap.entrySet().iterator();
+      Iterator<Map.Entry<Object, InternalCacheEntry>> i = cacheMap.entrySet().iterator();
       while (i.hasNext()) {
          if (i.next().getValue().isExpired())
             i.remove();
@@ -233,11 +234,11 @@ public class BdbjeLearningTest {
    }
 
    class StoreTransactionWorker implements TransactionWorker {
-      StoreTransactionWorker(StoredEntry entry) {
+      StoreTransactionWorker(InternalCacheEntry entry) {
          this.entry = entry;
       }
 
-      private StoredEntry entry;
+      private InternalCacheEntry entry;
 
       public void doWork() throws Exception {
          store(entry);
@@ -358,7 +359,7 @@ public class BdbjeLearningTest {
 
    public void testLoadAndStore() throws InterruptedException, CacheLoaderException {
       assert !cacheMap.containsKey("k");
-      StoredEntry se = new StoredEntry("k", "v", -1, -1);
+      InternalCacheEntry se = InternalEntryFactory.create("k", "v");
       store(se);
 
       assert load("k").getValue().equals("v");
@@ -366,9 +367,8 @@ public class BdbjeLearningTest {
       assert !load("k").isExpired();
       assert cacheMap.containsKey("k");
 
-      long now = System.currentTimeMillis();
       long lifespan = 120000;
-      se = new StoredEntry("k", "v", now, now + lifespan);
+      se = InternalEntryFactory.create("k", "v", lifespan);
       store(se);
 
       assert load("k").getValue().equals("v");
@@ -376,9 +376,8 @@ public class BdbjeLearningTest {
       assert !load("k").isExpired();
       assert cacheMap.containsKey("k");
 
-      now = System.currentTimeMillis();
       lifespan = 1;
-      se = new StoredEntry("k", "v", now, now + lifespan);
+      se = InternalEntryFactory.create("k", "v", lifespan);
       store(se);
       Thread.sleep(100);
       assert se.isExpired();
@@ -389,8 +388,8 @@ public class BdbjeLearningTest {
 
    public void testOnePhaseCommit() throws CacheLoaderException {
       List<Modification> mods = new ArrayList<Modification>();
-      mods.add(new Store(new StoredEntry("k1", "v1", -1, -1)));
-      mods.add(new Store(new StoredEntry("k2", "v2", -1, -1)));
+      mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
+      mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
       mods.add(new Remove("k1"));
       Transaction tx = EasyMock.createNiceMock(Transaction.class);
       prepare(mods, tx, true);
@@ -403,10 +402,10 @@ public class BdbjeLearningTest {
       cacheMap.clear();
 
       mods = new ArrayList<Modification>();
-      mods.add(new Store(new StoredEntry("k1", "v1", -1, -1)));
-      mods.add(new Store(new StoredEntry("k2", "v2", -1, -1)));
+      mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
+      mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
       mods.add(new Clear());
-      mods.add(new Store(new StoredEntry("k3", "v3", -1, -1)));
+      mods.add(new Store(InternalEntryFactory.create("k3", "v3")));
 
       prepare(mods, tx, true);
       assert !cacheMap.containsKey("k1");
@@ -418,8 +417,8 @@ public class BdbjeLearningTest {
    public void testTwoPhaseCommit() throws Throwable {
       final List<Throwable> throwables = new ArrayList<Throwable>();
       List<Modification> mods = new ArrayList<Modification>();
-      mods.add(new Store(new StoredEntry("k1", "v1", -1, -1)));
-      mods.add(new Store(new StoredEntry("k2", "v2", -1, -1)));
+      mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
+      mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
       mods.add(new Remove("k1"));
       Transaction tx = EasyMock.createNiceMock(Transaction.class);
       prepare(mods, tx, false);
@@ -449,10 +448,10 @@ public class BdbjeLearningTest {
       cacheMap.clear();
 
       mods = new ArrayList<Modification>();
-      mods.add(new Store(new StoredEntry("k1", "v1", -1, -1)));
-      mods.add(new Store(new StoredEntry("k2", "v2", -1, -1)));
+      mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
+      mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
       mods.add(new Clear());
-      mods.add(new Store(new StoredEntry("k3", "v3", -1, -1)));
+      mods.add(new Store(InternalEntryFactory.create("k3", "v3")));
 
       prepare(mods, tx, false);
 
@@ -486,36 +485,16 @@ public class BdbjeLearningTest {
 
    public void testRollback() throws Throwable {
 
-      store(new StoredEntry("old", "old", -1, -1));
+      store(InternalEntryFactory.create("old", "old"));
+
 
       List<Modification> mods = new ArrayList<Modification>();
-      mods.add(new Store(new StoredEntry("k1", "v1", -1, -1)));
-      mods.add(new Store(new StoredEntry("k2", "v2", -1, -1)));
+      mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
+      mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
       mods.add(new Remove("k1"));
       mods.add(new Remove("old"));
       Transaction tx = EasyMock.createNiceMock(Transaction.class);
       prepare(mods, tx, false);
-
-//      final List<Throwable> throwables = new ArrayList<Throwable>();
-//
-//      Thread gets1 = new Thread(
-//            new Runnable() {
-//               public void run() {
-//                  try {
-//                     assert !cacheMap.containsKey("k1");
-//                     assert !cacheMap.containsKey("k2");
-//                     assert cacheMap.containsKey("old");
-//                  } catch (Throwable e) {
-//                     throwables.add(e);
-//                  }
-//               }
-//            }
-//      );
-//
-//      gets1.start();
-//      gets1.join();
-//
-//      if (!throwables.isEmpty()) throw throwables.get(0);
 
       rollback(tx);
 
@@ -524,32 +503,12 @@ public class BdbjeLearningTest {
       assert cacheMap.containsKey("old");
 
       mods = new ArrayList<Modification>();
-      mods.add(new Store(new StoredEntry("k1", "v1", -1, -1)));
-      mods.add(new Store(new StoredEntry("k2", "v2", -1, -1)));
+      mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
+      mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
       mods.add(new Clear());
-      mods.add(new Store(new StoredEntry("k3", "v3", -1, -1)));
+      mods.add(new Store(InternalEntryFactory.create("k3", "v3")));
 
       prepare(mods, tx, false);
-
-//      Thread gets2 = new Thread(
-//            new Runnable() {
-//               public void run() {
-//                  try {
-//                     assert !cacheMap.containsKey("k1");
-//                     assert !cacheMap.containsKey("k2");
-//                     assert !cacheMap.containsKey("k3");
-//                  } catch (Throwable e) {
-//                     throwables.add(e);
-//                  }
-//               }
-//            }
-//      );
-//
-//      gets2.start();
-//      gets2.join();
-//
-//      if (!throwables.isEmpty()) throw throwables.get(0);
-
 
       rollback(tx);
 
@@ -561,37 +520,38 @@ public class BdbjeLearningTest {
 
 
    public void testCommitAndRollbackWithoutPrepare() throws CacheLoaderException {
-      store(new StoredEntry("old", "old", -1, -1));
+      store(InternalEntryFactory.create("old", "old"));
       Transaction tx = EasyMock.createNiceMock(Transaction.class);
       commit(tx);
-      store(new StoredEntry("old", "old", -1, -1));
+      store(InternalEntryFactory.create("old", "old"));
       rollback(tx);
 
       assert cacheMap.containsKey("old");
    }
 
    public void testPreload() throws CacheLoaderException {
-      store(new StoredEntry("k1", "v1", -1, -1));
-      store(new StoredEntry("k2", "v2", -1, -1));
-      store(new StoredEntry("k3", "v3", -1, -1));
+      store(InternalEntryFactory.create("k1", "v1"));
+      store(InternalEntryFactory.create("k2", "v2"));
+      store(InternalEntryFactory.create("k3", "v3"));
 
-      Set<StoredEntry> set = loadAll();
+      Set<InternalCacheEntry> set = loadAll();
 
       assert set.size() == 3;
       Set expected = new HashSet();
       expected.add("k1");
       expected.add("k2");
       expected.add("k3");
-      for (StoredEntry se : set) assert expected.remove(se.getKey());
+      for (InternalCacheEntry se : set) assert expected.remove(se.getKey());
       assert expected.isEmpty();
    }
 
    public void testPurgeExpired() throws Exception {
       long now = System.currentTimeMillis();
       long lifespan = 1000;
-      store(new StoredEntry("k1", "v1", now, now + lifespan));
-      store(new StoredEntry("k2", "v2", now, now + lifespan));
-      store(new StoredEntry("k3", "v3", now, now + lifespan));
+      store(InternalEntryFactory.create("k1", "v1", lifespan));
+      store(InternalEntryFactory.create("k2", "v2", lifespan));
+      store(InternalEntryFactory.create("k3", "v3", lifespan));
+
       assert cacheMap.containsKey("k1");
       assert cacheMap.containsKey("k2");
       assert cacheMap.containsKey("k3");
@@ -604,9 +564,9 @@ public class BdbjeLearningTest {
 
 
    public void testStreamingAPI() throws IOException, ClassNotFoundException, CacheLoaderException {
-      store(new StoredEntry("k1", "v1", -1, -1));
-      store(new StoredEntry("k2", "v2", -1, -1));
-      store(new StoredEntry("k3", "v3", -1, -1));
+      store(InternalEntryFactory.create("k1", "v1"));
+      store(InternalEntryFactory.create("k2", "v2"));
+      store(InternalEntryFactory.create("k3", "v3"));
 
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       toStream(out);
@@ -614,22 +574,22 @@ public class BdbjeLearningTest {
       cacheMap.clear();
       fromStream(new ByteArrayInputStream(out.toByteArray()));
 
-      Set<StoredEntry> set = loadAll();
+      Set<InternalCacheEntry> set = loadAll();
 
       assert set.size() == 3;
       Set expected = new HashSet();
       expected.add("k1");
       expected.add("k2");
       expected.add("k3");
-      for (StoredEntry se : set) assert expected.remove(se.getKey());
+      for (InternalCacheEntry se : set) assert expected.remove(se.getKey());
       assert expected.isEmpty();
    }
 
 
    public void testStreamingAPIReusingStreams() throws IOException, ClassNotFoundException, CacheLoaderException {
-      store(new StoredEntry("k1", "v1", -1, -1));
-      store(new StoredEntry("k2", "v2", -1, -1));
-      store(new StoredEntry("k3", "v3", -1, -1));
+      store(InternalEntryFactory.create("k1", "v1"));
+      store(InternalEntryFactory.create("k2", "v2"));
+      store(InternalEntryFactory.create("k3", "v3"));
 
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       byte[] dummyStartBytes = {1, 2, 3, 4, 5, 6, 7, 8};
@@ -651,14 +611,14 @@ public class BdbjeLearningTest {
       assert bytesRead == 8;
       for (int i = 8; i > 0; i--) assert dummy[8 - i] == i : "Start byte stream corrupted!";
 
-      Set<StoredEntry> set = loadAll();
+      Set<InternalCacheEntry> set = loadAll();
 
       assert set.size() == 3;
       Set expected = new HashSet();
       expected.add("k1");
       expected.add("k2");
       expected.add("k3");
-      for (StoredEntry se : set) assert expected.remove(se.getKey());
+      for (InternalCacheEntry se : set) assert expected.remove(se.getKey());
       assert expected.isEmpty();
    }
 
@@ -678,7 +638,7 @@ public class BdbjeLearningTest {
          public void run() {
             try {
                int randomInt = r.nextInt(10);
-               store(new StoredEntry(keys[randomInt], values[randomInt]));
+               store(InternalEntryFactory.create(keys[randomInt], values[randomInt]));
             } catch (Throwable e) {
                throwables.add(e);
             }
@@ -699,7 +659,7 @@ public class BdbjeLearningTest {
          public void run() {
             try {
                int randomInt = r.nextInt(10);
-               StoredEntry se = load(keys[randomInt]);
+               InternalCacheEntry se = load(keys[randomInt]);
                assert se == null || se.getValue().equals(values[randomInt]);
                loadAll();
             } catch (Throwable e) {

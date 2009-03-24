@@ -21,6 +21,7 @@
  */
 package org.horizon.config;
 
+import org.horizon.eviction.EvictionStrategy;
 import org.horizon.factories.annotations.Inject;
 import org.horizon.factories.annotations.NonVolatile;
 import org.horizon.factories.annotations.Start;
@@ -155,7 +156,6 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    @Dynamic
    private long stateRetrievalTimeout = 10000;
    private IsolationLevel isolationLevel = IsolationLevel.READ_COMMITTED;
-   private EvictionConfig evictionConfig = null;
    private String transactionManagerLookupClass = null;
    private CacheLoaderManagerConfig cacheLoaderManagerConfig = null;
    @Dynamic
@@ -168,6 +168,11 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    private int concurrencyLevel = 500;
    private boolean invocationBatchingEnabled;
    private boolean useAsyncSerialization = true;
+   private long evictionWakeupInterval = 5000;
+   private EvictionStrategy evictionStrategy = EvictionStrategy.NONE;
+   private int evictionMaxEntries = -1;
+   private long expirationLifespan = -1;
+   private long expirationMaxIdle = -1;
 
    @Start(priority = 1)
    private void correctIsolationLevels() {
@@ -283,13 +288,49 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       setCacheMode(cacheMode);
    }
 
-   public EvictionConfig getEvictionConfig() {
-      return evictionConfig;
+   public long getEvictionWakeupInterval() {
+      return evictionWakeupInterval;
    }
 
-   public void setEvictionConfig(EvictionConfig config) {
-      testImmutability("evictionConfig");
-      this.evictionConfig = config;
+   public void setEvictionWakeupInterval(long evictionWakeupInterval) {
+      testImmutability("evictionWakeupInterval");
+      this.evictionWakeupInterval = evictionWakeupInterval;
+   }
+
+   public EvictionStrategy getEvictionStrategy() {
+      return evictionStrategy;
+   }
+
+   public void setEvictionStrategy(EvictionStrategy evictionStrategy) {
+      testImmutability("evictionStrategy");
+      this.evictionStrategy = evictionStrategy;
+   }
+
+   public int getEvictionMaxEntries() {
+      return evictionMaxEntries;
+   }
+
+   public void setEvictionMaxEntries(int evictionMaxEntries) {
+      testImmutability("evictionMaxEntries");
+      this.evictionMaxEntries = evictionMaxEntries;
+   }
+
+   public long getExpirationLifespan() {
+      return expirationLifespan;
+   }
+
+   public void setExpirationLifespan(long expirationLifespan) {
+      testImmutability("expirationLifespan");
+      this.expirationLifespan = expirationLifespan;
+   }
+
+   public long getExpirationMaxIdle() {
+      return expirationMaxIdle;
+   }
+
+   public void setExpirationMaxIdle(long expirationMaxIdle) {
+      testImmutability("expirationMaxIdle");
+      this.expirationMaxIdle = expirationMaxIdle;
    }
 
    public void setTransactionManagerLookupClass(String transactionManagerLookupClass) {
@@ -439,8 +480,14 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
       Configuration that = (Configuration) o;
 
+      if (concurrencyLevel != that.concurrencyLevel) return false;
+      if (evictionMaxEntries != that.evictionMaxEntries) return false;
+      if (evictionWakeupInterval != that.evictionWakeupInterval) return false;
+      if (expirationLifespan != that.expirationLifespan) return false;
+      if (expirationMaxIdle != that.expirationMaxIdle) return false;
       if (exposeJmxStatistics != that.exposeJmxStatistics) return false;
       if (fetchInMemoryState != that.fetchInMemoryState) return false;
+      if (invocationBatchingEnabled != that.invocationBatchingEnabled) return false;
       if (lockAcquisitionTimeout != that.lockAcquisitionTimeout) return false;
       if (replQueueInterval != that.replQueueInterval) return false;
       if (replQueueMaxElements != that.replQueueMaxElements) return false;
@@ -448,12 +495,19 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       if (syncCommitPhase != that.syncCommitPhase) return false;
       if (syncReplTimeout != that.syncReplTimeout) return false;
       if (syncRollbackPhase != that.syncRollbackPhase) return false;
+      if (useAsyncSerialization != that.useAsyncSerialization) return false;
       if (useLazyDeserialization != that.useLazyDeserialization) return false;
+      if (useLockStriping != that.useLockStriping) return false;
       if (useReplQueue != that.useReplQueue) return false;
+      if (writeSkewCheck != that.writeSkewCheck) return false;
+      if (JmxNameBase != null ? !JmxNameBase.equals(that.JmxNameBase) : that.JmxNameBase != null) return false;
       if (cacheLoaderManagerConfig != null ? !cacheLoaderManagerConfig.equals(that.cacheLoaderManagerConfig) : that.cacheLoaderManagerConfig != null)
          return false;
       if (cacheMode != that.cacheMode) return false;
-      if (evictionConfig != null ? !evictionConfig.equals(that.evictionConfig) : that.evictionConfig != null)
+      if (customInterceptors != null ? !customInterceptors.equals(that.customInterceptors) : that.customInterceptors != null)
+         return false;
+      if (evictionStrategy != that.evictionStrategy) return false;
+      if (globalConfiguration != null ? !globalConfiguration.equals(that.globalConfiguration) : that.globalConfiguration != null)
          return false;
       if (isolationLevel != that.isolationLevel) return false;
       if (transactionManagerLookupClass != null ? !transactionManagerLookupClass.equals(that.transactionManagerLookupClass) : that.transactionManagerLookupClass != null)
@@ -464,7 +518,9 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
    @Override
    public int hashCode() {
-      int result = 0;
+      int result = globalConfiguration != null ? globalConfiguration.hashCode() : 0;
+      result = 31 * result + (JmxNameBase != null ? JmxNameBase.hashCode() : 0);
+      result = 31 * result + (useLockStriping ? 1 : 0);
       result = 31 * result + (useReplQueue ? 1 : 0);
       result = 31 * result + replQueueMaxElements;
       result = 31 * result + (int) (replQueueInterval ^ (replQueueInterval >>> 32));
@@ -475,13 +531,21 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       result = 31 * result + (cacheMode != null ? cacheMode.hashCode() : 0);
       result = 31 * result + (int) (stateRetrievalTimeout ^ (stateRetrievalTimeout >>> 32));
       result = 31 * result + (isolationLevel != null ? isolationLevel.hashCode() : 0);
-      result = 31 * result + (evictionConfig != null ? evictionConfig.hashCode() : 0);
       result = 31 * result + (transactionManagerLookupClass != null ? transactionManagerLookupClass.hashCode() : 0);
       result = 31 * result + (cacheLoaderManagerConfig != null ? cacheLoaderManagerConfig.hashCode() : 0);
       result = 31 * result + (syncCommitPhase ? 1 : 0);
       result = 31 * result + (syncRollbackPhase ? 1 : 0);
       result = 31 * result + (useLazyDeserialization ? 1 : 0);
-
+      result = 31 * result + (customInterceptors != null ? customInterceptors.hashCode() : 0);
+      result = 31 * result + (writeSkewCheck ? 1 : 0);
+      result = 31 * result + concurrencyLevel;
+      result = 31 * result + (invocationBatchingEnabled ? 1 : 0);
+      result = 31 * result + (useAsyncSerialization ? 1 : 0);
+      result = 31 * result + (int) (evictionWakeupInterval ^ (evictionWakeupInterval >>> 32));
+      result = 31 * result + (evictionStrategy != null ? evictionStrategy.hashCode() : 0);
+      result = 31 * result + evictionMaxEntries;
+      result = 31 * result + (int) (expirationLifespan ^ (expirationLifespan >>> 32));
+      result = 31 * result + (int) (expirationMaxIdle ^ (expirationMaxIdle >>> 32));
       return result;
    }
 
@@ -489,9 +553,6 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    public Configuration clone() {
       try {
          Configuration c = (Configuration) super.clone();
-         if (evictionConfig != null) {
-            c.setEvictionConfig(evictionConfig.clone());
-         }
          if (cacheLoaderManagerConfig != null) {
             c.setCacheLoaderManagerConfig(cacheLoaderManagerConfig.clone());
          }
@@ -523,10 +584,6 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    public void setCustomInterceptors(List<CustomInterceptorConfig> customInterceptors) {
       testImmutability("customInterceptors");
       this.customInterceptors = customInterceptors;
-   }
-
-   public boolean isUsingEviction() {
-      return getEvictionConfig() != null;
    }
 
    public void applyOverrides(Configuration overrides) {

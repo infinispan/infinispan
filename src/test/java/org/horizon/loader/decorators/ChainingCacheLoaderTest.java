@@ -1,13 +1,14 @@
 package org.horizon.loader.decorators;
 
 import org.easymock.EasyMock;
+import org.horizon.container.entries.InternalEntryFactory;
+import org.horizon.container.entries.InternalCacheEntry;
 import org.horizon.io.UnclosableObjectInputStream;
 import org.horizon.io.UnclosableObjectOutputStream;
 import org.horizon.loader.BaseCacheStoreTest;
 import org.horizon.loader.CacheLoaderConfig;
 import org.horizon.loader.CacheLoaderException;
 import org.horizon.loader.CacheStore;
-import org.horizon.loader.StoredEntry;
 import org.horizon.loader.dummy.DummyInMemoryCacheStore;
 import org.horizon.loader.modifications.Clear;
 import org.horizon.loader.modifications.Modification;
@@ -64,8 +65,8 @@ public class ChainingCacheLoaderTest extends BaseCacheStoreTest {
 
    public void testPropagatingWrites() throws Exception {
       // put something in the store
-      cs.store(new StoredEntry("k1", "v1"));
-      cs.store(new StoredEntry("k2", "v2", lifespan));
+      cs.store(InternalEntryFactory.create("k1", "v1"));
+      cs.store(InternalEntryFactory.create("k2", "v2", lifespan));
 
       int i = 1;
       for (CacheStore s : stores) {
@@ -97,9 +98,9 @@ public class ChainingCacheLoaderTest extends BaseCacheStoreTest {
          assert s.load("k2") == null;
       }
 
-      cs.store(new StoredEntry("k1", "v1"));
-      cs.store(new StoredEntry("k2", "v2", lifespan));
-      cs.store(new StoredEntry("k3", "v3", 1000)); // short lifespan!
+      cs.store(InternalEntryFactory.create("k1", "v1"));
+      cs.store(InternalEntryFactory.create("k2", "v2", lifespan));
+      cs.store(InternalEntryFactory.create("k3", "v3", 1000)); // short lifespan!
 
       for (CacheStore s : stores) {
          assert s.containsKey("k1");
@@ -126,13 +127,13 @@ public class ChainingCacheLoaderTest extends BaseCacheStoreTest {
       assert cs.load("k4") == null;
 
       // k1 is on store1
-      store1.store(new StoredEntry("k1", "v1"));
+      store1.store(InternalEntryFactory.create("k1", "v1"));
       // k2 is on store2
-      store2.store(new StoredEntry("k2", "v2"));
+      store2.store(InternalEntryFactory.create("k2", "v2"));
 
       // k3 is on both
-      store1.store(new StoredEntry("k3", "v3"));
-      store2.store(new StoredEntry("k3", "v3"));
+      store1.store(InternalEntryFactory.create("k3", "v3"));
+      store2.store(InternalEntryFactory.create("k3", "v3"));
 
       // k4 is on neither
 
@@ -141,14 +142,14 @@ public class ChainingCacheLoaderTest extends BaseCacheStoreTest {
       assert cs.load("k3").getValue().equals("v3");
       assert cs.load("k4") == null;
 
-      Set<StoredEntry> all = cs.loadAll();
+      Set<InternalCacheEntry> all = cs.loadAll();
 
       assert all.size() == 3;
       Set<Object> expectedKeys = new HashSet<Object>();
       expectedKeys.add("k1");
       expectedKeys.add("k2");
       expectedKeys.add("k3");
-      for (StoredEntry a : all) assert expectedKeys.remove(a.getKey());
+      for (InternalCacheEntry a : all) assert expectedKeys.remove(a.getKey());
 
       assert expectedKeys.isEmpty();
 
@@ -160,14 +161,14 @@ public class ChainingCacheLoaderTest extends BaseCacheStoreTest {
 
    public void testPropagatingOnePhaseCommit() throws Exception {
       List<Modification> list = new LinkedList<Modification>();
-      list.add(new Store(new StoredEntry("k1", "v1")));
-      list.add(new Store(new StoredEntry("k2", "v2", lifespan)));
-      list.add(new Store(new StoredEntry("k3", "v3")));
+      list.add(new Store(InternalEntryFactory.create("k1", "v1")));
+      list.add(new Store(InternalEntryFactory.create("k2", "v2", lifespan)));
+      list.add(new Store(InternalEntryFactory.create("k3", "v3")));
       list.add(new Remove("k3"));
       list.add(new Clear());
-      list.add(new Store(new StoredEntry("k4", "v4")));
-      list.add(new Store(new StoredEntry("k5", "v5", lifespan)));
-      list.add(new Store(new StoredEntry("k6", "v6")));
+      list.add(new Store(InternalEntryFactory.create("k4", "v4")));
+      list.add(new Store(InternalEntryFactory.create("k5", "v5", lifespan)));
+      list.add(new Store(InternalEntryFactory.create("k6", "v6")));
       list.add(new Remove("k6"));
       Transaction t = EasyMock.createNiceMock(Transaction.class);
       cs.prepare(list, t, true);
@@ -195,14 +196,14 @@ public class ChainingCacheLoaderTest extends BaseCacheStoreTest {
 
    public void testPropagatingTwoPhaseCommit() throws Exception {
       List<Modification> list = new LinkedList<Modification>();
-      list.add(new Store(new StoredEntry("k1", "v1")));
-      list.add(new Store(new StoredEntry("k2", "v2", lifespan)));
-      list.add(new Store(new StoredEntry("k3", "v3")));
+      list.add(new Store(InternalEntryFactory.create("k1", "v1")));
+      list.add(new Store(InternalEntryFactory.create("k2", "v2", lifespan)));
+      list.add(new Store(InternalEntryFactory.create("k3", "v3")));
       list.add(new Remove("k3"));
       list.add(new Clear());
-      list.add(new Store(new StoredEntry("k4", "v4")));
-      list.add(new Store(new StoredEntry("k5", "v5", lifespan)));
-      list.add(new Store(new StoredEntry("k6", "v6")));
+      list.add(new Store(InternalEntryFactory.create("k4", "v4")));
+      list.add(new Store(InternalEntryFactory.create("k5", "v5", lifespan)));
+      list.add(new Store(InternalEntryFactory.create("k6", "v6")));
       list.add(new Remove("k6"));
       Transaction t = EasyMock.createNiceMock(Transaction.class);
       cs.prepare(list, t, false);
@@ -231,8 +232,8 @@ public class ChainingCacheLoaderTest extends BaseCacheStoreTest {
 
 
    public void testPropagatingStreams() throws IOException, ClassNotFoundException, CacheLoaderException {
-      store2.store(new StoredEntry("k1", "v1"));
-      store2.store(new StoredEntry("k2", "v2", lifespan));
+      store2.store(InternalEntryFactory.create("k1", "v1"));
+      store2.store(InternalEntryFactory.create("k2", "v2", lifespan));
 
       assert cs.containsKey("k1");
       assert cs.containsKey("k2");

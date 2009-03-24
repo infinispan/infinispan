@@ -45,7 +45,7 @@ import java.util.Set;
 public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneable {
    FastCopyHashMap<K, V> delegate;
    AtomicHashMapDelta delta = null;
-   AtomicHashMapProxy proxy;
+   volatile AtomicHashMapProxy proxy;
 
    /**
     * Construction only allowed through this factory method.  This factory is intended for use internally by the

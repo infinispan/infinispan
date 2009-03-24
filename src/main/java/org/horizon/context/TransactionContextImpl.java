@@ -22,7 +22,7 @@
 package org.horizon.context;
 
 import org.horizon.commands.write.WriteCommand;
-import org.horizon.container.MVCCEntry;
+import org.horizon.container.entries.CacheEntry;
 import org.horizon.transaction.GlobalTransaction;
 import org.horizon.util.BidirectionalLinkedHashMap;
 
@@ -77,7 +77,7 @@ public class TransactionContextImpl extends AbstractContext implements Transacti
 
    public TransactionContextImpl(Transaction tx) throws SystemException, RollbackException {
       ltx = tx;
-      lookedUpEntries = new BidirectionalLinkedHashMap<Object, MVCCEntry>(8);
+      lookedUpEntries = new BidirectionalLinkedHashMap<Object, CacheEntry>(8);
    }
 
    public void reset() {
@@ -86,14 +86,14 @@ public class TransactionContextImpl extends AbstractContext implements Transacti
       localModifications = null;
       if (dummyEntriesCreatedByCacheLoader != null) dummyEntriesCreatedByCacheLoader.clear();
       if (removedKeys != null) removedKeys.clear();
-      lookedUpEntries = new BidirectionalLinkedHashMap<Object, MVCCEntry>(8);
+      lookedUpEntries = new BidirectionalLinkedHashMap<Object, CacheEntry>(8);
    }
 
    public GlobalTransaction getGobalTransaction() {
       return gtx;
    }
 
-   public void putLookedUpEntries(Map<Object, MVCCEntry> entries) {
+   public void putLookedUpEntries(Map<Object, CacheEntry> entries) {
       lookedUpEntries.putAll(entries);
    }
 

@@ -163,4 +163,11 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
          endAtomic();
       }
    }
+
+   @Override
+   public String toString() {
+      return "AtomicHashMapProxy{" +
+            "deltaMapKey=" + deltaMapKey +
+            '}';
+   }
 }

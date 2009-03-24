@@ -1,10 +1,10 @@
 package org.horizon.loader.decorators;
 
 import org.horizon.Cache;
+import org.horizon.container.entries.InternalCacheEntry;
 import org.horizon.loader.CacheLoaderConfig;
 import org.horizon.loader.CacheLoaderException;
 import org.horizon.loader.CacheStore;
-import org.horizon.loader.StoredEntry;
 import org.horizon.loader.modifications.Modification;
 import org.horizon.marshall.Marshaller;
 
@@ -41,7 +41,7 @@ public class AbstractDelegatingStore implements CacheStore {
       delegate.removeAll(keys);
    }
 
-   public void store(StoredEntry ed) throws CacheLoaderException {
+   public void store(InternalCacheEntry ed) throws CacheLoaderException {
       delegate.store(ed);
    }
 
@@ -81,11 +81,11 @@ public class AbstractDelegatingStore implements CacheStore {
       delegate.init(config, cache, m);
    }
 
-   public StoredEntry load(Object key) throws CacheLoaderException {
+   public InternalCacheEntry load(Object key) throws CacheLoaderException {
       return delegate.load(key);
    }
 
-   public Set<StoredEntry> loadAll() throws CacheLoaderException {
+   public Set<InternalCacheEntry> loadAll() throws CacheLoaderException {
       return delegate.loadAll();
    }
 

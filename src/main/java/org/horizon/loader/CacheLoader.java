@@ -1,6 +1,7 @@
 package org.horizon.loader;
 
 import org.horizon.Cache;
+import org.horizon.container.entries.InternalCacheEntry;
 import org.horizon.marshall.Marshaller;
 
 import java.util.Set;
@@ -32,7 +33,7 @@ public interface CacheLoader {
     * @return an entry
     * @throws CacheLoaderException in the event of problems reading from source
     */
-   StoredEntry load(Object key) throws CacheLoaderException;
+   InternalCacheEntry load(Object key) throws CacheLoaderException;
 
    /**
     * Loads all entries in the loader.  Expired entries are not returned.
@@ -40,7 +41,7 @@ public interface CacheLoader {
     * @return a set of entries, or an empty set if the loader is emptied.
     * @throws CacheLoaderException in the event of problems reading from source
     */
-   Set<StoredEntry> loadAll() throws CacheLoaderException;
+   Set<InternalCacheEntry> loadAll() throws CacheLoaderException;
 
    /**
     * @param key key to test

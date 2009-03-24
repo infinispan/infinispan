@@ -2,10 +2,7 @@ package org.horizon.config.parsing;
 
 import org.horizon.config.CacheLoaderManagerConfig;
 import org.horizon.config.Configuration;
-import org.horizon.config.ConfigurationException;
-import org.horizon.config.EvictionConfig;
-import org.horizon.eviction.DefaultEvictionAction;
-import org.horizon.eviction.algorithms.fifo.FIFOAlgorithmConfig;
+import org.horizon.eviction.EvictionStrategy;
 import org.horizon.loader.CacheLoaderConfig;
 import org.horizon.loader.decorators.SingletonStoreConfig;
 import org.horizon.loader.jdbc.TableManipulation;
@@ -253,56 +250,41 @@ public class ConfigurationParserTest {
       assert !ssc.isSingletonStoreEnabled();
    }
 
-   public void testInsufficientEviction() throws Exception {
-      XmlConfigurationParserImpl parser = new XmlConfigurationParserImpl();
-      String xml = "<eviction wakeupInterval=\"1000\" />";
-      Element e = XmlConfigHelper.stringToElement(xml);
-
-      Configuration c = new Configuration();
-      try {
-         parser.configureEviction(e, c);
-         assert false : "Should fail";
-      } catch (ConfigurationException expected) {
-         assert true : "expected";
-      }
-   }
-
    public void testDefaultEviction() throws Exception {
       XmlConfigurationParserImpl parser = new XmlConfigurationParserImpl();
-      String xml = "<eviction algorithmClass=\"org.horizon.eviction.algorithms.fifo.FIFOAlgorithm\" />";
+      String xml = "<eviction />";
       Element e = XmlConfigHelper.stringToElement(xml);
 
       Configuration c = new Configuration();
 
       parser.configureEviction(e, c);
-      EvictionConfig ec = c.getEvictionConfig();
-      assert ec != null;
-      assert ec.getActionPolicyClass().equals(DefaultEvictionAction.class.getName());
-      assert ec.getAlgorithmConfig() instanceof FIFOAlgorithmConfig;
-      assert ec.getEventQueueSize() == 200000;
-      assert ec.getWakeUpInterval() == 5000;
+      parser.configureExpiration(null, c);
+
+      assert c.getEvictionMaxEntries() == -1;
+      assert c.getEvictionStrategy() == EvictionStrategy.NONE;
+      assert c.getEvictionWakeupInterval() == 5000;
+      assert c.getExpirationLifespan() == -1;
+      assert c.getExpirationMaxIdle() == -1;
    }
 
    public void testEviction() throws Exception {
       XmlConfigurationParserImpl parser = new XmlConfigurationParserImpl();
-      String xml = "<eviction algorithmClass=\"org.horizon.eviction.algorithms.fifo.FIFOAlgorithm\" " +
-            "actionPolicyClass=\"org.blah.Blah\" wakeUpInterval=\"750\" eventQueueSize=\"5000\">" +
-            "<property name=\"maxEntries\" value=\"7000\" />" +
-            "<property name=\"minTimeToLive\" value=\"20\" />" +
-            "</eviction>";
-      Element e = XmlConfigHelper.stringToElement(xml);
+      String evictionXml = "<eviction strategy=\"LRU\" " +
+            "wakeUpInterval=\"750\" maxEntries=\"7000\" />";
+      String expirationXml = "<expiration lifespan=\"2000\" maxIdle=\"500\"/>";
+
+      Element evictionElement = XmlConfigHelper.stringToElement(evictionXml);
+      Element expirationElement = XmlConfigHelper.stringToElement(expirationXml);
 
       Configuration c = new Configuration();
 
-      parser.configureEviction(e, c);
-      EvictionConfig ec = c.getEvictionConfig();
-      assert ec != null;
-      assert ec.getActionPolicyClass().equals("org.blah.Blah");
-      assert ec.getAlgorithmConfig() instanceof FIFOAlgorithmConfig;
-      assert ec.getEventQueueSize() == 5000;
-      assert ec.getWakeUpInterval() == 750;
-      FIFOAlgorithmConfig ac = (FIFOAlgorithmConfig) ec.getAlgorithmConfig();
-      assert ac.getMaxEntries() == 7000;
-      assert ac.getMinTimeToLive() == 20;
+      parser.configureEviction(evictionElement, c);
+      parser.configureExpiration(expirationElement, c);
+
+      assert c.getEvictionStrategy() == EvictionStrategy.LRU;
+      assert c.getEvictionMaxEntries() == 7000;
+      assert c.getEvictionWakeupInterval() == 750;
+      assert c.getExpirationLifespan() == 2000;
+      assert c.getExpirationMaxIdle() == 500;
    }
 }

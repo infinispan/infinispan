@@ -1,11 +1,11 @@
 package org.horizon.loader.dummy;
 
 import org.horizon.Cache;
+import org.horizon.container.entries.InternalCacheEntry;
 import org.horizon.loader.AbstractCacheStore;
 import org.horizon.loader.AbstractCacheStoreConfig;
 import org.horizon.loader.CacheLoaderConfig;
 import org.horizon.loader.CacheLoaderException;
-import org.horizon.loader.StoredEntry;
 import org.horizon.logging.Log;
 import org.horizon.logging.LogFactory;
 import org.horizon.marshall.Marshaller;
@@ -24,12 +24,12 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
    private static final Log log = LogFactory.getLog(DummyInMemoryCacheStore.class);
    static final ConcurrentMap<String, Map> stores = new ConcurrentHashMap<String, Map>();
    String storeName = "__DEFAULT_STORES__";
-   Map<Object, StoredEntry> store;
+   Map<Object, InternalCacheEntry> store;
    Cfg config;
    private Marshaller marshaller;
    private Cache cache;
 
-   public void store(StoredEntry ed) {
+   public void store(InternalCacheEntry ed) {
       store.put(ed.getKey(), ed);
    }
 
@@ -39,7 +39,7 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
          int numEntries = (Integer) marshaller.objectFromObjectStream(ois);
          store.clear();
          for (int i = 0; i < numEntries; i++) {
-            StoredEntry e = (StoredEntry) marshaller.objectFromObjectStream(ois);
+            InternalCacheEntry e = (InternalCacheEntry) marshaller.objectFromObjectStream(ois);
             store.put(e.getKey(), e);
          }
       } catch (Exception e) {
@@ -50,7 +50,7 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
    public void toStream(ObjectOutput oos) throws CacheLoaderException {
       try {
          marshaller.objectToObjectStream(store.size(), oos);
-         for (StoredEntry se : store.values()) marshaller.objectToObjectStream(se, oos);
+         for (InternalCacheEntry se : store.values()) marshaller.objectToObjectStream(se, oos);
       } catch (Exception e) {
          throw new CacheLoaderException(e);
       }
@@ -65,8 +65,8 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
    }
 
    protected void purgeInternal() throws CacheLoaderException {
-      for (Iterator<StoredEntry> i = store.values().iterator(); i.hasNext();) {
-         StoredEntry se = i.next();
+      for (Iterator<InternalCacheEntry> i = store.values().iterator(); i.hasNext();) {
+         InternalCacheEntry se = i.next();
          if (se.isExpired()) i.remove();
       }
    }
@@ -79,9 +79,9 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
       if (marshaller == null) marshaller = new ObjectStreamMarshaller();
    }
 
-   public StoredEntry load(Object key) {
+   public InternalCacheEntry load(Object key) {
       if (key == null) return null;
-      StoredEntry se = store.get(key);
+      InternalCacheEntry se = store.get(key);
       if (se == null) return null;
       if (se.isExpired()) {
          log.debug("Key {0} exists, but has expired.  Entry is {1}", key, se);
@@ -92,10 +92,10 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
       return se;
    }
 
-   public Set<StoredEntry> loadAll() {
-      Set<StoredEntry> s = new HashSet<StoredEntry>();
-      for (Iterator<StoredEntry> i = store.values().iterator(); i.hasNext();) {
-         StoredEntry se = i.next();
+   public Set<InternalCacheEntry> loadAll() {
+      Set<InternalCacheEntry> s = new HashSet<InternalCacheEntry>();
+      for (Iterator<InternalCacheEntry> i = store.values().iterator(); i.hasNext();) {
+         InternalCacheEntry se = i.next();
          if (se.isExpired()) {
             log.debug("Key {0} exists, but has expired.  Entry is {1}", se.getKey(), se);
             i.remove();

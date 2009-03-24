@@ -1,5 +1,6 @@
 package org.horizon.loader;
 
+import org.horizon.container.entries.InternalCacheEntry;
 import org.horizon.loader.modifications.Modification;
 
 import javax.transaction.Transaction;
@@ -19,10 +20,10 @@ public interface CacheStore extends CacheLoader {
    /**
     * Stores an entry
     *
-    * @param ed entry to store
+    * @param entry entry to store
     * @throws CacheLoaderException in the event of problems writing to the store
     */
-   void store(StoredEntry ed) throws CacheLoaderException;
+   void store(InternalCacheEntry entry) throws CacheLoaderException;
 
    /**
     * Writes contents of the stream to the store.  Implementations should expect that the stream contains data in an

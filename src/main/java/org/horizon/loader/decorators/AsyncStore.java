@@ -1,9 +1,9 @@
 package org.horizon.loader.decorators;
 
 import org.horizon.CacheException;
+import org.horizon.container.entries.InternalCacheEntry;
 import org.horizon.loader.CacheLoaderException;
 import org.horizon.loader.CacheStore;
-import org.horizon.loader.StoredEntry;
 import org.horizon.loader.modifications.Clear;
 import org.horizon.loader.modifications.Modification;
 import org.horizon.loader.modifications.PurgeExpired;
@@ -61,7 +61,7 @@ public class AsyncStore extends AbstractDelegatingStore {
       this.asyncStoreConfig = asyncStoreConfig;
    }
 
-   public void store(StoredEntry ed) {
+   public void store(InternalCacheEntry ed) {
       enqueue(new Store(ed));
    }
 

@@ -7,6 +7,7 @@ import org.horizon.commands.write.PutKeyValueCommand;
 import org.horizon.config.CacheLoaderManagerConfig;
 import org.horizon.config.Configuration;
 import org.horizon.container.DataContainer;
+import org.horizon.container.entries.InternalCacheEntry;
 import org.horizon.context.InvocationContext;
 import org.horizon.interceptors.InterceptorChain;
 import org.horizon.interceptors.MarshalledValueInterceptor;
@@ -121,7 +122,8 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
 
       DataContainer dc1 = TestingUtil.extractComponent(cache1, DataContainer.class);
 
-      Object o = dc1.get("key");
+      InternalCacheEntry ice = dc1.get("key");
+      Object o = ice.getValue();
       assert o instanceof MarshalledValue;
       MarshalledValue mv = (MarshalledValue) o;
       assertDeserialized(mv);
@@ -135,7 +137,8 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
 
       // now on cache 2
       DataContainer dc2 = TestingUtil.extractComponent(cache2, DataContainer.class);
-      o = dc2.get("key");
+      ice = dc2.get("key");
+      o = ice.getValue();
       assert o instanceof MarshalledValue;
       mv = (MarshalledValue) o;
       assertSerialized(mv); // this proves that unmarshalling on the recipient cache instance is lazy

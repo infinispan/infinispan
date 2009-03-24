@@ -4,10 +4,10 @@ import org.horizon.Cache;
 import org.horizon.config.CacheLoaderManagerConfig;
 import org.horizon.config.Configuration;
 import org.horizon.config.GlobalConfiguration;
+import org.horizon.container.entries.InternalEntryFactory;
 import org.horizon.loader.CacheLoaderConfig;
 import org.horizon.loader.CacheLoaderManager;
 import org.horizon.loader.CacheStore;
-import org.horizon.loader.StoredEntry;
 import org.horizon.loader.jdbc.TableManipulation;
 import org.horizon.loader.jdbc.UnitTestDatabaseManager;
 import org.horizon.loader.jdbc.binary.JdbcBinaryCacheStoreConfig;
@@ -22,8 +22,8 @@ import org.testng.annotations.Test;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import java.util.Collections;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Tester class for ActivationInterceptor and PassivationInterceptor.
@@ -80,7 +80,7 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
       assertActivationCount(0);
       assert cache.get("key") == null;
       assertActivationCount(0);
-      cacheStore.store(new StoredEntry("key", "value"));
+      cacheStore.store(InternalEntryFactory.create("key", "value"));
       assert cacheStore.containsKey("key");
       assert cache.get("key").equals("value");
       assertActivationCount(1);
@@ -91,7 +91,7 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
       assertActivationCount(0);
       assert cache.get("key") == null;
       assertActivationCount(0);
-      cacheStore.store(new StoredEntry("key", "value"));
+      cacheStore.store(InternalEntryFactory.create("key", "value"));
       assert cacheStore.containsKey("key");
       cache.put("key", "value2");
       assert cache.get("key").equals("value2");
@@ -103,7 +103,7 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
       assertActivationCount(0);
       assert cache.get("key") == null;
       assertActivationCount(0);
-      cacheStore.store(new StoredEntry("key", "value"));
+      cacheStore.store(InternalEntryFactory.create("key", "value"));
       assert cacheStore.containsKey("key");
       assert cache.remove("key").equals("value");
       assertActivationCount(1);
@@ -114,7 +114,7 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
       assertActivationCount(0);
       assert cache.get("key") == null;
       assertActivationCount(0);
-      cacheStore.store(new StoredEntry("key", "value"));
+      cacheStore.store(InternalEntryFactory.create("key", "value"));
       assert cacheStore.containsKey("key");
       assert cache.replace("key", "value2").equals("value");
       assertActivationCount(1);
@@ -125,7 +125,7 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
       assertActivationCount(0);
       assert cache.get("key") == null;
       assertActivationCount(0);
-      cacheStore.store(new StoredEntry("key", "value"));
+      cacheStore.store(InternalEntryFactory.create("key", "value"));
       assert cacheStore.containsKey("key");
 
       Map toAdd = new HashMap();

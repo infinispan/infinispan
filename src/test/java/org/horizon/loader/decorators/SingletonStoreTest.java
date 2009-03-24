@@ -3,12 +3,12 @@ package org.horizon.loader.decorators;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.horizon.Cache;
+import org.horizon.container.entries.InternalCacheEntry;
 import org.horizon.config.CacheLoaderManagerConfig;
 import org.horizon.config.Configuration;
 import org.horizon.loader.CacheLoaderException;
 import org.horizon.loader.CacheLoaderManager;
 import org.horizon.loader.CacheStore;
-import org.horizon.loader.StoredEntry;
 import org.horizon.loader.dummy.DummyInMemoryCacheStore;
 import org.horizon.manager.CacheManager;
 import org.horizon.test.MultipleCacheManagersTest;
@@ -98,7 +98,7 @@ public class SingletonStoreTest extends MultipleCacheManagersTest {
    }
 
    private Object load(CacheStore cs, Object key) throws CacheLoaderException {
-      StoredEntry se = cs.load(key);
+      InternalCacheEntry se = cs.load(key);
       return se == null ? null : se.getValue();
    }
 

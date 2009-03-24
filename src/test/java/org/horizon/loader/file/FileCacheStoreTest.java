@@ -1,10 +1,11 @@
 package org.horizon.loader.file;
 
+import org.horizon.container.entries.InternalCacheEntry;
+import org.horizon.container.entries.InternalEntryFactory;
 import org.horizon.io.UnclosableObjectOutputStream;
 import org.horizon.loader.BaseCacheStoreTest;
 import org.horizon.loader.CacheLoaderException;
 import org.horizon.loader.CacheStore;
-import org.horizon.loader.StoredEntry;
 import org.horizon.loader.bucket.Bucket;
 import org.horizon.test.TestingUtil;
 import org.testng.annotations.AfterTest;
@@ -46,11 +47,10 @@ public class FileCacheStoreTest extends BaseCacheStoreTest {
 
    @Override
    public void testPurgeExpired() throws Exception {
-      long now = System.currentTimeMillis();
       long lifespan = 1000;
-      cs.store(new StoredEntry("k1", "v1", now, now + lifespan));
-      cs.store(new StoredEntry("k2", "v2", now, now + lifespan));
-      cs.store(new StoredEntry("k3", "v3", now, now + lifespan));
+      cs.store(InternalEntryFactory.create("k1", "v1", lifespan));
+      cs.store(InternalEntryFactory.create("k2", "v2", lifespan));
+      cs.store(InternalEntryFactory.create("k3", "v3", lifespan));
       assert cs.containsKey("k1");
       assert cs.containsKey("k2");
       assert cs.containsKey("k3");
@@ -64,7 +64,7 @@ public class FileCacheStoreTest extends BaseCacheStoreTest {
 
    public void testBucketRemoval() throws Exception {
       Bucket b;
-      StoredEntry se = new StoredEntry("test", "value");
+      InternalCacheEntry se = InternalEntryFactory.create("test", "value");
       fcs.store(se);
       b = fcs.loadBucketContainingKey("test");
       assert b != null;
@@ -81,7 +81,7 @@ public class FileCacheStoreTest extends BaseCacheStoreTest {
    }
 
    public void testToStream() throws Exception {
-      cs.store(new StoredEntry("k1", "v1", -1, -1));
+      cs.store(InternalEntryFactory.create("k1", "v1", -1, -1));
 
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       ObjectOutputStream oos = new ObjectOutputStream(out);

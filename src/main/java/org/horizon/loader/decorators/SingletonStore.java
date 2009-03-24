@@ -2,9 +2,9 @@ package org.horizon.loader.decorators;
 
 import org.horizon.Cache;
 import org.horizon.container.DataContainer;
+import org.horizon.container.entries.InternalCacheEntry;
 import org.horizon.loader.CacheLoaderException;
 import org.horizon.loader.CacheStore;
-import org.horizon.loader.StoredEntry;
 import org.horizon.loader.modifications.Modification;
 import org.horizon.logging.Log;
 import org.horizon.logging.LogFactory;
@@ -104,7 +104,7 @@ public class SingletonStore extends AbstractDelegatingStore {
    // only delegate if the current instance is active
 
    @Override
-   public void store(StoredEntry ed) throws CacheLoaderException {
+   public void store(InternalCacheEntry ed) throws CacheLoaderException {
       if (active) {
          if (trace) log.trace("Storing key {0}.  Instance: {1}", ed.getKey(), this);
          super.store(ed);
@@ -181,8 +181,8 @@ public class SingletonStore extends AbstractDelegatingStore {
    protected void pushState(final Cache cache) throws Exception {
       DataContainer dc = cache.getAdvancedCache().getDataContainer();
       Set keys = dc.keySet();
-      StoredEntry entry;
-      for (Object k : keys) if ((entry = dc.createEntryForStorage(k)) != null) store(entry);
+      InternalCacheEntry entry;
+      for (Object k : keys) if ((entry = dc.get(k)) != null) store(entry);
    }
 
 

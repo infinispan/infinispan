@@ -1,6 +1,6 @@
 package org.horizon.context;
 
-import org.horizon.container.MVCCEntry;
+import org.horizon.container.entries.CacheEntry;
 import org.horizon.invocation.Options;
 import org.horizon.util.BidirectionalLinkedHashMap;
 import org.horizon.util.BidirectionalMap;
@@ -21,7 +21,7 @@ public abstract class AbstractContext {
 
    protected volatile EnumSet<Options> options;
    protected byte contextFlags;
-   protected BidirectionalLinkedHashMap<Object, MVCCEntry> lookedUpEntries = null;
+   protected BidirectionalLinkedHashMap<Object, CacheEntry> lookedUpEntries = null;
 
    protected static enum ContextFlags {
       FORCE_SYNCHRONOUS(1), FORCE_ASYNCHRONOUS(1 << 1), ORIGIN_LOCAL(1 << 2), LOCAL_ROLLBACK_ONLY(1 << 3),
@@ -87,11 +87,11 @@ public abstract class AbstractContext {
    protected abstract int getLockSetSize();
 
    public boolean hasLockedKey(Object key) {
-      MVCCEntry e = lookupEntry(key);
+      CacheEntry e = lookupEntry(key);
       return e != null && e.isChanged();
    }
 
-   public MVCCEntry lookupEntry(Object key) {
+   public CacheEntry lookupEntry(Object key) {
       return lookedUpEntries.get(key);
    }
 
@@ -99,7 +99,7 @@ public abstract class AbstractContext {
       lookedUpEntries.remove(key);
    }
 
-   public void putLookedUpEntry(Object key, MVCCEntry entry) {
+   public void putLookedUpEntry(Object key, CacheEntry entry) {
       lookedUpEntries.put(key, entry);
    }
 
@@ -107,11 +107,11 @@ public abstract class AbstractContext {
       lookedUpEntries.clear();
    }
 
-   public BidirectionalMap<Object, MVCCEntry> getLookedUpEntries() {
+   public BidirectionalMap<Object, CacheEntry> getLookedUpEntries() {
       return lookedUpEntries;
    }
 
-   public void putLookedUpEntries(Map<Object, MVCCEntry> lookedUpEntries) {
+   public void putLookedUpEntries(Map<Object, CacheEntry> lookedUpEntries) {
       lookedUpEntries.putAll(lookedUpEntries);
    }
 
@@ -149,7 +149,7 @@ public abstract class AbstractContext {
       if (options != null) ctx.options = EnumSet.copyOf(options);
       ctx.contextFlags = contextFlags;
       if (lookedUpEntries != null)
-         ctx.lookedUpEntries = (BidirectionalLinkedHashMap<Object, MVCCEntry>) lookedUpEntries.clone();
+         ctx.lookedUpEntries = (BidirectionalLinkedHashMap<Object, CacheEntry>) lookedUpEntries.clone();
    }
 
    public boolean isContainsModifications() {

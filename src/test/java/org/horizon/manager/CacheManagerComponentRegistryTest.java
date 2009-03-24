@@ -3,10 +3,9 @@ package org.horizon.manager;
 import org.horizon.Cache;
 import org.horizon.test.TestingUtil;
 import org.horizon.config.Configuration;
-import org.horizon.config.EvictionConfig;
 import org.horizon.config.GlobalConfiguration;
 import org.horizon.eviction.EvictionManager;
-import org.horizon.eviction.algorithms.fifo.FIFOAlgorithmConfig;
+import org.horizon.eviction.EvictionStrategy;
 import org.horizon.interceptors.BatchingInterceptor;
 import org.horizon.interceptors.InterceptorChain;
 import org.horizon.remoting.RPCManager;
@@ -59,13 +58,10 @@ public class CacheManagerComponentRegistryTest {
    }
 
    public void testForceUnsharedComponents() throws NamedCacheNotFoundException {
-      EvictionConfig ec = new EvictionConfig();
-      ec.setAlgorithmConfig(new FIFOAlgorithmConfig());
-
       Configuration defaultCfg = new Configuration();
       defaultCfg.setFetchInMemoryState(false);
       defaultCfg.setCacheMode(Configuration.CacheMode.REPL_SYNC);
-      defaultCfg.setEvictionConfig(ec);
+      defaultCfg.setEvictionStrategy(EvictionStrategy.NONE);
       // cache manager with default configuration
       cm = new DefaultCacheManager(GlobalConfiguration.getClusteredDefault(), defaultCfg);
 

@@ -21,7 +21,7 @@
  */
 package org.horizon.context;
 
-import org.horizon.container.MVCCEntry;
+import org.horizon.container.entries.CacheEntry;
 import org.horizon.util.BidirectionalMap;
 
 import java.util.Map;
@@ -43,7 +43,7 @@ public interface EntryLookup {
     * @param key key to look up
     * @return an entry, or null if it cannot be found.
     */
-   MVCCEntry lookupEntry(Object key);
+   CacheEntry lookupEntry(Object key);
 
    /**
     * Retrieves a map of entries looked up within the current scope.
@@ -54,7 +54,7 @@ public interface EntryLookup {
     *
     * @return a map of looked up entries.
     */
-   BidirectionalMap<Object, MVCCEntry> getLookedUpEntries();
+   BidirectionalMap<Object, CacheEntry> getLookedUpEntries();
 
    /**
     * Puts an entry in the registry of looked up entries in the current scope.
@@ -66,9 +66,9 @@ public interface EntryLookup {
     * @param key key to store
     * @param e   entry to store
     */
-   void putLookedUpEntry(Object key, MVCCEntry e);
+   void putLookedUpEntry(Object key, CacheEntry e);
 
-   void putLookedUpEntries(Map<Object, MVCCEntry> lookedUpEntries);
+   void putLookedUpEntries(Map<Object, CacheEntry> lookedUpEntries);
 
    void removeLookedUpEntry(Object key);
 

@@ -25,7 +25,7 @@ import org.horizon.atomic.Delta;
 import org.horizon.atomic.DeltaAware;
 import org.horizon.commands.Visitor;
 import org.horizon.commands.read.AbstractDataCommand;
-import org.horizon.container.MVCCEntry;
+import org.horizon.container.entries.MVCCEntry;
 import org.horizon.context.InvocationContext;
 import org.horizon.notifications.cachelistener.CacheNotifier;
 
@@ -80,7 +80,7 @@ public class PutKeyValueCommand extends AbstractDataCommand implements DataWrite
 
    public Object perform(InvocationContext ctx) throws Throwable {
       Object o;
-      MVCCEntry e = ctx.lookupEntry(key);
+      MVCCEntry e = lookupMvccEntry(ctx, key);
       if (e.getValue() != null && putIfAbsent) {
          successful = false;
          return e.getValue();

@@ -108,12 +108,6 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       }
       interceptorChain.appendIntereceptor(createInterceptor(LockingInterceptor.class));
       
-
-      if (configuration.isUsingEviction()) {
-         EvictionInterceptor evictionInterceptor = (EvictionInterceptor) createInterceptor(EvictionInterceptor.class);
-         interceptorChain.appendIntereceptor(evictionInterceptor);
-      }
-
       CommandInterceptor callInterceptor = createInterceptor(CallInterceptor.class);
       interceptorChain.appendIntereceptor(callInterceptor);
       if (log.isTraceEnabled()) log.trace("Finished building default interceptor chain.");

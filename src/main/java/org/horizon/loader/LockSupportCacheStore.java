@@ -1,9 +1,10 @@
 package org.horizon.loader;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.horizon.Cache;
+import org.horizon.container.entries.InternalCacheEntry;
 import org.horizon.lock.StripedLock;
+import org.horizon.logging.Log;
+import org.horizon.logging.LogFactory;
 import org.horizon.marshall.Marshaller;
 
 import java.io.ObjectInput;
@@ -27,7 +28,8 @@ import java.util.Set;
  */
 public abstract class LockSupportCacheStore extends AbstractCacheStore {
 
-   private static Log log = LogFactory.getLog(LockSupportCacheStore.class);
+   private static final Log log = LogFactory.getLog(LockSupportCacheStore.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private StripedLock locks;
    private long globalLockTimeoutMillis;
@@ -88,34 +90,34 @@ public abstract class LockSupportCacheStore extends AbstractCacheStore {
       locks.releaseGlobalLock(exclusive);
    }
 
-   public final StoredEntry load(Object key) throws CacheLoaderException {
-      if (log.isTraceEnabled()) log.trace("load (" + key + ")");
+   public final InternalCacheEntry load(Object key) throws CacheLoaderException {
+      if (trace) log.trace("load ({0})", key);
       String lockingKey = getLockFromKey(key);
       lockForReading(lockingKey);
       try {
          return loadLockSafe(key, lockingKey);
       } finally {
          unlock(lockingKey);
-         if (log.isTraceEnabled()) log.trace("Exit load (" + key + ")");
+         if (trace) log.trace("Exit load (" + key + ")");
       }
    }
 
-   public final Set<StoredEntry> loadAll() throws CacheLoaderException {
-      if (log.isTraceEnabled()) log.trace("loadAll()");
+   public final Set<InternalCacheEntry> loadAll() throws CacheLoaderException {
+      if (trace) log.trace("loadAll()");
       acquireGlobalLock(false);
       try {
          return loadAllLockSafe();
       } finally {
          releaseGlobalLock(false);
-         if (log.isTraceEnabled()) log.trace("Exit loadAll()");
+         if (trace) log.trace("Exit loadAll()");
       }
    }
 
-   public final void store(StoredEntry ed) throws CacheLoaderException {
-      if (log.isTraceEnabled()) log.trace("store(" + ed + ")");
+   public final void store(InternalCacheEntry ed) throws CacheLoaderException {
+      if (trace) log.trace("store(" + ed + ")");
       if (ed == null) return;
       if (ed.isExpired()) {
-         log.trace("Entry " + ed + " is expired!  Not doing anything.");
+         if (trace) log.trace("Entry " + ed + " is expired!  Not doing anything.");
          return;
       }
 
@@ -126,18 +128,18 @@ public abstract class LockSupportCacheStore extends AbstractCacheStore {
       } finally {
          unlock(keyHashCode);
       }
-      if (log.isTraceEnabled()) log.trace("exit store(" + ed + ")");
+      if (trace) log.trace("exit store(" + ed + ")");
    }
 
    public final boolean remove(Object key) throws CacheLoaderException {
-      if (log.isTraceEnabled()) log.trace("remove(" + key + ")");
+      if (trace) log.trace("remove(" + key + ")");
       String keyHashCodeStr = getLockFromKey(key);
       try {
          lockForWritting(keyHashCodeStr);
          return removeLockSafe(key, keyHashCodeStr);
       } finally {
          unlock(keyHashCodeStr);
-         if (log.isTraceEnabled()) log.trace("Exit remove(" + key + ")");
+         if (trace) log.trace("Exit remove(" + key + ")");
       }
    }
 
@@ -162,7 +164,7 @@ public abstract class LockSupportCacheStore extends AbstractCacheStore {
    }
 
    public final void clear() throws CacheLoaderException {
-      log.trace("Clearing store");
+      if (trace) log.trace("Clearing store");
       try {
          acquireGlobalLock(true);
          clearLockSafe();
@@ -177,7 +179,7 @@ public abstract class LockSupportCacheStore extends AbstractCacheStore {
 
    protected abstract void clearLockSafe() throws CacheLoaderException;
 
-   protected abstract Set<StoredEntry> loadAllLockSafe() throws CacheLoaderException;
+   protected abstract Set<InternalCacheEntry> loadAllLockSafe() throws CacheLoaderException;
 
    protected abstract void toStreamLockSafe(ObjectOutput oos) throws CacheLoaderException;
 
@@ -185,9 +187,9 @@ public abstract class LockSupportCacheStore extends AbstractCacheStore {
 
    protected abstract boolean removeLockSafe(Object key, String lockingKey) throws CacheLoaderException;
 
-   protected abstract void storeLockSafe(StoredEntry ed, String lockingKey) throws CacheLoaderException;
+   protected abstract void storeLockSafe(InternalCacheEntry ed, String lockingKey) throws CacheLoaderException;
 
-   protected abstract StoredEntry loadLockSafe(Object key, String lockingKey) throws CacheLoaderException;
+   protected abstract InternalCacheEntry loadLockSafe(Object key, String lockingKey) throws CacheLoaderException;
 
    protected abstract String getLockFromKey(Object key) throws CacheLoaderException;
 }

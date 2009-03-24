@@ -21,7 +21,8 @@
  */
 package org.horizon.factories;
 
-import org.horizon.container.MVCCEntry;
+import org.horizon.container.entries.CacheEntry;
+import org.horizon.container.entries.MVCCEntry;
 import org.horizon.context.InvocationContext;
 import org.horizon.lock.TimeoutException;
 
@@ -50,5 +51,5 @@ public interface EntryFactory {
 
    MVCCEntry wrapEntryForWriting(InvocationContext ctx, Object key, boolean createIfAbsent, boolean forceLockIfAbsent, boolean alreadyLocked, boolean forRemoval) throws InterruptedException;
 
-   MVCCEntry wrapEntryForReading(InvocationContext ctx, Object key) throws InterruptedException;
+   CacheEntry wrapEntryForReading(InvocationContext ctx, Object key) throws InterruptedException;
 }

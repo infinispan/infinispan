@@ -37,6 +37,7 @@ import org.horizon.commands.write.ReplaceCommand;
 import org.horizon.config.Configuration;
 import org.horizon.config.ConfigurationException;
 import org.horizon.container.DataContainer;
+import org.horizon.container.entries.InternalCacheEntry;
 import org.horizon.context.InvocationContext;
 import org.horizon.eviction.EvictionManager;
 import org.horizon.factories.ComponentRegistry;
@@ -442,18 +443,9 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
    }
 
    public void compact() {
-      for (Object key : dataContainer.keySet()) {
-         // get the key first, before attempting to serialize stuff since data.get() may deserialize the key if doing
-         // a hashcode() or equals().
-
-         Object value = dataContainer.get(key);
-         if (key instanceof MarshalledValue) {
-            ((MarshalledValue) key).compact(true, true);
-         }
-
-         if (value instanceof MarshalledValue) {
-            ((MarshalledValue) value).compact(true, true);
-         }
+      for (InternalCacheEntry e: dataContainer) {
+         if (e.getKey() instanceof MarshalledValue) ((MarshalledValue) e.getKey()).compact(true, true);
+         if (e.getValue() instanceof MarshalledValue) ((MarshalledValue) e.getValue()).compact(true, true);
       }
    }
 }

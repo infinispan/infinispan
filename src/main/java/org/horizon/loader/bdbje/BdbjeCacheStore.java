@@ -14,10 +14,10 @@ import com.sleepycat.je.OperationStatus;
 import com.sleepycat.je.Transaction;
 import com.sleepycat.util.ExceptionUnwrapper;
 import org.horizon.Cache;
+import org.horizon.container.entries.InternalCacheEntry;
 import org.horizon.loader.AbstractCacheStore;
 import org.horizon.loader.CacheLoaderConfig;
 import org.horizon.loader.CacheLoaderException;
-import org.horizon.loader.StoredEntry;
 import org.horizon.loader.modifications.Modification;
 import org.horizon.logging.Log;
 import org.horizon.logging.LogFactory;
@@ -37,8 +37,8 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * An Oracle SleepyCat JE implementation of a {@link org.horizon.loader.CacheStore}.  <p/>This implementation uses two
  * databases <ol> <li>stored entry database: <tt>/{location}/CacheInstance-{@link org.horizon.Cache#getName()
- * name}</tt></li> {@link StoredEntry stored entries} are stored here, keyed on {@link
- * org.horizon.loader.StoredEntry#getKey()} <li>class catalog database: <tt>/{location}/CacheInstance-{@link
+ * name}</tt></li> {@link org.horizon.container.entries.InternalCacheEntry stored entries} are stored here, keyed on {@link
+ * org.horizon.container.entries.InternalCacheEntry#getKey()} <li>class catalog database: <tt>/{location}/CacheInstance-{@link
  * org.horizon.Cache#getName() name}_class_catalog</tt></li> class descriptions are stored here for efficiency reasons.
  * </ol> <p/> <p><tt>/{location}/je.properties</tt> is optional and will override any parameters to the internal
  * SleepyCat JE {@link EnvironmentConfig}.</p>
@@ -69,7 +69,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
    private Environment env;
    private StoredClassCatalog catalog;
    private Database cacheDb;
-   private StoredMap<Object, StoredEntry> cacheMap;
+   private StoredMap<Object, InternalCacheEntry> cacheMap;
 
    private PreparableTransactionRunner transactionRunner;
    private Map<javax.transaction.Transaction, Transaction> txnMap;
@@ -358,9 +358,9 @@ public class BdbjeCacheStore extends AbstractCacheStore {
     * {@inheritDoc} This implementation delegates to {@link StoredMap#get(Object)}.  If the object is expired, it will
     * not be returned.
     */
-   public StoredEntry load(Object key) throws CacheLoaderException {
+   public InternalCacheEntry load(Object key) throws CacheLoaderException {
       try {
-         StoredEntry s = cacheMap.get(key);
+         InternalCacheEntry s = cacheMap.get(key);
          if (s != null && s.isExpired()) {
             cacheMap.remove(key);
             s = null;
@@ -374,7 +374,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
    /**
     * {@inheritDoc} This implementation delegates to {@link StoredMap#put(Object, Object)}
     */
-   public void store(StoredEntry ed) throws CacheLoaderException {
+   public void store(InternalCacheEntry ed) throws CacheLoaderException {
       try {
          cacheMap.put(ed.getKey(), ed);
       } catch (RuntimeException caught) {
@@ -396,7 +396,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
    /**
     * {@inheritDoc} This implementation returns a Set from {@link StoredMap#values()}
     */
-   public Set<StoredEntry> loadAll() throws CacheLoaderException {
+   public Set<InternalCacheEntry> loadAll() throws CacheLoaderException {
       try {
          return new HashSet(cacheMap.values());
       } catch (RuntimeException caught) {
@@ -442,7 +442,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
 
    /**
     * @{inheritDoc} Writes the current count of cachestore entries followed by a pair of byte[]s corresponding to the
-    * SleepyCat binary representation of {@link org.horizon.loader.StoredEntry#getKey() key} {@link StoredEntry value}.
+    * SleepyCat binary representation of {@link InternalCacheEntry#getKey() key} {@link InternalCacheEntry value}.
     * <p/>
     * This implementation holds a transaction open to ensure that we see no new records added while iterating.
     */
@@ -499,7 +499,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
    @Override
    protected void purgeInternal() throws CacheLoaderException {
       try {
-         Iterator<Map.Entry<Object, StoredEntry>> i = cacheMap.entrySet().iterator();
+         Iterator<Map.Entry<Object, InternalCacheEntry>> i = cacheMap.entrySet().iterator();
          while (i.hasNext()) {
             if (i.next().getValue().isExpired())
                i.remove();
