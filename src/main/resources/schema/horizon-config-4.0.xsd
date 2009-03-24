@@ -50,6 +50,7 @@
          <xs:element name="lazyDeserialization" type="tns:lazyDeserialization" minOccurs="0" maxOccurs="1"/>
          <xs:element name="invocationBatching" type="tns:invocationBatchingType" minOccurs="0" maxOccurs="1"/>
          <xs:element name="eviction" type="tns:evictionType" minOccurs="0" maxOccurs="1"/>
+         <xs:element name="expiration" type="tns:expirationType" minOccurs="0" maxOccurs="1"/>
          <xs:element name="loaders" type="tns:loadersType" minOccurs="0" maxOccurs="1"/>
          <xs:element name="customInterceptors" type="tns:customInterceptorsType" minOccurs="0" maxOccurs="1"/>
          <xs:element name="clustering" type="tns:clusteringType" minOccurs="0" maxOccurs="1"/>
@@ -156,15 +157,21 @@
    </xs:complexType>
 
    <xs:complexType name="evictionType">
-      <xs:sequence>
-         <xs:element name="property" minOccurs="0" maxOccurs="unbounded" type="tns:propertyType"/>
-      </xs:sequence>
       <xs:attribute name="wakeUpInterval" type="tns:positiveInteger" use="required"/>
-      <xs:attribute name="name" type="xs:string"/>
-      <xs:attribute name="algorithmClass" type="xs:string"/>
-      <xs:attribute name="actionPolicyClass" type="xs:string"/>
-      <xs:attribute name="eventQueueSize" type="tns:positiveInteger"/>
+      <xs:attribute name="strategy">
+         <xs:simpleType>
+            <xs:restriction base="xs:string">
+               <xs:pattern
+                     value="[Nn][Oo][Nn][Ee]|[Ff][Ii][Ff][Oo]|[Ll][Rr][Uu]|\$\{.*\}"/>
+            </xs:restriction>
+         </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="maxEntries" type="xs:positiveInteger"/>
+   </xs:complexType>
 
+   <xs:complexType name="expirationType">
+      <xs:attribute name="lifespan" type="tns:positiveInteger"/>
+      <xs:attribute name="maxIdle" type="xs:positiveInteger"/>
    </xs:complexType>
 
    <xs:complexType name="loadersType">
