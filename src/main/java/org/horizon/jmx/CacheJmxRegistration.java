@@ -94,7 +94,6 @@ public class CacheJmxRegistration {
       GlobalConfiguration configuration = cache.getConfiguration().getGlobalConfiguration();
       MBeanServer beanServer = getMBeanServer(configuration);
       ComponentsJmxRegistration registrator = new ComponentsJmxRegistration(beanServer, components, getGroupName());
-      GlobalConfiguration globalConfiguration = cache.getConfiguration().getGlobalConfiguration();
       updateDomain(registrator, cache.getAdvancedCache().getComponentRegistry().getGlobalComponentRegistry(), beanServer);
       return registrator;
    }
