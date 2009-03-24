@@ -46,7 +46,6 @@ import org.horizon.transaction.TransactionTable;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -231,13 +230,6 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
    @ManagedOperation
    public void resetStatistics() {
       invalidations.set(0);
-   }
-
-   @ManagedOperation
-   public Map<String, Object> dumpStatistics() {
-      Map<String, Object> retval = new HashMap<String, Object>();
-      retval.put("Invalidations", invalidations);
-      return retval;
    }
 
    @ManagedAttribute
