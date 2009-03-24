@@ -125,8 +125,8 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       return evictions.get();
    }
 
-   @ManagedAttribute(description = "hit/miss ratio for the cache")
-   public double getHitMissRatio() {
+   @ManagedAttribute(description = "hit/(hit+miss) ratio for the cache")
+   public double getHitRatio() {
       double total = hits.get() + misses.get();
       if (total == 0)
          return 0;
