@@ -44,7 +44,6 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
    // reference to a global configuration
    private GlobalConfiguration globalConfiguration;
-   private String JmxNameBase;
    private boolean useLockStriping = true;
 
 
@@ -63,25 +62,6 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
    public boolean isStateTransferEnabled() {
       return fetchInMemoryState || (cacheLoaderManagerConfig != null && cacheLoaderManagerConfig.isFetchPersistentState());
-   }
-
-   /**
-    * If JMX statistics are enabled then all 'published' JMX objects will appear under this name. This is optional, if
-    * not specified an object name will be created for you by default.
-    *
-    * @see javax.management.ObjectName
-    * @see #isExposeJmxStatistics()
-    */
-   public void setJmxNameBase(String jmxObjectName) {
-      testImmutability("JmxNameBase");
-      this.JmxNameBase = jmxObjectName;
-   }
-
-   /**
-    * @see #setJmxNameBase(String)
-    */
-   public String getJmxNameBase() {
-      return JmxNameBase;
    }
 
    public void setUseLockStriping(boolean useLockStriping) {
@@ -500,7 +480,6 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       if (useLockStriping != that.useLockStriping) return false;
       if (useReplQueue != that.useReplQueue) return false;
       if (writeSkewCheck != that.writeSkewCheck) return false;
-      if (JmxNameBase != null ? !JmxNameBase.equals(that.JmxNameBase) : that.JmxNameBase != null) return false;
       if (cacheLoaderManagerConfig != null ? !cacheLoaderManagerConfig.equals(that.cacheLoaderManagerConfig) : that.cacheLoaderManagerConfig != null)
          return false;
       if (cacheMode != that.cacheMode) return false;
@@ -519,7 +498,6 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    @Override
    public int hashCode() {
       int result = globalConfiguration != null ? globalConfiguration.hashCode() : 0;
-      result = 31 * result + (JmxNameBase != null ? JmxNameBase.hashCode() : 0);
       result = 31 * result + (useLockStriping ? 1 : 0);
       result = 31 * result + (useReplQueue ? 1 : 0);
       result = 31 * result + replQueueMaxElements;
