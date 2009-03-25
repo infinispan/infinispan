@@ -4,6 +4,7 @@ import org.testng.annotations.Test;
 import org.horizon.container.entries.InternalCacheEntry;
 import org.horizon.container.entries.TransientCacheEntry;
 import org.horizon.container.entries.MortalCacheEntry;
+import org.horizon.container.entries.ImmortalCacheEntry;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -43,6 +44,40 @@ public class SimpleDataContainerTest {
       assert dc.size() == 1;
       dc.purge();
       assert dc.size() == 0;
+   }
+
+   public void testUpdatingLastUsed() throws Exception {
+      long idle = 600000;
+      SimpleDataContainer dc = new SimpleDataContainer();
+      dc.put("k", "v", -1, -1);
+      InternalCacheEntry ice = dc.get("k");
+      assert ice instanceof ImmortalCacheEntry;
+      assert ice.getExpiryTime() == -1;
+      assert ice.getLastUsed() == -1;
+      assert ice.getCreated() == -1;
+      assert ice.getMaxIdle() == -1;
+      assert ice.getLifespan() == -1;
+      dc.put("k", "v", -1, idle);
+      long oldTime = System.currentTimeMillis();
+      Thread.sleep(10); // for time calc granularity
+      ice = dc.get("k");
+      assert ice instanceof TransientCacheEntry;
+      assert ice.getExpiryTime() == -1;
+      assert ice.getLastUsed() > oldTime;
+      Thread.sleep(10); // for time calc granularity
+      assert ice.getLastUsed() < System.currentTimeMillis();
+      assert ice.getMaxIdle() == idle;
+      assert ice.getCreated() == -1;
+      assert ice.getLifespan() == -1;
+
+      oldTime = System.currentTimeMillis();
+      Thread.sleep(10); // for time calc granularity
+      assert dc.containsKey("k");
+      
+      // check that the last used stamp has been updated on a get
+      assert ice.getLastUsed() > oldTime;
+      Thread.sleep(10); // for time calc granularity
+      assert ice.getLastUsed() < System.currentTimeMillis();
    }
 
    public void testExpirableToImmortal() {

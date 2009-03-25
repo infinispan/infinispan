@@ -84,32 +84,80 @@ public abstract class BaseCacheStoreTest {
       return new ObjectStreamMarshaller();
    }
 
-
-   public void testLoadAndStore() throws InterruptedException, CacheLoaderException {
+   public void testLoadAndStoreImmortal() throws InterruptedException, CacheLoaderException {
       assert !cs.containsKey("k");
-      InternalCacheEntry se = InternalEntryFactory.create("k", "v", -1, -1);
+      InternalCacheEntry se = InternalEntryFactory.create("k", "v");
       cs.store(se);
 
       assert cs.load("k").getValue().equals("v");
       assert cs.load("k").getLifespan() == -1;
+      assert cs.load("k").getMaxIdle() == -1;
       assert !cs.load("k").isExpired();
       assert cs.containsKey("k");
+   }
 
-      long now = System.currentTimeMillis();
+   public void testLoadAndStoreWithLifespan() throws InterruptedException, CacheLoaderException {
+      assert !cs.containsKey("k");
+
       long lifespan = 120000;
-      se = InternalEntryFactory.create("k", "v", lifespan);
+      InternalCacheEntry se = InternalEntryFactory.create("k", "v", lifespan);
       cs.store(se);
 
       assert cs.load("k").getValue().equals("v");
       assert cs.load("k").getLifespan() == lifespan;
+      assert cs.load("k").getMaxIdle() == -1;
       assert !cs.load("k").isExpired();
       assert cs.containsKey("k");
 
-      now = System.currentTimeMillis();
       lifespan = 1;
       se = InternalEntryFactory.create("k", "v", lifespan);
       cs.store(se);
-      Thread.sleep(100);
+      Thread.sleep(10);
+      assert se.isExpired();
+      assert cs.load("k") == null;
+      assert !cs.containsKey("k");
+   }
+
+   public void testLoadAndStoreWithIdle() throws InterruptedException, CacheLoaderException {
+      assert !cs.containsKey("k");
+
+      long idle = 120000;
+      InternalCacheEntry se = InternalEntryFactory.create("k", "v", -1, idle);
+      cs.store(se);
+
+      assert cs.load("k").getValue().equals("v");
+      assert cs.load("k").getLifespan() == -1;
+      assert cs.load("k").getMaxIdle() == idle;
+      assert !cs.load("k").isExpired();
+      assert cs.containsKey("k");
+
+      idle = 1;
+      se = InternalEntryFactory.create("k", "v", -1, idle);
+      cs.store(se);
+      Thread.sleep(10);
+      assert se.isExpired();
+      assert cs.load("k") == null;
+      assert !cs.containsKey("k");
+   }
+
+   public void testLoadAndStoreWithLifespanAndIdle() throws InterruptedException, CacheLoaderException {
+      assert !cs.containsKey("k");
+
+      long lifespan = 200000;
+      long idle = 120000;
+      InternalCacheEntry se = InternalEntryFactory.create("k", "v", lifespan, idle);
+      cs.store(se);
+
+      assert cs.load("k").getValue().equals("v");
+      assert cs.load("k").getLifespan() == lifespan;
+      assert cs.load("k").getMaxIdle() == idle;
+      assert !cs.load("k").isExpired();
+      assert cs.containsKey("k");
+
+      idle = 1;
+      se = InternalEntryFactory.create("k", "v", lifespan, idle);
+      cs.store(se);
+      Thread.sleep(10);
       assert se.isExpired();
       assert cs.load("k") == null;
       assert !cs.containsKey("k");
@@ -119,14 +167,18 @@ public abstract class BaseCacheStoreTest {
       assert !cs.containsKey("k1");
       assert !cs.containsKey("k2");
 
-      long now = System.currentTimeMillis();
       long lifespan = 1;
+      long idle = 1;
       InternalCacheEntry se1 = InternalEntryFactory.create("k1", "v1", lifespan);
       InternalCacheEntry se2 = InternalEntryFactory.create("k2", "v2");
+      InternalCacheEntry se3 = InternalEntryFactory.create("k3", "v3", -1, idle);
+      InternalCacheEntry se4 = InternalEntryFactory.create("k4", "v4", lifespan, idle);
 
       cs.store(se1);
       cs.store(se2);
-      Thread.sleep(100);
+      cs.store(se3);
+      cs.store(se4);
+      Thread.sleep(10);
       cs.stop();
       cs.start();
       assert se1.isExpired();
@@ -135,7 +187,12 @@ public abstract class BaseCacheStoreTest {
       assert cs.load("k2") != null;
       assert cs.containsKey("k2");
       assert cs.load("k2").getValue().equals("v2");
-
+      assert se3.isExpired();
+      assert cs.load("k3") == null;
+      assert !cs.containsKey("k3");
+      assert se3.isExpired();
+      assert cs.load("k3") == null;
+      assert !cs.containsKey("k3");
    }
 
 
@@ -246,11 +303,11 @@ public abstract class BaseCacheStoreTest {
 
    public void testRollbackFromADifferentThreadReusingTransactionKey() throws CacheLoaderException, InterruptedException {
 
-      cs.store(InternalEntryFactory.create("old", "old", -1, -1));
+      cs.store(InternalEntryFactory.create("old", "old"));
 
       List<Modification> mods = new ArrayList<Modification>();
-      mods.add(new Store(InternalEntryFactory.create("k1", "v1", -1, -1)));
-      mods.add(new Store(InternalEntryFactory.create("k2", "v2", -1, -1)));
+      mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
+      mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
       mods.add(new Remove("k1"));
       mods.add(new Remove("old"));
       final Transaction tx = EasyMock.createNiceMock(Transaction.class);
@@ -350,13 +407,14 @@ public abstract class BaseCacheStoreTest {
 
    public void testPurgeExpired() throws Exception {
       long lifespan = 1000;
+      long idle = 500;
       cs.store(InternalEntryFactory.create("k1", "v1", lifespan));
-      cs.store(InternalEntryFactory.create("k2", "v2", lifespan));
-      cs.store(InternalEntryFactory.create("k3", "v3", lifespan));
+      cs.store(InternalEntryFactory.create("k2", "v2", -1, idle));
+      cs.store(InternalEntryFactory.create("k3", "v3", lifespan, idle));
       assert cs.containsKey("k1");
       assert cs.containsKey("k2");
       assert cs.containsKey("k3");
-      Thread.sleep(lifespan + 100);
+      Thread.sleep(lifespan + 10);
       cs.purgeExpired();
       assert !cs.containsKey("k1");
       assert !cs.containsKey("k2");
