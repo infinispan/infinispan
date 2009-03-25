@@ -137,6 +137,7 @@ public class XmlConfigurationParserImpl extends XmlParserBase implements XmlConf
             configureTransport(getSingleElementInCoreNS("transport", globalElement), gc);
             configureShutdown(getSingleElementInCoreNS("shutdown", globalElement), gc);
             configureSerialization(getSingleElementInCoreNS("serialization", globalElement), gc);
+            configureGlobalJmxStatistics(getSingleElementInCoreNS("globalJmxStatistics", globalElement), gc);
          }
       }
 
@@ -147,7 +148,7 @@ public class XmlConfigurationParserImpl extends XmlParserBase implements XmlConf
       Configuration c = new Configuration();
       configureLocking(getSingleElementInCoreNS("locking", e), c);
       configureTransaction(getSingleElementInCoreNS("transaction", e), c);
-      configureJmxStatistics(getSingleElementInCoreNS("jmxStatistics", e), c);
+      configureCacheJmxStatistics(getSingleElementInCoreNS("jmxStatistics", e), c);
       configureLazyDeserialization(getSingleElementInCoreNS("lazyDeserialization", e), c);
       configureInvocationBatching(getSingleElementInCoreNS("invocationBatching", e), c);
       configureClustering(getSingleElementInCoreNS("clustering", e), c);
@@ -263,20 +264,12 @@ public class XmlConfigurationParserImpl extends XmlParserBase implements XmlConf
       }
    }
 
-   void configureJmxStatistics(Element element, Configuration config) {
+   void configureCacheJmxStatistics(Element element, Configuration config) {
       if (element != null) {
          String enabled = getAttributeValue(element, "enabled");
          if (existsAttribute(enabled)) {
             config.setExposeJmxStatistics(getBoolean(enabled));
-         } else {
-            // by default enable this since the element is present!
-            config.setExposeJmxStatistics(true);
-         }
-         String jmxNameBase = getAttributeValue(element, "jmxNameBase");
-         if (existsAttribute(jmxNameBase)) {
-            //todo update this
-//            config.setJmxNameBase(jmxNameBase);
-         }
+         } 
       }
    }
 
@@ -414,6 +407,17 @@ public class XmlConfigurationParserImpl extends XmlParserBase implements XmlConf
          if (existsAttribute(tmp)) gc.setReplicationQueueScheduledExecutorFactoryClass(tmp);
          Properties p = XmlConfigHelper.extractProperties(e);
          if (p != null) gc.setReplicationQueueScheduledExecutorProperties(p);
+      }
+   }
+
+   public void configureGlobalJmxStatistics(Element e, GlobalConfiguration c) {
+      if (e != null) {
+         String enabled = getAttributeValue(e, "enabled");
+         if (existsAttribute(enabled)) c.setExposeGlobalJmxStatistics(getBoolean(enabled));
+         String jmxDomain = getAttributeValue(e, "jmxDomain");
+         if (existsAttribute(jmxDomain)) c.setJmxDomain(jmxDomain);
+         String mBeanServerLookup = getAttributeValue(e, "mBeanServerLookup");
+         if (existsAttribute(mBeanServerLookup)) c.setMBeanServerLookup(mBeanServerLookup);
       }
    }
 

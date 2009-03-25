@@ -27,6 +27,7 @@
          <property name="threadNamePrefix" value="ReplicationQueueThread"/>
       </replicationQueueScheduledExecutor>
 
+      <globalJmxStatistics enabled="true" jmxDomain="horizon"/>
 
       <!--
          If the transport is omitted, there is no way to create distributed or clustered caches.

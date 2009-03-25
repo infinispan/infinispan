@@ -2,6 +2,7 @@ package org.horizon.config.parsing;
 
 import org.horizon.config.CacheLoaderManagerConfig;
 import org.horizon.config.Configuration;
+import org.horizon.config.GlobalConfiguration;
 import org.horizon.eviction.EvictionStrategy;
 import org.horizon.loader.CacheLoaderConfig;
 import org.horizon.loader.decorators.SingletonStoreConfig;
@@ -65,13 +66,13 @@ public class ConfigurationParserTest {
       assert !c.isSyncRollbackPhase();
    }
 
-   public void testJmxStatistics() throws Exception {
+   public void testCacheJmxStatistics() throws Exception {
       XmlConfigurationParserImpl parser = new XmlConfigurationParserImpl();
       String xml = "<jmxStatistics enabled=\"true\"/>";
       Element e = XmlConfigHelper.stringToElement(xml);
 
       Configuration c = new Configuration();
-      parser.configureJmxStatistics(e, c);
+      parser.configureCacheJmxStatistics(e, c);
 
       assert c.isExposeJmxStatistics();
    }
@@ -93,7 +94,7 @@ public class ConfigurationParserTest {
       Element e = XmlConfigHelper.stringToElement(xml);
 
       Configuration c = new Configuration();
-      parser.configureJmxStatistics(e, c);
+      parser.configureCacheJmxStatistics(e, c);
 
       assert c.isExposeJmxStatistics();
    }

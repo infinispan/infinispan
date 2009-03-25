@@ -16,6 +16,7 @@
    <xs:complexType name="globalCacheConfigurationType">
       <xs:all>
          <xs:element name="serialization" type="tns:sharedSerializationType" minOccurs="0" maxOccurs="1"/>
+         <xs:element name="globalJmxStatistics" type="tns:globalJmxStatisticsType" minOccurs="0" maxOccurs="1"/>
          <xs:element name="transport" type="tns:transportConfigType" minOccurs="0" maxOccurs="1"/>
          <xs:element name="asyncListenerExecutor" type="tns:executorConfigurationType" minOccurs="0" maxOccurs="1"/>
          <xs:element name="asyncSerializationExecutor" type="tns:executorConfigurationType" minOccurs="0"
@@ -33,6 +34,12 @@
       <xs:attribute name="objectOutputStreamPoolSize" type="tns:positiveInteger"/>
       <xs:attribute name="version" type="xs:string"/>
       <xs:attribute name="marshallerClass" type="xs:string"/>
+   </xs:complexType>
+
+   <xs:complexType name="globalJmxStatisticsType">
+      <xs:attribute name="enabled" type="tns:booleanType"/>
+      <xs:attribute name="jmxDomain" type="xs:string"/>
+      <xs:attribute name="mBeanServerLookup" type="xs:string"/>
    </xs:complexType>
 
    <xs:complexType name="executorConfigurationType">
@@ -124,8 +131,7 @@
    </xs:simpleType>
 
    <xs:complexType name="jmxStatisticsType">
-      <xs:attribute name="enabled" type="tns:booleanType"/>
-      <xs:attribute name="jmxNameBase" type="xs:string"/>
+      <xs:attribute name="enabled" type="tns:booleanType"/>      
    </xs:complexType>
 
    <xs:complexType name="lazyDeserialization">
@@ -241,6 +247,6 @@
    <xs:complexType name="propertyType">
       <xs:attribute name="name" type="xs:string"/>
       <xs:attribute name="value" type="xs:string"/>
-   </xs:complexType>
+   </xs:complexType>   
 </xs:schema>
 

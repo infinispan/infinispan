@@ -112,10 +112,11 @@ public class XmlFileParsingTest {
       assert tableManipulation.isDropTableOnExit();
       assert !tableManipulation.isCreateTableOnStart();
 
-      //todo mmarkus re-enable test
-//      c = namedCaches.get("withJmxEnabled");
-//      assert c.isExposeManagementStatistics();
-//      assert c.getJmxNameBase().equals("horizonDomain:aKey=aValue");
+      c = namedCaches.get("withouthJmxEnabled");
+      assert !c.isExposeJmxStatistics();
+      assert !gc.isExposeGlobalJmxStatistics();
+      assert gc.getJmxDomain().equals("funky_domain");
+      assert gc.getMBeanServerLookup().equals("org.horizon.jmx.PerThreadMBeanServerLookup");
    }
 
    public void testConfigurationMerging() throws IOException {

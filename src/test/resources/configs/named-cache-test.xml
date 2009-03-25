@@ -25,6 +25,7 @@
 
       <serialization marshallerClass="org.horizon.marshall.VersionAwareMarshaller" version="1.0"
                      objectInputStreamPoolSize="100" objectOutputStreamPoolSize="100"/>
+      <globalJmxStatistics enabled="false" jmxDomain="funky_domain" mBeanServerLookup="org.horizon.jmx.PerThreadMBeanServerLookup"/>
 
    </global>
 
@@ -101,11 +102,11 @@
       </loaders>      
    </namedCache>
 
-   <namedCache name="withJmxEnabled">
+   <namedCache name="withouthJmxEnabled">
       <clustering>
          <async useReplQueue="true" replQueueInterval="100" replQueueMaxElements="200"/>
       </clustering>
-      <jmxStatistics enabled="true" jmxNameBase="horizonDomain:aKey=aValue"/>
+      <jmxStatistics enabled="false"/>
    </namedCache>
 
 </horizon>

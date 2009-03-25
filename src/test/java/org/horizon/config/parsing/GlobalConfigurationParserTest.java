@@ -39,6 +39,19 @@ public class GlobalConfigurationParserTest {
       assert gc.getTransportProperties().size() == 0;
    }
 
+   public void testGlobalJmxStatistics() throws Exception {
+      XmlConfigurationParserImpl parser = new XmlConfigurationParserImpl();
+      String xml = "<globalJmxStatistics enabled=\"true\" jmxDomain=\"horizons\" mBeanServerLookup=\"org.horizon.jmx.PerThreadMBeanServerLookup\"/>";
+      Element e = XmlConfigHelper.stringToElement(xml);
+
+      GlobalConfiguration c = new GlobalConfiguration();
+      parser.configureGlobalJmxStatistics(e, c);
+
+      assert c.isExposeGlobalJmxStatistics();
+      assert c.getJmxDomain().equals("horizons");
+      assert c.getMBeanServerLookup().equals("org.horizon.jmx.PerThreadMBeanServerLookup");
+   }
+
    public void testShutdown() throws Exception {
       XmlConfigurationParserImpl parser = new XmlConfigurationParserImpl();
       String xml = "<shutdown hookBehavior=\"REGISTER\" />";
