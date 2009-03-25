@@ -36,26 +36,23 @@ import java.util.Map.Entry;
 public class PutMapCommand implements WriteCommand {
    public static final byte METHOD_ID = 121;
 
-   private Map<Object, Object> map;
-   private CacheNotifier notifier;
-   private long lifespanMillis = -1;
+   Map<Object, Object> map;
+   CacheNotifier notifier;
+   long lifespanMillis = -1;
+   long maxIdleTimeMillis = -1;
 
-   public PutMapCommand(Map map, CacheNotifier notifier, long lifespanMillis) {
+   public PutMapCommand() {
+   }
+
+   public PutMapCommand(Map map, CacheNotifier notifier, long lifespanMillis, long maxIdleTimeMillis) {
       this.map = map;
       this.notifier = notifier;
       this.lifespanMillis = lifespanMillis;
-   }
-
-   public PutMapCommand(Map map, CacheNotifier notifier) {
-      this.map = map;
-      this.notifier = notifier;
+      this.maxIdleTimeMillis = maxIdleTimeMillis;
    }
 
    public void init(CacheNotifier notifier) {
       this.notifier = notifier;
-   }
-
-   public PutMapCommand() {
    }
 
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
@@ -73,6 +70,7 @@ public class PutMapCommand implements WriteCommand {
          notifier.notifyCacheEntryModified(key, me.getValue(), true, ctx);
          me.setValue(e.getValue());
          me.setLifespan(lifespanMillis);
+         me.setMaxIdle(maxIdleTimeMillis);
          notifier.notifyCacheEntryModified(key, me.getValue(), false, ctx);
       }
       return null;
@@ -91,16 +89,13 @@ public class PutMapCommand implements WriteCommand {
    }
 
    public Object[] getParameters() {
-      if (lifespanMillis < 0)
-         return new Object[]{map, false};
-      else
-         return new Object[]{map, true, lifespanMillis};
+      return new Object[]{map, lifespanMillis, maxIdleTimeMillis};
    }
 
    public void setParameters(int commandId, Object[] parameters) {
       map = (Map) parameters[0];
-      boolean setLifespan = (Boolean) parameters[1];
-      if (setLifespan) lifespanMillis = (Long) parameters[2];
+      lifespanMillis = (Long) parameters[1];
+      maxIdleTimeMillis = (Long) parameters[2];
    }
 
    @Override
@@ -111,6 +106,7 @@ public class PutMapCommand implements WriteCommand {
       PutMapCommand that = (PutMapCommand) o;
 
       if (lifespanMillis != that.lifespanMillis) return false;
+      if (maxIdleTimeMillis != that.maxIdleTimeMillis) return false;
       if (map != null ? !map.equals(that.map) : that.map != null) return false;
 
       return true;
@@ -120,6 +116,7 @@ public class PutMapCommand implements WriteCommand {
    public int hashCode() {
       int result = map != null ? map.hashCode() : 0;
       result = 31 * result + (int) (lifespanMillis ^ (lifespanMillis >>> 32));
+      result = 31 * result + (int) (maxIdleTimeMillis ^ (maxIdleTimeMillis >>> 32));
       return result;
    }
 
@@ -127,7 +124,6 @@ public class PutMapCommand implements WriteCommand {
    public String toString() {
       return "PutMapCommand{" +
             "map=" + map +
-            ", lifespanMillis=" + lifespanMillis +
             '}';
    }
 
@@ -137,5 +133,9 @@ public class PutMapCommand implements WriteCommand {
 
    public long getLifespanMillis() {
       return lifespanMillis;
+   }
+
+   public long getMaxIdleTimeMillis() {
+      return maxIdleTimeMillis;
    }
 }

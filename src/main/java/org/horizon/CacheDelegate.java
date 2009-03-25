@@ -64,6 +64,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -88,6 +89,7 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
    private CacheManager cacheManager;
    // this is never used here but should be injected - this is a hack to make sure the StateTransferManager is properly constructed if needed.
    private StateTransferManager stateTransferManager;
+   private long defaultLifespan, defaultMaxIdleTime;
 
    public CacheDelegate(String name) {
       this.name = name;
@@ -124,9 +126,7 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
 
    @SuppressWarnings("unchecked")
    public V putIfAbsent(K key, V value) {
-      PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value);
-      command.setPutIfAbsent(true);
-      return (V) invoker.invoke(getInvocationContext(), command);
+      return putIfAbsent(key, value, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
    }
 
    public boolean remove(Object key, Object value) {
@@ -135,14 +135,12 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
    }
 
    public boolean replace(K key, V oldValue, V newValue) {
-      ReplaceCommand command = commandsFactory.buildReplaceCommand(key, oldValue, newValue);
-      return (Boolean) invoker.invoke(getInvocationContext(), command);
+      return replace(key, oldValue, newValue, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
    }
 
    @SuppressWarnings("unchecked")
    public V replace(K key, V value) {
-      ReplaceCommand command = commandsFactory.buildReplaceCommand(key, null, value);
-      return (V) invoker.invoke(getInvocationContext(), command);
+      return replace(key, value, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
    }
 
    public int size() {
@@ -174,8 +172,7 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
 
    @SuppressWarnings("unchecked")
    public V put(K key, V value) {
-      PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value);
-      return (V) invoker.invoke(getInvocationContext(), command);
+      return put(key, value, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
    }
 
    @SuppressWarnings("unchecked")
@@ -184,9 +181,8 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
       return (V) invoker.invoke(getInvocationContext(), command);
    }
 
-   public void putAll(Map<? extends K, ? extends V> t) {
-      PutMapCommand command = commandsFactory.buildPutMapCommand(t);
-      invoker.invoke(getInvocationContext(), command);
+   public void putAll(Map<? extends K, ? extends V> map) {
+      putAll(map, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
    }
 
    public void clear() {
@@ -195,15 +191,15 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
    }
 
    public Set<K> keySet() {
-      throw new UnsupportedOperationException("Go away");
+      throw new UnsupportedOperationException("TODO implement me"); // TODO implement me
    }
 
    public Collection<V> values() {
-      throw new UnsupportedOperationException("Go away");
+      throw new UnsupportedOperationException("TODO implement me"); // TODO implement me
    }
 
    public Set<Map.Entry<K, V>> entrySet() {
-      throw new UnsupportedOperationException("Go away");
+      throw new UnsupportedOperationException("TODO implement me"); // TODO implement me
    }
 
    public void putForExternalRead(K key, V value) {
@@ -255,6 +251,8 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
 
    public void start() {
       componentRegistry.start();
+      defaultLifespan = config.getExpirationLifespan();
+      defaultMaxIdleTime = config.getExpirationMaxIdle();
    }
 
    public void stop() {
@@ -300,32 +298,32 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
 
    public V put(K key, V value, Options... options) {
       getInvocationContext().setOptions(options);
-      return put(key, value);
+      return put(key, value, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
    }
 
-   public V put(K key, V value, long lifespan, TimeUnit unit, Options... options) {
+   public V put(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Options... options) {
       getInvocationContext().setOptions(options);
-      return put(key, value, lifespan, unit);
+      return put(key, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
    }
 
    public V putIfAbsent(K key, V value, Options... options) {
       getInvocationContext().setOptions(options);
-      return putIfAbsent(key, value);
+      return putIfAbsent(key, value, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
    }
 
-   public V putIfAbsent(K key, V value, long lifespan, TimeUnit unit, Options... options) {
+   public V putIfAbsent(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Options... options) {
       getInvocationContext().setOptions(options);
-      return putIfAbsent(key, value, lifespan, unit);
+      return putIfAbsent(key, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
    }
 
    public void putAll(Map<? extends K, ? extends V> map, Options... options) {
       getInvocationContext().setOptions(options);
-      putAll(map);
+      putAll(map, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
    }
 
-   public void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit unit, Options... options) {
+   public void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Options... options) {
       getInvocationContext().setOptions(options);
-      putAll(map, lifespan, unit);
+      putAll(map, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
    }
 
    public V remove(Object key, Options... options) {
@@ -410,32 +408,55 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
    }
 
    @SuppressWarnings("unchecked")
-   public V put(K key, V value, long lifespan, TimeUnit unit) {
-      PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, unit.toMillis(lifespan));
+   public final V put(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit) {
+      PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, lifespanUnit.toMillis(lifespan), idleTimeUnit.toMillis(maxIdleTime));
       return (V) invoker.invoke(getInvocationContext(), command);
    }
 
    @SuppressWarnings("unchecked")
-   public V putIfAbsent(K key, V value, long lifespan, TimeUnit unit) {
-      PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, unit.toMillis(lifespan));
+   public final V putIfAbsent(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit) {
+      PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, lifespanUnit.toMillis(lifespan), idleTimeUnit.toMillis(maxIdleTime));
       command.setPutIfAbsent(true);
       return (V) invoker.invoke(getInvocationContext(), command);
    }
 
-   public void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit unit) {
-      PutMapCommand command = commandsFactory.buildPutMapCommand(map, unit.toMillis(lifespan));
+   public final void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit) {
+      PutMapCommand command = commandsFactory.buildPutMapCommand(map, lifespanUnit.toMillis(lifespan), idleTimeUnit.toMillis(maxIdleTime));
       invoker.invoke(getInvocationContext(), command);
    }
 
    @SuppressWarnings("unchecked")
-   public V replace(K key, V value, long lifespan, TimeUnit unit) {
-      ReplaceCommand command = commandsFactory.buildReplaceCommand(key, null, value, unit.toMillis(lifespan));
+   public final V replace(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit) {
+      ReplaceCommand command = commandsFactory.buildReplaceCommand(key, null, value, lifespanUnit.toMillis(lifespan), idleTimeUnit.toMillis(maxIdleTime));
       return (V) invoker.invoke(getInvocationContext(), command);
    }
 
-   public boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit unit) {
-      ReplaceCommand command = commandsFactory.buildReplaceCommand(key, oldValue, value, unit.toMillis(lifespan));
+   public final boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit) {
+      ReplaceCommand command = commandsFactory.buildReplaceCommand(key, oldValue, value, lifespanUnit.toMillis(lifespan), idleTimeUnit.toMillis(maxIdleTime));
       return (Boolean) invoker.invoke(getInvocationContext(), command);
+   }
+
+   @SuppressWarnings("unchecked")
+   public V put(K key, V value, long lifespan, TimeUnit unit) {
+      return put(key, value, lifespan, unit, defaultMaxIdleTime, MILLISECONDS);
+   }
+
+   @SuppressWarnings("unchecked")
+   public V putIfAbsent(K key, V value, long lifespan, TimeUnit unit) {
+      return putIfAbsent(key, value, lifespan, unit, defaultMaxIdleTime, MILLISECONDS);
+   }
+
+   public void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit unit) {
+      putAll(map, lifespan, unit, defaultMaxIdleTime, MILLISECONDS);
+   }
+
+   @SuppressWarnings("unchecked")
+   public V replace(K key, V value, long lifespan, TimeUnit unit) {
+      return replace(key, value, lifespan, unit, defaultMaxIdleTime, MILLISECONDS);
+   }
+
+   public boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit unit) {
+      return replace(key, oldValue, value, lifespan, unit, defaultMaxIdleTime, MILLISECONDS);
    }
 
    public AdvancedCache<K, V> getAdvancedCache() {
@@ -443,7 +464,7 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
    }
 
    public void compact() {
-      for (InternalCacheEntry e: dataContainer) {
+      for (InternalCacheEntry e : dataContainer) {
          if (e.getKey() instanceof MarshalledValue) ((MarshalledValue) e.getKey()).compact(true, true);
          if (e.getValue() instanceof MarshalledValue) ((MarshalledValue) e.getValue()).compact(true, true);
       }

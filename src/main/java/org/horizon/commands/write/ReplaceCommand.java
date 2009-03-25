@@ -34,25 +34,21 @@ import org.horizon.context.InvocationContext;
 public class ReplaceCommand extends AbstractDataCommand implements DataWriteCommand {
    public static final byte METHOD_ID = 122;
 
-   protected Object oldValue;
-   protected Object newValue;
-   protected long lifespanMillis = -1;
+   Object oldValue;
+   Object newValue;
+   long lifespanMillis = -1;
+   long maxIdleTimeMillis = -1;
    boolean successful = true;
 
-   public ReplaceCommand(Object key, Object oldValue, Object newValue, long lifespanMillis) {
+   public ReplaceCommand() {      
+   }
+
+   public ReplaceCommand(Object key, Object oldValue, Object newValue, long lifespanMillis, long maxIdleTimeMillis) {
       super(key);
       this.oldValue = oldValue;
       this.newValue = newValue;
       this.lifespanMillis = lifespanMillis;
-   }
-
-   public ReplaceCommand(Object key, Object oldValue, Object newValue) {
-      super(key);
-      this.oldValue = oldValue;
-      this.newValue = newValue;
-   }
-
-   public ReplaceCommand() {
+      this.maxIdleTimeMillis = maxIdleTimeMillis;
    }
 
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
@@ -68,6 +64,7 @@ public class ReplaceCommand extends AbstractDataCommand implements DataWriteComm
             if (oldValue == null || oldValue.equals(e.getValue())) {
                Object old = e.setValue(newValue);
                e.setLifespan(lifespanMillis);
+               e.setMaxIdle(maxIdleTimeMillis);
                return returnValue(old, true);
             }
             return returnValue(null, false);
@@ -75,6 +72,7 @@ public class ReplaceCommand extends AbstractDataCommand implements DataWriteComm
             // for remotely originating calls, this doesn't check the status of what is under the key at the moment
             Object old = e.setValue(newValue);
             e.setLifespan(lifespanMillis);
+            e.setMaxIdle(maxIdleTimeMillis);
             return returnValue(old, true);
          }
       }
@@ -96,10 +94,7 @@ public class ReplaceCommand extends AbstractDataCommand implements DataWriteComm
    }
 
    public Object[] getParameters() {
-      if (lifespanMillis < 0)
-         return new Object[]{key, oldValue, newValue, false};
-      else
-         return new Object[]{key, oldValue, newValue, true, lifespanMillis};
+      return new Object[]{key, oldValue, newValue, lifespanMillis, maxIdleTimeMillis};
    }
 
    public void setParameters(int commandId, Object[] parameters) {
@@ -107,8 +102,8 @@ public class ReplaceCommand extends AbstractDataCommand implements DataWriteComm
       key = parameters[0];
       oldValue = parameters[1];
       newValue = parameters[2];
-      boolean setLifespan = (Boolean) parameters[3];
-      if (setLifespan) lifespanMillis = (Long) parameters[4];
+      lifespanMillis = (Long) parameters[3];
+      maxIdleTimeMillis = (Long) parameters[4];
    }
 
    @Override
@@ -120,6 +115,7 @@ public class ReplaceCommand extends AbstractDataCommand implements DataWriteComm
       ReplaceCommand that = (ReplaceCommand) o;
 
       if (lifespanMillis != that.lifespanMillis) return false;
+      if (maxIdleTimeMillis != that.maxIdleTimeMillis) return false;
       if (newValue != null ? !newValue.equals(that.newValue) : that.newValue != null) return false;
       if (oldValue != null ? !oldValue.equals(that.oldValue) : that.oldValue != null) return false;
 
@@ -132,6 +128,7 @@ public class ReplaceCommand extends AbstractDataCommand implements DataWriteComm
       result = 31 * result + (oldValue != null ? oldValue.hashCode() : 0);
       result = 31 * result + (newValue != null ? newValue.hashCode() : 0);
       result = 31 * result + (int) (lifespanMillis ^ (lifespanMillis >>> 32));
+      result = 31 * result + (int) (maxIdleTimeMillis ^ (maxIdleTimeMillis >>> 32));
       return result;
    }
 
@@ -143,12 +140,15 @@ public class ReplaceCommand extends AbstractDataCommand implements DataWriteComm
       return lifespanMillis;
    }
 
+   public long getMaxIdleTimeMillis() {
+      return maxIdleTimeMillis;
+   }
+
    @Override
    public String toString() {
       return "ReplaceCommand{" +
             "oldValue=" + oldValue +
             ", newValue=" + newValue +
-            ", lifespanMillis=" + lifespanMillis +
             ", successful=" + successful +
             '}';
    }

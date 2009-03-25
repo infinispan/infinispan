@@ -38,32 +38,27 @@ import org.horizon.notifications.cachelistener.CacheNotifier;
 public class PutKeyValueCommand extends AbstractDataCommand implements DataWriteCommand {
    public static final byte METHOD_ID = 3;
 
-   protected Object value;
-   protected boolean putIfAbsent;
-   private CacheNotifier notifier;
+   Object value;
+   boolean putIfAbsent;
+   CacheNotifier notifier;
    boolean successful = true;
    long lifespanMillis = -1;
+   long maxIdleTimeMillis = -1;
 
-   public PutKeyValueCommand(Object key, Object value, boolean putIfAbsent, CacheNotifier notifier, long lifespanMillis) {
+   public PutKeyValueCommand() {
+   }
+
+   public PutKeyValueCommand(Object key, Object value, boolean putIfAbsent, CacheNotifier notifier, long lifespanMillis, long maxIdleTimeMillis) {
       super(key);
       this.value = value;
       this.putIfAbsent = putIfAbsent;
       this.notifier = notifier;
       this.lifespanMillis = lifespanMillis;
-   }
-
-   public PutKeyValueCommand(Object key, Object value, boolean putIfAbsent, CacheNotifier notifier) {
-      super(key);
-      this.value = value;
-      this.putIfAbsent = putIfAbsent;
-      this.notifier = notifier;
+      this.maxIdleTimeMillis = maxIdleTimeMillis;
    }
 
    public void init(CacheNotifier notifier) {
       this.notifier = notifier;
-   }
-
-   public PutKeyValueCommand() {
    }
 
    public Object getValue() {
@@ -96,9 +91,11 @@ public class PutKeyValueCommand extends AbstractDataCommand implements DataWrite
             e.setValue(dv.merge(toMergeWith));
             o = existing;
             e.setLifespan(lifespanMillis);
+            e.setMaxIdle(maxIdleTimeMillis);
          } else {
             o = e.setValue(value);
             e.setLifespan(lifespanMillis);
+            e.setMaxIdle(maxIdleTimeMillis);
          }
          notifier.notifyCacheEntryModified(key, e.getValue(), false, ctx);
       }
@@ -110,18 +107,15 @@ public class PutKeyValueCommand extends AbstractDataCommand implements DataWrite
    }
 
    public Object[] getParameters() {
-      if (lifespanMillis < 0)
-         return new Object[]{key, value, false};
-      else
-         return new Object[]{key, value, true, lifespanMillis};
+      return new Object[]{key, value, lifespanMillis, maxIdleTimeMillis};
    }
 
    public void setParameters(int commandId, Object[] parameters) {
       if (commandId != METHOD_ID) throw new IllegalStateException("Invalid method id");
       key = parameters[0];
       value = parameters[1];
-      boolean setLifespan = (Boolean) parameters[2];
-      if (setLifespan) lifespanMillis = (Long) parameters[3];
+      lifespanMillis = (Long) parameters[2];
+      maxIdleTimeMillis = (Long) parameters[3];
    }
 
    public boolean isPutIfAbsent() {
@@ -136,6 +130,10 @@ public class PutKeyValueCommand extends AbstractDataCommand implements DataWrite
       return lifespanMillis;
    }
 
+   public long getMaxIdleTimeMillis() {
+      return maxIdleTimeMillis;
+   }
+
    @Override
    public boolean equals(Object o) {
       if (this == o) return true;
@@ -145,6 +143,7 @@ public class PutKeyValueCommand extends AbstractDataCommand implements DataWrite
       PutKeyValueCommand that = (PutKeyValueCommand) o;
 
       if (lifespanMillis != that.lifespanMillis) return false;
+      if (maxIdleTimeMillis != that.maxIdleTimeMillis) return false;
       if (putIfAbsent != that.putIfAbsent) return false;
       if (value != null ? !value.equals(that.value) : that.value != null) return false;
 
@@ -157,6 +156,7 @@ public class PutKeyValueCommand extends AbstractDataCommand implements DataWrite
       result = 31 * result + (value != null ? value.hashCode() : 0);
       result = 31 * result + (putIfAbsent ? 1 : 0);
       result = 31 * result + (int) (lifespanMillis ^ (lifespanMillis >>> 32));
+      result = 31 * result + (int) (maxIdleTimeMillis ^ (maxIdleTimeMillis >>> 32));
       return result;
    }
 
@@ -165,7 +165,6 @@ public class PutKeyValueCommand extends AbstractDataCommand implements DataWrite
       return "PutKeyValueCommand{" +
             "key=" + key +
             ", value=" + value +
-            ", lifespanMillis=" + lifespanMillis +
             ", putIfAbsent=" + putIfAbsent +
             '}';
    }

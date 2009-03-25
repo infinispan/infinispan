@@ -320,7 +320,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
       try {
          Set<InternalCacheEntry> set = (Set<InternalCacheEntry>) marshaller.objectFromObjectStream(i);
          for (InternalCacheEntry se : set)
-            cache.put(se.getKey(), se.getValue(), se.getLifespan(), MILLISECONDS, Options.CACHE_MODE_LOCAL); // TODO store maxIdle as well
+            cache.put(se.getKey(), se.getValue(), se.getLifespan(), MILLISECONDS, se.getMaxIdle(), MILLISECONDS, Options.CACHE_MODE_LOCAL); // TODO store maxIdle as well
       } catch (Exception e) {
          dataContainer.clear();
          throw new StateTransferException(e);

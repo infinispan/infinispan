@@ -171,9 +171,9 @@ public class HorizonMarshaller implements Marshaller {
             if (ice.canExpire()) {
                out.writeBoolean(true);
                writeUnsignedLong(out, ice.getCreated());
-               writeUnsignedLong(out, ice.getLifespan());
+               out.writeLong(ice.getLifespan()); // could be negative so should not use unsigned longs
                writeUnsignedLong(out, ice.getLastUsed());
-               writeUnsignedLong(out, ice.getMaxIdle());
+               out.writeLong(ice.getMaxIdle()); // could be negative so should not use unsigned longs
             } else {
                out.writeBoolean(false);
             }
@@ -341,9 +341,9 @@ public class HorizonMarshaller implements Marshaller {
             boolean canExpire = in.readBoolean();
             if (canExpire) {
                long created = readUnsignedLong(in);
-               long lifespan = readUnsignedLong(in);
+               long lifespan = in.readLong(); // could be negative so should not use unsigned longs
                long lastUsed = readUnsignedLong(in);
-               long maxIdle = readUnsignedLong(in);
+               long maxIdle = in.readLong(); // could be negative so should not use unsigned longs
                return InternalEntryFactory.create(k, v, created, lifespan, lastUsed, maxIdle);
             } else {
                return InternalEntryFactory.create(k, v);

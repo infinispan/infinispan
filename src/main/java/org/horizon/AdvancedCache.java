@@ -89,15 +89,15 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
 
    V put(K key, V value, Options... options);
 
-   V put(K key, V value, long lifespan, TimeUnit unit, Options... options);
+   V put(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Options... options);
 
    V putIfAbsent(K key, V value, Options... options);
 
-   V putIfAbsent(K key, V value, long lifespan, TimeUnit unit, Options... options);
+   V putIfAbsent(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Options... options);
 
    void putAll(Map<? extends K, ? extends V> map, Options... options);
 
-   void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit unit, Options... options);
+   void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Options... options);
 
    V remove(Object key, Options... options);
 

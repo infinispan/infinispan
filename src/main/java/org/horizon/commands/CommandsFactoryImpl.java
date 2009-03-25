@@ -64,12 +64,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
       this.cache = cache;
    }
 
-   public PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value) {
-      return new PutKeyValueCommand(key, value, false, notifier);
-   }
-
-   public PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, long lifespanMillis) {
-      return new PutKeyValueCommand(key, value, false, notifier, lifespanMillis);
+   public PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, long lifespanMillis, long maxIdleTimeMillis) {
+      return new PutKeyValueCommand(key, value, false, notifier, lifespanMillis, maxIdleTimeMillis);
    }
 
    public RemoveCommand buildRemoveCommand(Object key, Object value) {
@@ -80,12 +76,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
       return new InvalidateCommand(notifier, keys);
    }
 
-   public ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue) {
-      return new ReplaceCommand(key, oldValue, newValue);
-   }
-
-   public ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, long lifespan) {
-      return new ReplaceCommand(key, oldValue, newValue, lifespan);
+   public ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, long lifespan, long maxIdleTimeMillis) {
+      return new ReplaceCommand(key, oldValue, newValue, lifespan, maxIdleTimeMillis);
    }
 
    public SizeCommand buildSizeCommand() {
@@ -99,12 +91,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
       return new GetKeyValueCommand(key, notifier);
    }
 
-   public PutMapCommand buildPutMapCommand(Map map) {
-      return new PutMapCommand(map, notifier);
-   }
-
-   public PutMapCommand buildPutMapCommand(Map map, long lifespan) {
-      return new PutMapCommand(map, notifier, lifespan);
+   public PutMapCommand buildPutMapCommand(Map map, long lifespan, long maxIdleTimeMillis) {
+      return new PutMapCommand(map, notifier, lifespan, maxIdleTimeMillis);
    }
 
    public ClearCommand buildClearCommand() {

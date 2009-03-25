@@ -50,25 +50,19 @@ import java.util.Map;
 @Scope(Scopes.NAMED_CACHE)
 public interface CommandsFactory {
 
-   PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value);
-
-   PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, long lifespanMillis);
+   PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, long lifespanMillis, long maxIdleTimeMillis);
 
    RemoveCommand buildRemoveCommand(Object key, Object value);
 
    InvalidateCommand buildInvalidateCommand(Object... keys);
 
-   ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue);
-
-   ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, long lifespanMillis);
+   ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, long lifespanMillis, long maxIdleTimeMillis);
 
    SizeCommand buildSizeCommand();
 
    GetKeyValueCommand buildGetKeyValueCommand(Object key);
 
-   PutMapCommand buildPutMapCommand(Map t);
-
-   PutMapCommand buildPutMapCommand(Map t, long lifespanMillis);
+   PutMapCommand buildPutMapCommand(Map map, long lifespanMillis, long maxIdleTimeMillis);
 
    ClearCommand buildClearCommand();
 

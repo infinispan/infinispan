@@ -2,14 +2,14 @@ package org.horizon.loader;
 
 import org.horizon.Cache;
 import org.horizon.CacheException;
-import org.horizon.container.entries.InternalCacheEntry;
 import org.horizon.config.CacheLoaderManagerConfig;
 import org.horizon.config.Configuration;
 import org.horizon.config.ConfigurationException;
+import org.horizon.container.entries.InternalCacheEntry;
 import org.horizon.factories.annotations.Inject;
 import org.horizon.factories.annotations.Start;
 import org.horizon.factories.annotations.Stop;
-import org.horizon.invocation.Options;
+import static org.horizon.invocation.Options.SKIP_CACHE_STATUS_CHECK;
 import org.horizon.loader.decorators.AsyncStore;
 import org.horizon.loader.decorators.ChainingCacheStore;
 import org.horizon.loader.decorators.ReadOnlyStore;
@@ -22,7 +22,7 @@ import org.horizon.util.ReflectionUtil;
 import org.horizon.util.Util;
 
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 public class CacheLoaderManagerImpl implements CacheLoaderManager {
 
@@ -123,8 +123,8 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
             }
 
             for (InternalCacheEntry e : state)
-               cache.getAdvancedCache().put(e.getKey(), e.getValue(), e.getLifespan(),
-                                            TimeUnit.MILLISECONDS, Options.SKIP_CACHE_STATUS_CHECK);
+               cache.getAdvancedCache().put(e.getKey(), e.getValue(), e.getLifespan(), MILLISECONDS,
+                                            e.getMaxIdle(), MILLISECONDS, SKIP_CACHE_STATUS_CHECK);
 
             if (log.isDebugEnabled()) stop = System.currentTimeMillis();
             if (log.isDebugEnabled()) total = stop - start;
