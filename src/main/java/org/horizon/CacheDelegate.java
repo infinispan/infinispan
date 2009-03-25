@@ -46,7 +46,7 @@ import org.horizon.factories.annotations.NonVolatile;
 import org.horizon.interceptors.InterceptorChain;
 import org.horizon.interceptors.base.CommandInterceptor;
 import org.horizon.invocation.InvocationContextContainer;
-import org.horizon.invocation.Options;
+import org.horizon.invocation.Flag;
 import org.horizon.lifecycle.ComponentStatus;
 import org.horizon.logging.Log;
 import org.horizon.logging.LogFactory;
@@ -209,7 +209,7 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
             transactionManager.suspend();
          }
          // if the entry exists then this should be a no-op.
-         putIfAbsent(key, value, Options.FAIL_SILENTLY, Options.FORCE_ASYNCHRONOUS, Options.ZERO_LOCK_ACQUISITION_TIMEOUT);
+         putIfAbsent(key, value, Flag.FAIL_SILENTLY, Flag.FORCE_ASYNCHRONOUS, Flag.ZERO_LOCK_ACQUISITION_TIMEOUT);
       }
       catch (Exception e) {
          if (log.isDebugEnabled()) log.debug("Caught exception while doing putForExternalRead()", e);
@@ -291,63 +291,63 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
       return componentRegistry;
    }
 
-   public void putForExternalRead(K key, V value, Options... options) {
-      getInvocationContext().setOptions(options);
+   public void putForExternalRead(K key, V value, Flag... flags) {
+      getInvocationContext().setFlags(flags);
       putForExternalRead(key, value);
    }
 
-   public V put(K key, V value, Options... options) {
-      getInvocationContext().setOptions(options);
+   public V put(K key, V value, Flag... flags) {
+      getInvocationContext().setFlags(flags);
       return put(key, value, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
    }
 
-   public V put(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Options... options) {
-      getInvocationContext().setOptions(options);
+   public V put(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags) {
+      getInvocationContext().setFlags(flags);
       return put(key, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
    }
 
-   public V putIfAbsent(K key, V value, Options... options) {
-      getInvocationContext().setOptions(options);
+   public V putIfAbsent(K key, V value, Flag... flags) {
+      getInvocationContext().setFlags(flags);
       return putIfAbsent(key, value, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
    }
 
-   public V putIfAbsent(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Options... options) {
-      getInvocationContext().setOptions(options);
+   public V putIfAbsent(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags) {
+      getInvocationContext().setFlags(flags);
       return putIfAbsent(key, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
    }
 
-   public void putAll(Map<? extends K, ? extends V> map, Options... options) {
-      getInvocationContext().setOptions(options);
+   public void putAll(Map<? extends K, ? extends V> map, Flag... flags) {
+      getInvocationContext().setFlags(flags);
       putAll(map, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
    }
 
-   public void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Options... options) {
-      getInvocationContext().setOptions(options);
+   public void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags) {
+      getInvocationContext().setFlags(flags);
       putAll(map, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
    }
 
-   public V remove(Object key, Options... options) {
-      getInvocationContext().setOptions(options);
+   public V remove(Object key, Flag... flags) {
+      getInvocationContext().setFlags(flags);
       return remove(key);
    }
 
-   public boolean remove(Object key, Object oldValue, Options... options) {
-      getInvocationContext().setOptions(options);
+   public boolean remove(Object key, Object oldValue, Flag... flags) {
+      getInvocationContext().setFlags(flags);
       return remove(key, oldValue);
    }
 
-   public void clear(Options... options) {
-      getInvocationContext().setOptions(options);
+   public void clear(Flag... flags) {
+      getInvocationContext().setFlags(flags);
       clear();
    }
 
-   public boolean containsKey(Object key, Options... options) {
-      getInvocationContext().setOptions(options);
+   public boolean containsKey(Object key, Flag... flags) {
+      getInvocationContext().setFlags(flags);
       return containsKey(key);
    }
 
-   public V get(Object key, Options... options) {
-      getInvocationContext().setOptions(options);
+   public V get(Object key, Flag... flags) {
+      getInvocationContext().setFlags(flags);
       return get(key);
    }
 

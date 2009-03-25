@@ -1,7 +1,7 @@
 package org.horizon.context;
 
 import org.horizon.container.entries.CacheEntry;
-import org.horizon.invocation.Options;
+import org.horizon.invocation.Flag;
 import org.horizon.util.BidirectionalLinkedHashMap;
 import org.horizon.util.BidirectionalMap;
 
@@ -19,8 +19,11 @@ import java.util.Set;
  */
 public abstract class AbstractContext {
 
-   protected volatile EnumSet<Options> options;
-   protected byte contextFlags;
+   protected volatile EnumSet<Flag> flags;
+
+   // these flags pertain to the context and are set internally.  Not to be confused with Flag, which is set by user
+   // invocations on AdvancedCache.
+   protected byte contextFlags;   
    protected BidirectionalLinkedHashMap<Object, CacheEntry> lookedUpEntries = null;
 
    protected static enum ContextFlags {
@@ -33,55 +36,55 @@ public abstract class AbstractContext {
       }
    }
 
-   protected final boolean isFlagSet(ContextFlags flag) {
+   protected final boolean isContextFlagSet(ContextFlags flag) {
       return (contextFlags & flag.mask) != 0;
    }
 
-   protected final void setFlag(ContextFlags flag) {
+   protected final void setContextFlag(ContextFlags flag) {
       contextFlags |= flag.mask;
    }
 
-   protected final void unsetFlag(ContextFlags flag) {
+   protected final void unsetContextFlag(ContextFlags flag) {
       contextFlags &= ~flag.mask;
    }
 
-   protected final void setFlag(ContextFlags flag, boolean value) {
+   protected final void setContextFlag(ContextFlags flag, boolean value) {
       if (value)
-         setFlag(flag);
+         setContextFlag(flag);
       else
-         unsetFlag(flag);
+         unsetContextFlag(flag);
    }
 
-   public boolean hasOption(Options o) {
-      return options != null && options.contains(o);
+   public boolean hasFlag(Flag o) {
+      return flags != null && flags.contains(o);
    }
 
-   public Set<Options> getOptions() {
-      return options;
+   public Set<Flag> getFlags() {
+      return flags;
    }
 
-   public void setOptions(Options... options) {
-      if (options == null || options.length == 0) return;
-      if (this.options == null)
-         this.options = EnumSet.copyOf(Arrays.asList(options));
+   public void setFlags(Flag... flags) {
+      if (flags == null || flags.length == 0) return;
+      if (this.flags == null)
+         this.flags = EnumSet.copyOf(Arrays.asList(flags));
       else
-         this.options.addAll(Arrays.asList(options));
+         this.flags.addAll(Arrays.asList(flags));
    }
 
-   public void setOptions(Collection<Options> options) {
-      if (options == null || options.size() == 0) return;
-      if (this.options == null)
-         this.options = EnumSet.copyOf(options);
+   public void setFlags(Collection<Flag> flags) {
+      if (flags == null || flags.size() == 0) return;
+      if (this.flags == null)
+         this.flags = EnumSet.copyOf(flags);
       else
-         this.options.addAll(options);
+         this.flags.addAll(flags);
    }
 
-   public void resetOptions() {
-      options = null;
+   public void resetFlags() {
+      flags = null;
    }
 
-   public boolean isOptionsUninit() {
-      return options == null;
+   public boolean isFlagsUninitialized() {
+      return flags == null;
    }
 
    protected abstract int getLockSetSize();
@@ -117,7 +120,7 @@ public abstract class AbstractContext {
 
    public void reset() {
       if (lookedUpEntries != null) lookedUpEntries.clear();
-      options = null;
+      flags = null;
       contextFlags = 0;
    }
 
@@ -131,14 +134,14 @@ public abstract class AbstractContext {
       if (contextFlags != that.contextFlags) return false;
       if (lookedUpEntries != null ? !lookedUpEntries.equals(that.lookedUpEntries) : that.lookedUpEntries != null)
          return false;
-      if (options != null ? !options.equals(that.options) : that.options != null) return false;
+      if (flags != null ? !flags.equals(that.flags) : that.flags != null) return false;
 
       return true;
    }
 
    @Override
    public int hashCode() {
-      int result = options != null ? options.hashCode() : 0;
+      int result = flags != null ? flags.hashCode() : 0;
       result = 31 * result + (int) contextFlags;
       result = 31 * result + (lookedUpEntries != null ? lookedUpEntries.hashCode() : 0);
       return result;
@@ -146,25 +149,25 @@ public abstract class AbstractContext {
 
    @SuppressWarnings("unchecked")
    protected void copyInto(AbstractContext ctx) {
-      if (options != null) ctx.options = EnumSet.copyOf(options);
+      if (flags != null) ctx.flags = EnumSet.copyOf(flags);
       ctx.contextFlags = contextFlags;
       if (lookedUpEntries != null)
          ctx.lookedUpEntries = (BidirectionalLinkedHashMap<Object, CacheEntry>) lookedUpEntries.clone();
    }
 
    public boolean isContainsModifications() {
-      return isFlagSet(ContextFlags.CONTAINS_MODS);
+      return isContextFlagSet(ContextFlags.CONTAINS_MODS);
    }
 
    public void setContainsModifications(boolean b) {
-      setFlag(ContextFlags.CONTAINS_MODS, b);
+      setContextFlag(ContextFlags.CONTAINS_MODS, b);
    }
 
    public boolean isContainsLocks() {
-      return isFlagSet(ContextFlags.CONTAINS_LOCKS);
+      return isContextFlagSet(ContextFlags.CONTAINS_LOCKS);
    }
 
    public void setContainsLocks(boolean b) {
-      setFlag(ContextFlags.CONTAINS_LOCKS, b);
+      setContextFlag(ContextFlags.CONTAINS_LOCKS, b);
    }
 }

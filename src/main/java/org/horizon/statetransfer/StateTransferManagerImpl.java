@@ -34,7 +34,7 @@ import org.horizon.factories.annotations.Inject;
 import org.horizon.factories.annotations.Start;
 import org.horizon.interceptors.InterceptorChain;
 import org.horizon.invocation.InvocationContextContainer;
-import org.horizon.invocation.Options;
+import org.horizon.invocation.Flag;
 import org.horizon.io.UnclosableObjectInputStream;
 import org.horizon.io.UnclosableObjectOutputStream;
 import org.horizon.loader.CacheLoaderException;
@@ -220,7 +220,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
             commandsFactory.initializeReplicableCommand(mod);
             InvocationContext ctx = invocationContextContainer.get();
             ctx.setOriginLocal(false);
-            ctx.setOptions(Options.CACHE_MODE_LOCAL, Options.SKIP_CACHE_STATUS_CHECK);
+            ctx.setFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_CACHE_STATUS_CHECK);
             interceptorChain.invoke(ctx, mod);
          }
 
@@ -255,7 +255,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
                commandsFactory.initializeReplicableCommand(command);
                InvocationContext ctx = invocationContextContainer.get();
                ctx.setOriginLocal(false);
-               ctx.setOptions(Options.CACHE_MODE_LOCAL, Options.SKIP_CACHE_STATUS_CHECK);
+               ctx.setFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_CACHE_STATUS_CHECK);
                interceptorChain.invoke(ctx, command);
             } else {
                if (trace) log.trace("Prepare {0} not in tx log; not applying", command);
@@ -320,7 +320,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
       try {
          Set<InternalCacheEntry> set = (Set<InternalCacheEntry>) marshaller.objectFromObjectStream(i);
          for (InternalCacheEntry se : set)
-            cache.put(se.getKey(), se.getValue(), se.getLifespan(), MILLISECONDS, se.getMaxIdle(), MILLISECONDS, Options.CACHE_MODE_LOCAL); // TODO store maxIdle as well
+            cache.put(se.getKey(), se.getValue(), se.getLifespan(), MILLISECONDS, se.getMaxIdle(), MILLISECONDS, Flag.CACHE_MODE_LOCAL); // TODO store maxIdle as well
       } catch (Exception e) {
          dataContainer.clear();
          throw new StateTransferException(e);

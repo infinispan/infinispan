@@ -8,7 +8,7 @@ import org.horizon.commands.write.PutMapCommand;
 import org.horizon.commands.write.RemoveCommand;
 import org.horizon.commands.write.ReplaceCommand;
 import org.horizon.config.Configuration;
-import org.horizon.invocation.Options;
+import org.horizon.invocation.Flag;
 import org.horizon.test.MultipleCacheManagersTest;
 import org.horizon.transaction.DummyTransactionManagerLookup;
 
@@ -59,7 +59,7 @@ public class BaseReplicatedAPITest extends MultipleCacheManagersTest {
    }
 
    public void remove() {
-      cache2.put("key", "value", Options.CACHE_MODE_LOCAL);
+      cache2.put("key", "value", Flag.CACHE_MODE_LOCAL);
       assert cache2.get("key").equals("value");
       assert cache1.get("key") == null;
 
@@ -70,8 +70,8 @@ public class BaseReplicatedAPITest extends MultipleCacheManagersTest {
       assert cache1.get("key") == null;
       assert cache2.get("key") == null;
 
-      cache1.put("key", "value", Options.CACHE_MODE_LOCAL);
-      cache2.put("key", "value", Options.CACHE_MODE_LOCAL);
+      cache1.put("key", "value", Flag.CACHE_MODE_LOCAL);
+      cache2.put("key", "value", Flag.CACHE_MODE_LOCAL);
       assert cache1.get("key").equals("value");
       assert cache2.get("key").equals("value");
 
@@ -84,7 +84,7 @@ public class BaseReplicatedAPITest extends MultipleCacheManagersTest {
    }
 
    public void testPutIfAbsent() {
-      cache2.put("key", "valueOld", Options.CACHE_MODE_LOCAL);
+      cache2.put("key", "valueOld", Flag.CACHE_MODE_LOCAL);
       assert cache2.get("key").equals("valueOld");
       assert cache1.get("key") == null;
 
@@ -95,7 +95,7 @@ public class BaseReplicatedAPITest extends MultipleCacheManagersTest {
       assert cache1.get("key").equals("value");
       assert cache2.get("key").equals("value");
 
-      cache2.put("key", "value2", Options.CACHE_MODE_LOCAL);
+      cache2.put("key", "value2", Flag.CACHE_MODE_LOCAL);
 
       assert cache1.get("key").equals("value");
       assert cache2.get("key").equals("value2");
@@ -107,8 +107,8 @@ public class BaseReplicatedAPITest extends MultipleCacheManagersTest {
    }
 
    public void testRemoveIfPresent() {
-      cache1.put("key", "value1", Options.CACHE_MODE_LOCAL);
-      cache2.put("key", "value2", Options.CACHE_MODE_LOCAL);
+      cache1.put("key", "value1", Flag.CACHE_MODE_LOCAL);
+      cache2.put("key", "value2", Flag.CACHE_MODE_LOCAL);
       assert cache1.get("key").equals("value1");
       assert cache2.get("key").equals("value2");
 
@@ -126,8 +126,8 @@ public class BaseReplicatedAPITest extends MultipleCacheManagersTest {
    }
 
    public void testClear() {
-      cache1.put("key", "value1", Options.CACHE_MODE_LOCAL);
-      cache2.put("key", "value2", Options.CACHE_MODE_LOCAL);
+      cache1.put("key", "value1", Flag.CACHE_MODE_LOCAL);
+      cache2.put("key", "value2", Flag.CACHE_MODE_LOCAL);
       assert cache1.get("key").equals("value1");
       assert cache2.get("key").equals("value2");
 
@@ -140,7 +140,7 @@ public class BaseReplicatedAPITest extends MultipleCacheManagersTest {
    }
 
    public void testReplace() {
-      cache2.put("key", "value2", Options.CACHE_MODE_LOCAL);
+      cache2.put("key", "value2", Flag.CACHE_MODE_LOCAL);
       assert cache1.get("key") == null;
       assert cache2.get("key").equals("value2");
 
@@ -149,7 +149,7 @@ public class BaseReplicatedAPITest extends MultipleCacheManagersTest {
       assert cache1.get("key") == null;
       assert cache2.get("key").equals("value2");
 
-      cache1.put("key", "valueN", Options.CACHE_MODE_LOCAL);
+      cache1.put("key", "valueN", Flag.CACHE_MODE_LOCAL);
 
       replListener(cache2).expect(ReplaceCommand.class);
       cache1.replace("key", "value1");
@@ -160,7 +160,7 @@ public class BaseReplicatedAPITest extends MultipleCacheManagersTest {
    }
 
    public void testReplaceWithOldVal() {
-      cache2.put("key", "value2", Options.CACHE_MODE_LOCAL);
+      cache2.put("key", "value2", Flag.CACHE_MODE_LOCAL);
       assert cache1.get("key") == null;
       assert cache2.get("key").equals("value2");
 
@@ -169,7 +169,7 @@ public class BaseReplicatedAPITest extends MultipleCacheManagersTest {
       assert cache1.get("key") == null;
       assert cache2.get("key").equals("value2");
 
-      cache1.put("key", "valueN", Options.CACHE_MODE_LOCAL);
+      cache1.put("key", "valueN", Flag.CACHE_MODE_LOCAL);
 
       cache1.replace("key", "valueOld", "value1"); // should do nothing since there is nothing to replace on cache1
 

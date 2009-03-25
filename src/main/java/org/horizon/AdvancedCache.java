@@ -6,7 +6,7 @@ import org.horizon.eviction.EvictionManager;
 import org.horizon.factories.ComponentRegistry;
 import org.horizon.interceptors.base.CommandInterceptor;
 import org.horizon.invocation.InvocationContextContainer;
-import org.horizon.invocation.Options;
+import org.horizon.invocation.Flag;
 
 import java.util.List;
 import java.util.Map;
@@ -85,27 +85,27 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
 
    DataContainer getDataContainer();
 
-   void putForExternalRead(K key, V value, Options... options);
+   void putForExternalRead(K key, V value, Flag... flags);
 
-   V put(K key, V value, Options... options);
+   V put(K key, V value, Flag... flags);
 
-   V put(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Options... options);
+   V put(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags);
 
-   V putIfAbsent(K key, V value, Options... options);
+   V putIfAbsent(K key, V value, Flag... flags);
 
-   V putIfAbsent(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Options... options);
+   V putIfAbsent(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags);
 
-   void putAll(Map<? extends K, ? extends V> map, Options... options);
+   void putAll(Map<? extends K, ? extends V> map, Flag... flags);
 
-   void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Options... options);
+   void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags);
 
-   V remove(Object key, Options... options);
+   V remove(Object key, Flag... flags);
 
-   boolean remove(Object key, Object oldValue, Options... options);
+   boolean remove(Object key, Object oldValue, Flag... flags);
 
-   void clear(Options... options);
+   void clear(Flag... flags);
 
-   boolean containsKey(Object key, Options... options);
+   boolean containsKey(Object key, Flag... flags);
 
-   V get(Object key, Options... options);
+   V get(Object key, Flag... flags);
 }

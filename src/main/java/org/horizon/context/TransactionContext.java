@@ -35,7 +35,7 @@ import java.util.List;
  * @see InvocationContext
  * @since 4.0
  */
-public interface TransactionContext extends EntryLookup, OptionContainer {
+public interface TransactionContext extends EntryLookup, FlagContainer {
    /**
     * Adds a modification to the modification list.
     *

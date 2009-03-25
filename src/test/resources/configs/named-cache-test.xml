@@ -85,7 +85,7 @@
          <loader class="org.horizon.loader.jdbc.stringbased.JdbcStringBasedCacheStore" fetchPersistentState="true"
                  ignoreModifications="true" purgeOnStartup="true">
 
-            <!-- See the documentation for more configuration examples and options. -->
+            <!-- See the documentation for more configuration examples and flags. -->
             <properties>
                <property name="connectionFactoryClass" value="org.horizon.loader.jdbc.connectionfactory.PooledConnectionFactory"/>
                <property name="connectionUrl" value="jdbc://some-url"/>

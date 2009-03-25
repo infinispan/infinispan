@@ -9,7 +9,7 @@ import org.horizon.container.entries.InternalCacheEntry;
 import org.horizon.factories.annotations.Inject;
 import org.horizon.factories.annotations.Start;
 import org.horizon.factories.annotations.Stop;
-import static org.horizon.invocation.Options.SKIP_CACHE_STATUS_CHECK;
+import static org.horizon.invocation.Flag.SKIP_CACHE_STATUS_CHECK;
 import org.horizon.loader.decorators.AsyncStore;
 import org.horizon.loader.decorators.ChainingCacheStore;
 import org.horizon.loader.decorators.ReadOnlyStore;

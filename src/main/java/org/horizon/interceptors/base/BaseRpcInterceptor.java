@@ -29,7 +29,7 @@ import org.horizon.context.InvocationContext;
 import org.horizon.context.TransactionContext;
 import org.horizon.factories.annotations.Inject;
 import org.horizon.factories.annotations.Start;
-import org.horizon.invocation.Options;
+import org.horizon.invocation.Flag;
 import org.horizon.remoting.RPCManager;
 import org.horizon.remoting.ReplicationQueue;
 import org.horizon.remoting.ResponseMode;
@@ -105,8 +105,8 @@ public abstract class BaseRpcInterceptor extends CommandInterceptor {
    protected void replicateCall(InvocationContext ctx, List<Address> recipients, ReplicableCommand c, boolean sync, boolean useOutOfBandMessage) throws Throwable {
       long syncReplTimeout = configuration.getSyncReplTimeout();
 
-      if (ctx.hasOption(Options.FORCE_ASYNCHRONOUS)) sync = false;
-      else if (ctx.hasOption(Options.FORCE_SYNCHRONOUS)) sync = true;
+      if (ctx.hasFlag(Flag.FORCE_ASYNCHRONOUS)) sync = false;
+      else if (ctx.hasFlag(Flag.FORCE_SYNCHRONOUS)) sync = true;
 
       // tx-level overrides are more important
       Transaction tx = ctx.getTransaction();
@@ -157,7 +157,7 @@ public abstract class BaseRpcInterceptor extends CommandInterceptor {
     */
    protected final boolean skipReplicationOfTransactionMethod(InvocationContext ctx) {
       GlobalTransaction gtx = ctx.getGlobalTransaction();
-      return ctx.getTransaction() == null || gtx == null || gtx.isRemote() || ctx.hasOption(Options.CACHE_MODE_LOCAL)
+      return ctx.getTransaction() == null || gtx == null || gtx.isRemote() || ctx.hasFlag(Flag.CACHE_MODE_LOCAL)
             || !ctx.getTransactionContext().hasModifications();
    }
 
@@ -171,16 +171,16 @@ public abstract class BaseRpcInterceptor extends CommandInterceptor {
    }
 
    protected final boolean isSynchronous(InvocationContext ctx) {
-      if (ctx.hasOption(Options.FORCE_SYNCHRONOUS))
+      if (ctx.hasFlag(Flag.FORCE_SYNCHRONOUS))
          return true;
-      else if (ctx.hasOption(Options.FORCE_ASYNCHRONOUS))
+      else if (ctx.hasFlag(Flag.FORCE_ASYNCHRONOUS))
          return false;
 
       return defaultSynchronous;
    }
 
    protected final boolean isLocalModeForced(InvocationContext ctx) {
-      if (ctx.hasOption(Options.CACHE_MODE_LOCAL)) {
+      if (ctx.hasFlag(Flag.CACHE_MODE_LOCAL)) {
          if (log.isDebugEnabled()) log.debug("LOCAL mode forced on invocation.  Suppressing clustered events.");
          return true;
       }

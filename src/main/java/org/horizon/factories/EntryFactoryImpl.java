@@ -32,7 +32,7 @@ import org.horizon.container.entries.RepeatableReadEntry;
 import org.horizon.context.InvocationContext;
 import org.horizon.factories.annotations.Inject;
 import org.horizon.factories.annotations.Start;
-import org.horizon.invocation.Options;
+import org.horizon.invocation.Flag;
 import org.horizon.lock.IsolationLevel;
 import org.horizon.lock.LockManager;
 import org.horizon.lock.TimeoutException;
@@ -75,7 +75,7 @@ public class EntryFactoryImpl implements EntryFactory {
 
    public final CacheEntry wrapEntryForReading(InvocationContext ctx, Object key) throws InterruptedException {
       CacheEntry cacheEntry;
-      if (ctx.hasOption(Options.FORCE_WRITE_LOCK)) {
+      if (ctx.hasFlag(Flag.FORCE_WRITE_LOCK)) {
          if (trace) log.trace("Forcing lock on reading");
          return wrapEntryForWriting(ctx, key, false, false, false, false);
       } else if ((cacheEntry = ctx.lookupEntry(key)) == null) {
@@ -140,7 +140,7 @@ public class EntryFactoryImpl implements EntryFactory {
             if (trace) log.trace("Retrieved from container.");
             // exists in cache!  Just acquire lock if needed, and wrap.
             // do we need a lock?
-            boolean needToCopy = alreadyLocked || acquireLock(ctx, key) || ctx.hasOption(Options.SKIP_LOCKING); // even if we do not acquire a lock, if skip-locking is enabled we should copy
+            boolean needToCopy = alreadyLocked || acquireLock(ctx, key) || ctx.hasFlag(Flag.SKIP_LOCKING); // even if we do not acquire a lock, if skip-locking is enabled we should copy
             mvccEntry = createWrappedEntry(key, cacheEntry.getValue(), false, false, cacheEntry.getLifespan());
             ctx.putLookedUpEntry(key, mvccEntry);
             if (needToCopy) mvccEntry.copyForUpdate(container, writeSkewCheck);
@@ -187,7 +187,7 @@ public class EntryFactoryImpl implements EntryFactory {
       // nothing wrong, just means that we fail to record the lock.  And that is a problem.
       // Better to check our records and lock again if necessary.
 
-      boolean shouldSkipLocking = ctx.hasOption(Options.SKIP_LOCKING);
+      boolean shouldSkipLocking = ctx.hasFlag(Flag.SKIP_LOCKING);
 
       if (!ctx.hasLockedKey(key) && !shouldSkipLocking) {
          if (lockManager.lockAndRecord(key, ctx)) {
@@ -204,7 +204,7 @@ public class EntryFactoryImpl implements EntryFactory {
    }
 
    private long getLockAcquisitionTimeout(InvocationContext ctx) {
-      return ctx.hasOption(Options.ZERO_LOCK_ACQUISITION_TIMEOUT) ?
+      return ctx.hasFlag(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT) ?
             0 : configuration.getLockAcquisitionTimeout();
    }
 

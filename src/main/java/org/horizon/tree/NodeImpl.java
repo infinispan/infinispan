@@ -25,7 +25,7 @@ import org.horizon.Cache;
 import org.horizon.atomic.AtomicMap;
 import org.horizon.batch.BatchContainer;
 import org.horizon.invocation.InvocationContextContainer;
-import org.horizon.invocation.Options;
+import org.horizon.invocation.Flag;
 import org.horizon.util.Immutables;
 import org.horizon.util.Util;
 
@@ -57,8 +57,8 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       return new NodeImpl<K, V>(fqn.getParent(), cache, batchContainer, icc);
    }
 
-   public Node<K, V> getParent(Options... options) {
-      icc.get().setOptions(options);
+   public Node<K, V> getParent(Flag... flags) {
+      icc.get().setFlags(flags);
       return getParent();
    }
 
@@ -77,8 +77,8 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       }
    }
 
-   public Set<Node<K, V>> getChildren(Options... options) {
-      icc.get().setOptions(options);
+   public Set<Node<K, V>> getChildren(Flag... flags) {
+      icc.get().setFlags(flags);
       return getChildren();
    }
 
@@ -86,8 +86,8 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       return Immutables.immutableSetCopy(getStructure().keySet());
    }
 
-   public Set<Object> getChildrenNames(Options... options) {
-      icc.get().setOptions(options);
+   public Set<Object> getChildrenNames(Flag... flags) {
+      icc.get().setFlags(flags);
       return getChildrenNames();
    }
 
@@ -96,8 +96,8 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       return Collections.unmodifiableMap(new HashMap(getDataInternal()));
    }
 
-   public Map<K, V> getData(Options... options) {
-      icc.get().setOptions(options);
+   public Map<K, V> getData(Flag... flags) {
+      icc.get().setFlags(flags);
       return getData();
    }
 
@@ -111,8 +111,8 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       }
    }
 
-   public Set<K> getKeys(Options... options) {
-      icc.get().setOptions(options);
+   public Set<K> getKeys(Flag... flags) {
+      icc.get().setFlags(flags);
       return getKeys();
    }
 
@@ -135,8 +135,8 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       }
    }
 
-   public Node<K, V> addChild(Fqn f, Options... options) {
-      icc.get().setOptions(options);
+   public Node<K, V> addChild(Fqn f, Flag... flags) {
+      icc.get().setFlags(flags);
       return addChild(f);
    }
 
@@ -144,8 +144,8 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       return removeChild(f.getLastElement());
    }
 
-   public boolean removeChild(Fqn f, Options... options) {
-      icc.get().setOptions(options);
+   public boolean removeChild(Fqn f, Flag... flags) {
+      icc.get().setFlags(flags);
       return removeChild(f);
    }
 
@@ -170,8 +170,8 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       }
    }
 
-   public boolean removeChild(Object childName, Options... options) {
-      icc.get().setOptions(options);
+   public boolean removeChild(Object childName, Flag... flags) {
+      icc.get().setFlags(flags);
       return removeChild(childName);
    }
 
@@ -188,8 +188,8 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       }
    }
 
-   public Node<K, V> getChild(Fqn f, Options... options) {
-      icc.get().setOptions(options);
+   public Node<K, V> getChild(Fqn f, Flag... flags) {
+      icc.get().setFlags(flags);
       return getChild(f);
    }
 
@@ -206,8 +206,8 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       }
    }
 
-   public Node<K, V> getChild(Object name, Options... options) {
-      icc.get().setOptions(options);
+   public Node<K, V> getChild(Object name, Flag... flags) {
+      icc.get().setFlags(flags);
       return getChild(name);
    }
 
@@ -221,8 +221,8 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       }
    }
 
-   public V put(K key, V value, Options... options) {
-      icc.get().setOptions(options);
+   public V put(K key, V value, Flag... flags) {
+      icc.get().setFlags(flags);
       return put(key, value);
    }
 
@@ -239,8 +239,8 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       }
    }
 
-   public V putIfAbsent(K key, V value, Options... options) {
-      icc.get().setOptions(options);
+   public V putIfAbsent(K key, V value, Flag... flags) {
+      icc.get().setFlags(flags);
       return putIfAbsent(key, value);
    }
 
@@ -258,8 +258,8 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       }
    }
 
-   public V replace(K key, V value, Options... options) {
-      icc.get().setOptions(options);
+   public V replace(K key, V value, Flag... flags) {
+      icc.get().setFlags(flags);
       return replace(key, value);
    }
 
@@ -279,8 +279,8 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       }
    }
 
-   public boolean replace(K key, V oldValue, V value, Options... options) {
-      icc.get().setOptions(options);
+   public boolean replace(K key, V oldValue, V value, Flag... flags) {
+      icc.get().setFlags(flags);
       return replace(key, oldValue, value);
    }
 
@@ -294,8 +294,8 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       }
    }
 
-   public void putAll(Map<? extends K, ? extends V> map, Options... options) {
-      icc.get().setOptions(options);
+   public void putAll(Map<? extends K, ? extends V> map, Flag... flags) {
+      icc.get().setFlags(flags);
       putAll(map);
    }
 
@@ -311,8 +311,8 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       }
    }
 
-   public void replaceAll(Map<? extends K, ? extends V> map, Options... options) {
-      icc.get().setOptions(options);
+   public void replaceAll(Map<? extends K, ? extends V> map, Flag... flags) {
+      icc.get().setFlags(flags);
       replaceAll(map);
    }
 
@@ -320,8 +320,8 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       return getData().get(key);
    }
 
-   public V get(K key, Options... options) {
-      icc.get().setOptions(options);
+   public V get(K key, Flag... flags) {
+      icc.get().setFlags(flags);
       return get(key);
    }
 
@@ -335,8 +335,8 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       }
    }
 
-   public V remove(K key, Options... options) {
-      icc.get().setOptions(options);
+   public V remove(K key, Flag... flags) {
+      icc.get().setFlags(flags);
       return remove(key);
    }
 
@@ -344,8 +344,8 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       getDataInternal().clear();
    }
 
-   public void clearData(Options... options) {
-      icc.get().setOptions(options);
+   public void clearData(Flag... flags) {
+      icc.get().setFlags(flags);
       clearData();
    }
 
@@ -353,8 +353,8 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       return getData().size();
    }
 
-   public int dataSize(Options... options) {
-      icc.get().setOptions(options);
+   public int dataSize(Flag... flags) {
+      icc.get().setFlags(flags);
       return dataSize();
    }
 
@@ -368,8 +368,8 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       }
    }
 
-   public boolean hasChild(Fqn f, Options... options) {
-      icc.get().setOptions(options);
+   public boolean hasChild(Fqn f, Flag... flags) {
+      icc.get().setFlags(flags);
       return hasChild(f);
    }
 
@@ -377,8 +377,8 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       return getStructure().containsKey(o);
    }
 
-   public boolean hasChild(Object o, Options... options) {
-      icc.get().setOptions(options);
+   public boolean hasChild(Object o, Flag... flags) {
+      icc.get().setFlags(flags);
       return hasChild(o);
    }
 
@@ -397,8 +397,8 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       }
    }
 
-   public void removeChildren(Options... options) {
-      icc.get().setOptions(options);
+   public void removeChildren(Flag... flags) {
+      icc.get().setFlags(flags);
       removeChildren();
    }
 

@@ -144,21 +144,21 @@ public class TransactionContextImpl extends AbstractContext implements Transacti
    }
 
    public boolean isForceAsyncReplication() {
-      return isFlagSet(ContextFlags.FORCE_ASYNCHRONOUS);
+      return isContextFlagSet(ContextFlags.FORCE_ASYNCHRONOUS);
    }
 
    public void setForceAsyncReplication(boolean forceAsyncReplication) {
-      setFlag(ContextFlags.FORCE_ASYNCHRONOUS, forceAsyncReplication);
-      if (forceAsyncReplication) unsetFlag(ContextFlags.FORCE_SYNCHRONOUS);
+      setContextFlag(ContextFlags.FORCE_ASYNCHRONOUS, forceAsyncReplication);
+      if (forceAsyncReplication) unsetContextFlag(ContextFlags.FORCE_SYNCHRONOUS);
    }
 
    public boolean isForceSyncReplication() {
-      return isFlagSet(ContextFlags.FORCE_SYNCHRONOUS);
+      return isContextFlagSet(ContextFlags.FORCE_SYNCHRONOUS);
    }
 
    public void setForceSyncReplication(boolean forceSyncReplication) {
-      setFlag(ContextFlags.FORCE_SYNCHRONOUS, forceSyncReplication);
-      if (forceSyncReplication) unsetFlag(ContextFlags.FORCE_ASYNCHRONOUS);
+      setContextFlag(ContextFlags.FORCE_SYNCHRONOUS, forceSyncReplication);
+      if (forceSyncReplication) unsetContextFlag(ContextFlags.FORCE_ASYNCHRONOUS);
    }
 
    /**

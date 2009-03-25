@@ -35,7 +35,7 @@ import org.horizon.factories.ComponentRegistry;
 import org.horizon.factories.annotations.Inject;
 import org.horizon.factories.context.ContextFactory;
 import org.horizon.invocation.InvocationContextContainer;
-import org.horizon.invocation.Options;
+import org.horizon.invocation.Flag;
 import org.horizon.jmx.annotations.ManagedAttribute;
 import org.horizon.jmx.annotations.ManagedOperation;
 import org.horizon.lock.LockManager;
@@ -127,7 +127,7 @@ public class TxInterceptor extends BaseTransactionalContextInterceptor {
    }
 
    private void throwIfNeeded(InvocationContext ctx, Throwable throwable) throws Throwable {
-      if (ctx.hasOption(Options.FAIL_SILENTLY))
+      if (ctx.hasFlag(Flag.FAIL_SILENTLY))
          log.trace("There was a problem handling this request, but FAIL_SLIENTLY was set, so suppressing exception", throwable);
       else
          throw throwable;
@@ -663,7 +663,7 @@ public class TxInterceptor extends BaseTransactionalContextInterceptor {
          ctx = invocationContextContainer.get();
          setTransactionalContext(tx, gtx, transactionContext, ctx);
 
-         if (ctx.isOptionsUninit()) ctx.setOptions(transactionContext.getOptions());
+         if (ctx.isFlagsUninitialized()) ctx.setFlags(transactionContext.getFlags());
 
          assertCanContinue();
 
@@ -678,9 +678,9 @@ public class TxInterceptor extends BaseTransactionalContextInterceptor {
             ctx = invocationContextContainer.get();
             setTransactionalContext(tx, gtx, transactionContext, ctx);
 
-            if (ctx.isOptionsUninit() && transactionContext != null) {
-               // use the options from the transaction entry instead
-               ctx.setOptions(transactionContext.getOptions());
+            if (ctx.isFlagsUninitialized() && transactionContext != null) {
+               // use the flags from the transaction entry instead
+               ctx.setFlags(transactionContext.getFlags());
             }
          }
 
@@ -696,11 +696,11 @@ public class TxInterceptor extends BaseTransactionalContextInterceptor {
 
             if (trace) log.trace("calling aftercompletion for " + gtx);
 
-            // set any transaction wide options as current for this thread.
+            // set any transaction wide flags as current for this thread.
             if (transactionContext != null) {
                // this should ideally be set in beforeCompletion(), after compacting the list.
                if (modifications == null) modifications = transactionContext.getModifications();
-               ctx.setOptions(transactionContext.getOptions());
+               ctx.setFlags(transactionContext.getFlags());
             }
             if (tx != null) transactions.remove(tx);
 
@@ -737,7 +737,7 @@ public class TxInterceptor extends BaseTransactionalContextInterceptor {
       }
 
       private void assertCanContinue() {
-         if (!componentRegistry.invocationsAllowed(true) && !ctx.hasOption(Options.SKIP_CACHE_STATUS_CHECK))
+         if (!componentRegistry.invocationsAllowed(true) && !ctx.hasFlag(Flag.SKIP_CACHE_STATUS_CHECK))
             throw new IllegalStateException("Cache not in STARTED state!");
       }
 
@@ -775,7 +775,7 @@ public class TxInterceptor extends BaseTransactionalContextInterceptor {
       // This is STILL remotely originating though and this needs to be made explicit here.
       // this can be checked by inspecting the InvocationContext.isOriginLocal() at the time of registering the sync.
       private boolean remoteLocal = false;
-      private Set<Options> originalOptions, transactionalOptions;
+      private Set<Flag> originalFlags, transactionalFlags;
 
       /**
        * A Synchronization for locally originating txs.
@@ -809,10 +809,10 @@ public class TxInterceptor extends BaseTransactionalContextInterceptor {
             modifications = transactionContext.getModifications();
          }
 
-         // set any transaction wide options as current for this thread, caching original options that would then be reset
-         originalOptions = ctx.getOptions();
-         transactionalOptions = transactionContext.getOptions();
-         ctx.setOptions(transactionalOptions);
+         // set any transaction wide flags as current for this thread, caching original flags that would then be reset
+         originalFlags = ctx.getFlags();
+         transactionalFlags = transactionContext.getFlags();
+         ctx.setFlags(transactionalFlags);
 
          try {
             switch (tx.getStatus()) {
@@ -850,7 +850,7 @@ public class TxInterceptor extends BaseTransactionalContextInterceptor {
          finally {
             localRollbackOnly = false;
             setTransactionalContext(null, null, null, ctx);
-            ctx.setOptions(originalOptions);
+            ctx.setFlags(originalFlags);
          }
       }
 
@@ -860,12 +860,12 @@ public class TxInterceptor extends BaseTransactionalContextInterceptor {
          if (ctx == null) ctx = invocationContextContainer.get();
          ctx.setLocalRollbackOnly(localRollbackOnly);
          setTransactionalContext(tx, gtx, transactionContext, ctx);
-         if (transactionalOptions != null) ctx.setOptions(transactionalOptions);
+         if (transactionalFlags != null) ctx.setFlags(transactionalFlags);
          try {
             super.afterCompletion(status);
          }
          finally {
-            ctx.setOptions(originalOptions);
+            ctx.setFlags(originalFlags);
             if (getStatisticsEnabled()) {
                if (status == Status.STATUS_ROLLEDBACK) rollbacks.incrementAndGet();
                else if (status == Status.STATUS_COMMITTED) commits.incrementAndGet();

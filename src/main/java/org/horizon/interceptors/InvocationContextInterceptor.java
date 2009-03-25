@@ -34,7 +34,7 @@ import org.horizon.commands.write.ReplaceCommand;
 import org.horizon.context.InvocationContext;
 import org.horizon.context.TransactionContext;
 import org.horizon.factories.annotations.Inject;
-import org.horizon.invocation.Options;
+import org.horizon.invocation.Flag;
 import org.horizon.remoting.RPCManager;
 import org.horizon.transaction.GlobalTransaction;
 import org.horizon.transaction.TransactionTable;
@@ -112,8 +112,8 @@ public class InvocationContextInterceptor extends BaseTransactionalContextInterc
             setTransactionalContext(null, null, null, ctx);
          }
 
-         if (ctx.hasOption(Options.FAIL_SILENTLY)) {
-            log.debug("FAIL_SILENTLY Option is present - suspending any ongoing transaction.");
+         if (ctx.hasFlag(Flag.FAIL_SILENTLY)) {
+            log.debug("FAIL_SILENTLY flag is present - suspending any ongoing transaction.");
             suppressExceptions = true;
             if (ctx.getTransaction() != null) {
                suspendedTransaction = txManager.suspend();
@@ -151,9 +151,9 @@ public class InvocationContextInterceptor extends BaseTransactionalContextInterc
           */
          if (scrubContextOnCompletion) setTransactionalContext(null, null, null, ctx);
 
-         // clean up any invocation-scope options set up
-         if (trace) log.trace("Resetting invocation-scope options");
-         ctx.resetOptions();
+         // clean up any invocation-scope flags set up
+         if (trace) log.trace("Resetting invocation-scope flags");
+         ctx.resetFlags();
 
          // if this is a prepare, opt prepare or
 
@@ -161,7 +161,7 @@ public class InvocationContextInterceptor extends BaseTransactionalContextInterc
             txManager.resume(suspendedTransaction);
          } else {
             if (ctx.getTransaction() != null && (TransactionTable.isValid(ctx.getTransaction()))) {
-               copyInvocationScopeOptionsToTxScope(ctx);
+               copyInvocationScopeFlagsToTxScope(ctx);
             }
          }
 
@@ -198,12 +198,12 @@ public class InvocationContextInterceptor extends BaseTransactionalContextInterc
       return gtx != null && (gtx.getAddress() != null) && (!gtx.getAddress().equals(rpcManager.getTransport().getAddress()));
    }
 
-   private void copyInvocationScopeOptionsToTxScope(InvocationContext ctx) {
+   private void copyInvocationScopeFlagsToTxScope(InvocationContext ctx) {
       // notify the transaction tCtx that this override is in place.
       TransactionContext tCtx = ctx.getTransactionContext();
       if (tCtx != null) {
-         if (ctx.hasOption(Options.CACHE_MODE_LOCAL)) tCtx.setOptions(Options.CACHE_MODE_LOCAL);
-         if (ctx.hasOption(Options.SKIP_CACHE_STATUS_CHECK)) tCtx.setOptions(Options.SKIP_CACHE_STATUS_CHECK);
+         if (ctx.hasFlag(Flag.CACHE_MODE_LOCAL)) tCtx.setFlags(Flag.CACHE_MODE_LOCAL);
+         if (ctx.hasFlag(Flag.SKIP_CACHE_STATUS_CHECK)) tCtx.setFlags(Flag.SKIP_CACHE_STATUS_CHECK);
       }
    }
 }

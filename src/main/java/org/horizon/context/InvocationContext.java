@@ -32,7 +32,7 @@ import javax.transaction.Transaction;
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @since 4.0
  */
-public interface InvocationContext extends EntryLookup, OptionContainer {
+public interface InvocationContext extends EntryLookup, FlagContainer {
 
    void setLocalRollbackOnly(boolean localRollbackOnly);
 

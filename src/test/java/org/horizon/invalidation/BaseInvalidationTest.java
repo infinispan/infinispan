@@ -7,7 +7,7 @@ import org.horizon.commands.CacheRPCCommand;
 import org.horizon.commands.write.ClearCommand;
 import org.horizon.commands.write.InvalidateCommand;
 import org.horizon.config.Configuration;
-import org.horizon.invocation.Options;
+import org.horizon.invocation.Flag;
 import org.horizon.remoting.RPCManager;
 import org.horizon.remoting.RPCManagerImpl;
 import org.horizon.remoting.ResponseFilter;
@@ -41,9 +41,9 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
    }
 
    public void testRemove() throws Exception {
-      cache1.put("key", "value", Options.CACHE_MODE_LOCAL);
+      cache1.put("key", "value", Flag.CACHE_MODE_LOCAL);
       assertEquals("value", cache1.get("key"));
-      cache2.put("key", "value", Options.CACHE_MODE_LOCAL);
+      cache2.put("key", "value", Flag.CACHE_MODE_LOCAL);
       assertEquals("value", cache2.get("key"));
 
       replListener(cache2).expectAny();
@@ -192,7 +192,7 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
    }
 
    public void testPutIfAbsent() {
-      assert null == cache2.put("key", "value", Options.CACHE_MODE_LOCAL);
+      assert null == cache2.put("key", "value", Flag.CACHE_MODE_LOCAL);
       assert cache2.get("key").equals("value");
       assert cache1.get("key") == null;
 
@@ -203,7 +203,7 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
       assert cache1.get("key").equals("value");
       assert cache2.get("key") == null;
 
-      assert null == cache2.put("key", "value2", Options.CACHE_MODE_LOCAL);
+      assert null == cache2.put("key", "value2", Flag.CACHE_MODE_LOCAL);
 
       assert cache1.get("key").equals("value");
       assert cache2.get("key").equals("value2");
@@ -215,8 +215,8 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
    }
 
    public void testRemoveIfPresent() {
-      cache1.put("key", "value1", Options.CACHE_MODE_LOCAL);
-      cache2.put("key", "value2", Options.CACHE_MODE_LOCAL);
+      cache1.put("key", "value1", Flag.CACHE_MODE_LOCAL);
+      cache2.put("key", "value2", Flag.CACHE_MODE_LOCAL);
       assert cache1.get("key").equals("value1");
       assert cache2.get("key").equals("value2");
 
@@ -234,8 +234,8 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
    }
 
    public void testClear() {
-      cache1.put("key", "value1", Options.CACHE_MODE_LOCAL);
-      cache2.put("key", "value2", Options.CACHE_MODE_LOCAL);
+      cache1.put("key", "value1", Flag.CACHE_MODE_LOCAL);
+      cache2.put("key", "value2", Flag.CACHE_MODE_LOCAL);
       assert cache1.get("key").equals("value1");
       assert cache2.get("key").equals("value2");
 
@@ -248,7 +248,7 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
    }
 
    public void testReplace() {
-      cache2.put("key", "value2", Options.CACHE_MODE_LOCAL);
+      cache2.put("key", "value2", Flag.CACHE_MODE_LOCAL);
       assert cache1.get("key") == null;
       assert cache2.get("key").equals("value2");
 
@@ -257,7 +257,7 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
       assert cache1.get("key") == null;
       assert cache2.get("key").equals("value2");
 
-      assert null == cache1.put("key", "valueN", Options.CACHE_MODE_LOCAL);
+      assert null == cache1.put("key", "valueN", Flag.CACHE_MODE_LOCAL);
 
       replListener(cache2).expect(InvalidateCommand.class);
       cache1.replace("key", "value1");
@@ -268,7 +268,7 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
    }
 
    public void testReplaceWithOldVal() {
-      cache2.put("key", "value2", Options.CACHE_MODE_LOCAL);
+      cache2.put("key", "value2", Flag.CACHE_MODE_LOCAL);
       assert cache1.get("key") == null;
       assert cache2.get("key").equals("value2");
 
@@ -277,7 +277,7 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
       assert cache1.get("key") == null;
       assert cache2.get("key").equals("value2");
 
-      assert null == cache1.put("key", "valueN", Options.CACHE_MODE_LOCAL);
+      assert null == cache1.put("key", "valueN", Flag.CACHE_MODE_LOCAL);
 
       assert !cache1.replace("key", "valueOld", "value1"); // should do nothing since there is nothing to replace on cache1
 

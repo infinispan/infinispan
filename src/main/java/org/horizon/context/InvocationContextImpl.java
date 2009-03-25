@@ -38,7 +38,7 @@ public class InvocationContextImpl extends AbstractContext implements Invocation
 
    public InvocationContextImpl() {
       // set this to true by default
-      setFlag(ContextFlags.ORIGIN_LOCAL);
+      setContextFlag(ContextFlags.ORIGIN_LOCAL);
    }
 
    protected final int getLockSetSize() {
@@ -123,7 +123,7 @@ public class InvocationContextImpl extends AbstractContext implements Invocation
     * @param localRollbackOnly if true, the context is only rolling back.
     */
    public void setLocalRollbackOnly(boolean localRollbackOnly) {
-      setFlag(ContextFlags.LOCAL_ROLLBACK_ONLY, localRollbackOnly);
+      setContextFlag(ContextFlags.LOCAL_ROLLBACK_ONLY, localRollbackOnly);
    }
 
    /**
@@ -187,7 +187,7 @@ public class InvocationContextImpl extends AbstractContext implements Invocation
     * @return true if the invocation originated locally.
     */
    public boolean isOriginLocal() {
-      return isFlagSet(ContextFlags.ORIGIN_LOCAL);
+      return isContextFlagSet(ContextFlags.ORIGIN_LOCAL);
    }
 
    /**
@@ -197,14 +197,14 @@ public class InvocationContextImpl extends AbstractContext implements Invocation
     * @param originLocal flag to set
     */
    public void setOriginLocal(boolean originLocal) {
-      setFlag(ContextFlags.ORIGIN_LOCAL, originLocal);
+      setContextFlag(ContextFlags.ORIGIN_LOCAL, originLocal);
    }
 
    /**
     * @return true if the current transaction is set to rollback only.
     */
    public boolean isLocalRollbackOnly() {
-      return isFlagSet(ContextFlags.LOCAL_ROLLBACK_ONLY);
+      return isContextFlagSet(ContextFlags.LOCAL_ROLLBACK_ONLY);
    }
 
    /**
@@ -215,7 +215,7 @@ public class InvocationContextImpl extends AbstractContext implements Invocation
       transaction = null;
       globalTransaction = null;
       transactionContext = null;
-      setFlag(ContextFlags.ORIGIN_LOCAL);
+      setContextFlag(ContextFlags.ORIGIN_LOCAL);
       lookedUpEntries = null;
    }
 
@@ -231,7 +231,7 @@ public class InvocationContextImpl extends AbstractContext implements Invocation
 
       this.setGlobalTransaction(template.getGlobalTransaction());
       this.setLocalRollbackOnly(template.isLocalRollbackOnly());
-      this.setOptions(template.getOptions());
+      this.setFlags(template.getFlags());
       this.setOriginLocal(template.isOriginLocal());
       this.setTransaction(template.getTransaction());
    }
@@ -303,7 +303,7 @@ public class InvocationContextImpl extends AbstractContext implements Invocation
             "transaction=" + transaction +
             ", globalTransaction=" + globalTransaction +
             ", transactionContext=" + transactionContext +
-            ", options=" + options +
+            ", flags=" + flags +
             ", contextFlags=" + contextFlags +
 //            ", invocationLocks=" + locks +
             ", lookedUpEntries size=" + (lookedUpEntries == null ? 0 : lookedUpEntries.size()) +

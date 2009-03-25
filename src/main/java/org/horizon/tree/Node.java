@@ -22,7 +22,7 @@
 package org.horizon.tree;
 
 import net.jcip.annotations.ThreadSafe;
-import org.horizon.invocation.Options;
+import org.horizon.invocation.Flag;
 
 import java.util.Map;
 import java.util.Set;
@@ -54,7 +54,7 @@ public interface Node<K, V> {
     */
    Node<K, V> getParent();
 
-   Node<K, V> getParent(Options... options);
+   Node<K, V> getParent(Flag... flags);
 
    /**
     * Returns an immutable set of children nodes.
@@ -63,7 +63,7 @@ public interface Node<K, V> {
     */
    Set<Node<K, V>> getChildren();
 
-   Set<Node<K, V>> getChildren(Options... options);
+   Set<Node<K, V>> getChildren(Flag... flags);
 
    /**
     * Returns an immutable set of children node names.
@@ -72,7 +72,7 @@ public interface Node<K, V> {
     */
    Set<Object> getChildrenNames();
 
-   Set<Object> getChildrenNames(Options... options);
+   Set<Object> getChildrenNames(Flag... flags);
 
    /**
     * Returns a map containing the data in this {@link Node}.
@@ -82,7 +82,7 @@ public interface Node<K, V> {
     */
    Map<K, V> getData();
 
-   Map<K, V> getData(Options... options);
+   Map<K, V> getData(Flag... flags);
 
    /**
     * Returns a {@link Set} containing the data in this {@link Node}.
@@ -92,7 +92,7 @@ public interface Node<K, V> {
     */
    Set<K> getKeys();
 
-   Set<K> getKeys(Options... options);
+   Set<K> getKeys(Flag... flags);
 
    /**
     * Returns the {@link Fqn} which represents the location of this {@link Node} in the cache structure.  The {@link
@@ -116,7 +116,7 @@ public interface Node<K, V> {
     */
    Node<K, V> addChild(Fqn f);
 
-   Node<K, V> addChild(Fqn f, Options... options);
+   Node<K, V> addChild(Fqn f, Flag... flags);
 
    /**
     * Removes a child node specified by the given relative {@link Fqn}.
@@ -128,7 +128,7 @@ public interface Node<K, V> {
     */
    boolean removeChild(Fqn f);
 
-   boolean removeChild(Fqn f, Options... options);
+   boolean removeChild(Fqn f, Flag... flags);
 
    /**
     * Removes a child node specified by the given name.
@@ -138,7 +138,7 @@ public interface Node<K, V> {
     */
    boolean removeChild(Object childName);
 
-   boolean removeChild(Object childName, Options... options);
+   boolean removeChild(Object childName, Flag... flags);
 
    /**
     * Returns the child node
@@ -148,7 +148,7 @@ public interface Node<K, V> {
     */
    Node<K, V> getChild(Fqn f);
 
-   Node<K, V> getChild(Fqn f, Options... options);
+   Node<K, V> getChild(Fqn f, Flag... flags);
 
    /**
     * @param name name of the child
@@ -156,7 +156,7 @@ public interface Node<K, V> {
     */
    Node<K, V> getChild(Object name);
 
-   Node<K, V> getChild(Object name, Options... options);
+   Node<K, V> getChild(Object name, Flag... flags);
 
 
    /**
@@ -169,7 +169,7 @@ public interface Node<K, V> {
     */
    V put(K key, V value);
 
-   V put(K key, V value, Options... options);
+   V put(K key, V value, Flag... flags);
 
    /**
     * If the specified key is not already associated with a value, associate it with the given value, and returns the
@@ -191,7 +191,7 @@ public interface Node<K, V> {
     */
    V putIfAbsent(K key, V value);
 
-   V putIfAbsent(K key, V value, Options... options);
+   V putIfAbsent(K key, V value, Flag... flags);
 
    /**
     * Replace entry for key only if currently mapped to some value. Acts as
@@ -212,7 +212,7 @@ public interface Node<K, V> {
     */
    V replace(K key, V value);
 
-   V replace(K key, V value, Options... options);
+   V replace(K key, V value, Flag... flags);
 
    /**
     * Replace entry for key only if currently mapped to given value. Acts as
@@ -235,7 +235,7 @@ public interface Node<K, V> {
     */
    boolean replace(K key, V oldValue, V newValue);
 
-   boolean replace(K key, V oldValue, V value, Options... options);
+   boolean replace(K key, V oldValue, V value, Flag... flags);
 
 
    /**
@@ -251,7 +251,7 @@ public interface Node<K, V> {
     */
    void putAll(Map<? extends K, ? extends V> map);
 
-   void putAll(Map<? extends K, ? extends V> map, Options... options);
+   void putAll(Map<? extends K, ? extends V> map, Flag... flags);
 
    /**
     * Similar to {@link #putAll(java.util.Map)} except that it removes any entries that exists in the data map first.
@@ -262,7 +262,7 @@ public interface Node<K, V> {
     */
    void replaceAll(Map<? extends K, ? extends V> map);
 
-   void replaceAll(Map<? extends K, ? extends V> map, Options... options);
+   void replaceAll(Map<? extends K, ? extends V> map, Flag... flags);
 
    /**
     * Returns the value to which this node maps the specified key. Returns <code>null</code> if the node contains no
@@ -274,7 +274,7 @@ public interface Node<K, V> {
     */
    V get(K key);
 
-   V get(K key, Options... options);
+   V get(K key, Flag... flags);
 
    /**
     * Removes the mapping for this key from this node if it is present. Returns the value to which the node previously
@@ -285,21 +285,21 @@ public interface Node<K, V> {
     */
    V remove(K key);
 
-   V remove(K key, Options... options);
+   V remove(K key, Flag... flags);
 
    /**
     * Removes all mappings from the node's data map.
     */
    void clearData();
 
-   void clearData(Options... options);
+   void clearData(Flag... flags);
 
    /**
     * @return the number of elements (key/value pairs) in the node's data map.
     */
    int dataSize();
 
-   int dataSize(Options... options);
+   int dataSize(Flag... flags);
 
    /**
     * Returns true if the child node denoted by the relative {@link Fqn} passed in exists.
@@ -309,7 +309,7 @@ public interface Node<K, V> {
     */
    boolean hasChild(Fqn f);
 
-   boolean hasChild(Fqn f, Options... options);
+   boolean hasChild(Fqn f, Flag... flags);
 
    /**
     * Returns true if the child node denoted by the Object name passed in exists.
@@ -319,7 +319,7 @@ public interface Node<K, V> {
     */
    boolean hasChild(Object o);
 
-   boolean hasChild(Object o, Options... options);
+   boolean hasChild(Object o, Flag... flags);
 
    /**
     * Tests if a node reference is still valid.  A node reference may become invalid if it has been removed, invalidated
@@ -332,5 +332,5 @@ public interface Node<K, V> {
 
    void removeChildren();
 
-   void removeChildren(Options... options);
+   void removeChildren(Flag... flags);
 }

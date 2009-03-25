@@ -9,7 +9,7 @@ package org.horizon.api.tree;
 
 import org.horizon.Cache;
 import org.horizon.config.Configuration;
-import org.horizon.invocation.Options;
+import org.horizon.invocation.Flag;
 import org.horizon.test.MultipleCacheManagersTest;
 import org.horizon.tree.Fqn;
 import org.horizon.tree.Node;
@@ -83,14 +83,14 @@ public class SyncReplTest extends MultipleCacheManagersTest {
       Map<Object, Object> map = new HashMap<Object, Object>();
       map.put("1", "1");
       map.put("2", "2");
-      cache1.getRoot().addChild(fqn).putAll(map, Options.SKIP_LOCKING);
-      assertEquals("Value should be set", "1", cache1.get(fqn, "1", Options.SKIP_LOCKING));
+      cache1.getRoot().addChild(fqn).putAll(map, Flag.SKIP_LOCKING);
+      assertEquals("Value should be set", "1", cache1.get(fqn, "1", Flag.SKIP_LOCKING));
 
       map = new HashMap<Object, Object>();
       map.put("3", "3");
       map.put("4", "4");
-      cache1.getRoot().addChild(fqn1).putAll(map, Options.SKIP_LOCKING);
+      cache1.getRoot().addChild(fqn1).putAll(map, Flag.SKIP_LOCKING);
 
-      assertEquals("Value should be set", "2", cache1.get(fqn, "2", Options.SKIP_LOCKING));
+      assertEquals("Value should be set", "2", cache1.get(fqn, "2", Flag.SKIP_LOCKING));
    }
 }

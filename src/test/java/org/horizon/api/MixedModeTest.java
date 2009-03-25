@@ -2,7 +2,7 @@ package org.horizon.api;
 
 import org.horizon.AdvancedCache;
 import org.horizon.config.Configuration;
-import org.horizon.invocation.Options;
+import org.horizon.invocation.Flag;
 import org.horizon.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
@@ -42,10 +42,10 @@ public class MixedModeTest extends MultipleCacheManagersTest {
 
    public void testMixedMode() {
 
-      invalSyncCache2.put("k", "v", Options.CACHE_MODE_LOCAL);
+      invalSyncCache2.put("k", "v", Flag.CACHE_MODE_LOCAL);
       assert invalSyncCache2.get("k").equals("v");
       assert invalSyncCache1.get("k") == null;
-      invalAsyncCache2.put("k", "v", Options.CACHE_MODE_LOCAL);
+      invalAsyncCache2.put("k", "v", Flag.CACHE_MODE_LOCAL);
       assert invalAsyncCache2.get("k").equals("v");
       assert invalAsyncCache1.get("k") == null;
 

@@ -25,7 +25,7 @@ import org.horizon.Cache;
 import org.horizon.batch.AutoBatchSupport;
 import org.horizon.batch.BatchContainer;
 import org.horizon.invocation.InvocationContextContainer;
-import org.horizon.invocation.Options;
+import org.horizon.invocation.Flag;
 import org.horizon.logging.Log;
 import org.horizon.logging.LogFactory;
 
@@ -63,12 +63,12 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
          return (AtomicHashMap<K, V>) cache.get(deltaMapKey);
       } else {
          // acquire WL
-         boolean suppressLocks = icc.get().hasOption(Options.SKIP_LOCKING);
-         if (!suppressLocks) icc.get().setOptions(Options.FORCE_WRITE_LOCK);
+         boolean suppressLocks = icc.get().hasFlag(Flag.SKIP_LOCKING);
+         if (!suppressLocks) icc.get().setFlags(Flag.FORCE_WRITE_LOCK);
 
          if (trace) {
             if (suppressLocks)
-               log.trace("Skip locking option used.  Skipping locking.");
+               log.trace("Skip locking flag used.  Skipping locking.");
             else
                log.trace("Forcing write lock even for reads");
          }
@@ -77,8 +77,8 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
          // copy for write
          AtomicHashMap copy = map == null ? new AtomicHashMap() : map.copyForWrite();
          copy.initForWriting();
-         // reinstate the option
-         if (suppressLocks) icc.get().setOptions(Options.SKIP_LOCKING);
+         // reinstate the flag
+         if (suppressLocks) icc.get().setFlags(Flag.SKIP_LOCKING);
          cache.put(deltaMapKey, copy);
          return copy;
       }

@@ -41,7 +41,7 @@ import org.horizon.context.TransactionContext;
 import org.horizon.factories.annotations.Inject;
 import org.horizon.factories.annotations.Start;
 import org.horizon.interceptors.base.JmxStatsCommandInterceptor;
-import org.horizon.invocation.Options;
+import org.horizon.invocation.Flag;
 import org.horizon.jmx.annotations.ManagedAttribute;
 import org.horizon.jmx.annotations.ManagedOperation;
 import org.horizon.loader.CacheLoaderManager;
@@ -105,7 +105,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
     */
    public final boolean skip(InvocationContext ctx, VisitableCommand command) {
       if (store == null) return true;  // could be because the cache loader oes not implement cache store
-      if ((!ctx.isOriginLocal() && loaderConfig.isShared()) || ctx.hasOption(Options.SKIP_CACHE_STORE)) {
+      if ((!ctx.isOriginLocal() && loaderConfig.isShared()) || ctx.hasFlag(Flag.SKIP_CACHE_STORE)) {
          if (trace)
             log.trace("Passing up method call and bypassing this interceptor since the cache loader is shared and this call originated remotely.");
          return true;

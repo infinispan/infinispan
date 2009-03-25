@@ -23,7 +23,7 @@ package org.horizon.tree;
 
 import org.horizon.Cache;
 import org.horizon.CacheException;
-import org.horizon.invocation.Options;
+import org.horizon.invocation.Flag;
 import org.horizon.lifecycle.Lifecycle;
 
 import java.util.Map;
@@ -57,7 +57,7 @@ public interface TreeCache<K, V> extends Lifecycle {
     */
    Node<K, V> getRoot();
 
-   Node<K, V> getRoot(Options... options);
+   Node<K, V> getRoot(Flag... flags);
 
    /**
     * Associates the specified value with the specified key for a {@link Node} in this cache. If the {@link Node}
@@ -73,7 +73,7 @@ public interface TreeCache<K, V> extends Lifecycle {
     */
    V put(Fqn fqn, K key, V value);
 
-   V put(Fqn fqn, K key, V value, Options... options);
+   V put(Fqn fqn, K key, V value, Flag... flags);
 
    /**
     * Convenience method that takes a string representation of an Fqn.  Otherwise identical to {@link #put(Fqn, Object,
@@ -90,7 +90,7 @@ public interface TreeCache<K, V> extends Lifecycle {
 
    V put(String fqn, K key, V value);
 
-   V put(String fqn, K key, V value, Options... options);
+   V put(String fqn, K key, V value, Flag... flags);
 
    /**
     * Copies all of the mappings from the specified map to a {@link Node}.
@@ -101,7 +101,7 @@ public interface TreeCache<K, V> extends Lifecycle {
     */
    void put(Fqn fqn, Map<? extends K, ? extends V> data);
 
-   void put(Fqn fqn, Map<? extends K, ? extends V> data, Options... options);
+   void put(Fqn fqn, Map<? extends K, ? extends V> data, Flag... flags);
 
    /**
     * Convenience method that takes a string representation of an Fqn.  Otherwise identical to {@link #put(Fqn,
@@ -113,7 +113,7 @@ public interface TreeCache<K, V> extends Lifecycle {
     */
    void put(String fqn, Map<? extends K, ? extends V> data);
 
-   void put(String fqn, Map<? extends K, ? extends V> data, Options... options);
+   void put(String fqn, Map<? extends K, ? extends V> data, Flag... flags);
 
    /**
     * Removes the mapping for this key from a Node. Returns the value to which the Node previously associated the key,
@@ -126,7 +126,7 @@ public interface TreeCache<K, V> extends Lifecycle {
     */
    V remove(Fqn fqn, K key);
 
-   V remove(Fqn fqn, K key, Options... options);
+   V remove(Fqn fqn, K key, Flag... flags);
 
    /**
     * Convenience method that takes a string representation of an Fqn.  Otherwise identical to {@link #remove(Fqn,
@@ -139,7 +139,7 @@ public interface TreeCache<K, V> extends Lifecycle {
     */
    V remove(String fqn, K key);
 
-   V remove(String fqn, K key, Options... options);
+   V remove(String fqn, K key, Flag... flags);
 
    /**
     * Removes a {@link Node} indicated by absolute {@link Fqn}.
@@ -150,7 +150,7 @@ public interface TreeCache<K, V> extends Lifecycle {
     */
    boolean removeNode(Fqn fqn);
 
-   boolean removeNode(Fqn fqn, Options... options);
+   boolean removeNode(Fqn fqn, Flag... flags);
 
    /**
     * Convenience method that takes a string representation of an Fqn.  Otherwise identical to {@link #removeNode(Fqn)}
@@ -161,7 +161,7 @@ public interface TreeCache<K, V> extends Lifecycle {
     */
    boolean removeNode(String fqn);
 
-   boolean removeNode(String fqn, Options... options);
+   boolean removeNode(String fqn, Flag... flags);
 
    /**
     * A convenience method to retrieve a node directly from the cache.  Equivalent to calling
@@ -173,7 +173,7 @@ public interface TreeCache<K, V> extends Lifecycle {
     */
    Node<K, V> getNode(Fqn fqn);
 
-   Node<K, V> getNode(Fqn fqn, Options... options);
+   Node<K, V> getNode(Fqn fqn, Flag... flags);
 
    /**
     * Convenience method that takes a string representation of an Fqn.  Otherwise identical to {@link #getNode(Fqn)}
@@ -184,7 +184,7 @@ public interface TreeCache<K, V> extends Lifecycle {
     */
    Node<K, V> getNode(String fqn);
 
-   Node<K, V> getNode(String fqn, Options... options);
+   Node<K, V> getNode(String fqn, Flag... flags);
 
 
    /**
@@ -197,7 +197,7 @@ public interface TreeCache<K, V> extends Lifecycle {
     */
    V get(Fqn fqn, K key);
 
-   V get(Fqn fqn, K key, Options... options);
+   V get(Fqn fqn, K key, Flag... flags);
 
    /**
     * Convenience method that takes a string representation of an Fqn.  Otherwise identical to {@link #get(Fqn,
@@ -210,7 +210,7 @@ public interface TreeCache<K, V> extends Lifecycle {
     */
    V get(String fqn, K key);
 
-   V get(String fqn, K key, Options... options);
+   V get(String fqn, K key, Flag... flags);
 
    /**
     * Moves a part of the cache to a different subtree.
@@ -268,7 +268,7 @@ public interface TreeCache<K, V> extends Lifecycle {
     */
    void move(Fqn nodeToMove, Fqn newParent) throws NodeNotExistsException;
 
-   void move(Fqn nodeToMove, Fqn newParent, Options... options) throws NodeNotExistsException;
+   void move(Fqn nodeToMove, Fqn newParent, Flag... flags) throws NodeNotExistsException;
 
    /**
     * Convenience method that takes in string representations of Fqns.  Otherwise identical to {@link #move(Fqn, Fqn)}
@@ -277,7 +277,7 @@ public interface TreeCache<K, V> extends Lifecycle {
     */
    void move(String nodeToMove, String newParent) throws NodeNotExistsException;
 
-   void move(String nodeToMove, String newParent, Options... options) throws NodeNotExistsException;
+   void move(String nodeToMove, String newParent, Flag... flags) throws NodeNotExistsException;
 
    /**
     * Retrieves a defensively copied data map of the underlying node.  A convenience method to retrieving a node and
@@ -290,7 +290,7 @@ public interface TreeCache<K, V> extends Lifecycle {
     */
    Map<K, V> getData(Fqn fqn);
 
-   Map<K, V> getData(Fqn fqn, Options... options);
+   Map<K, V> getData(Fqn fqn, Flag... flags);
 
    /**
     * Convenience method that takes in a String represenation of the Fqn.  Otherwise identical to {@link
@@ -298,7 +298,7 @@ public interface TreeCache<K, V> extends Lifecycle {
     */
    Set<K> getKeys(String fqn);
 
-   Set<K> getKeys(String fqn, Options... options);
+   Set<K> getKeys(String fqn, Flag... flags);
 
    /**
     * Returns a set of attribute keys for the Fqn. Returns null if the node is not found, otherwise a Set. The set is a
@@ -311,7 +311,7 @@ public interface TreeCache<K, V> extends Lifecycle {
     */
    Set<K> getKeys(Fqn fqn);
 
-   Set<K> getKeys(Fqn fqn, Options... options);
+   Set<K> getKeys(Fqn fqn, Flag... flags);
 
    /**
     * Convenience method that takes in a String represenation of the Fqn.  Otherwise identical to {@link
@@ -321,7 +321,7 @@ public interface TreeCache<K, V> extends Lifecycle {
     */
    void clearData(String fqn);
 
-   void clearData(String fqn, Options... options);
+   void clearData(String fqn, Flag... flags);
 
    /**
     * Removes the keys and properties from a named node.
@@ -333,7 +333,7 @@ public interface TreeCache<K, V> extends Lifecycle {
     */
    void clearData(Fqn fqn);
 
-   void clearData(Fqn fqn, Options... options);
+   void clearData(Fqn fqn, Flag... flags);
 
    /**
     * @return a reference to the underlying cache instance
@@ -348,7 +348,7 @@ public interface TreeCache<K, V> extends Lifecycle {
     */
    boolean exists(String fqn);
 
-   boolean exists(String fqn, Options... options);
+   boolean exists(String fqn, Flag... flags);
 
    /**
     * Tests if an Fqn exists.
@@ -358,5 +358,5 @@ public interface TreeCache<K, V> extends Lifecycle {
     */
    boolean exists(Fqn fqn);
 
-   boolean exists(Fqn fqn, Options... options);
+   boolean exists(Fqn fqn, Flag... flags);
 }

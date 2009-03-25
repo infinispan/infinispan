@@ -7,7 +7,7 @@ import org.horizon.commands.CacheRPCCommand;
 import org.horizon.commands.write.PutKeyValueCommand;
 import org.horizon.commands.write.RemoveCommand;
 import org.horizon.config.Configuration;
-import org.horizon.invocation.Options;
+import org.horizon.invocation.Flag;
 import org.horizon.remoting.RPCManager;
 import org.horizon.remoting.RPCManagerImpl;
 import org.horizon.remoting.ResponseFilter;
@@ -208,7 +208,7 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
    }
 
    /**
-    * Tests that setting a cacheModeLocal=true Option prevents propagation of the putForExternalRead().
+    * Tests that setting a cacheModeLocal=true flag prevents propagation of the putForExternalRead().
     *
     * @throws Exception
     */
@@ -217,7 +217,7 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
    }
 
    /**
-    * Tests that setting a cacheModeLocal=true Option prevents propagation of the putForExternalRead() when the call
+    * Tests that setting a cacheModeLocal=true flag prevents propagation of the putForExternalRead() when the call
     * occurs inside a transaction.
     *
     * @throws Exception
@@ -288,7 +288,7 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
    }
 
    /**
-    * Tests that setting a cacheModeLocal=true Option prevents propagation of the putForExternalRead().
+    * Tests that setting a cacheModeLocal=true flag prevents propagation of the putForExternalRead().
     *
     * @throws Exception
     */
@@ -304,7 +304,7 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
          if (transactional)
             tm1.begin();
 
-         cache1.getAdvancedCache().putForExternalRead(key, value, Options.CACHE_MODE_LOCAL);
+         cache1.getAdvancedCache().putForExternalRead(key, value, Flag.CACHE_MODE_LOCAL);
 
          if (transactional)
             tm1.commit();

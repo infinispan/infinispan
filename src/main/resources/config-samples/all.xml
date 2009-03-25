@@ -38,7 +38,7 @@
                  distributedSyncTimeout="50000">
          <!-- Note that the JGroups transport uses sensible defaults if no configuration property is defined. -->
          <property name="configurationFile" value="udp.xml"/>
-         <!-- See the JGroupsTransport javadocs for more options -->
+         <!-- See the JGroupsTransport javadocs for more flags -->
       </transport>
 
       <!-- Again, sensible defaults are used here if this is omitted.  -->
@@ -146,7 +146,7 @@
          <loader class="org.horizon.loader.jdbc.stringbased.JdbcStringBasedCacheStore" fetchPersistentState="true"
                  ignoreModifications="true" purgeOnStartup="true">
 
-            <!-- See the documentation for more configuration examples and options. -->
+            <!-- See the documentation for more configuration examples and flags. -->
             <properties>
                <property name="connectionFactoryClass" value="org.horizon.loader.jdbc.connectionfactory.PooledConnectionFactory"/>
                <property name="connectionUrl" value="org.horizon.loader.jdbc.connectionfactory.PooledConnectionFactory"/>

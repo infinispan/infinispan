@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @Test(groups = "profiling", enabled = false, testName = "profiling.ProfileTest")
 public class ProfileTest extends AbstractProfileTest {
    /*
-      Test configuration options
+      Test configuration flags
     */
    protected static final long NUM_OPERATIONS = 1000000; // DURATION is replaced with a fixed number of operations instead.
    protected static final int NUM_THREADS = 25;

@@ -1,12 +1,13 @@
 package org.horizon.invocation;
 
 /**
- * Available options, which may be set on a per-invocation basis
+ * Available flags, which may be set on a per-invocation basis.  These are provided using the {@link org.horizon.AdvancedCache}
+ * interface, using some of the overloaded methods that allow passing in of a variable number of Flags.
  *
  * @author Manik Surtani
  * @since 4.0
  */
-public enum Options {
+public enum Flag {
    ZERO_LOCK_ACQUISITION_TIMEOUT,
    CACHE_MODE_LOCAL,
    SKIP_LOCKING,

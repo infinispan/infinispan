@@ -27,7 +27,7 @@ import org.horizon.atomic.AtomicMapCache;
 import org.horizon.batch.AutoBatchSupport;
 import org.horizon.batch.BatchContainer;
 import org.horizon.invocation.InvocationContextContainer;
-import org.horizon.invocation.Options;
+import org.horizon.invocation.Flag;
 import org.horizon.lock.LockManager;
 import org.horizon.logging.Log;
 import org.horizon.logging.LogFactory;
@@ -69,7 +69,7 @@ public class TreeStructureSupport extends AutoBatchSupport {
             if (!exists(parent)) createNodeInCache(parent);
             AtomicMap<Object, Fqn> parentStructure = getStructure(parent);
             // don't lock parents for child insert/removes!
-            icc.get().setOptions(Options.SKIP_LOCKING);
+            icc.get().setFlags(Flag.SKIP_LOCKING);
             parentStructure.put(fqn.getLastElement(), fqn);
          }
          cache.getAtomicMap(structureKey);

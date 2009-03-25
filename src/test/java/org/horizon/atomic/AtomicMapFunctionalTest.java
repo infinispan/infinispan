@@ -3,7 +3,7 @@ package org.horizon.atomic;
 import org.horizon.config.Configuration;
 import org.horizon.context.InvocationContext;
 import org.horizon.invocation.InvocationContextContainer;
-import static org.horizon.invocation.Options.SKIP_LOCKING;
+import static org.horizon.invocation.Flag.SKIP_LOCKING;
 import org.horizon.logging.Log;
 import org.horizon.logging.LogFactory;
 import org.horizon.manager.CacheManager;
@@ -72,9 +72,9 @@ public class AtomicMapFunctionalTest {
       assert map.isEmpty();
       InvocationContextContainer icc = TestingUtil.extractComponent(cache, InvocationContextContainer.class);
       InvocationContext ic = icc.get();
-      ic.setOptions(SKIP_LOCKING);
+      ic.setFlags(SKIP_LOCKING);
       log.debug("Doing a put");
-      assert icc.get().hasOption(SKIP_LOCKING);
+      assert icc.get().hasFlag(SKIP_LOCKING);
       map.put("a", "b");
       log.debug("Put complete");
       assert map.get("a").equals("b");
@@ -87,7 +87,7 @@ public class AtomicMapFunctionalTest {
       AtomicMap<String, String> map = cache.getAtomicMap("key", String.class, String.class);
       tm.begin();
       assert map.isEmpty();
-      TestingUtil.extractComponent(cache, InvocationContextContainer.class).get().setOptions(SKIP_LOCKING);
+      TestingUtil.extractComponent(cache, InvocationContextContainer.class).get().setFlags(SKIP_LOCKING);
       map.put("a", "b");
       assert map.get("a").equals("b");
       Transaction t = tm.suspend();
@@ -106,7 +106,7 @@ public class AtomicMapFunctionalTest {
       assert map.isEmpty();
       map.put("x", "y");
       assert map.get("x").equals("y");
-      TestingUtil.extractComponent(cache, InvocationContextContainer.class).get().setOptions(SKIP_LOCKING);
+      TestingUtil.extractComponent(cache, InvocationContextContainer.class).get().setFlags(SKIP_LOCKING);
       log.debug("Doing a put");
       map.put("a", "b");
       log.debug("Put complete");

@@ -27,7 +27,7 @@ import org.horizon.context.InvocationContext;
 import org.horizon.factories.annotations.Inject;
 import org.horizon.factories.annotations.Start;
 import org.horizon.invocation.InvocationContextContainer;
-import org.horizon.invocation.Options;
+import org.horizon.invocation.Flag;
 import org.horizon.jmx.annotations.ManagedAttribute;
 import org.horizon.jmx.annotations.MBean;
 import org.horizon.logging.Log;
@@ -92,7 +92,7 @@ public class LockManagerImpl implements LockManager {
    }
 
    private long getLockAcquisitionTimeout(InvocationContext ctx) {
-      return ctx.hasOption(Options.ZERO_LOCK_ACQUISITION_TIMEOUT) ?
+      return ctx.hasFlag(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT) ?
             0 : configuration.getLockAcquisitionTimeout();
    }
 
