@@ -12,7 +12,7 @@ import java.util.Set;
 public class SimpleDataContainerTest {
    public void testExpiredData() throws InterruptedException {
       DataContainer dc = new SimpleDataContainer();
-      dc.put("k", "v", -1, 600000);
+      dc.put("k", "v", -1, 6000000);
       Thread.sleep(100);
 
       InternalCacheEntry entry = dc.get("k");
@@ -25,7 +25,7 @@ public class SimpleDataContainerTest {
       dc.put("k", "v", -1, 0);
       dc.purge();
 
-      dc.put("k", "v", 600000, -1);
+      dc.put("k", "v", 6000000, -1);
       Thread.sleep(100);
       assert dc.size() == 1;
 
@@ -57,7 +57,7 @@ public class SimpleDataContainerTest {
       assert dc.immortalEntries.containsKey("k");
       assert !dc.mortalEntries.containsKey("k");
 
-      dc.put("k", "v3", -1, 700000);
+      dc.put("k", "v3", -1, 6000000);
       assert dc.containsKey("k");
       assert !dc.immortalEntries.containsKey("k");
       assert dc.mortalEntries.containsKey("k");
@@ -67,8 +67,8 @@ public class SimpleDataContainerTest {
       SimpleDataContainer dc = new SimpleDataContainer();
       dc.put("k1", "v", 6000000, -1);
       dc.put("k2", "v", -1, -1);
-      dc.put("k3", "v", -1, 500000);
-      dc.put("k4", "v", 600000, 500000);
+      dc.put("k3", "v", -1, 6000000);
+      dc.put("k4", "v", 6000000, 6000000);
 
       Set expected = new HashSet();
       expected.add("k1");
