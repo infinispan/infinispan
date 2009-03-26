@@ -172,7 +172,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
 
             // Do we really need a response?!?  The caller would only ever expect a response for certain types of
             // commands, such as a ClusteredGet
-            if (cmd.isSingleCommand() && cmd.getSingleCommand() instanceof ClusteredGetCommand)
+            if (cmd instanceof ClusteredGetCommand)
                return retval;
             else
                return null; // saves on serializing a response!

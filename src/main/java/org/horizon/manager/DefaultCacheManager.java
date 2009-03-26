@@ -317,7 +317,7 @@ public class DefaultCacheManager implements CacheManager {
    public Address getAddress() {
       if (globalComponentRegistry == null) return null;
       RPCManager rpcManager = globalComponentRegistry.getComponent(RPCManager.class);
-      return rpcManager == null ? null : rpcManager.getTransport().getAddress();
+      return rpcManager == null ? null : rpcManager.getLocalAddress();
    }
 
    public boolean isCoordinator() {

@@ -67,7 +67,7 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
          if ((cs instanceof ChainingCacheStore) && !force) {
             ((ChainingCacheStore) loader).purgeIfNecessary();
          } else {
-            CacheLoaderConfig first = clmConfig.getFirstCacheLoaderConfig();
+            CacheStoreConfig first = (CacheStoreConfig) clmConfig.getFirstCacheLoaderConfig();
             if (force || (first != null && first.isPurgeOnStartup())) {
                cs.clear();
             }
@@ -156,12 +156,12 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
          // only one cache loader may have fetchPersistentState to true.
          int numLoadersWithFetchPersistentState = 0;
          for (CacheLoaderConfig cfg : clmConfig.getCacheLoaderConfigs()) {
-            if (cfg.isFetchPersistentState()) numLoadersWithFetchPersistentState++;
-
-            if (numLoadersWithFetchPersistentState > 1)
-               throw new Exception("Invalid cache loader configuration!!  Only ONE cache loader may have fetchPersistentState set to true.  Cache will not start!");
-
-            assertNotSingletonAndShared(cfg);
+            if (cfg instanceof CacheStoreConfig) {
+               if (((CacheStoreConfig) cfg).isFetchPersistentState()) numLoadersWithFetchPersistentState++;
+               if (numLoadersWithFetchPersistentState > 1)
+                  throw new Exception("Invalid cache loader configuration!!  Only ONE cache loader may have fetchPersistentState set to true.  Cache will not start!");
+               assertNotSingletonAndShared(((CacheStoreConfig) cfg));
+            }
 
             CacheLoader l = createCacheLoader(cfg, cache);
             ccl.addCacheLoader(l, cfg);
@@ -169,7 +169,8 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
       } else {
          CacheLoaderConfig cfg = clmConfig.getFirstCacheLoaderConfig();
          tmpLoader = createCacheLoader(cfg, cache);
-         assertNotSingletonAndShared(cfg);
+         if (cfg instanceof CacheStoreConfig)
+            assertNotSingletonAndShared(((CacheStoreConfig) cfg));
       }
 
       // Update the config with those actually used by the loaders
@@ -182,22 +183,23 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
       CacheLoader tmpLoader = (CacheLoader) Util.getInstance(cfg.getCacheLoaderClassName());
 
       if (tmpLoader != null) {
-         if (tmpLoader instanceof CacheStore) {
+         if (cfg instanceof CacheStoreConfig) {
             CacheStore tmpStore = (CacheStore) tmpLoader;
             // async?
-            if (cfg.getAsyncStoreConfig().isEnabled()) {
-               tmpStore = new AsyncStore(tmpStore, cfg.getAsyncStoreConfig());
+            CacheStoreConfig cfg2 = (CacheStoreConfig) cfg;
+            if (cfg2.getAsyncStoreConfig().isEnabled()) {
+               tmpStore = new AsyncStore(tmpStore, cfg2.getAsyncStoreConfig());
                tmpLoader = tmpStore;
             }
 
             // read only?
-            if (cfg.isIgnoreModifications()) {
+            if (cfg2.isIgnoreModifications()) {
                tmpStore = new ReadOnlyStore(tmpStore);
                tmpLoader = tmpStore;
             }
 
             // singleton?
-            SingletonStoreConfig ssc = cfg.getSingletonStoreConfig();
+            SingletonStoreConfig ssc = cfg2.getSingletonStoreConfig();
             if (ssc != null && ssc.isSingletonStoreEnabled()) {
                tmpStore = new SingletonStore(tmpStore, cache, ssc);
                tmpLoader = tmpStore;
@@ -210,7 +212,7 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
       return tmpLoader;
    }
 
-   void assertNotSingletonAndShared(CacheLoaderConfig cfg) {
+   void assertNotSingletonAndShared(CacheStoreConfig cfg) {
       SingletonStoreConfig ssc = cfg.getSingletonStoreConfig();
       if (ssc != null && ssc.isSingletonStoreEnabled() && clmConfig.isShared())
          throw new ConfigurationException("Invalid cache loader configuration!!  If a cache loader is configured as a singleton, the cache loader cannot be shared in a cluster!");

@@ -121,4 +121,9 @@ public interface RPCManager extends Lifecycle {
     *         a null otherwise.
     */
    Address getCurrentStateTransferSource();
+
+   /**
+    * Returns the local address.
+    */
+   public Address getLocalAddress();
 }

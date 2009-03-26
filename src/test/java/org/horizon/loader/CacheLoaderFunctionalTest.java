@@ -271,7 +271,8 @@ public class CacheLoaderFunctionalTest {
 
    public void testPurgeOnStartup() throws CacheLoaderException {
       Configuration purgingCfg = cfg.clone();
-      purgingCfg.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig().setPurgeOnStartup(true);
+      CacheStoreConfig firstCacheLoaderConfig = (CacheStoreConfig) purgingCfg.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig();
+      firstCacheLoaderConfig.setPurgeOnStartup(true);
       ((DummyInMemoryCacheStore.Cfg) purgingCfg.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStore("purgingCache");
       cm.defineCache("purgingCache", purgingCfg);
       Cache purgingCache = cm.getCache("purgingCache");

@@ -3,8 +3,8 @@ package org.horizon.statetransfer;
 import org.horizon.Cache;
 import org.horizon.config.CacheLoaderManagerConfig;
 import org.horizon.loader.CacheLoader;
-import org.horizon.loader.CacheLoaderConfig;
 import org.horizon.loader.CacheLoaderManager;
+import org.horizon.loader.CacheStoreConfig;
 import org.horizon.loader.dummy.DummyInMemoryCacheStore;
 import org.horizon.manager.CacheManager;
 import org.horizon.test.TestingUtil;
@@ -27,7 +27,7 @@ public class StateTransferCacheLoaderFunctionalTest extends StateTransferFunctio
    protected CacheManager createCacheManager() {
       // increment the DIMCS store id
       CacheLoaderManagerConfig clmc = new CacheLoaderManagerConfig();
-      CacheLoaderConfig clc = new DummyInMemoryCacheStore.Cfg("store number " + id++);
+      CacheStoreConfig clc = new DummyInMemoryCacheStore.Cfg("store number " + id++);
       clmc.addCacheLoaderConfig(clc);
       clc.setFetchPersistentState(true);
       clmc.setShared(sharedCacheLoader.get());

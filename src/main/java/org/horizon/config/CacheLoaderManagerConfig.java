@@ -22,6 +22,7 @@
 package org.horizon.config;
 
 import org.horizon.loader.CacheLoaderConfig;
+import org.horizon.loader.CacheStoreConfig;
 import org.horizon.util.Util;
 
 import java.util.LinkedList;
@@ -140,7 +141,8 @@ public class CacheLoaderManagerConfig extends AbstractNamedCacheConfigurationBea
     */
    public boolean isFetchPersistentState() {
       for (CacheLoaderConfig iclc : cacheLoaderConfigs) {
-         if (iclc.isFetchPersistentState()) return true;
+         if (iclc instanceof CacheStoreConfig)
+         if (((CacheStoreConfig)iclc).isFetchPersistentState()) return true;
       }
       return false;
    }

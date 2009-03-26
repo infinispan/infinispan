@@ -469,4 +469,8 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
          if (e.getValue() instanceof MarshalledValue) ((MarshalledValue) e.getValue()).compact(true, true);
       }
    }
+
+   public RPCManager getRpcManager() {
+      return rpcManager;
+   }
 }

@@ -149,6 +149,13 @@ public class RPCManagerImpl implements RPCManager {
       return currentStateTransferSource;
    }
 
+   public Address getLocalAddress() {
+      if (t == null) {
+         return null;
+      }
+      return t.getAddress();
+   }
+
    // -------------------------------------------- JMX information -----------------------------------------------
 
    @ManagedOperation

@@ -2,13 +2,15 @@ package org.horizon.container.entries;
 
 import org.horizon.container.DataContainer;
 
+import java.io.Serializable;
+
 /**
  * An entry that is stored in the data container
  *
  * @author Manik Surtani
  * @since 4.0
  */
-public interface CacheEntry {
+public interface CacheEntry extends Serializable {
 
    /**
     * Tests whether the entry represents a null value, typically used for repeatable read.

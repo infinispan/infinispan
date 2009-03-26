@@ -2,9 +2,8 @@ package org.horizon.config.parsing;
 
 import org.horizon.config.CacheLoaderManagerConfig;
 import org.horizon.config.Configuration;
-import org.horizon.config.GlobalConfiguration;
 import org.horizon.eviction.EvictionStrategy;
-import org.horizon.loader.CacheLoaderConfig;
+import org.horizon.loader.CacheStoreConfig;
 import org.horizon.loader.decorators.SingletonStoreConfig;
 import org.horizon.loader.jdbc.TableManipulation;
 import org.horizon.loader.jdbc.connectionfactory.ConnectionFactoryConfig;
@@ -186,7 +185,7 @@ public class ConfigurationParserTest {
       assert clc.isShared();
       assert clc.isPreload();
 
-      CacheLoaderConfig iclc = clc.getFirstCacheLoaderConfig();
+      CacheStoreConfig iclc = (CacheStoreConfig) clc.getFirstCacheLoaderConfig();
       assert iclc.getCacheLoaderClassName().equals(JdbcStringBasedCacheStore.class.getName());
       assert iclc.getAsyncStoreConfig().isEnabled();
       assert iclc.getAsyncStoreConfig().getBatchSize() == 15;
@@ -240,7 +239,7 @@ public class ConfigurationParserTest {
       assert !clc.isShared();
       assert !clc.isPreload();
 
-      CacheLoaderConfig iclc = clc.getFirstCacheLoaderConfig();
+      CacheStoreConfig iclc = (CacheStoreConfig) clc.getFirstCacheLoaderConfig();
       assert iclc.getCacheLoaderClassName().equals("org.horizon.loader.jdbc.binary.JdbcBinaryCacheStore");
       assert !iclc.getAsyncStoreConfig().isEnabled();
       assert !iclc.isFetchPersistentState();

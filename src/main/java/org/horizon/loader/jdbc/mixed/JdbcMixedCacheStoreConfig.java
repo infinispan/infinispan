@@ -30,7 +30,7 @@ public class JdbcMixedCacheStoreConfig extends AbstractCacheStoreConfig {
    }
 
    public JdbcMixedCacheStoreConfig() {
-      this.className = JdbcMixedCacheStore.class.getName();
+      this.cacheLoaderClassName = JdbcMixedCacheStore.class.getName();
    }
 
    public void setConnectionFactoryConfig(ConnectionFactoryConfig connectionFactoryConfig) {

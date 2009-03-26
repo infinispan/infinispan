@@ -34,18 +34,7 @@ import java.util.Properties;
  * @since 4.0
  */
 public abstract class PluggableConfigurationComponent extends AbstractNamedCacheConfigurationBean {
-   protected String className;
    protected Properties properties = EMPTY_PROPERTIES;
-
-   public String getCacheLoaderClassName() {
-      return className;
-   }
-
-   public void setCacheLoaderClassName(String className) {
-      if (className == null || className.length() == 0) return;
-      testImmutability("className");
-      this.className = className;
-   }
 
    public Properties getProperties() {
       return properties;
@@ -75,22 +64,18 @@ public abstract class PluggableConfigurationComponent extends AbstractNamedCache
 
       PluggableConfigurationComponent that = (PluggableConfigurationComponent) o;
 
-      if (className != null ? !className.equals(that.className) : that.className != null) return false;
       if (properties != null ? !properties.equals(that.properties) : that.properties != null) return false;
 
       return true;
    }
 
    public int hashCode() {
-      int result;
-      result = (className != null ? className.hashCode() : 0);
-      result = 31 * result + (properties != null ? properties.hashCode() : 0);
-      return result;
+      return (properties != null ? properties.hashCode() : 0);
    }
 
    @Override
    public String toString() {
-      return getClass().getSimpleName() + " {className = " + className +
+      return getClass().getSimpleName()  +
             ", properties=" + properties + "}";
    }
 

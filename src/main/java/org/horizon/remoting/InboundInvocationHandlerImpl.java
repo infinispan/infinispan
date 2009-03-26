@@ -54,7 +54,6 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
       InvocationContextContainer icc = cr.getLocalComponent(InvocationContextContainer.class);
       CommandsFactory commandsFactory = cr.getLocalComponent(CommandsFactory.class);
 
-      cmd.setInterceptorChain(ic);
       // initialize this command with components specific to the intended cache instance
       commandsFactory.initializeReplicableCommand(cmd);
       return cmd.perform(icc.get());

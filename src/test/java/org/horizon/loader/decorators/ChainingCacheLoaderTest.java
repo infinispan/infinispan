@@ -1,14 +1,14 @@
 package org.horizon.loader.decorators;
 
 import org.easymock.EasyMock;
-import org.horizon.container.entries.InternalEntryFactory;
 import org.horizon.container.entries.InternalCacheEntry;
+import org.horizon.container.entries.InternalEntryFactory;
 import org.horizon.io.UnclosableObjectInputStream;
 import org.horizon.io.UnclosableObjectOutputStream;
 import org.horizon.loader.BaseCacheStoreTest;
-import org.horizon.loader.CacheLoaderConfig;
 import org.horizon.loader.CacheLoaderException;
 import org.horizon.loader.CacheStore;
+import org.horizon.loader.CacheStoreConfig;
 import org.horizon.loader.dummy.DummyInMemoryCacheStore;
 import org.horizon.loader.modifications.Clear;
 import org.horizon.loader.modifications.Modification;
@@ -38,7 +38,7 @@ public class ChainingCacheLoaderTest extends BaseCacheStoreTest {
 
    protected CacheStore createCacheStore() throws CacheLoaderException {
       ChainingCacheStore store = new ChainingCacheStore();
-      CacheLoaderConfig cfg;
+      CacheStoreConfig cfg;
       store1 = new DummyInMemoryCacheStore();
       store1.init((cfg = new DummyInMemoryCacheStore.Cfg("instance1")), null, new ObjectStreamMarshaller());
 

@@ -6,6 +6,7 @@ import org.horizon.loader.CacheLoader;
 import org.horizon.loader.CacheLoaderConfig;
 import org.horizon.loader.CacheLoaderException;
 import org.horizon.loader.CacheStore;
+import org.horizon.loader.CacheStoreConfig;
 import org.horizon.loader.modifications.Modification;
 import org.horizon.marshall.Marshaller;
 
@@ -42,7 +43,8 @@ public class ChainingCacheStore implements CacheStore {
    public void fromStream(ObjectInput inputStream) throws CacheLoaderException {
       // loading and storing state via streams is *only* supported on the *first* store that has fetchPersistentState set.
       for (Map.Entry<CacheStore, CacheLoaderConfig> e : stores.entrySet()) {
-         if (e.getValue().isFetchPersistentState()) {
+         if (!(e.getValue() instanceof CacheStoreConfig)) continue;
+         if (((CacheStoreConfig) e.getValue()).isFetchPersistentState()) {
             e.getKey().fromStream(inputStream);
             // do NOT continue this for other stores, since the stream will not be in an appropriate state anymore
             break;
@@ -53,7 +55,8 @@ public class ChainingCacheStore implements CacheStore {
    public void toStream(ObjectOutput outputStream) throws CacheLoaderException {
       // loading and storing state via streams is *only* supported on the *first* store that has fetchPersistentState set.
       for (Map.Entry<CacheStore, CacheLoaderConfig> e : stores.entrySet()) {
-         if (e.getValue().isFetchPersistentState()) {
+         if (!(e.getValue() instanceof CacheStoreConfig)) continue;
+         if (((CacheStoreConfig) e.getValue()).isFetchPersistentState()) {
             e.getKey().toStream(outputStream);
             // do NOT continue this for other stores, since the stream will not be in an appropriate state anymore
             break;
@@ -138,7 +141,13 @@ public class ChainingCacheStore implements CacheStore {
 
    public void purgeIfNecessary() throws CacheLoaderException {
       for (Map.Entry<CacheStore, CacheLoaderConfig> e : stores.entrySet()) {
-         if (e.getValue().isPurgeOnStartup()) e.getKey().clear();
+         CacheLoaderConfig value = e.getValue();
+         if (value instanceof CacheStoreConfig && ((CacheStoreConfig) value).isPurgeOnStartup())
+            e.getKey().clear();
       }
+   }
+
+   public LinkedHashMap<CacheStore, CacheLoaderConfig> getStores() {
+      return stores;
    }
 }

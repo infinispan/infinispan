@@ -26,7 +26,7 @@ public class JdbcStringBasedCacheStoreConfig extends LockSupportCacheStoreConfig
    }
 
    public JdbcStringBasedCacheStoreConfig() {
-      className = JdbcStringBasedCacheStore.class.getName();
+      cacheLoaderClassName = JdbcStringBasedCacheStore.class.getName();
    }
 
    public JdbcStringBasedCacheStoreConfig(boolean manageConnectionFactory) {

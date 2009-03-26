@@ -27,6 +27,7 @@ import org.horizon.config.parsing.XmlConfigHelper;
 import org.horizon.config.parsing.XmlParserBase;
 import org.horizon.loader.CacheLoader;
 import org.horizon.loader.CacheLoaderConfig;
+import org.horizon.loader.CacheStoreConfig;
 import org.horizon.loader.decorators.AsyncStoreConfig;
 import org.horizon.loader.decorators.SingletonStoreConfig;
 import org.horizon.util.Util;
@@ -77,20 +78,22 @@ public class LoadersElementParser extends XmlParserBase {
          throw new ConfigurationException("Unable to instantiate cache loader or configuration", e);
       }
 
-      String fetchPersistentState = getAttributeValue(indivElement, "fetchPersistentState");
-      if (existsAttribute(fetchPersistentState)) clc.setFetchPersistentState(getBoolean(fetchPersistentState));
-      String ignoreModifications = getAttributeValue(indivElement, "ignoreModifications");
-      if (existsAttribute(ignoreModifications)) clc.setIgnoreModifications(getBoolean(ignoreModifications));
-      String purgeOnStartup = getAttributeValue(indivElement, "purgeOnStartup");
-      if (existsAttribute(purgeOnStartup)) clc.setPurgeOnStartup(getBoolean(purgeOnStartup));
-
       clc.setCacheLoaderClassName(clClass);
       Element propertiesElement = getSingleElementInCoreNS("properties", indivElement);
       Properties props = XmlConfigHelper.extractProperties(propertiesElement);
       if (props != null) XmlConfigHelper.setValues(clc, props, false, true);
 
-      clc.setSingletonStoreConfig(parseSingletonStoreConfig(getSingleElementInCoreNS("singletonStore", indivElement)));
-      clc.setAsyncStoreConfig(parseAsyncStoreConfig(getSingleElementInCoreNS("async", indivElement)));
+      if (clc instanceof CacheStoreConfig) {
+         CacheStoreConfig csc = (CacheStoreConfig) clc;
+         String fetchPersistentState = getAttributeValue(indivElement, "fetchPersistentState");
+         if (existsAttribute(fetchPersistentState)) csc.setFetchPersistentState(getBoolean(fetchPersistentState));
+         String ignoreModifications = getAttributeValue(indivElement, "ignoreModifications");
+         if (existsAttribute(ignoreModifications)) csc.setIgnoreModifications(getBoolean(ignoreModifications));
+         String purgeOnStartup = getAttributeValue(indivElement, "purgeOnStartup");
+         if (existsAttribute(purgeOnStartup)) csc.setPurgeOnStartup(getBoolean(purgeOnStartup));
+         csc.setSingletonStoreConfig(parseSingletonStoreConfig(getSingleElementInCoreNS("singletonStore", indivElement)));
+         csc.setAsyncStoreConfig(parseAsyncStoreConfig(getSingleElementInCoreNS("async", indivElement)));
+      }
       return clc;
    }
 

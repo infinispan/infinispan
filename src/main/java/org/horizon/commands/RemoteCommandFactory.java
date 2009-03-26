@@ -3,6 +3,7 @@ package org.horizon.commands;
 import org.horizon.CacheException;
 import org.horizon.commands.control.StateTransferControlCommand;
 import org.horizon.commands.read.GetKeyValueCommand;
+import org.horizon.commands.remote.ClusteredGetCommand;
 import org.horizon.commands.remote.ReplicateCommand;
 import org.horizon.commands.tx.CommitCommand;
 import org.horizon.commands.tx.PrepareCommand;
@@ -83,6 +84,9 @@ public class RemoteCommandFactory {
          case StateTransferControlCommand.METHOD_ID:
             command = new StateTransferControlCommand();
             ((StateTransferControlCommand) command).init(rpcManager);
+            break;
+         case ClusteredGetCommand.COMMAND_ID:
+            command = new ClusteredGetCommand();
             break;
          default:
             throw new CacheException("Unknown command id " + id + "!");

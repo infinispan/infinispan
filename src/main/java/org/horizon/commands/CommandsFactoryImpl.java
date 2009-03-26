@@ -25,6 +25,7 @@ import org.horizon.Cache;
 import org.horizon.commands.control.StateTransferControlCommand;
 import org.horizon.commands.read.GetKeyValueCommand;
 import org.horizon.commands.read.SizeCommand;
+import org.horizon.commands.remote.ClusteredGetCommand;
 import org.horizon.commands.remote.ReplicateCommand;
 import org.horizon.commands.tx.CommitCommand;
 import org.horizon.commands.tx.PrepareCommand;
@@ -38,6 +39,8 @@ import org.horizon.commands.write.RemoveCommand;
 import org.horizon.commands.write.ReplaceCommand;
 import org.horizon.container.DataContainer;
 import org.horizon.factories.annotations.Inject;
+import org.horizon.interceptors.InterceptorChain;
+import org.horizon.loader.CacheLoaderManager;
 import org.horizon.notifications.cachelistener.CacheNotifier;
 import org.horizon.remoting.transport.Address;
 import org.horizon.transaction.GlobalTransaction;
@@ -53,15 +56,19 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private DataContainer dataContainer;
    private CacheNotifier notifier;
    private Cache cache;
+   private CacheLoaderManager cacheLoaderManager;
 
    // some stateless commands can be reused so that they aren't constructed again all the time.
    SizeCommand cachedSizeCommand;
+   private InterceptorChain interceptorChain;
 
    @Inject
-   public void setupDependencies(DataContainer container, CacheNotifier notifier, Cache cache) {
+   public void setupDependencies(DataContainer container, CacheNotifier notifier, Cache cache, InterceptorChain interceptorChain, CacheLoaderManager clManager) {
       this.dataContainer = container;
       this.notifier = notifier;
       this.cache = cache;
+      this.interceptorChain = interceptorChain;
+      this.cacheLoaderManager = clManager;
    }
 
    public PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, long lifespanMillis, long maxIdleTimeMillis) {
@@ -142,8 +149,11 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case ReplicateCommand.METHOD_ID:
             ReplicateCommand rc = (ReplicateCommand) c;
+            rc.setInterceptorChain(interceptorChain);
             if (rc.getCommands() != null)
-               for (ReplicableCommand nested : rc.getCommands()) initializeReplicableCommand(nested);
+               for (ReplicableCommand nested : rc.getCommands()) {
+                  initializeReplicableCommand(nested);
+               }
             break;
          case InvalidateCommand.METHOD_ID:
             InvalidateCommand ic = (InvalidateCommand) c;
@@ -153,6 +163,10 @@ public class CommandsFactoryImpl implements CommandsFactory {
             PrepareCommand pc = (PrepareCommand) c;
             if (pc.getModifications() != null)
                for (ReplicableCommand nested : pc.getModifications()) initializeReplicableCommand(nested);
+            break;
+         case ClusteredGetCommand.COMMAND_ID:
+            ClusteredGetCommand clusteredGetCommand = (ClusteredGetCommand) c;
+            clusteredGetCommand.initialize(dataContainer, cacheLoaderManager);
             break;
       }
    }
