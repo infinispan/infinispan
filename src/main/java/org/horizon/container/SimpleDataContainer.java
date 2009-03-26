@@ -21,17 +21,26 @@ public class SimpleDataContainer implements DataContainer {
    final ConcurrentMap<Object, InternalCacheEntry> immortalEntries = new ConcurrentHashMap<Object, InternalCacheEntry>();
    final ConcurrentMap<Object, InternalCacheEntry> mortalEntries = new ConcurrentHashMap<Object, InternalCacheEntry>();
 
+   /**
+    * Like a get, but doesn't check for expired entries
+    *
+    * @param key key to retrieve
+    * @return an entry or null
+    */
+   private InternalCacheEntry peek(Object key) {
+      InternalCacheEntry e = immortalEntries.get(key);
+      if (e == null) e = mortalEntries.get(key);
+      return e;
+   }
+
    public InternalCacheEntry get(Object k) {
-      InternalCacheEntry e = immortalEntries.get(k);
-      if (e == null) {
-         e = mortalEntries.get(k);
-         if (e != null) {
-            if (e.isExpired()) {
-               mortalEntries.remove(k);
-               e = null;
-            } else {
-               e.touch();
-            }
+      InternalCacheEntry e = peek(k);
+      if (e != null) {
+         if (e.isExpired()) {
+            mortalEntries.remove(k);
+            e = null;
+         } else {
+            e.touch();
          }
       }
       return e;
@@ -74,14 +83,17 @@ public class SimpleDataContainer implements DataContainer {
    }
 
    public boolean containsKey(Object k) {
-      return get(k) != null;
+      InternalCacheEntry ice = peek(k);
+      if (ice != null && ice.isExpired()) {
+         mortalEntries.remove(k);
+         ice = null;
+      }
+      return ice != null;
    }
 
    public InternalCacheEntry remove(Object k) {
       InternalCacheEntry e = immortalEntries.remove(k);
-      if (e == null) {
-         e = mortalEntries.remove(k);
-      }
+      if (e == null) e = mortalEntries.remove(k);
 
       return e == null || e.isExpired() ? null : e;
    }
@@ -100,7 +112,7 @@ public class SimpleDataContainer implements DataContainer {
       return new KeySet();
    }
 
-   public void purge() {
+   public void purgeExpired() {
       for (Iterator<InternalCacheEntry> entries = mortalEntries.values().iterator(); entries.hasNext();) {
          InternalCacheEntry e = entries.next();
          if (e.isExpired()) entries.remove();

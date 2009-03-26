@@ -5,6 +5,7 @@ import org.horizon.manager.CacheManager;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 
 /**
  * Base class for tests that operate on a single (most likely local) cache instance. This operates similar to {@link
@@ -18,7 +19,7 @@ public abstract class SingleCacheManagerTest extends AbstractCacheTest {
    protected Cache cache;
 
    /**
-    * This method will always be called before {@link #create()}.  If you override this, make sure you annotate the
+    * This method will always be called before {@link #createBeforeClass()}.  If you override this, make sure you annotate the
     * overridden method with {@link org.testng.annotations.BeforeClass}.
     *
     * @throws Exception Just in case
@@ -32,18 +33,28 @@ public abstract class SingleCacheManagerTest extends AbstractCacheTest {
    // provided on dependsOnMethods unless it thinks there already is a package.  This does accept regular expressions
    // though so .*. works.  Otherwise it won't detect overridden methods in subclasses.
    @BeforeClass(dependsOnMethods = "org.horizon.*.preCreate")
-   protected void create() throws Exception {
-      cacheManager = createCacheManager();
+   protected void createBeforeClass() throws Exception {
+      if (cleanup == CleanupPhase.AFTER_TEST) cacheManager = createCacheManager();
+   }
+
+   @BeforeMethod
+   protected void createBeforeMethod() throws Exception {
+      if (cleanup == CleanupPhase.AFTER_METHOD) cacheManager = createCacheManager();
    }
 
    @AfterClass
-   protected void destroy() {
-      TestingUtil.killCacheManagers(cacheManager);
+   protected void destroyAfterClass() {
+      if (cleanup == CleanupPhase.AFTER_TEST) TestingUtil.killCacheManagers(cacheManager);
+   }
+
+   @AfterMethod
+   protected void destroyAfterMethod() {
+      if (cleanup == CleanupPhase.AFTER_METHOD) TestingUtil.killCacheManagers(cacheManager);
    }
 
    @AfterMethod
    protected void clearContent() {
-      super.clearContent(cacheManager);
+      if (cleanup == CleanupPhase.AFTER_TEST) super.clearContent(cacheManager);
    }
 
    protected abstract CacheManager createCacheManager() throws Exception;

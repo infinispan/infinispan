@@ -260,7 +260,7 @@ public class XmlConfigurationParserImpl extends XmlParserBase implements XmlConf
          tmp = getAttributeValue(evictionElement, "maxEntries");
          if (existsAttribute(tmp)) config.setEvictionMaxEntries(getInt(tmp));
          tmp = getAttributeValue(evictionElement, "wakeUpInterval");
-         if (existsAttribute(tmp)) config.setEvictionWakeupInterval(getLong(tmp));
+         if (existsAttribute(tmp)) config.setEvictionWakeUpInterval(getLong(tmp));
       }
    }
 

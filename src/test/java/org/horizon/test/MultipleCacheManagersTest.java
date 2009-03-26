@@ -42,13 +42,8 @@ import java.util.List;
 @Test(groups = {"functional", "unit"})
 public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
-   protected static enum CleanupPhase {
-      AFTER_METHOD, AFTER_TEST
-   }
-
    private List<CacheManager> cacheManagers = new ArrayList<CacheManager>();
-   private IdentityHashMap<Cache, ReplListener> listeners = new IdentityHashMap<Cache, ReplListener>();
-   protected CleanupPhase cleanup = CleanupPhase.AFTER_TEST;
+   private IdentityHashMap<Cache, ReplListener> listeners = new IdentityHashMap<Cache, ReplListener>();   
 
    @BeforeClass
    public void createBeforeClass() throws Throwable {

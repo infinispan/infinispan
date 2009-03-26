@@ -262,7 +262,7 @@ public class ConfigurationParserTest {
 
       assert c.getEvictionMaxEntries() == -1;
       assert c.getEvictionStrategy() == EvictionStrategy.NONE;
-      assert c.getEvictionWakeupInterval() == 5000;
+      assert c.getEvictionWakeUpInterval() == 5000;
       assert c.getExpirationLifespan() == -1;
       assert c.getExpirationMaxIdle() == -1;
    }
@@ -283,7 +283,7 @@ public class ConfigurationParserTest {
 
       assert c.getEvictionStrategy() == EvictionStrategy.LRU;
       assert c.getEvictionMaxEntries() == 7000;
-      assert c.getEvictionWakeupInterval() == 750;
+      assert c.getEvictionWakeUpInterval() == 750;
       assert c.getExpirationLifespan() == 2000;
       assert c.getExpirationMaxIdle() == 500;
    }

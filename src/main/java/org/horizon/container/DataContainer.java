@@ -85,5 +85,5 @@ public interface DataContainer extends Iterable<InternalCacheEntry> {
    /**
     * Purges entries that have passed their expiry time
     */
-   void purge();
+   void purgeExpired();
 }

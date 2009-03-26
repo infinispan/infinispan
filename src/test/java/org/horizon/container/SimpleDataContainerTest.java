@@ -14,16 +14,20 @@ import java.util.Set;
 
 @Test(groups = "unit", testName = "container.SimpleDataContainerTest")
 public class SimpleDataContainerTest {
-   SimpleDataContainer dc;
+   DataContainer dc;
 
    @BeforeMethod
    public void setUp() {
-      dc = new SimpleDataContainer();
+      dc = createContainer();
    }
 
    @AfterMethod
    public void tearDown() {
       dc = null;
+   }
+
+   protected DataContainer createContainer() {
+      return new SimpleDataContainer();
    }
 
    public void testExpiredData() throws InterruptedException {
@@ -38,7 +42,7 @@ public class SimpleDataContainerTest {
       entry = dc.get("k");
       assert entry.getLastUsed() > entryLastUsed;
       dc.put("k", "v", -1, 0);
-      dc.purge();
+      dc.purgeExpired();
 
       dc.put("k", "v", 6000000, -1);
       Thread.sleep(100);
@@ -57,7 +61,7 @@ public class SimpleDataContainerTest {
       dc.put("k", "v", 0, -1);
       Thread.sleep(100);
       assert dc.size() == 1;
-      dc.purge();
+      dc.purgeExpired();
       assert dc.size() == 0;
    }
 
@@ -86,7 +90,7 @@ public class SimpleDataContainerTest {
 
       oldTime = System.currentTimeMillis();
       Thread.sleep(10); // for time calc granularity
-      assert dc.containsKey("k");
+      assert dc.get("k") != null;
       
       // check that the last used stamp has been updated on a get
       assert ice.getLastUsed() > oldTime;
@@ -97,32 +101,22 @@ public class SimpleDataContainerTest {
    public void testExpirableToImmortalAndBack() {
       dc.put("k", "v", 6000000, -1);
       assert dc.containsKey("k");
-      assert !dc.immortalEntries.containsKey("k");
-      assert dc.mortalEntries.containsKey("k");
       assert dc.get("k") instanceof MortalCacheEntry;
 
       dc.put("k", "v2", -1, -1);
       assert dc.containsKey("k");
-      assert dc.immortalEntries.containsKey("k");
-      assert !dc.mortalEntries.containsKey("k");
       assert dc.get("k") instanceof ImmortalCacheEntry;
 
       dc.put("k", "v3", -1, 6000000);
       assert dc.containsKey("k");
-      assert !dc.immortalEntries.containsKey("k");
-      assert dc.mortalEntries.containsKey("k");
       assert dc.get("k") instanceof TransientCacheEntry;
 
       dc.put("k", "v3", 6000000, 6000000);
       assert dc.containsKey("k");
-      assert !dc.immortalEntries.containsKey("k");
-      assert dc.mortalEntries.containsKey("k");
       assert dc.get("k") instanceof TransientMortalCacheEntry;
 
       dc.put("k", "v", 6000000, -1);
       assert dc.containsKey("k");
-      assert !dc.immortalEntries.containsKey("k");
-      assert dc.mortalEntries.containsKey("k");
       assert dc.get("k") instanceof MortalCacheEntry;
    }
 

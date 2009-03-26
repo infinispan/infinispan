@@ -27,6 +27,11 @@ import java.util.concurrent.ConcurrentMap;
 public class AbstractCacheTest {
 
    protected final Log log = LogFactory.getLog(getClass());
+   protected static enum CleanupPhase {
+      AFTER_METHOD, AFTER_TEST
+   }
+
+   protected CleanupPhase cleanup = CleanupPhase.AFTER_TEST;
 
    public void clearContent(CacheManager cacheManager) {
       Set<Cache> runningCaches = getRunningCaches(cacheManager);

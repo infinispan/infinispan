@@ -148,7 +148,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    private int concurrencyLevel = 500;
    private boolean invocationBatchingEnabled;
    private boolean useAsyncSerialization = true;
-   private long evictionWakeupInterval = 5000;
+   private long evictionWakeUpInterval = 5000;
    private EvictionStrategy evictionStrategy = EvictionStrategy.NONE;
    private int evictionMaxEntries = -1;
    private long expirationLifespan = -1;
@@ -268,13 +268,13 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       setCacheMode(cacheMode);
    }
 
-   public long getEvictionWakeupInterval() {
-      return evictionWakeupInterval;
+   public long getEvictionWakeUpInterval() {
+      return evictionWakeUpInterval;
    }
 
-   public void setEvictionWakeupInterval(long evictionWakeupInterval) {
-      testImmutability("evictionWakeupInterval");
-      this.evictionWakeupInterval = evictionWakeupInterval;
+   public void setEvictionWakeUpInterval(long evictionWakeUpInterval) {
+      testImmutability("evictionWakeUpInterval");
+      this.evictionWakeUpInterval = evictionWakeUpInterval;
    }
 
    public EvictionStrategy getEvictionStrategy() {
@@ -462,7 +462,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
       if (concurrencyLevel != that.concurrencyLevel) return false;
       if (evictionMaxEntries != that.evictionMaxEntries) return false;
-      if (evictionWakeupInterval != that.evictionWakeupInterval) return false;
+      if (evictionWakeUpInterval != that.evictionWakeUpInterval) return false;
       if (expirationLifespan != that.expirationLifespan) return false;
       if (expirationMaxIdle != that.expirationMaxIdle) return false;
       if (exposeJmxStatistics != that.exposeJmxStatistics) return false;
@@ -519,7 +519,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       result = 31 * result + concurrencyLevel;
       result = 31 * result + (invocationBatchingEnabled ? 1 : 0);
       result = 31 * result + (useAsyncSerialization ? 1 : 0);
-      result = 31 * result + (int) (evictionWakeupInterval ^ (evictionWakeupInterval >>> 32));
+      result = 31 * result + (int) (evictionWakeUpInterval ^ (evictionWakeUpInterval >>> 32));
       result = 31 * result + (evictionStrategy != null ? evictionStrategy.hashCode() : 0);
       result = 31 * result + evictionMaxEntries;
       result = 31 * result + (int) (expirationLifespan ^ (expirationLifespan >>> 32));

@@ -23,7 +23,10 @@ package org.horizon.factories;
 
 import org.horizon.container.DataContainer;
 import org.horizon.container.SimpleDataContainer;
+import org.horizon.container.FIFODataContainer;
+import org.horizon.container.LRUDataContainer;
 import org.horizon.factories.annotations.DefaultFactoryFor;
+import org.horizon.config.ConfigurationException;
 
 /**
  * Constructs the data container
@@ -39,8 +42,12 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
       switch (configuration.getEvictionStrategy()) {
          case NONE:
             return (T) new SimpleDataContainer();
+         case FIFO:
+            return (T) new FIFODataContainer();
+         case LRU:
+            return (T) new LRUDataContainer();
          default:
-            throw new RuntimeException("Implement other containers for eviction policies!");
+            throw new ConfigurationException("Unknown eviction strategy " + configuration.getEvictionStrategy());
       }
    }
 }
