@@ -52,11 +52,15 @@ public class SimpleDataContainer implements DataContainer {
          e = mortalEntries.get(k);
          if (e != null) {
             e.setValue(v);
+            InternalCacheEntry original = e;
             e = e.setLifespan(lifespan).setMaxIdle(maxIdle);
 
             if (!e.canExpire()) {
                mortalEntries.remove(k);
                immortalEntries.put(k, e);
+            } else if (e != original) {
+               // the entry has changed type, but still can expire!
+               mortalEntries.put(k, e);
             }
          } else {
             e = InternalEntryFactory.create(k, v, lifespan, maxIdle);

@@ -1,18 +1,32 @@
 package org.horizon.container;
 
-import org.testng.annotations.Test;
-import org.horizon.container.entries.InternalCacheEntry;
-import org.horizon.container.entries.TransientCacheEntry;
-import org.horizon.container.entries.MortalCacheEntry;
 import org.horizon.container.entries.ImmortalCacheEntry;
+import org.horizon.container.entries.InternalCacheEntry;
+import org.horizon.container.entries.MortalCacheEntry;
+import org.horizon.container.entries.TransientCacheEntry;
+import org.horizon.container.entries.TransientMortalCacheEntry;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 import java.util.HashSet;
 import java.util.Set;
 
 @Test(groups = "unit", testName = "container.SimpleDataContainerTest")
 public class SimpleDataContainerTest {
+   SimpleDataContainer dc;
+
+   @BeforeMethod
+   public void setUp() {
+      dc = new SimpleDataContainer();
+   }
+
+   @AfterMethod
+   public void tearDown() {
+      dc = null;
+   }
+
    public void testExpiredData() throws InterruptedException {
-      DataContainer dc = new SimpleDataContainer();
       dc.put("k", "v", -1, 6000000);
       Thread.sleep(100);
 
@@ -31,7 +45,8 @@ public class SimpleDataContainerTest {
       assert dc.size() == 1;
 
       entry = dc.get("k");
-      assert entry instanceof MortalCacheEntry;
+      assert entry != null: "Entry should not be null!";
+      assert entry instanceof MortalCacheEntry : "Expected MortalCacheEntry, was " + entry.getClass().getSimpleName();
       assert entry.getCreated() <= System.currentTimeMillis();
 
       dc.put("k", "v", 0, -1);
@@ -48,7 +63,6 @@ public class SimpleDataContainerTest {
 
    public void testUpdatingLastUsed() throws Exception {
       long idle = 600000;
-      SimpleDataContainer dc = new SimpleDataContainer();
       dc.put("k", "v", -1, -1);
       InternalCacheEntry ice = dc.get("k");
       assert ice instanceof ImmortalCacheEntry;
@@ -80,26 +94,39 @@ public class SimpleDataContainerTest {
       assert ice.getLastUsed() < System.currentTimeMillis();
    }
 
-   public void testExpirableToImmortal() {
-      SimpleDataContainer dc = new SimpleDataContainer();
+   public void testExpirableToImmortalAndBack() {
       dc.put("k", "v", 6000000, -1);
       assert dc.containsKey("k");
       assert !dc.immortalEntries.containsKey("k");
       assert dc.mortalEntries.containsKey("k");
+      assert dc.get("k") instanceof MortalCacheEntry;
 
       dc.put("k", "v2", -1, -1);
       assert dc.containsKey("k");
       assert dc.immortalEntries.containsKey("k");
       assert !dc.mortalEntries.containsKey("k");
+      assert dc.get("k") instanceof ImmortalCacheEntry;
 
       dc.put("k", "v3", -1, 6000000);
       assert dc.containsKey("k");
       assert !dc.immortalEntries.containsKey("k");
       assert dc.mortalEntries.containsKey("k");
+      assert dc.get("k") instanceof TransientCacheEntry;
+
+      dc.put("k", "v3", 6000000, 6000000);
+      assert dc.containsKey("k");
+      assert !dc.immortalEntries.containsKey("k");
+      assert dc.mortalEntries.containsKey("k");
+      assert dc.get("k") instanceof TransientMortalCacheEntry;
+
+      dc.put("k", "v", 6000000, -1);
+      assert dc.containsKey("k");
+      assert !dc.immortalEntries.containsKey("k");
+      assert dc.mortalEntries.containsKey("k");
+      assert dc.get("k") instanceof MortalCacheEntry;
    }
 
    public void testKeySet() {
-      SimpleDataContainer dc = new SimpleDataContainer();
       dc.put("k1", "v", 6000000, -1);
       dc.put("k2", "v", -1, -1);
       dc.put("k3", "v", -1, 6000000);
