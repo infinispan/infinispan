@@ -1,5 +1,6 @@
 package org.horizon.atomic;
 
+import org.horizon.Cache;
 import org.horizon.config.Configuration;
 import org.horizon.lock.TimeoutException;
 import org.horizon.manager.CacheManager;
@@ -41,7 +42,8 @@ public class AtomicHashMapConcurrencyTest {
       c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
       c.setInvocationBatchingEnabled(true);
       CacheManager cm = new DefaultCacheManager(c);
-      cache = (AtomicMapCache<String, String>) cm.getCache();
+      Cache basicCache = cm.getCache();
+      cache = (AtomicMapCache<String, String>) basicCache;
       tm = TestingUtil.getTransactionManager(cache);
    }
 
@@ -55,7 +57,7 @@ public class AtomicHashMapConcurrencyTest {
 
    public void testConcurrentCreate() throws Exception {
       tm.begin();
-      AtomicMap<Integer, String> atomicMap = cache.getAtomicMap(KEY, Integer.class, String.class);
+      cache.getAtomicMap(KEY);
       OtherThread ot = new OtherThread();
       ot.start();
       Object response = ot.response.take();
@@ -63,7 +65,7 @@ public class AtomicHashMapConcurrencyTest {
    }
 
    public void testConcurrentModifications() throws Exception {
-      AtomicMap<Integer, String> atomicMap = cache.getAtomicMap(KEY, Integer.class, String.class);
+      AtomicMap<Integer, String> atomicMap = cache.getAtomicMap(KEY);
       tm.begin();
       atomicMap.put(1,"");
       OtherThread ot = new OtherThread();
@@ -74,7 +76,7 @@ public class AtomicHashMapConcurrencyTest {
    }
 
    public void testReadAfterTxStarted() throws Exception {
-      AtomicMap<Integer, String> atomicMap = cache.getAtomicMap(KEY, Integer.class, String.class);
+      AtomicMap<Integer, String> atomicMap = cache.getAtomicMap(KEY);
       atomicMap.put(1, "existing");
       tm.begin();
       atomicMap.put(1,"newVal");
@@ -104,7 +106,7 @@ public class AtomicHashMapConcurrencyTest {
       public void run() {
          try {
             tm.begin();
-            AtomicMap<Integer, String> atomicMap = cache.getAtomicMap(KEY, Integer.class, String.class);
+            AtomicMap<Integer, String> atomicMap = cache.getAtomicMap(KEY);
             boolean notCommited = true;
             while (notCommited) {
                Operation op = toExecute.take();
