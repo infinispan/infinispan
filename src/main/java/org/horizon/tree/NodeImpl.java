@@ -402,12 +402,14 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       removeChildren();
    }
 
+   @SuppressWarnings("unchecked")
    AtomicMap<K, V> getDataInternal() {
-      return (AtomicMap<K, V>) cache.getAtomicMap(dataKey);
+      return cache.getAtomicMap(dataKey);
    }
 
+   @SuppressWarnings("unchecked")
    AtomicMap<Object, Fqn> getStructure() {
-      return cache.getAtomicMap(structureKey, Object.class, Fqn.class);
+      return cache.getAtomicMap(structureKey);
    }
 
    public boolean equals(Object o) {

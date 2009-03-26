@@ -380,15 +380,11 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
       return dataContainer == null ? super.toString() : dataContainer.toString();
    }
 
-   public AtomicMap getAtomicMap(K key) throws ClassCastException {
+   @SuppressWarnings("unchecked")
+   public <AMK, AMV> AtomicMap<AMK, AMV> getAtomicMap(K key) throws ClassCastException {
       Object value = get(key);
       if (value == null) value = AtomicHashMap.newInstance(this, key);
       return ((AtomicHashMap) value).getProxy(this, key, batchContainer, invocationContextContainer);
-   }
-
-   @SuppressWarnings("unchecked")
-   public <AMK, AMV> AtomicMap<AMK, AMV> getAtomicMap(K key, Class<AMK> atomicMapKeyType, Class<AMV> atomicMapValueType) throws ClassCastException {
-      return getAtomicMap(key);
    }
 
    public BatchContainer getBatchContainer() {

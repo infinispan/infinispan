@@ -83,13 +83,8 @@ public class TreeStructureSupport extends AutoBatchSupport {
    }
 
    AtomicMap<Object, Fqn> getStructure(Fqn fqn) {
-      return cache.getAtomicMap(new NodeKey(fqn, NodeKey.Type.STRUCTURE), Object.class, Fqn.class);
+      return cache.getAtomicMap(new NodeKey(fqn, NodeKey.Type.STRUCTURE));
    }
-
-//   void updateStructure(Fqn fqn, FastCopyHashMap<Object, Fqn> structure)
-//   {
-//      cache.put(new NodeKey(fqn, NodeKey.Type.STRUCTURE), structure.clone());
-//   }
 
    public static boolean isLocked(Cache c, LockManager lockManager, Fqn fqn) {
       return lockManager.isLocked(new NodeKey(fqn, NodeKey.Type.STRUCTURE)) &&
@@ -104,7 +99,6 @@ public class TreeStructureSupport extends AutoBatchSupport {
     */
    public static String printTree(TreeCache<?, ?> cache, boolean details) {
       StringBuilder sb = new StringBuilder();
-//      sb.append("Raw keys: " + cache.getCache().keySet());
       sb.append("\n\n");
 
       // walk tree

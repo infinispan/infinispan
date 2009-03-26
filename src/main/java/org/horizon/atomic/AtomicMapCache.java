@@ -36,23 +36,11 @@ public interface AtomicMapCache<K, V> extends Cache<K, V> {
     * Returns an atomic map.  The classes passed in are used to parameterize the Map returned.
     *
     * @param key          key under which to obtain and store this map in the cache
-    * @param mapKeyType   type of the key used for this map
-    * @param mapValueType type of the value used for this map.
-    * @param <X>          map keys
-    * @param <Y>          map values
+    * @param <AMK>          map keys
+    * @param <AMV>          map values
     * @return a new or existing atomic map.  Never null.
     * @throws ClassCastException if there already is a value stored under the given key and the type of value cannot be
     *                            used as an AtomicMap.
     */
-   <AMK, AMV> AtomicMap<AMK, AMV> getAtomicMap(K key, Class<AMK> atomicMapKeyType, Class<AMV> atomicMapValueType) throws ClassCastException;
-
-   /**
-    * Un-parameterized version of {@link #getAtomicMap(Object, Class, Class)} which returns an un-parameterized map.
-    *
-    * @param key key under which to obtain and store this map in the cache
-    * @return a new or existing atomic map.  Never null.
-    * @throws ClassCastException if there already is a value stored under the given key and the type of value cannot be
-    *                            used as an AtomicMap.
-    */
-   AtomicMap getAtomicMap(K key) throws ClassCastException;
+   <AMK, AMV> AtomicMap<AMK, AMV> getAtomicMap(K key) throws ClassCastException;
 }
