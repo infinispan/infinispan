@@ -279,7 +279,7 @@ public class DefaultCacheManager implements CacheManager {
     *
     * @return the default cache.
     */
-   public Cache getCache() {
+   public <K, V> Cache<K, V> getCache() {
       return getCache(DEFAULT_CACHE_NAME);
    }
 
@@ -294,7 +294,8 @@ public class DefaultCacheManager implements CacheManager {
     * @param cacheName name of cache to retrieve
     * @return a cache instance identified by cacheName
     */
-   public Cache getCache(String cacheName) {
+   @SuppressWarnings("unchecked")
+   public <K, V> Cache<K, V> getCache(String cacheName) {
       if (cacheName == null)
          throw new NullPointerException("Null arguments not allowed");
 

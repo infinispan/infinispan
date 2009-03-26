@@ -74,7 +74,7 @@ public interface CacheManager extends Lifecycle, Listenable {
     *
     * @return the default cache.
     */
-   Cache getCache();
+   <K, V> Cache<K, V> getCache();
 
    /**
     * Retrieves a named cache from the system.  If the cache has been previously created with the same name, the running
@@ -87,7 +87,7 @@ public interface CacheManager extends Lifecycle, Listenable {
     * @param cacheName name of cache to retrieve
     * @return a cache instance identified by cacheName
     */
-   Cache getCache(String cacheName);
+   <K, V> Cache<K, V> getCache(String cacheName);
 
    /**
     * @return the name of the cluster.  Null if running in local mode.
