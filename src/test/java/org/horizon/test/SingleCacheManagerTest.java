@@ -6,6 +6,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 /**
  * Base class for tests that operate on a single (most likely local) cache instance. This operates similar to {@link
@@ -14,13 +15,14 @@ import org.testng.annotations.BeforeMethod;
  * @author Mircea.Markus@jboss.com
  * @see org.horizon.test.MultipleCacheManagersTest
  */
+@Test(groups = {"functional", "unit"})
 public abstract class SingleCacheManagerTest extends AbstractCacheTest {
    protected CacheManager cacheManager;
    protected Cache cache;
 
    /**
-    * This method will always be called before {@link #createBeforeClass()}.  If you override this, make sure you annotate the
-    * overridden method with {@link org.testng.annotations.BeforeClass}.
+    * This method will always be called before {@link #createBeforeClass()}.  If you override this, make sure you
+    * annotate the overridden method with {@link org.testng.annotations.BeforeClass}.
     *
     * @throws Exception Just in case
     */
