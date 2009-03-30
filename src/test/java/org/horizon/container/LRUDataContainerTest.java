@@ -7,7 +7,7 @@ import org.horizon.container.entries.TransientCacheEntry;
 import org.horizon.container.entries.TransientMortalCacheEntry;
 import org.testng.annotations.Test;
 
-@Test(groups = "unit", testName = "container.LRUDataContainerTest", enabled = false)
+@Test(groups = "unit", testName = "container.LRUDataContainerTest")
 public class LRUDataContainerTest extends FIFODataContainerTest {
    @Override
    protected DataContainer createContainer() {

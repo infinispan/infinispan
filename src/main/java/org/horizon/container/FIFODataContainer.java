@@ -189,13 +189,11 @@ public class FIFODataContainer implements DataContainer {
             (before = le.prev).lock();
             (after = le.next).lock();
             nextEntry = after.next;
-            nextEntry.lock();
             before.next = after.next;
             before.next.prev = before;
          }
       } finally {
          if (linksLocked) {
-            nextEntry.unlock();
             before.unlock();
             after.unlock();
             le.unlock();
@@ -570,7 +568,7 @@ public class FIFODataContainer implements DataContainer {
 
    protected static abstract class SpinLock {
       final AtomicBoolean l = new AtomicBoolean(false);
-//      final ReentrantLock rl = new ReentrantLock();
+      final ReentrantLock rl = new ReentrantLock();
 
       final void lock() {
          while (!l.compareAndSet(false, true)) {

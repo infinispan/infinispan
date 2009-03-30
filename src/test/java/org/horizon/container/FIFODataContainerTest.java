@@ -137,7 +137,7 @@ public class FIFODataContainerTest extends SimpleDataContainerTest {
 
    public void testMultithreadAccess() throws InterruptedException {
       assert dc.size() == 0;
-      int NUM_THREADS = 25;
+      int NUM_THREADS = 5;
       long testDuration = 2000; // millis
 
       Random r = new Random();
