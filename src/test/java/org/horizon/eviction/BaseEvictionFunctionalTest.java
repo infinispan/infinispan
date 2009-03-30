@@ -29,23 +29,23 @@ public abstract class BaseEvictionFunctionalTest extends SingleCacheManagerTest 
    }
 
    public void testMultithreaded() throws InterruptedException {
-      int NUM_THREADS = 10;
+      int NUM_THREADS = 20;
       Writer[] w = new Writer[NUM_THREADS];
       CountDownLatch startLatch = new CountDownLatch(1);
 
-      for (int i=0; i<NUM_THREADS; i++) w[i] = new Writer(i, startLatch);
-      for (Writer writer: w) writer.start();
+      for (int i = 0; i < NUM_THREADS; i++) w[i] = new Writer(i, startLatch);
+      for (Writer writer : w) writer.start();
 
       startLatch.countDown();
 
       Thread.sleep(250);
 
       // now stop writers
-      for (Writer writer: w) writer.running = false;
-      for (Writer writer: w) writer.join();
+      for (Writer writer : w) writer.running = false;
+      for (Writer writer : w) writer.join();
 
       // wait for the cache size to drop to 1, up to a specified amount of time.
-      long giveupTime = System.currentTimeMillis() + (1000 * 60 * 10); // 10 mins?
+      long giveupTime = System.currentTimeMillis() + (1000 * 60 * 1); // 1 mins?
       while (cache.getAdvancedCache().getDataContainer().size() > 1 && System.currentTimeMillis() < giveupTime) {
 //         System.out.println("Cache size is " + cache.size() + " and time diff is " + (giveupTime - System.currentTimeMillis()));
          Thread.sleep(100);

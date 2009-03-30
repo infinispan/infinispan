@@ -1,5 +1,6 @@
 package org.horizon.container;
 
+import net.jcip.annotations.ThreadSafe;
 import org.horizon.container.entries.InternalCacheEntry;
 import org.horizon.container.entries.InternalEntryFactory;
 import org.horizon.factories.annotations.Stop;
@@ -10,16 +11,24 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Simple data container that does not order entries for eviction
+ * Simple data container that does not order entries for eviction, implemented using two ConcurrentHashMaps, one for
+ * mortal and one for immortal entries.
+ * <p/>
+ * This container does not support eviction, in that entries are unsorted.
+ * <p/>
+ * This implementation offers O(1) performance for all operations.
  *
  * @author Manik Surtani
  * @since 4.0
  */
+@ThreadSafe
 public class SimpleDataContainer implements DataContainer {
    final ConcurrentMap<Object, InternalCacheEntry> immortalEntries = new ConcurrentHashMap<Object, InternalCacheEntry>();
    final ConcurrentMap<Object, InternalCacheEntry> mortalEntries = new ConcurrentHashMap<Object, InternalCacheEntry>();
+   final AtomicInteger numEntries = new AtomicInteger(0);
 
    /**
     * Like a get, but doesn't check for expired entries
@@ -38,6 +47,7 @@ public class SimpleDataContainer implements DataContainer {
       if (e != null) {
          if (e.isExpired()) {
             mortalEntries.remove(k);
+            numEntries.getAndDecrement();
             e = null;
          } else {
             e.touch();
@@ -72,6 +82,8 @@ public class SimpleDataContainer implements DataContainer {
                mortalEntries.put(k, e);
             }
          } else {
+            // this is a brand-new entry
+            numEntries.getAndIncrement();
             e = InternalEntryFactory.create(k, v, lifespan, maxIdle);
             if (e.canExpire())
                mortalEntries.put(k, e);
@@ -86,6 +98,7 @@ public class SimpleDataContainer implements DataContainer {
       InternalCacheEntry ice = peek(k);
       if (ice != null && ice.isExpired()) {
          mortalEntries.remove(k);
+         numEntries.getAndDecrement();
          ice = null;
       }
       return ice != null;
@@ -94,18 +107,20 @@ public class SimpleDataContainer implements DataContainer {
    public InternalCacheEntry remove(Object k) {
       InternalCacheEntry e = immortalEntries.remove(k);
       if (e == null) e = mortalEntries.remove(k);
+      if (e != null) numEntries.getAndDecrement();
 
       return e == null || e.isExpired() ? null : e;
    }
 
    public int size() {
-      return immortalEntries.size() + mortalEntries.size();
+      return numEntries.get();
    }
 
    @Stop(priority = 999)
    public void clear() {
       immortalEntries.clear();
       mortalEntries.clear();
+      numEntries.set(0);
    }
 
    public Set<Object> keySet() {
@@ -115,7 +130,10 @@ public class SimpleDataContainer implements DataContainer {
    public void purgeExpired() {
       for (Iterator<InternalCacheEntry> entries = mortalEntries.values().iterator(); entries.hasNext();) {
          InternalCacheEntry e = entries.next();
-         if (e.isExpired()) entries.remove();
+         if (e.isExpired()) {
+            entries.remove();
+            numEntries.getAndDecrement();
+         }
       }
    }
 
