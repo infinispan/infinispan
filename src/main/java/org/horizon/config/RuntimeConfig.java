@@ -21,7 +21,7 @@
  */
 package org.horizon.config;
 
-import org.horizon.remoting.RPCManager;
+import org.horizon.remoting.RpcManager;
 import org.horizon.util.Util;
 
 import javax.transaction.TransactionManager;
@@ -34,7 +34,7 @@ public class RuntimeConfig extends AbstractNamedCacheConfigurationBean {
    private static final long serialVersionUID = 5626847485703341794L;
 
    private transient TransactionManager transactionManager;
-   private RPCManager rpcManager;
+   private RpcManager rpcManager;
    private transient ExecutorService asyncSerializationExecutor;
    private transient ExecutorService asyncCacheListenerExecutor;
 
@@ -132,11 +132,11 @@ public class RuntimeConfig extends AbstractNamedCacheConfigurationBean {
       return result;
    }
 
-   public void setRPCManager(RPCManager rpcManager) {
+   public void setRPCManager(RpcManager rpcManager) {
       this.rpcManager = rpcManager;
    }
 
-   public RPCManager getRPCManager() {
+   public RpcManager getRPCManager() {
       return rpcManager;
    }
 

@@ -23,7 +23,7 @@ package org.horizon.factories;
 
 import org.horizon.config.RuntimeConfig;
 import org.horizon.factories.annotations.DefaultFactoryFor;
-import org.horizon.remoting.RPCManager;
+import org.horizon.remoting.RpcManager;
 
 /**
  * An extension of the EmptyConstructorFactory that places a component in the {@link RuntimeConfig} after creating it.
@@ -31,8 +31,8 @@ import org.horizon.remoting.RPCManager;
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @since 4.0
  */
-@DefaultFactoryFor(classes = RPCManager.class)
-public class RPCManagerFactory extends EmptyConstructorFactory implements AutoInstantiableFactory {
+@DefaultFactoryFor(classes = RpcManager.class)
+public class RpcManagerFactory extends EmptyConstructorFactory implements AutoInstantiableFactory {
    
    @Override
    public <T> T construct(Class<T> componentType) {

@@ -31,14 +31,15 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Manik Surtani
  * @since 4.0
  */
-@MBean(objectName = "RPCManager")
-public class RPCManagerImpl implements RPCManager {
+@MBean(objectName = "RpcManager")
+public class RpcManagerImpl implements RpcManager
+{
 
    Transport t;
    private final AtomicLong replicationCount = new AtomicLong(0);
    private final AtomicLong replicationFailures = new AtomicLong(0);
    boolean statisticsEnabled = false; // by default, don't gather statistics.
-   private static final Log log = LogFactory.getLog(RPCManagerImpl.class);
+   private static final Log log = LogFactory.getLog(RpcManagerImpl.class);
    private volatile Address currentStateTransferSource;
 
    @Inject

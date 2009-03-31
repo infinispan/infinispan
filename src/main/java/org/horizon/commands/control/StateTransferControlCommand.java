@@ -2,7 +2,7 @@ package org.horizon.commands.control;
 
 import org.horizon.commands.ReplicableCommand;
 import org.horizon.context.InvocationContext;
-import org.horizon.remoting.RPCManager;
+import org.horizon.remoting.RpcManager;
 
 /**
  * A command that informs caches participating in a state transfer of the various stages in the state transfer process.
@@ -12,7 +12,7 @@ import org.horizon.remoting.RPCManager;
  */
 public class StateTransferControlCommand implements ReplicableCommand {
    public static final int METHOD_ID = 49;
-   RPCManager rpcManager;
+   RpcManager rpcManager;
    boolean enabled;
 
    public StateTransferControlCommand() {
@@ -22,7 +22,7 @@ public class StateTransferControlCommand implements ReplicableCommand {
       this.enabled = enabled;
    }
 
-   public void init(RPCManager rpcManager) {
+   public void init(RpcManager rpcManager) {
       this.rpcManager = rpcManager;
    }
 

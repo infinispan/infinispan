@@ -44,7 +44,7 @@ import java.util.List;
  */
 @Scope(Scopes.GLOBAL)
 @NonVolatile
-public interface RPCManager extends Lifecycle {
+public interface RpcManager extends Lifecycle {
    // TODO this needs to be re-thought regarding adding a transport-independent mechanism of unicasts for distribution based on consistent hashes
    /**
     * Invokes an RPC call on other caches in the cluster.

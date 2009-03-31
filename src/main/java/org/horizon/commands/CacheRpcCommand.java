@@ -7,7 +7,7 @@ package org.horizon.commands;
  * @author Manik Surtani
  * @since 4.0
  */
-public interface CacheRPCCommand extends ReplicableCommand {
+public interface CacheRpcCommand extends ReplicableCommand {
 
    /**
     * @return the name of the cache that produced this command.  This will also be the name of the cache this command is

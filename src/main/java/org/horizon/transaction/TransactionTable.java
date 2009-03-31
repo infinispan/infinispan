@@ -30,7 +30,7 @@ import org.horizon.factories.annotations.Start;
 import org.horizon.factories.context.ContextFactory;
 import org.horizon.logging.Log;
 import org.horizon.logging.LogFactory;
-import org.horizon.remoting.RPCManager;
+import org.horizon.remoting.RpcManager;
 import org.horizon.remoting.transport.Address;
 import org.horizon.remoting.transport.Transport;
 
@@ -65,20 +65,20 @@ public class TransactionTable {
 
    private TransactionManager transactionManager = null;
 
-   private RPCManager rpcManager;
+   private RpcManager rpcManager;
    private Transport transport;
 
    private ContextFactory contextFactory;
 
    @Inject
-   public void initialize(TransactionManager transactionManager, RPCManager rpcManager, ContextFactory contextFactory) {
+   public void initialize(TransactionManager transactionManager, RpcManager rpcManager, ContextFactory contextFactory) {
       this.transactionManager = transactionManager;
       this.rpcManager = rpcManager;
       this.contextFactory = contextFactory;
    }
 
    @Start(priority = 12)
-   // needs to happen after RPCManager
+   // needs to happen after RpcManager
    public void start() {
       transport = rpcManager == null ? null : rpcManager.getTransport();
    }

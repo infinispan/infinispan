@@ -17,7 +17,7 @@ import org.horizon.commands.write.ReplaceCommand;
 import org.horizon.factories.annotations.Inject;
 import org.horizon.factories.scopes.Scope;
 import org.horizon.factories.scopes.Scopes;
-import org.horizon.remoting.RPCManager;
+import org.horizon.remoting.RpcManager;
 
 /**
  * Specifically used to create un-initialized {@link org.horizon.commands.ReplicableCommand}s from a byte stream.
@@ -27,10 +27,10 @@ import org.horizon.remoting.RPCManager;
  */
 @Scope(Scopes.GLOBAL)
 public class RemoteCommandFactory {
-   RPCManager rpcManager;
+   RpcManager rpcManager;
    
    @Inject
-   public void init(RPCManager rpcManager) {
+   public void init(RpcManager rpcManager) {
       this.rpcManager = rpcManager;
    }
 

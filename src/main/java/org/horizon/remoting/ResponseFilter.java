@@ -3,7 +3,7 @@ package org.horizon.remoting;
 import org.horizon.remoting.transport.Address;
 
 /**
- * A mechanism of filtering RPC responses.  Used with {@link RPCManager#invokeRemotely(java.util.List,
+ * A mechanism of filtering RPC responses.  Used with {@link RpcManager#invokeRemotely(java.util.List,
  * org.horizon.commands.ReplicableCommand, ResponseMode, long, boolean, ResponseFilter)}
  *
  * @author Manik Surtani

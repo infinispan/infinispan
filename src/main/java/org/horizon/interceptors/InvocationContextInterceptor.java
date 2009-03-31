@@ -35,7 +35,7 @@ import org.horizon.context.InvocationContext;
 import org.horizon.context.TransactionContext;
 import org.horizon.factories.annotations.Inject;
 import org.horizon.invocation.Flag;
-import org.horizon.remoting.RPCManager;
+import org.horizon.remoting.RpcManager;
 import org.horizon.transaction.GlobalTransaction;
 import org.horizon.transaction.TransactionTable;
 
@@ -43,10 +43,10 @@ import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 
 public class InvocationContextInterceptor extends BaseTransactionalContextInterceptor {
-   private RPCManager rpcManager;
+   private RpcManager rpcManager;
 
    @Inject
-   public void setDependencies(RPCManager rpcManager) {
+   public void setDependencies(RpcManager rpcManager) {
       this.rpcManager = rpcManager;
    }
 

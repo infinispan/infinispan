@@ -21,7 +21,7 @@
  */
 package org.horizon.interceptors.base;
 
-import org.horizon.commands.CacheRPCCommand;
+import org.horizon.commands.CacheRpcCommand;
 import org.horizon.commands.CommandsFactory;
 import org.horizon.commands.ReplicableCommand;
 import org.horizon.commands.remote.ReplicateCommand;
@@ -30,7 +30,7 @@ import org.horizon.context.TransactionContext;
 import org.horizon.factories.annotations.Inject;
 import org.horizon.factories.annotations.Start;
 import org.horizon.invocation.Flag;
-import org.horizon.remoting.RPCManager;
+import org.horizon.remoting.RpcManager;
 import org.horizon.remoting.ReplicationQueue;
 import org.horizon.remoting.ResponseMode;
 import org.horizon.remoting.transport.Address;
@@ -51,12 +51,12 @@ public abstract class BaseRpcInterceptor extends CommandInterceptor {
    protected TransactionTable txTable;
    private CommandsFactory commandsFactory;
 
-   protected RPCManager rpcManager;
+   protected RpcManager rpcManager;
    protected boolean defaultSynchronous;
    private boolean stateTransferEnabled;
 
    @Inject
-   public void injectComponents(RPCManager rpcManager, ReplicationQueue replicationQueue,
+   public void injectComponents(RpcManager rpcManager, ReplicationQueue replicationQueue,
                                 TransactionTable txTable, CommandsFactory commandsFactory) {
       this.rpcManager = rpcManager;
       this.replicationQueue = replicationQueue;
@@ -86,7 +86,7 @@ public abstract class BaseRpcInterceptor extends CommandInterceptor {
       }
    }
 
-   protected void replicateCall(InvocationContext ctx, CacheRPCCommand call, boolean sync, boolean useOutOfBandMessage) throws Throwable {
+   protected void replicateCall(InvocationContext ctx, CacheRpcCommand call, boolean sync, boolean useOutOfBandMessage) throws Throwable {
       replicateCall(ctx, null, call, sync, useOutOfBandMessage);
    }
 
@@ -94,7 +94,7 @@ public abstract class BaseRpcInterceptor extends CommandInterceptor {
       replicateCall(ctx, null, call, sync, useOutOfBandMessage);
    }
 
-   protected void replicateCall(InvocationContext ctx, CacheRPCCommand call, boolean sync) throws Throwable {
+   protected void replicateCall(InvocationContext ctx, CacheRpcCommand call, boolean sync) throws Throwable {
       replicateCall(ctx, null, call, sync, false);
    }
 

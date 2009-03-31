@@ -54,7 +54,7 @@ import org.horizon.manager.CacheManager;
 import org.horizon.marshall.MarshalledValue;
 import org.horizon.marshall.Marshaller;
 import org.horizon.notifications.cachelistener.CacheNotifier;
-import org.horizon.remoting.RPCManager;
+import org.horizon.remoting.RpcManager;
 import org.horizon.statetransfer.StateTransferManager;
 
 import javax.transaction.Transaction;
@@ -80,7 +80,7 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
    protected BatchContainer batchContainer;
    protected ComponentRegistry componentRegistry;
    protected TransactionManager transactionManager;
-   protected RPCManager rpcManager;
+   protected RpcManager rpcManager;
    protected Marshaller marshaller;
    private String name;
    private EvictionManager evictionManager;
@@ -105,7 +105,7 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
                                   ComponentRegistry componentRegistry,
                                   TransactionManager transactionManager,
                                   BatchContainer batchContainer,
-                                  RPCManager rpcManager, DataContainer dataContainer,
+                                  RpcManager rpcManager, DataContainer dataContainer,
                                   Marshaller marshaller,
                                   CacheManager cacheManager, StateTransferManager stateTransferManager) {
       this.invocationContextContainer = invocationContextContainer;
@@ -466,7 +466,7 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
       }
    }
 
-   public RPCManager getRpcManager() {
+   public RpcManager getRpcManager() {
       return rpcManager;
    }
 }

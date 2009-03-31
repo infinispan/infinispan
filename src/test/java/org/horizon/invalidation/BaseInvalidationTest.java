@@ -3,13 +3,13 @@ package org.horizon.invalidation;
 import static org.easymock.EasyMock.*;
 import org.horizon.AdvancedCache;
 import org.horizon.Cache;
-import org.horizon.commands.CacheRPCCommand;
+import org.horizon.commands.CacheRpcCommand;
 import org.horizon.commands.write.ClearCommand;
 import org.horizon.commands.write.InvalidateCommand;
 import org.horizon.config.Configuration;
 import org.horizon.invocation.Flag;
-import org.horizon.remoting.RPCManager;
-import org.horizon.remoting.RPCManagerImpl;
+import org.horizon.remoting.RpcManager;
+import org.horizon.remoting.RpcManagerImpl;
 import org.horizon.remoting.ResponseFilter;
 import org.horizon.remoting.ResponseMode;
 import org.horizon.remoting.transport.Address;
@@ -165,7 +165,7 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
    }
 
    public void testCacheMode() throws Exception {
-      RPCManagerImpl rpcManager = (RPCManagerImpl) TestingUtil.extractComponent(cache1, RPCManager.class);
+      RpcManagerImpl rpcManager = (RpcManagerImpl) TestingUtil.extractComponent(cache1, RpcManager.class);
       Transport origTransport = TestingUtil.extractComponent(cache1, Transport.class);
       try {
          Transport mockTransport = createMock(Transport.class);
@@ -178,7 +178,7 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
 
          expect(mockTransport.getMembers()).andReturn(members).anyTimes();
          expect(mockTransport.getAddress()).andReturn(addressOne).anyTimes();
-         expect(mockTransport.invokeRemotely((List<Address>) anyObject(), (CacheRPCCommand) anyObject(),
+         expect(mockTransport.invokeRemotely((List<Address>) anyObject(), (CacheRpcCommand) anyObject(),
                                              eq(isSync ? ResponseMode.SYNCHRONOUS : ResponseMode.ASYNCHRONOUS),
                                              anyLong(), anyBoolean(), (ResponseFilter) anyObject(), anyBoolean())).andReturn(null).anyTimes();
          replay(mockTransport);

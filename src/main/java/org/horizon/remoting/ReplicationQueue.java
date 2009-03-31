@@ -63,7 +63,7 @@ public class ReplicationQueue {
     * For periodical replication
     */
    private ScheduledExecutorService scheduledExecutor = null;
-   private RPCManager rpcManager;
+   private RpcManager rpcManager;
    private Configuration configuration;
    private boolean enabled;
    private CommandsFactory commandsFactory;
@@ -75,7 +75,7 @@ public class ReplicationQueue {
 
    @Inject
    private void injectDependencies(@ComponentName(KnownComponentNames.ASYNC_REPLICATION_QUEUE_EXECUTOR) ScheduledExecutorService executor,
-                                   RPCManager rpcManager, Configuration configuration, CommandsFactory commandsFactory) {
+                                   RpcManager rpcManager, Configuration configuration, CommandsFactory commandsFactory) {
       this.rpcManager = rpcManager;
       this.configuration = configuration;
       this.commandsFactory = commandsFactory;

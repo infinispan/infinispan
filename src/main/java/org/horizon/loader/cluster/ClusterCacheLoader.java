@@ -12,7 +12,7 @@ import org.horizon.loader.CacheLoaderException;
 import org.horizon.logging.Log;
 import org.horizon.logging.LogFactory;
 import org.horizon.marshall.Marshaller;
-import org.horizon.remoting.RPCManager;
+import org.horizon.remoting.RpcManager;
 import org.horizon.remoting.ResponseFilter;
 import org.horizon.remoting.ResponseMode;
 import org.horizon.remoting.transport.Address;
@@ -36,7 +36,7 @@ public class ClusterCacheLoader extends AbstractCacheLoader {
    private static boolean trace = log.isTraceEnabled();
 
    private ClusterCacheLoaderConfig config;
-   private RPCManager rpcManager;
+   private RpcManager rpcManager;
    private AdvancedCache cache;
 
    public void init(CacheLoaderConfig config, Cache cache, Marshaller m) {

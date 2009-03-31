@@ -4,7 +4,7 @@ import org.horizon.Cache;
 import org.horizon.test.TestingUtil;
 import org.horizon.config.Configuration;
 import org.horizon.config.DuplicateCacheNameException;
-import org.horizon.remoting.RPCManager;
+import org.horizon.remoting.RpcManager;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -33,28 +33,28 @@ public class CacheManagerXmlConfigurationTest {
       assert c.getConfiguration().getConcurrencyLevel() == 100;
       assert c.getConfiguration().getLockAcquisitionTimeout() == 1000;
       assert TestingUtil.extractComponent(c, TransactionManager.class) == null;
-      assert TestingUtil.extractComponent(c, RPCManager.class) != null : "This should not be null, since a shared RPC manager should be present";
+      assert TestingUtil.extractComponent(c, RpcManager.class) != null : "This should not be null, since a shared RPC manager should be present";
 
       // test the "transactional" cache
       c = cm.getCache("transactional");
       assert c.getConfiguration().getConcurrencyLevel() == 100;
       assert c.getConfiguration().getLockAcquisitionTimeout() == 1000;
       assert TestingUtil.extractComponent(c, TransactionManager.class) != null;
-      assert TestingUtil.extractComponent(c, RPCManager.class) != null : "This should not be null, since a shared RPC manager should be present";
+      assert TestingUtil.extractComponent(c, RpcManager.class) != null : "This should not be null, since a shared RPC manager should be present";
 
       // test the "replicated" cache
       c = cm.getCache("syncRepl");
       assert c.getConfiguration().getConcurrencyLevel() == 100;
       assert c.getConfiguration().getLockAcquisitionTimeout() == 1000;
       assert TestingUtil.extractComponent(c, TransactionManager.class) == null;
-      assert TestingUtil.extractComponent(c, RPCManager.class) != null : "This should not be null, since a shared RPC manager should be present";
+      assert TestingUtil.extractComponent(c, RpcManager.class) != null : "This should not be null, since a shared RPC manager should be present";
 
       // test the "txSyncRepl" cache
       c = cm.getCache("txSyncRepl");
       assert c.getConfiguration().getConcurrencyLevel() == 100;
       assert c.getConfiguration().getLockAcquisitionTimeout() == 1000;
       assert TestingUtil.extractComponent(c, TransactionManager.class) != null;
-      assert TestingUtil.extractComponent(c, RPCManager.class) != null : "This should not be null, since a shared RPC manager should be present";
+      assert TestingUtil.extractComponent(c, RpcManager.class) != null : "This should not be null, since a shared RPC manager should be present";
    }
 
    public void testNamedCacheXMLClashingNames() throws IOException {

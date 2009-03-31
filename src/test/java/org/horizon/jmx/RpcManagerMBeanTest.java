@@ -6,8 +6,8 @@ import org.horizon.Cache;
 import org.horizon.config.Configuration;
 import org.horizon.config.GlobalConfiguration;
 import org.horizon.manager.CacheManager;
-import org.horizon.remoting.RPCManager;
-import org.horizon.remoting.RPCManagerImpl;
+import org.horizon.remoting.RpcManager;
+import org.horizon.remoting.RpcManagerImpl;
 import org.horizon.remoting.transport.Transport;
 import org.horizon.test.MultipleCacheManagersTest;
 import org.horizon.test.TestingUtil;
@@ -56,8 +56,8 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
       cache1 = manager(0).getCache("repl_sync_cache");
       cache2 = manager(1).getCache("repl_sync_cache");
       mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
-      rpcManager1 = new ObjectName("RpcManagerMBeanTest:cache-name=[global],jmx-resource=RPCManager");
-      rpcManager2 = new ObjectName("RpcManagerMBeanTest2:cache-name=[global],jmx-resource=RPCManager");
+      rpcManager1 = new ObjectName("RpcManagerMBeanTest:cache-name=[global],jmx-resource=RpcManager");
+      rpcManager2 = new ObjectName("RpcManagerMBeanTest2:cache-name=[global],jmx-resource=RpcManager");
    }
 
    public void testEnableJmxStats() throws Exception {
@@ -102,7 +102,7 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
       cache1.put("a3", "b3");
       cache1.put("a4", "b4");
       assert mBeanServer.getAttribute(rpcManager1, "SuccessRatio").equals("100%");
-      RPCManagerImpl rpcManager = (RPCManagerImpl) TestingUtil.extractGlobalComponent(manager(0), RPCManager.class);
+      RpcManagerImpl rpcManager = (RpcManagerImpl) TestingUtil.extractGlobalComponent(manager(0), RpcManager.class);
       Transport originalTransport = rpcManager.getTransport();
 
       try {

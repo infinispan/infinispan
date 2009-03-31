@@ -8,10 +8,10 @@ package org.horizon.replication;
 
 import static org.easymock.EasyMock.*;
 import org.horizon.Cache;
-import org.horizon.commands.CacheRPCCommand;
+import org.horizon.commands.CacheRpcCommand;
 import org.horizon.config.Configuration;
-import org.horizon.remoting.RPCManager;
-import org.horizon.remoting.RPCManagerImpl;
+import org.horizon.remoting.RpcManager;
+import org.horizon.remoting.RpcManagerImpl;
 import org.horizon.remoting.ResponseFilter;
 import org.horizon.remoting.ResponseMode;
 import org.horizon.remoting.transport.Address;
@@ -118,7 +118,7 @@ public class SyncReplTest extends MultipleCacheManagersTest {
 
    public void testMixingSyncAndAsyncOnSameTransport() throws Exception {
       Transport originalTransport = null;
-      RPCManagerImpl rpcManager = null;
+      RpcManagerImpl rpcManager = null;
       try {
          Configuration asyncCache = getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC);
          defineCacheOnAllManagers("asyncCache", asyncCache);
@@ -137,10 +137,10 @@ public class SyncReplTest extends MultipleCacheManagersTest {
 
          // this is shared by all caches managed by the cache manager
          originalTransport = TestingUtil.extractComponent(asyncCache1, Transport.class);
-         rpcManager = (RPCManagerImpl) TestingUtil.extractComponent(asyncCache1, RPCManager.class);
+         rpcManager = (RpcManagerImpl) TestingUtil.extractComponent(asyncCache1, RpcManager.class);
          rpcManager.setTransport(mockTransport);
 
-         expect(mockTransport.invokeRemotely((List<Address>) anyObject(), (CacheRPCCommand) anyObject(), eq(ResponseMode.SYNCHRONOUS),
+         expect(mockTransport.invokeRemotely((List<Address>) anyObject(), (CacheRpcCommand) anyObject(), eq(ResponseMode.SYNCHRONOUS),
                                              anyLong(), anyBoolean(), (ResponseFilter) anyObject(), anyBoolean()))
                .andReturn(Collections.emptyList()).once();
 
@@ -152,7 +152,7 @@ public class SyncReplTest extends MultipleCacheManagersTest {
          reset(mockTransport);
          expect(mockTransport.getAddress()).andReturn(mockAddressOne).anyTimes();
          expect(mockTransport.getMembers()).andReturn(addresses).anyTimes();
-         expect(mockTransport.invokeRemotely((List<Address>) anyObject(), (CacheRPCCommand) anyObject(), eq(ResponseMode.ASYNCHRONOUS),
+         expect(mockTransport.invokeRemotely((List<Address>) anyObject(), (CacheRpcCommand) anyObject(), eq(ResponseMode.ASYNCHRONOUS),
                                              anyLong(), anyBoolean(), (ResponseFilter) anyObject(), anyBoolean()))
                .andReturn(Collections.emptyList()).once();
 

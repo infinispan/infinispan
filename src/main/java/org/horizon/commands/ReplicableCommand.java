@@ -25,7 +25,7 @@ import org.horizon.context.InvocationContext;
 
 /**
  * The core of the command-based cache framework.  Commands correspond to specific areas of functionality in the cache,
- * and can be replicated using the {@link org.horizon.remoting.RPCManager}
+ * and can be replicated using the {@link org.horizon.remoting.RpcManager}
  *
  * @author Mircea.Markus@jboss.com
  * @author Manik Surtani

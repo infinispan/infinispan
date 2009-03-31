@@ -22,7 +22,7 @@
 package org.horizon.remoting.transport.jgroups;
 
 import org.horizon.CacheException;
-import org.horizon.commands.CacheRPCCommand;
+import org.horizon.commands.CacheRpcCommand;
 import org.horizon.commands.ReplicableCommand;
 import org.horizon.commands.remote.ClusteredGetCommand;
 import org.horizon.logging.Log;
@@ -127,8 +127,8 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       if (isValid(req)) {
          try {
             ReplicableCommand cmd = (ReplicableCommand) req_marshaller.objectFromByteBuffer(req.getBuffer(), req.getOffset(), req.getLength());
-            if (cmd instanceof CacheRPCCommand)
-               return executeCommand((CacheRPCCommand) cmd, req);
+            if (cmd instanceof CacheRpcCommand)
+               return executeCommand((CacheRpcCommand) cmd, req);
             else
                return cmd.perform(null);
          }
@@ -141,7 +141,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       }
    }
 
-   protected Object executeCommand(CacheRPCCommand cmd, Message req) throws Throwable {
+   protected Object executeCommand(CacheRpcCommand cmd, Message req) throws Throwable {
       if (cmd == null) throw new NullPointerException("Unable to execute a null command!  Message was " + req);
       if (trace) log.trace("Attempting to execute command: {0} [sender={1}]", cmd, req.getSrc());
 

@@ -8,7 +8,7 @@ import org.horizon.eviction.EvictionManager;
 import org.horizon.eviction.EvictionStrategy;
 import org.horizon.interceptors.BatchingInterceptor;
 import org.horizon.interceptors.InterceptorChain;
-import org.horizon.remoting.RPCManager;
+import org.horizon.remoting.RpcManager;
 import org.horizon.test.TestingUtil;
 import org.horizon.transaction.DummyTransactionManager;
 import org.horizon.transaction.DummyTransactionManagerLookup;
@@ -52,9 +52,9 @@ public class CacheManagerComponentRegistryTest {
       assert TestingUtil.extractComponent(transactional, TransactionManager.class) instanceof DummyTransactionManager;
 
       // assert force-shared components
-      assert TestingUtil.extractComponent(c, RPCManager.class) != null;
-      assert TestingUtil.extractComponent(transactional, RPCManager.class) != null;
-      assert TestingUtil.extractComponent(c, RPCManager.class) == TestingUtil.extractComponent(transactional, RPCManager.class);
+      assert TestingUtil.extractComponent(c, RpcManager.class) != null;
+      assert TestingUtil.extractComponent(transactional, RpcManager.class) != null;
+      assert TestingUtil.extractComponent(c, RpcManager.class) == TestingUtil.extractComponent(transactional, RpcManager.class);
    }
 
    public void testForceUnsharedComponents() throws NamedCacheNotFoundException {

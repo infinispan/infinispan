@@ -7,7 +7,7 @@ import org.horizon.factories.ComponentRegistry;
 import org.horizon.interceptors.base.CommandInterceptor;
 import org.horizon.invocation.InvocationContextContainer;
 import org.horizon.invocation.Flag;
-import org.horizon.remoting.RPCManager;
+import org.horizon.remoting.RpcManager;
 
 import java.util.List;
 import java.util.Map;
@@ -80,7 +80,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     */
    ComponentRegistry getComponentRegistry();
 
-   RPCManager getRpcManager();
+   RpcManager getRpcManager();
 
    BatchContainer getBatchContainer();
 

@@ -43,7 +43,7 @@ import org.horizon.loader.CacheStore;
 import org.horizon.logging.Log;
 import org.horizon.logging.LogFactory;
 import org.horizon.marshall.Marshaller;
-import org.horizon.remoting.RPCManager;
+import org.horizon.remoting.RpcManager;
 import org.horizon.remoting.ResponseMode;
 import org.horizon.remoting.transport.Address;
 import org.horizon.remoting.transport.DistributedSync;
@@ -63,7 +63,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 public class StateTransferManagerImpl implements StateTransferManager {
 
-   RPCManager rpcManager;
+   RpcManager rpcManager;
    AdvancedCache cache;
    Configuration configuration;
    DataContainer dataContainer;
@@ -83,7 +83,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
    volatile Address stateSender;
 
    @Inject
-   public void injectDependencies(RPCManager rpcManager, AdvancedCache cache, Configuration configuration,
+   public void injectDependencies(RpcManager rpcManager, AdvancedCache cache, Configuration configuration,
                                   DataContainer dataContainer, CacheLoaderManager clm, Marshaller marshaller,
                                   TransactionLog transactionLog, InterceptorChain interceptorChain, InvocationContextContainer invocationContextContainer,
                                   CommandsFactory commandsFactory) {
@@ -100,7 +100,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
    }
 
    @Start(priority = 55)
-   // it is imperative that this starts *after* the RPCManager does, and *after* the cache loader manager (if any) inits and preloads
+   // it is imperative that this starts *after* the RpcManager does, and *after* the cache loader manager (if any) inits and preloads
    public void start() throws StateTransferException {
       log.trace("Data container is {0}", System.identityHashCode(dataContainer));
       cs = clm == null ? null : clm.getCacheStore();

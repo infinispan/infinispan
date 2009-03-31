@@ -38,7 +38,7 @@ import org.horizon.jmx.annotations.ManagedAttribute;
 import org.horizon.lifecycle.ComponentStatus;
 import org.horizon.lifecycle.Lifecycle;
 import org.horizon.notifications.cachemanagerlistener.CacheManagerNotifier;
-import org.horizon.remoting.RPCManager;
+import org.horizon.remoting.RpcManager;
 import org.horizon.remoting.transport.Address;
 
 import java.io.IOException;
@@ -311,19 +311,19 @@ public class DefaultCacheManager implements CacheManager {
 
    public List<Address> getMembers() {
       if (globalComponentRegistry == null) return null;
-      RPCManager rpcManager = globalComponentRegistry.getComponent(RPCManager.class);
+      RpcManager rpcManager = globalComponentRegistry.getComponent(RpcManager.class);
       return rpcManager == null ? null : rpcManager.getTransport().getMembers();
    }
 
    public Address getAddress() {
       if (globalComponentRegistry == null) return null;
-      RPCManager rpcManager = globalComponentRegistry.getComponent(RPCManager.class);
+      RpcManager rpcManager = globalComponentRegistry.getComponent(RpcManager.class);
       return rpcManager == null ? null : rpcManager.getLocalAddress();
    }
 
    public boolean isCoordinator() {
       if (globalComponentRegistry == null) return false;
-      RPCManager rpcManager = globalComponentRegistry.getComponent(RPCManager.class);
+      RpcManager rpcManager = globalComponentRegistry.getComponent(RpcManager.class);
       return rpcManager != null && rpcManager.getTransport().isCoordinator();
    }
 

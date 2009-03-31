@@ -58,14 +58,14 @@ public class JmxStatsFunctionalTest {
       cm.getCache("remote2");
 
       assert existsObject("horizon:cache-name=local_cache(local),jmx-resource=CacheMgmtInterceptor");
-      assert existsObject("horizon:cache-name=[global],jmx-resource=RPCManager");
+      assert existsObject("horizon:cache-name=[global],jmx-resource=RpcManager");
       assert existsObject("horizon:cache-name=remote1(repl_sync),jmx-resource=CacheMgmtInterceptor");
       assert existsObject("horizon:cache-name=remote2(invalidation_async),jmx-resource=CacheMgmtInterceptor");
 
       TestingUtil.killCacheManagers(cm);
 
       assert !existsObject("horizon:cache-name=local_cache(local),jmx-resource=CacheMgmtInterceptor");
-      assert !existsObject("horizon:cache-name=[global],jmx-resource=RPCManager");
+      assert !existsObject("horizon:cache-name=[global],jmx-resource=RpcManager");
       assert !existsObject("horizon:cache-name=remote1(repl_sync),jmx-resource=CacheMgmtInterceptor");
       assert !existsObject("horizon:cache-name=remote2(invalidation_async),jmx-resource=CacheMgmtInterceptor");
    }
@@ -105,7 +105,7 @@ public class JmxStatsFunctionalTest {
       cm.getCache("remote1");
 
       assert !existsObject("horizon:cache-name=local_cache(local),jmx-resource=CacheMgmtInterceptor");
-      assert existsObject("horizon:cache-name=[global],jmx-resource=RPCManager");
+      assert existsObject("horizon:cache-name=[global],jmx-resource=RpcManager");
       assert !existsObject("horizon:cache-name=remote1(repl_sync),jmx-resource=CacheMgmtInterceptor");
    }
 
@@ -128,7 +128,7 @@ public class JmxStatsFunctionalTest {
       cm.getCache("remote1");
 
       assert existsObject("horizon:cache-name=local_cache(local),jmx-resource=CacheMgmtInterceptor");
-      assert !existsObject("horizon:cache-name=[global],jmx-resource=RPCManager");
+      assert !existsObject("horizon:cache-name=[global],jmx-resource=RpcManager");
       assert existsObject("horizon:cache-name=remote1(repl_sync),jmx-resource=CacheMgmtInterceptor");
    }
 

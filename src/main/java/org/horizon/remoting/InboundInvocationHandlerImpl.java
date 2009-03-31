@@ -1,6 +1,6 @@
 package org.horizon.remoting;
 
-import org.horizon.commands.CacheRPCCommand;
+import org.horizon.commands.CacheRpcCommand;
 import org.horizon.commands.CommandsFactory;
 import org.horizon.factories.ComponentRegistry;
 import org.horizon.factories.GlobalComponentRegistry;
@@ -36,7 +36,7 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
       this.gcr = gcr;
    }
 
-   public Object handle(CacheRPCCommand cmd) throws Throwable {
+   public Object handle(CacheRpcCommand cmd) throws Throwable {
       String cacheName = cmd.getCacheName();
       ComponentRegistry cr = gcr.getNamedComponentRegistry(cacheName);
       if (cr == null) {

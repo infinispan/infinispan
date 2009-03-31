@@ -144,7 +144,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle {
       s.add(EmptyConstructorNamedCacheFactory.class);
       s.add(EmptyConstructorFactory.class);
       s.add(InterceptorChainFactory.class);
-      s.add(RPCManagerFactory.class);
+      s.add(RpcManagerFactory.class);
       s.add(TransactionManagerFactory.class);
       s.add(ReplicationQueueFactory.class);
       s.add(StateTransferManagerFactory.class);

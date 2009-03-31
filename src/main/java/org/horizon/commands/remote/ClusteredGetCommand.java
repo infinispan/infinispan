@@ -22,7 +22,7 @@
 package org.horizon.commands.remote;
 
 import org.horizon.CacheException;
-import org.horizon.commands.CacheRPCCommand;
+import org.horizon.commands.CacheRpcCommand;
 import org.horizon.commands.DataCommand;
 import org.horizon.container.DataContainer;
 import org.horizon.container.entries.InternalCacheEntry;
@@ -40,7 +40,8 @@ import org.horizon.logging.LogFactory;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public class ClusteredGetCommand implements CacheRPCCommand {
+public class ClusteredGetCommand implements CacheRpcCommand
+{
 
    public static final byte COMMAND_ID = 22;
    private static final Log log = LogFactory.getLog(ClusteredGetCommand.class);

@@ -3,15 +3,14 @@ package org.horizon.api.mvcc;
 import org.easymock.EasyMock;
 import static org.easymock.EasyMock.*;
 import org.horizon.Cache;
-import org.horizon.commands.CacheRPCCommand;
+import org.horizon.commands.CacheRpcCommand;
 import org.horizon.commands.write.PutKeyValueCommand;
 import org.horizon.commands.write.RemoveCommand;
 import org.horizon.config.Configuration;
 import org.horizon.invocation.Flag;
-import org.horizon.remoting.RPCManager;
-import org.horizon.remoting.RPCManagerImpl;
-import org.horizon.remoting.ResponseFilter;
-import org.horizon.remoting.ResponseMode;
+import org.horizon.remoting.RpcManagerImpl;
+import org.horizon.remoting.RpcManager;
+import org.horizon.remoting.*;
 import org.horizon.remoting.transport.Address;
 import org.horizon.remoting.transport.Transport;
 import org.horizon.test.MultipleCacheManagersTest;
@@ -89,7 +88,7 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
 
    public void testAsyncForce() throws Exception {
       Transport mockTransport = createNiceMock(Transport.class);
-      RPCManagerImpl rpcManager = (RPCManagerImpl) TestingUtil.extractComponent(cache1, RPCManager.class);
+      RpcManagerImpl rpcManager = (RpcManagerImpl) TestingUtil.extractComponent(cache1, RpcManager.class);
       Transport originalTransport = TestingUtil.extractComponent(cache1, Transport.class);
       try {
 
@@ -104,12 +103,12 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
          rpcManager.setTransport(mockTransport);
          // specify what we expectWithTx called on the mock Rpc Manager.  For params we don't care about, just use ANYTHING.
          // setting the mock object to expectWithTx the "sync" param to be false.
-         expect(mockTransport.invokeRemotely((List<Address>) anyObject(), (CacheRPCCommand) anyObject(),
+         expect(mockTransport.invokeRemotely((List<Address>) anyObject(), (CacheRpcCommand) anyObject(),
                                              eq(ResponseMode.ASYNCHRONOUS), anyLong(), anyBoolean(), (ResponseFilter) isNull(), anyBoolean())).andReturn(null);
 
          replay(mockAddress1, mockAddress2, mockTransport);
 
-         // now try a simple replication.  Since the RPCManager is a mock object it will not actually replicate anything.
+         // now try a simple replication.  Since the RpcManager is a mock object it will not actually replicate anything.
          cache1.putForExternalRead(key, value);
          verify(mockTransport);
 
@@ -143,7 +142,7 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
 
    public void testExceptionSuppression() throws Exception {
       Transport mockTransport = createNiceMock(Transport.class);
-      RPCManagerImpl rpcManager = (RPCManagerImpl) TestingUtil.extractComponent(cache1, RPCManager.class);
+      RpcManagerImpl rpcManager = (RpcManagerImpl) TestingUtil.extractComponent(cache1, RpcManager.class);
       Transport originalTransport = TestingUtil.extractComponent(cache1, Transport.class);
       try {
 
@@ -158,7 +157,7 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
          rpcManager.setTransport(mockTransport);
 
 
-         expect(mockTransport.invokeRemotely(anyAddresses(), (CacheRPCCommand) anyObject(), anyResponseMode(),
+         expect(mockTransport.invokeRemotely(anyAddresses(), (CacheRpcCommand) anyObject(), anyResponseMode(),
                                              anyLong(), anyBoolean(), (ResponseFilter) anyObject(), anyBoolean()))
                .andThrow(new RuntimeException("Barf!")).anyTimes();
 
@@ -293,14 +292,14 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
     * @throws Exception
     */
    private void cacheModeLocalTest(boolean transactional) throws Exception {
-      RPCManager rpcManager = EasyMock.createMock(RPCManager.class);
-      RPCManager originalRpcManager = TestingUtil.replaceComponent(cache1.getCacheManager(), RPCManager.class, rpcManager, true);
+      RpcManager rpcManager = EasyMock.createMock(RpcManager.class);
+      RpcManager originalRpcManager = TestingUtil.replaceComponent(cache1.getCacheManager(), RpcManager.class, rpcManager, true);
       try {
 
          // specify that we expectWithTx nothing will be called on the mock Rpc Manager.
          replay(rpcManager);
 
-         // now try a simple replication.  Since the RPCManager is a mock object it will not actually replicate anything.
+         // now try a simple replication.  Since the RpcManager is a mock object it will not actually replicate anything.
          if (transactional)
             tm1.begin();
 
@@ -313,7 +312,7 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
       } finally {
          if (originalRpcManager != null) {
             // cleanup
-            TestingUtil.replaceComponent(cache1.getCacheManager(), RPCManager.class, originalRpcManager, true);
+            TestingUtil.replaceComponent(cache1.getCacheManager(), RpcManager.class, originalRpcManager, true);
             cache1.remove(key);
          }
       }

@@ -1,6 +1,6 @@
 package org.horizon.remoting;
 
-import org.horizon.commands.CacheRPCCommand;
+import org.horizon.commands.CacheRpcCommand;
 import org.horizon.factories.scopes.Scope;
 import org.horizon.factories.scopes.Scopes;
 import org.horizon.statetransfer.StateTransferException;
@@ -10,7 +10,7 @@ import java.io.OutputStream;
 
 /**
  * A globally scoped component, that is able to locate named caches and invoke remotely originating calls on the
- * appropriate cache.  The primary goal of this component is to act as a bridge between the globally scoped {@link org.horizon.remoting.RPCManager}
+ * appropriate cache.  The primary goal of this component is to act as a bridge between the globally scoped {@link RpcManager}
  * and named-cache scoped components.
  *
  * @author Manik Surtani
@@ -26,7 +26,7 @@ public interface InboundInvocationHandler {
     * @return results, if any, from the invocation
     * @throws Throwable in the event of problems executing the command
     */
-   Object handle(CacheRPCCommand command) throws Throwable;
+   Object handle(CacheRpcCommand command) throws Throwable;
 
    /**
     * Applies state onto a named cache.  State to be read from the stream.  Implementations should NOT close the stream
