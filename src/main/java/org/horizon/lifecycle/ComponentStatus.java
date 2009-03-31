@@ -99,4 +99,8 @@ public enum ComponentStatus {
    public boolean allowInvocations() {
       return this == ComponentStatus.RUNNING;
    }
+
+   public boolean startingUp() {
+      return this == ComponentStatus.INITIALIZING || this == ComponentStatus.INSTANTIATED;
+   }
 }

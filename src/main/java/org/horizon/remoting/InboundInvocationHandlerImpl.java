@@ -2,15 +2,14 @@ package org.horizon.remoting;
 
 import org.horizon.commands.CacheRpcCommand;
 import org.horizon.commands.CommandsFactory;
+import org.horizon.config.Configuration;
 import org.horizon.factories.ComponentRegistry;
 import org.horizon.factories.GlobalComponentRegistry;
 import org.horizon.factories.annotations.Inject;
 import org.horizon.factories.annotations.NonVolatile;
 import org.horizon.factories.scopes.Scope;
 import org.horizon.factories.scopes.Scopes;
-import org.horizon.interceptors.InterceptorChain;
 import org.horizon.invocation.InvocationContextContainer;
-import org.horizon.lifecycle.ComponentStatus;
 import org.horizon.logging.Log;
 import org.horizon.logging.LogFactory;
 import org.horizon.statetransfer.StateTransferException;
@@ -44,13 +43,15 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
          return null;
       }
 
+      Configuration localConfig = cr.getComponent(Configuration.class);
+
       if (!cr.getStatus().allowInvocations()) {
-         long giveupTime = System.currentTimeMillis() + 10000;
-         while (cr.getStatus() == ComponentStatus.INITIALIZING && System.currentTimeMillis() < giveupTime) Thread.sleep(100);
-         if (!cr.getStatus().allowInvocations()) throw new IllegalStateException("Cache named " + cacheName + " exists but isn't in a state to handle invocations.  Its state is " + cr.getStatus());
+         long giveupTime = System.currentTimeMillis() + localConfig.getStateRetrievalTimeout();
+         while (cr.getStatus().startingUp() && System.currentTimeMillis() < giveupTime) Thread.sleep(100);
+         if (!cr.getStatus().allowInvocations())
+            throw new IllegalStateException("Cache named " + cacheName + " exists but isn't in a state to handle invocations.  Its state is " + cr.getStatus());
       }
 
-      InterceptorChain ic = cr.getLocalComponent(InterceptorChain.class);
       InvocationContextContainer icc = cr.getLocalComponent(InvocationContextContainer.class);
       CommandsFactory commandsFactory = cr.getLocalComponent(CommandsFactory.class);
 

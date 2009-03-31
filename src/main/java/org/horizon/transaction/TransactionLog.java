@@ -140,8 +140,8 @@ public class TransactionLog {
    }
 
    public void writePendingPrepares(Marshaller marshaller, ObjectOutputStream out) throws Exception {
-      for (PrepareCommand entry : pendingPrepares.values())
-         marshaller.objectToObjectStream(entry, out);
+      if (log.isTraceEnabled()) log.trace("Writing {0} pending prepares to the stream", pendingPrepares.size());
+      for (PrepareCommand entry : pendingPrepares.values()) marshaller.objectToObjectStream(entry, out);
    }
 
    public boolean hasPendingPrepare(PrepareCommand command) {

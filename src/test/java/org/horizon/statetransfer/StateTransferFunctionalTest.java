@@ -110,16 +110,16 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
          int c = 0;
          while (!stop) {
             try {
-               if (c == 1000) {
-                  if (tx) tm.begin();
-                  for (int i = 0; i < 1000; i++) cache.remove("test" + i);
-                  if (tx) tm.commit();
-                  c = 0;
-               } else {
-                  if (tx) tm.begin();
-                  cache.put("test" + c, c++);
-                  if (tx) tm.commit();
-               }
+//               if (c == 1000) {
+//                  if (tx) tm.begin();
+//                  for (int i = 0; i < 1000; i++) cache.remove("test" + i);
+//                  if (tx) tm.commit();
+//                  c = 0;
+//               } else {
+               if (tx) tm.begin();
+               cache.put("test" + c, c++);
+               if (tx) tm.commit();
+//               }
             }
             catch (Exception e) {
 //               e.printStackTrace();
@@ -211,6 +211,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       log.info("testSTWithThirdWritingTxCache end - " + testCount);
    }
 
+   @Test(invocationCount = 100, skipFailedInvocations = true)
    public void testSTWithWritingNonTxThread() throws Exception {
       testCount++;
       log.info("testSTWithWritingNonTxThread start - " + testCount);

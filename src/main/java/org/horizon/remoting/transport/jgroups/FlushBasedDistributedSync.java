@@ -24,32 +24,33 @@ public class FlushBasedDistributedSync implements DistributedSync {
 
    private final ReentrantReadWriteLock processingLock = new ReentrantReadWriteLock();
    private final ReclosableLatch flushBlockGate = new ReclosableLatch();
-   private final AtomicInteger flushCompletionCount = new AtomicInteger();
+   private final AtomicInteger flushBlockGateCount = new AtomicInteger(0);
+   private final AtomicInteger flushWaitGateCount = new AtomicInteger(0);
    private final ReclosableLatch flushWaitGate = new ReclosableLatch(false);
    private static final Log log = LogFactory.getLog(FlushBasedDistributedSync.class);
 
-   public int getSyncCount() {
-      return flushCompletionCount.get();
-   }
-
-   public void blockUntilAcquired(long timeout, TimeUnit timeUnit) throws TimeoutException {
+   public SyncResponse blockUntilAcquired(long timeout, TimeUnit timeUnit) throws TimeoutException {
+      int initState = flushWaitGateCount.get();
       while (true) {
          try {
             if (!flushWaitGate.await(timeout, timeUnit))
                throw new TimeoutException("Timed out waiting for a cluster-wide sync to be acquired. (timeout = " + Util.prettyPrintTime(timeout) + ")");
-            break;
+
+            return initState == flushWaitGateCount.get() ? SyncResponse.STATE_PREEXISTED : SyncResponse.STATE_ACHIEVED;
          } catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
          }
       }
    }
 
-   public void blockUntilReleased(long timeout, TimeUnit timeUnit) throws TimeoutException {
+   public SyncResponse blockUntilReleased(long timeout, TimeUnit timeUnit) throws TimeoutException {
+      int initState = flushBlockGateCount.get();
       while (true) {
          try {
             if (!flushBlockGate.await(timeout, timeUnit))
                throw new TimeoutException("Timed out waiting for a cluster-wide sync to be released. (timeout = " + Util.prettyPrintTime(timeout) + ")");
-            break;
+
+            return initState == flushWaitGateCount.get() ? SyncResponse.STATE_PREEXISTED : SyncResponse.STATE_ACHIEVED;
          } catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
          }
@@ -58,12 +59,13 @@ public class FlushBasedDistributedSync implements DistributedSync {
 
    public void acquireSync() {
       flushBlockGate.close();
+      flushWaitGateCount.incrementAndGet();
       flushWaitGate.open();
    }
 
    public void releaseSync() {
       flushWaitGate.close();
-      flushCompletionCount.incrementAndGet();
+      flushBlockGateCount.incrementAndGet();
       flushBlockGate.open();
    }
 

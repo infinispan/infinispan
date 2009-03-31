@@ -16,10 +16,9 @@ import java.util.concurrent.TimeoutException;
 @ThreadSafe
 public interface DistributedSync {
 
-   /**
-    * @return the number of syncs that have occured
-    */
-   int getSyncCount();
+   public enum SyncResponse {
+      STATE_ACHIEVED, STATE_NOT_ACHIEVED, STATE_PREEXISTED
+   }
 
    /**
     * Blocks until the start of a sync - either by the current RPCManager instance or a remote one - is received.  This
@@ -29,7 +28,7 @@ public interface DistributedSync {
     * @param timeUnit time unit
     * @throws TimeoutException if waiting for the sync times out.
     */
-   void blockUntilAcquired(long timeout, TimeUnit timeUnit) throws TimeoutException;
+   SyncResponse blockUntilAcquired(long timeout, TimeUnit timeUnit) throws TimeoutException;
 
    /**
     * Blocks until an ongoing sync ends.  This is returns immediately if there is no ongoing sync.
@@ -38,7 +37,7 @@ public interface DistributedSync {
     * @param timeUnit time unit
     * @throws TimeoutException if waiting for an ongoing sync to end times out.
     */
-   void blockUntilReleased(long timeout, TimeUnit timeUnit) throws TimeoutException;
+   SyncResponse blockUntilReleased(long timeout, TimeUnit timeUnit) throws TimeoutException;
 
    /**
     * Acquires the sync.  This could be from a local or remote source.

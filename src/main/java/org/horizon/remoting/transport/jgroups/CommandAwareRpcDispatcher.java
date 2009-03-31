@@ -46,6 +46,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * A JGroups RPC dispatcher that knows how to deal with {@link ReplicableCommand}s.
@@ -60,6 +61,8 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
    DistributedSync distributedSync;
    long distributedSyncTimeout;
    private Log log = LogFactory.getLog(CommandAwareRpcDispatcher.class);
+   AtomicBoolean newCacheStarting = new AtomicBoolean(false);
+   AtomicBoolean newCacheStarted = new AtomicBoolean(false);
 
    public CommandAwareRpcDispatcher() {
    }
@@ -147,21 +150,21 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
 
       boolean unlock = false;
       try {
-
-         int flushCount = distributedSync.getSyncCount();
          distributedSync.acquireProcessingLock(false, distributedSyncTimeout, MILLISECONDS);
          unlock = true;
-         distributedSync.blockUntilReleased(distributedSyncTimeout, MILLISECONDS);
+         DistributedSync.SyncResponse sr = distributedSync.blockUntilReleased(distributedSyncTimeout, MILLISECONDS);
 
          // If this thread blocked during a NBST flush, then inform the sender
          // it needs to replay ignored messages
-         boolean replayIgnored = distributedSync.getSyncCount() != flushCount;
+         boolean replayIgnored = sr == DistributedSync.SyncResponse.STATE_ACHIEVED;
+         if (trace) log.trace("Enough waiting; replayIgnored = {0}, sr {1}", replayIgnored, sr);
 
          Object retval;
          try {
             retval = inboundInvocationHandler.handle(cmd);
          } catch (IllegalStateException ise) {
-            if (trace) log.trace("Unable to execute command, cache not in a receptive state");
+            newCacheStarting.set(true);
+            if (trace) log.trace("Unable to execute command, cache not in a receptive state: " + ise.getMessage());
             // cache not in a started state, request replay
             return RequestIgnoredResponse.INSTANCE;
          }
