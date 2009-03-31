@@ -5,7 +5,7 @@ import org.horizon.container.entries.InternalEntryFactory;
 import org.horizon.loader.CacheLoaderException;
 import org.horizon.loader.CacheStore;
 import org.horizon.loader.jdbc.TableManipulation;
-import org.horizon.loader.jdbc.UnitTestDatabaseManager;
+import org.horizon.test.fwk.UnitTestDatabaseManager;
 import org.horizon.loader.jdbc.connectionfactory.ConnectionFactory;
 import org.horizon.loader.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.horizon.loader.jdbc.stringbased.DefaultKey2StringMapper;

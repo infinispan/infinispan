@@ -9,7 +9,7 @@ import org.horizon.loader.CacheLoaderConfig;
 import org.horizon.loader.CacheLoaderManager;
 import org.horizon.loader.CacheStore;
 import org.horizon.loader.jdbc.TableManipulation;
-import org.horizon.loader.jdbc.UnitTestDatabaseManager;
+import org.horizon.test.fwk.UnitTestDatabaseManager;
 import org.horizon.loader.jdbc.binary.JdbcBinaryCacheStoreConfig;
 import org.horizon.loader.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.horizon.manager.CacheManager;

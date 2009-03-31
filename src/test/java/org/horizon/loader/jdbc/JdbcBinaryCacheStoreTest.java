@@ -7,6 +7,7 @@ import org.horizon.loader.jdbc.binary.JdbcBinaryCacheStoreConfig;
 import org.horizon.loader.jdbc.connectionfactory.ConnectionFactory;
 import org.horizon.loader.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.horizon.marshall.ObjectStreamMarshaller;
+import org.horizon.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.Test;
 import static org.easymock.classextension.EasyMock.*;
 

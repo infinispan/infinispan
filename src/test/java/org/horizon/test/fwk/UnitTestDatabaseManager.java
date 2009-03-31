@@ -1,8 +1,10 @@
-package org.horizon.loader.jdbc;
+package org.horizon.test.fwk;
 
 import org.horizon.loader.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.horizon.loader.jdbc.connectionfactory.PooledConnectionFactory;
 import org.horizon.loader.jdbc.connectionfactory.ConnectionFactory;
+import org.horizon.loader.jdbc.TableManipulation;
+import org.horizon.loader.jdbc.JdbcUtil;
 import org.horizon.test.TestingUtil;
 
 import java.io.File;

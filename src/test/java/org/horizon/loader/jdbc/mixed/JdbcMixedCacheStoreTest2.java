@@ -3,7 +3,7 @@ package org.horizon.loader.jdbc.mixed;
 import org.horizon.loader.BaseCacheStoreTest;
 import org.horizon.loader.CacheStore;
 import org.horizon.loader.jdbc.TableManipulation;
-import org.horizon.loader.jdbc.UnitTestDatabaseManager;
+import org.horizon.test.fwk.UnitTestDatabaseManager;
 import org.horizon.loader.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.testng.annotations.Test;
 
