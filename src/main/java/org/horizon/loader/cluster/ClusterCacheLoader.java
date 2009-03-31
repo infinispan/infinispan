@@ -46,7 +46,6 @@ public class ClusterCacheLoader extends AbstractCacheLoader {
    }
 
    public InternalCacheEntry load(Object key) throws CacheLoaderException {
-      System.out.println("ClusterCacheLoader.load");
       if (!(isCacheReady() && isLocalCall())) return null;
       ClusteredGetCommand clusteredGetCommand = new ClusteredGetCommand(key, cache.getName());
       List<Object> response = doRemoteCall(clusteredGetCommand);
