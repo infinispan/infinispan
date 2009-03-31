@@ -115,6 +115,7 @@ public class XmlFileParsingTest {
       c = namedCaches.get("withouthJmxEnabled");
       assert !c.isExposeJmxStatistics();
       assert !gc.isExposeGlobalJmxStatistics();
+      assert gc.isAllowDuplicateDomains();
       assert gc.getJmxDomain().equals("funky_domain");
       assert gc.getMBeanServerLookup().equals("org.horizon.jmx.PerThreadMBeanServerLookup");
    }

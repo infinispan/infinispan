@@ -1,10 +1,10 @@
 package org.horizon.expiry;
 
 import org.horizon.Cache;
+import org.horizon.test.fwk.TestCacheManagerFactory;
 import org.horizon.container.DataContainer;
 import org.horizon.container.entries.InternalCacheEntry;
 import org.horizon.manager.CacheManager;
-import org.horizon.manager.DefaultCacheManager;
 import org.horizon.test.TestingUtil;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -21,7 +21,7 @@ public class ExpiryTest {
 
    @BeforeMethod
    public void setUp() {
-      cm = new DefaultCacheManager();
+      cm = TestCacheManagerFactory.createLocalCacheManager();
    }
 
    @AfterMethod

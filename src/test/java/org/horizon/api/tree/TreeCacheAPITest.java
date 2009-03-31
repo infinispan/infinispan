@@ -1,12 +1,13 @@
 package org.horizon.api.tree;
 
 import org.horizon.Cache;
+import org.horizon.test.fwk.TestCacheManagerFactory;
 import org.horizon.atomic.AtomicMap;
 import org.horizon.atomic.AtomicMapCache;
 import org.horizon.config.Configuration;
 import org.horizon.logging.Log;
 import org.horizon.logging.LogFactory;
-import org.horizon.manager.DefaultCacheManager;
+import org.horizon.manager.CacheManager;
 import org.horizon.test.TestingUtil;
 import org.horizon.transaction.DummyTransactionManagerLookup;
 import org.horizon.tree.Fqn;
@@ -41,7 +42,7 @@ public class TreeCacheAPITest {
       Configuration c = new Configuration();
       c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
       c.setInvocationBatchingEnabled(true);
-      DefaultCacheManager cm = new DefaultCacheManager(c);
+      CacheManager cm = TestCacheManagerFactory.createCacheManager(c);
 
       Cache flatcache = cm.getCache();
       cache = new TreeCacheImpl(flatcache);

@@ -1,6 +1,7 @@
 package org.horizon.replication;
 
 import org.horizon.Cache;
+import org.horizon.test.fwk.TestCacheManagerFactory;
 import org.horizon.config.Configuration;
 import org.horizon.config.GlobalConfiguration;
 import org.horizon.executors.ScheduledExecutorFactory;
@@ -37,8 +38,8 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
       globalConfiguration.setReplicationQueueScheduledExecutorFactoryClass(ReplQueueTestScheduledExecutorFactory.class.getName());
       globalConfiguration.setReplicationQueueScheduledExecutorProperties(ReplQueueTestScheduledExecutorFactory.myProps);
-      CacheManager first = TestingUtil.createClusteredCacheManager(globalConfiguration);
-      CacheManager second = TestingUtil.createClusteredCacheManager(globalConfiguration);
+      CacheManager first = TestCacheManagerFactory.createCacheManager(globalConfiguration);
+      CacheManager second = TestCacheManagerFactory.createCacheManager(globalConfiguration);
       registerCacheManager(first, second);
 
       Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC);

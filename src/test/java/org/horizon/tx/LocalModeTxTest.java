@@ -22,6 +22,7 @@
 package org.horizon.tx;
 
 import org.horizon.Cache;
+import org.horizon.test.fwk.TestCacheManagerFactory;
 import org.horizon.config.Configuration;
 import org.horizon.manager.CacheManager;
 import org.horizon.test.TestingUtil;
@@ -40,7 +41,7 @@ public class LocalModeTxTest extends SingleCacheManagerTest {
    protected CacheManager createCacheManager() {
       Configuration cfg = new Configuration();
       cfg.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
-      CacheManager cm = TestingUtil.createLocalCacheManager();
+      CacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
       cm.defineCache("test", cfg);
       c = cm.getCache("test");
       return cm;

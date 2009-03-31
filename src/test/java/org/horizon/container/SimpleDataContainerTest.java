@@ -38,7 +38,7 @@ public class SimpleDataContainerTest {
       assert entry instanceof TransientCacheEntry;
       assert entry.getLastUsed() <= System.currentTimeMillis();
       long entryLastUsed = entry.getLastUsed();
-      Thread.sleep(10);
+      Thread.sleep(100);
       entry = dc.get("k");
       assert entry.getLastUsed() > entryLastUsed;
       dc.put("k", "v", -1, 0);
@@ -77,24 +77,24 @@ public class SimpleDataContainerTest {
       assert ice.getLifespan() == -1;
       dc.put("k", "v", -1, idle);
       long oldTime = System.currentTimeMillis();
-      Thread.sleep(10); // for time calc granularity
+      Thread.sleep(100); // for time calc granularity
       ice = dc.get("k");
       assert ice instanceof TransientCacheEntry;
       assert ice.getExpiryTime() == -1;
       assert ice.getLastUsed() > oldTime;
-      Thread.sleep(10); // for time calc granularity
+      Thread.sleep(100); // for time calc granularity
       assert ice.getLastUsed() < System.currentTimeMillis();
       assert ice.getMaxIdle() == idle;
       assert ice.getCreated() == -1;
       assert ice.getLifespan() == -1;
 
       oldTime = System.currentTimeMillis();
-      Thread.sleep(10); // for time calc granularity
+      Thread.sleep(100); // for time calc granularity
       assert dc.get("k") != null;
       
       // check that the last used stamp has been updated on a get
       assert ice.getLastUsed() > oldTime;
-      Thread.sleep(10); // for time calc granularity
+      Thread.sleep(100); // for time calc granularity
       assert ice.getLastUsed() < System.currentTimeMillis();
    }
 

@@ -1,8 +1,8 @@
 package org.horizon.notifications;
 
 import org.horizon.Cache;
+import org.horizon.test.fwk.TestCacheManagerFactory;
 import org.horizon.manager.CacheManager;
-import org.horizon.manager.DefaultCacheManager;
 import org.horizon.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.horizon.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.horizon.test.TestingUtil;
@@ -19,7 +19,7 @@ public class AsyncNotificationTest {
 
    @BeforeMethod
    public void setUp() {
-      cm = new DefaultCacheManager();
+      cm = TestCacheManagerFactory.createLocalCacheManager();
       c = cm.getCache();
    }
 
@@ -29,7 +29,6 @@ public class AsyncNotificationTest {
    }
 
    public void testAsyncNotification() throws InterruptedException {
-
       CountDownLatch latch = new CountDownLatch(2);
       AbstractListener syncListener = new SyncListener(latch);
       AbstractListener asyncListener = new AsyncListener(latch);

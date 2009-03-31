@@ -1,10 +1,11 @@
 package org.horizon.jmx;
 
+import org.horizon.CacheException;
 import org.horizon.config.Configuration;
 import org.horizon.config.GlobalConfiguration;
 import org.horizon.manager.CacheManager;
-import org.horizon.manager.DefaultCacheManager;
 import org.horizon.test.TestingUtil;
+import org.horizon.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -38,10 +39,10 @@ public class JmxStatsFunctionalTest {
     */
    public void testDefaultDomanin() {
       assert !existsDomains("horizon");
-      GlobalConfiguration globalConfiguration = TestingUtil.getGlobalConfiguration();
+      GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
       globalConfiguration.setExposeGlobalJmxStatistics(true);
       globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
-      cm = new DefaultCacheManager(globalConfiguration);
+      cm = TestCacheManagerFactory.createCacheManager(globalConfiguration);
 
       Configuration localCache = config();//local by default
       cm.defineCache("local_cache", localCache);
@@ -72,11 +73,10 @@ public class JmxStatsFunctionalTest {
    public void testDifferentDomain() {
       assert !existsDomains("horizon");
       assert !existsDomains("mircea_jmx_domain");
-      GlobalConfiguration globalConfiguration = TestingUtil.getGlobalConfiguration();
-      globalConfiguration.setExposeGlobalJmxStatistics(true);
+      GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
       globalConfiguration.setJmxDomain("mircea_jmx_domain");
       globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
-      cm = new DefaultCacheManager(globalConfiguration);
+      cm = TestCacheManagerFactory.createCacheManager(globalConfiguration);
 
       Configuration localCache = config();//local by default
       cm.defineCache("local_cache", localCache);
@@ -88,10 +88,10 @@ public class JmxStatsFunctionalTest {
 
    public void testOnlyGlobalJmxStatsEnabled() {
       assert !existsDomains("horizon");
-      GlobalConfiguration globalConfiguration = TestingUtil.getGlobalConfiguration();
+      GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
       globalConfiguration.setExposeGlobalJmxStatistics(true);
       globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
-      cm = new DefaultCacheManager(globalConfiguration);
+      cm = TestCacheManagerFactory.createCacheManager(globalConfiguration);
 
       Configuration localCache = config();//local by default
       localCache.setExposeJmxStatistics(false);
@@ -111,10 +111,10 @@ public class JmxStatsFunctionalTest {
 
    public void testOnlyPerCacheJmxStatsEnabled() {
       assert !existsDomains("horizon");
-      GlobalConfiguration globalConfiguration = TestingUtil.getGlobalConfiguration();
+      GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
       globalConfiguration.setExposeGlobalJmxStatistics(false);
       globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
-      cm = new DefaultCacheManager(globalConfiguration);
+      cm = TestCacheManagerFactory.createCacheManager(globalConfiguration);
 
       Configuration localCache = config();//local by default
       localCache.setExposeJmxStatistics(true);
@@ -132,32 +132,62 @@ public class JmxStatsFunctionalTest {
       assert existsObject("horizon:cache-name=remote1(repl_sync),jmx-resource=CacheMgmtInterceptor");
    }
 
-   public void testMultipleManagersOnSameServer() {
+   public void testMultipleManagersOnSameServerFails() {
       assert !existsDomains("horizon");
-      GlobalConfiguration globalConfiguration = TestingUtil.getGlobalConfiguration();
-      globalConfiguration.setExposeGlobalJmxStatistics(true);
+      GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
       globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
-      cm = new DefaultCacheManager(globalConfiguration);
+      cm = TestCacheManagerFactory.createCacheManager(globalConfiguration);
       Configuration localCache = config();//local by default
       localCache.setExposeJmxStatistics(true);
       cm.defineCache("local_cache", localCache);
       cm.getCache("local_cache");
       assert existsObject("horizon:cache-name=local_cache(local),jmx-resource=CacheMgmtInterceptor");
 
-      GlobalConfiguration globalConfiguration2 = TestingUtil.getGlobalConfiguration();
+      GlobalConfiguration globalConfiguration2 = GlobalConfiguration.getClusteredDefault();
       globalConfiguration2.setExposeGlobalJmxStatistics(true);
+      globalConfiguration2.setAllowDuplicateDomains(false);
       globalConfiguration2.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
-      cm2 = new DefaultCacheManager(globalConfiguration);
+      cm2 = TestCacheManagerFactory.createCacheManager(globalConfiguration);
+      Configuration localCache2 = config();//local by default
+      localCache2.setExposeJmxStatistics(true);
+      cm2.defineCache("local_cache", localCache);
+      try {
+         cm2.getCache("local_cache");
+         assert false : "exception expected";
+      } catch (CacheException e) {
+         //expected
+      }
+   }
+
+   public void testMultipleManagersOnSameServer() {
+      assert !existsDomains("horizon");
+      GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
+      globalConfiguration.setAllowDuplicateDomains(true);
+      globalConfiguration.setExposeGlobalJmxStatistics(true);
+      globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
+      cm = TestCacheManagerFactory.createCacheManager(globalConfiguration);
+      Configuration localCache = config();//local by default
+      localCache.setExposeJmxStatistics(true);
+      cm.defineCache("local_cache", localCache);
+      cm.getCache("local_cache");
+      assert existsObject("horizon:cache-name=local_cache(local),jmx-resource=CacheMgmtInterceptor");
+
+      GlobalConfiguration globalConfiguration2 = GlobalConfiguration.getClusteredDefault();
+      globalConfiguration2.setExposeGlobalJmxStatistics(true);
+      globalConfiguration2.setAllowDuplicateDomains(true);
+      globalConfiguration2.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
+      cm2 = TestCacheManagerFactory.createCacheManager(globalConfiguration2);
       Configuration localCache2 = config();//local by default
       localCache2.setExposeJmxStatistics(true);
       cm2.defineCache("local_cache", localCache);
       cm2.getCache("local_cache");
       assert existsObject("horizon2:cache-name=local_cache(local),jmx-resource=CacheMgmtInterceptor");
 
-      GlobalConfiguration globalConfiguration3 = TestingUtil.getGlobalConfiguration();
+      GlobalConfiguration globalConfiguration3 = GlobalConfiguration.getClusteredDefault();
       globalConfiguration3.setExposeGlobalJmxStatistics(true);
+      globalConfiguration3.setAllowDuplicateDomains(true);
       globalConfiguration3.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
-      cm3 = new DefaultCacheManager(globalConfiguration);
+      cm3 = TestCacheManagerFactory.createCacheManager(globalConfiguration3);
       Configuration localCache3 = config();//local by default
       localCache3.setExposeJmxStatistics(true);
       cm3.defineCache("local_cache", localCache);
@@ -167,10 +197,10 @@ public class JmxStatsFunctionalTest {
 
    public void testUnregisterJmxInfoOnStop() {
       assert !existsDomains("horizon");
-      GlobalConfiguration globalConfiguration = TestingUtil.getGlobalConfiguration();
+      GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
       globalConfiguration.setExposeGlobalJmxStatistics(true);
       globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
-      cm = new DefaultCacheManager(globalConfiguration);
+      cm = TestCacheManagerFactory.createCacheManager(globalConfiguration);
       Configuration localCache = config();//local by default
       localCache.setExposeJmxStatistics(true);
       cm.defineCache("local_cache", localCache);
@@ -181,6 +211,38 @@ public class JmxStatsFunctionalTest {
 
       assert !existsObject("horizon:cache-name=local_cache(local),jmx-resource=CacheMgmtInterceptor");
       assert !existsDomains("horizon");
+   }
+
+   public void testCorrectUnregistering() {
+      assert !existsDomains("horizon");
+      GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
+      globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
+      cm = TestCacheManagerFactory.createCacheManager(globalConfiguration);
+      Configuration localCache = config();//local by default
+      cm.defineCache("local_cache", localCache);
+      cm.getCache("local_cache");
+      assert existsObject("horizon:cache-name=local_cache(local),jmx-resource=CacheMgmtInterceptor");
+
+      //now register a global one
+      GlobalConfiguration globalConfiguration2 = GlobalConfiguration.getClusteredDefault();
+      globalConfiguration2.setExposeGlobalJmxStatistics(true);
+      globalConfiguration2.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
+      globalConfiguration2.setAllowDuplicateDomains(true);
+      cm2 = TestCacheManagerFactory.createCacheManager(globalConfiguration2);
+      Configuration remoteCache = new Configuration();
+      remoteCache.setExposeJmxStatistics(true);
+      remoteCache.setCacheMode(Configuration.CacheMode.REPL_SYNC);
+      cm2.defineCache("remote_cache", remoteCache);
+      cm2.getCache("remote_cache");
+      assert existsObject("horizon2:cache-name=remote_cache(repl_sync),jmx-resource=CacheMgmtInterceptor");
+
+      cm2.stop();
+      assert existsObject("horizon:cache-name=local_cache(local),jmx-resource=CacheMgmtInterceptor");
+      assert !existsObject("horizon2:cache-name=remote_cache(repl_sync),jmx-resource=CacheMgmtInterceptor");
+
+      cm.stop();
+      assert !existsObject("horizon:cache-name=local_cache(local),jmx-resource=CacheMgmtInterceptor");
+      assert !existsObject("horizon2:cache-name=remote_cache(repl_sync),jmx-resource=CacheMgmtInterceptor");
    }
 
    static boolean existsObject(String s) {
@@ -199,23 +261,6 @@ public class JmxStatsFunctionalTest {
          if (domainSet.contains(domain)) return true;
       }
       return false;
-   }
-
-   private void sleepForever() {
-      while (true) {
-         try {
-            Thread.sleep(1000);
-         } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-         }
-      }
-   }
-
-   private CacheManager createCacheManager() {
-      Configuration configuration = new Configuration();
-      configuration.setFetchInMemoryState(false);
-      configuration.setExposeJmxStatistics(true);
-      return new DefaultCacheManager(configuration);
    }
 
    private Configuration config() {

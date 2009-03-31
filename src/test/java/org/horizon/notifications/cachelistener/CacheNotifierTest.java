@@ -2,14 +2,15 @@ package org.horizon.notifications.cachelistener;
 
 import static org.easymock.EasyMock.*;
 import org.horizon.Cache;
-import org.horizon.test.TestingUtil;
+import org.horizon.test.fwk.TestCacheManagerFactory;
 import org.horizon.config.Configuration;
 import org.horizon.context.InvocationContext;
 import org.horizon.lock.IsolationLevel;
 import org.horizon.manager.CacheManager;
-import org.horizon.manager.DefaultCacheManager;
+import org.horizon.test.TestingUtil;
 import org.horizon.transaction.DummyTransactionManagerLookup;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -33,7 +34,7 @@ public class CacheNotifierTest {
       c.setIsolationLevel(IsolationLevel.REPEATABLE_READ);
       c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
 
-      CacheManager cm = new DefaultCacheManager(c);
+      CacheManager cm = TestCacheManagerFactory.createCacheManager(c);
 
       cache = cm.getCache();
       tm = TestingUtil.getTransactionManager(cache);
@@ -45,6 +46,11 @@ public class CacheNotifierTest {
    public void tearDown() throws Exception {
       TestingUtil.replaceComponent(cache, CacheNotifier.class, origNotifier, true);
       TestingUtil.killCaches(cache);
+   }
+
+   @AfterTest
+   public void destroyManager() {
+      TestingUtil.killCacheManagers(cache.getCacheManager());
    }
 
    private void initCacheData(Object key, Object value) {

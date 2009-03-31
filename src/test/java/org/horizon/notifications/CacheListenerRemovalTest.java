@@ -1,8 +1,8 @@
 package org.horizon.notifications;
 
 import org.horizon.Cache;
+import org.horizon.test.fwk.TestCacheManagerFactory;
 import org.horizon.manager.CacheManager;
-import org.horizon.manager.DefaultCacheManager;
 import org.horizon.notifications.cachelistener.annotation.CacheEntryVisited;
 import org.horizon.notifications.cachelistener.event.Event;
 import org.horizon.test.TestingUtil;
@@ -22,7 +22,7 @@ public class CacheListenerRemovalTest {
 
    @BeforeMethod
    public void setUp() {
-      cm = new DefaultCacheManager();
+      cm = TestCacheManagerFactory.createLocalCacheManager();
       cache = cm.getCache();
    }
 

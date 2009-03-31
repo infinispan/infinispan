@@ -1,4 +1,4 @@
-package org.horizon.test;
+package org.horizon.test.fwk;
 
 import org.testng.annotations.Test;
 
@@ -18,7 +18,7 @@ import java.util.regex.Pattern;
  *
  * @author Mircea.Markus@jboss.com
  */
-@Test(groups = "functional", testName = "test.TestNameVerifier")
+@Test(groups = "functional", testName = "test.fwk.TestNameVerifier")
 public class TestNameVerifier {
    String dir = "src/test/java/org/horizon";
 

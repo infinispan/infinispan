@@ -1,7 +1,6 @@
 package org.horizon.api.mvcc;
 
 import org.horizon.Cache;
-import org.horizon.test.TestingUtil;
 import org.horizon.config.Configuration;
 import org.horizon.invocation.InvocationContextContainer;
 import org.horizon.lock.IsolationLevel;
@@ -10,7 +9,8 @@ import org.horizon.lock.TimeoutException;
 import org.horizon.logging.Log;
 import org.horizon.logging.LogFactory;
 import org.horizon.manager.CacheManager;
-import org.horizon.manager.DefaultCacheManager;
+import org.horizon.test.TestingUtil;
+import org.horizon.test.fwk.TestCacheManagerFactory;
 import org.horizon.transaction.DummyTransactionManagerLookup;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -25,9 +25,9 @@ import java.util.Collections;
  */
 @Test(groups = {"functional", "mvcc"})
 public abstract class LockTestBase {
+   private Log log = LogFactory.getLog(LockTestBase.class);
    protected boolean repeatableRead = true;
    protected boolean lockParentForChildInsertRemove = false;
-   private Log log = LogFactory.getLog(LockTestBase.class);
 
    protected class LockTestBaseTL {
       public Cache<String, String> cache;
@@ -46,7 +46,7 @@ public abstract class LockTestBase {
       defaultCfg.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
       defaultCfg.setIsolationLevel(repeatableRead ? IsolationLevel.REPEATABLE_READ : IsolationLevel.READ_COMMITTED);
       defaultCfg.setLockAcquisitionTimeout(200); // 200 ms
-      CacheManager cm = new DefaultCacheManager(defaultCfg);
+      CacheManager cm = TestCacheManagerFactory.createCacheManager(defaultCfg);
       tl.cache = cm.getCache();
       tl.lockManager = TestingUtil.extractComponentRegistry(tl.cache).getComponent(LockManager.class);
       tl.icc = TestingUtil.extractComponentRegistry(tl.cache).getComponent(InvocationContextContainer.class);

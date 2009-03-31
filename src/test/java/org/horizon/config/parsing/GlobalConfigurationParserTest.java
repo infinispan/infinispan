@@ -41,7 +41,7 @@ public class GlobalConfigurationParserTest {
 
    public void testGlobalJmxStatistics() throws Exception {
       XmlConfigurationParserImpl parser = new XmlConfigurationParserImpl();
-      String xml = "<globalJmxStatistics enabled=\"true\" jmxDomain=\"horizons\" mBeanServerLookup=\"org.horizon.jmx.PerThreadMBeanServerLookup\"/>";
+      String xml = "<globalJmxStatistics enabled=\"true\" jmxDomain=\"horizons\" mBeanServerLookup=\"org.horizon.jmx.PerThreadMBeanServerLookup\" allowDuplicateDomains=\"true\"/>";
       Element e = XmlConfigHelper.stringToElement(xml);
 
       GlobalConfiguration c = new GlobalConfiguration();
@@ -50,6 +50,7 @@ public class GlobalConfigurationParserTest {
       assert c.isExposeGlobalJmxStatistics();
       assert c.getJmxDomain().equals("horizons");
       assert c.getMBeanServerLookup().equals("org.horizon.jmx.PerThreadMBeanServerLookup");
+      assert c.isAllowDuplicateDomains();
    }
 
    public void testShutdown() throws Exception {

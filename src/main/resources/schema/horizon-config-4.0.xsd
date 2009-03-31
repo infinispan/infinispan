@@ -40,6 +40,7 @@
       <xs:attribute name="enabled" type="tns:booleanType"/>
       <xs:attribute name="jmxDomain" type="xs:string"/>
       <xs:attribute name="mBeanServerLookup" type="xs:string"/>
+      <xs:attribute name="allowDuplicateDomains" type="tns:booleanType"/>
    </xs:complexType>
 
    <xs:complexType name="executorConfigurationType">

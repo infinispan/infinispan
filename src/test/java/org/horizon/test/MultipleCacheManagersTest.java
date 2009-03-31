@@ -1,6 +1,7 @@
 package org.horizon.test;
 
 import org.horizon.Cache;
+import org.horizon.test.fwk.TestCacheManagerFactory;
 import org.horizon.config.Configuration;
 import org.horizon.manager.CacheManager;
 import org.testng.annotations.AfterClass;
@@ -113,7 +114,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
     * @return the new CacheManager
     */
    protected CacheManager addClusterEnabledCacheManager() {
-      CacheManager cm = TestingUtil.createClusteredCacheManager();
+      CacheManager cm = TestCacheManagerFactory.createClusteredCacheManager();
       cacheManagers.add(cm);
       return cm;
    }

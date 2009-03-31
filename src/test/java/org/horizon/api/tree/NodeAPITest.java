@@ -1,14 +1,14 @@
 package org.horizon.api.tree;
 
+import org.horizon.test.fwk.TestCacheManagerFactory;
 import org.horizon.config.Configuration;
 import org.horizon.manager.CacheManager;
-import org.horizon.manager.DefaultCacheManager;
+import org.horizon.test.TestingUtil;
 import org.horizon.transaction.DummyTransactionManagerLookup;
 import org.horizon.tree.Fqn;
 import org.horizon.tree.Node;
 import org.horizon.tree.TreeCache;
 import org.horizon.tree.TreeCacheImpl;
-import org.horizon.test.TestingUtil;
 import static org.testng.AssertJUnit.*;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -39,7 +39,7 @@ public class NodeAPITest {
       Configuration c = new Configuration();
       c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
       c.setInvocationBatchingEnabled(true);
-      CacheManager cm = new DefaultCacheManager(c);
+      CacheManager cm = TestCacheManagerFactory.createCacheManager(c);
       cache = new TreeCacheImpl(cm.getCache());
       tm = TestingUtil.getTransactionManager(cache.getCache());
    }

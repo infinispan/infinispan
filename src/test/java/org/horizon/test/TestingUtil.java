@@ -12,7 +12,6 @@ import org.horizon.Cache;
 import org.horizon.CacheDelegate;
 import org.horizon.commands.CommandsFactory;
 import org.horizon.commands.VisitableCommand;
-import org.horizon.config.GlobalConfiguration;
 import org.horizon.factories.ComponentRegistry;
 import org.horizon.factories.GlobalComponentRegistry;
 import org.horizon.interceptors.InterceptorChain;
@@ -22,9 +21,7 @@ import org.horizon.loader.CacheLoader;
 import org.horizon.loader.CacheLoaderManager;
 import org.horizon.lock.LockManager;
 import org.horizon.manager.CacheManager;
-import org.horizon.manager.DefaultCacheManager;
 import org.horizon.remoting.transport.Address;
-import org.horizon.remoting.transport.jgroups.JGroupsTransport;
 import org.horizon.tree.TreeCache;
 
 import javax.transaction.TransactionManager;
@@ -33,7 +30,6 @@ import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Properties;
 import java.util.Random;
 
 public class TestingUtil {
@@ -621,31 +617,6 @@ public class TestingUtil {
          cr.rewireNamedRegistries();
       }
       return old;
-   }
-
-   public static CacheManager createClusteredCacheManager() {
-      GlobalConfiguration globalConfiguration = getGlobalConfiguration();
-      return new DefaultCacheManager(globalConfiguration);
-   }
-
-   public static GlobalConfiguration getGlobalConfiguration() {
-      GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
-      Properties newTransportProps = new Properties();
-      newTransportProps.put(JGroupsTransport.CONFIGURATION_STRING, JGroupsConfigBuilder.getJGroupsConfig());
-      globalConfiguration.setTransportProperties(newTransportProps);
-      return globalConfiguration;
-   }
-
-   public static CacheManager createLocalCacheManager() {
-      GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
-      return new DefaultCacheManager(globalConfiguration);
-   }
-
-   public static CacheManager createClusteredCacheManager(GlobalConfiguration globalConfiguration) {
-      Properties newTransportProps = new Properties();
-      newTransportProps.put(JGroupsTransport.CONFIGURATION_STRING, JGroupsConfigBuilder.getJGroupsConfig());
-      globalConfiguration.setTransportProperties(newTransportProps);
-      return new DefaultCacheManager(globalConfiguration);
    }
 
    public static CacheLoader getCacheLoader(Cache cache) {

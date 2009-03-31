@@ -3,9 +3,9 @@ package org.horizon.jmx;
 import org.horizon.config.Configuration;
 import org.horizon.config.GlobalConfiguration;
 import org.horizon.manager.CacheManager;
-import org.horizon.manager.DefaultCacheManager;
 import org.horizon.test.SingleCacheManagerTest;
 import org.horizon.test.TestingUtil;
+import org.horizon.test.fwk.TestCacheManagerFactory;
 import org.horizon.transaction.DummyTransactionManagerLookup;
 import org.testng.annotations.Test;
 
@@ -27,11 +27,13 @@ public class MvccLockManagerMBeanTest extends SingleCacheManagerTest {
 
    protected CacheManager createCacheManager() throws Exception {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
+      globalConfiguration.setExposeGlobalJmxStatistics(true);
       globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
       globalConfiguration.setJmxDomain("MvccLockManagerMBeanTest");
-      cacheManager = new DefaultCacheManager(globalConfiguration);
+      cacheManager = TestCacheManagerFactory.createCacheManager(globalConfiguration);
 
       Configuration configuration = getDefaultClusteredConfig(Configuration.CacheMode.LOCAL);
+      configuration.setExposeJmxStatistics(true);
       configuration.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
       configuration.setConcurrencyLevel(CONCURRENCY_LEVEL);
 

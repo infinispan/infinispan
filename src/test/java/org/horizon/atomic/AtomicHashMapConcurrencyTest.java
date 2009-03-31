@@ -4,8 +4,8 @@ import org.horizon.Cache;
 import org.horizon.config.Configuration;
 import org.horizon.lock.TimeoutException;
 import org.horizon.manager.CacheManager;
-import org.horizon.manager.DefaultCacheManager;
 import org.horizon.test.TestingUtil;
+import org.horizon.test.fwk.TestCacheManagerFactory;
 import org.horizon.transaction.DummyTransactionManagerLookup;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -41,7 +41,7 @@ public class AtomicHashMapConcurrencyTest {
       // these 2 need to be set to use the AtomicMapCache
       c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
       c.setInvocationBatchingEnabled(true);
-      CacheManager cm = new DefaultCacheManager(c);
+      CacheManager cm = TestCacheManagerFactory.createCacheManager(c);
       Cache basicCache = cm.getCache();
       cache = (AtomicMapCache<String, String>) basicCache;
       tm = TestingUtil.getTransactionManager(cache);

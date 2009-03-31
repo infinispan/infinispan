@@ -1,9 +1,9 @@
 package org.horizon.tx;
 
 import org.horizon.Cache;
+import org.horizon.test.fwk.TestCacheManagerFactory;
 import org.horizon.config.Configuration;
 import org.horizon.manager.CacheManager;
-import org.horizon.manager.DefaultCacheManager;
 import org.horizon.test.SingleCacheManagerTest;
 import org.horizon.test.TestingUtil;
 import org.horizon.transaction.DummyTransactionManagerLookup;
@@ -18,7 +18,7 @@ public class TransactionsSpanningCaches extends SingleCacheManagerTest {
    protected CacheManager createCacheManager() throws Exception {
       Configuration c = new Configuration();
       c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
-      CacheManager cm = new DefaultCacheManager(c);
+      CacheManager cm = TestCacheManagerFactory.createCacheManager(c);
       cm.defineCache("c1", c);
       cm.defineCache("c2", c);
       return cm;

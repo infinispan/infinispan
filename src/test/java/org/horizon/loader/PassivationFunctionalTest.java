@@ -1,12 +1,12 @@
 package org.horizon.loader;
 
 import org.horizon.Cache;
-import org.horizon.container.entries.InternalCacheEntry;
+import org.horizon.test.fwk.TestCacheManagerFactory;
 import org.horizon.config.CacheLoaderManagerConfig;
 import org.horizon.config.Configuration;
+import org.horizon.container.entries.InternalCacheEntry;
 import org.horizon.loader.dummy.DummyInMemoryCacheStore;
 import org.horizon.manager.CacheManager;
-import org.horizon.manager.DefaultCacheManager;
 import org.horizon.test.TestingUtil;
 import org.horizon.transaction.DummyTransactionManagerLookup;
 import org.testng.annotations.AfterMethod;
@@ -42,7 +42,7 @@ public class PassivationFunctionalTest {
       clmc.setPassivation(true);
       clmc.addCacheLoaderConfig(new DummyInMemoryCacheStore.Cfg());
       cfg.setCacheLoaderManagerConfig(clmc);
-      cm = new DefaultCacheManager(cfg);
+      cm = TestCacheManagerFactory.createCacheManager(cfg);
       cache = cm.getCache();
       store = TestingUtil.extractComponent(cache, CacheLoaderManager.class).getCacheStore();
       tm = TestingUtil.getTransactionManager(cache);

@@ -1,16 +1,16 @@
 package org.horizon.notifications;
 
 import org.horizon.Cache;
-import org.horizon.test.TestingUtil;
+import org.horizon.test.fwk.TestCacheManagerFactory;
 import org.horizon.logging.Log;
 import org.horizon.logging.LogFactory;
 import org.horizon.manager.CacheManager;
-import org.horizon.manager.DefaultCacheManager;
 import org.horizon.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.horizon.notifications.cachelistener.annotation.CacheEntryModified;
 import org.horizon.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.horizon.notifications.cachelistener.annotation.CacheEntryVisited;
 import org.horizon.notifications.cachelistener.event.Event;
+import org.horizon.test.TestingUtil;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -29,7 +29,7 @@ public class ConcurrentNotificationTest {
 
    @BeforeMethod
    public void setUp() {
-      cm = new DefaultCacheManager();
+      cm = TestCacheManagerFactory.createLocalCacheManager();
       cache = cm.getCache();
       listener = new CacheListener();
       cache.addListener(listener);

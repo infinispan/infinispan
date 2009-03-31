@@ -125,7 +125,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    private boolean useReplQueue = false;
    private int replQueueMaxElements = 1000;
    private long replQueueInterval = 5000;
-   private boolean exposeJmxStatistics = true;
+   private boolean exposeJmxStatistics = false;
    @Dynamic
    private boolean fetchInMemoryState = true;
    @Dynamic

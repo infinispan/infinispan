@@ -1,4 +1,4 @@
-package org.horizon.test;
+package org.horizon.test.fwk;
 
 import org.horizon.config.parsing.JGroupsStackParser;
 import org.horizon.config.parsing.XmlConfigHelper;

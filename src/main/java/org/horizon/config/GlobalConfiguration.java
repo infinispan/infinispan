@@ -53,9 +53,10 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    private GlobalComponentRegistry gcr;
    private long distributedSyncTimeout = 60000; // default
 
-   private boolean exposeGlobalJmxStatistics = true;
+   private boolean exposeGlobalJmxStatistics = false;
    private String jmxDomain = "horizon";
    private String mBeanServerLookup = PlatformMBeanServerLookup.class.getName();
+   private boolean allowDuplicateDomains = false;
 
    public boolean isExposeGlobalJmxStatistics() {
       return exposeGlobalJmxStatistics;
@@ -92,6 +93,15 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    public void setMBeanServerLookup(String mBeanServerLookup) {
       testImmutability("mBeanServerLookup");
       this.mBeanServerLookup = mBeanServerLookup;
+   }
+
+   public boolean isAllowDuplicateDomains() {
+      return allowDuplicateDomains;
+   }
+
+   public void setAllowDuplicateDomains(boolean allowDuplicateDomains) {
+      testImmutability("allowDuplicateDomains");
+      this.allowDuplicateDomains = allowDuplicateDomains;
    }
 
    /**

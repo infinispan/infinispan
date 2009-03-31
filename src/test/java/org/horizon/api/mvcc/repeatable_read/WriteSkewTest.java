@@ -1,15 +1,15 @@
 package org.horizon.api.mvcc.repeatable_read;
 
 import org.horizon.Cache;
+import org.horizon.test.fwk.TestCacheManagerFactory;
 import org.horizon.api.mvcc.LockAssert;
 import org.horizon.config.Configuration;
 import org.horizon.invocation.InvocationContextContainer;
 import org.horizon.lock.IsolationLevel;
 import org.horizon.lock.LockManager;
 import org.horizon.manager.CacheManager;
-import org.horizon.manager.DefaultCacheManager;
-import org.horizon.transaction.DummyTransactionManagerLookup;
 import org.horizon.test.TestingUtil;
+import org.horizon.transaction.DummyTransactionManagerLookup;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
@@ -35,8 +35,7 @@ public class WriteSkewTest {
       c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
       c.setLockAcquisitionTimeout(200);
       c.setIsolationLevel(IsolationLevel.REPEATABLE_READ);
-
-      cacheManager = new DefaultCacheManager(c);
+      cacheManager = TestCacheManagerFactory.createCacheManager(c);
    }
 
    @AfterTest

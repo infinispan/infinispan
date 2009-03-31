@@ -25,7 +25,7 @@
 
       <serialization marshallerClass="org.horizon.marshall.VersionAwareMarshaller" version="1.0"
                      objectInputStreamPoolSize="100" objectOutputStreamPoolSize="100"/>
-      <globalJmxStatistics enabled="false" jmxDomain="funky_domain" mBeanServerLookup="org.horizon.jmx.PerThreadMBeanServerLookup"/>
+      <globalJmxStatistics enabled="false" jmxDomain="funky_domain" mBeanServerLookup="org.horizon.jmx.PerThreadMBeanServerLookup" allowDuplicateDomains="true"/>
 
    </global>
 

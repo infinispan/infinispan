@@ -2,10 +2,9 @@ package org.horizon.notifications.cachemanagerlistener;
 
 import static org.easymock.EasyMock.*;
 import org.horizon.Cache;
+import org.horizon.test.fwk.TestCacheManagerFactory;
 import org.horizon.config.Configuration;
-import org.horizon.config.GlobalConfiguration;
 import org.horizon.manager.CacheManager;
-import org.horizon.manager.DefaultCacheManager;
 import org.horizon.remoting.transport.Address;
 import org.horizon.test.TestingUtil;
 import org.testng.annotations.AfterMethod;
@@ -25,8 +24,8 @@ public class CacheManagerNotifierTest {
    }
 
    public void testViewChange() {
-      cm1 = TestingUtil.createClusteredCacheManager();
-      cm2 = TestingUtil.createClusteredCacheManager();
+      cm1 = TestCacheManagerFactory.createClusteredCacheManager();
+      cm2 = TestCacheManagerFactory.createClusteredCacheManager();
       Configuration c = new Configuration();
       c.setCacheMode(Configuration.CacheMode.REPL_SYNC);
       c.setFetchInMemoryState(false);
@@ -57,7 +56,7 @@ public class CacheManagerNotifierTest {
    }
 
    public void testCacheStartedAndStopped() {
-      cm1 = new DefaultCacheManager(GlobalConfiguration.getNonClusteredDefault());
+      cm1 = TestCacheManagerFactory.createLocalCacheManager();
       cm1.getCache();
       CacheManagerNotifier mockNotifier = createMock(CacheManagerNotifier.class);
       CacheManagerNotifier origNotifier = TestingUtil.replaceComponent(cm1, CacheManagerNotifier.class, mockNotifier, true);

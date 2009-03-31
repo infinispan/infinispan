@@ -1,10 +1,10 @@
 package org.horizon.jmx;
 
-import org.horizon.config.GlobalConfiguration;
 import org.horizon.config.Configuration;
+import org.horizon.config.GlobalConfiguration;
 import org.horizon.manager.CacheManager;
 import org.horizon.test.SingleCacheManagerTest;
-import org.horizon.test.TestingUtil;
+import org.horizon.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 import javax.management.MBeanServer;
@@ -25,11 +25,11 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
    private ObjectName name;
 
    protected CacheManager createCacheManager() throws Exception {
-      GlobalConfiguration globalConfiguration = TestingUtil.getGlobalConfiguration();
-      globalConfiguration.setExposeGlobalJmxStatistics(true);
+      GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
       globalConfiguration.setJmxDomain(JMX_DOMAIN);
       globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
-      cacheManager = TestingUtil.createClusteredCacheManager(globalConfiguration);
+      globalConfiguration.setExposeGlobalJmxStatistics(true);
+      cacheManager = TestCacheManagerFactory.createCacheManager(globalConfiguration);
       cacheManager.start();
       cacheManager.getCache();
       name = new ObjectName("CacheManagerMBeanTest:cache-name=[global],jmx-resource=CacheManager");

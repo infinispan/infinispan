@@ -3,8 +3,8 @@ package org.horizon.eviction;
 import org.horizon.Cache;
 import org.horizon.config.Configuration;
 import org.horizon.manager.CacheManager;
-import org.horizon.manager.DefaultCacheManager;
 import org.horizon.test.SingleCacheManagerTest;
+import org.horizon.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 import java.util.Random;
@@ -27,7 +27,7 @@ public abstract class BaseEvictionFunctionalTest extends SingleCacheManagerTest 
       cfg.setEvictionWakeUpInterval(100);
       cfg.setEvictionMaxEntries(1); // 1 max entries
       cfg.setUseLockStriping(false); // to minimise chances of deadlock in the unit test
-      CacheManager cm = new DefaultCacheManager(cfg);
+      CacheManager cm = TestCacheManagerFactory.createCacheManager(cfg);
       cache = cm.getCache();
       return cm;
    }

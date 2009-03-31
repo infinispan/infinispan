@@ -7,8 +7,8 @@ import org.horizon.config.GlobalConfiguration;
 import org.horizon.factories.AbstractComponentRegistry;
 import org.horizon.interceptors.CacheMgmtInterceptor;
 import org.horizon.manager.CacheManager;
-import org.horizon.manager.DefaultCacheManager;
 import org.horizon.test.TestingUtil;
+import org.horizon.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -36,7 +36,6 @@ public class ComponentsJmxRegistrationTest {
    @BeforeMethod
    public void setUp() {
       mBeanServer = MBeanServerFactory.createMBeanServer();
-//      mBeanServer = ManagementFactory.getPlatformMBeanServer();
       cacheManagers.clear();
    }
 
@@ -50,7 +49,7 @@ public class ComponentsJmxRegistrationTest {
    }
 
    public void testRegisterLocalCache() throws Exception {
-      CacheManager cm = TestingUtil.createLocalCacheManager();
+      CacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
       cacheManagers.add(cm);
       cm.start();
       Configuration configuration = config();
@@ -75,8 +74,9 @@ public class ComponentsJmxRegistrationTest {
    }
 
    public void testRegisterReplicatedCache() throws Exception {
-      GlobalConfiguration globalConfiguration = TestingUtil.getGlobalConfiguration();
-      CacheManager cm = new DefaultCacheManager(globalConfiguration);
+      GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
+      globalConfiguration.setAllowDuplicateDomains(true);
+      CacheManager cm = TestCacheManagerFactory.createCacheManager(globalConfiguration);
       cacheManagers.add(cm);
       cm.start();
       Configuration configurationOverride = config();
@@ -95,8 +95,9 @@ public class ComponentsJmxRegistrationTest {
    }
 
    public void testLocalAndReplicatedCache() throws Exception {
-      GlobalConfiguration globalConfiguration = TestingUtil.getGlobalConfiguration();
-      CacheManager cm = new DefaultCacheManager(globalConfiguration);
+      GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
+      globalConfiguration.setAllowDuplicateDomains(true);
+      CacheManager cm = TestCacheManagerFactory.createCacheManager(globalConfiguration);
       cacheManagers.add(cm);
       cm.start();
       Configuration replicated = config();

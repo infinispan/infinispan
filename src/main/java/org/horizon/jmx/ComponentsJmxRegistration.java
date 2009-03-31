@@ -71,12 +71,6 @@ public class ComponentsJmxRegistration {
    }
 
    public void setJmxDomain(String jmxDomain) {
-      String[] domains = mBeanServer.getDomains();
-      for (String domain : domains) {
-         if (domain.equals(jmxDomain)) {
-            log.warn("Jmx domain already in use");
-         }
-      }
       this.jmxDomain = jmxDomain;
    }
 

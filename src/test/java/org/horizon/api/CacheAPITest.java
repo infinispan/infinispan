@@ -1,12 +1,12 @@
 package org.horizon.api;
 
 import org.horizon.Cache;
+import org.horizon.test.fwk.TestCacheManagerFactory;
 import org.horizon.config.Configuration;
 import org.horizon.config.ConfigurationException;
 import org.horizon.lock.IsolationLevel;
 import org.horizon.manager.CacheManager;
 import org.horizon.test.SingleCacheManagerTest;
-import org.horizon.test.TestingUtil;
 import org.horizon.transaction.DummyTransactionManager;
 import org.horizon.transaction.DummyTransactionManagerLookup;
 import static org.testng.AssertJUnit.assertEquals;
@@ -30,7 +30,7 @@ public abstract class CacheAPITest extends SingleCacheManagerTest {
       Configuration c = new Configuration();
       c.setIsolationLevel(getIsolationLevel());
       c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
-      CacheManager cm = TestingUtil.createLocalCacheManager();
+      CacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
       cm.defineCache("test", c);
       cache = cm.getCache("test");
       return cm;

@@ -1,5 +1,6 @@
 package org.horizon.loader;
 
+import org.horizon.test.fwk.TestCacheManagerFactory;
 import org.horizon.commands.read.GetKeyValueCommand;
 import org.horizon.commands.write.EvictCommand;
 import org.horizon.config.CacheLoaderManagerConfig;
@@ -12,7 +13,6 @@ import org.horizon.interceptors.CacheLoaderInterceptor;
 import org.horizon.interceptors.base.CommandInterceptor;
 import org.horizon.loader.dummy.DummyInMemoryCacheStore;
 import org.horizon.manager.CacheManager;
-import org.horizon.manager.DefaultCacheManager;
 import org.horizon.test.SingleCacheManagerTest;
 import org.horizon.test.TestingUtil;
 import org.testng.annotations.Test;
@@ -51,7 +51,7 @@ public class ConcurrentLoadAndEvictTest extends SingleCacheManagerTest {
       CustomInterceptorConfig cic = new CustomInterceptorConfig(sdi);
       cic.setAfterInterceptor(CacheLoaderInterceptor.class);
       config.setCustomInterceptors(Collections.singletonList(cic));
-      return new DefaultCacheManager(config);
+      return TestCacheManagerFactory.createCacheManager(config);
    }
 
    public void testEvictBeforeRead() throws CacheLoaderException, ExecutionException, InterruptedException {

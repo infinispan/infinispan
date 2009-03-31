@@ -1,7 +1,7 @@
 package org.horizon.manager;
 
 import org.horizon.Cache;
-import org.horizon.test.TestingUtil;
+import org.horizon.test.fwk.TestCacheManagerFactory;
 import org.horizon.config.Configuration;
 import org.horizon.config.GlobalConfiguration;
 import org.horizon.eviction.EvictionManager;
@@ -9,6 +9,7 @@ import org.horizon.eviction.EvictionStrategy;
 import org.horizon.interceptors.BatchingInterceptor;
 import org.horizon.interceptors.InterceptorChain;
 import org.horizon.remoting.RPCManager;
+import org.horizon.test.TestingUtil;
 import org.horizon.transaction.DummyTransactionManager;
 import org.horizon.transaction.DummyTransactionManagerLookup;
 import org.testng.annotations.AfterMethod;
@@ -36,8 +37,7 @@ public class CacheManagerComponentRegistryTest {
       defaultCfg.setFetchInMemoryState(false);
 
       // cache manager with default configuration
-      cm = new DefaultCacheManager(GlobalConfiguration.getClusteredDefault(),
-                                   defaultCfg);
+      cm = TestCacheManagerFactory.createCacheManager(GlobalConfiguration.getClusteredDefault(), defaultCfg);
 
       // default cache with no overrides
       Cache c = cm.getCache();
@@ -63,7 +63,7 @@ public class CacheManagerComponentRegistryTest {
       defaultCfg.setCacheMode(Configuration.CacheMode.REPL_SYNC);
       defaultCfg.setEvictionStrategy(EvictionStrategy.NONE);
       // cache manager with default configuration
-      cm = new DefaultCacheManager(GlobalConfiguration.getClusteredDefault(), defaultCfg);
+      cm = TestCacheManagerFactory.createCacheManager(GlobalConfiguration.getClusteredDefault(), defaultCfg);
 
       // default cache with no overrides
       Cache c = cm.getCache();
@@ -81,7 +81,7 @@ public class CacheManagerComponentRegistryTest {
 
    public void testOverridingComponents() throws NamedCacheNotFoundException {
       Configuration defaultCfg = new Configuration();
-      cm = new DefaultCacheManager(defaultCfg);
+      cm = TestCacheManagerFactory.createCacheManager(GlobalConfiguration.getClusteredDefault(), defaultCfg);
 
       // default cache with no overrides
       Cache c = cm.getCache();

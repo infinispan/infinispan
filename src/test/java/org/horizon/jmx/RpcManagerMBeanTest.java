@@ -1,17 +1,18 @@
 package org.horizon.jmx;
 
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.replay;
 import org.horizon.Cache;
 import org.horizon.config.Configuration;
 import org.horizon.config.GlobalConfiguration;
 import org.horizon.manager.CacheManager;
-import org.horizon.remoting.transport.Transport;
-import org.horizon.remoting.RPCManagerImpl;
 import org.horizon.remoting.RPCManager;
+import org.horizon.remoting.RPCManagerImpl;
+import org.horizon.remoting.transport.Transport;
 import org.horizon.test.MultipleCacheManagersTest;
 import org.horizon.test.TestingUtil;
+import org.horizon.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-import static org.easymock.EasyMock.createMock;
-import static org.easymock.EasyMock.replay;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
@@ -31,23 +32,27 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
 
 
    protected void createCacheManagers() throws Throwable {
-      GlobalConfiguration globalConfiguration = TestingUtil.getGlobalConfiguration();
+      GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
       globalConfiguration.setExposeGlobalJmxStatistics(true);
+      globalConfiguration.setAllowDuplicateDomains(true);
       globalConfiguration.setJmxDomain(JMX_DOMAIN);
       globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
-      CacheManager cacheManager1 = TestingUtil.createClusteredCacheManager(globalConfiguration);
+      CacheManager cacheManager1 = TestCacheManagerFactory.createCacheManager(globalConfiguration);
       cacheManager1.start();
 
-      GlobalConfiguration globalConfiguration2 = TestingUtil.getGlobalConfiguration();
+      GlobalConfiguration globalConfiguration2 = GlobalConfiguration.getClusteredDefault();
+      globalConfiguration2.setExposeGlobalJmxStatistics(true);
       globalConfiguration2.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
       globalConfiguration2.setJmxDomain(JMX_DOMAIN);
-      globalConfiguration2.setExposeGlobalJmxStatistics(true);
-      CacheManager cacheManager2 = TestingUtil.createClusteredCacheManager(globalConfiguration2);
+      globalConfiguration2.setAllowDuplicateDomains(true);
+      CacheManager cacheManager2 = TestCacheManagerFactory.createCacheManager(globalConfiguration2);
       cacheManager2.start();
 
       registerCacheManager(cacheManager1, cacheManager2);
 
-      defineCacheOnAllManagers("repl_sync_cache", getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC));
+      Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
+      config.setExposeJmxStatistics(true);
+      defineCacheOnAllManagers("repl_sync_cache", config);
       cache1 = manager(0).getCache("repl_sync_cache");
       cache2 = manager(1).getCache("repl_sync_cache");
       mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();

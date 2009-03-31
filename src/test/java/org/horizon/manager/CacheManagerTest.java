@@ -1,6 +1,7 @@
 package org.horizon.manager;
 
 import org.horizon.Cache;
+import org.horizon.test.fwk.TestCacheManagerFactory;
 import org.horizon.test.TestingUtil;
 import org.horizon.config.Configuration;
 import org.horizon.config.DuplicateCacheNameException;
@@ -14,7 +15,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "manager.CacheManagerTest")
 public class CacheManagerTest {
    public void testDefaultCache() {
-      CacheManager cm = new DefaultCacheManager();
+      CacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
 
       try {
          assert cm.getCache().getStatus() == ComponentStatus.RUNNING;
@@ -34,7 +35,7 @@ public class CacheManagerTest {
    }
 
    public void testClashingNames() {
-      CacheManager cm = new DefaultCacheManager();
+      CacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
       try {
          Configuration c = new Configuration();
 
@@ -53,7 +54,7 @@ public class CacheManagerTest {
    }
 
    public void testStartAndStop() {
-      DefaultCacheManager cm = new DefaultCacheManager();
+      CacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
       try {
          Cache c1 = cm.getCache("cache1");
          Cache c2 = cm.getCache("cache2");

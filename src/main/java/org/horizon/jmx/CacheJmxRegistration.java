@@ -99,11 +99,18 @@ public class CacheJmxRegistration {
    }
 
    static void updateDomain(ComponentsJmxRegistration registrator, GlobalComponentRegistry componentRegistry, MBeanServer mBeanServer) {
-      GlobalConfiguration globalConfiguration = componentRegistry.getComponent(GlobalConfiguration.class);
+      GlobalConfiguration gc = componentRegistry.getComponent(GlobalConfiguration.class);
       String componentName = CacheJmxRegistration.class.getName() + "_jmxDomain";
       String jmxDomain = componentRegistry.getComponent(String.class, componentName);
       if (jmxDomain == null) {
-         jmxDomain = getJmxDomain(globalConfiguration.getJmxDomain(), mBeanServer);
+         jmxDomain = getJmxDomain(gc.getJmxDomain(), mBeanServer);
+         if (!jmxDomain.equals(gc.getJmxDomain()) && !gc.isAllowDuplicateDomains()) {
+            String message = "There's already an cache manager instance registered under '" + gc.getJmxDomain() +
+                  "' JMX domain. If you want to allow multiple instances configured with same JMX domain enable " +
+                  "'allowDuplicateDomains' attribute in 'globalJmxStatistics' config element";
+            if (log.isErrorEnabled()) log.error(message);
+            throw new JmxDomainConflictException(message);
+         }
          componentRegistry.registerComponent(jmxDomain, componentName);
       }
       registrator.setJmxDomain(jmxDomain);

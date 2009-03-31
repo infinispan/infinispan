@@ -418,6 +418,8 @@ public class XmlConfigurationParserImpl extends XmlParserBase implements XmlConf
          if (existsAttribute(jmxDomain)) c.setJmxDomain(jmxDomain);
          String mBeanServerLookup = getAttributeValue(e, "mBeanServerLookup");
          if (existsAttribute(mBeanServerLookup)) c.setMBeanServerLookup(mBeanServerLookup);
+         String allowDuplicateDomains = getAttributeValue(e, "allowDuplicateDomains");
+         if (existsAttribute(allowDuplicateDomains)) c.setAllowDuplicateDomains(getBoolean(allowDuplicateDomains));
       }
    }
 

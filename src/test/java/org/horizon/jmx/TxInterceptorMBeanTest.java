@@ -1,18 +1,18 @@
 package org.horizon.jmx;
 
-import org.testng.annotations.Test;
-import org.testng.annotations.AfterMethod;
-import org.horizon.test.TestingUtil;
-import org.horizon.test.MultipleCacheManagersTest;
-import org.horizon.manager.CacheManager;
-import org.horizon.manager.DefaultCacheManager;
-import org.horizon.config.GlobalConfiguration;
-import org.horizon.config.Configuration;
-import org.horizon.transaction.DummyTransactionManagerLookup;
 import org.horizon.Cache;
+import org.horizon.config.Configuration;
+import org.horizon.config.GlobalConfiguration;
+import org.horizon.manager.CacheManager;
+import org.horizon.test.MultipleCacheManagersTest;
+import org.horizon.test.TestingUtil;
+import org.horizon.test.fwk.TestCacheManagerFactory;
+import org.horizon.transaction.DummyTransactionManagerLookup;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.Test;
 
-import javax.management.ObjectName;
 import javax.management.MBeanServer;
+import javax.management.ObjectName;
 import javax.transaction.TransactionManager;
 
 /**
@@ -30,15 +30,18 @@ public class TxInterceptorMBeanTest extends MultipleCacheManagersTest {
    private Cache cache2;
 
    protected void createCacheManagers() throws Throwable {
-      GlobalConfiguration globalConfiguration = TestingUtil.getGlobalConfiguration();
+      GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
+      globalConfiguration.setExposeGlobalJmxStatistics(true);
+      globalConfiguration.setAllowDuplicateDomains(true);
       globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
       globalConfiguration.setJmxDomain("TxInterceptorMBeanTest");
-      CacheManager cacheManager1 = new DefaultCacheManager(globalConfiguration);
+      CacheManager cacheManager1 = TestCacheManagerFactory.createCacheManager(globalConfiguration);
       registerCacheManager(cacheManager1);
-      CacheManager cacheManager2 = new DefaultCacheManager(globalConfiguration.clone());
+      CacheManager cacheManager2 = TestCacheManagerFactory.createCacheManager(globalConfiguration.clone());
       registerCacheManager(cacheManager2);
 
       Configuration configuration = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
+      configuration.setExposeJmxStatistics(true);
       configuration.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
       cacheManager1.defineCache("test", configuration);
       cacheManager2.defineCache("test", configuration.clone());

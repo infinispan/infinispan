@@ -21,10 +21,10 @@
  */
 package org.horizon.atomic;
 
+import org.horizon.test.fwk.TestCacheManagerFactory;
 import static org.horizon.atomic.AtomicHashMapTestAssertions.assertIsEmpty;
 import static org.horizon.atomic.AtomicHashMapTestAssertions.assertIsEmptyMap;
 import org.horizon.config.Configuration;
-import org.horizon.manager.DefaultCacheManager;
 import org.horizon.test.TestingUtil;
 import org.horizon.transaction.DummyTransactionManagerLookup;
 import org.testng.annotations.AfterMethod;
@@ -47,7 +47,7 @@ public class APITest {
       Configuration c = new Configuration();
       c.setInvocationBatchingEnabled(true);
       c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
-      cache = (AtomicMapCache) new DefaultCacheManager(c).getCache();
+      cache = (AtomicMapCache) TestCacheManagerFactory.createCacheManager(c).getCache();
       tm = TestingUtil.getTransactionManager(cache);
    }
 

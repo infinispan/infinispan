@@ -3,15 +3,15 @@ package org.horizon.jmx;
 import org.horizon.config.Configuration;
 import org.horizon.config.GlobalConfiguration;
 import org.horizon.manager.CacheManager;
-import org.horizon.manager.DefaultCacheManager;
 import org.horizon.test.SingleCacheManagerTest;
+import org.horizon.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Test functionality in {@link org.horizon.interceptors.CacheMgmtInterceptor}.
@@ -25,11 +25,13 @@ public class CacheMgmtInterceptorMBeanTest extends SingleCacheManagerTest {
 
    protected CacheManager createCacheManager() throws Exception {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
+      globalConfiguration.setExposeGlobalJmxStatistics(true);
       globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
       globalConfiguration.setJmxDomain("CacheMgmtInterceptorMBeanTest");
-      cacheManager = new DefaultCacheManager(globalConfiguration);
+      cacheManager = TestCacheManagerFactory.createCacheManager(globalConfiguration);
 
       Configuration configuration = getDefaultClusteredConfig(Configuration.CacheMode.LOCAL);
+      configuration.setExposeJmxStatistics(true);
       cacheManager.defineCache("test", configuration);
       cache = cacheManager.getCache("test");
       mgmtInterceptor = new ObjectName("CacheMgmtInterceptorMBeanTest:cache-name=test(local),jmx-resource=CacheMgmtInterceptor");

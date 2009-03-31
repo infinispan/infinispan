@@ -12,9 +12,9 @@ import org.horizon.loader.jdbc.UnitTestDatabaseManager;
 import org.horizon.loader.jdbc.binary.JdbcBinaryCacheStoreConfig;
 import org.horizon.loader.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.horizon.manager.CacheManager;
-import org.horizon.manager.DefaultCacheManager;
 import org.horizon.test.SingleCacheManagerTest;
 import org.horizon.test.TestingUtil;
+import org.horizon.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -38,7 +38,8 @@ public class CacheLoaderAndCacheStoreInterceptorMBeanTest extends SingleCacheMan
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
       globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
       globalConfiguration.setJmxDomain("ActivationAndPassivationInterceptorMBeanTest");
-      cacheManager = new DefaultCacheManager(globalConfiguration);
+      globalConfiguration.setExposeGlobalJmxStatistics(true);
+      cacheManager = TestCacheManagerFactory.createCacheManager(globalConfiguration);
 
       ConnectionFactoryConfig connectionFactoryConfig = UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
       TableManipulation tableManipulation = UnitTestDatabaseManager.buildDefaultTableManipulation();
@@ -48,6 +49,7 @@ public class CacheLoaderAndCacheStoreInterceptorMBeanTest extends SingleCacheMan
       clManagerConfig.setPassivation(false);
       clManagerConfig.setCacheLoaderConfigs(Collections.singletonList((CacheLoaderConfig) config));
       Configuration configuration = getDefaultClusteredConfig(Configuration.CacheMode.LOCAL);
+      configuration.setExposeJmxStatistics(true);
       configuration.setCacheLoaderManagerConfig(clManagerConfig);
 
       cacheManager.defineCache("test", configuration);

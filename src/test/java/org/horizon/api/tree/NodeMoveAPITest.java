@@ -15,6 +15,7 @@ import org.horizon.tree.Fqn;
 import org.horizon.tree.Node;
 import org.horizon.tree.TreeCacheImpl;
 import org.horizon.tree.TreeStructureSupport;
+import org.horizon.test.fwk.TestCacheManagerFactory;
 import static org.testng.AssertJUnit.*;
 import org.testng.annotations.Test;
 
@@ -46,7 +47,7 @@ public class NodeMoveAPITest extends SingleCacheManagerTest {
    DataContainer dc;
 
    protected CacheManager createCacheManager() throws Exception {
-      CacheManager cm = TestingUtil.createLocalCacheManager();
+      CacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
       Configuration c = new Configuration();
       c.setFetchInMemoryState(false);
       c.setInvocationBatchingEnabled(true);

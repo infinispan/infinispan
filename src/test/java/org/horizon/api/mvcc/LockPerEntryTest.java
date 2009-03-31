@@ -1,11 +1,11 @@
 package org.horizon.api.mvcc;
 
 import org.horizon.Cache;
+import org.horizon.test.fwk.TestCacheManagerFactory;
 import org.horizon.config.Configuration;
 import org.horizon.invocation.InvocationContextContainer;
 import org.horizon.lock.LockManager;
 import org.horizon.manager.CacheManager;
-import org.horizon.manager.DefaultCacheManager;
 import org.horizon.test.SingleCacheManagerTest;
 import org.horizon.test.TestingUtil;
 import org.horizon.util.concurrent.locks.containers.LockContainer;
@@ -22,7 +22,7 @@ public class LockPerEntryTest extends SingleCacheManagerTest {
    protected CacheManager createCacheManager() throws Exception {
       Configuration cfg = new Configuration();
       cfg.setUseLockStriping(false);
-      return new DefaultCacheManager(cfg);
+      return TestCacheManagerFactory.createCacheManager(cfg);
    }
 
    public void testLocksCleanedUp() {

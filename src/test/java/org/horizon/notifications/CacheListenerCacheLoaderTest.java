@@ -1,11 +1,11 @@
 package org.horizon.notifications;
 
 import org.horizon.Cache;
+import org.horizon.test.fwk.TestCacheManagerFactory;
 import org.horizon.config.CacheLoaderManagerConfig;
 import org.horizon.config.Configuration;
 import org.horizon.loader.dummy.DummyInMemoryCacheStore;
 import org.horizon.manager.CacheManager;
-import org.horizon.manager.DefaultCacheManager;
 import org.horizon.notifications.cachelistener.annotation.CacheEntryActivated;
 import org.horizon.notifications.cachelistener.annotation.CacheEntryLoaded;
 import org.horizon.notifications.cachelistener.annotation.CacheEntryPassivated;
@@ -26,7 +26,7 @@ public class CacheListenerCacheLoaderTest {
 
    @BeforeMethod
    public void setUp() {
-      cm = new DefaultCacheManager();
+      cm = TestCacheManagerFactory.createLocalCacheManager();
       Configuration c = new Configuration();
       CacheLoaderManagerConfig clmc = new CacheLoaderManagerConfig();
       DummyInMemoryCacheStore.Cfg clc = new DummyInMemoryCacheStore.Cfg("no_passivation");

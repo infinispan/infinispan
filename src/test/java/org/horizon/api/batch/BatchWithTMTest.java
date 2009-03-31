@@ -1,6 +1,7 @@
 package org.horizon.api.batch;
 
 import org.horizon.Cache;
+import org.horizon.test.fwk.TestCacheManagerFactory;
 import org.horizon.config.Configuration;
 import org.horizon.manager.CacheManager;
 import org.horizon.test.TestingUtil;
@@ -19,7 +20,7 @@ public class BatchWithTMTest extends AbstractBatchTest {
 
    @BeforeClass
    public void createCacheManager() {
-      cm = TestingUtil.createLocalCacheManager();
+      cm = TestCacheManagerFactory.createLocalCacheManager();
    }
 
    @AfterClass

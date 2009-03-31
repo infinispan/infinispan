@@ -73,7 +73,6 @@ public class ClusteredGetCommand implements CacheRPCCommand {
     *         invoking a remote get specified by {@link #getDataCommand()}.
     */
    public Object perform(InvocationContext context) throws Throwable {
-      System.out.println("ClusteredGetCommand.perform");
       if (key != null) {
          InternalCacheEntry cacheEntry = dataContainer.get(key);
          if (cacheEntry == null) {

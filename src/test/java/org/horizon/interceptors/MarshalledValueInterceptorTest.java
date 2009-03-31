@@ -1,12 +1,11 @@
 package org.horizon.interceptors;
 
 import org.horizon.Cache;
-import org.horizon.test.TestingUtil;
+import org.horizon.test.fwk.TestCacheManagerFactory;
 import org.horizon.config.Configuration;
-import org.horizon.config.GlobalConfiguration;
 import org.horizon.manager.CacheManager;
-import org.horizon.manager.DefaultCacheManager;
 import org.horizon.marshall.MarshalledValue;
+import org.horizon.test.TestingUtil;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
@@ -27,7 +26,7 @@ public class MarshalledValueInterceptorTest {
 
    @BeforeTest
    public void setUp() {
-      cm = new DefaultCacheManager(GlobalConfiguration.getNonClusteredDefault());
+      cm = TestCacheManagerFactory.createLocalCacheManager();
    }
 
    @AfterTest
