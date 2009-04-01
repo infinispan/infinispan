@@ -13,9 +13,10 @@ import java.util.Set;
 /**
  * Tester class for {@link org.horizon.loader.jdbc.connectionfactory.PooledConnectionFactory}.
  *
- * @author
+ * @author Mircea.Markus@jboss.com
  */
-@Test(groups = "functional", testName = "loader.jdbc.PooledConnectionFactoryTest", enabled = false)
+@Test(groups = "functional", testName = "loader.jdbc.PooledConnectionFactoryTest", enabled = false,
+      description = "This test is disabled due to: http://sourceforge.net/tracker/index.php?func=detail&aid=1892195&group_id=25357&atid=383690")
 public class PooledConnectionFactoryTest {
 
    private PooledConnectionFactory factory;
