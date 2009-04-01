@@ -21,6 +21,7 @@ import org.horizon.statetransfer.StateTransferException;
 
 import java.text.NumberFormat;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -32,8 +33,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @since 4.0
  */
 @MBean(objectName = "RpcManager")
-public class RpcManagerImpl implements RpcManager
-{
+public class RpcManagerImpl implements RpcManager {
 
    Transport t;
    private final AtomicLong replicationCount = new AtomicLong(0);
@@ -84,9 +84,10 @@ public class RpcManagerImpl implements RpcManager
    public void retrieveState(String cacheName, long timeout) throws StateTransferException {
       if (t.isSupportStateTransfer()) {
          // TODO make these configurable
-         int initialWaitTime = 1000; // millis
+         Random r = new Random();
+         int initialWaitTime = (r.nextInt(10) + 1) * 100; // millis
          int waitTimeIncreaseFactor = 2;
-         int numRetries = 3;
+         int numRetries = 5;
          List<Address> members = t.getMembers();
          if (members.size() < 2) {
             if (log.isDebugEnabled())
