@@ -568,13 +568,11 @@ public class FIFODataContainer implements DataContainer {
 
    protected static abstract class SpinLock {
       final AtomicBoolean l = new AtomicBoolean(false);
-      final ReentrantLock rl = new ReentrantLock();
 
       final void lock() {
          while (!l.compareAndSet(false, true)) {
             // spin, spin, spin!
          }
-//         if (rl.tryLock()) l.set(true);
       }
 
       final boolean tryLock() {
@@ -582,10 +580,7 @@ public class FIFODataContainer implements DataContainer {
       }
 
       final void unlock() {
-//         try {
-//            rl.unlock();
          l.set(false);
-//         } catch (IllegalMonitorStateException e) {}
       }
    }
 
