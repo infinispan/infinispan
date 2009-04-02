@@ -269,4 +269,8 @@ public class JmxStatsFunctionalTest {
       configuration.setExposeJmxStatistics(true);
       return configuration;
    }
+
+   public void testFailure() {
+      assert false : "some failure here";
+   }
 }
