@@ -15,6 +15,7 @@ import org.horizon.remoting.ReplicationQueue;
 import org.horizon.remoting.transport.Address;
 
 import javax.transaction.TransactionManager;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
@@ -27,6 +28,7 @@ import java.util.concurrent.ConcurrentMap;
 public class AbstractCacheTest {
 
    protected final Log log = LogFactory.getLog(getClass());
+
    protected static enum CleanupPhase {
       AFTER_METHOD, AFTER_TEST
    }
@@ -34,17 +36,19 @@ public class AbstractCacheTest {
    protected CleanupPhase cleanup = CleanupPhase.AFTER_TEST;
 
    public void clearContent(CacheManager cacheManager) {
-      Set<Cache> runningCaches = getRunningCaches(cacheManager);
-      for (Cache cache : runningCaches) {
-         clearRunningTx(cache);
-      }
-      if (!cacheManager.getStatus().allowInvocations()) return;
-      for (Cache cache : runningCaches) {
-         removeInMemoryData(cache);
-         clearCacheLoader(cache);
-         clearReplicationQueues(cache);
-         InvocationContext invocationContext = ((AdvancedCache) cache).getInvocationContextContainer().get();
-         if (invocationContext != null) invocationContext.reset();
+      if (cacheManager != null) {
+         Set<Cache> runningCaches = getRunningCaches(cacheManager);
+         for (Cache cache : runningCaches) {
+            clearRunningTx(cache);
+         }
+         if (!cacheManager.getStatus().allowInvocations()) return;
+         for (Cache cache : runningCaches) {
+            removeInMemoryData(cache);
+            clearCacheLoader(cache);
+            clearReplicationQueues(cache);
+            InvocationContext invocationContext = ((AdvancedCache) cache).getInvocationContextContainer().get();
+            if (invocationContext != null) invocationContext.reset();
+         }
       }
    }
 
@@ -56,10 +60,10 @@ public class AbstractCacheTest {
    @SuppressWarnings(value = "unchecked")
    protected Set<Cache> getRunningCaches(CacheManager cacheManager) {
       ConcurrentMap<String, Cache> caches = (ConcurrentMap<String, Cache>) TestingUtil.extractField(DefaultCacheManager.class, cacheManager, "caches");
+      if (caches == null) return Collections.emptySet();
       Set<Cache> result = new HashSet<Cache>();
       for (Cache cache : caches.values()) {
-         if (cache.getStatus() == ComponentStatus.RUNNING)
-            result.add(cache);
+         if (cache.getStatus() == ComponentStatus.RUNNING) result.add(cache);
       }
       return result;
    }

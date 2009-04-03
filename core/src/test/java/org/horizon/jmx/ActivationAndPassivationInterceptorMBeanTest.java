@@ -1,10 +1,17 @@
 package org.horizon.jmx;
 
 import org.horizon.Cache;
+import org.horizon.config.CacheLoaderManagerConfig;
+import org.horizon.config.Configuration;
+import org.horizon.config.GlobalConfiguration;
 import org.horizon.container.entries.InternalEntryFactory;
+import org.horizon.loader.CacheLoaderManager;
 import org.horizon.loader.CacheStore;
+import org.horizon.loader.dummy.DummyInMemoryCacheStore;
 import org.horizon.manager.CacheManager;
 import org.horizon.test.SingleCacheManagerTest;
+import org.horizon.test.TestingUtil;
+import org.horizon.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -20,29 +27,22 @@ import java.util.Map;
  */
 @Test(groups = "functional", testName = "jmx.ActivationAndPassivationInterceptorMBeanTest")
 public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheManagerTest {
-
    Cache cache;
    MBeanServer threadMBeanServer;
    ObjectName activationInterceptorObjName;
    ObjectName passivationInterceptorObjName;
    CacheStore cacheStore;
 
-
    protected CacheManager createCacheManager() throws Exception {
-/*
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
       globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
       globalConfiguration.setJmxDomain("ActivationAndPassivationInterceptorMBeanTest");
       globalConfiguration.setExposeGlobalJmxStatistics(true);
       cacheManager = TestCacheManagerFactory.createCacheManager(globalConfiguration);
-
-      ConnectionFactoryConfig connectionFactoryConfig = UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
-      TableManipulation tableManipulation = UnitTestDatabaseManager.buildDefaultTableManipulation();
-      JdbcBinaryCacheStoreConfig config = new JdbcBinaryCacheStoreConfig(connectionFactoryConfig, tableManipulation);
-
+      DummyInMemoryCacheStore.Cfg cfg = new DummyInMemoryCacheStore.Cfg();
       CacheLoaderManagerConfig clManagerConfig = new CacheLoaderManagerConfig();
       clManagerConfig.setPassivation(true);
-      clManagerConfig.setCacheLoaderConfigs(Collections.singletonList((CacheLoaderConfig) config));
+      clManagerConfig.addCacheLoaderConfig(cfg);
       Configuration configuration = getDefaultClusteredConfig(Configuration.CacheMode.LOCAL);
       configuration.setExposeJmxStatistics(true);
       configuration.setCacheLoaderManagerConfig(clManagerConfig);
@@ -55,8 +55,7 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
       threadMBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
       cacheStore = TestingUtil.extractComponent(cache, CacheLoaderManager.class).getCacheStore();
 
-*/
-      return null;
+      return cacheManager;
    }
 
    @AfterMethod

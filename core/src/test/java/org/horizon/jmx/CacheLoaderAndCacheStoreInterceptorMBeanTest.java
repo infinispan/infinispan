@@ -4,13 +4,9 @@ import org.horizon.config.CacheLoaderManagerConfig;
 import org.horizon.config.Configuration;
 import org.horizon.config.GlobalConfiguration;
 import org.horizon.container.entries.InternalEntryFactory;
-import org.horizon.loader.CacheLoaderConfig;
 import org.horizon.loader.CacheLoaderManager;
 import org.horizon.loader.CacheStore;
-//import org.horizon.loader.jdbc.TableManipulation;
-import org.horizon.test.fwk.UnitTestDatabaseManager;
-//import org.horizon.loader.jdbc.binary.JdbcBinaryCacheStoreConfig;
-//import org.horizon.loader.jdbc.connectionfactory.ConnectionFactoryConfig;
+import org.horizon.loader.dummy.DummyInMemoryCacheStore;
 import org.horizon.manager.CacheManager;
 import org.horizon.test.SingleCacheManagerTest;
 import org.horizon.test.TestingUtil;
@@ -20,7 +16,6 @@ import org.testng.annotations.Test;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
-import java.util.Collections;
 
 /**
  * Tests the jmx functionality from CacheLoaderInterceptor and CacheStoreInterceptor.
@@ -34,39 +29,30 @@ public class CacheLoaderAndCacheStoreInterceptorMBeanTest extends SingleCacheMan
    private MBeanServer threadMBeanServer;
    private CacheStore cacheStore;
 
-// TODO: navssurtani -- Uncomment etc once the copying is done
-
-
-
    protected CacheManager createCacheManager() throws Exception {
-	/*
-	      GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
-	      globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
-	      globalConfiguration.setJmxDomain("ActivationAndPassivationInterceptorMBeanTest");
-	      globalConfiguration.setExposeGlobalJmxStatistics(true);
-	      cacheManager = TestCacheManagerFactory.createCacheManager(globalConfiguration);
+      GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
+      globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
+      globalConfiguration.setJmxDomain("CacheLoaderAndCacheStoreInterceptorMBeanTest");
+      globalConfiguration.setExposeGlobalJmxStatistics(true);
+      cacheManager = TestCacheManagerFactory.createCacheManager(globalConfiguration);
 
-	      ConnectionFactoryConfig connectionFactoryConfig = UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
-	      TableManipulation tableManipulation = UnitTestDatabaseManager.buildDefaultTableManipulation();
-	      JdbcBinaryCacheStoreConfig config = new JdbcBinaryCacheStoreConfig(connectionFactoryConfig, tableManipulation);
+      DummyInMemoryCacheStore.Cfg cfg = new DummyInMemoryCacheStore.Cfg();
 
-	      CacheLoaderManagerConfig clManagerConfig = new CacheLoaderManagerConfig();
-	      clManagerConfig.setPassivation(true);
-	      clManagerConfig.setCacheLoaderConfigs(Collections.singletonList((CacheLoaderConfig) config));
-	      Configuration configuration = getDefaultClusteredConfig(Configuration.CacheMode.LOCAL);
-	      configuration.setExposeJmxStatistics(true);
-	      configuration.setCacheLoaderManagerConfig(clManagerConfig);
+      CacheLoaderManagerConfig clManagerConfig = new CacheLoaderManagerConfig();
+      clManagerConfig.setPassivation(false);
+      clManagerConfig.addCacheLoaderConfig(cfg);
+      Configuration configuration = getDefaultClusteredConfig(Configuration.CacheMode.LOCAL);
+      configuration.setExposeJmxStatistics(true);
+      configuration.setCacheLoaderManagerConfig(clManagerConfig);
 
-	      cacheManager.defineCache("test", configuration);
-	      cache = cacheManager.getCache("test");
-	      activationInterceptorObjName = new ObjectName("ActivationAndPassivationInterceptorMBeanTest:cache-name=test(local),jmx-resource=ActivationInterceptor");
-	      passivationInterceptorObjName = new ObjectName("ActivationAndPassivationInterceptorMBeanTest:cache-name=test(local),jmx-resource=PassivationInterceptor");
+      cacheManager.defineCache("test", configuration);
+      cache = cacheManager.getCache("test");
+      loaderInterceptorObjName = new ObjectName("CacheLoaderAndCacheStoreInterceptorMBeanTest:cache-name=test(local),jmx-resource=CacheLoaderInterceptor");
+      storeInterceptorObjName = new ObjectName("CacheLoaderAndCacheStoreInterceptorMBeanTest:cache-name=test(local),jmx-resource=CacheStoreInterceptor");
 
-	      threadMBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
-	      cacheStore = TestingUtil.extractComponent(cache, CacheLoaderManager.class).getCacheStore();
-
-	*/
-	      return null;
+      threadMBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
+      cacheStore = TestingUtil.extractComponent(cache, CacheLoaderManager.class).getCacheStore();
+      return cacheManager;
    }
 
    @AfterMethod

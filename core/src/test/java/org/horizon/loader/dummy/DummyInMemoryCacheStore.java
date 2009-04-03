@@ -30,7 +30,7 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
    private Cache cache;
 
    public void store(InternalCacheEntry ed) {
-      store.put(ed.getKey(), ed);
+      if (ed != null) store.put(ed.getKey(), ed);
    }
 
    @SuppressWarnings("unchecked")
