@@ -179,7 +179,7 @@ public class ReplicateCommand implements CacheRpcCommand
 
       ReplicateCommand that = (ReplicateCommand) o;
 
-      return !(commands != null ? !commands.equals(that.commands) : that.commands != null);
+      return !(commands != null ? !Arrays.equals(commands, that.commands) : that.commands != null);
    }
 
    @Override
