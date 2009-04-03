@@ -1,27 +1,15 @@
 package org.horizon.jmx;
 
 import org.horizon.Cache;
-import org.horizon.config.CacheLoaderManagerConfig;
-import org.horizon.config.Configuration;
-import org.horizon.config.GlobalConfiguration;
 import org.horizon.container.entries.InternalEntryFactory;
-import org.horizon.loader.CacheLoaderConfig;
-import org.horizon.loader.CacheLoaderManager;
 import org.horizon.loader.CacheStore;
-//import org.horizon.loader.jdbc.TableManipulation;
-//import org.horizon.test.fwk.UnitTestDatabaseManager;
-//import org.horizon.loader.jdbc.binary.JdbcBinaryCacheStoreConfig;
-//import org.horizon.loader.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.horizon.manager.CacheManager;
 import org.horizon.test.SingleCacheManagerTest;
-import org.horizon.test.TestingUtil;
-import org.horizon.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,7 +27,6 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
    ObjectName passivationInterceptorObjName;
    CacheStore cacheStore;
 
-// TODO: navssurtani -- Uncomment etc once the copying is done
 
    protected CacheManager createCacheManager() throws Exception {
 /*
