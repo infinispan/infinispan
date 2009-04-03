@@ -1,11 +1,11 @@
 package org.horizon.loader;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.horizon.Cache;
 import org.horizon.loader.modifications.Modification;
 import org.horizon.loader.modifications.Remove;
 import org.horizon.loader.modifications.Store;
+import org.horizon.logging.Log;
+import org.horizon.logging.LogFactory;
 import org.horizon.marshall.Marshaller;
 import org.horizon.util.concurrent.WithinThreadExecutor;
 
@@ -70,7 +70,8 @@ public abstract class AbstractCacheStore extends AbstractCacheLoader implements 
       });
    }
 
-   protected void purgeInternal() throws CacheLoaderException {}
+   protected void purgeInternal() throws CacheLoaderException {
+   }
 
    protected void applyModifications(List<? extends Modification> mods) throws CacheLoaderException {
       for (Modification m : mods) {

@@ -1,7 +1,5 @@
 package org.horizon.loader.jdbc.binary;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.horizon.Cache;
 import org.horizon.container.entries.InternalCacheEntry;
 import org.horizon.io.ByteBuffer;
@@ -12,6 +10,8 @@ import org.horizon.loader.bucket.BucketBasedCacheStore;
 import org.horizon.loader.jdbc.JdbcUtil;
 import org.horizon.loader.jdbc.TableManipulation;
 import org.horizon.loader.jdbc.connectionfactory.ConnectionFactory;
+import org.horizon.logging.Log;
+import org.horizon.logging.LogFactory;
 import org.horizon.marshall.Marshaller;
 
 import java.io.IOException;

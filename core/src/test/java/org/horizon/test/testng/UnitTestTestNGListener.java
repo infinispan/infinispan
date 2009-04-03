@@ -1,7 +1,7 @@
 package org.horizon.test.testng;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.horizon.logging.Log;
+import org.horizon.logging.LogFactory;
 import org.testng.IClass;
 import org.testng.ITestContext;
 import org.testng.ITestListener;

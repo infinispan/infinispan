@@ -1,9 +1,9 @@
 package org.horizon.loader.jdbc;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.horizon.loader.CacheLoaderException;
 import org.horizon.loader.jdbc.connectionfactory.ConnectionFactory;
+import org.horizon.logging.Log;
+import org.horizon.logging.LogFactory;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;

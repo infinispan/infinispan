@@ -2,10 +2,10 @@ package org.horizon.loader.jdbc.connectionfactory;
 
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import com.mchange.v2.c3p0.DataSources;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.horizon.loader.CacheLoaderException;
 import org.horizon.loader.jdbc.JdbcUtil;
+import org.horizon.logging.Log;
+import org.horizon.logging.LogFactory;
 
 import java.beans.PropertyVetoException;
 import java.net.URL;

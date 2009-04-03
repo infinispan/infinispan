@@ -1,17 +1,16 @@
 package org.horizon.loader.jdbc.connectionfactory;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.horizon.loader.CacheLoaderException;
+import org.horizon.logging.Log;
+import org.horizon.logging.LogFactory;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
 /**
- * Connection factory implementation that will create database connection on a per invocation basis.
- * Not recommanded in production, {@link org.horizon.loader.jdbc.connectionfactory.PooledConnectionFactory} should rather
- * be used.
+ * Connection factory implementation that will create database connection on a per invocation basis. Not recommanded in
+ * production, {@link org.horizon.loader.jdbc.connectionfactory.PooledConnectionFactory} should rather be used.
  *
  * @author Mircea.Markus@jboss.com
  */

@@ -1,15 +1,15 @@
 package org.horizon.loader.decorators;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.horizon.Cache;
-import org.horizon.container.entries.InternalCacheEntry;
 import org.horizon.config.CacheLoaderManagerConfig;
 import org.horizon.config.Configuration;
+import org.horizon.container.entries.InternalCacheEntry;
 import org.horizon.loader.CacheLoaderException;
 import org.horizon.loader.CacheLoaderManager;
 import org.horizon.loader.CacheStore;
 import org.horizon.loader.dummy.DummyInMemoryCacheStore;
+import org.horizon.logging.Log;
+import org.horizon.logging.LogFactory;
 import org.horizon.manager.CacheManager;
 import org.horizon.test.MultipleCacheManagersTest;
 import org.horizon.test.TestingUtil;
