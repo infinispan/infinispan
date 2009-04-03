@@ -22,7 +22,6 @@ import org.horizon.loader.CacheLoaderManager;
 import org.horizon.lock.LockManager;
 import org.horizon.manager.CacheManager;
 import org.horizon.remoting.transport.Address;
-// import org.horizon.tree.TreeCache;
 
 import javax.transaction.TransactionManager;
 import java.io.File;
@@ -364,23 +363,9 @@ public class TestingUtil {
       f.delete();
    }
 
-
-//	TODO: navssurtani -- commented out on 02/04/2009 while moving stuff around; needs to be fixed.
-
-
-   public static void killTreeCaches(Collection treeCaches) {
-//      if (treeCaches != null) killTreeCaches((TreeCache[]) treeCaches.toArray(new TreeCache[]{}));
-   }
-
    public static void killCaches(Collection caches) {
-//      if (caches != null) killCaches((Cache[]) caches.toArray(new Cache[]{}));
+      if (caches != null) killCaches((Cache[]) caches.toArray(new Cache[]{}));
    }
-
-//   public static void killTreeCaches(TreeCache... treeCaches) {
-//      for (TreeCache tc : treeCaches) {
-//         if (tc != null) killCaches(tc.getCache());
-//      }
-//   }
 
    public static void killCacheManagers(CacheManager... cacheManagers) {
       if (cacheManagers != null) {
