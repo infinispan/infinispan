@@ -7,7 +7,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
    <modelVersion>4.0.0</modelVersion>
    <properties>
-      <horizon-version>4.0.0-SNAPSHOT</horizon-version>
+      <project-package>org.horizon</project-package>
+      <project-version>4.0.0-SNAPSHOT</project-version>
       <defaultTestGroup>functional,unit</defaultTestGroup>
       <!-- By default only generate Javadocs when we install the module. -->
       <javadocPhase>install</javadocPhase>
@@ -39,6 +40,27 @@
          <version>5.8</version>
          <scope>test</scope>
          <classifier>jdk15</classifier>
+      </dependency>
+
+      <dependency>
+         <groupId>org.easymock</groupId>
+         <artifactId>easymockclassextension</artifactId>
+         <version>2.4</version>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>org.easymock</groupId>
+         <artifactId>easymockclassextension</artifactId>
+         <version>2.4</version>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>jboss.jbossts</groupId>
+         <artifactId>jbossjta</artifactId>
+         <version>4.4.0.GA</version>
+         <scope>test</scope>
       </dependency>
    </dependencies>
    <build>
