@@ -1,0 +1,170 @@
+<?xml version="1.0"?>
+
+<!-- This pom is going to become the parent pom for the whole project -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+   <modelVersion>4.0.0</modelVersion>
+   <properties>
+      <horizon-version>4.0.0-SNAPSHOT</horizon-version>
+      <defaultTestGroup>functional,unit</defaultTestGroup>
+      <!-- By default only generate Javadocs when we install the module. -->
+      <javadocPhase>install</javadocPhase>
+   </properties>
+
+   <parent>
+      <groupId>org.jboss.cache</groupId>
+      <artifactId>jbosscache-common-parent</artifactId>
+      <version>1.5</version>
+   </parent>
+   <groupId>org.horizon</groupId>
+   <artifactId>horizon-parent</artifactId>
+   <version>${horizon-version}</version>
+   <name>Horizon - Parent</name>
+   <description>Horizon - Open Source Data Grids</description>
+   <url>http://www.horizon-project.org</url>
+   <packaging>pom</packaging>
+   <dependencies>
+	  <dependency>
+         <groupId>net.jcip</groupId>
+         <artifactId>jcip-annotations</artifactId>
+         <version>1.0</version>
+         <optional>true</optional>
+      </dependency>  
+      <!-- 5.8 is needed for proper parallel test execution -->
+      <dependency>
+         <groupId>org.testng</groupId>
+         <artifactId>testng</artifactId>
+         <version>5.8</version>
+         <scope>test</scope>
+         <classifier>jdk15</classifier>
+      </dependency>
+   </dependencies>
+   <build>
+      <plugins>
+         <!-- ensure parallel test execution -->
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>2.4.3-JBOSS</version>
+            <configuration>
+               <parallel>tests</parallel>
+               <threadCount>10</threadCount>
+               <forkMode>none</forkMode>
+               <systemProperties>
+                  <property>
+                     <name>jgroups.stack</name>
+                     <value>${protocol.stack}</value>
+                  </property>
+                  <property>
+                     <name>bind.address</name>
+                     <value>127.0.0.1</value>
+                  </property>
+                  <property>
+                     <name>java.net.preferIPv4Stack</name>
+                     <value>true</value>
+                  </property>
+               </systemProperties>
+               <trimStackTrace>false</trimStackTrace>
+               <properties>
+                  <property>
+                     <name>listener</name>
+                     <value>org.horizon.test.testng.UnitTestTestNGListener</value>
+                  </property>
+               </properties>
+            </configuration>
+         </plugin>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-jar-plugin</artifactId>
+            <configuration>
+               <archive>
+                  <manifest>
+                     <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                     <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                     <mainClass>org.horizon.Version</mainClass>
+                  </manifest>
+               </archive>
+            </configuration>
+            <executions>
+               <execution>
+                  <id>build-test-jar</id>
+                  <goals>
+                     <goal>test-jar</goal>
+                  </goals>
+                  <configuration>
+                     <archive>
+                        <manifest>
+                           <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                           <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                        </manifest>
+                     </archive>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+      </plugins>
+   </build>
+
+   <!-- basic JBoss repository so that the common parent POM in jbosscache-support can be found -->
+   <repositories>
+      <repository>
+         <id>repository.jboss.org</id>
+         <url>http://repository.jboss.org/maven2</url>
+      </repository>
+      <repository>
+         <id>snapshots.jboss.org</id>
+         <url>http://snapshots.jboss.org/maven2</url>
+      </repository>
+   </repositories>
+
+   <profiles>
+      <profile>
+         <id>test-hudson</id>
+         <activation>
+            <activeByDefault>true</activeByDefault>
+         </activation>
+         <properties>
+            <defaultTestGroup>functional,unit</defaultTestGroup>
+            <protocol.stack>tcp</protocol.stack>
+         </properties>
+      </profile>
+
+      <profile>
+         <id>test-functional</id>
+         <properties>
+            <defaultTestGroup>functional</defaultTestGroup>
+            <protocol.stack>tcp</protocol.stack>
+         </properties>
+      </profile>
+
+      <profile>
+         <id>test-unit</id>
+         <properties>
+            <defaultTestGroup>unit</defaultTestGroup>
+         </properties>
+      </profile>
+
+      <profile>
+         <id>test-jgroups</id>
+         <properties>
+            <defaultTestGroup>jgroups</defaultTestGroup>
+         </properties>
+      </profile>
+
+      <profile>
+         <id>test-transaction</id>
+         <properties>
+            <defaultTestGroup>transaction</defaultTestGroup>
+         </properties>
+      </profile>
+
+      <profile>
+         <id>test-integration</id>
+         <properties>
+            <defaultTestGroup>integration</defaultTestGroup>
+         </properties>
+      </profile>
+   </profiles>
+</project>

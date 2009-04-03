@@ -1,0 +1,62 @@
+<?xml version="1.0"?>
+
+<!-- This is the current pom for the cachestore/bdbje directory (or project) for Horizon-->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+   <modelVersion>4.0.0</modelVersion>
+   <properties>
+      <horizon-version>4.0.0-SNAPSHOT</horizon-version>
+   </properties>
+
+   <parent>
+      <groupId>org.horizon</groupId>
+      <artifactId>horizon-parent</artifactId>
+      <version>4.0.0-SNAPSHOT</version>
+   </parent>
+   
+
+   <groupId>org.horizon</groupId>
+   <artifactId>horizon-cachestore-bdbje</artifactId>
+   <version>${horizon-version}</version>
+   <name>Horizon - Cachestore bdbje</name>
+   <description>Horizon - Open Source Data Grids. This is the cachestore/bdbje package.</description>
+   <dependencies>
+      <dependency>
+          <groupId>org.horizon</groupId>
+          <artifactId>horizon-core</artifactId>
+          <version>${horizon-version}</version>
+      </dependency>
+
+	  <dependency>
+         <groupId>com.sleepycat</groupId>
+         <artifactId>je</artifactId>
+         <version>3.3.75</version>
+      </dependency>
+    
+      <dependency>
+         <groupId>org.easymock</groupId>
+         <artifactId>easymockclassextension</artifactId>
+         <version>2.4</version>
+         <scope>test</scope>
+      </dependency>
+
+	<dependency>
+     <groupId>org.horizon</groupId>
+     <artifactId>horizon-core</artifactId>
+     <version>${horizon-version}</version>
+     <type>test-jar</type>
+   </dependency>
+    
+	
+   </dependencies>
+
+   <repositories>
+   <repository>
+      <id>berkeleydb-je.repository</id>
+      <url>http://download.oracle.com/maven/</url>
+   </repository>
+   </repositories>
+
+</project>
