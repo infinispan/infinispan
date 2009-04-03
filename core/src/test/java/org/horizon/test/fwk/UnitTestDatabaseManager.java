@@ -8,17 +8,8 @@ package org.horizon.test.fwk;
 import org.horizon.test.TestingUtil;
 
 import java.io.File;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.util.Properties;
 import java.util.StringTokenizer;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Class that assures concurrent access to the in memory database.
@@ -29,7 +20,7 @@ public class UnitTestDatabaseManager {
 //   private static final ConnectionFactoryConfig realConfig = new ConnectionFactoryConfig();
 
 
-	// TODO: navssurtani -- commented out on 02/04/2009 while moving stuff around; needs to be fixed
+	// TODO: navssurtani -- move to jdbc package. Create a package org.horizon.test.fwk
 
 /*
    private static AtomicInteger userIndex = new AtomicInteger(0);
