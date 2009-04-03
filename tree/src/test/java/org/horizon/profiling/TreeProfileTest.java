@@ -1,17 +1,32 @@
 package org.horizon.profiling;
 
+import org.horizon.Cache;
+import org.horizon.config.Configuration;
+import org.horizon.lock.IsolationLevel;
 import org.horizon.logging.Log;
 import org.horizon.logging.LogFactory;
 import org.horizon.manager.CacheManager;
+import org.horizon.manager.DefaultCacheManager;
+import org.horizon.profiling.testinternals.FqnGenerator;
+import org.horizon.profiling.testinternals.Generator;
 import org.horizon.profiling.testinternals.TaskRunner;
 import org.horizon.test.TestingUtil;
+import org.horizon.test.TreeTestingUtil;
+import org.horizon.transaction.DummyTransactionManager;
+import org.horizon.tree.Fqn;
+import org.horizon.tree.TreeCache;
+import org.horizon.tree.TreeCacheImpl;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Test to use with a profiler to profile replication.  To be used in conjunction with ProfileSlaveTest.
+ *  * Test to use with a profiler to profile replication.  To be used in conjunction with ProfileSlaveTest.
  * <p/>
  * Typical usage pattern:
  * <p/>
@@ -20,6 +35,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * <p/>
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
+ * @author Navin Surtani (<a href="mailto:nsurtani@redhat.com">nsurtani@redhat.com</a>)
  */
 @Test(groups = "profiling", testName = "profiling.TreeProfileTest", enabled = false)
 public class TreeProfileTest {
@@ -38,13 +54,11 @@ public class TreeProfileTest {
    protected static final boolean USE_SLEEP = false; // throttle generation a bit
    private CacheManager cacheManager;
 
-// TODO: navssurtani move this to tree package.
+
+   protected TreeCache cache;
 
 
-//   protected TreeCache cache;
 
-
-/*
    @BeforeMethod
    public void setUp() {
       Configuration cfg = new Configuration();
@@ -57,27 +71,25 @@ public class TreeProfileTest {
       Cache c = cacheManager.getCache();
       cache = new TreeCacheImpl(c);
    }
-*/
+
    @AfterMethod
    public void tearDown() {
-//      TestingUtil.killTreeCaches(cache);
+      TreeTestingUtil.killTreeCaches(cache);
       TestingUtil.killCacheManagers(cacheManager);
    }
 
-// TODO: navssurtani commented out.
 
-//   private List<Fqn> fqns = new ArrayList<Fqn>(MAX_OVERALL_NODES);
+   private List<Fqn> fqns = new ArrayList<Fqn>(MAX_OVERALL_NODES);
 
    public void testLocalMode() throws Exception {
       runCompleteTest();
    }
 
-	//TODO: navssurtani -- Uncomment the init() and warmup() once the stuff is fixed.
 
    private void runCompleteTest() throws Exception {
-//      init();
+      init();
       startup();
-//      warmup();
+      warmup();
       doTest();
 
       // wait for user exit
@@ -88,9 +100,7 @@ public class TreeProfileTest {
     * The following test phases can be profiled individually using triggers in JProfiler.
     */
 
-	// TODO: navssurtani commented out.
-	
-/*
+
    protected void init() {
       long startTime = System.currentTimeMillis();
       log.warn("Starting init() phase");
@@ -98,7 +108,7 @@ public class TreeProfileTest {
       for (int i = 0; i < MAX_OVERALL_NODES; i++) {
          Fqn fqn;
          do {
-            fqn = Generator.createRandomFqn(MAX_DEPTH);
+            fqn = FqnGenerator.createRandomFqn(MAX_DEPTH);
          }
          while (fqns.contains(fqn));
 
@@ -109,18 +119,16 @@ public class TreeProfileTest {
       long duration = System.currentTimeMillis() - startTime;
       log.warn("Finished init() phase.  " + printDuration(duration));
    }
-*/
+
    protected void startup() {
       long startTime = System.currentTimeMillis();
       log.warn("Starting cache");
-//      cache.start();
+      cache.start();
       long duration = System.currentTimeMillis() - startTime;
       log.warn("Started cache.  " + printDuration(duration));
    }
 
-// TODO: navssurtani commented out.
 
-/*
    private void warmup() throws InterruptedException {
       long startTime = System.currentTimeMillis();
       TaskRunner runner = new TaskRunner(NUM_THREADS);
@@ -131,7 +139,7 @@ public class TreeProfileTest {
             public void run() {
                try {
                   // this will create the necessary nodes.
-//                  cache.put(fqn, "key", Collections.emptyMap());
+                  cache.put(fqn, "key", Collections.emptyMap());
                }
                catch (Exception e) {
                   log.warn("Caught Exception", e);
@@ -140,21 +148,20 @@ public class TreeProfileTest {
          });
       }
 
-//TODO: navssurtani -- sort this messy stuff out!!!
       // loop through WARMUP_LOOPS gets and puts for JVM optimisation
       for (int i = 0; i < WARMUP_LOOPS; i++) {
          runner.execute(new Runnable() {
             public void run() {
                try {
-//                  Fqn fqn = Generator.getRandomElement(fqns);
+                  Fqn fqn = Generator.getRandomElement(fqns);
                   DummyTransactionManager.getInstance().begin();
-//                  cache.get(fqn, "key");
+                  cache.get(fqn, "key");
                   DummyTransactionManager.getInstance().commit();
                   DummyTransactionManager.getInstance().begin();
-//                  cache.put(fqn, "key", "Value");
+                  cache.put(fqn, "key", "Value");
                   DummyTransactionManager.getInstance().commit();
                   DummyTransactionManager.getInstance().begin();
-//                  cache.remove(fqn, "key");
+                  cache.remove(fqn, "key");
                   DummyTransactionManager.getInstance().commit();
                }
                catch (Exception e) {
@@ -174,7 +181,7 @@ public class TreeProfileTest {
 
       startup();
    }
-*/
+
    private void doTest() throws Exception {
       TaskRunner runner = new TaskRunner(NUM_THREADS);
 
@@ -224,7 +231,7 @@ public class TreeProfileTest {
       double nOps = (double) (NUM_OPERATIONS / 3);
       double avg = ((double) totalNanos) / nOps;
       double avgMicros = avg / 1000;
-      return avgMicros + " Âµs";
+      return avgMicros + " µs";
    }
 
    private double toMillis(long nanos) {
@@ -240,11 +247,8 @@ public class TreeProfileTest {
       Mode mode;
       AtomicLong duration;
 
-// TODO: navssurtani commented out.
-
-
       public void run() {
-/*         Fqn fqn = Generator.getRandomElement(fqns);
+         Fqn fqn = Generator.getRandomElement(fqns);
          long d = 0, st = 0;
          try {
             switch (mode) {
@@ -271,9 +275,9 @@ public class TreeProfileTest {
             d = 0;
          }
          duration.getAndAdd(d);
-*/
+
 	}
-     
+
    }
 
    private class Putter extends MyRunnable {
