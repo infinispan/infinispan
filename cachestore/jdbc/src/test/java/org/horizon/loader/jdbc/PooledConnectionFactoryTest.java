@@ -2,6 +2,7 @@ package org.horizon.loader.jdbc;
 
 import org.horizon.loader.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.horizon.loader.jdbc.connectionfactory.PooledConnectionFactory;
+import org.horizon.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
