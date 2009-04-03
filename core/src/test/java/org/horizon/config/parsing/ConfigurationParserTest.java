@@ -5,11 +5,8 @@ import org.horizon.config.Configuration;
 import org.horizon.eviction.EvictionStrategy;
 import org.horizon.loader.CacheStoreConfig;
 import org.horizon.loader.decorators.SingletonStoreConfig;
-/* import org.horizon.loader.jdbc.TableManipulation;
-import org.horizon.loader.jdbc.connectionfactory.ConnectionFactoryConfig;
-import org.horizon.loader.jdbc.connectionfactory.PooledConnectionFactory;
-import org.horizon.loader.jdbc.stringbased.JdbcStringBasedCacheStore;
-import org.horizon.loader.jdbc.stringbased.JdbcStringBasedCacheStoreConfig;*/
+import org.horizon.loader.file.FileCacheStore;
+import org.horizon.loader.file.FileCacheStoreConfig;
 import org.horizon.lock.IsolationLevel;
 import org.horizon.transaction.GenericTransactionManagerLookup;
 import org.testng.annotations.Test;
@@ -153,29 +150,19 @@ public class ConfigurationParserTest {
       assert !c.isUseReplQueue();
    }
 
-	// TODO: navssurtani -- commented out on 02/04/09 while moving stuff around. Needs to be fixed.
-
-/*
    public void testCacheLoaders() throws Exception {
       XmlConfigurationParserImpl parser = new XmlConfigurationParserImpl();
       String xml =
             "      <loaders passivation=\"true\" shared=\"true\" preload=\"true\">\n" +
-            "         <loader class=\"org.horizon.loader.jdbc.stringbased.JdbcStringBasedCacheStore\" fetchPersistentState=\"true\"\n" +
-            "                 ignoreModifications=\"true\" purgeOnStartup=\"true\">\n" +
-            "            <properties>\n" +
-            "               <property name=\"connectionFactoryClass\" value=\"org.horizon.loader.jdbc.connectionfactory.PooledConnectionFactory\"/>\n" +
-            "               <property name=\"connectionUrl\" value=\"jdbc://some-url\"/>\n" +
-            "               <property name=\"userName\" value=\"root\"/>\n" +
-            "               <property name=\"driverClass\" value=\"org.dbms.Driver\"/>\n" +
-            "               <property name=\"idColumnType\" value=\"VARCHAR2(256)\"/>\n" +
-            "               <property name=\"dataColumnType\" value=\"BLOB\"/>\n" +
-            "               <property name=\"dropTableOnExit\" value=\"true\"/>\n" +
-            "               <property name=\"createTableOnStart\" value=\"false\"/>\n" +
-            "            </properties>\n" +
-            "            <singletonStore enabled=\"true\" pushStateWhenCoordinator=\"true\" pushStateTimeout=\"20000\"/>\n" +
-            "            <async enabled=\"true\" batchSize=\"15\"/>\n" +
-            "         </loader>\n" +
-            "      </loaders>      ";
+                  "         <loader class=\"org.horizon.loader.file.FileCacheStore\" fetchPersistentState=\"true\"\n" +
+                  "                 ignoreModifications=\"true\" purgeOnStartup=\"true\">\n" +
+                  "            <properties>\n" +
+                  "               <property name=\"location\" value=\"blahblah\"/>\n" +
+                  "            </properties>\n" +
+                  "            <singletonStore enabled=\"true\" pushStateWhenCoordinator=\"true\" pushStateTimeout=\"20000\"/>\n" +
+                  "            <async enabled=\"true\" batchSize=\"15\"/>\n" +
+                  "         </loader>\n" +
+                  "      </loaders>      ";
       Element e = XmlConfigHelper.stringToElement(xml);
 
       Configuration c = new Configuration();
@@ -189,7 +176,7 @@ public class ConfigurationParserTest {
       assert clc.isPreload();
 
       CacheStoreConfig iclc = (CacheStoreConfig) clc.getFirstCacheLoaderConfig();
-      assert iclc.getCacheLoaderClassName().equals(JdbcStringBasedCacheStore.class.getName());
+      assert iclc.getCacheLoaderClassName().equals(FileCacheStore.class.getName());
       assert iclc.getAsyncStoreConfig().isEnabled();
       assert iclc.getAsyncStoreConfig().getBatchSize() == 15;
       assert iclc.getAsyncStoreConfig().getPollWait() == 100;
@@ -200,29 +187,15 @@ public class ConfigurationParserTest {
       assert iclc.isPurgeOnStartup();
 
       assert clc.getCacheLoaderConfigs().size() == 1;
-      JdbcStringBasedCacheStoreConfig csConf = (JdbcStringBasedCacheStoreConfig) clc.getFirstCacheLoaderConfig();
-      assert csConf.getCacheLoaderClassName().equals("org.horizon.loader.jdbc.stringbased.JdbcStringBasedCacheStore");
-      assert csConf.isFetchPersistentState();
-      assert csConf.isIgnoreModifications();
-      assert csConf.isPurgeOnStartup();
-      TableManipulation tableManipulation = csConf.getTableManipulation();
-      ConnectionFactoryConfig cfc = csConf.getConnectionFactoryConfig();
-      assert cfc.getConnectionFactoryClass().equals(PooledConnectionFactory.class.getName());
-      assert cfc.getConnectionUrl().equals("jdbc://some-url");
-      assert cfc.getUserName().equals("root");
-      assert cfc.getDriverClass().equals("org.dbms.Driver");
-      assert tableManipulation.getIdColumnType().equals("VARCHAR2(256)");
-      assert tableManipulation.getDataColumnType().equals("BLOB");
-      assert tableManipulation.isDropTableOnExit();
-      assert !tableManipulation.isCreateTableOnStart();
-
+      FileCacheStoreConfig csConf = (FileCacheStoreConfig) clc.getFirstCacheLoaderConfig();
+      assert csConf.getLocation().equals("blahblah");
 
       SingletonStoreConfig ssc = iclc.getSingletonStoreConfig();
       assert ssc.isSingletonStoreEnabled();
       assert ssc.isPushStateWhenCoordinator();
       assert ssc.getPushStateTimeout() == 20000;
    }
-*/
+
    public void testCacheLoadersDefaults() throws Exception {
       XmlConfigurationParserImpl parser = new XmlConfigurationParserImpl();
       String xml = "<loaders>\n" +

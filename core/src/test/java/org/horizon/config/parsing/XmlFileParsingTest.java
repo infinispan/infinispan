@@ -3,10 +3,7 @@ package org.horizon.config.parsing;
 import org.horizon.config.CacheLoaderManagerConfig;
 import org.horizon.config.Configuration;
 import org.horizon.config.GlobalConfiguration;
-// import org.horizon.loader.jdbc.stringbased.JdbcStringBasedCacheStoreConfig;
-// import org.horizon.loader.jdbc.connectionfactory.PooledConnectionFactory;
-// import org.horizon.loader.jdbc.connectionfactory.ConnectionFactoryConfig;
-// import org.horizon.loader.jdbc.TableManipulation;
+import org.horizon.loader.file.FileCacheStoreConfig;
 import org.horizon.lock.IsolationLevel;
 import org.testng.annotations.Test;
 
@@ -16,9 +13,6 @@ import java.util.Map;
 @Test(groups = "unit", testName = "config.parsing.XmlFileParsingTest")
 public class XmlFileParsingTest {
 
-	//TODO: navssurtani -- commented out this method on 2nd April 2009. Needs to be uncommented and fixed.
-
-	/*
    public void testNamedCacheFile() throws IOException {
       XmlConfigurationParser parser = new XmlConfigurationParserImpl("configs/named-cache-test.xml");
 
@@ -100,21 +94,12 @@ public class XmlFileParsingTest {
       c = namedCaches.get("withLoader");
       CacheLoaderManagerConfig loaderManagerConfig = c.getCacheLoaderManagerConfig();
       assert loaderManagerConfig.getCacheLoaderConfigs().size() == 1;
-      JdbcStringBasedCacheStoreConfig csConf = (JdbcStringBasedCacheStoreConfig) loaderManagerConfig.getFirstCacheLoaderConfig();
-      assert csConf.getCacheLoaderClassName().equals("org.horizon.loader.jdbc.stringbased.JdbcStringBasedCacheStore");
+      FileCacheStoreConfig csConf = (FileCacheStoreConfig) loaderManagerConfig.getFirstCacheLoaderConfig();
+      assert csConf.getCacheLoaderClassName().equals("org.horizon.loader.file.FileCacheStore");
       assert csConf.isFetchPersistentState();
       assert csConf.isIgnoreModifications();
       assert csConf.isPurgeOnStartup();
-      TableManipulation tableManipulation = csConf.getTableManipulation();
-      ConnectionFactoryConfig cfc = csConf.getConnectionFactoryConfig();
-      assert cfc.getConnectionFactoryClass().equals(PooledConnectionFactory.class.getName());
-      assert cfc.getConnectionUrl().equals("jdbc://some-url");
-      assert cfc.getUserName().equals("root");
-      assert cfc.getDriverClass().equals("org.dbms.Driver");
-      assert tableManipulation.getIdColumnType().equals("VARCHAR2(256)");
-      assert tableManipulation.getDataColumnType().equals("BLOB");
-      assert tableManipulation.isDropTableOnExit();
-      assert !tableManipulation.isCreateTableOnStart();
+      assert csConf.getLocation().equals("/tmp/FileCacheStore-Location");
 
       c = namedCaches.get("withouthJmxEnabled");
       assert !c.isExposeJmxStatistics();
@@ -123,7 +108,7 @@ public class XmlFileParsingTest {
       assert gc.getJmxDomain().equals("funky_domain");
       assert gc.getMBeanServerLookup().equals("org.horizon.jmx.PerThreadMBeanServerLookup");
    }
-*/
+
    public void testConfigurationMerging() throws IOException {
       XmlConfigurationParser parser = new XmlConfigurationParserImpl("configs/named-cache-test.xml");
       Configuration defaultCfg = parser.parseDefaultConfiguration();
