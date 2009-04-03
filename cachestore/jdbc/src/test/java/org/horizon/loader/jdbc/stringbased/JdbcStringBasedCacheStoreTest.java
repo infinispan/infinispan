@@ -7,6 +7,7 @@ import org.horizon.loader.jdbc.TableManipulation;
 import org.horizon.loader.jdbc.connectionfactory.ConnectionFactory;
 import org.horizon.loader.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.horizon.marshall.ObjectStreamMarshaller;
+import org.horizon.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.Test;
 
 /**
@@ -17,10 +18,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "loader.jdbc.stringbased.JdbcStringBasedCacheStoreTest")
 public class JdbcStringBasedCacheStoreTest extends BaseCacheStoreTest {
 
-
    protected CacheStore createCacheStore() throws Exception {
-
-
       ConnectionFactoryConfig connectionFactoryConfig = UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
       TableManipulation tm = UnitTestDatabaseManager.buildDefaultTableManipulation();
       JdbcStringBasedCacheStoreConfig config = new JdbcStringBasedCacheStoreConfig(connectionFactoryConfig, tm);
@@ -28,9 +26,6 @@ public class JdbcStringBasedCacheStoreTest extends BaseCacheStoreTest {
       jdbcBucketCacheStore.init(config, null, new ObjectStreamMarshaller());
       jdbcBucketCacheStore.start();
       return jdbcBucketCacheStore;
-
-
-
    }
 
    public void testNotCreateConnectionFactory() throws Exception {
@@ -58,6 +53,4 @@ public class JdbcStringBasedCacheStoreTest extends BaseCacheStoreTest {
       stringBasedCacheStore.stop();
       verify(tableManipulation, connectionFactory);
    }
-
-
 }

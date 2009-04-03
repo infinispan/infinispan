@@ -3,6 +3,7 @@ package org.horizon.loader.jdbc;
 import static org.easymock.EasyMock.*;
 import org.horizon.loader.CacheLoaderException;
 import org.horizon.loader.jdbc.connectionfactory.ConnectionFactoryConfig;
+import org.horizon.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;

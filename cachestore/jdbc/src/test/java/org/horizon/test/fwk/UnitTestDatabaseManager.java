@@ -31,8 +31,6 @@ import java.util.regex.Pattern;
 public class UnitTestDatabaseManager {
    private static final ConnectionFactoryConfig realConfig = new ConnectionFactoryConfig();
 
-
-
    private static AtomicInteger userIndex = new AtomicInteger(0);
 
    static {
@@ -48,12 +46,10 @@ public class UnitTestDatabaseManager {
    }
 
    public static ConnectionFactoryConfig getUniqueConnectionFactoryConfig() {
-    synchronized (realConfig) {
+      synchronized (realConfig) {
          return returnBasedOnDifferentInstance();
       }
-
    }
-
 
    public static void shutdownInMemoryDatabase(ConnectionFactoryConfig config) {
 
@@ -98,15 +94,13 @@ public class UnitTestDatabaseManager {
    }
 
 
-  private static String getShutdownUrl(ConnectionFactoryConfig props) {
+   private static String getShutdownUrl(ConnectionFactoryConfig props) {
       String url = props.getConnectionUrl();
       assert url != null;
       StringTokenizer tokenizer = new StringTokenizer(url, ";");
       String result = tokenizer.nextToken() + ";" + "shutdown=true";
       return result;
    }
-
-
 
 
    private static ConnectionFactoryConfig returnBasedOnDifferentInstance() {

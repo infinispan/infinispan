@@ -8,6 +8,7 @@ import org.horizon.loader.jdbc.TableManipulation;
 import org.horizon.loader.jdbc.connectionfactory.ConnectionFactory;
 import org.horizon.loader.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.horizon.marshall.ObjectStreamMarshaller;
+import org.horizon.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
@@ -30,8 +31,6 @@ public class JdbcStringBasedCacheStoreTest2 {
    private TableManipulation tableManipulation;
    private static final Person MIRCEA = new Person("Mircea", "Markus", 28);
    private static final Person MANIK = new Person("Manik", "Surtani", 18);
-
-
 
    @BeforeTest
    public void createCacheStore() throws CacheLoaderException {

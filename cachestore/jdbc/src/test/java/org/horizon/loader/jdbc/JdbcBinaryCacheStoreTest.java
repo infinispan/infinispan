@@ -1,5 +1,6 @@
 package org.horizon.loader.jdbc;
 
+import static org.easymock.classextension.EasyMock.*;
 import org.horizon.loader.BaseCacheStoreTest;
 import org.horizon.loader.CacheStore;
 import org.horizon.loader.jdbc.binary.JdbcBinaryCacheStore;
@@ -7,8 +8,8 @@ import org.horizon.loader.jdbc.binary.JdbcBinaryCacheStoreConfig;
 import org.horizon.loader.jdbc.connectionfactory.ConnectionFactory;
 import org.horizon.loader.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.horizon.marshall.ObjectStreamMarshaller;
+import org.horizon.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.Test;
-import static org.easymock.classextension.EasyMock.*;
 
 /**
  * Tester class for {@link JdbcBinaryCacheStore}
@@ -18,12 +19,7 @@ import static org.easymock.classextension.EasyMock.*;
 @Test(groups = "functional", testName = "loader.jdbc.JdbcBinaryCacheStoreTest")
 public class JdbcBinaryCacheStoreTest extends BaseCacheStoreTest {
 
-
-
    protected CacheStore createCacheStore() throws Exception {
-  
-
-
       ConnectionFactoryConfig connectionFactoryConfig = UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
       TableManipulation tm = UnitTestDatabaseManager.buildDefaultTableManipulation();
       JdbcBinaryCacheStoreConfig config = new JdbcBinaryCacheStoreConfig(connectionFactoryConfig, tm);
@@ -32,8 +28,6 @@ public class JdbcBinaryCacheStoreTest extends BaseCacheStoreTest {
       jdbcBucketCacheStore.start();
       assert jdbcBucketCacheStore.getConnectionFactory() != null;
       return jdbcBucketCacheStore;
-
-
    }
 
    public void testNotCreateConnectionFactory() throws Exception {

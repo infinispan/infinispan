@@ -12,8 +12,8 @@ import org.horizon.loader.jdbc.stringbased.JdbcStringBasedCacheStoreConfig;
 import org.testng.annotations.Test;
 import org.w3c.dom.Element;
 
-@Test(groups = "unit", testName = "config.parsing.ConfigurationParserTest")
-public class ConfigurationParserTest {
+@Test(groups = "unit", testName = "config.parsing.JdbcConfigurationParserTest")
+public class JdbcConfigurationParserTest {
    public void testCacheLoaders() throws Exception {
       XmlConfigurationParserImpl parser = new XmlConfigurationParserImpl();
       String xml =

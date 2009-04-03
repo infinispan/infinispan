@@ -10,6 +10,7 @@ import org.horizon.loader.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.horizon.loader.jdbc.stringbased.DefaultKey2StringMapper;
 import org.horizon.loader.jdbc.stringbased.Person;
 import org.horizon.marshall.ObjectStreamMarshaller;
+import org.horizon.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
@@ -99,7 +100,7 @@ public class JdbcMixedCacheStoreTest {
       cacheStore.store(InternalEntryFactory.create(MIRCEA, "value"));
       assertRowCounts(1, 1);
       cacheStore.clear();
-      assertRowCounts(0,0);
+      assertRowCounts(0, 0);
    }
 
    public void testMixedFromAndToStream() throws Exception {
@@ -107,14 +108,14 @@ public class JdbcMixedCacheStoreTest {
       cacheStore.store(InternalEntryFactory.create("String2", "someValue"));
       cacheStore.store(InternalEntryFactory.create(MIRCEA, "value1"));
       cacheStore.store(InternalEntryFactory.create(MANIK, "value2"));
-      assertRowCounts(2,2);
+      assertRowCounts(2, 2);
       ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
       ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
       cacheStore.toStream(objectOutputStream);
       cacheStore.clear();
-      assertRowCounts(0,0);
+      assertRowCounts(0, 0);
       cacheStore.fromStream(new ObjectInputStream(new ByteArrayInputStream(byteArrayOutputStream.toByteArray())));
-      assertRowCounts(2,2);
+      assertRowCounts(2, 2);
       assert cacheStore.load("String").getValue().equals("someValue");
       assert cacheStore.load("String2").getValue().equals("someValue");
       assert cacheStore.load(MIRCEA).getValue().equals("value1");
@@ -130,7 +131,7 @@ public class JdbcMixedCacheStoreTest {
       cacheStore.store(second);
       cacheStore.store(third);
       cacheStore.store(forth);
-      assertRowCounts(2,2);
+      assertRowCounts(2, 2);
       Set<InternalCacheEntry> entries = cacheStore.loadAll();
       assert entries.size() == 4;
       assert entries.contains(first);
@@ -144,10 +145,10 @@ public class JdbcMixedCacheStoreTest {
       InternalCacheEntry second = InternalEntryFactory.create(MIRCEA, "value1", 1000);
       cacheStore.store(first);
       cacheStore.store(second);
-      assertRowCounts(1,1);
+      assertRowCounts(1, 1);
       Thread.sleep(1200);
       cacheStore.purgeExpired();
-      assertRowCounts(0,0);
+      assertRowCounts(0, 0);
    }
 
    public void testPurgeExpiredWithRemainingEntries() throws Exception {
@@ -159,10 +160,10 @@ public class JdbcMixedCacheStoreTest {
       cacheStore.store(second);
       cacheStore.store(third);
       cacheStore.store(forth);
-      assertRowCounts(2,2);
+      assertRowCounts(2, 2);
       Thread.sleep(1200);
       cacheStore.purgeExpired();
-      assertRowCounts(1,1);
+      assertRowCounts(1, 1);
    }
 
    public void testTableConflict() {

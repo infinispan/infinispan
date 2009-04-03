@@ -199,7 +199,7 @@ public class ConfigurationParserTest {
    public void testCacheLoadersDefaults() throws Exception {
       XmlConfigurationParserImpl parser = new XmlConfigurationParserImpl();
       String xml = "<loaders>\n" +
-            "         <loader class=\"org.horizon.loader.jdbc.binary.JdbcBinaryCacheStore\">\n" +
+            "         <loader class=\"org.horizon.loader.file.FileCacheStore\">\n" +
             "            <properties />\n" +
             "         </loader>\n" +
             "      </loaders>";
@@ -216,7 +216,7 @@ public class ConfigurationParserTest {
       assert !clc.isPreload();
 
       CacheStoreConfig iclc = (CacheStoreConfig) clc.getFirstCacheLoaderConfig();
-      assert iclc.getCacheLoaderClassName().equals("org.horizon.loader.jdbc.binary.JdbcBinaryCacheStore");
+      assert iclc.getCacheLoaderClassName().equals("org.horizon.loader.file.FileCacheStore");
       assert !iclc.getAsyncStoreConfig().isEnabled();
       assert !iclc.isFetchPersistentState();
       assert !iclc.isIgnoreModifications();
