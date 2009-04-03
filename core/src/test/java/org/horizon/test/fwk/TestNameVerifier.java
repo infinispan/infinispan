@@ -20,6 +20,7 @@ import java.util.regex.Pattern;
  */
 @Test(groups = "functional", testName = "test.fwk.TestNameVerifier")
 public class TestNameVerifier {
+   protected String moduleName = "core";
    String dir = "src/test/java/org/horizon";
 
    Pattern packageLinePattern = Pattern.compile("package org.horizon[^;]*");
@@ -132,6 +133,10 @@ public class TestNameVerifier {
 
    private File[] getJavaFiles() {
       File file = new File(dir);
+      if (!file.exists()) {
+         // try prepending dir with module name
+         file = new File(moduleName + File.separator + dir);
+      }
       assert file.isDirectory();
       ArrayList<File> result = new ArrayList<File>();
       addJavaFiles(file, result);
