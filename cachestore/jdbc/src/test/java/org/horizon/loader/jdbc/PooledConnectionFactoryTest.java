@@ -2,7 +2,6 @@ package org.horizon.loader.jdbc;
 
 import org.horizon.loader.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.horizon.loader.jdbc.connectionfactory.PooledConnectionFactory;
-import org.horizon.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -21,13 +20,12 @@ public class PooledConnectionFactoryTest {
 
    private PooledConnectionFactory factory;
 
-   // TODO: navssurtani fix this
 
    @AfterMethod
    public void destroyFacotry() {
       factory.stop();
    }
-/*
+
    public void testValuesNoOverrides() throws Exception {
       factory = new PooledConnectionFactory();
       ConnectionFactoryConfig config = UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
@@ -50,4 +48,4 @@ public class PooledConnectionFactoryTest {
       assert factory.getPooledDataSource().getNumBusyConnections() == 0;
    }
 
-*/}
+}

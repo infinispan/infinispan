@@ -3,7 +3,6 @@ package org.horizon.loader.jdbc.mixed;
 import org.horizon.loader.BaseCacheStoreTest;
 import org.horizon.loader.CacheStore;
 import org.horizon.loader.jdbc.TableManipulation;
-import org.horizon.test.fwk.UnitTestDatabaseManager;
 import org.horizon.loader.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.testng.annotations.Test;
 
@@ -15,11 +14,10 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "loader.jdbc.mixed.JdbcMixedCacheStoreTest2")
 public class JdbcMixedCacheStoreTest2 extends BaseCacheStoreTest {
 
-	//TODO : navssurtani -- fix up commented out bits
 
    protected CacheStore createCacheStore() throws Exception {
       
-/*
+
 	  JdbcMixedCacheStoreConfig jdbcCacheStoreConfig = new JdbcMixedCacheStoreConfig();
       TableManipulation stringsTm = UnitTestDatabaseManager.buildDefaultTableManipulation();
       stringsTm.setTableName("STRINGS_TABLE");
@@ -36,8 +34,7 @@ public class JdbcMixedCacheStoreTest2 extends BaseCacheStoreTest {
       cacheStore.start();
       return cacheStore;
 
-*/
-	return null;
+
 
    }
 }

@@ -5,7 +5,6 @@ import org.horizon.container.entries.InternalEntryFactory;
 import org.horizon.loader.CacheLoaderException;
 import org.horizon.loader.CacheStore;
 import org.horizon.loader.jdbc.TableManipulation;
-import org.horizon.test.fwk.UnitTestDatabaseManager;
 import org.horizon.loader.jdbc.connectionfactory.ConnectionFactory;
 import org.horizon.loader.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.horizon.loader.jdbc.stringbased.DefaultKey2StringMapper;
@@ -38,9 +37,7 @@ public class JdbcMixedCacheStoreTest {
    private static final Person MIRCEA = new Person("Mircea", "Markus", 28);
    private static final Person MANIK = new Person("Manik", "Surtani", 18);
 
-   //TODO: navssurtani -- fix createCacheStore() and destroyStore()
 
-/*
    @BeforeTest
    public void createCacheStore() throws CacheLoaderException {
       stringsTm = UnitTestDatabaseManager.buildDefaultTableManipulation();
@@ -56,20 +53,20 @@ public class JdbcMixedCacheStoreTest {
       cacheStore.init(cacheStoreConfig, null, new ObjectStreamMarshaller());
       cacheStore.start();
    }
-*/
+
    @AfterMethod
    public void clearStore() throws Exception {
       cacheStore.clear();
       assertBinaryRowCount(0);
       assertStringsRowCount(0);
    }
-/*
+
    @AfterTest
    public void destroyStore() throws CacheLoaderException {
       cacheStore.stop();
       UnitTestDatabaseManager.shutdownInMemoryDatabase(cfc);
    }
-*/
+
    public void testMixedStore() throws Exception {
       cacheStore.store(InternalEntryFactory.create("String", "someValue"));
       assertStringsRowCount(1);
@@ -178,23 +175,23 @@ public class JdbcMixedCacheStoreTest {
    }
 
    private void assertStringsRowCount(int rowCount) {
-/*  
+
       JdbcMixedCacheStore store = (JdbcMixedCacheStore) cacheStore;
       ConnectionFactory connectionFactory = store.getConnectionFactory();
       String tableName = stringsTm.getTableName();
       int value = UnitTestDatabaseManager.rowCount(connectionFactory, tableName);
       assert value == rowCount : "Expected " + rowCount + " rows, actual value is " + value;
-*/
+
    }
 
    private void assertBinaryRowCount(int rowCount) {
-/*
+
       JdbcMixedCacheStore store = (JdbcMixedCacheStore) cacheStore;
       ConnectionFactory connectionFactory = store.getConnectionFactory();
       String tableName = binaryTm.getTableName();
       int value = UnitTestDatabaseManager.rowCount(connectionFactory, tableName);
       assert value == rowCount : "Expected " + rowCount + " rows, actual value is " + value;
-*/
+
    }
 
 

@@ -5,7 +5,6 @@ import org.horizon.container.entries.InternalEntryFactory;
 import org.horizon.loader.CacheLoaderException;
 import org.horizon.loader.CacheStore;
 import org.horizon.loader.jdbc.TableManipulation;
-import org.horizon.test.fwk.UnitTestDatabaseManager;
 import org.horizon.loader.jdbc.connectionfactory.ConnectionFactory;
 import org.horizon.loader.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.horizon.marshall.ObjectStreamMarshaller;
@@ -32,9 +31,8 @@ public class JdbcStringBasedCacheStoreTest2 {
    private static final Person MIRCEA = new Person("Mircea", "Markus", 28);
    private static final Person MANIK = new Person("Manik", "Surtani", 18);
 
-	// TODO:navssurtani -- Clean up this stuff
 
-/*
+
    @BeforeTest
    public void createCacheStore() throws CacheLoaderException {
       tableManipulation = UnitTestDatabaseManager.buildDefaultTableManipulation();
@@ -58,7 +56,7 @@ public class JdbcStringBasedCacheStoreTest2 {
       cacheStore.stop();
       UnitTestDatabaseManager.shutdownInMemoryDatabase(cfc);
    }
-*/
+
    /**
     * When trying to perists an unsupported object an exception is expected.
     */
@@ -73,12 +71,12 @@ public class JdbcStringBasedCacheStoreTest2 {
       cacheStore.store(InternalEntryFactory.create(MIRCEA, "Cluj Napoca"));
    }
 
-/*
+
    public void testStoreLoadRemove() throws Exception {
       assert rowCount() == 0;
       assert cacheStore.load(MIRCEA) == null : "should not be present in the store";
       String value = "adsdsadsa";
-      cacheStore.store(InternalEntryFactory.create  (MIRCEA, value));
+      cacheStore.store(InternalEntryFactory.create(MIRCEA, value));
       assert rowCount() == 1;
       assert cacheStore.load(MIRCEA).getValue().equals(value);
       assert !cacheStore.remove(MANIK);
@@ -93,10 +91,10 @@ public class JdbcStringBasedCacheStoreTest2 {
       cacheStore.store(InternalEntryFactory.create(MIRCEA, "value"));
       cacheStore.store(InternalEntryFactory.create(MANIK, "value"));
       assert rowCount() == 2;
-      cacheStore.removeAll(Collections.singleton((Object)MIRCEA));
+      cacheStore.removeAll(Collections.singleton((Object) MIRCEA));
       cacheStore.load(MANIK).getValue().equals("value");
       assert rowCount() == 1;
-      cacheStore.store(InternalEntryFactory.create(MIRCEA,"value"));
+      cacheStore.store(InternalEntryFactory.create(MIRCEA, "value"));
       assert rowCount() == 2;
       Set toRemove = new HashSet();
       toRemove.add(MIRCEA);
@@ -115,7 +113,7 @@ public class JdbcStringBasedCacheStoreTest2 {
    }
 
    public void testPurgeExpired() throws Exception {
-      InternalCacheEntry first = InternalEntryFactory.create(MIRCEA, "val",1000);
+      InternalCacheEntry first = InternalEntryFactory.create(MIRCEA, "val", 1000);
       InternalCacheEntry second = InternalEntryFactory.create(MANIK, "val2");
       cacheStore.store(first);
       cacheStore.store(second);
@@ -132,8 +130,9 @@ public class JdbcStringBasedCacheStoreTest2 {
       String tableName = tableManipulation.getTableName();
       return UnitTestDatabaseManager.rowCount(connectionFactory, tableName);
    }
-*/
+
    private ConnectionFactory getConnection() {
+
       JdbcStringBasedCacheStore store = (JdbcStringBasedCacheStore) cacheStore;
       return store.getConnectionFactory();
    }

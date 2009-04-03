@@ -4,7 +4,6 @@ import static org.easymock.classextension.EasyMock.*;
 import org.horizon.loader.BaseCacheStoreTest;
 import org.horizon.loader.CacheStore;
 import org.horizon.loader.jdbc.TableManipulation;
-import org.horizon.test.fwk.UnitTestDatabaseManager;
 import org.horizon.loader.jdbc.connectionfactory.ConnectionFactory;
 import org.horizon.loader.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.horizon.marshall.ObjectStreamMarshaller;
@@ -18,11 +17,9 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "loader.jdbc.stringbased.JdbcStringBasedCacheStoreTest")
 public class JdbcStringBasedCacheStoreTest extends BaseCacheStoreTest {
 
-	//TODO : navssurtani -- fix up commented out methods.
-
 
    protected CacheStore createCacheStore() throws Exception {
-/*
+
 
       ConnectionFactoryConfig connectionFactoryConfig = UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
       TableManipulation tm = UnitTestDatabaseManager.buildDefaultTableManipulation();
@@ -32,11 +29,10 @@ public class JdbcStringBasedCacheStoreTest extends BaseCacheStoreTest {
       jdbcBucketCacheStore.start();
       return jdbcBucketCacheStore;
 
-*/
 
-	return null;
+
    }
-/*
+
    public void testNotCreateConnectionFactory() throws Exception {
       JdbcStringBasedCacheStore stringBasedCacheStore = new JdbcStringBasedCacheStore();
       JdbcStringBasedCacheStoreConfig config = new JdbcStringBasedCacheStoreConfig(false);
@@ -63,5 +59,5 @@ public class JdbcStringBasedCacheStoreTest extends BaseCacheStoreTest {
       verify(tableManipulation, connectionFactory);
    }
 
-*/
+
 }
