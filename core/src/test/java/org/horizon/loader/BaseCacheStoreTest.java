@@ -31,8 +31,8 @@ import java.util.Random;
 import java.util.Set;
 
 @SuppressWarnings("unchecked")
-@Test
 // this needs to be here for the test to run in an IDE
+@Test(groups = "unit", testName = "loader.BaseCacheStoreTest")
 public abstract class BaseCacheStoreTest {
 
    protected abstract CacheStore createCacheStore() throws Exception;
@@ -63,7 +63,7 @@ public abstract class BaseCacheStoreTest {
    public void assertNoLocksHeld() {
       //doesn't really make sense to add a subclass for this check only
       if (cs instanceof LockSupportCacheStore) {
-         assert  ((LockSupportCacheStore)cs).getTotalLockCount() == 0;
+         assert ((LockSupportCacheStore) cs).getTotalLockCount() == 0;
       }
    }
 

@@ -8,8 +8,6 @@ import org.horizon.loader.CacheLoaderException;
 import org.horizon.loader.CacheStore;
 import org.horizon.loader.bucket.Bucket;
 import org.horizon.test.TestingUtil;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
@@ -32,12 +30,6 @@ public class FileCacheStoreTest extends BaseCacheStoreTest {
       fcs.init(cfg, getCache(), getMarshaller());
       fcs.start();
       return fcs;
-   }
-
-   @AfterTest
-   @BeforeTest
-   public void removeTempDirectory() {
-      TestingUtil.recursiveFileRemove(tmpDirectory);
    }
 
    @Override
