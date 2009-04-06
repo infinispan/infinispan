@@ -144,7 +144,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
 
       if (onePhaseCommit != that.onePhaseCommit) return false;
       if (localAddress != null ? !localAddress.equals(that.localAddress) : that.localAddress != null) return false;
-      if (modifications != null ? !modifications.equals(that.modifications) : that.modifications != null) return false;
+      if (modifications != null ? !Arrays.equals(modifications, that.modifications) : that.modifications != null) return false;
 
       return true;
    }
