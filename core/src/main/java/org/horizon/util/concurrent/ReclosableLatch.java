@@ -34,6 +34,9 @@ import java.util.concurrent.locks.AbstractQueuedSynchronizer;
  * @since 4.0
  */
 public class ReclosableLatch extends AbstractQueuedSynchronizer {
+   
+   private static final long serialVersionUID = 1744280161777661090l;
+
    // the following states are used in the AQS.
    private static final int OPEN_STATE = 0, CLOSED_STATE = 1;
 
