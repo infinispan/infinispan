@@ -9,21 +9,21 @@
    <global>
 
       <!-- Note that if these are left blank, defaults are used.  See the user guide for what these defaults are -->
-      <asyncListenerExecutor factory="org.horizon.executors.DefaultExecutorFactory">
+      <asyncListenerExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
          <property name="maxThreads" value="5"/>
          <property name="threadNamePrefix" value="AsyncListenerThread"/>
       </asyncListenerExecutor>
 
-      <asyncSerializationExecutor factory="org.horizon.executors.DefaultExecutorFactory">
+      <asyncSerializationExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
          <property name="maxThreads" value="25"/>
          <property name="threadNamePrefix" value="AsyncSerializationThread"/>
       </asyncSerializationExecutor>
 
-      <evictionScheduledExecutor factory="org.horizon.executors.DefaultScheduledExecutorFactory">
+      <evictionScheduledExecutor factory="org.infinispan.executors.DefaultScheduledExecutorFactory">
          <property name="threadNamePrefix" value="EvictionThread"/>
       </evictionScheduledExecutor>
 
-      <replicationQueueScheduledExecutor factory="org.horizon.executors.DefaultScheduledExecutorFactory">
+      <replicationQueueScheduledExecutor factory="org.infinispan.executors.DefaultScheduledExecutorFactory">
          <property name="threadNamePrefix" value="ReplicationQueueThread"/>
       </replicationQueueScheduledExecutor>
 
@@ -34,7 +34,7 @@
          There is no added cost to defining a transport but not creating a cache that uses one, since the transport
          is created and initialized lazily.
       -->
-      <transport transportClass="org.horizon.remoting.transport.jgroups.JGroupsTransport" clusterName="horizon-cluster"
+      <transport transportClass="org.infinispan.remoting.transport.jgroups.JGroupsTransport" clusterName="horizon-cluster"
                  distributedSyncTimeout="50000">
          <!-- Note that the JGroups transport uses sensible defaults if no configuration property is defined. -->
          <property name="configurationFile" value="udp.xml"/>
@@ -42,7 +42,7 @@
       </transport>
 
       <!-- Again, sensible defaults are used here if this is omitted.  -->
-      <serialization marshallerClass="org.horizon.marshall.VersionAwareMarshaller" version="1.0"
+      <serialization marshallerClass="org.infinispan.marshall.VersionAwareMarshaller" version="1.0"
                      objectInputStreamPoolSize="100" objectOutputStreamPoolSize="100"/>
 
       <!--
@@ -70,7 +70,7 @@
       Used to register a transaction manager and participate in ongoing transactions.
       -->
       <transaction
-            transactionManagerLookupClass="org.horizon.transaction.GenericTransactionManagerLookup"
+            transactionManagerLookupClass="org.infinispan.transaction.GenericTransactionManagerLookup"
             syncRollbackPhase="false"
             syncCommitPhase="false"/>
 
@@ -143,13 +143,13 @@
          <!--
             We can have multiple cache loaders, which get chained
          -->
-         <loader class="org.horizon.loader.jdbc.stringbased.JdbcStringBasedCacheStore" fetchPersistentState="true"
+         <loader class="org.infinispan.loader.jdbc.stringbased.JdbcStringBasedCacheStore" fetchPersistentState="true"
                  ignoreModifications="true" purgeOnStartup="true">
 
             <!-- See the documentation for more configuration examples and flags. -->
             <properties>
-               <property name="connectionFactoryClass" value="org.horizon.loader.jdbc.connectionfactory.PooledConnectionFactory"/>
-               <property name="connectionUrl" value="org.horizon.loader.jdbc.connectionfactory.PooledConnectionFactory"/>
+               <property name="connectionFactoryClass" value="org.infinispan.loader.jdbc.connectionfactory.PooledConnectionFactory"/>
+               <property name="connectionUrl" value="org.infinispan.loader.jdbc.connectionfactory.PooledConnectionFactory"/>
                <property name="userName" value="root"/>
                <property name="driverClass" value="org.dbms.Driver"/>
                <property name="idColumnType" value="VARCHAR2(256)"/>
@@ -182,8 +182,8 @@
          </interceptor>
          <interceptor position="last" class="com.mycompany.CustomInterceptor2"/>
          <interceptor index="3" class="com.mycompany.CustomInterceptor1"/>
-         <interceptor before="org.horizon.interceptors.CallInterceptor" class="com.mycompany.CustomInterceptor2"/>
-         <interceptor after="org.horizon.interceptors.CallInterceptor" class="com.mycompany.CustomInterceptor1"/>
+         <interceptor before="org.infinispanpan.interceptors.CallInterceptor" class="com.mycompany.CustomInterceptor2"/>
+         <interceptor after="org.infinispanpan.interceptors.CallInterceptor" class="com.mycompany.CustomInterceptor1"/>
       </customInterceptors>
       -->
    </namedCache>

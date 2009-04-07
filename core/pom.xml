@@ -1,24 +1,20 @@
 <?xml version="1.0"?>
-
-<!-- This is the current pom for the core directory (or project) for Horizon-->
-
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
    <modelVersion>4.0.0</modelVersion>
 
    <parent>
-      <groupId>org.horizon</groupId>
-      <artifactId>horizon-parent</artifactId>
+      <groupId>org.infinispan</groupId>
+      <artifactId>infinispan-parent</artifactId>
       <version>4.0.0-SNAPSHOT</version>
       <relativePath>../parent/pom.xml</relativePath>
    </parent>
 
-
-   <groupId>org.horizon</groupId>
-   <artifactId>horizon-core</artifactId>
-   <name>Horizon - Core</name>
-   <description>Horizon - Open Source Data Grids. This is the core package.</description>
+   <groupId>org.infinispan</groupId>
+   <artifactId>infinispan-core</artifactId>
+   <name>Infinispan - Core</name>
+   <description>Infinispan - Open Source Data Grids. This is the core package.</description>
    <dependencies>
       <!-- Weird dep that should be removed soon -->
       <dependency>

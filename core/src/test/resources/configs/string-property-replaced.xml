@@ -8,12 +8,12 @@
 
    <global>
 
-      <asyncListenerExecutor factory="org.horizon.executors.DefaultExecutorFactory">
+      <asyncListenerExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
          <property name="maxThreads" value="${test.property.asyncListenerMaxThreads:5}"/>
          <property name="threadNamePrefix" value="AsyncListenerThread"/>
       </asyncListenerExecutor>
 
-      <transport transportClass="org.horizon.remoting.transport.jgroups.JGroupsTransport">
+      <transport transportClass="org.infinispan.remoting.transport.jgroups.JGroupsTransport">
          <property name="configurationFile" value="${test.property.jgroupsConfigFile:udp.xml}"/>
       </transport>
 
@@ -30,7 +30,7 @@
             concurrencyLevel="500"/>
 
       <transaction
-            transactionManagerLookupClass="org.horizon.transaction.GenericTransactionManagerLookup"
+            transactionManagerLookupClass="org.infinispan.transaction.GenericTransactionManagerLookup"
             syncRollbackPhase="false"
             syncCommitPhase="${test.property.SyncCommitPhase:true}"/>
 

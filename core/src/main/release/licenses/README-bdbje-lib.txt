@@ -3,7 +3,7 @@ $Id: README-bdbje-lib.txt 7782 2009-02-25 12:02:25Z manik.surtani@jboss.com $
 
 NAME:    Sleepycat Berkeley DB Java Edition
 PROJECT: http://www.oracle.com/database/berkeley-db/je/index.html
-PURPOSE: Used for Berkeley DB-based CacheLoader (org.horizon.loader.bdbje.BdbjeCacheStore) in Horizon
+PURPOSE: Used for Berkeley DB-based CacheLoader (org.infinispan.loader.bdbje.BdbjeCacheStore) in Horizon
 RESTRICTION: Horizon can use Berkeley DB Java Edition from Oracle
              for persistent, reliable and transaction-protected
              data storage. If you choose to use Berkeley DB Java Edition

@@ -44,19 +44,19 @@
    <!-- Limit categories -->
    <!-- ================ -->
 
-   <category name="org.horizon">
+   <category name="org.infinispan">
       <priority value="WARN"/>
    </category>
 
-   <category name="org.horizon.profiling">
+   <category name="org.infinispan.profiling">
       <priority value="WARN"/>
    </category>
 
-   <category name="org.horizon.jmx">
+   <category name="org.infinispan.jmx">
       <priority value="WARN"/>
    </category>
 
-   <category name="org.horizon.factories">
+   <category name="org.infinispan.factories">
       <priority value="WARN"/>
    </category>
 

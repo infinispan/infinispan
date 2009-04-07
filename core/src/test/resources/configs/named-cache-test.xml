@@ -3,30 +3,30 @@
 
    <global>
 
-      <asyncListenerExecutor factory="org.horizon.executors.DefaultExecutorFactory">
+      <asyncListenerExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
          <property name="maxThreads" value="5"/>
          <property name="threadNamePrefix" value="AsyncListenerThread"/>
       </asyncListenerExecutor>
 
-      <asyncSerializationExecutor factory="org.horizon.executors.DefaultExecutorFactory">
+      <asyncSerializationExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
          <property name="maxThreads" value="25"/>
          <property name="threadNamePrefix" value="AsyncSerializationThread"/>
       </asyncSerializationExecutor>
 
-      <evictionScheduledExecutor factory="org.horizon.executors.DefaultScheduledExecutorFactory">
+      <evictionScheduledExecutor factory="org.infinispan.executors.DefaultScheduledExecutorFactory">
          <property name="threadNamePrefix" value="EvictionThread"/>
       </evictionScheduledExecutor>
 
-      <replicationQueueScheduledExecutor factory="org.horizon.executors.DefaultScheduledExecutorFactory">
+      <replicationQueueScheduledExecutor factory="org.infinispan.executors.DefaultScheduledExecutorFactory">
          <property name="threadNamePrefix" value="ReplicationQueueThread"/>
       </replicationQueueScheduledExecutor>
 
-      <transport transportClass="org.horizon.remoting.transport.jgroups.JGroupsTransport"/>
+      <transport transportClass="org.infinispan.remoting.transport.jgroups.JGroupsTransport"/>
 
-      <serialization marshallerClass="org.horizon.marshall.VersionAwareMarshaller" version="1.0"
+      <serialization marshallerClass="org.infinispan.marshall.VersionAwareMarshaller" version="1.0"
                      objectInputStreamPoolSize="100" objectOutputStreamPoolSize="100"/>
       <globalJmxStatistics enabled="false" jmxDomain="funky_domain"
-                           mBeanServerLookup="org.horizon.jmx.PerThreadMBeanServerLookup" allowDuplicateDomains="true"/>
+                           mBeanServerLookup="org.infinispan.jmx.PerThreadMBeanServerLookup" allowDuplicateDomains="true"/>
 
    </global>
 
@@ -36,7 +36,7 @@
    </default>
 
    <namedCache name="transactional">
-      <transaction transactionManagerLookupClass="org.horizon.transaction.GenericTransactionManagerLookup"/>
+      <transaction transactionManagerLookupClass="org.infinispan.transaction.GenericTransactionManagerLookup"/>
    </namedCache>
 
    <namedCache name="syncRepl">
@@ -83,7 +83,7 @@
          <!--
             We can have multiple cache loaders, which get chained
          -->
-         <loader class="org.horizon.loader.file.FileCacheStore" fetchPersistentState="true"
+         <loader class="org.infinispan.loader.file.FileCacheStore" fetchPersistentState="true"
                  ignoreModifications="true" purgeOnStartup="true">
 
             <!-- See the documentation for more configuration examples and flags. -->
