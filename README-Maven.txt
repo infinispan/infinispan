@@ -27,12 +27,10 @@ output at every stage.
 
 * mvn package -P Docs: Packages the module as a JAR file, and builds the javadocs and user documentation from docbook sources.
 
-* mvn install: will install the artifacts in your local repo for use by other projects (such as JBoss Cache POJO edition
-  which depends on JBoss Cache Core).  Will also use Maven's assembly plugin to build ZIP files for download
-  (in target/distribution)
+* mvn install: will install the artifacts in your local repo for use by other projects.  Will also use Maven's assembly plugin to build ZIP files for download (in target/distribution)
 
 * mvn deploy: will build and deploy the project to the JBoss snapshots repository.  Note that you should have your WebDAV
-  username and password set up.  (Deploys snapshots to http://snapshots.jboss.org/maven2/org/jboss/cache/).  If you have
+  username and password set up.  (Deploys snapshots to http://snapshots.jboss.org/maven2/org/infinispan).  If you have
   a non-SNAPSHOT version number in your pom.xml, it will be deployed to the live releases repository (see below)
 
 * mvn clean site -Ptest-functional,codeCoverage: will run all tests in the test-functional profile and generate code
@@ -82,7 +80,7 @@ JBoss release repository cannot be accessed via WebDAV, as the snapshot reposito
 1.4. Maven settings.xml
 -----------------------
 
-Working with the JBoss Cache source tree, I have configured my ~/.m2/settings.xml to look like:
+Working with the Infinispan source tree, I have configured my ~/.m2/settings.xml to look like:
 
 <settings>
 
@@ -119,13 +117,12 @@ currently in use, but there is not formal, you can make up any group name if you
 
 2.1. Current Groups
 -------------------
-* unit - Unit tests using stubs to isolate and test each major class in JBoss Cache.  This is the default group run if no test group is specified.
-* functional - Tests which test the general functionality of JBoss Cache
+* unit - Unit tests using stubs to isolate and test each major class in Infinispan.  This is the default group run if no test group is specified.
+* functional - Tests which test the general functionality of Infinispan
 * jgroups - Tests which need to send data on a JGroups Channel
 * transaction - Tests which use a transaction manager
 * profiling - Tests used for manual profiling, not meant for automated test runs
 * manual - Other tests that are run manually
-* integration - Integration tests emulating usage patterns for specific products such as JBoss AS Clustering and Hibernate clustering
 
 It should be noted that every test (except those not intended to be run by Hudson) should at least be in the functional
 group, since this is the default test group that is executed by maven, and the one that is required to prepare a release.
@@ -161,13 +158,13 @@ of the test.
 Alternatively, if there is more than one test with a given classname in your test suite, you could provide the path to
 the test.
 
-   $ mvn -P test-XXX -Dtest=org/jboss/cache/multiplexer/SyncReplTxTest test
+   $ mvn -P test-XXX -Dtest=org/infinispan/api/MixedModeTest test
 
 2.5. Executing all tests in a given package
 --------------------------------------------
 This can be achieved by passing in the package name with a wildcard to the test parameter.
 
-   $ mvn -P test-XXX -Dtest=org/jboss/cache/multiplexer/* test
+   $ mvn -P test-XXX -Dtest=org/infinispan/api/* test
 
 2.6. Skipping the test run
 --------------------------
@@ -207,7 +204,7 @@ E.g., to run a "jgroups" group test in your IDE using TCP instead of the default
 
 Or, to use JBoss JTA (Arjuna TM) instead of the DummyTransactionManager in a "transaction" group test, set:
 
-   -Dorg.jboss.cache.test.tm=jboss-jta
+   -Dorg.infinispan.test.tm=jboss-jta
 
 Please refer to the POM file for more properties and permutations.
 
