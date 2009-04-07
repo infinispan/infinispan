@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<horizon xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:horizon:config:4.0">
+<infinispan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:infinispan:config:4.0">
 
    <!-- *************************** -->
    <!-- System-wide global settings -->
@@ -38,4 +38,4 @@
          <sync/>
       </clustering>
    </default>
-</horizon>
+</infinispan>

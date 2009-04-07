@@ -3,14 +3,14 @@ JARs included in the distribution
 1) REQUIRED JARs
 ----------------
 
-The following JARs are REQUIRED for the proper operation of Horizon, in addition to the horizon.jar file:
+The following JARs are REQUIRED for the proper operation of Infinispan, in addition to the infinispan-core.jar file:
 
 * jcip-annotations.jar - (http://jcip.net) - Annotations used to assert concurrency behaviour of internal classes.
 
-* jgroups.jar (http://jgroups.com) - Group communications library that is the backbone of Horizon's replication.
+* jgroups.jar (http://jgroups.org) - Group communications library that is the backbone of Infinispan's replication.
   Necessary even when the cache is run in LOCAL mode.
 
-* jboss-common-core.jar - JBoss utilities used by Horizon.  Version 2.0.5.GA or above needed if run with JDK 6.
+* jboss-common-core.jar - JBoss utilities used by Infinispan.  Version 2.0.5.GA or above needed if run with JDK 6.
 
 * jboss-logging-spi.jar - Required by jboss-common-core.
 

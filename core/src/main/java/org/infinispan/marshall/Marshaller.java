@@ -33,7 +33,7 @@ import java.io.ObjectOutput;
 /**
  * A marshaller is a class that is able to marshall and unmarshall objects efficiently.
  * <p/>
- * The reason why this is implemented specially in Horizon rather than resorting to Java serialization or even the more
+ * The reason why this is implemented specially in Infinispan rather than resorting to Java serialization or even the more
  * efficient JBoss serialization is that a lot of efficiency can be gained when a majority of the serialization that
  * occurs has to do with a small set of known types such as {@link org.infinispan.transaction.GlobalTransaction} or {@link
  * org.infinispan.commands.ReplicableCommand}, and class type information can be replaced with simple magic numbers.
@@ -42,7 +42,7 @@ import java.io.ObjectOutput;
  * <p/>
  * In addition, using a marshaller allows adding additional data to the byte stream, such as context class loader
  * information on which class loader to use to deserialize the object stream, or versioning information to allow streams
- * to interoperate between different versions of Horizon (see {@link VersionAwareMarshaller}
+ * to interoperate between different versions of Infinispan (see {@link VersionAwareMarshaller}
  * <p/>
  * This interface is used to marshall {@link org.infinispan.commands.ReplicableCommand}s, their parameters and their
  * response values.

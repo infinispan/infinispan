@@ -1,7 +1,7 @@
 package org.infinispan.logging;
 
 /**
- * Horizon's log abstraction layer.
+ * Infinispan's log abstraction layer.
  * <p/>
  * Usage is very similar to Apache's Commons Logging, except that there are no additional dependencies beyond a JDK.
  * <p/>

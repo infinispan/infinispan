@@ -24,17 +24,17 @@ package org.infinispan;
 import net.jcip.annotations.Immutable;
 
 /**
- * Contains version information about this release of Horizon.
+ * Contains version information about this release of Infinispan.
  *
  * @author Bela Ban
  * @since 4.0
  */
 @Immutable
 public class Version {
-   public static final String version = "1.0.0.SNAPSHOT";
+   public static final String version = "4.0.0.SNAPSHOT";
    public static final String codename = "Starobrno";
-   public static final String projectName = "Horizon";
-   static final byte[] version_id = {'0', '1', '0', '0', 'S'};
+   public static final String projectName = "Infinispan";
+   static final byte[] version_id = {'0', '4', '0', '0', 'S'};
    private static final int MAJOR_SHIFT = 11;
    private static final int MINOR_SHIFT = 6;
    private static final int MAJOR_MASK = 0x00f800;
@@ -49,7 +49,7 @@ public class Version {
       System.out.println();
       System.out.println("\nVersion: \t" + version);
       System.out.println("Codename: \t" + codename);
-      System.out.println("History:  \t(see http://jira.jboss.org for details)\n");
+      System.out.println("History:  \t(see https://jira.jboss.org/jira/browse/ISPN for details)\n");
    }
 
    /**

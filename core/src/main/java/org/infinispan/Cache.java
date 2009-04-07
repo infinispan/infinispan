@@ -32,7 +32,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
 /**
- * The central interface of Horizon.  A Cache provides a highly concurrent, optionally distributed data structure with
+ * The central interface of Infinispan.  A Cache provides a highly concurrent, optionally distributed data structure with
  * additional features such as: <ul> <li>JTA transaction compatibility</li> <li>Eviction support to prevent evicting
  * entries from memory to prevent {@link OutOfMemoryError}s</li> <li>Persisting entries to a {@link
  * org.infinispan.loader.CacheStore}, either when they are evicted as an overflow, or all the time, to maintain persistent
@@ -46,7 +46,7 @@ import java.util.concurrent.TimeUnit;
  * Also, like most {@link java.util.concurrent.ConcurrentMap} implementations, Cache does not support the use of
  * <tt>null</tt> keys (although <tt>null</tt> values are allowed).
  * <p/>
- * Please see the Horizon documentation for more details.
+ * Please see the <a href="http://www.jboss.org/infinispan/docs">Infinispan documentation</a> for more details.
  * <p/>
  *
  * @author Mircea.Markus@jboss.com

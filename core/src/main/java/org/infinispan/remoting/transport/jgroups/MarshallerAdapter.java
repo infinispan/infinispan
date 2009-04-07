@@ -6,7 +6,7 @@ import org.jgroups.blocks.RpcDispatcher;
 import org.jgroups.util.Buffer;
 
 /**
- * Bridge between JGroups and Horizon marshallers
+ * Bridge between JGroups and Infinispan marshallers
  *
  * @author Manik Surtani
  * @since 4.0

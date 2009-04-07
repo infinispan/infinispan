@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<horizon xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:horizon:config:4.0">
+<infinispan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:infinispan:config:4.0">
 
    <!-- *************************** -->
    <!-- System-wide global settings -->
@@ -27,14 +27,14 @@
          <property name="threadNamePrefix" value="ReplicationQueueThread"/>
       </replicationQueueScheduledExecutor>
 
-      <globalJmxStatistics enabled="true" jmxDomain="horizon"/>
+      <globalJmxStatistics enabled="true" jmxDomain="infinispan"/>
 
       <!--
          If the transport is omitted, there is no way to create distributed or clustered caches.
          There is no added cost to defining a transport but not creating a cache that uses one, since the transport
          is created and initialized lazily.
       -->
-      <transport transportClass="org.infinispan.remoting.transport.jgroups.JGroupsTransport" clusterName="horizon-cluster"
+      <transport transportClass="org.infinispan.remoting.transport.jgroups.JGroupsTransport" clusterName="infinispan-cluster"
                  distributedSyncTimeout="50000">
          <!-- Note that the JGroups transport uses sensible defaults if no configuration property is defined. -->
          <property name="configurationFile" value="udp.xml"/>
@@ -187,4 +187,4 @@
       </customInterceptors>
       -->
    </namedCache>
-</horizon>
+</infinispan>

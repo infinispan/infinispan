@@ -30,7 +30,7 @@ import org.infinispan.logging.Log;
 import org.infinispan.logging.LogFactory;
 
 /**
- * Factory that creates components used internally within Horizon, and also wires dependencies into the components.
+ * Factory that creates components used internally within Infinispan, and also wires dependencies into the components.
  * <p/>
  * The {@link DefaultCacheFactory} is a special subclass of this, which bootstraps the construction of other components.
  * When this class is loaded, it maintains a static list of known default factories for known components, which it then

@@ -99,7 +99,7 @@ public class GlobalConfigurationParserTest {
       parser.configureSerialization(e, gc);
 
       assert gc.getMarshallerClass().equals(VersionAwareMarshaller.class.getName());
-      assert gc.getMarshallVersionString().equals("1.0");
+      assert gc.getMarshallVersionString().equals("4.0");
       assert gc.getObjectInputStreamPoolSize() == 50;
       assert gc.getObjectOutputStreamPoolSize() == 50;
    }

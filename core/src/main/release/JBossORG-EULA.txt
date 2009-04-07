@@ -11,7 +11,7 @@ GNU General Public License v.2;
 
 (b) JBoss Rules, which is licensed pursuant to the Apache  License v.2.0;
 
-(c) an optional download for Horizon for the Berkeley DB for Java database, which is licensed under the 
+(c) an optional download for Infinispan for the Berkeley DB for Java database, which is licensed under the 
 (open source) Sleepycat License (if Client does not wish to use the open source version of this database, 
 it may purchase a license from Sleepycat Software); 
 

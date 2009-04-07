@@ -689,7 +689,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle {
 
       addShutdownHook();
 
-      getLog().info("Horizon version: " + Version.printVersion());
+      getLog().info("Infinispan version: " + Version.printVersion());
       state = ComponentStatus.RUNNING;
    }
 

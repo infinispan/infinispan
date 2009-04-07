@@ -195,7 +195,7 @@ public class TransactionContextImpl extends AbstractContext implements Transacti
    }
 
 //   public ReversibleOrderedSet<Object> getKeysLocked() {
-//      return locks == null ? HorizonCollections.emptyReversibleOrderedSet() : Immutables.immutableReversibleOrderedSetCopy(locks);
+//      return locks == null ? InfinispanCollections.emptyReversibleOrderedSet() : Immutables.immutableReversibleOrderedSetCopy(locks);
 //   }
 
    @Override

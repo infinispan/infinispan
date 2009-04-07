@@ -96,9 +96,9 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
       if (tm != null)
          return tm;
       if (lookupFailed) {
-         //fall back to a dummy from Horizon
+         //fall back to a dummy from Infinispan
          tm = DummyTransactionManager.getInstance();
-         log.warn("Falling back to DummyTransactionManager from Horizon");
+         log.warn("Falling back to DummyTransactionManager from Infinispan");
       }
       return tm;
    }

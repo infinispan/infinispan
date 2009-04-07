@@ -24,7 +24,7 @@ package org.infinispan.atomic;
 import java.util.Map;
 
 /**
- * This is a special type of Map geared for use in Horizon.  This map type supports Horizon atomicizing writes
+ * This is a special type of Map geared for use in Infinispan.  This map type supports Infinispan atomicizing writes
  * on the cache such that a coarse grained locking is used if this map is stored in the cache, such that the entire map
  * is locked for writes or is isolated for safe concurrent read.
  * <p/>

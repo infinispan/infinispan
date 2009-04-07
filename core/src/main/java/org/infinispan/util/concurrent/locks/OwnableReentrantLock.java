@@ -34,7 +34,7 @@ import java.util.concurrent.locks.Lock;
  * constructed with a reference to the {@link InvocationContextContainer}, so it is able to determine whether the
  * caller's "owner" reference is the current thread or a {@link GlobalTransaction} instance.
  * <p/>
- * This makes this lock implementation very closely tied to Horizon internals, but it provides for a very clean,
+ * This makes this lock implementation very closely tied to Infinispan internals, but it provides for a very clean,
  * efficient and moreover familiar interface to work with, since it implements {@link java.util.concurrent.locks.Lock}.
  * <p/>
  * For the sake of performance, this lock only supports nonfair queueing.

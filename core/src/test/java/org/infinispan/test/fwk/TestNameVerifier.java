@@ -23,7 +23,7 @@ public class TestNameVerifier {
    protected String moduleName = "core";
    String dir = "src/test/java/org/infinispan";
 
-   Pattern packageLinePattern = Pattern.compile("package org.horizon[^;]*");
+   Pattern packageLinePattern = Pattern.compile("package org.infinispan[^;]*");
    Pattern classLinePattern = Pattern.compile("(abstract\\s*)??(public\\s*)(abstract\\s*)??class [^\\s]*");
    Pattern atAnnotationPattern = Pattern.compile("@Test[^)]*");
    Pattern testNamePattern = Pattern.compile("testName\\s*=\\s*\"[^\"]*\"");

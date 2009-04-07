@@ -46,7 +46,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    private String transportClass = null; // this defaults to a non-clustered cache.
    private TypedProperties transportProperties = EMPTY_PROPERTIES;
    private Configuration defaultConfiguration;
-   private String clusterName = "Horizon-Cluster";
+   private String clusterName = "Infinispan-Cluster";
    private ShutdownHookBehavior shutdownHookBehavior = ShutdownHookBehavior.DEFAULT;
    private short marshallVersion = DEFAULT_MARSHALL_VERSION;
 

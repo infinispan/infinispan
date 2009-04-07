@@ -26,7 +26,7 @@ import org.infinispan.transaction.GlobalTransaction;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.util.BidirectionalLinkedHashMap;
 import org.infinispan.util.BidirectionalMap;
-import org.infinispan.util.HorizonCollections;
+import org.infinispan.util.InfinispanCollections;
 
 import javax.transaction.Transaction;
 import java.util.Map;
@@ -103,7 +103,7 @@ public class InvocationContextImpl extends AbstractContext implements Invocation
    public BidirectionalMap<Object, CacheEntry> getLookedUpEntries() {
       if (transactionContext != null) return transactionContext.getLookedUpEntries();
       return (BidirectionalMap<Object, CacheEntry>)
-            (lookedUpEntries == null ? HorizonCollections.emptyBidirectionalMap() : lookedUpEntries);
+            (lookedUpEntries == null ? InfinispanCollections.emptyBidirectionalMap() : lookedUpEntries);
    }
 
    @SuppressWarnings("unchecked")

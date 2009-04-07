@@ -8,12 +8,12 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 
 /**
- * Static helpers for Horizon-specific collections
+ * Static helpers for Infinispan-specific collections
  *
  * @author Manik Surtani
  * @since 4.0
  */
-public class HorizonCollections {
+public class InfinispanCollections {
    private static final ReversibleOrderedSet EMPTY_ROS = new EmptyReversibleOrderedSet();
    private static final BidirectionalMap EMPTY_BIDI_MAP = new EmptyBidiMap();
 

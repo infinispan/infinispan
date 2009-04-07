@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified"
-           xmlns:tns="urn:horizon:config:4.0" targetNamespace="urn:horizon:config:4.0"
+           xmlns:tns="urn:infinispan:config:4.0" targetNamespace="urn:infinispan:config:4.0"
            xmlns:xs="http://www.w3.org/2001/XMLSchema" version="1.0">
 
-   <xs:element name="horizon" type="tns:cacheManagerConfigurationType"/>
+   <xs:element name="infinispan" type="tns:cacheManagerConfigurationType"/>
 
    <xs:complexType name="cacheManagerConfigurationType">
       <xs:sequence>

@@ -181,7 +181,7 @@ public class JmxStatsFunctionalTest {
       localCache2.setExposeJmxStatistics(true);
       cm2.defineCache("local_cache", localCache);
       cm2.getCache("local_cache");
-      assert existsObject("horizon2:cache-name=local_cache(local),jmx-resource=CacheMgmtInterceptor");
+      assert existsObject("infinispan2:cache-name=local_cache(local),jmx-resource=CacheMgmtInterceptor");
 
       GlobalConfiguration globalConfiguration3 = GlobalConfiguration.getClusteredDefault();
       globalConfiguration3.setExposeGlobalJmxStatistics(true);
@@ -192,7 +192,7 @@ public class JmxStatsFunctionalTest {
       localCache3.setExposeJmxStatistics(true);
       cm3.defineCache("local_cache", localCache);
       cm3.getCache("local_cache");
-      assert existsObject("horizon3:cache-name=local_cache(local),jmx-resource=CacheMgmtInterceptor");
+      assert existsObject("infinispan3:cache-name=local_cache(local),jmx-resource=CacheMgmtInterceptor");
    }
 
    public void testUnregisterJmxInfoOnStop() {
@@ -234,15 +234,15 @@ public class JmxStatsFunctionalTest {
       remoteCache.setCacheMode(Configuration.CacheMode.REPL_SYNC);
       cm2.defineCache("remote_cache", remoteCache);
       cm2.getCache("remote_cache");
-      assert existsObject("horizon2:cache-name=remote_cache(repl_sync),jmx-resource=CacheMgmtInterceptor");
+      assert existsObject("infinispan2:cache-name=remote_cache(repl_sync),jmx-resource=CacheMgmtInterceptor");
 
       cm2.stop();
       assert existsObject("infinispan:cache-name=local_cache(local),jmx-resource=CacheMgmtInterceptor");
-      assert !existsObject("horizon2:cache-name=remote_cache(repl_sync),jmx-resource=CacheMgmtInterceptor");
+      assert !existsObject("infinispan2:cache-name=remote_cache(repl_sync),jmx-resource=CacheMgmtInterceptor");
 
       cm.stop();
       assert !existsObject("infinispan:cache-name=local_cache(local),jmx-resource=CacheMgmtInterceptor");
-      assert !existsObject("horizon2:cache-name=remote_cache(repl_sync),jmx-resource=CacheMgmtInterceptor");
+      assert !existsObject("infinispan2:cache-name=remote_cache(repl_sync),jmx-resource=CacheMgmtInterceptor");
    }
 
    static boolean existsObject(String s) {

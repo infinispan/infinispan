@@ -26,7 +26,7 @@ package org.infinispan.lock;
  * only supports {@link #READ_COMMITTED} and {@link #REPEATABLE_READ}, upgrading where
  * possible.
  * <p/>
- * Also note that Horizon defaults to {@link #READ_COMMITTED}.
+ * Also note that Infinispan defaults to {@link #READ_COMMITTED}.
  * <p/>
  *
  * @author (various)

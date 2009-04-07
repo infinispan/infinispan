@@ -21,7 +21,7 @@ import org.infinispan.loader.LockSupportCacheStoreConfig;
  * @since 4.0
  */
 public class FileCacheStoreConfig extends LockSupportCacheStoreConfig {
-   String location = "Horizon-FileCacheStore";
+   String location = "Infinispan-FileCacheStore";
    private int streamBufferSize = 8192;
 
    public FileCacheStoreConfig() {

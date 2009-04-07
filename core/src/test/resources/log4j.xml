@@ -8,7 +8,7 @@
 
    <!-- A time/date based rolling appender -->
    <appender name="FILE" class="org.apache.log4j.DailyRollingFileAppender">
-      <param name="File" value="horizon.log"/>
+      <param name="File" value="infinispan.log"/>
       <param name="Append" value="false"/>
 
       <!-- Rollover at midnight each day -->

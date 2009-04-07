@@ -194,7 +194,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
    public void start() throws CacheLoaderException {
       super.start();
       String location = config.getLocation();
-      if (location == null || location.trim().length() == 0) location = "Horizon-FileCacheStore"; // use relative path!
+      if (location == null || location.trim().length() == 0) location = "Infinispan-FileCacheStore"; // use relative path!
       location += File.separator + cache.getName();
       root = new File(location);
       if (!root.exists()) {
