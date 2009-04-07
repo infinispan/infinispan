@@ -12,8 +12,8 @@
 
    <groupId>org.infinispan</groupId>
    <artifactId>infinispan-cachestore-bdbje</artifactId>
-   <name>INFINISPAN - Cachestore bdbje</name>
-   <description>INFINISPAN - Open Source Data Grids. This is the cachestore/bdbje package.</description>
+   <name>Infinispan BDBJE CacheStore</name>
+   <description>Infinispan BerkeleyDB JavaEdition CacheStore module</description>
    <dependencies>
       <dependency>
          <groupId>${project-package}</groupId>

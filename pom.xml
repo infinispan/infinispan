@@ -15,8 +15,8 @@
    <artifactId>infinispan-aggregator</artifactId>
    <version>4.0.0-SNAPSHOT</version>
 
-   <name>Infinispan (Aggregator)</name>
-   <description>INFINISPAN - Open Source Data Grids. This is the aggregator module.</description>
+   <name>Infinispan Aggregator</name>
+   <description>Infinispan Module Aggregator</description>
    <packaging>pom</packaging>
 
    <reporting>

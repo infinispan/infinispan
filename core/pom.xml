@@ -13,8 +13,8 @@
 
    <groupId>org.infinispan</groupId>
    <artifactId>infinispan-core</artifactId>
-   <name>Infinispan - Core</name>
-   <description>Infinispan - Open Source Data Grids. This is the core package.</description>
+   <name>Infinispan Core</name>
+   <description>Infinispan core module</description>
    <dependencies>
       <!-- Weird dep that should be removed soon -->
       <dependency>

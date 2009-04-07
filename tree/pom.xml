@@ -12,8 +12,8 @@
 
    <groupId>org.infinispan</groupId>
    <artifactId>infinispan-tree</artifactId>
-   <name>Infinispan - Tree API</name>
-   <description>INFINISPAN - Open Source Data Grids. This is the tree api package.</description>
+   <name>Infinispan Tree API</name>
+   <description>Infinispan tree API module</description>
    <dependencies>
       <dependency>
          <groupId>${project-package}</groupId>
