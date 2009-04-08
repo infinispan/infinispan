@@ -41,6 +41,7 @@
                <descriptors>
                   <descriptor>assembly/all.xml</descriptor>
                   <descriptor>assembly/bin.xml</descriptor>
+                  <descriptor>assembly/single_jar.xml</descriptor>
                   <descriptor>assembly/src.xml</descriptor>
                </descriptors>
                <finalName>${artifactId}-${project-version}</finalName>
