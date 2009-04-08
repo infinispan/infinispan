@@ -19,18 +19,6 @@
    <description>Infinispan Module Aggregator</description>
    <packaging>pom</packaging>
 
-   <reporting>
-      <plugins>
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-javadoc-plugin</artifactId>
-            <configuration>
-               <excludePackageNames>org.infinispan</excludePackageNames>
-            </configuration>
-         </plugin>
-      </plugins>
-   </reporting>
-
    <modules>
       <module>parent</module>
       <module>core</module>

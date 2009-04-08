@@ -4,19 +4,13 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
    <modelVersion>4.0.0</modelVersion>
    <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+      <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
       <project-package>org.infinispan</project-package>
       <project-version>4.0.0-SNAPSHOT</project-version>
       <defaultTestGroup>functional,unit</defaultTestGroup>
-      <!-- By default only generate Javadocs when we install the module. -->
-      <javadocPhase>install</javadocPhase>
+      <build-jars>true</build-jars>
    </properties>
 
-   <parent>
-      <groupId>org.jboss.cache</groupId>
-      <artifactId>jbosscache-common-parent</artifactId>
-      <version>1.5</version>
-   </parent>
    <groupId>org.infinispan</groupId>
    <artifactId>infinispan-parent</artifactId>
    <version>4.0.0-SNAPSHOT</version>
@@ -24,6 +18,57 @@
    <description>Infinispan common parent POM module</description>
    <url>http://www.infinispan.org</url>
    <packaging>pom</packaging>
+
+
+   <!-- stuff about the project -->
+   <organization>
+      <name>JBoss, a division of Red Hat</name>
+      <url>http://www.jboss.org</url>
+   </organization>
+   <licenses>
+      <license>
+         <name>GNU Lesser General Public License</name>
+         <url>http://www.gnu.org/copyleft/lesser.html</url>
+         <distribution>repo</distribution>
+      </license>
+   </licenses>
+   <scm>
+      <connection>scm:svn:http://anonsvn.jboss.org/repos/infinispan</connection>
+      <developerConnection>scm:svn:https://svn.jboss.org/repos/infinispan</developerConnection>
+      <url>http://viewvc.jboss.org/cgi-bin/viewvc.cgi/infinispan/</url>
+   </scm>
+   <issueManagement>
+      <system>jira</system>
+      <url>https://jira.jboss.com/jira/browse/ISPN</url>
+   </issueManagement>
+   <ciManagement>
+      <system>hudson</system>
+      <url>http://hudson.jboss.org/hudson/view/Infinispan</url>
+      <notifiers>
+         <notifier>
+            <type>mail</type>
+            <address>infinispan-commits@lists.jboss.org</address>
+         </notifier>
+      </notifiers>
+   </ciManagement>
+   <mailingLists>
+      <mailingList>
+         <name>Infinispan Commit Notificatons</name>
+         <post>infinispan-commits@lists.jboss.org</post>
+         <subscribe>https://lists.jboss.org/mailman/listinfo/infinispan-commits</subscribe>
+         <unsubscribe>https://lists.jboss.org/mailman/listinfo/infinispan-commits</unsubscribe>
+         <archive>http://lists.jboss.org/pipermail/infinispan-commits/</archive>
+      </mailingList>
+      <mailingList>
+         <name>Infinispan Developers</name>
+         <post>infinispan-dev@lists.jboss.org</post>
+         <subscribe>https://lists.jboss.org/mailman/listinfo/infinispan-dev</subscribe>
+         <unsubscribe>https://lists.jboss.org/mailman/listinfo/infinispan-dev</unsubscribe>
+         <archive>http://lists.jboss.org/pipermail/infinispan-dev/</archive>
+      </mailingList>
+   </mailingLists>
+
+
    <dependencies>
       <dependency>
          <groupId>net.jcip</groupId>
@@ -63,8 +108,41 @@
    </dependencies>
    <build>
       <plugins>
-         <!-- ensure parallel test execution -->
          <plugin>
+            <!-- enforce java 1.5 and maven 2.0.8 -->
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-enforcer-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>enforce-java</id>
+                  <goals>
+                     <goal>enforce</goal>
+                  </goals>
+                  <configuration>
+                     <rules>
+                        <requireJavaVersion>
+                           <version>[1.5,)</version>
+                        </requireJavaVersion>
+                        <requireMavenVersion>
+                           <version>(2.0.8,)</version>
+                        </requireMavenVersion>
+
+                     </rules>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+         <plugin>
+            <!-- by default, compile to JDK 1.5 compatibility (individual modules and/or user can override) -->
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <configuration>
+               <source>1.5</source>
+               <target>1.5</target>
+            </configuration>
+         </plugin>
+         <plugin>
+            <!-- ensure parallel test execution -->
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
             <version>2.4.3-JBOSS</version>
@@ -95,39 +173,85 @@
                </properties>
             </configuration>
          </plugin>
+
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-jar-plugin</artifactId>
-            <configuration>
-               <archive>
-                  <manifest>
-                     <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-                     <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-                     <mainClass>org.infinispan.Version</mainClass>
-                  </manifest>
-               </archive>
-            </configuration>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>2.5</version>
             <executions>
                <execution>
-                  <id>build-test-jar</id>
+                  <phase>${javadocPhase}</phase>
                   <goals>
-                     <goal>test-jar</goal>
+                     <goal>javadoc</goal>
                   </goals>
                   <configuration>
-                     <archive>
-                        <manifest>
-                           <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-                           <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-                        </manifest>
-                     </archive>
+                     <links>
+                        <link>http://java.sun.com/j2se/1.5.0/docs/api/</link>
+                        <link>http://java.sun.com/javaee/5/docs/api/</link>
+                     </links>
                   </configuration>
                </execution>
             </executions>
          </plugin>
+
+         <plugin>
+            <!-- eclipse project file generation -->
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-eclipse-plugin</artifactId>
+            <configuration>
+               <downloadSources>true</downloadSources>
+               <buildOutputDirectory>${basedir}/eclipse-output</buildOutputDirectory>
+            </configuration>
+         </plugin>
+         <plugin>
+            <!-- IntelliJ project file generation -->
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-idea-plugin</artifactId>
+            <configuration>
+               <downloadSources>true</downloadSources>
+            </configuration>
+         </plugin>
+
+         <plugin>
+            <!-- Make sure we generate src jars too -->
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <inherited>true</inherited>
+            <executions>
+               <execution>
+                  <id>attach-sources</id>
+                  <goals>
+                     <goal>jar</goal>
+                  </goals>
+               </execution>
+            </executions>
+         </plugin>
       </plugins>
+      <finalName>${artifactId}</finalName>
    </build>
 
-   <!-- basic JBoss repository so that the common parent POM in jbosscache-support can be found -->
+   <reporting>
+      <plugins>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-report-plugin</artifactId>
+            <version>2.3</version>
+         </plugin>
+         <!-- Findbugs report -->
+         <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>findbugs-maven-plugin</artifactId>
+            <version>1.2-SNAPSHOT</version>
+            <configuration>
+               <onlyAnalyze>org.infinispan.*</onlyAnalyze>
+               <xmlOutput>true</xmlOutput>
+               <xmlOutputDirectory>target</xmlOutputDirectory>
+            </configuration>
+         </plugin>
+      </plugins>
+   </reporting>
+
+   <!-- basic JBoss repository -->
    <repositories>
       <repository>
          <id>repository.jboss.org</id>
@@ -138,6 +262,26 @@
          <url>http://snapshots.jboss.org/maven2</url>
       </repository>
    </repositories>
+
+   <pluginRepositories>
+      <pluginRepository>
+         <id>Main Maven Repo</id>
+         <url>http://repo1.maven.org/maven2/</url>
+      </pluginRepository>
+      <pluginRepository>
+         <id>snapshots.repository.codehaus.org</id>
+         <url>http://snapshots.repository.codehaus.org</url>
+      </pluginRepository>
+      <pluginRepository>
+         <id>repository.jboss.org</id>
+         <url>http://repository.jboss.org/maven2</url>
+      </pluginRepository>
+      <pluginRepository>
+         <id>snapshots.jboss.org</id>
+         <url>http://snapshots.jboss.org/maven2</url>
+      </pluginRepository>
+
+   </pluginRepositories>
 
    <profiles>
       <profile>
@@ -181,10 +325,47 @@
       </profile>
 
       <profile>
-         <id>test-integration</id>
-         <properties>
-            <defaultTestGroup>integration</defaultTestGroup>
-         </properties>
+         <id>jarBuilder</id>
+         <activation>
+            <activeByDefault>true</activeByDefault>
+            <property>
+               <name>dojar</name>
+               <value>${build-jars}</value>
+            </property>
+         </activation>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-jar-plugin</artifactId>
+                  <configuration>
+                     <archive>
+                        <manifest>
+                           <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                           <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                           <mainClass>org.infinispan.Version</mainClass>
+                        </manifest>
+                     </archive>
+                  </configuration>
+                  <executions>
+                     <execution>
+                        <id>build-test-jar</id>
+                        <goals>
+                           <goal>test-jar</goal>
+                        </goals>
+                        <configuration>
+                           <archive>
+                              <manifest>
+                                 <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                                 <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                              </manifest>
+                           </archive>
+                        </configuration>
+                     </execution>
+                  </executions>
+               </plugin>
+            </plugins>
+         </build>
       </profile>
    </profiles>
 </project>

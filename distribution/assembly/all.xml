@@ -1,24 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <!--
    This package will build a ZIP containing the following:
 
-   * jbosscache-core.jar
-   * library dependencies
-   * sample config files
-   * conversion scripts
-   * license docs and readmes
--->
+   + modules
+      + core
+         - infinispan-core.jar
+         + lib (contains dependencies)
+      + tree
+         - infinispan-tree.jar
+         + lib
 
+      .. etc ...
+
+   + test
+      + modules
+         ... as above, for test jars and deps ...
+
+   + bin (any scripts, etc)
+   + etc (sample configs, resources, etc from src/main/resources)
+   + doc (release notes, etc from src/main/release)
+-->
+      
 <assembly xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:maven:assembly:1.1.0-SNAPSHOT">
-   <id>bin</id>
+   <id>all</id>
 
    <formats>
       <format>zip</format>
    </formats>
 
+   <!-- TODO fix this, this is still based on the old JBoss Cache src tree -->
    <includeBaseDirectory>true</includeBaseDirectory>
 
    <fileSets>
+
       <!-- code -->
       <fileSet>
          <directory>target</directory>
@@ -28,7 +43,6 @@
          </includes>
          <excludes>
             <exclude>*test*.jar</exclude>
-            <exclude>*sources*.jar</exclude>
          </excludes>
       </fileSet>
 
@@ -60,7 +74,6 @@
          </includes>
       </fileSet>
 
-
       <!-- EULAs and license files -->
       <fileSet>
          <directory>src/main/release</directory>
@@ -70,15 +83,25 @@
          </includes>
       </fileSet>
 
+      <!-- docs -->
+      <fileSet>
+         <directory>target/site/apidocs</directory>
+         <outputDirectory>doc/apidocs</outputDirectory>
+      </fileSet>
+
+      <fileSet>
+         <directory>target/docbook</directory>
+         <outputDirectory>doc/</outputDirectory>
+      </fileSet>
    </fileSets>
 
    <!-- Make sure we filter out the junk that jboss-common-core pulls in -->
    <dependencySets>
       <dependencySet>
          <outputDirectory>lib</outputDirectory>
-         <outputFileNameMapping>${artifactId}.${extension}</outputFileNameMapping>
+         <outputFileNameMapping>${scope}/${artifactId}.${extension}</outputFileNameMapping>
          <unpack>false</unpack>
-         <scope>runtime</scope>
+         <scope>test</scope>
       </dependencySet>
    </dependencySets>
 </assembly>
