@@ -32,6 +32,7 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 
 /**
  * @author Mircea.Markus@jboss.com
+ * @author <a href="mailto:galder.zamarreno@jboss.com">Galder Zamarreno</a>
  * @since 4.0
  */
 public class RemoveCommand extends AbstractDataCommand implements DataWriteCommand {
@@ -41,7 +42,11 @@ public class RemoveCommand extends AbstractDataCommand implements DataWriteComma
    protected CacheNotifier notifier;
    boolean successful = true;
 
-   protected Object value;
+   /** When not null, value indicates that the entry should only be removed if 
+    * the key is mapped to this value. By the time the RemoveCommand needs to 
+    * be marshalled, the condition must have been true locally already, so 
+    * there's no need to marshall the value. **/
+   protected transient Object value;
 
    public RemoveCommand(Object key, Object value, CacheNotifier notifier) {
       super(key);
