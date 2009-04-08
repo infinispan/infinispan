@@ -9,7 +9,7 @@ import org.testng.annotations.Test;
  * Unit tests that cover {@link  BdbjeCacheStoreConfig }
  *
  * @author Adrian Cole
- * @version $Id: $
+ * @version $Id$
  * @since 4.0
  */
 @Test(groups = "unit", enabled = true, testName = "loader.bdbje.BdbjeCacheStoreConfigTest")

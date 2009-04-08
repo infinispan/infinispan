@@ -21,7 +21,7 @@ import java.io.File;
  * Factory that assembles objects specific to the SleepyCat JE API.
  *
  * @author Adrian Cole
- * @version $Id: $
+ * @version $Id$
  * @since 4.0
  */
 public class BdbjeResourceFactory {

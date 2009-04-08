@@ -15,7 +15,7 @@ import org.infinispan.util.Util;
  * </ul>
  *
  * @author Mircea.Markus@jboss.com
- * @version $Id: AbstractCacheStoreConfig.java 7852 2009-03-05 00:22:03Z adriancole $
+ * @version $Id$
  * @since 4.0
  */
 public class AbstractCacheStoreConfig extends PluggableConfigurationComponent implements CacheStoreConfig {

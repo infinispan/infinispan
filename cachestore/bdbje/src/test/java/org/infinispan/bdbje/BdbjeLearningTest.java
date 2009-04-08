@@ -54,7 +54,7 @@ import java.util.Set;
  * test may warrant updating.
  *
  * @author Adrian Cole
- * @version $Id: $
+ * @version $Id$
  * @since 4.0
  */
 @Test(groups = "unit", enabled = true, testName = "loader.bdbje.BdbjeLearningTest")

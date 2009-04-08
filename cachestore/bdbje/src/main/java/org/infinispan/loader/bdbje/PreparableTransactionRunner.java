@@ -15,7 +15,7 @@ import com.sleepycat.util.ExceptionUnwrapper;
  * transaction prepared is accessible via {@link com.sleepycat.collections.CurrentTransaction#getTransaction()}
  *
  * @author Adrian Cole
- * @version $Id: $
+ * @version $Id$
  * @since 4.0
  */
 public class PreparableTransactionRunner extends TransactionRunner {

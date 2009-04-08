@@ -24,7 +24,7 @@ import java.util.Set;
 
 /**
  * @author Adrian Cole
- * @version $Id: $
+ * @version $Id$
  * @since 4.0
  */
 @Test(groups = "unit", testName = "loader.s3.S3CacheStoreIntegrationTest")

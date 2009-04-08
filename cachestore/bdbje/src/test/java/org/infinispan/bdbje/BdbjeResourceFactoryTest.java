@@ -12,7 +12,7 @@ import org.testng.annotations.Test;
 
 /**
  * @author Adrian Cole
- * @version $Id: $
+ * @version $Id$
  * @since 4.0
  */
 @Test(groups = "unit", enabled = true, testName = "loader.bdbje.BdbjeResourceFactoryTest")

@@ -13,7 +13,7 @@ import java.util.List;
  * com.sleepycat.collections.TransactionRunner}.
  *
  * @author Adrian Cole
- * @version $Id: $
+ * @version $Id$
  * @since 4.0
  */
 public class ModificationsTransactionWorker implements TransactionWorker {

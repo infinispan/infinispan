@@ -1,5 +1,5 @@
 
-$Id: README-bdbje-lib.txt 7782 2009-02-25 12:02:25Z manik.surtani@jboss.com $
+$Id$
 
 NAME:    Sleepycat Berkeley DB Java Edition
 PROJECT: http://www.oracle.com/database/berkeley-db/je/index.html

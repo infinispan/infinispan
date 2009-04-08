@@ -22,7 +22,7 @@ import org.infinispan.loader.AbstractCacheStoreConfig;
  * Please see {@link AbstractCacheStoreConfig} for more configuration parameters.
  * 
  * @author Adrian Cole
- * @version $Id: $
+ * @version $Id$
  * @since 4.0
  */
 public class BdbjeCacheStoreConfig extends AbstractCacheStoreConfig {

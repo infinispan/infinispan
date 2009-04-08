@@ -12,4 +12,5 @@ enable-auto-props = yes
 *.xsd = svn:keywords=Id Revision;svn:eol-style=LF
 *.txt = svn:keywords=Id Revision;svn:eol-style=LF
 *.sh = svn:keywords=Id Revision;svn:eol-style=LF;svn:executable
+*.py = svn:keywords=Id Revision;svn:eol-style=LF;svn:executable
 

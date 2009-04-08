@@ -55,7 +55,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p/>
  *
  * @author Adrian Cole
- * @version $Id: $
+ * @version $Id$
  * @since 4.0
  */
 public class BdbjeCacheStore extends AbstractCacheStore {
