@@ -208,12 +208,26 @@ Or, to use JBoss JTA (Arjuna TM) instead of the DummyTransactionManager in a "tr
 
 Please refer to the POM file for more properties and permutations.
 
-2.9. Integration with CruiseControl / Hudson
---------------------------------------------
+2.9. Integration with Hudson
+----------------------------
 
-CruiseControl should do the following:
+Hudson should do the following:
 
 * Run "mvn clean site" - will clean and run tests, and then prepare reports.  In addition to unit tests, this project is
   set up to run FindBugs, PMD, jxr, and a bunch of other code analysis tools and provide a report in
   target/site/project-reports.html - which should be linked from the CruiseControl summary page.
 
+
+3.0 IDE support
+---------------
+
+Maven supports generating IDE configuration files for easy setup of a project.  Currently Eclipse and IntelliJ IDEA are
+supported.  To set up your IDE, follow these steps.  In a virgin checkout of trunk (or any other tag or branch), do:
+
+   $ mvn install -Dmaven.test.skip.exec=true && mvn eclipse:eclipse
+
+OR
+
+   $ mvn install -Dmaven.test.skip.exec=true && mvn idea:idea
+
+And then start up your IDE and open the project file that has been generated.
