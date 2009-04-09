@@ -447,6 +447,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
          mon.notifyStateReceiptSucceeded();
       } catch (Exception e) {
          mon.notifyStateReceiptFailed(e instanceof StateTransferException ? (StateTransferException) e : new StateTransferException(e));
+         log.error("Caught while requesting or applying state", e);
       } finally {
          Util.closeStream(istream);
       }
