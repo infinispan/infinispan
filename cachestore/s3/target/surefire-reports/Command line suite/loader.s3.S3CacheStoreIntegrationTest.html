@@ -1,0 +1,818 @@
+<html>
+<head>
+<title>TestNG:  loader.s3.S3CacheStoreIntegrationTest</title>
+<link href="../testng.css" rel="stylesheet" type="text/css" />
+<link href="../my-testng.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+.log { display: none;} 
+.stack-trace { display: none;} 
+</style>
+<script type="text/javascript">
+<!--
+function flip(e) {
+  current = e.style.display;
+  if (current == 'block') {
+    e.style.display = 'none';
+    return 0;
+  }
+  else {
+    e.style.display = 'block';
+    return 1;
+  }
+}
+
+function toggleBox(szDivId, elem, msg1, msg2)
+{
+  var res = -1;  if (document.getElementById) {
+    res = flip(document.getElementById(szDivId));
+  }
+  else if (document.all) {
+    // this is the way old msie versions work
+    res = flip(document.all[szDivId]);
+  }
+  if(elem) {
+    if(res == 0) elem.innerHTML = msg1; else elem.innerHTML = msg2;
+  }
+
+}
+
+function toggleAllBoxes() {
+  if (document.getElementsByTagName) {
+    d = document.getElementsByTagName('div');
+    for (i = 0; i < d.length; i++) {
+      if (d[i].className == 'log') {
+        flip(d[i]);
+      }
+    }
+  }
+}
+
+// -->
+</script>
+
+</head>
+<body>
+<h2 align='center'>loader.s3.S3CacheStoreIntegrationTest</h2><table border='1' align="center">
+<tr>
+<td>Tests passed/Failed/Skipped:</td><td>0/15/2</td>
+</tr><tr>
+<td>Started on:</td><td>Tue Apr 07 19:36:32 CEST 2009</td>
+</tr>
+<tr><td>Total time:</td><td>1 seconds (1470 ms)</td>
+</tr><tr>
+<td>Included groups:</td><td>unit functional </td>
+</tr><tr>
+<td>Excluded groups:</td><td></td>
+</tr>
+</table><p/>
+<small><i>(Hover the method name to see the test class name)</i></small><p/>
+<table width='100%' border='1' class='invocation-failed'>
+<tr><td colspan='3' align='center'><b>FAILED CONFIGURATIONS</b></td></tr>
+<tr><td><b>Test method</b></td>
+<td width="10%"><b>Time (seconds)</b></td>
+<td width="30%"><b>Exception</b></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.setUp()'>@BeforeMethod setUp</td>
+<td>0</td>
+<td><div><pre>org.infinispan.loader.CacheLoaderException: error opening s3 service
+	at org.infinispan.loader.s3.S3CacheStore.convertToCacheLoaderException(S3CacheStore.java:148)
+	at org.infinispan.loader.s3.S3CacheStore.start(S3CacheStore.java:88)
+	at org.infinispan.loader.s3.S3CacheStoreIntegrationTest.createAndStartCacheStore(S3CacheStoreIntegrationTest.java:79)
+	at org.infinispan.loader.s3.S3CacheStoreIntegrationTest.createCacheStore(S3CacheStoreIntegrationTest.java:64)
+	at org.infinispan.loader.BaseCacheStoreTest.setUp(BaseCacheStoreTest.java:45)
+	at org.infinispan.loader.s3.S3CacheStoreIntegrationTest.setUp(S3CacheStoreIntegrationTest.java:90)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)
+	at java.lang.Thread.run(Thread.java:619)
+Caused by: org.jets3t.service.S3ServiceException: S3 GET failed for '/' XML Error Message: &lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;Error&gt;&lt;Code&gt;InvalidAccessKeyId&lt;/Code&gt;&lt;Message&gt;The AWS Access Key Id you provided does not exist in our records.&lt;/Message&gt;&lt;RequestId&gt;16A47E5BDB906B2C&lt;/RequestId&gt;&lt;HostId&gt;yNkDOoNpsahEFwXqPpjuaJK6IT2XTPjpPB4TKTAAgmyH9gnZJ/BfTriJ/ojBq0h1&lt;/HostId&gt;&lt;AWSAccessKeyId&gt;youraccesskey&lt;/AWSAccessKeyId&gt;&lt;/Error&gt;
+	at org.jets3t.service.impl.rest.httpclient.RestS3Service.performRequest(RestS3Service.java:392)
+	at org.jets3t.service.impl.rest.httpclient.RestS3Service.performRestGet(RestS3Service.java:727)
+	at org.jets3t.service.impl.rest.httpclient.RestS3Service.listAllBucketsImpl(RestS3Service.java:1010)
+	at org.jets3t.service.S3Service.listAllBuckets(S3Service.java:1329)
+	at org.jets3t.service.S3Service.getBucket(S3Service.java:1506)
+	at org.jets3t.service.S3Service.getOrCreateBucket(S3Service.java:1529)
+	at org.infinispan.loader.s3.Jets3tS3Connection.getOrCreateBucket(Jets3tS3Connection.java:63)
+	at org.infinispan.loader.s3.S3CacheStore.start(S3CacheStore.java:86)
+	... 26 more
+... Removed 19 stack frames</pre></div><a href='#' onClick='toggleBox("stack-trace13977236", this, "Click to show all stack frames", "Click to hide stack frames")'>Click to show all stack frames</a>
+<div class='stack-trace' id='stack-trace13977236'><pre>org.infinispan.loader.CacheLoaderException: error opening s3 service
+	at org.infinispan.loader.s3.S3CacheStore.convertToCacheLoaderException(S3CacheStore.java:148)
+	at org.infinispan.loader.s3.S3CacheStore.start(S3CacheStore.java:88)
+	at org.infinispan.loader.s3.S3CacheStoreIntegrationTest.createAndStartCacheStore(S3CacheStoreIntegrationTest.java:79)
+	at org.infinispan.loader.s3.S3CacheStoreIntegrationTest.createCacheStore(S3CacheStoreIntegrationTest.java:64)
+	at org.infinispan.loader.BaseCacheStoreTest.setUp(BaseCacheStoreTest.java:45)
+	at org.infinispan.loader.s3.S3CacheStoreIntegrationTest.setUp(S3CacheStoreIntegrationTest.java:90)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)
+	at java.lang.reflect.Method.invoke(Method.java:597)
+	at org.testng.internal.MethodHelper.invokeMethod(MethodHelper.java:580)
+	at org.testng.internal.Invoker.invokeConfigurationMethod(Invoker.java:398)
+	at org.testng.internal.Invoker.invokeConfigurations(Invoker.java:145)
+	at org.testng.internal.Invoker.invokeMethod(Invoker.java:427)
+	at org.testng.internal.Invoker.invokeTestMethod(Invoker.java:617)
+	at org.testng.internal.Invoker.invokeTestMethods(Invoker.java:885)
+	at org.testng.internal.TestMethodWorker.invokeTestMethods(TestMethodWorker.java:126)
+	at org.testng.internal.TestMethodWorker.run(TestMethodWorker.java:110)
+	at org.testng.TestRunner.runWorkers(TestRunner.java:712)
+	at org.testng.TestRunner.privateRun(TestRunner.java:582)
+	at org.testng.TestRunner.run(TestRunner.java:477)
+	at org.testng.SuiteRunner.runTest(SuiteRunner.java:324)
+	at org.testng.SuiteRunner.access$000(SuiteRunner.java:33)
+	at org.testng.SuiteRunner$SuiteWorker.run(SuiteRunner.java:350)
+	at org.testng.internal.thread.ThreadUtil$CountDownLatchedRunnable.run(ThreadUtil.java:132)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)
+	at java.lang.Thread.run(Thread.java:619)
+Caused by: org.jets3t.service.S3ServiceException: S3 GET failed for '/' XML Error Message: &lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;Error&gt;&lt;Code&gt;InvalidAccessKeyId&lt;/Code&gt;&lt;Message&gt;The AWS Access Key Id you provided does not exist in our records.&lt;/Message&gt;&lt;RequestId&gt;16A47E5BDB906B2C&lt;/RequestId&gt;&lt;HostId&gt;yNkDOoNpsahEFwXqPpjuaJK6IT2XTPjpPB4TKTAAgmyH9gnZJ/BfTriJ/ojBq0h1&lt;/HostId&gt;&lt;AWSAccessKeyId&gt;youraccesskey&lt;/AWSAccessKeyId&gt;&lt;/Error&gt;
+	at org.jets3t.service.impl.rest.httpclient.RestS3Service.performRequest(RestS3Service.java:392)
+	at org.jets3t.service.impl.rest.httpclient.RestS3Service.performRestGet(RestS3Service.java:727)
+	at org.jets3t.service.impl.rest.httpclient.RestS3Service.listAllBucketsImpl(RestS3Service.java:1010)
+	at org.jets3t.service.S3Service.listAllBuckets(S3Service.java:1329)
+	at org.jets3t.service.S3Service.getBucket(S3Service.java:1506)
+	at org.jets3t.service.S3Service.getOrCreateBucket(S3Service.java:1529)
+	at org.infinispan.loader.s3.Jets3tS3Connection.getOrCreateBucket(Jets3tS3Connection.java:63)
+	at org.infinispan.loader.s3.S3CacheStore.start(S3CacheStore.java:86)
+	... 26 more
+</pre></div></td>
+</tr>
+</table><p>
+<table width='100%' border='1' class='invocation-skipped'>
+<tr><td colspan='3' align='center'><b>SKIPPED CONFIGURATIONS</b></td></tr>
+<tr><td><b>Test method</b></td>
+<td width="10%"><b>Time (seconds)</b></td>
+<td width="30%"><b>Exception</b></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.setUp()'>@BeforeMethod setUp</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.setUp()'>@BeforeMethod setUp</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.setUp()'>@BeforeMethod setUp</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.setUp()'>@BeforeMethod setUp</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.setUp()'>@BeforeMethod setUp</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.setUp()'>@BeforeMethod setUp</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.setUp()'>@BeforeMethod setUp</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.setUp()'>@BeforeMethod setUp</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.setUp()'>@BeforeMethod setUp</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.setUp()'>@BeforeMethod setUp</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.setUp()'>@BeforeMethod setUp</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.setUp()'>@BeforeMethod setUp</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.setUp()'>@BeforeMethod setUp</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.setUp()'>@BeforeMethod setUp</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.setUp()'>@BeforeMethod setUp</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.setUp()'>@BeforeMethod setUp</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.tearDown()'>@AfterMethod tearDown</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.tearDown()'>@AfterMethod tearDown</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.tearDown()'>@AfterMethod tearDown</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.tearDown()'>@AfterMethod tearDown</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.tearDown()'>@AfterMethod tearDown</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.tearDown()'>@AfterMethod tearDown</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.tearDown()'>@AfterMethod tearDown</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.tearDown()'>@AfterMethod tearDown</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.tearDown()'>@AfterMethod tearDown</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.tearDown()'>@AfterMethod tearDown</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.tearDown()'>@AfterMethod tearDown</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.tearDown()'>@AfterMethod tearDown</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.tearDown()'>@AfterMethod tearDown</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.tearDown()'>@AfterMethod tearDown</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.tearDown()'>@AfterMethod tearDown</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.tearDown()'>@AfterMethod tearDown</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.tearDown()'>@AfterMethod tearDown</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.removeS3Buckets()'>@AfterTest removeS3Buckets</td>
+<td>0</td>
+<td></td>
+</tr>
+</table><p>
+<table width='100%' border='1' class='invocation-failed'>
+<tr><td colspan='3' align='center'><b>FAILED TESTS</b></td></tr>
+<tr><td><b>Test method</b></td>
+<td width="10%"><b>Time (seconds)</b></td>
+<td width="30%"><b>Exception</b></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.testCommitAndRollbackWithoutPrepare()'>testCommitAndRollbackWithoutPrepare</td>
+<td>0</td>
+<td><div><pre>java.lang.NullPointerException
+	at org.infinispan.loader.BaseCacheStoreTest.testCommitAndRollbackWithoutPrepare(BaseCacheStoreTest.java:352)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)
+	at java.lang.Thread.run(Thread.java:619)
+... Removed 17 stack frames</pre></div><a href='#' onClick='toggleBox("stack-trace26564926", this, "Click to show all stack frames", "Click to hide stack frames")'>Click to show all stack frames</a>
+<div class='stack-trace' id='stack-trace26564926'><pre>java.lang.NullPointerException
+	at org.infinispan.loader.BaseCacheStoreTest.testCommitAndRollbackWithoutPrepare(BaseCacheStoreTest.java:352)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)
+	at java.lang.reflect.Method.invoke(Method.java:597)
+	at org.testng.internal.MethodHelper.invokeMethod(MethodHelper.java:580)
+	at org.testng.internal.Invoker.invokeMethod(Invoker.java:478)
+	at org.testng.internal.Invoker.invokeTestMethod(Invoker.java:617)
+	at org.testng.internal.Invoker.invokeTestMethods(Invoker.java:885)
+	at org.testng.internal.TestMethodWorker.invokeTestMethods(TestMethodWorker.java:126)
+	at org.testng.internal.TestMethodWorker.run(TestMethodWorker.java:110)
+	at org.testng.TestRunner.runWorkers(TestRunner.java:712)
+	at org.testng.TestRunner.privateRun(TestRunner.java:582)
+	at org.testng.TestRunner.run(TestRunner.java:477)
+	at org.testng.SuiteRunner.runTest(SuiteRunner.java:324)
+	at org.testng.SuiteRunner.access$000(SuiteRunner.java:33)
+	at org.testng.SuiteRunner$SuiteWorker.run(SuiteRunner.java:350)
+	at org.testng.internal.thread.ThreadUtil$CountDownLatchedRunnable.run(ThreadUtil.java:132)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)
+	at java.lang.Thread.run(Thread.java:619)
+</pre></div></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.testConcurrency()'>testConcurrency</td>
+<td>0</td>
+<td><div><pre>java.lang.NullPointerException
+	at org.infinispan.loader.BaseCacheStoreTest$3.run(BaseCacheStoreTest.java:511)
+	at org.infinispan.loader.BaseCacheStoreTest$6.run(BaseCacheStoreTest.java:547)
+</pre></div><a href='#' onClick='toggleBox("stack-trace9445174", this, "Click to show all stack frames", "Click to hide stack frames")'>Click to show all stack frames</a>
+<div class='stack-trace' id='stack-trace9445174'><pre>java.lang.NullPointerException
+	at org.infinispan.loader.BaseCacheStoreTest$3.run(BaseCacheStoreTest.java:511)
+	at org.infinispan.loader.BaseCacheStoreTest$6.run(BaseCacheStoreTest.java:547)
+</pre></div></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.testConfigFile()'>testConfigFile</td>
+<td>0</td>
+<td><div><pre>java.lang.NullPointerException
+	at org.infinispan.loader.BaseCacheStoreTest.testConfigFile(BaseCacheStoreTest.java:490)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)
+	at java.lang.Thread.run(Thread.java:619)
+... Removed 17 stack frames</pre></div><a href='#' onClick='toggleBox("stack-trace16201329", this, "Click to show all stack frames", "Click to hide stack frames")'>Click to show all stack frames</a>
+<div class='stack-trace' id='stack-trace16201329'><pre>java.lang.NullPointerException
+	at org.infinispan.loader.BaseCacheStoreTest.testConfigFile(BaseCacheStoreTest.java:490)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)
+	at java.lang.reflect.Method.invoke(Method.java:597)
+	at org.testng.internal.MethodHelper.invokeMethod(MethodHelper.java:580)
+	at org.testng.internal.Invoker.invokeMethod(Invoker.java:478)
+	at org.testng.internal.Invoker.invokeTestMethod(Invoker.java:617)
+	at org.testng.internal.Invoker.invokeTestMethods(Invoker.java:885)
+	at org.testng.internal.TestMethodWorker.invokeTestMethods(TestMethodWorker.java:126)
+	at org.testng.internal.TestMethodWorker.run(TestMethodWorker.java:110)
+	at org.testng.TestRunner.runWorkers(TestRunner.java:712)
+	at org.testng.TestRunner.privateRun(TestRunner.java:582)
+	at org.testng.TestRunner.run(TestRunner.java:477)
+	at org.testng.SuiteRunner.runTest(SuiteRunner.java:324)
+	at org.testng.SuiteRunner.access$000(SuiteRunner.java:33)
+	at org.testng.SuiteRunner$SuiteWorker.run(SuiteRunner.java:350)
+	at org.testng.internal.thread.ThreadUtil$CountDownLatchedRunnable.run(ThreadUtil.java:132)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)
+	at java.lang.Thread.run(Thread.java:619)
+</pre></div></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.testLoadAndStoreImmortal()'>testLoadAndStoreImmortal</td>
+<td>0</td>
+<td><div><pre>java.lang.NullPointerException
+	at org.infinispan.loader.BaseCacheStoreTest.testLoadAndStoreImmortal(BaseCacheStoreTest.java:88)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)
+	at java.lang.Thread.run(Thread.java:619)
+... Removed 17 stack frames</pre></div><a href='#' onClick='toggleBox("stack-trace32173387", this, "Click to show all stack frames", "Click to hide stack frames")'>Click to show all stack frames</a>
+<div class='stack-trace' id='stack-trace32173387'><pre>java.lang.NullPointerException
+	at org.infinispan.loader.BaseCacheStoreTest.testLoadAndStoreImmortal(BaseCacheStoreTest.java:88)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)
+	at java.lang.reflect.Method.invoke(Method.java:597)
+	at org.testng.internal.MethodHelper.invokeMethod(MethodHelper.java:580)
+	at org.testng.internal.Invoker.invokeMethod(Invoker.java:478)
+	at org.testng.internal.Invoker.invokeTestMethod(Invoker.java:617)
+	at org.testng.internal.Invoker.invokeTestMethods(Invoker.java:885)
+	at org.testng.internal.TestMethodWorker.invokeTestMethods(TestMethodWorker.java:126)
+	at org.testng.internal.TestMethodWorker.run(TestMethodWorker.java:110)
+	at org.testng.TestRunner.runWorkers(TestRunner.java:712)
+	at org.testng.TestRunner.privateRun(TestRunner.java:582)
+	at org.testng.TestRunner.run(TestRunner.java:477)
+	at org.testng.SuiteRunner.runTest(SuiteRunner.java:324)
+	at org.testng.SuiteRunner.access$000(SuiteRunner.java:33)
+	at org.testng.SuiteRunner$SuiteWorker.run(SuiteRunner.java:350)
+	at org.testng.internal.thread.ThreadUtil$CountDownLatchedRunnable.run(ThreadUtil.java:132)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)
+	at java.lang.Thread.run(Thread.java:619)
+</pre></div></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.testLoadAndStoreWithIdle()'>testLoadAndStoreWithIdle</td>
+<td>0</td>
+<td><div><pre>java.lang.NullPointerException
+	at org.infinispan.loader.BaseCacheStoreTest.testLoadAndStoreWithIdle(BaseCacheStoreTest.java:122)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)
+	at java.lang.Thread.run(Thread.java:619)
+... Removed 17 stack frames</pre></div><a href='#' onClick='toggleBox("stack-trace21342620", this, "Click to show all stack frames", "Click to hide stack frames")'>Click to show all stack frames</a>
+<div class='stack-trace' id='stack-trace21342620'><pre>java.lang.NullPointerException
+	at org.infinispan.loader.BaseCacheStoreTest.testLoadAndStoreWithIdle(BaseCacheStoreTest.java:122)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)
+	at java.lang.reflect.Method.invoke(Method.java:597)
+	at org.testng.internal.MethodHelper.invokeMethod(MethodHelper.java:580)
+	at org.testng.internal.Invoker.invokeMethod(Invoker.java:478)
+	at org.testng.internal.Invoker.invokeTestMethod(Invoker.java:617)
+	at org.testng.internal.Invoker.invokeTestMethods(Invoker.java:885)
+	at org.testng.internal.TestMethodWorker.invokeTestMethods(TestMethodWorker.java:126)
+	at org.testng.internal.TestMethodWorker.run(TestMethodWorker.java:110)
+	at org.testng.TestRunner.runWorkers(TestRunner.java:712)
+	at org.testng.TestRunner.privateRun(TestRunner.java:582)
+	at org.testng.TestRunner.run(TestRunner.java:477)
+	at org.testng.SuiteRunner.runTest(SuiteRunner.java:324)
+	at org.testng.SuiteRunner.access$000(SuiteRunner.java:33)
+	at org.testng.SuiteRunner$SuiteWorker.run(SuiteRunner.java:350)
+	at org.testng.internal.thread.ThreadUtil$CountDownLatchedRunnable.run(ThreadUtil.java:132)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)
+	at java.lang.Thread.run(Thread.java:619)
+</pre></div></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.testLoadAndStoreWithLifespan()'>testLoadAndStoreWithLifespan</td>
+<td>0</td>
+<td><div><pre>java.lang.NullPointerException
+	at org.infinispan.loader.BaseCacheStoreTest.testLoadAndStoreWithLifespan(BaseCacheStoreTest.java:100)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)
+	at java.lang.Thread.run(Thread.java:619)
+... Removed 17 stack frames</pre></div><a href='#' onClick='toggleBox("stack-trace10642267", this, "Click to show all stack frames", "Click to hide stack frames")'>Click to show all stack frames</a>
+<div class='stack-trace' id='stack-trace10642267'><pre>java.lang.NullPointerException
+	at org.infinispan.loader.BaseCacheStoreTest.testLoadAndStoreWithLifespan(BaseCacheStoreTest.java:100)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)
+	at java.lang.reflect.Method.invoke(Method.java:597)
+	at org.testng.internal.MethodHelper.invokeMethod(MethodHelper.java:580)
+	at org.testng.internal.Invoker.invokeMethod(Invoker.java:478)
+	at org.testng.internal.Invoker.invokeTestMethod(Invoker.java:617)
+	at org.testng.internal.Invoker.invokeTestMethods(Invoker.java:885)
+	at org.testng.internal.TestMethodWorker.invokeTestMethods(TestMethodWorker.java:126)
+	at org.testng.internal.TestMethodWorker.run(TestMethodWorker.java:110)
+	at org.testng.TestRunner.runWorkers(TestRunner.java:712)
+	at org.testng.TestRunner.privateRun(TestRunner.java:582)
+	at org.testng.TestRunner.run(TestRunner.java:477)
+	at org.testng.SuiteRunner.runTest(SuiteRunner.java:324)
+	at org.testng.SuiteRunner.access$000(SuiteRunner.java:33)
+	at org.testng.SuiteRunner$SuiteWorker.run(SuiteRunner.java:350)
+	at org.testng.internal.thread.ThreadUtil$CountDownLatchedRunnable.run(ThreadUtil.java:132)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)
+	at java.lang.Thread.run(Thread.java:619)
+</pre></div></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.testLoadAndStoreWithLifespanAndIdle()'>testLoadAndStoreWithLifespanAndIdle</td>
+<td>0</td>
+<td><div><pre>java.lang.NullPointerException
+	at org.infinispan.loader.BaseCacheStoreTest.testLoadAndStoreWithLifespanAndIdle(BaseCacheStoreTest.java:144)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)
+	at java.lang.Thread.run(Thread.java:619)
+... Removed 17 stack frames</pre></div><a href='#' onClick='toggleBox("stack-trace10091594", this, "Click to show all stack frames", "Click to hide stack frames")'>Click to show all stack frames</a>
+<div class='stack-trace' id='stack-trace10091594'><pre>java.lang.NullPointerException
+	at org.infinispan.loader.BaseCacheStoreTest.testLoadAndStoreWithLifespanAndIdle(BaseCacheStoreTest.java:144)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)
+	at java.lang.reflect.Method.invoke(Method.java:597)
+	at org.testng.internal.MethodHelper.invokeMethod(MethodHelper.java:580)
+	at org.testng.internal.Invoker.invokeMethod(Invoker.java:478)
+	at org.testng.internal.Invoker.invokeTestMethod(Invoker.java:617)
+	at org.testng.internal.Invoker.invokeTestMethods(Invoker.java:885)
+	at org.testng.internal.TestMethodWorker.invokeTestMethods(TestMethodWorker.java:126)
+	at org.testng.internal.TestMethodWorker.run(TestMethodWorker.java:110)
+	at org.testng.TestRunner.runWorkers(TestRunner.java:712)
+	at org.testng.TestRunner.privateRun(TestRunner.java:582)
+	at org.testng.TestRunner.run(TestRunner.java:477)
+	at org.testng.SuiteRunner.runTest(SuiteRunner.java:324)
+	at org.testng.SuiteRunner.access$000(SuiteRunner.java:33)
+	at org.testng.SuiteRunner$SuiteWorker.run(SuiteRunner.java:350)
+	at org.testng.internal.thread.ThreadUtil$CountDownLatchedRunnable.run(ThreadUtil.java:132)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)
+	at java.lang.Thread.run(Thread.java:619)
+</pre></div></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.testOnePhaseCommit()'>testOnePhaseCommit</td>
+<td>0</td>
+<td><div><pre>java.lang.NullPointerException
+	at org.infinispan.loader.BaseCacheStoreTest.testOnePhaseCommit(BaseCacheStoreTest.java:205)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)
+	at java.lang.Thread.run(Thread.java:619)
+... Removed 17 stack frames</pre></div><a href='#' onClick='toggleBox("stack-trace3882875", this, "Click to show all stack frames", "Click to hide stack frames")'>Click to show all stack frames</a>
+<div class='stack-trace' id='stack-trace3882875'><pre>java.lang.NullPointerException
+	at org.infinispan.loader.BaseCacheStoreTest.testOnePhaseCommit(BaseCacheStoreTest.java:205)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)
+	at java.lang.reflect.Method.invoke(Method.java:597)
+	at org.testng.internal.MethodHelper.invokeMethod(MethodHelper.java:580)
+	at org.testng.internal.Invoker.invokeMethod(Invoker.java:478)
+	at org.testng.internal.Invoker.invokeTestMethod(Invoker.java:617)
+	at org.testng.internal.Invoker.invokeTestMethods(Invoker.java:885)
+	at org.testng.internal.TestMethodWorker.invokeTestMethods(TestMethodWorker.java:126)
+	at org.testng.internal.TestMethodWorker.run(TestMethodWorker.java:110)
+	at org.testng.TestRunner.runWorkers(TestRunner.java:712)
+	at org.testng.TestRunner.privateRun(TestRunner.java:582)
+	at org.testng.TestRunner.run(TestRunner.java:477)
+	at org.testng.SuiteRunner.runTest(SuiteRunner.java:324)
+	at org.testng.SuiteRunner.access$000(SuiteRunner.java:33)
+	at org.testng.SuiteRunner$SuiteWorker.run(SuiteRunner.java:350)
+	at org.testng.internal.thread.ThreadUtil$CountDownLatchedRunnable.run(ThreadUtil.java:132)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)
+	at java.lang.Thread.run(Thread.java:619)
+</pre></div></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.testPreload()'>testPreload</td>
+<td>0</td>
+<td><div><pre>java.lang.NullPointerException
+	at org.infinispan.loader.BaseCacheStoreTest.testPreload(BaseCacheStoreTest.java:362)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)
+	at java.lang.Thread.run(Thread.java:619)
+... Removed 17 stack frames</pre></div><a href='#' onClick='toggleBox("stack-trace18999998", this, "Click to show all stack frames", "Click to hide stack frames")'>Click to show all stack frames</a>
+<div class='stack-trace' id='stack-trace18999998'><pre>java.lang.NullPointerException
+	at org.infinispan.loader.BaseCacheStoreTest.testPreload(BaseCacheStoreTest.java:362)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)
+	at java.lang.reflect.Method.invoke(Method.java:597)
+	at org.testng.internal.MethodHelper.invokeMethod(MethodHelper.java:580)
+	at org.testng.internal.Invoker.invokeMethod(Invoker.java:478)
+	at org.testng.internal.Invoker.invokeTestMethod(Invoker.java:617)
+	at org.testng.internal.Invoker.invokeTestMethods(Invoker.java:885)
+	at org.testng.internal.TestMethodWorker.invokeTestMethods(TestMethodWorker.java:126)
+	at org.testng.internal.TestMethodWorker.run(TestMethodWorker.java:110)
+	at org.testng.TestRunner.runWorkers(TestRunner.java:712)
+	at org.testng.TestRunner.privateRun(TestRunner.java:582)
+	at org.testng.TestRunner.run(TestRunner.java:477)
+	at org.testng.SuiteRunner.runTest(SuiteRunner.java:324)
+	at org.testng.SuiteRunner.access$000(SuiteRunner.java:33)
+	at org.testng.SuiteRunner$SuiteWorker.run(SuiteRunner.java:350)
+	at org.testng.internal.thread.ThreadUtil$CountDownLatchedRunnable.run(ThreadUtil.java:132)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)
+	at java.lang.Thread.run(Thread.java:619)
+</pre></div></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.testPurgeExpired()'>testPurgeExpired</td>
+<td>0</td>
+<td><div><pre>java.lang.NullPointerException
+	at org.infinispan.loader.BaseCacheStoreTest.testPurgeExpired(BaseCacheStoreTest.java:411)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)
+	at java.lang.Thread.run(Thread.java:619)
+... Removed 17 stack frames</pre></div><a href='#' onClick='toggleBox("stack-trace16591095", this, "Click to show all stack frames", "Click to hide stack frames")'>Click to show all stack frames</a>
+<div class='stack-trace' id='stack-trace16591095'><pre>java.lang.NullPointerException
+	at org.infinispan.loader.BaseCacheStoreTest.testPurgeExpired(BaseCacheStoreTest.java:411)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)
+	at java.lang.reflect.Method.invoke(Method.java:597)
+	at org.testng.internal.MethodHelper.invokeMethod(MethodHelper.java:580)
+	at org.testng.internal.Invoker.invokeMethod(Invoker.java:478)
+	at org.testng.internal.Invoker.invokeTestMethod(Invoker.java:617)
+	at org.testng.internal.Invoker.invokeTestMethods(Invoker.java:885)
+	at org.testng.internal.TestMethodWorker.invokeTestMethods(TestMethodWorker.java:126)
+	at org.testng.internal.TestMethodWorker.run(TestMethodWorker.java:110)
+	at org.testng.TestRunner.runWorkers(TestRunner.java:712)
+	at org.testng.TestRunner.privateRun(TestRunner.java:582)
+	at org.testng.TestRunner.run(TestRunner.java:477)
+	at org.testng.SuiteRunner.runTest(SuiteRunner.java:324)
+	at org.testng.SuiteRunner.access$000(SuiteRunner.java:33)
+	at org.testng.SuiteRunner$SuiteWorker.run(SuiteRunner.java:350)
+	at org.testng.internal.thread.ThreadUtil$CountDownLatchedRunnable.run(ThreadUtil.java:132)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)
+	at java.lang.Thread.run(Thread.java:619)
+</pre></div></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.testRollback()'>testRollback</td>
+<td>0</td>
+<td><div><pre>java.lang.NullPointerException
+	at org.infinispan.loader.BaseCacheStoreTest.testRollback(BaseCacheStoreTest.java:264)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)
+	at java.lang.Thread.run(Thread.java:619)
+... Removed 17 stack frames</pre></div><a href='#' onClick='toggleBox("stack-trace16509931", this, "Click to show all stack frames", "Click to hide stack frames")'>Click to show all stack frames</a>
+<div class='stack-trace' id='stack-trace16509931'><pre>java.lang.NullPointerException
+	at org.infinispan.loader.BaseCacheStoreTest.testRollback(BaseCacheStoreTest.java:264)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)
+	at java.lang.reflect.Method.invoke(Method.java:597)
+	at org.testng.internal.MethodHelper.invokeMethod(MethodHelper.java:580)
+	at org.testng.internal.Invoker.invokeMethod(Invoker.java:478)
+	at org.testng.internal.Invoker.invokeTestMethod(Invoker.java:617)
+	at org.testng.internal.Invoker.invokeTestMethods(Invoker.java:885)
+	at org.testng.internal.TestMethodWorker.invokeTestMethods(TestMethodWorker.java:126)
+	at org.testng.internal.TestMethodWorker.run(TestMethodWorker.java:110)
+	at org.testng.TestRunner.runWorkers(TestRunner.java:712)
+	at org.testng.TestRunner.privateRun(TestRunner.java:582)
+	at org.testng.TestRunner.run(TestRunner.java:477)
+	at org.testng.SuiteRunner.runTest(SuiteRunner.java:324)
+	at org.testng.SuiteRunner.access$000(SuiteRunner.java:33)
+	at org.testng.SuiteRunner$SuiteWorker.run(SuiteRunner.java:350)
+	at org.testng.internal.thread.ThreadUtil$CountDownLatchedRunnable.run(ThreadUtil.java:132)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)
+	at java.lang.Thread.run(Thread.java:619)
+</pre></div></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.testRollbackFromADifferentThreadReusingTransactionKey()'>testRollbackFromADifferentThreadReusingTransactionKey</td>
+<td>0</td>
+<td><div><pre>java.lang.NullPointerException
+	at org.infinispan.loader.BaseCacheStoreTest.testRollbackFromADifferentThreadReusingTransactionKey(BaseCacheStoreTest.java:306)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)
+	at java.lang.Thread.run(Thread.java:619)
+... Removed 17 stack frames</pre></div><a href='#' onClick='toggleBox("stack-trace12194295", this, "Click to show all stack frames", "Click to hide stack frames")'>Click to show all stack frames</a>
+<div class='stack-trace' id='stack-trace12194295'><pre>java.lang.NullPointerException
+	at org.infinispan.loader.BaseCacheStoreTest.testRollbackFromADifferentThreadReusingTransactionKey(BaseCacheStoreTest.java:306)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)
+	at java.lang.reflect.Method.invoke(Method.java:597)
+	at org.testng.internal.MethodHelper.invokeMethod(MethodHelper.java:580)
+	at org.testng.internal.Invoker.invokeMethod(Invoker.java:478)
+	at org.testng.internal.Invoker.invokeTestMethod(Invoker.java:617)
+	at org.testng.internal.Invoker.invokeTestMethods(Invoker.java:885)
+	at org.testng.internal.TestMethodWorker.invokeTestMethods(TestMethodWorker.java:126)
+	at org.testng.internal.TestMethodWorker.run(TestMethodWorker.java:110)
+	at org.testng.TestRunner.runWorkers(TestRunner.java:712)
+	at org.testng.TestRunner.privateRun(TestRunner.java:582)
+	at org.testng.TestRunner.run(TestRunner.java:477)
+	at org.testng.SuiteRunner.runTest(SuiteRunner.java:324)
+	at org.testng.SuiteRunner.access$000(SuiteRunner.java:33)
+	at org.testng.SuiteRunner$SuiteWorker.run(SuiteRunner.java:350)
+	at org.testng.internal.thread.ThreadUtil$CountDownLatchedRunnable.run(ThreadUtil.java:132)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)
+	at java.lang.Thread.run(Thread.java:619)
+</pre></div></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.testStopStartDoesntNukeValues()'>testStopStartDoesntNukeValues</td>
+<td>0</td>
+<td><div><pre>java.lang.NullPointerException
+	at org.infinispan.loader.BaseCacheStoreTest.testStopStartDoesntNukeValues(BaseCacheStoreTest.java:167)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)
+	at java.lang.Thread.run(Thread.java:619)
+... Removed 17 stack frames</pre></div><a href='#' onClick='toggleBox("stack-trace32291974", this, "Click to show all stack frames", "Click to hide stack frames")'>Click to show all stack frames</a>
+<div class='stack-trace' id='stack-trace32291974'><pre>java.lang.NullPointerException
+	at org.infinispan.loader.BaseCacheStoreTest.testStopStartDoesntNukeValues(BaseCacheStoreTest.java:167)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)
+	at java.lang.reflect.Method.invoke(Method.java:597)
+	at org.testng.internal.MethodHelper.invokeMethod(MethodHelper.java:580)
+	at org.testng.internal.Invoker.invokeMethod(Invoker.java:478)
+	at org.testng.internal.Invoker.invokeTestMethod(Invoker.java:617)
+	at org.testng.internal.Invoker.invokeTestMethods(Invoker.java:885)
+	at org.testng.internal.TestMethodWorker.invokeTestMethods(TestMethodWorker.java:126)
+	at org.testng.internal.TestMethodWorker.run(TestMethodWorker.java:110)
+	at org.testng.TestRunner.runWorkers(TestRunner.java:712)
+	at org.testng.TestRunner.privateRun(TestRunner.java:582)
+	at org.testng.TestRunner.run(TestRunner.java:477)
+	at org.testng.SuiteRunner.runTest(SuiteRunner.java:324)
+	at org.testng.SuiteRunner.access$000(SuiteRunner.java:33)
+	at org.testng.SuiteRunner$SuiteWorker.run(SuiteRunner.java:350)
+	at org.testng.internal.thread.ThreadUtil$CountDownLatchedRunnable.run(ThreadUtil.java:132)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)
+	at java.lang.Thread.run(Thread.java:619)
+</pre></div></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.testStoreAndRemoveAll()'>testStoreAndRemoveAll</td>
+<td>0</td>
+<td><div><pre>java.lang.NullPointerException
+	at org.infinispan.loader.BaseCacheStoreTest.testStoreAndRemoveAll(BaseCacheStoreTest.java:379)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)
+	at java.lang.Thread.run(Thread.java:619)
+... Removed 17 stack frames</pre></div><a href='#' onClick='toggleBox("stack-trace8009861", this, "Click to show all stack frames", "Click to hide stack frames")'>Click to show all stack frames</a>
+<div class='stack-trace' id='stack-trace8009861'><pre>java.lang.NullPointerException
+	at org.infinispan.loader.BaseCacheStoreTest.testStoreAndRemoveAll(BaseCacheStoreTest.java:379)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)
+	at java.lang.reflect.Method.invoke(Method.java:597)
+	at org.testng.internal.MethodHelper.invokeMethod(MethodHelper.java:580)
+	at org.testng.internal.Invoker.invokeMethod(Invoker.java:478)
+	at org.testng.internal.Invoker.invokeTestMethod(Invoker.java:617)
+	at org.testng.internal.Invoker.invokeTestMethods(Invoker.java:885)
+	at org.testng.internal.TestMethodWorker.invokeTestMethods(TestMethodWorker.java:126)
+	at org.testng.internal.TestMethodWorker.run(TestMethodWorker.java:110)
+	at org.testng.TestRunner.runWorkers(TestRunner.java:712)
+	at org.testng.TestRunner.privateRun(TestRunner.java:582)
+	at org.testng.TestRunner.run(TestRunner.java:477)
+	at org.testng.SuiteRunner.runTest(SuiteRunner.java:324)
+	at org.testng.SuiteRunner.access$000(SuiteRunner.java:33)
+	at org.testng.SuiteRunner$SuiteWorker.run(SuiteRunner.java:350)
+	at org.testng.internal.thread.ThreadUtil$CountDownLatchedRunnable.run(ThreadUtil.java:132)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)
+	at java.lang.Thread.run(Thread.java:619)
+</pre></div></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.testTwoPhaseCommit()'>testTwoPhaseCommit</td>
+<td>0</td>
+<td><div><pre>java.lang.NullPointerException
+	at org.infinispan.loader.BaseCacheStoreTest.testTwoPhaseCommit(BaseCacheStoreTest.java:230)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)
+	at java.lang.Thread.run(Thread.java:619)
+... Removed 17 stack frames</pre></div><a href='#' onClick='toggleBox("stack-trace26065986", this, "Click to show all stack frames", "Click to hide stack frames")'>Click to show all stack frames</a>
+<div class='stack-trace' id='stack-trace26065986'><pre>java.lang.NullPointerException
+	at org.infinispan.loader.BaseCacheStoreTest.testTwoPhaseCommit(BaseCacheStoreTest.java:230)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)
+	at java.lang.reflect.Method.invoke(Method.java:597)
+	at org.testng.internal.MethodHelper.invokeMethod(MethodHelper.java:580)
+	at org.testng.internal.Invoker.invokeMethod(Invoker.java:478)
+	at org.testng.internal.Invoker.invokeTestMethod(Invoker.java:617)
+	at org.testng.internal.Invoker.invokeTestMethods(Invoker.java:885)
+	at org.testng.internal.TestMethodWorker.invokeTestMethods(TestMethodWorker.java:126)
+	at org.testng.internal.TestMethodWorker.run(TestMethodWorker.java:110)
+	at org.testng.TestRunner.runWorkers(TestRunner.java:712)
+	at org.testng.TestRunner.privateRun(TestRunner.java:582)
+	at org.testng.TestRunner.run(TestRunner.java:477)
+	at org.testng.SuiteRunner.runTest(SuiteRunner.java:324)
+	at org.testng.SuiteRunner.access$000(SuiteRunner.java:33)
+	at org.testng.SuiteRunner$SuiteWorker.run(SuiteRunner.java:350)
+	at org.testng.internal.thread.ThreadUtil$CountDownLatchedRunnable.run(ThreadUtil.java:132)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)
+	at java.lang.Thread.run(Thread.java:619)
+</pre></div></td>
+</tr>
+</table><p>
+<table width='100%' border='1' class='invocation-skipped'>
+<tr><td colspan='3' align='center'><b>SKIPPED TESTS</b></td></tr>
+<tr><td><b>Test method</b></td>
+<td width="10%"><b>Time (seconds)</b></td>
+<td width="30%"><b>Exception</b></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.testStreamingAPI()'>testStreamingAPI</td>
+<td>0</td>
+<td></td>
+</tr>
+<tr>
+<td title='org.infinispan.loader.s3.S3CacheStoreIntegrationTest.testStreamingAPIReusingStreams()'>testStreamingAPIReusingStreams</td>
+<td>0</td>
+<td></td>
+</tr>
+</table><p>
+</body>
+</html>
