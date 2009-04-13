@@ -24,7 +24,8 @@ package org.infinispan.commands;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.SizeCommand;
-import org.infinispan.commands.remote.ReplicateCommand;
+import org.infinispan.commands.remote.MultipleRpcCommand;
+import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -86,9 +87,9 @@ public interface CommandsFactory {
     */
    void initializeReplicableCommand(ReplicableCommand command);
 
-   ReplicateCommand buildReplicateCommand(List<ReplicableCommand> toReplicate);
+   MultipleRpcCommand buildReplicateCommand(List<ReplicableCommand> toReplicate);
 
-   ReplicateCommand buildReplicateCommand(ReplicableCommand call);
+   SingleRpcCommand buildSingleRpcCommand(ReplicableCommand call);
 
    StateTransferControlCommand buildStateTransferControlCommand(boolean block);
 }

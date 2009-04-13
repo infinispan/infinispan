@@ -40,7 +40,7 @@ public class AsyncReplTest extends MultipleCacheManagersTest {
       replListener(cache2).expectAny();
       cache1.put(key, "value1");
       // allow for replication
-      replListener(cache2).waitForRPC(60, TimeUnit.SECONDS);
+      replListener(cache2).waitForRpc(60, TimeUnit.SECONDS);
       assertEquals("value1", cache1.get(key));
       assertEquals("value1", cache2.get(key));
 
@@ -48,7 +48,7 @@ public class AsyncReplTest extends MultipleCacheManagersTest {
       cache1.put(key, "value2");
       assertEquals("value2", cache1.get(key));
 
-      replListener(cache2).waitForRPC(60, TimeUnit.SECONDS);
+      replListener(cache2).waitForRpc(60, TimeUnit.SECONDS);
 
       assertEquals("value2", cache1.get(key));
       assertEquals("value2", cache2.get(key));
@@ -59,7 +59,7 @@ public class AsyncReplTest extends MultipleCacheManagersTest {
       replListener(cache2).expectAny();
       cache1.put(key, "value1");
       // allow for replication
-      replListener(cache2).waitForRPC(60, TimeUnit.SECONDS);
+      replListener(cache2).waitForRpc(60, TimeUnit.SECONDS);
       assertEquals("value1", cache1.get(key));
       assertEquals("value1", cache2.get(key));
 
@@ -73,7 +73,7 @@ public class AsyncReplTest extends MultipleCacheManagersTest {
 
       mgr.commit();
 
-      replListener(cache2).waitForRPC(60, TimeUnit.SECONDS);
+      replListener(cache2).waitForRpc(60, TimeUnit.SECONDS);
 
       assertEquals("value2", cache1.get(key));
       assertEquals("value2", cache2.get(key));

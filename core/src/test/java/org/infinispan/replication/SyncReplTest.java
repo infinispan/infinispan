@@ -8,7 +8,7 @@ package org.infinispan.replication;
 
 import static org.easymock.EasyMock.*;
 import org.infinispan.Cache;
-import org.infinispan.commands.CacheRpcCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.remoting.RpcManager;
 import org.infinispan.remoting.RpcManagerImpl;

@@ -23,7 +23,7 @@ package org.infinispan.remoting;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.commands.remote.ReplicateCommand;
+import org.infinispan.commands.remote.MultipleRpcCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
@@ -142,9 +142,9 @@ public class ReplicationQueue {
       if (toReplicateSize > 0) {
          try {
             log.trace("Flushing {0} elements", toReplicateSize);
-            ReplicateCommand replicateCommand = commandsFactory.buildReplicateCommand(toReplicate);
+            MultipleRpcCommand multipleRpcCommand = commandsFactory.buildReplicateCommand(toReplicate);
             // send to all live caches in the cluster
-            rpcManager.invokeRemotely(null, replicateCommand, ResponseMode.ASYNCHRONOUS, configuration.getSyncReplTimeout(), stateTransferEnabled);
+            rpcManager.invokeRemotely(null, multipleRpcCommand, ResponseMode.ASYNCHRONOUS, configuration.getSyncReplTimeout(), stateTransferEnabled);
          }
          catch (Throwable t) {
             log.error("failed replicating " + toReplicate.size() + " elements in replication queue", t);

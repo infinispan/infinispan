@@ -29,7 +29,7 @@ public class ReplListener {
    }
 
    /**
-    * Expects any commands.  The moment a single command is detected, the {@link #waitForRPC()} command will be
+    * Expects any commands.  The moment a single command is detected, the {@link #waitForRpc()} command will be
     * unblocked.
     */
    public void expectAny() {
@@ -61,7 +61,7 @@ public class ReplListener {
    }
 
    /**
-    * Expects a specific set of commands.  {@link #waitForRPC()} will block until all of these commands are detected.
+    * Expects a specific set of commands.  {@link #waitForRpc()} will block until all of these commands are detected.
     *
     * @param expectedCommands commands to expect
     */
@@ -76,14 +76,14 @@ public class ReplListener {
     * Blocks for a predefined amount of time (120 Seconds) until commands defined in any of the expect*() methods have
     * been detected.  If the commands have not been detected by this time, an exception is thrown.
     */
-   public void waitForRPC() {
-      waitForRPC(30, TimeUnit.SECONDS);
+   public void waitForRpc() {
+      waitForRpc(30, TimeUnit.SECONDS);
    }
 
    /**
-    * The same as {@link #waitForRPC()} except that you are allowed to specify the max wait time.
+    * The same as {@link #waitForRpc()} except that you are allowed to specify the max wait time.
     */
-   public void waitForRPC(long time, TimeUnit unit) {
+   public void waitForRpc(long time, TimeUnit unit) {
       assert expectedCommands != null : "there are no replication expectations; please use ReplListener.expect() before calling this method";
       try {
          if (!latch.await(time, unit)) {

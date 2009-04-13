@@ -22,7 +22,6 @@
 package org.infinispan.commands.remote;
 
 import org.infinispan.CacheException;
-import org.infinispan.commands.CacheRpcCommand;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -40,12 +39,10 @@ import org.infinispan.logging.LogFactory;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public class ClusteredGetCommand implements CacheRpcCommand
-{
+public class ClusteredGetCommand implements CacheRpcCommand {
 
    public static final byte COMMAND_ID = 22;
    private static final Log log = LogFactory.getLog(ClusteredGetCommand.class);
-   private static final boolean trace = log.isTraceEnabled();
 
    private Object key;
    private String cacheName;

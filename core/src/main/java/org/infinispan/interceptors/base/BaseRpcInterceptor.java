@@ -21,18 +21,18 @@
  */
 package org.infinispan.interceptors.base;
 
-import org.infinispan.commands.CacheRpcCommand;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.commands.remote.ReplicateCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.TransactionContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.invocation.Flag;
-import org.infinispan.remoting.RpcManager;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.ResponseMode;
+import org.infinispan.remoting.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.GlobalTransaction;
 import org.infinispan.transaction.TransactionTable;
@@ -134,7 +134,7 @@ public abstract class BaseRpcInterceptor extends CommandInterceptor {
             if (trace)
                log.trace("Setting call recipients to " + callRecipients + " since the original list of recipients passed in is null.");
          }
-         ReplicateCommand command = commandsFactory.buildReplicateCommand(call);
+         SingleRpcCommand command = commandsFactory.buildSingleRpcCommand(call);
 
          List rsps = rpcManager.invokeRemotely(callRecipients,
                                                command,

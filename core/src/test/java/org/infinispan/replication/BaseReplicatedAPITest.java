@@ -37,7 +37,7 @@ public class BaseReplicatedAPITest extends MultipleCacheManagersTest {
 
       replListener(cache2).expect(PutKeyValueCommand.class);
       cache1.put("key", "value");
-      replListener(cache2).waitForRPC();
+      replListener(cache2).waitForRpc();
 
       assert cache1.get("key").equals("value");
       assert cache2.get("key").equals("value");
@@ -48,7 +48,7 @@ public class BaseReplicatedAPITest extends MultipleCacheManagersTest {
 
       replListener(cache2).expect(PutMapCommand.class);
       cache1.putAll(map);
-      replListener(cache2).waitForRPC();
+      replListener(cache2).waitForRpc();
 
       assert cache1.get("key").equals("value");
       assert cache2.get("key").equals("value");
@@ -65,7 +65,7 @@ public class BaseReplicatedAPITest extends MultipleCacheManagersTest {
 
       replListener(cache2).expect(RemoveCommand.class);
       cache1.remove("key");
-      replListener(cache2).waitForRPC();
+      replListener(cache2).waitForRpc();
 
       assert cache1.get("key") == null;
       assert cache2.get("key") == null;
@@ -77,7 +77,7 @@ public class BaseReplicatedAPITest extends MultipleCacheManagersTest {
 
       replListener(cache2).expect(RemoveCommand.class);
       cache1.remove("key");
-      replListener(cache2).waitForRPC();
+      replListener(cache2).waitForRpc();
 
       assert cache1.get("key") == null;
       assert cache2.get("key") == null;
@@ -90,7 +90,7 @@ public class BaseReplicatedAPITest extends MultipleCacheManagersTest {
 
       replListener(cache2).expect(PutKeyValueCommand.class);
       cache1.putIfAbsent("key", "value");
-      replListener(cache2).waitForRPC();
+      replListener(cache2).waitForRpc();
 
       assert cache1.get("key").equals("value");
       assert cache2.get("key").equals("value");
@@ -119,7 +119,7 @@ public class BaseReplicatedAPITest extends MultipleCacheManagersTest {
 
       replListener(cache2).expect(RemoveCommand.class);
       cache1.remove("key", "value1");
-      replListener(cache2).waitForRPC();
+      replListener(cache2).waitForRpc();
 
       assert cache1.get("key") == null;
       assert cache2.get("key") == null;
@@ -133,7 +133,7 @@ public class BaseReplicatedAPITest extends MultipleCacheManagersTest {
 
       replListener(cache2).expect(ClearCommand.class);
       cache1.clear();
-      replListener(cache2).waitForRPC();
+      replListener(cache2).waitForRpc();
 
       assert cache1.get("key") == null;
       assert cache2.get("key") == null;
@@ -153,7 +153,7 @@ public class BaseReplicatedAPITest extends MultipleCacheManagersTest {
 
       replListener(cache2).expect(ReplaceCommand.class);
       cache1.replace("key", "value1");
-      replListener(cache2).waitForRPC();
+      replListener(cache2).waitForRpc();
 
       assert cache1.get("key").equals("value1");
       assert cache2.get("key").equals("value1");
@@ -178,7 +178,7 @@ public class BaseReplicatedAPITest extends MultipleCacheManagersTest {
 
       replListener(cache2).expect(ReplaceCommand.class);
       cache1.replace("key", "valueN", "value1");
-      replListener(cache2).waitForRPC();
+      replListener(cache2).waitForRpc();
 
       assert cache1.get("key").equals("value1");
       assert cache2.get("key").equals("value1");

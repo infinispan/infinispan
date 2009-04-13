@@ -3,7 +3,7 @@ package org.infinispan.invalidation;
 import static org.easymock.EasyMock.*;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.commands.CacheRpcCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.config.Configuration;
@@ -48,7 +48,7 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
 
       replListener(cache2).expectAny();
       assertEquals("value", cache1.remove("key"));
-      replListener(cache2).waitForRPC();
+      replListener(cache2).waitForRpc();
 
       assertEquals(false, cache2.containsKey("key"));
    }
@@ -56,20 +56,20 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
    public void testResurrectEntry() throws Exception {
       replListener(cache2).expect(InvalidateCommand.class);
       cache1.put("key", "value");
-      replListener(cache2).waitForRPC();
+      replListener(cache2).waitForRpc();
 
       assertEquals("value", cache1.get("key"));
       assertEquals(null, cache2.get("key"));
       replListener(cache2).expect(InvalidateCommand.class);
       cache1.put("key", "newValue");
-      replListener(cache2).waitForRPC();
+      replListener(cache2).waitForRpc();
 
       assertEquals("newValue", cache1.get("key"));
       assertEquals(null, cache2.get("key"));
 
       replListener(cache2).expect(InvalidateCommand.class);
       assertEquals("newValue", cache1.remove("key"));
-      replListener(cache2).waitForRPC();
+      replListener(cache2).waitForRpc();
 
       assertEquals(null, cache1.get("key"));
       assertEquals(null, cache2.get("key"));
@@ -77,14 +77,14 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
       // Restore locally
       replListener(cache2).expect(InvalidateCommand.class);
       cache1.put("key", "value");
-      replListener(cache2).waitForRPC();
+      replListener(cache2).waitForRpc();
 
       assertEquals("value", cache1.get("key"));
       assertEquals(null, cache2.get("key"));
 
       replListener(cache1).expect(InvalidateCommand.class);
       cache2.put("key", "value2");
-      replListener(cache1).waitForRPC();
+      replListener(cache1).waitForRpc();
 
       assertEquals("value2", cache2.get("key"));
       assertEquals(null, cache1.get("key"));
@@ -96,7 +96,7 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
 
       replListener(cache2).expect(InvalidateCommand.class);
       cache1.put("key", "value");
-      replListener(cache2).waitForRPC();
+      replListener(cache2).waitForRpc();
 
       assertEquals("value", cache1.get("key"));
       assertNull("Should be null", cache2.get("key"));
@@ -108,7 +108,7 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
       // Remove an entry that doesn't exist in cache2
       cache2.remove("key");
       tm.commit();
-      replListener(cache1).waitForRPC();
+      replListener(cache1).waitForRpc();
 
       assert cache1.get("key") == null;
       assert cache2.get("key") == null;
@@ -117,7 +117,7 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
    public void testTxSyncUnableToInvalidate() throws Exception {
       replListener(cache2).expect(InvalidateCommand.class);
       cache1.put("key", "value");
-      replListener(cache2).waitForRPC();
+      replListener(cache2).waitForRpc();
 
       assertEquals("value", cache1.get("key"));
       assertNull(cache2.get("key"));
@@ -142,7 +142,7 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
             fail("Ought to have failed!");
          } else {
             assert true : "Ought to have succeeded";
-//            replListener(cache2).waitForRPC();
+//            replListener(cache2).waitForRpc();
          }
       }
       catch (RollbackException roll) {
@@ -155,8 +155,8 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
       mgr2.resume(tx2);
       try {
          mgr2.commit();
-         replListener(cache1).waitForRPC();
-         if (!isSync) replListener(cache2).waitForRPC();
+         replListener(cache1).waitForRpc();
+         if (!isSync) replListener(cache2).waitForRpc();
          assertTrue("Ought to have succeeded!", true);
       }
       catch (RollbackException roll) {
@@ -198,7 +198,7 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
 
       replListener(cache2).expect(InvalidateCommand.class);
       cache1.putIfAbsent("key", "value");
-      replListener(cache2).waitForRPC();
+      replListener(cache2).waitForRpc();
 
       assert cache1.get("key").equals("value");
       assert cache2.get("key") == null;
@@ -227,7 +227,7 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
 
       replListener(cache2).expect(InvalidateCommand.class);
       cache1.remove("key", "value1");
-      replListener(cache2).waitForRPC();
+      replListener(cache2).waitForRpc();
 
       assert cache1.get("key") == null;
       assert cache2.get("key") == null;
@@ -241,7 +241,7 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
 
       replListener(cache2).expect(ClearCommand.class);
       cache1.clear();
-      replListener(cache2).waitForRPC();
+      replListener(cache2).waitForRpc();
 
       assert cache1.get("key") == null;
       assert cache2.get("key") == null;
@@ -261,7 +261,7 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
 
       replListener(cache2).expect(InvalidateCommand.class);
       cache1.replace("key", "value1");
-      replListener(cache2).waitForRPC();
+      replListener(cache2).waitForRpc();
 
       assert cache1.get("key").equals("value1");
       assert cache2.get("key") == null;
@@ -286,7 +286,7 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
 
       replListener(cache2).expect(InvalidateCommand.class);
       assert cache1.replace("key", "valueN", "value1");
-      replListener(cache2).waitForRPC();
+      replListener(cache2).waitForRpc();
 
       assert cache1.get("key").equals("value1");
       assert cache2.get("key") == null;

@@ -1,6 +1,6 @@
 package org.infinispan.remoting;
 
-import org.infinispan.commands.CacheRpcCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.config.Configuration;
 import org.infinispan.factories.ComponentRegistry;

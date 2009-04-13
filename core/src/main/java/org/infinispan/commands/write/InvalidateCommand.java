@@ -37,7 +37,7 @@ import java.util.Arrays;
  * @since 4.0
  */
 public class InvalidateCommand extends RemoveCommand {
-   public static final int METHOD_ID = 47;
+   public static final int COMMAND_ID = 47;
    private static final Log log = LogFactory.getLog(InvalidateCommand.class);
    private static final boolean trace = log.isTraceEnabled();
    private Object[] keys;
@@ -71,7 +71,7 @@ public class InvalidateCommand extends RemoveCommand {
    }
 
    public byte getCommandId() {
-      return METHOD_ID;
+      return COMMAND_ID;
    }
 
    @Override

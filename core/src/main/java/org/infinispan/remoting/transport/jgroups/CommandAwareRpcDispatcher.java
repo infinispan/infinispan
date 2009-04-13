@@ -22,7 +22,7 @@
 package org.infinispan.remoting.transport.jgroups;
 
 import org.infinispan.CacheException;
-import org.infinispan.commands.CacheRpcCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.logging.Log;

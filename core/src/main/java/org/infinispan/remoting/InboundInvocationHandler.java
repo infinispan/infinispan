@@ -1,6 +1,6 @@
 package org.infinispan.remoting;
 
-import org.infinispan.commands.CacheRpcCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.statetransfer.StateTransferException;

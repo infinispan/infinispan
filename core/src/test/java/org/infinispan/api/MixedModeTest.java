@@ -58,8 +58,8 @@ public class MixedModeTest extends MultipleCacheManagersTest {
       invalAsyncCache1.put("k", "invalAsync");
       localCache1.put("k", "local");
 
-      replListener(replAsyncCache2).waitForRPC();
-      replListener(invalAsyncCache2).waitForRPC();
+      replListener(replAsyncCache2).waitForRpc();
+      replListener(invalAsyncCache2).waitForRpc();
 
       assert replSyncCache1.get("k").equals("replSync");
       assert replSyncCache2.get("k").equals("replSync");

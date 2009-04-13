@@ -36,7 +36,7 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
  * @since 4.0
  */
 public class PutKeyValueCommand extends AbstractDataCommand implements DataWriteCommand {
-   public static final byte METHOD_ID = 3;
+   public static final byte COMMAND_ID = 3;
 
    Object value;
    boolean putIfAbsent;
@@ -103,7 +103,7 @@ public class PutKeyValueCommand extends AbstractDataCommand implements DataWrite
    }
 
    public byte getCommandId() {
-      return METHOD_ID;
+      return COMMAND_ID;
    }
 
    public Object[] getParameters() {
@@ -111,7 +111,7 @@ public class PutKeyValueCommand extends AbstractDataCommand implements DataWrite
    }
 
    public void setParameters(int commandId, Object[] parameters) {
-      if (commandId != METHOD_ID) throw new IllegalStateException("Invalid method id");
+      if (commandId != COMMAND_ID) throw new IllegalStateException("Invalid method id");
       key = parameters[0];
       value = parameters[1];
       lifespanMillis = (Long) parameters[2];

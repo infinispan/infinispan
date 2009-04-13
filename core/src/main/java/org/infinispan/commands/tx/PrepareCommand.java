@@ -41,7 +41,7 @@ import java.util.Set;
  * @since 4.0
  */
 public class PrepareCommand extends AbstractTransactionBoundaryCommand {
-   public static final byte METHOD_ID = 10;
+   public static final byte COMMAND_ID = 10;
 
    protected WriteCommand[] modifications;
    protected Address localAddress;
@@ -106,7 +106,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
    }
 
    public byte getCommandId() {
-      return METHOD_ID;
+      return COMMAND_ID;
    }
 
    @Override

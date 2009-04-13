@@ -3,7 +3,7 @@ package org.infinispan.api.mvcc;
 import org.easymock.EasyMock;
 import static org.easymock.EasyMock.*;
 import org.infinispan.Cache;
-import org.infinispan.commands.CacheRpcCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.config.Configuration;
@@ -51,7 +51,7 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
    public void testNoOpWhenKeyPresent() {
       replListener2.expect(PutKeyValueCommand.class);
       cache1.putForExternalRead(key, value);
-      replListener2.waitForRPC();
+      replListener2.waitForRpc();
 
 
       assertEquals("PFER should have succeeded", value, cache1.get(key));
@@ -60,14 +60,14 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
       // reset
       replListener2.expect(RemoveCommand.class);
       cache1.remove(key);
-      replListener2.waitForRPC();
+      replListener2.waitForRpc();
 
       assert cache1.isEmpty() : "Should have reset";
       assert cache2.isEmpty() : "Should have reset";
 
       replListener2.expect(PutKeyValueCommand.class);
       cache1.put(key, value);
-      replListener2.waitForRPC();
+      replListener2.waitForRpc();
 
       // now this pfer should be a no-op
       cache1.putForExternalRead(key, value2);
@@ -120,7 +120,7 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
    public void testTxSuspension() throws Exception {
       replListener2.expect(PutKeyValueCommand.class);
       cache1.put(key + "0", value);
-      replListener2.waitForRPC();
+      replListener2.waitForRpc();
 
       // start a tx and do some stuff.
       replListener2.expect(PutKeyValueCommand.class);
@@ -129,7 +129,7 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
       cache1.putForExternalRead(key, value); // should have happened in a separate tx and have committed already.
       Transaction t = tm1.suspend();
 
-      replListener2.waitForRPC();
+      replListener2.waitForRpc();
       assertEquals("PFER should have completed", value, cache1.get(key));
       assertEquals("PFER should have completed", value, cache2.get(key));
 
@@ -194,7 +194,7 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
 
       replListener2.expect(PutKeyValueCommand.class);
       cache1.putForExternalRead(key, value);
-      replListener2.waitForRPC();
+      replListener2.waitForRpc();
 
       assertEquals("PFER updated cache1", value, cache1.get(key));
       assertEquals("PFER propagated to cache2 as expected", value, cache2.get(key));
@@ -237,7 +237,7 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
       tm1.begin();
       cache1.putForExternalRead(key, value);
       tm1.commit();
-      replListener2.waitForRPC();
+      replListener2.waitForRpc();
 
       TransactionTable tt1 = getTransactionTable(cache1);
       TransactionTable tt2 = getTransactionTable(cache2);
@@ -253,7 +253,7 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
       cache1.putForExternalRead(key, value);
       cache1.put(key, value);
       tm1.commit();
-      replListener2.waitForRPC();
+      replListener2.waitForRpc();
 
       assert tt1.getNumGlobalTransactions() == 0 : "Cache 1 should have no stale global TXs";
       assert tt1.getNumLocalTransactions() == 0 : "Cache 1 should have no stale local TXs";
@@ -265,7 +265,7 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
       cache1.put(key, value);
       cache1.putForExternalRead(key, value);
       tm1.commit();
-      replListener2.waitForRPC();
+      replListener2.waitForRpc();
 
       assert tt1.getNumGlobalTransactions() == 0 : "Cache 1 should have no stale global TXs";
       assert tt1.getNumLocalTransactions() == 0 : "Cache 1 should have no stale local TXs";
@@ -278,7 +278,7 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
       cache1.putForExternalRead(key, value);
       cache1.put(key, value);
       tm1.commit();
-      replListener2.waitForRPC();
+      replListener2.waitForRpc();
 
       assert tt1.getNumGlobalTransactions() == 0 : "Cache 1 should have no stale global TXs";
       assert tt1.getNumLocalTransactions() == 0 : "Cache 1 should have no stale local TXs";

@@ -26,7 +26,8 @@ import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.commands.remote.ReplicateCommand;
+import org.infinispan.commands.remote.MultipleRpcCommand;
+import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -123,12 +124,12 @@ public class CommandsFactoryImpl implements CommandsFactory {
       return new RollbackCommand(gtx);
    }
 
-   public ReplicateCommand buildReplicateCommand(List<ReplicableCommand> toReplicate) {
-      return new ReplicateCommand(toReplicate, cache.getName());
+   public MultipleRpcCommand buildReplicateCommand(List<ReplicableCommand> toReplicate) {
+      return new MultipleRpcCommand(toReplicate, cache.getName());
    }
 
-   public ReplicateCommand buildReplicateCommand(ReplicableCommand call) {
-      return new ReplicateCommand(call, cache.getName());
+   public SingleRpcCommand buildSingleRpcCommand(ReplicableCommand call) {
+      return new SingleRpcCommand(cache.getName(), call);
    }
 
    public StateTransferControlCommand buildStateTransferControlCommand(boolean block) {
@@ -138,28 +139,35 @@ public class CommandsFactoryImpl implements CommandsFactory {
    public void initializeReplicableCommand(ReplicableCommand c) {
       if (c == null) return;
       switch (c.getCommandId()) {
-         case PutKeyValueCommand.METHOD_ID:
+         case PutKeyValueCommand.COMMAND_ID:
             ((PutKeyValueCommand) c).init(notifier);
             break;
-         case PutMapCommand.METHOD_ID:
+         case PutMapCommand.COMMAND_ID:
             ((PutMapCommand) c).init(notifier);
             break;
-         case RemoveCommand.METHOD_ID:
+         case RemoveCommand.COMMAND_ID:
             ((RemoveCommand) c).init(notifier);
             break;
-         case ReplicateCommand.METHOD_ID:
-            ReplicateCommand rc = (ReplicateCommand) c;
+         case MultipleRpcCommand.COMMAND_ID:
+            MultipleRpcCommand rc = (MultipleRpcCommand) c;
             rc.setInterceptorChain(interceptorChain);
             if (rc.getCommands() != null)
                for (ReplicableCommand nested : rc.getCommands()) {
                   initializeReplicableCommand(nested);
                }
             break;
-         case InvalidateCommand.METHOD_ID:
+         case SingleRpcCommand.COMMAND_ID:
+            SingleRpcCommand src = (SingleRpcCommand) c;
+            src.setInterceptorChain(interceptorChain);
+            if (src.getCommand() != null)
+                  initializeReplicableCommand(src.getCommand());
+
+            break;
+         case InvalidateCommand.COMMAND_ID:
             InvalidateCommand ic = (InvalidateCommand) c;
             ic.init(notifier);
             break;
-         case PrepareCommand.METHOD_ID:
+         case PrepareCommand.COMMAND_ID:
             PrepareCommand pc = (PrepareCommand) c;
             if (pc.getModifications() != null)
                for (ReplicableCommand nested : pc.getModifications()) initializeReplicableCommand(nested);

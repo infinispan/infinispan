@@ -34,7 +34,7 @@ import java.util.Map.Entry;
  * @since 4.0
  */
 public class PutMapCommand implements WriteCommand {
-   public static final byte METHOD_ID = 121;
+   public static final byte COMMAND_ID = 121;
 
    Map<Object, Object> map;
    CacheNotifier notifier;
@@ -85,7 +85,7 @@ public class PutMapCommand implements WriteCommand {
    }
 
    public byte getCommandId() {
-      return METHOD_ID;
+      return COMMAND_ID;
    }
 
    public Object[] getParameters() {

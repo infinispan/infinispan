@@ -4,7 +4,8 @@ import org.infinispan.CacheException;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.commands.remote.ReplicateCommand;
+import org.infinispan.commands.remote.MultipleRpcCommand;
+import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -48,13 +49,13 @@ public class RemoteCommandFactory {
    public ReplicableCommand fromStream(byte id, Object[] parameters) {
       ReplicableCommand command;
       switch (id) {
-         case PutKeyValueCommand.METHOD_ID:
+         case PutKeyValueCommand.COMMAND_ID:
             command = new PutKeyValueCommand();
             break;
-         case PutMapCommand.METHOD_ID:
+         case PutMapCommand.COMMAND_ID:
             command = new PutMapCommand();
             break;
-         case RemoveCommand.METHOD_ID:
+         case RemoveCommand.COMMAND_ID:
             command = new RemoveCommand();
             break;
          case ReplaceCommand.METHOD_ID:
@@ -66,7 +67,7 @@ public class RemoteCommandFactory {
          case ClearCommand.METHOD_ID:
             command = new ClearCommand();
             break;
-         case PrepareCommand.METHOD_ID:
+         case PrepareCommand.COMMAND_ID:
             command = new PrepareCommand();
             break;
          case CommitCommand.METHOD_ID:
@@ -75,10 +76,13 @@ public class RemoteCommandFactory {
          case RollbackCommand.METHOD_ID:
             command = new RollbackCommand();
             break;
-         case ReplicateCommand.METHOD_ID:
-            command = new ReplicateCommand();
+         case MultipleRpcCommand.COMMAND_ID:
+            command = new MultipleRpcCommand();
             break;
-         case InvalidateCommand.METHOD_ID:
+         case SingleRpcCommand.COMMAND_ID:
+            command = new SingleRpcCommand();
+            break;
+         case InvalidateCommand.COMMAND_ID:
             command = new InvalidateCommand();
             break;
          case StateTransferControlCommand.METHOD_ID:
