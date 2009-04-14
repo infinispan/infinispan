@@ -159,6 +159,10 @@
               <name>java.net.preferIPv4Stack</name>
               <value>true</value>
             </property>
+            <property>
+              <name>infinispan.marshaller.class</name>
+              <value>${marshaller.class}</value>
+            </property>                 
           </systemProperties>
           <trimStackTrace>false</trimStackTrace>
           <properties>
@@ -341,5 +345,13 @@
         <defaultTestGroup>transaction</defaultTestGroup>
       </properties>
     </profile>
+    <profile>
+      <id>test-jbossmarshaller</id>
+      <properties>
+        <defaultTestGroup>functional</defaultTestGroup>
+        <marshaller.class>org.infinispan.marshall.jboss.JBossMarshaller</marshaller.class>
+        <protocol.stack>tcp</protocol.stack>
+      </properties>
+    </profile>    
   </profiles>
 </project>
