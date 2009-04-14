@@ -5,6 +5,7 @@ import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
+import org.infinispan.util.Util;
 
 import java.util.Properties;
 
@@ -12,14 +13,18 @@ import java.util.Properties;
  * CacheManagers in unit tests should be created with this factory, in order to avoit resource clashes.
  *
  * @author Mircea.Markus@jboss.com
+ * @author Galder Zamarreño
  */
 public class TestCacheManagerFactory {
+   
+   public static final String MARSHALLER = System.getProperties().getProperty("infinispan.marshaller.class");
 
    /**
     * Creates an cache manager that does not support clustering.
     */
    public static CacheManager createLocalCacheManager() {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
+      amendMarshaller(globalConfiguration);
 //      amendJmx(globalConfiguration);
       return new DefaultCacheManager(globalConfiguration);
    }
@@ -29,6 +34,7 @@ public class TestCacheManagerFactory {
     */
    public static CacheManager createClusteredCacheManager() {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
+      amendMarshaller(globalConfiguration);
 //      amendJmx(globalConfiguration);
       Properties newTransportProps = new Properties();
       newTransportProps.put(JGroupsTransport.CONFIGURATION_STRING, JGroupsConfigBuilder.getJGroupsConfig());
@@ -41,6 +47,7 @@ public class TestCacheManagerFactory {
     * during running tests in parallel.
     */
    public static CacheManager createCacheManager(GlobalConfiguration configuration) {
+      amendMarshaller(configuration);
       amendTransport(configuration);
 //      amendJmx(configuration);
       return new DefaultCacheManager(configuration);
@@ -52,11 +59,13 @@ public class TestCacheManagerFactory {
     */
    public static CacheManager createCacheManager(Configuration defaultCacheConfig) {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
+      amendMarshaller(globalConfiguration);
 //      amendJmx(globalConfiguration);
       return new DefaultCacheManager(globalConfiguration, defaultCacheConfig);
    }
 
    public static DefaultCacheManager createCacheManager(GlobalConfiguration configuration, Configuration defaultCfg) {
+      amendMarshaller(configuration);
       amendTransport(configuration);
 //      amendJmx(configuration);
       return new DefaultCacheManager(configuration, defaultCfg);
@@ -72,6 +81,17 @@ public class TestCacheManagerFactory {
          Properties newTransportProps = new Properties();
          newTransportProps.put(JGroupsTransport.CONFIGURATION_STRING, JGroupsConfigBuilder.getJGroupsConfig());
          configuration.setTransportProperties(newTransportProps);
+      }
+   }
+   
+   private static void amendMarshaller(GlobalConfiguration configuration) {
+      if (MARSHALLER != null) {
+         try {
+            Util.loadClass(MARSHALLER);
+            configuration.setMarshallerClass(MARSHALLER);
+         } catch (ClassNotFoundException e) {
+            // No-op, stick to GlobalConfiguration default.
+         }
       }
    }
 }

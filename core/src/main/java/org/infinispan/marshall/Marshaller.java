@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.io.OutputStream;
 
 /**
  * A marshaller is a class that is able to marshall and unmarshall objects efficiently.
@@ -52,10 +53,32 @@ import java.io.ObjectOutput;
  * transferring state en-masse.
  *
  * @author <a href="mailto://manik@jboss.org">Manik Surtani</a>
+ * @author Galder Zamarreño
  * @since 4.0
  */
 @Scope(Scopes.GLOBAL)
 public interface Marshaller {
+   
+   /**
+    * Create and open a new ObjectOutput for the given output stream. This 
+    * method should be used for opening data outpus when multiple 
+    * objectToObjectStream() calls will be made before the stream is closed
+    * 
+    * @param os output stream 
+    * @return ObjectOutput to write to
+    * @throws IOException
+    */
+   ObjectOutput startObjectOutput(OutputStream os) throws IOException;
+   
+   /**
+    * Finish using the given ObjectOutput. After opening a ObjectOutput and 
+    * calling objectToObjectStream() mutliple times, use this method to flush 
+    * the data and close if necessary
+    * 
+    * @param oo data output that finished using
+    */
+   void finishObjectOutput(ObjectOutput oo);
+   
    /**
     * Marshalls an object to a given {@link java.io.ObjectOutput}
     *
@@ -64,6 +87,26 @@ public interface Marshaller {
     */
    void objectToObjectStream(Object obj, ObjectOutput out) throws IOException;
 
+   /**
+    * Create and open a new ObjectInput for the given input stream. This 
+    * method should be used for opening data inputs when multiple 
+    * objectFromObjectStream() calls will be made before the stream is closed.
+    * 
+    * @param is input stream 
+    * @return ObjectInput to read from
+    * @throws IOException
+    */
+   ObjectInput startObjectInput(InputStream is) throws IOException;
+   
+   /**
+    * Finish using the given ObjectInput. After opening a ObjectInput and 
+    * calling objectFromObjectStream() mutliple times, use this method to flush 
+    * the data and close if necessary
+    * 
+    * @param oi data input that finished using
+    */
+   void finishObjectInput(ObjectInput oi);
+   
    /**
     * Unmarshalls an object from an {@link java.io.ObjectInput}
     *

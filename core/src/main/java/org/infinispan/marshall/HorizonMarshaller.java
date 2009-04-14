@@ -40,6 +40,7 @@ import org.infinispan.transaction.GlobalTransaction;
 import org.infinispan.transaction.TransactionLog;
 import org.infinispan.util.FastCopyHashMap;
 import org.infinispan.util.Immutables;
+import org.infinispan.util.Util;
 import org.jboss.util.NotImplementedException;
 import org.jboss.util.stream.MarshalledValueInputStream;
 
@@ -47,8 +48,10 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInput;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.util.*;
@@ -57,6 +60,7 @@ import java.util.*;
  * Abstract marshaller
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
+ * @author Galder Zamarreño
  * @since 4.0
  */
 public class HorizonMarshaller implements Marshaller {
@@ -795,6 +799,14 @@ public class HorizonMarshaller implements Marshaller {
             c.equals(Double.class));
    }
 
+   public ObjectOutput startObjectOutput(OutputStream os) throws IOException {
+      return new ObjectOutputStream(os);
+   }
+   
+   public void finishObjectOutput(ObjectOutput oo) {
+      Util.flushAndCloseOutput(oo);
+   }
+   
    public void objectToObjectStream(Object o, ObjectOutput out) throws IOException {
       Map<Object, Integer> refMap = useRefs ? new IdentityHashMap<Object, Integer>() : null;
       ClassLoader toUse = defaultClassLoader;
@@ -809,6 +821,14 @@ public class HorizonMarshaller implements Marshaller {
       finally {
          current.setContextClassLoader(old);
       }
+   }
+   
+   public ObjectInput startObjectInput(InputStream is) throws IOException {
+      return new ObjectInputStream(is);
+   }
+   
+   public void finishObjectInput(ObjectInput oi) {
+      Util.closeInput(oi);
    }
 
    public Object objectFromObjectStream(ObjectInput in) throws IOException, ClassNotFoundException {

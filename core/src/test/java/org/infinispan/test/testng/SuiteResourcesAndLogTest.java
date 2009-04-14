@@ -13,6 +13,7 @@ import java.io.File;
  * This class makes sure that all files are being deleted after each test run. It also logs testsuite information.
  *
  * @author Mircea.Markus@jboss.com
+ * @author Galder Zamarreño
  */
 @Test(groups = "functional", testName = "test.testng.SuiteResourcesAndLogTest")
 public class SuiteResourcesAndLogTest {
@@ -53,6 +54,7 @@ public class SuiteResourcesAndLogTest {
       log("sun.arch.data.model = " + System.getProperty("sun.arch.data.model"));
       log("sun.cpu.endian = " + System.getProperty("sun.cpu.endian"));
       log("jgroups.stack = " + System.getProperty("jgroups.stack"));
+      log("infinispan.marshaller.class = " + System.getProperty("infinispan.marshaller.class"));
       log("~~~~~~~~~~~~~~~~~~~~~~~~~ ENVIRONMENT INFO ~~~~~~~~~~~~~~~~~~~~~~~~~~");
    }
 

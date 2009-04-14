@@ -36,6 +36,7 @@ import java.io.ObjectInput;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 
 /**
  * A delegate to various other marshallers like {@link HorizonMarshaller}. This delegating marshaller adds versioning
@@ -43,7 +44,7 @@ import java.io.ObjectOutputStream;
  * based on the versioning information when unmarshalling objects.
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
- * @author <a href="mailto:galder.zamarreno@jboss.com">Galder Zamarreno</a>
+ * @author Galder Zamarreño
  * @since 4.0
  */
 public class VersionAwareMarshaller implements Marshaller {
@@ -109,11 +110,27 @@ public class VersionAwareMarshaller implements Marshaller {
       }
       return defaultMarshaller.objectFromObjectStream(in);
    }
+   
+   public ObjectOutput startObjectOutput(OutputStream os) throws IOException {
+      return defaultMarshaller.startObjectOutput(os);
+   }
+   
+   public void finishObjectOutput(ObjectOutput oo) {
+      defaultMarshaller.finishObjectOutput(oo);
+   }
 
    public void objectToObjectStream(Object obj, ObjectOutput out) throws IOException {
       out.writeShort(VERSION_400);
       log.trace("Wrote version {0}", VERSION_400);
       defaultMarshaller.objectToObjectStream(obj, out);
+   }
+   
+   public ObjectInput startObjectInput(InputStream is) throws IOException {
+      return defaultMarshaller.startObjectInput(is);
+   }
+   
+   public void finishObjectInput(ObjectInput oi) {
+      defaultMarshaller.finishObjectInput(oi);
    }
 
    public Object objectFromObjectStream(ObjectInput in) throws IOException, ClassNotFoundException {

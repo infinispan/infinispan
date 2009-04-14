@@ -52,7 +52,9 @@ import org.infinispan.util.Util;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInput;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
@@ -130,22 +132,22 @@ public class StateTransferManagerImpl implements StateTransferManager {
    }
 
    public void generateState(OutputStream out) throws StateTransferException {
-      ObjectOutputStream oos = null;
+      ObjectOutput oo = null;
       boolean txLogActivated = false;
       try {
          boolean canProvideState = (transientState || persistentState)
                && (txLogActivated = transactionLog.activate());
          if (log.isDebugEnabled()) log.debug("Generating state.  Can provide? {0}", canProvideState);
-         oos = new ObjectOutputStream(out);
-         marshaller.objectToObjectStream(canProvideState, oos);
+         oo = marshaller.startObjectOutput(out);
+         marshaller.objectToObjectStream(canProvideState, oo);
 
          if (canProvideState) {
-            delimit(oos);
-            if (transientState) generateInMemoryState(oos);
-            delimit(oos);
-            if (persistentState) generatePersistentState(oos);
-            delimit(oos);
-            generateTransactionLog(oos);
+            delimit(oo);
+            if (transientState) generateInMemoryState(oo);
+            delimit(oo);
+            if (persistentState) generatePersistentState(oo);
+            delimit(oo);
+            generateTransactionLog(oo);
 
             if (log.isDebugEnabled()) log.debug("State generated, closing object stream");
          } else {
@@ -157,12 +159,12 @@ public class StateTransferManagerImpl implements StateTransferManager {
       } catch (Exception e) {
          throw new StateTransferException(e);
       } finally {
-         Util.flushAndCloseStream(oos);
+         marshaller.finishObjectOutput(oo);
          if (txLogActivated) transactionLog.deactivate();
       }
    }
 
-   private void generateTransactionLog(ObjectOutputStream oos) throws Exception {
+   private void generateTransactionLog(ObjectOutput oo) throws Exception {
       // todo this should be configurable
       int maxNonProgressingLogWrites = 100;
       int flushTimeout = 60000;
@@ -173,7 +175,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
          if (trace) log.trace("Transaction log size is {0}", transactionLog.size());
          for (int nonProgress = 0, size = transactionLog.size(); size > 0;) {
             if (trace) log.trace("Tx Log remaining entries = " + size);
-            transactionLog.writeCommitLog(marshaller, oos);
+            transactionLog.writeCommitLog(marshaller, oo);
             int newSize = transactionLog.size();
 
             // If size did not decrease then we did not make progress, and could be wasting
@@ -190,29 +192,29 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
          // Signal to sender that we need a flush to get a consistent view
          // of the remaining transactions.
-         delimit(oos);
-         oos.flush();
+         delimit(oo);
+         oo.flush();
          if (trace) log.trace("Waiting for a distributed sync block");
          distributedSync.blockUntilAcquired(flushTimeout, MILLISECONDS);
 
          if (trace) log.trace("Distributed sync block received, proceeding with writing commit log");
          // Write remaining transactions
-         transactionLog.writeCommitLog(marshaller, oos);
-         delimit(oos);
+         transactionLog.writeCommitLog(marshaller, oo);
+         delimit(oo);
 
          // Write all non-completed prepares
-         transactionLog.writePendingPrepares(marshaller, oos);
-         delimit(oos);
-         oos.flush();
+         transactionLog.writePendingPrepares(marshaller, oo);
+         delimit(oo);
+         oo.flush();
       }
       finally {
          distributedSync.releaseProcessingLock();
       }
    }
 
-   private void processCommitLog(ObjectInputStream ois) throws Exception {
+   private void processCommitLog(ObjectInput oi) throws Exception {
       if (trace) log.trace("Applying commit log");
-      Object object = marshaller.objectFromObjectStream(ois);
+      Object object = marshaller.objectFromObjectStream(oi);
       while (object instanceof TransactionLog.LogEntry) {
          WriteCommand[] mods = ((TransactionLog.LogEntry) object).getModifications();
          if (trace) log.trace("Mods = {0}", Arrays.toString(mods));
@@ -224,17 +226,17 @@ public class StateTransferManagerImpl implements StateTransferManager {
             interceptorChain.invoke(ctx, mod);
          }
 
-         object = marshaller.objectFromObjectStream(ois);
+         object = marshaller.objectFromObjectStream(oi);
       }
 
       assertDelimited(object);
       if (trace) log.trace("Finished applying commit log");
    }
 
-   private void applyTransactionLog(ObjectInputStream ois) throws Exception {
+   private void applyTransactionLog(ObjectInput oi) throws Exception {
       if (trace) log.trace("Integrating transaction log");
 
-      processCommitLog(ois);
+      processCommitLog(oi);
       stateSender = rpcManager.getCurrentStateTransferSource();
       mimicPartialFlushViaRPC(stateSender, true);
       needToUnblockRPC = true;
@@ -242,11 +244,11 @@ public class StateTransferManagerImpl implements StateTransferManager {
       try {
          if (trace)
             log.trace("Retrieving/Applying post-flush commits");
-         processCommitLog(ois);
+         processCommitLog(oi);
 
          if (trace)
             log.trace("Retrieving/Applying pending prepares");
-         Object object = marshaller.objectFromObjectStream(ois);
+         Object object = marshaller.objectFromObjectStream(oi);
          while (object instanceof PrepareCommand) {
             PrepareCommand command = (PrepareCommand) object;
 
@@ -260,7 +262,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
             } else {
                if (trace) log.trace("Prepare {0} not in tx log; not applying", command);
             }
-            object = marshaller.objectFromObjectStream(ois);
+            object = marshaller.objectFromObjectStream(oi);
          }
          assertDelimited(object);
       } catch (Exception e) {
@@ -288,17 +290,17 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
    public void applyState(InputStream in) throws StateTransferException {
       if (log.isDebugEnabled()) log.debug("Applying state");
-      ObjectInputStream ois = null;
+      ObjectInput oi = null;
       try {
-         ois = new ObjectInputStream(in);
-         boolean canProvideState = (Boolean) marshaller.objectFromObjectStream(ois);
+         oi = marshaller.startObjectInput(in);
+         boolean canProvideState = (Boolean) marshaller.objectFromObjectStream(oi);
          if (canProvideState) {
-            assertDelimited(ois);
-            if (transientState) applyInMemoryState(ois);
-            assertDelimited(ois);
-            if (persistentState) applyPersistentState(ois);
-            assertDelimited(ois);
-            applyTransactionLog(ois);
+            assertDelimited(oi);
+            if (transientState) applyInMemoryState(oi);
+            assertDelimited(oi);
+            if (persistentState) applyPersistentState(oi);
+            assertDelimited(oi);
+            applyTransactionLog(oi);
             if (log.isDebugEnabled()) log.debug("State applied, closing object stream");
          } else {
             String msg = "Provider cannot provide state!";
@@ -311,11 +313,11 @@ public class StateTransferManagerImpl implements StateTransferManager {
          throw new StateTransferException(e);
       } finally {
          // just close the object stream but do NOT close the underlying stream
-         Util.closeStream(ois);
+         marshaller.finishObjectInput(oi);
       }
    }
 
-   private void applyInMemoryState(ObjectInputStream i) throws StateTransferException {
+   private void applyInMemoryState(ObjectInput i) throws StateTransferException {
       dataContainer.clear();
       try {
          Set<InternalCacheEntry> set = (Set<InternalCacheEntry>) marshaller.objectFromObjectStream(i);
@@ -327,7 +329,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
       }
    }
 
-   private void generateInMemoryState(ObjectOutputStream o) throws StateTransferException {
+   private void generateInMemoryState(ObjectOutput oo) throws StateTransferException {
       // write all StoredEntries to the stream using the marshaller.
       // TODO is it safe enough to get these from the data container directly?
       try {
@@ -336,13 +338,13 @@ public class StateTransferManagerImpl implements StateTransferManager {
             if (!e.isExpired()) entries.add(e);
          }
          if (log.isDebugEnabled()) log.debug("Writing {0} StoredEntries to stream", entries.size());
-         marshaller.objectToObjectStream(entries, o);
+         marshaller.objectToObjectStream(entries, oo);
       } catch (Exception e) {
          throw new StateTransferException(e);
       }
    }
 
-   private void applyPersistentState(ObjectInputStream i) throws StateTransferException {
+   private void applyPersistentState(ObjectInput i) throws StateTransferException {
       try {
          // always use the unclosable stream delegate to ensure the impl doesn't close the stream
          cs.fromStream(new UnclosableObjectInputStream(i));
@@ -351,20 +353,20 @@ public class StateTransferManagerImpl implements StateTransferManager {
       }
    }
 
-   private void generatePersistentState(ObjectOutputStream o) throws StateTransferException {
+   private void generatePersistentState(ObjectOutput oo) throws StateTransferException {
       try {
          // always use the unclosable stream delegate to ensure the impl doesn't close the stream
-         cs.toStream(new UnclosableObjectOutputStream(o));
+         cs.toStream(new UnclosableObjectOutputStream(oo));
       } catch (CacheLoaderException cle) {
          throw new StateTransferException(cle);
       }
    }
 
-   private void delimit(ObjectOutputStream o) throws IOException {
-      marshaller.objectToObjectStream(DELIMITER, o);
+   private void delimit(ObjectOutput oo) throws IOException {
+      marshaller.objectToObjectStream(DELIMITER, oo);
    }
 
-   private void assertDelimited(ObjectInputStream i) throws StateTransferException {
+   private void assertDelimited(ObjectInput i) throws StateTransferException {
       Object o;
       try {
          o = marshaller.objectFromObjectStream(i);

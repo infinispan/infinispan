@@ -22,6 +22,8 @@
 package org.infinispan.util;
 
 import java.io.InputStream;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.text.NumberFormat;
@@ -32,6 +34,7 @@ import java.util.Map;
  * General utility methods used throughout the JBC code base.
  *
  * @author <a href="brian.stansberry@jboss.com">Brian Stansberry</a>
+ * @author Galder Zamarreño
  * @since 4.0
  */
 public final class Util {
@@ -165,6 +168,15 @@ public final class Util {
       }
    }
 
+   public static void closeInput(ObjectInput i) {
+      if (i == null) return;
+      try {
+         i.close();
+      } catch (Exception e) {
+
+      }
+   }
+   
    public static void flushAndCloseStream(OutputStream o) {
       if (o == null) return;
       try {
@@ -179,4 +191,20 @@ public final class Util {
 
       }
    }
+   
+   public static void flushAndCloseOutput(ObjectOutput o) {
+      if (o == null) return;
+      try {
+         o.flush();
+      } catch (Exception e) {
+
+      }
+
+      try {
+         o.close();
+      } catch (Exception e) {
+
+      }
+   }
+
 }

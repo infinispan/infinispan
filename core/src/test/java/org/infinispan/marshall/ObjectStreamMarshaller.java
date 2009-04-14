@@ -1,6 +1,7 @@
 package org.infinispan.marshall;
 
 import org.infinispan.io.ByteBuffer;
+import org.infinispan.util.Util;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -10,6 +11,7 @@ import java.io.ObjectInput;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.io.Serializable;
 
 /**
@@ -18,12 +20,29 @@ import java.io.Serializable;
  * @author Manik Surtani
  */
 public class ObjectStreamMarshaller implements Marshaller, Serializable {
+   
+   public ObjectOutput startObjectOutput(OutputStream os) throws IOException {
+      return new ObjectOutputStream(os);
+   }
+
+   public void finishObjectOutput(ObjectOutput oo) {
+      Util.flushAndCloseOutput(oo);
+   }
+   
    public void objectToObjectStream(Object obj, ObjectOutput out) throws IOException {
       out.writeObject(obj);
    }
 
    public Object objectFromObjectStream(ObjectInput in) throws IOException, ClassNotFoundException {
       return in.readObject();
+   }
+
+   public ObjectInput startObjectInput(InputStream is) throws IOException {
+      return new ObjectInputStream(is);
+   }
+
+   public void finishObjectInput(ObjectInput oi) {
+      Util.closeInput(oi);
    }
 
    public Object objectFromStream(InputStream is) throws IOException, ClassNotFoundException {
@@ -57,5 +76,4 @@ public class ObjectStreamMarshaller implements Marshaller, Serializable {
    public Object objectFromByteBuffer(byte[] buf) throws IOException, ClassNotFoundException {
       return objectFromObjectStream(new ObjectInputStream(new ByteArrayInputStream(buf)));
    }
-
 }
