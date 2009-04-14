@@ -36,7 +36,7 @@ public abstract class BaseRpcCommand implements CacheRpcCommand {
    }
 
 
-   protected Object processCommand(InvocationContext ctx, ReplicableCommand cacheCommand) throws Throwable {
+   protected final Object processCommand(InvocationContext ctx, ReplicableCommand cacheCommand) throws Throwable {
       Object result;
       try {
          if (trace) log.trace("Invoking command " + cacheCommand + ", with originLocal flag set to false.");
