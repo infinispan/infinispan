@@ -66,7 +66,6 @@
     <project-package>org.infinispan</project-package>
     <project-version>4.0.0-SNAPSHOT</project-version>
     <defaultTestGroup>functional,unit</defaultTestGroup>
-    <build-jars>true</build-jars>
   </properties>
 
   <dependencies>
@@ -201,6 +200,55 @@
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>2.5</version>
+        <executions>
+          <execution>
+            <id>javadoc</id>
+            <phase>package</phase>
+            <goals>
+              <goal>javadoc</goal>
+            </goals>
+            <configuration>
+              <links>
+                <link>http://java.sun.com/j2se/1.5.0/docs/api/</link>
+                <link>http://java.sun.com/javaee/5/docs/api/</link>
+              </links>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+         <archive>
+            <manifest>
+              <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+              <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+              <mainClass>org.infinispan.Version</mainClass>
+            </manifest>
+          </archive>
+        </configuration>
+        <executions>
+          <execution>
+            <id>build-test-jar</id>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+            <configuration>
+              <archive>
+                <manifest>
+                  <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                  <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                </manifest>
+              </archive>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
     <finalName>${artifactId}</finalName>
   </build>
@@ -292,68 +340,6 @@
       <properties>
         <defaultTestGroup>transaction</defaultTestGroup>
       </properties>
-    </profile>
-    <!-- only apply these plugins for modules who are of type jar -->
-    <profile>
-      <id>jarBuilder</id>
-      <activation>
-        <property>
-          <name>build-jars</name>
-          <value>true</value>
-        </property>
-      </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-javadoc-plugin</artifactId>
-            <version>2.5</version>
-            <executions>
-              <execution>
-                <phase>${javadocPhase}</phase>
-                <goals>
-                  <goal>javadoc</goal>
-                </goals>
-                <configuration>
-                  <links>
-                    <link>http://java.sun.com/j2se/1.5.0/docs/api/</link>
-                    <link>http://java.sun.com/javaee/5/docs/api/</link>
-                  </links>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-jar-plugin</artifactId>
-            <configuration>
-              <archive>
-                <manifest>
-                  <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-                  <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-                  <mainClass>org.infinispan.Version</mainClass>
-                </manifest>
-              </archive>
-            </configuration>
-            <executions>
-              <execution>
-                <id>build-test-jar</id>
-                <goals>
-                  <goal>test-jar</goal>
-                </goals>
-                <configuration>
-                  <archive>
-                    <manifest>
-                      <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-                      <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-                    </manifest>
-                  </archive>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
     </profile>
   </profiles>
 </project>

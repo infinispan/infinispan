@@ -3,11 +3,6 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
    <modelVersion>4.0.0</modelVersion>
-
-   <properties>
-      <build-jars>false</build-jars>
-   </properties>
-
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-parent</artifactId>
@@ -24,6 +19,26 @@
 
    <build>
       <plugins>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>javadoc</id>
+                <phase>none</phase>
+              </execution>
+            </executions>
+         </plugin>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-jar-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>build-test-jar</id>
+                <phase>none</phase>
+              </execution>
+            </executions>
+         </plugin>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-assembly-plugin</artifactId>
