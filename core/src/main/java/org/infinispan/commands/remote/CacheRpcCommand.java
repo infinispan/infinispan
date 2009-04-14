@@ -3,8 +3,7 @@ package org.infinispan.commands.remote;
 import org.infinispan.commands.ReplicableCommand;
 
 /**
- * The RPCManager only replicates commands wrapped in an RPCCommand.  As a wrapper, an RPCCommand could contain a single
- * {@link org.infinispan.commands.ReplicableCommand} or a List of them.
+ * The {@link org.infinispan.remoting.RpcManager} only replicates commands wrapped in a {@link CacheRpcCommand}.
  *
  * @author Manik Surtani
  * @author Mircea.Markus@jboss.com
