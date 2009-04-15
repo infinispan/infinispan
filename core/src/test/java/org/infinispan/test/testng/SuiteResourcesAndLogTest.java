@@ -20,18 +20,6 @@ public class SuiteResourcesAndLogTest {
    
    private static Log log = LogFactory.getLog(SuiteResourcesAndLogTest.class);
 
-   @BeforeSuite
-   @AfterSuite
-   public void removeTempDir() {
-      TestingUtil.recursiveFileRemove(TestingUtil.TEST_FILES);
-      log("Removing all the files from " + TestingUtil.TEST_FILES);
-      File file = new File(TestingUtil.TEST_FILES);
-      if (file.exists()) {
-         System.err.println("!!!!!!!!!!!!! Directory '" + TestingUtil.TEST_FILES + "' should have been deleted!!!");
-      } else {
-         log("Successfully removed folder: '" + TestingUtil.TEST_FILES + "'");
-      }
-   }
 
    @BeforeSuite
    @AfterSuite
