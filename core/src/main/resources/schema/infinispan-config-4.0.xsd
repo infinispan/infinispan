@@ -30,8 +30,8 @@
    </xs:complexType>
 
    <xs:complexType name="sharedSerializationType">
-      <xs:attribute name="objectInputStreamPoolSize" type="tns:positiveInteger"/>
-      <xs:attribute name="objectOutputStreamPoolSize" type="tns:positiveInteger"/>
+      <xs:attribute name="objectInputStreamPoolSize" type="tns:positiveNumber"/>
+      <xs:attribute name="objectOutputStreamPoolSize" type="tns:positiveNumber"/>
       <xs:attribute name="version" type="xs:string"/>
       <xs:attribute name="marshallerClass" type="xs:string"/>
    </xs:complexType>
@@ -71,12 +71,14 @@
          <xs:element name="sync" type="tns:syncType" minOccurs="0" maxOccurs="1"/>
          <xs:element name="async" type="tns:asyncType" minOccurs="0" maxOccurs="1"/>
          <xs:element name="stateRetrieval" type="tns:stateRetrievalType" minOccurs="0" maxOccurs="1"/>
+         <xs:element name="hash" type="tns:hashType" minOccurs="0" maxOccurs="1" />
+         <xs:element name="l1" type="tns:l1Type" minOccurs="0" maxOccurs="1" />
       </xs:all>
       <xs:attribute name="mode">
          <xs:simpleType>
             <xs:restriction base="xs:string">
                <xs:pattern
-                     value="[Rr][Ee][Pp][Ll][Ii][Cc][Aa][Tt][Ii][Oo][Nn]|[Ii][Nn][Vv][Aa][Ll][Ii][Dd][Aa][Tt][Ii][Oo][Nn]|[Rr]|[Ii]|\$\{.*\}"/>
+                     value="[Rr][Ee][Pp][Ll][Ii][Cc][Aa][Tt][Ii][Oo][Nn]|[Ii][Nn][Vv][Aa][Ll][Ii][Dd][Aa][Tt][Ii][Oo][Nn]|[Dd][Ii][Ss][Tt][Rr][Ii][Bb][Uu][Tt][Ii][Oo][Nn]|[Rr]|[Ii]|[Dd]|[Rr][Ee][Pp][Ll]|[Ii][Nn][Vv][Aa][Ll]|[Dd][Ii][Ss][Tt]|\$\{.*\}"/>
             </xs:restriction>
          </xs:simpleType>
       </xs:attribute>
@@ -91,7 +93,7 @@
             </xs:restriction>
          </xs:simpleType>
       </xs:attribute>
-      <xs:attribute name="lockAcquisitionTimeout" type="tns:positiveInteger"/>
+      <xs:attribute name="lockAcquisitionTimeout" type="tns:positiveNumber"/>
       <xs:attribute name="writeSkewCheck" type="tns:booleanType"/>
       <xs:attribute name="useLockStriping" type="tns:booleanType"/>
       <xs:attribute name="concurrencyLevel" type="xs:integer"/>
@@ -105,7 +107,19 @@
 
    <xs:complexType name="stateRetrievalType">
       <xs:attribute name="fetchInMemoryState" type="tns:booleanType"/>
-      <xs:attribute name="timeout" type="tns:positiveInteger"/>
+      <xs:attribute name="timeout" type="tns:positiveNumber"/>
+   </xs:complexType>
+
+   <xs:complexType name="hashType">
+      <xs:attribute name="class" type="xs:string"/>
+      <xs:attribute name="numOwners" type="tns:positiveNumber"/>
+      <xs:attribute name="rehashWait" type="tns:positiveNumber"/>
+   </xs:complexType>
+
+   <xs:complexType name="l1Type">
+      <xs:attribute name="enabled" type="tns:booleanType"/>
+      <xs:attribute name="onRehash" type="tns:booleanType"/>
+      <xs:attribute name="lifespan" type="tns:positiveNumber"/>
    </xs:complexType>
 
    <xs:complexType name="shutdownType">
@@ -125,7 +139,7 @@
       </xs:restriction>
    </xs:simpleType>
 
-   <xs:simpleType name="positiveInteger">
+   <xs:simpleType name="positiveNumber">
       <xs:restriction base="xs:string">
          <xs:pattern value="\$\{.*\}|\+?[0-9]*"/>
       </xs:restriction>
@@ -149,22 +163,22 @@
       </xs:sequence>
       <xs:attribute name="transportClass" type="xs:string"/>
       <xs:attribute name="clusterName" type="xs:string"/>
-      <xs:attribute name="distributedSyncTimeout" type="xs:long"/>
+      <xs:attribute name="distributedSyncTimeout" type="tns:positiveNumber"/>
    </xs:complexType>
 
    <xs:complexType name="syncType">
-      <xs:attribute name="replTimeout" type="tns:positiveInteger"/>
+      <xs:attribute name="replTimeout" type="tns:positiveNumber"/>
    </xs:complexType>
 
    <xs:complexType name="asyncType">
       <xs:attribute name="useReplQueue" type="tns:booleanType"/>
-      <xs:attribute name="replQueueInterval" type="tns:positiveInteger"/>
-      <xs:attribute name="replQueueMaxElements" type="tns:positiveInteger"/>
+      <xs:attribute name="replQueueInterval" type="tns:positiveNumber"/>
+      <xs:attribute name="replQueueMaxElements" type="tns:positiveNumber"/>
       <xs:attribute name="useAsyncSerialization" type="tns:booleanType"/>
    </xs:complexType>
 
    <xs:complexType name="evictionType">
-      <xs:attribute name="wakeUpInterval" type="tns:positiveInteger" use="required"/>
+      <xs:attribute name="wakeUpInterval" type="tns:positiveNumber" use="required"/>
       <xs:attribute name="strategy">
          <xs:simpleType>
             <xs:restriction base="xs:string">
@@ -173,12 +187,12 @@
             </xs:restriction>
          </xs:simpleType>
       </xs:attribute>
-      <xs:attribute name="maxEntries" type="xs:positiveInteger"/>
+      <xs:attribute name="maxEntries" type="tns:positiveNumber"/>
    </xs:complexType>
 
    <xs:complexType name="expirationType">
-      <xs:attribute name="lifespan" type="tns:positiveInteger"/>
-      <xs:attribute name="maxIdle" type="xs:positiveInteger"/>
+      <xs:attribute name="lifespan" type="tns:positiveNumber"/>
+      <xs:attribute name="maxIdle" type="tns:positiveNumber"/>
    </xs:complexType>
 
    <xs:complexType name="loadersType">
@@ -191,16 +205,16 @@
                      <xs:complexType>
                         <xs:attribute name="enabled" type="tns:booleanType"/>
                         <xs:attribute name="pushStateWhenCoordinator" type="tns:booleanType"/>
-                        <xs:attribute name="pushStateTimeout" type="xs:positiveInteger"/>
+                        <xs:attribute name="pushStateTimeout" type="tns:positiveNumber"/>
                      </xs:complexType>
                   </xs:element>
                   <xs:element name="async" minOccurs="0" maxOccurs="1">
                      <xs:complexType>
                         <xs:attribute name="enabled" type="tns:booleanType"/>
-                        <xs:attribute name="batchSize" type="xs:positiveInteger"/>
-                        <xs:attribute name="pollWait" type="xs:positiveInteger"/>
-                        <xs:attribute name="queueSize" type="xs:positiveInteger"/>
-                        <xs:attribute name="threadPoolSize" type="xs:positiveInteger"/>
+                        <xs:attribute name="batchSize" type="tns:positiveNumber"/>
+                        <xs:attribute name="pollWait" type="tns:positiveNumber"/>
+                        <xs:attribute name="queueSize" type="tns:positiveNumber"/>
+                        <xs:attribute name="threadPoolSize" type="tns:positiveNumber"/>
                      </xs:complexType>
                   </xs:element>
                </xs:all>
@@ -239,7 +253,7 @@
                </xs:attribute>
                <xs:attribute name="before" type="xs:string"/>
                <xs:attribute name="after" type="xs:string"/>
-               <xs:attribute name="index" type="tns:positiveInteger"/>
+               <xs:attribute name="index" type="tns:positiveNumber"/>
             </xs:complexType>
          </xs:element>
       </xs:sequence>

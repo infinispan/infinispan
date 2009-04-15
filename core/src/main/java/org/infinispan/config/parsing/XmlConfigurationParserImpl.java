@@ -8,10 +8,10 @@ import org.infinispan.config.DuplicateCacheNameException;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.config.parsing.element.CustomInterceptorsElementParser;
 import org.infinispan.config.parsing.element.LoadersElementParser;
+import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.lock.IsolationLevel;
 import org.infinispan.transaction.GenericTransactionManagerLookup;
 import org.infinispan.util.FileLookup;
-import org.infinispan.eviction.EvictionStrategy;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
@@ -113,7 +113,11 @@ public class XmlConfigurationParserImpl extends XmlParserBase implements XmlConf
                namedCaches = null;
                throw new DuplicateCacheNameException("Named cache " + configurationName + " is declared more than once!");
             }
-            namedCaches.put(configurationName, parseConfiguration(e));
+            try {
+               namedCaches.put(configurationName, parseConfiguration(e));
+            } catch (ConfigurationException ce) {
+               throw new ConfigurationException("Problems configuring named cache '" + configurationName + "'", ce);
+            }
          }
       }
 
@@ -166,13 +170,15 @@ public class XmlConfigurationParserImpl extends XmlParserBase implements XmlConf
 
    void configureClustering(Element e, Configuration config) {
       if (e == null) return; //we might not have this configured
-      // there are 2 attribs - mode and clusterName
-      boolean repl = true;
+
+      Configuration.CacheMode cacheMode;
       String mode = getAttributeValue(e, "mode").toUpperCase();
       if (mode.startsWith("R"))
-         repl = true;
+         cacheMode = Configuration.CacheMode.REPL_SYNC;
       else if (mode.startsWith("I"))
-         repl = false;
+         cacheMode = Configuration.CacheMode.INVALIDATION_SYNC;
+      else
+         cacheMode = Configuration.CacheMode.DIST_SYNC; // the default
 
       Element asyncEl = getSingleElementInCoreNS("async", e);
       Element syncEl = getSingleElementInCoreNS("sync", e);
@@ -180,16 +186,43 @@ public class XmlConfigurationParserImpl extends XmlParserBase implements XmlConf
          throw new ConfigurationException("Cannot have sync and async elements within the same cluster element!");
       boolean sync = asyncEl == null; // even if both are null, we default to sync
       if (sync) {
-         config.setCacheMode(repl ? Configuration.CacheMode.REPL_SYNC : Configuration.CacheMode.INVALIDATION_SYNC);
+         config.setCacheMode(cacheMode);
          configureSyncMode(syncEl, config);
       } else {
-         config.setCacheMode(repl ? Configuration.CacheMode.REPL_ASYNC : Configuration.CacheMode.INVALIDATION_ASYNC);
+         cacheMode = cacheMode.toAsync(); // get the async version of this mode
+         config.setCacheMode(cacheMode);
          configureAsyncMode(asyncEl, config);
       }
-      String cn = getAttributeValue(e, "clusterName");
-//      if (existsAttribute(cn)) config.setClusterName(cn);
-      configureStateRetrieval(getSingleElementInCoreNS("stateRetrieval", e), config);
-//      configureTransport(getSingleElementInCoreNS("jgroupsConfig", e), config);
+
+      if (cacheMode.isDistributed()) {
+         // L1 cache
+         Element l1 = getSingleElementInCoreNS("l1", e);
+         String tmp = getAttributeValue(l1, "enabled");
+         if (existsAttribute(tmp)) config.setL1CacheEnabled(getBoolean(tmp));
+         tmp = getAttributeValue(l1, "lifespan");
+         if (existsAttribute(tmp)) config.setL1Lifespan(getLong(tmp));
+         tmp = getAttributeValue(l1, "onRehash");
+         if (existsAttribute(tmp)) config.setL1OnRehash(getBoolean(tmp));
+
+         // consistent hash algo
+         Element hash = getSingleElementInCoreNS("hash", e);
+         tmp = getAttributeValue(hash, "class");
+         if (existsAttribute(tmp)) config.setConsistentHashClass(tmp);
+         tmp = getAttributeValue(hash, "numOwners");
+         if (existsAttribute(tmp)) config.setNumOwners(getInt(tmp));
+         tmp = getAttributeValue(hash, "rehashWait");
+         if (existsAttribute(tmp)) config.setRehashWaitTime(getLong(tmp));
+
+         config.setFetchInMemoryState(false);         
+
+         // sanity check against the presence of a stateRetrieval element
+         if (getSingleElementInCoreNS("stateRetrieval", e) != null)
+            throw new ConfigurationException("stateRetrieval cannot be used with cache mode 'DISTRIBUTION'!");
+      } else {
+         configureStateRetrieval(getSingleElementInCoreNS("stateRetrieval", e), config);
+         if (getSingleElementInCoreNS("l1", e) != null || getSingleElementInCoreNS("hash", e) != null)
+            throw new ConfigurationException("l1 and hash elements cannot be used with cache modes 'REPLICATION' and 'INVALIDATION'!");
+      }
    }
 
    void configureStateRetrieval(Element element, Configuration config) {

@@ -124,7 +124,7 @@
    </namedCache>
 
 
-   <namedCache name="jdbcBackedCache">
+   <namedCache name="persistentCache">
       <!--
             Cache loaders.
 
@@ -143,25 +143,26 @@
          <!--
             We can have multiple cache loaders, which get chained
          -->
-         <loader class="org.infinispan.loader.jdbc.stringbased.JdbcStringBasedCacheStore" fetchPersistentState="true"
+         <loader class="org.infinispan.loader.file.FileCacheStore" fetchPersistentState="true"
                  ignoreModifications="true" purgeOnStartup="true">
 
             <!-- See the documentation for more configuration examples and flags. -->
             <properties>
-               <property name="connectionFactoryClass" value="org.infinispan.loader.jdbc.connectionfactory.PooledConnectionFactory"/>
-               <property name="connectionUrl" value="org.infinispan.loader.jdbc.connectionfactory.PooledConnectionFactory"/>
-               <property name="userName" value="root"/>
-               <property name="driverClass" value="org.dbms.Driver"/>
-               <property name="idColumnType" value="VARCHAR2(256)"/>
-               <property name="dataColumnType" value="BLOB"/>
-               <property name="dropTableOnExit" value="false"/>
-               <property name="createTableOnStart" value="true"/>
+               <property name="location" value="/tmp" />
             </properties>
             <singletonStore enabled="true" pushStateWhenCoordinator="true" pushStateTimeout="20000"/>
             <async enabled="true" batchSize="1000" threadPoolSize="5"/>
          </loader>
       </loaders>
 
+   </namedCache>
+
+   <namedCache name="distributedCache">
+      <clustering mode="distribution">
+         <sync />
+         <hash numOwners="3" rehashWait="120000" />
+         <l1 enabled="true" lifespan="600000" />
+      </clustering>
    </namedCache>
 
    <namedCache name="withReplicatinQueue">

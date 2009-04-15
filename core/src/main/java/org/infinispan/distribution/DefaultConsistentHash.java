@@ -14,7 +14,20 @@ import java.util.TreeMap;
 
 public class DefaultConsistentHash implements ConsistentHash {
    private SortedMap<Integer, Address> caches = new TreeMap<Integer, Address>();
-   private final static int HASH_SPACE = 10000; // must be > max number of nodes in a cluster
+   // must be > max number of nodes in a cluster.  Assume no more than a million nodes in a cluster?  :-)
+   private final static int HASH_SPACE = 1000000;
+
+
+   public void setCaches(Collection<Address> caches) {
+      this.caches.clear();
+      // evenly distribute the caches across this space.
+      int increaseFactor = HASH_SPACE / caches.size();
+      int nextIndex = increaseFactor;
+      for (Address a: caches) {
+         this.caches.put(nextIndex, a);
+         nextIndex += increaseFactor;
+      }
+   }
 
    public List<Address> locate(Object key, int replicationCount) {
       int hash = Math.abs(key.hashCode());

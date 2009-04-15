@@ -9,6 +9,7 @@ import org.infinispan.loader.file.FileCacheStore;
 import org.infinispan.loader.file.FileCacheStoreConfig;
 import org.infinispan.lock.IsolationLevel;
 import org.infinispan.transaction.GenericTransactionManagerLookup;
+import org.infinispan.distribution.DefaultConsistentHash;
 import org.testng.annotations.Test;
 import org.w3c.dom.Element;
 
@@ -144,10 +145,10 @@ public class ConfigurationParserTest {
       Configuration c = new Configuration();
       parser.configureClustering(e, c);
 
-      assert c.getCacheMode() == Configuration.CacheMode.REPL_SYNC;
-      assert c.getStateRetrievalTimeout() == 10000;
-      assert c.isFetchInMemoryState();
+      assert c.getCacheMode() == Configuration.CacheMode.DIST_SYNC;
+      assert !c.isFetchInMemoryState();
       assert !c.isUseReplQueue();
+      assert c.isL1CacheEnabled();
    }
 
    public void testCacheLoaders() throws Exception {
@@ -262,5 +263,43 @@ public class ConfigurationParserTest {
       assert c.getEvictionWakeUpInterval() == 750;
       assert c.getExpirationLifespan() == 2000;
       assert c.getExpirationMaxIdle() == 500;
+   }
+
+   public void testClusteringDist() throws Exception {
+      XmlConfigurationParserImpl parser = new XmlConfigurationParserImpl();
+      String xml = "<clustering mode=\"d\">\n" +
+            "         <async />" +
+            "         <l1 enabled=\"false\"/>\n" +
+            "         <hash class=\"org.blah.Blah\" numOwners=\"900\" rehashWait=\"-1\" />" +
+            "      </clustering>";
+      Element e = XmlConfigHelper.stringToElement(xml);
+
+      Configuration c = new Configuration();
+      parser.configureClustering(e, c);
+
+      assert c.getCacheMode() == Configuration.CacheMode.DIST_ASYNC;
+      assert !c.isFetchInMemoryState();
+      assert !c.isL1CacheEnabled();
+      assert c.getConsistentHashClass().equals("org.blah.Blah");
+      assert c.getNumOwners() == 900;
+      assert c.getRehashWaitTime() == -1;
+   }
+
+   public void testClusteringDistDefaults() throws Exception {
+      XmlConfigurationParserImpl parser = new XmlConfigurationParserImpl();
+      String xml = "<clustering mode=\"d\" />";
+      Element e = XmlConfigHelper.stringToElement(xml);
+
+      Configuration c = new Configuration();
+      parser.configureClustering(e, c);
+
+      assert c.getCacheMode() == Configuration.CacheMode.DIST_SYNC;
+      assert !c.isFetchInMemoryState();
+      assert c.isL1CacheEnabled();
+      assert c.getConsistentHashClass().equals(DefaultConsistentHash.class.getName());
+      assert c.getNumOwners() == 2;
+      assert c.getRehashWaitTime() == 60000;
+      assert c.getL1Lifespan() == 600000;
+      assert c.isL1OnRehash();
    }
 }

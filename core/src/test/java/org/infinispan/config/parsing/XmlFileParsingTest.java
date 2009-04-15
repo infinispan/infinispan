@@ -5,6 +5,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.loader.file.FileCacheStoreConfig;
 import org.infinispan.lock.IsolationLevel;
+import org.infinispan.distribution.DefaultConsistentHash;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -107,6 +108,14 @@ public class XmlFileParsingTest {
       assert gc.isAllowDuplicateDomains();
       assert gc.getJmxDomain().equals("funky_domain");
       assert gc.getMBeanServerLookup().equals("org.infinispan.jmx.PerThreadMBeanServerLookup");
+
+      c = namedCaches.get("dist");
+      assert c.getCacheMode() == Configuration.CacheMode.DIST_SYNC;
+      assert c.getL1Lifespan() == 600000;
+      assert c.getRehashWaitTime() == 120000;
+      assert c.getConsistentHashClass().equals(DefaultConsistentHash.class.getName());
+      assert c.getNumOwners() == 3;
+      assert c.isL1CacheEnabled();
    }
 
    public void testConfigurationMerging() throws IOException {

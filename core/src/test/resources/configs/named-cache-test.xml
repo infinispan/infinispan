@@ -40,21 +40,21 @@
    </namedCache>
 
    <namedCache name="syncRepl">
-      <clustering>
+      <clustering mode="repl">
          <stateRetrieval fetchInMemoryState="false"/>
          <sync replTimeout="15000"/>
       </clustering>
    </namedCache>
 
    <namedCache name="asyncRepl">
-      <clustering>
+      <clustering mode="repl">
          <stateRetrieval fetchInMemoryState="false"/>
          <async useAsyncSerialization="false"/>
       </clustering>
    </namedCache>
 
    <namedCache name="asyncReplQueue">
-      <clustering>
+      <clustering mode="repl">
          <stateRetrieval fetchInMemoryState="false"/>
          <async useReplQueue="true" replQueueInterval="1234" replQueueMaxElements="100"/>
       </clustering>
@@ -62,7 +62,7 @@
 
    <namedCache name="txSyncRepl">
       <transaction/>
-      <clustering>
+      <clustering mode="repl">
          <stateRetrieval fetchInMemoryState="false"/>
          <sync replTimeout="15000"/>
       </clustering>
@@ -94,6 +94,14 @@
             <async enabled="true" batchSize="1000" threadPoolSize="5"/>
          </loader>
       </loaders>
+   </namedCache>
+
+   <namedCache name="dist">
+      <clustering mode="distribution">
+         <sync />
+         <hash numOwners="3" rehashWait="120000" />
+         <l1 enabled="true" lifespan="600000" />
+      </clustering>
    </namedCache>
 
    <namedCache name="withouthJmxEnabled">

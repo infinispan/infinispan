@@ -14,6 +14,8 @@ import java.util.Map;
  */
 public interface ConsistentHash {
 
+   void setCaches(Collection<Address> caches);
+   
    List<Address> locate(Object key, int replCount);
 
    Map<Object, List<Address>> locate(Collection<Object> keys, int replCount);

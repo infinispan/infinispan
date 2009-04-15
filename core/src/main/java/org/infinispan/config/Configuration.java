@@ -27,6 +27,7 @@ import org.infinispan.factories.annotations.NonVolatile;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.lock.IsolationLevel;
 import org.infinispan.util.ReflectionUtil;
+import org.infinispan.distribution.DefaultConsistentHash;
 
 import java.util.Collections;
 import java.util.List;
@@ -100,7 +101,17 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       /**
        * Data invalidated asynchronously.
        */
-      INVALIDATION_ASYNC;
+      INVALIDATION_ASYNC,
+
+      /**
+       * Synchronous DIST
+       */
+      DIST_SYNC,
+
+      /**
+       * Async DIST
+       */
+      DIST_ASYNC;
 
       /**
        * Returns true if the mode is invalidation, either sync or async.
@@ -110,11 +121,41 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       }
 
       public boolean isSynchronous() {
-         return this == REPL_SYNC || this == INVALIDATION_SYNC || this == LOCAL;
+         return this == REPL_SYNC || this == DIST_SYNC || this == INVALIDATION_SYNC || this == LOCAL;
       }
 
       public boolean isClustered() {
          return this != LOCAL;
+      }
+
+      public boolean isDistributed() {
+         return this == DIST_SYNC || this == DIST_ASYNC;
+      }
+
+      public CacheMode toSync() {
+         switch (this) {
+            case REPL_ASYNC:
+               return REPL_SYNC;
+            case INVALIDATION_ASYNC:
+               return INVALIDATION_SYNC;
+            case DIST_ASYNC:
+               return DIST_SYNC;
+            default:
+               return this;
+         }
+      }
+
+      public CacheMode toAsync() {
+         switch (this) {
+            case REPL_SYNC:
+               return REPL_ASYNC;
+            case INVALIDATION_SYNC:
+               return INVALIDATION_ASYNC;
+            case DIST_SYNC:
+               return DIST_ASYNC;
+            default:
+               return this;
+         }
       }
    }
 
@@ -153,6 +194,12 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    private int evictionMaxEntries = -1;
    private long expirationLifespan = -1;
    private long expirationMaxIdle = -1;
+   private boolean l1CacheEnabled = true;
+   private long l1Lifespan = 600000;
+   private boolean l1OnRehash = true;
+   private String consistentHashClass = DefaultConsistentHash.class.getName();
+   private int numOwners = 2;
+   private long rehashWaitTime = 60000;
 
    @Start(priority = 1)
    private void correctIsolationLevels() {
@@ -372,6 +419,36 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       this.useAsyncSerialization = useAsyncSerialization;
    }
 
+   public void setL1CacheEnabled(boolean l1CacheEnabled) {
+      testImmutability("l1CacheEnabled");
+      this.l1CacheEnabled = l1CacheEnabled;
+   }
+
+   public void setL1Lifespan(long l1Lifespan) {
+      testImmutability("l1Lifespan");
+      this.l1Lifespan = l1Lifespan;
+   }
+
+   public void setL1OnRehash(boolean l1OnRehash) {
+      testImmutability("l1OnRehash");
+      this.l1OnRehash = l1OnRehash;
+   }
+
+   public void setConsistentHashClass(String consistentHashClass) {
+      testImmutability("consistentHashClass");
+      this.consistentHashClass = consistentHashClass;
+   }
+
+   public void setNumOwners(int numOwners) {
+      testImmutability("numOwners");
+      this.numOwners = numOwners;
+   }
+
+   public void setRehashWaitTime(long rehashWaitTime) {
+      testImmutability("rehashWaitTime");
+      this.rehashWaitTime = rehashWaitTime;
+   }
+
    // ------------------------------------------------------------------------------------------------------------
    //   GETTERS
    // ------------------------------------------------------------------------------------------------------------
@@ -445,6 +522,30 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       return useLazyDeserialization;
    }
 
+   public boolean isL1CacheEnabled() {
+      return l1CacheEnabled;
+   }
+
+   public long getL1Lifespan() {
+      return l1Lifespan;
+   }
+
+   public boolean isL1OnRehash() {
+      return l1OnRehash;
+   }
+
+   public String getConsistentHashClass() {
+      return consistentHashClass;
+   }
+
+   public int getNumOwners() {
+      return numOwners;
+   }
+
+   public long getRehashWaitTime() {
+      return rehashWaitTime;
+   }
+
    // ------------------------------------------------------------------------------------------------------------
    //   HELPERS
    // ------------------------------------------------------------------------------------------------------------
@@ -468,7 +569,12 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       if (exposeJmxStatistics != that.exposeJmxStatistics) return false;
       if (fetchInMemoryState != that.fetchInMemoryState) return false;
       if (invocationBatchingEnabled != that.invocationBatchingEnabled) return false;
+      if (l1CacheEnabled != that.l1CacheEnabled) return false;
+      if (l1Lifespan != that.l1Lifespan) return false;
+      if (rehashWaitTime != that.rehashWaitTime) return false;
+      if (l1OnRehash != that.l1OnRehash) return false;
       if (lockAcquisitionTimeout != that.lockAcquisitionTimeout) return false;
+      if (numOwners != that.numOwners) return false;
       if (replQueueInterval != that.replQueueInterval) return false;
       if (replQueueMaxElements != that.replQueueMaxElements) return false;
       if (stateRetrievalTimeout != that.stateRetrievalTimeout) return false;
@@ -483,6 +589,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       if (cacheLoaderManagerConfig != null ? !cacheLoaderManagerConfig.equals(that.cacheLoaderManagerConfig) : that.cacheLoaderManagerConfig != null)
          return false;
       if (cacheMode != that.cacheMode) return false;
+      if (consistentHashClass != null ? !consistentHashClass.equals(that.consistentHashClass) : that.consistentHashClass != null)
+         return false;
       if (customInterceptors != null ? !customInterceptors.equals(that.customInterceptors) : that.customInterceptors != null)
          return false;
       if (evictionStrategy != that.evictionStrategy) return false;
@@ -524,6 +632,12 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       result = 31 * result + evictionMaxEntries;
       result = 31 * result + (int) (expirationLifespan ^ (expirationLifespan >>> 32));
       result = 31 * result + (int) (expirationMaxIdle ^ (expirationMaxIdle >>> 32));
+      result = 31 * result + (l1CacheEnabled ? 1 : 0);
+      result = 31 * result + (int) (l1Lifespan ^ (l1Lifespan >>> 32));
+      result = 31 * result + (int) (rehashWaitTime ^ (rehashWaitTime >>> 32));
+      result = 31 * result + (l1OnRehash ? 1 : 0);
+      result = 31 * result + (consistentHashClass != null ? consistentHashClass.hashCode() : 0);
+      result = 31 * result + numOwners;
       return result;
    }
 
