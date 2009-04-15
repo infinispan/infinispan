@@ -1,43 +1,27 @@
 package org.infinispan.container;
 
-import net.jcip.annotations.ThreadSafe;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalEntryFactory;
 
 import java.util.AbstractSet;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * A data container that exposes an iterator that is ordered based on order of entry into the container, with the oldest
- * entries first.
- * <p/>
- * This data container that maintains a concurrent hashtable of entries, and also maintains linking between the elements
- * for ordered iterators.
- * <p/>
- * This uses concepts from {@link java.util.concurrent.ConcurrentHashMap} in that it maintains a table of lockable
- * Segments, each of which is a specialized Hashtable, but HashEntries are also linked to each other such that they can
- * be navigated, like a {@link java.util.LinkedHashMap}.  To ensure thread safety of links between entries, we follow
- * auxillary node ideas expressed in John D. Valois' paper, <a href="http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.41.9506"><i>Lock-Free
- * Linked Lists Using Compare-and-Swap</i></a>.
- * <p/>
- * The locks maintained on linkable entrues are implemented using {@link org.infinispan.container.FIFODataContainer.SpinLock}s,
- * and due to the nature of these spin locks, they should only be held for a minimal amount of time.
+ * // TODO: Manik: Document this
  *
  * @author Manik Surtani
  * @since 4.0
  */
-@ThreadSafe
-public class FIFODataContainer implements DataContainer {
+public class NewFIFOContainer implements DataContainer {
+
    /**
     * The maximum capacity, used if a higher value is implicitly specified by either of the constructors with arguments.
     * MUST be a power of two <= 1<<30 to ensure that entries are indexable using ints.
     */
    static final int MAXIMUM_CAPACITY = 1 << 30;
-
-   final LinkedEntry dummyEntry = new LinkedEntry(); // a dummy linked entry
 
    // -- these fields are all very similar to JDK's ConcurrentHashMap
 
@@ -58,7 +42,9 @@ public class FIFODataContainer implements DataContainer {
 
    Set<Object> keySet;
 
-   public FIFODataContainer() {
+   final LinkedEntry head = new LinkedEntry(), tail = new LinkedEntry();
+
+   public NewFIFOContainer() {
       float loadFactor = 0.75f;
       int initialCapacity = 16;
       int concurrencyLevel = 16;
@@ -87,177 +73,58 @@ public class FIFODataContainer implements DataContainer {
       initLinks();
    }
 
-   // ---------- Public API methods
+   // links and link management
 
-   public InternalCacheEntry get(Object k) {
-      int h = hash(k.hashCode());
-      Segment s = segmentFor(h);
-      LinkedEntry le = s.get(k, h);
-      InternalCacheEntry ice = le == null ? null : le.entry;
-      if (ice != null) {
-         if (ice.isExpired()) {
-            remove(k);
-            ice = null;
-         } else {
-            ice.touch();
-         }
+   static final class LinkedEntry {
+      volatile InternalCacheEntry e;
+      volatile LinkedEntry n, p;
+
+      private static final AtomicReferenceFieldUpdater<LinkedEntry, InternalCacheEntry> E_UPDATER = AtomicReferenceFieldUpdater.newUpdater(LinkedEntry.class, InternalCacheEntry.class, "e");
+      private static final AtomicReferenceFieldUpdater<LinkedEntry, LinkedEntry> N_UPDATER = AtomicReferenceFieldUpdater.newUpdater(LinkedEntry.class, LinkedEntry.class, "n");
+      private static final AtomicReferenceFieldUpdater<LinkedEntry, LinkedEntry> P_UPDATER = AtomicReferenceFieldUpdater.newUpdater(LinkedEntry.class, LinkedEntry.class, "p");
+
+      final boolean casValue(InternalCacheEntry expected, InternalCacheEntry newValue) {
+         return E_UPDATER.compareAndSet(this, expected, newValue);
       }
 
-      return ice;
-   }
-
-   public void put(Object k, Object v, long lifespan, long maxIdle) {
-      // do a normal put first.
-      int h = hash(k.hashCode());
-      Segment s = segmentFor(h);
-      s.lock();
-      LinkedEntry le = null;
-      Aux before = null, after = null;
-      boolean newEntry = false;
-      try {
-         le = s.get(k, h);
-         InternalCacheEntry ice = le == null ? null : le.entry;
-         if (ice == null) {
-            newEntry = true;
-            ice = InternalEntryFactory.create(k, v, lifespan, maxIdle);
-            // only update linking if this is a new entry
-            le = new LinkedEntry();
-            le.lock();
-            after = new Aux();
-            after.lock();
-            le.next = after;
-            after.next = dummyEntry;
-         } else {
-            ice.setValue(v);
-            ice = ice.setLifespan(lifespan).setMaxIdle(maxIdle);
-         }
-
-         le.entry = ice;
-         s.locklessPut(k, h, le);
-
-         if (newEntry) {
-            dummyEntry.lock();
-            (before = dummyEntry.prev).lock();
-            before.next = le;
-            le.prev = before;
-            dummyEntry.prev = after;
-         }
-      } finally {
-         if (newEntry) {
-            if (le != null) {
-               before.unlock();
-               dummyEntry.unlock();
-               after.unlock();
-               le.unlock();
-            }
-         }
-         s.unlock();
-      }
-   }
-
-   public boolean containsKey(Object k) {
-      int h = hash(k.hashCode());
-      Segment s = segmentFor(h);
-      LinkedEntry le = s.get(k, h);
-      InternalCacheEntry ice = le == null ? null : le.entry;
-      if (ice != null) {
-         if (ice.isExpired()) {
-            remove(k);
-            ice = null;
-         }
+      final boolean casNext(LinkedEntry expected, LinkedEntry newValue) {
+         return N_UPDATER.compareAndSet(this, expected, newValue);
       }
 
-      return ice != null;
-   }
-
-   public InternalCacheEntry remove(Object k) {
-      int h = hash(k.hashCode());
-      Segment s = segmentFor(h);
-      s.lock();
-      InternalCacheEntry ice = null;
-      LinkedEntry le = null;
-      boolean linksLocked = false;
-      LinkedEntry nextEntry = null;
-      Aux before = null, after = null;
-      try {
-         le = s.locklessRemove(k, h);
-         if (le != null) {
-            ice = le.entry;
-            linksLocked = true;
-            // need to unlink
-            le.lock();
-            (before = le.prev).lock();
-            (after = le.next).lock();
-            nextEntry = after.next;
-            before.next = after.next;
-            before.next.prev = before;
-         }
-      } finally {
-         if (linksLocked) {
-            before.unlock();
-            after.unlock();
-            le.unlock();
-         }
-         s.unlock();
+      final boolean casPrev(LinkedEntry expected, LinkedEntry newValue) {
+         return P_UPDATER.compareAndSet(this, expected, newValue);
       }
 
-      if (ice == null || ice.isExpired())
-         return null;
-      else
-         return ice;
-   }
+      final void mark() {
+         e = null;
+      }
 
-   public int size() {
-      // approximate sizing is good enough
-      int sz = 0;
-      final Segment[] segs = segments;
-      for (Segment s : segs) sz += s.count;
-      return sz;
-   }
-
-   public void clear() {
-      // This is expensive...
-      // lock all segments
-      for (Segment s : segments) s.lock();
-      try {
-         for (Segment s : segments) s.locklessClear();
-         initLinks();
-      } finally {
-         for (Segment s : segments) s.unlock();
+      final boolean isMarked() {
+         return e == null; // an impossible value unless deleted
       }
    }
-
-   public Set<Object> keySet() {
-      if (keySet == null) keySet = new KeySet();
-      return keySet;
-   }
-
-   public void purgeExpired() {
-      for (InternalCacheEntry ice : this) {
-         if (ice.isExpired()) remove(ice.getKey());
-      }
-   }
-
-   public Iterator<InternalCacheEntry> iterator() {
-      return new ValueIterator();
-   }
-
-   // --------------- Internals
 
    /**
     * Initializes links to an empty container
     */
    protected final void initLinks() {
-      Aux tail = new Aux();
-      try {
-         tail.lock();
-         dummyEntry.prev = tail;
-         dummyEntry.next = tail;
-         tail.next = dummyEntry;
-      } finally {
-         tail.unlock();
-         dummyEntry.unlock();
-      }
+      head.n = tail;
+      head.p = tail;
+      tail.n = head;
+      tail.p = head;
+   }
+
+   protected final void unlink(LinkedEntry le) {
+      le.p.casNext(le, le.n);
+      le.n.casPrev(le, le.p);
+   }
+
+   protected final void linkAtEnd(LinkedEntry le) {
+      le.n = tail;
+      do {
+         le.p = tail.p;
+      } while (!le.p.casNext(tail, le));
+      tail.p = le;
    }
 
    /**
@@ -307,7 +174,6 @@ public class FIFODataContainer implements DataContainer {
          this.value = value;
       }
    }
-
 
    /**
     * Very similar to a Segment in a ConcurrentHashMap
@@ -525,6 +391,7 @@ public class FIFODataContainer implements DataContainer {
       }
    }
 
+
    protected final class KeySet extends AbstractSet<Object> {
 
       public Iterator<Object> iterator() {
@@ -532,15 +399,20 @@ public class FIFODataContainer implements DataContainer {
       }
 
       public int size() {
-         return FIFODataContainer.this.size();
+         return NewFIFOContainer.this.size();
       }
    }
 
    protected abstract class LinkedIterator {
-      Aux nextAux = dummyEntry.next;
+      LinkedEntry current = head;
 
       public boolean hasNext() {
-         return nextAux.next != dummyEntry;
+         current = current.n;
+         while (current.isMarked()) {
+            if (current == tail || current == head) return false;
+            current = current.n;
+         }
+         return true;
       }
 
       public void remove() {
@@ -550,48 +422,159 @@ public class FIFODataContainer implements DataContainer {
 
    protected final class ValueIterator extends LinkedIterator implements Iterator<InternalCacheEntry> {
       public InternalCacheEntry next() {
-         LinkedEntry le = nextAux.next;
-         if (le == dummyEntry) return null;
-         nextAux = le.next;
-         return le.entry;
+         while (current.isMarked()) {
+            LinkedEntry n = current.n;
+            unlink(current);
+            current = n;
+            if (n == head || n == tail) throw new IndexOutOfBoundsException("Reached head or tail pointer!");
+         }
+         
+         return current.e;
       }
    }
 
    protected final class KeyIterator extends LinkedIterator implements Iterator<Object> {
       public Object next() {
-         LinkedEntry le = nextAux.next;
-         if (le == dummyEntry) return null;
-         nextAux = le.next;
-         return le.entry.getKey();
+         while (current.isMarked()) {
+            LinkedEntry n = current.n;
+            unlink(current);
+            current = n;
+            if (n == head || n == tail) throw new IndexOutOfBoundsException("Reached head or tail pointer!");
+         }
+
+         return current.e.getKey();
       }
    }
 
-   protected static abstract class SpinLock {
-      final AtomicBoolean l = new AtomicBoolean(false);
 
-      final void lock() {
-         while (!l.compareAndSet(false, true)) {
-            // spin, spin, spin!
+   // ----------- PUBLIC API ---------------
+
+   public InternalCacheEntry get(Object k) {
+      int h = hash(k.hashCode());
+      Segment s = segmentFor(h);
+      LinkedEntry le = s.get(k, h);
+      InternalCacheEntry ice = null;
+      if (le != null) {
+         ice = le.e;
+         if (le.isMarked()) unlink(le);
+      }
+      if (ice != null) {
+         if (ice.isExpired()) {
+            remove(k);
+            ice = null;
+         } else {
+            ice.touch();
+         }
+      }
+      return ice;
+   }
+
+   public void put(Object k, Object v, long lifespan, long maxIdle) {
+      // do a normal put first.
+      int h = hash(k.hashCode());
+      Segment s = segmentFor(h);
+      s.lock();
+      LinkedEntry le;
+      boolean newEntry = false;
+      try {
+         le = s.get(k, h);
+         InternalCacheEntry ice = le == null ? null : le.e;
+         if (ice == null) {
+            newEntry = true;
+            ice = InternalEntryFactory.create(k, v, lifespan, maxIdle);
+            // only update linking if this is a new entry
+            le = new LinkedEntry();
+         } else {
+            ice.setValue(v);
+            ice = ice.setLifespan(lifespan).setMaxIdle(maxIdle);
+         }
+
+         // need to do this anyway since the ICE impl may have changed
+         le.e = ice;
+         s.locklessPut(k, h, le);
+
+         if (newEntry) {
+            linkAtEnd(le);
+         }
+      } finally {
+         s.unlock();
+      }
+   }
+
+   public boolean containsKey(Object k) {
+      int h = hash(k.hashCode());
+      Segment s = segmentFor(h);
+      LinkedEntry le = s.get(k, h);
+      InternalCacheEntry ice = null;
+      if (le != null) {
+         ice = le.e;
+         if (le.isMarked()) unlink(le);
+      }
+      if (ice != null) {
+         if (ice.isExpired()) {
+            remove(k);
+            ice = null;
          }
       }
 
-      final boolean tryLock() {
-         return l.compareAndSet(false, true);
+      return ice != null;
+   }
+
+   public InternalCacheEntry remove(Object k) {
+      int h = hash(k.hashCode());
+      Segment s = segmentFor(h);
+      s.lock();
+      InternalCacheEntry ice = null;
+      LinkedEntry le;
+      try {
+         le = s.locklessRemove(k, h);
+         if (le != null) {
+            ice = le.e;
+            le.mark();
+            unlink(le);
+         }
+      } finally {
+         s.unlock();
       }
 
-      final void unlock() {
-         l.set(false);
+      if (ice == null || ice.isExpired())
+         return null;
+      else
+         return ice;
+   }
+
+   public int size() {
+      // approximate sizing is good enough
+      int sz = 0;
+      final Segment[] segs = segments;
+      for (Segment s : segs) sz += s.count;
+      return sz;
+   }
+
+   public void clear() {
+      // This is expensive...
+      // lock all segments
+      for (Segment s : segments) s.lock();
+      try {
+         for (Segment s : segments) s.locklessClear();
+         initLinks();
+      } finally {
+         for (Segment s : segments) s.unlock();
       }
    }
 
-   protected final static class Aux extends SpinLock {
-      volatile LinkedEntry next;
+   public Set<Object> keySet() {
+      if (keySet == null) keySet = new KeySet();
+      return keySet;
    }
 
-   protected final static class LinkedEntry extends SpinLock {
-      volatile Aux prev;
-      volatile Aux next;
-      volatile InternalCacheEntry entry;
+   public void purgeExpired() {
+      for (InternalCacheEntry ice : this) {
+         if (ice.isExpired()) remove(ice.getKey());
+      }
+   }
+
+   public Iterator<InternalCacheEntry> iterator() {
+      return new ValueIterator();
    }
 }
-

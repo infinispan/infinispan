@@ -10,12 +10,12 @@ import org.testng.annotations.Test;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 
-@Test(groups = "unit", testName = "container.FIFODataContainerTest")
-public class FIFODataContainerTest extends SimpleDataContainerTest {
+@Test(groups = "unit", testName = "container.NewFIFODataContainerTest")
+public class NewFIFODataContainerTest extends SimpleDataContainerTest {
 
    @Override
    protected DataContainer createContainer() {
-      return new FIFODataContainer();
+      return new NewFIFOContainer();
    }
 
    public void testOrdering() {
@@ -43,31 +43,31 @@ public class FIFODataContainerTest extends SimpleDataContainerTest {
    }
 
    private void setInitialEntry() {
-      FIFODataContainer ldc = (FIFODataContainer) dc;
+      NewFIFOContainer ldc = (NewFIFOContainer) dc;
       dc.put("k", "v", -1, -1);
 
       assert dc.size() == 1;
 
-      FIFODataContainer.Aux last = ldc.dummyEntry.prev;
-      FIFODataContainer.Aux next = ldc.dummyEntry.next;
-      FIFODataContainer.LinkedEntry le = next.next;
-      FIFODataContainer.Aux last2 = le.next;
+      NewFIFOContainer.LinkedEntry tail = ldc.tail;
+      NewFIFOContainer.LinkedEntry head = ldc.head;
+      NewFIFOContainer.LinkedEntry e = ldc.head.n;
 
-      assert last == last2;
-      assert last != next;
-      assert le != ldc.dummyEntry;
-      assert le.prev == next;
-      assert le.next == last;
-      assert le.entry != null;
-      assert le.entry.getKey().equals("k");
-      assert le.entry.getValue().equals("v");
+      assert head.n == e;
+      assert head.p == tail;
+      assert tail.n == head;
+      assert tail.p == e;
+      assert e.n == tail;
+      assert e.p == head;
+      assert !e.isMarked();
    }
 
    public void testInsertingLinks() {
-      FIFODataContainer ldc = (FIFODataContainer) dc;
+      NewFIFOContainer ldc = (NewFIFOContainer) dc;
       assert dc.size() == 0;
-      assert ldc.dummyEntry.prev == ldc.dummyEntry.next;
-      assert ldc.dummyEntry.entry == null;
+      assert ldc.head.n == ldc.tail;
+      assert ldc.tail.n == ldc.head;
+      assert ldc.head.p == ldc.tail;
+      assert ldc.tail.p == ldc.head;
 
       setInitialEntry();
 
@@ -76,63 +76,69 @@ public class FIFODataContainerTest extends SimpleDataContainerTest {
 
       assert dc.size() == 2;
 
-      FIFODataContainer.Aux last = ldc.dummyEntry.prev;
-      FIFODataContainer.Aux next = ldc.dummyEntry.next;
-      FIFODataContainer.LinkedEntry le1 = next.next;
-      FIFODataContainer.Aux next2 = le1.next;
-      FIFODataContainer.LinkedEntry le2 = next2.next;
-      FIFODataContainer.Aux last2 = le2.next;
+      NewFIFOContainer.LinkedEntry tail = ldc.tail;
+      NewFIFOContainer.LinkedEntry head = ldc.head;
+      NewFIFOContainer.LinkedEntry le1 = head.n;
+      NewFIFOContainer.LinkedEntry le2 = le1.n;
 
-      assert last == last2;
-      assert last != next;
-      assert last != next2;
-      assert next != next2;
-      assert le1 != ldc.dummyEntry;
-      assert le2 != ldc.dummyEntry;
+      assert tail == le2.n;
+      assert tail != le1.n;
+      assert le1 != ldc.head;
+      assert le2 != ldc.head;
+      assert le1 != ldc.tail;
+      assert le2 != ldc.tail;
       assert le1 != le2;
 
-      assert le1.prev == next;
-      assert le1.next == next2;
-      assert le2.prev == next2;
-      assert le2.next == last;
+      assert le1.p == head;
+      assert le1.n == le2;
+      assert le2.p == le1;
+      assert le2.n == tail;
 
-      assert le1.entry != null;
-      assert le1.entry.getKey().equals("k");
-      assert le1.entry.getValue().equals("v");
+      assert le1.e != null;
+      assert le1.e.getKey().equals("k");
+      assert le1.e.getValue().equals("v");
 
-      assert le2.entry != null;
-      assert le2.entry.getKey().equals("k2");
-      assert le2.entry.getValue().equals("v2");
+      assert le2.e != null;
+      assert le2.e.getKey().equals("k2");
+      assert le2.e.getValue().equals("v2");
    }
 
    public void testRemovingLinks() {
-      FIFODataContainer aldc = (FIFODataContainer) dc;
+      NewFIFOContainer aldc = (NewFIFOContainer) dc;
       assert dc.size() == 0;
-      assert aldc.dummyEntry.prev == aldc.dummyEntry.next;
-      assert aldc.dummyEntry.entry == null;
+      assert aldc.head.n == aldc.tail;
+      assert aldc.tail.n == aldc.head;
+      assert aldc.head.p == aldc.tail;
+      assert aldc.tail.p == aldc.head;
 
       setInitialEntry();
 
       dc.remove("k");
 
       assert dc.size() == 0;
-      assert aldc.dummyEntry.prev == aldc.dummyEntry.next;
-      assert aldc.dummyEntry.entry == null;
+      assert aldc.head.n == aldc.tail;
+      assert aldc.tail.n == aldc.head;
+      assert aldc.head.p == aldc.tail;
+      assert aldc.tail.p == aldc.head;
    }
 
    public void testClear() {
-      FIFODataContainer aldc = (FIFODataContainer) dc;
+      NewFIFOContainer aldc = (NewFIFOContainer) dc;
       assert dc.size() == 0;
-      assert aldc.dummyEntry.prev == aldc.dummyEntry.next;
-      assert aldc.dummyEntry.entry == null;
+      assert aldc.head.n == aldc.tail;
+      assert aldc.tail.n == aldc.head;
+      assert aldc.head.p == aldc.tail;
+      assert aldc.tail.p == aldc.head;
 
       setInitialEntry();
 
       dc.clear();
 
       assert dc.size() == 0;
-      assert aldc.dummyEntry.prev == aldc.dummyEntry.next;
-      assert aldc.dummyEntry.entry == null;
+      assert aldc.head.n == aldc.tail;
+      assert aldc.tail.n == aldc.head;
+      assert aldc.head.p == aldc.tail;
+      assert aldc.tail.p == aldc.head;
    }
 
    public void testMultithreadAccess() throws InterruptedException {
@@ -153,22 +159,6 @@ public class FIFODataContainerTest extends SimpleDataContainerTest {
 
       for (Worker w : workers) w.running = false;
       for (Worker w : workers) w.join();
-
-      assertNoStaleSpinLocks((FIFODataContainer) dc);
-   }
-
-   protected void assertNoStaleSpinLocks(FIFODataContainer fdc) {
-      FIFODataContainer.SpinLock first = fdc.dummyEntry;
-      FIFODataContainer.SpinLock next = fdc.dummyEntry;
-
-      do {
-         assert !next.l.get() : "Should NOT be locked!";
-         if (next instanceof FIFODataContainer.Aux)
-            next = ((FIFODataContainer.Aux) next).next;
-         else
-            next = ((FIFODataContainer.LinkedEntry) next).next;
-
-      } while (first != next);
    }
 
    protected final class Worker extends Thread {

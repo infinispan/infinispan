@@ -6,8 +6,8 @@ import org.infinispan.container.entries.InternalCacheEntry;
 /**
  * A data container that exposes an iterator that is ordered based on least recently used (visited) entries first.
  * <p/>
- * This builds on the {@link org.infinispan.container.FIFODataContainer} by calling {@link
- * org.infinispan.container.LRUDataContainer#updateLinks(org.infinispan.container.FIFODataContainer.LinkedEntry)} even for
+ * This builds on the {@link SpinLockBasedFIFODataContainer} by calling {@link
+ * SpinLockBasedLRUDataContainer#updateLinks(org.infinispan.container.SpinLockBasedFIFODataContainer.LinkedEntry)} even for
  * {@link #get(Object)} invocations to make sure ordering is intact, as per LRU.
  * <p/>
  *
@@ -15,7 +15,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
  * @since 4.0
  */
 @ThreadSafe
-public class LRUDataContainer extends FIFODataContainer {
+public class SpinLockBasedLRUDataContainer extends SpinLockBasedFIFODataContainer {
 
    @Override
    public InternalCacheEntry get(Object k) {
