@@ -10,12 +10,12 @@ import org.testng.annotations.Test;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 
-@Test(groups = "unit", testName = "container.NewFIFODataContainerTest")
-public class NewFIFODataContainerTest extends SimpleDataContainerTest {
+@Test(groups = "unit", testName = "container.FIFODataContainerTest")
+public class FIFODataContainerTest extends SimpleDataContainerTest {
 
    @Override
    protected DataContainer createContainer() {
-      return new NewFIFOContainer();
+      return new FIFODataContainer();
    }
 
    public void testOrdering() {
@@ -43,14 +43,14 @@ public class NewFIFODataContainerTest extends SimpleDataContainerTest {
    }
 
    private void setInitialEntry() {
-      NewFIFOContainer ldc = (NewFIFOContainer) dc;
+      FIFODataContainer ldc = (FIFODataContainer) dc;
       dc.put("k", "v", -1, -1);
 
       assert dc.size() == 1;
 
-      NewFIFOContainer.LinkedEntry tail = ldc.tail;
-      NewFIFOContainer.LinkedEntry head = ldc.head;
-      NewFIFOContainer.LinkedEntry e = ldc.head.n;
+      FIFODataContainer.LinkedEntry tail = ldc.tail;
+      FIFODataContainer.LinkedEntry head = ldc.head;
+      FIFODataContainer.LinkedEntry e = ldc.head.n;
 
       assert head.n == e;
       assert head.p == tail;
@@ -62,7 +62,7 @@ public class NewFIFODataContainerTest extends SimpleDataContainerTest {
    }
 
    public void testInsertingLinks() {
-      NewFIFOContainer ldc = (NewFIFOContainer) dc;
+      FIFODataContainer ldc = (FIFODataContainer) dc;
       assert dc.size() == 0;
       assert ldc.head.n == ldc.tail;
       assert ldc.tail.n == ldc.head;
@@ -76,10 +76,10 @@ public class NewFIFODataContainerTest extends SimpleDataContainerTest {
 
       assert dc.size() == 2;
 
-      NewFIFOContainer.LinkedEntry tail = ldc.tail;
-      NewFIFOContainer.LinkedEntry head = ldc.head;
-      NewFIFOContainer.LinkedEntry le1 = head.n;
-      NewFIFOContainer.LinkedEntry le2 = le1.n;
+      FIFODataContainer.LinkedEntry tail = ldc.tail;
+      FIFODataContainer.LinkedEntry head = ldc.head;
+      FIFODataContainer.LinkedEntry le1 = head.n;
+      FIFODataContainer.LinkedEntry le2 = le1.n;
 
       assert tail == le2.n;
       assert tail != le1.n;
@@ -104,7 +104,7 @@ public class NewFIFODataContainerTest extends SimpleDataContainerTest {
    }
 
    public void testRemovingLinks() {
-      NewFIFOContainer aldc = (NewFIFOContainer) dc;
+      FIFODataContainer aldc = (FIFODataContainer) dc;
       assert dc.size() == 0;
       assert aldc.head.n == aldc.tail;
       assert aldc.tail.n == aldc.head;
@@ -123,7 +123,7 @@ public class NewFIFODataContainerTest extends SimpleDataContainerTest {
    }
 
    public void testClear() {
-      NewFIFOContainer aldc = (NewFIFOContainer) dc;
+      FIFODataContainer aldc = (FIFODataContainer) dc;
       assert dc.size() == 0;
       assert aldc.head.n == aldc.tail;
       assert aldc.tail.n == aldc.head;

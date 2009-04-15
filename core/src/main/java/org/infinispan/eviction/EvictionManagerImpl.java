@@ -83,7 +83,8 @@ public class EvictionManagerImpl implements EvictionManager {
       if (dataContainer.size() > maxEntries) {
          if (trace) log.trace("Data container is larger than maxEntries, size is {0}.  Evicting...", dataContainer.size());
          for (InternalCacheEntry ice: dataContainer) {
-            if (dataContainer.size() > maxEntries) {
+            int dcsz = dataContainer.size();
+            if (dcsz > maxEntries) {
                cache.evict(ice.getKey());
             } else {
                if (trace) log.trace("Evicted enough entries");

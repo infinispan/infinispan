@@ -10,12 +10,24 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * // TODO: Manik: Document this
+ * A container that maintains order of entries based on when they were placed in the container.  Iterators obtained
+ * from this container maintain this order.
+ * <p />
+ * This container offers constant-time operation for all public API methods.
+ * <p />
+ * This is implemented using a set of lockable segments, each of which is a hash table, not unlike the JDK's
+ * {@link java.util.concurrent.ConcurrentHashMap} with the exception that each entry is also linked.
+ * <p />
+ * Links are maintained using techniques inspired by H. Sundell and P. Tsigas' 2008 paper,
+ * <a href="http://www.md.chalmers.se/~tsigas/papers/Lock-Free-Deques-Doubly-Lists-JPDC.pdf"><i>Lock Free Deques and Doubly Linked Lists</i></a>,
+ * M. Michael's 2002 paper, <a href="http://www.research.ibm.com/people/m/michael/spaa-2002.pdf"><i>High Performance Dynamic Lock-Free Hash Tables and List-Based Sets</i></a>,
+ * and Java6's ConcurrentSkipListMap.
+ * <p />
  *
  * @author Manik Surtani
  * @since 4.0
  */
-public class NewFIFOContainer implements DataContainer {
+public class FIFODataContainer implements DataContainer {
 
    /**
     * The maximum capacity, used if a higher value is implicitly specified by either of the constructors with arguments.
@@ -44,7 +56,7 @@ public class NewFIFOContainer implements DataContainer {
 
    final LinkedEntry head = new LinkedEntry(), tail = new LinkedEntry();
 
-   public NewFIFOContainer() {
+   public FIFODataContainer() {
       float loadFactor = 0.75f;
       int initialCapacity = 16;
       int concurrencyLevel = 16;
@@ -399,7 +411,7 @@ public class NewFIFOContainer implements DataContainer {
       }
 
       public int size() {
-         return NewFIFOContainer.this.size();
+         return FIFODataContainer.this.size();
       }
    }
 

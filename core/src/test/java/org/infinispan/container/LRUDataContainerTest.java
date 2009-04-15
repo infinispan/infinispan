@@ -7,11 +7,11 @@ import org.infinispan.container.entries.TransientCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.testng.annotations.Test;
 
-@Test(groups = "unit", testName = "container.NewLRUDataContainerTest")
-public class NewLRUDataContainerTest extends NewFIFODataContainerTest {
+@Test(groups = "unit", testName = "container.LRUDataContainerTest")
+public class LRUDataContainerTest extends FIFODataContainerTest {
    @Override
    protected DataContainer createContainer() {
-      return new NewLRUContainer();
+      return new LRUDataContainer();
    }
 
    @Override

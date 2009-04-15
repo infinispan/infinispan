@@ -4,12 +4,16 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalEntryFactory;
 
 /**
- * // TODO: Manik: Document this
- *
+ * Based on the same techniques outlined in the {@link org.infinispan.container.FIFODataContainer}, this implementation
+ * additionally unlinks and re-links entries at the tail whenever entries are visited (using a get()) or are updated
+ * (a put() on an existing key).
+ * <p />
+ * Again, these are constant-time operations.
+ * <p />
  * @author Manik Surtani
  * @since 4.0
  */
-public class NewLRUContainer extends NewFIFOContainer {
+public class LRUDataContainer extends FIFODataContainer {
 
    @Override
    public InternalCacheEntry get(Object k) {

@@ -21,12 +21,12 @@
  */
 package org.infinispan.factories;
 
-import org.infinispan.container.DataContainer;
-import org.infinispan.container.SimpleDataContainer;
-import org.infinispan.container.SpinLockBasedFIFODataContainer;
-import org.infinispan.container.SpinLockBasedLRUDataContainer;
-import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.config.ConfigurationException;
+import org.infinispan.container.DataContainer;
+import org.infinispan.container.FIFODataContainer;
+import org.infinispan.container.LRUDataContainer;
+import org.infinispan.container.SimpleDataContainer;
+import org.infinispan.factories.annotations.DefaultFactoryFor;
 
 /**
  * Constructs the data container
@@ -43,9 +43,9 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
          case NONE:
             return (T) new SimpleDataContainer();
          case FIFO:
-            return (T) new SpinLockBasedFIFODataContainer();
+            return (T) new FIFODataContainer();
          case LRU:
-            return (T) new SpinLockBasedLRUDataContainer();
+            return (T) new LRUDataContainer();
          default:
             throw new ConfigurationException("Unknown eviction strategy " + configuration.getEvictionStrategy());
       }
