@@ -216,8 +216,12 @@ public class XmlConfigurationParserImpl extends XmlParserBase implements XmlConf
          config.setFetchInMemoryState(false);         
 
          // sanity check against the presence of a stateRetrieval element
-         if (getSingleElementInCoreNS("stateRetrieval", e) != null)
-            throw new ConfigurationException("stateRetrieval cannot be used with cache mode 'DISTRIBUTION'!");
+         Element ste = null;
+         if ((ste = getSingleElementInCoreNS("stateRetrieval", e)) != null) {
+            tmp = getAttributeValue(ste, "fetchInMemoryState");
+            if (!existsAttribute(tmp) || getBoolean(tmp))
+               throw new ConfigurationException("stateRetrieval cannot be used with cache mode 'DISTRIBUTION'!");
+         }
       } else {
          configureStateRetrieval(getSingleElementInCoreNS("stateRetrieval", e), config);
          if (getSingleElementInCoreNS("l1", e) != null || getSingleElementInCoreNS("hash", e) != null)
