@@ -1,5 +1,6 @@
 package org.infinispan.jmx;
 
+import org.easymock.EasyMock;
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.replay;
 import org.infinispan.Cache;
@@ -8,6 +9,7 @@ import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.remoting.RpcManager;
 import org.infinispan.remoting.RpcManagerImpl;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -16,6 +18,7 @@ import org.testng.annotations.Test;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
+import java.util.LinkedList;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -91,6 +94,8 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
       assert mBeanServer.getAttribute(rpcManager1, "ReplicationFailures").equals("0");
    }
 
+
+
    @Test(dependsOnMethods = "testEnableJmxStats")
    public void testSuccessRatio() throws Exception {
       assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals("0");
@@ -107,6 +112,7 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
 
       try {
          Transport transport = createMock(Transport.class);
+         EasyMock.expect(transport.getMembers()).andReturn(new LinkedList<Address>()).anyTimes();
          replay(transport);
          rpcManager.setTransport(transport);
          cache1.put("a6", "b6");
