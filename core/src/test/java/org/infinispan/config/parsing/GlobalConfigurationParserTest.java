@@ -3,7 +3,7 @@ package org.infinispan.config.parsing;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.executors.DefaultExecutorFactory;
 import org.infinispan.executors.DefaultScheduledExecutorFactory;
-import org.infinispan.marshall.HorizonMarshaller;
+import org.infinispan.marshall.MarshallerImpl;
 import org.infinispan.marshall.VersionAwareMarshaller;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.testng.annotations.Test;
@@ -84,7 +84,7 @@ public class GlobalConfigurationParserTest {
       GlobalConfiguration gc = new GlobalConfiguration();
       parser.configureSerialization(e, gc);
 
-      assert gc.getMarshallerClass().equals(HorizonMarshaller.class.getName());
+      assert gc.getMarshallerClass().equals(MarshallerImpl.class.getName());
       assert gc.getMarshallVersionString().equals("9.2");
       assert gc.getObjectInputStreamPoolSize() == 100;
       assert gc.getObjectOutputStreamPoolSize() == 100;

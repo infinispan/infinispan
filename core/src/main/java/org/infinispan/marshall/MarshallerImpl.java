@@ -63,7 +63,7 @@ import java.util.*;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class HorizonMarshaller implements Marshaller {
+public class MarshallerImpl implements Marshaller {
    // magic numbers
    protected static final int MAGICNUMBER_GTX = 1;
    protected static final int MAGICNUMBER_JG_ADDRESS = 2;
@@ -97,7 +97,7 @@ public class HorizonMarshaller implements Marshaller {
    protected static final int MAGICNUMBER_SERIALIZABLE = 100;
    protected static final int MAGICNUMBER_REF = 101;
 
-   public HorizonMarshaller() {
+   public MarshallerImpl() {
       initLogger();
       // enabled, since this is always enabled in JBC 2.0.0.
       useRefs = false;

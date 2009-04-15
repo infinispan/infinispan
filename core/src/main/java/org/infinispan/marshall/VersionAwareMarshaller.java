@@ -39,7 +39,7 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 
 /**
- * A delegate to various other marshallers like {@link HorizonMarshaller}. This delegating marshaller adds versioning
+ * A delegate to various other marshallers like {@link MarshallerImpl}. This delegating marshaller adds versioning
  * information to the stream when marshalling objects and is able to pick the appropriate marshaller to delegate to
  * based on the versioning information when unmarshalling objects.
  *
@@ -54,13 +54,13 @@ public class VersionAwareMarshaller implements Marshaller {
    private static final int VERSION_400 = 400;
    private static final int CUSTOM_MARSHALLER = 999;
 
-   private HorizonMarshaller defaultMarshaller;
+   private MarshallerImpl defaultMarshaller;
 
    ClassLoader defaultClassLoader;
 
    @Inject
    public void init(ClassLoader loader, RemoteCommandFactory remoteCommandFactory) {
-      defaultMarshaller = new HorizonMarshaller();
+      defaultMarshaller = new MarshallerImpl();
       defaultMarshaller.init(loader, remoteCommandFactory);
    }
 

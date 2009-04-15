@@ -214,7 +214,7 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       MarshalledValue mv = new MarshalledValue(pojo, true);
 
 
-      HorizonMarshaller marshaller = new HorizonMarshaller();
+      MarshallerImpl marshaller = new MarshallerImpl();
 
       // start the test
       ByteArrayOutputStream bout = new ByteArrayOutputStream();
@@ -227,7 +227,7 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       ByteArrayInputStream bin = new ByteArrayInputStream(bout.toByteArray());
       ObjectInputStream in = new ObjectInputStream(bin);
 
-      assert in.read() == HorizonMarshaller.MAGICNUMBER_MARSHALLEDVALUE;
+      assert in.read() == MarshallerImpl.MAGICNUMBER_MARSHALLEDVALUE;
       MarshalledValue recreated = new MarshalledValue();
       recreated.readExternal(in);
 
