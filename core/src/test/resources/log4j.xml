@@ -45,7 +45,7 @@
    <!-- ================ -->
 
    <category name="org.infinispan">
-      <priority value="TRACE"/>
+      <priority value="INFO"/>
    </category>
 
    <category name="org.infinispan.profiling">
