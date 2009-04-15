@@ -77,7 +77,7 @@ public class GlobalConfigurationParserTest {
 
    public void testMarshalling() throws Exception {
       XmlConfigurationParserImpl parser = new XmlConfigurationParserImpl();
-      String xml = "<serialization marshallerClass=\"org.infinispan.marshall.HorizonMarshaller\" version=\"9.2\"\n" +
+      String xml = "<serialization marshallerClass=\"org.infinispan.marshall.MarshallerImpl\" version=\"9.2\"\n" +
             "                     objectInputStreamPoolSize=\"100\" objectOutputStreamPoolSize=\"100\"/>";
       Element e = XmlConfigHelper.stringToElement(xml);
 
