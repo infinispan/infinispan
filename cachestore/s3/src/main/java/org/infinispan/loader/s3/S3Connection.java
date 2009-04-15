@@ -1,35 +1,23 @@
 package org.infinispan.loader.s3;
 
-import org.jets3t.service.S3ServiceException;
-import org.jets3t.service.model.S3Bucket;
-import org.jets3t.service.model.S3Object;
+import org.infinispan.marshall.Marshaller;
 
 /**
- * This interface defines the interactons between the {@link S3CacheStore} and Amazon S3.
+ * // TODO: Adrian: Document this!
  *
  * @author Adrian Cole
  * @since 4.0
  */
-public interface S3Connection {
+public interface S3Connection<C, B> {
+    void connect(S3CacheStoreConfig config, Marshaller m) throws S3ConnectionException;
 
-   void connect(String awsAccessKey, String awsSecretKey) throws S3ServiceException;
+    C getConnection() throws S3ConnectionException;
 
-   S3Bucket getOrCreateBucket(String bucketName) throws S3ServiceException;
+    B verifyOrCreateBucket(String bucketName) throws S3ConnectionException;
 
-   void removeBucketIfEmpty(S3Bucket bucket) throws S3ServiceException;
+    void destroyBucket(String name) throws S3ConnectionException;
 
-   S3Object createObject(String key);
+    void copyBucket(String sourceBucket, String destinationBucket) throws S3ConnectionException;
 
-   S3Object putObjectIntoBucket(S3Object object, S3Bucket bucket) throws S3ServiceException;
-
-   S3Object getObjectInBucket(String objectKey, S3Bucket bucket) throws S3ServiceException;
-
-   S3Object[] getAllObjectsInBucketWithoutTheirData(S3Bucket bucket) throws S3ServiceException;
-
-   public void removeObjectFromBucket(String objectKey, S3Bucket bucket) throws S3ServiceException;
-
-   void removeAllObjectsFromBucket(S3Bucket rootS3Bucket) throws S3ServiceException;
-
-   void copyObjectsFromOneBucketToAnother(String[] keys, String sourceBucketName, String destinationBucketName) throws S3ServiceException;
-
+    void disconnect();
 }

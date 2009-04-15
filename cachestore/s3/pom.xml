@@ -2,53 +2,39 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-   <modelVersion>4.0.0</modelVersion>
-   <parent>
-      <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-parent</artifactId>
-      <version>4.0.0-SNAPSHOT</version>
-      <relativePath>../../parent/pom.xml</relativePath>
-   </parent>
-   <groupId>org.infinispan</groupId>
-   <artifactId>infinispan-cachestore-s3</artifactId>
-   <name>Infinispan Amazon S3 CacheStore</name>
-   <description>Infinispan Amazon S3 CacheStore module</description>
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.infinispan</groupId>
+        <artifactId>infinispan-parent</artifactId>
+        <version>4.0.0-SNAPSHOT</version>
+        <relativePath>../../parent/pom.xml</relativePath>
+    </parent>
+    <groupId>org.infinispan</groupId>
+    <artifactId>infinispan-cachestore-s3</artifactId>
+    <name>Infinispan Amazon S3 CacheStore</name>
+    <description>Infinispan Amazon S3 CacheStore module</description>
 
-   <dependencies>
-      <dependency>
-         <groupId>${project-package}</groupId>
-         <artifactId>infinispan-core</artifactId>
-         <version>${project-version}</version>
-      </dependency>
+    <dependencies>
+        <dependency>
+            <groupId>${project-package}</groupId>
+            <artifactId>infinispan-core</artifactId>
+            <version>${project-version}</version>
+        </dependency>
 
-      <dependency>
-         <groupId>${project-package}</groupId>
-         <artifactId>infinispan-core</artifactId>
-         <version>${project-version}</version>
-         <type>test-jar</type>
-         <scope>test</scope>
-      </dependency>
+        <dependency>
+            <groupId>${project-package}</groupId>
+            <artifactId>infinispan-core</artifactId>
+            <version>${project-version}</version>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
 
-      <dependency>
-         <groupId>net.java.dev.jets3t</groupId>
-         <artifactId>jets3t</artifactId>
-         <version>0.7.0</version>
-      </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>1.4</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 
-      <dependency>
-         <groupId>commons-io</groupId>
-         <artifactId>commons-io</artifactId>
-         <version>1.4</version>
-         <scope>test</scope>
-      </dependency>
-   </dependencies>
-
-   <repositories>
-      <!-- Repository for Amazon S3 artifacts -->
-      <repository>
-         <name>jets3t</name>
-         <id>jets3t</id>
-         <url>http://jets3t.s3.amazonaws.com/maven2</url>
-      </repository>
-   </repositories>
 </project>

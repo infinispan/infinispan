@@ -18,6 +18,28 @@ public class S3CacheStoreConfig extends LockSupportCacheStoreConfig {
    private String awsAccessKey;
    private String awsSecretKey;
    private String bucket;
+   private String proxyHost;
+   private int proxyPort;
+
+   public int getMaxConnections() {
+      return maxConnections;
+   }
+
+   public void setMaxConnections(int maxConnections) {
+      this.maxConnections = maxConnections;
+   }
+
+   private int maxConnections = 3;
+   private boolean secure = true;
+
+   public boolean isSecure() {
+      return secure;
+   }
+
+   public void setSecure(boolean secure) {
+      this.secure = secure;
+   }
+
 
    public S3CacheStoreConfig() {
       setCacheLoaderClassName(S3CacheStore.class.getName());
@@ -45,6 +67,22 @@ public class S3CacheStoreConfig extends LockSupportCacheStoreConfig {
 
    public void setBucket(String bucket) {
       this.bucket = bucket;
+   }
+
+   public String getProxyHost() {
+      return proxyHost;
+   }
+
+   public void setProxyHost(String proxyHost) {
+      this.proxyHost = proxyHost;
+   }
+
+   public int getProxyPort() {
+      return proxyPort;
+   }
+
+   public void setProxyPort(int proxyPort) {
+      this.proxyPort = proxyPort;
    }
 
 

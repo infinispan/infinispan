@@ -1,104 +1,48 @@
 package org.infinispan.loader.s3;
 
-import org.apache.commons.io.IOUtils;
-import org.jets3t.service.S3ServiceException;
-import org.jets3t.service.model.S3Bucket;
-import org.jets3t.service.model.S3Object;
+import org.infinispan.loader.bucket.Bucket;
+import org.infinispan.marshall.Marshaller;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * @author Adrian Cole
- * @version $Id$
+ * Stores S3 Buckets in a map instead of connecting to a live server.
+ *
  * @since 4.0
+ * @author Adrian Cole
  */
-public class MockS3Connection implements S3Connection {
-   private Map<String, S3Bucket> nameToS3Bucket = new ConcurrentHashMap<String, S3Bucket>();
-   private Map<String, Map<String, S3Object>> bucketToContents = new ConcurrentHashMap<String, Map<String, S3Object>>();
+public class MockS3Connection implements S3Connection<MockS3Connection, Map<String, Bucket>> {
+    private static Map<String, Map<String, Bucket>> bucketToContents = new ConcurrentHashMap<String, Map<String, Bucket>>();
 
-   public synchronized S3Bucket getOrCreateBucket(String bucketName) throws S3ServiceException {
-      S3Bucket bucket = nameToS3Bucket.get(bucketName);
-      if (bucket == null) {
-         bucket = new S3Bucket(bucketName);
-         nameToS3Bucket.put(bucketName, bucket);
-         bucketToContents.put(bucketName, new ConcurrentHashMap<String, S3Object>());
-      }
-      return bucket;
-   }
+    public void connect(S3CacheStoreConfig config, Marshaller m) throws S3ConnectionException {
+        // Do nothing
+    }
 
-   public S3Object[] getAllObjectsInBucketWithoutTheirData(S3Bucket bucket) throws S3ServiceException {
-      Map<String, S3Object> contents = bucketToContents.get(bucket.getName());
-      return contents.values().toArray(new S3Object[]{});
-   }
+    public MockS3Connection getConnection() throws S3ConnectionException {
+        return this;
+    }
 
-   public void copyObjectsFromOneBucketToAnother(String[] keys, String sourceBucketName, String destinationBucketName) throws S3ServiceException {
-      Map<String, S3Object> source = bucketToContents.get(sourceBucketName);
-      Map<String, S3Object> destination = bucketToContents.get(destinationBucketName);
-      for (int i = 0; i < keys.length; i++) {
-         destination.put(keys[i], source.get(keys[i]));
-      }
-   }
+    public Map<String, Bucket> verifyOrCreateBucket(String bucketName) throws S3ConnectionException {
+        if (!bucketToContents.containsKey(bucketName)) {
+            bucketToContents.put(bucketName, new ConcurrentHashMap<String, Bucket>());
+        }
+        return bucketToContents.get(bucketName);
+    }
 
-   public void removeBucketIfEmpty(S3Bucket bucket) throws S3ServiceException {
-      nameToS3Bucket.remove(bucket.getName());
-      bucketToContents.remove(bucket.getName());
-   }
+    public void destroyBucket(String name) throws S3ConnectionException {
+        bucketToContents.remove(name);
+    }
 
-   public S3Object getObjectInBucket(String objectKey, S3Bucket bucket) throws S3ServiceException {
-      Map<String, S3Object> contents = bucketToContents.get(bucket.getName());
-      return contents.get(objectKey);
-   }
+    public void disconnect() {
+        // na
+    }
 
-   public S3Object putObjectIntoBucket(S3Object object, S3Bucket bucket) throws S3ServiceException {
-      Map<String, S3Object> contents = bucketToContents.get(bucket.getName());
-      contents.put(object.getKey(), object);
-      return object;
-   }
-
-   public void connect(String awsAccessKey, String awsSecretKey) throws S3ServiceException {
-      // ignore
-   }
-
-   public S3Object createObject(String key) {
-      return new MockS3Object(key);
-   }
-
-   public void removeObjectFromBucket(String objectKey, S3Bucket bucket) throws S3ServiceException {
-      Map<String, S3Object> contents = bucketToContents.get(bucket.getName());
-      contents.remove(objectKey);
-   }
-
-   public void removeAllObjectsFromBucket(S3Bucket bucket) throws S3ServiceException {
-      Map<String, S3Object> contents = bucketToContents.get(bucket.getName());
-      contents.clear();
-   }
-
-   class MockS3Object extends S3Object {
-
-      byte[] buff;
-
-      public MockS3Object(String key) {
-         super(key);
-      }
-
-      @Override
-      public void setDataInputStream(InputStream inputStream) {
-         try {
-            buff = IOUtils.toByteArray(inputStream);
-         } catch (IOException e) {
-            throw new RuntimeException(e);
-         }
-      }
-
-      @Override
-      public InputStream getDataInputStream() throws S3ServiceException {
-         return (buff != null) ? new ByteArrayInputStream(buff) : null;
-      }
-   }
-
+    public void copyBucket(String sourceBucket, String destinationBucket) throws S3ConnectionException {
+        Map<String, Bucket> source = bucketToContents.get(sourceBucket);
+        Map<String, Bucket> dest = bucketToContents.get(destinationBucket);
+        for (Bucket bucket : source.values()) {
+            dest.put(bucket.getBucketName(), bucket);
+        }
+    }
 }
-
