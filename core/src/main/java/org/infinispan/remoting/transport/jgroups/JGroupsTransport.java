@@ -152,28 +152,28 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
             try {
                channel = new JChannel(new FileLookup().lookupFileLocation(cfg));
             } catch (Exception e) {
-               // move on to next method to configure the channel
-               channel = null;
+               log.error("Error while trying to create a channel using config files: " + cfg);
+               throw new CacheException(e);
             }
          }
 
-         if (channel == null && p.containsKey(CONFIGURATION_XML)) {
+         if (p.containsKey(CONFIGURATION_XML)) {
             cfg = p.getProperty(CONFIGURATION_XML);
             try {
                channel = new JChannel(XmlConfigHelper.stringToElement(cfg));
             } catch (Exception e) {
-               // move on to next method to configure the channel
-               channel = null;
+               log.error("Error while trying to create a channel using config XML: " + cfg);
+               throw new CacheException(e);
             }
          }
 
-         if (channel == null && p.containsKey(CONFIGURATION_STRING)) {
+         if (p.containsKey(CONFIGURATION_STRING)) {
             cfg = p.getProperty(CONFIGURATION_STRING);
             try {
                channel = new JChannel(cfg);
             } catch (Exception e) {
-               // move on to next method to configure the channel
-               channel = null;
+               log.error("Error while trying to create a channel using config string: " + cfg);
+               throw new CacheException(e);
             }
          }
       }
