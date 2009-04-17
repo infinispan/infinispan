@@ -80,8 +80,8 @@ import java.util.Stack;
 @Scope(Scopes.NAMED_CACHE)
 public abstract class AbstractComponentRegistry implements Lifecycle {
 
-   // TODO remove this debug code as it is HUGELY inefficient 
-   private static final boolean DEBUG_DEPENDENCIES = true;
+   // Make sure this is ALWAYS false when being checked in to the code repository!
+   public static final boolean DEBUG_DEPENDENCIES = false;
    private Stack<String> debugStack = DEBUG_DEPENDENCIES ? new Stack<String>() : null;
 
    /**
