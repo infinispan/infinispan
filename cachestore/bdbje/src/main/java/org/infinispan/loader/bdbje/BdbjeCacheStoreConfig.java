@@ -7,7 +7,7 @@ import org.infinispan.loader.AbstractCacheStoreConfig;
  * the {@link BdbjeCacheStore}.
  * <p/>
  * <ul> <li><tt>location</tt> - a location on disk where the store can write internal files.  This defaults to
- * <tt>Horizon-BdbjeCacheStore</tt> in the current working directory.</li> <li><tt>lockAcquistionTimeout</tt> - the length of time, in milliseconds, to wait for locks
+ * <tt>Infinispan-BdbjeCacheStore</tt> in the current working directory.</li> <li><tt>lockAcquistionTimeout</tt> - the length of time, in milliseconds, to wait for locks
  * before timing out and throwing an exception.  By default, this is set to <tt>60000</tt>.</li>
  * <li><tt>maxTxRetries</tt> - the number of times transaction prepares will attempt to resolve a deadlock before
  * throwing an exception.  By default, this is set to <tt>5</tt>.</li>
@@ -26,7 +26,7 @@ import org.infinispan.loader.AbstractCacheStoreConfig;
  * @since 4.0
  */
 public class BdbjeCacheStoreConfig extends AbstractCacheStoreConfig {
-   private String location = "Horizon-BdbjeCacheStore";
+   private String location = "Infinispan-BdbjeCacheStore";
    private long lockAcquistionTimeout = 60 * 1000;
    private int maxTxRetries = 5;
    private String cacheDbName;

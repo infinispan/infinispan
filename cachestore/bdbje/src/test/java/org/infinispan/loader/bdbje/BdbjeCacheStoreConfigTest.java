@@ -57,7 +57,7 @@ public class BdbjeCacheStoreConfigTest {
 
    @Test
    public void testGetLocationDefault() {
-      assert config.getLocation().equals("Horizon-BdbjeCacheStore");
+      assert config.getLocation().equals("Infinispan-BdbjeCacheStore");
    }
 
    @Test
