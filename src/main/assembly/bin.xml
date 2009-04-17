@@ -7,7 +7,7 @@
          + lib (contains dependencies)
       + tree
          - infinispan-tree.jar
-         + lib
+         + lib (excluding core and transitive dependencies)
 
       .. etc ...
 
@@ -84,10 +84,14 @@
                 <outputDirectory>modules/${module.basedir.name}</outputDirectory>
                 <unpack>false</unpack>
                 <outputFileNameMapping>
-                  ${module.artifactId}.${module.extension} 
+                    ${module.artifactId}.${module.extension}
                 </outputFileNameMapping>
                 <dependencySets>
                     <dependencySet>
+                        <excludes>
+                            <exclude>infinispan-core*</exclude>
+                        </excludes>
+                        <useTransitiveDependencies>false</useTransitiveDependencies>
                         <outputDirectory>modules/${module.basedir.name}/lib</outputDirectory>
                     </dependencySet>
                 </dependencySets>
