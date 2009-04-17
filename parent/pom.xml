@@ -105,7 +105,7 @@
 
   <build>
     <plugins>
-      <!-- enforce java 1.5 and maven 2.0.8 -->
+      <!-- enforce java 1.5 and maven 2.1.0 -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
@@ -121,7 +121,7 @@
                   <version>[1.5,)</version>
                 </requireJavaVersion>
                 <requireMavenVersion>
-                  <version>(2.0.8,)</version>
+                  <version>[2.1.0,)</version>
                 </requireMavenVersion>
               </rules>
             </configuration>
