@@ -19,14 +19,14 @@
 * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
 */
-package org.infinispan.remoting.transport.jgroups;
+package org.infinispan.remoting.responses;
 
 /**
  * Indicates that the request was ignored,
  *
  * @author Jason T. Greene
  */
-public class RequestIgnoredResponse {
+public class RequestIgnoredResponse extends InvalidResponse {
    public static final RequestIgnoredResponse INSTANCE = new RequestIgnoredResponse();
 
    private RequestIgnoredResponse() {

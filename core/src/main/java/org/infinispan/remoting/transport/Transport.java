@@ -11,6 +11,7 @@ import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.InboundInvocationHandler;
 import org.infinispan.remoting.ResponseFilter;
 import org.infinispan.remoting.ResponseMode;
+import org.infinispan.remoting.responses.Response;
 import org.infinispan.statetransfer.StateTransferException;
 
 import java.util.List;
@@ -58,7 +59,7 @@ public interface Transport extends Lifecycle {
     * @return a list of responses from each member contacted.
     * @throws Exception in the event of problems.
     */
-   List<Object> invokeRemotely(List<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter, boolean supportReplay) throws Exception;
+   List<Response> invokeRemotely(List<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter, boolean supportReplay) throws Exception;
 
    /**
     * @return true if the current Channel is the coordinator of the cluster.
@@ -106,6 +107,7 @@ public interface Transport extends Lifecycle {
 
    /**
     * Tests whether the transport supports state transfer
+    *
     * @return true if the implementation supports state transfer, false otherwise.
     */
    boolean isSupportStateTransfer();

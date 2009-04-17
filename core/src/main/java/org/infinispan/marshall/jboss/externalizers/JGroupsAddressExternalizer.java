@@ -19,44 +19,44 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.marshall.jboss;
+package org.infinispan.marshall.jboss.externalizers;
+
+import net.jcip.annotations.Immutable;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
+import org.jboss.marshalling.Creator;
+import org.jboss.marshalling.Externalizer;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-import net.jcip.annotations.Immutable;
-
-import org.infinispan.remoting.transport.jgroups.ExtendedResponse;
-import org.jboss.marshalling.Creator;
-import org.jboss.marshalling.Externalizer;
-
 /**
- * ExtendedResponseExternalizer.
- * 
+ * JGroupsAddressExternalizer.
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */
 @Immutable
-public class ExtendedResponseExternalizer implements Externalizer {
-   /** The serialVersionUID */
-   private static final long serialVersionUID = 1529506931234856884L;
+public class JGroupsAddressExternalizer implements Externalizer {
+
+   /**
+    * The serialVersionUID
+    */
+   private static final long serialVersionUID = 2400716389425727329L;
 
    public void writeExternal(Object subject, ObjectOutput output) throws IOException {
-      ExtendedResponse er = (ExtendedResponse) subject;
-      output.writeBoolean(er.isReplayIgnoredRequests());
-      output.writeObject(er.getResponse());
+      JGroupsAddress address = (JGroupsAddress) subject;
+      address.writeExternal(output);
    }
 
-   public Object createExternal(Class<?> subjectType, ObjectInput input, Creator defaultCreator) 
-            throws IOException, ClassNotFoundException {
-      boolean replayIgnoredRequests = input.readBoolean();
-      Object response = input.readObject();
-      return new ExtendedResponse(response, replayIgnoredRequests);
+   public Object createExternal(Class<?> subjectType, ObjectInput input, Creator defaultCreator)
+         throws IOException, ClassNotFoundException {
+      return new JGroupsAddress();
    }
 
    public void readExternal(Object subject, ObjectInput input) throws IOException,
-            ClassNotFoundException {
-      // No-op
+                                                                      ClassNotFoundException {
+      JGroupsAddress address = (JGroupsAddress) subject;
+      address.readExternal(input);
    }
 }

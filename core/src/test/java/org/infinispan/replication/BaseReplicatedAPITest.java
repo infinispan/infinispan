@@ -25,7 +25,7 @@ public class BaseReplicatedAPITest extends MultipleCacheManagersTest {
       Configuration c = getDefaultClusteredConfig(isSync ? Configuration.CacheMode.REPL_SYNC : Configuration.CacheMode.REPL_ASYNC);
       c.setStateRetrievalTimeout(1000);
       c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
-      List<Cache> caches = createClusteredCaches(2, "replication", c);
+      List<Cache<Object, Object>> caches = createClusteredCaches(2, "replication", c);
       cache1 = caches.get(0).getAdvancedCache();
       cache2 = caches.get(1).getAdvancedCache();
    }

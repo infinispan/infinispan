@@ -13,6 +13,8 @@ import org.infinispan.remoting.InboundInvocationHandler;
 import org.infinispan.remoting.ReplicationException;
 import org.infinispan.remoting.ResponseFilter;
 import org.infinispan.remoting.ResponseMode;
+import org.infinispan.remoting.responses.ExceptionResponse;
+import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.DistributedSync;
 import org.infinispan.remoting.transport.Transport;
@@ -254,7 +256,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
          log.warn("Channel not set up properly!");
          return false;
       }
-      
+
       return true;
    }
 
@@ -269,8 +271,8 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
    // outbound RPC
    // ------------------------------------------------------------------------------------------------------------------
 
-   public List<Object> invokeRemotely(List<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout,
-                                      boolean usePriorityQueue, ResponseFilter responseFilter, boolean supportReplay)
+   public List<Response> invokeRemotely(List<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout,
+                                        boolean usePriorityQueue, ResponseFilter responseFilter, boolean supportReplay)
          throws Exception {
 
       if (recipients != null && recipients.isEmpty()) {
@@ -300,25 +302,28 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
 
          // short-circuit no-return-value calls.
          if (rsps == null) return Collections.emptyList();
-         List<Object> retval = new ArrayList<Object>(rsps.size());
+         List<Response> retval = new ArrayList<Response>(rsps.size());
 
          for (Rsp rsp : rsps.values()) {
             if (rsp.wasSuspected() || !rsp.wasReceived()) {
-               CacheException ex;
                if (rsp.wasSuspected()) {
-                  ex = new SuspectException("Suspected member: " + rsp.getSender());
+                  throw new SuspectException("Suspected member: " + rsp.getSender());
                } else {
-                  ex = new TimeoutException("Replication timeout for " + rsp.getSender());
+                  throw new TimeoutException("Replication timeout for " + rsp.getSender());
                }
-               retval.add(new ReplicationException("rsp=" + rsp, ex));
             } else {
-               Object value = rsp.getValue();
-               if (value instanceof Exception && !(value instanceof ReplicationException)) {
-                  // if we have any application-level exceptions make sure we throw them!!
-                  if (trace) log.trace("Recieved exception'" + value + "' from " + rsp.getSender());
-                  throw (Exception) value;
+               if (rsp.getValue() != null) {
+                  Response value = (Response) rsp.getValue();
+                  if (value instanceof ExceptionResponse) {
+                     Exception e = ((ExceptionResponse) value).getException();
+                     if (!(e instanceof ReplicationException)) {
+                        // if we have any application-level exceptions make sure we throw them!!
+                        if (trace) log.trace("Recieved exception '{0}' from {1}", e, rsp.getSender());
+                        throw e;
+                     }
+                  }
+                  retval.add(value);
                }
-               retval.add(value);
             }
          }
          return retval;

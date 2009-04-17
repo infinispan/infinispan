@@ -19,45 +19,43 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.marshall.jboss;
+package org.infinispan.marshall.jboss.externalizers;
+
+import net.jcip.annotations.Immutable;
+import org.infinispan.marshall.MarshalledValue;
+import org.jboss.marshalling.Creator;
+import org.jboss.marshalling.Externalizer;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.HashMap;
-import java.util.Map;
-
-import net.jcip.annotations.Immutable;
-
-import org.infinispan.util.Immutables;
-import org.jboss.marshalling.Creator;
-import org.jboss.marshalling.Externalizer;
 
 /**
- * ImmutableExternalizer.
- * 
+ * MarshalledValueExternalizer.
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */
 @Immutable
-public class ImmutableMapExternalizer implements Externalizer {
+public class MarshalledValueExternalizer implements Externalizer {
 
-   /** The serialVersionUID */
-   private static final long serialVersionUID = -3592193723750924806L;
+   /**
+    * The serialVersionUID
+    */
+   private static final long serialVersionUID = 8473423584918714661L;
 
    public void writeExternal(Object subject, ObjectOutput output) throws IOException {
-      MarshallUtil.marshallMap((Map)subject, output);
+      ((MarshalledValue) subject).writeExternal(output);
    }
 
-   public Object createExternal(Class<?> subjectType, ObjectInput input, Creator defaultCreator) 
-            throws IOException, ClassNotFoundException {
-      Map map = new HashMap();
-      MarshallUtil.unmarshallMap(map, input);
-      return Immutables.immutableMapWrap(map);
+   public Object createExternal(Class<?> subjectType, ObjectInput input, Creator defaultCreator)
+         throws IOException, ClassNotFoundException {
+      return new MarshalledValue();
    }
 
    public void readExternal(Object subject, ObjectInput input) throws IOException,
-            ClassNotFoundException {
-      // No-op since all the work is done in createExternal in order to be able to change identity.
+                                                                      ClassNotFoundException {
+      ((MarshalledValue) subject).readExternal(input);
    }
+
 }

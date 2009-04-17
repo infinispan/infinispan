@@ -76,4 +76,11 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry, 
    public final Object getValue() {
       return value;
    }
+
+   @Override
+   public String toString() {
+      return getClass().getSimpleName() + "{" +
+            "key=" + key +
+            '}';
+   }
 }

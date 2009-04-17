@@ -24,6 +24,7 @@ package org.infinispan.commands;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.SizeCommand;
+import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.MultipleRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -76,8 +77,8 @@ public interface CommandsFactory {
    RollbackCommand buildRollbackCommand(GlobalTransaction gtx);
 
    /**
-    * Initializes a {@link org.infinispan.commands.ReplicableCommand} read from a data stream with components specific to
-    * the target cache instance.
+    * Initializes a {@link org.infinispan.commands.ReplicableCommand} read from a data stream with components specific
+    * to the target cache instance.
     * <p/>
     * Implementations should also be deep, in that if the command contains other commands, these should be recursed
     * into.
@@ -92,4 +93,6 @@ public interface CommandsFactory {
    SingleRpcCommand buildSingleRpcCommand(ReplicableCommand call);
 
    StateTransferControlCommand buildStateTransferControlCommand(boolean block);
+
+   ClusteredGetCommand buildClusteredGetCommand(Object key);
 }

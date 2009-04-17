@@ -21,7 +21,7 @@ public class ClusteredAPITest extends MultipleCacheManagersTest {
       c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
       c.setInvocationBatchingEnabled(true);
 
-      List<Cache> caches = createClusteredCaches(2, "atomic", c);
+      List<Cache<Object, Object>> caches = createClusteredCaches(2, "atomic", c);
       cache1 = (AtomicMapCache) caches.get(0);
       cache2 = (AtomicMapCache) caches.get(1);
    }

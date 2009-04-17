@@ -15,6 +15,7 @@ import org.infinispan.logging.Log;
 import org.infinispan.logging.LogFactory;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
+import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.statetransfer.StateTransferException;
@@ -26,8 +27,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * This component really is just a wrapper around a {@link org.infinispan.remoting.transport.Transport} implementation, and
- * is used to set up the transport and provide lifecycle and dependency hooks into external transport implementations.
+ * This component really is just a wrapper around a {@link org.infinispan.remoting.transport.Transport} implementation,
+ * and is used to set up the transport and provide lifecycle and dependency hooks into external transport
+ * implementations.
  *
  * @author Manik Surtani
  * @since 4.0
@@ -62,9 +64,9 @@ public class RpcManagerImpl implements RpcManager {
       t.stop();
    }
 
-   public List<Object> invokeRemotely(List<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter, boolean stateTransferEnabled) throws Exception {
+   public List<Response> invokeRemotely(List<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter, boolean stateTransferEnabled) throws Exception {
       try {
-         List<Object> result = t.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue, responseFilter, stateTransferEnabled);
+         List<Response> result = t.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue, responseFilter, stateTransferEnabled);
          if (isStatisticsEnabled()) replicationCount.incrementAndGet();
          return result;
       } catch (Throwable e) {
@@ -73,11 +75,11 @@ public class RpcManagerImpl implements RpcManager {
       }
    }
 
-   public List<Object> invokeRemotely(List<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, boolean stateTransferEnabled) throws Exception {
+   public List<Response> invokeRemotely(List<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, boolean stateTransferEnabled) throws Exception {
       return invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue, null, stateTransferEnabled);
    }
 
-   public List<Object> invokeRemotely(List<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean stateTransferEnabled) throws Exception {
+   public List<Response> invokeRemotely(List<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean stateTransferEnabled) throws Exception {
       return invokeRemotely(recipients, rpcCommand, mode, timeout, false, null, stateTransferEnabled);
    }
 

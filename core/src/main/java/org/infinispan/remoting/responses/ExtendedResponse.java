@@ -19,18 +19,18 @@
 * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
 */
-package org.infinispan.remoting.transport.jgroups;
+package org.infinispan.remoting.responses;
 
 /**
  * A response with extended information
  *
  * @author Jason T. Greene
  */
-public class ExtendedResponse {
+public class ExtendedResponse extends ValidResponse {
    private final boolean replayIgnoredRequests;
-   private final Object response;
+   private final Response response;
 
-   public ExtendedResponse(Object response, boolean replayIgnoredRequests) {
+   public ExtendedResponse(Response response, boolean replayIgnoredRequests) {
       this.response = response;
       this.replayIgnoredRequests = replayIgnoredRequests;
    }
@@ -39,7 +39,11 @@ public class ExtendedResponse {
       return replayIgnoredRequests;
    }
 
-   public Object getResponse() {
+   public Response getResponse() {
       return response;
+   }
+
+   public boolean isSuccessful() {
+      return response.isSuccessful();
    }
 }

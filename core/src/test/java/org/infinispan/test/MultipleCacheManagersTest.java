@@ -1,9 +1,9 @@
 package org.infinispan.test;
 
 import org.infinispan.Cache;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -44,7 +44,7 @@ import java.util.List;
 public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
    private List<CacheManager> cacheManagers = new ArrayList<CacheManager>();
-   private IdentityHashMap<Cache, ReplListener> listeners = new IdentityHashMap<Cache, ReplListener>();   
+   private IdentityHashMap<Cache, ReplListener> listeners = new IdentityHashMap<Cache, ReplListener>();
 
    @BeforeClass
    public void createBeforeClass() throws Throwable {
@@ -85,9 +85,6 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       }
    }
 
-   /**
-    * @see #getDefaultReplicatedConfig()
-    */
    private void assertSupportedConfig() {
       for (CacheManager cm : cacheManagers) {
          for (Cache cache : getRunningCaches(cm)) {
@@ -125,12 +122,13 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       }
    }
 
-   protected List<Cache> createClusteredCaches(int numMembersInCluster, String cacheName, Configuration c) {
-      List<Cache> caches = new ArrayList<Cache>(numMembersInCluster);
+   protected <K, V> List<Cache<K, V>> createClusteredCaches(int numMembersInCluster, String cacheName, Configuration c) {
+      List<Cache<K, V>> caches = new ArrayList<Cache<K, V>>(numMembersInCluster);
       for (int i = 0; i < numMembersInCluster; i++) {
          CacheManager cm = addClusterEnabledCacheManager();
          cm.defineCache(cacheName, c);
-         caches.add(cm.getCache(cacheName));
+         Cache<K, V> cache = cm.getCache(cacheName);
+         caches.add(cache);
       }
       TestingUtil.blockUntilViewsReceived(10000, caches);
       return caches;

@@ -22,12 +22,14 @@
 package org.infinispan.remoting.transport.jgroups;
 
 import org.infinispan.CacheException;
-import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.commands.remote.ClusteredGetCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.logging.Log;
 import org.infinispan.logging.LogFactory;
 import org.infinispan.remoting.InboundInvocationHandler;
+import org.infinispan.remoting.responses.ExtendedResponse;
+import org.infinispan.remoting.responses.RequestIgnoredResponse;
+import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.DistributedSync;
 import org.jgroups.Address;
 import org.jgroups.Channel;
@@ -144,7 +146,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       }
    }
 
-   protected Object executeCommand(CacheRpcCommand cmd, Message req) throws Throwable {
+   protected Response executeCommand(CacheRpcCommand cmd, Message req) throws Throwable {
       if (cmd == null) throw new NullPointerException("Unable to execute a null command!  Message was " + req);
       if (trace) log.trace("Attempting to execute command: {0} [sender={1}]", cmd, req.getSrc());
 
@@ -159,27 +161,18 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          boolean replayIgnored = sr == DistributedSync.SyncResponse.STATE_ACHIEVED;
          if (trace) log.trace("Enough waiting; replayIgnored = {0}, sr {1}", replayIgnored, sr);
 
-         Object retval;
-         try {
-            retval = inboundInvocationHandler.handle(cmd);
-         } catch (IllegalStateException ise) {
-            newCacheStarting.set(true);
-            if (trace) log.trace("Unable to execute command, cache not in a receptive state: " + ise.getMessage());
-            // cache not in a started state, request replay
-            return RequestIgnoredResponse.INSTANCE;
-         }
+         Response resp = inboundInvocationHandler.handle(cmd);
 
-         if (replayIgnored) {
-            return new ExtendedResponse(retval, true);
+         // A null response is valid and OK ...
+         if (resp == null || resp.isValid()) {
+            if (replayIgnored) resp = new ExtendedResponse(resp, true);
          } else {
-
-            // Do we really need a response?!?  The caller would only ever expect a response for certain types of
-            // commands, such as a ClusteredGet
-            if (cmd instanceof ClusteredGetCommand)
-               return retval;
-            else
-               return null; // saves on serializing a response!
+            // invalid response
+            newCacheStarting.set(true);
+            if (trace) log.trace("Unable to execute command, got invalid response");
          }
+
+         return resp;
       } finally {
          if (unlock) distributedSync.releaseProcessingLock();
       }

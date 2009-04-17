@@ -19,30 +19,31 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.marshall.jboss;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+package org.infinispan.marshall.jboss.externalizers;
 
 import net.jcip.annotations.Immutable;
-
 import org.infinispan.CacheException;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.util.Util;
 import org.jboss.marshalling.Creator;
 import org.jboss.marshalling.Externalizer;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 /**
  * ReplicableCommandExternalizer.
- * 
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */
 @Immutable
 public class ReplicableCommandExternalizer implements Externalizer {
 
-   /** The serialVersionUID */
+   /**
+    * The serialVersionUID
+    */
    private static final long serialVersionUID = 6915200269446867084L;
 
    public void writeExternal(Object subject, ObjectOutput output) throws IOException {
@@ -57,21 +58,21 @@ public class ReplicableCommandExternalizer implements Externalizer {
    }
 
    /**
-    * In this case, subjectType will contain the class name of the ReplicableCommand subclass to 
-    * create. Note that StateTransferControlCommand might need to be treated differently!!! 
+    * In this case, subjectType will contain the class name of the ReplicableCommand subclass to create. Note that
+    * StateTransferControlCommand might need to be treated differently!!!
     */
-   public Object createExternal(Class<?> subjectType, ObjectInput input, Creator defaultCreator) 
-            throws IOException, ClassNotFoundException {
+   public Object createExternal(Class<?> subjectType, ObjectInput input, Creator defaultCreator)
+         throws IOException, ClassNotFoundException {
       try {
-         ReplicableCommand command = (ReplicableCommand) Util.getInstance(subjectType);        
+         ReplicableCommand command = (ReplicableCommand) Util.getInstance(subjectType);
          return command;
-      } catch(Exception e) {
+      } catch (Exception e) {
          throw new CacheException("Unable to create new instance of ReplicableCommand", e);
       }
    }
 
    public void readExternal(Object subject, ObjectInput input) throws IOException,
-            ClassNotFoundException {
+                                                                      ClassNotFoundException {
       ReplicableCommand command = (ReplicableCommand) subject;
       short methodId = input.readShort();
       byte numArgs = input.readByte();

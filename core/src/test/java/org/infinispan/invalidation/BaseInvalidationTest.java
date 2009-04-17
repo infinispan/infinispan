@@ -8,10 +8,10 @@ import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.invocation.Flag;
-import org.infinispan.remoting.RpcManager;
-import org.infinispan.remoting.RpcManagerImpl;
 import org.infinispan.remoting.ResponseFilter;
 import org.infinispan.remoting.ResponseMode;
+import org.infinispan.remoting.RpcManager;
+import org.infinispan.remoting.RpcManagerImpl;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -35,7 +35,7 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
       Configuration c = getDefaultClusteredConfig(isSync ? Configuration.CacheMode.INVALIDATION_SYNC : Configuration.CacheMode.INVALIDATION_ASYNC);
       c.setStateRetrievalTimeout(1000);
       c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
-      List<Cache> caches = createClusteredCaches(2, "invalidation", c);
+      List<Cache<Object, Object>> caches = createClusteredCaches(2, "invalidation", c);
       cache1 = caches.get(0).getAdvancedCache();
       cache2 = caches.get(1).getAdvancedCache();
    }

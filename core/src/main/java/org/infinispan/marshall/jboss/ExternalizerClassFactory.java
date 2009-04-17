@@ -21,96 +21,133 @@
  */
 package org.infinispan.marshall.jboss;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.WeakHashMap;
-
 import net.jcip.annotations.Immutable;
-
 import org.infinispan.CacheException;
+import org.infinispan.atomic.AtomicHashMap;
+import org.infinispan.commands.control.StateTransferControlCommand;
+import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commands.remote.ClusteredGetCommand;
+import org.infinispan.commands.remote.MultipleRpcCommand;
+import org.infinispan.commands.remote.SingleRpcCommand;
+import org.infinispan.commands.tx.CommitCommand;
+import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.commands.tx.RollbackCommand;
+import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commands.write.InvalidateCommand;
+import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.container.entries.ImmortalCacheEntry;
+import org.infinispan.container.entries.MortalCacheEntry;
+import org.infinispan.container.entries.TransientCacheEntry;
+import org.infinispan.container.entries.TransientMortalCacheEntry;
+import org.infinispan.marshall.MarshalledValue;
+import org.infinispan.marshall.jboss.externalizers.*;
 import org.infinispan.remoting.RpcManager;
+import org.infinispan.remoting.responses.ExceptionResponse;
+import org.infinispan.remoting.responses.ExtendedResponse;
+import org.infinispan.remoting.responses.RequestIgnoredResponse;
+import org.infinispan.remoting.responses.SuccessfulResponse;
+import org.infinispan.remoting.responses.UnsuccessfulResponse;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
+import org.infinispan.transaction.GlobalTransaction;
+import org.infinispan.util.FastCopyHashMap;
 import org.infinispan.util.Util;
 import org.jboss.marshalling.ClassExternalizerFactory;
 import org.jboss.marshalling.Externalizer;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.WeakHashMap;
+
 /**
  * CustomExternalizerFactory.
- * 
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */
 @Immutable
 public class ExternalizerClassFactory implements ClassExternalizerFactory {
    private static final Map<String, String> EXTERNALIZERS = new HashMap<String, String>();
-   
+
    static {
-      EXTERNALIZERS.put("org.infinispan.transaction.GlobalTransaction", "org.infinispan.marshall.jboss.GlobalTransactionExternalizer"); 
-      EXTERNALIZERS.put("org.infinispan.remoting.transport.jgroups.JGroupsAddress", "org.infinispan.marshall.jboss.JGroupsAddressExternalizer"); 
-      EXTERNALIZERS.put("java.util.ArrayList", "org.infinispan.marshall.jboss.ArrayListExternalizer");
-      EXTERNALIZERS.put("java.util.LinkedList", "org.infinispan.marshall.jboss.LinkedListExternalizer");
-      EXTERNALIZERS.put("java.util.HashMap", "org.infinispan.marshall.jboss.MapExternalizer");
-      EXTERNALIZERS.put("java.util.TreeMap", "org.infinispan.marshall.jboss.MapExternalizer");
-      EXTERNALIZERS.put("java.util.HashSet", "org.infinispan.marshall.jboss.SetExternalizer");
-      EXTERNALIZERS.put("java.util.TreeSet", "org.infinispan.marshall.jboss.SetExternalizer");
-      EXTERNALIZERS.put("org.infinispan.util.Immutables$ImmutableMapWrapper", "org.infinispan.marshall.jboss.ImmutableMapExternalizer");
-      EXTERNALIZERS.put("org.infinispan.marshall.MarshalledValue", "org.infinispan.marshall.jboss.MarshalledValueExternalizer");
-      EXTERNALIZERS.put("org.infinispan.util.FastCopyHashMap", "org.infinispan.marshall.jboss.MapExternalizer");
-      EXTERNALIZERS.put("java.util.Collections$SingletonList", "org.infinispan.marshall.jboss.SingletonListExternalizer");
-      EXTERNALIZERS.put("org.infinispan.transaction.TransactionLog$LogEntry", "org.infinispan.marshall.jboss.TransactionLogExternalizer");
-      EXTERNALIZERS.put("org.infinispan.remoting.transport.jgroups.ExtendedResponse", "org.infinispan.marshall.jboss.ExtendedResponseExternalizer");
-      EXTERNALIZERS.put("org.infinispan.atomic.AtomicHashMap", "org.infinispan.marshall.jboss.DeltaAwareExternalizer");
+      EXTERNALIZERS.put(GlobalTransaction.class.getName(), GlobalTransactionExternalizer.class.getName());
+      EXTERNALIZERS.put(JGroupsAddress.class.getName(), JGroupsAddressExternalizer.class.getName());
+      EXTERNALIZERS.put(ArrayList.class.getName(), ArrayListExternalizer.class.getName());
+      EXTERNALIZERS.put(LinkedList.class.getName(), LinkedListExternalizer.class.getName());
+      EXTERNALIZERS.put(HashMap.class.getName(), MapExternalizer.class.getName());
+      EXTERNALIZERS.put(TreeMap.class.getName(), MapExternalizer.class.getName());
+      EXTERNALIZERS.put(HashSet.class.getName(), SetExternalizer.class.getName());
+      EXTERNALIZERS.put(TreeSet.class.getName(), SetExternalizer.class.getName());
+      EXTERNALIZERS.put("org.infinispan.util.Immutables$ImmutableMapWrapper", ImmutableMapExternalizer.class.getName());
+      EXTERNALIZERS.put(MarshalledValue.class.getName(), MarshalledValueExternalizer.class.getName());
+      EXTERNALIZERS.put(FastCopyHashMap.class.getName(), MapExternalizer.class.getName());
+      EXTERNALIZERS.put("java.util.Collections$SingletonList", SingletonListExternalizer.class.getName());
+      EXTERNALIZERS.put("org.infinispan.transaction.TransactionLog$LogEntry", TransactionLogExternalizer.class.getName());
+      EXTERNALIZERS.put(ExtendedResponse.class.getName(), ExtendedResponseExternalizer.class.getName());
+      EXTERNALIZERS.put(RequestIgnoredResponse.class.getName(), RequestIgnoredResponseExternalizer.class.getName());
+      EXTERNALIZERS.put(SuccessfulResponse.class.getName(), SuccessfulResponseExternalizer.class.getName());
+      EXTERNALIZERS.put(UnsuccessfulResponse.class.getName(), UnsuccessfulResponseExternalizer.class.getName());
+      EXTERNALIZERS.put(ExceptionResponse.class.getName(), ExceptionResponseExternalizer.class.getName());
+      EXTERNALIZERS.put(AtomicHashMap.class.getName(), DeltaAwareExternalizer.class.getName());
 
-      EXTERNALIZERS.put("org.infinispan.commands.control.StateTransferControlCommand", "org.infinispan.marshall.jboss.StateTransferControlCommandExternalizer");
-      EXTERNALIZERS.put("org.infinispan.commands.remote.ClusteredGetCommand", "org.infinispan.marshall.jboss.ReplicableCommandExternalizer");
-      EXTERNALIZERS.put("org.infinispan.commands.remote.MultipleRpcCommand", "org.infinispan.marshall.jboss.ReplicableCommandExternalizer");
-      EXTERNALIZERS.put("org.infinispan.commands.remote.SingleRpcCommand", "org.infinispan.marshall.jboss.ReplicableCommandExternalizer");      
-      EXTERNALIZERS.put("org.infinispan.commands.read.GetKeyValueCommand", "org.infinispan.marshall.jboss.ReplicableCommandExternalizer");
-      EXTERNALIZERS.put("org.infinispan.commands.write.PutKeyValueCommand", "org.infinispan.marshall.jboss.ReplicableCommandExternalizer");
-      EXTERNALIZERS.put("org.infinispan.commands.write.RemoveCommand", "org.infinispan.marshall.jboss.ReplicableCommandExternalizer");
-      EXTERNALIZERS.put("org.infinispan.commands.write.InvalidateCommand", "org.infinispan.marshall.jboss.ReplicableCommandExternalizer");
-      EXTERNALIZERS.put("org.infinispan.commands.write.ReplaceCommand", "org.infinispan.marshall.jboss.ReplicableCommandExternalizer");
-      EXTERNALIZERS.put("org.infinispan.commands.write.ClearCommand", "org.infinispan.marshall.jboss.ReplicableCommandExternalizer");
-      EXTERNALIZERS.put("org.infinispan.commands.write.PutMapCommand", "org.infinispan.marshall.jboss.ReplicableCommandExternalizer");
-      EXTERNALIZERS.put("org.infinispan.commands.tx.PrepareCommand", "org.infinispan.marshall.jboss.ReplicableCommandExternalizer");
-      EXTERNALIZERS.put("org.infinispan.commands.tx.CommitCommand", "org.infinispan.marshall.jboss.ReplicableCommandExternalizer");
-      EXTERNALIZERS.put("org.infinispan.commands.tx.RollbackCommand", "org.infinispan.marshall.jboss.ReplicableCommandExternalizer");
+      EXTERNALIZERS.put(StateTransferControlCommand.class.getName(), StateTransferControlCommandExternalizer.class.getName());
+      EXTERNALIZERS.put(ClusteredGetCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
+      EXTERNALIZERS.put(MultipleRpcCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
+      EXTERNALIZERS.put(SingleRpcCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
+      EXTERNALIZERS.put(GetKeyValueCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
+      EXTERNALIZERS.put(PutKeyValueCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
+      EXTERNALIZERS.put(RemoveCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
+      EXTERNALIZERS.put(InvalidateCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
+      EXTERNALIZERS.put(ReplaceCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
+      EXTERNALIZERS.put(ClearCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
+      EXTERNALIZERS.put(PutMapCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
+      EXTERNALIZERS.put(PrepareCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
+      EXTERNALIZERS.put(CommitCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
+      EXTERNALIZERS.put(RollbackCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
 
-      EXTERNALIZERS.put("org.infinispan.container.entries.ImmortalCacheEntry", "org.infinispan.marshall.jboss.InternalCachedEntryExternalizer");
-      EXTERNALIZERS.put("org.infinispan.container.entries.MortalCacheEntry", "org.infinispan.marshall.jboss.InternalCachedEntryExternalizer");
-      EXTERNALIZERS.put("org.infinispan.container.entries.TransientCacheEntry", "org.infinispan.marshall.jboss.InternalCachedEntryExternalizer");
-      EXTERNALIZERS.put("org.infinispan.container.entries.TransientMortalCacheEntry", "org.infinispan.marshall.jboss.InternalCachedEntryExternalizer");
+      EXTERNALIZERS.put(ImmortalCacheEntry.class.getName(), InternalCachedEntryExternalizer.class.getName());
+      EXTERNALIZERS.put(MortalCacheEntry.class.getName(), InternalCachedEntryExternalizer.class.getName());
+      EXTERNALIZERS.put(TransientCacheEntry.class.getName(), InternalCachedEntryExternalizer.class.getName());
+      EXTERNALIZERS.put(TransientMortalCacheEntry.class.getName(), InternalCachedEntryExternalizer.class.getName());
    }
-   
+
    private final Map<Class<?>, Externalizer> externalizers = new WeakHashMap<Class<?>, Externalizer>();
    private final RpcManager rpcManager;
    private final CustomObjectTable objectTable;
-   
+
    public ExternalizerClassFactory(RpcManager rpcManager, CustomObjectTable objectTable) {
       this.rpcManager = rpcManager;
       this.objectTable = objectTable;
    }
-   
+
    public void init() {
-	try {
-	   for (Map.Entry<String, String> entry : EXTERNALIZERS.entrySet()) {
-		Class typeClazz = Util.loadClass(entry.getKey());
-		Externalizer ext = (Externalizer) Util.getInstance(entry.getValue());
-		if (ext instanceof StateTransferControlCommandExternalizer) {
-		   ((StateTransferControlCommandExternalizer) ext).init(rpcManager);
-		}
-		externalizers.put(typeClazz, ext);
-		objectTable.add(ext);
-	   }
-	} catch (IOException e) {
-	   throw new CacheException("Unable to open load magicnumbers.properties", e);
-	} catch (ClassNotFoundException e) {
-	   throw new CacheException("Unable to load one of the classes defined in the magicnumbers.properties", e);
-	} catch (Exception e) {
-	   throw new CacheException("Unable to instantiate Externalizer class", e);
-	}	
+      try {
+         for (Map.Entry<String, String> entry : EXTERNALIZERS.entrySet()) {
+            Class typeClazz = Util.loadClass(entry.getKey());
+            Externalizer ext = (Externalizer) Util.getInstance(entry.getValue());
+            if (ext instanceof StateTransferControlCommandExternalizer) {
+               ((StateTransferControlCommandExternalizer) ext).init(rpcManager);
+            }
+            externalizers.put(typeClazz, ext);
+            objectTable.add(ext);
+         }
+      } catch (IOException e) {
+         throw new CacheException("Unable to open load magicnumbers.properties", e);
+      } catch (ClassNotFoundException e) {
+         throw new CacheException("Unable to load one of the classes defined in the magicnumbers.properties", e);
+      } catch (Exception e) {
+         throw new CacheException("Unable to instantiate Externalizer class", e);
+      }
    }
-   
+
    public void stop() {
       externalizers.clear();
    }

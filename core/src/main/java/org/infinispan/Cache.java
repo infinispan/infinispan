@@ -32,11 +32,11 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
 /**
- * The central interface of Infinispan.  A Cache provides a highly concurrent, optionally distributed data structure with
- * additional features such as: <ul> <li>JTA transaction compatibility</li> <li>Eviction support to prevent evicting
- * entries from memory to prevent {@link OutOfMemoryError}s</li> <li>Persisting entries to a {@link
- * org.infinispan.loader.CacheStore}, either when they are evicted as an overflow, or all the time, to maintain persistent
- * copies that would withstand server failure or restarts.</li> </ul>
+ * The central interface of Infinispan.  A Cache provides a highly concurrent, optionally distributed data structure
+ * with additional features such as: <ul> <li>JTA transaction compatibility</li> <li>Eviction support to prevent
+ * evicting entries from memory to prevent {@link OutOfMemoryError}s</li> <li>Persisting entries to a {@link
+ * org.infinispan.loader.CacheStore}, either when they are evicted as an overflow, or all the time, to maintain
+ * persistent copies that would withstand server failure or restarts.</li> </ul>
  * <p/>
  * For convenience, Cache extends {@link java.util.concurrent.ConcurrentMap} and implements all methods accordingly,
  * although methods like {@link java.util.concurrent.ConcurrentMap#keySet()}, {@link
@@ -48,6 +48,20 @@ import java.util.concurrent.TimeUnit;
  * <p/>
  * Please see the <a href="http://www.jboss.org/infinispan/docs">Infinispan documentation</a> for more details.
  * <p/>
+ * A note about return values.  Certain methods on {@link Map} could have indeterminate return values, <i>if</i> the
+ * DISTRIBITION cache mode is used in an asynchronous manner <i>and</i> the invocation takes place on a cache instance
+ * where the entry involved is not local.  These methods are: <ul> <li>{@link #put(Object, Object)} and its variations,
+ * including {@link #putIfAbsent(Object, Object)}</li> <li>{@link #remove(Object)} and its variations</li> <li>{@link
+ * #replace(Object, Object)} and its variations</li> </ul> The methods still <i>behave</i> as expected, i.e., {@link
+ * #putIfAbsent(Object, Object)} will be a no-op if there is a value present, just that since remote calls are
+ * asynchronous and the operation needs to be executed on a remote cache, the calling cache will not wait for a return
+ * value.
+ * <p/>
+ * As such, as a general rule of thumb, return values to these methods should <i>not</i> be used if using DISTRIBUTION
+ * in asynchronous mode.
+ * <p/>
+ * For all other cache modes (including <i>synchronous</i> DISTRIBUTION) these return values are reliable and can be
+ * used.
  *
  * @author Mircea.Markus@jboss.com
  * @author Manik Surtani
@@ -159,11 +173,12 @@ public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable 
    /**
     * An overloaded form of {@link #put(Object, Object)}, which takes in lifespan parameters.
     *
-    * @param key      key to use
-    * @param value    value to store
-    * @param lifespan lifespan of the entry.  Negative values are intepreted as unlimited lifespan.
-    * @param lifespanUnit time unit for lifespan
-    * @param maxIdleTime the maximum amount of time this key is allowed to be idle for before it is considered as expired
+    * @param key             key to use
+    * @param value           value to store
+    * @param lifespan        lifespan of the entry.  Negative values are intepreted as unlimited lifespan.
+    * @param lifespanUnit    time unit for lifespan
+    * @param maxIdleTime     the maximum amount of time this key is allowed to be idle for before it is considered as
+    *                        expired
     * @param maxIdleTimeUnit time unit for max idle time
     * @return the value being replaced, or null if nothing is being replaced.
     */
@@ -172,11 +187,12 @@ public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable 
    /**
     * An overloaded form of {@link #putIfAbsent(Object, Object)}, which takes in lifespan parameters.
     *
-    * @param key      key to use
-    * @param value    value to store
-    * @param lifespan lifespan of the entry.  Negative values are intepreted as unlimited lifespan.
-    * @param lifespanUnit time unit for lifespan
-    * @param maxIdleTime the maximum amount of time this key is allowed to be idle for before it is considered as expired
+    * @param key             key to use
+    * @param value           value to store
+    * @param lifespan        lifespan of the entry.  Negative values are intepreted as unlimited lifespan.
+    * @param lifespanUnit    time unit for lifespan
+    * @param maxIdleTime     the maximum amount of time this key is allowed to be idle for before it is considered as
+    *                        expired
     * @param maxIdleTimeUnit time unit for max idle time
     * @return the value being replaced, or null if nothing is being replaced.
     */
@@ -186,10 +202,11 @@ public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable 
     * An overloaded form of {@link #putAll(java.util.Map)}, which takes in lifespan parameters.  Note that the lifespan
     * is applied to all mappings in the map passed in.
     *
-    * @param map      map containing mappings to enter
-    * @param lifespan lifespan of the entry.  Negative values are intepreted as unlimited lifespan.
-    * @param lifespanUnit time unit for lifespan
-    * @param maxIdleTime the maximum amount of time this key is allowed to be idle for before it is considered as expired
+    * @param map             map containing mappings to enter
+    * @param lifespan        lifespan of the entry.  Negative values are intepreted as unlimited lifespan.
+    * @param lifespanUnit    time unit for lifespan
+    * @param maxIdleTime     the maximum amount of time this key is allowed to be idle for before it is considered as
+    *                        expired
     * @param maxIdleTimeUnit time unit for max idle time
     */
    void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit);
@@ -197,11 +214,12 @@ public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable 
    /**
     * An overloaded form of {@link #replace(Object, Object)}, which takes in lifespan parameters.
     *
-    * @param key      key to use
-    * @param value    value to store
-    * @param lifespan lifespan of the entry.  Negative values are intepreted as unlimited lifespan.
-    * @param lifespanUnit time unit for lifespan
-    * @param maxIdleTime the maximum amount of time this key is allowed to be idle for before it is considered as expired
+    * @param key             key to use
+    * @param value           value to store
+    * @param lifespan        lifespan of the entry.  Negative values are intepreted as unlimited lifespan.
+    * @param lifespanUnit    time unit for lifespan
+    * @param maxIdleTime     the maximum amount of time this key is allowed to be idle for before it is considered as
+    *                        expired
     * @param maxIdleTimeUnit time unit for max idle time
     * @return the value being replaced, or null if nothing is being replaced.
     */
@@ -210,12 +228,13 @@ public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable 
    /**
     * An overloaded form of {@link #replace(Object, Object, Object)}, which takes in lifespan parameters.
     *
-    * @param key      key to use
-    * @param oldValue value to replace
-    * @param value    value to store
-    * @param lifespan lifespan of the entry.  Negative values are intepreted as unlimited lifespan.
-    * @param lifespanUnit time unit for lifespan
-    * @param maxIdleTime the maximum amount of time this key is allowed to be idle for before it is considered as expired
+    * @param key             key to use
+    * @param oldValue        value to replace
+    * @param value           value to store
+    * @param lifespan        lifespan of the entry.  Negative values are intepreted as unlimited lifespan.
+    * @param lifespanUnit    time unit for lifespan
+    * @param maxIdleTime     the maximum amount of time this key is allowed to be idle for before it is considered as
+    *                        expired
     * @param maxIdleTimeUnit time unit for max idle time
     * @return true if the value was replaced, false otherwise
     */

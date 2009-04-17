@@ -12,9 +12,11 @@ import org.infinispan.loader.CacheLoaderException;
 import org.infinispan.logging.Log;
 import org.infinispan.logging.LogFactory;
 import org.infinispan.marshall.Marshaller;
-import org.infinispan.remoting.RpcManager;
 import org.infinispan.remoting.ResponseFilter;
 import org.infinispan.remoting.ResponseMode;
+import org.infinispan.remoting.RpcManager;
+import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
 
 import java.util.ArrayList;
@@ -23,17 +25,13 @@ import java.util.List;
 import java.util.Set;
 
 /**
- *  Cache loader that consults other members in the cluster for values. A
- * <code>timeout</code> property is required, a <code>long</code> that
- * specifies in milliseconds how long to wait for results before returning a
- * null.
+ * Cache loader that consults other members in the cluster for values. A <code>timeout</code> property is required, a
+ * <code>long</code> that specifies in milliseconds how long to wait for results before returning a null.
  *
  * @author Mircea.Markus@jboss.com
  */
 public class ClusterCacheLoader extends AbstractCacheLoader {
-
    private static Log log = LogFactory.getLog(ClusterCacheLoader.class);
-   private static boolean trace = log.isTraceEnabled();
 
    private ClusterCacheLoaderConfig config;
    private RpcManager rpcManager;
@@ -48,25 +46,23 @@ public class ClusterCacheLoader extends AbstractCacheLoader {
    public InternalCacheEntry load(Object key) throws CacheLoaderException {
       if (!(isCacheReady() && isLocalCall())) return null;
       ClusteredGetCommand clusteredGetCommand = new ClusteredGetCommand(key, cache.getName());
-      List<Object> response = doRemoteCall(clusteredGetCommand);
+      List<Response> response = doRemoteCall(clusteredGetCommand);
       if (response.isEmpty()) return null;
       if (response.size() > 1)
          throw new CacheLoaderException("Response length is always 0 or 1, received: " + response);
-      Object firstResponse = response.get(0);
-      if (firstResponse instanceof InternalCacheEntry)
-         return (InternalCacheEntry) firstResponse;
-      return (InternalCacheEntry) unknownResponse(firstResponse);
+      Response firstResponse = response.get(0);
+      if (firstResponse.isSuccessful() && firstResponse instanceof SuccessfulResponse) {
+         return (InternalCacheEntry) ((SuccessfulResponse) firstResponse).getResponseValue();
+      }
+
+      String message = "Unknown response from remote cache: " + response;
+      log.error(message);
+      throw new CacheLoaderException(message);
    }
 
    @SuppressWarnings(value = "unchecked")
    public Set<InternalCacheEntry> loadAll() throws CacheLoaderException {
       return Collections.EMPTY_SET;
-   }
-
-   private Object unknownResponse(Object response) throws CacheLoaderException {
-      String message = "Unknown response from remote cache: " + response;
-      log.error(message);
-      throw new CacheLoaderException(message);
    }
 
    public void start() throws CacheLoaderException {
@@ -93,14 +89,11 @@ public class ClusterCacheLoader extends AbstractCacheLoader {
          this.pendingResponders.remove(localAddress);
       }
 
-      public boolean isAcceptable(Object object, Address address) {
+      public boolean isAcceptable(Response response, Address address) {
          pendingResponders.remove(address);
 
-         if (object instanceof List) {
-            List response = (List) object;
-            Boolean foundResult = (Boolean) response.get(0);
-            if (foundResult) numValidResponses++;
-         }
+         if (response instanceof SuccessfulResponse) numValidResponses++;
+
          // always return true to make sure a response is logged by the JGroups RpcDispatcher.
          return true;
       }
@@ -111,7 +104,7 @@ public class ClusterCacheLoader extends AbstractCacheLoader {
 
    }
 
-   private List<Object> doRemoteCall(ClusteredGetCommand clusteredGetCommand) throws CacheLoaderException {
+   private List<Response> doRemoteCall(ClusteredGetCommand clusteredGetCommand) throws CacheLoaderException {
       ResponseValidityFilter filter = new ResponseValidityFilter(rpcManager.getTransport().getMembers(), rpcManager.getLocalAddress());
       try {
          return rpcManager.invokeRemotely(null, clusteredGetCommand, ResponseMode.WAIT_FOR_VALID_RESPONSE, config.getRemoteCallTimeout(), false, filter, false);

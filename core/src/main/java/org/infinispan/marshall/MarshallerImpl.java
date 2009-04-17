@@ -22,20 +22,24 @@
 package org.infinispan.marshall;
 
 import org.infinispan.CacheException;
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.atomic.DeltaAware;
 import org.infinispan.commands.RemoteCommandFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.io.ByteBuffer;
 import org.infinispan.io.ExposedByteArrayOutputStream;
 import org.infinispan.logging.Log;
 import org.infinispan.logging.LogFactory;
+import org.infinispan.remoting.responses.ExceptionResponse;
+import org.infinispan.remoting.responses.ExtendedResponse;
+import org.infinispan.remoting.responses.RequestIgnoredResponse;
+import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.responses.SuccessfulResponse;
+import org.infinispan.remoting.responses.UnsuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.ExtendedResponse;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
-import org.infinispan.remoting.transport.jgroups.RequestIgnoredResponse;
 import org.infinispan.transaction.GlobalTransaction;
 import org.infinispan.transaction.TransactionLog;
 import org.infinispan.util.FastCopyHashMap;
@@ -91,8 +95,14 @@ public class MarshallerImpl implements Marshaller {
    protected static final int MAGICNUMBER_COMMAND = 24;
    protected static final int MAGICNUMBER_TRANSACTION_LOG = 25;
    protected static final int MAGICNUMBER_INTERNAL_CACHED_ENTRY = 26;
+
+   // ---- responses
    protected static final int MAGICNUMBER_REQUEST_IGNORED_RESPONSE = 27;
-   protected static final int MAGICNUMBER_EXTENDED_RESPONSE = 28;   
+   protected static final int MAGICNUMBER_EXTENDED_RESPONSE = 28;
+   protected static final int MAGICNUMBER_EXCEPTION_RESPONSE = 29;
+   protected static final int MAGICNUMBER_SUCCESSFUL_RESPONSE = 30;
+   protected static final int MAGICNUMBER_UNSUCCESSFUL_RESPONSE = 31;
+
    protected static final int MAGICNUMBER_NULL = 99;
    protected static final int MAGICNUMBER_SERIALIZABLE = 100;
    protected static final int MAGICNUMBER_REF = 101;
@@ -160,13 +170,8 @@ public class MarshallerImpl implements Marshaller {
          } else if (o instanceof JGroupsAddress) {
             out.writeByte(MAGICNUMBER_JG_ADDRESS);
             marshallJGroupsAddress((JGroupsAddress) o, out);
-         } else if (o instanceof RequestIgnoredResponse) {
-            out.writeByte(MAGICNUMBER_REQUEST_IGNORED_RESPONSE);
-         } else if (o instanceof ExtendedResponse) {
-            out.writeByte(MAGICNUMBER_EXTENDED_RESPONSE);
-            ExtendedResponse er = (ExtendedResponse) o;
-            out.writeBoolean(er.isReplayIgnoredRequests());
-            marshallObject(er.getResponse(), out, refMap);
+         } else if (o instanceof Response) {
+            marshallResponse((Response) o, out, refMap);
          } else if (o instanceof InternalCacheEntry) {
             out.writeByte(MAGICNUMBER_INTERNAL_CACHED_ENTRY);
             InternalCacheEntry ice = (InternalCacheEntry) o;
@@ -299,7 +304,48 @@ public class MarshallerImpl implements Marshaller {
       }
    }
 
+   private void marshallResponse(Response response, ObjectOutput out, Map<Object, Integer> refMap) throws IOException {
+      if (response instanceof RequestIgnoredResponse) {
+         out.writeByte(MAGICNUMBER_REQUEST_IGNORED_RESPONSE);
+      } else if (response instanceof ExtendedResponse) {
+         out.writeByte(MAGICNUMBER_EXTENDED_RESPONSE);
+         ExtendedResponse er = (ExtendedResponse) response;
+         out.writeBoolean(er.isReplayIgnoredRequests());
+         marshallObject(er.getResponse(), out, refMap);
+      } else if (response instanceof UnsuccessfulResponse) {
+         out.writeByte(MAGICNUMBER_UNSUCCESSFUL_RESPONSE);
+      } else if (response instanceof SuccessfulResponse) {
+         out.writeByte(MAGICNUMBER_SUCCESSFUL_RESPONSE);
+         marshallObject(((SuccessfulResponse) response).getResponseValue(), out, refMap);
+      } else if (response instanceof ExceptionResponse) {
+         out.writeByte(MAGICNUMBER_EXCEPTION_RESPONSE);
+         marshallObject(((ExceptionResponse) response).getException(), out, refMap);
+      }
+   }
+
    // --------- Unmarshalling methods
+
+   private Response unmarshallResponse(int magic, ObjectInput in, UnmarshalledReferences refMap) throws IOException, ClassNotFoundException {
+
+      switch (magic) {
+         case MAGICNUMBER_REQUEST_IGNORED_RESPONSE:
+            return RequestIgnoredResponse.INSTANCE;
+         case MAGICNUMBER_UNSUCCESSFUL_RESPONSE:
+            return UnsuccessfulResponse.INSTANCE;
+         case MAGICNUMBER_SUCCESSFUL_RESPONSE:
+            Object retval = unmarshallObject(in, refMap);
+            return new SuccessfulResponse(retval);
+         case MAGICNUMBER_EXCEPTION_RESPONSE:
+            Exception e = (Exception) unmarshallObject(in, refMap);
+            return new ExceptionResponse(e);
+         case MAGICNUMBER_EXTENDED_RESPONSE:
+            boolean replay = in.readBoolean();
+            Response response = (Response) unmarshallObject(in, refMap);
+            return new ExtendedResponse(response, replay);
+         default:
+            return null;
+      }
+   }
 
    protected Object unmarshallObject(ObjectInput in, ClassLoader loader, UnmarshalledReferences refMap, boolean overrideContextClassloaderOnThread) throws IOException, ClassNotFoundException {
       if (loader == null) {
@@ -353,11 +399,11 @@ public class MarshallerImpl implements Marshaller {
                return InternalEntryFactory.create(k, v);
             }
          case MAGICNUMBER_REQUEST_IGNORED_RESPONSE:
-            return RequestIgnoredResponse.INSTANCE;
          case MAGICNUMBER_EXTENDED_RESPONSE:
-            boolean replayIgnoredRequests = in.readBoolean();
-            Object response = unmarshallObject(in, refMap);
-            return new ExtendedResponse(response, replayIgnoredRequests);
+         case MAGICNUMBER_EXCEPTION_RESPONSE:
+         case MAGICNUMBER_UNSUCCESSFUL_RESPONSE:
+         case MAGICNUMBER_SUCCESSFUL_RESPONSE:
+            return unmarshallResponse(magicNumber, in, refMap);
          case MAGICNUMBER_COMMAND:
             retVal = unmarshallCommand(in, refMap);
             return retVal;
@@ -802,11 +848,11 @@ public class MarshallerImpl implements Marshaller {
    public ObjectOutput startObjectOutput(OutputStream os) throws IOException {
       return new ObjectOutputStream(os);
    }
-   
+
    public void finishObjectOutput(ObjectOutput oo) {
       Util.flushAndCloseOutput(oo);
    }
-   
+
    public void objectToObjectStream(Object o, ObjectOutput out) throws IOException {
       Map<Object, Integer> refMap = useRefs ? new IdentityHashMap<Object, Integer>() : null;
       ClassLoader toUse = defaultClassLoader;
@@ -822,11 +868,11 @@ public class MarshallerImpl implements Marshaller {
          current.setContextClassLoader(old);
       }
    }
-   
+
    public ObjectInput startObjectInput(InputStream is) throws IOException {
       return new ObjectInputStream(is);
    }
-   
+
    public void finishObjectInput(ObjectInput oi) {
       Util.closeInput(oi);
    }

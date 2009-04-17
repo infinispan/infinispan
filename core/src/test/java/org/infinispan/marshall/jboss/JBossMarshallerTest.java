@@ -21,18 +21,6 @@
  */
 package org.infinispan.marshall.jboss;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
-
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -53,10 +41,11 @@ import org.infinispan.container.entries.MortalCacheEntry;
 import org.infinispan.container.entries.TransientCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.infinispan.marshall.MarshalledValue;
+import org.infinispan.remoting.responses.ExtendedResponse;
+import org.infinispan.remoting.responses.RequestIgnoredResponse;
+import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.ExtendedResponse;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
-import org.infinispan.remoting.transport.jgroups.RequestIgnoredResponse;
 import org.infinispan.transaction.GlobalTransaction;
 import org.infinispan.transaction.TransactionLog;
 import org.infinispan.util.FastCopyHashMap;
@@ -66,11 +55,13 @@ import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
+import java.util.*;
+
 /**
  * JBossMarshallingMarshallerTest.
- * 
+ * <p/>
  * Todo: AtomicHashMap missing.
- * 
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */
@@ -78,27 +69,27 @@ import org.testng.annotations.Test;
 public class JBossMarshallerTest {
 
    private final JBossMarshaller marshaller = new JBossMarshaller();
-   
+
    @BeforeTest
    public void setUp() {
       marshaller.init(Thread.currentThread().getContextClassLoader(), null);
    }
-   
+
    @AfterTest
    public void tearDown() {
       marshaller.stop();
    }
-   
+
    public void testJGroupsAddressMarshalling() throws Exception {
       JGroupsAddress address = new JGroupsAddress(new IpAddress(12345));
       marshallAndAssertEquality(address);
    }
-   
+
    public void testGlobalTransactionMarshalling() throws Exception {
       GlobalTransaction gtx = GlobalTransaction.create(new JGroupsAddress(new IpAddress(12345)));
       marshallAndAssertEquality(gtx);
    }
-   
+
    public void testListMarshalling() throws Exception {
       List l1 = new ArrayList();
       List l2 = new LinkedList();
@@ -110,7 +101,7 @@ public class JBossMarshallerTest {
       marshallAndAssertEquality(l1);
       marshallAndAssertEquality(l2);
    }
-   
+
    public void testMapMarshalling() throws Exception {
       Map m1 = new HashMap();
       Map m2 = new TreeMap();
@@ -127,13 +118,13 @@ public class JBossMarshallerTest {
       marshallAndAssertEquality(m2);
       byte[] bytes = marshaller.objectToByteBuffer(m4);
       Map<Integer, GlobalTransaction> m4Read = (Map<Integer, GlobalTransaction>) marshaller.objectFromByteBuffer(bytes);
-      for (Map.Entry<Integer, GlobalTransaction> entry : m4.entrySet()) {      
-         assert m4Read.get(entry.getKey()).equals(entry.getValue()) : "Writen[" + entry.getValue() + "] and read[" +  m4Read.get(entry.getKey()) +"] objects should be the same";
+      for (Map.Entry<Integer, GlobalTransaction> entry : m4.entrySet()) {
+         assert m4Read.get(entry.getKey()).equals(entry.getValue()) : "Writen[" + entry.getValue() + "] and read[" + m4Read.get(entry.getKey()) + "] objects should be the same";
       }
-      
+
       marshallAndAssertEquality(m5);
    }
-   
+
    public void testSetMarshalling() throws Exception {
       Set s1 = new HashSet();
       Set s2 = new TreeSet();
@@ -145,7 +136,7 @@ public class JBossMarshallerTest {
       marshallAndAssertEquality(s1);
       marshallAndAssertEquality(s2);
    }
-   
+
    public void testMarshalledValueMarshalling() throws Exception {
       GlobalTransaction gtx = GlobalTransaction.create(new JGroupsAddress(new IpAddress(12345)));
       MarshalledValue mv = new MarshalledValue(gtx, true);
@@ -157,74 +148,74 @@ public class JBossMarshallerTest {
       List l = Collections.singletonList(gtx);
       marshallAndAssertEquality(l);
    }
-   
+
    public void testTransactionLogMarshalling() throws Exception {
       GlobalTransaction gtx = GlobalTransaction.create(new JGroupsAddress(new IpAddress(12345)));
       PutKeyValueCommand command = new PutKeyValueCommand("k", "v", false, null, 0, 0);
       TransactionLog.LogEntry entry = new TransactionLog.LogEntry(gtx, command);
       byte[] bytes = marshaller.objectToByteBuffer(entry);
       TransactionLog.LogEntry readObj = (TransactionLog.LogEntry) marshaller.objectFromByteBuffer(bytes);
-      assert Arrays.equals(readObj.getModifications(), entry.getModifications()) : 
-         "Writen[" + entry.getModifications() + "] and read[" +  readObj.getModifications() +"] objects should be the same";
-      assert readObj.getTransaction().equals(entry.getTransaction()) : 
-         "Writen[" + entry.getModifications() + "] and read[" +  readObj.getModifications() +"] objects should be the same";
+      assert Arrays.equals(readObj.getModifications(), entry.getModifications()) :
+            "Writen[" + entry.getModifications() + "] and read[" + readObj.getModifications() + "] objects should be the same";
+      assert readObj.getTransaction().equals(entry.getTransaction()) :
+            "Writen[" + entry.getModifications() + "] and read[" + readObj.getModifications() + "] objects should be the same";
    }
-   
+
    public void testRequestIgnoredResponseMarshalling() throws Exception {
       marshallAndAssertEquality(RequestIgnoredResponse.INSTANCE);
    }
-   
+
    public void testExtendedResponseMarshalling() throws Exception {
-      PutKeyValueCommand command = new PutKeyValueCommand("k", "v", false, null, 0, 0);
-      ExtendedResponse extended = new ExtendedResponse(command, false);
+      SuccessfulResponse sr = new SuccessfulResponse("Blah");
+      ExtendedResponse extended = new ExtendedResponse(sr, false);
       byte[] bytes = marshaller.objectToByteBuffer(extended);
       ExtendedResponse readObj = (ExtendedResponse) marshaller.objectFromByteBuffer(bytes);
       assert extended.getResponse().equals(readObj.getResponse()) :
-         "Writen[" + extended.getResponse() + "] and read[" +  readObj.getResponse() +"] objects should be the same";
+            "Writen[" + extended.getResponse() + "] and read[" + readObj.getResponse() + "] objects should be the same";
       assert extended.isReplayIgnoredRequests() == readObj.isReplayIgnoredRequests() :
-         "Writen[" + extended.isReplayIgnoredRequests() + "] and read[" +  readObj.isReplayIgnoredRequests() +"] objects should be the same";
+            "Writen[" + extended.isReplayIgnoredRequests() + "] and read[" + readObj.isReplayIgnoredRequests() + "] objects should be the same";
    }
-   
+
    public void testReplicableCommandsMarshalling() throws Exception {
       StateTransferControlCommand c1 = new StateTransferControlCommand(true);
       byte[] bytes = marshaller.objectToByteBuffer(c1);
-      StateTransferControlCommand rc1 = (StateTransferControlCommand)marshaller.objectFromByteBuffer(bytes);
-      assert rc1.getCommandId() == c1.getCommandId() : "Writen[" + c1.getCommandId() + "] and read[" +  rc1.getCommandId() +"] objects should be the same";
-      assert Arrays.equals(rc1.getParameters(), c1.getParameters()) : "Writen[" + c1.getParameters() + "] and read[" +  rc1.getParameters() +"] objects should be the same";
-      
+      StateTransferControlCommand rc1 = (StateTransferControlCommand) marshaller.objectFromByteBuffer(bytes);
+      assert rc1.getCommandId() == c1.getCommandId() : "Writen[" + c1.getCommandId() + "] and read[" + rc1.getCommandId() + "] objects should be the same";
+      assert Arrays.equals(rc1.getParameters(), c1.getParameters()) : "Writen[" + c1.getParameters() + "] and read[" + rc1.getParameters() + "] objects should be the same";
+
       ClusteredGetCommand c2 = new ClusteredGetCommand("key", "mycache");
       marshallAndAssertEquality(c2);
-      
+
       // SizeCommand does not have an empty constructor, so doesn't look to be one that is marshallable.      
-      
+
       GetKeyValueCommand c4 = new GetKeyValueCommand("key", null);
       bytes = marshaller.objectToByteBuffer(c4);
-      GetKeyValueCommand rc4 = (GetKeyValueCommand)marshaller.objectFromByteBuffer(bytes);
-      assert rc4.getCommandId() == c4.getCommandId() : "Writen[" + c4.getCommandId() + "] and read[" +  rc4.getCommandId() +"] objects should be the same";
-      assert Arrays.equals(rc4.getParameters(), c4.getParameters()) : "Writen[" + c4.getParameters() + "] and read[" +  rc4.getParameters() +"] objects should be the same";
-      
+      GetKeyValueCommand rc4 = (GetKeyValueCommand) marshaller.objectFromByteBuffer(bytes);
+      assert rc4.getCommandId() == c4.getCommandId() : "Writen[" + c4.getCommandId() + "] and read[" + rc4.getCommandId() + "] objects should be the same";
+      assert Arrays.equals(rc4.getParameters(), c4.getParameters()) : "Writen[" + c4.getParameters() + "] and read[" + rc4.getParameters() + "] objects should be the same";
+
       PutKeyValueCommand c5 = new PutKeyValueCommand("k", "v", false, null, 0, 0);
       marshallAndAssertEquality(c5);
-      
+
       RemoveCommand c6 = new RemoveCommand("key", null, null);
       marshallAndAssertEquality(c6);
-      
+
       // EvictCommand does not have an empty constructor, so doesn't look to be one that is marshallable.
-      
+
       InvalidateCommand c7 = new InvalidateCommand(null, "key1", "key2");
       bytes = marshaller.objectToByteBuffer(c7);
-      InvalidateCommand rc7 = (InvalidateCommand)marshaller.objectFromByteBuffer(bytes);
-      assert rc7.getCommandId() == c7.getCommandId() : "Writen[" + c7.getCommandId() + "] and read[" +  rc7.getCommandId() +"] objects should be the same";
-      assert Arrays.equals(rc7.getParameters(), c7.getParameters()) : "Writen[" + c7.getParameters() + "] and read[" +  rc7.getParameters() +"] objects should be the same";
-      
+      InvalidateCommand rc7 = (InvalidateCommand) marshaller.objectFromByteBuffer(bytes);
+      assert rc7.getCommandId() == c7.getCommandId() : "Writen[" + c7.getCommandId() + "] and read[" + rc7.getCommandId() + "] objects should be the same";
+      assert Arrays.equals(rc7.getParameters(), c7.getParameters()) : "Writen[" + c7.getParameters() + "] and read[" + rc7.getParameters() + "] objects should be the same";
+
       ReplaceCommand c8 = new ReplaceCommand("key", "oldvalue", "newvalue", 0, 0);
       marshallAndAssertEquality(c8);
-      
+
       ClearCommand c9 = new ClearCommand();
       bytes = marshaller.objectToByteBuffer(c9);
-      ClearCommand rc9 = (ClearCommand)marshaller.objectFromByteBuffer(bytes);
-      assert rc9.getCommandId() == c9.getCommandId() : "Writen[" + c9.getCommandId() + "] and read[" +  rc9.getCommandId() +"] objects should be the same";
-      assert Arrays.equals(rc9.getParameters(), c9.getParameters()) : "Writen[" + c9.getParameters() + "] and read[" +  rc9.getParameters() +"] objects should be the same";
+      ClearCommand rc9 = (ClearCommand) marshaller.objectFromByteBuffer(bytes);
+      assert rc9.getCommandId() == c9.getCommandId() : "Writen[" + c9.getCommandId() + "] and read[" + rc9.getCommandId() + "] objects should be the same";
+      assert Arrays.equals(rc9.getParameters(), c9.getParameters()) : "Writen[" + c9.getParameters() + "] and read[" + rc9.getParameters() + "] objects should be the same";
 
       Map m1 = new HashMap();
       for (int i = 0; i < 10; i++) {
@@ -233,40 +224,40 @@ public class JBossMarshallerTest {
       }
       PutMapCommand c10 = new PutMapCommand(m1, null, 0, 0);
       marshallAndAssertEquality(c10);
-      
+
       Address local = new JGroupsAddress(new IpAddress(12345));
       GlobalTransaction gtx = GlobalTransaction.create(local);
       PrepareCommand c11 = new PrepareCommand(gtx, local, true, c5, c6, c8, c10);
       marshallAndAssertEquality(c11);
-      
+
       CommitCommand c12 = new CommitCommand(gtx);
       marshallAndAssertEquality(c12);
-      
+
       RollbackCommand c13 = new RollbackCommand(gtx);
       marshallAndAssertEquality(c13);
-      
-      MultipleRpcCommand c99 = new MultipleRpcCommand(Arrays.asList(new ReplicableCommand[] {c2, c5, c6, c8, c10, c12, c13}), "mycache");
+
+      MultipleRpcCommand c99 = new MultipleRpcCommand(Arrays.asList(new ReplicableCommand[]{c2, c5, c6, c8, c10, c12, c13}), "mycache");
       marshallAndAssertEquality(c99);
    }
-   
+
    public void testInternalCacheEntryMarshalling() throws Exception {
       ImmortalCacheEntry entry1 = (ImmortalCacheEntry) InternalEntryFactory.create("key", "value", System.currentTimeMillis() - 1000, -1, System.currentTimeMillis(), -1);
       marshallAndAssertEquality(entry1);
-      
-      MortalCacheEntry entry2 =  (MortalCacheEntry) InternalEntryFactory.create("key", "value", System.currentTimeMillis() - 1000, 200000, System.currentTimeMillis(), -1);
+
+      MortalCacheEntry entry2 = (MortalCacheEntry) InternalEntryFactory.create("key", "value", System.currentTimeMillis() - 1000, 200000, System.currentTimeMillis(), -1);
       marshallAndAssertEquality(entry2);
-      
+
       TransientCacheEntry entry3 = (TransientCacheEntry) InternalEntryFactory.create("key", "value", System.currentTimeMillis() - 1000, -1, System.currentTimeMillis(), 4000000);
       marshallAndAssertEquality(entry3);
-      
+
       TransientMortalCacheEntry entry4 = (TransientMortalCacheEntry) InternalEntryFactory.create("key", "value", System.currentTimeMillis() - 1000, 200000, System.currentTimeMillis(), 4000000);
-      marshallAndAssertEquality(entry4);      
+      marshallAndAssertEquality(entry4);
    }
-   
+
    protected void marshallAndAssertEquality(Object writeObj) throws Exception {
       byte[] bytes = marshaller.objectToByteBuffer(writeObj);
       Object readObj = marshaller.objectFromByteBuffer(bytes);
-      assert readObj.equals(writeObj) : "Writen[" + writeObj + "] and read[" +  readObj +"] objects should be the same";
+      assert readObj.equals(writeObj) : "Writen[" + writeObj + "] and read[" + readObj + "] objects should be the same";
    }
-   
+
 }

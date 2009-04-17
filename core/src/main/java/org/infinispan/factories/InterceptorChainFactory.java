@@ -93,6 +93,10 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          case INVALIDATION_ASYNC:
             interceptorChain.appendIntereceptor(createInterceptor(InvalidationInterceptor.class));
             break;
+         case DIST_SYNC:
+         case DIST_ASYNC:
+            interceptorChain.appendIntereceptor(createInterceptor(DistributionInterceptor.class));
+            break;
          case LOCAL:
             //Nothing...
       }
@@ -107,7 +111,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          }
       }
       interceptorChain.appendIntereceptor(createInterceptor(LockingInterceptor.class));
-      
+
       CommandInterceptor callInterceptor = createInterceptor(CallInterceptor.class);
       interceptorChain.appendIntereceptor(callInterceptor);
       if (log.isTraceEnabled()) log.trace("Finished building default interceptor chain.");

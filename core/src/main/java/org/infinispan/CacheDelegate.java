@@ -45,8 +45,8 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.NonVolatile;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.invocation.InvocationContextContainer;
 import org.infinispan.invocation.Flag;
+import org.infinispan.invocation.InvocationContextContainer;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.logging.Log;
 import org.infinispan.logging.LogFactory;
@@ -55,6 +55,7 @@ import org.infinispan.marshall.MarshalledValue;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.RpcManager;
+import org.infinispan.remoting.responses.ResponseGenerator;
 import org.infinispan.statetransfer.StateTransferManager;
 
 import javax.transaction.Transaction;
@@ -89,6 +90,8 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
    private CacheManager cacheManager;
    // this is never used here but should be injected - this is a hack to make sure the StateTransferManager is properly constructed if needed.
    private StateTransferManager stateTransferManager;
+   // as above for ResponseGenerator
+   private ResponseGenerator responseGenerator;
    private long defaultLifespan, defaultMaxIdleTime;
 
    public CacheDelegate(String name) {
@@ -106,7 +109,7 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
                                   TransactionManager transactionManager,
                                   BatchContainer batchContainer,
                                   RpcManager rpcManager, DataContainer dataContainer,
-                                  Marshaller marshaller,
+                                  Marshaller marshaller, ResponseGenerator responseGenerator,
                                   CacheManager cacheManager, StateTransferManager stateTransferManager) {
       this.invocationContextContainer = invocationContextContainer;
       this.commandsFactory = commandsFactory;
@@ -121,6 +124,7 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
       this.dataContainer = dataContainer;
       this.marshaller = marshaller;
       this.cacheManager = cacheManager;
+      this.responseGenerator = responseGenerator;
       this.stateTransferManager = stateTransferManager;
    }
 

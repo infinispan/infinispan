@@ -19,46 +19,46 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.marshall.jboss;
+package org.infinispan.marshall.jboss.externalizers;
+
+import net.jcip.annotations.Immutable;
+import org.infinispan.remoting.responses.ExtendedResponse;
+import org.infinispan.remoting.responses.Response;
+import org.jboss.marshalling.Creator;
+import org.jboss.marshalling.Externalizer;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.Collection;
-
-import net.jcip.annotations.Immutable;
-
-import org.jboss.marshalling.Creator;
-import org.jboss.marshalling.Externalizer;
 
 /**
- * List externalizer dealing with ArrayList and LinkedList implementations.
- * 
+ * ExtendedResponseExternalizer.
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */
 @Immutable
-public class ArrayListExternalizer implements Externalizer {
-
-   /** The serialVersionUID */
-   private static final long serialVersionUID = 589638638644295615L;
+public class ExtendedResponseExternalizer implements Externalizer {
+   /**
+    * The serialVersionUID
+    */
+   private static final long serialVersionUID = 1529506931234856884L;
 
    public void writeExternal(Object subject, ObjectOutput output) throws IOException {
-      MarshallUtil.marshallCollection((Collection) subject, output);
+      ExtendedResponse er = (ExtendedResponse) subject;
+      output.writeBoolean(er.isReplayIgnoredRequests());
+      output.writeObject(er.getResponse());
    }
 
-   public Object createExternal(Class<?> subjectType, ObjectInput input, Creator defaultCreator) 
-            throws IOException, ClassNotFoundException {
-      int size = MarshallUtil.readUnsignedInt(input);
-      ArrayList l = new ArrayList(size);
-      for (int i = 0; i < size; i++) l.add(input.readObject());
-      return l;
+   public Object createExternal(Class<?> subjectType, ObjectInput input, Creator defaultCreator)
+         throws IOException, ClassNotFoundException {
+      boolean replayIgnoredRequests = input.readBoolean();
+      Response response = (Response) input.readObject();
+      return new ExtendedResponse(response, replayIgnoredRequests);
    }
 
    public void readExternal(Object subject, ObjectInput input) throws IOException,
-            ClassNotFoundException {
-      // No-op since size was needed both for the creation and list population, 
-      // so all the work was done in createExternal 
+                                                                      ClassNotFoundException {
+      // No-op
    }
 }

@@ -28,7 +28,7 @@ public class AsyncReplTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       Configuration asyncConfiguration = getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC);
       asyncConfiguration.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
-      List<Cache> caches = createClusteredCaches(2, "asyncRepl", asyncConfiguration);
+      List<Cache<Object, Object>> caches = createClusteredCaches(2, "asyncRepl", asyncConfiguration);
       cache1 = caches.get(0);
       cache2 = caches.get(1);
    }

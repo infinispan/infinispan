@@ -19,29 +19,31 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.marshall.jboss;
+package org.infinispan.marshall.jboss.externalizers;
+
+import net.jcip.annotations.Immutable;
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.marshall.jboss.MarshallUtil;
+import org.jboss.marshalling.Creator;
+import org.jboss.marshalling.Externalizer;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-import net.jcip.annotations.Immutable;
-
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.InternalEntryFactory;
-import org.jboss.marshalling.Creator;
-import org.jboss.marshalling.Externalizer;
-
 /**
  * InternalCachedEntryExternalizer.
- * 
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */
 @Immutable
 public class InternalCachedEntryExternalizer implements Externalizer {
 
-   /** The serialVersionUID */
+   /**
+    * The serialVersionUID
+    */
    private static final long serialVersionUID = -3475239737916428837L;
 
    public void writeExternal(Object subject, ObjectOutput output) throws IOException {
@@ -59,8 +61,8 @@ public class InternalCachedEntryExternalizer implements Externalizer {
       }
    }
 
-   public Object createExternal(Class<?> subjectType, ObjectInput input, Creator defaultCreator) 
-            throws IOException, ClassNotFoundException {
+   public Object createExternal(Class<?> subjectType, ObjectInput input, Creator defaultCreator)
+         throws IOException, ClassNotFoundException {
       Object k = input.readObject();
       Object v = input.readObject();
       boolean canExpire = input.readBoolean();
@@ -76,7 +78,7 @@ public class InternalCachedEntryExternalizer implements Externalizer {
    }
 
    public void readExternal(Object subject, ObjectInput input) throws IOException,
-            ClassNotFoundException {
+                                                                      ClassNotFoundException {
       // No-op
    }
 }

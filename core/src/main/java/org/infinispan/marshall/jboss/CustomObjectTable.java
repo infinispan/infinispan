@@ -21,44 +21,43 @@
  */
 package org.infinispan.marshall.jboss;
 
+import net.jcip.annotations.Immutable;
+import org.infinispan.remoting.responses.RequestIgnoredResponse;
+import org.jboss.marshalling.Marshaller;
+import org.jboss.marshalling.ObjectTable;
+import org.jboss.marshalling.Unmarshaller;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
-import net.jcip.annotations.Immutable;
-
-import org.infinispan.remoting.transport.jgroups.RequestIgnoredResponse;
-import org.jboss.marshalling.Marshaller;
-import org.jboss.marshalling.ObjectTable;
-import org.jboss.marshalling.Unmarshaller;
-
 /**
  * CustomObjectTable.
- * 
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */
 public class CustomObjectTable implements ObjectTable {
-   
+
    private final List<Object> objects = new ArrayList<Object>();
    private final Map<Object, Writer> writers = new IdentityHashMap<Object, Writer>();
    private byte index;
-   
+
    public void init() {
       objects.add(RequestIgnoredResponse.INSTANCE);
       writers.put(RequestIgnoredResponse.INSTANCE, new CustomObjectWriter(index++));
    }
-   
+
    public void stop() {
       writers.clear();
       objects.clear();
    }
-   
+
    public void add(Object o) {
       objects.add(o);
-      writers.put(o, new CustomObjectWriter(index++));      
+      writers.put(o, new CustomObjectWriter(index++));
    }
 
    public Writer getObjectWriter(Object o) throws IOException {
@@ -76,9 +75,9 @@ public class CustomObjectTable implements ObjectTable {
       CustomObjectWriter(byte objectId) {
          this.id = objectId;
       }
-      
+
       public void writeObject(Marshaller marshaller, Object object) throws IOException {
          marshaller.write(id);
-      }      
+      }
    }
 }

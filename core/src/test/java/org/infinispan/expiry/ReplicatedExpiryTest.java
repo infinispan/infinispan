@@ -1,11 +1,11 @@
 package org.infinispan.expiry;
 
 import org.infinispan.Cache;
+import org.infinispan.config.Configuration;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.infinispan.container.entries.MortalCacheEntry;
 import org.infinispan.container.entries.TransientCacheEntry;
-import org.infinispan.config.Configuration;
+import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
@@ -19,7 +19,7 @@ public class ReplicatedExpiryTest extends MultipleCacheManagersTest {
 
    protected void createCacheManagers() throws Throwable {
       Configuration cfg = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
-      List<Cache> caches = createClusteredCaches(2, "cache", cfg);
+      List<Cache<Object, Object>> caches = createClusteredCaches(2, "cache", cfg);
       c1 = caches.get(0);
       c2 = caches.get(1);
    }

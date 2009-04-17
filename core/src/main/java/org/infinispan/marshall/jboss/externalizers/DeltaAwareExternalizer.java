@@ -19,50 +19,43 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.marshall.jboss;
+package org.infinispan.marshall.jboss.externalizers;
+
+import net.jcip.annotations.Immutable;
+import org.infinispan.atomic.DeltaAware;
+import org.jboss.marshalling.Creator;
+import org.jboss.marshalling.Externalizer;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Collection;
-import java.util.Set;
-
-import net.jcip.annotations.Immutable;
-
-import org.infinispan.CacheException;
-import org.infinispan.util.Util;
-import org.jboss.marshalling.Creator;
-import org.jboss.marshalling.Externalizer;
 
 /**
- * Set externalizer for all set implementations, i.e. HashSet and TreeSet
- * 
+ * DeltaAwareExternalizer.
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */
 @Immutable
-public class SetExternalizer implements Externalizer {
-   
-   /** The serialVersionUID */
-   private static final long serialVersionUID = -3147427397000304867L;
+public class DeltaAwareExternalizer implements Externalizer {
+
+   /**
+    * The serialVersionUID
+    */
+   private static final long serialVersionUID = -1635913024455984627L;
 
    public void writeExternal(Object subject, ObjectOutput output) throws IOException {
-      MarshallUtil.marshallCollection((Collection) subject, output);
+      DeltaAware dw = (DeltaAware) subject;
+      output.writeObject(dw.delta());
    }
-   
-   public Object createExternal(Class<?> subjectType, ObjectInput input, Creator defaultCreator) 
-            throws IOException, ClassNotFoundException {
-      try {
-         return Util.getInstance(subjectType);        
-      } catch(Exception e) {
-         throw new CacheException("Unable to create new instance of ReplicableCommand", e);
-      }
+
+   public Object createExternal(Class<?> subjectType, ObjectInput input, Creator defaultCreator)
+         throws IOException, ClassNotFoundException {
+      return input.readObject();
    }
-   
+
    public void readExternal(Object subject, ObjectInput input) throws IOException,
-            ClassNotFoundException {
-      Set set = (Set) subject;
-      int size = MarshallUtil.readUnsignedInt(input);
-      for (int i = 0; i < size; i++) set.add(input.readObject());
+                                                                      ClassNotFoundException {
+      // No-op
    }
 }

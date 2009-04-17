@@ -41,7 +41,7 @@ public class ReplicationExceptionTest extends MultipleCacheManagersTest {
       configuration.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
       configuration.setLockAcquisitionTimeout(5000);
 
-      List<Cache> caches = createClusteredCaches(2, "replicatinExceptionTest", configuration);
+      List<Cache<Object, Object>> caches = createClusteredCaches(2, "replicatinExceptionTest", configuration);
 
       cache1 = caches.get(0).getAdvancedCache();
       cache2 = caches.get(1).getAdvancedCache();

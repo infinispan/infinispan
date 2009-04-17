@@ -177,8 +177,10 @@ public class XmlConfigurationParserImpl extends XmlParserBase implements XmlConf
          cacheMode = Configuration.CacheMode.REPL_SYNC;
       else if (mode.startsWith("I"))
          cacheMode = Configuration.CacheMode.INVALIDATION_SYNC;
+      else if (mode.startsWith("D"))
+         throw new ConfigurationException("DIST is unsupported in this release.  Please use REPL or INVAL.");
       else
-         cacheMode = Configuration.CacheMode.DIST_SYNC; // the default
+         cacheMode = Configuration.CacheMode.REPL_SYNC; // the default
 
       Element asyncEl = getSingleElementInCoreNS("async", e);
       Element syncEl = getSingleElementInCoreNS("sync", e);
@@ -213,7 +215,7 @@ public class XmlConfigurationParserImpl extends XmlParserBase implements XmlConf
          tmp = getAttributeValue(hash, "rehashWait");
          if (existsAttribute(tmp)) config.setRehashWaitTime(getLong(tmp));
 
-         config.setFetchInMemoryState(false);         
+         config.setFetchInMemoryState(false);
 
          // sanity check against the presence of a stateRetrieval element
          Element ste = null;
@@ -306,7 +308,7 @@ public class XmlConfigurationParserImpl extends XmlParserBase implements XmlConf
          String enabled = getAttributeValue(element, "enabled");
          if (existsAttribute(enabled)) {
             config.setExposeJmxStatistics(getBoolean(enabled));
-         } 
+         }
       }
    }
 

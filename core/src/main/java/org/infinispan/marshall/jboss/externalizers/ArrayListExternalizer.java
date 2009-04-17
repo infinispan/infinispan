@@ -19,42 +19,48 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.marshall.jboss;
+package org.infinispan.marshall.jboss.externalizers;
+
+import net.jcip.annotations.Immutable;
+import org.infinispan.marshall.jboss.MarshallUtil;
+import org.jboss.marshalling.Creator;
+import org.jboss.marshalling.Externalizer;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-
-import net.jcip.annotations.Immutable;
-
-import org.infinispan.atomic.DeltaAware;
-import org.jboss.marshalling.Creator;
-import org.jboss.marshalling.Externalizer;
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
- * DeltaAwareExternalizer.
- * 
+ * List externalizer dealing with ArrayList and LinkedList implementations.
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */
 @Immutable
-public class DeltaAwareExternalizer implements Externalizer {
+public class ArrayListExternalizer implements Externalizer {
 
-   /** The serialVersionUID */
-   private static final long serialVersionUID = -1635913024455984627L;
+   /**
+    * The serialVersionUID
+    */
+   private static final long serialVersionUID = 589638638644295615L;
 
    public void writeExternal(Object subject, ObjectOutput output) throws IOException {
-      DeltaAware dw = (DeltaAware) subject;
-      output.writeObject(dw.delta());
+      MarshallUtil.marshallCollection((Collection) subject, output);
    }
 
-   public Object createExternal(Class<?> subjectType, ObjectInput input, Creator defaultCreator) 
-            throws IOException, ClassNotFoundException {
-      return input.readObject();
+   public Object createExternal(Class<?> subjectType, ObjectInput input, Creator defaultCreator)
+         throws IOException, ClassNotFoundException {
+      int size = MarshallUtil.readUnsignedInt(input);
+      ArrayList l = new ArrayList(size);
+      for (int i = 0; i < size; i++) l.add(input.readObject());
+      return l;
    }
 
    public void readExternal(Object subject, ObjectInput input) throws IOException,
-            ClassNotFoundException {
-      // No-op
+                                                                      ClassNotFoundException {
+      // No-op since size was needed both for the creation and list population, 
+      // so all the work was done in createExternal 
    }
 }

@@ -1,6 +1,7 @@
 package org.infinispan.remoting.transport.jgroups;
 
 import org.infinispan.remoting.ResponseFilter;
+import org.infinispan.remoting.responses.Response;
 import org.jgroups.Address;
 import org.jgroups.blocks.RspFilter;
 
@@ -24,7 +25,7 @@ public class JGroupsResponseFilterAdapter implements RspFilter {
    }
 
    public boolean isAcceptable(Object response, Address sender) {
-      return r.isAcceptable(response, new JGroupsAddress(sender));
+      return r.isAcceptable((Response) response, new JGroupsAddress(sender));
    }
 
    public boolean needMoreResponses() {

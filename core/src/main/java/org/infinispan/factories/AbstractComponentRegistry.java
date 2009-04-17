@@ -67,7 +67,8 @@ import java.util.Stack;
  * The registry can exist in one of several states, as defined by the {@link org.infinispan.lifecycle.ComponentStatus}
  * enumeration. In terms of the cache, state changes in the following manner: <ul> <li>INSTANTIATED - when first
  * constructed</li> <li>CONSTRUCTED - when created using the DefaultCacheFactory</li> <li>STARTED - when {@link
- * org.infinispan.Cache#start()} is called</li> <li>STOPPED - when {@link org.infinispan.Cache#stop()} is called</li> </ul>
+ * org.infinispan.Cache#start()} is called</li> <li>STOPPED - when {@link org.infinispan.Cache#stop()} is called</li>
+ * </ul>
  * <p/>
  * Cache configuration can only be changed and will only be reinjected if the cache is not in the {@link
  * org.infinispan.lifecycle.ComponentStatus#RUNNING} state.
@@ -79,7 +80,7 @@ import java.util.Stack;
 @Scope(Scopes.NAMED_CACHE)
 public abstract class AbstractComponentRegistry implements Lifecycle {
 
-   // Be careful when changing this to 'true'.  It should *never* go into the code repo with this flag set to 'true'!
+   // TODO remove this debug code as it is HUGELY inefficient 
    private static final boolean DEBUG_DEPENDENCIES = true;
    private Stack<String> debugStack = DEBUG_DEPENDENCIES ? new Stack<String>() : null;
 
@@ -153,6 +154,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle {
       s.add(NamedExecutorsFactory.class);
       s.add(TransportFactory.class);
       s.add(MarshallerFactory.class);
+      s.add(ResponseGeneratorFactory.class);
       return s;
    }
 
@@ -585,8 +587,9 @@ public abstract class AbstractComponentRegistry implements Lifecycle {
    }
 
    /**
-    * Stops the cache and sets the cache status to {@link org.infinispan.lifecycle.ComponentStatus#TERMINATED} once it is
-    * done.  If the cache is not in the {@link org.infinispan.lifecycle.ComponentStatus#RUNNING} state, this is a no-op.
+    * Stops the cache and sets the cache status to {@link org.infinispan.lifecycle.ComponentStatus#TERMINATED} once it
+    * is done.  If the cache is not in the {@link org.infinispan.lifecycle.ComponentStatus#RUNNING} state, this is a
+    * no-op.
     */
    public void stop() {
       if (!state.stopAllowed()) {
@@ -615,8 +618,8 @@ public abstract class AbstractComponentRegistry implements Lifecycle {
     * Destroys the cache and frees up any resources.  Sets the cache status to {@link
     * org.infinispan.lifecycle.ComponentStatus#TERMINATED} when it is done.
     * <p/>
-    * If the cache is in {@link org.infinispan.lifecycle.ComponentStatus#RUNNING} when this method is called, it will first
-    * call {@link #stop()} to stop the cache.
+    * If the cache is in {@link org.infinispan.lifecycle.ComponentStatus#RUNNING} when this method is called, it will
+    * first call {@link #stop()} to stop the cache.
     */
    private void destroy() {
       try {
@@ -728,8 +731,8 @@ public abstract class AbstractComponentRegistry implements Lifecycle {
     * org.infinispan.lifecycle.ComponentStatus#INITIALIZING}, this method will block for up to {@link
     * Configuration#getStateRetrievalTimeout()} millis, checking for a valid state.
     *
-    * @param originLocal true if the call originates locally (i.e., from the {@link org.infinispan.CacheDelegate} or false
-    *                    if it originates remotely, i.e., from the {@link org.infinispan.remoting.InboundInvocationHandler}.
+    * @param originLocal true if the call originates locally (i.e., from the {@link org.infinispan.CacheDelegate} or
+    *                    false if it originates remotely, i.e., from the {@link org.infinispan.remoting.InboundInvocationHandler}.
     * @return true if invocations are allowed, false otherwise.
     */
    public boolean invocationsAllowed(boolean originLocal) {

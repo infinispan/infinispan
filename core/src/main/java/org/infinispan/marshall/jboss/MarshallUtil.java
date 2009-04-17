@@ -21,6 +21,8 @@
  */
 package org.infinispan.marshall.jboss;
 
+import net.jcip.annotations.Immutable;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -28,15 +30,14 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-import net.jcip.annotations.Immutable;
-
 /**
  * MarshallUtil.
- * 
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */
 @Immutable
+@SuppressWarnings("unchecked")
 public class MarshallUtil {
 
    /**
@@ -45,7 +46,7 @@ public class MarshallUtil {
     *
     * @param i int to write
     */
-   protected static void writeUnsignedInt(ObjectOutput out, int i) throws IOException {
+   public static void writeUnsignedInt(ObjectOutput out, int i) throws IOException {
       while ((i & ~0x7F) != 0) {
          out.writeByte((byte) ((i & 0x7f) | 0x80));
          i >>>= 7;
@@ -57,7 +58,7 @@ public class MarshallUtil {
     * Reads an int stored in variable-length format.  Reads between one and five bytes.  Smaller values take fewer
     * bytes.  Negative numbers are not supported.
     */
-   protected static int readUnsignedInt(ObjectInput in) throws IOException {
+   public static int readUnsignedInt(ObjectInput in) throws IOException {
       byte b = in.readByte();
       int i = b & 0x7F;
       for (int shift = 7; (b & 0x80) != 0; shift += 7) {
@@ -66,15 +67,15 @@ public class MarshallUtil {
       }
       return i;
    }
-   
-   protected static void marshallCollection(Collection c, ObjectOutput out) throws IOException {
+
+   public static void marshallCollection(Collection c, ObjectOutput out) throws IOException {
       writeUnsignedInt(out, c.size());
       for (Object o : c) {
          out.writeObject(o);
       }
    }
-   
-   protected static void marshallMap(Map map, ObjectOutput out) throws IOException {
+
+   public static void marshallMap(Map map, ObjectOutput out) throws IOException {
       int mapSize = map.size();
       writeUnsignedInt(out, mapSize);
       if (mapSize == 0) return;
@@ -84,8 +85,8 @@ public class MarshallUtil {
          out.writeObject(me.getValue());
       }
    }
-   
-   protected static void unmarshallMap(Map map, ObjectInput in) throws IOException, ClassNotFoundException{
+
+   public static void unmarshallMap(Map map, ObjectInput in) throws IOException, ClassNotFoundException {
       int size = MarshallUtil.readUnsignedInt(in);
       for (int i = 0; i < size; i++) map.put(in.readObject(), in.readObject());
    }
@@ -96,7 +97,7 @@ public class MarshallUtil {
     *
     * @param i int to write
     */
-   protected static void writeUnsignedLong(ObjectOutput out, long i) throws IOException {
+   public static void writeUnsignedLong(ObjectOutput out, long i) throws IOException {
       while ((i & ~0x7F) != 0) {
          out.writeByte((byte) ((i & 0x7f) | 0x80));
          i >>>= 7;
@@ -108,7 +109,7 @@ public class MarshallUtil {
     * Reads a long stored in variable-length format.  Reads between one and nine bytes.  Smaller values take fewer
     * bytes.  Negative numbers are not supported.
     */
-   protected static long readUnsignedLong(ObjectInput in) throws IOException {
+   public static long readUnsignedLong(ObjectInput in) throws IOException {
       byte b = in.readByte();
       long i = b & 0x7F;
       for (int shift = 7; (b & 0x80) != 0; shift += 7) {
@@ -116,5 +117,5 @@ public class MarshallUtil {
          i |= (b & 0x7FL) << shift;
       }
       return i;
-   }   
+   }
 }

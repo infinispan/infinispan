@@ -19,43 +19,50 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.marshall.jboss;
+package org.infinispan.marshall.jboss.externalizers;
+
+import net.jcip.annotations.Immutable;
+import org.infinispan.CacheException;
+import org.infinispan.marshall.jboss.MarshallUtil;
+import org.infinispan.util.Util;
+import org.jboss.marshalling.Creator;
+import org.jboss.marshalling.Externalizer;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-
-import net.jcip.annotations.Immutable;
-
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
-import org.jboss.marshalling.Creator;
-import org.jboss.marshalling.Externalizer;
+import java.util.Map;
 
 /**
- * JGroupsAddressExternalizer.
- * 
+ * Map externalizer for all map implementations except immutable maps and singleton maps, i.e. FastCopyHashMap, HashMap,
+ * TreeMap.
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */
 @Immutable
-public class JGroupsAddressExternalizer implements Externalizer {
+public class MapExternalizer implements Externalizer {
 
-   /** The serialVersionUID */
-   private static final long serialVersionUID = 2400716389425727329L;
+   /**
+    * The serialVersionUID
+    */
+   private static final long serialVersionUID = -532896252671303391L;
 
    public void writeExternal(Object subject, ObjectOutput output) throws IOException {
-      JGroupsAddress address = (JGroupsAddress) subject;
-      address.writeExternal(output);
+      MarshallUtil.marshallMap((Map) subject, output);
    }
 
-   public Object createExternal(Class<?> subjectType, ObjectInput input, Creator defaultCreator) 
-            throws IOException, ClassNotFoundException {
-      return new JGroupsAddress();
+   public Object createExternal(Class<?> subjectType, ObjectInput input, Creator defaultCreator)
+         throws IOException, ClassNotFoundException {
+      try {
+         return Util.getInstance(subjectType);
+      } catch (Exception e) {
+         throw new CacheException("Unable to create new instance of ReplicableCommand", e);
+      }
    }
 
    public void readExternal(Object subject, ObjectInput input) throws IOException,
-            ClassNotFoundException {
-      JGroupsAddress address = (JGroupsAddress) subject;
-      address.readExternal(input);
+                                                                      ClassNotFoundException {
+      MarshallUtil.unmarshallMap((Map) subject, input);
    }
 }

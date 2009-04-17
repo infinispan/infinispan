@@ -19,41 +19,42 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.marshall.jboss;
-
-import java.io.IOException;
-import java.io.ObjectInput;
+package org.infinispan.marshall.jboss.externalizers;
 
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.remoting.RpcManager;
 import org.jboss.marshalling.Creator;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+
 /**
  * StateTransferControlCommandExternalizer.
- * 
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */
 public class StateTransferControlCommandExternalizer extends ReplicableCommandExternalizer {
-   
-   /** The serialVersionUID */
+
+   /**
+    * The serialVersionUID
+    */
    private static final long serialVersionUID = -3743458410265076691L;
-   
+
    private RpcManager rpcManager;
 
    public void init(RpcManager rpcManager) {
       this.rpcManager = rpcManager;
    }
-   
+
    /**
-    * In this case, subjectType will contain the class name of the ReplicableCommand subclass to 
-    * create. 
-    * 
-    * Note that StateTransferControlCommand might need to be treated differently!!! 
-    * Todo: check outcome of email sent to dev list.
+    * In this case, subjectType will contain the class name of the ReplicableCommand subclass to create.
+    * <p/>
+    * Note that StateTransferControlCommand might need to be treated differently!!! Todo: check outcome of email sent to
+    * dev list.
     */
-   public Object createExternal(Class<?> subjectType, ObjectInput input, Creator defaultCreator) 
-            throws IOException, ClassNotFoundException {
+   public Object createExternal(Class<?> subjectType, ObjectInput input, Creator defaultCreator)
+         throws IOException, ClassNotFoundException {
       StateTransferControlCommand command = new StateTransferControlCommand();
       command.init(rpcManager);
       return command;

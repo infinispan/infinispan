@@ -136,6 +136,10 @@ public class CommandsFactoryImpl implements CommandsFactory {
       return new StateTransferControlCommand(block);
    }
 
+   public ClusteredGetCommand buildClusteredGetCommand(Object key) {
+      return new ClusteredGetCommand(key, cache.getName());
+   }
+
    public void initializeReplicableCommand(ReplicableCommand c) {
       if (c == null) return;
       switch (c.getCommandId()) {
@@ -160,7 +164,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
             SingleRpcCommand src = (SingleRpcCommand) c;
             src.setInterceptorChain(interceptorChain);
             if (src.getCommand() != null)
-                  initializeReplicableCommand(src.getCommand());
+               initializeReplicableCommand(src.getCommand());
 
             break;
          case InvalidateCommand.COMMAND_ID:

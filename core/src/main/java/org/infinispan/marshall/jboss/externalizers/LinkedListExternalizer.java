@@ -19,42 +19,49 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.marshall.jboss;
+package org.infinispan.marshall.jboss.externalizers;
+
+import net.jcip.annotations.Immutable;
+import org.infinispan.marshall.jboss.MarshallUtil;
+import org.jboss.marshalling.Creator;
+import org.jboss.marshalling.Externalizer;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-
-import net.jcip.annotations.Immutable;
-
-import org.infinispan.marshall.MarshalledValue;
-import org.jboss.marshalling.Creator;
-import org.jboss.marshalling.Externalizer;
+import java.util.Collection;
+import java.util.LinkedList;
 
 /**
- * MarshalledValueExternalizer.
- * 
+ * LinkedListExternalizer.
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */
 @Immutable
-public class MarshalledValueExternalizer implements Externalizer {
+public class LinkedListExternalizer implements Externalizer {
 
-   /** The serialVersionUID */
-   private static final long serialVersionUID = 8473423584918714661L;
+   /**
+    * The serialVersionUID
+    */
+   private static final long serialVersionUID = -3222803557498456230L;
 
    public void writeExternal(Object subject, ObjectOutput output) throws IOException {
-      ((MarshalledValue) subject).writeExternal(output);
+      MarshallUtil.marshallCollection((Collection) subject, output);
    }
-   
-   public Object createExternal(Class<?> subjectType, ObjectInput input, Creator defaultCreator) 
-            throws IOException, ClassNotFoundException {
-      return new MarshalledValue();
+
+   public Object createExternal(Class<?> subjectType, ObjectInput input, Creator defaultCreator)
+         throws IOException, ClassNotFoundException {
+      int size = MarshallUtil.readUnsignedInt(input);
+      LinkedList l = new LinkedList();
+      for (int i = 0; i < size; i++) l.add(input.readObject());
+      return l;
    }
-   
+
    public void readExternal(Object subject, ObjectInput input) throws IOException,
-            ClassNotFoundException {
-      ((MarshalledValue) subject).readExternal(input);
+                                                                      ClassNotFoundException {
+      // No-op since size was needed both for the creation and list population, 
+      // so work was done in createExternal 
    }
-   
+
 }

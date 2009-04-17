@@ -10,10 +10,11 @@ import static org.easymock.EasyMock.*;
 import org.infinispan.Cache;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.config.Configuration;
-import org.infinispan.remoting.RpcManager;
-import org.infinispan.remoting.RpcManagerImpl;
 import org.infinispan.remoting.ResponseFilter;
 import org.infinispan.remoting.ResponseMode;
+import org.infinispan.remoting.RpcManager;
+import org.infinispan.remoting.RpcManagerImpl;
+import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -119,6 +120,7 @@ public class SyncReplTest extends MultipleCacheManagersTest {
    public void testMixingSyncAndAsyncOnSameTransport() throws Exception {
       Transport originalTransport = null;
       RpcManagerImpl rpcManager = null;
+      List<Response> emptyResponses = Collections.emptyList();
       try {
          Configuration asyncCache = getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC);
          defineCacheOnAllManagers("asyncCache", asyncCache);
@@ -142,7 +144,7 @@ public class SyncReplTest extends MultipleCacheManagersTest {
 
          expect(mockTransport.invokeRemotely((List<Address>) anyObject(), (CacheRpcCommand) anyObject(), eq(ResponseMode.SYNCHRONOUS),
                                              anyLong(), anyBoolean(), (ResponseFilter) anyObject(), anyBoolean()))
-               .andReturn(Collections.emptyList()).once();
+               .andReturn(emptyResponses).once();
 
          replay(mockTransport);
          // check that the replication call was sync
@@ -154,7 +156,7 @@ public class SyncReplTest extends MultipleCacheManagersTest {
          expect(mockTransport.getMembers()).andReturn(addresses).anyTimes();
          expect(mockTransport.invokeRemotely((List<Address>) anyObject(), (CacheRpcCommand) anyObject(), eq(ResponseMode.ASYNCHRONOUS),
                                              anyLong(), anyBoolean(), (ResponseFilter) anyObject(), anyBoolean()))
-               .andReturn(Collections.emptyList()).once();
+               .andReturn(emptyResponses).once();
 
          replay(mockTransport);
          asyncCache1.put("k", "v");

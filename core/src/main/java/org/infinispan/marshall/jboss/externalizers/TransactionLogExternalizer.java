@@ -19,48 +19,54 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.marshall.jboss;
+package org.infinispan.marshall.jboss.externalizers;
+
+import net.jcip.annotations.Immutable;
+import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.marshall.jboss.MarshallUtil;
+import org.infinispan.transaction.GlobalTransaction;
+import org.infinispan.transaction.TransactionLog;
+import org.jboss.marshalling.Creator;
+import org.jboss.marshalling.Externalizer;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-import net.jcip.annotations.Immutable;
-
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.transaction.GlobalTransaction;
-import org.jboss.marshalling.Creator;
-import org.jboss.marshalling.Externalizer;
-
 /**
- * GlobalTransactionExternalizer.
- * 
+ * TransactionLogExternalizer.
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */
 @Immutable
-public class GlobalTransactionExternalizer implements Externalizer {
+public class TransactionLogExternalizer implements Externalizer {
 
-   /** The serialVersionUID */
-   private static final long serialVersionUID = -8677909497367726531L;
+   /**
+    * The serialVersionUID
+    */
+   private static final long serialVersionUID = -7341096933735222157L;
 
    public void writeExternal(Object subject, ObjectOutput output) throws IOException {
-      GlobalTransaction gtx = (GlobalTransaction) subject;
-      output.writeLong(gtx.getId());
-      output.writeObject(gtx.getAddress());
+      TransactionLog.LogEntry le = (TransactionLog.LogEntry) subject;
+      output.writeObject(le.getTransaction());
+      WriteCommand[] cmds = le.getModifications();
+      MarshallUtil.writeUnsignedInt(output, cmds.length);
+      for (WriteCommand c : cmds)
+         output.writeObject(c);
    }
 
    public Object createExternal(Class<?> subjectType, ObjectInput input, Creator defaultCreator)
-            throws IOException, ClassNotFoundException {
-      return new GlobalTransaction();
+         throws IOException, ClassNotFoundException {
+      GlobalTransaction gtx = (GlobalTransaction) input.readObject();
+      int numCommands = MarshallUtil.readUnsignedInt(input);
+      WriteCommand[] cmds = new WriteCommand[numCommands];
+      for (int i = 0; i < numCommands; i++) cmds[i] = (WriteCommand) input.readObject();
+      return new TransactionLog.LogEntry(gtx, cmds);
    }
 
    public void readExternal(Object subject, ObjectInput input) throws IOException,
-            ClassNotFoundException {
-      GlobalTransaction gtx = (GlobalTransaction) subject;
-      long id = input.readLong();
-      Object address = input.readObject();
-      gtx.setId(id);
-      gtx.setAddress((Address) address);
+                                                                      ClassNotFoundException {
+      // No-op since the initialisation the creation and read happens during the create phase.
    }
 }

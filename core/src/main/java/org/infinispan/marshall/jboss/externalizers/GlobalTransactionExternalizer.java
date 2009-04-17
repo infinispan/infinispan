@@ -19,48 +19,49 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.marshall.jboss;
+package org.infinispan.marshall.jboss.externalizers;
+
+import net.jcip.annotations.Immutable;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.transaction.GlobalTransaction;
+import org.jboss.marshalling.Creator;
+import org.jboss.marshalling.Externalizer;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Map;
-
-import net.jcip.annotations.Immutable;
-
-import org.infinispan.CacheException;
-import org.infinispan.util.Util;
-import org.jboss.marshalling.Creator;
-import org.jboss.marshalling.Externalizer;
 
 /**
- * Map externalizer for all map implementations except immutable maps and singleton maps, 
- * i.e. FastCopyHashMap, HashMap, TreeMap.
- * 
+ * GlobalTransactionExternalizer.
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */
 @Immutable
-public class MapExternalizer implements Externalizer {
-   
-   /** The serialVersionUID */
-   private static final long serialVersionUID = -532896252671303391L;
+public class GlobalTransactionExternalizer implements Externalizer {
+
+   /**
+    * The serialVersionUID
+    */
+   private static final long serialVersionUID = -8677909497367726531L;
 
    public void writeExternal(Object subject, ObjectOutput output) throws IOException {
-      MarshallUtil.marshallMap((Map) subject, output);
+      GlobalTransaction gtx = (GlobalTransaction) subject;
+      output.writeLong(gtx.getId());
+      output.writeObject(gtx.getAddress());
    }
-   
-   public Object createExternal(Class<?> subjectType, ObjectInput input, Creator defaultCreator) 
-            throws IOException, ClassNotFoundException {
-      try {
-         return Util.getInstance(subjectType);        
-      } catch(Exception e) {
-         throw new CacheException("Unable to create new instance of ReplicableCommand", e);
-      }
+
+   public Object createExternal(Class<?> subjectType, ObjectInput input, Creator defaultCreator)
+         throws IOException, ClassNotFoundException {
+      return new GlobalTransaction();
    }
-   
+
    public void readExternal(Object subject, ObjectInput input) throws IOException,
-            ClassNotFoundException {
-      MarshallUtil.unmarshallMap((Map) subject, input);
+                                                                      ClassNotFoundException {
+      GlobalTransaction gtx = (GlobalTransaction) subject;
+      long id = input.readLong();
+      Object address = input.readObject();
+      gtx.setId(id);
+      gtx.setAddress((Address) address);
    }
 }

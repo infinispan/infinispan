@@ -43,7 +43,7 @@ public class SyncCacheListenerTest extends MultipleCacheManagersTest {
       conf.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
       conf.setLockAcquisitionTimeout(5000);
 
-      List<Cache> caches = createClusteredCaches(2, "cache", conf);
+      List<Cache<Object, Object>> caches = createClusteredCaches(2, "cache", conf);
 
       cache1 = caches.get(0);
       cache2 = caches.get(1);
