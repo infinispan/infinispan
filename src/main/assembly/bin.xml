@@ -19,7 +19,7 @@
         xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0 http://maven.apache.org/xsd/assembly-1.1.0.xsd">
-    <id>test</id>
+    <id>bin</id>
 
     <formats>
         <format>zip</format>
@@ -27,15 +27,11 @@
 
     <moduleSets>
         <moduleSet>
-
             <includeSubModules>false</includeSubModules>
-            <!--<includes>-->
-            <!--<include>org.infinispan:infinispan-core</include>-->
-            <!---->
-            <!--</includes>-->
 
             <sources>
                 <includeModuleDirectory>false</includeModuleDirectory>
+
                 <fileSets>
 
                     <!-- resources -->
@@ -75,86 +71,40 @@
                         </includes>
                     </fileSet>
 
-                    <!-- docs -->
-                    <fileSet>
-                        <directory>target/site/apidocs</directory>
-                        <outputDirectory>doc/apidocs</outputDirectory>
-                    </fileSet>
-
                     <fileSet>
                         <directory>target/docbook</directory>
                         <outputDirectory>doc/</outputDirectory>
                     </fileSet>
                 </fileSets>
-                <!--
-                <fileSets>
-                    <fileSet>
-                        <outputDirectory>modules/${module.basedir.name}</outputDirectory>
-                        <includes>
-                            <include>src/**</include>
-                        </includes>
-                    </fileSet>
-                </fileSets>
 
-                -->
             </sources>
 
             <binaries>
+
                 <outputDirectory>modules/${module.basedir.name}</outputDirectory>
                 <unpack>false</unpack>
+                <outputFileNameMapping>
+                  ${module.artifactId}.${module.extension} 
+                </outputFileNameMapping>
                 <dependencySets>
                     <dependencySet>
                         <outputDirectory>modules/${module.basedir.name}/lib</outputDirectory>
                     </dependencySet>
                 </dependencySets>
+
             </binaries>
         </moduleSet>
-        <!--
-        <moduleSet>
-            <binaries>
-                <attachmentClassifier>javadoc</attachmentClassifier>
-                <includeDependencies>false</includeDependencies>
-                <outputDirectory>modules/${module.basedir.name}/javadoc</outputDirectory>
-            </binaries>
-        </moduleSet>
-              -->
-        <!--<moduleSet>-->
-            <!--<includes>-->
-            <!--<include>org.infinispan:infinispan-core</include>-->
-            <!--</includes>-->
-            <!--<binaries>-->
-                <!--<outputDirectory>-->
-                    <!--modules/${module.basedir.name}-->
-                <!--</outputDirectory>-->
-                <!--<dependencySets>-->
-                    <!--<dependencySet>-->
-                        <!--<outputDirectory>modules/${module.basedir.name}/lib</outputDirectory>-->
-                    <!--</dependencySet>-->
-                <!--</dependencySets>-->
-                <!--<unpack>false</unpack>-->
-            <!--</binaries>-->
-        <!--</moduleSet>-->
+
     </moduleSets>
 
-    <!--
+    <fileSets>
 
-      <dependencySets>
-        <dependencySet>
-          <includes>
-            <include>infinispan-*</include>
-          </includes>
-          <useTransitiveDependencies>true</useTransitiveDependencies>
-          <outputDirectory>${artifact.artifactId}</outputDirectory>
-          <unpack>false</unpack>
-        </dependencySet>
-        <dependencySet>
-          <excludes>
-            <exclude>infinispan-*</exclude>
-          </excludes>
-          <useProjectArtifact>false</useProjectArtifact>
-          <outputDirectory>${artifact.artifactId}/lib</outputDirectory>
-        </dependencySet>
-      </dependencySets>
-    -->
-</assembly> 
+        <!-- docs -->
+        <fileSet>
+            <directory>target/site/apidocs</directory>
+            <outputDirectory>doc/apidocs</outputDirectory>
+        </fileSet>
 
+    </fileSets>
+
+</assembly>

@@ -36,7 +36,8 @@
             <executions>
               <execution>
                 <id>javadoc</id>
-                <phase>none</phase>
+                <phase>package</phase>
+                <goals><goal>aggregate</goal></goals>
               </execution>
             </executions>
          </plugin>
@@ -66,12 +67,10 @@
             <configuration>
                <descriptors>
                   <descriptor>src/main/assembly/bin.xml</descriptor>
-<!--
                   <descriptor>src/main/assembly/all.xml</descriptor>
-                  <descriptor>src/main/assembly/dep.xml</descriptor>
+<!--
                   <descriptor>src/main/assembly/single_jar.xml</descriptor>
                   <descriptor>src/main/assembly/src.xml</descriptor>
-                  <descriptor>src/main/assembly/test.xml</descriptor>
 -->
                </descriptors>
                <finalName>${artifactId}-${project-version}</finalName>
