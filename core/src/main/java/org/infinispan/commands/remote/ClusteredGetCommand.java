@@ -22,8 +22,8 @@
 package org.infinispan.commands.remote;
 
 import org.infinispan.CacheException;
-import org.infinispan.commands.DataCommand;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.loader.CacheLoaderManager;
@@ -64,13 +64,12 @@ public class ClusteredGetCommand implements CacheRpcCommand {
    }
 
    /**
-    * Invokes a {@link DataCommand} on a remote cache and returns results.
+    * Invokes a logical "get(key)" on a remote cache and returns results.
     *
     * @param context invocation context, ignored.
-    * @return a List containing 2 elements: a boolean, (true or false) and a value (Object) which is the result of
-    *         invoking a remote get specified by {@link #getDataCommand()}.
+    * @return  returns an <code>CacheEntry</code> or null, if no entry is found.
     */
-   public Object perform(InvocationContext context) throws Throwable {
+   public CacheEntry perform(InvocationContext context) throws Throwable {
       if (key != null) {
          InternalCacheEntry cacheEntry = dataContainer.get(key);
          if (cacheEntry == null) {
