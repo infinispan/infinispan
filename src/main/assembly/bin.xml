@@ -1,0 +1,160 @@
+<!--
+   This package will build a ZIP containing the following:
+
+   + modules
+      + core
+         - infinispan-core.jar
+         + lib (contains dependencies)
+      + tree
+         - infinispan-tree.jar
+         + lib
+
+      .. etc ...
+
+   + bin (any scripts, etc)
+   + etc (sample configs, resources, etc from src/main/resources)
+   + doc (release notes, etc from src/main/release)
+-->
+<assembly
+        xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0 http://maven.apache.org/xsd/assembly-1.1.0.xsd">
+    <id>test</id>
+
+    <formats>
+        <format>zip</format>
+    </formats>
+
+    <moduleSets>
+        <moduleSet>
+
+            <includeSubModules>false</includeSubModules>
+            <!--<includes>-->
+            <!--<include>org.infinispan:infinispan-core</include>-->
+            <!---->
+            <!--</includes>-->
+
+            <sources>
+                <includeModuleDirectory>false</includeModuleDirectory>
+                <fileSets>
+
+                    <!-- resources -->
+                    <fileSet>
+                        <directory>src/main/resources</directory>
+                        <outputDirectory>etc</outputDirectory>
+                        <excludes>
+                            <exclude>**/*.sh</exclude>
+                        </excludes>
+                    </fileSet>
+
+                    <!-- Executable resources -->
+                    <fileSet>
+                        <directory>src/main/resources</directory>
+                        <outputDirectory>etc</outputDirectory>
+                        <includes>
+                            <include>**/*.sh</include>
+                        </includes>
+                        <fileMode>0777</fileMode>
+                    </fileSet>
+
+                    <!-- Log4j XML -->
+                    <fileSet>
+                        <directory>src/test/resources</directory>
+                        <outputDirectory>etc</outputDirectory>
+                        <includes>
+                            <include>log4j.xml</include>
+                        </includes>
+                    </fileSet>
+
+                    <!-- EULAs and license files -->
+                    <fileSet>
+                        <directory>src/main/release</directory>
+                        <outputDirectory></outputDirectory>
+                        <includes>
+                            <include>**/*.txt</include>
+                        </includes>
+                    </fileSet>
+
+                    <!-- docs -->
+                    <fileSet>
+                        <directory>target/site/apidocs</directory>
+                        <outputDirectory>doc/apidocs</outputDirectory>
+                    </fileSet>
+
+                    <fileSet>
+                        <directory>target/docbook</directory>
+                        <outputDirectory>doc/</outputDirectory>
+                    </fileSet>
+                </fileSets>
+                <!--
+                <fileSets>
+                    <fileSet>
+                        <outputDirectory>modules/${module.basedir.name}</outputDirectory>
+                        <includes>
+                            <include>src/**</include>
+                        </includes>
+                    </fileSet>
+                </fileSets>
+
+                -->
+            </sources>
+
+            <binaries>
+                <outputDirectory>modules/${module.basedir.name}</outputDirectory>
+                <unpack>false</unpack>
+                <dependencySets>
+                    <dependencySet>
+                        <outputDirectory>modules/${module.basedir.name}/lib</outputDirectory>
+                    </dependencySet>
+                </dependencySets>
+            </binaries>
+        </moduleSet>
+        <!--
+        <moduleSet>
+            <binaries>
+                <attachmentClassifier>javadoc</attachmentClassifier>
+                <includeDependencies>false</includeDependencies>
+                <outputDirectory>modules/${module.basedir.name}/javadoc</outputDirectory>
+            </binaries>
+        </moduleSet>
+              -->
+        <!--<moduleSet>-->
+            <!--<includes>-->
+            <!--<include>org.infinispan:infinispan-core</include>-->
+            <!--</includes>-->
+            <!--<binaries>-->
+                <!--<outputDirectory>-->
+                    <!--modules/${module.basedir.name}-->
+                <!--</outputDirectory>-->
+                <!--<dependencySets>-->
+                    <!--<dependencySet>-->
+                        <!--<outputDirectory>modules/${module.basedir.name}/lib</outputDirectory>-->
+                    <!--</dependencySet>-->
+                <!--</dependencySets>-->
+                <!--<unpack>false</unpack>-->
+            <!--</binaries>-->
+        <!--</moduleSet>-->
+    </moduleSets>
+
+    <!--
+
+      <dependencySets>
+        <dependencySet>
+          <includes>
+            <include>infinispan-*</include>
+          </includes>
+          <useTransitiveDependencies>true</useTransitiveDependencies>
+          <outputDirectory>${artifact.artifactId}</outputDirectory>
+          <unpack>false</unpack>
+        </dependencySet>
+        <dependencySet>
+          <excludes>
+            <exclude>infinispan-*</exclude>
+          </excludes>
+          <useProjectArtifact>false</useProjectArtifact>
+          <outputDirectory>${artifact.artifactId}/lib</outputDirectory>
+        </dependencySet>
+      </dependencySets>
+    -->
+</assembly> 
+
