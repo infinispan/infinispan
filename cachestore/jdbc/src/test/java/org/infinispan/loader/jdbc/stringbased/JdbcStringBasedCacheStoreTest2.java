@@ -91,11 +91,11 @@ public class JdbcStringBasedCacheStoreTest2 {
       cacheStore.store(InternalEntryFactory.create(MANIK, "value"));
       assert rowCount() == 2;
       cacheStore.removeAll(Collections.singleton((Object) MIRCEA));
-      cacheStore.load(MANIK).getValue().equals("value");
+      assert cacheStore.load(MANIK).getValue().equals("value");
       assert rowCount() == 1;
       cacheStore.store(InternalEntryFactory.create(MIRCEA, "value"));
       assert rowCount() == 2;
-      Set toRemove = new HashSet();
+      Set<Object> toRemove = new HashSet<Object>();
       toRemove.add(MIRCEA);
       toRemove.add(MANIK);
       cacheStore.removeAll(toRemove);
