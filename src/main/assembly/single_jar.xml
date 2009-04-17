@@ -10,87 +10,99 @@
    + etc (sample configs, resources, etc from src/main/resources)
    + doc (release notes, etc from src/main/release)
 -->
-      
-<assembly xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:maven:assembly:1.1.0-SNAPSHOT">
-   <id>all</id>
+<assembly
+        xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0 http://maven.apache.org/xsd/assembly-1.1.0.xsd">
+    <id>single_jar</id>
 
-   <formats>
-      <format>zip</format>
-   </formats>
+    <formats>
+        <format>zip</format>
+    </formats>
 
-   <!-- TODO fix this, this is still based on the old JBoss Cache src tree -->
-   <includeBaseDirectory>true</includeBaseDirectory>
+    <moduleSets>
+        <moduleSet>
+            <includeSubModules>false</includeSubModules>
 
-   <fileSets>
+            <sources>
+                <includeModuleDirectory>false</includeModuleDirectory>
 
-      <!-- code -->
-      <fileSet>
-         <directory>target</directory>
-         <outputDirectory/>
-         <includes>
-            <include>*.jar</include>
-         </includes>
-         <excludes>
-            <exclude>*test*.jar</exclude>
-         </excludes>
-      </fileSet>
+                <fileSets>
 
-      <!-- resources -->
-      <fileSet>
-         <directory>src/main/resources</directory>
-         <outputDirectory>etc</outputDirectory>
-         <excludes>
-            <exclude>**/*.sh</exclude>
-         </excludes>
-      </fileSet>
+                    <!-- resources -->
+                    <fileSet>
+                        <directory>src/main/resources</directory>
+                        <outputDirectory>etc</outputDirectory>
+                        <excludes>
+                            <exclude>**/*.sh</exclude>
+                        </excludes>
+                    </fileSet>
 
-      <!-- Executable resources -->
-      <fileSet>
-         <directory>src/main/resources</directory>
-         <outputDirectory>etc</outputDirectory>
-         <includes>
-            <include>**/*.sh</include>
-         </includes>
-         <fileMode>0777</fileMode>
-      </fileSet>
+                    <!-- Executable resources -->
+                    <fileSet>
+                        <directory>src/main/resources</directory>
+                        <outputDirectory>etc</outputDirectory>
+                        <includes>
+                            <include>**/*.sh</include>
+                        </includes>
+                        <fileMode>0777</fileMode>
+                    </fileSet>
 
-      <!-- Log4j XML -->
-      <fileSet>
-         <directory>src/test/resources</directory>
-         <outputDirectory>etc</outputDirectory>
-         <includes>
-            <include>log4j.xml</include>
-         </includes>
-      </fileSet>
+                    <!-- Log4j XML -->
+                    <fileSet>
+                        <directory>src/test/resources</directory>
+                        <outputDirectory>etc</outputDirectory>
+                        <includes>
+                            <include>log4j.xml</include>
+                        </includes>
+                    </fileSet>
 
-      <!-- EULAs and license files -->
-      <fileSet>
-         <directory>src/main/release</directory>
-         <outputDirectory/>
-         <includes>
-            <include>**/*.txt</include>
-         </includes>
-      </fileSet>
+                    <!-- EULAs and license files -->
+                    <fileSet>
+                        <directory>src/main/release</directory>
+                        <outputDirectory></outputDirectory>
+                        <includes>
+                            <include>**/*.txt</include>
+                        </includes>
+                    </fileSet>
 
-      <!-- docs -->
-      <fileSet>
-         <directory>target/site/apidocs</directory>
-         <outputDirectory>doc/apidocs</outputDirectory>
-      </fileSet>
+                    <fileSet>
+                        <directory>target/docbook</directory>
+                        <outputDirectory>doc/</outputDirectory>
+                    </fileSet>
+                </fileSets>
 
-      <fileSet>
-         <directory>target/docbook</directory>
-         <outputDirectory>doc/</outputDirectory>
-      </fileSet>
-   </fileSets>
+            </sources>
 
-   <!-- Make sure we filter out the junk that jboss-common-core pulls in -->
-   <dependencySets>
-      <dependencySet>
-         <outputDirectory>lib</outputDirectory>
-         <outputFileNameMapping>${scope}/${artifactId}.${extension}</outputFileNameMapping>
-         <unpack>false</unpack>
-         <scope>test</scope>
-      </dependencySet>
-   </dependencySets>
+            <binaries>
+                <unpack>false</unpack>
+                <!-- TODO do not insert the project jar itself, only the deps -->
+                <outputDirectory>/.ignore</outputDirectory>
+                <dependencySets>
+                    <dependencySet>
+                        <excludes>
+                            <exclude>infinispan-*</exclude>
+                        </excludes>
+                        <outputDirectory>lib</outputDirectory>
+                    </dependencySet>
+                </dependencySets>
+            </binaries>
+        </moduleSet>
+
+    </moduleSets>
+    <fileSets>
+        <fileSet>
+            <directory>target</directory>
+            <includes>
+                <include>infinispan-all.jar</include>
+            </includes>
+            <outputDirectory>/</outputDirectory>
+        </fileSet>
+
+        <!-- docs -->
+        <fileSet>
+            <directory>target/site/apidocs</directory>
+            <outputDirectory>doc/apidocs</outputDirectory>
+        </fileSet>
+    </fileSets>
 </assembly>
