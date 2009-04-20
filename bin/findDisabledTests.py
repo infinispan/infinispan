@@ -1,5 +1,4 @@
 #!/usr/bin/python
-from __future__ import with_statement
 import os
 import fnmatch
 import re
@@ -51,12 +50,15 @@ testAnnotationMatcher = re.compile('^\s*@Test')
 disabledMatcher = re.compile('enabled\s*=\s*false')
 
 for testFile in GlobDirectoryWalker(getSearchPath(sys.argv[0]), '*Test.java'):
-    with open(testFile) as tf:
+    tf = open(testFile)
+    try:
         for line in tf:
             if testAnnotationMatcher.search(line):
                 if disabledMatcher.search(line):
                     disabledTestFiles.append(testFile)
                 break
+    finally:
+        tf.close()
 
 print "Files containing disabled tests: \n"
 uniqueTests=set(disabledTestFiles)
