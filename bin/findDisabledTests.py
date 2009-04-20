@@ -6,6 +6,14 @@ import re
 import time
 import sys
 
+def assertValidPython():
+    if (sys.version < 2.5):
+        raise Error("Incompatible version of Python.  Need at least Python 2.5.0")
+
+
+assertValidPython()
+
+
 class GlobDirectoryWalker:
     # a forward iterator that traverses a directory tree
 
@@ -43,12 +51,6 @@ def getSearchPath(executable):
 def stripLeadingDots(filename):
     return filename.strip('/. ')
 
-def assertValidPython():
-    if (sys.version < 2.5):
-        raise Error("Incompatible version of Python.  Need at least Python 2.5.0")
-
-
-assertValidPython()
 ## Walk through all files that end with Test.java
 startTime = time.clock()
 disabledTestFiles = []
