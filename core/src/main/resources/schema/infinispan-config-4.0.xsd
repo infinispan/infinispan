@@ -55,13 +55,14 @@
          <xs:element name="locking" type="tns:lockingType" minOccurs="0" maxOccurs="1"/>
          <xs:element name="transaction" type="tns:transactionType" minOccurs="0" maxOccurs="1"/>
          <xs:element name="jmxStatistics" type="tns:jmxStatisticsType" minOccurs="0" maxOccurs="1"/>
-         <xs:element name="lazyDeserialization" type="tns:lazyDeserialization" minOccurs="0" maxOccurs="1"/>
+         <xs:element name="lazyDeserialization" type="tns:lazyDeserializationType" minOccurs="0" maxOccurs="1"/>
          <xs:element name="invocationBatching" type="tns:invocationBatchingType" minOccurs="0" maxOccurs="1"/>
          <xs:element name="eviction" type="tns:evictionType" minOccurs="0" maxOccurs="1"/>
          <xs:element name="expiration" type="tns:expirationType" minOccurs="0" maxOccurs="1"/>
          <xs:element name="loaders" type="tns:loadersType" minOccurs="0" maxOccurs="1"/>
          <xs:element name="customInterceptors" type="tns:customInterceptorsType" minOccurs="0" maxOccurs="1"/>
          <xs:element name="clustering" type="tns:clusteringType" minOccurs="0" maxOccurs="1"/>
+         <xs:element name="unsafe" type="tns:unsafeType" minOccurs="0" maxOccurs="1"/>
       </xs:all>
       <xs:attribute name="name" type="xs:string"/>
    </xs:complexType>
@@ -71,8 +72,8 @@
          <xs:element name="sync" type="tns:syncType" minOccurs="0" maxOccurs="1"/>
          <xs:element name="async" type="tns:asyncType" minOccurs="0" maxOccurs="1"/>
          <xs:element name="stateRetrieval" type="tns:stateRetrievalType" minOccurs="0" maxOccurs="1"/>
-         <xs:element name="hash" type="tns:hashType" minOccurs="0" maxOccurs="1" />
-         <xs:element name="l1" type="tns:l1Type" minOccurs="0" maxOccurs="1" />
+         <xs:element name="hash" type="tns:hashType" minOccurs="0" maxOccurs="1"/>
+         <xs:element name="l1" type="tns:l1Type" minOccurs="0" maxOccurs="1"/>
       </xs:all>
       <xs:attribute name="mode">
          <xs:simpleType>
@@ -146,11 +147,15 @@
    </xs:simpleType>
 
    <xs:complexType name="jmxStatisticsType">
-      <xs:attribute name="enabled" type="tns:booleanType"/>      
+      <xs:attribute name="enabled" type="tns:booleanType"/>
    </xs:complexType>
 
-   <xs:complexType name="lazyDeserialization">
+   <xs:complexType name="lazyDeserializationType">
       <xs:attribute name="enabled" type="tns:booleanType"/>
+   </xs:complexType>
+
+   <xs:complexType name="unsafeType">
+      <xs:attribute name="unreliableReturnValues" type="tns:booleanType"/>
    </xs:complexType>
 
    <xs:complexType name="invocationBatchingType">
@@ -262,6 +267,6 @@
    <xs:complexType name="propertyType">
       <xs:attribute name="name" type="xs:string"/>
       <xs:attribute name="value" type="xs:string"/>
-   </xs:complexType>   
+   </xs:complexType>
 </xs:schema>
 

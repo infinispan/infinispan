@@ -334,6 +334,7 @@ public class DefaultCacheManager implements CacheManager {
          if (overrides != null) c.applyOverrides(overrides);
       }
 
+      c.assertValid();
       Cache cache = new DefaultCacheFactory().createCache(c, globalComponentRegistry, cacheName);
       Cache other = caches.putIfAbsent(cacheName, cache);
       if (other == null) {
@@ -382,7 +383,7 @@ public class DefaultCacheManager implements CacheManager {
       return globalComponentRegistry.getStatus();
    }
 
-   @ManagedAttribute (description = "the defined cache names and their status")
+   @ManagedAttribute(description = "the defined cache names and their status")
    public String getDefinedCacheNames() {
       StringBuilder result = new StringBuilder("[");
       for (String cacheName : this.configurationOverrides.keySet()) {
@@ -393,12 +394,12 @@ public class DefaultCacheManager implements CacheManager {
       return result.toString();
    }
 
-   @ManagedAttribute (description = "the total number of defined caches")
+   @ManagedAttribute(description = "the total number of defined caches")
    public String getDefinedCacheCount() {
       return String.valueOf(this.configurationOverrides.keySet().size());
    }
 
-   @ManagedAttribute (description = "number of running caches")
+   @ManagedAttribute(description = "number of running caches")
    public String getCreatedCacheCount() {
       return String.valueOf(this.caches.keySet().size());
    }

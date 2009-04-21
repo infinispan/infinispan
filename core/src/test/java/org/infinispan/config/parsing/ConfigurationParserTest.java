@@ -3,6 +3,7 @@ package org.infinispan.config.parsing;
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
+import org.infinispan.distribution.DefaultConsistentHash;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.loader.CacheStoreConfig;
 import org.infinispan.loader.decorators.SingletonStoreConfig;
@@ -10,7 +11,6 @@ import org.infinispan.loader.file.FileCacheStore;
 import org.infinispan.loader.file.FileCacheStoreConfig;
 import org.infinispan.lock.IsolationLevel;
 import org.infinispan.transaction.GenericTransactionManagerLookup;
-import org.infinispan.distribution.DefaultConsistentHash;
 import org.testng.annotations.Test;
 import org.w3c.dom.Element;
 
@@ -309,27 +309,27 @@ public class ConfigurationParserTest {
       String xml = "<clustering mode=\"d\"><sync/><async/></clustering>";
       try {
          parser.configureClustering(XmlConfigHelper.stringToElement(xml), new Configuration());
-         assert false: "Should fail";
+         assert false : "Should fail";
       } catch (ConfigurationException ce) {
          // expected
       }
 
       xml = "<clustering mode=\"d\"><stateRetrieval /></clustering>";
-
+      Configuration c = new Configuration();
+      parser.configureClustering(XmlConfigHelper.stringToElement(xml), c);
       try {
-         parser.configureClustering(XmlConfigHelper.stringToElement(xml), new Configuration());
-         assert false: "Should fail";
-      } catch (ConfigurationException ce) {
-         // expected
+         c.assertValid();
+         assert false : "Should fail";
+      } catch (ConfigurationException expected) {
       }
 
       xml = "<clustering mode=\"d\"><stateRetrieval fetchInMemoryState=\"true\"/></clustering>";
-
+      c = new Configuration();
+      parser.configureClustering(XmlConfigHelper.stringToElement(xml), c);
       try {
-         parser.configureClustering(XmlConfigHelper.stringToElement(xml), new Configuration());
-         assert false: "Should fail";
-      } catch (ConfigurationException ce) {
-         // expected
+         c.assertValid();
+         assert false : "Should fail";
+      } catch (ConfigurationException expected) {
       }
 
       xml = "<clustering mode=\"d\"><stateRetrieval fetchInMemoryState=\"false\"/></clustering>";
@@ -339,7 +339,7 @@ public class ConfigurationParserTest {
 
       try {
          parser.configureClustering(XmlConfigHelper.stringToElement(xml), new Configuration());
-         assert false: "Should fail";
+         assert false : "Should fail";
       } catch (ConfigurationException ce) {
          // expected
       }
@@ -348,16 +348,16 @@ public class ConfigurationParserTest {
 
       try {
          parser.configureClustering(XmlConfigHelper.stringToElement(xml), new Configuration());
-         assert false: "Should fail";
+         assert false : "Should fail";
       } catch (ConfigurationException ce) {
          // expected
       }
 
-xml = "<clustering mode=\"r\"><hash /></clustering>";
+      xml = "<clustering mode=\"r\"><hash /></clustering>";
 
       try {
          parser.configureClustering(XmlConfigHelper.stringToElement(xml), new Configuration());
-         assert false: "Should fail";
+         assert false : "Should fail";
       } catch (ConfigurationException ce) {
          // expected
       }
@@ -366,12 +366,9 @@ xml = "<clustering mode=\"r\"><hash /></clustering>";
 
       try {
          parser.configureClustering(XmlConfigHelper.stringToElement(xml), new Configuration());
-         assert false: "Should fail";
+         assert false : "Should fail";
       } catch (ConfigurationException ce) {
          // expected
       }
-
-
-
    }
 }

@@ -21,13 +21,13 @@
  */
 package org.infinispan.config;
 
+import org.infinispan.distribution.DefaultConsistentHash;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.NonVolatile;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.lock.IsolationLevel;
 import org.infinispan.util.ReflectionUtil;
-import org.infinispan.distribution.DefaultConsistentHash;
 
 import java.util.Collections;
 import java.util.List;
@@ -45,8 +45,6 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
    // reference to a global configuration
    private GlobalConfiguration globalConfiguration;
-   private boolean useLockStriping = true;
-
 
    public GlobalConfiguration getGlobalConfiguration() {
       return globalConfiguration;
@@ -72,6 +70,14 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
    public boolean isUseLockStriping() {
       return useLockStriping;
+   }
+
+   public boolean isUnsafeUnreliableReturnValues() {
+      return unsafeUnreliableReturnValues;
+   }
+
+   public void setUnsafeUnreliableReturnValues(boolean unsafeUnreliableReturnValues) {
+      this.unsafeUnreliableReturnValues = unsafeUnreliableReturnValues;
    }
 
    /**
@@ -168,7 +174,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    private long replQueueInterval = 5000;
    private boolean exposeJmxStatistics = false;
    @Dynamic
-   private boolean fetchInMemoryState = true;
+   private boolean fetchInMemoryState = false;
    @Dynamic
    private long lockAcquisitionTimeout = 10000;
    @Dynamic
@@ -200,6 +206,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    private String consistentHashClass = DefaultConsistentHash.class.getName();
    private int numOwners = 2;
    private long rehashWaitTime = 60000;
+   private boolean useLockStriping = true;
+   private boolean unsafeUnreliableReturnValues = false;
 
    @Start(priority = 1)
    private void correctIsolationLevels() {
@@ -258,8 +266,9 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    }
 
    /**
-    * Enables invocation batching if set to <tt>true</tt>.  You still need to use {@link org.infinispan.Cache#startBatch()}
-    * and {@link org.infinispan.Cache#endBatch(boolean)} to demarcate the start and end of batches.
+    * Enables invocation batching if set to <tt>true</tt>.  You still need to use {@link
+    * org.infinispan.Cache#startBatch()} and {@link org.infinispan.Cache#endBatch(boolean)} to demarcate the start and
+    * end of batches.
     *
     * @param enabled if true, batching is enabled.
     * @since 4.0
@@ -660,8 +669,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    }
 
    /**
-    * Returns the {@link org.infinispan.config.CustomInterceptorConfig}, if any, associated with this configuration object.
-    * The custom interceptors will be added to the cache at startup in the sequence defined by this list.
+    * Returns the {@link org.infinispan.config.CustomInterceptorConfig}, if any, associated with this configuration
+    * object. The custom interceptors will be added to the cache at startup in the sequence defined by this list.
     *
     * @return List of cutom interceptors, never null
     */
@@ -683,5 +692,14 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       for (String overriddenField : overrides.overriddenConfigurationElements) {
          ReflectionUtil.setValue(this, overriddenField, ReflectionUtil.getValue(overrides, overriddenField));
       }
+   }
+
+   public void assertValid() throws ConfigurationException {
+      // certain combinations are illegal, such as state transfer + DIST
+      if (cacheMode.isDistributed() && fetchInMemoryState)
+         throw new ConfigurationException("Cache cannot use DISTRIBUTION mode and have fetchInMemoryState set to true");
+
+      if (cacheMode == CacheMode.DIST_ASYNC && !unsafeUnreliableReturnValues)
+         throw new ConfigurationException("DISTRIBUTION mode cannot be asynchronous without breaking return values in the public API.  To force this, please use the <unsafe /> element, setting the 'unreliableReturnValues' attribute to 'true'.");
    }
 }

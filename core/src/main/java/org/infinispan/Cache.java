@@ -48,20 +48,6 @@ import java.util.concurrent.TimeUnit;
  * <p/>
  * Please see the <a href="http://www.jboss.org/infinispan/docs">Infinispan documentation</a> for more details.
  * <p/>
- * A note about return values.  Certain methods on {@link Map} could have indeterminate return values, <i>if</i> the
- * DISTRIBITION cache mode is used in an asynchronous manner <i>and</i> the invocation takes place on a cache instance
- * where the entry involved is not local.  These methods are: <ul> <li>{@link #put(Object, Object)} and its variations,
- * including {@link #putIfAbsent(Object, Object)}</li> <li>{@link #remove(Object)} and its variations</li> <li>{@link
- * #replace(Object, Object)} and its variations</li> </ul> The methods still <i>behave</i> as expected, i.e., {@link
- * #putIfAbsent(Object, Object)} will be a no-op if there is a value present, just that since remote calls are
- * asynchronous and the operation needs to be executed on a remote cache, the calling cache will not wait for a return
- * value.
- * <p/>
- * As such, as a general rule of thumb, return values to these methods should <i>not</i> be used if using DISTRIBUTION
- * in asynchronous mode.
- * <p/>
- * For all other cache modes (including <i>synchronous</i> DISTRIBUTION) these return values are reliable and can be
- * used.
  *
  * @author Mircea.Markus@jboss.com
  * @author Manik Surtani

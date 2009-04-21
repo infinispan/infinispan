@@ -159,7 +159,7 @@ public class XmlConfigurationParserImpl extends XmlParserBase implements XmlConf
       configureEviction(getSingleElementInCoreNS("eviction", e), c);
       configureCacheLoaders(getSingleElementInCoreNS("loaders", e), c);
       configureCustomInterceptors(getSingleElementInCoreNS("customInterceptors", e), c);
-
+      configureUnsafe(getSingleElementInCoreNS("unsafe", e), c);
       return c;
    }
 
@@ -212,27 +212,19 @@ public class XmlConfigurationParserImpl extends XmlParserBase implements XmlConf
          if (existsAttribute(tmp)) config.setNumOwners(getInt(tmp));
          tmp = getAttributeValue(hash, "rehashWait");
          if (existsAttribute(tmp)) config.setRehashWaitTime(getLong(tmp));
-
-         config.setFetchInMemoryState(false);
-
-         // sanity check against the presence of a stateRetrieval element
-         Element ste = null;
-         if ((ste = getSingleElementInCoreNS("stateRetrieval", e)) != null) {
-            tmp = getAttributeValue(ste, "fetchInMemoryState");
-            if (!existsAttribute(tmp) || getBoolean(tmp))
-               throw new ConfigurationException("stateRetrieval cannot be used with cache mode 'DISTRIBUTION'!");
-         }
-      } else {
-         configureStateRetrieval(getSingleElementInCoreNS("stateRetrieval", e), config);
-         if (getSingleElementInCoreNS("l1", e) != null || getSingleElementInCoreNS("hash", e) != null)
-            throw new ConfigurationException("l1 and hash elements cannot be used with cache modes 'REPLICATION' and 'INVALIDATION'!");
+      } else if (getSingleElementInCoreNS("l1", e) != null || getSingleElementInCoreNS("hash", e) != null) {
+         throw new ConfigurationException("l1 and hash elements cannot be used with cache modes 'REPLICATION' and 'INVALIDATION'!");
       }
+      configureStateRetrieval(getSingleElementInCoreNS("stateRetrieval", e), config);
    }
 
    void configureStateRetrieval(Element element, Configuration config) {
       if (element == null) return; //we might not have this configured
       String fetchInMemoryState = getAttributeValue(element, "fetchInMemoryState");
-      if (existsAttribute(fetchInMemoryState)) config.setFetchInMemoryState(getBoolean(fetchInMemoryState));
+      if (existsAttribute(fetchInMemoryState))
+         config.setFetchInMemoryState(getBoolean(fetchInMemoryState));
+      else
+         config.setFetchInMemoryState(true); // set this to true since the element was provided   
       String stateRetrievalTimeout = getAttributeValue(element, "timeout");
       if (existsAttribute(stateRetrievalTimeout)) config.setStateRetrievalTimeout(getLong(stateRetrievalTimeout));
 
@@ -316,6 +308,13 @@ public class XmlConfigurationParserImpl extends XmlParserBase implements XmlConf
          if (existsAttribute(enabled)) {
             config.setUseLazyDeserialization(getBoolean(enabled));
          }
+      }
+   }
+
+   void configureUnsafe(Element element, Configuration configuration) {
+      if (element != null) {
+         String tmp = getAttributeValue(element, "unreliableReturnValues");
+         if (existsAttribute(tmp)) configuration.setUnsafeUnreliableReturnValues(getBoolean(tmp));
       }
    }
 
