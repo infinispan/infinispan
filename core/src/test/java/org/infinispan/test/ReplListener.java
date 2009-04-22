@@ -28,6 +28,8 @@ public class ReplListener {
    boolean watchLocal;
    Lock eagerCommandsLock = new ReentrantLock();
    CountDownLatch latch = new CountDownLatch(1);
+   volatile boolean sawAtLeastOneInvocation = false;
+   boolean expectAny = false;
 
    /**
     * This listener atatches itself to a cache and when {@link #expect(Class[])} is invoked, will start checking for
@@ -75,6 +77,7 @@ public class ReplListener {
     * unblocked.
     */
    public void expectAny() {
+      expectAny = true;
       expect();
    }
 
@@ -117,6 +120,7 @@ public class ReplListener {
          eagerCommandsLock.lock();
          try {
             this.expectedCommands.removeAll(eagerCommands);
+            if (!eagerCommands.isEmpty()) sawAtLeastOneInvocation = true;
             eagerCommands.clear();
          } finally {
             eagerCommandsLock.unlock();
@@ -138,7 +142,8 @@ public class ReplListener {
    public void waitForRpc(long time, TimeUnit unit) {
       assert expectedCommands != null : "there are no replication expectations; please use ReplListener.expect() before calling this method";
       try {
-         if (!expectedCommands.isEmpty() && !latch.await(time, unit)) {
+         boolean successful = (expectAny && sawAtLeastOneInvocation) || (!expectAny && expectedCommands.isEmpty());
+         if (!successful && !latch.await(time, unit)) {
             assert false : "Waiting for more than " + time + " " + unit + " and following commands did not replicate: " + expectedCommands + " on cache [" + c.getCacheManager().getAddress() + "]";
          }
       }
@@ -147,6 +152,8 @@ public class ReplListener {
       }
       finally {
          expectedCommands = null;
+         expectAny = false;
+         sawAtLeastOneInvocation = false;
          latch = new CountDownLatch(1);
       }
    }
@@ -176,8 +183,10 @@ public class ReplListener {
       }
 
       private void markAsVisited(VisitableCommand cmd) {
+         System.out.println("Cache [" + c + "] saw command " + cmd);
          if (expectedCommands != null) {
             expectedCommands.remove(cmd.getClass());
+            sawAtLeastOneInvocation = true;
             if (expectedCommands.isEmpty()) latch.countDown();
          } else {
             if (recordCommandsEagerly) {
@@ -187,8 +196,6 @@ public class ReplListener {
                } finally {
                   eagerCommandsLock.unlock();
                }
-            } else {
-               System.out.println("Received unexpected command: " + cmd);
             }
          }
       }
