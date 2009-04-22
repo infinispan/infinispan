@@ -19,12 +19,37 @@ import java.util.concurrent.TimeUnit;
  * attachReplicationListener(cache); r.expect(RemoveCommand.class); // ... r.waitForRPC(); </code>
  */
 public class ReplListener {
-   Cache c;
-   Set<Class<? extends VisitableCommand>> expectedCommands;
+   Cache<?, ?> c;
+   volatile Set<Class<? extends VisitableCommand>> expectedCommands;
+   Set<Class<? extends VisitableCommand>> eagerCommands;
+   boolean recordCommandsEagerly;
    CountDownLatch latch = new CountDownLatch(1);
 
-   public ReplListener(Cache c) {
+   /**
+    * This listener atatches itself to a cache and when {@link #expect(Class[])} is invoked, will start checking for
+    * invocations of the command on the cache, waiting for all expected commands to be received in {@link
+    * #waitForRpc()}.
+    *
+    * @param c cache on which to attach listener
+    */
+   public ReplListener(Cache<?, ?> c) {
+      this(c, false);
+   }
+
+   /**
+    * As {@link #ReplListener(org.infinispan.Cache)} except that you can optionally configure whether command recording
+    * is eager (false by default).
+    * <p/>
+    * If <tt>recordCommandsEagerly</tt> is true, then commands are recorded from the moment the listener is attached to
+    * the cache, even before {@link #expect(Class[])} is invoked.  As such, when {@link #expect(Class[])} is called, the
+    * list of commands to wait for will take into account commands already seen thanks to eager recording.
+    *
+    * @param c                     cache on which to attach listener
+    * @param recordCommandsEagerly whether to record commands eagerly
+    */
+   public ReplListener(Cache<?, ?> c, boolean recordCommandsEagerly) {
       this.c = c;
+      this.recordCommandsEagerly = recordCommandsEagerly;
       this.c.getAdvancedCache().addInterceptor(new ReplListenerInterceptor(), 1);
    }
 
@@ -70,6 +95,8 @@ public class ReplListener {
          this.expectedCommands = new HashSet<Class<? extends VisitableCommand>>();
       }
       this.expectedCommands.addAll(Arrays.asList(expectedCommands));
+
+      if (recordCommandsEagerly) this.expectedCommands.removeAll(eagerCommands);
    }
 
    /**
@@ -99,6 +126,10 @@ public class ReplListener {
       }
    }
 
+   public Cache<?, ?> getCache() {
+      return c;
+   }
+
    protected class ReplListenerInterceptor extends CommandInterceptor {
       @Override
       protected Object handleDefault(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
@@ -124,7 +155,11 @@ public class ReplListener {
             expectedCommands.remove(cmd.getClass());
             if (expectedCommands.isEmpty()) latch.countDown();
          } else {
-            System.out.println("Received unexpected command: " + cmd);
+            if (recordCommandsEagerly) {
+               eagerCommands.add(cmd.getClass());
+            } else {
+               System.out.println("Received unexpected command: " + cmd);
+            }
          }
       }
    }
