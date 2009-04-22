@@ -381,7 +381,7 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
 
    @Override
    public String toString() {
-      return dataContainer == null ? super.toString() : dataContainer.toString();
+      return "Cache '" + name + "'@" + (config.getCacheMode().isClustered() ? getCacheManager().getAddress() : System.identityHashCode(this));
    }
 
    @SuppressWarnings("unchecked")
