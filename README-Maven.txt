@@ -5,7 +5,7 @@
 Requirements:
 
 * Java 5.0 and above
-* Maven 2.0.8 and above
+* Maven 2.1.0 and above
 
 
 1.1. Quickstart: Typical lifecycle phases
