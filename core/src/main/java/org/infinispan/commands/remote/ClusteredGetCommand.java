@@ -31,9 +31,9 @@ import org.infinispan.logging.Log;
 import org.infinispan.logging.LogFactory;
 
 /**
- * Issues a clustered get call, for use primarily by the {@link ClusteredCacheLoader}.  This is not a {@link
- * org.infinispan.commands.VisitableCommand} and hence not passed up the {@link org.infinispan.interceptors.base.CommandInterceptor}
- * chain.
+ * Issues a clustered get call, for use primarily by the {@link org.infinispan.loader.cluster.ClusterCacheLoader}.  This
+ * is not a {@link org.infinispan.commands.VisitableCommand} and hence not passed up the {@link
+ * org.infinispan.interceptors.base.CommandInterceptor} chain.
  * <p/>
  *
  * @author Mircea.Markus@jboss.com
@@ -43,6 +43,7 @@ public class ClusteredGetCommand implements CacheRpcCommand {
 
    public static final byte COMMAND_ID = 22;
    private static final Log log = LogFactory.getLog(ClusteredGetCommand.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private Object key;
    private String cacheName;
@@ -67,12 +68,14 @@ public class ClusteredGetCommand implements CacheRpcCommand {
     * Invokes a logical "get(key)" on a remote cache and returns results.
     *
     * @param context invocation context, ignored.
-    * @return  returns an <code>CacheEntry</code> or null, if no entry is found.
+    * @return returns an <code>CacheEntry</code> or null, if no entry is found.
     */
    public CacheEntry perform(InvocationContext context) throws Throwable {
       if (key != null) {
          InternalCacheEntry cacheEntry = dataContainer.get(key);
+         if (trace) log.trace("Found InternalCacheEntry {0} for key {1}", cacheEntry, key);
          if (cacheEntry == null) {
+            if (trace) log.trace("Checking in cache loader");
             context.setOriginLocal(false); //to make sure that if there is an ClusteredCl, this won't initiate a remote
             // lookup
             if (cacheLoaderManager != null && cacheLoaderManager.getCacheLoader() != null)
