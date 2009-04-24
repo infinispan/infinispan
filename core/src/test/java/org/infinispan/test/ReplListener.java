@@ -9,8 +9,8 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
 
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
@@ -22,11 +22,11 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class ReplListener {
    Cache<?, ?> c;
-   volatile Set<Class<? extends VisitableCommand>> expectedCommands;
-   Set<Class<? extends VisitableCommand>> eagerCommands = new HashSet<Class<? extends VisitableCommand>>();
+   volatile List<Class<? extends VisitableCommand>> expectedCommands;
+   List<Class<? extends VisitableCommand>> eagerCommands = new LinkedList<Class<? extends VisitableCommand>>();
    boolean recordCommandsEagerly;
    boolean watchLocal;
-   Lock eagerCommandsLock = new ReentrantLock();
+   final Lock expectationSetupLock = new ReentrantLock();
    CountDownLatch latch = new CountDownLatch(1);
    volatile boolean sawAtLeastOneInvocation = false;
    boolean expectAny = false;
@@ -111,20 +111,20 @@ public class ReplListener {
     * @param expectedCommands commands to expect
     */
    public void expect(Class<? extends VisitableCommand>... expectedCommands) {
-      if (this.expectedCommands == null) {
-         this.expectedCommands = new HashSet<Class<? extends VisitableCommand>>();
-      }
-      this.expectedCommands.addAll(Arrays.asList(expectedCommands));
+      expectationSetupLock.lock();
+      try {
+         if (this.expectedCommands == null) {
+            this.expectedCommands = new LinkedList<Class<? extends VisitableCommand>>();
+         }
+         this.expectedCommands.addAll(Arrays.asList(expectedCommands));
 
-      if (recordCommandsEagerly) {
-         eagerCommandsLock.lock();
-         try {
+         if (recordCommandsEagerly) {
             this.expectedCommands.removeAll(eagerCommands);
             if (!eagerCommands.isEmpty()) sawAtLeastOneInvocation = true;
             eagerCommands.clear();
-         } finally {
-            eagerCommandsLock.unlock();
          }
+      } finally {
+         expectationSetupLock.unlock();
       }
    }
 
@@ -183,20 +183,18 @@ public class ReplListener {
       }
 
       private void markAsVisited(VisitableCommand cmd) {
-         System.out.println("Cache [" + c + "] saw command " + cmd);
-         if (expectedCommands != null) {
-            expectedCommands.remove(cmd.getClass());
-            sawAtLeastOneInvocation = true;
-            if (expectedCommands.isEmpty()) latch.countDown();
-         } else {
-            if (recordCommandsEagerly) {
-               eagerCommandsLock.lock();
-               try {
-                  eagerCommands.add(cmd.getClass());
-               } finally {
-                  eagerCommandsLock.unlock();
-               }
+         expectationSetupLock.lock();
+         try {
+            log.fatal("Cache [" + c + "] saw command " + cmd);
+            if (expectedCommands != null) {
+               expectedCommands.remove(cmd.getClass());
+               sawAtLeastOneInvocation = true;
+               if (expectedCommands.isEmpty()) latch.countDown();
+            } else {
+               if (recordCommandsEagerly) eagerCommands.add(cmd.getClass());
             }
+         } finally {
+            expectationSetupLock.unlock();
          }
       }
    }
