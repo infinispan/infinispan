@@ -3,6 +3,7 @@ package org.infinispan.invalidation;
 import static org.easymock.EasyMock.*;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.api.mvcc.LockAssert;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.InvalidateCommand;
@@ -31,9 +32,14 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
    protected AdvancedCache cache1, cache2;
    protected boolean isSync;
 
+   protected BaseInvalidationTest() {
+      cleanup = CleanupPhase.AFTER_METHOD;
+   }
+
    protected void createCacheManagers() throws Throwable {
       Configuration c = getDefaultClusteredConfig(isSync ? Configuration.CacheMode.INVALIDATION_SYNC : Configuration.CacheMode.INVALIDATION_ASYNC);
       c.setStateRetrievalTimeout(1000);
+      c.setLockAcquisitionTimeout(500);
       c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
       List<Cache<Object, Object>> caches = createClusteredCaches(2, "invalidation", c);
       cache1 = caches.get(0).getAdvancedCache();
@@ -162,6 +168,9 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
       catch (RollbackException roll) {
          fail("Ought to have succeeded!");
       }
+
+      LockAssert.assertNoLocks(cache1);
+      LockAssert.assertNoLocks(cache2);
    }
 
    public void testCacheMode() throws Exception {
