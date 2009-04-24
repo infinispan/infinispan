@@ -202,7 +202,7 @@ public class JBossMarshallerTest {
 
       // EvictCommand does not have an empty constructor, so doesn't look to be one that is marshallable.
 
-      InvalidateCommand c7 = new InvalidateCommand(null, "key1", "key2");
+      InvalidateCommand c7 = new InvalidateCommand(null, null, "key1", "key2");
       bytes = marshaller.objectToByteBuffer(c7);
       InvalidateCommand rc7 = (InvalidateCommand) marshaller.objectFromByteBuffer(bytes);
       assert rc7.getCommandId() == c7.getCommandId() : "Writen[" + c7.getCommandId() + "] and read[" + rc7.getCommandId() + "] objects should be the same";

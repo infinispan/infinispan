@@ -172,4 +172,8 @@ public class PutKeyValueCommand extends AbstractDataCommand implements DataWrite
    public boolean isSuccessful() {
       return successful;
    }
+
+   public boolean isConditional() {
+      return putIfAbsent;
+   }
 }

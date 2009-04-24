@@ -40,7 +40,7 @@ public class ReplaceCommand extends AbstractDataCommand implements DataWriteComm
    long maxIdleTimeMillis = -1;
    boolean successful = true;
 
-   public ReplaceCommand() {      
+   public ReplaceCommand() {
    }
 
    public ReplaceCommand(Object key, Object oldValue, Object newValue, long lifespanMillis, long maxIdleTimeMillis) {
@@ -134,6 +134,10 @@ public class ReplaceCommand extends AbstractDataCommand implements DataWriteComm
 
    public boolean isSuccessful() {
       return successful;
+   }
+
+   public boolean isConditional() {
+      return true;
    }
 
    public long getLifespanMillis() {

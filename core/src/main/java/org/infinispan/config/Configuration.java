@@ -77,6 +77,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    }
 
    public void setUnsafeUnreliableReturnValues(boolean unsafeUnreliableReturnValues) {
+      testImmutability("unsafeUnreliableReturnValues");
       this.unsafeUnreliableReturnValues = unsafeUnreliableReturnValues;
    }
 

@@ -58,6 +58,8 @@ public interface CommandsFactory {
 
    InvalidateCommand buildInvalidateCommand(Object... keys);
 
+   InvalidateCommand buildInvalidateFromL1Command(Object... keys);
+
    ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, long lifespanMillis, long maxIdleTimeMillis);
 
    SizeCommand buildSizeCommand();

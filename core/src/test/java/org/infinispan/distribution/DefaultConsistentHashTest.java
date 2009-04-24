@@ -11,7 +11,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-@Test(groups = "unit", testName = "distribution.DefaultConsistentHashTest", enabled = false)
+@Test(groups = "unit", testName = "distribution.DefaultConsistentHashTest")
 public class DefaultConsistentHashTest {
 
    List<Address> servers;

@@ -22,8 +22,8 @@
 package org.infinispan.commands.write;
 
 import org.infinispan.commands.Visitor;
-import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 
 /**
@@ -68,5 +68,9 @@ public class ClearCommand implements WriteCommand {
 
    public boolean isSuccessful() {
       return true;
+   }
+
+   public boolean isConditional() {
+      return false;
    }
 }

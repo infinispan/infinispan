@@ -1,6 +1,10 @@
 package org.infinispan.distribution;
 
+import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.config.Configuration;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -10,7 +14,12 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
+import org.infinispan.remoting.ResponseFilter;
+import org.infinispan.remoting.ResponseMode;
 import org.infinispan.remoting.RpcManager;
+import org.infinispan.remoting.responses.ClusteredGetResponseValidityFilter;
+import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Util;
 
@@ -19,7 +28,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * // TODO: Manik: Document this
+ * The default distribution manager implementation
  *
  * @author Manik Surtani
  * @since 4.0
@@ -33,12 +42,14 @@ public class DistributionManagerImpl implements DistributionManager {
    CacheManagerNotifier notifier;
    int replCount;
    ViewChangeListener listener;
+   CommandsFactory cf;
 
    @Inject
-   public void init(Configuration configuration, RpcManager rpcManager, CacheManagerNotifier notifier) {
+   public void init(Configuration configuration, RpcManager rpcManager, CacheManagerNotifier notifier, CommandsFactory cf) {
       this.configuration = configuration;
       this.rpcManager = rpcManager;
       this.notifier = notifier;
+      this.cf = cf;
    }
 
    // needs to be AFTER the RpcManager
@@ -66,14 +77,34 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    public List<Address> locate(Object key) {
-      List<Address> adds = consistentHash.locate(key, replCount);
-      if (trace) log.trace("Located {0} addresses for key {1}.  Repl count is {2}, addresses are {3}", adds.size(),
-                           key, replCount, adds);
-      return adds;
+      return consistentHash.locate(key, replCount);
    }
 
    public Map<Object, List<Address>> locateAll(Collection<Object> keys) {
       return consistentHash.locateAll(keys, replCount);
+   }
+
+   public void transformForL1(CacheEntry entry) {
+      if (entry.getLifespan() < 0 || entry.getLifespan() > configuration.getL1Lifespan())
+         entry.setLifespan(configuration.getL1Lifespan());
+   }
+
+   public InternalCacheEntry retrieveFromRemoteSource(Object key) throws Exception {
+      ClusteredGetCommand get = cf.buildClusteredGetCommand(key);
+
+      ResponseFilter filter = new ClusteredGetResponseValidityFilter(locate(key));
+      List<Response> responses = rpcManager.invokeRemotely(locate(key), get, ResponseMode.SYNCHRONOUS,
+                                                           configuration.getSyncReplTimeout(), false, filter, false);
+
+      if (!responses.isEmpty()) {
+         for (Response r : responses) {
+            if (r instanceof SuccessfulResponse) {
+               return (InternalCacheEntry) ((SuccessfulResponse) r).getResponseValue();
+            }
+         }
+      }
+
+      return null;
    }
 
    @Listener

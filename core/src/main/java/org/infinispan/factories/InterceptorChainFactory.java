@@ -77,7 +77,10 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          interceptorChain.appendIntereceptor(createInterceptor(CacheMgmtInterceptor.class));
 
       // load the tx interceptor
-      interceptorChain.appendIntereceptor(createInterceptor(TxInterceptor.class));
+      if (configuration.getCacheMode().isDistributed())
+         interceptorChain.appendIntereceptor(createInterceptor(DistTxInterceptor.class));
+      else
+         interceptorChain.appendIntereceptor(createInterceptor(TxInterceptor.class));
 
       if (configuration.isUseLazyDeserialization())
          interceptorChain.appendIntereceptor(createInterceptor(MarshalledValueInterceptor.class));
@@ -110,7 +113,11 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
             interceptorChain.appendIntereceptor(createInterceptor(CacheStoreInterceptor.class));
          }
       }
-      interceptorChain.appendIntereceptor(createInterceptor(LockingInterceptor.class));
+
+      if (configuration.getCacheMode().isDistributed())
+         interceptorChain.appendIntereceptor(createInterceptor(DistLockingInterceptor.class));
+      else
+         interceptorChain.appendIntereceptor(createInterceptor(LockingInterceptor.class));
 
       CommandInterceptor callInterceptor = createInterceptor(CallInterceptor.class);
       interceptorChain.appendIntereceptor(callInterceptor);

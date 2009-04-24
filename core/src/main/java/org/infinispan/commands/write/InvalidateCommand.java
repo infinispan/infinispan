@@ -56,13 +56,16 @@ public class InvalidateCommand extends RemoveCommand {
     * @param ctx invocation context
     * @return null
     */
+   @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-      if (trace) log.trace("Invalidating keys:" + Arrays.toString(keys));
-      for (Object key : keys) {
-         this.key = key;
-         super.perform(ctx);
-      }
+      if (trace) log.trace("Invalidating keys {0}", Arrays.toString(keys));
+      for (Object k : keys) invalidate(ctx, k);
       return null;
+   }
+
+   protected void invalidate(InvocationContext ctx, Object keyToInvalidate) throws Throwable {
+      this.key = keyToInvalidate; // so that the superclass can see it
+      super.perform(ctx);
    }
 
    @Override
@@ -70,6 +73,7 @@ public class InvalidateCommand extends RemoveCommand {
       notifier.notifyCacheEntryInvalidated(key, isPre, ctx);
    }
 
+   @Override
    public byte getCommandId() {
       return COMMAND_ID;
    }
@@ -106,6 +110,7 @@ public class InvalidateCommand extends RemoveCommand {
       }
    }
 
+   @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitInvalidateCommand(ctx, this);
    }

@@ -17,4 +17,13 @@ public interface WriteCommand extends VisitableCommand {
     * @return true if the command completed successfully, false otherwise.
     */
    boolean isSuccessful();
+
+   /**
+    * Certain commands only work based on a certain condition or state of the cache.  For example, {@link
+    * org.infinispan.Cache#putIfAbsent(Object, Object)} only does anything if a condition is met, i.e., the entry in
+    * question is not already present.  This method tests whether the command in question is conditional or not.
+    *
+    * @return true if the command is conditional, false otherwise
+    */
+   boolean isConditional();
 }

@@ -222,6 +222,7 @@ public class LockingInterceptor extends CommandInterceptor {
             if (trace) log.trace("Nothing to do since there are no modifications in scope.");
          }
       } else {
+         if (trace) log.trace("Transactional.  Not cleaning up locks till the transaction ends.");
          if (useReadCommitted) {
             Map<Object, CacheEntry> lookedUpEntries = ctx.getLookedUpEntries();
             if (!lookedUpEntries.isEmpty()) {
@@ -258,8 +259,9 @@ public class LockingInterceptor extends CommandInterceptor {
             Object key = e.getKey();
             boolean needToUnlock = lockManager.possiblyLocked(entry);
             // could be null with read-committed
-            if (entry != null && entry.isChanged()) entry.commit(dataContainer);
-            else {
+            if (entry != null && entry.isChanged()) {
+               commitEntry(ctx, entry);
+            } else {
                if (trace) log.trace("Entry for key {0} is null, not calling commitUpdate", key);
             }
 
@@ -289,6 +291,10 @@ public class LockingInterceptor extends CommandInterceptor {
       }
       ctx.setContainsModifications(false);
       ctx.setContainsLocks(false);
+   }
+
+   protected void commitEntry(InvocationContext ctx, CacheEntry entry) {
+      entry.commit(dataContainer);
    }
 
    @SuppressWarnings("unchecked")

@@ -1,5 +1,7 @@
 package org.infinispan.distribution;
 
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.transport.Address;
@@ -40,5 +42,20 @@ public interface DistributionManager {
     * @return a list of addresses where the key may reside
     */
    Map<Object, List<Address>> locateAll(Collection<Object> keys);
+
+   /**
+    * Transforms a cache entry so it is marked for L1 rather than the primary cache data structure.
+    *
+    * @param entry entry to transform
+    */
+   void transformForL1(CacheEntry entry);
+
+   /**
+    * Retrieves a cache entry from a remote source
+    *
+    * @param key key to look up
+    * @return an internal cache entry, or null if it cannot be located
+    */
+   InternalCacheEntry retrieveFromRemoteSource(Object key) throws Exception;
 }
 

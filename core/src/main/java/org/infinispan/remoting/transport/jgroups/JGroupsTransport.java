@@ -304,14 +304,17 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
          if (rsps == null) return Collections.emptyList();
          List<Response> retval = new ArrayList<Response>(rsps.size());
 
+         boolean noValidResponses = true;
          for (Rsp rsp : rsps.values()) {
             if (rsp.wasSuspected() || !rsp.wasReceived()) {
                if (rsp.wasSuspected()) {
                   throw new SuspectException("Suspected member: " + rsp.getSender());
                } else {
-                  throw new TimeoutException("Replication timeout for " + rsp.getSender());
+                  // if we have a response filter then we may not have waited for some nodes!
+                  if (responseFilter == null) throw new TimeoutException("Replication timeout for " + rsp.getSender());
                }
             } else {
+               noValidResponses = false;
                if (rsp.getValue() != null) {
                   Response value = (Response) rsp.getValue();
                   if (value instanceof ExceptionResponse) {
@@ -326,6 +329,8 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
                }
             }
          }
+
+         if (noValidResponses) throw new TimeoutException("Timed out waiting for valid responses!");
          return retval;
       } finally {
          // release the "processing" lock so that other threads are aware of the network call having completed

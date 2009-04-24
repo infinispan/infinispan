@@ -3,7 +3,6 @@ package org.infinispan.interceptors;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -20,8 +19,6 @@ import org.infinispan.context.TransactionContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.BaseRpcInterceptor;
-import org.infinispan.remoting.ResponseMode;
-import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.GlobalTransaction;
 import org.infinispan.util.Immutables;
@@ -34,7 +31,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * // TODO: Document this
+ * The interceptor that handles distribution of entries across a cluster, as well as transparent lookup
  *
  * @author manik
  * @since 4.0
@@ -45,13 +42,14 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    // TODO move this to the transaction context.  Will scale better there.
    private final Map<GlobalTransaction, List<Address>> txRecipients = new ConcurrentHashMap<GlobalTransaction, List<Address>>();
    static final RecipientGenerator CLEAR_COMMAND_GENERATOR = new RecipientGenerator() {
+      private final Object[] EMPTY_ARRAY = {};
 
       public List<Address> generateRecipients() {
          return null;
       }
 
       public Object[] getKeys() {
-         return null;
+         return EMPTY_ARRAY;
       }
    };
 
@@ -70,31 +68,36 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       Object returnValue = invokeNextInterceptor(ctx, command);
-      if (returnValue == null) {
-         // attempt a remote lookup
-         // TODO update ClusteredGetCommand (maybe a new command?) to ensure we get back ICEs.
-         ClusteredGetCommand get = cf.buildClusteredGetCommand(command.getKey());
-         // TODO use a RspFilter to filter responses         
-         List<Response> responses = rpcManager.invokeRemotely(dm.locate(command.getKey()), get, ResponseMode.SYNCHRONOUS,
-                                                              configuration.getSyncReplTimeout(), false, false);
-
-         // the first response is all that matters
-         if (responses.isEmpty()) return returnValue;
-
-         for (Object response : responses) {
-            if (!(response instanceof Throwable)) {
-               InternalCacheEntry ice = (InternalCacheEntry) response;
-               if (configuration.isL1CacheEnabled()) {
-                  long lifespan = ice.getLifespan() < 0 ? configuration.getL1Lifespan() : Math.min(ice.getLifespan(), configuration.getL1Lifespan());
-                  PutKeyValueCommand put = cf.buildPutKeyValueCommand(ice.getKey(), ice.getValue(), lifespan, -1);
-                  invokeNextInterceptor(ctx, put);
-               }
-               return ice.getValue();
-            }
-         }
-         return null;
-      }
+      // need to check in the context as well since a null retval is not necessarily an indication of the entry not being
+      // available.  It could just have been removed in the same tx beforehand.
+      if (returnValue == null && ctx.lookupEntry(command.getKey()) == null)
+         returnValue = remoteGetAndStoreInL1(ctx, command.getKey());
       return returnValue;
+   }
+
+   private Object remoteGetAndStoreInL1(InvocationContext ctx, Object key) throws Throwable {
+      if (ctx.isOriginLocal() && !dm.isLocal(key)) {
+         if (trace) log.trace("Doing a remote get for key {0}", key);
+         // attempt a remote lookup
+         InternalCacheEntry ice = dm.retrieveFromRemoteSource(key);
+
+         if (ice != null) {
+            if (configuration.isL1CacheEnabled()) {
+               if (trace) log.trace("Caching remotely retrieved entry for key {0} in L1", key);
+               long lifespan = ice.getLifespan() < 0 ? configuration.getL1Lifespan() : Math.min(ice.getLifespan(), configuration.getL1Lifespan());
+               PutKeyValueCommand put = cf.buildPutKeyValueCommand(ice.getKey(), ice.getValue(), lifespan, -1);
+               invokeNextInterceptor(ctx, put);
+            } else {
+               if (trace) log.trace("Not caching remotely retrieved entry for key {0} in L1", key);
+            }
+            return ice.getValue();
+         }
+
+      } else {
+         if (trace)
+            log.trace("Not doing a remote get for key {0} since entry is mapped to current node, or is in L1", key);
+      }
+      return null;
    }
 
    // ---- WRITE commands
@@ -113,6 +116,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
 
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+
       return handleWriteCommand(ctx, command,
                                 new SingleKeyRecipientGenerator(command.getKey()));
    }
@@ -163,7 +167,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
          txRecipients.put(command.getGlobalTransaction(), recipients);
 
          // this method will return immediately if we're the only member (because exclude_self=true)
-         replicateCall(ctx, command, sync);
+         replicateCall(ctx, recipients, command, sync, false);
       }
 
       return retVal;
@@ -202,12 +206,21 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    }
 
 
+   private void remoteGetBeforeWrite(InvocationContext ctx, Object... keys) throws Throwable {
+      // only do this if we are sync (OR if we dont care about return values!)
+//      if (!configuration.isUnsafeUnreliableReturnValues()) {
+      for (Object k : keys) remoteGetAndStoreInL1(ctx, k);
+//      }
+   }
+
    /**
     * If we are within one transaction we won't do any replication as replication would only be performed at commit
     * time. If the operation didn't originate locally we won't do any replication either.
     */
    private Object handleWriteCommand(InvocationContext ctx, WriteCommand command, RecipientGenerator recipientGenerator) throws Throwable {
       boolean local = isLocalModeForced(ctx);
+      // see if we need to load values from remote srcs first
+      remoteGetBeforeWrite(ctx, recipientGenerator.getKeys());
       if (local && ctx.getTransaction() == null) return invokeNextInterceptor(ctx, command);
       // FIRST pass this call up the chain.  Only if it succeeds (no exceptions) locally do we attempt to replicate.
 
@@ -215,16 +228,11 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
 
       if (command.isSuccessful()) {
          if (ctx.getTransaction() == null && ctx.isOriginLocal()) {
-            if (trace) {
-               log.trace("invoking method " + command.getClass().getSimpleName() + ", members=" + rpcManager.getTransport().getMembers() + ", mode=" +
-                     configuration.getCacheMode() + ", exclude_self=" + true + ", timeout=" +
-                     configuration.getSyncReplTimeout());
-            }
-
             List<Address> rec = recipientGenerator.generateRecipients();
+            if (trace) log.trace("Invoking command {0} on hosts {1}", command, rec);
             // if L1 caching is used make sure we broadcast an invalidate message
             if (configuration.isL1CacheEnabled() && rec != null) {
-               InvalidateCommand ic = cf.buildInvalidateCommand(recipientGenerator.getKeys());
+               InvalidateCommand ic = cf.buildInvalidateFromL1Command(recipientGenerator.getKeys());
                replicateCall(ctx, ic, isSynchronous(ctx), false);
             }
             replicateCall(ctx, rec, command, isSynchronous(ctx), false);

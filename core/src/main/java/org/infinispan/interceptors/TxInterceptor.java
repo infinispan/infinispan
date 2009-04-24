@@ -34,8 +34,8 @@ import org.infinispan.context.TransactionContext;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.context.ContextFactory;
-import org.infinispan.invocation.InvocationContextContainer;
 import org.infinispan.invocation.Flag;
+import org.infinispan.invocation.InvocationContextContainer;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.lock.LockManager;
@@ -405,14 +405,29 @@ public class TxInterceptor extends BaseTransactionalContextInterceptor {
    }
 
    /**
+    * Designed to be overridden.  Returns a VisitableCommand fit for replaying locally, based on the modification passed
+    * in.  If a null value is returned, this means that the command should not be replayed.
+    *
+    * @param modification modification in a prepare call
+    * @return a VisitableCommand representing this modification, fit for replaying, or null if the command should not be
+    *         replayed.
+    */
+   protected VisitableCommand getCommandToReplay(VisitableCommand modification) {
+      return modification;
+   }
+
+   /**
     * Replays modifications
     */
-   protected void replayModifications(InvocationContext ctx, Transaction ltx, PrepareCommand command) throws Throwable {
+   private void replayModifications(InvocationContext ctx, Transaction ltx, PrepareCommand command) throws Throwable {
       try {
          // replay modifications
          for (VisitableCommand modification : command.getModifications()) {
-            invokeNextInterceptor(ctx, modification);
-            assertTxIsStillValid(ltx);
+            VisitableCommand toReplay = getCommandToReplay(modification);
+            if (toReplay != null) {
+               invokeNextInterceptor(ctx, toReplay);
+               assertTxIsStillValid(ltx);
+            }
          }
       }
       catch (Throwable th) {

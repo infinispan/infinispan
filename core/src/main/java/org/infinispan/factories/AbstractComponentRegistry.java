@@ -155,6 +155,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle {
       s.add(TransportFactory.class);
       s.add(MarshallerFactory.class);
       s.add(ResponseGeneratorFactory.class);
+      s.add(DistributionManagerFactory.class);
       return s;
    }
 

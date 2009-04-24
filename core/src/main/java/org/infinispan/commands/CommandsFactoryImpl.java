@@ -34,11 +34,13 @@ import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.InvalidateCommand;
+import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.container.DataContainer;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.loader.CacheLoaderManager;
@@ -62,14 +64,18 @@ public class CommandsFactoryImpl implements CommandsFactory {
    // some stateless commands can be reused so that they aren't constructed again all the time.
    SizeCommand cachedSizeCommand;
    private InterceptorChain interceptorChain;
+   private DistributionManager distributionManager;
 
    @Inject
-   public void setupDependencies(DataContainer container, CacheNotifier notifier, Cache cache, InterceptorChain interceptorChain, CacheLoaderManager clManager) {
+   public void setupDependencies(DataContainer container, CacheNotifier notifier, Cache cache,
+                                 InterceptorChain interceptorChain, CacheLoaderManager clManager,
+                                 DistributionManager distributionManager) {
       this.dataContainer = container;
       this.notifier = notifier;
       this.cache = cache;
       this.interceptorChain = interceptorChain;
       this.cacheLoaderManager = clManager;
+      this.distributionManager = distributionManager;
    }
 
    public PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, long lifespanMillis, long maxIdleTimeMillis) {
@@ -82,6 +88,10 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    public InvalidateCommand buildInvalidateCommand(Object... keys) {
       return new InvalidateCommand(notifier, keys);
+   }
+
+   public InvalidateCommand buildInvalidateFromL1Command(Object... keys) {
+      return new InvalidateL1Command(distributionManager, notifier, keys);
    }
 
    public ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, long lifespan, long maxIdleTimeMillis) {
@@ -170,6 +180,10 @@ public class CommandsFactoryImpl implements CommandsFactory {
          case InvalidateCommand.COMMAND_ID:
             InvalidateCommand ic = (InvalidateCommand) c;
             ic.init(notifier);
+            break;
+         case InvalidateL1Command.COMMAND_ID:
+            InvalidateL1Command ilc = (InvalidateL1Command) c;
+            ilc.init(distributionManager, notifier);
             break;
          case PrepareCommand.COMMAND_ID:
             PrepareCommand pc = (PrepareCommand) c;

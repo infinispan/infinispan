@@ -131,6 +131,10 @@ public class PutMapCommand implements WriteCommand {
       return true;
    }
 
+   public boolean isConditional() {
+      return false;
+   }
+
    public long getLifespanMillis() {
       return lifespanMillis;
    }

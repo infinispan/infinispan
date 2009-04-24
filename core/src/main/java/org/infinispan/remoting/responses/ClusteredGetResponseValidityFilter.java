@@ -3,8 +3,8 @@ package org.infinispan.remoting.responses;
 import org.infinispan.remoting.ResponseFilter;
 import org.infinispan.remoting.transport.Address;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
+import java.util.HashSet;
 
 /**
  * A filter that tests the validity of {@link org.infinispan.commands.remote.ClusteredGetCommand}s.
@@ -16,12 +16,10 @@ public class ClusteredGetResponseValidityFilter implements ResponseFilter {
 
    private int numValidResponses = 0;
 
-   private List<Address> pendingResponders;
+   private Collection<Address> pendingResponders;
 
-   public ClusteredGetResponseValidityFilter(List<Address> expected, Address localAddress) {
-      this.pendingResponders = new ArrayList<Address>(expected);
-      // We'll never get a response from ourself
-      this.pendingResponders.remove(localAddress);
+   public ClusteredGetResponseValidityFilter(Collection<Address> pendingResponders) {
+      this.pendingResponders = new HashSet<Address>(pendingResponders);
    }
 
    public boolean isAcceptable(Response response, Address address) {

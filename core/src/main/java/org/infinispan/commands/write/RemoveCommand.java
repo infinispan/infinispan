@@ -42,10 +42,11 @@ public class RemoveCommand extends AbstractDataCommand implements DataWriteComma
    protected CacheNotifier notifier;
    boolean successful = true;
 
-   /** When not null, value indicates that the entry should only be removed if 
-    * the key is mapped to this value. By the time the RemoveCommand needs to 
-    * be marshalled, the condition must have been true locally already, so 
-    * there's no need to marshall the value. **/
+   /**
+    * When not null, value indicates that the entry should only be removed if the key is mapped to this value. By the
+    * time the RemoveCommand needs to be marshalled, the condition must have been true locally already, so there's no
+    * need to marshall the value. *
+    */
    protected transient Object value;
 
    public RemoveCommand(Object key, Object value, CacheNotifier notifier) {
@@ -124,5 +125,9 @@ public class RemoveCommand extends AbstractDataCommand implements DataWriteComma
 
    public boolean isSuccessful() {
       return successful;
+   }
+
+   public boolean isConditional() {
+      return value != null;
    }
 }

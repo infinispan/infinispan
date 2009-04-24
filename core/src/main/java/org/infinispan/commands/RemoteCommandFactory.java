@@ -11,6 +11,7 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.InvalidateCommand;
+import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -29,7 +30,7 @@ import org.infinispan.remoting.RpcManager;
 @Scope(Scopes.GLOBAL)
 public class RemoteCommandFactory {
    RpcManager rpcManager;
-   
+
    @Inject
    public void init(RpcManager rpcManager) {
       this.rpcManager = rpcManager;
@@ -84,6 +85,9 @@ public class RemoteCommandFactory {
             break;
          case InvalidateCommand.COMMAND_ID:
             command = new InvalidateCommand();
+            break;
+         case InvalidateL1Command.COMMAND_ID:
+            command = new InvalidateL1Command();
             break;
          case StateTransferControlCommand.METHOD_ID:
             command = new StateTransferControlCommand();

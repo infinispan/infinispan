@@ -305,7 +305,6 @@ public class InvocationContextImpl extends AbstractContext implements Invocation
             ", transactionContext=" + transactionContext +
             ", flags=" + flags +
             ", contextFlags=" + contextFlags +
-//            ", invocationLocks=" + locks +
             ", lookedUpEntries size=" + (lookedUpEntries == null ? 0 : lookedUpEntries.size()) +
             '}';
    }
