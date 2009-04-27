@@ -10,7 +10,7 @@
     <colspec value="left:4dlu:noGrow"/>
     <colspec value="fill:100px:grow"/>
     <constraints>
-      <xy x="20" y="20" width="918" height="661"/>
+      <xy x="20" y="20" width="1011" height="661"/>
     </constraints>
     <properties/>
     <border type="line" title="Infinipan GUI Demo Application">
@@ -56,6 +56,7 @@
                   <forms defaultalign-vert="false"/>
                 </constraints>
                 <properties>
+                  <font style="1"/>
                   <text value="Command"/>
                 </properties>
               </component>
@@ -74,18 +75,13 @@
                   <forms defaultalign-vert="false"/>
                 </constraints>
               </vspacer>
-              <hspacer id="bfe90">
-                <constraints>
-                  <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                  <forms defaultalign-horz="false"/>
-                </constraints>
-              </hspacer>
               <component id="458fc" class="javax.swing.JLabel">
                 <constraints>
                   <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
                   <forms defaultalign-vert="false"/>
                 </constraints>
                 <properties>
+                  <font style="1"/>
                   <text value="Cache configuration file"/>
                 </properties>
               </component>
@@ -112,13 +108,25 @@
                     <properties>
                       <background color="-3355444"/>
                       <font name="Courier New" size="10"/>
+                      <text value=""/>
                     </properties>
                   </component>
                 </children>
               </scrollpane>
+              <component id="17832" class="javax.swing.JLabel">
+                <constraints>
+                  <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <forms/>
+                </constraints>
+                <properties>
+                  <font size="12" style="2"/>
+                  <text value="Note that you can specify a configuration file to use by passing in -Dinfinispan.demo.cfg=file:/path/to/config.xml"/>
+                </properties>
+              </component>
             </children>
           </grid>
-          <grid id="73867" binding="dataViewTab" layout-manager="BorderLayout" hgap="0" vgap="0">
+          <grid id="73867" binding="dataViewTab" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
               <tabbedpane title="Data view" enabled="false">
                 <tooltip value="This tab contains a view of all the data in the cache."/>
@@ -130,8 +138,22 @@
             </properties>
             <border type="none"/>
             <children>
+              <component id="c41ff" class="javax.swing.JButton" binding="refreshDataTableButton">
+                <constraints>
+                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="0" indent="0" use-parent-layout="false">
+                    <minimum-size width="100" height="20"/>
+                    <preferred-size width="100" height="20"/>
+                    <maximum-size width="100" height="20"/>
+                  </grid>
+                </constraints>
+                <properties>
+                  <text value="Refresh"/>
+                </properties>
+              </component>
               <scrollpane id="1b795">
-                <constraints border-constraint="Center"/>
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                </constraints>
                 <properties>
                   <background color="-16737895"/>
                   <horizontalScrollBarPolicy value="30"/>

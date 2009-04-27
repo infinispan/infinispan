@@ -3,31 +3,37 @@ package org.infinispan.demo;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.infinispan.Cache;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.notifications.Listener;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryEvicted;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
+import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
-import org.jgroups.Address;
+import org.infinispan.remoting.transport.Address;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Manik Surtani
@@ -68,17 +74,16 @@ public class InfinispanDemo {
    private String startCacheButtonLabel = "Start Cache", stopCacheButtonLabel = "Stop Cache";
    private String statusStarting = "Starting Cache ... ", statusStarted = "Cache Running.", statusStopping = "Stopping Cache ...", statusStopped = "Cache Stopped.";
    private ExecutorService asyncExecutor;
+   private final AtomicInteger updateCounter = new AtomicInteger(0);
    private BlockingQueue<Runnable> asyncTaskQueue;
    private JTable dataTable;
+   private JButton refreshDataTableButton;
    private Random r = new Random();
+   private ClusterTableModel clusterTableModel;
+   private CachedDataTableModel cachedDataTableModel;
 
    public static void main(String[] args) {
-      String cfgFileName = "demo-cache-config.xml";
-      if (args.length == 1 && args[0] != null && args[0].toLowerCase().endsWith(".xml")) {
-         // the first arg is the name of the config file.
-         cfgFileName = args[0];
-      }
-
+      String cfgFileName = System.getProperty("infinispan.demo.cfg", "etc/demo-cache-config.xml");
       frame = new JFrame("Infinispan GUI Demo (STOPPED)");
       frame.setContentPane(new InfinispanDemo(cfgFileName).panel1);
       frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -95,6 +100,13 @@ public class InfinispanDemo {
       cacheStatusProgressBar.setVisible(false);
       cacheStatusProgressBar.setEnabled(false);
       configFileName.setText(cacheConfigFile);
+
+      // data tables
+      clusterTableModel = new ClusterTableModel();
+      clusterTable.setModel(clusterTableModel);
+      cachedDataTableModel = new CachedDataTableModel();
+      dataTable.setModel(cachedDataTableModel);
+
       // default state of the action button should be unstarted.
       actionButton.setText(startCacheButtonLabel);
       cacheStatus.setText(statusStopped);
@@ -198,6 +210,20 @@ public class InfinispanDemo {
          }
       });
 
+      refreshDataTableButton.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent e) {
+            processAction(refreshDataTableButton, true);
+            asyncExecutor.execute(new Runnable() {
+               public void run() {
+                  InfinispanDemo.this.updateCachedDataTable();
+                  processAction(refreshDataTableButton, false);
+                  // now switch to the data pane
+                  mainPane.setSelectedIndex(1);
+               }
+            });
+         }
+      });
+
       cacheDetailsButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent e) {
             if (cache != null) debugTextArea.setText(cache.toString());
@@ -263,31 +289,31 @@ public class InfinispanDemo {
             try {
                if (cache == null) {
                   URL resource = getClass().getClassLoader().getResource(cacheConfigFile);
-                  String contents;
+                  if (resource == null) resource = new URL(cacheConfigFile);
                   // update config file display
-                  if (resource != null) {
-                     configFileName.setText(resource.toString());
-                  } else {
-                     configFileName.setText(cacheConfigFile);
-                  }
+                  configFileName.setText(resource.toString());
+
                   configFileName.repaint();
 
                   try {
-                     configFileContents.setText(readContents(resource == null ? new FileInputStream(cacheConfigFile) : resource.openStream()));
+                     configFileContents.setText(readContents(resource.openStream()));
                      configFileContents.setEditable(false);
                   }
                   catch (Exception e) {
-                     log.warn("Unable to open config file for display", e);
+                     log.warn("Unable to open config file [" + cacheConfigFile + "] for display", e);
                   }
                   configFileContents.repaint();
 
-                  cache = new DefaultCacheManager(cacheConfigFile).getCache();
+                  cache = new DefaultCacheManager(resource.openStream()).getCache();
                } else {
                   cache.start();
                }
 
-//               updateClusterTable(cache.getCacheManager().getMembers());
-//               cache.addCacheListener(new CacheListener());
+               CacheListener cl = new CacheListener();
+               cache.addListener(cl);
+               cache.getCacheManager().addListener(cl);
+               updateClusterTable(cache.getCacheManager().getMembers());
+
                moveCacheToState(ComponentStatus.RUNNING);
             } catch (Exception e) {
                log.error("Unable to start cache!", e);
@@ -315,98 +341,80 @@ public class InfinispanDemo {
 
    private void updateClusterTable(List<Address> members) {
       log.debug("Updating cluster table with new member list " + members);
-//      clusterDataModel.setMembers(members);
+      clusterTableModel.setMembers(members);
       updateTitleBar();
    }
 
    private void updateTitleBar() {
       String title = "Infinispan GUI Demo";
       if (cache != null && cache.getStatus() == ComponentStatus.RUNNING) {
-         title += " (STARTED) " + cache.getCacheManager().getAddress() + " Cluster size: " + cache.getCacheManager().getMembers().size();
+         title += " (STARTED) " + getLocalAddress() + " Cluster size: " + getClusterSize();
       } else {
          title += " (STOPPED)";
       }
       frame.setTitle(title);
    }
 
+   private String getLocalAddress() {
+      Address a = cache.getCacheManager().getAddress();
+      if (a == null) return "(LOCAL mode)";
+      else return a.toString();
+   }
+
+   private String getClusterSize() {
+      List<Address> members = cache.getCacheManager().getMembers();
+      return members == null || members.isEmpty() ? "N/A" : "" + members.size();
+   }
+
    @Listener
    public class CacheListener {
       @ViewChanged
       public void viewChangeEvent(ViewChangedEvent e) {
-//         updateClusterTable(e.getNewView().getMembers());
+         updateClusterTable(e.getNewMemberList());
       }
 
-//      @NodeModified
-//      public void nodeModified(NodeModifiedEvent e) {
-//         if (!e.isPre()) {
-//            // only if this is the current node selected in the tree do we bother refreshing it
-//            if (nodeDataTableModel.getCurrentFqn() != null && nodeDataTableModel.getCurrentFqn().equals(e.getFqn())) {
-//               nodeDataTableModel.updateCurrentNode();
-//            }
-//         }
-//      }
-//
-//      @NodeCreated
-//      public void nodeCreated(NodeCreatedEvent e) {
-//         if (!e.isPre()) {
-//            final Fqn fqn = e.getFqn();
-//            asyncExecutor.execute(new Runnable() {
-//               public void run() {
-//                  treeRefresher.addNode(fqn);
-//                  // only refresh if there are no more tasks queued up
-//                  if (asyncTaskQueue.isEmpty()) treeRefresher.repaint();
-//               }
-//            });
-//         }
-//      }
-//
-//
-//      @NodeRemoved
-//      public void nodeRemoved(NodeRemovedEvent e) {
-//         if (!e.isPre()) {
-//            final Fqn fqn = e.getFqn();
-//            asyncExecutor.execute(new Runnable() {
-//               public void run() {
-//                  treeRefresher.removeNode(fqn);
-//                  // only refresh if there are no more tasks queued up
-//                  if (asyncTaskQueue.isEmpty()) treeRefresher.repaint();
-//               }
-//            });
-//         }
-//      }
+      @CacheEntryModified
+      @CacheEntryRemoved
+      @CacheEntryEvicted
+      public void removed(Event e) {
+         if (!e.isPre()) updateCachedDataTable();
+      }
+   }
 
-      // dont bother with node modified events since the tree GUI widget will refresh each node when it is selected.
+   private void updateCachedDataTable() {
+      updateCounter.incrementAndGet();
+      asyncExecutor.execute(new Runnable() {
+         public void run() {
+            if (updateCounter.decrementAndGet() == 0) cachedDataTableModel.update();
+         }
+      });
    }
 
    public class ClusterTableModel extends AbstractTableModel {
-      List<Address> members = new ArrayList<Address>();
+      List<String> members = new ArrayList<String>();
       List<String> memberStates = new ArrayList<String>();
 
-      public void setMembers(List<Address> members) {
-         if (this.members != members) {
-            this.members.clear();
-            this.members.addAll(members);
-         }
+      public void setMembers(List<Address> m) {
+         if (m != null && !m.isEmpty()) {
+            members = new ArrayList<String>(m.size());
+            for (Address ma : m) members.add(ma.toString());
 
-         List<Address> buddies = Collections.emptyList();
+            memberStates = new ArrayList<String>(m.size());
+            for (Address a : m) {
+               String extraInfo = "Member";
+               // if this is the first member then this is the coordinator
+               if (memberStates.isEmpty()) extraInfo += " (coord)";
+               if (a.equals(cache.getCacheManager().getAddress()))
+                  extraInfo += " (me)";
 
-         memberStates = new ArrayList<String>(members.size());
-         for (Address a : members) {
-            String extraInfo = "Member";
-            // if this is the first member then this is the coordinator
-            if (memberStates.isEmpty()) extraInfo += " (coord)";
-            if (a.equals(cache.getCacheManager().getAddress()))
-               extraInfo += " (me)";
-            else if (buddies.contains(a))
-               extraInfo += " (buddy)";
-            memberStates.add(extraInfo);
+               memberStates.add(extraInfo);
+            }
+         } else {
+            members = Collections.singletonList("me!");
+            memberStates = Collections.singletonList("(local mode)");
          }
 
          fireTableDataChanged();
-      }
-
-      public void setBuddies() {
-         setMembers(members);
       }
 
       public int getRowCount() {
@@ -427,10 +435,94 @@ public class InfinispanDemo {
          return "NULL!";
       }
 
+      @Override
       public String getColumnName(int c) {
          if (c == 0) return "Member Address";
          if (c == 1) return "Member Info";
          return "NULL!";
+      }
+   }
+
+   public class CachedDataTableModel extends AbstractTableModel {
+
+      List<InternalCacheEntry> data = new LinkedList<InternalCacheEntry>();
+
+      public int getRowCount() {
+         return data.size();
+      }
+
+      public int getColumnCount() {
+         return 4;
+      }
+
+      public Object getValueAt(int rowIndex, int columnIndex) {
+         if (data.size() > rowIndex) {
+            InternalCacheEntry e = data.get(rowIndex);
+            switch (columnIndex) {
+               case 0:
+                  return e.getKey();
+               case 1:
+                  return e.getValue();
+               case 2:
+                  return e.getLifespan();
+               case 3:
+                  return e.getMaxIdle();
+            }
+         }
+         return "NULL!";
+      }
+
+      @Override
+      public String getColumnName(int c) {
+         switch (c) {
+            case 0:
+               return "Key";
+            case 1:
+               return "Value";
+            case 2:
+               return "Lifespan";
+            case 3:
+               return "MaxIdle";
+         }
+         return "NULL!";
+      }
+
+      public void update() {
+         // whew - expensive stuff.
+         data.clear();
+         for (InternalCacheEntry ice : cache.getAdvancedCache().getDataContainer()) {
+            if (!ice.isExpired()) data.add(ice);
+         }
+         fireTableDataChanged();
+      }
+   }
+
+   class CachedEntry {
+      String key, value;
+      long lifespan = -1, maxIdle = -1;
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (o == null || getClass() != o.getClass()) return false;
+
+         CachedEntry that = (CachedEntry) o;
+
+         if (lifespan != that.lifespan) return false;
+         if (maxIdle != that.maxIdle) return false;
+         if (key != null ? !key.equals(that.key) : that.key != null) return false;
+         if (value != null ? !value.equals(that.value) : that.value != null) return false;
+
+         return true;
+      }
+
+      @Override
+      public int hashCode() {
+         int result = key != null ? key.hashCode() : 0;
+         result = 31 * result + (value != null ? value.hashCode() : 0);
+         result = 31 * result + (int) (lifespan ^ (lifespan >>> 32));
+         result = 31 * result + (int) (maxIdle ^ (maxIdle >>> 32));
+         return result;
       }
    }
 }
