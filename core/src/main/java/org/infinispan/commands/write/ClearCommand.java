@@ -25,6 +25,7 @@ import org.infinispan.commands.Visitor;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.notifications.cachelistener.CacheNotifier;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -32,7 +33,19 @@ import org.infinispan.context.InvocationContext;
  */
 public class ClearCommand implements WriteCommand {
    private static final Object[] params = new Object[0];
-   public static final byte METHOD_ID = 17;
+   public static final byte COMMAND_ID = 17;
+   CacheNotifier notifier;
+
+   public ClearCommand() {
+   }
+
+   public ClearCommand(CacheNotifier notifier) {
+      this.notifier = notifier;
+   }
+
+   public void init(CacheNotifier notifier) {
+      this.notifier = notifier;
+   }
 
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitClearCommand(ctx, this);
@@ -42,8 +55,11 @@ public class ClearCommand implements WriteCommand {
       for (CacheEntry e : ctx.getLookedUpEntries().values()) {
          if (e instanceof MVCCEntry) {
             MVCCEntry me = (MVCCEntry) e;
+            Object k = me.getKey(), v = me.getValue();
+            notifier.notifyCacheEntryRemoved(k, v, true, ctx);
             me.setRemoved(true);
             me.setValid(false);
+            notifier.notifyCacheEntryRemoved(k, null, false, ctx);
          }
       }
       return null;
@@ -54,11 +70,11 @@ public class ClearCommand implements WriteCommand {
    }
 
    public byte getCommandId() {
-      return METHOD_ID;
+      return COMMAND_ID;
    }
 
    public void setParameters(int commandId, Object[] parameters) {
-      if (commandId != METHOD_ID) throw new IllegalStateException("Invalid method id");
+      if (commandId != COMMAND_ID) throw new IllegalStateException("Invalid command id");
    }
 
    @Override

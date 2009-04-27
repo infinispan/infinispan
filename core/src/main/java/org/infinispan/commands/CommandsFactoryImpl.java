@@ -114,7 +114,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    public ClearCommand buildClearCommand() {
-      return new ClearCommand();
+      return new ClearCommand(notifier);
    }
 
    public EvictCommand buildEvictCommand(Object key) {
@@ -189,6 +189,10 @@ public class CommandsFactoryImpl implements CommandsFactory {
             PrepareCommand pc = (PrepareCommand) c;
             if (pc.getModifications() != null)
                for (ReplicableCommand nested : pc.getModifications()) initializeReplicableCommand(nested);
+            break;
+         case ClearCommand.COMMAND_ID:
+            ClearCommand cc = (ClearCommand) c;
+            cc.init(notifier);
             break;
          case ClusteredGetCommand.COMMAND_ID:
             ClusteredGetCommand clusteredGetCommand = (ClusteredGetCommand) c;
