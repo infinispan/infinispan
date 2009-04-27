@@ -4,7 +4,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * // TODO: Manik: Document this!
+ * A per-entry lock container for ReentrantLocks
  *
  * @author Manik Surtani
  * @since 4.0

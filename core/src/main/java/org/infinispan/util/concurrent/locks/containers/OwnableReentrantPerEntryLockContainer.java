@@ -6,7 +6,7 @@ import org.infinispan.util.concurrent.locks.OwnableReentrantLock;
 import java.util.concurrent.locks.Lock;
 
 /**
- * // TODO: Manik: Document this!
+ * A per-entry lock container for OwnableReentrantLocks
  *
  * @author Manik Surtani
  * @since 4.0
