@@ -41,7 +41,7 @@
 
    <build>
       <plugins>
-         <plugin>
+         <!--<plugin>
             <artifactId>maven-assembly-plugin</artifactId>
             <version>2.2-beta-1</version>
             <executions>
@@ -62,7 +62,7 @@
                </execution>
             </executions>
          </plugin>
-
+-->
          <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>ideauidesigner-maven-plugin</artifactId>
