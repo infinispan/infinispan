@@ -1,7 +1,6 @@
 package org.infinispan.interceptors;
 
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -20,15 +19,14 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.BaseRpcInterceptor;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.transaction.GlobalTransaction;
 import org.infinispan.util.Immutables;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * The interceptor that handles distribution of entries across a cluster, as well as transparent lookup
@@ -39,8 +37,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public class DistributionInterceptor extends BaseRpcInterceptor {
    DistributionManager dm;
    CommandsFactory cf;
-   // TODO move this to the transaction context.  Will scale better there.
-   private final Map<GlobalTransaction, List<Address>> txRecipients = new ConcurrentHashMap<GlobalTransaction, List<Address>>();
    static final RecipientGenerator CLEAR_COMMAND_GENERATOR = new RecipientGenerator() {
       private final Object[] EMPTY_ARRAY = {};
 
@@ -135,15 +131,11 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    // ---- TX boundard commands
    @Override
    public Object visitCommitCommand(InvocationContext ctx, CommitCommand command) throws Throwable {
-      try {
-         if (!skipReplicationOfTransactionMethod(ctx)) {
-            List<Address> recipients = txRecipients.get(command.getGlobalTransaction());
-            if (recipients != null) replicateCall(ctx, recipients, command, configuration.isSyncCommitPhase(), true);
-         }
-         return invokeNextInterceptor(ctx, command);
-      } finally {
-         txRecipients.remove(command.getGlobalTransaction());
+      if (!skipReplicationOfTransactionMethod(ctx)) {
+         List<Address> recipients = new ArrayList<Address>(ctx.getTransactionContext().getTransactionParticipants());
+         replicateCall(ctx, recipients, command, configuration.isSyncCommitPhase(), true);
       }
+      return invokeNextInterceptor(ctx, command);
    }
 
    @Override
@@ -163,8 +155,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
                       rpcManager.getTransport().getAddress(), command.getGlobalTransaction(), sync);
          }
 
-         List<Address> recipients = determineRecipients(command);
-         txRecipients.put(command.getGlobalTransaction(), recipients);
+         List<Address> recipients = new ArrayList<Address>(ctx.getTransactionContext().getTransactionParticipants());
 
          // this method will return immediately if we're the only member (because exclude_self=true)
          replicateCall(ctx, recipients, command, sync, false);
@@ -175,36 +166,12 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
 
    @Override
    public Object visitRollbackCommand(InvocationContext ctx, RollbackCommand command) throws Throwable {
-      try {
-         if (!skipReplicationOfTransactionMethod(ctx) && !ctx.isLocalRollbackOnly()) {
-            List<Address> recipients = txRecipients.get(command.getGlobalTransaction());
-            if (recipients != null) replicateCall(ctx, recipients, command, configuration.isSyncRollbackPhase(), true);
-         }
-         return invokeNextInterceptor(ctx, command);
-      } finally {
-         txRecipients.remove(command.getGlobalTransaction());
+      if (!skipReplicationOfTransactionMethod(ctx) && !ctx.isLocalRollbackOnly()) {
+         List<Address> recipients = new ArrayList<Address>(ctx.getTransactionContext().getTransactionParticipants());
+         replicateCall(ctx, recipients, command, configuration.isSyncRollbackPhase(), true);
       }
+      return invokeNextInterceptor(ctx, command);
    }
-
-   private List<Address> determineRecipients(PrepareCommand cmd) {
-      Set<Address> r = new HashSet<Address>();
-      boolean toAll = false;
-      for (WriteCommand c : cmd.getModifications()) {
-         if (c instanceof ClearCommand) {
-            toAll = true;
-            break;
-         } else {
-            if (c instanceof DataCommand) {
-               r.addAll(dm.locate(((DataCommand) c).getKey()));
-            } else if (c instanceof PutMapCommand) {
-               r.addAll(new MultipleKeysRecipientGenerator(((PutMapCommand) c).getMap().keySet()).generateRecipients());
-            }
-         }
-      }
-
-      return toAll ? null : Immutables.immutableListConvert(r);
-   }
-
 
    private void remoteGetBeforeWrite(InvocationContext ctx, Object... keys) throws Throwable {
       // only do this if we are sync (OR if we dont care about return values!)
@@ -221,23 +188,32 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       boolean local = isLocalModeForced(ctx);
       // see if we need to load values from remote srcs first
       remoteGetBeforeWrite(ctx, recipientGenerator.getKeys());
-      if (local && ctx.getTransaction() == null) return invokeNextInterceptor(ctx, command);
-      // FIRST pass this call up the chain.  Only if it succeeds (no exceptions) locally do we attempt to replicate.
 
+      // if this is local mode then skip distributing
+      if (local && ctx.getTransaction() == null) return invokeNextInterceptor(ctx, command);
+
+      // FIRST pass this call up the chain.  Only if it succeeds (no exceptions) locally do we attempt to distribute.
       Object returnValue = invokeNextInterceptor(ctx, command);
 
       if (command.isSuccessful()) {
-         if (ctx.getTransaction() == null && ctx.isOriginLocal()) {
-            List<Address> rec = recipientGenerator.generateRecipients();
-            if (trace) log.trace("Invoking command {0} on hosts {1}", command, rec);
-            // if L1 caching is used make sure we broadcast an invalidate message
-            if (configuration.isL1CacheEnabled() && rec != null) {
-               InvalidateCommand ic = cf.buildInvalidateFromL1Command(recipientGenerator.getKeys());
-               replicateCall(ctx, ic, isSynchronous(ctx), false);
+         if (ctx.getTransaction() == null) {
+            if (ctx.isOriginLocal()) {
+               List<Address> rec = recipientGenerator.generateRecipients();
+               if (trace) log.trace("Invoking command {0} on hosts {1}", command, rec);
+               // if L1 caching is used make sure we broadcast an invalidate message
+               if (configuration.isL1CacheEnabled() && rec != null) {
+                  InvalidateCommand ic = cf.buildInvalidateFromL1Command(recipientGenerator.getKeys());
+                  replicateCall(ctx, ic, isSynchronous(ctx), false);
+               }
+               replicateCall(ctx, rec, command, isSynchronous(ctx), false);
             }
-            replicateCall(ctx, rec, command, isSynchronous(ctx), false);
          } else {
-            if (local) ctx.getTransactionContext().addLocalModification(command);
+            if (local) {
+               ctx.getTransactionContext().addLocalModification(command);
+            } else {
+               // add to list of participants
+               ctx.getTransactionContext().addTransactionParticipants(recipientGenerator.generateRecipients());
+            }
          }
       }
       return returnValue;

@@ -5,7 +5,7 @@ import static org.easymock.EasyMock.createNiceMock;
 import org.infinispan.Cache;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextImpl;
-import org.infinispan.factories.context.ContextFactory;
+import org.infinispan.factories.context.DefaultContextFactory;
 import org.infinispan.invocation.InvocationContextContainer;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
@@ -31,7 +31,7 @@ public class CacheNotifierImplTest {
       mockCache = createNiceMock(Cache.class);
       EasyMock.replay(mockCache);
       InvocationContextContainer icc = new InvocationContextContainer();
-      icc.injectContextFactory(new ContextFactory());
+      icc.injectContextFactory(new DefaultContextFactory());
       n.injectDependencies(icc, mockCache);
       cl = new CacheListener();
       n.start();

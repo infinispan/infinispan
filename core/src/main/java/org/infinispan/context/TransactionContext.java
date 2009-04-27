@@ -22,10 +22,13 @@
 package org.infinispan.context;
 
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.GlobalTransaction;
 
 import javax.transaction.Transaction;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * A context that contains information pertaining to a given transaction.  These contexts typically have the lifespan of
@@ -160,4 +163,20 @@ public interface TransactionContext extends EntryLookup, FlagContainer {
    void reset();
 
    GlobalTransaction getGobalTransaction();
+
+   /**
+    * Retrieves a set of Addresses of caches participating in a given transaction for a specific cache.  Returns null if
+    * the participation includes <i>all</i> caches in the cluster (e.g., you are using replication, invalidation or
+    * local mode).
+    *
+    * @return a set of cache addresses
+    */
+   Set<Address> getTransactionParticipants();
+
+   /**
+    * Adds a transaction participant.  This has no effect unless the cache mode used is DIST.
+    *
+    * @param addresses address to add
+    */
+   void addTransactionParticipants(Collection<Address> addresses);
 }

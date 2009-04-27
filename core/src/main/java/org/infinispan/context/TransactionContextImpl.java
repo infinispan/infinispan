@@ -23,6 +23,7 @@ package org.infinispan.context;
 
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.GlobalTransaction;
 import org.infinispan.util.BidirectionalLinkedHashMap;
 
@@ -30,10 +31,12 @@ import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A transaction context specially geared to dealing with MVCC.
@@ -91,6 +94,14 @@ public class TransactionContextImpl extends AbstractContext implements Transacti
 
    public GlobalTransaction getGobalTransaction() {
       return gtx;
+   }
+
+   public Set<Address> getTransactionParticipants() {
+      return null; // by default all caches in the cluster participate.
+   }
+
+   public void addTransactionParticipants(Collection<Address> addresses) {
+      // no-op - meant for overriding
    }
 
    public void putLookedUpEntries(Map<Object, CacheEntry> entries) {
@@ -193,10 +204,6 @@ public class TransactionContextImpl extends AbstractContext implements Transacti
    public boolean hasAnyModifications() {
       return hasModifications() || hasLocalModifications();
    }
-
-//   public ReversibleOrderedSet<Object> getKeysLocked() {
-//      return locks == null ? InfinispanCollections.emptyReversibleOrderedSet() : Immutables.immutableReversibleOrderedSetCopy(locks);
-//   }
 
    @Override
    public boolean equals(Object o) {
