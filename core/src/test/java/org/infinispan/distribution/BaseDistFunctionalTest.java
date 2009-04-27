@@ -10,6 +10,7 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MortalCacheEntry;
+import org.infinispan.lock.IsolationLevel;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -26,10 +27,16 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
    protected List<Cache<Object, String>> caches;
    protected boolean sync = true;
    protected boolean tx = false;
+   protected boolean testRetVals = true;
 
    protected void createCacheManagers() throws Throwable {
       Configuration c = getDefaultClusteredConfig(sync ? DIST_SYNC : DIST_ASYNC);
-      if (!sync) c.setUnsafeUnreliableReturnValues(true);
+      if (!testRetVals) {
+         c.setUnsafeUnreliableReturnValues(true);
+         // we also need to use repeatable read for tests to work when we dont have reliable return values, since the
+         // tests repeatedly queries changes
+         c.setIsolationLevel(IsolationLevel.REPEATABLE_READ);
+      }
       if (tx) c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
       caches = createClusteredCaches(4, "dist", c);
       c1 = caches.get(0);

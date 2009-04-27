@@ -12,11 +12,13 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.TransactionContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.BaseRpcInterceptor;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Immutables;
@@ -37,6 +39,10 @@ import java.util.Set;
 public class DistributionInterceptor extends BaseRpcInterceptor {
    DistributionManager dm;
    CommandsFactory cf;
+   DataContainer dataContainer;
+   boolean isL1CacheEnabled, needReliableReturnValues, sync;
+
+
    static final RecipientGenerator CLEAR_COMMAND_GENERATOR = new RecipientGenerator() {
       private final Object[] EMPTY_ARRAY = {};
 
@@ -50,9 +56,17 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    };
 
    @Inject
-   public void injectDependencies(DistributionManager distributionManager, CommandsFactory cf) {
+   public void injectDependencies(DistributionManager distributionManager, CommandsFactory cf, DataContainer dataContainer) {
       this.dm = distributionManager;
       this.cf = cf;
+      this.dataContainer = dataContainer;
+   }
+
+   @Start
+   public void start() {
+      isL1CacheEnabled = configuration.isL1CacheEnabled();
+      needReliableReturnValues = !configuration.isUnsafeUnreliableReturnValues();
+      sync = configuration.getCacheMode().isSynchronous();
    }
 
    // ---- READ commands
@@ -71,14 +85,26 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       return returnValue;
    }
 
+   /**
+    * This method retrieves an entry from a remote cache and optionally stores it in L1 (if L1 is enabled).
+    * <p/>
+    * This method only works if a) this is a locally originating invocation and b) the entry in question is not local to
+    * the current cache instance and c) the entry is not in L1.  If either of a, b or c does not hold true, this method
+    * returns a null and doesn't do anything.
+    *
+    * @param ctx invocation context
+    * @param key key to retrieve
+    * @return value of a remote get, or null
+    * @throws Throwable if there are problems
+    */
    private Object remoteGetAndStoreInL1(InvocationContext ctx, Object key) throws Throwable {
-      if (ctx.isOriginLocal() && !dm.isLocal(key)) {
+      if (ctx.isOriginLocal() && !dm.isLocal(key) && isNotInL1(key)) {
          if (trace) log.trace("Doing a remote get for key {0}", key);
          // attempt a remote lookup
          InternalCacheEntry ice = dm.retrieveFromRemoteSource(key);
 
          if (ice != null) {
-            if (configuration.isL1CacheEnabled()) {
+            if (isL1CacheEnabled) {
                if (trace) log.trace("Caching remotely retrieved entry for key {0} in L1", key);
                long lifespan = ice.getLifespan() < 0 ? configuration.getL1Lifespan() : Math.min(ice.getLifespan(), configuration.getL1Lifespan());
                PutKeyValueCommand put = cf.buildPutKeyValueCommand(ice.getKey(), ice.getValue(), lifespan, -1);
@@ -94,6 +120,16 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
             log.trace("Not doing a remote get for key {0} since entry is mapped to current node, or is in L1", key);
       }
       return null;
+   }
+
+   /**
+    * Tests whether a key is in the L1 cache if L1 is enabled.
+    *
+    * @param key key to check for
+    * @return true if the key is not in L1, or L1 caching is not enabled.  false the key is in L1.
+    */
+   private boolean isNotInL1(Object key) {
+      return !isL1CacheEnabled || !dataContainer.containsKey(key);
    }
 
    // ---- WRITE commands
@@ -149,7 +185,6 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       }
 
       if (!skipReplicationOfTransactionMethod(ctx)) {
-         boolean sync = configuration.getCacheMode().isSynchronous();
          if (trace) {
             log.trace("[" + rpcManager.getTransport().getAddress() + "] Running remote prepare for global tx {1}.  Synchronous? {2}",
                       rpcManager.getTransport().getAddress(), command.getGlobalTransaction(), sync);
@@ -173,11 +208,14 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       return invokeNextInterceptor(ctx, command);
    }
 
-   private void remoteGetBeforeWrite(InvocationContext ctx, Object... keys) throws Throwable {
-      // only do this if we are sync (OR if we dont care about return values!)
-//      if (!configuration.isUnsafeUnreliableReturnValues()) {
-      for (Object k : keys) remoteGetAndStoreInL1(ctx, k);
-//      }
+   private void remoteGetBeforeWrite(InvocationContext ctx, boolean isConditionalCommand, Object... keys) throws Throwable {
+      // this should only happen if:
+      //   a) unsafeUnreliableReturnValues is false
+      //   b) unsafeUnreliableReturnValues is true, we are in a TX and the command is conditional
+
+      if (needReliableReturnValues || (isConditionalCommand && ctx.getTransaction() != null)) {
+         for (Object k : keys) remoteGetAndStoreInL1(ctx, k);
+      }
    }
 
    /**
@@ -187,7 +225,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    private Object handleWriteCommand(InvocationContext ctx, WriteCommand command, RecipientGenerator recipientGenerator) throws Throwable {
       boolean local = isLocalModeForced(ctx);
       // see if we need to load values from remote srcs first
-      remoteGetBeforeWrite(ctx, recipientGenerator.getKeys());
+      remoteGetBeforeWrite(ctx, command.isConditional(), recipientGenerator.getKeys());
 
       // if this is local mode then skip distributing
       if (local && ctx.getTransaction() == null) return invokeNextInterceptor(ctx, command);
@@ -201,7 +239,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
                List<Address> rec = recipientGenerator.generateRecipients();
                if (trace) log.trace("Invoking command {0} on hosts {1}", command, rec);
                // if L1 caching is used make sure we broadcast an invalidate message
-               if (configuration.isL1CacheEnabled() && rec != null) {
+               if (isL1CacheEnabled && rec != null) {
                   InvalidateCommand ic = cf.buildInvalidateFromL1Command(recipientGenerator.getKeys());
                   replicateCall(ctx, ic, isSynchronous(ctx), false);
                }

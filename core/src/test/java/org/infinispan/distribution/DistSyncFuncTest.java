@@ -13,6 +13,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest {
    public DistSyncFuncTest() {
       sync = true;
       tx = false;
+      testRetVals = true;
    }
 
    public void testBasicDistribution() {
@@ -52,7 +53,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest {
       Object retval = nonOwner.put("k1", "value2");
       asyncWait("k1", PutKeyValueCommand.class, getSecondNonOwner("k1"));
 
-      assert "value".equals(retval);
+      if (testRetVals) assert "value".equals(retval);
       assertOnAllCachesAndOwnership("k1", "value2");
    }
 
@@ -60,7 +61,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest {
       initAndTest();
       Object retval = getFirstNonOwner("k1").putIfAbsent("k1", "value2");
 
-      assert "value".equals(retval);
+      if (testRetVals) assert "value".equals(retval);
 
       assertOnAllCachesAndOwnership("k1", "value");
 
@@ -69,7 +70,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest {
 
       retval = getFirstNonOwner("k1").putIfAbsent("k1", "value2");
       asyncWait("k1", PutKeyValueCommand.class, getSecondNonOwner("k1"));
-      assert null == retval;
+      if (testRetVals) assert null == retval;
 
       assertOnAllCachesAndOwnership("k1", "value2");
    }
@@ -78,7 +79,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest {
       initAndTest();
       Object retval = getFirstNonOwner("k1").remove("k1");
       asyncWait("k1", RemoveCommand.class, getSecondNonOwner("k1"));
-      if (sync) assert "value".equals(retval);
+      if (testRetVals) assert "value".equals(retval);
 
       assertOnAllCachesAndOwnership("k1", null);
    }
@@ -86,13 +87,13 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest {
    public void testConditionalRemoveFromNonOwner() {
       initAndTest();
       boolean retval = getFirstNonOwner("k1").remove("k1", "value2");
-      assert !retval : "Should not have removed entry";
+      if (testRetVals) assert !retval : "Should not have removed entry";
 
       assertOnAllCachesAndOwnership("k1", "value");
 
       retval = getFirstNonOwner("k1").remove("k1", "value");
       asyncWait("k1", RemoveCommand.class, getSecondNonOwner("k1"));
-      assert retval : "Should have removed entry";
+      if (testRetVals) assert retval : "Should have removed entry";
 
       assertOnAllCachesAndOwnership("k1", null);
    }
@@ -100,7 +101,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest {
    public void testReplaceFromNonOwner() {
       initAndTest();
       Object retval = getFirstNonOwner("k1").replace("k1", "value2");
-      assert "value".equals(retval);
+      if (testRetVals) assert "value".equals(retval);
 
       asyncWait("k1", ReplaceCommand.class, getSecondNonOwner("k1"));
 
@@ -110,7 +111,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest {
       asyncWait(null, ClearCommand.class);
 
       retval = getFirstNonOwner("k1").replace("k1", "value2");
-      assert retval == null;
+      if (testRetVals) assert retval == null;
 
       assertOnAllCachesAndOwnership("k1", null);
    }
@@ -119,14 +120,14 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest {
       initAndTest();
       Cache<Object, String> nonOwner = getFirstNonOwner("k1");
       boolean retval = nonOwner.replace("k1", "valueX", "value2");
-      assert !retval : "Should not have replaced";
+      if (testRetVals) assert !retval : "Should not have replaced";
 
       assertOnAllCachesAndOwnership("k1", "value");
 
       assert !nonOwner.getAdvancedCache().getComponentRegistry().getComponent(DistributionManager.class).isLocal("k1");
       retval = nonOwner.replace("k1", "value", "value2");
       asyncWait("k1", ReplaceCommand.class, getSecondNonOwner("k1"));
-      assert retval : "Should have replaced";
+      if (testRetVals) assert retval : "Should have replaced";
 
       assertOnAllCachesAndOwnership("k1", "value2");
    }

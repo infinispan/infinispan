@@ -699,8 +699,5 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       // certain combinations are illegal, such as state transfer + DIST
       if (cacheMode.isDistributed() && fetchInMemoryState)
          throw new ConfigurationException("Cache cannot use DISTRIBUTION mode and have fetchInMemoryState set to true");
-
-      if (cacheMode == CacheMode.DIST_ASYNC && !unsafeUnreliableReturnValues)
-         throw new ConfigurationException("DISTRIBUTION mode cannot be asynchronous without breaking return values in the public API.  To force this, please use the <unsafe /> element, setting the 'unreliableReturnValues' attribute to 'true'.");
    }
 }

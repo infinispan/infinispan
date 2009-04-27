@@ -22,6 +22,7 @@ public class DistAsyncTxFuncTest extends DistSyncTxFuncTest {
    public DistAsyncTxFuncTest() {
       sync = false;
       tx = true;
+      testRetVals = true;
       cleanup = CleanupPhase.AFTER_METHOD; // ensure any stale TXs are wiped
    }
 

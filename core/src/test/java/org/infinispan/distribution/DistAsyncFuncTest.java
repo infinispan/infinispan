@@ -19,6 +19,7 @@ public class DistAsyncFuncTest extends DistSyncFuncTest {
    public DistAsyncFuncTest() {
       sync = false;
       tx = false;
+      testRetVals = true;
    }
 
    @Override

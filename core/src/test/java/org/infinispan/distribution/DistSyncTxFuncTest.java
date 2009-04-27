@@ -10,6 +10,7 @@ public class DistSyncTxFuncTest extends BaseDistFunctionalTest {
    public DistSyncTxFuncTest() {
       sync = true;
       tx = true;
+      testRetVals = true;
       cleanup = CleanupPhase.AFTER_METHOD; // ensure any stale TXs are wiped
    }
 
@@ -112,9 +113,9 @@ public class DistSyncTxFuncTest extends BaseDistFunctionalTest {
       TransactionManager tm4 = getTransactionManager(c4);
       tm4.begin();
       Object ret = c4.put(k1, "new_value");
-      assert "value1".equals(ret);
+      if (testRetVals) assert "value1".equals(ret);
       ret = c4.put(k2, "new_value");
-      assert "value2".equals(ret);
+      if (testRetVals) assert "value2".equals(ret);
       tm4.rollback();
 
       assertIsInContainerImmortal(c1, k1);
@@ -140,9 +141,9 @@ public class DistSyncTxFuncTest extends BaseDistFunctionalTest {
       TransactionManager tm4 = getTransactionManager(c4);
       tm4.begin();
       Object ret = c4.putIfAbsent(k1, "new_value");
-      assert "value1".equals(ret) : "Was expecting value1 but was " + ret;
+      if (testRetVals) assert "value1".equals(ret) : "Was expecting value1 but was " + ret;
       ret = c4.putIfAbsent(k2, "new_value");
-      assert "value2".equals(ret) : "Was expecting value2 but was " + ret;
+      if (testRetVals) assert "value2".equals(ret) : "Was expecting value2 but was " + ret;
 
       assert c4.get(k1).equals("value1");
       assert c4.get(k2).equals("value2");
@@ -175,9 +176,9 @@ public class DistSyncTxFuncTest extends BaseDistFunctionalTest {
       TransactionManager tm4 = getTransactionManager(c4);
       tm4.begin();
       Object ret = c4.remove(k1);
-      assert "value1".equals(ret);
+      if (testRetVals) assert "value1".equals(ret);
       ret = c4.remove(k2);
-      assert "value2".equals(ret);
+      if (testRetVals) assert "value2".equals(ret);
 
       assert !c4.containsKey(k1);
       assert !c4.containsKey(k2);
@@ -206,17 +207,17 @@ public class DistSyncTxFuncTest extends BaseDistFunctionalTest {
       TransactionManager tm4 = getTransactionManager(c4);
       tm4.begin();
       boolean ret = c4.remove(k1, "valueX");
-      assert !ret;
+      if (testRetVals) assert !ret;
       ret = c4.remove(k2, "valueX");
-      assert !ret;
+      if (testRetVals) assert !ret;
 
       assert c4.containsKey(k1);
       assert c4.containsKey(k2);
 
       ret = c4.remove(k1, "value1");
-      assert ret;
+      if (testRetVals) assert ret;
       ret = c4.remove(k2, "value2");
-      assert ret;
+      if (testRetVals) assert ret;
 
       assert !c4.containsKey(k1);
       assert !c4.containsKey(k2);
@@ -245,9 +246,9 @@ public class DistSyncTxFuncTest extends BaseDistFunctionalTest {
       TransactionManager tm4 = getTransactionManager(c4);
       tm4.begin();
       Object ret = c4.replace(k1, "new_value");
-      assert "value1".equals(ret);
+      if (testRetVals) assert "value1".equals(ret);
       ret = c4.replace(k2, "new_value");
-      assert "value2".equals(ret);
+      if (testRetVals) assert "value2".equals(ret);
 
       assert "new_value".equals(c4.get(k1));
       assert "new_value".equals(c4.get(k2));
@@ -276,17 +277,17 @@ public class DistSyncTxFuncTest extends BaseDistFunctionalTest {
       TransactionManager tm4 = getTransactionManager(c4);
       tm4.begin();
       boolean ret = c4.replace(k1, "valueX", "new_value");
-      assert !ret;
+      if (testRetVals) assert !ret;
       ret = c4.replace(k2, "valueX", "new_value");
-      assert !ret;
+      if (testRetVals) assert !ret;
 
       assert "value1".equals(c4.get(k1));
       assert "value2".equals(c4.get(k2));
 
       ret = c4.replace(k1, "value1", "new_value");
-      assert ret;
+      if (testRetVals) assert ret;
       ret = c4.replace(k2, "value2", "new_value");
-      assert ret;
+      if (testRetVals) assert ret;
 
       assert "new_value".equals(c4.get(k1));
       assert "new_value".equals(c4.get(k2));
