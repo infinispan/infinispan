@@ -18,7 +18,9 @@ public class DefaultScheduledExecutorFactory implements ScheduledExecutorFactory
       final AtomicInteger counter = new AtomicInteger(0);
       return Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
          public Thread newThread(Runnable r) {
-            return new Thread(r, threadNamePrefix + "-" + counter.getAndIncrement());
+            Thread th = new Thread(r, threadNamePrefix + "-" + counter.getAndIncrement());
+            th.setDaemon(true);
+            return th;
          }
       });
    }
