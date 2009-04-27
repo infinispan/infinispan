@@ -157,6 +157,7 @@ public class XmlConfigurationParserImpl extends XmlParserBase implements XmlConf
       configureInvocationBatching(getSingleElementInCoreNS("invocationBatching", e), c);
       configureClustering(getSingleElementInCoreNS("clustering", e), c);
       configureEviction(getSingleElementInCoreNS("eviction", e), c);
+      configureExpiration(getSingleElementInCoreNS("expiration", e), c);
       configureCacheLoaders(getSingleElementInCoreNS("loaders", e), c);
       configureCustomInterceptors(getSingleElementInCoreNS("customInterceptors", e), c);
       configureUnsafe(getSingleElementInCoreNS("unsafe", e), c);

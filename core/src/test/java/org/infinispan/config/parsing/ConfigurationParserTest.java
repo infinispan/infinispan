@@ -228,7 +228,7 @@ public class ConfigurationParserTest {
       assert !ssc.isSingletonStoreEnabled();
    }
 
-   public void testDefaultEviction() throws Exception {
+   public void testDefaultEvictionAndExpiration() throws Exception {
       XmlConfigurationParserImpl parser = new XmlConfigurationParserImpl();
       String xml = "<eviction />";
       Element e = XmlConfigHelper.stringToElement(xml);
@@ -245,7 +245,7 @@ public class ConfigurationParserTest {
       assert c.getExpirationMaxIdle() == -1;
    }
 
-   public void testEviction() throws Exception {
+   public void testEvictionAndExpiration() throws Exception {
       XmlConfigurationParserImpl parser = new XmlConfigurationParserImpl();
       String evictionXml = "<eviction strategy=\"LRU\" " +
             "wakeUpInterval=\"750\" maxEntries=\"7000\" />";

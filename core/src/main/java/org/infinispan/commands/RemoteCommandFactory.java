@@ -65,7 +65,7 @@ public class RemoteCommandFactory {
          case GetKeyValueCommand.METHOD_ID:
             command = new GetKeyValueCommand();
             break;
-         case ClearCommand.METHOD_ID:
+         case ClearCommand.COMMAND_ID:
             command = new ClearCommand();
             break;
          case PrepareCommand.COMMAND_ID:
