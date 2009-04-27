@@ -2,12 +2,12 @@ package org.infinispan.notifications.cachelistener;
 
 import static org.easymock.EasyMock.*;
 import org.infinispan.Cache;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.lock.IsolationLevel;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.DummyTransactionManagerLookup;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterTest;
@@ -113,6 +113,24 @@ public class CacheNotifierTest {
 
    public void testNonexistentRemove() throws Exception {
       cache.remove("doesNotExist");
+      replay(mockNotifier);
+      verify(mockNotifier);
+   }
+
+   public void testVisit() throws Exception {
+      initCacheData("key", "value");
+
+      mockNotifier.notifyCacheEntryVisited(eq("key"), eq(true), isA(InvocationContext.class));
+      expectLastCall().once();
+      mockNotifier.notifyCacheEntryVisited(eq("key"), eq(false), isA(InvocationContext.class));
+      expectLastCall().once();
+      replay(mockNotifier);
+      cache.get("key");
+      verify(mockNotifier);
+   }
+
+   public void testNonexistentVisit() throws Exception {
+      cache.get("doesNotExist");
       replay(mockNotifier);
       verify(mockNotifier);
    }
