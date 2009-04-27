@@ -74,7 +74,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
    ExecutorService asyncExecutor;
    CacheManagerNotifier notifier;
    final ConcurrentMap<String, StateTransferMonitor> stateTransfersInProgress = new ConcurrentHashMap<String, StateTransferMonitor>();
-   private final FlushBasedDistributedSync flushTracker = new FlushBasedDistributedSync();
+   private final JGroupsDistSync flushTracker = new JGroupsDistSync();
    long distributedSyncTimeout;
 
    // ------------------------------------------------------------------------------------------------------------------
@@ -401,11 +401,11 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
    }
 
    public void block() {
-      flushTracker.acquireSync();
+      // no-op
    }
 
    public void unblock() {
-      flushTracker.releaseSync();
+      // no-op
    }
 
    public void receive(Message msg) {
