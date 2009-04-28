@@ -197,13 +197,14 @@ public abstract class AbstractComponentRegistry implements Lifecycle {
          c = new Component();
          c.name = name;
          c.instance = component;
-         getLog().trace("Registering component {0} under name {1}", c, name);
          componentLookup.put(name, c);
       }
       c.nonVolatile = ReflectionUtil.isAnnotationPresent(component.getClass(), NonVolatile.class);
       addComponentDependencies(c);
       // inject dependencies for this component
       c.injectDependencies();
+      
+      if (old != null) getLog().trace("Registering component {0} under name {1}", c, name); 
    }
 
    /**
