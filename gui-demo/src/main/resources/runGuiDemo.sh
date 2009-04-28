@@ -22,4 +22,5 @@ done
 
 JVM_PARAMS="-Dbind.address=127.0.0.1 -Djava.net.preferIPv4Stack=true -Dlog4j.configuration=./etc/log4j.xml"
 
-java -cp ${CP} ${JVM_PARAMS} org.infinispan.demo.InfinispanDemo
+java -cp ${CP} ${JVM_PARAMS} org.infinispan.demo.InfinispanDemo &
+
