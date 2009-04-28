@@ -169,7 +169,7 @@ def patch(pomFile, version):
     
 def updateVersions(version, workingDir):
     client = svnConn.getClient()
-    client.checkout(svnBase + "/tags/" + version, localTagsDir)
+    client.checkout(svnBase + "/tags/" + version, localTagsDir + '/' + version)
 
     # Find the root pom first
     getModules(workingDir)
