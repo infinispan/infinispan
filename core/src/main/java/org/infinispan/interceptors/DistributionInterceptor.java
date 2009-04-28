@@ -20,6 +20,7 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.BaseRpcInterceptor;
+import org.infinispan.invocation.Flag;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Immutables;
 
@@ -40,7 +41,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    DistributionManager dm;
    CommandsFactory cf;
    DataContainer dataContainer;
-   boolean isL1CacheEnabled, needReliableReturnValues, sync;
+   boolean isL1CacheEnabled, needReliableReturnValues;
 
 
    static final RecipientGenerator CLEAR_COMMAND_GENERATOR = new RecipientGenerator() {
@@ -66,7 +67,6 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    public void start() {
       isL1CacheEnabled = configuration.isL1CacheEnabled();
       needReliableReturnValues = !configuration.isUnsafeUnreliableReturnValues();
-      sync = configuration.getCacheMode().isSynchronous();
    }
 
    // ---- READ commands
@@ -184,6 +184,8 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
          command = replicablePrepareCommand;
       }
 
+      boolean sync = isSynchronous(ctx);
+
       if (!skipReplicationOfTransactionMethod(ctx)) {
          if (trace) {
             log.trace("[" + rpcManager.getTransport().getAddress() + "] Running remote prepare for global tx {1}.  Synchronous? {2}",
@@ -213,9 +215,13 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       //   a) unsafeUnreliableReturnValues is false
       //   b) unsafeUnreliableReturnValues is true, we are in a TX and the command is conditional
 
-      if (needReliableReturnValues || (isConditionalCommand && ctx.getTransaction() != null)) {
+      if (isNeedReliableReturnValues(ctx) || (isConditionalCommand && ctx.getTransaction() != null)) {
          for (Object k : keys) remoteGetAndStoreInL1(ctx, k);
       }
+   }
+
+   private boolean isNeedReliableReturnValues(InvocationContext ctx) {
+      return !ctx.hasFlag(Flag.UNSAFE_UNRELIABLE_RETURN_VALUES) && needReliableReturnValues;
    }
 
    /**
