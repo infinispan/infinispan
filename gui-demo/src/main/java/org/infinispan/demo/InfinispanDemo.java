@@ -16,6 +16,8 @@ import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.remoting.transport.Address;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.table.AbstractTableModel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -26,13 +28,14 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -45,7 +48,6 @@ public class InfinispanDemo {
    private JPanel panel1;
    private JLabel cacheStatus;
    private JPanel dataGeneratorTab;
-   private JPanel statisticsTab;
    private JPanel clusterViewTab;
    private JPanel dataViewTab;
    private JPanel controlPanelTab;
@@ -59,31 +61,26 @@ public class InfinispanDemo {
    private JRadioButton removeEntryRadioButton;
    private JRadioButton getEntryRadioButton;
    private JButton goButton;
-   private JScrollPane nodeDataScrollPane;
    private JButton randomGeneratorButton;
-   private JTextField maxEntriesTextField;
    private JButton cacheClearButton;
    private JTextArea configFileContents;
-   private JScrollPane treeScrollPane;
-   private JPanel debugTab;
-   private JButton cacheDetailsButton;
-   private JButton cacheLockInfoButton;
-   private JTextArea debugTextArea;
    private String cacheConfigFile;
    private Cache<String, String> cache;
    private String startCacheButtonLabel = "Start Cache", stopCacheButtonLabel = "Stop Cache";
    private String statusStarting = "Starting Cache ... ", statusStarted = "Cache Running.", statusStopping = "Stopping Cache ...", statusStopped = "Cache Stopped.";
    private ExecutorService asyncExecutor;
    private final AtomicInteger updateCounter = new AtomicInteger(0);
-   private BlockingQueue<Runnable> asyncTaskQueue;
    private JTable dataTable;
    private JButton refreshDataTableButton;
+   private JSlider generateSlider;
+   private JSpinner lifespanSpinner;
+   private JSpinner maxIdleSpinner;
    private Random r = new Random();
    private ClusterTableModel clusterTableModel;
    private CachedDataTableModel cachedDataTableModel;
 
    public static void main(String[] args) {
-      String cfgFileName = System.getProperty("infinispan.demo.cfg", "etc/demo-cache-config.xml");
+      String cfgFileName = System.getProperty("infinispan.demo.cfg", "config-samples/gui-demo-cache-config.xml");
       frame = new JFrame("Infinispan GUI Demo (STOPPED)");
       frame.setContentPane(new InfinispanDemo(cfgFileName).panel1);
       frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -94,7 +91,6 @@ public class InfinispanDemo {
 
    public InfinispanDemo(String cfgFileName) {
       asyncExecutor = Executors.newFixedThreadPool(1);
-      asyncTaskQueue = ((ThreadPoolExecutor) asyncExecutor).getQueue();
 
       cacheConfigFile = cfgFileName;
       cacheStatusProgressBar.setVisible(false);
@@ -133,7 +129,7 @@ public class InfinispanDemo {
                public void run() {
                   // based on the value of the radio button:
                   if (putEntryRadioButton.isSelected()) {
-                     cache.put(keyTextField.getText(), valueTextField.getText());
+                     cache.put(keyTextField.getText(), valueTextField.getText(), lifespan(), TimeUnit.MILLISECONDS, maxIdle(), TimeUnit.MILLISECONDS);
                   } else if (removeEntryRadioButton.isSelected()) {
                      cache.remove(keyTextField.getText());
                   } else if (getEntryRadioButton.isSelected()) {
@@ -141,16 +137,41 @@ public class InfinispanDemo {
                   }
                   dataViewTab.repaint();
                   processAction(goButton, false);
+
+                  // reset these values
+                  lifespanSpinner.setValue(cache.getConfiguration().getExpirationLifespan());
+                  maxIdleSpinner.setValue(cache.getConfiguration().getExpirationMaxIdle());
                   // now switch to the data pane
                   mainPane.setSelectedIndex(1);
+               }
+
+               private long lifespan() {
+                  try {
+                     String s = lifespanSpinner.getValue().toString();
+                     return Long.parseLong(s);
+                  } catch (Exception e) {
+                     return cache.getConfiguration().getExpirationLifespan();
+                  }
+               }
+
+               private long maxIdle() {
+                  try {
+                     String s = maxIdleSpinner.getValue().toString();
+                     return Long.parseLong(s);
+                  } catch (Exception e) {
+                     return cache.getConfiguration().getExpirationMaxIdle();
+                  }
                }
             });
          }
       });
+
       removeEntryRadioButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent e) {
             keyTextField.setEnabled(true);
             valueTextField.setEnabled(false);
+            lifespanSpinner.setEnabled(false);
+            maxIdleSpinner.setEnabled(false);
          }
       });
 
@@ -158,6 +179,8 @@ public class InfinispanDemo {
          public void actionPerformed(ActionEvent e) {
             keyTextField.setEnabled(true);
             valueTextField.setEnabled(true);
+            lifespanSpinner.setEnabled(true);
+            maxIdleSpinner.setEnabled(true);
          }
       });
 
@@ -165,8 +188,19 @@ public class InfinispanDemo {
          public void actionPerformed(ActionEvent e) {
             keyTextField.setEnabled(true);
             valueTextField.setEnabled(false);
+            lifespanSpinner.setEnabled(false);
+            maxIdleSpinner.setEnabled(false);
          }
       });
+
+      generateSlider.addChangeListener(new ChangeListener() {
+
+         public void stateChanged(ChangeEvent e) {
+            randomGeneratorButton.setText("Generate " + generateSlider.getValue() + " Random Entries");
+         }
+      });
+
+      randomGeneratorButton.setText("Generate " + generateSlider.getValue() + " Random Entries");
 
       randomGeneratorButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent e) {
@@ -175,17 +209,15 @@ public class InfinispanDemo {
             // process this asynchronously
             asyncExecutor.execute(new Runnable() {
                public void run() {
-                  int entries = 1;
-                  try {
-                     entries = Integer.parseInt(maxEntriesTextField.getText());
-                  }
-                  catch (NumberFormatException nfe) {
-                     log.warn("Entered a non-integer for depth.  Using 1.", nfe);
-                  }
+                  int entries = generateSlider.getValue();
 
-                  for (int i = 0; i < entries; i++) cache.put(randomString(), randomString());
+                  Map<String, String> rand = new HashMap<String, String>();
+                  while (rand.size() < entries) rand.put(randomString(), randomString());
+
+                  cache.putAll(rand);
 
                   processAction(randomGeneratorButton, false);
+                  generateSlider.setValue(50);
                   // now switch to the data pane
                   mainPane.setSelectedIndex(1);
                }
@@ -221,17 +253,6 @@ public class InfinispanDemo {
                   mainPane.setSelectedIndex(1);
                }
             });
-         }
-      });
-
-      cacheDetailsButton.addActionListener(new ActionListener() {
-         public void actionPerformed(ActionEvent e) {
-            if (cache != null) debugTextArea.setText(cache.toString());
-         }
-      });
-      cacheLockInfoButton.addActionListener(new ActionListener() {
-         public void actionPerformed(ActionEvent e) {
-            if (cache != null) debugTextArea.setText(cache.toString());
          }
       });
    }
@@ -314,9 +335,13 @@ public class InfinispanDemo {
                cache.getCacheManager().addListener(cl);
                updateClusterTable(cache.getCacheManager().getMembers());
 
+               lifespanSpinner.setValue(cache.getConfiguration().getExpirationLifespan());
+               maxIdleSpinner.setValue(cache.getConfiguration().getExpirationMaxIdle());
+
                moveCacheToState(ComponentStatus.RUNNING);
             } catch (Exception e) {
                log.error("Unable to start cache!", e);
+               throw new RuntimeException(e);
             }
          }
       });

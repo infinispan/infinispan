@@ -217,6 +217,10 @@
             <rowspec value="top:3dlu:noGrow"/>
             <rowspec value="center:max(d;4px):noGrow"/>
             <rowspec value="top:3dlu:noGrow"/>
+            <rowspec value="center:d:grow"/>
+            <rowspec value="top:3dlu:noGrow"/>
+            <rowspec value="center:max(d;4px):noGrow"/>
+            <rowspec value="top:3dlu:noGrow"/>
             <rowspec value="center:max(d;4px):noGrow"/>
             <rowspec value="top:3dlu:noGrow"/>
             <rowspec value="center:d:grow"/>
@@ -225,13 +229,7 @@
             <rowspec value="top:3dlu:noGrow"/>
             <rowspec value="center:max(d;4px):noGrow"/>
             <rowspec value="top:3dlu:noGrow"/>
-            <rowspec value="center:max(d;4px):noGrow"/>
-            <rowspec value="top:3dlu:noGrow"/>
             <rowspec value="center:d:grow"/>
-            <rowspec value="top:3dlu:noGrow"/>
-            <rowspec value="center:max(d;4px):noGrow"/>
-            <rowspec value="top:3dlu:noGrow"/>
-            <rowspec value="center:max(d;4px):noGrow"/>
             <colspec value="fill:d:noGrow"/>
             <colspec value="left:4dlu:noGrow"/>
             <colspec value="fill:200px:noGrow"/>
@@ -274,34 +272,8 @@
                   </grid>
                   <forms defaultalign-horz="false"/>
                 </constraints>
-                <properties/>
-              </component>
-              <component id="ca2af" class="javax.swing.JRadioButton" binding="putEntryRadioButton">
-                <constraints>
-                  <grid row="6" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                  <forms/>
-                </constraints>
                 <properties>
-                  <selected value="true"/>
-                  <text value="&amp;Put Entry"/>
-                </properties>
-              </component>
-              <component id="e9453" class="javax.swing.JRadioButton" binding="removeEntryRadioButton">
-                <constraints>
-                  <grid row="8" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                  <forms/>
-                </constraints>
-                <properties>
-                  <text value="&amp;Remove Entry"/>
-                </properties>
-              </component>
-              <component id="11f60" class="javax.swing.JButton" binding="goButton" default-binding="true">
-                <constraints>
-                  <grid row="10" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                  <forms defaultalign-horz="false"/>
-                </constraints>
-                <properties>
-                  <text value="&amp;Go"/>
+                  <toolTipText value="Cached entry key"/>
                 </properties>
               </component>
               <component id="5eb9b" class="javax.swing.JTextField" binding="valueTextField" default-binding="true">
@@ -311,7 +283,9 @@
                   </grid>
                   <forms defaultalign-horz="false"/>
                 </constraints>
-                <properties/>
+                <properties>
+                  <toolTipText value="Cached entry value"/>
+                </properties>
               </component>
               <component id="24ed" class="javax.swing.JLabel">
                 <constraints>
@@ -325,7 +299,7 @@
               </component>
               <component id="aacea" class="javax.swing.JLabel">
                 <constraints>
-                  <grid row="14" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <grid row="12" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                   <forms/>
                 </constraints>
                 <properties>
@@ -333,60 +307,28 @@
                   <text value="Random data generator"/>
                 </properties>
               </component>
-              <component id="bf689" class="javax.swing.JSeparator">
-                <constraints>
-                  <grid row="12" column="0" row-span="1" col-span="5" vsize-policy="6" hsize-policy="6" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-                  <forms defaultalign-horz="false" defaultalign-vert="false"/>
-                </constraints>
-                <properties/>
-              </component>
               <component id="c9835" class="javax.swing.JLabel">
                 <constraints>
-                  <grid row="16" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <grid row="14" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                   <forms/>
                 </constraints>
                 <properties>
-                  <labelFor value="513f3"/>
                   <text value="Max entries"/>
                 </properties>
               </component>
-              <component id="32377" class="javax.swing.JButton" binding="randomGeneratorButton">
-                <constraints>
-                  <grid row="18" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                  <forms defaultalign-horz="false"/>
-                </constraints>
-                <properties>
-                  <text value="Ge&amp;nerate"/>
-                </properties>
-              </component>
-              <component id="513f3" class="javax.swing.JTextField" binding="maxEntriesTextField">
-                <constraints>
-                  <grid row="16" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
-                    <preferred-size width="150" height="-1"/>
-                  </grid>
-                  <forms defaultalign-horz="false"/>
-                </constraints>
-                <properties/>
-              </component>
-              <component id="f036" class="javax.swing.JSeparator">
-                <constraints>
-                  <grid row="20" column="0" row-span="1" col-span="5" vsize-policy="6" hsize-policy="6" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-                  <forms defaultalign-horz="false" defaultalign-vert="false"/>
-                </constraints>
-                <properties/>
-              </component>
               <component id="43cf0" class="javax.swing.JButton" binding="cacheClearButton">
                 <constraints>
-                  <grid row="24" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <grid row="20" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                   <forms defaultalign-horz="false"/>
                 </constraints>
                 <properties>
                   <text value="C&amp;lear cache"/>
+                  <toolTipText value="Clears all caches"/>
                 </properties>
               </component>
               <component id="dae1c" class="javax.swing.JLabel">
                 <constraints>
-                  <grid row="22" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <grid row="18" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                   <forms/>
                 </constraints>
                 <properties>
@@ -394,57 +336,125 @@
                   <text value="Clear cache"/>
                 </properties>
               </component>
+              <component id="402fc" class="javax.swing.JLabel">
+                <constraints>
+                  <grid row="8" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <forms/>
+                </constraints>
+                <properties>
+                  <text value="MaxIdle (millis)"/>
+                </properties>
+              </component>
+              <component id="6a9f0" class="javax.swing.JLabel">
+                <constraints>
+                  <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <forms/>
+                </constraints>
+                <properties>
+                  <text value="Lifespan (millis)"/>
+                </properties>
+              </component>
+              <component id="ca2af" class="javax.swing.JRadioButton" binding="putEntryRadioButton">
+                <constraints>
+                  <grid row="2" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <forms/>
+                </constraints>
+                <properties>
+                  <selected value="true"/>
+                  <text value="&amp;Put Entry"/>
+                  <toolTipText value="Adds a new entry or overwrites an existing one"/>
+                </properties>
+              </component>
               <component id="f10d0" class="javax.swing.JRadioButton" binding="getEntryRadioButton" default-binding="true">
+                <constraints>
+                  <grid row="4" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <forms/>
+                </constraints>
+                <properties>
+                  <text value="&amp;Get Entry"/>
+                  <toolTipText value="Retrieves a cache entry, potentially from a remote cache"/>
+                </properties>
+              </component>
+              <component id="e9453" class="javax.swing.JRadioButton" binding="removeEntryRadioButton">
                 <constraints>
                   <grid row="6" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                   <forms/>
                 </constraints>
                 <properties>
-                  <text value="Get Entry"/>
+                  <text value="&amp;Remove Entry"/>
+                  <toolTipText value="Removes an entry from the cache"/>
                 </properties>
               </component>
-            </children>
-          </grid>
-          <grid id="ffd9b" binding="debugTab" layout-manager="GridLayoutManager" row-count="2" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-            <margin top="0" left="0" bottom="0" right="0"/>
-            <constraints>
-              <tabbedpane title="Debug" enabled="false"/>
-            </constraints>
-            <properties/>
-            <border type="none"/>
-            <children>
-              <component id="cda62" class="javax.swing.JButton" binding="cacheDetailsButton">
+              <component id="11f60" class="javax.swing.JButton" binding="goButton" default-binding="true">
                 <constraints>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                  <grid row="8" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <forms defaultalign-horz="false"/>
                 </constraints>
                 <properties>
-                  <text value="Print cache details"/>
+                  <text value="&amp;Go"/>
+                  <toolTipText value="Perform operation"/>
                 </properties>
               </component>
-              <component id="3a0c2" class="javax.swing.JButton" binding="cacheLockInfoButton">
+              <component id="32377" class="javax.swing.JButton" binding="randomGeneratorButton">
                 <constraints>
-                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                  <grid row="14" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <forms defaultalign-horz="false"/>
                 </constraints>
                 <properties>
-                  <text value="Print cache locking info"/>
+                  <text value="Ge&amp;nerate"/>
+                  <toolTipText value="Generates random data"/>
                 </properties>
               </component>
-              <component id="7423b" class="javax.swing.JTextArea" binding="debugTextArea">
+              <component id="7a363" class="javax.swing.JSlider" binding="generateSlider">
                 <constraints>
-                  <grid row="1" column="0" row-span="1" col-span="3" vsize-policy="6" hsize-policy="6" anchor="0" fill="3" indent="0" use-parent-layout="false">
-                    <preferred-size width="150" height="50"/>
-                  </grid>
+                  <grid row="14" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+                  <forms defaultalign-horz="false"/>
                 </constraints>
                 <properties>
-                  <background color="-3355444"/>
-                  <font name="Courier New" size="10"/>
+                  <maximum value="1000"/>
+                  <minimum value="1"/>
+                  <minorTickSpacing value="100"/>
+                  <paintLabels value="true"/>
+                  <paintTicks value="true"/>
+                  <valueIsAdjusting value="true"/>
                 </properties>
               </component>
-              <hspacer id="75f56">
+              <component id="1e4f0" class="javax.swing.JSpinner" binding="lifespanSpinner">
                 <constraints>
-                  <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                  <grid row="6" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+                  <forms defaultalign-horz="false"/>
                 </constraints>
-              </hspacer>
+                <properties>
+                  <toolTipText value="Lifespan of the cache entry, in milliseconds.  Defaults to what is declared in XML config.  -1 is immortal."/>
+                </properties>
+              </component>
+              <component id="10b2a" class="javax.swing.JSpinner" binding="maxIdleSpinner">
+                <constraints>
+                  <grid row="8" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+                  <forms defaultalign-horz="false"/>
+                </constraints>
+                <properties>
+                  <toolTipText value="MaxIdle of the cache entry, in milliseconds.  Defaults to what is declared in XML config.  -1 is immortal."/>
+                </properties>
+              </component>
+              <vspacer id="de3e7">
+                <constraints>
+                  <grid row="22" column="0" row-span="1" col-span="5" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+                  <forms defaultalign-vert="false"/>
+                </constraints>
+              </vspacer>
+              <vspacer id="3df43">
+                <constraints>
+                  <grid row="16" column="0" row-span="1" col-span="5" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+                  <forms defaultalign-vert="false"/>
+                </constraints>
+              </vspacer>
+              <vspacer id="767c9">
+                <constraints>
+                  <grid row="10" column="0" row-span="1" col-span="5" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+                  <forms defaultalign-vert="false"/>
+                </constraints>
+              </vspacer>
             </children>
           </grid>
         </children>

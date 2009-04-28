@@ -32,37 +32,10 @@
          <artifactId>forms_rt</artifactId>
          <version>6.0.5</version>
       </dependency>
-      <dependency>
-         <groupId>log4j</groupId>
-         <artifactId>log4j</artifactId>
-         <version>1.2.13</version>
-      </dependency>
    </dependencies>
 
    <build>
       <plugins>
-         <!--<plugin>
-            <artifactId>maven-assembly-plugin</artifactId>
-            <version>2.2-beta-1</version>
-            <executions>
-               <execution>
-                  <id>assemble</id>
-                  <phase>install</phase>
-                  <goals>
-                     <goal>attached</goal>
-                  </goals>
-                  <configuration>
-                     <descriptors>
-                        <descriptor>assembly.xml</descriptor>
-                     </descriptors>
-                     <finalName>${artifactId}-${version}</finalName>
-                     <outputDirectory>target/distribution</outputDirectory>
-                     <workDirectory>target/assembly/work</workDirectory>
-                  </configuration>
-               </execution>
-            </executions>
-         </plugin>
--->
          <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>ideauidesigner-maven-plugin</artifactId>
