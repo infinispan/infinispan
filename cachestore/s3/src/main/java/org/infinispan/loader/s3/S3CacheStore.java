@@ -44,8 +44,7 @@ public class S3CacheStore extends BucketBasedCacheStore {
     * {@inheritDoc} This initializes the internal <tt>s3Connection</tt> to a default implementation
     */
    public void init(CacheLoaderConfig config, Cache cache, Marshaller m) {
-      throw new UnsupportedOperationException("no default implementation, yet");
-//        init(config, cache, m, null, null);
+        init(config, cache, m, null, null);
    }
 
    @Override

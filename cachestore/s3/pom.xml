@@ -14,6 +14,11 @@
     <name>Infinispan Amazon S3 CacheStore</name>
     <description>Infinispan Amazon S3 CacheStore module</description>
 
+    <properties>
+        <jclouds.aws.accesskeyid></jclouds.aws.accesskeyid>
+        <jclouds.aws.secretaccesskey></jclouds.aws.secretaccesskey>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>${project-package}</groupId>
@@ -30,11 +35,51 @@
         </dependency>
 
         <dependency>
+            <groupId>org.jclouds</groupId>
+            <artifactId>jclouds-s3</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jclouds</groupId>
+            <artifactId>jclouds-s3nio</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        
+        <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
             <version>1.4</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
+    <repositories>
+        <repository>
+            <id>jclouds</id>
+            <url>http://jclouds.googlecode.com/svn/trunk/repo</url>
+        </repository>
+    </repositories>
+    <build>
+        <plugins>
+            <plugin>
+               <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-surefire-plugin</artifactId>
+               <version>2.4.3</version>
+               <configuration>
+                 <forkMode>once</forkMode>
+                 <parallel>false</parallel>
+                    <systemProperties>
+                        <property>
+                            <name>jclouds.aws.accesskeyid</name>
+                            <value>${jclouds.aws.accesskeyid}</value>
+                        </property>
+                        <property>
+                            <name>jclouds.aws.secretaccesskey</name>
+                            <value>${jclouds.aws.secretaccesskey}</value>
+                        </property>
+                    </systemProperties>
+               </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>
