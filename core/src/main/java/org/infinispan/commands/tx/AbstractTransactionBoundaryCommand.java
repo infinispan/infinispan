@@ -26,7 +26,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.transaction.GlobalTransaction;
 
 /**
- * // TODO: MANIK: Document this
+ * An abstract transaction boundary command that holds a reference to a {@link GlobalTransaction}
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @since 4.0
