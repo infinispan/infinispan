@@ -71,10 +71,12 @@ public class InfinispanDemo {
    private ExecutorService asyncExecutor;
    private final AtomicInteger updateCounter = new AtomicInteger(0);
    private JTable dataTable;
-   private JButton refreshDataTableButton;
    private JSlider generateSlider;
    private JSpinner lifespanSpinner;
    private JSpinner maxIdleSpinner;
+   private JButton refreshButton;
+   private JPanel dataViewControlPanel;
+   private JLabel cacheContentsSizeLabel;
    private Random r = new Random();
    private ClusterTableModel clusterTableModel;
    private CachedDataTableModel cachedDataTableModel;
@@ -242,13 +244,13 @@ public class InfinispanDemo {
          }
       });
 
-      refreshDataTableButton.addActionListener(new ActionListener() {
+      refreshButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent e) {
-            processAction(refreshDataTableButton, true);
+            processAction(refreshButton, true);
             asyncExecutor.execute(new Runnable() {
                public void run() {
                   InfinispanDemo.this.updateCachedDataTable();
-                  processAction(refreshDataTableButton, false);
+                  processAction(refreshButton, false);
                   // now switch to the data pane
                   mainPane.setSelectedIndex(1);
                }
@@ -308,27 +310,29 @@ public class InfinispanDemo {
       asyncExecutor.execute(new Runnable() {
          public void run() {
             try {
+               URL resource = getClass().getClassLoader().getResource(cacheConfigFile);
+               if (resource == null) resource = new URL(cacheConfigFile);
+
                if (cache == null) {
-                  URL resource = getClass().getClassLoader().getResource(cacheConfigFile);
-                  if (resource == null) resource = new URL(cacheConfigFile);
                   // update config file display
-                  configFileName.setText(resource.toString());
-
-                  configFileName.repaint();
-
-                  try {
-                     configFileContents.setText(readContents(resource.openStream()));
-                     configFileContents.setEditable(false);
-                  }
-                  catch (Exception e) {
-                     log.warn("Unable to open config file [" + cacheConfigFile + "] for display", e);
-                  }
-                  configFileContents.repaint();
-
                   cache = new DefaultCacheManager(resource.openStream()).getCache();
                } else {
                   cache.start();
                }
+
+               // repaint the cfg file display
+               configFileName.setText(resource.toString());
+               configFileName.repaint();
+
+               try {
+                  configFileContents.setText(readContents(resource.openStream()));
+                  configFileContents.setEditable(false);
+               }
+               catch (Exception e) {
+                  log.warn("Unable to open config file [" + cacheConfigFile + "] for display", e);
+               }
+               configFileContents.repaint();
+
 
                CacheListener cl = new CacheListener();
                cache.addListener(cl);
@@ -337,6 +341,7 @@ public class InfinispanDemo {
 
                lifespanSpinner.setValue(cache.getConfiguration().getExpirationLifespan());
                maxIdleSpinner.setValue(cache.getConfiguration().getExpirationMaxIdle());
+               cacheContentsSizeLabel.setText("Cache contains " + cache.size() + " entries");
 
                moveCacheToState(ComponentStatus.RUNNING);
             } catch (Exception e) {
@@ -353,6 +358,11 @@ public class InfinispanDemo {
       asyncExecutor.execute(new Runnable() {
          public void run() {
             if (cache != null) cache.stop();
+            cachedDataTableModel.reset();
+            configFileContents.setText("");
+            configFileContents.repaint();
+            configFileName.setText("");
+            configFileName.repaint();
             moveCacheToState(ComponentStatus.TERMINATED);
          }
       });
@@ -518,6 +528,13 @@ public class InfinispanDemo {
          for (InternalCacheEntry ice : cache.getAdvancedCache().getDataContainer()) {
             if (!ice.isExpired()) data.add(ice);
          }
+         cacheContentsSizeLabel.setText("Cache contains " + data.size() + " entries");
+         fireTableDataChanged();
+      }
+
+      public void reset() {
+         data.clear();
+         cacheContentsSizeLabel.setText("Cache contains " + data.size() + " entries");
          fireTableDataChanged();
       }
    }
