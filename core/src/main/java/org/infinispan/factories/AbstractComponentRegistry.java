@@ -204,7 +204,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle {
       // inject dependencies for this component
       c.injectDependencies();
       
-      if (old != null) getLog().trace("Registering component {0} under name {1}", c, name); 
+      if (old == null) getLog().trace("Registering component {0} under name {1}", c, name); 
    }
 
    /**
