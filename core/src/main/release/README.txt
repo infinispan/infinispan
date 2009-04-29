@@ -1,17 +1,41 @@
 Infinispan -- a distributed, transactional, highly scalable data structure
 ==========================================================================
 
-Note:
- - We offer different packaging for download:
-   // TODO write this up
+We offer different distributions for download:
 
-Requirements:
- - JDK 5.0 and up
+* infinispan-X.Y.Z-all.ZIP
+   * contains core jar + dependencies
+   * additional optional modules + dependencies
+   * test classes
+   * sample configurations
+   * API documentation
+   * GUI demo
 
-Problems:
- - Please report problems on the Infinispan user forum.  Please see
+* infinispan-X.Y.Z-bin.ZIP
+   * contains core jar + dependencies
+   * additional optional modules + dependencies
+   * sample configurations
+   * API documentation
+   * GUI demo
 
-      http://www.jboss.org/infinispan/community
+* infinispan-X.Y.Z-single_jar.ZIP
+   * contains a single jar containing infinispan-core and all optional modules + dependencies
+   * sample configurations
+   * API documentation
 
-   for details.
+* infinispan-X.Y.Z-src.ZIP
+   * snapshot of the source code tree from subversion for this release
+
+Requirements
+------------
+
+Infinispan needs a JDK 5.0 compliant Java virtual machine.  And nothing else.
+
+Problems
+--------
+Please report problems on the Infinispan user forum.  Please see
+
+   http://www.jboss.org/infinispan/community
+
+for details.
    
