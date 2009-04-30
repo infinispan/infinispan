@@ -31,6 +31,7 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.InvalidateCommand;
+import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -44,6 +45,7 @@ import org.infinispan.marshall.MarshalledValue;
 import org.infinispan.remoting.responses.ExtendedResponse;
 import org.infinispan.remoting.responses.RequestIgnoredResponse;
 import org.infinispan.remoting.responses.SuccessfulResponse;
+import org.infinispan.remoting.responses.UnsuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.transaction.GlobalTransaction;
@@ -161,8 +163,9 @@ public class JBossMarshallerTest {
             "Writen[" + entry.getModifications() + "] and read[" + readObj.getModifications() + "] objects should be the same";
    }
 
-   public void testRequestIgnoredResponseMarshalling() throws Exception {
+   public void testImmutableResponseMarshalling() throws Exception {
       marshallAndAssertEquality(RequestIgnoredResponse.INSTANCE);
+      marshallAndAssertEquality(UnsuccessfulResponse.INSTANCE);      
    }
 
    public void testExtendedResponseMarshalling() throws Exception {
@@ -208,6 +211,12 @@ public class JBossMarshallerTest {
       assert rc7.getCommandId() == c7.getCommandId() : "Writen[" + c7.getCommandId() + "] and read[" + rc7.getCommandId() + "] objects should be the same";
       assert Arrays.equals(rc7.getParameters(), c7.getParameters()) : "Writen[" + c7.getParameters() + "] and read[" + rc7.getParameters() + "] objects should be the same";
 
+      InvalidateCommand c71 = new InvalidateL1Command(null, null, "key1", "key2");
+      bytes = marshaller.objectToByteBuffer(c71);
+      InvalidateCommand rc71 = (InvalidateCommand) marshaller.objectFromByteBuffer(bytes);
+      assert rc71.getCommandId() == c71.getCommandId() : "Writen[" + c71.getCommandId() + "] and read[" + rc71.getCommandId() + "] objects should be the same";
+      assert Arrays.equals(rc71.getParameters(), c71.getParameters()) : "Writen[" + c71.getParameters() + "] and read[" + rc71.getParameters() + "] objects should be the same";
+      
       ReplaceCommand c8 = new ReplaceCommand("key", "oldvalue", "newvalue", 0, 0);
       marshallAndAssertEquality(c8);
 

@@ -34,6 +34,7 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.InvalidateCommand;
+import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -118,6 +119,8 @@ public class MagicNumberClassTable implements ClassTable {
       MAGIC_NUMBERS.put(MortalCacheEntry.class.getName(), 35);
       MAGIC_NUMBERS.put(TransientCacheEntry.class.getName(), 36);
       MAGIC_NUMBERS.put(TransientMortalCacheEntry.class.getName(), 37);
+      
+      MAGIC_NUMBERS.put(InvalidateL1Command.class.getName(), 38);
    }
 
    private final Map<Class<?>, Writer> writers = new WeakHashMap<Class<?>, Writer>();
