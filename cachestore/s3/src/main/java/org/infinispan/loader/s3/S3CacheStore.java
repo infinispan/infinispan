@@ -17,7 +17,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * A TODO link implementation of a {@link org.infinispan.loader.bucket.BucketBasedCacheStore}. This file store stores
+ * By default, a JClouds implementation of a {@link org.infinispan.loader.bucket.BucketBasedCacheStore}. This file store stores
  * stuff in the following format: <tt>http://s3.amazon.com/{bucket}/bucket_number.bucket</tt>
  * <p/>
  *
