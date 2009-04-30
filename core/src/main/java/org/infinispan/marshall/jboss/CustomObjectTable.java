@@ -23,6 +23,7 @@ package org.infinispan.marshall.jboss;
 
 import net.jcip.annotations.Immutable;
 import org.infinispan.remoting.responses.RequestIgnoredResponse;
+import org.infinispan.remoting.responses.UnsuccessfulResponse;
 import org.jboss.marshalling.Marshaller;
 import org.jboss.marshalling.ObjectTable;
 import org.jboss.marshalling.Unmarshaller;
@@ -48,6 +49,8 @@ public class CustomObjectTable implements ObjectTable {
    public void init() {
       objects.add(RequestIgnoredResponse.INSTANCE);
       writers.put(RequestIgnoredResponse.INSTANCE, new CustomObjectWriter(index++));
+      objects.add(UnsuccessfulResponse.INSTANCE);
+      writers.put(UnsuccessfulResponse.INSTANCE, new CustomObjectWriter(index++));
    }
 
    public void stop() {
