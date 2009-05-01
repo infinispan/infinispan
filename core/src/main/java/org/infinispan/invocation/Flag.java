@@ -15,9 +15,10 @@ package org.infinispan.invocation;
  * #FORCE_ASYNCHRONOUS} - forces asynchronous network calls where possible</li> <li>{@link #FORCE_SYNCHRONOUS} - forces
  * synchronous network calls where possible</li> <li>{@link #SKIP_CACHE_STORE} - skips storing an entry to any
  * configured {@link org.infinispan.loader.CacheStore}s</li> <li>{@link #FAIL_SILENTLY} - swallows any exceptions,
- * logging them instead at a low log level</li> <li>{@link #UNSAFE_UNRELIABLE_RETURN_VALUES} - when used with DIST cache
- * mode, will skip retrieving a remote value before overwriting it, rendering return values for some operations (such as
- * {@link org.infinispan.Cache#put(Object, Object)} or {@link org.infinispan.Cache#remove(Object)} unusable.</li> </ul>
+ * logging them instead at a low log level</li> <li>{@link #SKIP_REMOTE_LOOKUP} - when used with DIST cache mode, will
+ * skip retrieving a remote value either when doing a get() or exists(), or to provide an overwritten value with a put()
+ * or remove().  This could render return values for some operations (such as {@link org.infinispan.Cache#put(Object,
+ * Object)} or {@link org.infinispan.Cache#remove(Object)} unusable.</li> </ul>
  *
  * @author Manik Surtani
  * @since 4.0
@@ -32,5 +33,5 @@ public enum Flag {
    FORCE_SYNCHRONOUS,
    SKIP_CACHE_STORE,
    FAIL_SILENTLY,
-   UNSAFE_UNRELIABLE_RETURN_VALUES
+   SKIP_REMOTE_LOOKUP
 }

@@ -80,7 +80,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       Object returnValue = invokeNextInterceptor(ctx, command);
       // need to check in the context as well since a null retval is not necessarily an indication of the entry not being
       // available.  It could just have been removed in the same tx beforehand.
-      if (returnValue == null && ctx.lookupEntry(command.getKey()) == null)
+      if (!ctx.hasFlag(Flag.SKIP_REMOTE_LOOKUP) && returnValue == null && ctx.lookupEntry(command.getKey()) == null)
          returnValue = remoteGetAndStoreInL1(ctx, command.getKey());
       return returnValue;
    }
@@ -221,7 +221,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    }
 
    private boolean isNeedReliableReturnValues(InvocationContext ctx) {
-      return !ctx.hasFlag(Flag.UNSAFE_UNRELIABLE_RETURN_VALUES) && needReliableReturnValues;
+      return !ctx.hasFlag(Flag.SKIP_REMOTE_LOOKUP) && needReliableReturnValues;
    }
 
    /**
