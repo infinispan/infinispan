@@ -30,7 +30,7 @@ public class JCloudsConnection implements S3Connection<org.jclouds.aws.s3.S3Conn
      * {@inheritDoc}
      */
     public void connect(S3CacheStoreConfig config, Marshaller m) throws S3ConnectionException {
-        InputStream propertiesIS = null;
+        InputStream propertiesIS;
         try {
             propertiesIS = JCloudsConnection.class.getResourceAsStream("/jclouds.properties");
             Properties properties = new Properties();
@@ -67,8 +67,7 @@ public class JCloudsConnection implements S3Connection<org.jclouds.aws.s3.S3Conn
      */
     public org.jclouds.aws.s3.domain.S3Bucket verifyOrCreateBucket(String bucketName) throws S3ConnectionException {
         try {
-            org.jclouds.aws.s3.domain.S3Bucket bucket = new org.jclouds.aws.s3.domain.S3Bucket();
-            bucket.setName(bucketName);
+            org.jclouds.aws.s3.domain.S3Bucket bucket = new org.jclouds.aws.s3.domain.S3Bucket(bucketName);
             s3Service.createBucketIfNotExists(bucket).get();
             return bucket;
         } catch (Exception ex) {
@@ -78,9 +77,8 @@ public class JCloudsConnection implements S3Connection<org.jclouds.aws.s3.S3Conn
 
     public void destroyBucket(String name) throws S3ConnectionException {
         try {
-            org.jclouds.aws.s3.domain.S3Bucket bucket = new org.jclouds.aws.s3.domain.S3Bucket();
-            bucket.setName(name);
-            context.createMapView(bucket).clear();
+            org.jclouds.aws.s3.domain.S3Bucket bucket = new org.jclouds.aws.s3.domain.S3Bucket(name);
+            context.createS3ObjectMap(bucket).clear();
             s3Service.deleteBucket(bucket);
         } catch (Exception ex) {
             throw convertToS3ConnectionException("Exception removing s3 bucket " + name, ex);
@@ -89,26 +87,23 @@ public class JCloudsConnection implements S3Connection<org.jclouds.aws.s3.S3Conn
 
 
     Set<String> keysInBucket(S3Bucket bucket) throws S3ConnectionException {
-        return context.createMapView(bucket).keySet();
+        return context.createS3ObjectMap(bucket).keySet();
     }
 
     /**
      * {@inheritDoc}
      */
     public void copyBucket(String sourceBucket, String destinationBucket) throws S3ConnectionException {
-        Set<String> sourceKeys = null;
+        Set<String> sourceKeys;
         try {
-            S3Bucket source = new S3Bucket();
-            source.setName(sourceBucket);
+            S3Bucket source = new S3Bucket(sourceBucket);
             source = s3Service.getBucket(source).get();
             sourceKeys = keysInBucket(source);
-            S3Bucket dest = new S3Bucket();
-            dest.setName(destinationBucket);
+            S3Bucket dest = new S3Bucket(destinationBucket);
 
             for (String key : sourceKeys) {
                 try {
-                    S3Object object = new S3Object();
-                    object.setKey(key);
+                    S3Object object = new S3Object(key);
                     s3Service.copyObject(source, object, dest, object).get();
                 } catch (Exception ex) {
                     throw convertToS3ConnectionException("Exception while copying key " + key + " from bucket " + sourceBucket, ex);

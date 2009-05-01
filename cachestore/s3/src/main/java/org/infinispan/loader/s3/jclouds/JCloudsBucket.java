@@ -5,6 +5,7 @@ import org.infinispan.loader.s3.S3ConnectionException;
 import org.jclouds.aws.s3.domain.S3Bucket;
 import org.jclouds.aws.s3.domain.S3Object;
 import org.jclouds.aws.s3.S3ObjectMap;
+import org.jclouds.aws.s3.S3InputStreamMap;
 
 import java.io.InputStream;
 import java.util.HashSet;
@@ -32,7 +33,7 @@ public class JCloudsBucket implements org.infinispan.loader.s3.S3Bucket<S3Bucket
         this.connection = connection;
         this.rootS3Bucket = bucket;
         this.name = bucket.getName();
-        this.map = connection.context.createMapView(rootS3Bucket);
+        this.map = connection.context.createInputStreamMap(rootS3Bucket);
     }
 
     public String getName() {
@@ -118,7 +119,7 @@ public class JCloudsBucket implements org.infinispan.loader.s3.S3Bucket<S3Bucket
             if (b.getEntries().isEmpty()) {
                 map.remove(b.getBucketName());
             } else {
-                ((S3ObjectMap)map).putBytes(b.getBucketName(),connection.marshaller.objectToByteBuffer(b));
+                ((S3InputStreamMap)map).putBytes(b.getBucketName(),connection.marshaller.objectToByteBuffer(b));
             }
         } catch (Exception ex) {
             throw connection.convertToS3ConnectionException("Exception while saving bucket " + b, ex);
