@@ -51,10 +51,14 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       for (Cache<Object, String> c : caches) assert c.isEmpty();
 
       c1.put("k1", "value");
-      asyncWait("k1", PutKeyValueCommand.class, getNonOwners("k1"));
+      asyncWait("k1", PutKeyValueCommand.class, getNonOwnersExcludingSelf("k1", addressOf(c1)));
       for (Cache<Object, String> c : caches)
-         assert "value".equals(c.get("k1")) : "Failed on cache " + c.getCacheManager().getAddress();
+         assert "value".equals(c.get("k1")) : "Failed on cache " + addressOf(c);
       assertOwnershipAndNonOwnership("k1");
+   }
+
+   protected static Address addressOf(Cache<?, ?> cache) {
+      return cache.getCacheManager().getAddress();
    }
 
    protected Cache<Object, String> getFirstNonOwner(String key) {
@@ -70,10 +74,10 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
          Object realVal = c.get(key);
          if (value == null) {
             assert realVal == null : "Expecting [" + key + "] to equal [" + value + "] on cache ["
-                  + c.getCacheManager().getAddress() + "] but was [" + realVal + "]";
+                  + addressOf(c) + "] but was [" + realVal + "]";
          } else {
             assert value.equals(realVal) : "Expecting [" + key + "] to equal [" + value + "] on cache ["
-                  + c.getCacheManager().getAddress() + "] but was [" + realVal + "]";
+                  + addressOf(c) + "] but was [" + realVal + "]";
          }
       }
       if (value != null) assertOwnershipAndNonOwnership(key);
@@ -84,11 +88,11 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
          DataContainer dc = c.getAdvancedCache().getDataContainer();
          if (isOwner(c, key)) {
             InternalCacheEntry ice = dc.get(key);
-            assert ice != null : "Fail on cache " + c.getCacheManager().getAddress() + ": dc.get(" + key + ") returned null!";
-            assert ice instanceof ImmortalCacheEntry : "Fail on cache " + c.getCacheManager().getAddress() + ": dc.get(" + key + ") returned " + dc.get(key);
+            assert ice != null : "Fail on cache " + addressOf(c) + ": dc.get(" + key + ") returned null!";
+            assert ice instanceof ImmortalCacheEntry : "Fail on cache " + addressOf(c) + ": dc.get(" + key + ") returned " + dc.get(key);
          } else {
             if (dc.containsKey(key)) {
-               assert dc.get(key) instanceof MortalCacheEntry : "Fail on cache " + c.getCacheManager().getAddress() + ": dc.get(" + key + ") returned " + dc.get(key);
+               assert dc.get(key) instanceof MortalCacheEntry : "Fail on cache " + addressOf(c) + ": dc.get(" + key + ") returned " + dc.get(key);
                assert dc.get(key).getLifespan() == c1.getConfiguration().getL1Lifespan();
             }
          }
@@ -98,28 +102,28 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
    protected void assertIsInL1(Cache<?, ?> cache, Object key) {
       DataContainer dc = cache.getAdvancedCache().getDataContainer();
       InternalCacheEntry ice = dc.get(key);
-      assert ice != null : "Entry for key [" + key + "] should be in data container on cache at [" + cache.getCacheManager().getAddress() + "]!";
-      assert !(ice instanceof ImmortalCacheEntry) : "Entry for key [" + key + "] should have a lifespan on cache at [" + cache.getCacheManager().getAddress() + "]!";
+      assert ice != null : "Entry for key [" + key + "] should be in data container on cache at [" + addressOf(cache) + "]!";
+      assert !(ice instanceof ImmortalCacheEntry) : "Entry for key [" + key + "] should have a lifespan on cache at [" + addressOf(cache) + "]!";
    }
 
    protected void assertIsNotInL1(Cache<?, ?> cache, Object key) {
       DataContainer dc = cache.getAdvancedCache().getDataContainer();
       InternalCacheEntry ice = dc.get(key);
-      assert ice == null : "Entry for key [" + key + "] should not be in data container on cache at [" + cache.getCacheManager().getAddress() + "]!";
+      assert ice == null : "Entry for key [" + key + "] should not be in data container on cache at [" + addressOf(cache) + "]!";
    }
 
    protected void assertIsInContainerImmortal(Cache<?, ?> cache, Object key) {
       DataContainer dc = cache.getAdvancedCache().getDataContainer();
       InternalCacheEntry ice = dc.get(key);
-      assert ice != null : "Entry for key [" + key + "] should be in data container on cache at [" + cache.getCacheManager().getAddress() + "]!";
-      assert ice instanceof ImmortalCacheEntry : "Entry for key [" + key + "] on cache at [" + cache.getCacheManager().getAddress() + "] should be immortal but was [" + ice + "]!";
+      assert ice != null : "Entry for key [" + key + "] should be in data container on cache at [" + addressOf(cache) + "]!";
+      assert ice instanceof ImmortalCacheEntry : "Entry for key [" + key + "] on cache at [" + addressOf(cache) + "] should be immortal but was [" + ice + "]!";
    }
 
    protected static boolean isOwner(Cache<?, ?> c, Object key) {
       DistributionManager dm = c.getAdvancedCache().getComponentRegistry().getComponent(DistributionManager.class);
       List<Address> ownerAddresses = dm.locate(key);
       for (Address a : ownerAddresses) {
-         if (c.getCacheManager().getAddress().equals(a)) return true;
+         if (addressOf(c).equals(a)) return true;
       }
       return false;
    }
@@ -127,7 +131,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
    protected static boolean isFirstOwner(Cache<?, ?> c, Object key) {
       DistributionManager dm = c.getAdvancedCache().getComponentRegistry().getComponent(DistributionManager.class);
       List<Address> ownerAddresses = dm.locate(key);
-      return c.getCacheManager().getAddress().equals(ownerAddresses.get(0));
+      return addressOf(c).equals(ownerAddresses.get(0));
    }
 
    protected Cache<Object, String>[] getOwners(Object key) {
@@ -137,6 +141,28 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
          if (isOwner(c, key)) owners[i++] = c;
       }
       return owners;
+   }
+
+   protected Cache<Object, String>[] getNonOwnersExcludingSelf(Object key, Address self) {
+      Cache<Object, String>[] nonOwners = getNonOwners(key);
+      boolean selfInArray = false;
+      for (Cache<?, ?> c : nonOwners) {
+         if (addressOf(c).equals(self)) {
+            selfInArray = true;
+            break;
+         }
+      }
+
+      if (selfInArray) {
+         Cache<Object, String>[] nonOwnersExclSelf = new Cache[nonOwners.length - 1];
+         int i = 0;
+         for (Cache<Object, String> c : nonOwners) {
+            if (!addressOf(c).equals(self)) nonOwnersExclSelf[i++] = c;
+         }
+         return nonOwnersExclSelf;
+      } else {
+         return nonOwners;
+      }
    }
 
    protected Cache<Object, String>[] getNonOwners(Object key) {
@@ -182,9 +208,8 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       String address;
 
       public MagicKey(Cache<?, ?> toMapTo) {
-         address = toMapTo.getCacheManager().getAddress().toString();
-         // generate a hashcode that will always map it to the specified cache.
-         for (int i = 1; i < DefaultConsistentHash.HASH_SPACE; i += 100) {
+         address = addressOf(toMapTo).toString();
+         for (int i = 0; i < toMapTo.getCacheManager().getMembers().size(); i++) {
             // create a dummy object with this hashcode
             final int hc = i;
             Object dummy = new Object() {

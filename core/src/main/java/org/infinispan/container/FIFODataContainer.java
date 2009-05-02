@@ -10,19 +10,19 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * A container that maintains order of entries based on when they were placed in the container.  Iterators obtained
- * from this container maintain this order.
- * <p />
+ * A container that maintains order of entries based on when they were placed in the container.  Iterators obtained from
+ * this container maintain this order.
+ * <p/>
  * This container offers constant-time operation for all public API methods.
- * <p />
- * This is implemented using a set of lockable segments, each of which is a hash table, not unlike the JDK's
- * {@link java.util.concurrent.ConcurrentHashMap} with the exception that each entry is also linked.
- * <p />
- * Links are maintained using techniques inspired by H. Sundell and P. Tsigas' 2008 paper,
- * <a href="http://www.md.chalmers.se/~tsigas/papers/Lock-Free-Deques-Doubly-Lists-JPDC.pdf"><i>Lock Free Deques and Doubly Linked Lists</i></a>,
- * M. Michael's 2002 paper, <a href="http://www.research.ibm.com/people/m/michael/spaa-2002.pdf"><i>High Performance Dynamic Lock-Free Hash Tables and List-Based Sets</i></a>,
- * and Java6's ConcurrentSkipListMap.
- * <p />
+ * <p/>
+ * This is implemented using a set of lockable segments, each of which is a hash table, not unlike the JDK's {@link
+ * java.util.concurrent.ConcurrentHashMap} with the exception that each entry is also linked.
+ * <p/>
+ * Links are maintained using techniques inspired by H. Sundell and P. Tsigas' 2008 paper, <a
+ * href="http://www.md.chalmers.se/~tsigas/papers/Lock-Free-Deques-Doubly-Lists-JPDC.pdf"><i>Lock Free Deques and Doubly
+ * Linked Lists</i></a>, M. Michael's 2002 paper, <a href="http://www.research.ibm.com/people/m/michael/spaa-2002.pdf"><i>High
+ * Performance Dynamic Lock-Free Hash Tables and List-Based Sets</i></a>, and Java6's ConcurrentSkipListMap.
+ * <p/>
  *
  * @author Manik Surtani
  * @since 4.0
@@ -87,17 +87,12 @@ public class FIFODataContainer implements DataContainer {
 
    // links and link management
 
-   static final class LinkedEntry {
+   static class LinkedEntry {
       volatile InternalCacheEntry e;
       volatile LinkedEntry n, p;
 
-      private static final AtomicReferenceFieldUpdater<LinkedEntry, InternalCacheEntry> E_UPDATER = AtomicReferenceFieldUpdater.newUpdater(LinkedEntry.class, InternalCacheEntry.class, "e");
       private static final AtomicReferenceFieldUpdater<LinkedEntry, LinkedEntry> N_UPDATER = AtomicReferenceFieldUpdater.newUpdater(LinkedEntry.class, LinkedEntry.class, "n");
       private static final AtomicReferenceFieldUpdater<LinkedEntry, LinkedEntry> P_UPDATER = AtomicReferenceFieldUpdater.newUpdater(LinkedEntry.class, LinkedEntry.class, "p");
-
-      final boolean casValue(InternalCacheEntry expected, InternalCacheEntry newValue) {
-         return E_UPDATER.compareAndSet(this, expected, newValue);
-      }
 
       final boolean casNext(LinkedEntry expected, LinkedEntry newValue) {
          return N_UPDATER.compareAndSet(this, expected, newValue);
@@ -114,6 +109,22 @@ public class FIFODataContainer implements DataContainer {
       final boolean isMarked() {
          return e == null; // an impossible value unless deleted
       }
+
+      final LinkedEntry getN() {
+         return n;
+      }
+
+      final LinkedEntry getP() {
+         return p;
+      }
+   }
+
+   static final class Marker extends LinkedEntry {
+      Marker(LinkedEntry actual) {
+         e = null;
+         n = actual;
+         p = actual;
+      }
    }
 
    /**
@@ -127,8 +138,7 @@ public class FIFODataContainer implements DataContainer {
    }
 
    protected final void unlink(LinkedEntry le) {
-      le.p.casNext(le, le.n);
-      le.n.casPrev(le, le.p);
+      if (le.p.casNext(le, le.n)) le.n.casPrev(le, le.p);
    }
 
    protected final void linkAtEnd(LinkedEntry le) {
@@ -440,7 +450,7 @@ public class FIFODataContainer implements DataContainer {
             current = n;
             if (n == head || n == tail) throw new IndexOutOfBoundsException("Reached head or tail pointer!");
          }
-         
+
          return current.e;
       }
    }

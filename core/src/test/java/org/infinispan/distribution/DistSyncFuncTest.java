@@ -48,7 +48,6 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest {
    public void testPutFromNonOwner() {
       initAndTest();
       Cache<Object, String> nonOwner = getFirstNonOwner("k1");
-      System.out.println("Non-owner address is " + nonOwner.getCacheManager().getAddress());
 
       Object retval = nonOwner.put("k1", "value2");
       asyncWait("k1", PutKeyValueCommand.class, getSecondNonOwner("k1"));
