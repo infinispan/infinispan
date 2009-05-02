@@ -13,8 +13,10 @@ import static org.testng.Assert.assertEquals;
 import org.testng.annotations.*;
 
 import java.io.*;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.logging.*;
 
 /**
  * @author Adrian Cole
@@ -23,6 +25,7 @@ import java.util.Set;
  */
 @Test(groups = "unit", sequential = true, testName = "loader.s3.S3CacheStoreIntegrationTest")
 public class S3CacheStoreIntegrationTest extends BaseCacheStoreTest {
+
     private String proxyHost;
     private int proxyPort = -1;
     private int maxConnections = 20;

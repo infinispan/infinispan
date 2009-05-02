@@ -3,8 +3,6 @@ package org.infinispan.loader.s3.jclouds;
 import org.infinispan.loader.bucket.Bucket;
 import org.infinispan.loader.s3.S3ConnectionException;
 import org.jclouds.aws.s3.domain.S3Bucket;
-import org.jclouds.aws.s3.domain.S3Object;
-import org.jclouds.aws.s3.S3ObjectMap;
 import org.jclouds.aws.s3.S3InputStreamMap;
 
 import java.io.InputStream;

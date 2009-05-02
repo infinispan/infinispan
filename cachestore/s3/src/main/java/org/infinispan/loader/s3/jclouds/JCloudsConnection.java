@@ -14,6 +14,9 @@ import org.jclouds.aws.s3.nio.config.S3HttpNioConnectionPoolClientModule;
 import java.io.InputStream;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * An JClouds implementation of {@link S3Connection}.  This implementation uses the threadsafe {@link S3HttpNioConnectionPoolClientModule} transport.
@@ -25,26 +28,33 @@ public class JCloudsConnection implements S3Connection<org.jclouds.aws.s3.S3Conn
     protected org.jclouds.aws.s3.S3Connection s3Service;
     protected S3Context context;
     protected Marshaller marshaller;
+    protected S3CacheStoreConfig config;
 
     /**
      * {@inheritDoc}
      */
     public void connect(S3CacheStoreConfig config, Marshaller m) throws S3ConnectionException {
+        this.config = config;
         InputStream propertiesIS;
         try {
             propertiesIS = JCloudsConnection.class.getResourceAsStream("/jclouds.properties");
             Properties properties = new Properties();
             properties.load(propertiesIS);
             if (!config.isSecure()) {
-                properties.put(S3Constants.PROPERTY_HTTP_PORT, "80");
-                properties.put(S3Constants.PROPERTY_HTTP_SECURE, "false");
+                properties.setProperty(S3Constants.PROPERTY_HTTP_PORT, "80");
+                properties.setProperty(S3Constants.PROPERTY_HTTP_SECURE, "false");
+            }
+            if (properties.containsKey(S3Constants.PROPERTY_AWS_MAP_TIMEOUT)) {
+                config.setRequestTimeout(Long.parseLong(properties.getProperty(S3Constants.PROPERTY_AWS_MAP_TIMEOUT)));
+            } else {
+                properties.setProperty(S3Constants.PROPERTY_AWS_MAP_TIMEOUT, config.getRequestTimeout()+"");
             }
             if (!properties.containsKey(S3Constants.PROPERTY_AWS_ACCESSKEYID))
-                properties.put(S3Constants.PROPERTY_AWS_ACCESSKEYID, config.getAwsAccessKey());
+                properties.setProperty(S3Constants.PROPERTY_AWS_ACCESSKEYID, checkNotNull(config.getAwsAccessKey(),"config.getAwsAccessKey()"));
             if (!properties.containsKey(S3Constants.PROPERTY_AWS_SECRETACCESSKEY))
-                properties.put(S3Constants.PROPERTY_AWS_SECRETACCESSKEY, config.getAwsSecretKey());
+                properties.setProperty(S3Constants.PROPERTY_AWS_SECRETACCESSKEY, checkNotNull(config.getAwsSecretKey(),"config.getAwsSecretKey()"));
             if (!properties.containsKey(S3Constants.PROPERTY_POOL_MAX_CONNECTIONS))
-                properties.put(S3Constants.PROPERTY_POOL_MAX_CONNECTIONS, config.getMaxConnections());
+                properties.setProperty(S3Constants.PROPERTY_POOL_MAX_CONNECTIONS, config.getMaxConnections()+"");
             //TODO proxy host/port
             this.context = S3ContextFactory.createS3Context(properties, new S3HttpNioConnectionPoolClientModule());
             this.s3Service = context.getConnection();
@@ -68,7 +78,7 @@ public class JCloudsConnection implements S3Connection<org.jclouds.aws.s3.S3Conn
     public org.jclouds.aws.s3.domain.S3Bucket verifyOrCreateBucket(String bucketName) throws S3ConnectionException {
         try {
             org.jclouds.aws.s3.domain.S3Bucket bucket = new org.jclouds.aws.s3.domain.S3Bucket(bucketName);
-            s3Service.createBucketIfNotExists(bucket).get();
+            s3Service.createBucketIfNotExists(bucket).get(config.getRequestTimeout(), TimeUnit.MILLISECONDS);
             return bucket;
         } catch (Exception ex) {
             throw convertToS3ConnectionException("Exception retrieving or creating s3 bucket " + bucketName, ex);
@@ -97,14 +107,14 @@ public class JCloudsConnection implements S3Connection<org.jclouds.aws.s3.S3Conn
         Set<String> sourceKeys;
         try {
             S3Bucket source = new S3Bucket(sourceBucket);
-            source = s3Service.getBucket(source).get();
+            source = s3Service.getBucket(source).get(config.getRequestTimeout(), TimeUnit.MILLISECONDS);
             sourceKeys = keysInBucket(source);
             S3Bucket dest = new S3Bucket(destinationBucket);
 
             for (String key : sourceKeys) {
                 try {
                     S3Object object = new S3Object(key);
-                    s3Service.copyObject(source, object, dest, object).get();
+                    s3Service.copyObject(source, object, dest, object).get(config.getRequestTimeout(), TimeUnit.MILLISECONDS);
                 } catch (Exception ex) {
                     throw convertToS3ConnectionException("Exception while copying key " + key + " from bucket " + sourceBucket, ex);
                 }

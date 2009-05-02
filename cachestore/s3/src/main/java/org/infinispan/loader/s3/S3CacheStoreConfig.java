@@ -9,7 +9,8 @@ import org.infinispan.loader.LockSupportCacheStoreConfig;
  * <ul> <li><tt>awsAccessKey</tt> - identifies you as the party responsible for s3 requests.  This is required and there
  * is no default.</li> <li><tt>awsSecretKey</tt> - used to authenticate you as the owner of <tt>awsAccessKey</tt>.  This
  * is required and there is no default.</li> <li><tt>bucket</tt> - the name of the s3 bucket used to store cache data.
- * This is required and there is no default.</li> </ul>
+ * This is required and there is no default.</li>
+ * <li><tt>requestTimeout</tt> - The maximum amount of milliseconds a single S3 request can take before throwing an exception.  Default is 10000</li></ul>
  *
  * @author Adrian Cole
  * @since 4.0
@@ -20,6 +21,17 @@ public class S3CacheStoreConfig extends LockSupportCacheStoreConfig {
    private String bucket;
    private String proxyHost;
    private int proxyPort;
+   private long requestTimeout = 10000;
+
+
+   public long getRequestTimeout() {
+      return requestTimeout;
+   }
+
+   public void setRequestTimeout(long requestTimeout) {
+      this.requestTimeout = requestTimeout;
+   }
+
 
    public int getMaxConnections() {
       return maxConnections;
