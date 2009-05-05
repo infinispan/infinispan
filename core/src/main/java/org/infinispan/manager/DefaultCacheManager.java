@@ -28,8 +28,8 @@ import org.infinispan.config.DuplicateCacheNameException;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.config.parsing.XmlConfigurationParser;
 import org.infinispan.config.parsing.XmlConfigurationParserImpl;
-import org.infinispan.factories.DefaultCacheFactory;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.InternalCacheFactory;
 import org.infinispan.factories.annotations.NonVolatile;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -335,7 +335,7 @@ public class DefaultCacheManager implements CacheManager {
       }
 
       c.assertValid();
-      Cache cache = new DefaultCacheFactory().createCache(c, globalComponentRegistry, cacheName);
+      Cache cache = new InternalCacheFactory().createCache(c, globalComponentRegistry, cacheName);
       Cache other = caches.putIfAbsent(cacheName, cache);
       if (other == null) {
          cache.start();

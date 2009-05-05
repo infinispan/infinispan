@@ -33,18 +33,18 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.InterceptorChain;
-import org.infinispan.invocation.InvocationContextContainer;
 import org.infinispan.invocation.Flag;
+import org.infinispan.invocation.InvocationContextContainer;
 import org.infinispan.io.UnclosableObjectInputStream;
 import org.infinispan.io.UnclosableObjectOutputStream;
-import org.infinispan.loader.CacheLoaderException;
-import org.infinispan.loader.CacheLoaderManager;
-import org.infinispan.loader.CacheStore;
+import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.loaders.CacheLoaderManager;
+import org.infinispan.loaders.CacheStore;
 import org.infinispan.logging.Log;
 import org.infinispan.logging.LogFactory;
 import org.infinispan.marshall.Marshaller;
-import org.infinispan.remoting.RpcManager;
 import org.infinispan.remoting.ResponseMode;
+import org.infinispan.remoting.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.DistributedSync;
 import org.infinispan.transaction.TransactionLog;
@@ -53,14 +53,12 @@ import org.infinispan.util.Util;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInput;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Set;
 import java.util.HashSet;
+import java.util.Set;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 public class StateTransferManagerImpl implements StateTransferManager {
@@ -123,7 +121,8 @@ public class StateTransferManagerImpl implements StateTransferManager {
       }
    }
 
-   @Start (priority = 1000) // needs to be the last thing that happens on this cache
+   @Start(priority = 1000)
+   // needs to be the last thing that happens on this cache
    public void releaseRPCBlock() throws Exception {
       if (needToUnblockRPC) {
          if (trace) log.trace("Stopping RPC block");
@@ -334,7 +333,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
       // TODO is it safe enough to get these from the data container directly?
       try {
          Set<InternalCacheEntry> entries = new HashSet<InternalCacheEntry>();
-         for (InternalCacheEntry e: dataContainer) {
+         for (InternalCacheEntry e : dataContainer) {
             if (!e.isExpired()) entries.add(e);
          }
          if (log.isDebugEnabled()) log.debug("Writing {0} StoredEntries to stream", entries.size());

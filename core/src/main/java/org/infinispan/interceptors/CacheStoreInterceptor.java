@@ -44,12 +44,12 @@ import org.infinispan.interceptors.base.JmxStatsCommandInterceptor;
 import org.infinispan.invocation.Flag;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
-import org.infinispan.loader.CacheLoaderManager;
-import org.infinispan.loader.CacheStore;
-import org.infinispan.loader.modifications.Clear;
-import org.infinispan.loader.modifications.Modification;
-import org.infinispan.loader.modifications.Remove;
-import org.infinispan.loader.modifications.Store;
+import org.infinispan.loaders.CacheLoaderManager;
+import org.infinispan.loaders.CacheStore;
+import org.infinispan.loaders.modifications.Clear;
+import org.infinispan.loaders.modifications.Modification;
+import org.infinispan.loaders.modifications.Remove;
+import org.infinispan.loaders.modifications.Store;
 import org.infinispan.logging.LogFactory;
 import org.infinispan.transaction.GlobalTransaction;
 

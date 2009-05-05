@@ -33,10 +33,14 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * The central interface of Infinispan.  A Cache provides a highly concurrent, optionally distributed data structure
- * with additional features such as: <ul> <li>JTA transaction compatibility</li> <li>Eviction support to prevent
- * evicting entries from memory to prevent {@link OutOfMemoryError}s</li> <li>Persisting entries to a {@link
- * org.infinispan.loader.CacheStore}, either when they are evicted as an overflow, or all the time, to maintain
- * persistent copies that would withstand server failure or restarts.</li> </ul>
+ * with additional features such as:
+ * <p/>
+ * <ul> <li>JTA transaction compatibility</li> <li>Eviction support for evicting entries from memory to prevent {@link
+ * OutOfMemoryError}s</li> <li>Persisting entries to a {@link org.infinispan.loaders.CacheStore}, either when they are
+ * evicted as an overflow, or all the time, to maintain persistent copies that would withstand server failure or
+ * restarts.</li> </ul>
+ * <p/>
+ * <p/>
  * <p/>
  * For convenience, Cache extends {@link java.util.concurrent.ConcurrentMap} and implements all methods accordingly,
  * although methods like {@link java.util.concurrent.ConcurrentMap#keySet()}, {@link
@@ -46,11 +50,24 @@ import java.util.concurrent.TimeUnit;
  * Also, like most {@link java.util.concurrent.ConcurrentMap} implementations, Cache does not support the use of
  * <tt>null</tt> keys (although <tt>null</tt> values are allowed).
  * <p/>
- * Please see the <a href="http://www.jboss.org/infinispan/docs">Infinispan documentation</a> for more details.
+ * An instance of the Cache is usually obtained by using a {@link CacheManager}.
+ * <pre>
+ *   CacheManager cm = new DefaultCacheManager(); // optionally pass in a default configuration
+ *   Cache c = cm.getCache();
+ * </pre>
+ * See the {@link CacheManager} interface for more details on providing specific configurations, using multiple caches
+ * in the same JVM, etc.
+ * <p/>
+ * Please see the <a href="http://www.jboss.org/infinispan/docs">Infinispan documentation</a> and/or the <a
+ * href="http://www.jboss.org/community/wiki/5minutetutorialonInfinispan">5 Minute Usage Tutorial</a> for more details.
  * <p/>
  *
  * @author Mircea.Markus@jboss.com
  * @author Manik Surtani
+ * @see CacheManager
+ * @see org.infinispan.manager.DefaultCacheManager
+ * @see <a href="http://www.jboss.org/infinispan/docs">Infinispan documentation</a>
+ * @see <a href="http://www.jboss.org/community/wiki/5minutetutorialonInfinispan">5 Minute Usage Tutorial</a>
  * @since 4.0
  */
 public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable {

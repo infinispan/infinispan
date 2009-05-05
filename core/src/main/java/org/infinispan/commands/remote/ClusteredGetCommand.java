@@ -26,12 +26,12 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.loader.CacheLoaderManager;
+import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.logging.Log;
 import org.infinispan.logging.LogFactory;
 
 /**
- * Issues a clustered get call, for use primarily by the {@link org.infinispan.loader.cluster.ClusterCacheLoader}.  This
+ * Issues a clustered get call, for use primarily by the {@link org.infinispan.loaders.cluster.ClusterCacheLoader}. This
  * is not a {@link org.infinispan.commands.VisitableCommand} and hence not passed up the {@link
  * org.infinispan.interceptors.base.CommandInterceptor} chain.
  * <p/>

@@ -32,7 +32,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * A simple implementation of lock striping, using cache entry keys to lock on, primarily used to help make {@link
- * org.infinispan.loader.CacheLoader} implemtations thread safe.
+ * org.infinispan.loaders.CacheLoader} implemtations thread safe.
  * <p/>
  * Backed by a set of {@link java.util.concurrent.locks.ReentrantReadWriteLock} instances, and using the key hashcodes
  * to determine buckets.
@@ -188,10 +188,10 @@ public class StripedLock {
       for (int i = 0; i < sharedLocks.length; i++) {
          Lock toAcquire = exclusive ? sharedLocks[i].writeLock() : sharedLocks[i].readLock();
          try {
-             success = toAcquire.tryLock(timeout, TimeUnit.MILLISECONDS);
+            success = toAcquire.tryLock(timeout, TimeUnit.MILLISECONDS);
             if (!success) {
                if (log.isTraceEnabled())
-                  log.trace("Could not aquire lock on " + toAcquire + ". Exclusive?"  + exclusive);
+                  log.trace("Could not aquire lock on " + toAcquire + ". Exclusive?" + exclusive);
                break;
             }
          } catch (InterruptedException e) {

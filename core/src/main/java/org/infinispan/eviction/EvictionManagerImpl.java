@@ -10,8 +10,8 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
-import org.infinispan.loader.CacheStore;
-import org.infinispan.loader.CacheLoaderManager;
+import org.infinispan.loaders.CacheLoaderManager;
+import org.infinispan.loaders.CacheStore;
 import org.infinispan.logging.Log;
 import org.infinispan.logging.LogFactory;
 
@@ -45,13 +45,15 @@ public class EvictionManagerImpl implements EvictionManager {
       this.cacheLoaderManager = cacheLoaderManager;
    }
 
-   @Start (priority = 55) // make sure this starts after the CacheLoaderManager
+   @Start(priority = 55)
+   // make sure this starts after the CacheLoaderManager
    public void start() {
       // first check if eviction is enabled!
       enabled = configuration.getEvictionStrategy() != EvictionStrategy.NONE;
       if (enabled) {
          maxEntries = configuration.getEvictionMaxEntries();
-         if (cacheLoaderManager != null && cacheLoaderManager.isEnabled()) cacheStore = cacheLoaderManager.getCacheStore();
+         if (cacheLoaderManager != null && cacheLoaderManager.isEnabled())
+            cacheStore = cacheLoaderManager.getCacheStore();
          // Set up the eviction timer task
          if (configuration.getEvictionWakeUpInterval() <= 0) {
             log.info("wakeUpInterval is <= 0, not starting eviction thread");
@@ -83,7 +85,7 @@ public class EvictionManagerImpl implements EvictionManager {
       int dcsz = dataContainer.size();
       if (dcsz > maxEntries) {
          if (trace) log.trace("Data container is larger than maxEntries, size is {0}.  Evicting...", dcsz);
-         for (InternalCacheEntry ice: dataContainer) {
+         for (InternalCacheEntry ice : dataContainer) {
             dcsz = dataContainer.size();
             if (dcsz > maxEntries) {
                cache.evict(ice.getKey());

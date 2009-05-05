@@ -26,7 +26,8 @@
       <serialization marshallerClass="org.infinispan.marshall.VersionAwareMarshaller" version="1.0"
                      objectInputStreamPoolSize="100" objectOutputStreamPoolSize="100"/>
       <globalJmxStatistics enabled="false" jmxDomain="funky_domain"
-                           mBeanServerLookup="org.infinispan.jmx.PerThreadMBeanServerLookup" allowDuplicateDomains="true"/>
+                           mBeanServerLookup="org.infinispan.jmx.PerThreadMBeanServerLookup"
+                           allowDuplicateDomains="true"/>
 
    </global>
 
@@ -83,7 +84,7 @@
          <!--
             We can have multiple cache loaders, which get chained
          -->
-         <loader class="org.infinispan.loader.file.FileCacheStore" fetchPersistentState="true"
+         <loader class="org.infinispan.loaders.file.FileCacheStore" fetchPersistentState="true"
                  ignoreModifications="true" purgeOnStartup="true">
 
             <!-- See the documentation for more configuration examples and flags. -->
@@ -98,9 +99,9 @@
 
    <namedCache name="dist">
       <clustering mode="distribution">
-         <sync />
-         <hash numOwners="3" rehashWait="120000" />
-         <l1 enabled="true" lifespan="600000" />
+         <sync/>
+         <hash numOwners="3" rehashWait="120000"/>
+         <l1 enabled="true" lifespan="600000"/>
       </clustering>
    </namedCache>
 

@@ -10,8 +10,8 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
-import org.infinispan.loader.CacheLoaderException;
-import org.infinispan.loader.CacheStore;
+import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.loaders.CacheStore;
 
 import java.util.concurrent.atomic.AtomicLong;
 

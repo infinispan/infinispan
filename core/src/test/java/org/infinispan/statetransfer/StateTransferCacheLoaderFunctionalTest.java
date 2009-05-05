@@ -2,10 +2,10 @@ package org.infinispan.statetransfer;
 
 import org.infinispan.Cache;
 import org.infinispan.config.CacheLoaderManagerConfig;
-import org.infinispan.loader.CacheLoader;
-import org.infinispan.loader.CacheLoaderManager;
-import org.infinispan.loader.CacheStoreConfig;
-import org.infinispan.loader.dummy.DummyInMemoryCacheStore;
+import org.infinispan.loaders.CacheLoader;
+import org.infinispan.loaders.CacheLoaderManager;
+import org.infinispan.loaders.CacheStoreConfig;
+import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;

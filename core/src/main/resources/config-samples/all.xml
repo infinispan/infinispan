@@ -34,7 +34,8 @@
          There is no added cost to defining a transport but not creating a cache that uses one, since the transport
          is created and initialized lazily.
       -->
-      <transport transportClass="org.infinispan.remoting.transport.jgroups.JGroupsTransport" clusterName="infinispan-cluster"
+      <transport transportClass="org.infinispan.remoting.transport.jgroups.JGroupsTransport"
+                 clusterName="infinispan-cluster"
                  distributedSyncTimeout="50000">
          <!-- Note that the JGroups transport uses sensible defaults if no configuration property is defined. -->
          <property name="configurationFile" value="udp.xml"/>
@@ -119,8 +120,8 @@
          Eviction configuration.  WakeupInterval defines how often the eviction thread runs, in milliseconds.  0 means
          the eviction thread will never run.  A separate executor is used for eviction in each cache.
       -->
-      <eviction wakeUpInterval="500" maxEntries="5000" strategy="FIFO" />
-      <expiration lifespan="60000" maxIdle="1000" />
+      <eviction wakeUpInterval="500" maxEntries="5000" strategy="FIFO"/>
+      <expiration lifespan="60000" maxIdle="1000"/>
    </namedCache>
 
 
@@ -143,12 +144,12 @@
          <!--
             We can have multiple cache loaders, which get chained
          -->
-         <loader class="org.infinispan.loader.file.FileCacheStore" fetchPersistentState="true"
+         <loader class="org.infinispan.loaders.file.FileCacheStore" fetchPersistentState="true"
                  ignoreModifications="true" purgeOnStartup="true">
 
             <!-- See the documentation for more configuration examples and flags. -->
             <properties>
-               <property name="location" value="/tmp" />
+               <property name="location" value="/tmp"/>
             </properties>
             <singletonStore enabled="true" pushStateWhenCoordinator="true" pushStateTimeout="20000"/>
             <async enabled="true" batchSize="1000" threadPoolSize="5"/>
@@ -159,9 +160,9 @@
 
    <namedCache name="distributedCache">
       <clustering mode="distribution">
-         <sync />
-         <hash numOwners="3" rehashWait="120000" />
-         <l1 enabled="true" lifespan="600000" />
+         <sync/>
+         <hash numOwners="3" rehashWait="120000"/>
+         <l1 enabled="true" lifespan="600000"/>
       </clustering>
    </namedCache>
 

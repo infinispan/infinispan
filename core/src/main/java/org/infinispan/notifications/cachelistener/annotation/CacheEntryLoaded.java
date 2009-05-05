@@ -28,7 +28,7 @@ import java.lang.annotation.Target;
 
 /**
  * This annotation should be used on methods that need to be notified when a cache entry is loaded from a {@link
- * org.infinispan.loader.CacheLoaderOld}.
+ * org.infinispan.loaders.CacheLoaderOld}.
  * <p/>
  * Methods annotated with this annotation should be public and take in a single parameter, a {@link
  * org.infinispan.notifications.cachelistener.event.CacheEntryLoadedEvent} otherwise an {@link

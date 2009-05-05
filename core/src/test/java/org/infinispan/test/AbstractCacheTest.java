@@ -6,7 +6,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.loader.CacheLoaderManager;
+import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.logging.Log;
 import org.infinispan.logging.LogFactory;
 import org.infinispan.manager.CacheManager;

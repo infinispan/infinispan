@@ -27,9 +27,9 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.EntryFactory;
 import org.infinispan.factories.annotations.Inject;
@@ -37,8 +37,8 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.JmxStatsCommandInterceptor;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
-import org.infinispan.loader.CacheLoader;
-import org.infinispan.loader.CacheLoaderManager;
+import org.infinispan.loaders.CacheLoader;
+import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 
 import java.util.concurrent.atomic.AtomicLong;
@@ -170,7 +170,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    protected void sendNotification(Object key, boolean pre, InvocationContext ctx) {
       notifier.notifyCacheEntryLoaded(key, pre, ctx);
    }
-   
+
    private void loadIfNeededAndUpdateStats(InvocationContext ctx, Object key) throws Throwable {
       boolean found = loadIfNeeded(ctx, key);
       if (!found && getStatisticsEnabled()) {

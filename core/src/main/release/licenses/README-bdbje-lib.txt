@@ -3,7 +3,7 @@ $Id$
 
 NAME:    Sleepycat Berkeley DB Java Edition
 PROJECT: http://www.oracle.com/database/berkeley-db/je/index.html
-PURPOSE: Used for Berkeley DB-based CacheLoader (org.infinispan.loader.bdbje.BdbjeCacheStore) in Infinispan
+PURPOSE: Used for Berkeley DB-based CacheLoader (org.infinispan.loaders.bdbje.BdbjeCacheStore) in Infinispan
 RESTRICTION: Infinispan can use Berkeley DB Java Edition from Oracle
              for persistent, reliable and transaction-protected
              data storage. If you choose to use Berkeley DB Java Edition

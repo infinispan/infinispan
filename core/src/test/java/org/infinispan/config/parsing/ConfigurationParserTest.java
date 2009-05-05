@@ -5,10 +5,10 @@ import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.distribution.DefaultConsistentHash;
 import org.infinispan.eviction.EvictionStrategy;
-import org.infinispan.loader.CacheStoreConfig;
-import org.infinispan.loader.decorators.SingletonStoreConfig;
-import org.infinispan.loader.file.FileCacheStore;
-import org.infinispan.loader.file.FileCacheStoreConfig;
+import org.infinispan.loaders.CacheStoreConfig;
+import org.infinispan.loaders.decorators.SingletonStoreConfig;
+import org.infinispan.loaders.file.FileCacheStore;
+import org.infinispan.loaders.file.FileCacheStoreConfig;
 import org.infinispan.lock.IsolationLevel;
 import org.infinispan.transaction.GenericTransactionManagerLookup;
 import org.testng.annotations.Test;
@@ -156,7 +156,7 @@ public class ConfigurationParserTest {
       XmlConfigurationParserImpl parser = new XmlConfigurationParserImpl();
       String xml =
             "      <loaders passivation=\"true\" shared=\"true\" preload=\"true\">\n" +
-                  "         <loader class=\"org.infinispan.loader.file.FileCacheStore\" fetchPersistentState=\"true\"\n" +
+                  "         <loader class=\"org.infinispan.loaders.file.FileCacheStore\" fetchPersistentState=\"true\"\n" +
                   "                 ignoreModifications=\"true\" purgeOnStartup=\"true\">\n" +
                   "            <properties>\n" +
                   "               <property name=\"location\" value=\"blahblah\"/>\n" +
@@ -201,7 +201,7 @@ public class ConfigurationParserTest {
    public void testCacheLoadersDefaults() throws Exception {
       XmlConfigurationParserImpl parser = new XmlConfigurationParserImpl();
       String xml = "<loaders>\n" +
-            "         <loader class=\"org.infinispan.loader.file.FileCacheStore\">\n" +
+            "         <loader class=\"org.infinispan.loaders.file.FileCacheStore\">\n" +
             "            <properties />\n" +
             "         </loader>\n" +
             "      </loaders>";
@@ -218,7 +218,7 @@ public class ConfigurationParserTest {
       assert !clc.isPreload();
 
       CacheStoreConfig iclc = (CacheStoreConfig) clc.getFirstCacheLoaderConfig();
-      assert iclc.getCacheLoaderClassName().equals("org.infinispan.loader.file.FileCacheStore");
+      assert iclc.getCacheLoaderClassName().equals("org.infinispan.loaders.file.FileCacheStore");
       assert !iclc.getAsyncStoreConfig().isEnabled();
       assert !iclc.isFetchPersistentState();
       assert !iclc.isIgnoreModifications();

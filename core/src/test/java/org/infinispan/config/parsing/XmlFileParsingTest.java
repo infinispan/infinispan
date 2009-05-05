@@ -3,9 +3,9 @@ package org.infinispan.config.parsing;
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.loader.file.FileCacheStoreConfig;
-import org.infinispan.lock.IsolationLevel;
 import org.infinispan.distribution.DefaultConsistentHash;
+import org.infinispan.loaders.file.FileCacheStoreConfig;
+import org.infinispan.lock.IsolationLevel;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -96,7 +96,7 @@ public class XmlFileParsingTest {
       CacheLoaderManagerConfig loaderManagerConfig = c.getCacheLoaderManagerConfig();
       assert loaderManagerConfig.getCacheLoaderConfigs().size() == 1;
       FileCacheStoreConfig csConf = (FileCacheStoreConfig) loaderManagerConfig.getFirstCacheLoaderConfig();
-      assert csConf.getCacheLoaderClassName().equals("org.infinispan.loader.file.FileCacheStore");
+      assert csConf.getCacheLoaderClassName().equals("org.infinispan.loaders.file.FileCacheStore");
       assert csConf.isFetchPersistentState();
       assert csConf.isIgnoreModifications();
       assert csConf.isPurgeOnStartup();

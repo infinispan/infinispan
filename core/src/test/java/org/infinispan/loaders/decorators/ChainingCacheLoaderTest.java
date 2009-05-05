@@ -1,0 +1,281 @@
+package org.infinispan.loaders.decorators;
+
+import org.easymock.EasyMock;
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.io.UnclosableObjectInputStream;
+import org.infinispan.io.UnclosableObjectOutputStream;
+import org.infinispan.loaders.BaseCacheStoreTest;
+import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.loaders.CacheStore;
+import org.infinispan.loaders.CacheStoreConfig;
+import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
+import org.infinispan.loaders.modifications.Clear;
+import org.infinispan.loaders.modifications.Modification;
+import org.infinispan.loaders.modifications.Remove;
+import org.infinispan.loaders.modifications.Store;
+import org.infinispan.marshall.ObjectStreamMarshaller;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.Test;
+
+import javax.transaction.Transaction;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+
+@Test(groups = "unit", testName = "loaders.decorators.ChainingCacheLoaderTest")
+public class ChainingCacheLoaderTest extends BaseCacheStoreTest {
+
+   DummyInMemoryCacheStore store1, store2;
+   DummyInMemoryCacheStore[] stores;  // for convenient iteration
+   private static final long lifespan = 6000000;
+
+   protected CacheStore createCacheStore() throws CacheLoaderException {
+      ChainingCacheStore store = new ChainingCacheStore();
+      CacheStoreConfig cfg;
+      store1 = new DummyInMemoryCacheStore();
+      store1.init((cfg = new DummyInMemoryCacheStore.Cfg("instance1")), null, new ObjectStreamMarshaller());
+
+      store.addCacheLoader(store1, cfg);
+
+      store2 = new DummyInMemoryCacheStore();
+      store2.init((cfg = new DummyInMemoryCacheStore.Cfg("instance2")), null, new ObjectStreamMarshaller());
+      // set store2 up for streaming
+      cfg.setFetchPersistentState(true);
+      store.addCacheLoader(store2, cfg);
+
+      stores = new DummyInMemoryCacheStore[]{store1, store2};
+
+      store.start();
+
+      return store;
+   }
+
+   @AfterMethod
+   public void afterMethod() {
+      if (store1 != null) store1.clear();
+      if (store2 != null) store2.clear();
+   }
+
+   public void testPropagatingWrites() throws Exception {
+      // put something in the store
+      cs.store(InternalEntryFactory.create("k1", "v1"));
+      cs.store(InternalEntryFactory.create("k2", "v2", lifespan));
+
+      int i = 1;
+      for (CacheStore s : stores) {
+         assert s.containsKey("k1") : "Key k1 missing on store " + i;
+         assert s.containsKey("k2") : "Key k2 missing on store " + i;
+         assert s.load("k1").getValue().equals("v1");
+         assert s.load("k2").getValue().equals("v2");
+         assert s.load("k1").getLifespan() == -1;
+         assert s.load("k2").getLifespan() == lifespan;
+         i++;
+      }
+
+      cs.remove("k1");
+
+      for (CacheStore s : stores) {
+         assert !s.containsKey("k1");
+         assert s.containsKey("k2");
+         assert s.load("k1") == null;
+         assert s.load("k2").getValue().equals("v2");
+         assert s.load("k2").getLifespan() == lifespan;
+      }
+
+      cs.clear();
+
+      for (CacheStore s : stores) {
+         assert !s.containsKey("k1");
+         assert !s.containsKey("k2");
+         assert s.load("k1") == null;
+         assert s.load("k2") == null;
+      }
+
+      cs.store(InternalEntryFactory.create("k1", "v1"));
+      cs.store(InternalEntryFactory.create("k2", "v2", lifespan));
+      cs.store(InternalEntryFactory.create("k3", "v3", 1000)); // short lifespan!
+
+      for (CacheStore s : stores) {
+         assert s.containsKey("k1");
+         assert s.containsKey("k2");
+         assert s.containsKey("k3");
+      }
+
+      Thread.sleep(1100);
+
+      cs.purgeExpired();
+
+      for (CacheStore s : stores) {
+         assert s.containsKey("k1");
+         assert s.containsKey("k2");
+         assert !s.containsKey("k3");
+      }
+   }
+
+   public void testGetsFromMultipleSrcs() throws Exception {
+
+      assert cs.load("k1") == null;
+      assert cs.load("k2") == null;
+      assert cs.load("k3") == null;
+      assert cs.load("k4") == null;
+
+      // k1 is on store1
+      store1.store(InternalEntryFactory.create("k1", "v1"));
+      // k2 is on store2
+      store2.store(InternalEntryFactory.create("k2", "v2"));
+
+      // k3 is on both
+      store1.store(InternalEntryFactory.create("k3", "v3"));
+      store2.store(InternalEntryFactory.create("k3", "v3"));
+
+      // k4 is on neither
+
+      assert cs.load("k1").getValue().equals("v1");
+      assert cs.load("k2").getValue().equals("v2");
+      assert cs.load("k3").getValue().equals("v3");
+      assert cs.load("k4") == null;
+
+      Set<InternalCacheEntry> all = cs.loadAll();
+
+      assert all.size() == 3;
+      Set<Object> expectedKeys = new HashSet<Object>();
+      expectedKeys.add("k1");
+      expectedKeys.add("k2");
+      expectedKeys.add("k3");
+      for (InternalCacheEntry a : all) assert expectedKeys.remove(a.getKey());
+
+      assert expectedKeys.isEmpty();
+
+      cs.remove("k3");
+
+      assert !store1.containsKey("k3");
+      assert !store2.containsKey("k3");
+   }
+
+   public void testPropagatingOnePhaseCommit() throws Exception {
+      List<Modification> list = new LinkedList<Modification>();
+      list.add(new Store(InternalEntryFactory.create("k1", "v1")));
+      list.add(new Store(InternalEntryFactory.create("k2", "v2", lifespan)));
+      list.add(new Store(InternalEntryFactory.create("k3", "v3")));
+      list.add(new Remove("k3"));
+      list.add(new Clear());
+      list.add(new Store(InternalEntryFactory.create("k4", "v4")));
+      list.add(new Store(InternalEntryFactory.create("k5", "v5", lifespan)));
+      list.add(new Store(InternalEntryFactory.create("k6", "v6")));
+      list.add(new Remove("k6"));
+      Transaction t = EasyMock.createNiceMock(Transaction.class);
+      cs.prepare(list, t, true);
+
+      CacheStore[] allStores = new CacheStore[]{cs, store1, store2}; // for iteration
+      for (int i = 1; i < 7; i++) {
+         if (i < 4 || i == 6) {
+            // these have been deleted
+            for (CacheStore s : allStores) assert !s.containsKey("k" + i) : "Failed on k" + i;
+         } else {
+            for (CacheStore s : allStores) {
+               assert s.containsKey("k" + i);
+               assert s.load("k" + i).getValue().equals("v" + i);
+               assert s.load("k" + i).getLifespan() == (i == 5 ? lifespan : -1);
+            }
+         }
+      }
+
+      cs.clear();
+
+      for (int i = 1; i < 7; i++) {
+         for (CacheStore s : allStores) assert !s.containsKey("k" + i);
+      }
+   }
+
+   public void testPropagatingTwoPhaseCommit() throws Exception {
+      List<Modification> list = new LinkedList<Modification>();
+      list.add(new Store(InternalEntryFactory.create("k1", "v1")));
+      list.add(new Store(InternalEntryFactory.create("k2", "v2", lifespan)));
+      list.add(new Store(InternalEntryFactory.create("k3", "v3")));
+      list.add(new Remove("k3"));
+      list.add(new Clear());
+      list.add(new Store(InternalEntryFactory.create("k4", "v4")));
+      list.add(new Store(InternalEntryFactory.create("k5", "v5", lifespan)));
+      list.add(new Store(InternalEntryFactory.create("k6", "v6")));
+      list.add(new Remove("k6"));
+      Transaction t = EasyMock.createNiceMock(Transaction.class);
+      cs.prepare(list, t, false);
+
+      CacheStore[] allStores = new CacheStore[]{cs, store1, store2}; // for iteration
+
+      for (int i = 1; i < 7; i++) {
+         for (CacheStore s : allStores) assert !s.containsKey("k" + i);
+      }
+
+      cs.commit(t);
+
+      for (int i = 1; i < 7; i++) {
+         if (i < 4 || i == 6) {
+            // these have been deleted
+            for (CacheStore s : allStores) assert !s.containsKey("k" + i);
+         } else {
+            for (CacheStore s : allStores) {
+               assert s.containsKey("k" + i);
+               assert s.load("k" + i).getValue().equals("v" + i);
+               assert s.load("k" + i).getLifespan() == (i == 5 ? lifespan : -1);
+            }
+         }
+      }
+   }
+
+
+   public void testPropagatingStreams() throws IOException, ClassNotFoundException, CacheLoaderException {
+      store2.store(InternalEntryFactory.create("k1", "v1"));
+      store2.store(InternalEntryFactory.create("k2", "v2", lifespan));
+
+      assert cs.containsKey("k1");
+      assert cs.containsKey("k2");
+
+      ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+      ObjectOutputStream oos = new ObjectOutputStream(byteStream);
+      cs.toStream(new UnclosableObjectOutputStream(oos));
+      oos.close();
+      byteStream.close();
+      cs.clear();
+
+      assert !cs.containsKey("k1");
+      assert !cs.containsKey("k2");
+      for (CacheStore s : stores) {
+         assert !s.containsKey("k1");
+         assert !s.containsKey("k2");
+      }
+
+      cs.fromStream(new UnclosableObjectInputStream(new ObjectInputStream(new ByteArrayInputStream(byteStream.toByteArray()))));
+
+      assert cs.containsKey("k1");
+      assert cs.containsKey("k2");
+      assert cs.load("k1").getValue().equals("v1");
+      assert cs.load("k2").getValue().equals("v2");
+      assert cs.load("k1").getLifespan() == -1;
+      assert cs.load("k2").getLifespan() == lifespan;
+
+      assert store2.containsKey("k1");
+      assert store2.containsKey("k2");
+      assert store2.load("k1").getValue().equals("v1");
+      assert store2.load("k2").getValue().equals("v2");
+      assert store2.load("k1").getLifespan() == -1;
+      assert store2.load("k2").getLifespan() == lifespan;
+
+      // store 1 has not been set up to support fetching state
+      assert !store1.containsKey("k1");
+      assert !store1.containsKey("k2");
+   }
+
+   @Override
+   public void testConfigFile() {
+      // no op
+   }
+}
+

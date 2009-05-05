@@ -24,13 +24,14 @@ import java.util.List;
  * Constructing a <tt>CacheManager</tt> is done via one of its constructors, which optionally take in a {@link
  * org.infinispan.config.Configuration} or a path or URL to a configuration XML file.
  * <p/>
- * Lifecycle - <tt>CacheManager</tt>s have a lifecycle (it implements {@link org.infinispan.lifecycle.Lifecycle}) and the
- * default constructors also call {@link #start()}.  Overloaded versions of the constructors are available, that do not
- * start the <tt>CacheManager</tt>, although it must be kept in mind that <tt>CacheManager</tt>s need to be started
+ * Lifecycle - <tt>CacheManager</tt>s have a lifecycle (it implements {@link org.infinispan.lifecycle.Lifecycle}) and
+ * the default constructors also call {@link #start()}.  Overloaded versions of the constructors are available, that do
+ * not start the <tt>CacheManager</tt>, although it must be kept in mind that <tt>CacheManager</tt>s need to be started
  * before they can be used to create <tt>Cache</tt> instances.
  * <p/>
  * Once constructed, <tt>CacheManager</tt>s should be made available to any component that requires a <tt>Cache</tt>,
- * via JNDI or via some other mechanism such as an IoC container.
+ * via <a href="http://en.wikipedia.org/wiki/Java_Naming_and_Directory_Interface">JNDI</a> or via some other mechanism
+ * such as an <a href="http://en.wikipedia.org/wiki/Dependency_injection">dependency injection</a> framework.
  * <p/>
  * You obtain <tt>Cache</tt> instances from the <tt>CacheManager</tt> by using one of the overloaded
  * <tt>getCache()</tt>, methods.  Note that with <tt>getCache()</tt>, there is no guarantee that the instance you get is

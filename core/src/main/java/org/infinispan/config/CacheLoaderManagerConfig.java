@@ -21,8 +21,8 @@
  */
 package org.infinispan.config;
 
-import org.infinispan.loader.CacheLoaderConfig;
-import org.infinispan.loader.CacheStoreConfig;
+import org.infinispan.loaders.CacheLoaderConfig;
+import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.util.Util;
 
 import java.util.LinkedList;
@@ -142,7 +142,7 @@ public class CacheLoaderManagerConfig extends AbstractNamedCacheConfigurationBea
    public boolean isFetchPersistentState() {
       for (CacheLoaderConfig iclc : cacheLoaderConfigs) {
          if (iclc instanceof CacheStoreConfig)
-         if (((CacheStoreConfig)iclc).isFetchPersistentState()) return true;
+            if (((CacheStoreConfig) iclc).isFetchPersistentState()) return true;
       }
       return false;
    }

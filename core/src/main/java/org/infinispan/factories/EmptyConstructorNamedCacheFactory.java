@@ -28,7 +28,7 @@ import org.infinispan.config.ConfigurationException;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.invocation.InvocationContextContainer;
-import org.infinispan.loader.CacheLoaderManager;
+import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.VersionAwareMarshaller;
 import org.infinispan.notifications.cachelistener.CacheNotifier;

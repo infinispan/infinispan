@@ -34,10 +34,11 @@ import java.io.OutputStream;
 /**
  * A marshaller is a class that is able to marshall and unmarshall objects efficiently.
  * <p/>
- * The reason why this is implemented specially in Infinispan rather than resorting to Java serialization or even the more
- * efficient JBoss serialization is that a lot of efficiency can be gained when a majority of the serialization that
- * occurs has to do with a small set of known types such as {@link org.infinispan.transaction.GlobalTransaction} or {@link
- * org.infinispan.commands.ReplicableCommand}, and class type information can be replaced with simple magic numbers.
+ * The reason why this is implemented specially in Infinispan rather than resorting to Java serialization or even the
+ * more efficient JBoss serialization is that a lot of efficiency can be gained when a majority of the serialization
+ * that occurs has to do with a small set of known types such as {@link org.infinispan.transaction.GlobalTransaction} or
+ * {@link org.infinispan.commands.ReplicableCommand}, and class type information can be replaced with simple magic
+ * numbers.
  * <p/>
  * Unknown types (typically user data) falls back to JBoss serialization.
  * <p/>
@@ -48,9 +49,9 @@ import java.io.OutputStream;
  * This interface is used to marshall {@link org.infinispan.commands.ReplicableCommand}s, their parameters and their
  * response values.
  * <p/>
- * The interface is also used by the {@link org.infinispan.loader.CacheStore} framework to efficiently serialize data to be
- * persisted, as well as the {@link org.infinispan.statetransfer.StateTransferManager} when serializing the cache for
- * transferring state en-masse.
+ * The interface is also used by the {@link org.infinispan.loaders.CacheStore} framework to efficiently serialize data
+ * to be persisted, as well as the {@link org.infinispan.statetransfer.StateTransferManager} when serializing the cache
+ * for transferring state en-masse.
  *
  * @author <a href="mailto://manik@jboss.org">Manik Surtani</a>
  * @author Galder Zamarreño
@@ -58,27 +59,25 @@ import java.io.OutputStream;
  */
 @Scope(Scopes.GLOBAL)
 public interface Marshaller {
-   
+
    /**
-    * Create and open a new ObjectOutput for the given output stream. This 
-    * method should be used for opening data outpus when multiple 
-    * objectToObjectStream() calls will be made before the stream is closed
-    * 
-    * @param os output stream 
+    * Create and open a new ObjectOutput for the given output stream. This method should be used for opening data outpus
+    * when multiple objectToObjectStream() calls will be made before the stream is closed
+    *
+    * @param os output stream
     * @return ObjectOutput to write to
     * @throws IOException
     */
    ObjectOutput startObjectOutput(OutputStream os) throws IOException;
-   
+
    /**
-    * Finish using the given ObjectOutput. After opening a ObjectOutput and 
-    * calling objectToObjectStream() mutliple times, use this method to flush 
-    * the data and close if necessary
-    * 
+    * Finish using the given ObjectOutput. After opening a ObjectOutput and calling objectToObjectStream() mutliple
+    * times, use this method to flush the data and close if necessary
+    *
     * @param oo data output that finished using
     */
    void finishObjectOutput(ObjectOutput oo);
-   
+
    /**
     * Marshalls an object to a given {@link java.io.ObjectOutput}
     *
@@ -88,25 +87,23 @@ public interface Marshaller {
    void objectToObjectStream(Object obj, ObjectOutput out) throws IOException;
 
    /**
-    * Create and open a new ObjectInput for the given input stream. This 
-    * method should be used for opening data inputs when multiple 
-    * objectFromObjectStream() calls will be made before the stream is closed.
-    * 
-    * @param is input stream 
+    * Create and open a new ObjectInput for the given input stream. This method should be used for opening data inputs
+    * when multiple objectFromObjectStream() calls will be made before the stream is closed.
+    *
+    * @param is input stream
     * @return ObjectInput to read from
     * @throws IOException
     */
    ObjectInput startObjectInput(InputStream is) throws IOException;
-   
+
    /**
-    * Finish using the given ObjectInput. After opening a ObjectInput and 
-    * calling objectFromObjectStream() mutliple times, use this method to flush 
-    * the data and close if necessary
-    * 
+    * Finish using the given ObjectInput. After opening a ObjectInput and calling objectFromObjectStream() mutliple
+    * times, use this method to flush the data and close if necessary
+    *
     * @param oi data input that finished using
     */
    void finishObjectInput(ObjectInput oi);
-   
+
    /**
     * Unmarshalls an object from an {@link java.io.ObjectInput}
     *

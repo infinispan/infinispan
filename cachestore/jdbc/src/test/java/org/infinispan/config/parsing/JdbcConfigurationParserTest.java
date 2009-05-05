@@ -2,13 +2,13 @@ package org.infinispan.config.parsing;
 
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
-import org.infinispan.loader.CacheStoreConfig;
-import org.infinispan.loader.decorators.SingletonStoreConfig;
-import org.infinispan.loader.jdbc.TableManipulation;
-import org.infinispan.loader.jdbc.connectionfactory.ConnectionFactoryConfig;
-import org.infinispan.loader.jdbc.connectionfactory.PooledConnectionFactory;
-import org.infinispan.loader.jdbc.stringbased.JdbcStringBasedCacheStore;
-import org.infinispan.loader.jdbc.stringbased.JdbcStringBasedCacheStoreConfig;
+import org.infinispan.loaders.CacheStoreConfig;
+import org.infinispan.loaders.decorators.SingletonStoreConfig;
+import org.infinispan.loaders.jdbc.TableManipulation;
+import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
+import org.infinispan.loaders.jdbc.connectionfactory.PooledConnectionFactory;
+import org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore;
+import org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStoreConfig;
 import org.testng.annotations.Test;
 import org.w3c.dom.Element;
 
@@ -18,10 +18,10 @@ public class JdbcConfigurationParserTest {
       XmlConfigurationParserImpl parser = new XmlConfigurationParserImpl();
       String xml =
             "      <loaders passivation=\"true\" shared=\"true\" preload=\"true\">\n" +
-                  "         <loader class=\"org.infinispan.loader.jdbc.stringbased.JdbcStringBasedCacheStore\" fetchPersistentState=\"true\"\n" +
+                  "         <loader class=\"org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore\" fetchPersistentState=\"true\"\n" +
                   "                 ignoreModifications=\"true\" purgeOnStartup=\"true\">\n" +
                   "            <properties>\n" +
-                  "               <property name=\"connectionFactoryClass\" value=\"org.infinispan.loader.jdbc.connectionfactory.PooledConnectionFactory\"/>\n" +
+                  "               <property name=\"connectionFactoryClass\" value=\"org.infinispan.loaders.jdbc.connectionfactory.PooledConnectionFactory\"/>\n" +
                   "               <property name=\"connectionUrl\" value=\"jdbc://some-url\"/>\n" +
                   "               <property name=\"userName\" value=\"root\"/>\n" +
                   "               <property name=\"driverClass\" value=\"org.dbms.Driver\"/>\n" +
@@ -59,7 +59,7 @@ public class JdbcConfigurationParserTest {
 
       assert clc.getCacheLoaderConfigs().size() == 1;
       JdbcStringBasedCacheStoreConfig csConf = (JdbcStringBasedCacheStoreConfig) clc.getFirstCacheLoaderConfig();
-      assert csConf.getCacheLoaderClassName().equals("org.infinispan.loader.jdbc.stringbased.JdbcStringBasedCacheStore");
+      assert csConf.getCacheLoaderClassName().equals("org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore");
       assert csConf.isFetchPersistentState();
       assert csConf.isIgnoreModifications();
       assert csConf.isPurgeOnStartup();
