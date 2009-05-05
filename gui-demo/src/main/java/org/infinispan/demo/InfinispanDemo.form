@@ -143,12 +143,12 @@
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <background color="-16737895"/>
+                  <background color="-1118482"/>
                   <horizontalScrollBarPolicy value="30"/>
                 </properties>
                 <border type="none"/>
                 <children>
-                  <component id="90e0f" class="javax.swing.JTable" binding="dataTable">
+                  <component id="90e0f" class="javax.swing.JTable" binding="dataTable" custom-create="true">
                     <constraints/>
                     <properties/>
                   </component>
@@ -209,7 +209,7 @@
                   <forms defaultalign-horz="false" defaultalign-vert="false"/>
                 </constraints>
                 <properties>
-                  <background color="-16737895"/>
+                  <background color="-1118482"/>
                   <horizontalScrollBarPolicy value="30"/>
                 </properties>
                 <border type="none"/>

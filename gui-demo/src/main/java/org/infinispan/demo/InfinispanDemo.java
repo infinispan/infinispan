@@ -19,6 +19,8 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableCellRenderer;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
@@ -399,6 +401,40 @@ public class InfinispanDemo {
    private String getClusterSize() {
       List<Address> members = cache.getCacheManager().getMembers();
       return members == null || members.isEmpty() ? "N/A" : "" + members.size();
+   }
+
+   private void createUIComponents() {
+      dataTable = new AlternateColorTable();
+
+   }
+
+   public static class AlternateColorTable extends JTable {
+
+      final Color c1 = new Color(0xEE, 0xEE, 0xEE);
+      final Color c2 = new Color(0xFF, 0xFF, 0xEE);
+
+      /**
+       * Returns the appropriate background color for the given row.
+       */
+      protected Color colorForRow(int row) {
+         return (row % 2 == 0) ? c1 : c2;
+      }
+
+      /**
+       * Shades alternate rows in different colors.
+       */
+      @Override
+      public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
+         Component c = super.prepareRenderer(renderer, row, column);
+         if (!isCellSelected(row, column)) {
+            c.setBackground(colorForRow(row));
+            c.setForeground(UIManager.getColor("Table.foreground"));
+         } else {
+            c.setBackground(UIManager.getColor("Table.selectionBackground"));
+            c.setForeground(UIManager.getColor("Table.selectionForeground"));
+         }
+         return c;
+      }
    }
 
    @Listener
