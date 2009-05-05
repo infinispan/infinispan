@@ -78,7 +78,7 @@ public class JCloudsConnection
 				.getMaxConnections()
 				+ "");
 	    // TODO proxy host/port
-	    Module loggingModule = org.infinispan.logging.LogFactory.IS_LOG4J_AVAILABLE ? new Log4JLoggingModule()
+	    Module loggingModule = org.infinispan.util.logging.LogFactory.IS_LOG4J_AVAILABLE ? new Log4JLoggingModule()
 		    : new JDKLoggingModule();
 	    this.context = S3ContextFactory.createS3Context(properties,
 		    new S3HttpNioConnectionPoolClientModule(), loggingModule);
