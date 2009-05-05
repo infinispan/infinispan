@@ -1,7 +1,7 @@
 package org.infinispan.test.testng;
 
-import org.infinispan.logging.Log;
-import org.infinispan.logging.LogFactory;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.testng.IClass;
 import org.testng.ITestContext;
 import org.testng.ITestListener;

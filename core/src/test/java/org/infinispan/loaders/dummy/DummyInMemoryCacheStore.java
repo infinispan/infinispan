@@ -6,10 +6,10 @@ import org.infinispan.loaders.AbstractCacheStore;
 import org.infinispan.loaders.AbstractCacheStoreConfig;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.logging.Log;
-import org.infinispan.logging.LogFactory;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.ObjectStreamMarshaller;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.io.ObjectInput;
 import java.io.ObjectOutput;

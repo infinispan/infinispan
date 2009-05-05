@@ -7,9 +7,9 @@ import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.loaders.bucket.BucketBasedCacheStore;
-import org.infinispan.logging.Log;
-import org.infinispan.logging.LogFactory;
 import org.infinispan.marshall.Marshaller;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.io.*;
 import java.util.HashSet;
@@ -34,8 +34,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
    File root;
 
    /**
-    * @return root directory where all files for this {@link org.infinispan.loaders.CacheStore CacheStore} are
-    *         written.
+    * @return root directory where all files for this {@link org.infinispan.loaders.CacheStore CacheStore} are written.
     */
    public File getRoot() {
       return root;

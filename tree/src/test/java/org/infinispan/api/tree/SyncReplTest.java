@@ -9,7 +9,7 @@ package org.infinispan.api.tree;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
-import org.infinispan.invocation.Flag;
+import org.infinispan.context.Flag;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.tree.Fqn;
 import org.infinispan.tree.Node;

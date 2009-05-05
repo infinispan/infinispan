@@ -2,11 +2,11 @@ package org.infinispan.atomic;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
-import org.infinispan.lock.TimeoutException;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.DummyTransactionManagerLookup;
+import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -18,7 +18,7 @@ import java.util.concurrent.BlockingQueue;
 /**
  * Tester class for AtomicMapCache.
  *
- * @author  Mircea.Markus@jboss.com
+ * @author Mircea.Markus@jboss.com
  */
 @Test(groups = "functional", testName = "atomic.AtomicHashMapConcurrencyTest")
 public class AtomicHashMapConcurrencyTest {
@@ -67,7 +67,7 @@ public class AtomicHashMapConcurrencyTest {
    public void testConcurrentModifications() throws Exception {
       AtomicMap<Integer, String> atomicMap = cache.getAtomicMap(KEY);
       tm.begin();
-      atomicMap.put(1,"");
+      atomicMap.put(1, "");
       OtherThread ot = new OtherThread();
       ot.start();
       ot.toExecute.put(Operation.PUT);
@@ -79,7 +79,7 @@ public class AtomicHashMapConcurrencyTest {
       AtomicMap<Integer, String> atomicMap = cache.getAtomicMap(KEY);
       atomicMap.put(1, "existing");
       tm.begin();
-      atomicMap.put(1,"newVal");
+      atomicMap.put(1, "newVal");
       OtherThread ot = new OtherThread();
       ot.start();
       ot.toExecute.put(Operation.READ);

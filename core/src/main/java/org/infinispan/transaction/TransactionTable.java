@@ -28,11 +28,11 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.NonVolatile;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.context.ContextFactory;
-import org.infinispan.logging.Log;
-import org.infinispan.logging.LogFactory;
 import org.infinispan.remoting.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.Status;
 import javax.transaction.SystemException;

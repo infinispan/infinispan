@@ -19,10 +19,10 @@ import org.infinispan.loaders.AbstractCacheStore;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.modifications.Modification;
-import org.infinispan.logging.Log;
-import org.infinispan.logging.LogFactory;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.util.ReflectionUtil;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.io.File;
 import java.io.ObjectInput;

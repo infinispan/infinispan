@@ -1,8 +1,8 @@
 package org.infinispan.loaders.jdbc.connectionfactory;
 
 import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.logging.Log;
-import org.infinispan.logging.LogFactory;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.sql.Connection;
 import java.sql.DriverManager;

@@ -5,7 +5,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.distribution.DefaultConsistentHash;
 import org.infinispan.loaders.file.FileCacheStoreConfig;
-import org.infinispan.lock.IsolationLevel;
+import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
 import java.io.IOException;

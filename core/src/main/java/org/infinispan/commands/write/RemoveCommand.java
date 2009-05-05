@@ -25,9 +25,9 @@ import org.infinispan.commands.Visitor;
 import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.logging.Log;
-import org.infinispan.logging.LogFactory;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 
 /**

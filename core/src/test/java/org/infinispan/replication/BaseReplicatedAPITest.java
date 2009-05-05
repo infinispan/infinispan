@@ -8,7 +8,7 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.config.Configuration;
-import org.infinispan.invocation.Flag;
+import org.infinispan.context.Flag;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.DummyTransactionManagerLookup;
 

@@ -29,16 +29,16 @@ import org.infinispan.container.entries.NullMarkerEntry;
 import org.infinispan.container.entries.NullMarkerEntryForRemoval;
 import org.infinispan.container.entries.ReadCommittedEntry;
 import org.infinispan.container.entries.RepeatableReadEntry;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.invocation.Flag;
-import org.infinispan.lock.IsolationLevel;
-import org.infinispan.lock.LockManager;
-import org.infinispan.lock.TimeoutException;
-import org.infinispan.logging.Log;
-import org.infinispan.logging.LogFactory;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.util.concurrent.IsolationLevel;
+import org.infinispan.util.concurrent.TimeoutException;
+import org.infinispan.util.concurrent.locks.LockManager;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 public class EntryFactoryImpl implements EntryFactory {
    private boolean useRepeatableRead;
@@ -129,7 +129,7 @@ public class EntryFactoryImpl implements EntryFactory {
             if (mvccEntry != cacheEntry) mvccEntry = (MVCCEntry) cacheEntry;
             mvccEntry.setRemoved(false);
             mvccEntry.setValid(true);
-         }         
+         }
 
          return mvccEntry;
 
@@ -178,7 +178,7 @@ public class EntryFactoryImpl implements EntryFactory {
     * @return true if a lock was needed and acquired, false if it didn't need to acquire the lock (i.e., lock was
     *         already held)
     * @throws InterruptedException if interrupted
-    * @throws org.infinispan.lock.TimeoutException
+    * @throws org.infinispan.util.concurrent.TimeoutException
     *                              if we are unable to acquire the lock after a specified timeout.
     */
    public final boolean acquireLock(InvocationContext ctx, Object key) throws InterruptedException, TimeoutException {

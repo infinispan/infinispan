@@ -24,10 +24,10 @@ package org.infinispan.atomic;
 import org.infinispan.Cache;
 import org.infinispan.batch.AutoBatchSupport;
 import org.infinispan.batch.BatchContainer;
-import org.infinispan.invocation.InvocationContextContainer;
-import org.infinispan.invocation.Flag;
-import org.infinispan.logging.Log;
-import org.infinispan.logging.LogFactory;
+import org.infinispan.context.Flag;
+import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collection;
 import java.util.Map;

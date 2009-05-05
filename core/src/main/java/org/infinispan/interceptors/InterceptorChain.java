@@ -24,14 +24,14 @@ package org.infinispan.interceptors;
 import org.infinispan.CacheException;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.invocation.InvocationContextContainer;
-import org.infinispan.logging.Log;
-import org.infinispan.logging.LogFactory;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -249,7 +249,7 @@ public class InterceptorChain {
 
    /**
     * Similar to {@link #invoke(InvocationContext , VisitableCommand)}, but constructs a invocation context on the fly,
-    * using {@link InvocationContextContainer#get()}
+    * using {@link org.infinispan.context.InvocationContextContainer#get()}
     */
    public Object invokeRemote(VisitableCommand cacheCommand) throws Throwable {
       InvocationContext ctxt = invocationContextContainer.get();
@@ -259,7 +259,8 @@ public class InterceptorChain {
 
    /**
     * Similar to {@link #invoke(InvocationContext , VisitableCommand)}, but constructs a invocation context on the fly,
-    * using {@link InvocationContextContainer#get()} and setting the origin local flag to its default value.
+    * using {@link org.infinispan.context.InvocationContextContainer#get()} and setting the origin local flag to its
+    * default value.
     */
    public Object invoke(VisitableCommand cacheCommand) throws Throwable {
       InvocationContext ctxt = invocationContextContainer.get();

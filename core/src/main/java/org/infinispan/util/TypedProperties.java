@@ -1,7 +1,7 @@
 package org.infinispan.util;
 
-import org.infinispan.logging.Log;
-import org.infinispan.logging.LogFactory;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.Properties;
 

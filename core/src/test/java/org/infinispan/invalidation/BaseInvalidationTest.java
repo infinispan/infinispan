@@ -8,7 +8,7 @@ import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.config.Configuration;
-import org.infinispan.invocation.Flag;
+import org.infinispan.context.Flag;
 import org.infinispan.remoting.ResponseFilter;
 import org.infinispan.remoting.ResponseMode;
 import org.infinispan.remoting.RpcManager;

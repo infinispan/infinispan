@@ -23,14 +23,14 @@ package org.infinispan.notifications.cachelistener;
 
 import org.infinispan.Cache;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.invocation.InvocationContextContainer;
-import org.infinispan.logging.Log;
-import org.infinispan.logging.LogFactory;
 import org.infinispan.notifications.AbstractListenerImpl;
 import org.infinispan.notifications.cachelistener.annotation.*;
 import org.infinispan.notifications.cachelistener.event.*;
 import static org.infinispan.notifications.cachelistener.event.Event.Type.*;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.Transaction;
 import java.lang.annotation.Annotation;

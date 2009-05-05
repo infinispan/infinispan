@@ -1,20 +1,20 @@
 package org.infinispan.api.tree;
 
 import org.infinispan.Cache;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.atomic.AtomicMap;
 import org.infinispan.atomic.AtomicMapCache;
 import org.infinispan.config.Configuration;
-import org.infinispan.logging.Log;
-import org.infinispan.logging.LogFactory;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.DummyTransactionManagerLookup;
 import org.infinispan.tree.Fqn;
 import org.infinispan.tree.Node;
 import org.infinispan.tree.NodeKey;
 import org.infinispan.tree.TreeCache;
 import org.infinispan.tree.TreeCacheImpl;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import static org.testng.AssertJUnit.*;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;

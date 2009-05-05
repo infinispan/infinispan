@@ -22,7 +22,7 @@
 package org.infinispan.util.concurrent.locks;
 
 import net.jcip.annotations.ThreadSafe;
-import org.infinispan.invocation.InvocationContextContainer;
+import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.transaction.GlobalTransaction;
 
 import java.util.concurrent.TimeUnit;
@@ -31,8 +31,8 @@ import java.util.concurrent.locks.Lock;
 
 /**
  * A lock that supports reentrancy based on owner (and not on current thread).  For this to work, the lock needs to be
- * constructed with a reference to the {@link InvocationContextContainer}, so it is able to determine whether the
- * caller's "owner" reference is the current thread or a {@link GlobalTransaction} instance.
+ * constructed with a reference to the {@link org.infinispan.context.InvocationContextContainer}, so it is able to
+ * determine whether the caller's "owner" reference is the current thread or a {@link GlobalTransaction} instance.
  * <p/>
  * This makes this lock implementation very closely tied to Infinispan internals, but it provides for a very clean,
  * efficient and moreover familiar interface to work with, since it implements {@link java.util.concurrent.locks.Lock}.

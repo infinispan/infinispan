@@ -32,9 +32,9 @@ import java.util.Set;
  * startup for warm caches), so performance drawback shouldn't be significant (again, most of the cases).
  * <p/>
  * Resource sharing - both aggregated cache loaders have locks and connection pools. The locking is not shared, each
- * loader keeping its own {@link org.infinispan.lock.StripedLock} instace. Also the tables (even though similar as
- * definition) are different in order to avoid key collision. On the other hand, the connection pooling is a shared
- * resource.
+ * loader keeping its own {@link org.infinispan.util.concurrent.locks.StripedLock} instace. Also the tables (even though
+ * similar as definition) are different in order to avoid key collision. On the other hand, the connection pooling is a
+ * shared resource.
  *
  * @author Mircea.Markus@jboss.com
  * @see org.infinispan.loaders.jdbc.mixed.JdbcMixedCacheStoreConfig

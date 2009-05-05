@@ -1,4 +1,4 @@
-package org.infinispan.logging;
+package org.infinispan.util.logging;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;

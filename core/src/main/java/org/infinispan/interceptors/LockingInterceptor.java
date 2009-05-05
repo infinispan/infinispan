@@ -40,9 +40,9 @@ import org.infinispan.factories.EntryFactory;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.lock.IsolationLevel;
-import org.infinispan.lock.LockManager;
 import org.infinispan.util.ReversibleOrderedSet;
+import org.infinispan.util.concurrent.IsolationLevel;
+import org.infinispan.util.concurrent.locks.LockManager;
 
 import java.util.ArrayList;
 import java.util.Iterator;

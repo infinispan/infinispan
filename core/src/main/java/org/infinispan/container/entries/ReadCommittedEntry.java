@@ -23,8 +23,8 @@ package org.infinispan.container.entries;
 
 import org.infinispan.container.DataContainer;
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.*;
-import org.infinispan.logging.Log;
-import org.infinispan.logging.LogFactory;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * A wrapper around a cached entry that encapsulates read committed semantics when writes are initiated, committed or
@@ -140,8 +140,9 @@ public class ReadCommittedEntry implements MVCCEntry {
    public final void commit(DataContainer container) {
       // only do stuff if there are changes.
       if (isChanged()) {
-         if (trace) log.trace("Updating entry (key={0} removed={1} valid={2} changed={3} created={4} value={5}]", getKey(),
-                              isRemoved(), isValid(), isChanged(), isCreated(), value);
+         if (trace)
+            log.trace("Updating entry (key={0} removed={1} valid={2} changed={3} created={4} value={5}]", getKey(),
+                      isRemoved(), isValid(), isChanged(), isCreated(), value);
          if (isRemoved()) {
             container.remove(key);
          } else {

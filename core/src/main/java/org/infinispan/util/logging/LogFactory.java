@@ -1,4 +1,4 @@
-package org.infinispan.logging;
+package org.infinispan.util.logging;
 
 /**
  * Factory that creates {@link Log} instances.

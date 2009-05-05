@@ -23,8 +23,8 @@ package org.infinispan.container.entries;
 
 import org.infinispan.CacheException;
 import org.infinispan.container.DataContainer;
-import org.infinispan.logging.Log;
-import org.infinispan.logging.LogFactory;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * An extension of {@link org.infinispan.container.ReadCommittedEntry} that provides Repeatable Read semantics

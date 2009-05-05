@@ -2,9 +2,6 @@ package org.infinispan.profiling;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
-import org.infinispan.lock.IsolationLevel;
-import org.infinispan.logging.Log;
-import org.infinispan.logging.LogFactory;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.profiling.testinternals.FqnGenerator;
@@ -16,6 +13,9 @@ import org.infinispan.transaction.DummyTransactionManager;
 import org.infinispan.tree.Fqn;
 import org.infinispan.tree.TreeCache;
 import org.infinispan.tree.TreeCacheImpl;
+import org.infinispan.util.concurrent.IsolationLevel;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- *  * Test to use with a profiler to profile replication.  To be used in conjunction with ProfileSlaveTest.
+ * * Test to use with a profiler to profile replication.  To be used in conjunction with ProfileSlaveTest.
  * <p/>
  * Typical usage pattern:
  * <p/>
@@ -42,7 +42,7 @@ public class TreeProfileTest {
    Log log = LogFactory.getLog(TreeProfileTest.class);
 
    /**
-      Test configuration options
+    * Test configuration options
     */
    protected static final long NUM_OPERATIONS = 1000000; // DURATION is replaced with a fixed number of operations instead.
    protected static final int NUM_THREADS = 25;
@@ -56,7 +56,6 @@ public class TreeProfileTest {
 
 
    protected TreeCache cache;
-
 
 
    @BeforeMethod
@@ -276,7 +275,7 @@ public class TreeProfileTest {
          }
          duration.getAndAdd(d);
 
-	}
+      }
 
    }
 

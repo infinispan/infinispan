@@ -26,8 +26,8 @@ import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.NonVolatile;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.lock.IsolationLevel;
 import org.infinispan.util.ReflectionUtil;
+import org.infinispan.util.concurrent.IsolationLevel;
 
 import java.util.Collections;
 import java.util.List;

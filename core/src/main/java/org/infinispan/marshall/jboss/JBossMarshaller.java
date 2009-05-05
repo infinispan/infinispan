@@ -21,13 +21,6 @@
  */
 package org.infinispan.marshall.jboss;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.io.OutputStream;
-
 import org.infinispan.CacheException;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Stop;
@@ -35,11 +28,11 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.io.ByteBuffer;
 import org.infinispan.io.ExposedByteArrayOutputStream;
-import org.infinispan.logging.Log;
-import org.infinispan.logging.LogFactory;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.remoting.RpcManager;
 import org.infinispan.util.Util;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.jboss.marshalling.ContextClassResolver;
 import org.jboss.marshalling.MarshallerFactory;
 import org.jboss.marshalling.Marshalling;
@@ -47,9 +40,16 @@ import org.jboss.marshalling.MarshallingConfiguration;
 import org.jboss.marshalling.Unmarshaller;
 import org.jboss.marshalling.reflect.SunReflectiveCreator;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.io.OutputStream;
+
 /**
  * JBossMarshaller.
- * 
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */
@@ -57,8 +57,8 @@ import org.jboss.marshalling.reflect.SunReflectiveCreator;
 public class JBossMarshaller implements Marshaller {
    private static final Log log = LogFactory.getLog(JBossMarshaller.class);
    private static final String DEFAULT_MARSHALLER_FACTORY = "org.jboss.marshalling.river.RiverMarshallerFactory";
-//   private static final int VERSION_400 = 400;
-//   private static final int DEFAULT_VERSION = VERSION_400;
+   //   private static final int VERSION_400 = 400;
+   //   private static final int DEFAULT_VERSION = VERSION_400;
    private ClassLoader defaultClassLoader;
    private MarshallingConfiguration configuration;
    private MarshallerFactory factory;
@@ -66,18 +66,18 @@ public class JBossMarshaller implements Marshaller {
    private CustomObjectTable objectTable;
    private ExternalizerClassFactory externalizerFactoryAndObjectTable;
 ///   private boolean trace;
-   
+
    @Inject
    public void init(ClassLoader defaultCl, RpcManager rpcManager) {
       log.debug("Using JBoss Marshalling based marshaller.");
-      
+
 //      trace = log.isTraceEnabled();
       defaultClassLoader = defaultCl;
 
       try {
          // Todo: Enable different marshaller factories via configuration
-         factory = (MarshallerFactory)Util.getInstance(DEFAULT_MARSHALLER_FACTORY);         
-      } catch(Exception e) {
+         factory = (MarshallerFactory) Util.getInstance(DEFAULT_MARSHALLER_FACTORY);
+      } catch (Exception e) {
          throw new CacheException("Unable to load JBoss Marshalling marshaller factory " + DEFAULT_MARSHALLER_FACTORY, e);
       }
 
@@ -96,7 +96,7 @@ public class JBossMarshaller implements Marshaller {
 //      // Todo: This is the JBMAR underlying protocol version, don't touch! Think about how to get VAM into JBMAR
 //      configuration.setVersion(DEFAULT_VERSION);
    }
-   
+
    @Stop
    public void stop() {
       // Do not leak classloader when cache is stopped.
@@ -112,7 +112,7 @@ public class JBossMarshaller implements Marshaller {
       System.arraycopy(b.getBuf(), b.getOffset(), bytes, 0, b.getLength());
       return bytes;
    }
-   
+
    public ByteBuffer objectToBuffer(Object o) throws IOException {
       ExposedByteArrayOutputStream baos = new ExposedByteArrayOutputStream(128);
       ObjectOutput marshaller = startObjectOutput(baos);
@@ -120,13 +120,13 @@ public class JBossMarshaller implements Marshaller {
       finishObjectOutput(marshaller);
       return new ByteBuffer(baos.getRawBuffer(), 0, baos.size());
    }
-   
+
    public ObjectOutput startObjectOutput(OutputStream os) throws IOException {
       org.jboss.marshalling.Marshaller marshaller = factory.createMarshaller(configuration);
       marshaller.start(Marshalling.createByteOutput(os));
       return marshaller;
    }
-   
+
    public void finishObjectOutput(ObjectOutput oo) {
       try {
          ((org.jboss.marshalling.Marshaller) oo).finish();
@@ -139,7 +139,7 @@ public class JBossMarshaller implements Marshaller {
       Thread current = Thread.currentThread();
       ClassLoader old = current.getContextClassLoader();
       if (old != null) toUse = old;
-   
+
       try {
          current.setContextClassLoader(toUse);
          out.writeObject(obj);
@@ -148,26 +148,26 @@ public class JBossMarshaller implements Marshaller {
          current.setContextClassLoader(old);
       }
    }
-   
+
    public Object objectFromByteBuffer(byte[] buf) throws IOException, ClassNotFoundException {
       return objectFromByteBuffer(buf, 0, buf.length);
    }
-   
+
    public Object objectFromByteBuffer(byte[] buf, int offset, int length) throws IOException,
-            ClassNotFoundException {
+                                                                                 ClassNotFoundException {
       ByteArrayInputStream is = new ByteArrayInputStream(buf, offset, length);
       ObjectInput unmarshaller = startObjectInput(is);
       Object o = objectFromObjectStream(unmarshaller);
       finishObjectInput(unmarshaller);
       return o;
    }
-   
+
    public ObjectInput startObjectInput(InputStream is) throws IOException {
       Unmarshaller unmarshaller = factory.createUnmarshaller(configuration);
       unmarshaller.start(Marshalling.createByteInput(is));
-      return unmarshaller; 
+      return unmarshaller;
    }
-   
+
    public void finishObjectInput(ObjectInput oi) {
       try {
          ((Unmarshaller) oi).finish();
@@ -191,7 +191,7 @@ public class JBossMarshaller implements Marshaller {
       classTable.init();
       return classTable;
    }
-   
+
    protected ExternalizerClassFactory createCustomExternalizerFactory(RpcManager rpcManager, CustomObjectTable objectTable) {
       ExternalizerClassFactory externalizerFactory = new ExternalizerClassFactory(rpcManager, objectTable);
       externalizerFactory.init();

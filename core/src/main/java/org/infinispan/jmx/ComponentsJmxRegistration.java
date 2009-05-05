@@ -24,8 +24,8 @@ package org.infinispan.jmx;
 import org.infinispan.CacheException;
 import org.infinispan.factories.AbstractComponentRegistry;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.logging.Log;
-import org.infinispan.logging.LogFactory;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.MBeanServer;

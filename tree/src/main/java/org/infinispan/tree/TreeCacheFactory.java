@@ -8,8 +8,6 @@ import org.infinispan.config.ConfigurationException;
  *
  * @author Navin Surtani
  */
-
-
 public class TreeCacheFactory {
 
    /**
@@ -17,16 +15,15 @@ public class TreeCacheFactory {
     *
     * @param cache
     * @return instance of a {@link TreeCache}
-    * @throws NullPointerException if the cache parameter is null
+    * @throws NullPointerException   if the cache parameter is null
     * @throws ConfigurationException if the invocation batching configuration is not enabled.
-    *
     */
 
    public <K, V> TreeCache<K, V> createTreeCache(Cache<K, V> cache) {
 
       // Validation to make sure that the cache is not null.
 
-      if (cache == null){
+      if (cache == null) {
          throw new NullPointerException("The cache parameter passed in is null");
       }
 

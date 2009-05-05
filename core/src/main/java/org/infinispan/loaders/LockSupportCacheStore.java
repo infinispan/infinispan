@@ -2,10 +2,10 @@ package org.infinispan.loaders;
 
 import org.infinispan.Cache;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.lock.StripedLock;
-import org.infinispan.logging.Log;
-import org.infinispan.logging.LogFactory;
 import org.infinispan.marshall.Marshaller;
+import org.infinispan.util.concurrent.locks.StripedLock;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -19,8 +19,8 @@ import java.util.Set;
  * manipulated data won't be corrupted by concurrent access to Store. It also assurce atomic data access for each stored
  * entry.
  * <p/>
- * Locking is based on a {@link org.infinispan.lock.StripedLock}. You can tune the concurrency level of the striped lock
- * (see the Javadocs of StripedLock for details on what this is) by using the {@link
+ * Locking is based on a {@link org.infinispan.util.concurrent.locks.StripedLock}. You can tune the concurrency level of
+ * the striped lock (see the Javadocs of StripedLock for details on what this is) by using the {@link
  * org.infinispan.loaders.LockSupportCacheStore#setLockConcurrencyLevel(int)} setter.
  * <p/>
  *

@@ -1,14 +1,14 @@
 package org.infinispan.api;
 
 import org.infinispan.Cache;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
-import org.infinispan.lock.IsolationLevel;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.DummyTransactionManager;
 import org.infinispan.transaction.DummyTransactionManagerLookup;
+import org.infinispan.util.concurrent.IsolationLevel;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 import org.testng.annotations.Test;

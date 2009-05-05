@@ -30,9 +30,9 @@ import java.lang.annotation.Target;
  * This annotation is used for components that will be registered in the {@link org.infinispan.factories.ComponentRegistry},
  * that are resilient to changes in configuration.  Examples are the {@link org.infinispan.factories.ComponentRegistry}
  * implementation used, which does not change regardless of the configuration.  Components such as the {@link
- * org.infinispan.lock.LockManager}, though, should <b>never</b> be marked as <tt>@NonVolatile</tt> since based on the
- * configuration, different lock manager implementations may be selected.  LockManager is, hence, <b>not</b> resilient
- * to changes in the configuration.
+ * org.infinispan.util.concurrent.locks.LockManager}, though, should <b>never</b> be marked as <tt>@NonVolatile</tt>
+ * since based on the configuration, different lock manager implementations may be selected.  LockManager is, hence,
+ * <b>not</b> resilient to changes in the configuration.
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @since 4.0

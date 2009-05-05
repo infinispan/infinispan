@@ -1,4 +1,4 @@
-package org.infinispan.logging;
+package org.infinispan.util.logging;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;

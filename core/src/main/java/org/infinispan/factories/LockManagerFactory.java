@@ -22,8 +22,8 @@
 package org.infinispan.factories;
 
 import org.infinispan.factories.annotations.DefaultFactoryFor;
-import org.infinispan.lock.LockManager;
-import org.infinispan.lock.LockManagerImpl;
+import org.infinispan.util.concurrent.locks.LockManager;
+import org.infinispan.util.concurrent.locks.LockManagerImpl;
 
 /**
  * // TODO: MANIK: Document this

@@ -1,4 +1,4 @@
-package org.infinispan.invocation;
+package org.infinispan.context;
 
 /**
  * Available flags, which may be set on a per-invocation basis.  These are provided using the {@link

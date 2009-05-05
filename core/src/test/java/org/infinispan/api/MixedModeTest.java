@@ -2,7 +2,7 @@ package org.infinispan.api;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.config.Configuration;
-import org.infinispan.invocation.Flag;
+import org.infinispan.context.Flag;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 

@@ -27,8 +27,8 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.loaders.CacheLoaderManager;
-import org.infinispan.logging.Log;
-import org.infinispan.logging.LogFactory;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Issues a clustered get call, for use primarily by the {@link org.infinispan.loaders.cluster.ClusterCacheLoader}. This

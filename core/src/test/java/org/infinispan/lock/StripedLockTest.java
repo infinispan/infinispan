@@ -1,5 +1,6 @@
 package org.infinispan.lock;
 
+import org.infinispan.util.concurrent.locks.StripedLock;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -7,11 +8,11 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 /**
- * Tester class for {@link org.infinispan.lock.StripedLock}.
+ * Tester class for {@link org.infinispan.util.concurrent.locks.StripedLock}.
  *
  * @author Mircea.Markus@jboss.com
  */
-@Test (groups = "unit", testName = "lock.StripedLockTest")
+@Test(groups = "unit", testName = "lock.StripedLockTest")
 public class StripedLockTest {
 
    StripedLock stripedLock;
@@ -80,7 +81,6 @@ public class StripedLockTest {
       stripedLock.releaseGlobalLock(true);
       assert stripedLock.getTotalReadLockCount() == 0;
       assert stripedLock.getTotalWriteLockCount() == 0;
-
 
 
    }

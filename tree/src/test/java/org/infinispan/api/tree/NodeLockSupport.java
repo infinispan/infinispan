@@ -25,10 +25,10 @@ package org.infinispan.api.tree;
 
 import org.infinispan.Cache;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.lock.LockManager;
 import org.infinispan.tree.Fqn;
 import org.infinispan.tree.TreeCache;
 import org.infinispan.tree.TreeStructureSupport;
+import org.infinispan.util.concurrent.locks.LockManager;
 
 import javax.transaction.TransactionManager;
 

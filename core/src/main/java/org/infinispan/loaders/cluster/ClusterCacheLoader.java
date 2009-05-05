@@ -9,8 +9,6 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.loaders.AbstractCacheLoader;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.logging.Log;
-import org.infinispan.logging.LogFactory;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.remoting.ResponseFilter;
 import org.infinispan.remoting.ResponseMode;
@@ -19,6 +17,8 @@ import org.infinispan.remoting.responses.ClusteredGetResponseValidityFilter;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collections;
 import java.util.HashSet;

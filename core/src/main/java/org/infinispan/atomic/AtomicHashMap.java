@@ -24,7 +24,7 @@ package org.infinispan.atomic;
 import net.jcip.annotations.NotThreadSafe;
 import org.infinispan.Cache;
 import org.infinispan.batch.BatchContainer;
-import org.infinispan.invocation.InvocationContextContainer;
+import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.util.FastCopyHashMap;
 
 import java.util.Collection;

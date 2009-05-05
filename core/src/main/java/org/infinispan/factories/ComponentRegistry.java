@@ -8,9 +8,9 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.ScopeDetector;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.logging.Log;
-import org.infinispan.logging.LogFactory;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.HashMap;
 import java.util.Map;

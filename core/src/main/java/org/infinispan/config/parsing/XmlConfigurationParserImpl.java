@@ -9,9 +9,9 @@ import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.config.parsing.element.CustomInterceptorsElementParser;
 import org.infinispan.config.parsing.element.LoadersElementParser;
 import org.infinispan.eviction.EvictionStrategy;
-import org.infinispan.lock.IsolationLevel;
 import org.infinispan.transaction.GenericTransactionManagerLookup;
 import org.infinispan.util.FileLookup;
+import org.infinispan.util.concurrent.IsolationLevel;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 

@@ -23,7 +23,7 @@ package org.infinispan.tree;
 
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
-import org.infinispan.invocation.Flag;
+import org.infinispan.context.Flag;
 import org.infinispan.lifecycle.Lifecycle;
 
 import java.util.Map;
@@ -44,6 +44,12 @@ import java.util.Set;
  * locking, is coarse grained.  At the same time, replication is fine grained, and only modified attributes in a Node
  * are replicated.
  * <p/>
+ * Obtaining a TreeCache is done using the {@link TreeCacheFactory}.
+ * <pre>
+ *   Cache cache = new DefaultCacheFactory().getCache();
+ *   TreeCacheFactory tcf = new TreeCacheFactory();
+ *   TreeCache tree = tcf.createTreeCache(cache);
+ * </pre>
  *
  * @author Manik Surtani (<a href="mailto:manik AT jboss DOT org">manik AT jboss DOT org</a>)
  * @see Node

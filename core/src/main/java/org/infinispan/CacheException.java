@@ -24,7 +24,7 @@ package org.infinispan;
 /**
  * Thrown when operations on {@link Cache} fail unexpectedly.
  * <p/>
- * Specific subclasses such as {@link org.infinispan.lock.TimeoutException} and {@link
+ * Specific subclasses such as {@link org.infinispan.util.concurrent.TimeoutException} and {@link
  * org.infinispan.config.ConfigurationException} have more specific uses.
  *
  * @author <a href="mailto:bela@jboss.org">Bela Ban</a>

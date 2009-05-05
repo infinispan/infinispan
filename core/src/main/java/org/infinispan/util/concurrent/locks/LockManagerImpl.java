@@ -19,26 +19,25 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.lock;
+package org.infinispan.util.concurrent.locks;
 
 import org.infinispan.config.Configuration;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.invocation.InvocationContextContainer;
-import org.infinispan.invocation.Flag;
-import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.MBean;
-import org.infinispan.logging.Log;
-import org.infinispan.logging.LogFactory;
+import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.util.ReversibleOrderedSet;
-import org.infinispan.util.concurrent.locks.OwnableReentrantLock;
 import org.infinispan.util.concurrent.locks.containers.LockContainer;
 import org.infinispan.util.concurrent.locks.containers.OwnableReentrantPerEntryLockContainer;
 import org.infinispan.util.concurrent.locks.containers.OwnableReentrantStripedLockContainer;
 import org.infinispan.util.concurrent.locks.containers.ReentrantPerEntryLockContainer;
 import org.infinispan.util.concurrent.locks.containers.ReentrantStripedLockContainer;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.TransactionManager;
 import java.util.Iterator;

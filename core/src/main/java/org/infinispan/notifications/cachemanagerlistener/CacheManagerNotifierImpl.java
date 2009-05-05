@@ -1,8 +1,6 @@
 package org.infinispan.notifications.cachemanagerlistener;
 
 import org.infinispan.factories.annotations.Stop;
-import org.infinispan.logging.Log;
-import org.infinispan.logging.LogFactory;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.notifications.AbstractListenerImpl;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStarted;
@@ -14,6 +12,8 @@ import org.infinispan.notifications.cachemanagerlistener.event.Event;
 import org.infinispan.notifications.cachemanagerlistener.event.EventImpl;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.lang.annotation.Annotation;
 import java.util.HashMap;

@@ -28,27 +28,27 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.logging.Log;
-import org.infinispan.logging.LogFactory;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * This is the base class for all interceptors to extend, and implements the {@link org.infinispan.commands.Visitor}
  * interface allowing it to intercept invocations on {@link org.infinispan.commands.VisitableCommand}s.
  * <p/>
  * Commands are either created by the {@link org.infinispan.CacheDelegate} (for invocations on the {@link
- * org.infinispan.Cache} public interface), or by the {@link org.infinispan.marshall.CommandAwareRpcDispatcher} for remotely
- * originating invocations, and are passed up the interceptor chain by using the {@link
+ * org.infinispan.Cache} public interface), or by the {@link org.infinispan.marshall.CommandAwareRpcDispatcher} for
+ * remotely originating invocations, and are passed up the interceptor chain by using the {@link
  * org.infinispan.interceptors.InterceptorChain} helper class.
  * <p/>
  * When writing interceptors, authors can either override a specific visitXXX() method (such as {@link
- * #visitGetKeyValueCommand(org.infinispan.context.InvocationContext, org.infinispan.commands.read.GetKeyValueCommand)}) or
- * the more generic {@link #handleDefault(org.infinispan.context.InvocationContext, org.infinispan.commands.VisitableCommand)}
- * which is the default behaviour of any visit method, as defined in {@link AbstractVisitor#handleDefault(org.infinispan.context.InvocationContext,
- * org.infinispan.commands.VisitableCommand)}.
+ * #visitGetKeyValueCommand(org.infinispan.context.InvocationContext, org.infinispan.commands.read.GetKeyValueCommand)})
+ * or the more generic {@link #handleDefault(org.infinispan.context.InvocationContext,
+ * org.infinispan.commands.VisitableCommand)} which is the default behaviour of any visit method, as defined in {@link
+ * AbstractVisitor#handleDefault(org.infinispan.context.InvocationContext, org.infinispan.commands.VisitableCommand)}.
  * <p/>
  * The preferred approach is to override the specific visitXXX() methods that are of interest rather than to override
- * {@link #handleDefault(org.infinispan.context.InvocationContext, org.infinispan.commands.VisitableCommand)} and then write a
- * series of if statements or a switch block, if command-specific behaviour is needed.
+ * {@link #handleDefault(org.infinispan.context.InvocationContext, org.infinispan.commands.VisitableCommand)} and then
+ * write a series of if statements or a switch block, if command-specific behaviour is needed.
  * <p/>
  *
  * @author Mircea.Markus@jboss.com

@@ -25,9 +25,9 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.atomic.AtomicMap;
-import org.infinispan.invocation.Flag;
-import org.infinispan.logging.Log;
-import org.infinispan.logging.LogFactory;
+import org.infinispan.context.Flag;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.Map;
 import java.util.Set;
@@ -208,7 +208,8 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
 
    public void move(Fqn nodeToMoveFqn, Fqn newParentFqn) throws NodeNotExistsException {
       if (trace) log.trace("Moving node '" + nodeToMoveFqn + "' to '" + newParentFqn + "'");
-      if (nodeToMoveFqn == null || newParentFqn == null) throw new NullPointerException("Cannot accept null parameters!");
+      if (nodeToMoveFqn == null || newParentFqn == null)
+         throw new NullPointerException("Cannot accept null parameters!");
 
       if (nodeToMoveFqn.getParent().equals(newParentFqn)) {
          if (trace) log.trace("Not doing anything as this node is equal with its parent");
@@ -227,7 +228,7 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
          if (!exists(newParentFqn)) {
             // then we need to silently create the new parent
             createNodeInCache(newParentFqn);
-            if (trace) log.trace("The new parent ("+newParentFqn +") did not exists, was created");
+            if (trace) log.trace("The new parent (" + newParentFqn + ") did not exists, was created");
          }
 
          // create an empty node for this new parent

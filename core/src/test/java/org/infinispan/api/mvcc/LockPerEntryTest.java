@@ -1,13 +1,13 @@
 package org.infinispan.api.mvcc;
 
 import org.infinispan.Cache;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.config.Configuration;
-import org.infinispan.invocation.InvocationContextContainer;
-import org.infinispan.lock.LockManager;
+import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.concurrent.locks.containers.LockContainer;
 import org.testng.annotations.Test;
 

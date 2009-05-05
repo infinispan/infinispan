@@ -24,7 +24,7 @@ package org.infinispan.factories;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.lock.TimeoutException;
+import org.infinispan.util.concurrent.TimeoutException;
 
 /**
  * // TODO: MANIK: Document this
@@ -44,7 +44,7 @@ public interface EntryFactory {
     * @return true if a lock was needed and acquired, false if it didn't need to acquire the lock (i.e., lock was
     *         already held)
     * @throws InterruptedException if interrupted
-    * @throws org.infinispan.lock.TimeoutException
+    * @throws org.infinispan.util.concurrent.TimeoutException
     *                              if we are unable to acquire the lock after a specified timeout.
     */
    boolean acquireLock(InvocationContext ctx, Object key) throws InterruptedException, TimeoutException;

@@ -14,7 +14,7 @@ import javax.management.ObjectName;
 import javax.transaction.TransactionManager;
 
 /**
- * Test the JMX functionality in {@link org.infinispan.lock.LockManagerImpl}.
+ * Test the JMX functionality in {@link org.infinispan.util.concurrent.locks.LockManagerImpl}.
  *
  * @author Mircea.Markus@jboss.com
  */

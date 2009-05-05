@@ -19,10 +19,10 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.lock;
+package org.infinispan.util.concurrent.locks;
 
-import org.infinispan.context.InvocationContext;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.context.InvocationContext;
 
 /**
  * An interface to deal with all aspects of acquiring and releasing locks for cache entries.
@@ -33,8 +33,8 @@ import org.infinispan.container.entries.CacheEntry;
 public interface LockManager {
    /**
     * Determines the owner to be used when obtaining locks, given an invocation context.  This is typically a {@link
-    * org.infinispan.transaction.GlobalTransaction} if one is present in the context, or {@link Thread#currentThread()} if
-    * one is not present.
+    * org.infinispan.transaction.GlobalTransaction} if one is present in the context, or {@link Thread#currentThread()}
+    * if one is not present.
     *
     * @param ctx invocation context
     * @return owner to be used for acquiring locks.

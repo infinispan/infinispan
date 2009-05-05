@@ -1,13 +1,10 @@
 package org.infinispan.test.testng;
 
-import org.infinispan.logging.Log;
-import org.infinispan.logging.LogFactory;
-import org.infinispan.test.TestingUtil;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
-
-import java.io.File;
 
 /**
  * This class makes sure that all files are being deleted after each test run. It also logs testsuite information.
@@ -17,7 +14,7 @@ import java.io.File;
  */
 @Test(groups = "functional", testName = "test.testng.SuiteResourcesAndLogTest")
 public class SuiteResourcesAndLogTest {
-   
+
    private static Log log = LogFactory.getLog(SuiteResourcesAndLogTest.class);
 
 

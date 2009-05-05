@@ -1,11 +1,11 @@
 package org.infinispan.remoting.transport.jgroups;
 
 import net.jcip.annotations.ThreadSafe;
-import org.infinispan.logging.Log;
-import org.infinispan.logging.LogFactory;
 import org.infinispan.remoting.transport.DistributedSync;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.ReclosableLatch;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;

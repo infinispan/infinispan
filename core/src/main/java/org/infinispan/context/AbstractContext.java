@@ -1,7 +1,6 @@
 package org.infinispan.context;
 
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.invocation.Flag;
 import org.infinispan.util.BidirectionalLinkedHashMap;
 import org.infinispan.util.BidirectionalMap;
 
@@ -23,7 +22,7 @@ public abstract class AbstractContext {
 
    // these flags pertain to the context and are set internally.  Not to be confused with Flag, which is set by user
    // invocations on AdvancedCache.
-   protected byte contextFlags;   
+   protected byte contextFlags;
    protected BidirectionalLinkedHashMap<Object, CacheEntry> lookedUpEntries = null;
 
    protected static enum ContextFlags {

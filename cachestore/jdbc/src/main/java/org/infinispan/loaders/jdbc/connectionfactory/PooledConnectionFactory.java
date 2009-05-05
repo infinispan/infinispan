@@ -4,8 +4,8 @@ import com.mchange.v2.c3p0.ComboPooledDataSource;
 import com.mchange.v2.c3p0.DataSources;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.jdbc.JdbcUtil;
-import org.infinispan.logging.Log;
-import org.infinispan.logging.LogFactory;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.beans.PropertyVetoException;
 import java.net.URL;

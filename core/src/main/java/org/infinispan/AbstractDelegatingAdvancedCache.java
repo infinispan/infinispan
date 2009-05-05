@@ -2,11 +2,11 @@ package org.infinispan;
 
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.container.DataContainer;
+import org.infinispan.context.Flag;
+import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.invocation.Flag;
-import org.infinispan.invocation.InvocationContextContainer;
 import org.infinispan.remoting.RpcManager;
 
 import java.util.List;

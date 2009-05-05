@@ -19,12 +19,11 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.lock;
+package org.infinispan.util.concurrent;
 
 /**
  * Various transaction isolation levels as an enumerated class.  Note that <a href="http://wiki.jboss.org/wiki/JBossCacheMVCC">MVCC</a>
- * only supports {@link #READ_COMMITTED} and {@link #REPEATABLE_READ}, upgrading where
- * possible.
+ * only supports {@link #READ_COMMITTED} and {@link #REPEATABLE_READ}, upgrading where possible.
  * <p/>
  * Also note that Infinispan defaults to {@link #READ_COMMITTED}.
  * <p/>

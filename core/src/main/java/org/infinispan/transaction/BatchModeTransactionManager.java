@@ -21,8 +21,8 @@
  */
 package org.infinispan.transaction;
 
-import org.infinispan.logging.Log;
-import org.infinispan.logging.LogFactory;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Not really a transaction manager in the truest sense of the word.  Only used to batch up operations.  Proper

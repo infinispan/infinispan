@@ -24,8 +24,8 @@ package org.infinispan.tree;
 import org.infinispan.Cache;
 import org.infinispan.atomic.AtomicMap;
 import org.infinispan.batch.BatchContainer;
-import org.infinispan.invocation.InvocationContextContainer;
-import org.infinispan.invocation.Flag;
+import org.infinispan.context.Flag;
+import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.util.Immutables;
 import org.infinispan.util.Util;
 

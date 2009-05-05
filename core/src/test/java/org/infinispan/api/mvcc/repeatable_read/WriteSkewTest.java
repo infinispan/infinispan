@@ -1,15 +1,15 @@
 package org.infinispan.api.mvcc.repeatable_read;
 
 import org.infinispan.Cache;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.api.mvcc.LockAssert;
 import org.infinispan.config.Configuration;
-import org.infinispan.invocation.InvocationContextContainer;
-import org.infinispan.lock.IsolationLevel;
-import org.infinispan.lock.LockManager;
+import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.DummyTransactionManagerLookup;
+import org.infinispan.util.concurrent.IsolationLevel;
+import org.infinispan.util.concurrent.locks.LockManager;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;

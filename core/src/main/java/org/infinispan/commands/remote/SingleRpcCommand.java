@@ -2,8 +2,8 @@ package org.infinispan.commands.remote;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.logging.Log;
-import org.infinispan.logging.LogFactory;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Similar to {@link org.infinispan.commands.remote.MultipleRpcCommand}, but it only aggregates a single command for

@@ -26,11 +26,11 @@ import org.infinispan.atomic.AtomicMap;
 import org.infinispan.atomic.AtomicMapCache;
 import org.infinispan.batch.AutoBatchSupport;
 import org.infinispan.batch.BatchContainer;
-import org.infinispan.invocation.InvocationContextContainer;
-import org.infinispan.invocation.Flag;
-import org.infinispan.lock.LockManager;
-import org.infinispan.logging.Log;
-import org.infinispan.logging.LogFactory;
+import org.infinispan.context.Flag;
+import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.util.concurrent.locks.LockManager;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 public class TreeStructureSupport extends AutoBatchSupport {
    private static Log log = LogFactory.getLog(TreeStructureSupport.class);

@@ -22,7 +22,7 @@
 package org.infinispan.tree;
 
 import net.jcip.annotations.ThreadSafe;
-import org.infinispan.invocation.Flag;
+import org.infinispan.context.Flag;
 
 import java.util.Map;
 import java.util.Set;

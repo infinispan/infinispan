@@ -25,8 +25,8 @@ import org.infinispan.commands.RemoteCommandFactory;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.io.ByteBuffer;
 import org.infinispan.io.ExposedByteArrayOutputStream;
-import org.infinispan.logging.Log;
-import org.infinispan.logging.LogFactory;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.jboss.util.stream.MarshalledValueInputStream;
 
 import java.io.ByteArrayInputStream;
@@ -110,11 +110,11 @@ public class VersionAwareMarshaller implements Marshaller {
       }
       return defaultMarshaller.objectFromObjectStream(in);
    }
-   
+
    public ObjectOutput startObjectOutput(OutputStream os) throws IOException {
       return defaultMarshaller.startObjectOutput(os);
    }
-   
+
    public void finishObjectOutput(ObjectOutput oo) {
       defaultMarshaller.finishObjectOutput(oo);
    }
@@ -124,11 +124,11 @@ public class VersionAwareMarshaller implements Marshaller {
       log.trace("Wrote version {0}", VERSION_400);
       defaultMarshaller.objectToObjectStream(obj, out);
    }
-   
+
    public ObjectInput startObjectInput(InputStream is) throws IOException {
       return defaultMarshaller.startObjectInput(is);
    }
-   
+
    public void finishObjectInput(ObjectInput oi) {
       defaultMarshaller.finishObjectInput(oi);
    }

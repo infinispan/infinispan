@@ -22,10 +22,10 @@
 package org.infinispan.config.parsing;
 
 import org.infinispan.config.ConfigurationException;
-import org.infinispan.logging.Log;
-import org.infinispan.logging.LogFactory;
 import org.infinispan.util.BeanUtils;
 import org.infinispan.util.TypedProperties;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.jboss.util.StringPropertyReplacer;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;

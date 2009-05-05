@@ -1,4 +1,4 @@
-package org.infinispan.logging;
+package org.infinispan.util.logging;
 
 /**
  * Abstract log implementation that handles message interpolation

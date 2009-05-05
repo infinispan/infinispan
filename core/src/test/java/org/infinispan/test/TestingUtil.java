@@ -19,9 +19,9 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.loaders.CacheLoader;
 import org.infinispan.loaders.CacheLoaderManager;
-import org.infinispan.lock.LockManager;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.concurrent.locks.LockManager;
 
 import javax.transaction.TransactionManager;
 import java.io.File;
@@ -123,10 +123,10 @@ public class TestingUtil {
 
    /**
     * Waits for the given memebrs to be removed from the cluster. The difference between this and {@link
-    * #blockUntilViewsReceived(long, org.infinispan.manager.CacheManager[])} methods(s) is that it does not barf if
-    * more than expected memebers is in the cluster - this is because we expect to start with a grater number fo
-    * memebers than we eventually expect. It will barf though, if the number of members is not the one expected but
-    * only after the timeout expieres.
+    * #blockUntilViewsReceived(long, org.infinispan.manager.CacheManager[])} methods(s) is that it does not barf if more
+    * than expected memebers is in the cluster - this is because we expect to start with a grater number fo memebers
+    * than we eventually expect. It will barf though, if the number of members is not the one expected but only after
+    * the timeout expieres.
     */
    public static void blockForMemberToFail(long timeout, CacheManager... cacheManagers) {
       blockUntilViewsReceived(timeout, false, cacheManagers);

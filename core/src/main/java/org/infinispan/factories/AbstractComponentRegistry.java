@@ -37,9 +37,9 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.Lifecycle;
-import org.infinispan.logging.Log;
 import org.infinispan.util.BeanUtils;
 import org.infinispan.util.ReflectionUtil;
+import org.infinispan.util.logging.Log;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -203,8 +203,8 @@ public abstract class AbstractComponentRegistry implements Lifecycle {
       addComponentDependencies(c);
       // inject dependencies for this component
       c.injectDependencies();
-      
-      if (old == null) getLog().trace("Registering component {0} under name {1}", c, name); 
+
+      if (old == null) getLog().trace("Registering component {0} under name {1}", c, name);
    }
 
    /**
