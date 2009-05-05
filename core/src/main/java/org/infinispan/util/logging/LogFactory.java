@@ -8,7 +8,7 @@ package org.infinispan.util.logging;
  */
 public class LogFactory {
 
-   private static final boolean IS_LOG4J_AVAILABLE;
+   public static final boolean IS_LOG4J_AVAILABLE;
 
    static {
       boolean available;
