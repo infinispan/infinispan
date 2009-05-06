@@ -5,11 +5,12 @@ import org.infinispan.container.entries.InternalEntryFactory;
 
 /**
  * Based on the same techniques outlined in the {@link org.infinispan.container.FIFODataContainer}, this implementation
- * additionally unlinks and re-links entries at the tail whenever entries are visited (using a get()) or are updated
- * (a put() on an existing key).
- * <p />
+ * additionally unlinks and re-links entries at the tail whenever entries are visited (using a get()) or are updated (a
+ * put() on an existing key).
+ * <p/>
  * Again, these are constant-time operations.
- * <p />
+ * <p/>
+ *
  * @author Manik Surtani
  * @since 4.0
  */
@@ -23,7 +24,7 @@ public class LRUDataContainer extends FIFODataContainer {
       InternalCacheEntry ice = null;
       if (le != null) {
          ice = le.e;
-         if (le.isMarked()) unlink(le);
+         if (isMarkedForRemoval(le)) unlink(le);
       }
       if (ice != null) {
          if (ice.isExpired()) {
@@ -51,14 +52,14 @@ public class LRUDataContainer extends FIFODataContainer {
          if (ice == null) {
             newEntry = true;
             ice = InternalEntryFactory.create(k, v, lifespan, maxIdle);
-            le = new LinkedEntry();
+            le = new LinkedEntry(ice);
          } else {
             ice.setValue(v);
             ice = ice.setLifespan(lifespan).setMaxIdle(maxIdle);
+            // need to do this anyway since the ICE impl may have changed
+            le.e = ice;
          }
 
-         // need to do this anyway since the ICE impl may have changed
-         le.e = ice;
          s.locklessPut(k, h, le);
 
          if (newEntry) {
@@ -66,7 +67,7 @@ public class LRUDataContainer extends FIFODataContainer {
          } else {
             updateLinks(le);
          }
-         
+
       } finally {
          s.unlock();
       }

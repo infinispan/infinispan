@@ -58,7 +58,7 @@ public class FIFODataContainerTest extends SimpleDataContainerTest {
       assert tail.p == e;
       assert e.n == tail;
       assert e.p == head;
-      assert !e.isMarked();
+      assert !ldc.isMarkedForRemoval(e);
    }
 
    public void testInsertingLinks() {
@@ -143,7 +143,7 @@ public class FIFODataContainerTest extends SimpleDataContainerTest {
 
    public void testMultithreadAccess() throws InterruptedException {
       assert dc.size() == 0;
-      int NUM_THREADS = 5;
+      int NUM_THREADS = 10;
       long testDuration = 2000; // millis
 
       Random r = new Random();

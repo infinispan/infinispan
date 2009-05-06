@@ -7,6 +7,7 @@ import java.util.AbstractSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -54,7 +55,7 @@ public class FIFODataContainer implements DataContainer {
 
    Set<Object> keySet;
 
-   final LinkedEntry head = new LinkedEntry(), tail = new LinkedEntry();
+   final LinkedEntry head = new LinkedEntry(null), tail = new LinkedEntry(null);
 
    public FIFODataContainer() {
       float loadFactor = 0.75f;
@@ -87,12 +88,75 @@ public class FIFODataContainer implements DataContainer {
 
    // links and link management
 
+   /**
+    * Tests whether a given linked entry is marked for deletion.  In this implementation, being "marked" means that it
+    * is of type Marker rather than LinkedEntry, but given the relative cost of an "instanceof" check, we prefer to test
+    * the state of the InternalCacheEntry referenced by the LinkedEntry.  An InternalCacheEntry *always* exists so if it
+    * is null, then this is a marker (or possibly the head or tail dummy entry).
+    *
+    * @param e entry to test
+    * @return true if the entry is marked for removal.  False if it is not, or if the entry is the head or tail dummy
+    *         entry.
+    */
+   protected final boolean isMarkedForRemoval(LinkedEntry e) {
+      return e != head && e != tail && e.e == null;
+   }
+
+   /**
+    * Places a removal marker the 'previous' reference on the given entry.  Note that marking a reference does not mean
+    * that the reference pointed to is marked for removal, rather it means the LinkedEntry doing the referencing is the
+    * entry to be removed.
+    *
+    * @param e entry
+    * @return true if the marking was successful, false otherwise.  Could return false if the reference is already
+    *         marked, or if the CAS failed.
+    */
+   protected final boolean markPrevReference(LinkedEntry e) {
+      if (isMarkedForRemoval(e.p)) return false;
+      Marker m = new Marker(e.p);
+      return e.casPrev(e.p, m);
+   }
+
+   /**
+    * Places a removal marker the 'next' reference on the given entry.  Note that marking a reference does not mean that
+    * the reference pointed to is marked for removal, rather it means the LinkedEntry doing the referencing is the entry
+    * to be removed.
+    *
+    * @param e entry
+    * @return true if the marking was successful, false otherwise.  Could return false if the reference is already
+    *         marked, or if the CAS failed.
+    */
+   protected final boolean markNextReference(LinkedEntry e) {
+      if (isMarkedForRemoval(e.n)) return false;
+      Marker m = new Marker(e.n);
+      return e.casNext(e.n, m);
+   }
+
+   /**
+    * The LinkedEntry class.  This entry is stored in the lockable Segments, and is also capable of being doubly
+    * linked.
+    */
    static class LinkedEntry {
       volatile InternalCacheEntry e;
+      /**
+       * Links to next and previous entries.  Needs to be volatile.
+       */
       volatile LinkedEntry n, p;
 
+      /**
+       * CAS updaters for prev and next references
+       */
       private static final AtomicReferenceFieldUpdater<LinkedEntry, LinkedEntry> N_UPDATER = AtomicReferenceFieldUpdater.newUpdater(LinkedEntry.class, LinkedEntry.class, "n");
       private static final AtomicReferenceFieldUpdater<LinkedEntry, LinkedEntry> P_UPDATER = AtomicReferenceFieldUpdater.newUpdater(LinkedEntry.class, LinkedEntry.class, "p");
+
+      /**
+       * LinkedEntries must always have a valid InternalCacheEntry.
+       *
+       * @param e internal cache entry
+       */
+      LinkedEntry(InternalCacheEntry e) {
+         this.e = e;
+      }
 
       final boolean casNext(LinkedEntry expected, LinkedEntry newValue) {
          return N_UPDATER.compareAndSet(this, expected, newValue);
@@ -101,27 +165,17 @@ public class FIFODataContainer implements DataContainer {
       final boolean casPrev(LinkedEntry expected, LinkedEntry newValue) {
          return P_UPDATER.compareAndSet(this, expected, newValue);
       }
-
-      final void mark() {
-         e = null;
-      }
-
-      final boolean isMarked() {
-         return e == null; // an impossible value unless deleted
-      }
-
-      final LinkedEntry getN() {
-         return n;
-      }
-
-      final LinkedEntry getP() {
-         return p;
-      }
    }
 
+   /**
+    * A marker.  If a reference in LinkedEntry (either to its previous or next entry) needs to be marked, it should be
+    * CAS'd with an instance of Marker that points to the actual entry.  Typically this is done by calling {@link
+    * org.infinispan.container.FIFODataContainer#markNextReference(org.infinispan.container.FIFODataContainer.LinkedEntry)}
+    * or {@link org.infinispan.container.FIFODataContainer#markPrevReference(org.infinispan.container.FIFODataContainer.LinkedEntry)}
+    */
    static final class Marker extends LinkedEntry {
       Marker(LinkedEntry actual) {
-         e = null;
+         super(null);
          n = actual;
          p = actual;
       }
@@ -137,17 +191,152 @@ public class FIFODataContainer implements DataContainer {
       tail.p = head;
    }
 
-   protected final void unlink(LinkedEntry le) {
-      if (le.p.casNext(le, le.n)) le.n.casPrev(le, le.p);
+   /**
+    * Un-links an entry from the doubly linked list in a threadsafe, lock-free manner.  The entry is typically retrieved
+    * using {@link Segment#locklessRemove(Object, int)} after locking the Segment.
+    *
+    * @param entry entry to unlink
+    */
+   protected final void unlink(LinkedEntry entry) {
+      if (entry == head || entry == tail) return;
+      for (; ;) {
+         LinkedEntry next = entry.n;
+         if (isMarkedForRemoval(next)) return;
+         LinkedEntry prev;
+         if (markNextReference(entry)) {
+            next = entry.n;
+            while (true) {
+               prev = entry.p;
+               if (isMarkedForRemoval(prev) || markPrevReference(entry)) {
+                  prev = entry.p;
+                  break;
+               }
+            }
+            prev = correctPrev(prev.p, next.n);
+         }
+      }
    }
 
-   protected final void linkAtEnd(LinkedEntry le) {
-      le.n = tail;
-      do {
-         le.p = tail.p;
-      } while (!le.p.casNext(tail, le));
-      tail.p = le;
+   /**
+    * Links a new entry at the end of the linked list.  Typically done when a put() creates a new entry, or if ordering
+    * needs to be updated based on access.  If this entry already exists in the linked list, it should first be {@link
+    * #unlink(org.infinispan.container.FIFODataContainer.LinkedEntry)}ed.
+    *
+    * @param entry entry to link at end
+    */
+   protected final void linkAtEnd(LinkedEntry entry) {
+      LinkedEntry prev = tail.p;
+      long backOffNanos = 100000; // start at 0.1 millis
+      for (; ;) {
+         entry.p = prev;
+         entry.n = tail;
+         if (prev.casNext(tail, entry)) break;
+         prev = correctPrev(prev, tail);
+
+         LockSupport.parkNanos(backOffNanos);
+         backOffNanos <<= 1;
+      }
+
+      backOffNanos = 100000; // start at 0.1 millis
+      for (; ;) {
+         LinkedEntry l1 = tail.p;
+         if (isMarkedForRemoval(l1) || entry.n != tail) break;
+         if (tail.casPrev(l1, entry)) {
+            if (isMarkedForRemoval(entry.p)) entry = correctPrev(entry, tail);
+            break;
+         }
+         LockSupport.parkNanos(backOffNanos);
+         backOffNanos <<= 1;
+      }
    }
+
+   /**
+    * Retrieves the next entry after a given entry, skipping marked entries accordingly.
+    *
+    * @param current current entry to inspect
+    * @return the next valid entry, or null if we have reached the end of the list.
+    */
+   protected final LinkedEntry getNext(LinkedEntry current) {
+      for (; ;) {
+         if (current == tail) return null;
+         LinkedEntry next = current.n;
+         if (isMarkedForRemoval(next)) next = next.n;
+         boolean marked = isMarkedForRemoval(next.n);
+         if (marked && !isMarkedForRemoval(current.n)) {
+            markPrevReference(next);
+            current.casNext(next, next.n.n); // since next.n is a marker
+            continue;
+         }
+         current = next;
+         if (!marked && next != tail) return current;
+      }
+   }
+
+   /**
+    * Retrieves the previous entry befora a given entry, skipping marked entries accordingly.
+    *
+    * @param current current entry to inspect
+    * @return the previous valid entry, or null if we have reached the start of the list.
+    */
+   protected final LinkedEntry getPrev(LinkedEntry current) {
+      for (; ;) {
+         if (current == head) return null;
+         LinkedEntry prev = current.p;
+         if (prev.n == current && !isMarkedForRemoval(current) && !isMarkedForRemoval(current.n)) {
+            current = prev;
+            if (current != head) return current;
+         } else if (isMarkedForRemoval(current.n)) {
+            current = getNext(current);
+         } else {
+            prev = correctPrev(prev, current);
+         }
+      }
+   }
+
+   /**
+    * Correct 'previous' links.  This 'helper' function is used if unable to properly set previous pointers (due to a
+    * concurrent update) and is used when traversing the list in reverse.
+    *
+    * @param suggestedPreviousEntry suggested previous entry
+    * @param currentEntry           current entry
+    * @return the actual valid, previous entry.  Links are also corrected in the process.
+    */
+   protected final LinkedEntry correctPrev(LinkedEntry suggestedPreviousEntry, LinkedEntry currentEntry) {
+      LinkedEntry lastLink = null, link1, prev2;
+      long backOffNanos = 100000; // start at 0.1 millis
+      while (true) {
+         link1 = currentEntry.p;
+         if (isMarkedForRemoval(link1)) break;
+         prev2 = suggestedPreviousEntry.n;
+         if (isMarkedForRemoval(prev2)) {
+            if (lastLink != null) {
+               markPrevReference(suggestedPreviousEntry);
+               lastLink.casNext(suggestedPreviousEntry, prev2.p);
+               suggestedPreviousEntry = lastLink;
+               lastLink = null;
+               continue;
+            }
+            prev2 = suggestedPreviousEntry.p;
+            suggestedPreviousEntry = prev2;
+            continue;
+         }
+
+         if (prev2 != currentEntry) {
+            lastLink = suggestedPreviousEntry;
+            suggestedPreviousEntry = prev2;
+            continue;
+         }
+
+         if (currentEntry.casPrev(link1, suggestedPreviousEntry)) {
+            if (isMarkedForRemoval(suggestedPreviousEntry.p)) continue;
+            break;
+         }
+         LockSupport.parkNanos(backOffNanos);
+         backOffNanos <<= 1;
+      }
+      return suggestedPreviousEntry;
+   }
+
 
    /**
     * Similar to ConcurrentHashMap's hash() function: applies a supplemental hash function to a given hashCode, which
@@ -429,12 +618,9 @@ public class FIFODataContainer implements DataContainer {
       LinkedEntry current = head;
 
       public boolean hasNext() {
-         current = current.n;
-         while (current.isMarked()) {
-            if (current == tail || current == head) return false;
-            current = current.n;
-         }
-         return true;
+         if (current == tail) return false;
+         current = getNext(current);
+         return current != null;
       }
 
       public void remove() {
@@ -444,26 +630,12 @@ public class FIFODataContainer implements DataContainer {
 
    protected final class ValueIterator extends LinkedIterator implements Iterator<InternalCacheEntry> {
       public InternalCacheEntry next() {
-         while (current.isMarked()) {
-            LinkedEntry n = current.n;
-            unlink(current);
-            current = n;
-            if (n == head || n == tail) throw new IndexOutOfBoundsException("Reached head or tail pointer!");
-         }
-
          return current.e;
       }
    }
 
    protected final class KeyIterator extends LinkedIterator implements Iterator<Object> {
       public Object next() {
-         while (current.isMarked()) {
-            LinkedEntry n = current.n;
-            unlink(current);
-            current = n;
-            if (n == head || n == tail) throw new IndexOutOfBoundsException("Reached head or tail pointer!");
-         }
-
          return current.e.getKey();
       }
    }
@@ -478,7 +650,7 @@ public class FIFODataContainer implements DataContainer {
       InternalCacheEntry ice = null;
       if (le != null) {
          ice = le.e;
-         if (le.isMarked()) unlink(le);
+         if (isMarkedForRemoval(le)) unlink(le);
       }
       if (ice != null) {
          if (ice.isExpired()) {
@@ -505,14 +677,14 @@ public class FIFODataContainer implements DataContainer {
             newEntry = true;
             ice = InternalEntryFactory.create(k, v, lifespan, maxIdle);
             // only update linking if this is a new entry
-            le = new LinkedEntry();
+            le = new LinkedEntry(ice);
          } else {
             ice.setValue(v);
             ice = ice.setLifespan(lifespan).setMaxIdle(maxIdle);
+            // need to do this anyway since the ICE impl may have changed
+            le.e = ice;
          }
 
-         // need to do this anyway since the ICE impl may have changed
-         le.e = ice;
          s.locklessPut(k, h, le);
 
          if (newEntry) {
@@ -530,7 +702,7 @@ public class FIFODataContainer implements DataContainer {
       InternalCacheEntry ice = null;
       if (le != null) {
          ice = le.e;
-         if (le.isMarked()) unlink(le);
+         if (isMarkedForRemoval(le)) unlink(le);
       }
       if (ice != null) {
          if (ice.isExpired()) {
@@ -552,7 +724,6 @@ public class FIFODataContainer implements DataContainer {
          le = s.locklessRemove(k, h);
          if (le != null) {
             ice = le.e;
-            le.mark();
             unlink(le);
          }
       } finally {
