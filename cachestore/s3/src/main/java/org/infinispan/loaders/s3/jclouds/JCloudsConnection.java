@@ -107,7 +107,7 @@ public class JCloudsConnection
 	try {
 	    org.jclouds.aws.s3.domain.S3Bucket bucket = new org.jclouds.aws.s3.domain.S3Bucket(
 		    bucketName);
-	    s3Service.createBucketIfNotExists(bucket).get(
+	    s3Service.createBucketIfNotExists(bucketName).get(
 		    config.getRequestTimeout(), TimeUnit.MILLISECONDS);
 	    return bucket;
 	} catch (Exception ex) {
@@ -119,10 +119,8 @@ public class JCloudsConnection
 
     public void destroyBucket(String name) throws S3ConnectionException {
 	try {
-	    org.jclouds.aws.s3.domain.S3Bucket bucket = new org.jclouds.aws.s3.domain.S3Bucket(
-		    name);
-	    context.createS3ObjectMap(bucket).clear();
-	    s3Service.deleteBucket(bucket);
+	    context.createS3ObjectMap(name).clear();
+	    s3Service.deleteBucketIfEmpty(name);
 	} catch (Exception ex) {
 	    throw convertToS3ConnectionException(
 		    "Exception removing s3 bucket " + name, ex);
@@ -130,7 +128,7 @@ public class JCloudsConnection
     }
 
     Set<String> keysInBucket(S3Bucket bucket) throws S3ConnectionException {
-	return context.createS3ObjectMap(bucket).keySet();
+	return context.createS3ObjectMap(bucket.getName()).keySet();
     }
 
     /**
@@ -141,15 +139,13 @@ public class JCloudsConnection
 	Set<String> sourceKeys;
 	try {
 	    S3Bucket source = new S3Bucket(sourceBucket);
-	    source = s3Service.getBucket(source).get(
+	    source = s3Service.getBucket(sourceBucket).get(
 		    config.getRequestTimeout(), TimeUnit.MILLISECONDS);
 	    sourceKeys = keysInBucket(source);
-	    S3Bucket dest = new S3Bucket(destinationBucket);
 
 	    for (String key : sourceKeys) {
 		try {
-		    S3Object object = new S3Object(key);
-		    s3Service.copyObject(source, object, dest, object).get(
+		    s3Service.copyObject(sourceBucket, key, destinationBucket, key).get(
 			    config.getRequestTimeout(), TimeUnit.MILLISECONDS);
 		} catch (Exception ex) {
 		    throw convertToS3ConnectionException(
