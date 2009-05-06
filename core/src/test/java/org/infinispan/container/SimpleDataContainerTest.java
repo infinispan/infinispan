@@ -49,7 +49,7 @@ public class SimpleDataContainerTest {
       assert dc.size() == 1;
 
       entry = dc.get("k");
-      assert entry != null: "Entry should not be null!";
+      assert entry != null : "Entry should not be null!";
       assert entry instanceof MortalCacheEntry : "Expected MortalCacheEntry, was " + entry.getClass().getSimpleName();
       assert entry.getCreated() <= System.currentTimeMillis();
 
@@ -91,7 +91,7 @@ public class SimpleDataContainerTest {
       oldTime = System.currentTimeMillis();
       Thread.sleep(100); // for time calc granularity
       assert dc.get("k") != null;
-      
+
       // check that the last used stamp has been updated on a get
       assert ice.getLastUsed() > oldTime;
       Thread.sleep(100); // for time calc granularity
@@ -134,6 +134,25 @@ public class SimpleDataContainerTest {
 
       for (Object o : dc.keySet()) assert expected.remove(o);
 
-      assert expected.isEmpty();
+      assert expected.isEmpty() : "Did not see keys " + expected + " in iterator!";
+   }
+
+   public void testEntrySet() {
+      dc.put("k1", "v", 6000000, -1);
+      dc.put("k2", "v", -1, -1);
+      dc.put("k3", "v", -1, 6000000);
+      dc.put("k4", "v", 6000000, 6000000);
+
+      Set expected = new HashSet();
+      expected.add("k1");
+      expected.add("k2");
+      expected.add("k3");
+      expected.add("k4");
+
+      for (InternalCacheEntry ice : dc) {
+         assert expected.remove(ice.getKey());
+      }
+
+      assert expected.isEmpty() : "Did not see keys " + expected + " in iterator!";
    }
 }
