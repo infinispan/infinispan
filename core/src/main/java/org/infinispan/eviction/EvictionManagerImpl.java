@@ -12,6 +12,7 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
+import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -65,17 +66,28 @@ public class EvictionManagerImpl implements EvictionManager {
    }
 
    public void processEviction() {
+      long start = 0;
       try {
-         if (trace) log.trace("Purging data container of expired entries");
+         if (trace) {
+            log.trace("Purging data container of expired entries");
+            start = System.currentTimeMillis();
+         }
          dataContainer.purgeExpired();
+         if (trace)
+            log.trace("Purging data container completed in {0}", Util.prettyPrintTime(System.currentTimeMillis() - start));
       } catch (Exception e) {
          log.warn("Caught exception purging data container!", e);
       }
 
       if (cacheStore != null) {
          try {
-            if (trace) log.trace("Purging cache store of expired entries");
+            if (trace) {
+               log.trace("Purging cache store of expired entries");
+               start = System.currentTimeMillis();
+            }
             cacheStore.purgeExpired();
+            if (trace)
+               log.trace("Purging cache store completed in {0}", Util.prettyPrintTime(System.currentTimeMillis() - start));
          } catch (Exception e) {
             log.warn("Caught exception purging cache store!", e);
          }
@@ -84,16 +96,27 @@ public class EvictionManagerImpl implements EvictionManager {
       // finally iterate through data container if too big
       int dcsz = dataContainer.size();
       if (dcsz > maxEntries) {
-         if (trace) log.trace("Data container is larger than maxEntries, size is {0}.  Evicting...", dcsz);
+         if (trace) {
+            log.trace("Data container is larger than maxEntries, size is {0}.  Evicting...", dcsz);
+            start = System.currentTimeMillis();
+         }
          for (InternalCacheEntry ice : dataContainer) {
-            dcsz = dataContainer.size();
-            if (dcsz > maxEntries) {
-               cache.evict(ice.getKey());
-            } else {
-               if (trace) log.trace("Evicted enough entries");
-               break;
+            Object k = ice.getKey();
+            try {
+               dcsz = dataContainer.size();
+               if (dcsz > maxEntries) {
+                  if (trace) log.trace("Attempting to evict key [{0}]", k);
+                  cache.evict(k);
+               } else {
+                  if (trace) log.trace("Evicted enough entries");
+                  break;
+               }
+            } catch (Exception e) {
+               log.warn("Caught exception when iterating through data container.  Current entry is under key [{0}]", e, k);
             }
          }
+         if (trace)
+            log.trace("Eviction process completed in {0}", Util.prettyPrintTime(System.currentTimeMillis() - start));
       } else {
          if (trace) log.trace("Data container is smaller than or equal to the maxEntries; not doing anything");
       }
