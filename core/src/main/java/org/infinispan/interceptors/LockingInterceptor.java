@@ -35,6 +35,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.EntryFactory;
 import org.infinispan.factories.annotations.Inject;
@@ -142,6 +143,7 @@ public class LockingInterceptor extends CommandInterceptor {
    @Override
    public Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
       // ensure keys are properly locked for evict commands
+      ctx.setFlags(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT);
       return visitRemoveCommand(ctx, command);
    }
 
