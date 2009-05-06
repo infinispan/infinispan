@@ -113,6 +113,7 @@ public abstract class BaseCacheStoreTest {
       se = InternalEntryFactory.create("k", "v", lifespan);
       cs.store(se);
       Thread.sleep(100);
+      cs.purgeExpired();
       assert se.isExpired();
       assert cs.load("k") == null;
       assert !cs.containsKey("k");
@@ -135,6 +136,7 @@ public abstract class BaseCacheStoreTest {
       se = InternalEntryFactory.create("k", "v", -1, idle);
       cs.store(se);
       Thread.sleep(100);
+      cs.purgeExpired();
       assert se.isExpired();
       assert cs.load("k") == null;
       assert !cs.containsKey("k");
@@ -158,6 +160,7 @@ public abstract class BaseCacheStoreTest {
       se = InternalEntryFactory.create("k", "v", lifespan, idle);
       cs.store(se);
       Thread.sleep(100);
+      cs.purgeExpired();
       assert se.isExpired();
       assert cs.load("k") == null;
       assert !cs.containsKey("k");
@@ -557,4 +560,5 @@ public abstract class BaseCacheStoreTest {
 
       if (!exceptions.isEmpty()) throw exceptions.get(0);
    }
+   
 }

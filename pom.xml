@@ -26,6 +26,7 @@
       <module>cachestore/bdbje</module>
       <module>cachestore/s3</module>
       <module>cachestore/jdbc</module>
+      <module>cachestore/jdbm</module>
       <module>gui-demo</module>
    </modules>
 
@@ -81,6 +82,7 @@ pageTracker._trackPageview();
                            <fileset dir="cachestore/bdbje/target/classes"/>
                            <fileset dir="cachestore/jdbc/target/classes"/>
                            <fileset dir="cachestore/s3/target/classes"/>
+                           <fileset dir="cachestore/jdbm/target/classes"/>
                            <fileset dir="core/target/classes"/>
                            <fileset dir="tree/target/classes"/>
                         </zip>
