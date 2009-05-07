@@ -26,14 +26,18 @@ command_line_regexp = re.compile('COMMAND_ID\s*=\s*([0-9]+)\s*;')
 
 
 command_ids = {}
-
+warnings = []
 for testFile in GlobDirectoryWalker(getSearchPath(sys.argv[0]) + 'core/src/main/java/org/infinispan/commands', '*Command.java'):
   tf = open(testFile)
   try:
     for line in tf:
       mo = command_line_regexp.search(line)
       if mo:
-        command_ids[int(mo.group(1))] = trimName(testFile)
+        id = int(mo.group(1))
+        trimmed_name = trimName(testFile)
+        if id in command_ids:
+          warnings.append("Saw duplicate COMMAND_IDs in files [%s] and [%s]" % (trimmed_name, command_ids[id])) 
+        command_ids[id] = trimmed_name
   finally:
     tf.close()
 
@@ -48,4 +52,10 @@ for k in sortedKeys:
   i += 1
 
 print "\n"
+if len(warnings) > 0:
+  print "WARNINGS:"
+  for w in warnings:
+    print "  *** %s" % w
+  print "\n"
+
 print "Next available ID is %s" % get_next(sortedKeys)
