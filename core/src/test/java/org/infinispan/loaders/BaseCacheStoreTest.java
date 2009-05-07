@@ -495,7 +495,6 @@ public abstract class BaseCacheStoreTest {
       assert clc.getCacheLoaderClassName().equals(cs.getClass().getName()) : "Cache loaders doesn't provide a proper configuration type that is capable of creating the loaders!";
    }
 
-   @Test(enabled=false)
    public void testConcurrency() throws Exception {
       int numThreads = 3;
       final int loops = 500;
