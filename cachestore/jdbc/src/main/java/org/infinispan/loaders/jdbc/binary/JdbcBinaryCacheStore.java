@@ -292,7 +292,7 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
          rs = ps.executeQuery();
          while (rs.next()) {
             String key = rs.getString(2);
-            if (immediateLockForWritting(key)) {
+            if (immediateLockForWriting(key)) {
                if (log.isTraceEnabled()) log.trace("Adding bucket keyed " + key + " for purging.");
                InputStream binaryStream = rs.getBinaryStream(1);
                Bucket bucket = (Bucket) JdbcUtil.unmarshall(getMarshaller(), binaryStream);
