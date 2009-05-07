@@ -11,7 +11,7 @@ import org.infinispan.remoting.RpcManager;
  * @since 4.0
  */
 public class StateTransferControlCommand implements ReplicableCommand {
-   public static final int METHOD_ID = 49;
+   public static final int COMMAND_ID = 49;
    RpcManager rpcManager;
    boolean enabled;
 
@@ -35,7 +35,7 @@ public class StateTransferControlCommand implements ReplicableCommand {
    }
 
    public byte getCommandId() {
-      return METHOD_ID;
+      return COMMAND_ID;
    }
 
    public Object[] getParameters() {

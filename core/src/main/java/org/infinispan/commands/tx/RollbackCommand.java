@@ -32,7 +32,7 @@ import org.infinispan.transaction.GlobalTransaction;
  * @since 4.0
  */
 public class RollbackCommand extends AbstractTransactionBoundaryCommand {
-   public static final byte METHOD_ID = 12;
+   public static final byte COMMAND_ID = 12;
 
    public RollbackCommand(GlobalTransaction globalTransaction) {
       this.gtx = globalTransaction;
@@ -46,7 +46,7 @@ public class RollbackCommand extends AbstractTransactionBoundaryCommand {
    }
 
    public byte getCommandId() {
-      return METHOD_ID;
+      return COMMAND_ID;
    }
 
    public String toString() {

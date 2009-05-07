@@ -32,7 +32,7 @@ import org.infinispan.transaction.GlobalTransaction;
  * @since 4.0
  */
 public class CommitCommand extends AbstractTransactionBoundaryCommand {
-   public static final byte METHOD_ID = 11;
+   public static final byte COMMAND_ID = 11;
 
    public CommitCommand(GlobalTransaction gtx) {
       this.gtx = gtx;
@@ -46,7 +46,7 @@ public class CommitCommand extends AbstractTransactionBoundaryCommand {
    }
 
    public byte getCommandId() {
-      return METHOD_ID;
+      return COMMAND_ID;
    }
 
    public String toString() {

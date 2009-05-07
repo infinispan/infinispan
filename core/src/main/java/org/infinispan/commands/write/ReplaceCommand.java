@@ -32,7 +32,7 @@ import org.infinispan.context.InvocationContext;
  * @since 4.0
  */
 public class ReplaceCommand extends AbstractDataCommand implements DataWriteCommand {
-   public static final byte METHOD_ID = 122;
+   public static final byte COMMAND_ID = 122;
 
    Object oldValue;
    Object newValue;
@@ -90,7 +90,7 @@ public class ReplaceCommand extends AbstractDataCommand implements DataWriteComm
    }
 
    public byte getCommandId() {
-      return METHOD_ID;
+      return COMMAND_ID;
    }
 
    public Object[] getParameters() {
@@ -98,7 +98,7 @@ public class ReplaceCommand extends AbstractDataCommand implements DataWriteComm
    }
 
    public void setParameters(int commandId, Object[] parameters) {
-      if (commandId != METHOD_ID) throw new IllegalArgumentException("Invalid method name");
+      if (commandId != COMMAND_ID) throw new IllegalArgumentException("Invalid method name");
       key = parameters[0];
       oldValue = parameters[1];
       newValue = parameters[2];
