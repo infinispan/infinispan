@@ -35,7 +35,7 @@ import org.infinispan.util.logging.LogFactory;
  * @since 4.0
  */
 public class GetKeyValueCommand extends AbstractDataCommand {
-   public static final byte COMMAND_ID = 26;
+   public static final byte COMMAND_ID = 4;
    private static final Log log = LogFactory.getLog(GetKeyValueCommand.class);
    private static final boolean trace = log.isTraceEnabled();
    private CacheNotifier notifier;

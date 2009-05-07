@@ -41,7 +41,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class ClusteredGetCommand implements CacheRpcCommand {
 
-   public static final byte COMMAND_ID = 22;
+   public static final byte COMMAND_ID = 3;
    private static final Log log = LogFactory.getLog(ClusteredGetCommand.class);
    private static final boolean trace = log.isTraceEnabled();
 

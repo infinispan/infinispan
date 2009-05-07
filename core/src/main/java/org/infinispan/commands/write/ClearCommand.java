@@ -33,7 +33,7 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
  */
 public class ClearCommand implements WriteCommand {
    private static final Object[] params = new Object[0];
-   public static final byte COMMAND_ID = 17;
+   public static final byte COMMAND_ID = 5;
    CacheNotifier notifier;
 
    public ClearCommand() {

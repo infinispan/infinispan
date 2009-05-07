@@ -12,7 +12,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Mircea.Markus@jboss.com
  */
 public class SingleRpcCommand extends BaseRpcCommand {
-   public static final int COMMAND_ID = 21;
+   public static final int COMMAND_ID = 1;
    private static Log log = LogFactory.getLog(SingleRpcCommand.class);
    private static boolean trace = log.isTraceEnabled();
 

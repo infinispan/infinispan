@@ -38,7 +38,7 @@ import org.infinispan.util.logging.LogFactory;
 public class RemoveCommand extends AbstractDataCommand implements DataWriteCommand {
    private static final Log log = LogFactory.getLog(RemoveCommand.class);
    private static final boolean trace = log.isTraceEnabled();
-   public static final byte COMMAND_ID = 6;
+   public static final byte COMMAND_ID = 10;
    protected CacheNotifier notifier;
    boolean successful = true;
 

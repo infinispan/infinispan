@@ -36,7 +36,7 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
  * @since 4.0
  */
 public class PutKeyValueCommand extends AbstractDataCommand implements DataWriteCommand {
-   public static final byte COMMAND_ID = 3;
+   public static final byte COMMAND_ID = 8;
 
    Object value;
    boolean putIfAbsent;

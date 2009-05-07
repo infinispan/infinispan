@@ -11,7 +11,7 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
  * @since 4.0
  */
 public class InvalidateL1Command extends InvalidateCommand {
-   public static final int COMMAND_ID = 48;
+   public static final int COMMAND_ID = 7;
    private DistributionManager dm;
 
    public InvalidateL1Command() {

@@ -41,7 +41,7 @@ import java.util.Set;
  * @since 4.0
  */
 public class PrepareCommand extends AbstractTransactionBoundaryCommand {
-   public static final byte COMMAND_ID = 10;
+   public static final byte COMMAND_ID = 12;
 
    protected WriteCommand[] modifications;
    protected Address localAddress;
@@ -144,7 +144,8 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
 
       if (onePhaseCommit != that.onePhaseCommit) return false;
       if (localAddress != null ? !localAddress.equals(that.localAddress) : that.localAddress != null) return false;
-      if (modifications != null ? !Arrays.equals(modifications, that.modifications) : that.modifications != null) return false;
+      if (modifications != null ? !Arrays.equals(modifications, that.modifications) : that.modifications != null)
+         return false;
 
       return true;
    }

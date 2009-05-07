@@ -42,7 +42,7 @@ import java.util.List;
  */
 public class MultipleRpcCommand extends BaseRpcCommand {
 
-   public static final byte COMMAND_ID = 13;
+   public static final byte COMMAND_ID = 2;
 
    private static final Log log = LogFactory.getLog(MultipleRpcCommand.class);
    private static final boolean trace = log.isTraceEnabled();

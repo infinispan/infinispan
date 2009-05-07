@@ -32,7 +32,7 @@ import org.infinispan.transaction.GlobalTransaction;
  * @since 4.0
  */
 public class RollbackCommand extends AbstractTransactionBoundaryCommand {
-   public static final byte COMMAND_ID = 12;
+   public static final byte COMMAND_ID = 13;
 
    public RollbackCommand(GlobalTransaction globalTransaction) {
       this.gtx = globalTransaction;

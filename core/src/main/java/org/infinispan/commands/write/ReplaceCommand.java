@@ -32,7 +32,7 @@ import org.infinispan.context.InvocationContext;
  * @since 4.0
  */
 public class ReplaceCommand extends AbstractDataCommand implements DataWriteCommand {
-   public static final byte COMMAND_ID = 122;
+   public static final byte COMMAND_ID = 11;
 
    Object oldValue;
    Object newValue;
