@@ -59,10 +59,10 @@ public class RemoteCommandFactory {
          case RemoveCommand.COMMAND_ID:
             command = new RemoveCommand();
             break;
-         case ReplaceCommand.METHOD_ID:
+         case ReplaceCommand.COMMAND_ID:
             command = new ReplaceCommand();
             break;
-         case GetKeyValueCommand.METHOD_ID:
+         case GetKeyValueCommand.COMMAND_ID:
             command = new GetKeyValueCommand();
             break;
          case ClearCommand.COMMAND_ID:
@@ -71,10 +71,10 @@ public class RemoteCommandFactory {
          case PrepareCommand.COMMAND_ID:
             command = new PrepareCommand();
             break;
-         case CommitCommand.METHOD_ID:
+         case CommitCommand.COMMAND_ID:
             command = new CommitCommand();
             break;
-         case RollbackCommand.METHOD_ID:
+         case RollbackCommand.COMMAND_ID:
             command = new RollbackCommand();
             break;
          case MultipleRpcCommand.COMMAND_ID:
@@ -89,7 +89,7 @@ public class RemoteCommandFactory {
          case InvalidateL1Command.COMMAND_ID:
             command = new InvalidateL1Command();
             break;
-         case StateTransferControlCommand.METHOD_ID:
+         case StateTransferControlCommand.COMMAND_ID:
             command = new StateTransferControlCommand();
             ((StateTransferControlCommand) command).init(rpcManager);
             break;
