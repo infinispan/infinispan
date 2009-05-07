@@ -106,15 +106,15 @@ public class JdbmCacheStoreTest extends BaseCacheStoreTest {
       oos.close();
       out.close();
 
-      ObjectInputStream ois = null;
+      ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(out.toByteArray()));
       try {
-         ois = new ObjectInputStream(new ByteArrayInputStream(out.toByteArray()));
-         assert ois.readLong() == 1 : "we have 3 different buckets";
          Object readObject = ois.readObject();
          assert readObject instanceof InternalCacheEntry;
-         // assert ois.readInt() > 0; //size on disk
+         readObject = ois.readObject();
+         assert readObject == null;
+         assert ois.available() == 0;
       } finally {
-         if (ois != null) ois.close();
+         ois.close();
       }
    }
 }

@@ -17,9 +17,11 @@ import java.util.Set;
 import jdbm.RecordManager;
 import jdbm.RecordManagerFactory;
 import jdbm.btree.BTree;
+import jdbm.helper.FastIterator;
 import jdbm.helper.Serializer;
 import jdbm.helper.Tuple;
 import jdbm.helper.TupleBrowser;
+import jdbm.htree.HTree;
 import net.jcip.annotations.ThreadSafe;
 
 import org.infinispan.Cache;
@@ -63,7 +65,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
 
    private JdbmCacheStoreConfig config;
    private RecordManager recman;
-   private BTree tree;
+   private HTree tree;
    private BTree expiryTree;
    private Cache cache;
 
@@ -125,7 +127,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
 
    public InternalCacheEntry load(Object key) throws CacheLoaderException {
       try {
-         return (InternalCacheEntry) tree.find(key);
+         return (InternalCacheEntry) tree.get(key);
       } catch (IOException e) {
          throw new CacheLoaderException(e);
       }
@@ -150,25 +152,26 @@ public class JdbmCacheStore extends AbstractCacheStore {
       if (recid == 0) {
          createTree();
       } else {
-         tree = BTree.load(recman, recid);
+         tree = HTree.load(recman, recid);
          recid = recman.getNamedObject(EXPIRY);
          expiryTree = BTree.load(recman, recid);
          setSerializer();
       }
 
-      log.info("JDBM database " + f + " opened with " + tree.size() + " entries");
+      log.info("JDBM database " + f + " opened");
    }
 
    /**
     * Resets the value serializer to point to our marshaller.
     */
    private void setSerializer() {
-      tree.setValueSerializer(new JdbmSerializer(getMarshaller()));
+      // TODO explore how to use our marshaller with HTree
+      // tree.setValueSerializer(new JdbmSerializer(getMarshaller()));
       expiryTree.setValueSerializer(new JdbmSerializer(getMarshaller()));
    }
 
    private void createTree() throws IOException {
-      tree = BTree.createInstance(recman, config.createComparator(), (Serializer) null, (Serializer) null);
+      tree = HTree.createInstance(recman);
       expiryTree = BTree.createInstance(recman, new NaturalComparator(), (Serializer) null, (Serializer) null);
       recman.setNamedObject(NAME, tree.getRecid());
       recman.setNamedObject(EXPIRY, expiryTree.getRecid());
@@ -225,12 +228,11 @@ public class JdbmCacheStore extends AbstractCacheStore {
       if (trace)
          log.trace("remove() " + key);
       try {
-         return tree.remove(key) != null;
-      } catch (IllegalArgumentException e) {
+         tree.remove(key);
+         return true; // TODO the return value is not really important, right?
+      } catch (IOException e) {
          // can happen during normal operation
          return false;
-      } catch (IOException e) {
-         throw new CacheLoaderException(e);
       }
    }
 
@@ -244,8 +246,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
       if (trace)
          log.trace("store() " + key);
       try {
-         tree.insert(key, entry, true); // TODO a waste to ignore the return
-                                        // value
+         tree.put(key, entry);
          if (entry.canExpire())
             addNewExpiry(entry);
       } catch (IOException e) {
@@ -289,11 +290,14 @@ public class JdbmCacheStore extends AbstractCacheStore {
    public void toStream(ObjectOutput outputStream) throws CacheLoaderException {
       try {
          Set<InternalCacheEntry> loadAll = loadAll();
-         outputStream.writeLong(loadAll.size());
-         log.debug("toStream() " + loadAll.size() + " entries");
-         for (InternalCacheEntry entry : loadAll)
+         log.debug("toStream() entries");
+         int count = 0;
+         for (InternalCacheEntry entry : loadAll) {
             outputStream.writeObject(entry);
-         log.debug("done!");
+            count++;
+         }
+         outputStream.writeObject(null);
+         log.debug("wrote " + count + " entries");
       } catch (IOException e) {
          throw new CacheLoaderException(e);
       }
@@ -305,13 +309,16 @@ public class JdbmCacheStore extends AbstractCacheStore {
     */
    public void fromStream(ObjectInput inputStream) throws CacheLoaderException {
       try {
-         long count = inputStream.readLong();
-         log.debug("fromStream() " + count + " entries");
-         for (int i = 0; i < count; i++) {
+         log.debug("fromStream()");
+         int count = 0;
+         while (true) {
+            count++;
             InternalCacheEntry entry = (InternalCacheEntry) inputStream.readObject();
+            if (entry == null)
+               break;
             store(entry);
          }
-         log.debug("done!");
+         log.debug("read " + count + " entries");
       } catch (IOException e) {
          throw new CacheLoaderException(e);
       } catch (ClassNotFoundException e) {
@@ -362,7 +369,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
          log.debug("purge (up to) " + keys.size() + " entries");
       int count = 0;
       for (Object key : keys) {
-         InternalCacheEntry ice = (InternalCacheEntry) tree.find(key);
+         InternalCacheEntry ice = (InternalCacheEntry) tree.get(key);
          if (ice == null)
             continue;
          if (ice.isExpired()) {
@@ -398,38 +405,32 @@ public class JdbmCacheStore extends AbstractCacheStore {
 
    @Override
    public String toString() {
-      BTree bt = tree;
       BTree et = expiryTree;
-      int size = (bt == null) ? -1 : bt.size();
       int expiry = (et == null) ? -1 : et.size();
-      return "JdbmCacheLoader locationStr=" + config.getLocation() + " size=" + size + " expirySize=" + expiry;
+      return "JdbmCacheLoader locationStr=" + config.getLocation() + " expirySize=" + expiry;
    }
 
    private final class BTreeSet extends AbstractSet<InternalCacheEntry> {
 
       @Override
       public Iterator<InternalCacheEntry> iterator() {
-         final TupleBrowser browse;
+         final FastIterator fi;
          try {
-            browse = tree.browse();
+            fi = tree.values();
          } catch (IOException e) {
             throw new CacheException(e);
          }
 
          return new Iterator<InternalCacheEntry>() {
 
-            final Tuple tuple = new Tuple();
             InternalCacheEntry current = null;
             boolean next = true;
 
             public boolean hasNext() {
-               if (current == null) {
-                  try {
-                     next = browse.getNext(tuple);
-                     current = (InternalCacheEntry) tuple.getValue();
-                  } catch (IOException e) {
-                     throw new CacheException(e);
-                  }
+               if (current == null && next) {
+                  current = (InternalCacheEntry) fi.next();
+                  if (current == null)
+                     next = false;
                }
                return next;
             }
@@ -453,7 +454,11 @@ public class JdbmCacheStore extends AbstractCacheStore {
 
       @Override
       public int size() {
-         return tree.size();
+         log.warn("size() should never be called; except for tests");
+         int size = 0;
+         for (@SuppressWarnings("unused") Object dummy : this)
+            size++;
+         return size;
       }
    }
 }
