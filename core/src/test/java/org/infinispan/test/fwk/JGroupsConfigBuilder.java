@@ -82,7 +82,7 @@ public class JGroupsConfigBuilder {
       String newStartPort;
       if (m.find()) {
          newStartPort = threadTcpStartPort.get();
-         result = m.replaceFirst("start_port=" + newStartPort);
+         result = m.replaceFirst("bind_port=" + newStartPort);
       } else {
          System.out.println("Config is:" + tcpConfig);
          Thread.dumpStack();
