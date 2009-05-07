@@ -51,42 +51,42 @@ public abstract class LockSupportCacheStore extends AbstractCacheStore {
    /**
     * Release the locks (either read or write).
     */
-   protected void unlock(String key) {
+   protected final void unlock(String key) {
       locks.releaseLock(key);
    }
 
    /**
     * Acquires write lock on the given key.
     */
-   protected void lockForWritting(String key) throws CacheLoaderException {
+   protected final void lockForWriting(String key) throws CacheLoaderException {
       locks.acquireLock(key, true);
    }
 
    /**
     * Acquires read lock on the given key.
     */
-   protected void lockForReading(String key) throws CacheLoaderException {
+   protected final void lockForReading(String key) throws CacheLoaderException {
       locks.acquireLock(key, false);
    }
 
    /**
-    * Same as {@link #lockForWritting(String)}, but with 0 timeout.
+    * Same as {@link #lockForWriting(String)}, but with 0 timeout.
     */
-   protected boolean immediateLockForWritting(String key) throws CacheLoaderException {
+   protected final boolean immediateLockForWriting(String key) throws CacheLoaderException {
       return locks.acquireLock(key, true, 0);
    }
 
    /**
     * Based on the supplied param, acquires a global read(false) or write (true) lock.
     */
-   protected void acquireGlobalLock(boolean exclusive) throws CacheLoaderException {
+   protected final void acquireGlobalLock(boolean exclusive) throws CacheLoaderException {
       locks.aquireGlobalLock(exclusive, globalLockTimeoutMillis);
    }
 
    /**
     * Based on the supplied param, releases a global read(false) or write (true) lock.
     */
-   protected void releaseGlobalLock(boolean exclusive) {
+   protected final void releaseGlobalLock(boolean exclusive) {
       locks.releaseGlobalLock(exclusive);
    }
 
@@ -122,7 +122,7 @@ public abstract class LockSupportCacheStore extends AbstractCacheStore {
       }
 
       String keyHashCode = getLockFromKey(ed.getKey());
-      lockForWritting(keyHashCode);
+      lockForWriting(keyHashCode);
       try {
          storeLockSafe(ed, keyHashCode);
       } finally {
@@ -135,7 +135,7 @@ public abstract class LockSupportCacheStore extends AbstractCacheStore {
       if (trace) log.trace("remove(" + key + ")");
       String keyHashCodeStr = getLockFromKey(key);
       try {
-         lockForWritting(keyHashCodeStr);
+         lockForWriting(keyHashCodeStr);
          return removeLockSafe(key, keyHashCodeStr);
       } finally {
          unlock(keyHashCodeStr);
