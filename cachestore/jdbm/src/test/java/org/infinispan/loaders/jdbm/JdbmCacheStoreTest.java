@@ -29,8 +29,8 @@ public class JdbmCacheStoreTest extends BaseCacheStoreTest {
 
    @BeforeTest
    @Parameters({"basedir"})
-   protected void setUpTempDir() {
-      tmpDirectory = "." + TestingUtil.TEST_PATH + File.separator + getClass().getSimpleName();
+   protected void setUpTempDir(String basedir) {
+      tmpDirectory = basedir + TestingUtil.TEST_PATH + File.separator + getClass().getSimpleName();
    }
 
    @AfterTest
