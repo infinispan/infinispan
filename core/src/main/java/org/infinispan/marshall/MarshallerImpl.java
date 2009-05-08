@@ -26,8 +26,13 @@ import org.infinispan.atomic.DeltaAware;
 import org.infinispan.commands.RemoteCommandFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.container.entries.MortalCacheEntry;
+import org.infinispan.container.entries.TransientCacheEntry;
+import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.infinispan.io.ByteBuffer;
 import org.infinispan.io.ExposedByteArrayOutputStream;
 import org.infinispan.remoting.responses.ExceptionResponse;
@@ -94,14 +99,23 @@ public class MarshallerImpl implements Marshaller {
    protected static final int MAGICNUMBER_SINGLETON_LIST = 23;
    protected static final int MAGICNUMBER_COMMAND = 24;
    protected static final int MAGICNUMBER_TRANSACTION_LOG = 25;
-   protected static final int MAGICNUMBER_INTERNAL_CACHED_ENTRY = 26;
+
+   // --- cache entries and values ---
+   protected static final int MAGICNUMBER_ICE_IMMORTAL = 26;
+   protected static final int MAGICNUMBER_ICE_MORTAL = 27;
+   protected static final int MAGICNUMBER_ICE_TRANSIENT = 28;
+   protected static final int MAGICNUMBER_ICE_TRANSIENT_MORTAL = 29;
+   protected static final int MAGICNUMBER_ICV_IMMORTAL = 30;
+   protected static final int MAGICNUMBER_ICV_MORTAL = 31;
+   protected static final int MAGICNUMBER_ICV_TRANSIENT = 32;
+   protected static final int MAGICNUMBER_ICV_TRANSIENT_MORTAL = 33;
 
    // ---- responses
-   protected static final int MAGICNUMBER_REQUEST_IGNORED_RESPONSE = 27;
-   protected static final int MAGICNUMBER_EXTENDED_RESPONSE = 28;
-   protected static final int MAGICNUMBER_EXCEPTION_RESPONSE = 29;
-   protected static final int MAGICNUMBER_SUCCESSFUL_RESPONSE = 30;
-   protected static final int MAGICNUMBER_UNSUCCESSFUL_RESPONSE = 31;
+   protected static final int MAGICNUMBER_REQUEST_IGNORED_RESPONSE = 34;
+   protected static final int MAGICNUMBER_EXTENDED_RESPONSE = 35;
+   protected static final int MAGICNUMBER_EXCEPTION_RESPONSE = 36;
+   protected static final int MAGICNUMBER_SUCCESSFUL_RESPONSE = 37;
+   protected static final int MAGICNUMBER_UNSUCCESSFUL_RESPONSE = 38;
 
    protected static final int MAGICNUMBER_NULL = 99;
    protected static final int MAGICNUMBER_SERIALIZABLE = 100;
@@ -173,19 +187,9 @@ public class MarshallerImpl implements Marshaller {
          } else if (o instanceof Response) {
             marshallResponse((Response) o, out, refMap);
          } else if (o instanceof InternalCacheEntry) {
-            out.writeByte(MAGICNUMBER_INTERNAL_CACHED_ENTRY);
-            InternalCacheEntry ice = (InternalCacheEntry) o;
-            marshallObject(ice.getKey(), out, refMap);
-            marshallObject(ice.getValue(), out, refMap);
-            if (ice.canExpire()) {
-               out.writeBoolean(true);
-               writeUnsignedLong(out, ice.getCreated());
-               out.writeLong(ice.getLifespan()); // could be negative so should not use unsigned longs
-               writeUnsignedLong(out, ice.getLastUsed());
-               out.writeLong(ice.getMaxIdle()); // could be negative so should not use unsigned longs
-            } else {
-               out.writeBoolean(false);
-            }
+            marshallInternalCacheEntry((InternalCacheEntry) o, out, refMap);
+         } else if (o instanceof InternalCacheValue) {
+            marshallInternalCacheValue((InternalCacheValue) o, out, refMap);
          } else if (o.getClass().equals(ArrayList.class)) {
             out.writeByte(MAGICNUMBER_ARRAY_LIST);
             marshallCollection((Collection) o, out, refMap);
@@ -249,6 +253,64 @@ public class MarshallerImpl implements Marshaller {
          } else {
             throw new IOException("Don't know how to marshall object of type " + o.getClass());
          }
+      }
+   }
+
+   private void marshallInternalCacheEntry(InternalCacheEntry ice, ObjectOutput out, Map<Object, Integer> refMap) throws IOException {
+      if (ice.getClass().equals(ImmortalCacheEntry.class)) {
+         out.writeByte(MAGICNUMBER_ICE_IMMORTAL);
+         marshallObject(ice.getKey(), out, refMap);
+         marshallObject(ice.getValue(), out, refMap);
+
+      } else if (ice.getClass().equals(MortalCacheEntry.class)) {
+         out.writeByte(MAGICNUMBER_ICE_MORTAL);
+         marshallObject(ice.getKey(), out, refMap);
+         marshallObject(ice.getValue(), out, refMap);
+         writeUnsignedLong(out, ice.getCreated());
+         out.writeLong(ice.getLifespan()); // could be negative so should not use unsigned longs
+
+      } else if (ice.getClass().equals(TransientCacheEntry.class)) {
+         out.writeByte(MAGICNUMBER_ICE_TRANSIENT);
+         marshallObject(ice.getKey(), out, refMap);
+         marshallObject(ice.getValue(), out, refMap);
+         writeUnsignedLong(out, ice.getLastUsed());
+         out.writeLong(ice.getMaxIdle()); // could be negative so should not use unsigned longs
+
+      } else if (ice.getClass().equals(TransientMortalCacheEntry.class)) {
+         out.writeByte(MAGICNUMBER_ICE_TRANSIENT_MORTAL);
+         marshallObject(ice.getKey(), out, refMap);
+         marshallObject(ice.getValue(), out, refMap);
+         writeUnsignedLong(out, ice.getCreated());
+         out.writeLong(ice.getLifespan()); // could be negative so should not use unsigned longs
+         writeUnsignedLong(out, ice.getLastUsed());
+         out.writeLong(ice.getMaxIdle()); // could be negative so should not use unsigned longs
+      }
+   }
+
+   private void marshallInternalCacheValue(InternalCacheValue icv, ObjectOutput out, Map<Object, Integer> refMap) throws IOException {
+      if (icv.getClass().equals(ImmortalCacheEntry.class)) {
+         out.writeByte(MAGICNUMBER_ICV_IMMORTAL);
+         marshallObject(icv.getValue(), out, refMap);
+
+      } else if (icv.getClass().equals(MortalCacheEntry.class)) {
+         out.writeByte(MAGICNUMBER_ICV_MORTAL);
+         marshallObject(icv.getValue(), out, refMap);
+         writeUnsignedLong(out, icv.getCreated());
+         out.writeLong(icv.getLifespan()); // could be negative so should not use unsigned longs
+
+      } else if (icv.getClass().equals(TransientCacheEntry.class)) {
+         out.writeByte(MAGICNUMBER_ICV_TRANSIENT);
+         marshallObject(icv.getValue(), out, refMap);
+         writeUnsignedLong(out, icv.getLastUsed());
+         out.writeLong(icv.getMaxIdle()); // could be negative so should not use unsigned longs
+
+      } else if (icv.getClass().equals(TransientMortalCacheEntry.class)) {
+         out.writeByte(MAGICNUMBER_ICV_TRANSIENT_MORTAL);
+         marshallObject(icv.getValue(), out, refMap);
+         writeUnsignedLong(out, icv.getCreated());
+         out.writeLong(icv.getLifespan()); // could be negative so should not use unsigned longs
+         writeUnsignedLong(out, icv.getLastUsed());
+         out.writeLong(icv.getMaxIdle()); // could be negative so should not use unsigned longs
       }
    }
 
@@ -385,19 +447,16 @@ public class MarshallerImpl implements Marshaller {
             MarshalledValue mv = new MarshalledValue();
             mv.readExternal(in);
             return mv;
-         case MAGICNUMBER_INTERNAL_CACHED_ENTRY:
-            Object k = unmarshallObject(in, refMap);
-            Object v = unmarshallObject(in, refMap);
-            boolean canExpire = in.readBoolean();
-            if (canExpire) {
-               long created = readUnsignedLong(in);
-               long lifespan = in.readLong(); // could be negative so should not use unsigned longs
-               long lastUsed = readUnsignedLong(in);
-               long maxIdle = in.readLong(); // could be negative so should not use unsigned longs
-               return InternalEntryFactory.create(k, v, created, lifespan, lastUsed, maxIdle);
-            } else {
-               return InternalEntryFactory.create(k, v);
-            }
+         case MAGICNUMBER_ICE_IMMORTAL:
+         case MAGICNUMBER_ICE_MORTAL:
+         case MAGICNUMBER_ICE_TRANSIENT:
+         case MAGICNUMBER_ICE_TRANSIENT_MORTAL:
+            return unmarshallInternalCacheEntry(magicNumber, in, refMap);
+         case MAGICNUMBER_ICV_IMMORTAL:
+         case MAGICNUMBER_ICV_MORTAL:
+         case MAGICNUMBER_ICV_TRANSIENT:
+         case MAGICNUMBER_ICV_TRANSIENT_MORTAL:
+            return unmarshallInternalCacheValue(magicNumber, in, refMap);
          case MAGICNUMBER_REQUEST_IGNORED_RESPONSE:
          case MAGICNUMBER_EXTENDED_RESPONSE:
          case MAGICNUMBER_EXCEPTION_RESPONSE:
@@ -463,6 +522,49 @@ public class MarshallerImpl implements Marshaller {
             throw new IOException("Unknown magic number " + magicNumber);
       }
       throw new IOException("Unknown magic number " + magicNumber);
+   }
+
+   private InternalCacheEntry unmarshallInternalCacheEntry(byte magic, ObjectInput in, UnmarshalledReferences refMap) throws IOException, ClassNotFoundException {
+      Object k = unmarshallObject(in, refMap);
+      Object v = unmarshallObject(in, refMap);
+      switch (magic) {
+         case MAGICNUMBER_ICE_IMMORTAL:
+            return InternalEntryFactory.create(k, v);
+         case MAGICNUMBER_ICE_MORTAL:
+            return InternalEntryFactory.create(k, v,
+                                               readUnsignedLong(in), (Long) unmarshallObject(in, refMap),
+                                               -1, -1);
+         case MAGICNUMBER_ICE_TRANSIENT:
+            return InternalEntryFactory.create(k, v,
+                                               -1, -1,
+                                               readUnsignedLong(in), (Long) unmarshallObject(in, refMap));
+         case MAGICNUMBER_ICE_TRANSIENT_MORTAL:
+            return InternalEntryFactory.create(k, v,
+                                               readUnsignedLong(in), (Long) unmarshallObject(in, refMap),
+                                               readUnsignedLong(in), (Long) unmarshallObject(in, refMap));
+      }
+      throw new IllegalArgumentException("Unknown magic number " + magic);
+   }
+
+   private InternalCacheValue unmarshallInternalCacheValue(byte magic, ObjectInput in, UnmarshalledReferences refMap) throws IOException, ClassNotFoundException {
+      Object v = unmarshallObject(in, refMap);
+      switch (magic) {
+         case MAGICNUMBER_ICE_IMMORTAL:
+            return InternalEntryFactory.createValue(v);
+         case MAGICNUMBER_ICE_MORTAL:
+            return InternalEntryFactory.createValue(v,
+                                                    readUnsignedLong(in), (Long) unmarshallObject(in, refMap),
+                                                    -1, -1);
+         case MAGICNUMBER_ICE_TRANSIENT:
+            return InternalEntryFactory.createValue(v,
+                                                    -1, -1,
+                                                    readUnsignedLong(in), (Long) unmarshallObject(in, refMap));
+         case MAGICNUMBER_ICE_TRANSIENT_MORTAL:
+            return InternalEntryFactory.createValue(v,
+                                                    readUnsignedLong(in), (Long) unmarshallObject(in, refMap),
+                                                    readUnsignedLong(in), (Long) unmarshallObject(in, refMap));
+      }
+      throw new IllegalArgumentException("Unknown magic number " + magic);
    }
 
    private FastCopyHashMap unmarshallFastCopyHashMap(ObjectInput in, UnmarshalledReferences refMap) throws IOException, ClassNotFoundException {
