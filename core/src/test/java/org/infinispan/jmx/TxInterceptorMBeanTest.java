@@ -15,11 +15,6 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import javax.transaction.TransactionManager;
 
-/**
- * Tester class for {@link TxInterceptor} jmx stuff.
- *
- * @author Mircea.Markus@jboss.com
- */
 @Test(groups = "functional", testName = "jmx.TxInterceptorMBeanTest")
 public class TxInterceptorMBeanTest extends MultipleCacheManagersTest {
 
@@ -68,7 +63,7 @@ public class TxInterceptorMBeanTest extends MultipleCacheManagersTest {
       tm.commit();
       assertCommitRollback(1, 0);
    }
-   
+
    public void testRollback() throws Exception {
       assertCommitRollback(0, 0);
       tm.begin();

@@ -104,8 +104,6 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
 
    V remove(Object key, Flag... flags);
 
-   boolean remove(Object key, Object oldValue, Flag... flags);
-
    void clear(Flag... flags);
 
    boolean containsKey(Object key, Flag... flags);

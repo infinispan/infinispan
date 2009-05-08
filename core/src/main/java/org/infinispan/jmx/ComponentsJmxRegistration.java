@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Registers a set of {@link AbstractComponentRegistry.Component} to an Mbean server.
+ * Registers a set of components on an MBean server.
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.0
@@ -57,9 +57,9 @@ public class ComponentsJmxRegistration {
    /**
     * C-tor.
     *
-    * @param mBeanServer    the server where mbeans are being registered
-    * @param cache          cache that needs to be monitored
-    * @param objectNameBase path in the MBeanServer where to register cache MBeans
+    * @param mBeanServer the server where mbeans are being registered
+    * @param components  components
+    * @param groupName   group name
     * @see java.lang.management.ManagementFactory#getPlatformMBeanServer()
     * @see <a href="http://java.sun.com/j2se/1.5.0/docs/guide/management/mxbeans.html#mbean_server">platform
     *      MBeanServer</a>

@@ -1,10 +1,9 @@
 package org.infinispan.loaders.jdbc.stringbased;
 
 /**
- * Defines the logic of mapping an key object to a String. This is required {@link
- * org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore}, in order to map each {@link
- * org.infinispan.loaders.StoredEntry} as an single row within a database. It bassically should generate an unique
- * String PK based on the supplied key.
+ * Defines the logic of mapping an key object to a String. This is required {@link JdbcStringBasedCacheStore}, in order
+ * to map each key as an single row within a database. It basically should generate a unique String PK based on the
+ * supplied key.
  *
  * @author Mircea.Markus@jboss.com
  */

@@ -21,6 +21,11 @@
  */
 package org.infinispan.notifications.cachelistener.annotation;
 
+import org.infinispan.loaders.CacheLoader;
+import org.infinispan.notifications.IncorrectListenerException;
+import org.infinispan.notifications.Listener;
+import org.infinispan.notifications.cachelistener.event.CacheEntryLoadedEvent;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -28,14 +33,14 @@ import java.lang.annotation.Target;
 
 /**
  * This annotation should be used on methods that need to be notified when a cache entry is loaded from a {@link
- * org.infinispan.loaders.CacheLoaderOld}.
+ * CacheLoader}.
  * <p/>
  * Methods annotated with this annotation should be public and take in a single parameter, a {@link
- * org.infinispan.notifications.cachelistener.event.CacheEntryLoadedEvent} otherwise an {@link
- * org.infinispan.notifications.IncorrectListenerException} will be thrown when registering your cache listener.
+ * CacheEntryLoadedEvent} otherwise an {@link IncorrectListenerException} will be thrown when registering your cache
+ * listener.
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani</a>
- * @see org.infinispan.notifications.Listener
+ * @see Listener
  * @since 4.0
  */
 @Retention(RetentionPolicy.RUNTIME)

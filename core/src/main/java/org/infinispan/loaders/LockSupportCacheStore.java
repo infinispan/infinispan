@@ -12,16 +12,15 @@ import java.io.ObjectOutput;
 import java.util.Set;
 
 /**
- * This class extends {@link org.infinispan.loaders.AbstractCacheStore} adding lock support for consistently acceessing
- * stored data.
+ * This class extends {@link AbstractCacheStore} adding lock support for consistently acceessing stored data.
  * <p/>
  * In-memory locking is needed by aggregation operations(e.g. loadAll, toStream, fromStream) to make sure that
  * manipulated data won't be corrupted by concurrent access to Store. It also assurce atomic data access for each stored
  * entry.
  * <p/>
- * Locking is based on a {@link org.infinispan.util.concurrent.locks.StripedLock}. You can tune the concurrency level of
- * the striped lock (see the Javadocs of StripedLock for details on what this is) by using the {@link
- * org.infinispan.loaders.LockSupportCacheStore#setLockConcurrencyLevel(int)} setter.
+ * Locking is based on a {@link StripedLock}. You can tune the concurrency level of the striped lock (see the Javadocs
+ * of StripedLock for details on what this is) by using the {@link LockSupportCacheStoreConfig#setLockConcurrencyLevel(int)}
+ * setter.
  * <p/>
  *
  * @author Mircea.Markus@jboss.com

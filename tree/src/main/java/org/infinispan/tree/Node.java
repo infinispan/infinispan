@@ -22,6 +22,7 @@
 package org.infinispan.tree;
 
 import net.jcip.annotations.ThreadSafe;
+import org.infinispan.Cache;
 import org.infinispan.context.Flag;
 
 import java.util.Map;
@@ -42,7 +43,7 @@ import java.util.Set;
  * <p/>
  *
  * @author <a href="mailto:manik AT jboss DOT org">Manik Surtani (manik AT jboss DOT org)</a>
- * @see org.infinispan.tree.TreeCache
+ * @see TreeCache
  * @since 4.0
  */
 @ThreadSafe

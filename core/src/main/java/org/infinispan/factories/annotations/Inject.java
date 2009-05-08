@@ -21,15 +21,19 @@
  */
 package org.infinispan.factories.annotations;
 
+import org.infinispan.factories.AbstractComponentFactory;
+import org.infinispan.factories.ComponentRegistry;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+
 /**
  * Used to annotate a method as one that is used to inject a registered component into another component.  The component
- * to be constructed must be built using the {@link ComponentFactory#construct(Class)} method, or if your object that
- * needs components injected into it already exists, it can be built using the {@link
+ * to be constructed must be built using the {@link AbstractComponentFactory#construct(Class)} method, or if your object
+ * that needs components injected into it already exists, it can be built using the {@link
  * ComponentRegistry#wireDependencies(Object)} method.
  * <p/>
  * Usage example:

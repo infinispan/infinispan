@@ -57,24 +57,20 @@ public class RuntimeConfig extends AbstractNamedCacheConfigurationBean {
 
    /**
     * This is only relevant if the async cache replication executor has been set using {@link
-    * #setAsyncSerializationExecutor(java.util.concurrent.ExecutorService)}. If the executor is created internally, this
-    * method will return null.
+    * #setAsyncSerializationExecutor(ExecutorService)}. If the executor is created internally, this method will return
+    * null.
     * <p/>
     *
     * @return the executor used for async replication.
-    * @since 4.0
     */
    public ExecutorService getAsyncSerializationExecutor() {
       return asyncSerializationExecutor;
    }
 
    /**
-    * This is used to set the executor to use for async cache replucation, and effectively overrides {@link
-    * Configuration#setSerializationExecutorPoolSize(int)}
-    * <p/>
+    * This is used to set the executor to use for asynchronous cache operations.
     *
     * @param asyncSerializationExecutor executor to set
-    * @since 4.0
     */
    public void setAsyncSerializationExecutor(ExecutorService asyncSerializationExecutor) {
       this.asyncSerializationExecutor = asyncSerializationExecutor;
@@ -87,19 +83,16 @@ public class RuntimeConfig extends AbstractNamedCacheConfigurationBean {
     * <p/>
     *
     * @return the executor to use for async cache listeners
-    * @since 4.0
     */
    public ExecutorService getAsyncCacheListenerExecutor() {
       return asyncCacheListenerExecutor;
    }
 
    /**
-    * This is used to set the executor to use for async cache listeners, and effectively overrides {@link
-    * Configuration#setListenerAsyncPoolSize(int)}
+    * This is used to set the executor to use for asynchronous cache listeners.
     * <p/>
     *
     * @param asyncCacheListenerExecutor the executor to use for async cache listeners
-    * @since 4.0
     */
    public void setAsyncCacheListenerExecutor(ExecutorService asyncCacheListenerExecutor) {
       this.asyncCacheListenerExecutor = asyncCacheListenerExecutor;

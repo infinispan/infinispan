@@ -442,8 +442,8 @@ public class BdbjeCacheStore extends AbstractCacheStore {
    }
 
    /**
-    * @{inheritDoc} Writes the current count of cachestore entries followed by a pair of byte[]s corresponding to the
-    * SleepyCat binary representation of {@link InternalCacheEntry#getKey() key} {@link InternalCacheEntry value}.
+    * Writes the current count of cachestore entries followed by a pair of byte[]s corresponding to the SleepyCat binary
+    * representation of {@link InternalCacheEntry#getKey() key} {@link InternalCacheEntry value}.
     * <p/>
     * This implementation holds a transaction open to ensure that we see no new records added while iterating.
     */

@@ -2,7 +2,6 @@ package org.infinispan.config;
 
 import org.infinispan.CacheException;
 import org.infinispan.Version;
-import org.infinispan.jmx.PlatformMBeanServerLookup;
 import org.infinispan.executors.DefaultExecutorFactory;
 import org.infinispan.executors.DefaultScheduledExecutorFactory;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -10,6 +9,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.NonVolatile;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.jmx.PlatformMBeanServerLookup;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.marshall.VersionAwareMarshaller;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
@@ -70,9 +70,6 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    /**
     * If JMX statistics are enabled then all 'published' JMX objects will appear under this name. This is optional, if
     * not specified an object name will be created for you by default.
-    *
-    * @see javax.management.ObjectName
-    * @see #isExposeManagementStatistics()
     */
    public void setJmxDomain(String jmxObjectName) {
       testImmutability("jmxNameBase");

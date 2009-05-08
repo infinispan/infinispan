@@ -169,8 +169,8 @@ public class FIFODataContainer implements DataContainer {
    /**
     * A marker.  If a reference in LinkedEntry (either to its previous or next entry) needs to be marked, it should be
     * CAS'd with an instance of Marker that points to the actual entry.  Typically this is done by calling {@link
-    * org.infinispan.container.FIFODataContainer#markNextReference(org.infinispan.container.FIFODataContainer.LinkedEntry)}
-    * or {@link org.infinispan.container.FIFODataContainer#markPrevReference(org.infinispan.container.FIFODataContainer.LinkedEntry)}
+    * FIFODataContainer#markNextReference(org.infinispan.container.FIFODataContainer.LinkedEntry)} or {@link
+    * FIFODataContainer#markPrevReference(org.infinispan.container.FIFODataContainer.LinkedEntry)}
     */
    static final class Marker extends LinkedEntry {
       Marker(LinkedEntry actual) {
@@ -192,7 +192,7 @@ public class FIFODataContainer implements DataContainer {
 
    /**
     * Un-links an entry from the doubly linked list in a threadsafe, lock-free manner.  The entry is typically retrieved
-    * using {@link Segment#locklessRemove(Object, int)} after locking the Segment.
+    * using Segment#locklessRemove() after locking the Segment.
     *
     * @param entry entry to unlink
     */

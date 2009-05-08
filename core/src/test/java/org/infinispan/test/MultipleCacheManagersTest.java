@@ -24,8 +24,8 @@ import java.util.List;
  *       are expensive to create.
  * </pre>
  * If, however, you would like your cache managers destroyed after every <i>test method</i> instead of the </i>test
- * class</i>, you could set the <tt>cleanup</tt> field to {@link org.infinispan.test.MultipleCacheManagersTest.CleanupPhase#AFTER_METHOD}
- * in your test's constructor.  E.g.:
+ * class</i>, you could set the <tt>cleanup</tt> field to {@link MultipleCacheManagersTest.CleanupPhase#AFTER_METHOD} in
+ * your test's constructor.  E.g.:
  * <pre>
  * <p/>
  * public void MyTest extends MultipleCacheManagersTest {

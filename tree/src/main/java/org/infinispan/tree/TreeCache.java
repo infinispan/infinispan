@@ -24,6 +24,7 @@ package org.infinispan.tree;
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.context.Flag;
+import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.Lifecycle;
 
 import java.util.Map;
@@ -270,7 +271,7 @@ public interface TreeCache<K, V> extends Lifecycle {
     * @param newParent  new location under which to attach the node being moved.
     * @throws NodeNotExistsException may throw one of these if the target node does not exist or if a different thread
     *                                has moved this node elsewhere already.
-    * @throws IllegalStateException  if {@link #getStatus()} would not return {@link org.infinispan.lifecycle.ComponentStatus#STARTED}.
+    * @throws IllegalStateException  if {@link Cache#getStatus()} would not return {@link ComponentStatus#RUNNING}.
     */
    void move(Fqn nodeToMove, Fqn newParent) throws NodeNotExistsException;
 
@@ -279,7 +280,7 @@ public interface TreeCache<K, V> extends Lifecycle {
    /**
     * Convenience method that takes in string representations of Fqns.  Otherwise identical to {@link #move(Fqn, Fqn)}
     *
-    * @throws IllegalStateException if {@link #getStatus()} would not return {@link org.infinispan.lifecycle.ComponentStatus#STARTED}.
+    * @throws IllegalStateException if {@link Cache#getStatus()} would not return {@link ComponentStatus#RUNNING}.
     */
    void move(String nodeToMove, String newParent) throws NodeNotExistsException;
 
@@ -292,7 +293,7 @@ public interface TreeCache<K, V> extends Lifecycle {
     * @param fqn
     * @return map of data, or an empty map
     * @throws CacheException
-    * @throws IllegalStateException if {@link #getStatus()} would not return {@link org.infinispan.lifecycle.ComponentStatus#STARTED}.
+    * @throws IllegalStateException if {@link Cache#getStatus()} would not return {@link ComponentStatus#RUNNING}.
     */
    Map<K, V> getData(Fqn fqn);
 
@@ -313,7 +314,7 @@ public interface TreeCache<K, V> extends Lifecycle {
     * A convenience method to retrieving a node and getting keys from the node directly.
     *
     * @param fqn name of the node
-    * @throws IllegalStateException if {@link #getStatus()} would not return {@link org.infinispan.lifecycle.ComponentStatus#STARTED}.
+    * @throws IllegalStateException if {@link Cache#getStatus()} would not return {@link ComponentStatus#RUNNING}.
     */
    Set<K> getKeys(Fqn fqn);
 
@@ -323,7 +324,7 @@ public interface TreeCache<K, V> extends Lifecycle {
     * Convenience method that takes in a String represenation of the Fqn.  Otherwise identical to {@link
     * #clearData(Fqn)}.
     *
-    * @throws IllegalStateException if {@link #getStatus()} would not return {@link org.infinispan.lifecycle.ComponentStatus#STARTED}.
+    * @throws IllegalStateException if {@link Cache#getStatus()} would not return {@link ComponentStatus#RUNNING}.
     */
    void clearData(String fqn);
 
@@ -335,7 +336,7 @@ public interface TreeCache<K, V> extends Lifecycle {
     * A convenience method to retrieving a node and getting keys from the node directly.
     *
     * @param fqn name of the node
-    * @throws IllegalStateException if {@link #getStatus()} would not return {@link org.infinispan.lifecycle.ComponentStatus#STARTED}.
+    * @throws IllegalStateException if {@link Cache#getStatus()} would not return {@link ComponentStatus#RUNNING}.
     */
    void clearData(Fqn fqn);
 

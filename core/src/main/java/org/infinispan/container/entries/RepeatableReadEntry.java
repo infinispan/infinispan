@@ -27,7 +27,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * An extension of {@link org.infinispan.container.ReadCommittedEntry} that provides Repeatable Read semantics
+ * An extension of {@link ReadCommittedEntry} that provides Repeatable Read semantics
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @since 4.0

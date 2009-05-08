@@ -25,7 +25,7 @@ package org.infinispan.atomic;
  * This interface allows the extraction of deltas.
  * <p/>
  * Implementations would be closely coupled to a corresponding {@link Delta} implementation, since {@link
- * org.infinispan.atomic.Delta#instantiate()} would need to know how to recreate this instance of DeltaAware if needed.
+ * Delta#merge(DeltaAware)}  would need to know how to recreate this instance of DeltaAware if needed.
  * <p/>
  *
  * @author Manik Surtani (<a href="mailto:manik AT jboss DOT org">manik AT jboss DOT org</a>)

@@ -29,7 +29,7 @@ public class AbstractCacheTest {
 
    protected final Log log = LogFactory.getLog(getClass());
 
-   protected static enum CleanupPhase {
+   public static enum CleanupPhase {
       AFTER_METHOD, AFTER_TEST
    }
 
