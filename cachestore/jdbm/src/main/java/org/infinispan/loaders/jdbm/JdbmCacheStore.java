@@ -1,19 +1,5 @@
 package org.infinispan.loaders.jdbm;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.text.SimpleDateFormat;
-import java.util.AbstractSet;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Properties;
-import java.util.Set;
-
 import jdbm.RecordManager;
 import jdbm.RecordManagerFactory;
 import jdbm.btree.BTree;
@@ -23,7 +9,6 @@ import jdbm.helper.Tuple;
 import jdbm.helper.TupleBrowser;
 import jdbm.htree.HTree;
 import net.jcip.annotations.ThreadSafe;
-
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.config.ConfigurationException;
@@ -38,16 +23,29 @@ import org.infinispan.marshall.Marshaller;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.text.SimpleDateFormat;
+import java.util.AbstractSet;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Properties;
+import java.util.Set;
+
 /**
- * A persistent <code>CacheLoader</code> based on the JDBM project. See
- * http://jdbm.sourceforge.net/ . Does not support transaction isolation.
+ * A persistent <code>CacheLoader</code> based on the JDBM project. See http://jdbm.sourceforge.net/ . Does not support
+ * transaction isolation.
  * <p/>
  * Supports removal of expired entries.
  * <p/>
- * It would probably be better if meta-data (expiry time) was stored independent
- * of the value of the entry. That is, if (key,"m") == meta and (key,"v") ==
- * value.
- * 
+ * It would probably be better if meta-data (expiry time) was stored independent of the value of the entry. That is, if
+ * (key,"m") == meta and (key,"v") == value.
+ *
  * @author Elias Ross
  * @version $Id: JdbmCacheLoader.java 7261 2008-12-07 18:53:38Z genman $
  */
@@ -179,8 +177,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
    }
 
    /**
-    * Closes all databases, ignoring exceptions, and nulls references to all
-    * database related information.
+    * Closes all databases, ignoring exceptions, and nulls references to all database related information.
     */
    @Override
    public void stop() {
@@ -284,8 +281,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
    }
 
    /**
-    * Writes to a stream the number of entries (long) then the entries
-    * themselves.
+    * Writes to a stream the number of entries (long) then the entries themselves.
     */
    public void toStream(ObjectOutput outputStream) throws CacheLoaderException {
       try {
@@ -304,8 +300,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
    }
 
    /**
-    * Reads from a stream the number of entries (long) then the entries
-    * themselves.
+    * Reads from a stream the number of entries (long) then the entries themselves.
     */
    public void fromStream(ObjectInput inputStream) throws CacheLoaderException {
       try {
@@ -340,8 +335,8 @@ public class JdbmCacheStore extends AbstractCacheStore {
    }
 
    /**
-    * Find all times less than current time. Build a list of keys for those
-    * times. Then purge those keys, assuming those keys' expiry has not changed.
+    * Find all times less than current time. Build a list of keys for those times. Then purge those keys, assuming those
+    * keys' expiry has not changed.
     */
    private void purgeInternal0() throws IOException {
       TupleBrowser browse = expiryTree.browse();
@@ -387,17 +382,17 @@ public class JdbmCacheStore extends AbstractCacheStore {
    protected void applyModifications(List<? extends Modification> mods) throws CacheLoaderException {
       for (Modification m : mods) {
          switch (m.getType()) {
-         case STORE:
-            store0(((Store) m).getStoredEntry());
-            break;
-         case CLEAR:
-            clear();
-            break;
-         case REMOVE:
-            remove0(((Remove) m).getKey());
-            break;
-         default:
-            throw new AssertionError();
+            case STORE:
+               store0(((Store) m).getStoredEntry());
+               break;
+            case CLEAR:
+               clear();
+               break;
+            case REMOVE:
+               remove0(((Remove) m).getKey());
+               break;
+            default:
+               throw new AssertionError();
          }
       }
       commit();
@@ -453,10 +448,11 @@ public class JdbmCacheStore extends AbstractCacheStore {
       }
 
       @Override
+      @SuppressWarnings("unused")
       public int size() {
          log.warn("size() should never be called; except for tests");
          int size = 0;
-         for (@SuppressWarnings("unused") Object dummy : this)
+         for (Object dummy : this)
             size++;
          return size;
       }
