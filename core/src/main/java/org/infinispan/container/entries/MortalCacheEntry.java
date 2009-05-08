@@ -27,7 +27,7 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
    }
 
    public final boolean isExpired() {
-      return lifespan > -1 && System.currentTimeMillis() > created + lifespan;
+      return ExpiryHelper.isExpiredMortal(lifespan, created);
    }
 
    public final boolean canExpire() {
@@ -75,6 +75,10 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
 
    public final void touch() {
       // no-op
+   }
+
+   public InternalCacheValue toInternalCacheValue() {
+      return new MortalCacheValue(value, created, lifespan);
    }
 
    @Override

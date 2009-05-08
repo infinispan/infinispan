@@ -74,12 +74,17 @@ public class TransientMortalCacheEntry extends TransientCacheEntry {
 
    @Override
    public boolean isExpired() {
-      return super.isExpired() || (lifespan > -1 && System.currentTimeMillis() > created + lifespan);
+      return ExpiryHelper.isExpiredTransientMortal(maxIdle, lastUsed, lifespan, created);
    }
 
    @Override
    public final long getExpiryTime() {
       return lifespan > -1 ? created + lifespan : -1;
+   }
+
+   @Override
+   public InternalCacheValue toInternalCacheValue() {
+      return new TransientMortalCacheValue(value, created, lifespan, maxIdle, lastUsed);
    }
 
    @Override

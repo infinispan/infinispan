@@ -8,7 +8,6 @@ package org.infinispan.container.entries;
  */
 public interface InternalCacheEntry extends CacheEntry {
    /**
-    *
     * @return true if the entry has expired; false otherwise
     */
    boolean isExpired();
@@ -18,12 +17,13 @@ public interface InternalCacheEntry extends CacheEntry {
     */
    boolean canExpire();
 
-    /**
+   /**
     * Sets the maximum idle time of the entry.
-    * <p />
-    * Note that if this method is used, you should always use a reference to the
-    * return value after invocation, since as an optimization, implementations may change type of CacheEntry used after
-    * invoking this method, for example changing a MortalCacheEntry to an ImmortalCacheEntry.
+    * <p/>
+    * Note that if this method is used, you should always use a reference to the return value after invocation, since as
+    * an optimization, implementations may change type of CacheEntry used after invoking this method, for example
+    * changing a MortalCacheEntry to an ImmortalCacheEntry.
+    *
     * @param maxIdle maxIdle to set
     * @return the updated CacheEntry
     */
@@ -31,10 +31,11 @@ public interface InternalCacheEntry extends CacheEntry {
 
    /**
     * Sets the lifespan of the entry.
-    * <p />
-    * Note that if this method is used, you should always use a reference to the
-    * return value after invocation, since as an optimization, implementations may change type of CacheEntry used after
-    * invoking this method, for example changing a MortalCacheEntry to an ImmortalCacheEntry.
+    * <p/>
+    * Note that if this method is used, you should always use a reference to the return value after invocation, since as
+    * an optimization, implementations may change type of CacheEntry used after invoking this method, for example
+    * changing a MortalCacheEntry to an ImmortalCacheEntry.
+    *
     * @param lifespan lifespan to set
     * @return the updated CacheEntry
     */
@@ -52,6 +53,7 @@ public interface InternalCacheEntry extends CacheEntry {
 
    /**
     * Only used with entries that have a lifespan, this determines when an entry is due to expire.
+    *
     * @return timestamp when the entry is due to expire, or -1 if it doesn't have a lifespan
     */
    long getExpiryTime();
@@ -60,4 +62,20 @@ public interface InternalCacheEntry extends CacheEntry {
     * Updates access timestamps on this instance
     */
    void touch();
+
+   /**
+    * Creates a representation of this entry as an {@link org.infinispan.container.entries.InternalCacheValue}. The main
+    * purpose of this is to provide a representation that does <i>not</i> have a reference to the key. This is useful in
+    * situations where the key is already known or stored elsewhere, making serialization and deserialization more
+    * efficient.
+    * <p/>
+    * Note that this should not be used to optimize memory overhead, since the saving of an additional reference to a
+    * key (a single object reference) does not warrant the cost of constructing an InternalCacheValue.  This <i>only</i>
+    * makes sense when marshalling is involved, since the cost of marshalling the key again can be sidestepped using an
+    * InternalCacheValue if the key is already known/marshalled.
+    * <p/>
+    *
+    * @return a new InternalCacheValue encapsulating this InternalCacheEntry's value and expiration information.
+    */
+   InternalCacheValue toInternalCacheValue();
 }

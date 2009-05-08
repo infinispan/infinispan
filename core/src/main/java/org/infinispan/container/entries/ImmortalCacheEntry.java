@@ -68,6 +68,10 @@ public class ImmortalCacheEntry extends AbstractInternalCacheEntry {
       // no-op
    }
 
+   public InternalCacheValue toInternalCacheValue() {
+      return new ImmortalCacheValue(value);
+   }
+
    @Override
    public boolean equals(Object o) {
       if (this == o) return true;
@@ -87,6 +91,4 @@ public class ImmortalCacheEntry extends AbstractInternalCacheEntry {
       result = 31 * result + (value != null ? value.hashCode() : 0);
       return result;
    }
-
-
 }

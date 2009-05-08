@@ -36,7 +36,7 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
    }
 
    public boolean isExpired() {
-      return maxIdle > -1 && System.currentTimeMillis() > maxIdle + lastUsed;
+      return ExpiryHelper.isExpiredTransient(maxIdle, lastUsed);
    }
 
    public InternalCacheEntry setMaxIdle(long maxIdle) {
@@ -76,6 +76,10 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
 
    public final long getMaxIdle() {
       return maxIdle;
+   }
+
+   public InternalCacheValue toInternalCacheValue() {
+      return new TransientCacheValue(value, maxIdle, lastUsed);
    }
 
    @Override
