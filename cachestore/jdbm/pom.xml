@@ -36,6 +36,16 @@
 			<groupId>org.apache.directory.server</groupId>
 			<artifactId>apacheds-jdbm</artifactId>
 			<version>1.5.4</version>
+            <exclusions>
+                <exclusion>
+	                <groupId>org.apache.directory.shared</groupId>
+	                <artifactId>shared-ldap</artifactId>
+                </exclusion>   
+                <exclusion>
+	                <groupId>org.slf4j</groupId>
+	                <artifactId>slf4j-api</artifactId>
+                </exclusion>   
+            </exclusions>
         </dependency>
         
 		<!--
