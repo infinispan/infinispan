@@ -64,6 +64,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -335,14 +336,73 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
       return remove(key);
    }
 
-   public boolean remove(Object key, Object oldValue, Flag... flags) {
-      getInvocationContext().setFlags(flags);
-      return remove(key, oldValue);
-   }
-
    public void clear(Flag... flags) {
       getInvocationContext().setFlags(flags);
       clear();
+   }
+
+   public V replace(K k, V v, Flag... flags) {
+      return null;  // TODO: Customise this generated block
+   }
+
+   public V replace(K k, V oV, V nV, Flag... flags) {
+      return null;  // TODO: Customise this generated block
+   }
+
+   public boolean replace(K k, V v, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, Flag... flags) {
+      return false;  // TODO: Customise this generated block
+   }
+
+   public boolean replace(K k, V oV, V nV, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, Flag... flags) {
+      return false;  // TODO: Customise this generated block
+   }
+
+   public Future<V> putAsync(K key, V value, Flag... flags) {
+      return null;  // TODO: Customise this generated block
+   }
+
+   public Future<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags) {
+      return null;  // TODO: Customise this generated block
+   }
+
+   public Future<V> putIfAbsentAsync(K key, V value, Flag... flags) {
+      return null;  // TODO: Customise this generated block
+   }
+
+   public Future<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags) {
+      return null;  // TODO: Customise this generated block
+   }
+
+   public Future<Void> putAllAsync(Map<? extends K, ? extends V> map, Flag... flags) {
+      return null;  // TODO: Customise this generated block
+   }
+
+   public Future<Void> putAllAsync(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags) {
+      return null;  // TODO: Customise this generated block
+   }
+
+   public Future<V> removeAsync(Object key, Flag... flags) {
+      return null;  // TODO: Customise this generated block
+   }
+
+   public Future<Void> clearAsync(Flag... flags) {
+      return null;  // TODO: Customise this generated block
+   }
+
+   public Future<V> replaceAsync(K k, V v, Flag... flags) {
+      return null;  // TODO: Customise this generated block
+   }
+
+   public Future<V> replaceAsync(K k, V oV, V nV, Flag... flags) {
+      return null;  // TODO: Customise this generated block
+   }
+
+   public Future<Boolean> replaceAsync(K k, V v, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, Flag... flags) {
+      return null;  // TODO: Customise this generated block
+   }
+
+   public Future<Boolean> replaceAsync(K k, V oV, V nV, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, Flag... flags) {
+      return null;  // TODO: Customise this generated block
    }
 
    public boolean containsKey(Object key, Flag... flags) {
@@ -434,6 +494,78 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
    public final boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit) {
       ReplaceCommand command = commandsFactory.buildReplaceCommand(key, oldValue, value, lifespanUnit.toMillis(lifespan), idleTimeUnit.toMillis(maxIdleTime));
       return (Boolean) invoker.invoke(getInvocationContext(), command);
+   }
+
+   public Future<V> putAsync(K key, V value) {
+      return null;  // TODO: Customise this generated block
+   }
+
+   public Future<V> putAsync(K key, V value, long lifespan, TimeUnit unit) {
+      return null;  // TODO: Customise this generated block
+   }
+
+   public Future<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      return null;  // TODO: Customise this generated block
+   }
+
+   public Future<Void> putAllAsync(Map<? extends K, ? extends V> data) {
+      return null;  // TODO: Customise this generated block
+   }
+
+   public Future<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit unit) {
+      return null;  // TODO: Customise this generated block
+   }
+
+   public Future<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      return null;  // TODO: Customise this generated block
+   }
+
+   public Future<Void> clearAsync() {
+      return null;  // TODO: Customise this generated block
+   }
+
+   public Future<V> putIfAbsentAsync(K key, V value) {
+      return null;  // TODO: Customise this generated block
+   }
+
+   public Future<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit unit) {
+      return null;  // TODO: Customise this generated block
+   }
+
+   public Future<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      return null;  // TODO: Customise this generated block
+   }
+
+   public Future<V> removeAsync(Object key) {
+      return null;  // TODO: Customise this generated block
+   }
+
+   public Future<Boolean> removeAsync(Object key, Object value) {
+      return null;  // TODO: Customise this generated block
+   }
+
+   public Future<V> replaceAsync(K key, V value) {
+      return null;  // TODO: Customise this generated block
+   }
+
+   public Future<V> replaceAsync(K key, V value, long lifespan, TimeUnit unit) {
+      return null;  // TODO: Customise this generated block
+   }
+
+   public Future<V> replaceAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      return null;  // TODO: Customise this generated block
+   }
+
+   public Future<Boolean> replaceAsync(K key, V oldValue, V newValue) {
+      return null;  // TODO: Customise this generated block
+   }
+
+   public Future<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit unit) {
+      return null;  // TODO: Customise this generated block
+   }
+
+   public Future<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      return null;  // TODO: Customise this generated block
    }
 
    @SuppressWarnings("unchecked")

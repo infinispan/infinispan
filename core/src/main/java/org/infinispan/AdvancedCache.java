@@ -11,6 +11,7 @@ import org.infinispan.remoting.RpcManager;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -105,6 +106,40 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
    V remove(Object key, Flag... flags);
 
    void clear(Flag... flags);
+
+   V replace(K k, V v, Flag... flags);
+
+   V replace(K k, V oV, V nV, Flag... flags);
+
+   boolean replace(K k, V v, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, Flag... flags);
+
+   boolean replace(K k, V oV, V nV, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, Flag... flags);
+
+
+   // -- async methods --
+   Future<V> putAsync(K key, V value, Flag... flags);
+
+   Future<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags);
+
+   Future<V> putIfAbsentAsync(K key, V value, Flag... flags);
+
+   Future<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags);
+
+   Future<Void> putAllAsync(Map<? extends K, ? extends V> map, Flag... flags);
+
+   Future<Void> putAllAsync(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags);
+
+   Future<V> removeAsync(Object key, Flag... flags);
+
+   Future<Void> clearAsync(Flag... flags);
+
+   Future<V> replaceAsync(K k, V v, Flag... flags);
+
+   Future<V> replaceAsync(K k, V oV, V nV, Flag... flags);
+
+   Future<Boolean> replaceAsync(K k, V v, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, Flag... flags);
+
+   Future<Boolean> replaceAsync(K k, V oV, V nV, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, Flag... flags);
 
    boolean containsKey(Object key, Flag... flags);
 
