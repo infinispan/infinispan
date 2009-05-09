@@ -42,7 +42,7 @@
         
         <dependency>
             <groupId>org.jclouds</groupId>
-            <artifactId>jclouds-s3nio</artifactId>
+            <artifactId>jclouds-httpnio</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
         

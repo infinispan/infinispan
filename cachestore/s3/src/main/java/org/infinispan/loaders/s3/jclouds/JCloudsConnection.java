@@ -10,7 +10,7 @@ import org.jclouds.aws.s3.S3Constants;
 import org.jclouds.aws.s3.S3Context;
 import org.jclouds.aws.s3.S3ContextFactory;
 import org.jclouds.aws.s3.domain.S3Bucket;
-import org.jclouds.aws.s3.nio.config.S3HttpNioConnectionPoolClientModule;
+import org.jclouds.http.httpnio.config.HttpNioConnectionPoolClientModule;
 import org.jclouds.logging.jdk.config.JDKLoggingModule;
 import org.jclouds.logging.log4j.config.Log4JLoggingModule;
 
@@ -51,11 +51,11 @@ public class JCloudsConnection
             properties.setProperty(S3Constants.PROPERTY_HTTP_SECURE,
                                    "false");
          }
-         if (properties.containsKey(S3Constants.PROPERTY_AWS_MAP_TIMEOUT)) {
+         if (properties.containsKey(S3Constants.PROPERTY_S3_MAP_TIMEOUT)) {
             config.setRequestTimeout(Long.parseLong(properties
-                  .getProperty(S3Constants.PROPERTY_AWS_MAP_TIMEOUT)));
+                  .getProperty(S3Constants.PROPERTY_S3_MAP_TIMEOUT)));
          } else {
-            properties.setProperty(S3Constants.PROPERTY_AWS_MAP_TIMEOUT,
+            properties.setProperty(S3Constants.PROPERTY_S3_MAP_TIMEOUT,
                                    config.getRequestTimeout() + "");
          }
          if (!properties.containsKey(S3Constants.PROPERTY_AWS_ACCESSKEYID))
@@ -78,7 +78,7 @@ public class JCloudsConnection
          Module loggingModule = org.infinispan.util.logging.LogFactory.IS_LOG4J_AVAILABLE ? new Log4JLoggingModule()
                : new JDKLoggingModule();
          this.context = S3ContextFactory.createS3Context(properties,
-                                                         new S3HttpNioConnectionPoolClientModule(), loggingModule);
+                                                         new HttpNioConnectionPoolClientModule(), loggingModule);
          this.s3Service = context.getConnection();
          if (this.s3Service == null) {
             throw new S3ConnectionException("Could not connect");
@@ -101,7 +101,7 @@ public class JCloudsConnection
       try {
          org.jclouds.aws.s3.domain.S3Bucket bucket = new org.jclouds.aws.s3.domain.S3Bucket(
                bucketName);
-         s3Service.createBucketIfNotExists(bucketName).get(
+         s3Service.putBucketIfNotExists(bucketName).get(
                config.getRequestTimeout(), TimeUnit.MILLISECONDS);
          return bucket;
       } catch (Exception ex) {
@@ -133,7 +133,7 @@ public class JCloudsConnection
       Set<String> sourceKeys;
       try {
          S3Bucket source = new S3Bucket(sourceBucket);
-         source = s3Service.getBucket(sourceBucket).get(
+         source = s3Service.listBucket(sourceBucket).get(
                config.getRequestTimeout(), TimeUnit.MILLISECONDS);
          sourceKeys = keysInBucket(source);
 
