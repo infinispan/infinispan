@@ -72,7 +72,7 @@ public class S3CacheStoreIntegrationTest extends BaseCacheStoreTest {
       }
       csBucket = (System.getProperty("user.name")
             + "." + this.getClass().getSimpleName()).toLowerCase();
-      System.err.printf("accessKey: %1s, connectionClass: %2s, bucketClass: %3s, bucket: %4s%n", accessKey,
+      System.out.printf("accessKey: %1$s, connectionClass: %2$s, bucketClass: %3$s, bucket: %4$s%n", accessKey,
                         connectionClass, bucketClass, csBucket);
 
       cs2Bucket = csBucket + "2";

@@ -70,7 +70,7 @@
     <repositories>
         <repository>
             <id>jclouds</id>
-            <url>http://jclouds.googlecode.com/svn/trunk/repo</url>
+            <url>http://jclouds.googlecode.com/svn/repo</url>
         </repository>
     </repositories>
     <build>
