@@ -1,5 +1,15 @@
 package org.infinispan.loaders.s3;
 
+import static org.testng.Assert.assertEquals;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.io.UnclosableObjectInputStream;
@@ -9,21 +19,12 @@ import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.s3.jclouds.JCloudsBucket;
 import org.infinispan.loaders.s3.jclouds.JCloudsConnection;
-import static org.testng.Assert.assertEquals;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * @author Adrian Cole
@@ -69,8 +70,8 @@ public class S3CacheStoreIntegrationTest extends BaseCacheStoreTest {
          proxyHost = "localhost";  // TODO  not yet used
          proxyPort = 8888; // TODO  not yet used
       }
-      csBucket = System.getProperty("user.name")
-            + "." + this.getClass().getName();
+      csBucket = (System.getProperty("user.name")
+            + "." + this.getClass().getSimpleName()).toLowerCase();
       System.err.printf("accessKey: %1s, connectionClass: %2s, bucketClass: %3s, bucket: %4s%n", accessKey,
                         connectionClass, bucketClass, csBucket);
 
