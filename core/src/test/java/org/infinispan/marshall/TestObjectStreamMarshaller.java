@@ -42,11 +42,11 @@ public class TestObjectStreamMarshaller extends AbstractMarshaller {
    public void objectToObjectStream(Object obj, ObjectOutput out) throws IOException {
       String xml = xs.toXML(obj);
       debug("Writing: \n" + xml);
-      out.writeUTF(xml);
+      out.writeObject(xml);
    }
 
    public Object objectFromObjectStream(ObjectInput in) throws IOException, ClassNotFoundException {
-      String xml = in.readUTF();
+      String xml = (String) in.readObject();
       debug("Reading: \n" + xml);
       return xs.fromXML(xml);
    }

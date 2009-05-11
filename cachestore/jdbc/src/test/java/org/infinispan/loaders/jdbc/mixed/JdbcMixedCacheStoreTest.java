@@ -51,7 +51,7 @@ public class JdbcMixedCacheStoreTest {
 
       cacheStoreConfig.setKey2StringMapperClass(DefaultKey2StringMapper.class.getName());
       cacheStore = new JdbcMixedCacheStore();
-      cacheStore.init(cacheStoreConfig, null, new TestObjectStreamMarshaller());
+      cacheStore.init(cacheStoreConfig, null, new TestObjectStreamMarshaller(true));
       cacheStore.start();
    }
 
@@ -103,7 +103,6 @@ public class JdbcMixedCacheStoreTest {
       assertRowCounts(0, 0);
    }
 
-   @Test(enabled = false, description = "Re-enable once proper semantics of how the 2 delegate stores multiplex over the stream is figured out.")
    public void testMixedFromAndToStream() throws Exception {
       cacheStore.store(InternalEntryFactory.create("String", "someValue"));
       cacheStore.store(InternalEntryFactory.create("String2", "someValue"));
