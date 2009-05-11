@@ -9,6 +9,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.remoting.RpcManager;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
@@ -80,6 +81,15 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @return the component registry for this cache instance
     */
    ComponentRegistry getComponentRegistry();
+   
+   
+   void lock(K key, boolean eager);
+   
+   void lock(Collection<? extends K> keys, boolean eager);
+   
+   void unlock(K key);
+   
+   void unlock(Collection<? extends K> keys);
 
    RpcManager getRpcManager();
 

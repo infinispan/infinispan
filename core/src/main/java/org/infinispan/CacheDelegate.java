@@ -253,6 +253,22 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
    private InvocationContext getInvocationContext() {
       return invocationContextContainer.get();
    }
+   
+   public void lock(K key, boolean eager) {
+      // TODO: Customise this generated block
+   }
+
+   public void lock(Collection<? extends K> keys, boolean eager) {
+      // TODO: Customise this generated block
+   }
+
+   public void unlock(K key) {
+      // TODO: Customise this generated block
+   }
+
+   public void unlock(Collection<? extends K> keys) {
+      // TODO: Customise this generated block
+   }
 
    public void start() {
       componentRegistry.start();

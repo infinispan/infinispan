@@ -65,4 +65,7 @@ public interface Visitor {
    Object visitCommitCommand(InvocationContext ctx, CommitCommand command) throws Throwable;
 
    Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand invalidateCommand) throws Throwable;
+   
+   // locking commands
+   Object visitLockControlCommand(InvocationContext ctx, LockControlCommand command) throws Throwable;
 }

@@ -124,4 +124,8 @@ public abstract class AbstractVisitor implements Visitor {
          command.acceptVisitor(ctx, this);
       }
    }
+   
+   public Object visitLockControlCommand(InvocationContext ctx, LockControlCommand command) throws Throwable{
+      return handleDefault(ctx, command);
+   }
 }

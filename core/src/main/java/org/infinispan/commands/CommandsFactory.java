@@ -42,6 +42,7 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.GlobalTransaction;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -97,4 +98,6 @@ public interface CommandsFactory {
    StateTransferControlCommand buildStateTransferControlCommand(boolean block);
 
    ClusteredGetCommand buildClusteredGetCommand(Object key);
+   
+   LockControlCommand buildLockControlCommand(Collection keys, boolean lock);
 }

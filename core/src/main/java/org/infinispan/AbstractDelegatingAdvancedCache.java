@@ -9,6 +9,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.remoting.RpcManager;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
@@ -255,5 +256,21 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
 
    public Future<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
       return cache.replaceAsync(key, oldValue, newValue, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+   }
+
+   public void lock(K key, boolean eager) {
+      cache.lock(key, eager);
+   }
+
+   public void lock(Collection<? extends K> keys, boolean eager) {
+      cache.lock(keys, eager);
+   }
+
+   public void unlock(K key) {
+      cache.unlock(key);
+   }
+
+   public void unlock(Collection<? extends K> keys) {
+      cache.unlock(keys);
    }
 }

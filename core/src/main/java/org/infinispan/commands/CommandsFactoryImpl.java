@@ -48,6 +48,7 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.GlobalTransaction;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -199,5 +200,9 @@ public class CommandsFactoryImpl implements CommandsFactory {
             clusteredGetCommand.initialize(dataContainer, cacheLoaderManager);
             break;
       }
+   }
+
+   public LockControlCommand buildLockControlCommand(Collection keys, boolean lock) {
+      return new LockControlCommand(keys,lock);
    }
 }
