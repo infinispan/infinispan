@@ -42,6 +42,7 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.container.DataContainer;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -61,6 +62,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private CacheNotifier notifier;
    private Cache cache;
    private CacheLoaderManager cacheLoaderManager;
+   private String cacheName;
 
    // some stateless commands can be reused so that they aren't constructed again all the time.
    SizeCommand cachedSizeCommand;
@@ -77,6 +79,12 @@ public class CommandsFactoryImpl implements CommandsFactory {
       this.interceptorChain = interceptorChain;
       this.cacheLoaderManager = clManager;
       this.distributionManager = distributionManager;
+   }
+
+   @Start(priority = 1)
+   // needs to happen early on
+   public void start() {
+      cacheName = cache.getName();
    }
 
    public PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, long lifespanMillis, long maxIdleTimeMillis) {
@@ -136,11 +144,11 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    public MultipleRpcCommand buildReplicateCommand(List<ReplicableCommand> toReplicate) {
-      return new MultipleRpcCommand(toReplicate, cache.getName());
+      return new MultipleRpcCommand(toReplicate, cacheName);
    }
 
    public SingleRpcCommand buildSingleRpcCommand(ReplicableCommand call) {
-      return new SingleRpcCommand(cache.getName(), call);
+      return new SingleRpcCommand(cacheName, call);
    }
 
    public StateTransferControlCommand buildStateTransferControlCommand(boolean block) {
@@ -148,7 +156,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    public ClusteredGetCommand buildClusteredGetCommand(Object key) {
-      return new ClusteredGetCommand(key, cache.getName());
+      return new ClusteredGetCommand(key, cacheName);
    }
 
    public void initializeReplicableCommand(ReplicableCommand c) {
@@ -203,6 +211,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    public LockControlCommand buildLockControlCommand(Collection keys, boolean lock) {
-      return new LockControlCommand(keys,lock);
+      return new LockControlCommand(keys, lock);
    }
 }
