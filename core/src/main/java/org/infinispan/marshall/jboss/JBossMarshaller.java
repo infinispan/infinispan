@@ -28,7 +28,7 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.io.ByteBuffer;
 import org.infinispan.io.ExposedByteArrayOutputStream;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.marshall.AbstractMarshaller;
 import org.infinispan.remoting.RpcManager;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
@@ -54,7 +54,7 @@ import java.io.OutputStream;
  * @since 4.0
  */
 @Scope(Scopes.GLOBAL)
-public class JBossMarshaller implements Marshaller {
+public class JBossMarshaller extends AbstractMarshaller {
    private static final Log log = LogFactory.getLog(JBossMarshaller.class);
    private static final String DEFAULT_MARSHALLER_FACTORY = "org.jboss.marshalling.river.RiverMarshallerFactory";
    //   private static final int VERSION_400 = 400;
@@ -177,13 +177,6 @@ public class JBossMarshaller implements Marshaller {
 
    public Object objectFromObjectStream(ObjectInput in) throws IOException, ClassNotFoundException {
       return in.readObject();
-   }
-
-   public Object objectFromStream(InputStream is) throws IOException, ClassNotFoundException {
-      ObjectInput unmarshaller = startObjectInput(is);
-      Object o = objectFromObjectStream(unmarshaller);
-      finishObjectInput(unmarshaller);
-      return o;
    }
 
    protected MagicNumberClassTable createMagicNumberClassTable() {

@@ -12,6 +12,7 @@ import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
 import com.sleepycat.util.ExceptionUnwrapper;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.marshall.Marshaller;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -95,11 +96,12 @@ public class BdbjeResourceFactory {
     * @throws com.sleepycat.je.DatabaseException
     *          if the StoredMap cannot be opened.
     */
-   public StoredMap createStoredMapViewOfDatabase(Database database, StoredClassCatalog classCatalog) throws DatabaseException {
-      EntryBinding storedEntryKeyBinding =
-            new SerialBinding(classCatalog, Object.class);
-      EntryBinding storedEntryValueBinding =
-            new SerialBinding(classCatalog, InternalCacheEntry.class);
+   public StoredMap createStoredMapViewOfDatabase(Database database, StoredClassCatalog classCatalog, Marshaller m) throws DatabaseException {
+      EntryBinding<Object> storedEntryKeyBinding =
+            new SerialBinding<Object>(classCatalog, Object.class);
+//      EntryBinding storedEntryValueBinding =
+//            new SerialBinding(classCatalog, InternalCacheEntry.class);
+      EntryBinding<InternalCacheEntry> storedEntryValueBinding = new InternalCacheEntryBinding(m);
       try {
          return new StoredMap<Object, InternalCacheEntry>(database,
                                                           storedEntryKeyBinding, storedEntryValueBinding, true);

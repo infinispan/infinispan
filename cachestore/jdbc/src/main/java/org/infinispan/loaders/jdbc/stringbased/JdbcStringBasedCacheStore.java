@@ -46,7 +46,7 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
    /**
     * delimits the stram for stream trasfer operations
     */
-   private static final String STRING_STREAM_DELIMITER = "__JdbcCacheStore_done__";
+   private static final byte STRING_STREAM_DELIMITER = 100;
 
    private JdbcStringBasedCacheStoreConfig config;
    private Key2StringMapper key2StringMapper;
@@ -142,8 +142,8 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
 
          int readStoredEntries = 0;
          int batchSize = config.getBatchSize();
-         Object objFromStream = objectInput.readObject();
-         while (!objFromStream.equals(STRING_STREAM_DELIMITER)) {
+         Object objFromStream = marshaller.objectFromObjectStream(objectInput);
+         while (objFromStream instanceof InternalCacheEntry) {
             InternalCacheEntry se = (InternalCacheEntry) objFromStream;
             readStoredEntries++;
             String key = key2StringMapper.getStringMapping(se.getKey());
@@ -157,7 +157,7 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
                if (log.isTraceEnabled())
                   log.trace("Executing batch " + (readStoredEntries / batchSize) + ", batch size is " + batchSize);
             }
-            objFromStream = objectInput.readObject();
+            objFromStream = marshaller.objectFromObjectStream(objectInput);
          }
          if (readStoredEntries % batchSize != 0)
             ps.executeBatch();//flush the batch
@@ -190,9 +190,9 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
          while (rs.next()) {
             InputStream is = rs.getBinaryStream(1);
             InternalCacheEntry se = (InternalCacheEntry) JdbcUtil.unmarshall(getMarshaller(), is);
-            objectOutput.writeObject(se);
+            marshaller.objectToObjectStream(se, objectOutput);
          }
-         objectOutput.writeObject(STRING_STREAM_DELIMITER);
+         marshaller.objectToObjectStream(STRING_STREAM_DELIMITER, objectOutput);
       } catch (SQLException e) {
          logAndThrow(e, "SQL Error while storing string keys to database");
       } catch (IOException e) {

@@ -227,9 +227,7 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       ByteArrayInputStream bin = new ByteArrayInputStream(bout.toByteArray());
       ObjectInputStream in = new ObjectInputStream(bin);
 
-      assert in.read() == MarshallerImpl.MAGICNUMBER_MARSHALLEDVALUE;
-      MarshalledValue recreated = new MarshalledValue();
-      recreated.readExternal(in);
+      MarshalledValue recreated = (MarshalledValue) marshaller.objectFromObjectStream(in);
 
       // there should be nothing more
       assert in.available() == 0;

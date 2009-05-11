@@ -15,6 +15,8 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.modifications.Store;
+import org.infinispan.marshall.Marshaller;
+import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.util.ReflectionUtil;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -77,7 +79,7 @@ public class BdbjeCacheStoreTest {
       }
 
       @Override
-      public StoredMap createStoredMapViewOfDatabase(Database database, StoredClassCatalog classCatalog) throws DatabaseException {
+      public StoredMap createStoredMapViewOfDatabase(Database database, StoredClassCatalog classCatalog, Marshaller m) throws DatabaseException {
          return cacheMap;
       }
 
@@ -120,7 +122,7 @@ public class BdbjeCacheStoreTest {
    }
 
    void start() throws DatabaseException, CacheLoaderException {
-      cs.init(cfg, factory, cache);
+      cs.init(cfg, factory, cache, new TestObjectStreamMarshaller());
       expect(cache.getName()).andReturn("cache");
    }
 

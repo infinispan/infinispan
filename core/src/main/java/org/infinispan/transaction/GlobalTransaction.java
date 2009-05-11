@@ -23,10 +23,6 @@ package org.infinispan.transaction;
 
 import org.infinispan.remoting.transport.Address;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.concurrent.atomic.AtomicLong;
 
 
@@ -39,9 +35,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
  * @since 4.0
  */
-public class GlobalTransaction implements Externalizable {
-
-   private static final long serialVersionUID = 8011434781266976149L;
+public class GlobalTransaction {
 
    private static AtomicLong sid = new AtomicLong(0);
 
@@ -104,18 +98,6 @@ public class GlobalTransaction implements Externalizable {
       StringBuilder sb = new StringBuilder();
       sb.append("GlobalTransaction:<").append(addr).append(">:").append(id);
       return sb.toString();
-   }
-
-   public void writeExternal(ObjectOutput out) throws IOException {
-      out.writeObject(addr);
-      out.writeLong(id);
-      // out.writeInt(hash_code);
-   }
-
-   public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-      addr = (Address) in.readObject();
-      id = in.readLong();
-      hash_code = -1;
    }
 
    /**

@@ -27,7 +27,13 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.GlobalTransaction;
 import org.jboss.util.stream.MarshalledValueInputStream;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.NotSerializableException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.Arrays;
 
 /**
@@ -42,7 +48,7 @@ import java.util.Arrays;
  * @see org.infinispan.interceptors.MarshalledValueInterceptor
  * @since 4.0
  */
-public class MarshalledValue implements Externalizable {
+public class MarshalledValue {
    protected Object instance;
    protected byte[] raw;
    private int cachedHashCode = 0;
@@ -60,7 +66,16 @@ public class MarshalledValue implements Externalizable {
    }
 
    public MarshalledValue() {
-      // empty ctor for serialization
+   }
+
+   public MarshalledValue(byte[] raw, int cachedHashCode) {
+      init(raw, cachedHashCode);
+   }
+
+   public void init(byte[] raw, int cachedHashCode) {
+      // for unmarshalling
+      this.raw = raw;
+      this.cachedHashCode = cachedHashCode;
    }
 
    public synchronized void serialize() {
@@ -133,26 +148,16 @@ public class MarshalledValue implements Externalizable {
       instance = null;
    }
 
-   public void writeExternal(ObjectOutput out) throws IOException {
+   public byte[] getRaw() {
       if (raw == null) serialize();
-      out.writeInt(raw.length);
-      out.write(raw);
-      out.writeInt(hashCode());
-   }
-
-   public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-      int size = in.readInt();
-      raw = new byte[size];
-      cachedHashCode = 0;
-      in.readFully(raw);
-      cachedHashCode = in.readInt();
+      return raw;
    }
 
    /**
-    * Returns the 'cached' instance.
-    * Impl note: this method is synchronized so that it synchronizez with the code that nullifies the instance.
+    * Returns the 'cached' instance. Impl note: this method is synchronized so that it synchronizez with the code that
+    * nullifies the instance.
     *
-    * @see #nullifyInstance() 
+    * @see #nullifyInstance()
     */
    public synchronized Object get() throws IOException, ClassNotFoundException {
       if (instance == null) deserialize();

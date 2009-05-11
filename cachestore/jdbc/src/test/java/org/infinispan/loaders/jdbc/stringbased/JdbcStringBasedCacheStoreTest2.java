@@ -7,7 +7,7 @@ import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
-import org.infinispan.marshall.ObjectStreamMarshaller;
+import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterTest;
@@ -40,7 +40,7 @@ public class JdbcStringBasedCacheStoreTest2 {
       config.setKey2StringMapperClass(PersonKey2StringMapper.class.getName());
       config.setPurgeSynchronously(true);
       cacheStore = new JdbcStringBasedCacheStore();
-      cacheStore.init(config, null, new ObjectStreamMarshaller());
+      cacheStore.init(config, null, new TestObjectStreamMarshaller());
       cacheStore.start();
    }
 

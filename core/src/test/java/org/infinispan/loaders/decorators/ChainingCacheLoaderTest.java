@@ -14,7 +14,7 @@ import org.infinispan.loaders.modifications.Clear;
 import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
-import org.infinispan.marshall.ObjectStreamMarshaller;
+import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -40,12 +40,12 @@ public class ChainingCacheLoaderTest extends BaseCacheStoreTest {
       ChainingCacheStore store = new ChainingCacheStore();
       CacheStoreConfig cfg;
       store1 = new DummyInMemoryCacheStore();
-      store1.init((cfg = new DummyInMemoryCacheStore.Cfg("instance1")), null, new ObjectStreamMarshaller());
+      store1.init((cfg = new DummyInMemoryCacheStore.Cfg("instance1")), null, new TestObjectStreamMarshaller());
 
       store.addCacheLoader(store1, cfg);
 
       store2 = new DummyInMemoryCacheStore();
-      store2.init((cfg = new DummyInMemoryCacheStore.Cfg("instance2")), null, new ObjectStreamMarshaller());
+      store2.init((cfg = new DummyInMemoryCacheStore.Cfg("instance2")), null, new TestObjectStreamMarshaller());
       // set store2 up for streaming
       cfg.setFetchPersistentState(true);
       store.addCacheLoader(store2, cfg);

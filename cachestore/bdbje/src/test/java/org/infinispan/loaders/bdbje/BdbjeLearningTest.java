@@ -23,6 +23,7 @@ import org.infinispan.loaders.modifications.Clear;
 import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
+import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -106,15 +107,12 @@ public class BdbjeLearningTest {
       EntryBinding storedEntryKeyBinding =
             new SerialBinding(javaCatalog, Object.class);
       EntryBinding storedEntryValueBinding =
-            new SerialBinding(javaCatalog, InternalCacheEntry.class);
+            new InternalCacheEntryBinding(new TestObjectStreamMarshaller());
 
       storedEntriesDb = env.openDatabase(null, STORED_ENTRIES, dbConfig);
 
-      cacheMap =
-            new StoredMap<Object, InternalCacheEntry>(storedEntriesDb,
-                                                      storedEntryKeyBinding, storedEntryValueBinding, true);
-
-
+      cacheMap = new StoredMap<Object, InternalCacheEntry>(storedEntriesDb, storedEntryKeyBinding,
+                                                           storedEntryValueBinding, true);
    }
 
    public void testTransactionWorker() throws Exception {

@@ -11,7 +11,7 @@ import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
 import org.infinispan.marshall.Marshaller;
-import org.infinispan.marshall.ObjectStreamMarshaller;
+import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.util.Util;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -81,7 +81,7 @@ public abstract class BaseCacheStoreTest {
     * @return a mock marshaller for use with the cache store impls
     */
    protected Marshaller getMarshaller() {
-      return new ObjectStreamMarshaller();
+      return new TestObjectStreamMarshaller(false);
    }
 
    public void testLoadAndStoreImmortal() throws InterruptedException, CacheLoaderException {
@@ -431,11 +431,13 @@ public abstract class BaseCacheStoreTest {
 
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       ObjectOutputStream oos = new ObjectOutputStream(out);
+
       cs.toStream(new UnclosableObjectOutputStream(oos));
       oos.flush();
       oos.close();
       out.close();
       cs.clear();
+
       ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(out.toByteArray()));
       cs.fromStream(new UnclosableObjectInputStream(ois));
 
@@ -560,5 +562,5 @@ public abstract class BaseCacheStoreTest {
 
       if (!exceptions.isEmpty()) throw exceptions.get(0);
    }
-   
+
 }

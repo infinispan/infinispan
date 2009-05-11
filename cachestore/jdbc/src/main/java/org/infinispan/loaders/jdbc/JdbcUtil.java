@@ -64,7 +64,7 @@ public class JdbcUtil {
 
    public static Object unmarshall(Marshaller marshaller, InputStream inputStream) throws CacheLoaderException {
       try {
-         return marshaller.objectFromStream(inputStream);
+         return marshaller.objectFromInputStream(inputStream);
       } catch (IOException e) {
          String message = "I/O error while unmarshalling from stram";
          log.error(message, e);

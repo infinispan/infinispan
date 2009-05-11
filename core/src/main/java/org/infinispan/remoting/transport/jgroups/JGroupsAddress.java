@@ -2,18 +2,13 @@ package org.infinispan.remoting.transport.jgroups;
 
 import org.infinispan.remoting.transport.Address;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
 /**
  * An encapsulation of a JGroups Address
  *
  * @author Manik Surtani
  * @since 4.0
  */
-public class JGroupsAddress implements Address, Externalizable {
+public class JGroupsAddress implements Address {
    org.jgroups.Address address;
 
    public JGroupsAddress() {
@@ -49,11 +44,11 @@ public class JGroupsAddress implements Address, Externalizable {
       }
    }
 
-   public void writeExternal(ObjectOutput out) throws IOException {
-      out.writeObject(address);
+   public org.jgroups.Address getJGroupsAddress() {
+      return address;
    }
 
-   public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-      address = (org.jgroups.Address) in.readObject();
+   public void setJGroupsAddress(org.jgroups.Address address) {
+      this.address = address;
    }
 }

@@ -46,7 +46,7 @@ public class JGroupsAddressExternalizer implements Externalizer {
 
    public void writeExternal(Object subject, ObjectOutput output) throws IOException {
       JGroupsAddress address = (JGroupsAddress) subject;
-      address.writeExternal(output);
+      output.writeObject(address.getJGroupsAddress());
    }
 
    public Object createExternal(Class<?> subjectType, ObjectInput input, Creator defaultCreator)
@@ -57,6 +57,6 @@ public class JGroupsAddressExternalizer implements Externalizer {
    public void readExternal(Object subject, ObjectInput input) throws IOException,
                                                                       ClassNotFoundException {
       JGroupsAddress address = (JGroupsAddress) subject;
-      address.readExternal(input);
+      address.setJGroupsAddress((org.jgroups.Address) input.readObject());
    }
 }

@@ -61,6 +61,7 @@ public class ByteBuffer {
       return new ByteBuffer(new_buf, 0, new_length);
    }
 
+   @Override
    public String toString() {
       StringBuilder sb = new StringBuilder();
       sb.append(length).append(" bytes");

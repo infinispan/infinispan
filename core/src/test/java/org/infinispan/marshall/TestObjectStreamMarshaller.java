@@ -1,5 +1,6 @@
 package org.infinispan.marshall;
 
+import com.thoughtworks.xstream.XStream;
 import org.infinispan.io.ByteBuffer;
 import org.infinispan.util.Util;
 
@@ -12,15 +13,24 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
-import java.io.Serializable;
 
 /**
- * A dummy marshaller impl that uses JDK object streams
+ * A dummy marshaller impl that uses JBoss Marshalling object streams as they do not require that the objects being
+ * serialized/deserialized implement Serializable.
  *
  * @author Manik Surtani
  */
-public class ObjectStreamMarshaller implements Marshaller, Serializable {
-   
+public class TestObjectStreamMarshaller extends AbstractMarshaller {
+   XStream xs = new XStream();
+   boolean debugXml = false;
+
+   public TestObjectStreamMarshaller(boolean debugXml) {
+      this.debugXml = debugXml;
+   }
+
+   public TestObjectStreamMarshaller() {
+   }
+
    public ObjectOutput startObjectOutput(OutputStream os) throws IOException {
       return new ObjectOutputStream(os);
    }
@@ -28,13 +38,17 @@ public class ObjectStreamMarshaller implements Marshaller, Serializable {
    public void finishObjectOutput(ObjectOutput oo) {
       Util.flushAndCloseOutput(oo);
    }
-   
+
    public void objectToObjectStream(Object obj, ObjectOutput out) throws IOException {
-      out.writeObject(obj);
+      String xml = xs.toXML(obj);
+      debug("Writing: \n" + xml);
+      out.writeUTF(xml);
    }
 
    public Object objectFromObjectStream(ObjectInput in) throws IOException, ClassNotFoundException {
-      return in.readObject();
+      String xml = in.readUTF();
+      debug("Reading: \n" + xml);
+      return xs.fromXML(xml);
    }
 
    public ObjectInput startObjectInput(InputStream is) throws IOException {
@@ -43,13 +57,6 @@ public class ObjectStreamMarshaller implements Marshaller, Serializable {
 
    public void finishObjectInput(ObjectInput oi) {
       Util.closeInput(oi);
-   }
-
-   public Object objectFromStream(InputStream is) throws IOException, ClassNotFoundException {
-      if (is instanceof ObjectInputStream)
-         return objectFromObjectStream((ObjectInputStream) is);
-      else
-         return objectFromObjectStream(new ObjectInputStream(is));
    }
 
    public ByteBuffer objectToBuffer(Object o) throws IOException {
@@ -75,5 +82,11 @@ public class ObjectStreamMarshaller implements Marshaller, Serializable {
 
    public Object objectFromByteBuffer(byte[] buf) throws IOException, ClassNotFoundException {
       return objectFromObjectStream(new ObjectInputStream(new ByteArrayInputStream(buf)));
+   }
+
+   private void debug(String s) {
+      if (debugXml) {
+         System.out.println("TestObjectStreamMarshaller: " + s);
+      }
    }
 }

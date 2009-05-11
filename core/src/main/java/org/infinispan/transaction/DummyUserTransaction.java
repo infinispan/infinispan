@@ -41,10 +41,9 @@ import java.util.List;
  *         Date: May 15, 2003 Time: 4:20:17 PM
  * @since 4.0
  */
-public class DummyUserTransaction implements UserTransaction, java.io.Serializable {
+public class DummyUserTransaction implements UserTransaction {
    static final Log logger_ = LogFactory.getLog(DummyUserTransaction.class);
    DummyTransactionManager tm_;
-   private static final long serialVersionUID = -6568400755677046127L;
 
    /**
     * List<Synchronization>

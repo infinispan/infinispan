@@ -7,7 +7,7 @@ import org.infinispan.loaders.AbstractCacheStoreConfig;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.marshall.Marshaller;
-import org.infinispan.marshall.ObjectStreamMarshaller;
+import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -76,7 +76,7 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
       this.config = (Cfg) config;
       this.cache = cache;
       this.marshaller = m;
-      if (marshaller == null) marshaller = new ObjectStreamMarshaller();
+      if (marshaller == null) marshaller = new TestObjectStreamMarshaller();
    }
 
    public InternalCacheEntry load(Object key) {

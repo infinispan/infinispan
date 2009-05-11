@@ -44,7 +44,9 @@ import java.util.Set;
 public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
 
    private static final Log log = LogFactory.getLog(JdbcBinaryCacheStore.class);
-   private final static String BINARY_STREAM_DELIMITER = "__JdbcBinaryCacheStore_done__";
+
+   // TODO shouldn't we move this delimiter to a superclass, if it is the same and needs to be shared between this class and JdbcStringBasedCacheStore ?
+   private final static byte BINARY_STREAM_DELIMITER = 100;
 
    private JdbcBinaryCacheStoreConfig config;
    private ConnectionFactory connectionFactory;
@@ -197,14 +199,14 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
 
          int readBuckets = 0;
          int batchSize = config.getBatchSize();
-         String bucketName = (String) objectInput.readObject();
-         while (!bucketName.equals(BINARY_STREAM_DELIMITER)) {
-            Bucket bucket = (Bucket) objectInput.readObject();
+         Object bucketName = marshaller.objectFromObjectStream(objectInput);
+         while (bucketName instanceof String) {
+            Bucket bucket = (Bucket) marshaller.objectFromObjectStream(objectInput);
             readBuckets++;
             ByteBuffer buffer = JdbcUtil.marshall(getMarshaller(), bucket);
             ps.setBinaryStream(1, buffer.getStream(), buffer.getLength());
             ps.setLong(2, bucket.timestampOfFirstEntryToExpire());
-            ps.setString(3, bucketName);
+            ps.setString(3, (String) bucketName);
             if (readBuckets % batchSize == 0) {
                ps.executeBatch();
                if (log.isTraceEnabled())
@@ -212,7 +214,7 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
             } else {
                ps.addBatch();
             }
-            bucketName = (String) objectInput.readObject();
+            bucketName = marshaller.objectFromObjectStream(objectInput);
          }
          if (readBuckets % batchSize != 0)
             ps.executeBatch();//flush the batch
@@ -244,10 +246,10 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
             InputStream inputStream = rs.getBinaryStream(1);
             Bucket bucket = (Bucket) JdbcUtil.unmarshall(getMarshaller(), inputStream);
             String bucketName = rs.getString(2);
-            objectOutput.writeObject(bucketName);
-            objectOutput.writeObject(bucket);
+            marshaller.objectToObjectStream(bucketName, objectOutput);
+            marshaller.objectToObjectStream(bucket, objectOutput);
          }
-         objectOutput.writeObject(BINARY_STREAM_DELIMITER);
+         marshaller.objectToObjectStream(BINARY_STREAM_DELIMITER, objectOutput);
       } catch (SQLException ex) {
          logAndThrow(ex, "SQL failure while writing store's content to stream");
       }

@@ -35,6 +35,8 @@ import org.infinispan.container.entries.TransientCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.infinispan.io.ByteBuffer;
 import org.infinispan.io.ExposedByteArrayOutputStream;
+import org.infinispan.io.UnsignedNumeric;
+import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.ExtendedResponse;
 import org.infinispan.remoting.responses.RequestIgnoredResponse;
@@ -50,7 +52,6 @@ import org.infinispan.util.Immutables;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.jboss.util.NotImplementedException;
 import org.jboss.util.stream.MarshalledValueInputStream;
 
 import java.io.ByteArrayInputStream;
@@ -72,7 +73,7 @@ import java.util.*;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class MarshallerImpl implements Marshaller {
+public class MarshallerImpl extends AbstractMarshaller {
    // magic numbers
    protected static final int MAGICNUMBER_GTX = 1;
    protected static final int MAGICNUMBER_JG_ADDRESS = 2;
@@ -116,6 +117,9 @@ public class MarshallerImpl implements Marshaller {
    protected static final int MAGICNUMBER_EXCEPTION_RESPONSE = 36;
    protected static final int MAGICNUMBER_SUCCESSFUL_RESPONSE = 37;
    protected static final int MAGICNUMBER_UNSUCCESSFUL_RESPONSE = 38;
+
+   // -- for cache stores
+   protected static final int MAGICNUMBER_CACHESTORE_BUCKET = 39;
 
    protected static final int MAGICNUMBER_NULL = 99;
    protected static final int MAGICNUMBER_SERIALIZABLE = 100;
@@ -171,7 +175,7 @@ public class MarshallerImpl implements Marshaller {
             }
          } else if (o instanceof MarshalledValue) {
             out.writeByte(MAGICNUMBER_MARSHALLEDVALUE);
-            ((MarshalledValue) o).writeExternal(out);
+            marshallMarshalledValue((MarshalledValue) o, out, refMap);
          } else if (o instanceof DeltaAware) {
             // reading in should be nothing special.
             out.writeByte(MAGICNUMBER_SERIALIZABLE);
@@ -232,6 +236,9 @@ public class MarshallerImpl implements Marshaller {
          } else if (o instanceof Byte) {
             out.writeByte(MAGICNUMBER_BYTE);
             out.writeByte(((Byte) o).byteValue());
+         } else if (o instanceof Bucket) {
+            out.writeByte(MAGICNUMBER_CACHESTORE_BUCKET);
+            marshallBucket((Bucket) o, out, refMap);
          } else if (o instanceof String) {
             out.writeByte(MAGICNUMBER_STRING);
             if (useRefs) writeReference(out, createReference(o, refMap));
@@ -254,6 +261,18 @@ public class MarshallerImpl implements Marshaller {
             throw new IOException("Don't know how to marshall object of type " + o.getClass());
          }
       }
+   }
+
+   private void marshallMarshalledValue(MarshalledValue mv, ObjectOutput out, Map<Object, Integer> refMap) throws IOException {
+      byte[] raw = mv.getRaw();
+      writeUnsignedInt(out, raw.length);
+      out.write(raw);
+      out.writeInt(mv.hashCode());
+   }
+
+   private void marshallBucket(Bucket b, ObjectOutput o, Map<Object, Integer> refMap) throws IOException {
+      writeUnsignedInt(o, b.getNumEntries());
+      for (InternalCacheEntry se : b.getEntries().values()) marshallObject(se, o, refMap);
    }
 
    private void marshallInternalCacheEntry(InternalCacheEntry ice, ObjectOutput out, Map<Object, Integer> refMap) throws IOException {
@@ -343,7 +362,7 @@ public class MarshallerImpl implements Marshaller {
    }
 
    private void marshallJGroupsAddress(JGroupsAddress address, ObjectOutput out) throws IOException {
-      address.writeExternal(out);
+      out.writeObject(address.getJGroupsAddress());
    }
 
    @SuppressWarnings("unchecked")
@@ -444,9 +463,7 @@ public class MarshallerImpl implements Marshaller {
             if (useRefs) refMap.putReferencedObject(reference, retVal);
             return retVal;
          case MAGICNUMBER_MARSHALLEDVALUE:
-            MarshalledValue mv = new MarshalledValue();
-            mv.readExternal(in);
-            return mv;
+            return unmarshallMarshalledValue(in, refMap);
          case MAGICNUMBER_ICE_IMMORTAL:
          case MAGICNUMBER_ICE_MORTAL:
          case MAGICNUMBER_ICE_TRANSIENT:
@@ -480,6 +497,8 @@ public class MarshallerImpl implements Marshaller {
             WriteCommand[] cmds = new WriteCommand[numCommands];
             for (int i = 0; i < numCommands; i++) cmds[i] = (WriteCommand) unmarshallObject(in, refMap);
             return new TransactionLog.LogEntry(gtx, cmds);
+         case MAGICNUMBER_CACHESTORE_BUCKET:
+            return unmarshallBucket(in, refMap);
          case MAGICNUMBER_ARRAY:
             return unmarshallArray(in, refMap);
          case MAGICNUMBER_ARRAY_LIST:
@@ -522,6 +541,21 @@ public class MarshallerImpl implements Marshaller {
             throw new IOException("Unknown magic number " + magicNumber);
       }
       throw new IOException("Unknown magic number " + magicNumber);
+   }
+
+   private MarshalledValue unmarshallMarshalledValue(ObjectInput in, UnmarshalledReferences refs) throws IOException, ClassNotFoundException {
+      int sz = readUnsignedInt(in);
+      byte[] raw = new byte[sz];
+      in.readFully(raw);
+      int hc = in.readInt();
+      return new MarshalledValue(raw, hc);
+   }
+
+   private Bucket unmarshallBucket(ObjectInput input, UnmarshalledReferences references) throws IOException, ClassNotFoundException {
+      Bucket b = new Bucket();
+      int numEntries = readUnsignedInt(input);
+      for (int i = 0; i < numEntries; i++) b.addEntry((InternalCacheEntry) unmarshallObject(input, references));
+      return b;
    }
 
    private InternalCacheEntry unmarshallInternalCacheEntry(byte magic, ObjectInput in, UnmarshalledReferences refMap) throws IOException, ClassNotFoundException {
@@ -601,9 +635,8 @@ public class MarshallerImpl implements Marshaller {
    }
 
    private JGroupsAddress unmarshallJGroupsAddress(ObjectInput in) throws IOException, ClassNotFoundException {
-      JGroupsAddress address = new JGroupsAddress();
-      address.readExternal(in);
-      return address;
+      org.jgroups.Address jga = (org.jgroups.Address) in.readObject();
+      return new JGroupsAddress(jga);
    }
 
    private List unmarshallArrayList(ObjectInput in, UnmarshalledReferences refMap) throws IOException, ClassNotFoundException {
@@ -695,63 +728,6 @@ public class MarshallerImpl implements Marshaller {
     */
    protected int readReference(ObjectInput in) throws IOException {
       return readUnsignedInt(in);
-   }
-
-   /**
-    * Reads an int stored in variable-length format.  Reads between one and five bytes.  Smaller values take fewer
-    * bytes.  Negative numbers are not supported.
-    */
-   protected int readUnsignedInt(ObjectInput in) throws IOException {
-      byte b = in.readByte();
-      int i = b & 0x7F;
-      for (int shift = 7; (b & 0x80) != 0; shift += 7) {
-         b = in.readByte();
-         i |= (b & 0x7FL) << shift;
-      }
-      return i;
-   }
-
-   /**
-    * Writes an int in a variable-length format.  Writes between one and five bytes.  Smaller values take fewer bytes.
-    * Negative numbers are not supported.
-    *
-    * @param i int to write
-    */
-   protected void writeUnsignedInt(ObjectOutput out, int i) throws IOException {
-      while ((i & ~0x7F) != 0) {
-         out.writeByte((byte) ((i & 0x7f) | 0x80));
-         i >>>= 7;
-      }
-      out.writeByte((byte) i);
-   }
-
-
-   /**
-    * Reads an int stored in variable-length format.  Reads between one and nine bytes.  Smaller values take fewer
-    * bytes.  Negative numbers are not supported.
-    */
-   protected final long readUnsignedLong(ObjectInput in) throws IOException {
-      byte b = in.readByte();
-      long i = b & 0x7F;
-      for (int shift = 7; (b & 0x80) != 0; shift += 7) {
-         b = in.readByte();
-         i |= (b & 0x7FL) << shift;
-      }
-      return i;
-   }
-
-   /**
-    * Writes an int in a variable-length format.  Writes between one and nine bytes.  Smaller values take fewer bytes.
-    * Negative numbers are not supported.
-    *
-    * @param i int to write
-    */
-   protected final void writeUnsignedLong(ObjectOutput out, long i) throws IOException {
-      while ((i & ~0x7F) != 0) {
-         out.writeByte((byte) ((i & 0x7f) | 0x80));
-         i >>>= 7;
-      }
-      out.writeByte((byte) i);
    }
 
    protected Object unmarshallArray(ObjectInput in, UnmarshalledReferences refs) throws IOException, ClassNotFoundException {
@@ -986,10 +962,6 @@ public class MarshallerImpl implements Marshaller {
       return retValue;
    }
 
-   public Object objectFromStream(InputStream is) throws IOException {
-      throw new NotImplementedException("not implemented");
-   }
-
    public ByteBuffer objectToBuffer(Object o) throws IOException {
       ExposedByteArrayOutputStream baos = new ExposedByteArrayOutputStream(128);
       ObjectOutput out = new ObjectOutputStream(baos);
@@ -1008,5 +980,21 @@ public class MarshallerImpl implements Marshaller {
 
    public Object objectFromByteBuffer(byte[] bytes) throws IOException, ClassNotFoundException {
       return objectFromByteBuffer(bytes, 0, bytes.length);
+   }
+
+   private int readUnsignedInt(ObjectInput in) throws IOException {
+      return UnsignedNumeric.readUnsignedInt(in);
+   }
+
+   private long readUnsignedLong(ObjectInput in) throws IOException {
+      return UnsignedNumeric.readUnsignedLong(in);
+   }
+
+   private void writeUnsignedInt(ObjectOutput o, int i) throws IOException {
+      UnsignedNumeric.writeUnsignedInt(o, i);
+   }
+
+   private void writeUnsignedLong(ObjectOutput o, long i) throws IOException {
+      UnsignedNumeric.writeUnsignedLong(o, i);
    }
 }

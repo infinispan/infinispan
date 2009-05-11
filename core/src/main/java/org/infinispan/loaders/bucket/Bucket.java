@@ -2,10 +2,8 @@ package org.infinispan.loaders.bucket;
 
 import org.infinispan.container.entries.InternalCacheEntry;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -14,7 +12,7 @@ import java.util.Map;
 /**
  * A bucket is where entries are stored.
  */
-public final class Bucket implements Externalizable {
+public final class Bucket {
    private Map<Object, InternalCacheEntry> entries = new HashMap<Object, InternalCacheEntry>();
    private transient String bucketName;
 
@@ -28,11 +26,6 @@ public final class Bucket implements Externalizable {
 
    public final InternalCacheEntry getEntry(Object key) {
       return entries.get(key);
-   }
-
-   public final void writeExternal(ObjectOutput out) throws IOException {
-      out.writeInt(entries.size());
-      for (InternalCacheEntry se : entries.values()) out.writeObject(se);
    }
 
    public final void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
@@ -93,5 +86,13 @@ public final class Bucket implements Externalizable {
 
    public boolean isEmpty() {
       return entries.isEmpty();
+   }
+
+   public int getNumEntries() {
+      return entries.size();
+   }
+
+   public void clearEntries() {
+      entries.clear();
    }
 }

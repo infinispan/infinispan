@@ -11,7 +11,14 @@ import org.infinispan.marshall.Marshaller;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -141,17 +148,14 @@ public class FileCacheStore extends BucketBasedCacheStore {
       if (bucketFile.exists()) {
          if (log.isTraceEnabled()) log.trace("Found bucket file: '" + bucketFile + "'");
          FileInputStream is = null;
-         ObjectInputStream ois = null;
          try {
             is = new FileInputStream(bucketFile);
-            ois = new ObjectInputStream(is);
-            bucket = (Bucket) ois.readObject();
+            bucket = (Bucket) marshaller.objectFromInputStream(is);
          } catch (Exception e) {
             String message = "Error while reading from file: " + bucketFile.getAbsoluteFile();
             log.error(message, e);
             throw new CacheLoaderException(message, e);
          } finally {
-            safeClose(ois);
             safeClose(is);
          }
       }
@@ -175,19 +179,16 @@ public class FileCacheStore extends BucketBasedCacheStore {
 
       if (!b.getEntries().isEmpty()) {
          FileOutputStream fos = null;
-         ObjectOutputStream oos = null;
          try {
+            byte[] bytes = marshaller.objectToByteBuffer(b);
             fos = new FileOutputStream(f);
-            oos = new ObjectOutputStream(fos);
-            oos.writeObject(b);
-            oos.flush();
+            fos.write(bytes);
             fos.flush();
          } catch (IOException ex) {
             log.error("Exception while saving bucket " + b, ex);
             throw new CacheLoaderException(ex);
          }
          finally {
-            safeClose(oos);
             safeClose(fos);
          }
       }

@@ -9,7 +9,7 @@ import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.infinispan.loaders.jdbc.stringbased.DefaultKey2StringMapper;
 import org.infinispan.loaders.jdbc.stringbased.Person;
-import org.infinispan.marshall.ObjectStreamMarshaller;
+import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterTest;
@@ -51,7 +51,7 @@ public class JdbcMixedCacheStoreTest {
 
       cacheStoreConfig.setKey2StringMapperClass(DefaultKey2StringMapper.class.getName());
       cacheStore = new JdbcMixedCacheStore();
-      cacheStore.init(cacheStoreConfig, null, new ObjectStreamMarshaller());
+      cacheStore.init(cacheStoreConfig, null, new TestObjectStreamMarshaller());
       cacheStore.start();
    }
 
@@ -103,6 +103,7 @@ public class JdbcMixedCacheStoreTest {
       assertRowCounts(0, 0);
    }
 
+   @Test(enabled = false, description = "Re-enable once proper semantics of how the 2 delegate stores multiplex over the stream is figured out.")
    public void testMixedFromAndToStream() throws Exception {
       cacheStore.store(InternalEntryFactory.create("String", "someValue"));
       cacheStore.store(InternalEntryFactory.create("String2", "someValue"));

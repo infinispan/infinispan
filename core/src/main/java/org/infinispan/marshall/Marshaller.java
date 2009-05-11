@@ -112,14 +112,6 @@ public interface Marshaller {
    Object objectFromObjectStream(ObjectInput in) throws IOException, ClassNotFoundException;
 
    /**
-    * Unmarshalls an object from an {@link java.io.InputStream}
-    *
-    * @param is stream to unmarshall from
-    * @return Object from stream passed in.
-    */
-   Object objectFromStream(InputStream is) throws IOException, ClassNotFoundException;
-
-   /**
     * A method that returns an instance of {@link org.infinispan.io.ByteBuffer}, which allows direct access to the byte
     * array with minimal array copying
     *
@@ -134,4 +126,6 @@ public interface Marshaller {
    byte[] objectToByteBuffer(Object obj) throws IOException;
 
    Object objectFromByteBuffer(byte[] buf) throws IOException, ClassNotFoundException;
+
+   Object objectFromInputStream(InputStream is) throws IOException, ClassNotFoundException;
 }

@@ -6,7 +6,6 @@ import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
-import org.infinispan.marshall.ObjectStreamMarshaller;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.Test;
 
@@ -23,7 +22,7 @@ public class JdbcStringBasedCacheStoreTest extends BaseCacheStoreTest {
       TableManipulation tm = UnitTestDatabaseManager.buildDefaultTableManipulation();
       JdbcStringBasedCacheStoreConfig config = new JdbcStringBasedCacheStoreConfig(connectionFactoryConfig, tm);
       JdbcStringBasedCacheStore jdbcBucketCacheStore = new JdbcStringBasedCacheStore();
-      jdbcBucketCacheStore.init(config, null, new ObjectStreamMarshaller());
+      jdbcBucketCacheStore.init(config, null, getMarshaller());
       jdbcBucketCacheStore.start();
       return jdbcBucketCacheStore;
    }
@@ -32,7 +31,7 @@ public class JdbcStringBasedCacheStoreTest extends BaseCacheStoreTest {
       JdbcStringBasedCacheStore stringBasedCacheStore = new JdbcStringBasedCacheStore();
       JdbcStringBasedCacheStoreConfig config = new JdbcStringBasedCacheStoreConfig(false);
       config.setCreateTableOnStart(false);
-      stringBasedCacheStore.init(config, null, new ObjectStreamMarshaller());
+      stringBasedCacheStore.init(config, null, getMarshaller());
       stringBasedCacheStore.start();
       assert stringBasedCacheStore.getConnectionFactory() == null;
 

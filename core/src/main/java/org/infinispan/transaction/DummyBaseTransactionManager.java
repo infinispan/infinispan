@@ -33,15 +33,13 @@ import javax.transaction.Status;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
-import java.io.Serializable;
 
 /**
  * @author bela
  * @since 4.0
  */
-public class DummyBaseTransactionManager implements TransactionManager, Serializable {
+public class DummyBaseTransactionManager implements TransactionManager {
    static ThreadLocal<DummyTransaction> thread_local = new ThreadLocal<DummyTransaction>();
-   private static final long serialVersionUID = -6716097342564237376l;
    private static final Log log = LogFactory.getLog(DummyBaseTransactionManager.class);
    private static final boolean trace = log.isTraceEnabled();
 

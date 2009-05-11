@@ -47,7 +47,7 @@ import java.io.OutputStream;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class VersionAwareMarshaller implements Marshaller {
+public class VersionAwareMarshaller extends AbstractMarshaller {
    private static final Log log = LogFactory.getLog(VersionAwareMarshaller.class);
    private boolean trace = log.isTraceEnabled();
 
@@ -89,20 +89,6 @@ public class VersionAwareMarshaller implements Marshaller {
       try {
          versionId = in.readShort();
          log.trace("Read version {0}", versionId);
-      }
-      catch (Exception e) {
-         log.error("Unable to read version id from first two bytes of stream, barfing.");
-         throw new IOException("Unable to read version id from first two bytes of stream.");
-      }
-      return defaultMarshaller.objectFromObjectStream(in);
-   }
-
-   public Object objectFromStream(InputStream is) throws IOException, ClassNotFoundException {
-      short versionId;
-      ObjectInputStream in = new MarshalledValueInputStream(is);
-      try {
-         versionId = in.readShort();
-         if (trace) log.trace("Read version " + versionId);
       }
       catch (Exception e) {
          log.error("Unable to read version id from first two bytes of stream, barfing.");

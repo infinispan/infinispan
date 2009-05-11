@@ -22,6 +22,7 @@
 package org.infinispan.marshall.jboss.externalizers;
 
 import net.jcip.annotations.Immutable;
+import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.marshall.MarshalledValue;
 import org.jboss.marshalling.Creator;
 import org.jboss.marshalling.Externalizer;
@@ -45,7 +46,11 @@ public class MarshalledValueExternalizer implements Externalizer {
    private static final long serialVersionUID = 8473423584918714661L;
 
    public void writeExternal(Object subject, ObjectOutput output) throws IOException {
-      ((MarshalledValue) subject).writeExternal(output);
+      MarshalledValue mv = ((MarshalledValue) subject);
+      byte[] raw = mv.getRaw();
+      UnsignedNumeric.writeUnsignedInt(output, raw.length);
+      output.write(raw);
+      output.writeInt(mv.hashCode());
    }
 
    public Object createExternal(Class<?> subjectType, ObjectInput input, Creator defaultCreator)
@@ -55,7 +60,11 @@ public class MarshalledValueExternalizer implements Externalizer {
 
    public void readExternal(Object subject, ObjectInput input) throws IOException,
                                                                       ClassNotFoundException {
-      ((MarshalledValue) subject).readExternal(input);
+      MarshalledValue mv = ((MarshalledValue) subject);
+      int length = UnsignedNumeric.readUnsignedInt(input);
+      byte[] b = new byte[length];
+      input.readFully(b);
+      int hc = input.readInt();
+      mv.init(b, hc);
    }
-
 }

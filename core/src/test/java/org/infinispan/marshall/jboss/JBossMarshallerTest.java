@@ -48,6 +48,7 @@ import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.responses.UnsuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
+import org.infinispan.statetransfer.Person;
 import org.infinispan.transaction.GlobalTransaction;
 import org.infinispan.transaction.TransactionLog;
 import org.infinispan.util.FastCopyHashMap;
@@ -140,8 +141,9 @@ public class JBossMarshallerTest {
    }
 
    public void testMarshalledValueMarshalling() throws Exception {
-      GlobalTransaction gtx = GlobalTransaction.create(new JGroupsAddress(new IpAddress(12345)));
-      MarshalledValue mv = new MarshalledValue(gtx, true);
+      Person p = new Person();
+      p.setName("Bob Dylan");
+      MarshalledValue mv = new MarshalledValue(p, true);
       marshallAndAssertEquality(mv);
    }
 
@@ -165,7 +167,7 @@ public class JBossMarshallerTest {
 
    public void testImmutableResponseMarshalling() throws Exception {
       marshallAndAssertEquality(RequestIgnoredResponse.INSTANCE);
-      marshallAndAssertEquality(UnsuccessfulResponse.INSTANCE);      
+      marshallAndAssertEquality(UnsuccessfulResponse.INSTANCE);
    }
 
    public void testExtendedResponseMarshalling() throws Exception {
@@ -216,7 +218,7 @@ public class JBossMarshallerTest {
       InvalidateCommand rc71 = (InvalidateCommand) marshaller.objectFromByteBuffer(bytes);
       assert rc71.getCommandId() == c71.getCommandId() : "Writen[" + c71.getCommandId() + "] and read[" + rc71.getCommandId() + "] objects should be the same";
       assert Arrays.equals(rc71.getParameters(), c71.getParameters()) : "Writen[" + c71.getParameters() + "] and read[" + rc71.getParameters() + "] objects should be the same";
-      
+
       ReplaceCommand c8 = new ReplaceCommand("key", "oldvalue", "newvalue", 0, 0);
       marshallAndAssertEquality(c8);
 

@@ -84,13 +84,13 @@ public class BdbjeCacheStore extends AbstractCacheStore {
     */
    public void init(CacheLoaderConfig config, Cache cache, Marshaller m) {
       BdbjeCacheStoreConfig cfg = (BdbjeCacheStoreConfig) config;
-      init(cfg, new BdbjeResourceFactory(cfg), cache);
+      init(cfg, new BdbjeResourceFactory(cfg), cache, m);
    }
 
-   public void init(BdbjeCacheStoreConfig cfg, BdbjeResourceFactory factory, Cache cache) {
+   void init(BdbjeCacheStoreConfig cfg, BdbjeResourceFactory factory, Cache cache, Marshaller m) {
       if (trace) log.trace("initializing BdbjeCacheStore");
       printLicense();
-      super.init(cfg, cache, null);
+      super.init(cfg, cache, m);
       this.cfg = cfg;
       this.factory = factory;
       this.cache = cache;
@@ -142,7 +142,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
          cacheDb = factory.createDatabase(env, cfg.getCacheDbName());
          Database catalogDb = factory.createDatabase(env, cfg.getCatalogDbName());
          catalog = factory.createStoredClassCatalog(catalogDb);
-         cacheMap = factory.createStoredMapViewOfDatabase(cacheDb, catalog);
+         cacheMap = factory.createStoredMapViewOfDatabase(cacheDb, catalog, marshaller);
       } catch (DatabaseException e) {
          throw convertToCacheLoaderException("could not open sleepycat je resource", e);
       }

@@ -1,11 +1,11 @@
 package org.infinispan.expiry;
 
 import org.infinispan.Cache;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -140,7 +140,7 @@ public class ExpiryTest {
 
    public void testLifespanExpiryInReplace() throws InterruptedException {
       Cache cache = cm.getCache();
-      long lifespan = 1000;
+      long lifespan = 10000;
       assert cache.get("k") == null;
       assert cache.replace("k", "v", lifespan, MILLISECONDS) == null;
       assert cache.get("k") == null;

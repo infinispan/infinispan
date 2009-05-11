@@ -35,7 +35,7 @@ public abstract class AbstractCacheStore extends AbstractCacheLoader implements 
 
    private ExecutorService purgerService;
 
-   private Marshaller marshaller;
+   protected Marshaller marshaller;
 
    public void init(CacheLoaderConfig config, Cache cache, Marshaller m) {
       this.config = (AbstractCacheStoreConfig) config;

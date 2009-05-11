@@ -2,15 +2,13 @@ package org.infinispan.container.entries;
 
 import org.infinispan.container.DataContainer;
 
-import java.io.Serializable;
-
 /**
  * An abstract internal cache entry that is typically stored in the data container
  *
  * @author Manik Surtani
  * @since 4.0
  */
-public abstract class AbstractInternalCacheEntry implements InternalCacheEntry, Serializable {
+public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
 
    Object key;
    Object value;
