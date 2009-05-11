@@ -6,13 +6,14 @@ import org.infinispan.loaders.s3.S3CacheStoreConfig;
 import org.infinispan.loaders.s3.S3Connection;
 import org.infinispan.loaders.s3.S3ConnectionException;
 import org.infinispan.marshall.Marshaller;
-import org.jclouds.aws.s3.S3Constants;
 import org.jclouds.aws.s3.S3Context;
 import org.jclouds.aws.s3.S3ContextFactory;
 import org.jclouds.aws.s3.domain.S3Bucket;
+import org.jclouds.aws.s3.reference.S3Constants;
 import org.jclouds.http.httpnio.config.HttpNioConnectionPoolClientModule;
 import org.jclouds.logging.jdk.config.JDKLoggingModule;
 import org.jclouds.logging.log4j.config.Log4JLoggingModule;
+
 
 import java.io.InputStream;
 import java.util.Properties;
