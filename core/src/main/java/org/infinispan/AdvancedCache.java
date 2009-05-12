@@ -145,9 +145,9 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
 
    Future<V> replaceAsync(K k, V v, Flag... flags);
 
-   Future<V> replaceAsync(K k, V oV, V nV, Flag... flags);
+   Future<Boolean> replaceAsync(K k, V oV, V nV, Flag... flags);
 
-   Future<Boolean> replaceAsync(K k, V v, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, Flag... flags);
+   Future<V> replaceAsync(K k, V v, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, Flag... flags);
 
    Future<Boolean> replaceAsync(K k, V oV, V nV, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, Flag... flags);
 

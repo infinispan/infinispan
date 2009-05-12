@@ -66,9 +66,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import java.util.concurrent.TimeoutException;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -386,52 +388,59 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
       return replace(k, oV, nV, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
    }
 
-   public Future<V> putAsync(K key, V value, Flag... flags) {
-      return null;  // TODO: Customise this generated block
+   public final Future<V> putAsync(K key, V value, Flag... flags) {
+      return putAsync(key, value, MILLISECONDS.toMillis(defaultLifespan), MILLISECONDS, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS, flags);
    }
 
-   public Future<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags) {
-      return null;  // TODO: Customise this generated block
+   public final Future<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags) {
+      getInvocationContext().setFlags(flags);
+      return putAsync(key, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
    }
 
-   public Future<V> putIfAbsentAsync(K key, V value, Flag... flags) {
-      return null;  // TODO: Customise this generated block
+   public final Future<V> putIfAbsentAsync(K key, V value, Flag... flags) {
+      return putIfAbsentAsync(key, value, MILLISECONDS.toMillis(defaultLifespan), MILLISECONDS, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS, flags);
    }
 
-   public Future<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags) {
-      return null;  // TODO: Customise this generated block
+   public final Future<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags) {
+      getInvocationContext().setFlags(flags);
+      return putIfAbsentAsync(key, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
    }
 
-   public Future<Void> putAllAsync(Map<? extends K, ? extends V> map, Flag... flags) {
-      return null;  // TODO: Customise this generated block
+   public final Future<Void> putAllAsync(Map<? extends K, ? extends V> map, Flag... flags) {
+      return putAllAsync(map, MILLISECONDS.toMillis(defaultLifespan), MILLISECONDS, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS, flags);
    }
 
-   public Future<Void> putAllAsync(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags) {
-      return null;  // TODO: Customise this generated block
+   public final Future<Void> putAllAsync(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags) {
+      getInvocationContext().setFlags(flags);
+      return putAllAsync(map, MILLISECONDS.toMillis(defaultLifespan), MILLISECONDS, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS);
    }
 
-   public Future<V> removeAsync(Object key, Flag... flags) {
-      return null;  // TODO: Customise this generated block
+   public final Future<V> removeAsync(Object key, Flag... flags) {
+      getInvocationContext().setFlags(flags);
+      return removeAsync(key);
    }
 
-   public Future<Void> clearAsync(Flag... flags) {
-      return null;  // TODO: Customise this generated block
+   public final Future<Void> clearAsync(Flag... flags) {
+      getInvocationContext().setFlags(flags);
+      return clearAsync();
    }
 
-   public Future<V> replaceAsync(K k, V v, Flag... flags) {
-      return null;  // TODO: Customise this generated block
+   public final Future<V> replaceAsync(K k, V v, Flag... flags) {
+      return replaceAsync(k, v, MILLISECONDS.toMillis(defaultLifespan), MILLISECONDS, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS, flags);
    }
 
-   public Future<V> replaceAsync(K k, V oV, V nV, Flag... flags) {
-      return null;  // TODO: Customise this generated block
+   public final Future<Boolean> replaceAsync(K k, V oV, V nV, Flag... flags) {
+      return replaceAsync(k, oV, nV, MILLISECONDS.toMillis(defaultLifespan), MILLISECONDS, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS, flags);
    }
 
-   public Future<Boolean> replaceAsync(K k, V v, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, Flag... flags) {
-      return null;  // TODO: Customise this generated block
+   public final Future<V> replaceAsync(K k, V v, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, Flag... flags) {
+      getInvocationContext().setFlags(flags);
+      return replaceAsync(k, v, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
    }
 
-   public Future<Boolean> replaceAsync(K k, V oV, V nV, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, Flag... flags) {
-      return null;  // TODO: Customise this generated block
+   public final Future<Boolean> replaceAsync(K k, V oV, V nV, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, Flag... flags) {
+      getInvocationContext().setFlags(flags);
+      return replaceAsync(k, oV, nV, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
    }
 
    public final boolean containsKey(Object key, Flag... flags) {
@@ -525,76 +534,143 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
       return (Boolean) invoker.invoke(getInvocationContext(), command);
    }
 
-   public Future<V> putAsync(K key, V value) {
-      return null;  // TODO: Customise this generated block
+   /**
+    * Wraps a return value as a future, if needed.  Typically, if the stack, operation and configuration support
+    * handling of futures, this retval is already a future in which case this method does nothing except cast to
+    * future.
+    * <p/>
+    * Otherwise, a future wrapper is created, which has already completed and simply returns the retval.  This is used
+    * for API consistency.
+    *
+    * @param retval return value to wrap
+    * @param <X>    contents of the future
+    * @return a future
+    */
+   @SuppressWarnings("unchecked")
+   private <X> Future<X> wrapInFuture(final Object retval) {
+      if (retval instanceof Future) {
+         return (Future<X>) retval;
+      } else {
+         return new Future<X>() {
+            public boolean cancel(boolean mayInterruptIfRunning) {
+               return true;
+            }
+
+            public boolean isCancelled() {
+               return false;
+            }
+
+            public boolean isDone() {
+               return true;
+            }
+
+            @SuppressWarnings("unchecked")
+            public X get() throws InterruptedException, ExecutionException {
+               return (X) retval;
+            }
+
+            public X get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+               return get();
+            }
+         };
+      }
    }
 
-   public Future<V> putAsync(K key, V value, long lifespan, TimeUnit unit) {
-      return null;  // TODO: Customise this generated block
+   public final Future<V> putAsync(K key, V value) {
+      return putAsync(key, value, MILLISECONDS.toMillis(defaultLifespan), MILLISECONDS, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS);
    }
 
-   public Future<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return null;  // TODO: Customise this generated block
+   public final Future<V> putAsync(K key, V value, long lifespan, TimeUnit unit) {
+      return putAsync(key, value, lifespan, unit, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS);
    }
 
-   public Future<Void> putAllAsync(Map<? extends K, ? extends V> data) {
-      return null;  // TODO: Customise this generated block
+   public final Future<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      InvocationContext ctx = getInvocationContext();
+      ctx.setUseFutureReturnType(true);
+      PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, lifespanUnit.toMillis(lifespan), maxIdleUnit.toMillis(maxIdle));
+      return wrapInFuture(invoker.invoke(ctx, command));
    }
 
-   public Future<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit unit) {
-      return null;  // TODO: Customise this generated block
+   public final Future<Void> putAllAsync(Map<? extends K, ? extends V> data) {
+      return putAllAsync(data, MILLISECONDS.toMillis(defaultLifespan), MILLISECONDS, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS);
    }
 
-   public Future<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return null;  // TODO: Customise this generated block
+   public final Future<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit unit) {
+      return putAllAsync(data, lifespan, unit, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS);
    }
 
-   public Future<Void> clearAsync() {
-      return null;  // TODO: Customise this generated block
+   public final Future<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      InvocationContext ctx = getInvocationContext();
+      ctx.setUseFutureReturnType(true);
+      PutMapCommand command = commandsFactory.buildPutMapCommand(data, lifespanUnit.toMillis(lifespan), maxIdleUnit.toMillis(maxIdle));
+      return wrapInFuture(invoker.invoke(ctx, command));
    }
 
-   public Future<V> putIfAbsentAsync(K key, V value) {
-      return null;  // TODO: Customise this generated block
+   public final Future<Void> clearAsync() {
+      InvocationContext ctx = getInvocationContext();
+      ctx.setUseFutureReturnType(true);
+      ClearCommand command = commandsFactory.buildClearCommand();
+      return wrapInFuture(invoker.invoke(ctx, command));
    }
 
-   public Future<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit unit) {
-      return null;  // TODO: Customise this generated block
+   public final Future<V> putIfAbsentAsync(K key, V value) {
+      return putIfAbsentAsync(key, value, MILLISECONDS.toMillis(defaultLifespan), MILLISECONDS, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS);
    }
 
-   public Future<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return null;  // TODO: Customise this generated block
+   public final Future<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit unit) {
+      return putIfAbsentAsync(key, value, lifespan, unit, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS);
    }
 
-   public Future<V> removeAsync(Object key) {
-      return null;  // TODO: Customise this generated block
+   public final Future<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      InvocationContext ctx = getInvocationContext();
+      ctx.setUseFutureReturnType(true);
+      PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, lifespanUnit.toMillis(lifespan), maxIdleUnit.toMillis(maxIdle));
+      command.setPutIfAbsent(true);
+      return wrapInFuture(invoker.invoke(ctx, command));
    }
 
-   public Future<Boolean> removeAsync(Object key, Object value) {
-      return null;  // TODO: Customise this generated block
+   public final Future<V> removeAsync(Object key) {
+      InvocationContext ctx = getInvocationContext();
+      ctx.setUseFutureReturnType(true);
+      RemoveCommand command = commandsFactory.buildRemoveCommand(key, null);
+      return wrapInFuture(invoker.invoke(ctx, command));
    }
 
-   public Future<V> replaceAsync(K key, V value) {
-      return null;  // TODO: Customise this generated block
+   public final Future<Boolean> removeAsync(Object key, Object value) {
+      InvocationContext ctx = getInvocationContext();
+      ctx.setUseFutureReturnType(true);
+      RemoveCommand command = commandsFactory.buildRemoveCommand(key, value);
+      return wrapInFuture(invoker.invoke(ctx, command));
    }
 
-   public Future<V> replaceAsync(K key, V value, long lifespan, TimeUnit unit) {
-      return null;  // TODO: Customise this generated block
+   public final Future<V> replaceAsync(K key, V value) {
+      return replaceAsync(key, value, MILLISECONDS.toMillis(defaultLifespan), MILLISECONDS, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS);
    }
 
-   public Future<V> replaceAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return null;  // TODO: Customise this generated block
+   public final Future<V> replaceAsync(K key, V value, long lifespan, TimeUnit unit) {
+      return replaceAsync(key, value, lifespan, unit, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS);
    }
 
-   public Future<Boolean> replaceAsync(K key, V oldValue, V newValue) {
-      return null;  // TODO: Customise this generated block
+   public final Future<V> replaceAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      InvocationContext ctx = getInvocationContext();
+      ctx.setUseFutureReturnType(true);
+      ReplaceCommand command = commandsFactory.buildReplaceCommand(key, null, value, lifespanUnit.toMillis(lifespan), maxIdleUnit.toMillis(maxIdle));
+      return wrapInFuture(invoker.invoke(getInvocationContext(), command));
    }
 
-   public Future<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit unit) {
-      return null;  // TODO: Customise this generated block
+   public final Future<Boolean> replaceAsync(K key, V oldValue, V newValue) {
+      return replaceAsync(key, oldValue, newValue, MILLISECONDS.toMillis(defaultLifespan), MILLISECONDS, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS);
    }
 
-   public Future<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return null;  // TODO: Customise this generated block
+   public final Future<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit unit) {
+      return replaceAsync(key, oldValue, newValue, lifespan, unit, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS);
+   }
+
+   public final Future<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      InvocationContext ctx = getInvocationContext();
+      ctx.setUseFutureReturnType(true);
+      ReplaceCommand command = commandsFactory.buildReplaceCommand(key, oldValue, newValue, lifespanUnit.toMillis(lifespan), maxIdleUnit.toMillis(maxIdle));
+      return wrapInFuture(invoker.invoke(ctx, command));
    }
 
    public final V put(K key, V value, long lifespan, TimeUnit unit) {
