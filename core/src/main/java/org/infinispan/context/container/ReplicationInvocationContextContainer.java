@@ -75,8 +75,8 @@ public class ReplicationInvocationContextContainer implements InvocationContextC
          return contexts.updateThreadContextAndReturn(context);
       } else {
          contexts.initNonTxInvocationContext();
-         contexts.nonTxInvocationContext.setOriginLocal(true);
          if (prepareForCall) contexts.nonTxInvocationContext.prepareForCall();
+         contexts.nonTxInvocationContext.setOriginLocal(true);
          return contexts.updateThreadContextAndReturn(contexts.nonTxInvocationContext);
       }
    }
