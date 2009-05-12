@@ -118,11 +118,11 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
       return cache.replace(k, v, flags);
    }
 
-   public V replace(K k, V oV, V nV, Flag... flags) {
+   public boolean replace(K k, V oV, V nV, Flag... flags) {
       return cache.replace(k, oV, nV, flags);
    }
 
-   public boolean replace(K k, V v, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, Flag... flags) {
+   public V replace(K k, V v, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, Flag... flags) {
       return cache.replace(k, v, lifespan, lifespanUnit, maxIdle, maxIdleUnit, flags);
    }
 
@@ -166,11 +166,11 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
       return cache.replaceAsync(k, v, flags);
    }
 
-   public Future<V> replaceAsync(K k, V oV, V nV, Flag... flags) {
+   public Future<Boolean> replaceAsync(K k, V oV, V nV, Flag... flags) {
       return cache.replaceAsync(k, oV, nV, flags);
    }
 
-   public Future<Boolean> replaceAsync(K k, V v, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, Flag... flags) {
+   public Future<V> replaceAsync(K k, V v, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, Flag... flags) {
       return cache.replaceAsync(k, v, lifespan, lifespanUnit, maxIdle, maxIdleUnit, flags);
    }
 
