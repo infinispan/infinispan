@@ -23,18 +23,24 @@ output at every stage.
 
 * mvn package: Packages the module as a JAR file, the resulting JAR file will be in target/
 
-* mvn package -Dmaven.test.skip=true: Creates a JAR file without running tests.
+* mvn package -Dmaven.test.skip.exec=true: Creates a JAR file without running tests.
 
-* mvn package -P Docs: Packages the module as a JAR file, and builds the javadocs and user documentation from docbook sources.
+* mvn install: will install the artifacts in your local repo for use by other projects/modules.
 
-* mvn install: will install the artifacts in your local repo for use by other projects.  Will also use Maven's assembly plugin to build ZIP files for download (in target/distribution)
+* mvn install -P distribution: In addition to install, will also use Maven's assembly plugin to build ZIP files for distribution (in target/distribution)
 
 * mvn deploy: will build and deploy the project to the JBoss snapshots repository.  Note that you should have your WebDAV
   username and password set up.  (Deploys snapshots to http://snapshots.jboss.org/maven2/org/infinispan).  If you have
   a non-SNAPSHOT version number in your pom.xml, it will be deployed to the live releases repository (see below)
 
-* mvn clean site -Ptest-functional,codeCoverage: will run all tests in the test-functional profile and generate code
-  coverage reports using EMMA.
+
+Other notes:
+------------
+* Running mvn clean, compile and test also works if run within a single module rather than just the root
+
+* Run mvn install -Dmaven.test.skip.exec=true to ensure snapshots are available for inter-module dependencies
+
+* Run mvn idea:idea or mvn eclipse:eclipse to set up your IDE
 
 
 1.2. Setting up your WebDAV username and password to deploy project snapshots
@@ -142,31 +148,25 @@ report-only goal, ike so:
 
    $ mvn surefire-report:report-only
 
-2.3. Executing different groups
--------------------------------
-A group can be executed (using the default configuration) by simply using the appropriate profile, like so:
-
-   $ mvn -P test-jgroups test
-
-2.4. Executing a single test
+2.3. Executing a single test
 ----------------------------
 A single test can be executed using the test property. The value is the short name (not the fully qualified package name)
 of the test.
 
-   $ mvn -P test-XXX -Dtest=FqnTest test
+   $ mvn -Dtest=FqnTest test
 
 Alternatively, if there is more than one test with a given classname in your test suite, you could provide the path to
 the test.
 
-   $ mvn -P test-XXX -Dtest=org/infinispan/api/MixedModeTest test
+   $ mvn -Dtest=org/infinispan/api/MixedModeTest test
 
-2.5. Executing all tests in a given package
+2.4. Executing all tests in a given package
 --------------------------------------------
 This can be achieved by passing in the package name with a wildcard to the test parameter.
 
-   $ mvn -P test-XXX -Dtest=org/infinispan/api/* test
+   $ mvn -Dtest=org/infinispan/api/* test
 
-2.6. Skipping the test run
+2.5. Skipping the test run
 --------------------------
 It is sometimes desirable to install the jboss cache package in your local repository without performing a full test run.
 To do this, simply use the maven.test.skip.exec property:
@@ -174,10 +174,9 @@ To do this, simply use the maven.test.skip.exec property:
    $ mvn -Dmaven.test.skip.exec=true install
 
 Again, this is just a shortcut for local use. It SHOULD NEVER BE USED when releasing. Also, make sure "exec" is included
-in the property, if not the tests will not be built, which will prevent a test jar being produced (POJO Cache needs the
-Core Cache test jar).
+in the property, if not the tests will not be built, which will prevent a test jar being produced.
 
-2.7. Permutations
+2.6. Permutations
 -----------------
 We use the term permutation to describe a group execution against a particular config. This allows us to test a variety
 of environments and configurations without rewriting the same basic test over and over again. For example, the jgroups-tcp
@@ -191,7 +190,7 @@ permutations without wiping the results from the previous run. Note that due to 
 permutation can be executed per mvn command. So automating multiple runs requires shell scripting, or some other execution
 framework to make multiple called to maven.
 
-2.8. Running permutations manually or in an IDE
+2.7. Running permutations manually or in an IDE
 -----------------------------------------------
 
 Sometimes you want to run a test using settings other than the defaults (such as UDP for "jgroups" group tests or the
@@ -208,7 +207,7 @@ Or, to use JBoss JTA (Arjuna TM) instead of the DummyTransactionManager in a "tr
 
 Please refer to the POM file for more properties and permutations.
 
-2.9. Integration with Hudson
+2.8. Integration with Hudson
 ----------------------------
 
 Hudson should do the following:
