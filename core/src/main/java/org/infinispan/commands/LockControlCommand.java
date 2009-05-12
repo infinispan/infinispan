@@ -23,51 +23,66 @@ package org.infinispan.commands;
 
 import java.util.Collection;
 
-import org.infinispan.commands.VisitableCommand;
-import org.infinispan.commands.Visitor;
+import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
 import org.infinispan.context.InvocationContext;
 
 /**
  * 
- *
+ * 
  * @author Vladimir Blagojevic (<a href="mailto:vblagoje@redhat.com">vblagoje@redhat.com</a>)
- * @param 
+ * @param
  * @since 4.0
  */
-public class LockControlCommand implements VisitableCommand {
+public class LockControlCommand extends AbstractTransactionBoundaryCommand {
    private final Collection keys;
    private final boolean lock;
 
-   public LockControlCommand(Collection keys,boolean lock) {
-      this.keys=keys;
+   public LockControlCommand(Collection keys, boolean lock) {
+      this.keys = keys;
       this.lock = lock;
+   }
+
+   public Collection getKeys() {
+      return keys;
+   }
+
+   public boolean isLock() {
+      return lock;
+   }
+
+   public boolean isUnlock() {
+      return !isLock();
    }
 
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitLockControlCommand(ctx, this);
    }
 
-   public Boolean perform(InvocationContext ctx) throws Throwable {
-      return true;
-   }
-
    public byte getCommandId() {
-      return 0;  // no-op
+      return 0; // no-op
    }
 
-   public Object[] getParameters() {
-      return new Object[0];  // no-op
+   public boolean equals(Object o) {
+      if (this == o)
+         return true;
+      if (o == null || getClass() != o.getClass())
+         return false;
+
+      LockControlCommand that = (LockControlCommand) o;
+      if (!super.equals(that))
+         return false;
+      return keys.equals(that.getKeys());
    }
 
-   public void setParameters(int commandId, Object[] parameters) {
-      // no-op
+   public int hashCode() {
+      int result = super.hashCode();
+      result = 31 * result + (keys != null ? keys.hashCode() : 0);
+      result = 31 * result + (lock ? 1 : 0);
+      return result;
    }
 
    @Override
    public String toString() {
-      return "LockControlCommand{" +
-            "lock=" + lock +
-            "keys=" + keys +
-            '}';
+      return "LockControlCommand{" + "lock=" + lock + "keys=" + keys + '}';
    }
 }
