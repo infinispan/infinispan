@@ -399,7 +399,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
     */
    public Set<InternalCacheEntry> loadAll() throws CacheLoaderException {
       try {
-         return new HashSet(cacheMap.values());
+         return new HashSet<InternalCacheEntry>(cacheMap.values());
       } catch (RuntimeException caught) {
          throw convertToCacheLoaderException("error loading all entries", caught);
       }

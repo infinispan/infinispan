@@ -61,7 +61,6 @@ import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -211,7 +210,7 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
    }
 
    public void putForExternalRead(K key, V value) {
-      putForExternalRead(key, value, null);
+      putForExternalRead(key, value, (Flag[]) null);
    }
 
    public void evict(K key) {
@@ -268,7 +267,7 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
       LockControlCommand command = commandsFactory.buildLockControlCommand(keys, false);
       invoker.invoke(getInvocationContext(), command);
    }
-   
+
    public void start() {
       componentRegistry.start();
       defaultLifespan = config.getExpirationLifespan();
@@ -313,7 +312,7 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
 
    public void putForExternalRead(K key, V value, Flag... flags) {
       InvocationContext invocationContext = getInvocationContext();
-      invocationContext.setFlags(flags);
+      if (flags != null) invocationContext.setFlags(flags);
       Transaction ongoingTransaction = null;
       try {
          if (transactionManager != null && (ongoingTransaction = transactionManager.getTransaction()) != null) {
