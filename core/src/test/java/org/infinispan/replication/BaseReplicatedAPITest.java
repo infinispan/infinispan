@@ -2,21 +2,23 @@ package org.infinispan.replication;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.context.Flag;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.config.Configuration;
+import org.infinispan.context.Flag;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.testng.annotations.Test;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class BaseReplicatedAPITest extends MultipleCacheManagersTest {
+@Test(groups = "functional", testName = "replication.BaseReplicatedAPITest")
+public abstract class BaseReplicatedAPITest extends MultipleCacheManagersTest {
 
    AdvancedCache cache1, cache2;
    protected boolean isSync;
