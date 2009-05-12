@@ -53,8 +53,15 @@ public class ReadCommittedEntry implements MVCCEntry {
       this.lifespan = lifespan;
    }
 
+   // if this or any MVCC entry implementation ever needs to store a boolean, always use a flag instead.  This is far
+   // more space-efficient.  Note that this value will be stored in a byte, which means up to 8 flags can be stored in
+   // a single byte.  Always start shifting with 0, the last shift cannot be greater than 7.
    protected static enum Flags {
-      CHANGED(1), CREATED(1 << 1), REMOVED(1 << 2), VALID(1 << 3);
+      CHANGED(1), // same as 1 << 0
+      CREATED(1 << 1),
+      REMOVED(1 << 2),
+      VALID(1 << 3);
+
       final byte mask;
 
       Flags(int mask) {
