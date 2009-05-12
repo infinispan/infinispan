@@ -96,25 +96,4 @@ public class JdbmCacheStoreTest extends BaseCacheStoreTest {
       } catch (NoSuchElementException e) {}
    }
 
-   public void testToStream() throws Exception {
-      cs.store(InternalEntryFactory.create("k1", "v1", -1, -1));
-
-      ByteArrayOutputStream out = new ByteArrayOutputStream();
-      ObjectOutputStream oos = new ObjectOutputStream(out);
-      cs.toStream(new UnclosableObjectOutputStream(oos));
-      oos.flush();
-      oos.close();
-      out.close();
-
-      ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(out.toByteArray()));
-      try {
-         Object readObject = ois.readObject();
-         assert readObject instanceof InternalCacheEntry;
-         readObject = ois.readObject();
-         assert readObject == null;
-         assert ois.available() == 0;
-      } finally {
-         ois.close();
-      }
-   }
 }

@@ -13,6 +13,7 @@ import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.loaders.AbstractCacheStore;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
@@ -125,9 +126,11 @@ public class JdbmCacheStore extends AbstractCacheStore {
 
    public InternalCacheEntry load(Object key) throws CacheLoaderException {
       try {
-         return (InternalCacheEntry) tree.get(key);
+         return unmarshall(tree.get(key), key);
       } catch (IOException e) {
          throw new CacheLoaderException(e);
+      } catch (ClassNotFoundException e) {
+         throw new CacheException(e);
       }
    }
 
@@ -237,13 +240,25 @@ public class JdbmCacheStore extends AbstractCacheStore {
       store0(entry);
       commit();
    }
+   
+   private byte[] marshall(InternalCacheEntry entry) throws IOException {
+      return getMarshaller().objectToByteBuffer(entry.toInternalCacheValue());
+   }
+
+   private InternalCacheEntry unmarshall(Object o, Object key) throws IOException, ClassNotFoundException {
+      if (o == null)
+         return null;
+      byte b[] = (byte[]) o;
+      InternalCacheValue v = (InternalCacheValue)getMarshaller().objectFromByteBuffer(b);
+      return v.toInternalCacheEntry(key);
+   }
 
    private void store0(InternalCacheEntry entry) throws CacheLoaderException {
       Object key = entry.getKey();
       if (trace)
          log.trace("store() " + key);
       try {
-         tree.put(key, entry);
+         tree.put(key, marshall(entry));
          if (entry.canExpire())
             addNewExpiry(entry);
       } catch (IOException e) {
@@ -283,16 +298,16 @@ public class JdbmCacheStore extends AbstractCacheStore {
    /**
     * Writes to a stream the number of entries (long) then the entries themselves.
     */
-   public void toStream(ObjectOutput outputStream) throws CacheLoaderException {
+   public void toStream(ObjectOutput out) throws CacheLoaderException {
       try {
          Set<InternalCacheEntry> loadAll = loadAll();
          log.debug("toStream() entries");
          int count = 0;
          for (InternalCacheEntry entry : loadAll) {
-            outputStream.writeObject(entry);
+            getMarshaller().objectToObjectStream(entry, out);
             count++;
          }
-         outputStream.writeObject(null);
+        getMarshaller().objectToObjectStream(null, out);
          log.debug("wrote " + count + " entries");
       } catch (IOException e) {
          throw new CacheLoaderException(e);
@@ -302,13 +317,13 @@ public class JdbmCacheStore extends AbstractCacheStore {
    /**
     * Reads from a stream the number of entries (long) then the entries themselves.
     */
-   public void fromStream(ObjectInput inputStream) throws CacheLoaderException {
+   public void fromStream(ObjectInput in) throws CacheLoaderException {
       try {
          log.debug("fromStream()");
          int count = 0;
          while (true) {
             count++;
-            InternalCacheEntry entry = (InternalCacheEntry) inputStream.readObject();
+            InternalCacheEntry entry = (InternalCacheEntry) getMarshaller().objectFromObjectStream(in);
             if (entry == null)
                break;
             store(entry);
@@ -329,7 +344,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
       log.trace("purgeInternal");
       try {
          purgeInternal0();
-      } catch (IOException e) {
+      } catch (Exception e) {
          throw new CacheLoaderException(e);
       }
    }
@@ -337,8 +352,9 @@ public class JdbmCacheStore extends AbstractCacheStore {
    /**
     * Find all times less than current time. Build a list of keys for those times. Then purge those keys, assuming those
     * keys' expiry has not changed.
+    * @throws ClassNotFoundException 
     */
-   private void purgeInternal0() throws IOException {
+   private void purgeInternal0() throws Exception {
       TupleBrowser browse = expiryTree.browse();
       Tuple tuple = new Tuple();
       List<Long> times = new ArrayList<Long>();
@@ -364,9 +380,10 @@ public class JdbmCacheStore extends AbstractCacheStore {
          log.debug("purge (up to) " + keys.size() + " entries");
       int count = 0;
       for (Object key : keys) {
-         InternalCacheEntry ice = (InternalCacheEntry) tree.get(key);
-         if (ice == null)
+         byte[] b = (byte[]) tree.get(key);
+         if (b == null)
             continue;
+         InternalCacheValue ice = (InternalCacheValue) getMarshaller().objectFromByteBuffer(b);
          if (ice.isExpired()) {
             // somewhat inefficient to FIND then REMOVE...
             tree.remove(key);
@@ -411,7 +428,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
       public Iterator<InternalCacheEntry> iterator() {
          final FastIterator fi;
          try {
-            fi = tree.values();
+            fi = tree.keys();
          } catch (IOException e) {
             throw new CacheException(e);
          }
@@ -423,9 +440,18 @@ public class JdbmCacheStore extends AbstractCacheStore {
 
             public boolean hasNext() {
                if (current == null && next) {
-                  current = (InternalCacheEntry) fi.next();
-                  if (current == null)
+                  Object key = fi.next();
+                  if (key == null) {
                      next = false;
+                  } else {
+                     try {
+                        current = unmarshall(tree.get(key), key);
+                     } catch (IOException e) {
+                        throw new CacheException(e);
+                     } catch (ClassNotFoundException e) {
+                        throw new CacheException(e);
+                     }
+                  }
                }
                return next;
             }
