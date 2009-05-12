@@ -36,9 +36,6 @@ public interface EntryLookup {
    /**
     * Retrieves an entry from the collection of looked up entries in the current scope.
     * <p/>
-    * If a transaction is in progress, implementations should delegate to the same method in {@link
-    * TransactionContext}.
-    * <p/>
     *
     * @param key key to look up
     * @return an entry, or null if it cannot be found.
@@ -48,19 +45,12 @@ public interface EntryLookup {
    /**
     * Retrieves a map of entries looked up within the current scope.
     * <p/>
-    * If a transaction is in progress, implementations should delegate to the same method in {@link
-    * TransactionContext}.
-    * <p/>
-    *
     * @return a map of looked up entries.
     */
    BidirectionalMap<Object, CacheEntry> getLookedUpEntries();
 
    /**
     * Puts an entry in the registry of looked up entries in the current scope.
-    * <p/>
-    * If a transaction is in progress, implementations should delegate to the same method in {@link
-    * TransactionContext}.
     * <p/>
     *
     * @param key key to store
@@ -78,7 +68,6 @@ public interface EntryLookup {
    void clearLookedUpEntries();
 
    /**
-    * Note that if a transaction is in scope, implementations should test this lock from on {@link TransactionContext}.
     * Using this method should always ensure locks checked in the appropriate scope.
     *
     * @param key lock to test
@@ -86,23 +75,4 @@ public interface EntryLookup {
     */
    boolean hasLockedKey(Object key);
 
-   /**
-    * @return true if the context contains modifications, false otherwise
-    */
-   boolean isContainsModifications();
-
-   /**
-    * Sets whether modifications have been made in the current context
-    */
-   void setContainsModifications(boolean b);
-
-   /**
-    * @return true if the context contains locks, false otherwise
-    */
-   boolean isContainsLocks();
-
-   /**
-    * Sets whether locks have been acquired in the current context
-    */
-   void setContainsLocks(boolean b);
 }

@@ -3,7 +3,7 @@ package org.infinispan.commands.remote;
 import org.infinispan.commands.ReplicableCommand;
 
 /**
- * The {@link org.infinispan.remoting.RpcManager} only replicates commands wrapped in a {@link CacheRpcCommand}.
+ * The {@link org.infinispan.remoting.rpc.RpcManager} only replicates commands wrapped in a {@link CacheRpcCommand}.
  *
  * @author Manik Surtani
  * @author Mircea.Markus@jboss.com

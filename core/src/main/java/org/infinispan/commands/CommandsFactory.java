@@ -37,10 +37,10 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.transaction.GlobalTransaction;
+import org.infinispan.transaction.xa.GlobalTransaction;
 
 import java.util.Collection;
 import java.util.List;
@@ -73,7 +73,7 @@ public interface CommandsFactory {
 
    EvictCommand buildEvictCommand(Object key);
 
-   PrepareCommand buildPrepareCommand(GlobalTransaction gtx, List modifications, Address localAddress, boolean onePhaseCommit);
+   PrepareCommand buildPrepareCommand(GlobalTransaction gtx, List<WriteCommand> modifications, boolean onePhaseCommit);
 
    CommitCommand buildCommitCommand(GlobalTransaction gtx);
 

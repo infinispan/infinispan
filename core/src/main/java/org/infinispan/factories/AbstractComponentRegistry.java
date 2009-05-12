@@ -32,7 +32,6 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.NonVolatile;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
-import org.infinispan.factories.context.ContextMetaFactory;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -157,7 +156,6 @@ public abstract class AbstractComponentRegistry implements Lifecycle {
       s.add(MarshallerFactory.class);
       s.add(ResponseGeneratorFactory.class);
       s.add(DistributionManagerFactory.class);
-      s.add(ContextMetaFactory.class);
       return s;
    }
 

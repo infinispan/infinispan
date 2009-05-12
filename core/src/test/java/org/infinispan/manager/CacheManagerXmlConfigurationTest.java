@@ -4,7 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.DuplicateCacheNameException;
-import org.infinispan.remoting.RpcManager;
+import org.infinispan.remoting.rpc.RpcManager;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -97,7 +97,7 @@ public class CacheManagerXmlConfigurationTest {
             "    </default>\n" +
             "\n" +
             "    <namedCache name=\"c1\">\n" +
-            "        <transaction transactionManagerLookupClass=\"org.infinispan.transaction.GenericTransactionManagerLookup\"/>\n" +
+            "        <transaction transactionManagerLookupClass=\"org.infinispan.transaction.lookup.GenericTransactionManagerLookup\"/>\n" +
             "    </namedCache>\n" +
             "\n" +
             "</infinispan>";

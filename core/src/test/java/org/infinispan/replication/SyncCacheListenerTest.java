@@ -17,8 +17,9 @@ import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.notifications.cachelistener.event.TransactionalEvent;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.transaction.DummyTransactionManagerLookup;
+import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
+import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import static org.testng.AssertJUnit.*;
@@ -134,16 +135,20 @@ public class SyncCacheListenerTest extends MultipleCacheManagersTest {
 
    public void testSyncReplMap() throws Exception {
       Integer age;
+      LockManager lm1 = TestingUtil.extractComponent(cache1, LockManager.class);
 
+      assert lm1.getOwner("age") == null : "lock info is " + lm1.printLockInfo();
       LocalListener lis = new LocalListener();
       cache1.addListener(lis);
       lis.put("age", 38);
+      assert lm1.getOwner("age") == null : "lock info is " + lm1.printLockInfo();
 
       cache1.put("name", "Ben");
       // value on cache2 must be 38
       age = (Integer) cache2.get("age");
       assertNotNull("\"age\" obtained from cache2 must be non-null ", age);
       assertTrue("\"age\" must be 38", age == 38);
+      assert lm1.getOwner("age") == null : "lock info is " + lm1.printLockInfo();
    }
 
    @Listener

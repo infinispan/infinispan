@@ -59,7 +59,10 @@ public class ReentrantStripedLockContainer extends AbstractStripedLockContainer 
 
    public final int getNumLocksHeld() {
       int i = 0;
-      for (ReentrantLock l : sharedLocks) if (l.isLocked()) i++;
+      for (ReentrantLock l : sharedLocks)
+         if (l.isLocked()) {
+            i++;
+         }
       return i;
    }
 

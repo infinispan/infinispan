@@ -23,7 +23,7 @@ package org.infinispan.factories;
 
 import org.infinispan.config.RuntimeConfig;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
-import org.infinispan.remoting.RpcManager;
+import org.infinispan.remoting.rpc.RpcManager;
 
 /**
  * An extension of the EmptyConstructorFactory that places a component in the {@link RuntimeConfig} after creating it.

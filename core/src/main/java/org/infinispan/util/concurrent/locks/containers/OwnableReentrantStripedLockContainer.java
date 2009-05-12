@@ -22,7 +22,7 @@
 package org.infinispan.util.concurrent.locks.containers;
 
 import net.jcip.annotations.ThreadSafe;
-import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.context.container.InvocationContextContainer;
 import org.infinispan.util.concurrent.locks.OwnableReentrantLock;
 
 import java.util.Arrays;

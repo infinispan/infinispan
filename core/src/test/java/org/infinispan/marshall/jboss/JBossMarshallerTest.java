@@ -49,8 +49,8 @@ import org.infinispan.remoting.responses.UnsuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.statetransfer.Person;
-import org.infinispan.transaction.GlobalTransaction;
 import org.infinispan.transaction.TransactionLog;
+import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.FastCopyHashMap;
 import org.infinispan.util.Immutables;
 import org.jgroups.stack.IpAddress;
@@ -89,7 +89,8 @@ public class JBossMarshallerTest {
    }
 
    public void testGlobalTransactionMarshalling() throws Exception {
-      GlobalTransaction gtx = GlobalTransaction.create(new JGroupsAddress(new IpAddress(12345)));
+      JGroupsAddress jGroupsAddress = new JGroupsAddress(new IpAddress(12345));
+      GlobalTransaction gtx = new GlobalTransaction(jGroupsAddress, false);
       marshallAndAssertEquality(gtx);
    }
 
@@ -97,7 +98,8 @@ public class JBossMarshallerTest {
       List l1 = new ArrayList();
       List l2 = new LinkedList();
       for (int i = 0; i < 10; i++) {
-         GlobalTransaction gtx = GlobalTransaction.create(new JGroupsAddress(new IpAddress(1000 * i)));
+         JGroupsAddress jGroupsAddress = new JGroupsAddress(new IpAddress(1000 * i));
+         GlobalTransaction gtx = new GlobalTransaction(jGroupsAddress, false);
          l1.add(gtx);
          l2.add(gtx);
       }
@@ -111,7 +113,8 @@ public class JBossMarshallerTest {
       Map m3 = new HashMap();
       Map<Integer, GlobalTransaction> m4 = new FastCopyHashMap<Integer, GlobalTransaction>();
       for (int i = 0; i < 10; i++) {
-         GlobalTransaction gtx = GlobalTransaction.create(new JGroupsAddress(new IpAddress(1000 * i)));
+         JGroupsAddress jGroupsAddress = new JGroupsAddress(new IpAddress(1000 * i));
+         GlobalTransaction gtx = new GlobalTransaction(jGroupsAddress, false);
          m1.put(1000 * i, gtx);
          m2.put(1000 * i, gtx);
          m4.put(1000 * i, gtx);
@@ -148,13 +151,13 @@ public class JBossMarshallerTest {
    }
 
    public void testSingletonListMarshalling() throws Exception {
-      GlobalTransaction gtx = GlobalTransaction.create(new JGroupsAddress(new IpAddress(12345)));
+      GlobalTransaction gtx = new GlobalTransaction(new JGroupsAddress(new IpAddress(12345)), false);
       List l = Collections.singletonList(gtx);
       marshallAndAssertEquality(l);
    }
 
    public void testTransactionLogMarshalling() throws Exception {
-      GlobalTransaction gtx = GlobalTransaction.create(new JGroupsAddress(new IpAddress(12345)));
+      GlobalTransaction gtx = new GlobalTransaction(new JGroupsAddress(new IpAddress(12345)), false);
       PutKeyValueCommand command = new PutKeyValueCommand("k", "v", false, null, 0, 0);
       TransactionLog.LogEntry entry = new TransactionLog.LogEntry(gtx, command);
       byte[] bytes = marshaller.objectToByteBuffer(entry);
@@ -191,7 +194,7 @@ public class JBossMarshallerTest {
       ClusteredGetCommand c2 = new ClusteredGetCommand("key", "mycache");
       marshallAndAssertEquality(c2);
 
-      // SizeCommand does not have an empty constructor, so doesn't look to be one that is marshallable.      
+      // SizeCommand does not have an empty constructor, so doesn't look to be one that is marshallable.
 
       GetKeyValueCommand c4 = new GetKeyValueCommand("key", null);
       bytes = marshaller.objectToByteBuffer(c4);
@@ -230,15 +233,15 @@ public class JBossMarshallerTest {
 
       Map m1 = new HashMap();
       for (int i = 0; i < 10; i++) {
-         GlobalTransaction gtx = GlobalTransaction.create(new JGroupsAddress(new IpAddress(1000 * i)));
+         GlobalTransaction gtx = new GlobalTransaction(new JGroupsAddress(new IpAddress(1000 * i)), false);
          m1.put(1000 * i, gtx);
       }
       PutMapCommand c10 = new PutMapCommand(m1, null, 0, 0);
       marshallAndAssertEquality(c10);
 
       Address local = new JGroupsAddress(new IpAddress(12345));
-      GlobalTransaction gtx = GlobalTransaction.create(local);
-      PrepareCommand c11 = new PrepareCommand(gtx, local, true, c5, c6, c8, c10);
+      GlobalTransaction gtx = new GlobalTransaction(local, false);
+      PrepareCommand c11 = new PrepareCommand(gtx, true, c5, c6, c8, c10);
       marshallAndAssertEquality(c11);
 
       CommitCommand c12 = new CommitCommand(gtx);

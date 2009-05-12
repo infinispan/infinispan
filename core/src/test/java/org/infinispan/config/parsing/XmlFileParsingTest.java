@@ -51,7 +51,7 @@ public class XmlFileParsingTest {
 
       Configuration c = namedCaches.get("transactional");
 
-      assert c.getTransactionManagerLookupClass().equals("org.infinispan.transaction.GenericTransactionManagerLookup");
+      assert c.getTransactionManagerLookupClass().equals("org.infinispan.transaction.lookup.GenericTransactionManagerLookup");
 
       c = namedCaches.get("syncRepl");
 
@@ -75,7 +75,7 @@ public class XmlFileParsingTest {
 
       c = namedCaches.get("txSyncRepl");
 
-      assert c.getTransactionManagerLookupClass().equals("org.infinispan.transaction.GenericTransactionManagerLookup");
+      assert c.getTransactionManagerLookupClass().equals("org.infinispan.transaction.lookup.GenericTransactionManagerLookup");
       assert c.getCacheMode() == Configuration.CacheMode.REPL_SYNC;
       assert !c.isFetchInMemoryState();
       assert c.getSyncReplTimeout() == 15000;
@@ -127,7 +127,7 @@ public class XmlFileParsingTest {
       c.applyOverrides(namedCaches.get("transactional"));
 
       assert c.getCacheMode() == Configuration.CacheMode.LOCAL;
-      assert c.getTransactionManagerLookupClass().equals("org.infinispan.transaction.GenericTransactionManagerLookup");
+      assert c.getTransactionManagerLookupClass().equals("org.infinispan.transaction.lookup.GenericTransactionManagerLookup");
       assert c.getLockAcquisitionTimeout() == 1000;
       assert c.getConcurrencyLevel() == 100;
       assert c.getIsolationLevel() == IsolationLevel.READ_COMMITTED;
@@ -171,7 +171,7 @@ public class XmlFileParsingTest {
 
       c = defaultCfg.clone();
       c.applyOverrides(namedCaches.get("txSyncRepl"));
-      assert c.getTransactionManagerLookupClass().equals("org.infinispan.transaction.GenericTransactionManagerLookup");
+      assert c.getTransactionManagerLookupClass().equals("org.infinispan.transaction.lookup.GenericTransactionManagerLookup");
       assert c.getCacheMode() == Configuration.CacheMode.REPL_SYNC;
       assert !c.isFetchInMemoryState();
       assert c.getSyncReplTimeout() == 15000;

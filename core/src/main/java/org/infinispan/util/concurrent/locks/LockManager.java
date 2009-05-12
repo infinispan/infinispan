@@ -31,23 +31,11 @@ import org.infinispan.context.InvocationContext;
  * @since 4.0
  */
 public interface LockManager {
-   /**
-    * Determines the owner to be used when obtaining locks, given an invocation context.  This is typically a {@link
-    * org.infinispan.transaction.GlobalTransaction} if one is present in the context, or {@link Thread#currentThread()}
-    * if one is not present.
-    *
-    * @param ctx invocation context
-    * @return owner to be used for acquiring locks.
-    */
-   Object getLockOwner(InvocationContext ctx);
 
    /**
     * Acquires a lock of type lockType, on a specific entry in the cache.  This method will try for a period of time and
     * give up if it is unable to acquire the required lock.  The period of time is specified in {@link
     * org.infinispan.config.Configuration#getLockAcquisitionTimeout()}.
-    * <p/>
-    * The owner for the lock is determined by passing the invocation context to {@link
-    * #getLockOwner(InvocationContext)}.
     * <p/>
     *
     * @param key key to lock
@@ -68,8 +56,6 @@ public interface LockManager {
     * Releases locks present in an invocation context and transaction entry, if one is available.
     * <p/>
     * Locks are released in reverse order of which they are acquired and registered.
-    * <p/>
-    * Lock owner is determined by passing the invocation context to {@link #getLockOwner(InvocationContext)}
     * <p/>
     *
     * @param ctx invocation context to inspect

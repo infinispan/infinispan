@@ -34,6 +34,7 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.TxInvocationContext;
 
 import java.util.Collection;
 
@@ -83,15 +84,15 @@ public abstract class AbstractVisitor implements Visitor {
 
    // tx commands
 
-   public Object visitPrepareCommand(InvocationContext ctx, PrepareCommand command) throws Throwable {
+   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
 
-   public Object visitRollbackCommand(InvocationContext ctx, RollbackCommand command) throws Throwable {
+   public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
 
-   public Object visitCommitCommand(InvocationContext ctx, CommitCommand command) throws Throwable {
+   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
 

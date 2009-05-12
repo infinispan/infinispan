@@ -25,72 +25,62 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.transaction.GlobalTransaction;
+import org.infinispan.context.impl.RemoteTxInvocationContext;
+import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.transaction.xa.GlobalTransaction;
 
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * // TODO: MANIK: Document this
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
+ * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
 public class PrepareCommand extends AbstractTransactionBoundaryCommand {
+
    public static final byte COMMAND_ID = 12;
 
    protected WriteCommand[] modifications;
-   protected Address localAddress;
    protected boolean onePhaseCommit;
+   protected CacheNotifier notifier;
 
-   public PrepareCommand(GlobalTransaction gtx, Address localAddress, boolean onePhaseCommit, WriteCommand... modifications) {
-      this.gtx = gtx;
+   public void initialize(CacheNotifier notifier) {
+      this.notifier = notifier;
+   }
+
+   public PrepareCommand(GlobalTransaction gtx, boolean onePhaseCommit, WriteCommand... modifications) {
+      this.globalTx = gtx;
       this.modifications = modifications;
-      this.localAddress = localAddress;
       this.onePhaseCommit = onePhaseCommit;
    }
 
-   public PrepareCommand(GlobalTransaction gtx, List<WriteCommand> commands, Address localAddress, boolean onePhaseCommit) {
-      this.gtx = gtx;
+   public PrepareCommand(GlobalTransaction gtx, List<WriteCommand> commands, boolean onePhaseCommit) {
+      this.globalTx = gtx;
       this.modifications = commands == null || commands.size() == 0 ? null : commands.toArray(new WriteCommand[commands.size()]);
-      this.localAddress = localAddress;
       this.onePhaseCommit = onePhaseCommit;
-   }
-
-   public void removeModifications(Collection<WriteCommand> modificationsToRemove) {
-      if (modifications != null && modificationsToRemove != null && modificationsToRemove.size() > 0) {
-         // defensive copy
-         Set<WriteCommand> toRemove = new HashSet<WriteCommand>(modificationsToRemove);
-         WriteCommand[] newMods = new WriteCommand[modifications.length - modificationsToRemove.size()];
-         int i = 0;
-         for (WriteCommand c : modifications) {
-            if (toRemove.contains(c)) {
-               toRemove.remove(c);
-            } else {
-               newMods[i++] = c;
-            }
-         }
-         modifications = newMods;
-      }
    }
 
    public PrepareCommand() {
    }
 
+   public final Object perform(InvocationContext ignored) throws Throwable {
+      if (ignored != null) throw new IllegalStateException("Expected null context!");
+      RemoteTxInvocationContext ctx = icc.getRemoteTxInvocationContext(getGlobalTransaction(), true);
+      notifier.notifyTransactionRegistered(ctx.getClusterTransactionId(), ctx);
+      ctx.initialize(modifications, globalTx);
+      return invoker.invoke(ctx, this);
+   }
+
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
-      return visitor.visitPrepareCommand(ctx, this);
+      return visitor.visitPrepareCommand((TxInvocationContext) ctx, this);
    }
 
    public WriteCommand[] getModifications() {
       return modifications;
-   }
-
-   public Address getLocalAddress() {
-      return localAddress;
    }
 
    public boolean isOnePhaseCommit() {
@@ -113,8 +103,8 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
    public Object[] getParameters() {
       int numMods = modifications == null ? 0 : modifications.length;
       Object[] retval = new Object[numMods + 4];
-      retval[0] = gtx;
-      retval[1] = localAddress;
+      retval[0] = globalTx;
+      retval[1] = cacheName;
       retval[2] = onePhaseCommit;
       retval[3] = numMods;
       if (numMods > 0) System.arraycopy(modifications, 0, retval, 4, numMods);
@@ -124,8 +114,8 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
    @Override
    @SuppressWarnings("unchecked")
    public void setParameters(int commandId, Object[] args) {
-      gtx = (GlobalTransaction) args[0];
-      localAddress = (Address) args[1];
+      globalTx = (GlobalTransaction) args[0];
+      cacheName = (String) args[1];
       onePhaseCommit = (Boolean) args[2];
       int numMods = (Integer) args[3];
       if (numMods > 0) {
@@ -134,35 +124,9 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
       }
    }
 
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      if (!super.equals(o)) return false;
-
-      PrepareCommand that = (PrepareCommand) o;
-
-      if (onePhaseCommit != that.onePhaseCommit) return false;
-      if (localAddress != null ? !localAddress.equals(that.localAddress) : that.localAddress != null) return false;
-      if (modifications != null ? !Arrays.equals(modifications, that.modifications) : that.modifications != null)
-         return false;
-
-      return true;
-   }
-
-   @Override
-   public int hashCode() {
-      int result = super.hashCode();
-      result = 31 * result + (modifications != null ? modifications.hashCode() : 0);
-      result = 31 * result + (localAddress != null ? localAddress.hashCode() : 0);
-      result = 31 * result + (onePhaseCommit ? 1 : 0);
-      return result;
-   }
-
    public PrepareCommand copy() {
       PrepareCommand copy = new PrepareCommand();
-      copy.gtx = gtx;
-      copy.localAddress = localAddress;
+      copy.globalTx = globalTx;
       copy.modifications = modifications == null ? null : modifications.clone();
       copy.onePhaseCommit = onePhaseCommit;
       return copy;
@@ -171,11 +135,9 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
    @Override
    public String toString() {
       return "PrepareCommand{" +
-            "globalTransaction=" + gtx +
-            ", modifications=" + Arrays.toString(modifications) +
-            ", localAddress=" + localAddress +
+            "modifications=" + (modifications == null ? null : Arrays.asList(modifications)) +
             ", onePhaseCommit=" + onePhaseCommit +
-            '}';
+            "} " + super.toString();
    }
 
    public boolean containsModificationType(Class<? extends ReplicableCommand> replicableCommandClass) {
@@ -185,5 +147,9 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
          }
       }
       return false;
+   }
+
+   public boolean hasModifications() {
+      return modifications != null && modifications.length > 0;
    }
 }

@@ -9,8 +9,8 @@ import org.infinispan.lifecycle.Lifecycle;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.InboundInvocationHandler;
-import org.infinispan.remoting.ResponseFilter;
-import org.infinispan.remoting.ResponseMode;
+import org.infinispan.remoting.rpc.ResponseFilter;
+import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.statetransfer.StateTransferException;
 

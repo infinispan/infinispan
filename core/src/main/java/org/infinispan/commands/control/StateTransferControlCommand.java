@@ -2,7 +2,7 @@ package org.infinispan.commands.control;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.remoting.RpcManager;
+import org.infinispan.remoting.rpc.RpcManager;
 
 /**
  * A command that informs caches participating in a state transfer of the various stages in the state transfer process.

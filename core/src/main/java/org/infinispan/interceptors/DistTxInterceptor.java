@@ -2,6 +2,7 @@ package org.infinispan.interceptors;
 
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
@@ -22,12 +23,15 @@ import java.util.Map;
  * @since 4.0
  */
 public class DistTxInterceptor extends TxInterceptor {
+
    DistributionManager dm;
    ReplayCommandVisitor replayCommandVisitor = new ReplayCommandVisitor();
+   private CommandsFactory commandsFactory;
 
    @Inject
-   public void injectDistributionManager(DistributionManager dm) {
+   public void injectDistributionManager(DistributionManager dm, CommandsFactory commandsFactory) {
       this.dm = dm;
+      this.commandsFactory = commandsFactory;
    }
 
    /**

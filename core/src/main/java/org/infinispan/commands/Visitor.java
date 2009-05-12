@@ -34,6 +34,12 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.TxInvocationContext;
+
+/**
+ * @author Mircea.Markus@jboss.com
+ * @since 4.0
+ */
 
 public interface Visitor {
    // write commands
@@ -58,11 +64,11 @@ public interface Visitor {
 
    // tx commands
 
-   Object visitPrepareCommand(InvocationContext ctx, PrepareCommand command) throws Throwable;
+   Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable;
 
-   Object visitRollbackCommand(InvocationContext ctx, RollbackCommand command) throws Throwable;
+   Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable;
 
-   Object visitCommitCommand(InvocationContext ctx, CommitCommand command) throws Throwable;
+   Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable;
 
    Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand invalidateCommand) throws Throwable;
    

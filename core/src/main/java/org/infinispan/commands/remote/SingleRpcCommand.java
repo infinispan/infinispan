@@ -41,7 +41,7 @@ public class SingleRpcCommand extends BaseRpcCommand {
    }
 
    public Object perform(InvocationContext ctx) throws Throwable {
-      return processCommand(ctx, command);
+      return processVisitableCommand(command);
    }
 
    @Override

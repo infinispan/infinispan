@@ -21,7 +21,7 @@
  */
 package org.infinispan.notifications.cachelistener.event;
 
-import javax.transaction.Transaction;
+import org.infinispan.transaction.xa.GlobalTransaction;
 
 /**
  * An event type that includes a transaction context - if one exists - as well as a boolean as to whether the call
@@ -35,7 +35,7 @@ public interface TransactionalEvent extends Event {
     * @return the Transaction associated with the current call.  May be null if the current call is outside the scope of
     *         a transaction.
     */
-   Transaction getTransaction();
+   GlobalTransaction getGlobalTransaction();
 
    /**
     * @return true if the call originated on the local cache instance; false if originated from a remote one.

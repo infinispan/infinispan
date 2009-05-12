@@ -12,7 +12,7 @@ import java.io.OutputStream;
 /**
  * A globally scoped component, that is able to locate named caches and invoke remotely originating calls on the
  * appropriate cache.  The primary goal of this component is to act as a bridge between the globally scoped {@link
- * RpcManager} and named-cache scoped components.
+ * org.infinispan.remoting.rpc.RpcManager} and named-cache scoped components.
  *
  * @author Manik Surtani
  * @since 4.0

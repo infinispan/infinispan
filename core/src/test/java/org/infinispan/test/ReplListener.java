@@ -6,6 +6,7 @@ import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
 
 import java.util.Arrays;
@@ -166,13 +167,17 @@ public class ReplListener {
       @Override
       protected Object handleDefault(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
          // first pass up chain
-         Object o = invokeNextInterceptor(ctx, cmd);
-         if (!ctx.isOriginLocal() || watchLocal) markAsVisited(cmd);
+         Object o;
+         try {
+            o = invokeNextInterceptor(ctx, cmd);
+         } finally {//make sure we do mark this command as received even in the case of exceptions(e.g. timeouts)
+            if (!ctx.isOriginLocal() || watchLocal) markAsVisited(cmd);
+         }
          return o;
       }
 
       @Override
-      public Object visitPrepareCommand(InvocationContext ctx, PrepareCommand cmd) throws Throwable {
+      public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand cmd) throws Throwable {
          // first pass up chain
          Object o = invokeNextInterceptor(ctx, cmd);
          if (!ctx.isOriginLocal() || watchLocal) {
@@ -185,7 +190,7 @@ public class ReplListener {
       private void markAsVisited(VisitableCommand cmd) {
          expectationSetupLock.lock();
          try {
-            log.fatal("Cache [" + c + "] saw command " + cmd);
+            log.info("Cache [" + c + "] saw command " + cmd);
             if (expectedCommands != null) {
                expectedCommands.remove(cmd.getClass());
                sawAtLeastOneInvocation = true;

@@ -26,12 +26,13 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.container.InvocationContextContainer;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * Issues a clustered get call, for use primarily by the {@link org.infinispan.loaders.cluster.ClusterCacheLoader}. This
+ * Issues a clustered get call, for use primarily by the {@link org.infinispan.loader.cluster.ClusterCacheLoader}.  This
  * is not a {@link org.infinispan.commands.VisitableCommand} and hence not passed up the {@link
  * org.infinispan.interceptors.base.CommandInterceptor} chain.
  * <p/>
@@ -41,7 +42,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class ClusteredGetCommand implements CacheRpcCommand {
 
-   public static final byte COMMAND_ID = 3;
+   public static final byte COMMAND_ID = 22;
    private static final Log log = LogFactory.getLog(ClusteredGetCommand.class);
    private static final boolean trace = log.isTraceEnabled();
 
@@ -50,6 +51,7 @@ public class ClusteredGetCommand implements CacheRpcCommand {
 
    private DataContainer dataContainer;
    private CacheLoaderManager cacheLoaderManager;
+   private InvocationContextContainer icc;
 
    public ClusteredGetCommand() {
    }
@@ -59,9 +61,10 @@ public class ClusteredGetCommand implements CacheRpcCommand {
       this.cacheName = cacheName;
    }
 
-   public void initialize(DataContainer dataContainer, CacheLoaderManager clManager) {
+   public void initialize(DataContainer dataContainer, CacheLoaderManager clManager, InvocationContextContainer icc) {
       this.dataContainer = dataContainer;
       this.cacheLoaderManager = clManager;
+      this.icc = icc;
    }
 
    /**
@@ -76,10 +79,14 @@ public class ClusteredGetCommand implements CacheRpcCommand {
          if (trace) log.trace("Found InternalCacheEntry {0} for key {1}", cacheEntry, key);
          if (cacheEntry == null) {
             if (trace) log.trace("Checking in cache loader");
-            context.setOriginLocal(false); //to make sure that if there is an ClusteredCl, this won't initiate a remote
+            // hack -> the call is here to make sure that the current thread is associated with
+            // the remote InvocationCOntext in order to make sure that ClusterCL won't trigger a recurring cluster get
+            // which might result in infinite loops 
+            icc.getRemoteNonTxInvocationContext();
             // lookup
-            if (cacheLoaderManager != null && cacheLoaderManager.getCacheLoader() != null)
+            if (cacheLoaderManager != null && cacheLoaderManager.getCacheLoader() != null) {
                cacheEntry = cacheLoaderManager.getCacheLoader().load(key);
+            }
          }
          return cacheEntry;
       } else {

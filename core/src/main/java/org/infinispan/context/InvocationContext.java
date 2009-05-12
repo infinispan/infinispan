@@ -21,44 +21,24 @@
  */
 package org.infinispan.context;
 
-import org.infinispan.transaction.GlobalTransaction;
-
-import javax.transaction.Transaction;
-
 /**
  * A context that contains information pertaining to a given invocation.  These contexts typically have the lifespan of
  * a single invocation.
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
+ * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public interface InvocationContext extends EntryLookup, FlagContainer {
-
-   void setLocalRollbackOnly(boolean localRollbackOnly);
-
-   Transaction getTransaction();
-
-   void setTransaction(Transaction transaction);
-
-   TransactionContext getTransactionContext();
-
-   void setTransactionContext(TransactionContext transactionContext);
-
-   GlobalTransaction getGlobalTransaction();
-
-   void setGlobalTransaction(GlobalTransaction globalTransaction);
+public interface InvocationContext extends EntryLookup, FlagContainer, Cloneable {
 
    boolean isOriginLocal();
 
-   void setOriginLocal(boolean originLocal);
+   boolean isInTxScope();
 
-   boolean isLocalRollbackOnly();
+   Object getLockOwner();
 
-   void reset();
+   public Object clone();
 
-   InvocationContext copy();
+   boolean hasLockedEntries();
 
-   void setState(InvocationContext template);
-
-   boolean isValidTransaction();
 }

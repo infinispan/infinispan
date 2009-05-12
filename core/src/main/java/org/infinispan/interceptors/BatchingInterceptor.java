@@ -24,6 +24,7 @@ package org.infinispan.interceptors;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.container.InvocationContextContainer;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
 
@@ -39,11 +40,13 @@ import javax.transaction.TransactionManager;
 public class BatchingInterceptor extends CommandInterceptor {
    BatchContainer batchContainer;
    TransactionManager transactionManager;
+   InvocationContextContainer icc;
 
    @Inject
-   private void inject(BatchContainer batchContainer, TransactionManager transactionManager) {
+   private void inject(BatchContainer batchContainer, TransactionManager transactionManager, InvocationContextContainer icc) {
       this.batchContainer = batchContainer;
       this.transactionManager = transactionManager;
+      this.icc = icc;
    }
 
    /**
@@ -53,18 +56,20 @@ public class BatchingInterceptor extends CommandInterceptor {
     */
    @Override
    protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
-      Transaction tx = null;
-      try {
-         // if in a batch, attach tx
-         if (transactionManager.getTransaction() == null &&
-               (tx = batchContainer.getBatchTransaction()) != null) {
+      Transaction tx;
+      if (!ctx.isOriginLocal()) return invokeNextInterceptor(ctx, command);
+      // if in a batch, attach tx
+      if (transactionManager.getTransaction() == null && (tx = batchContainer.getBatchTransaction()) != null) {
+         try {
             transactionManager.resume(tx);
+            //this will make the call with a tx invocation context
+            return invokeNextInterceptor(icc.getLocalInvocationContext(true), command);
+         } finally {
+            if (transactionManager.getTransaction() != null && batchContainer.isSuspendTxAfterInvocation())
+               transactionManager.suspend();
          }
-         return super.handleDefault(ctx, command);
-      }
-      finally {
-         if (tx != null && transactionManager.getTransaction() != null && batchContainer.isSuspendTxAfterInvocation())
-            transactionManager.suspend();
+      } else {
+         return invokeNextInterceptor(ctx, command);
       }
    }
 }

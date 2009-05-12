@@ -8,8 +8,8 @@ import org.infinispan.marshall.Marshaller;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.InboundInvocationHandler;
 import org.infinispan.remoting.ReplicationException;
-import org.infinispan.remoting.ResponseFilter;
-import org.infinispan.remoting.ResponseMode;
+import org.infinispan.remoting.rpc.ResponseFilter;
+import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
@@ -372,7 +372,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
             // and roll back any tx and break any locks
 //               List<org.jgroups.Address> removed = toJGroupsAddressList(members);
 //               removed.removeAll(newMembers);
-//               spi.getInvocationContext().getOptionOverrides().setSkipCacheStatusCheck(true);
+//               spi.getLocalInvocationContext().getOptionOverrides().setSkipCacheStatusCheck(true);
 //                  if (root != null)
 //                  {
             //removeLocksForDeadMembers(root.getDelegationTarget(), removed);

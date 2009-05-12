@@ -34,6 +34,7 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.TxInvocationContext;
 
 /**
  * This interceptor adds pre and post processing to each <tt>visitXXX()</tt> method.
@@ -169,7 +170,7 @@ public abstract class PrePostProcessingCommandInterceptor extends CommandInterce
    // tx commands
 
    @Override
-   public Object visitPrepareCommand(InvocationContext ctx, PrepareCommand command) throws Throwable {
+   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       try {
          return (doBeforeCall(ctx, command)) ? handlePrepareCommand(ctx, command) : null;
       }
@@ -183,7 +184,7 @@ public abstract class PrePostProcessingCommandInterceptor extends CommandInterce
    }
 
    @Override
-   public Object visitRollbackCommand(InvocationContext ctx, RollbackCommand command) throws Throwable {
+   public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       try {
          return (doBeforeCall(ctx, command)) ? handleRollbackCommand(ctx, command) : null;
       }
@@ -197,7 +198,7 @@ public abstract class PrePostProcessingCommandInterceptor extends CommandInterce
    }
 
    @Override
-   public Object visitCommitCommand(InvocationContext ctx, CommitCommand command) throws Throwable {
+   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       try {
          return (doBeforeCall(ctx, command)) ? handleCommitCommand(ctx, command) : null;
       }

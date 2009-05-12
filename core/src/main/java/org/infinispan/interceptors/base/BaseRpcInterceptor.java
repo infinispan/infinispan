@@ -21,153 +21,32 @@
  */
 package org.infinispan.interceptors.base;
 
-import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.commands.remote.CacheRpcCommand;
-import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.TransactionContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.remoting.ReplicationQueue;
-import org.infinispan.remoting.ResponseMode;
-import org.infinispan.remoting.RpcManager;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.transaction.GlobalTransaction;
-import org.infinispan.transaction.TransactionTable;
-
-import javax.transaction.Transaction;
-import java.util.List;
+import org.infinispan.remoting.rpc.CacheRpcManager;
 
 /**
  * Acts as a base for all RPC calls - subclassed by
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
+ * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
 public abstract class BaseRpcInterceptor extends CommandInterceptor {
-   private ReplicationQueue replicationQueue;
-   protected TransactionTable txTable;
-   private CommandsFactory commandsFactory;
 
-   protected RpcManager rpcManager;
-   protected boolean defaultSynchronous;
-   private boolean stateTransferEnabled;
+   protected CacheRpcManager rpcManager;
 
    @Inject
-   public void injectComponents(RpcManager rpcManager, ReplicationQueue replicationQueue,
-                                TransactionTable txTable, CommandsFactory commandsFactory) {
+   public void init(CacheRpcManager rpcManager) {
       this.rpcManager = rpcManager;
-      this.replicationQueue = replicationQueue;
-      this.txTable = txTable;
-      this.commandsFactory = commandsFactory;
    }
+   protected boolean defaultSynchronous;
 
    @Start
    public void init() {
       defaultSynchronous = configuration.getCacheMode().isSynchronous();
-      stateTransferEnabled = configuration.isFetchInMemoryState();
-   }
-
-   /**
-    * Checks whether any of the responses are exceptions. If yes, re-throws them (as exceptions or runtime exceptions).
-    */
-   protected void checkResponses(List rsps) throws Throwable {
-      if (rsps != null) {
-         for (Object rsp : rsps) {
-            if (rsp != null && rsp instanceof Throwable) {
-               // lets print a stack trace first.
-               if (log.isDebugEnabled())
-                  log.debug("Received Throwable from remote cache", (Throwable) rsp);
-               throw (Throwable) rsp;
-            }
-         }
-      }
-   }
-
-   protected void replicateCall(InvocationContext ctx, CacheRpcCommand call, boolean sync, boolean useOutOfBandMessage) throws Throwable {
-      replicateCall(ctx, null, call, sync, useOutOfBandMessage);
-   }
-
-   protected void replicateCall(InvocationContext ctx, ReplicableCommand call, boolean sync, boolean useOutOfBandMessage) throws Throwable {
-      replicateCall(ctx, null, call, sync, useOutOfBandMessage);
-   }
-
-   protected void replicateCall(InvocationContext ctx, CacheRpcCommand call, boolean sync) throws Throwable {
-      replicateCall(ctx, null, call, sync, false);
-   }
-
-   protected void replicateCall(InvocationContext ctx, ReplicableCommand call, boolean sync) throws Throwable {
-      replicateCall(ctx, null, call, sync, false);
-   }
-
-   protected void replicateCall(InvocationContext ctx, List<Address> recipients, ReplicableCommand c, boolean sync, boolean useOutOfBandMessage) throws Throwable {
-      long syncReplTimeout = configuration.getSyncReplTimeout();
-
-      if (ctx.hasFlag(Flag.FORCE_ASYNCHRONOUS)) sync = false;
-      else if (ctx.hasFlag(Flag.FORCE_SYNCHRONOUS)) sync = true;
-
-      // tx-level overrides are more important
-      Transaction tx = ctx.getTransaction();
-      if (tx != null) {
-         TransactionContext transactionContext = ctx.getTransactionContext();
-         if (transactionContext != null) {
-            if (transactionContext.isForceAsyncReplication()) sync = false;
-            else if (transactionContext.isForceSyncReplication()) sync = true;
-         }
-      }
-
-      replicateCall(recipients, c, sync, useOutOfBandMessage, syncReplTimeout);
-   }
-
-   protected void replicateCall(List<Address> recipients, ReplicableCommand call, boolean sync, boolean useOutOfBandMessage, long timeout) throws Throwable {
-      if (trace) log.trace("Broadcasting call " + call + " to recipient list " + recipients);
-
-      if (!sync && replicationQueue != null) {
-         if (log.isDebugEnabled()) log.debug("Putting call " + call + " on the replication queue.");
-         replicationQueue.add(call);
-      } else {
-         List<Address> callRecipients = recipients;
-         if (callRecipients == null) {
-            callRecipients = null;
-            if (trace)
-               log.trace("Setting call recipients to " + callRecipients + " since the original list of recipients passed in is null.");
-         }
-         SingleRpcCommand command = commandsFactory.buildSingleRpcCommand(call);
-
-         List rsps = rpcManager.invokeRemotely(callRecipients,
-                                               command,
-                                               sync ? ResponseMode.SYNCHRONOUS : ResponseMode.ASYNCHRONOUS, // is synchronised?
-                                               timeout, useOutOfBandMessage, stateTransferEnabled
-         );
-         if (trace) log.trace("responses=" + rsps);
-         if (sync) checkResponses(rsps);
-      }
-   }
-
-   /**
-    * It does not make sense replicating a transaction method(commit, rollback, prepare) if one of the following is
-    * true:
-    * <pre>
-    *    - call was not initiated here, but on other member of the cluster
-    *    - there is no transaction. Why broadcast a commit or rollback if there is no transaction going on?
-    *    - the current transaction did not modify any data
-    * </pre>
-    */
-   protected final boolean skipReplicationOfTransactionMethod(InvocationContext ctx) {
-      GlobalTransaction gtx = ctx.getGlobalTransaction();
-      return ctx.getTransaction() == null || gtx == null || gtx.isRemote() || ctx.hasFlag(Flag.CACHE_MODE_LOCAL)
-            || !ctx.getTransactionContext().hasModifications();
-   }
-
-   /**
-    * The call runs in a transaction and it was initiated on this cache instance of the cluster.
-    */
-   protected final boolean isTransactionalAndLocal(InvocationContext ctx) {
-      GlobalTransaction gtx = ctx.getGlobalTransaction();
-      boolean isInitiatedHere = gtx != null && !gtx.isRemote();
-      return isInitiatedHere && (ctx.getTransaction() != null);
    }
 
    protected final boolean isSynchronous(InvocationContext ctx) {

@@ -50,25 +50,25 @@ public abstract class NodeLockSupport {
    protected void checkLocks() {
       Cache<Object, Object> cache = cacheTL.get();
       LockManager lm = TestingUtil.extractLockManager(cache);
-      assert !TreeStructureSupport.isLocked(cache, lm, A);
-      assert !TreeStructureSupport.isLocked(cache, lm, Fqn.ROOT);
-      assert TreeStructureSupport.isLocked(cache, lm, C);
-      assert TreeStructureSupport.isLocked(cache, lm, A_B);
-      assert TreeStructureSupport.isLocked(cache, lm, A_B_C);
+      assert !TreeStructureSupport.isLocked(lm, A);
+      assert !TreeStructureSupport.isLocked(lm, Fqn.ROOT);
+      assert TreeStructureSupport.isLocked(lm, C);
+      assert TreeStructureSupport.isLocked(lm, A_B);
+      assert TreeStructureSupport.isLocked(lm, A_B_C);
    }
 
    protected void checkLocksDeep() {
       Cache<Object, Object> cache = cacheTL.get();
       LockManager lm = TestingUtil.extractLockManager(cache);
-      assert !TreeStructureSupport.isLocked(cache, lm, A);
-      assert !TreeStructureSupport.isLocked(cache, lm, Fqn.ROOT);
-      assert !TreeStructureSupport.isLocked(cache, lm, A_B_D);
+      assert !TreeStructureSupport.isLocked(lm, A);
+      assert !TreeStructureSupport.isLocked(lm, Fqn.ROOT);
+      assert !TreeStructureSupport.isLocked(lm, A_B_D);
 
-      assert TreeStructureSupport.isLocked(cache, lm, C);
-      assert TreeStructureSupport.isLocked(cache, lm, C_E);
-      assert TreeStructureSupport.isLocked(cache, lm, A_B);
-      assert TreeStructureSupport.isLocked(cache, lm, A_B_C);
-      assert TreeStructureSupport.isLocked(cache, lm, A_B_C_E);
+      assert TreeStructureSupport.isLocked(lm, C);
+      assert TreeStructureSupport.isLocked(lm, C_E);
+      assert TreeStructureSupport.isLocked(lm, A_B);
+      assert TreeStructureSupport.isLocked(lm, A_B_C);
+      assert TreeStructureSupport.isLocked(lm, A_B_C_E);
    }
 
    protected void assertNoLocks() {

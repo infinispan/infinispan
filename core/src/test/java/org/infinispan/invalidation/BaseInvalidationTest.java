@@ -9,15 +9,16 @@ import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.Flag;
-import org.infinispan.remoting.ResponseFilter;
-import org.infinispan.remoting.ResponseMode;
-import org.infinispan.remoting.RpcManager;
-import org.infinispan.remoting.RpcManagerImpl;
+import org.infinispan.remoting.rpc.ResponseFilter;
+import org.infinispan.remoting.rpc.ResponseMode;
+import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.rpc.RpcManagerImpl;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.transaction.DummyTransactionManagerLookup;
+import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.util.concurrent.locks.LockManager;
 import static org.testng.AssertJUnit.*;
 import org.testng.annotations.Test;
 
@@ -132,8 +133,6 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
       TransactionManager mgr1 = TestingUtil.getTransactionManager(cache1);
       TransactionManager mgr2 = TestingUtil.getTransactionManager(cache2);
 
-      replListener(cache1).expect(InvalidateCommand.class);
-      replListener(cache2).expect(InvalidateCommand.class);
       mgr1.begin();
       cache1.put("key", "value2");
       Transaction tx1 = mgr1.suspend();
@@ -143,12 +142,13 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
       mgr1.resume(tx1);
       // this oughtta fail
       try {
+         replListener(cache2).expect(InvalidateCommand.class);
          mgr1.commit();
          if (isSync) {
             fail("Ought to have failed!");
          } else {
             assert true : "Ought to have succeeded";
-//            replListener(cache2).waitForRpc();
+            replListener(cache2).waitForRpc();
          }
       }
       catch (RollbackException roll) {
@@ -160,14 +160,19 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
 
       mgr2.resume(tx2);
       try {
+         replListener(cache1).expect(InvalidateCommand.class);
          mgr2.commit();
-         replListener(cache1).waitForRpc();
-         if (!isSync) replListener(cache2).waitForRpc();
+         if (!isSync) replListener(cache1).waitForRpc();
          assertTrue("Ought to have succeeded!", true);
       }
       catch (RollbackException roll) {
          fail("Ought to have succeeded!");
       }
+
+      LockManager lm1 = TestingUtil.extractComponent(cache1, LockManager.class);
+      LockManager lm2 = TestingUtil.extractComponent(cache2, LockManager.class);
+      assert !lm1.isLocked("key");
+      assert !lm2.isLocked("key");
 
       LockAssert.assertNoLocks(cache1);
       LockAssert.assertNoLocks(cache2);

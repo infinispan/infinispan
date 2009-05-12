@@ -24,7 +24,7 @@ package org.infinispan.marshall;
 import org.infinispan.CacheException;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.transaction.GlobalTransaction;
+import org.infinispan.transaction.xa.GlobalTransaction;
 import org.jboss.util.stream.MarshalledValueInputStream;
 
 import java.io.ByteArrayInputStream;

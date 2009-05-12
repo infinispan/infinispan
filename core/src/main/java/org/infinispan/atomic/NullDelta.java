@@ -21,7 +21,8 @@
  */
 package org.infinispan.atomic;
 
-import java.io.Externalizable;
+import org.infinispan.atomic.atomichashmap.AtomicHashMap;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -32,8 +33,8 @@ import java.io.ObjectOutput;
  * @author Manik Surtani (<a href="mailto:manik AT jboss DOT org">manik AT jboss DOT org</a>)
  * @since 4.0
  */
-public class NullDelta implements Externalizable, Delta {
-   static final NullDelta INSTANCE = new NullDelta();
+public class NullDelta implements Delta {
+   public static final NullDelta INSTANCE = new NullDelta();
 
    public void writeExternal(ObjectOutput out) throws IOException {
       // don't bother writing anything
@@ -43,7 +44,7 @@ public class NullDelta implements Externalizable, Delta {
       // nothing to read
    }
 
-   public DeltaAware merge(DeltaAware d) {
-      return (d != null && d instanceof AtomicHashMap) ? d : new AtomicHashMap();
+   public DeltaAware merge(DeltaAware other) {
+      return (other != null && other instanceof AtomicHashMap) ? other : new AtomicHashMap();
    }
 }

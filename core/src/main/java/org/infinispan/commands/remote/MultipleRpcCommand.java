@@ -23,6 +23,7 @@ package org.infinispan.commands.remote;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.tx.TransactionBoundaryCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -62,7 +63,13 @@ public class MultipleRpcCommand extends BaseRpcCommand {
     */
    public Object perform(InvocationContext ctx) throws Throwable {
       if (trace) log.trace("Executing remotely originated commands: " + commands.length);
-      for (ReplicableCommand command : commands) processCommand(ctx, command);
+      for (ReplicableCommand command : commands) {
+         if (command instanceof TransactionBoundaryCommand) {
+            command.perform(null);
+         } else {
+            processVisitableCommand(command);
+         }
+      }
       return null;
    }
 

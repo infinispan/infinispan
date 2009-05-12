@@ -39,15 +39,16 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.DataContainer;
+import org.infinispan.context.container.InvocationContextContainer;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.transaction.GlobalTransaction;
+import org.infinispan.transaction.xa.GlobalTransaction;
 
 import java.util.Collection;
 import java.util.List;
@@ -68,17 +69,19 @@ public class CommandsFactoryImpl implements CommandsFactory {
    SizeCommand cachedSizeCommand;
    private InterceptorChain interceptorChain;
    private DistributionManager distributionManager;
+   private InvocationContextContainer icc;
 
    @Inject
    public void setupDependencies(DataContainer container, CacheNotifier notifier, Cache cache,
                                  InterceptorChain interceptorChain, CacheLoaderManager clManager,
-                                 DistributionManager distributionManager) {
+                                 DistributionManager distributionManager, InvocationContextContainer icc) {
       this.dataContainer = container;
       this.notifier = notifier;
       this.cache = cache;
       this.interceptorChain = interceptorChain;
       this.cacheLoaderManager = clManager;
       this.distributionManager = distributionManager;
+      this.icc = icc;
    }
 
    @Start(priority = 1)
@@ -131,16 +134,22 @@ public class CommandsFactoryImpl implements CommandsFactory {
       return command;
    }
 
-   public PrepareCommand buildPrepareCommand(GlobalTransaction gtx, List modifications, Address localAddress, boolean onePhaseCommit) {
-      return new PrepareCommand(gtx, modifications, localAddress, onePhaseCommit);
+   public PrepareCommand buildPrepareCommand(GlobalTransaction gtx, List<WriteCommand> modifications, boolean onePhaseCommit) {
+      PrepareCommand command = new PrepareCommand(gtx, modifications, onePhaseCommit);
+      command.setCacheName(cacheName);
+      return command;
    }
 
    public CommitCommand buildCommitCommand(GlobalTransaction gtx) {
-      return new CommitCommand(gtx);
+      CommitCommand commitCommand = new CommitCommand(gtx);
+      commitCommand.setCacheName(cacheName);
+      return commitCommand;
    }
 
    public RollbackCommand buildRollbackCommand(GlobalTransaction gtx) {
-      return new RollbackCommand(gtx);
+      RollbackCommand rollbackCommand = new RollbackCommand(gtx);
+      rollbackCommand.setCacheName(cacheName);
+      return rollbackCommand;
    }
 
    public MultipleRpcCommand buildReplicateCommand(List<ReplicableCommand> toReplicate) {
@@ -173,7 +182,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case MultipleRpcCommand.COMMAND_ID:
             MultipleRpcCommand rc = (MultipleRpcCommand) c;
-            rc.setInterceptorChain(interceptorChain);
+            rc.init(interceptorChain, icc);
             if (rc.getCommands() != null)
                for (ReplicableCommand nested : rc.getCommands()) {
                   initializeReplicableCommand(nested);
@@ -181,7 +190,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case SingleRpcCommand.COMMAND_ID:
             SingleRpcCommand src = (SingleRpcCommand) c;
-            src.setInterceptorChain(interceptorChain);
+            src.init(interceptorChain, icc);
             if (src.getCommand() != null)
                initializeReplicableCommand(src.getCommand());
 
@@ -196,8 +205,18 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case PrepareCommand.COMMAND_ID:
             PrepareCommand pc = (PrepareCommand) c;
+            pc.init(interceptorChain, icc);
+            pc.initialize(notifier);
             if (pc.getModifications() != null)
                for (ReplicableCommand nested : pc.getModifications()) initializeReplicableCommand(nested);
+            break;
+         case CommitCommand.COMMAND_ID:
+            CommitCommand commitCommand = (CommitCommand) c;
+            commitCommand.init(interceptorChain, icc);
+            break;
+         case RollbackCommand.COMMAND_ID:
+            RollbackCommand rollbackCommand = (RollbackCommand) c;
+            rollbackCommand.init(interceptorChain, icc);
             break;
          case ClearCommand.COMMAND_ID:
             ClearCommand cc = (ClearCommand) c;
@@ -205,7 +224,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case ClusteredGetCommand.COMMAND_ID:
             ClusteredGetCommand clusteredGetCommand = (ClusteredGetCommand) c;
-            clusteredGetCommand.initialize(dataContainer, cacheLoaderManager);
+            clusteredGetCommand.initialize(dataContainer, cacheLoaderManager, icc);
             break;
       }
    }

@@ -24,7 +24,7 @@ package org.infinispan.interceptors;
 import org.infinispan.CacheException;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.context.container.InvocationContextContainer;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
@@ -55,7 +55,7 @@ public class InterceptorChain {
    /**
     * used for invoking commands on the chain
     */
-   private InvocationContextContainer invocationContextContainer;
+   private InvocationContextContainer icc;
    private static final Log log = LogFactory.getLog(InterceptorChain.class);
 
    /**
@@ -66,8 +66,8 @@ public class InterceptorChain {
    }
 
    @Inject
-   public void initialize(InvocationContextContainer invocationContextContainer) {
-      this.invocationContextContainer = invocationContextContainer;
+   public void initialize(InvocationContextContainer icc) {
+      this.icc = icc;
    }
 
    @Start
@@ -248,26 +248,6 @@ public class InterceptorChain {
    }
 
    /**
-    * Similar to {@link #invoke(InvocationContext , VisitableCommand)}, but constructs a invocation context on the fly,
-    * using {@link org.infinispan.context.InvocationContextContainer#get()}
-    */
-   public Object invokeRemote(VisitableCommand cacheCommand) throws Throwable {
-      InvocationContext ctxt = invocationContextContainer.get();
-      ctxt.setOriginLocal(false);
-      return cacheCommand.acceptVisitor(ctxt, firstInChain);
-   }
-
-   /**
-    * Similar to {@link #invoke(InvocationContext , VisitableCommand)}, but constructs a invocation context on the fly,
-    * using {@link org.infinispan.context.InvocationContextContainer#get()} and setting the origin local flag to its
-    * default value.
-    */
-   public Object invoke(VisitableCommand cacheCommand) throws Throwable {
-      InvocationContext ctxt = invocationContextContainer.get();
-      return cacheCommand.acceptVisitor(ctxt, firstInChain);
-   }
-
-   /**
     * @return the first interceptor in the chain.
     */
    public CommandInterceptor getFirstInChain() {
@@ -281,10 +261,6 @@ public class InterceptorChain {
     */
    public void setFirstInChain(CommandInterceptor interceptor) {
       this.firstInChain = interceptor;
-   }
-
-   public InvocationContext getInvocationContext() {
-      return invocationContextContainer.get();
    }
 
    /**

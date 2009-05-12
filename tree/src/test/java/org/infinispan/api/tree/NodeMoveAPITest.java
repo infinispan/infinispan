@@ -3,7 +3,7 @@ package org.infinispan.api.tree;
 import org.infinispan.api.mvcc.LockAssert;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
-import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.context.container.InvocationContextContainer;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -394,18 +394,18 @@ public class NodeMoveAPITest extends SingleCacheManagerTest {
 
    protected void checkLocks() {
       LockManager lm = TestingUtil.extractLockManager(cache);
-      assert TreeStructureSupport.isLocked(cache, lm, C);
-      assert TreeStructureSupport.isLocked(cache, lm, A_B_C);
+      assert TreeStructureSupport.isLocked(lm, C);
+      assert TreeStructureSupport.isLocked(lm, A_B_C);
    }
 
    protected void checkLocksDeep() {
       LockManager lm = TestingUtil.extractLockManager(cache);
 
       // /a/b, /c, /c/e, /a/b/c and /a/b/c/e should all be locked.
-      assert TreeStructureSupport.isLocked(cache, lm, C);
-      assert TreeStructureSupport.isLocked(cache, lm, C_E);
-      assert TreeStructureSupport.isLocked(cache, lm, A_B_C);
-      assert TreeStructureSupport.isLocked(cache, lm, A_B_C_E);
+      assert TreeStructureSupport.isLocked(lm, C);
+      assert TreeStructureSupport.isLocked(lm, C_E);
+      assert TreeStructureSupport.isLocked(lm, A_B_C);
+      assert TreeStructureSupport.isLocked(lm, A_B_C_E);
    }
 
    protected void assertNoLocks() {

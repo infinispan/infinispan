@@ -37,6 +37,7 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.EntryFactory;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -76,29 +77,38 @@ public class LockingInterceptor extends CommandInterceptor {
    }
 
    @Override
-   public Object visitCommitCommand(InvocationContext ctx, CommitCommand command) throws Throwable {
+   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       try {
          return invokeNextInterceptor(ctx, command);
       } finally {
-         transactionalCleanup(true, ctx);
+         if (ctx.isInTxScope()) {
+            cleanupLocks(ctx, ctx.getLockOwner(), true);
+         } else {
+            throw new IllegalStateException("Attempting to do a commit or rollback but there is no transactional context in scope. " + ctx);
+         }
       }
    }
 
    @Override
-   public Object visitRollbackCommand(InvocationContext ctx, RollbackCommand command) throws Throwable {
+   public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       try {
          return invokeNextInterceptor(ctx, command);
       } finally {
-         transactionalCleanup(false, ctx);
+         if (ctx.isInTxScope()) {
+            cleanupLocks(ctx, ctx.getLockOwner(), false);
+         } else {
+            throw new IllegalStateException("Attempting to do a commit or rollback but there is no transactional context in scope. " + ctx);
+         }
       }
    }
 
    @Override
-   public Object visitPrepareCommand(InvocationContext ctx, PrepareCommand command) throws Throwable {
+   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       try {
          return invokeNextInterceptor(ctx, command);
       } finally {
-         if (command.isOnePhaseCommit()) transactionalCleanup(true, ctx);
+         if (command.isOnePhaseCommit())
+            cleanupLocks(ctx, ctx.getLockOwner(), true);
       }
    }
 
@@ -108,8 +118,7 @@ public class LockingInterceptor extends CommandInterceptor {
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       try {
          entryFactory.wrapEntryForReading(ctx, command.getKey());
-         Object r = invokeNextInterceptor(ctx, command);
-         return r;
+         return invokeNextInterceptor(ctx, command);
       } finally {
          doAfterCall(ctx);
       }
@@ -133,7 +142,6 @@ public class LockingInterceptor extends CommandInterceptor {
          // get a snapshot of all keys in the data container
          for (Object key : dataContainer.keySet())
             entryFactory.wrapEntryForWriting(ctx, key, false, false, false, false);
-         ctx.setContainsModifications(true);
          return invokeNextInterceptor(ctx, command);
       } finally {
          doAfterCall(ctx);
@@ -153,9 +161,7 @@ public class LockingInterceptor extends CommandInterceptor {
          if (command.getKeys() != null) {
             for (Object key : command.getKeys()) entryFactory.wrapEntryForWriting(ctx, key, false, true, false, false);
          }
-         Object o = invokeNextInterceptor(ctx, command);
-         if (!ctx.isContainsModifications()) ctx.setContainsModifications(command.isSuccessful());
-         return o;
+         return invokeNextInterceptor(ctx, command);
       } finally {
          doAfterCall(ctx);
       }
@@ -165,9 +171,7 @@ public class LockingInterceptor extends CommandInterceptor {
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       try {
          entryFactory.wrapEntryForWriting(ctx, command.getKey(), true, false, false, false);
-         Object o = invokeNextInterceptor(ctx, command);
-         if (!ctx.isContainsModifications()) ctx.setContainsModifications(command.isSuccessful());
-         return o;
+         return invokeNextInterceptor(ctx, command);
       } finally {
          doAfterCall(ctx);
       }
@@ -179,9 +183,7 @@ public class LockingInterceptor extends CommandInterceptor {
          for (Object key : command.getMap().keySet()) {
             entryFactory.wrapEntryForWriting(ctx, key, true, false, false, false);
          }
-         Object o = invokeNextInterceptor(ctx, command);
-         if (!ctx.isContainsModifications()) ctx.setContainsModifications(command.isSuccessful());
-         return o;
+         return invokeNextInterceptor(ctx, command);
       }
       finally {
          doAfterCall(ctx);
@@ -192,9 +194,7 @@ public class LockingInterceptor extends CommandInterceptor {
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       try {
          entryFactory.wrapEntryForWriting(ctx, command.getKey(), false, true, false, true);
-         Object o = invokeNextInterceptor(ctx, command);
-         if (!ctx.isContainsModifications()) ctx.setContainsModifications(command.isSuccessful());
-         return o;
+         return invokeNextInterceptor(ctx, command);
       }
       finally {
          doAfterCall(ctx);
@@ -205,9 +205,7 @@ public class LockingInterceptor extends CommandInterceptor {
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       try {
          entryFactory.wrapEntryForWriting(ctx, command.getKey(), false, true, false, false);
-         Object o = invokeNextInterceptor(ctx, command);
-         if (!ctx.isContainsModifications()) ctx.setContainsModifications(command.isSuccessful());
-         return o;
+         return invokeNextInterceptor(ctx, command);
       }
       finally {
          doAfterCall(ctx);
@@ -217,17 +215,13 @@ public class LockingInterceptor extends CommandInterceptor {
    @SuppressWarnings("unchecked")
    private void doAfterCall(InvocationContext ctx) {
       // for non-transactional stuff.
-      if (ctx.getTransactionContext() == null) {
-         if (ctx.isContainsModifications() || ctx.isContainsLocks()) {
-            cleanupLocks(ctx, Thread.currentThread(), true);
-         } else {
-            if (trace) log.trace("Nothing to do since there are no modifications in scope.");
-         }
+      if (!ctx.isInTxScope()) {
+            cleanupLocks(ctx, ctx.getLockOwner(), true);
       } else {
          if (trace) log.trace("Transactional.  Not cleaning up locks till the transaction ends.");
          if (useReadCommitted) {
             Map<Object, CacheEntry> lookedUpEntries = ctx.getLookedUpEntries();
-            if (!lookedUpEntries.isEmpty()) {
+            if (lookedUpEntries != null && !lookedUpEntries.isEmpty()) {
                // This should be a Set but we can use an ArrayList instead for efficiency since we know that the elements
                // will always be unique as they are keys from a Map.  Also, we know the maximum size so this ArrayList 
                // should never resize.
@@ -291,27 +285,10 @@ public class LockingInterceptor extends CommandInterceptor {
             }
          }
       }
-      ctx.setContainsModifications(false);
-      ctx.setContainsLocks(false);
    }
 
    protected void commitEntry(InvocationContext ctx, CacheEntry entry) {
       entry.commit(dataContainer);
    }
 
-   @SuppressWarnings("unchecked")
-   private void transactionalCleanup(boolean commit, InvocationContext ctx) {
-      if (ctx.getTransactionContext() != null) {
-         if (ctx.isContainsModifications() || ctx.isContainsLocks()) {
-            if (trace)
-               log.trace("Performing cleanup.  Contains mods? {0} Contains locks? {1}", ctx.isContainsModifications(), ctx.isContainsLocks());
-            cleanupLocks(ctx, ctx.getGlobalTransaction(), commit);
-         } else {
-            if (trace)
-               log.trace("At transaction boundary (" + (commit ? "commit" : "rollback") + "), and we have no locks in context!");
-         }
-      } else {
-         throw new IllegalStateException("Attempting to do a commit or rollback but there is no transactional context in scope. " + ctx);
-      }
-   }
 }

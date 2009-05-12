@@ -23,7 +23,8 @@ package org.infinispan.commands.tx;
 
 import org.infinispan.commands.Visitor;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.transaction.GlobalTransaction;
+import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.transaction.xa.GlobalTransaction;
 
 /**
  * // TODO: MANIK: Document this
@@ -35,14 +36,14 @@ public class RollbackCommand extends AbstractTransactionBoundaryCommand {
    public static final byte COMMAND_ID = 13;
 
    public RollbackCommand(GlobalTransaction globalTransaction) {
-      this.gtx = globalTransaction;
+      this.globalTx = globalTransaction;
    }
 
    public RollbackCommand() {
    }
 
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
-      return visitor.visitRollbackCommand(ctx, this);
+      return visitor.visitRollbackCommand((TxInvocationContext)ctx, this);
    }
 
    public byte getCommandId() {
@@ -51,7 +52,7 @@ public class RollbackCommand extends AbstractTransactionBoundaryCommand {
 
    public String toString() {
       return "RollbackCommand{" +
-            "gtx=" + gtx +
+            "gtx=" + globalTx +
             '}';
    }
 }

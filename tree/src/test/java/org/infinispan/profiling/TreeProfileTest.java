@@ -9,7 +9,7 @@ import org.infinispan.profiling.testinternals.Generator;
 import org.infinispan.profiling.testinternals.TaskRunner;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.TreeTestingUtil;
-import org.infinispan.transaction.DummyTransactionManager;
+import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.infinispan.tree.Fqn;
 import org.infinispan.tree.TreeCache;
 import org.infinispan.tree.TreeCacheImpl;

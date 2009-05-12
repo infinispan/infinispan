@@ -9,7 +9,7 @@ import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.loaders.decorators.SingletonStoreConfig;
 import org.infinispan.loaders.file.FileCacheStore;
 import org.infinispan.loaders.file.FileCacheStoreConfig;
-import org.infinispan.transaction.GenericTransactionManagerLookup;
+import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 import org.w3c.dom.Element;

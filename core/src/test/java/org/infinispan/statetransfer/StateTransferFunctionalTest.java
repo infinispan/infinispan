@@ -5,7 +5,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.transaction.DummyTransactionManagerLookup;
+import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -16,7 +16,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
-@Test(groups = "functional", testName = "statetransfer.StateTransferFunctionalTest")
+@Test(groups = "functional", testName = "statetransfer.StateTransferFunctionalTest", enabled = false)
 public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
 
    protected static final String ADDRESS_CLASSNAME = Address.class.getName();

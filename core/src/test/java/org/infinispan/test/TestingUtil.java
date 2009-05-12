@@ -12,6 +12,8 @@ import org.infinispan.Cache;
 import org.infinispan.CacheDelegate;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.context.container.InvocationContextContainer;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.interceptors.InterceptorChain;
@@ -123,10 +125,10 @@ public class TestingUtil {
 
    /**
     * Waits for the given memebrs to be removed from the cluster. The difference between this and {@link
-    * #blockUntilViewsReceived(long, org.infinispan.manager.CacheManager[])} methods(s) is that it does not barf if more
-    * than expected memebers is in the cluster - this is because we expect to start with a grater number fo memebers
-    * than we eventually expect. It will barf though, if the number of members is not the one expected but only after
-    * the timeout expieres.
+    * #blockUntilViewsReceived(long, org.infinispan.manager.CacheManager[])} methods(s) is that it does not barf if
+    * more than expected memebers is in the cluster - this is because we expect to start with a grater number fo
+    * memebers than we eventually expect. It will barf though, if the number of members is not the one expected but
+    * only after the timeout expieres.
     */
    public static void blockForMemberToFail(long timeout, CacheManager... cacheManagers) {
       blockUntilViewsReceived(timeout, false, cacheManagers);
@@ -520,13 +522,14 @@ public class TestingUtil {
    public static void replicateCommand(Cache cache, VisitableCommand command) throws Throwable {
       ComponentRegistry cr = extractComponentRegistry(cache);
       InterceptorChain ic = cr.getComponent(InterceptorChain.class);
-      ic.invoke(command);
+      InvocationContextContainer icc = cr.getComponent(InvocationContextContainer.class);
+      InvocationContext ctxt = icc.getLocalInvocationContext(true);
+      ic.invoke(ctxt, command);
    }
 
    public static void blockUntilViewsReceived(int timeout, List caches) {
       blockUntilViewsReceived((Cache[]) caches.toArray(new Cache[]{}), timeout);
    }
-
 
    public static CommandsFactory extractCommandsFactory(Cache<Object, Object> cache) {
       return (CommandsFactory) extractField(cache, "commandsFactory");

@@ -45,7 +45,7 @@ import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.responses.UnsuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
-import org.infinispan.transaction.GlobalTransaction;
+import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.TransactionLog;
 import org.infinispan.util.FastCopyHashMap;
 import org.infinispan.util.Immutables;

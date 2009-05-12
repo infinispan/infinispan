@@ -24,7 +24,7 @@ package org.infinispan.marshall.jboss.externalizers;
 import net.jcip.annotations.Immutable;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.marshall.jboss.MarshallUtil;
-import org.infinispan.transaction.GlobalTransaction;
+import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.TransactionLog;
 import org.jboss.marshalling.Creator;
 import org.jboss.marshalling.Externalizer;

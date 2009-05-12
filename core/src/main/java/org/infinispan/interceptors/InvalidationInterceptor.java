@@ -26,7 +26,6 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ClearCommand;
-import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
@@ -34,14 +33,13 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.TransactionContext;
+import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.BaseRpcInterceptor;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
-import org.infinispan.transaction.GlobalTransaction;
-import org.infinispan.transaction.TransactionTable;
+import org.infinispan.transaction.xa.GlobalTransaction;
 
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
@@ -82,24 +80,24 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      return handleInvalidate(ctx, command);
+      return handleInvalidate(ctx, command, command.getKey());
    }
 
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-      return handleInvalidate(ctx, command);
+      return handleInvalidate(ctx, command, command.getKey());
    }
 
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-      return handleInvalidate(ctx, command);
+      return handleInvalidate(ctx, command, command.getKey());
    }
 
    @Override
    public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
       // just broadcast the clear command - this is simplest!
       Object retval = invokeNextInterceptor(ctx, command);
-      if (ctx.isOriginLocal()) replicateCall(ctx, command, defaultSynchronous);
+      if (ctx.isOriginLocal()) rpcManager.broadcastReplicableCommand(command, defaultSynchronous);
       return retval;
    }
 
@@ -110,58 +108,33 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
    }
 
    @Override
-   public Object visitPrepareCommand(InvocationContext ctx, PrepareCommand command) throws Throwable {
+   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       Object retval = invokeNextInterceptor(ctx, command);
-      Transaction tx = ctx.getTransaction();
-      if (tx != null) {
-         if (trace) log.trace("Entering InvalidationInterceptor's prepare phase");
-         // fetch the modifications before the transaction is committed (and thus removed from the txTable)
-         GlobalTransaction gtx = ctx.getGlobalTransaction();
-         TransactionContext transactionContext = ctx.getTransactionContext();
-         if (transactionContext == null)
-            throw new IllegalStateException("cannot find transaction transactionContext for " + gtx);
-
-         if (transactionContext.hasModifications()) {
-            List<WriteCommand> mods;
-            if (transactionContext.hasLocalModifications()) {
-               mods = Arrays.asList(command.getModifications());
-               mods.removeAll(transactionContext.getLocalModifications());
-            } else {
-               mods = Arrays.asList(command.getModifications());
-            }
-            broadcastInvalidate(mods, tx, ctx);
-         } else {
-            if (trace) log.trace("Nothing to invalidate - no modifications in the transaction.");
-         }
+      if (trace) log.trace("Entering InvalidationInterceptor's prepare phase");
+      // fetch the modifications before the transaction is committed (and thus removed from the txTable)
+      if (ctx.hasModifications() && ctx.isOriginLocal()) {
+         List<WriteCommand> mods = Arrays.asList(command.getModifications());
+         Transaction runningTransaction = ctx.getRunningTransaction();
+         if (runningTransaction == null) throw new IllegalStateException("we must have an associated transaction");
+         broadcastInvalidate(mods, runningTransaction, ctx);
+      } else {
+         if (trace) log.trace("Nothing to invalidate - no modifications in the transaction.");
       }
       return retval;
    }
 
-   private Object handleInvalidate(InvocationContext ctx, DataWriteCommand command) throws Throwable {
-      return handleInvalidate(ctx, command, command.getKey());
-   }
-
    private Object handleInvalidate(InvocationContext ctx, WriteCommand command, Object... keys) throws Throwable {
       Object retval = invokeNextInterceptor(ctx, command);
-      if (command.isSuccessful()) {
-         Transaction tx = ctx.getTransaction();
-         if (log.isDebugEnabled()) log.debug("Is a CRUD method");
+      if (command.isSuccessful() && !ctx.isInTxScope()) {
          if (keys != null && keys.length != 0) {
-            // could be potentially TRANSACTIONAL.  Ignore if it is, until we see a prepare().
-            if (tx == null || !TransactionTable.isValid(tx)) {
-               // the no-tx case:
-               //replicate an evict call.
-               invalidateAcrossCluster(isSynchronous(ctx), ctx, keys);
-            } else {
-               if (isLocalModeForced(ctx)) ctx.getTransactionContext().addLocalModification(command);
-            }
+            invalidateAcrossCluster(isSynchronous(ctx), ctx, keys);
          }
       }
       return retval;
    }
 
    private void broadcastInvalidate(List<WriteCommand> modifications, Transaction tx, InvocationContext ctx) throws Throwable {
-      if (ctx.getTransaction() != null && !isLocalModeForced(ctx)) {
+      if (ctx.isInTxScope() && !isLocalModeForced(ctx)) {
          if (modifications == null || modifications.isEmpty()) return;
          InvalidationFilterVisitor filterVisitor = new InvalidationFilterVisitor(modifications.size());
          filterVisitor.visitCollection(null, modifications);
@@ -217,9 +190,9 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
          incrementInvalidations();
          InvalidateCommand command = commandsFactory.buildInvalidateCommand(keys);
          if (log.isDebugEnabled())
-            log.debug("Cache [" + rpcManager.getTransport().getAddress() + "] replicating " + command);
+            log.debug("Cache [" + rpcManager.getLocalAddress() + "] replicating " + command);
          // voila, invalidated!
-         replicateCall(ctx, command, synchronous);
+         rpcManager.broadcastReplicableCommand(command, synchronous);
       }
    }
 

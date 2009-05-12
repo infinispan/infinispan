@@ -23,7 +23,7 @@ package org.infinispan.marshall.jboss;
 
 import net.jcip.annotations.Immutable;
 import org.infinispan.CacheException;
-import org.infinispan.atomic.AtomicHashMap;
+import org.infinispan.atomic.atomichashmap.AtomicHashMap;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
@@ -50,7 +50,7 @@ import org.infinispan.remoting.responses.RequestIgnoredResponse;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.responses.UnsuccessfulResponse;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
-import org.infinispan.transaction.GlobalTransaction;
+import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.FastCopyHashMap;
 import org.infinispan.util.Util;
 import org.jboss.marshalling.ClassTable;

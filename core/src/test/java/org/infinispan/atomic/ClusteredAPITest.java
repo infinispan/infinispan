@@ -5,8 +5,8 @@ import static org.infinispan.atomic.AtomicHashMapTestAssertions.assertIsEmpty;
 import static org.infinispan.atomic.AtomicHashMapTestAssertions.assertIsEmptyMap;
 import org.infinispan.config.Configuration;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.transaction.DummyTransactionManager;
-import org.infinispan.transaction.DummyTransactionManagerLookup;
+import org.infinispan.transaction.tm.DummyTransactionManager;
+import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.testng.annotations.Test;
 
 import java.util.List;

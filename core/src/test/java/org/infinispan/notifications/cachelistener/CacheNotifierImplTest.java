@@ -1,22 +1,21 @@
 package org.infinispan.notifications.cachelistener;
 
 import org.easymock.EasyMock;
-import static org.easymock.EasyMock.createNiceMock;
+import static org.easymock.classextension.EasyMock.createNiceMock;
 import org.infinispan.Cache;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.context.InvocationContextImpl;
-import org.infinispan.factories.context.DefaultContextFactory;
+import org.infinispan.context.container.InvocationContextContainer;
+import org.infinispan.context.container.ReplicationInvocationContextContainer;
+import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.notifications.cachelistener.event.TransactionCompletedEvent;
 import org.infinispan.notifications.cachelistener.event.TransactionRegisteredEvent;
+import org.infinispan.transaction.xa.GlobalTransaction;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import javax.transaction.Transaction;
 
 @Test(groups = "unit", testName = "notifications.cachelistener.CacheNotifierImplTest")
 public class CacheNotifierImplTest {
@@ -30,13 +29,12 @@ public class CacheNotifierImplTest {
       n = new CacheNotifierImpl();
       mockCache = createNiceMock(Cache.class);
       EasyMock.replay(mockCache);
-      InvocationContextContainer icc = new InvocationContextContainer();
-      icc.injectContextFactory(new DefaultContextFactory());
+      InvocationContextContainer icc = new ReplicationInvocationContextContainer();
       n.injectDependencies(icc, mockCache);
       cl = new CacheListener();
       n.start();
       n.addListener(cl);
-      ctx = new InvocationContextImpl();
+      ctx = new NonTxInvocationContext();
    }
 
    public void testNotifyCacheEntryCreated() {
@@ -180,7 +178,7 @@ public class CacheNotifierImplTest {
    }
 
    public void testNotifyTransactionCompleted() {
-      Transaction tx = createNiceMock(Transaction.class);
+      GlobalTransaction tx = createNiceMock(GlobalTransaction.class);
       n.notifyTransactionCompleted(tx, true, ctx);
       n.notifyTransactionCompleted(tx, false, ctx);
 
@@ -188,25 +186,25 @@ public class CacheNotifierImplTest {
       assert cl.getEvents().get(0).getCache() == mockCache;
       assert cl.getEvents().get(0).getType() == Event.Type.TRANSACTION_COMPLETED;
       assert ((TransactionCompletedEvent) cl.getEvents().get(0)).isTransactionSuccessful();
-      assert ((TransactionCompletedEvent) cl.getEvents().get(0)).getTransaction() == tx;
+      assert ((TransactionCompletedEvent) cl.getEvents().get(0)).getGlobalTransaction() == tx;
       assert cl.getEvents().get(1).getCache() == mockCache;
       assert cl.getEvents().get(1).getType() == Event.Type.TRANSACTION_COMPLETED;
       assert !((TransactionCompletedEvent) cl.getEvents().get(1)).isTransactionSuccessful();
-      assert ((TransactionCompletedEvent) cl.getEvents().get(1)).getTransaction() == tx;
+      assert ((TransactionCompletedEvent) cl.getEvents().get(1)).getGlobalTransaction() == tx;
    }
 
    public void testNotifyTransactionRegistered() {
-      InvocationContext ctx = new InvocationContextImpl();
-      Transaction tx = createNiceMock(Transaction.class);
+      InvocationContext ctx = new NonTxInvocationContext();
+      GlobalTransaction tx = createNiceMock(GlobalTransaction.class);
       n.notifyTransactionRegistered(tx, ctx);
       n.notifyTransactionRegistered(tx, ctx);
 
       assert cl.getInvocationCount() == 2;
       assert cl.getEvents().get(0).getCache() == mockCache;
       assert cl.getEvents().get(0).getType() == Event.Type.TRANSACTION_REGISTERED;
-      assert ((TransactionRegisteredEvent) cl.getEvents().get(0)).getTransaction() == tx;
+      assert ((TransactionRegisteredEvent) cl.getEvents().get(0)).getGlobalTransaction() == tx;
       assert cl.getEvents().get(1).getCache() == mockCache;
       assert cl.getEvents().get(1).getType() == Event.Type.TRANSACTION_REGISTERED;
-      assert ((TransactionRegisteredEvent) cl.getEvents().get(1)).getTransaction() == tx;
+      assert ((TransactionRegisteredEvent) cl.getEvents().get(1)).getGlobalTransaction() == tx;
    }
 }

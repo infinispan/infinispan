@@ -6,8 +6,8 @@ import org.infinispan.config.ConfigurationException;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.DummyTransactionManager;
-import org.infinispan.transaction.DummyTransactionManagerLookup;
+import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.infinispan.util.concurrent.IsolationLevel;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
@@ -23,7 +23,7 @@ import java.util.Map;
  */
 @Test(groups = "functional")
 public abstract class CacheAPITest extends SingleCacheManagerTest {
-   Cache cache;
+   protected Cache cache;
 
    protected CacheManager createCacheManager() throws Exception {
       // start a single cache instance

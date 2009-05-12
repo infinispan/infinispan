@@ -90,10 +90,15 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest {
 
       assertOnAllCachesAndOwnership("k1", "value");
 
-      retval = getFirstNonOwner("k1").remove("k1", "value");
+      assert caches.get(1).get("k1").equals("value");
+
+      Cache<Object, String> owner = getFirstNonOwner("k1");
+
+      retval = owner.remove("k1", "value");
       asyncWait("k1", RemoveCommand.class, getSecondNonOwner("k1"));
       if (testRetVals) assert retval : "Should have removed entry";
 
+      assert caches.get(1).get("k1") == null: "expected null but received " + caches.get(1).get("k1");
       assertOnAllCachesAndOwnership("k1", null);
    }
 

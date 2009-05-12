@@ -22,8 +22,7 @@
 package org.infinispan.notifications.cachelistener.event;
 
 import org.infinispan.Cache;
-
-import javax.transaction.Transaction;
+import org.infinispan.transaction.xa.GlobalTransaction;
 
 /**
  * Basic implementation of an event that covers all event types.
@@ -37,22 +36,11 @@ public class EventImpl implements CacheEntryActivatedEvent, CacheEntryCreatedEve
    private boolean pre = false; // by default events are after the fact
    private Cache cache;
    private Object key;
-   private Transaction transaction;
+   private GlobalTransaction transaction;
    private boolean originLocal = true; // by default events all originate locally
    private boolean transactionSuccessful;
    private Type type;
    private Object value;
-
-   public EventImpl(boolean pre, Cache cache, Object key, Transaction transaction, boolean originLocal, boolean successful, Type type, Object value) {
-      this.pre = pre;
-      this.cache = cache;
-      this.key = key;
-      this.transaction = transaction;
-      this.originLocal = originLocal;
-      this.transactionSuccessful = successful;
-      this.type = type;
-      this.value = value;
-   }
 
    public EventImpl() {
    }
@@ -73,8 +61,8 @@ public class EventImpl implements CacheEntryActivatedEvent, CacheEntryCreatedEve
       return key;
    }
 
-   public Transaction getTransaction() {
-      return transaction;
+   public GlobalTransaction getGlobalTransaction() {
+      return this.transaction;
    }
 
    public boolean isOriginLocal() {
@@ -99,7 +87,7 @@ public class EventImpl implements CacheEntryActivatedEvent, CacheEntryCreatedEve
       this.key = key;
    }
 
-   public void setTransaction(Transaction transaction) {
+   public void setTransactionId(GlobalTransaction transaction) {
       this.transaction = transaction;
    }
 

@@ -32,9 +32,8 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.TransactionContext;
+import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.base.BaseRpcInterceptor;
-import org.infinispan.transaction.GlobalTransaction;
 
 /**
  * Takes care of replicating modifications to other caches in a cluster. Also listens for prepare(), commit() and
@@ -46,30 +45,28 @@ import org.infinispan.transaction.GlobalTransaction;
 public class ReplicationInterceptor extends BaseRpcInterceptor {
 
    @Override
-   public Object visitCommitCommand(InvocationContext ctx, CommitCommand command) throws Throwable {
-      if (!skipReplicationOfTransactionMethod(ctx))
-         replicateCall(ctx, command, configuration.isSyncCommitPhase(), true);
+   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+      if (!ctx.isInTxScope()) throw new IllegalStateException("This should not be possible!");
+      if (ctx.isOriginLocal()) {
+         rpcManager.broadcastRpcCommand(command, configuration.isSyncCommitPhase(), true);
+      }
       return invokeNextInterceptor(ctx, command);
    }
 
    @Override
-   public Object visitPrepareCommand(InvocationContext ctx, PrepareCommand command) throws Throwable {
+   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       Object retVal = invokeNextInterceptor(ctx, command);
-      TransactionContext transactionContext = ctx.getTransactionContext();
-      if (transactionContext.hasLocalModifications()) {
-         PrepareCommand replicablePrepareCommand = command.copy(); // make sure we remove any "local" transactions
-         replicablePrepareCommand.removeModifications(transactionContext.getLocalModifications());
-         command = replicablePrepareCommand;
+      if (ctx.isOriginLocal() && command.hasModifications()) {
+         boolean async = configuration.getCacheMode() == Configuration.CacheMode.REPL_ASYNC;
+         rpcManager.broadcastRpcCommand(command, !async, false);
       }
-
-      if (!skipReplicationOfTransactionMethod(ctx)) runPreparePhase(command, command.getGlobalTransaction(), ctx);
       return retVal;
    }
 
    @Override
-   public Object visitRollbackCommand(InvocationContext ctx, RollbackCommand command) throws Throwable {
-      if (!skipReplicationOfTransactionMethod(ctx) && !ctx.isLocalRollbackOnly()) {
-         replicateCall(ctx, command, configuration.isSyncRollbackPhase());
+   public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+      if (ctx.isOriginLocal() && !configuration.isOnePhaseCommit()) {
+         rpcManager.broadcastRpcCommand(command, configuration.isSyncRollbackPhase(), true);
       }
       return invokeNextInterceptor(ctx, command);
    }
@@ -104,44 +101,11 @@ public class ReplicationInterceptor extends BaseRpcInterceptor {
     * time. If the operation didn't originate locally we won't do any replication either.
     */
    private Object handleCrudMethod(InvocationContext ctx, WriteCommand command) throws Throwable {
-      boolean local = isLocalModeForced(ctx);
-      if (local && ctx.getTransaction() == null) return invokeNextInterceptor(ctx, command);
       // FIRST pass this call up the chain.  Only if it succeeds (no exceptions) locally do we attempt to replicate.
       Object returnValue = invokeNextInterceptor(ctx, command);
-
-      if (command.isSuccessful()) {
-         if (ctx.getTransaction() == null && ctx.isOriginLocal()) {
-            if (trace) {
-               log.trace("invoking method " + command.getClass().getSimpleName() + ", members=" + rpcManager.getTransport().getMembers() + ", mode=" +
-                     configuration.getCacheMode() + ", exclude_self=" + true + ", timeout=" +
-                     configuration.getSyncReplTimeout());
-            }
-
-            replicateCall(ctx, command, isSynchronous(ctx));
-         } else {
-            if (local) ctx.getTransactionContext().addLocalModification(command);
-         }
+      if (!isLocalModeForced(ctx) && command.isSuccessful() && ctx.isOriginLocal() && !ctx.isInTxScope()) {
+         rpcManager.broadcastReplicableCommand(command, isSynchronous(ctx));
       }
       return returnValue;
-   }
-
-   /**
-    * Calls prepare(GlobalTransaction,List,Address,boolean)) in all members except self. Waits for all responses. If one
-    * of the members failed to prepare, its return value will be an exception. If there is one exception we rethrow it.
-    * This will mark the current transaction as rolled back, which will cause the afterCompletion(int) callback to have
-    * a status of <tt>MARKED_ROLLBACK</tt>. When we get that call, we simply roll back the transaction.<br/> If
-    * everything runs okay, the afterCompletion(int) callback will trigger the @link
-    * #runCommitPhase(GlobalTransaction)). <br/>
-    *
-    * @throws Exception
-    */
-   protected void runPreparePhase(PrepareCommand prepareMethod, GlobalTransaction gtx, InvocationContext ctx) throws Throwable {
-      boolean async = configuration.getCacheMode() == Configuration.CacheMode.REPL_ASYNC;
-      if (trace) {
-         log.trace("(" + rpcManager.getTransport().getAddress() + "): running remote prepare for global tx " + gtx + " with async mode=" + async);
-      }
-
-      // this method will return immediately if we're the only member (because exclude_self=true)
-      replicateCall(ctx, prepareMethod, !async);
    }
 }

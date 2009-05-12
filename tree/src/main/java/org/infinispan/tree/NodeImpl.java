@@ -23,9 +23,10 @@ package org.infinispan.tree;
 
 import org.infinispan.Cache;
 import org.infinispan.atomic.AtomicMap;
+import org.infinispan.atomic.atomichashmap.AtomicHashMapProxy;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.context.Flag;
-import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.context.container.InvocationContextContainer;
 import org.infinispan.util.Immutables;
 import org.infinispan.util.Util;
 
@@ -58,19 +59,19 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public Node<K, V> getParent(Flag... flags) {
-      icc.get().setFlags(flags);
+      icc.getLocalInvocationContext(true).setFlags(flags);
       return getParent();
    }
 
    public Set<Node<K, V>> getChildren() {
       startAtomic();
       try {
-         Set<Node<K, V>> set = new HashSet<Node<K, V>>();
+         Set<Node<K, V>> result = new HashSet<Node<K, V>>();
          for (Fqn f : getStructure().values()) {
             NodeImpl<K, V> n = new NodeImpl<K, V>(f, cache, batchContainer, icc);
-            set.add(n);
+            result.add(n);
          }
-         return Immutables.immutableSetWrap(set);
+         return Immutables.immutableSetWrap(result);
       }
       finally {
          endAtomic();
@@ -78,7 +79,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public Set<Node<K, V>> getChildren(Flag... flags) {
-      icc.get().setFlags(flags);
+      icc.getLocalInvocationContext(true).setFlags(flags);
       return getChildren();
    }
 
@@ -87,7 +88,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public Set<Object> getChildrenNames(Flag... flags) {
-      icc.get().setFlags(flags);
+      icc.getLocalInvocationContext(true).setFlags(flags);
       return getChildrenNames();
    }
 
@@ -97,7 +98,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public Map<K, V> getData(Flag... flags) {
-      icc.get().setFlags(flags);
+      icc.getLocalInvocationContext(true).setFlags(flags);
       return getData();
    }
 
@@ -112,7 +113,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public Set<K> getKeys(Flag... flags) {
-      icc.get().setFlags(flags);
+      icc.getLocalInvocationContext(true).setFlags(flags);
       return getKeys();
    }
 
@@ -124,11 +125,15 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
       startAtomic();
       try {
          Fqn absoluteChildFqn = Fqn.fromRelativeFqn(fqn, f);
-         NodeImpl<K, V> child = new NodeImpl<K, V>(absoluteChildFqn, cache, batchContainer, icc);
-         AtomicMap<Object, Fqn> s = getStructure();
-         s.put(f.getLastElement(), absoluteChildFqn);
+
+         //1) first register it with the parent
+         AtomicMap<Object, Fqn> structureMap = getStructure();
+         structureMap.put(f.getLastElement(), absoluteChildFqn);
+
+         //2) then create the structure and data maps
          createNodeInCache(absoluteChildFqn);
-         return child;
+
+         return new NodeImpl<K, V>(absoluteChildFqn, cache, batchContainer, icc);
       }
       finally {
          endAtomic();
@@ -136,7 +141,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public Node<K, V> addChild(Fqn f, Flag... flags) {
-      icc.get().setFlags(flags);
+      icc.getLocalInvocationContext(true).setFlags(flags);
       return addChild(f);
    }
 
@@ -145,7 +150,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public boolean removeChild(Fqn f, Flag... flags) {
-      icc.get().setFlags(flags);
+      icc.getLocalInvocationContext(true).setFlags(flags);
       return removeChild(f);
    }
 
@@ -171,7 +176,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public boolean removeChild(Object childName, Flag... flags) {
-      icc.get().setFlags(flags);
+      icc.getLocalInvocationContext(true).setFlags(flags);
       return removeChild(childName);
    }
 
@@ -189,7 +194,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public Node<K, V> getChild(Fqn f, Flag... flags) {
-      icc.get().setFlags(flags);
+      icc.getLocalInvocationContext(true).setFlags(flags);
       return getChild(f);
    }
 
@@ -207,14 +212,15 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public Node<K, V> getChild(Object name, Flag... flags) {
-      icc.get().setFlags(flags);
+      icc.getLocalInvocationContext(true).setFlags(flags);
       return getChild(name);
    }
 
    public V put(K key, V value) {
       startAtomic();
       try {
-         return getDataInternal().put(key, value);
+         AtomicHashMapProxy<K, V> map = (AtomicHashMapProxy<K, V>) getDataInternal();
+         return map.put(key, value);
       }
       finally {
          endAtomic();
@@ -222,7 +228,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public V put(K key, V value, Flag... flags) {
-      icc.get().setFlags(flags);
+      icc.getLocalInvocationContext(true).setFlags(flags);
       return put(key, value);
    }
 
@@ -240,14 +246,14 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public V putIfAbsent(K key, V value, Flag... flags) {
-      icc.get().setFlags(flags);
+      icc.getLocalInvocationContext(true).setFlags(flags);
       return putIfAbsent(key, value);
    }
 
    public V replace(K key, V value) {
       startAtomic();
       try {
-         AtomicMap<K, V> map = getDataInternal();
+         AtomicMap<K, V> map = cache.getAtomicMap(dataKey);
          if (map.containsKey(key))
             return map.put(key, value);
          else
@@ -259,7 +265,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public V replace(K key, V value, Flag... flags) {
-      icc.get().setFlags(flags);
+      icc.getLocalInvocationContext(true).setFlags(flags);
       return replace(key, value);
    }
 
@@ -280,7 +286,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public boolean replace(K key, V oldValue, V value, Flag... flags) {
-      icc.get().setFlags(flags);
+      icc.getLocalInvocationContext(true).setFlags(flags);
       return replace(key, oldValue, value);
    }
 
@@ -295,7 +301,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public void putAll(Map<? extends K, ? extends V> map, Flag... flags) {
-      icc.get().setFlags(flags);
+      icc.getLocalInvocationContext(true).setFlags(flags);
       putAll(map);
    }
 
@@ -312,7 +318,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public void replaceAll(Map<? extends K, ? extends V> map, Flag... flags) {
-      icc.get().setFlags(flags);
+      icc.getLocalInvocationContext(true).setFlags(flags);
       replaceAll(map);
    }
 
@@ -321,7 +327,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public V get(K key, Flag... flags) {
-      icc.get().setFlags(flags);
+      icc.getLocalInvocationContext(true).setFlags(flags);
       return get(key);
    }
 
@@ -336,7 +342,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public V remove(K key, Flag... flags) {
-      icc.get().setFlags(flags);
+      icc.getLocalInvocationContext(true).setFlags(flags);
       return remove(key);
    }
 
@@ -345,7 +351,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public void clearData(Flag... flags) {
-      icc.get().setFlags(flags);
+      icc.getLocalInvocationContext(true).setFlags(flags);
       clearData();
    }
 
@@ -354,7 +360,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public int dataSize(Flag... flags) {
-      icc.get().setFlags(flags);
+      icc.getLocalInvocationContext(true).setFlags(flags);
       return dataSize();
    }
 
@@ -369,7 +375,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public boolean hasChild(Fqn f, Flag... flags) {
-      icc.get().setFlags(flags);
+      icc.getLocalInvocationContext(true).setFlags(flags);
       return hasChild(f);
    }
 
@@ -378,7 +384,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public boolean hasChild(Object o, Flag... flags) {
-      icc.get().setFlags(flags);
+      icc.getLocalInvocationContext(true).setFlags(flags);
       return hasChild(o);
    }
 
@@ -398,7 +404,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    }
 
    public void removeChildren(Flag... flags) {
-      icc.get().setFlags(flags);
+      icc.getLocalInvocationContext(true).setFlags(flags);
       removeChildren();
    }
 

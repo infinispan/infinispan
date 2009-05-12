@@ -1,6 +1,6 @@
 package org.infinispan.util.concurrent.locks.containers;
 
-import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.context.container.InvocationContextContainer;
 import org.infinispan.util.concurrent.locks.OwnableReentrantLock;
 
 import java.util.concurrent.locks.Lock;

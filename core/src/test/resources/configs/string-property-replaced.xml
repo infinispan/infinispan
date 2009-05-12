@@ -30,7 +30,7 @@
             concurrencyLevel="500"/>
 
       <transaction
-            transactionManagerLookupClass="org.infinispan.transaction.GenericTransactionManagerLookup"
+            transactionManagerLookupClass="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"
             syncRollbackPhase="false"
             syncCommitPhase="${test.property.SyncCommitPhase:true}"/>
 

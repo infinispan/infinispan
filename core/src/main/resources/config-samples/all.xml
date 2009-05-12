@@ -71,7 +71,7 @@
       Used to register a transaction manager and participate in ongoing transactions.
       -->
       <transaction
-            transactionManagerLookupClass="org.infinispan.transaction.GenericTransactionManagerLookup"
+            transactionManagerLookupClass="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"
             syncRollbackPhase="false"
             syncCommitPhase="false"/>
 

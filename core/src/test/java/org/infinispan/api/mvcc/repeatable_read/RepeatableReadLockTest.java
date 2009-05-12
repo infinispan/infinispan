@@ -112,4 +112,31 @@ public class RepeatableReadLockTest extends LockTestBase {
       tx.commit();
       assert cache.get("a") == null;
    }
+
+   public void testLocksOnPutKeyVal() throws Exception {
+      LockTestBaseTL tl = threadLocal.get();
+      Cache<String, String> cache = tl.cache;
+      TransactionManager tm = tl.tm;
+      tm.begin();
+      cache.put("k", "v");
+      assertLocked("k");
+      tm.commit();
+
+      assertNoLocks();
+
+      tm.begin();
+      assert cache.get("k").equals("v");
+      assertNotLocked("k");
+      tm.commit();
+
+      assertNoLocks();
+
+      tm.begin();
+      cache.remove("k");
+      assertLocked("k");
+      tm.commit();
+
+      assertNoLocks();
+   }
+
 }

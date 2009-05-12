@@ -23,16 +23,17 @@ package org.infinispan.notifications.cachelistener;
 
 import org.infinispan.Cache;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.context.container.InvocationContextContainer;
+import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.notifications.AbstractListenerImpl;
 import org.infinispan.notifications.cachelistener.annotation.*;
 import org.infinispan.notifications.cachelistener.event.*;
 import static org.infinispan.notifications.cachelistener.event.Event.Type.*;
+import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import javax.transaction.Transaction;
 import java.lang.annotation.Annotation;
 import java.util.HashMap;
 import java.util.List;
@@ -43,6 +44,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * Helper class that handles all notifications to registered listeners.
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
+ * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
 public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNotifier {
@@ -112,201 +114,178 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
    public void notifyCacheEntryCreated(Object key, boolean pre, InvocationContext ctx) {
       if (!cacheEntryCreatedListeners.isEmpty()) {
          boolean originLocal = ctx.isOriginLocal();
-         Transaction tx = ctx.getTransaction();
-         InvocationContext backup = resetInvocationContext(ctx);
+         Object contexts = icc.suspend();
          EventImpl e = new EventImpl();
          e.setCache(cache);
          e.setOriginLocal(originLocal);
          e.setPre(pre);
          e.setKey(key);
-         e.setTransaction(tx);
+         setTx(ctx, e);
          e.setType(CACHE_ENTRY_CREATED);
          for (ListenerInvocation listener : cacheEntryCreatedListeners) listener.invoke(e);
-         restoreInvocationContext(backup);
+         icc.resume(contexts);
       }
    }
 
    public void notifyCacheEntryModified(Object key, Object value, boolean pre, InvocationContext ctx) {
       if (!cacheEntryModifiedListeners.isEmpty()) {
          boolean originLocal = ctx.isOriginLocal();
-         Transaction tx = ctx.getTransaction();
-         InvocationContext backup = resetInvocationContext(ctx);
+         Object contexts = icc.suspend();
          EventImpl e = new EventImpl();
          e.setCache(cache);
          e.setOriginLocal(originLocal);
          e.setValue(value);
          e.setPre(pre);
          e.setKey(key);
-         e.setTransaction(tx);
+         setTx(ctx, e);
          e.setType(CACHE_ENTRY_MODIFIED);
          for (ListenerInvocation listener : cacheEntryModifiedListeners) listener.invoke(e);
-         restoreInvocationContext(backup);
+         icc.resume(contexts);
       }
    }
 
    public void notifyCacheEntryRemoved(Object key, Object value, boolean pre, InvocationContext ctx) {
       if (!cacheEntryRemovedListeners.isEmpty()) {
          boolean originLocal = ctx.isOriginLocal();
-         Transaction tx = ctx.getTransaction();
-         InvocationContext backup = resetInvocationContext(ctx);
+         Object contexts = icc.suspend();
          EventImpl e = new EventImpl();
          e.setCache(cache);
          e.setOriginLocal(originLocal);
          e.setValue(value);
          e.setPre(pre);
          e.setKey(key);
-         e.setTransaction(tx);
+         setTx(ctx, e);
          e.setType(CACHE_ENTRY_REMOVED);
          for (ListenerInvocation listener : cacheEntryRemovedListeners) listener.invoke(e);
-         restoreInvocationContext(backup);
+         icc.resume(contexts);
       }
    }
 
    public void notifyCacheEntryVisited(Object key, boolean pre, InvocationContext ctx) {
       if (!cacheEntryVisitedListeners.isEmpty()) {
-         Transaction tx = ctx.getTransaction();
-         InvocationContext backup = resetInvocationContext(ctx);
+         Object contexts = icc.suspend();
          EventImpl e = new EventImpl();
          e.setCache(cache);
          e.setPre(pre);
          e.setKey(key);
-         e.setTransaction(tx);
+         setTx(ctx, e);
          e.setType(CACHE_ENTRY_VISITED);
          for (ListenerInvocation listener : cacheEntryVisitedListeners) listener.invoke(e);
-         restoreInvocationContext(backup);
+         icc.resume(contexts);
       }
    }
 
    public void notifyCacheEntryEvicted(final Object key, final boolean pre, InvocationContext ctx) {
       if (!cacheEntryEvictedListeners.isEmpty()) {
          final boolean originLocal = ctx.isOriginLocal();
-         Transaction tx = ctx.getTransaction();
-         InvocationContext backup = resetInvocationContext(ctx);
+         Object contexts = icc.suspend();
          EventImpl e = new EventImpl();
          e.setCache(cache);
          e.setOriginLocal(originLocal);
          e.setPre(pre);
          e.setKey(key);
-         e.setTransaction(tx);
+         setTx(ctx, e);
          e.setType(CACHE_ENTRY_EVICTED);
          for (ListenerInvocation listener : cacheEntryEvictedListeners) listener.invoke(e);
-         restoreInvocationContext(backup);
+         icc.resume(contexts);
       }
    }
 
    public void notifyCacheEntryInvalidated(final Object key, final boolean pre, InvocationContext ctx) {
       if (!cacheEntryInvalidatedListeners.isEmpty()) {
          final boolean originLocal = ctx.isOriginLocal();
-         Transaction tx = ctx.getTransaction();
-         InvocationContext backup = resetInvocationContext(ctx);
+         Object contexts = icc.suspend();
          EventImpl e = new EventImpl();
          e.setCache(cache);
          e.setOriginLocal(originLocal);
          e.setPre(pre);
          e.setKey(key);
-         e.setTransaction(tx);
+         setTx(ctx, e);
          e.setType(CACHE_ENTRY_INVALIDATED);
          for (ListenerInvocation listener : cacheEntryInvalidatedListeners) listener.invoke(e);
-         restoreInvocationContext(backup);
+         icc.resume(contexts);
       }
    }
 
    public void notifyCacheEntryLoaded(Object key, boolean pre, InvocationContext ctx) {
       if (!cacheEntryLoadedListeners.isEmpty()) {
          boolean originLocal = ctx.isOriginLocal();
-         Transaction tx = ctx.getTransaction();
-         InvocationContext backup = resetInvocationContext(ctx);
+         Object contexts = icc.suspend();
          EventImpl e = new EventImpl();
          e.setCache(cache);
          e.setOriginLocal(originLocal);
          e.setPre(pre);
          e.setKey(key);
-         e.setTransaction(tx);
+         setTx(ctx, e);
          e.setType(CACHE_ENTRY_LOADED);
          for (ListenerInvocation listener : cacheEntryLoadedListeners) listener.invoke(e);
-         restoreInvocationContext(backup);
+         icc.resume(contexts);
       }
    }
 
    public void notifyCacheEntryActivated(Object key, boolean pre, InvocationContext ctx) {
       if (!cacheEntryActivatedListeners.isEmpty()) {
          boolean originLocal = ctx.isOriginLocal();
-         Transaction tx = ctx.getTransaction();
-         InvocationContext backup = resetInvocationContext(ctx);
+         Object contexts = icc.suspend();
          EventImpl e = new EventImpl();
          e.setCache(cache);
          e.setOriginLocal(originLocal);
          e.setPre(pre);
          e.setKey(key);
-         e.setTransaction(tx);
+         setTx(ctx, e);
          e.setType(CACHE_ENTRY_ACTIVATED);
          for (ListenerInvocation listener : cacheEntryActivatedListeners) listener.invoke(e);
-         restoreInvocationContext(backup);
+         icc.resume(contexts);
+      }
+   }
+
+   private void setTx(InvocationContext ctx, EventImpl e) {
+      if (ctx.isInTxScope()) {
+         GlobalTransaction tx = ((TxInvocationContext) ctx).getClusterTransactionId();
+         e.setTransactionId(tx);
       }
    }
 
    public void notifyCacheEntryPassivated(Object key, boolean pre, InvocationContext ctx) {
       if (!cacheEntryPassivatedListeners.isEmpty()) {
-         Transaction tx = ctx.getTransaction();
-         InvocationContext backup = resetInvocationContext(ctx);
+         Object contexts = icc.suspend();
          EventImpl e = new EventImpl();
          e.setCache(cache);
          e.setPre(pre);
          e.setKey(key);
-         e.setTransaction(tx);
+         setTx(ctx, e);
          e.setType(CACHE_ENTRY_PASSIVATED);
          for (ListenerInvocation listener : cacheEntryPassivatedListeners) listener.invoke(e);
-         restoreInvocationContext(backup);
+         icc.resume(contexts);
       }
    }
 
-   public void notifyTransactionCompleted(Transaction transaction, boolean successful, InvocationContext ctx) {
+   public void notifyTransactionCompleted(GlobalTransaction transaction, boolean successful, InvocationContext ctx) {
       if (!transactionCompletedListeners.isEmpty()) {
          boolean isOriginLocal = ctx.isOriginLocal();
-         InvocationContext backup = resetInvocationContext(ctx);
+         Object contexts = icc.suspend();
          EventImpl e = new EventImpl();
          e.setCache(cache);
          e.setOriginLocal(isOriginLocal);
-         e.setTransaction(transaction);
+         e.setTransactionId(transaction);
          e.setTransactionSuccessful(successful);
          e.setType(TRANSACTION_COMPLETED);
          for (ListenerInvocation listener : transactionCompletedListeners) listener.invoke(e);
-         restoreInvocationContext(backup);
+         icc.resume(contexts);
       }
    }
 
-   public void notifyTransactionRegistered(Transaction transaction, InvocationContext ctx) {
+   public void notifyTransactionRegistered(GlobalTransaction globalTransaction, InvocationContext ctx) {
       if (!transactionRegisteredListeners.isEmpty()) {
          boolean isOriginLocal = ctx.isOriginLocal();
-         InvocationContext backup = resetInvocationContext(ctx);
+         Object contexts = icc.suspend();
          EventImpl e = new EventImpl();
          e.setCache(cache);
          e.setOriginLocal(isOriginLocal);
-         e.setTransaction(transaction);
+         e.setTransactionId(globalTransaction);
          e.setType(TRANSACTION_REGISTERED);
          for (ListenerInvocation listener : transactionRegisteredListeners) listener.invoke(e);
-         restoreInvocationContext(backup);
+         icc.resume(contexts);
       }
-   }
-
-   private void restoreInvocationContext(InvocationContext backup) {
-      icc.set(backup);
-   }
-
-   /**
-    * Resets the current (passed-in) invocation, and returns a temp InvocationContext containing its state so it can be
-    * restored later using {@link #restoreInvocationContext(InvocationContext)}
-    *
-    * @param ctx the current context to be reset
-    * @return a clone of ctx, before it was reset
-    */
-   private InvocationContext resetInvocationContext(InvocationContext ctx) {
-      // wipe current context.
-      icc.reset();
-      // get a new Invocation Context
-      InvocationContext newContext = icc.get();
-      newContext.putLookedUpEntries(ctx.getLookedUpEntries());
-//      newContext.addAllKeysLocked(ctx.getKeysLocked());
-      return ctx;
    }
 }

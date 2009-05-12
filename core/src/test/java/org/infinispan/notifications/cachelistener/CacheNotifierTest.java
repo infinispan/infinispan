@@ -7,14 +7,14 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.DummyTransactionManagerLookup;
+import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import java.util.Collections;
 import java.util.HashMap;
@@ -66,7 +66,7 @@ public class CacheNotifierTest {
       cache.putAll(data);
       verify(mockNotifier);
 
-      // now reset the mock
+      // now resume the mock
       reset(mockNotifier);
    }
 
@@ -82,9 +82,9 @@ public class CacheNotifierTest {
    }
 
    private void expectTransactionBoundaries(boolean successful) {
-      mockNotifier.notifyTransactionRegistered(isA(Transaction.class), isA(InvocationContext.class));
+      mockNotifier.notifyTransactionRegistered(isA(GlobalTransaction.class), isA(InvocationContext.class));
       expectLastCall().once();
-      mockNotifier.notifyTransactionCompleted(isA(Transaction.class), eq(successful), isA(InvocationContext.class));
+      mockNotifier.notifyTransactionCompleted(isA(GlobalTransaction.class), eq(successful), isA(InvocationContext.class));
       expectLastCall().once();
    }
 

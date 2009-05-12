@@ -21,7 +21,7 @@
  */
 package org.infinispan.config;
 
-import org.infinispan.remoting.RpcManager;
+import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.util.Util;
 
 import javax.transaction.TransactionManager;

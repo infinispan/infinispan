@@ -23,7 +23,8 @@ package org.infinispan.commands.tx;
 
 import org.infinispan.commands.Visitor;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.transaction.GlobalTransaction;
+import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.transaction.xa.GlobalTransaction;
 
 /**
  * // TODO: MANIK: Document this
@@ -35,14 +36,14 @@ public class CommitCommand extends AbstractTransactionBoundaryCommand {
    public static final byte COMMAND_ID = 14;
 
    public CommitCommand(GlobalTransaction gtx) {
-      this.gtx = gtx;
+      this.globalTx = gtx;
    }
 
    public CommitCommand() {
    }
 
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
-      return visitor.visitCommitCommand(ctx, this);
+      return visitor.visitCommitCommand((TxInvocationContext)ctx, this);
    }
 
    public byte getCommandId() {
@@ -51,7 +52,7 @@ public class CommitCommand extends AbstractTransactionBoundaryCommand {
 
    public String toString() {
       return "CommitCommand {" +
-            "gtx=" + gtx +
+            "gtx=" + globalTx +
             '}';
    }
 }

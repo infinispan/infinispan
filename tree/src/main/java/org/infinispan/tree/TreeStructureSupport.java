@@ -27,7 +27,7 @@ import org.infinispan.atomic.AtomicMapCache;
 import org.infinispan.batch.AutoBatchSupport;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.context.Flag;
-import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.context.container.InvocationContextContainer;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -35,7 +35,7 @@ import org.infinispan.util.logging.LogFactory;
 public class TreeStructureSupport extends AutoBatchSupport {
    private static Log log = LogFactory.getLog(TreeStructureSupport.class);
 
-   AtomicMapCache cache;
+   AtomicMapCache<NodeKey, Object> cache;
    InvocationContextContainer icc;
 
    public TreeStructureSupport(Cache cache, BatchContainer batchContainer, InvocationContextContainer icc) {
@@ -69,7 +69,7 @@ public class TreeStructureSupport extends AutoBatchSupport {
             if (!exists(parent)) createNodeInCache(parent);
             AtomicMap<Object, Fqn> parentStructure = getStructure(parent);
             // don't lock parents for child insert/removes!
-            icc.get().setFlags(Flag.SKIP_LOCKING);
+            icc.getThreadContext().setFlags(Flag.SKIP_LOCKING);
             parentStructure.put(fqn.getLastElement(), fqn);
          }
          cache.getAtomicMap(structureKey);
@@ -86,7 +86,7 @@ public class TreeStructureSupport extends AutoBatchSupport {
       return cache.getAtomicMap(new NodeKey(fqn, NodeKey.Type.STRUCTURE));
    }
 
-   public static boolean isLocked(Cache c, LockManager lockManager, Fqn fqn) {
+   public static boolean isLocked(LockManager lockManager, Fqn fqn) {
       return lockManager.isLocked(new NodeKey(fqn, NodeKey.Type.STRUCTURE)) &&
             lockManager.isLocked(new NodeKey(fqn, NodeKey.Type.DATA));
    }

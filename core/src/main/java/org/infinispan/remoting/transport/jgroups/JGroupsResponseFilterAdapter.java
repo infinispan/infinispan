@@ -1,12 +1,12 @@
 package org.infinispan.remoting.transport.jgroups;
 
-import org.infinispan.remoting.ResponseFilter;
+import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.responses.Response;
 import org.jgroups.Address;
 import org.jgroups.blocks.RspFilter;
 
 /**
- * Acts as a bridge between JGroups RspFilter and {@link org.infinispan.remoting.ResponseFilter}.
+ * Acts as a bridge between JGroups RspFilter and {@link org.infinispan.remoting.rpc.ResponseFilter}.
  *
  * @author Manik Surtani
  * @since 4.0

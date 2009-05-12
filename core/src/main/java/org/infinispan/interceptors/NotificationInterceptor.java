@@ -24,9 +24,10 @@ package org.infinispan.interceptors;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
-import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.interceptors.base.CommandInterceptor;
 
 /**
  * The interceptor in charge of firing off notifications to cache listeners
@@ -34,7 +35,7 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
  * @author <a href="mailto:manik@jboss.org">Manik Surtani</a>
  * @since 4.0
  */
-public class NotificationInterceptor extends BaseTransactionalContextInterceptor {
+public class NotificationInterceptor extends CommandInterceptor {
    private CacheNotifier notifier;
 
    @Inject
@@ -43,24 +44,23 @@ public class NotificationInterceptor extends BaseTransactionalContextInterceptor
    }
 
    @Override
-   public Object visitPrepareCommand(InvocationContext ctx, PrepareCommand command) throws Throwable {
+   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       Object retval = invokeNextInterceptor(ctx, command);
-      if (command.isOnePhaseCommit()) notifier.notifyTransactionCompleted(ctx.getTransaction(), true, ctx);
-
+      if (command.isOnePhaseCommit()) notifier.notifyTransactionCompleted(ctx.getClusterTransactionId(), true, ctx);
       return retval;
    }
 
    @Override
-   public Object visitCommitCommand(InvocationContext ctx, CommitCommand command) throws Throwable {
+   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       Object retval = invokeNextInterceptor(ctx, command);
-      notifier.notifyTransactionCompleted(ctx.getTransaction(), true, ctx);
+      notifier.notifyTransactionCompleted(ctx.getClusterTransactionId(), true, ctx);
       return retval;
    }
 
    @Override
-   public Object visitRollbackCommand(InvocationContext ctx, RollbackCommand command) throws Throwable {
+   public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       Object retval = invokeNextInterceptor(ctx, command);
-      notifier.notifyTransactionCompleted(ctx.getTransaction(), false, ctx);
+      notifier.notifyTransactionCompleted(ctx.getClusterTransactionId(), false, ctx);
       return retval;
    }
 }

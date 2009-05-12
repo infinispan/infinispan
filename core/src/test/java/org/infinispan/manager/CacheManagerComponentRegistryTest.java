@@ -8,10 +8,10 @@ import org.infinispan.eviction.EvictionManager;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.interceptors.BatchingInterceptor;
 import org.infinispan.interceptors.InterceptorChain;
-import org.infinispan.remoting.RpcManager;
+import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.transaction.DummyTransactionManager;
-import org.infinispan.transaction.DummyTransactionManagerLookup;
+import org.infinispan.transaction.tm.DummyTransactionManager;
+import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 

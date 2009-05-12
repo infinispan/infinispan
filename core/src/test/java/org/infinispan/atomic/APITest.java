@@ -26,7 +26,7 @@ import static org.infinispan.atomic.AtomicHashMapTestAssertions.assertIsEmpty;
 import static org.infinispan.atomic.AtomicHashMapTestAssertions.assertIsEmptyMap;
 import org.infinispan.config.Configuration;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.transaction.DummyTransactionManagerLookup;
+import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
@@ -121,11 +121,10 @@ public class APITest {
 
       tm.begin();
       map.put("blah", "blah");
-      assert map.size() == 1;
       assert map.get("blah").equals("blah");
-      assert map.containsKey("blah");
-      Transaction t = tm.suspend();
 
+      Transaction t = tm.suspend();
+      assert map.size() == 0;
       assertIsEmpty(map);
       assertIsEmptyMap(cache, "map");
 

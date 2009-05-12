@@ -2,10 +2,11 @@ package org.infinispan.commands.remote;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.VisitableCommand;
-import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.context.container.InvocationContextContainer;
 
 /**
  * Base class for RPC commands.
@@ -15,6 +16,7 @@ import org.infinispan.util.logging.LogFactory;
 public abstract class BaseRpcCommand implements CacheRpcCommand {
 
    protected InterceptorChain interceptorChain;
+   protected InvocationContextContainer icc;
    protected String cacheName;
 
    private static final Log log = LogFactory.getLog(BaseRpcCommand.class);
@@ -31,38 +33,19 @@ public abstract class BaseRpcCommand implements CacheRpcCommand {
       return cacheName;
    }
 
-   public void setInterceptorChain(InterceptorChain interceptorChain) {
+   public void init(InterceptorChain interceptorChain, InvocationContextContainer icc) {
       this.interceptorChain = interceptorChain;
+      this.icc = icc;
    }
 
-
-   protected final Object processCommand(InvocationContext ctx, ReplicableCommand cacheCommand) throws Throwable {
-      Object result;
-      try {
-         if (trace) log.trace("Invoking command " + cacheCommand + ", with originLocal flag set to false.");
-         ctx.setOriginLocal(false);
-         if (cacheCommand instanceof VisitableCommand) {
-            Object retVal = interceptorChain.invokeRemote((VisitableCommand) cacheCommand);
-            // we only need to return values for a set of remote calls; not every call.
-            result = null;
-         } else {
-            throw new RuntimeException("Do we still need to deal with non-visitable commands? (" + cacheCommand.getClass().getName() + ")");
-//            result = cacheCommand.perform(null);
-         }
+   protected final Object processVisitableCommand(ReplicableCommand cacheCommand) throws Throwable {
+      if (cacheCommand instanceof VisitableCommand) {
+         InvocationContext ctx = icc.getRemoteNonTxInvocationContext();
+         if (trace) log.trace("Invoking command " + cacheCommand + ", with originLocal flag set to " + ctx.isOriginLocal() + ".");
+         return interceptorChain.invoke(ctx, (VisitableCommand) cacheCommand);
+         // we only need to return values for a set of remote calls; not every call.
+      } else {
+         throw new RuntimeException("Do we still need to deal with non-visitable commands? (" + cacheCommand.getClass().getName() + ")");
       }
-      catch (Throwable ex) {
-         // TODO deal with PFER
-//         if (!(cacheCommand instanceof PutForExternalReadCommand))
-//         {
-         throw ex;
-//         }
-//         else
-//         {
-//            if (trace)
-//               log.trace("Caught an exception, but since this is a putForExternalRead() call, suppressing the exception.  Exception is:", ex);
-//            result = null;
-//         }
-      }
-      return result;
    }
 }

@@ -30,12 +30,9 @@ import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
-import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.transaction.GlobalTransaction;
-
-import javax.transaction.Transaction;
 
 /**
  * Always at the end of the chain, directly in front of the cache. Simply calls into the cache using reflection. If the
@@ -47,19 +44,19 @@ import javax.transaction.Transaction;
  */
 public class CallInterceptor extends CommandInterceptor {
    @Override
-   public Object visitPrepareCommand(InvocationContext ctx, PrepareCommand command) throws Throwable {
+   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       if (trace) log.trace("Suppressing invocation of method handlePrepareCommand.");
       return null;
    }
 
    @Override
-   public Object visitCommitCommand(InvocationContext ctx, CommitCommand command) throws Throwable {
+   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (trace) log.trace("Suppressing invocation of method handleCommitCommand.");
       return null;
    }
 
    @Override
-   public Object visitRollbackCommand(InvocationContext ctx, RollbackCommand command) throws Throwable {
+   public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (trace) log.trace("Suppressing invocation of method handleRollbackCommand.");
       return null;
    }
@@ -76,9 +73,11 @@ public class CallInterceptor extends CommandInterceptor {
          retval = command.perform(ctx);
       }
       catch (Throwable t) {
-         Transaction tx = ctx.getTransaction();
-         if (ctx.isValidTransaction()) {
-            tx.setRollbackOnly();
+         if (ctx.isInTxScope()) {
+            TxInvocationContext txContext = (TxInvocationContext) ctx;
+            if (txContext.isValidRunningTx()) {
+               txContext.getRunningTransaction().setRollbackOnly();
+            }
          }
          throw t;
       }
@@ -87,32 +86,16 @@ public class CallInterceptor extends CommandInterceptor {
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      return handleAlterCacheMethod(ctx, command);
+      return invokeCommand(ctx, command);
    }
 
    @Override
    public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      return handleAlterCacheMethod(ctx, command);
+      return invokeCommand(ctx, command);
    }
 
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-      return handleAlterCacheMethod(ctx, command);
-   }
-
-   private Object handleAlterCacheMethod(InvocationContext ctx, WriteCommand command)
-         throws Throwable {
-      Object result = invokeCommand(ctx, command);
-      if (ctx.isValidTransaction()) {
-         GlobalTransaction gtx = ctx.getGlobalTransaction();
-         if (gtx == null) {
-            if (log.isDebugEnabled()) {
-               log.debug("didn't find GlobalTransaction for " + ctx.getTransaction() + "; won't add modification to transaction list");
-            }
-         } else {
-            ctx.getTransactionContext().addModification(command);
-         }
-      }
-      return result;
+      return invokeCommand(ctx, command);
    }
 }

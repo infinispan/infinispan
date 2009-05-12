@@ -16,7 +16,7 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.TransactionContext;
+import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -136,8 +136,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      return handleWriteCommand(ctx, command,
-                                new SingleKeyRecipientGenerator(command.getKey()));
+      return handleWriteCommand(ctx, command, new SingleKeyRecipientGenerator(command.getKey()));
    }
 
    @Override
@@ -166,46 +165,34 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
 
    // ---- TX boundard commands
    @Override
-   public Object visitCommitCommand(InvocationContext ctx, CommitCommand command) throws Throwable {
-      if (!skipReplicationOfTransactionMethod(ctx)) {
-         List<Address> recipients = new ArrayList<Address>(ctx.getTransactionContext().getTransactionParticipants());
-         replicateCall(ctx, recipients, command, configuration.isSyncCommitPhase(), true);
+   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+      if (ctx.isOriginLocal()) {
+         List<Address> recipients = new ArrayList<Address>(ctx.getTransactionParticipants());
+         rpcManager.multicastRpcCommand(recipients, command, configuration.isSyncCommitPhase(), true);
       }
       return invokeNextInterceptor(ctx, command);
    }
 
    @Override
-   public Object visitPrepareCommand(InvocationContext ctx, PrepareCommand command) throws Throwable {
+   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       Object retVal = invokeNextInterceptor(ctx, command);
-      TransactionContext transactionContext = ctx.getTransactionContext();
-      if (transactionContext.hasLocalModifications()) {
-         PrepareCommand replicablePrepareCommand = command.copy(); // make sure we remove any "local" transactions
-         replicablePrepareCommand.removeModifications(transactionContext.getLocalModifications());
-         command = replicablePrepareCommand;
-      }
 
       boolean sync = isSynchronous(ctx);
 
-      if (!skipReplicationOfTransactionMethod(ctx)) {
-         if (trace) {
-            log.trace("[" + rpcManager.getTransport().getAddress() + "] Running remote prepare for global tx {1}.  Synchronous? {2}",
-                      rpcManager.getTransport().getAddress(), command.getGlobalTransaction(), sync);
-         }
-
-         List<Address> recipients = new ArrayList<Address>(ctx.getTransactionContext().getTransactionParticipants());
-
+      if (ctx.isOriginLocal()) {
+         List<Address> recipients = new ArrayList<Address>(ctx.getTransactionParticipants());
+         if (trace)  log.trace("Multicasting PrepareCommand to recipients : " + recipients);
          // this method will return immediately if we're the only member (because exclude_self=true)
-         replicateCall(ctx, recipients, command, sync, false);
+         rpcManager.multicastRpcCommand(recipients, command, sync, false);
       }
-
       return retVal;
    }
 
    @Override
-   public Object visitRollbackCommand(InvocationContext ctx, RollbackCommand command) throws Throwable {
-      if (!skipReplicationOfTransactionMethod(ctx) && !ctx.isLocalRollbackOnly()) {
-         List<Address> recipients = new ArrayList<Address>(ctx.getTransactionContext().getTransactionParticipants());
-         replicateCall(ctx, recipients, command, configuration.isSyncRollbackPhase(), true);
+   public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+      if (ctx.isOriginLocal()) {
+         List<Address> recipients = new ArrayList<Address>(ctx.getTransactionParticipants());
+         rpcManager.multicastRpcCommand(recipients, command, configuration.isSyncRollbackPhase(), true);
       }
       return invokeNextInterceptor(ctx, command);
    }
@@ -215,7 +202,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       //   a) unsafeUnreliableReturnValues is false
       //   b) unsafeUnreliableReturnValues is true, we are in a TX and the command is conditional
 
-      if (isNeedReliableReturnValues(ctx) || (isConditionalCommand && ctx.getTransaction() != null)) {
+      if (isNeedReliableReturnValues(ctx) || (isConditionalCommand && ctx.isInTxScope())) {
          for (Object k : keys) remoteGetAndStoreInL1(ctx, k);
       }
    }
@@ -229,34 +216,33 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
     * time. If the operation didn't originate locally we won't do any replication either.
     */
    private Object handleWriteCommand(InvocationContext ctx, WriteCommand command, RecipientGenerator recipientGenerator) throws Throwable {
-      boolean local = isLocalModeForced(ctx);
+      boolean localModeForced = isLocalModeForced(ctx);
       // see if we need to load values from remote srcs first
       remoteGetBeforeWrite(ctx, command.isConditional(), recipientGenerator.getKeys());
 
       // if this is local mode then skip distributing
-      if (local && ctx.getTransaction() == null) return invokeNextInterceptor(ctx, command);
+      if (localModeForced && ctx.isInTxScope()) return invokeNextInterceptor(ctx, command);
 
       // FIRST pass this call up the chain.  Only if it succeeds (no exceptions) locally do we attempt to distribute.
       Object returnValue = invokeNextInterceptor(ctx, command);
 
       if (command.isSuccessful()) {
-         if (ctx.getTransaction() == null) {
+         if (!ctx.isInTxScope()) {
             if (ctx.isOriginLocal()) {
                List<Address> rec = recipientGenerator.generateRecipients();
                if (trace) log.trace("Invoking command {0} on hosts {1}", command, rec);
                // if L1 caching is used make sure we broadcast an invalidate message
                if (isL1CacheEnabled && rec != null) {
                   InvalidateCommand ic = cf.buildInvalidateFromL1Command(recipientGenerator.getKeys());
-                  replicateCall(ctx, ic, isSynchronous(ctx), false);
+                  rpcManager.broadcastReplicableCommand(ic, isSynchronous(ctx));
                }
-               replicateCall(ctx, rec, command, isSynchronous(ctx), false);
+               rpcManager.multicastReplicableCommand(rec, command, isSynchronous(ctx));
             }
          } else {
-            if (local) {
-               ctx.getTransactionContext().addLocalModification(command);
+            if (!localModeForced) {
+               ((TxInvocationContext)ctx).addTransactionParticipants(recipientGenerator.generateRecipients());
             } else {
                // add to list of participants
-               ctx.getTransactionContext().addTransactionParticipants(recipientGenerator.generateRecipients());
             }
          }
       }

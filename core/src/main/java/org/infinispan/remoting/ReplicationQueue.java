@@ -32,6 +32,8 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.rpc.ResponseMode;
 
 import java.util.ArrayList;
 import java.util.LinkedList;

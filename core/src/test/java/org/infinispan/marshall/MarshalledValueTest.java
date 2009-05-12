@@ -1,6 +1,5 @@
 package org.infinispan.marshall;
 
-import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -66,8 +65,10 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
 
    @BeforeMethod
    public void addMarshalledValueInterceptor() {
+      InterceptorChain chain = TestingUtil.extractComponent(cache1, InterceptorChain.class);
+      chain.removeInterceptor(MarshalledValueListenerInterceptor.class);
       mvli = new MarshalledValueListenerInterceptor();
-      ((AdvancedCache) cache1).addInterceptorAfter(mvli, MarshalledValueInterceptor.class);
+      chain.addInterceptorAfter(mvli, MarshalledValueInterceptor.class);
    }
 
    @AfterMethod
@@ -116,8 +117,11 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
    }
 
    public void testReleaseObjectValueReferences() {
+      assert cache1.isEmpty();
       Pojo value = new Pojo();
+      System.out.println(TestingUtil.extractComponent(cache1, InterceptorChain.class).toString());
       cache1.put("key", value);
+      assert cache1.containsKey("key");
       assertSerializationCounts(1, 0);
 
       DataContainer dc1 = TestingUtil.extractComponent(cache1, DataContainer.class);
@@ -280,7 +284,7 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       cache1.put("key", pojo);
 
       assert l.newValue != null;
-      assert l.newValue instanceof MarshalledValue;
+      assert l.newValue instanceof MarshalledValue : "recieved " + l.newValue.getClass().getName();
       MarshalledValue mv = (MarshalledValue) l.newValue;
       assert mv.instance instanceof Pojo;
       assertSerializationCounts(1, 0);

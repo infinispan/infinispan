@@ -85,7 +85,7 @@ public class EntryFactoryImpl implements EntryFactory {
 
          // do not bother wrapping though if this is not in a tx.  repeatable read etc are all meaningless unless there is a tx.
          // TODO: Do we need to wrap for reading even IN a TX if we are using read-committed?
-         if (ctx.getTransaction() == null) {
+         if (!ctx.isInTxScope()) {
             if (cacheEntry != null) ctx.putLookedUpEntry(key, cacheEntry);
             return cacheEntry;
          } else {
@@ -129,7 +129,7 @@ public class EntryFactoryImpl implements EntryFactory {
             if (mvccEntry != cacheEntry) mvccEntry = (MVCCEntry) cacheEntry;
             mvccEntry.setRemoved(false);
             mvccEntry.setValid(true);
-         }
+         }         
 
          return mvccEntry;
 
@@ -178,7 +178,7 @@ public class EntryFactoryImpl implements EntryFactory {
     * @return true if a lock was needed and acquired, false if it didn't need to acquire the lock (i.e., lock was
     *         already held)
     * @throws InterruptedException if interrupted
-    * @throws org.infinispan.util.concurrent.TimeoutException
+    * @throws org.infinispan.lock.TimeoutException
     *                              if we are unable to acquire the lock after a specified timeout.
     */
    public final boolean acquireLock(InvocationContext ctx, Object key) throws InterruptedException, TimeoutException {
@@ -196,7 +196,7 @@ public class EntryFactoryImpl implements EntryFactory {
          } else {
             Object owner = lockManager.getOwner(key);
             throw new TimeoutException("Unable to acquire lock on key [" + key + "] after [" + getLockAcquisitionTimeout(ctx)
-                  + "] milliseconds for requestor [" + lockManager.getLockOwner(ctx) + "]! Lock held by [" + owner + "]");
+                  + "] milliseconds for requestor [" + ctx.getLockOwner() + "]! Lock held by [" + owner + "]");
          }
       }
 

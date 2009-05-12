@@ -12,7 +12,7 @@ import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.transaction.DummyTransactionManagerLookup;
+import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import static org.testng.AssertJUnit.assertEquals;
 import org.testng.annotations.Test;
 
@@ -59,21 +59,21 @@ public class AsyncReplTest extends MultipleCacheManagersTest {
       replListener(cache2).expectAny();
       cache1.put(key, "value1");
       // allow for replication
-      replListener(cache2).waitForRpc(60, TimeUnit.SECONDS);
+      replListener(cache2).waitForRpc();
+      assertNotLocked(cache1, key);
+
       assertEquals("value1", cache1.get(key));
       assertEquals("value1", cache2.get(key));
 
       TransactionManager mgr = TestingUtil.getTransactionManager(cache1);
       mgr.begin();
-
       replListener(cache2).expectAnyWithTx();
       cache1.put(key, "value2");
       assertEquals("value2", cache1.get(key));
       assertEquals("value1", cache2.get(key));
-
       mgr.commit();
-
       replListener(cache2).waitForRpc(60, TimeUnit.SECONDS);
+      assertNotLocked(cache1, key);
 
       assertEquals("value2", cache1.get(key));
       assertEquals("value2", cache2.get(key));
@@ -87,5 +87,20 @@ public class AsyncReplTest extends MultipleCacheManagersTest {
 
       assertEquals("value2", cache1.get(key));
       assertEquals("value2", cache2.get(key));
+
+      assertNotLocked(cache1, key);
+
+   }
+
+   public void simpleTest() throws Exception {
+      String key = "key";
+      TransactionManager mgr = TestingUtil.getTransactionManager(cache1);
+
+      mgr.begin();
+      cache1.put(key, "value3");
+      mgr.rollback();
+      
+      assertNotLocked(cache1, key);
+
    }
 }

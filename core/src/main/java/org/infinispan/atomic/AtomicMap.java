@@ -34,7 +34,7 @@ import java.util.Map;
  *
  * @author Manik Surtani (<a href="mailto:manik AT jboss DOT org">manik AT jboss DOT org</a>)
  * @see DeltaAware
- * @see AtomicHashMap
+ * @see org.infinispan.atomic.atomichashmap.AtomicHashMap
  * @since 4.0
  */
 public interface AtomicMap<K, V> extends Map<K, V> {

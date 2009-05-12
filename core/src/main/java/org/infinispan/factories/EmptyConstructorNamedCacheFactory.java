@@ -25,15 +25,16 @@ package org.infinispan.factories;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.config.ConfigurationException;
-import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.context.container.InvocationContextContainer;
+import org.infinispan.context.container.ReplicationInvocationContextContainer;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.VersionAwareMarshaller;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.remoting.rpc.CacheRpcManager;
 import org.infinispan.transaction.TransactionLog;
-import org.infinispan.transaction.TransactionTable;
 
 /**
  * Simple factory that just uses reflection and an empty constructor of the component type.
@@ -42,8 +43,8 @@ import org.infinispan.transaction.TransactionTable;
  * @since 4.0
  */
 @DefaultFactoryFor(classes = {CacheNotifier.class, EntryFactory.class, CommandsFactory.class,
-                              CacheLoaderManager.class, InvocationContextContainer.class,
-                              TransactionTable.class, BatchContainer.class, TransactionLog.class, EvictionManager.class})
+                              CacheLoaderManager.class, InvocationContextContainer.class, CacheRpcManager.class,
+                              BatchContainer.class, TransactionLog.class, EvictionManager.class, InvocationContextContainer.class})
 public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
    @Override
    public <T> T construct(Class<T> componentType) {
@@ -52,6 +53,8 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
             Class componentImpl;
             if (componentType.equals(Marshaller.class)) {
                componentImpl = VersionAwareMarshaller.class;
+            } else if (componentType.equals(InvocationContextContainer.class)) {
+                  componentImpl = ReplicationInvocationContextContainer.class;
             } else {
                // add an "Impl" to the end of the class name and try again
                componentImpl = getClass().getClassLoader().loadClass(componentType.getName() + "Impl");

@@ -31,7 +31,7 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.context.container.InvocationContextContainer;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.InterceptorChain;
@@ -41,8 +41,8 @@ import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.marshall.Marshaller;
-import org.infinispan.remoting.ResponseMode;
-import org.infinispan.remoting.RpcManager;
+import org.infinispan.remoting.rpc.ResponseMode;
+import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.DistributedSync;
 import org.infinispan.transaction.TransactionLog;
@@ -215,12 +215,12 @@ public class StateTransferManagerImpl implements StateTransferManager {
       if (trace) log.trace("Applying commit log");
       Object object = marshaller.objectFromObjectStream(oi);
       while (object instanceof TransactionLog.LogEntry) {
-         WriteCommand[] mods = ((TransactionLog.LogEntry) object).getModifications();
+         TransactionLog.LogEntry logEntry = (TransactionLog.LogEntry) object;
+         WriteCommand[] mods = logEntry.getModifications();
          if (trace) log.trace("Mods = {0}", Arrays.toString(mods));
          for (WriteCommand mod : mods) {
             commandsFactory.initializeReplicableCommand(mod);
-            InvocationContext ctx = invocationContextContainer.get();
-            ctx.setOriginLocal(false);
+            InvocationContext ctx = invocationContextContainer.getRemoteTxInvocationContext(logEntry.getTransaction(),true);
             ctx.setFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_CACHE_STATUS_CHECK);
             interceptorChain.invoke(ctx, mod);
          }
@@ -254,8 +254,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
             if (!transactionLog.hasPendingPrepare(command)) {
                if (trace) log.trace("Applying pending prepare {0}", command);
                commandsFactory.initializeReplicableCommand(command);
-               InvocationContext ctx = invocationContextContainer.get();
-               ctx.setOriginLocal(false);
+               InvocationContext ctx = invocationContextContainer.getRemoteTxInvocationContext(command.getGlobalTransaction(), true);
                ctx.setFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_CACHE_STATUS_CHECK);
                interceptorChain.invoke(ctx, command);
             } else {

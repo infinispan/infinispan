@@ -39,7 +39,7 @@ import java.lang.annotation.Target;
  * <h4>Transactional Semantics</h4> <p/> Since the event is delivered during the actual cache call, the transactional
  * outcome is not yet known. For this reason, <i>events are always delivered, even if the changes they represent are
  * discarded by their containing transaction</i>. For applications that must only process events that represent changes
- * in a completed transaction, {@link org.infinispan.notifications.cachelistener.event.TransactionalEvent#getTransaction()}
+ * in a completed transaction, {@link org.infinispan.notifications.cachelistener.event.TransactionalEvent#getGlobalTransaction()}
  * can be used, along with {@link org.infinispan.notifications.cachelistener.event.TransactionCompletedEvent#isTransactionSuccessful()}
  * to record events and later process them once the transaction has been successfully committed. Example 4 demonstrates
  * this. </p> <p/> <h4>Threading Semantics</h4> <p/> A listener implementation must be capable of handling concurrent

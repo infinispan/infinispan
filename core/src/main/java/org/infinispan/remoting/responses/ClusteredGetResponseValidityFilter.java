@@ -1,6 +1,6 @@
 package org.infinispan.remoting.responses;
 
-import org.infinispan.remoting.ResponseFilter;
+import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.transport.Address;
 
 import java.util.Collection;

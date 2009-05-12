@@ -10,10 +10,10 @@ import static org.easymock.EasyMock.*;
 import org.infinispan.Cache;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.config.Configuration;
-import org.infinispan.remoting.ResponseFilter;
-import org.infinispan.remoting.ResponseMode;
-import org.infinispan.remoting.RpcManager;
-import org.infinispan.remoting.RpcManagerImpl;
+import org.infinispan.remoting.rpc.ResponseFilter;
+import org.infinispan.remoting.rpc.ResponseMode;
+import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.rpc.RpcManagerImpl;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
@@ -150,7 +150,7 @@ public class SyncReplTest extends MultipleCacheManagersTest {
          // check that the replication call was sync
          cache1.put("k", "v");
 
-         // reset to test for async
+         // resume to test for async
          reset(mockTransport);
          expect(mockTransport.getAddress()).andReturn(mockAddressOne).anyTimes();
          expect(mockTransport.getMembers()).andReturn(addresses).anyTimes();

@@ -22,8 +22,10 @@
 package org.infinispan.util.concurrent.locks;
 
 import net.jcip.annotations.ThreadSafe;
-import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.transaction.GlobalTransaction;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.context.container.InvocationContextContainer;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.AbstractQueuedSynchronizer;
@@ -31,8 +33,8 @@ import java.util.concurrent.locks.Lock;
 
 /**
  * A lock that supports reentrancy based on owner (and not on current thread).  For this to work, the lock needs to be
- * constructed with a reference to the {@link org.infinispan.context.InvocationContextContainer}, so it is able to
- * determine whether the caller's "owner" reference is the current thread or a {@link GlobalTransaction} instance.
+ * constructed with a reference to the {@link org.infinispan.context.container.InvocationContextContainer}, so it is able to determine whether the
+ * caller's "owner" reference is the current thread or a {@link org.infinispan.transaction.xa.GlobalTransaction} instance.
  * <p/>
  * This makes this lock implementation very closely tied to Infinispan internals, but it provides for a very clean,
  * efficient and moreover familiar interface to work with, since it implements {@link java.util.concurrent.locks.Lock}.
@@ -45,6 +47,8 @@ import java.util.concurrent.locks.Lock;
  */
 @ThreadSafe
 public class OwnableReentrantLock extends AbstractQueuedSynchronizer implements Lock {
+
+   private static Log log = LogFactory.getLog(OwnableReentrantLock.class);
    /**
     * Current owner
     */
@@ -52,18 +56,18 @@ public class OwnableReentrantLock extends AbstractQueuedSynchronizer implements 
    /**
     * Invocation context to consult when testing the current requestor
     */
-   transient InvocationContextContainer invocationContextContainer;
+   transient InvocationContextContainer icc;
 
    /**
     * Creates a new lock instance.
     *
-    * @param invocationContextContainer InvocationContextContainer instance to consult for the invocation context of the
+    * @param icc InvocationContextContainer instance to consult for the invocation context of the
     *                                   call.
     */
-   public OwnableReentrantLock(InvocationContextContainer invocationContextContainer) {
-      if (invocationContextContainer == null)
+   public OwnableReentrantLock(InvocationContextContainer icc) {
+      if (icc == null)
          throw new IllegalArgumentException("Invocation context container cannot be null!");
-      this.invocationContextContainer = invocationContextContainer;
+      this.icc = icc;
    }
 
    /**
@@ -71,8 +75,9 @@ public class OwnableReentrantLock extends AbstractQueuedSynchronizer implements 
     *         otherwise.
     */
    protected final Object currentRequestor() {
-      GlobalTransaction gtx;
-      return (gtx = invocationContextContainer.get().getGlobalTransaction()) == null ? Thread.currentThread() : gtx;
+      InvocationContext invocationContext = icc.getThreadContext();
+      Object o = invocationContext.getLockOwner();
+      return o;
    }
 
    public void lock() {

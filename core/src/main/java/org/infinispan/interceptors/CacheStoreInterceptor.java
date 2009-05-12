@@ -38,7 +38,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.TransactionContext;
+import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.JmxStatsCommandInterceptor;
@@ -50,12 +50,10 @@ import org.infinispan.loaders.modifications.Clear;
 import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
-import org.infinispan.transaction.GlobalTransaction;
+import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.LogFactory;
 
-import javax.transaction.SystemException;
 import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -74,7 +72,6 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    private CacheLoaderManagerConfig loaderConfig = null;
-   private TransactionManager txMgr = null;
    private HashMap<Transaction, Integer> txStores = new HashMap<Transaction, Integer>();
    private Map<Transaction, Set<Object>> preparingTxs = new ConcurrentHashMap<Transaction, Set<Object>>();
    private final AtomicLong cacheStores = new AtomicLong(0);
@@ -88,9 +85,8 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @Inject
-   protected void init(CacheLoaderManager loaderManager, TransactionManager txManager) {
+   protected void init(CacheLoaderManager loaderManager) {
       this.loaderManager = loaderManager;
-      txMgr = txManager;
    }
 
    @Start(priority = 15)
@@ -114,11 +110,11 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @Override
-   public Object visitCommitCommand(InvocationContext ctx, CommitCommand command) throws Throwable {
-      if (!skip(ctx, command) && inTransaction()) {
-         if (ctx.getTransactionContext().hasAnyModifications()) {
+   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+      if (!skip(ctx, command)) {
+         if (ctx.hasModifications()) {
             // this is a commit call.
-            Transaction tx = ctx.getTransaction();
+            Transaction tx = ctx.getRunningTransaction();
             log.trace("Calling loader.commit() for transaction {0}", tx);
             try {
                store.commit(tx);
@@ -143,11 +139,11 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @Override
-   public Object visitRollbackCommand(InvocationContext ctx, RollbackCommand command) throws Throwable {
-      if (!skip(ctx, command) && inTransaction()) {
+   public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
+      if (!skip(ctx, command)) {
          if (trace) log.trace("transactional so don't put stuff in the cloader yet.");
-         if (ctx.getTransactionContext().hasAnyModifications()) {
-            Transaction tx = ctx.getTransaction();
+         if (ctx.hasModifications()) {
+            Transaction tx = ctx.getRunningTransaction();
             // this is a rollback method
             if (preparingTxs.containsKey(tx)) {
                preparingTxs.remove(tx);
@@ -162,10 +158,10 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @Override
-   public Object visitPrepareCommand(InvocationContext ctx, PrepareCommand command) throws Throwable {
-      if (!skip(ctx, command) && inTransaction()) {
+   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+      if (!skip(ctx, command)) {
          if (trace) log.trace("transactional so don't put stuff in the cloader yet.");
-         prepareCacheLoader(ctx, command.getGlobalTransaction(), ctx.getTransactionContext(), command.isOnePhaseCommit());
+         prepareCacheLoader(ctx, command.getGlobalTransaction(), ctx, command.isOnePhaseCommit());
       }
       return invokeNextInterceptor(ctx, command);
    }
@@ -173,7 +169,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       Object retval = invokeNextInterceptor(ctx, command);
-      if (!skip(ctx, command) && !inTransaction() && command.isSuccessful()) {
+      if (!skip(ctx, command) && !ctx.isInTxScope() && command.isSuccessful()) {
          Object key = command.getKey();
          boolean resp = store.remove(key);
          log.trace("Removed entry under key {0} and got response {1} from CacheStore", key, resp);
@@ -183,7 +179,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
 
    @Override
    public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      if (!skip(ctx, command) && !inTransaction()) {
+      if (!skip(ctx, command) && !ctx.isInTxScope()) {
          store.clear();
          log.trace("Cleared cache store");
       }
@@ -193,7 +189,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       Object returnValue = invokeNextInterceptor(ctx, command);
-      if (skip(ctx, command) || inTransaction() || !command.isSuccessful()) return returnValue;
+      if (skip(ctx, command) || ctx.isInTxScope() || !command.isSuccessful()) return returnValue;
 
       Object key = command.getKey();
       InternalCacheEntry se = getStoredEntry(key, ctx);
@@ -207,7 +203,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       Object returnValue = invokeNextInterceptor(ctx, command);
-      if (skip(ctx, command) || inTransaction() || !command.isSuccessful()) return returnValue;
+      if (skip(ctx, command) || ctx.isInTxScope() || !command.isSuccessful()) return returnValue;
 
       Object key = command.getKey();
       InternalCacheEntry se = getStoredEntry(key, ctx);
@@ -221,7 +217,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       Object returnValue = invokeNextInterceptor(ctx, command);
-      if (skip(ctx, command) || inTransaction()) return returnValue;
+      if (skip(ctx, command) || ctx.isInTxScope()) return returnValue;
 
       Map<Object, Object> map = command.getMap();
       for (Object key : map.keySet()) {
@@ -233,11 +229,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       return returnValue;
    }
 
-   private boolean inTransaction() throws SystemException {
-      return txMgr != null && txMgr.getTransaction() != null;
-   }
-
-   private void prepareCacheLoader(InvocationContext ctx, GlobalTransaction gtx, TransactionContext transactionContext, boolean onePhase) throws Throwable {
+   private void prepareCacheLoader(TxInvocationContext ctx, GlobalTransaction gtx, TxInvocationContext transactionContext, boolean onePhase) throws Throwable {
       if (transactionContext == null) {
          throw new Exception("transactionContext for transaction " + gtx + " not found in transaction table");
       }
@@ -253,7 +245,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       log.trace("Converted method calls to cache loader modifications.  List size: {0}", numMods);
 
       if (numMods > 0) {
-         Transaction tx = transactionContext.getTransaction();
+         Transaction tx = transactionContext.getRunningTransaction();
          store.prepare(modsBuilder.modifications, tx, onePhase);
 
          preparingTxs.put(tx, modsBuilder.affectedKeys);

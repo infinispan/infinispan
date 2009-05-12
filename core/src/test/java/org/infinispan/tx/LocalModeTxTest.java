@@ -27,7 +27,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.transaction.DummyTransactionManagerLookup;
+import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.testng.annotations.Test;
 
 import javax.transaction.Transaction;
@@ -55,6 +55,19 @@ public class LocalModeTxTest extends SingleCacheManagerTest {
       assert c.isEmpty();
       tm.resume(t);
       tm.commit();
+      assert !c.isEmpty();
+   }
+
+   public void testTxCommit3() throws Exception {
+      TransactionManager tm = TestingUtil.getTransactionManager(c);
+      tm.begin();
+      c.put("key", "value");
+      tm.commit();
+      assert !c.isEmpty();
+   }
+
+   public void testNonTx() throws Exception {
+      c.put("key", "value");
       assert !c.isEmpty();
    }
 

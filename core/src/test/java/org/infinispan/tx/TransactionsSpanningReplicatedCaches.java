@@ -5,7 +5,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.transaction.DummyTransactionManagerLookup;
+import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.testng.annotations.Test;
 
 import javax.transaction.Transaction;
@@ -137,4 +137,35 @@ public class TransactionsSpanningReplicatedCaches extends MultipleCacheManagersT
       assert c2.get("c2key").equals("c2value");
       assert c2Replica.get("c2key").equals("c2value");
    }
+
+   public void testRollbackSpanningCaches2() throws Exception {
+      Cache c1 = cm1.getCache("c1");
+
+      assert c1.getConfiguration().getCacheMode().isClustered();
+      Cache c1Replica = cm2.getCache("c1");
+
+      assert c1.isEmpty();
+      assert c1Replica.isEmpty();
+
+      c1.put("c1key", "c1value");
+      assert c1.get("c1key").equals("c1value");
+      assert c1Replica.get("c1key").equals("c1value");
+  }
+
+  public void testSimpleCommit() throws Exception {
+      Cache c1 = cm1.getCache("c1");
+      Cache c1Replica = cm2.getCache("c1");
+
+
+     assert c1.isEmpty();
+     assert c1Replica.isEmpty();
+
+     TransactionManager tm = TestingUtil.getTransactionManager(c1);
+     tm.begin();
+      c1.put("c1key", "c1value");
+     tm.commit();
+
+      assert c1.get("c1key").equals("c1value");
+      assert c1Replica.get("c1key").equals("c1value");
+  }
 }

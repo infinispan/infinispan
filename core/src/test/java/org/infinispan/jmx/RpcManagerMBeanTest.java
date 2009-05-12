@@ -7,13 +7,14 @@ import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.manager.CacheManager;
-import org.infinispan.remoting.RpcManager;
-import org.infinispan.remoting.RpcManagerImpl;
+import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.rpc.RpcManagerImpl;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import static org.testng.Assert.assertEquals;
 import org.testng.annotations.Test;
 
 import javax.management.MBeanServer;
@@ -88,12 +89,11 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
       mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals("N/A");
 
 
-      //now reset statistics
+      //now resume statistics
       mBeanServer.invoke(rpcManager1, "resetStatistics", new Object[0], new String[0]);
       assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals("0");
       assert mBeanServer.getAttribute(rpcManager1, "ReplicationFailures").equals("0");
    }
-
 
 
    @Test(dependsOnMethods = "testEnableJmxStats")
@@ -115,11 +115,11 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
          EasyMock.expect(transport.getMembers()).andReturn(new LinkedList<Address>()).anyTimes();
          replay(transport);
          rpcManager.setTransport(transport);
-         cache1.put("a6", "b6");
+         cache1.put("a5", "b5");
          assert false : "rpc manager should had thrown an expception";
       } catch (Throwable e) {
          //expected
-         assert mBeanServer.getAttribute(rpcManager1, "SuccessRatio").equals("80%");
+         assertEquals(mBeanServer.getAttribute(rpcManager1, "SuccessRatio"), ("80%"));
       }
       finally {
          rpcManager.setTransport(originalTransport);

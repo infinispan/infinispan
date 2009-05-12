@@ -10,12 +10,12 @@ import org.infinispan.loaders.AbstractCacheLoader;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.marshall.Marshaller;
-import org.infinispan.remoting.ResponseFilter;
-import org.infinispan.remoting.ResponseMode;
-import org.infinispan.remoting.RpcManager;
 import org.infinispan.remoting.responses.ClusteredGetResponseValidityFilter;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
+import org.infinispan.remoting.rpc.ResponseFilter;
+import org.infinispan.remoting.rpc.ResponseMode;
+import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -91,7 +91,7 @@ public class ClusterCacheLoader extends AbstractCacheLoader {
    }
 
    private boolean isLocalCall() {
-      InvocationContext invocationContext = cache.getInvocationContextContainer().get();
+      InvocationContext invocationContext = cache.getInvocationContextContainer().getThreadContext();
       return invocationContext.isOriginLocal();
    }
 

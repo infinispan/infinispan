@@ -139,6 +139,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          return this == DIST_SYNC || this == DIST_ASYNC;
       }
 
+      public boolean isReplicated() {
+         return this == REPL_SYNC || this == REPL_ASYNC;
+      }
+
       public CacheMode toSync() {
          switch (this) {
             case REPL_ASYNC:
@@ -699,5 +703,9 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       // certain combinations are illegal, such as state transfer + DIST
       if (cacheMode.isDistributed() && fetchInMemoryState)
          throw new ConfigurationException("Cache cannot use DISTRIBUTION mode and have fetchInMemoryState set to true");
+   }
+
+   public boolean isOnePhaseCommit() {
+      return !getCacheMode().isSynchronous();
    }
 }

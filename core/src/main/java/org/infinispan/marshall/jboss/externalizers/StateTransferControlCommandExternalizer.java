@@ -22,7 +22,7 @@
 package org.infinispan.marshall.jboss.externalizers;
 
 import org.infinispan.commands.control.StateTransferControlCommand;
-import org.infinispan.remoting.RpcManager;
+import org.infinispan.remoting.rpc.RpcManager;
 import org.jboss.marshalling.Creator;
 
 import java.io.IOException;

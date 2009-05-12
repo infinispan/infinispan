@@ -26,8 +26,7 @@ import org.infinispan.factories.annotations.NonVolatile;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.notifications.Listenable;
-
-import javax.transaction.Transaction;
+import org.infinispan.transaction.xa.GlobalTransaction;
 
 /**
  * Public interface with all allowed notifications.
@@ -89,12 +88,12 @@ public interface CacheNotifier extends Listenable {
     * @param transaction the transaction that has just completed
     * @param successful  if true, the transaction committed.  If false, this is a rollback event
     */
-   void notifyTransactionCompleted(Transaction transaction, boolean successful, InvocationContext ctx);
+   void notifyTransactionCompleted(GlobalTransaction transaction, boolean successful, InvocationContext ctx);
 
    /**
     * Notifies all registered listeners of a transaction registration event.
     *
-    * @param transaction the transaction that has just completed
+    * @param globalTransaction
     */
-   void notifyTransactionRegistered(Transaction transaction, InvocationContext ctx);
+   void notifyTransactionRegistered(GlobalTransaction globalTransaction, InvocationContext ctx);
 }

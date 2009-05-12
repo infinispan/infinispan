@@ -21,37 +21,68 @@
  */
 package org.infinispan.commands.tx;
 
-import org.infinispan.commands.TransactionBoundaryCommand;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.transaction.GlobalTransaction;
+import org.infinispan.context.container.InvocationContextContainer;
+import org.infinispan.context.impl.RemoteTxInvocationContext;
+import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
- * An abstract transaction boundary command that holds a reference to a {@link GlobalTransaction}
+ * An abstract transaction boundary command that holds a reference to a {@link org.infinispan.transaction.xa.GlobalTransaction}
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
+ * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
 public abstract class AbstractTransactionBoundaryCommand implements TransactionBoundaryCommand {
-   GlobalTransaction gtx;
 
-   public GlobalTransaction getGlobalTransaction() {
-      return gtx;
+   private static Log log = LogFactory.getLog(AbstractTransactionBoundaryCommand.class);
+
+   protected GlobalTransaction globalTx;
+   protected String cacheName;
+   protected InterceptorChain invoker;
+   protected InvocationContextContainer icc;
+
+   public void init(InterceptorChain chain, InvocationContextContainer icc) {
+      this.invoker = chain;
+      this.icc = icc;
    }
 
-   public void setGlobalTransaction(GlobalTransaction gtx) {
-      this.gtx = gtx;
+   public String getCacheName() {
+      return cacheName;
+   }
+
+   public void setCacheName(String cacheName) {
+      this.cacheName = cacheName;
+   }
+
+   public GlobalTransaction getGlobalTransaction() {
+      return globalTx;
+   }
+
+   public void GlobalTransaction(GlobalTransaction gtx) {
+      this.globalTx = gtx;
    }
 
    public Object perform(InvocationContext ctx) throws Throwable {
-      return null;
+      if (ctx != null) throw new IllegalStateException("Expected null context!");
+      RemoteTxInvocationContext ctxt = icc.getRemoteTxInvocationContext(getGlobalTransaction(), false);
+      if (ctxt == null) {
+         if (log.isInfoEnabled()) log.info("Not found RemoteTxInvocationContext for tx: " + getGlobalTransaction());
+         return null;
+      }
+      return invoker.invoke(ctxt, this);
    }
 
    public Object[] getParameters() {
-      return new Object[]{gtx};
+      return new Object[]{globalTx, cacheName};
    }
 
    public void setParameters(int commandId, Object[] args) {
-      gtx = (GlobalTransaction) args[0];
+      globalTx = (GlobalTransaction) args[0];
+      cacheName = (String) args[1];
    }
 
    public boolean equals(Object o) {
@@ -59,13 +90,19 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
       if (o == null || getClass() != o.getClass()) return false;
 
       AbstractTransactionBoundaryCommand that = (AbstractTransactionBoundaryCommand) o;
-
-      if (gtx != null ? !gtx.equals(that.gtx) : that.gtx != null) return false;
-
-      return true;
+      return this.globalTx.equals(that.globalTx);
    }
 
    public int hashCode() {
-      return (gtx != null ? gtx.hashCode() : 0);
+      return globalTx.hashCode();
+   }
+
+   @Override
+   public String toString() {
+      return "AbstractTransactionBoundaryCommand{" +
+            "globalTx=" + globalTx +
+            ", cacheName='" + cacheName + '\'' +
+            ", invoker=" + invoker +
+            '}';
    }
 }
