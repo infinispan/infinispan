@@ -21,6 +21,7 @@
  */
 package org.infinispan.interceptors;
 
+import org.infinispan.commands.LockControlCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -63,6 +64,16 @@ public class ReplicationInterceptor extends BaseRpcInterceptor {
       return retVal;
    }
 
+   @Override
+   public Object visitLockControlCommand(InvocationContext ctx, LockControlCommand command) throws Throwable {
+      Object retVal = invokeNextInterceptor(ctx, command);
+      if (ctx.isOriginLocal()) {
+         rpcManager.broadcastRpcCommand(command, true, false);
+      }
+      return retVal;
+   }
+
+   
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (ctx.isOriginLocal() && !configuration.isOnePhaseCommit()) {
