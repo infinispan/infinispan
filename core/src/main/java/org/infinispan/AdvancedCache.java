@@ -81,14 +81,14 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @return the component registry for this cache instance
     */
    ComponentRegistry getComponentRegistry();
-   
-   
+
+
    void lock(K key);
-   
+
    void lock(Collection<? extends K> keys);
-   
+
    void unlock(K key);
-   
+
    void unlock(Collection<? extends K> keys);
 
    RpcManager getRpcManager();
@@ -119,9 +119,9 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
 
    V replace(K k, V v, Flag... flags);
 
-   V replace(K k, V oV, V nV, Flag... flags);
+   boolean replace(K k, V oV, V nV, Flag... flags);
 
-   boolean replace(K k, V v, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, Flag... flags);
+   V replace(K k, V v, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, Flag... flags);
 
    boolean replace(K k, V oV, V nV, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, Flag... flags);
 
