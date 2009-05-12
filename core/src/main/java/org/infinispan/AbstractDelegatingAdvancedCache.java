@@ -258,12 +258,12 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
       return cache.replaceAsync(key, oldValue, newValue, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
    }
 
-   public void lock(K key, boolean eager) {
-      cache.lock(key, eager);
+   public void lock(K key) {
+      cache.lock(key);
    }
 
-   public void lock(Collection<? extends K> keys, boolean eager) {
-      cache.lock(keys, eager);
+   public void lock(Collection<? extends K> keys) {
+      cache.lock(keys);
    }
 
    public void unlock(K key) {

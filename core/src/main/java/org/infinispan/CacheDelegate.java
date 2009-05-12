@@ -63,6 +63,7 @@ import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -238,15 +239,13 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
       return icc.getLocalInvocationContext(true);
    }
 
-   public void lock(K key, boolean eager) {
+   public void lock(K key) {
       if (key == null)
          throw new IllegalArgumentException("Cannot lock null key");
-      List<K> keys = new ArrayList<K>(1);
-      keys.add(key);
-      lock(keys, eager);
+      lock(Collections.singletonList(key));
    }
 
-   public void lock(Collection<? extends K> keys, boolean eager) {
+   public void lock(Collection<? extends K> keys) {
       if (keys == null || keys.isEmpty())
          throw new IllegalArgumentException("Cannot lock empty list of keys");
       LockControlCommand command = commandsFactory.buildLockControlCommand(keys, true);
@@ -256,9 +255,7 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
    public void unlock(K key) {
       if (key == null)
          throw new IllegalArgumentException("Cannot unlock null key");
-      List<K> keys = new ArrayList<K>(1);
-      keys.add(key);
-      unlock(keys);
+      unlock(Collections.singletonList(key));
    }
 
    public void unlock(Collection<? extends K> keys) {

@@ -25,6 +25,7 @@ import java.util.Collection;
 
 import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.transaction.xa.GlobalTransaction;
 
 /**
  * 
@@ -34,8 +35,9 @@ import org.infinispan.context.InvocationContext;
  * @since 4.0
  */
 public class LockControlCommand extends AbstractTransactionBoundaryCommand {
-   private final Collection keys;
-   private final boolean lock;
+   public static final int COMMAND_ID = 3;
+   private Collection keys;
+   private boolean lock;
 
    public LockControlCommand(Collection keys, boolean lock) {
       this.keys = keys;
@@ -59,9 +61,20 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
    }
 
    public byte getCommandId() {
-      return 0; // no-op
+      return COMMAND_ID;
+   }
+   
+   public Object[] getParameters() {
+      return new Object[]{globalTx, cacheName,keys,lock};
    }
 
+   public void setParameters(int commandId, Object[] args) {
+      globalTx = (GlobalTransaction) args[0];
+      cacheName = (String) args[1];
+      keys = (Collection) args [2];
+      lock = (Boolean)args[3];
+   }
+   
    public boolean equals(Object o) {
       if (this == o)
          return true;
@@ -83,6 +96,11 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
 
    @Override
    public String toString() {
-      return "LockControlCommand{" + "lock=" + lock + "keys=" + keys + '}';
+      return "LockControlCommand{" + 
+         "globalTx=" + globalTx + 
+         ", cacheName='" + cacheName+ 
+         ", invoker=" + invoker + 
+         ", lock=" + lock + 
+         ", keys=" + keys + '}';
    }
 }

@@ -83,9 +83,9 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
    ComponentRegistry getComponentRegistry();
    
    
-   void lock(K key, boolean eager);
+   void lock(K key);
    
-   void lock(Collection<? extends K> keys, boolean eager);
+   void lock(Collection<? extends K> keys);
    
    void unlock(K key);
    
