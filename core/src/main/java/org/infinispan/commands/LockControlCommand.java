@@ -39,6 +39,10 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
    private Collection keys;
    private boolean lock;
 
+   
+   public LockControlCommand() {
+   }
+
    public LockControlCommand(Collection keys, boolean lock) {
       this.keys = keys;
       this.lock = lock;
@@ -69,10 +73,12 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
    }
 
    public void setParameters(int commandId, Object[] args) {
+      if (commandId != COMMAND_ID)
+         throw new IllegalStateException("Unusupported command id:" + commandId);
       globalTx = (GlobalTransaction) args[0];
       cacheName = (String) args[1];
-      keys = (Collection) args [2];
-      lock = (Boolean)args[3];
+      keys = (Collection) args[2];
+      lock = (Boolean) args[3];
    }
    
    public boolean equals(Object o) {

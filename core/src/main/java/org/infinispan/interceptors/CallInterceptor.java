@@ -22,6 +22,7 @@
 package org.infinispan.interceptors;
 
 
+import org.infinispan.commands.LockControlCommand;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -58,6 +59,12 @@ public class CallInterceptor extends CommandInterceptor {
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (trace) log.trace("Suppressing invocation of method handleRollbackCommand.");
+      return null;
+   }
+   
+   @Override
+   public Object visitLockControlCommand(InvocationContext ctx, LockControlCommand c) throws Throwable {
+      if (trace) log.trace("Suppressing invocation of method handleLockControlCommand.");
       return null;
    }
 

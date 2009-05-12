@@ -1,5 +1,6 @@
 package org.infinispan.interceptors;
 
+import org.infinispan.commands.LockControlCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.SizeCommand;
@@ -87,7 +88,12 @@ public class TxInterceptor extends CommandInterceptor {
       transactionLog.rollback(command.getGlobalTransaction());
       return invokeNextInterceptor(ctx, command);
    }
-
+   
+   @Override
+   public Object visitLockControlCommand(InvocationContext ctx, LockControlCommand command) throws Throwable{
+      return enlistReadAndInvokeNext(ctx, command);
+   }
+   
    /**
     * Designed to be overridden.  Returns a VisitableCommand fit for replaying locally, based on the modification passed
     * in.  If a null value is returned, this means that the command should not be replayed.

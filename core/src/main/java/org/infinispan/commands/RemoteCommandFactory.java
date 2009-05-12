@@ -53,6 +53,9 @@ public class RemoteCommandFactory {
          case PutKeyValueCommand.COMMAND_ID:
             command = new PutKeyValueCommand();
             break;
+         case LockControlCommand.COMMAND_ID:
+            command = new LockControlCommand();
+            break;   
          case PutMapCommand.COMMAND_ID:
             command = new PutMapCommand();
             break;
