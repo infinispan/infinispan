@@ -3,14 +3,14 @@ package org.infinispan.context.impl;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.BidirectionalMap;
 import org.infinispan.util.BidirectionalLinkedHashMap;
+import org.infinispan.util.BidirectionalMap;
 
 import javax.transaction.Transaction;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.ArrayList;
 
 /**
  * // TODO: Mircea: Document this!
@@ -107,7 +107,7 @@ public class RemoteTxInvocationContext extends AbstractTxInvocationContext {
    }
 
    @Override
-   public Object clone() {
+   public RemoteTxInvocationContext clone() {
       RemoteTxInvocationContext dolly = (RemoteTxInvocationContext) super.clone();
       if (modifications != null) {
          dolly.modifications = new ArrayList<WriteCommand>(modifications);

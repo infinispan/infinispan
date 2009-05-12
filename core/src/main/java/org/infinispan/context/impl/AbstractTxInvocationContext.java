@@ -6,10 +6,10 @@ import org.infinispan.remoting.transport.Address;
 import javax.transaction.Status;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
-import java.util.Set;
 import java.util.Collections;
-import java.util.List;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * // TODO: Mircea: Document this!
@@ -95,9 +95,9 @@ public abstract class AbstractTxInvocationContext extends AbstractInvocationCont
    }
 
    @Override
-   public Object clone() {
+   public AbstractTxInvocationContext clone() {
       AbstractTxInvocationContext dolly = (AbstractTxInvocationContext) super.clone();
-      if (this.txParticipants != null)  {
+      if (this.txParticipants != null) {
          dolly.txParticipants = new HashSet<Address>(txParticipants);
       }
       return dolly;

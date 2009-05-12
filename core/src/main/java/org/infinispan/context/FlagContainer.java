@@ -19,7 +19,7 @@ public interface FlagContainer {
 
    void setFlags(Collection<Flag> flags);
 
-   void resetFlags();
+   void reset();
 
    boolean isFlagsUninitialized();
 }

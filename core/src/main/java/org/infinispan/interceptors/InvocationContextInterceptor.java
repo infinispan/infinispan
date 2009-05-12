@@ -105,7 +105,7 @@ public class InvocationContextInterceptor extends CommandInterceptor {
          }
          throw th;
       } finally {
-         ctx.resetFlags();
+         ctx.reset();
       }
    }
 }

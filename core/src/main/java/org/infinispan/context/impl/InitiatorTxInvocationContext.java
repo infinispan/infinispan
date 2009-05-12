@@ -71,9 +71,4 @@ public class InitiatorTxInvocationContext extends AbstractTxInvocationContext {
    public void clearLookedUpEntries() {
       xaAdapter.clearLookedUpEntries();
    }
-
-   @Override
-   public Object clone() {
-      return super.clone();
-   }
 }

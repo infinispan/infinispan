@@ -1,9 +1,9 @@
 package org.infinispan.context.impl;
 
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.util.BidirectionalLinkedHashMap;
 import org.infinispan.util.BidirectionalMap;
 import org.infinispan.util.InfinispanCollections;
-import org.infinispan.util.BidirectionalLinkedHashMap;
 
 import java.util.Map;
 
@@ -14,8 +14,6 @@ import java.util.Map;
  * @since 4.0
  */
 public class NonTxInvocationContext extends AbstractInvocationContext {
-
-   private boolean isOriginLocal;
 
    protected BidirectionalLinkedHashMap<Object, CacheEntry> lookedUpEntries = null;
 
@@ -48,11 +46,11 @@ public class NonTxInvocationContext extends AbstractInvocationContext {
    }
 
    public boolean isOriginLocal() {
-      return isOriginLocal;
+      return isContextFlagSet(ContextFlag.ORIGIN_LOCAL);
    }
 
    public void setOriginLocal(boolean originLocal) {
-      isOriginLocal = originLocal;
+      setContextFlag(ContextFlag.ORIGIN_LOCAL, originLocal);
    }
 
    public boolean isInTxScope() {
@@ -68,16 +66,16 @@ public class NonTxInvocationContext extends AbstractInvocationContext {
    }
 
    public void prepareForCall() {
-      resetFlags();
+      reset();
       clearLookedUpEntries();
    }
 
    @Override
-   public Object clone() {
+   public NonTxInvocationContext clone() {
       NonTxInvocationContext dolly = (NonTxInvocationContext) super.clone();
       if (lookedUpEntries != null) {
          dolly.lookedUpEntries = new BidirectionalLinkedHashMap<Object, CacheEntry>(lookedUpEntries);
       }
-      return dolly; 
+      return dolly;
    }
 }

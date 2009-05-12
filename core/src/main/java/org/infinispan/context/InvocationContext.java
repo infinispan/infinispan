@@ -37,8 +37,12 @@ public interface InvocationContext extends EntryLookup, FlagContainer, Cloneable
 
    Object getLockOwner();
 
-   public Object clone();
+   public InvocationContext clone();
 
    boolean hasLockedEntries();
+
+   boolean isUseFutureReturnType();
+
+   void setUseFutureReturnType(boolean useFutureReturnType);
 
 }
