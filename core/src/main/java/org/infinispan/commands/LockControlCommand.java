@@ -43,9 +43,14 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
    public LockControlCommand() {
    }
 
-   public LockControlCommand(Collection keys, boolean lock) {
+   public LockControlCommand(Collection keys, String cacheName, boolean lock) {
+      this.cacheName = cacheName;
       this.keys = keys;
       this.lock = lock;
+   }
+   
+   public void attachGlobalTransaction (GlobalTransaction gtx){
+      globalTx = gtx;
    }
 
    public Collection getKeys() {

@@ -43,6 +43,7 @@ import org.infinispan.factories.EntryFactory;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ReversibleOrderedSet;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.concurrent.locks.LockManager;
@@ -138,12 +139,25 @@ public class LockingInterceptor extends CommandInterceptor {
    @Override
    public Object visitLockControlCommand(InvocationContext ctx, LockControlCommand c) throws Throwable {
       try {
+         if(ctx.isOriginLocal() && ctx.isInTxScope()){
+            c.attachGlobalTransaction((GlobalTransaction) ctx.getLockOwner());
+         }
          if (c.isLock()) {
-            for (Object key : c.getKeys())
-               entryFactory.acquireLock(ctx, key);
+            for (Object key : c.getKeys()) {
+               boolean needed = entryFactory.acquireLock(ctx, key);
+               if (trace) {
+                  if (needed)
+                     log.trace("Key " + key + " was needed and acquired by " + ctx.getLockOwner());
+                  else
+                     log.trace("Key " + key + " was already held by " + ctx.getLockOwner());
+               }
+            }
          } else if (c.isUnlock()) {
-            for (Object key : c.getKeys())
+            for (Object key : c.getKeys()) {
                entryFactory.releaseLock(key);
+               if (trace)
+                  log.trace("Unlocked key " + key);
+            }
          }
          return invokeNextInterceptor(ctx, c);
       } finally {

@@ -230,10 +230,14 @@ public class CommandsFactoryImpl implements CommandsFactory {
             ClusteredGetCommand clusteredGetCommand = (ClusteredGetCommand) c;
             clusteredGetCommand.initialize(dataContainer, cacheLoaderManager, icc);
             break;
+         case LockControlCommand.COMMAND_ID:
+            LockControlCommand lcc = (LockControlCommand)c;
+            lcc.init(interceptorChain, icc,txTable);
+            break;    
       }
    }
 
    public LockControlCommand buildLockControlCommand(Collection keys, boolean lock) {
-      return new LockControlCommand(keys, lock);
+      return new LockControlCommand(keys, cacheName, lock);
    }
 }

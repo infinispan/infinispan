@@ -41,15 +41,19 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
       assertNull("Should be null", cache1.get(k));
       assertNull("Should be null", cache2.get(k));
 
+
+      String name = "Vladimir";
       TransactionManager mgr = TestingUtil.getTransactionManager(cache1);
       mgr.begin();
-      cache1.getAdvancedCache().lock(k);
+      
       cache1.put(k, v);
+      cache1.getAdvancedCache().lock(k);
+      cache1.put(k, name);
       cache1.getAdvancedCache().unlock(k);
       mgr.commit();
 
-      assertEquals(v, cache1.get(k));
-      assertEquals("Should have replicated", v, cache2.get(k));
+      assertEquals(name, cache1.get(k));
+      assertEquals("Should have replicated", name, cache2.get(k));
 
       cache2.remove(k);
       assert cache1.isEmpty();
