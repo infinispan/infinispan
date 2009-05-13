@@ -160,7 +160,7 @@ public class TxInterceptor extends CommandInterceptor {
 
    private Object enlistReadAndInvokeNext(InvocationContext ctx, VisitableCommand command) throws Throwable {
       if (shouldEnlist(ctx)) {
-         TransactionXaAdapter xaAdapter = enlist();
+         TransactionXaAdapter xaAdapter = enlist(ctx);
          LocalTxInvocationContext localTxContext = (LocalTxInvocationContext) ctx;
          localTxContext.setXaCache(xaAdapter);
       }
@@ -169,7 +169,7 @@ public class TxInterceptor extends CommandInterceptor {
 
    private Object enlistWriteAndInvokeNext(InvocationContext ctx, WriteCommand command) throws Throwable {
       if (shouldEnlist(ctx)) {
-         TransactionXaAdapter xaAdapter = enlist();
+         TransactionXaAdapter xaAdapter = enlist(ctx);
          LocalTxInvocationContext localTxContext = (LocalTxInvocationContext) ctx;
          if (!isLocalModeForced(ctx)) {
             xaAdapter.addModification(command);
@@ -181,13 +181,13 @@ public class TxInterceptor extends CommandInterceptor {
       return invokeNextInterceptor(ctx, command);
    }
 
-   public TransactionXaAdapter enlist() throws SystemException, RollbackException {
+   public TransactionXaAdapter enlist(InvocationContext ctx) throws SystemException, RollbackException {
       Transaction transaction = tm.getTransaction();
       if (transaction == null) throw new IllegalStateException("This should only be called in an tx scope");
       int status = transaction.getStatus();
       if (!isValid(status)) throw new IllegalStateException("Transaction " + transaction +
             " is not in a valid state to be invoking cache operations on.");
-      return txTable.getOrCreateXaAdapter(transaction);
+      return txTable.getOrCreateXaAdapter(transaction, ctx);
    }
 
    private boolean isValid(int status) {

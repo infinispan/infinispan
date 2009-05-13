@@ -4,6 +4,7 @@ import org.infinispan.CacheException;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.config.Configuration;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.InterceptorChain;
@@ -68,7 +69,7 @@ public class TransactionTable {
       return remoteTransaction;
    }
 
-   public TransactionXaAdapter getOrCreateXaAdapter(Transaction transaction) {
+   public TransactionXaAdapter getOrCreateXaAdapter(Transaction transaction, InvocationContext ctx) {
       TransactionXaAdapter current = localTransactions.get(transaction);
       if (current == null) {
          Address localAddress = rpcManager != null ? rpcManager.getLocalAddress() : null;
@@ -81,7 +82,7 @@ public class TransactionTable {
             log.error("Failed to emlist TransactionXaAdapter to transaction");
             throw new CacheException(e);
          }
-         notifier.notifyTransactionRegistered(tx, icc.getThreadContext());
+         notifier.notifyTransactionRegistered(tx, ctx);
       }
       return current;
    }
