@@ -26,7 +26,7 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.container.InvocationContextContainer;
+import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;

@@ -3,7 +3,7 @@ package org.infinispan.api.tree;
 import org.infinispan.api.mvcc.LockAssert;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
-import org.infinispan.context.container.InvocationContextContainer;
+import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.test.SingleCacheManagerTest;

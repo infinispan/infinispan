@@ -18,7 +18,7 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.ReplListener;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
-import org.infinispan.transaction.xa.TxEnlistingManager;
+import org.infinispan.transaction.xa.TransactionTable;
 import static org.testng.AssertJUnit.*;
 import org.testng.annotations.Test;
 
@@ -226,10 +226,6 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
       cacheModeLocalTest(true);
    }
 
-   private TxEnlistingManager getTxEnlistingManager(Cache cache) {
-      return TestingUtil.extractComponent(cache, TxEnlistingManager.class);
-   }
-
    /**
     * Tests that suspended transactions do not leak.  See JBCACHE-1246.
     */
@@ -240,13 +236,13 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
       tm1.commit();
       replListener2.waitForRpc();
 
-      TxEnlistingManager tt1 = getTxEnlistingManager(cache1);
-      TxEnlistingManager tt2 = getTxEnlistingManager(cache2);
+      TransactionTable tt1 = TestingUtil.extractComponent(cache1, TransactionTable.class);
+      TransactionTable tt2 = TestingUtil.extractComponent(cache2, TransactionTable.class);
 
-      assert tt1.getActiveRemotelyInitiatedTxCount() == 0 : "Cache 1 should have no stale global TXs";
-      assert tt1.getActiveLocallyInitiatedTxCount() == 0 : "Cache 1 should have no stale local TXs";
-      assert tt2.getActiveRemotelyInitiatedTxCount() == 0 : "Cache 2 should have no stale global TXs";
-      assert tt2.getActiveLocallyInitiatedTxCount() == 0 : "Cache 2 should have no stale local TXs";
+      assert tt1.getRemoteTxCount() == 0 : "Cache 1 should have no stale global TXs";
+      assert tt1.getLocalTxCount() == 0 : "Cache 1 should have no stale local TXs";
+      assert tt2.getRemoteTxCount() == 0 : "Cache 2 should have no stale global TXs";
+      assert tt2.getLocalTxCount() == 0 : "Cache 2 should have no stale local TXs";
 
       System.out.println("PutForExternalReadTest.testMemLeakOnSuspendedTransactions");
       replListener2.expectWithTx(PutKeyValueCommand.class);
@@ -256,10 +252,10 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
       tm1.commit();
       replListener2.waitForRpc();
 
-      assert tt1.getActiveRemotelyInitiatedTxCount() == 0 : "Cache 1 should have no stale global TXs";
-      assert tt1.getActiveLocallyInitiatedTxCount() == 0 : "Cache 1 should have no stale local TXs";
-      assert tt2.getActiveRemotelyInitiatedTxCount() == 0 : "Cache 2 should have no stale global TXs";
-      assert tt2.getActiveLocallyInitiatedTxCount() == 0 : "Cache 2 should have no stale local TXs";
+      assert tt1.getRemoteTxCount() == 0 : "Cache 1 should have no stale global TXs";
+      assert tt1.getLocalTxCount() == 0 : "Cache 1 should have no stale local TXs";
+      assert tt2.getRemoteTxCount() == 0 : "Cache 2 should have no stale global TXs";
+      assert tt2.getLocalTxCount() == 0 : "Cache 2 should have no stale local TXs";
 
       replListener2.expectWithTx(PutKeyValueCommand.class);
       tm1.begin();
@@ -268,10 +264,10 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
       tm1.commit();
       replListener2.waitForRpc();
 
-      assert tt1.getActiveRemotelyInitiatedTxCount() == 0 : "Cache 1 should have no stale global TXs";
-      assert tt1.getActiveLocallyInitiatedTxCount() == 0 : "Cache 1 should have no stale local TXs";
-      assert tt2.getActiveRemotelyInitiatedTxCount() == 0 : "Cache 2 should have no stale global TXs";
-      assert tt2.getActiveLocallyInitiatedTxCount() == 0 : "Cache 2 should have no stale local TXs";
+      assert tt1.getRemoteTxCount() == 0 : "Cache 1 should have no stale global TXs";
+      assert tt1.getLocalTxCount() == 0 : "Cache 1 should have no stale local TXs";
+      assert tt2.getRemoteTxCount() == 0 : "Cache 2 should have no stale global TXs";
+      assert tt2.getLocalTxCount() == 0 : "Cache 2 should have no stale local TXs";
 
       replListener2.expectWithTx(PutKeyValueCommand.class, PutKeyValueCommand.class);
       tm1.begin();
@@ -281,10 +277,10 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
       tm1.commit();
       replListener2.waitForRpc();
 
-      assert tt1.getActiveRemotelyInitiatedTxCount() == 0 : "Cache 1 should have no stale global TXs";
-      assert tt1.getActiveLocallyInitiatedTxCount() == 0 : "Cache 1 should have no stale local TXs";
-      assert tt2.getActiveRemotelyInitiatedTxCount() == 0 : "Cache 2 should have no stale global TXs";
-      assert tt2.getActiveLocallyInitiatedTxCount() == 0 : "Cache 2 should have no stale local TXs";
+      assert tt1.getRemoteTxCount() == 0 : "Cache 1 should have no stale global TXs";
+      assert tt1.getLocalTxCount() == 0 : "Cache 1 should have no stale local TXs";
+      assert tt2.getRemoteTxCount() == 0 : "Cache 2 should have no stale global TXs";
+      assert tt2.getLocalTxCount() == 0 : "Cache 2 should have no stale local TXs";
    }
 
    /**

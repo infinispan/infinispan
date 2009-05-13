@@ -24,7 +24,7 @@ package org.infinispan.interceptors;
 import org.infinispan.CacheException;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.container.InvocationContextContainer;
+import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;

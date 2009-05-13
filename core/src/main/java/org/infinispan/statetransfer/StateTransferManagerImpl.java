@@ -30,8 +30,8 @@ import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.context.container.InvocationContextContainer;
+import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.InterceptorChain;
@@ -46,6 +46,8 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.DistributedSync;
 import org.infinispan.transaction.TransactionLog;
+import org.infinispan.transaction.xa.RemoteTransaction;
+import org.infinispan.transaction.xa.TransactionTable;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -74,6 +76,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
    InvocationContextContainer invocationContextContainer;
    InterceptorChain interceptorChain;
    CommandsFactory commandsFactory;
+   TransactionTable txTable;
    private static final Log log = LogFactory.getLog(StateTransferManagerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
    private static final Byte DELIMITER = (byte) 123;
@@ -86,7 +89,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
    public void injectDependencies(RpcManager rpcManager, AdvancedCache cache, Configuration configuration,
                                   DataContainer dataContainer, CacheLoaderManager clm, Marshaller marshaller,
                                   TransactionLog transactionLog, InterceptorChain interceptorChain, InvocationContextContainer invocationContextContainer,
-                                  CommandsFactory commandsFactory) {
+                                  CommandsFactory commandsFactory, TransactionTable txTable) {
       this.rpcManager = rpcManager;
       this.cache = cache;
       this.configuration = configuration;
@@ -97,6 +100,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
       this.invocationContextContainer = invocationContextContainer;
       this.interceptorChain = interceptorChain;
       this.commandsFactory = commandsFactory;
+      this.txTable = txTable;
    }
 
    @Start(priority = 55)
@@ -214,13 +218,15 @@ public class StateTransferManagerImpl implements StateTransferManager {
    private void processCommitLog(ObjectInput oi) throws Exception {
       if (trace) log.trace("Applying commit log");
       Object object = marshaller.objectFromObjectStream(oi);
+      RemoteTxInvocationContext ctx = invocationContextContainer.getRemoteTxInvocationContext();
       while (object instanceof TransactionLog.LogEntry) {
          TransactionLog.LogEntry logEntry = (TransactionLog.LogEntry) object;
+         RemoteTransaction remoteTransaction = txTable.getRemoteTransaction(logEntry.getTransaction());
+         ctx.setRemoteTransaction(remoteTransaction);
          WriteCommand[] mods = logEntry.getModifications();
          if (trace) log.trace("Mods = {0}", Arrays.toString(mods));
          for (WriteCommand mod : mods) {
             commandsFactory.initializeReplicableCommand(mod);
-            InvocationContext ctx = invocationContextContainer.getRemoteTxInvocationContext(logEntry.getTransaction(),true);
             ctx.setFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_CACHE_STATUS_CHECK);
             interceptorChain.invoke(ctx, mod);
          }
@@ -254,7 +260,9 @@ public class StateTransferManagerImpl implements StateTransferManager {
             if (!transactionLog.hasPendingPrepare(command)) {
                if (trace) log.trace("Applying pending prepare {0}", command);
                commandsFactory.initializeReplicableCommand(command);
-               InvocationContext ctx = invocationContextContainer.getRemoteTxInvocationContext(command.getGlobalTransaction(), true);
+               RemoteTxInvocationContext ctx = invocationContextContainer.getRemoteTxInvocationContext();
+               RemoteTransaction transaction = txTable.createRemoteTransaction(command.getGlobalTransaction(), command.getModifications());
+               ctx.setRemoteTransaction(transaction);
                ctx.setFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_CACHE_STATUS_CHECK);
                interceptorChain.invoke(ctx, command);
             } else {

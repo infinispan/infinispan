@@ -27,7 +27,7 @@ import org.infinispan.atomic.AtomicMapCache;
 import org.infinispan.batch.AutoBatchSupport;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.context.Flag;
-import org.infinispan.context.container.InvocationContextContainer;
+import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;

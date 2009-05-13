@@ -13,7 +13,7 @@ import org.infinispan.CacheDelegate;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.container.InvocationContextContainer;
+import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.interceptors.InterceptorChain;
@@ -523,7 +523,7 @@ public class TestingUtil {
       ComponentRegistry cr = extractComponentRegistry(cache);
       InterceptorChain ic = cr.getComponent(InterceptorChain.class);
       InvocationContextContainer icc = cr.getComponent(InvocationContextContainer.class);
-      InvocationContext ctxt = icc.getLocalInvocationContext(true);
+      InvocationContext ctxt = icc.getLocalInvocationContext();
       ic.invoke(ctxt, command);
    }
 

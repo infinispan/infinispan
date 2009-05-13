@@ -29,6 +29,7 @@ import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.transaction.xa.RemoteTransaction;
 
 import java.util.Arrays;
 import java.util.List;
@@ -69,9 +70,15 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
 
    public final Object perform(InvocationContext ignored) throws Throwable {
       if (ignored != null) throw new IllegalStateException("Expected null context!");
-      RemoteTxInvocationContext ctx = icc.getRemoteTxInvocationContext(getGlobalTransaction(), true);
-      notifier.notifyTransactionRegistered(ctx.getClusterTransactionId(), ctx);
-      ctx.initialize(modifications, globalTx);
+
+      //1. first create a remote transaction
+      RemoteTransaction remoteTransaction = txTable.createRemoteTransaction(globalTx, modifications);
+
+      //2. then set it on the invocation context
+      RemoteTxInvocationContext ctx = icc.getRemoteTxInvocationContext();
+      ctx.setRemoteTransaction(remoteTransaction);
+      
+      notifier.notifyTransactionRegistered(ctx.getGlobalTransaction(), ctx);
       return invoker.invoke(ctx, this);
    }
 

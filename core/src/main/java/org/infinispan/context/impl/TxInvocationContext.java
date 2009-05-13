@@ -21,7 +21,7 @@ public interface TxInvocationContext extends InvocationContext {
 
    Set<Address> getTransactionParticipants();
 
-   GlobalTransaction getClusterTransactionId();
+   GlobalTransaction getGlobalTransaction();
 
    List<WriteCommand> getModifications();
 

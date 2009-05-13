@@ -2,7 +2,7 @@ package org.infinispan.api.mvcc;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
-import org.infinispan.context.container.InvocationContextContainer;
+import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;

@@ -46,21 +46,21 @@ public class NotificationInterceptor extends CommandInterceptor {
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       Object retval = invokeNextInterceptor(ctx, command);
-      if (command.isOnePhaseCommit()) notifier.notifyTransactionCompleted(ctx.getClusterTransactionId(), true, ctx);
+      if (command.isOnePhaseCommit()) notifier.notifyTransactionCompleted(ctx.getGlobalTransaction(), true, ctx);
       return retval;
    }
 
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       Object retval = invokeNextInterceptor(ctx, command);
-      notifier.notifyTransactionCompleted(ctx.getClusterTransactionId(), true, ctx);
+      notifier.notifyTransactionCompleted(ctx.getGlobalTransaction(), true, ctx);
       return retval;
    }
 
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       Object retval = invokeNextInterceptor(ctx, command);
-      notifier.notifyTransactionCompleted(ctx.getClusterTransactionId(), false, ctx);
+      notifier.notifyTransactionCompleted(ctx.getGlobalTransaction(), false, ctx);
       return retval;
    }
 }

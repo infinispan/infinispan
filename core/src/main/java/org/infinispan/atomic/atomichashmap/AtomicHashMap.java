@@ -31,7 +31,7 @@ import org.infinispan.atomic.operations.ClearOperation;
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.NullDelta;
 import org.infinispan.batch.BatchContainer;
-import org.infinispan.context.container.InvocationContextContainer;
+import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.util.FastCopyHashMap;
 
 import java.util.Collection;

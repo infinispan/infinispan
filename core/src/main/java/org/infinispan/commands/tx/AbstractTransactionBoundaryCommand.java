@@ -22,10 +22,12 @@
 package org.infinispan.commands.tx;
 
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.container.InvocationContextContainer;
+import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.transaction.xa.TransactionTable;
+import org.infinispan.transaction.xa.RemoteTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -44,10 +46,13 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
    protected String cacheName;
    protected InterceptorChain invoker;
    protected InvocationContextContainer icc;
+   protected TransactionTable txTable;
 
-   public void init(InterceptorChain chain, InvocationContextContainer icc) {
+
+   public void init(InterceptorChain chain, InvocationContextContainer icc, TransactionTable txTable) {
       this.invoker = chain;
       this.icc = icc;
+      this.txTable = txTable;
    }
 
    public String getCacheName() {
@@ -68,12 +73,18 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
 
    public Object perform(InvocationContext ctx) throws Throwable {
       if (ctx != null) throw new IllegalStateException("Expected null context!");
-      RemoteTxInvocationContext ctxt = icc.getRemoteTxInvocationContext(getGlobalTransaction(), false);
-      if (ctxt == null) {
-         if (log.isInfoEnabled()) log.info("Not found RemoteTxInvocationContext for tx: " + getGlobalTransaction());
+      RemoteTransaction transaction = txTable.getRemoteTransaction(globalTx);
+      if (transaction == null) {
+         if (log.isInfoEnabled()) log.info("Not found RemoteTransaction for tx id: " + globalTx);
          return null;
       }
-      return invoker.invoke(ctxt, this);
+      RemoteTxInvocationContext ctxt = icc.getRemoteTxInvocationContext();
+      ctxt.setRemoteTransaction(transaction);
+      try {
+         return invoker.invoke(ctxt, this);
+      } finally {
+         txTable.removeRemoteTransaction(globalTx);
+      }
    }
 
    public Object[] getParameters() {

@@ -3,12 +3,10 @@ package org.infinispan.context.impl;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.BidirectionalLinkedHashMap;
+import org.infinispan.transaction.xa.RemoteTransaction;
 import org.infinispan.util.BidirectionalMap;
 
 import javax.transaction.Transaction;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -20,11 +18,8 @@ import java.util.Map;
  */
 public class RemoteTxInvocationContext extends AbstractTxInvocationContext {
 
-   private List<WriteCommand> modifications;
 
-   private BidirectionalMap<Object, CacheEntry> lookedUpEntries;
-
-   protected GlobalTransaction tx;
+   private RemoteTransaction remoteTransaction;
 
    public RemoteTxInvocationContext() {
    }
@@ -34,11 +29,11 @@ public class RemoteTxInvocationContext extends AbstractTxInvocationContext {
    }
 
    public Object getLockOwner() {
-      return tx;
+      return remoteTransaction.getGlobalTransaction();
    }
 
-   public GlobalTransaction getClusterTransactionId() {
-      return tx;
+   public GlobalTransaction getGlobalTransaction() {
+      return remoteTransaction.getGlobalTransaction();
    }
 
    public boolean isInTxScope() {
@@ -50,74 +45,54 @@ public class RemoteTxInvocationContext extends AbstractTxInvocationContext {
    }
 
    public List<WriteCommand> getModifications() {
-      return modifications;
+      return remoteTransaction.getModifications();
    }
 
-   public void initialize(WriteCommand[] modifications, GlobalTransaction tx) {
-      this.modifications = Arrays.asList(modifications);
-      lookedUpEntries = new BidirectionalLinkedHashMap<Object, CacheEntry>(modifications.length);
-      this.tx = tx;
+   public void setRemoteTransaction(RemoteTransaction remoteTransaction) {
+      this.remoteTransaction = remoteTransaction;
    }
 
    public CacheEntry lookupEntry(Object key) {
-      return lookedUpEntries.get(key);
+      return remoteTransaction.lookupEntry(key);
    }
 
    public BidirectionalMap<Object, CacheEntry> getLookedUpEntries() {
-      return lookedUpEntries;
+      return remoteTransaction.getLookedUpEntries();
    }
 
    public void putLookedUpEntry(Object key, CacheEntry e) {
-      lookedUpEntries.put(key, e);
+      remoteTransaction.putLookedUpEntry(key, e);
    }
 
    public void removeLookedUpEntry(Object key) {
-      lookedUpEntries.remove(key);
+      remoteTransaction.removeLookedUpEntry(key);
    }
 
    public void clearLookedUpEntries() {
-      lookedUpEntries.clear();
+      remoteTransaction.clearLookedUpEntries();
    }
 
    public void putLookedUpEntries(Map<Object, CacheEntry> lookedUpEntries) {
-      lookedUpEntries.putAll(lookedUpEntries);
+      remoteTransaction.putLookedUpEntries(lookedUpEntries);
    }
 
    @Override
    public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof RemoteTxInvocationContext)) return false;
-
-      RemoteTxInvocationContext context = (RemoteTxInvocationContext) o;
-      return tx.equals(context.tx);
+      RemoteTxInvocationContext that = (RemoteTxInvocationContext) o;
+      return remoteTransaction.equals(that.remoteTransaction);
    }
 
    @Override
    public int hashCode() {
-      return tx.hashCode();
-   }
-
-   @Override
-   public String toString() {
-      return "RemoteTxInvocationContext{" +
-            "modifications=" + modifications +
-            ", lookedUpEntries=" + lookedUpEntries +
-            ", tx=" + tx +
-            "} " + super.toString();
+      return remoteTransaction.hashCode();
    }
 
    @Override
    public RemoteTxInvocationContext clone() {
       RemoteTxInvocationContext dolly = (RemoteTxInvocationContext) super.clone();
-      if (modifications != null) {
-         dolly.modifications = new ArrayList<WriteCommand>(modifications);
-      }
-      if (lookedUpEntries != null) {
-         dolly.lookedUpEntries = new BidirectionalLinkedHashMap<Object, CacheEntry>(lookedUpEntries);
-      }
-      if (tx != null) {
-         dolly.tx = (GlobalTransaction) tx.clone();
-      }
+      dolly.remoteTransaction = (RemoteTransaction) remoteTransaction.clone();
       return dolly;
    }
 }

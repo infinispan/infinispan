@@ -16,7 +16,7 @@ import java.util.Map;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public class InitiatorTxInvocationContext extends AbstractTxInvocationContext {
+public class LocalTxInvocationContext extends AbstractTxInvocationContext {
 
    private TransactionXaAdapter xaAdapter;
 
@@ -33,11 +33,11 @@ public class InitiatorTxInvocationContext extends AbstractTxInvocationContext {
    }
 
    public Object getLockOwner() {
-      return xaAdapter.getTransactionIdentifier();
+      return xaAdapter.getGlobalTx();
    }
 
-   public GlobalTransaction getClusterTransactionId() {
-      return xaAdapter.getTransactionIdentifier();
+   public GlobalTransaction getGlobalTransaction() {
+      return xaAdapter.getGlobalTx();
    }
 
    public List<WriteCommand> getModifications() {

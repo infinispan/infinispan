@@ -6,7 +6,7 @@ import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.container.InvocationContextContainer;
+import org.infinispan.context.InvocationContextContainer;
 
 /**
  * Base class for RPC commands.

@@ -1,7 +1,7 @@
 package org.infinispan.api.mvcc;
 
 import org.infinispan.Cache;
-import org.infinispan.context.container.InvocationContextContainer;
+import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.test.TestingUtil;
@@ -21,7 +21,7 @@ public class LockAssert {
 
    public static void assertNotLocked(Object key, InvocationContextContainer icc) {
       // can't rely on the negative test since other entries may share the same lock with lock striping.
-      assert !icc.getLocalInvocationContext(true).hasLockedKey(key) : key + " lock recorded!";
+      assert !icc.getLocalInvocationContext().hasLockedKey(key) : key + " lock recorded!";
    }
 
    public static void assertNoLocks(LockManager lockManager, InvocationContextContainer icc) {

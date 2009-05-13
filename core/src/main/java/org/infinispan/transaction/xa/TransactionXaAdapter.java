@@ -7,8 +7,8 @@ import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.context.container.InvocationContextContainer;
-import org.infinispan.context.impl.InitiatorTxInvocationContext;
+import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.util.BidirectionalLinkedHashMap;
 import org.infinispan.util.BidirectionalMap;
@@ -30,7 +30,7 @@ import java.util.Map;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public class TransactionXaAdapter implements XAResource {
+public class TransactionXaAdapter implements CacheTransaction, XAResource {
 
    private static Log log = LogFactory.getLog(TransactionXaAdapter.class);
 
@@ -39,25 +39,25 @@ public class TransactionXaAdapter implements XAResource {
    private List<WriteCommand> modifications;
    private BidirectionalMap<Object, CacheEntry> lookedUpEntries;
 
-   private GlobalTransaction transactionIdentifier;
+   private GlobalTransaction globalTx;
    private InvocationContextContainer icc;
    private InterceptorChain invoker;
 
    private CommandsFactory commandsFactory;
    private Configuration configuration;
 
-   private TxEnlistingManager txEnlistingManager;
+   private TransactionTable txTable;
    private Transaction transaction;
 
-   public TransactionXaAdapter(GlobalTransaction transactionIdentifier, InvocationContextContainer icc, InterceptorChain invoker,
-                  CommandsFactory commandsFactory, Configuration configuration, TxEnlistingManager txEnlistingManager,
-                  Transaction transaction) {
-      this.transactionIdentifier = transactionIdentifier;
+   public TransactionXaAdapter(GlobalTransaction globalTx, InvocationContextContainer icc, InterceptorChain invoker,
+                         CommandsFactory commandsFactory, Configuration configuration, TransactionTable txTable,
+                         Transaction transaction) {
+      this.globalTx = globalTx;
       this.icc = icc;
       this.invoker = invoker;
       this.commandsFactory = commandsFactory;
       this.configuration = configuration;
-      this.txEnlistingManager = txEnlistingManager;
+      this.txTable = txTable;
       this.transaction = transaction;
    }
 
@@ -75,10 +75,10 @@ public class TransactionXaAdapter implements XAResource {
          return XA_OK;
       }
 
-      PrepareCommand prepareCommand = commandsFactory.buildPrepareCommand(transactionIdentifier, modifications, configuration.isOnePhaseCommit());
+      PrepareCommand prepareCommand = commandsFactory.buildPrepareCommand(globalTx, modifications, configuration.isOnePhaseCommit());
       if (log.isTraceEnabled()) log.trace("Sending prepare command through the chain: " + prepareCommand);
 
-      InitiatorTxInvocationContext ctx = icc.getInitiatorTxInvocationContext();
+      LocalTxInvocationContext ctx = icc.getInitiatorTxInvocationContext();
       ctx.setXaCache(this);
       try {
          invoker.invoke(ctx, prepareCommand);
@@ -90,13 +90,13 @@ public class TransactionXaAdapter implements XAResource {
    }
 
    public void commit(Xid xid, boolean b) throws XAException {
-      if (log.isTraceEnabled()) log.trace("commiting TransactionXaAdapter: " + transactionIdentifier);
+      if (log.isTraceEnabled()) log.trace("commiting TransactionXaAdapter: " + globalTx);
       try {
-         InitiatorTxInvocationContext ctx = icc.getInitiatorTxInvocationContext();
+         LocalTxInvocationContext ctx = icc.getInitiatorTxInvocationContext();
          ctx.setXaCache(this);
          if (configuration.isOnePhaseCommit()) {
             if (log.isTraceEnabled()) log.trace("Doing an 1PC prepare call on the interceptor chain");
-            PrepareCommand command = commandsFactory.buildPrepareCommand(transactionIdentifier, modifications, true);
+            PrepareCommand command = commandsFactory.buildPrepareCommand(globalTx, modifications, true);
             try {
                invoker.invoke(ctx, command);
             } catch (Throwable e) {
@@ -104,7 +104,7 @@ public class TransactionXaAdapter implements XAResource {
                throw new XAException(XAException.XAER_RMERR);
             }
          } else {
-            CommitCommand commitCommand = commandsFactory.buildCommitCommand(transactionIdentifier);
+            CommitCommand commitCommand = commandsFactory.buildCommitCommand(globalTx);
             try {
                invoker.invoke(ctx, commitCommand);
             } catch (Throwable e) {
@@ -113,14 +113,14 @@ public class TransactionXaAdapter implements XAResource {
             }
          }
       } finally {
-         txEnlistingManager.delist(transaction);
+         txTable.removeLocalTransaction(transaction);
          this.modifications = null;
       }
    }
 
    public void rollback(Xid xid) throws XAException {
-      RollbackCommand rollbackCommand = commandsFactory.buildRollbackCommand(transactionIdentifier);
-      InitiatorTxInvocationContext ctx = icc.getInitiatorTxInvocationContext();
+      RollbackCommand rollbackCommand = commandsFactory.buildRollbackCommand(globalTx);
+      LocalTxInvocationContext ctx = icc.getInitiatorTxInvocationContext();
       ctx.setXaCache(this);
       try {
          invoker.invoke(ctx, rollbackCommand);
@@ -128,7 +128,7 @@ public class TransactionXaAdapter implements XAResource {
          log.error("Exception while ", e);
          throw new XAException(XAException.XA_HEURHAZ);
       } finally {
-         txEnlistingManager.delist(transaction);
+         txTable.removeLocalTransaction(transaction);
          this.modifications = null;
       }
    }
@@ -155,7 +155,7 @@ public class TransactionXaAdapter implements XAResource {
          return false;
       }
       TransactionXaAdapter other = (TransactionXaAdapter) xaResource;
-      return other.transactionIdentifier.equals(this.transactionIdentifier);
+      return other.globalTx.equals(this.globalTx);
    }
 
    public Xid[] recover(int i) throws XAException {
@@ -188,20 +188,12 @@ public class TransactionXaAdapter implements XAResource {
       lookedUpEntries.put(key, e);
    }
 
-   public void removeLookedUpEntry(Object key) {
-      if (lookedUpEntries != null) lookedUpEntries.remove(key);
-   }
-
-   public void clearLookedUpEntries() {
-      if (lookedUpEntries != null) lookedUpEntries.clear();
-   }
-
    private void initLookedUpEntries() {
       if (lookedUpEntries == null) lookedUpEntries = new BidirectionalLinkedHashMap<Object, CacheEntry>(4);
    }
 
-   public GlobalTransaction getTransactionIdentifier() {
-      return transactionIdentifier;
+   public GlobalTransaction getGlobalTx() {
+      return globalTx;
    }
 
    public List<WriteCommand> getModifications() {
@@ -210,5 +202,17 @@ public class TransactionXaAdapter implements XAResource {
 
    public Transaction getTransaction() {
       return transaction;
+   }
+
+   public GlobalTransaction getGlobalTransaction() {
+      return globalTx;
+   }
+
+   public void removeLookedUpEntry(Object key) {
+      if (lookedUpEntries != null) lookedUpEntries.remove(key);
+   }
+
+   public void clearLookedUpEntries() {
+      if (lookedUpEntries != null) lookedUpEntries.clear();
    }
 }

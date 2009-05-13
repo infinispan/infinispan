@@ -46,7 +46,7 @@ public class AbstractCacheTest {
             removeInMemoryData(cache);
             clearCacheLoader(cache);
             clearReplicationQueues(cache);
-            InvocationContext invocationContext = ((AdvancedCache) cache).getInvocationContextContainer().getLocalInvocationContext(true);
+            InvocationContext invocationContext = ((AdvancedCache) cache).getInvocationContextContainer().getLocalInvocationContext();
          }
       }
    }

@@ -19,20 +19,22 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.context.container;
+package org.infinispan.context;
 
-import org.infinispan.context.InvocationContext;
-import org.infinispan.context.impl.InitiatorTxInvocationContext;
+import org.infinispan.CacheException;
+import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.TransactionXaAdapter;
-import org.infinispan.transaction.xa.TxEnlistingManager;
+import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.transaction.xa.TransactionTable;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import javax.transaction.SystemException;
 import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -43,11 +45,12 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @since 4.0
  */
-public class ReplicationInvocationContextContainer implements InvocationContextContainer {
+public class InvocationContextContainerImpl implements InvocationContextContainer {
 
-   private static Log log = LogFactory.getLog(ReplicationInvocationContextContainer.class);
+   private static Log log = LogFactory.getLog(InvocationContextContainerImpl.class);
 
-   private TxEnlistingManager txEnlistingManager;
+   private TransactionManager tm;
+   private TransactionTable transactionTable;
 
 
    private ThreadLocal<PossibleContexts> contextsTl = new ThreadLocal<PossibleContexts>() {
@@ -60,44 +63,40 @@ public class ReplicationInvocationContextContainer implements InvocationContextC
    private Map<GlobalTransaction, RemoteTxInvocationContext> remoteTxMap = new ConcurrentHashMap<GlobalTransaction, RemoteTxInvocationContext>(20);
 
    @Inject
-   public void init(TxEnlistingManager txEnlistingManager) {
-      this.txEnlistingManager = txEnlistingManager;
+   public void init(TransactionManager tm, TransactionTable transactionTable) {
+      this.tm = tm;
+      this.transactionTable = transactionTable;
    }
 
-   public InvocationContext getLocalInvocationContext(boolean prepareForCall) {
+   public InvocationContext getLocalInvocationContext() {
       PossibleContexts contexts = contextsTl.get();
-      Transaction tx = txEnlistingManager.getRunningTx();
+      Transaction tx = getRunningTx();
       if (tx != null) {
          contexts.initInitiatorInvicationContext();
-         InitiatorTxInvocationContext context = contexts.initiatorTxInvocationContext;
-         TransactionXaAdapter xaAdapter = txEnlistingManager.getXaCache(tx);
+         LocalTxInvocationContext context = contexts.localTxInvocationContext;
+         TransactionXaAdapter xaAdapter = transactionTable.getXaCacheAdapter(tx);
          context.setXaCache(xaAdapter);
          return contexts.updateThreadContextAndReturn(context);
       } else {
          contexts.initNonTxInvocationContext();
-         if (prepareForCall) contexts.nonTxInvocationContext.prepareForCall();
+         contexts.nonTxInvocationContext.prepareForCall();
          contexts.nonTxInvocationContext.setOriginLocal(true);
          return contexts.updateThreadContextAndReturn(contexts.nonTxInvocationContext);
       }
    }
 
-   public InitiatorTxInvocationContext getInitiatorTxInvocationContext() {
+   public LocalTxInvocationContext getInitiatorTxInvocationContext() {
       PossibleContexts contexts = contextsTl.get();
       contexts.initInitiatorInvicationContext();
-      contexts.updateThreadContextAndReturn(contexts.initiatorTxInvocationContext);
-      return contexts.initiatorTxInvocationContext;
+      contexts.updateThreadContextAndReturn(contexts.localTxInvocationContext);
+      return contexts.localTxInvocationContext;
    }
 
-   public RemoteTxInvocationContext getRemoteTxInvocationContext(GlobalTransaction globalTransaction, boolean create) {
-      RemoteTxInvocationContext context = remoteTxMap.get(globalTransaction);
-      if (context == null && create) {
-         context = new RemoteTxInvocationContext();
-         if (log.isTraceEnabled()) log.trace("Rgistering remote tx: " + globalTransaction);
-         remoteTxMap.put(globalTransaction, context);
-      }
+   public RemoteTxInvocationContext getRemoteTxInvocationContext() {
       PossibleContexts contexts = contextsTl.get();
-      contexts.updateThreadContextAndReturn(context);
-      return context;
+      contexts.initRemoteTxInvocationContext();
+      contexts.updateThreadContextAndReturn(contexts.remoteTxContext);
+      return contexts.remoteTxContext;
    }
 
    public InvocationContext getRemoteNonTxInvocationContext() {
@@ -127,13 +126,14 @@ public class ReplicationInvocationContextContainer implements InvocationContextC
 
    public static class PossibleContexts {
       private NonTxInvocationContext nonTxInvocationContext;
-      private InitiatorTxInvocationContext initiatorTxInvocationContext;
+      private LocalTxInvocationContext localTxInvocationContext;
       private NonTxInvocationContext remoteNonTxContext;
+      private RemoteTxInvocationContext remoteTxContext;
       private InvocationContext threadInvocationContex;
 
       public void initInitiatorInvicationContext() {
-         if (initiatorTxInvocationContext == null) {
-            initiatorTxInvocationContext = new InitiatorTxInvocationContext();
+         if (localTxInvocationContext == null) {
+            localTxInvocationContext = new LocalTxInvocationContext();
          }
       }
 
@@ -149,9 +149,23 @@ public class ReplicationInvocationContextContainer implements InvocationContextC
          }
       }
 
+      public void initRemoteTxInvocationContext() {
+         if (remoteTxContext == null) {
+            remoteTxContext = new RemoteTxInvocationContext();
+         }
+      }
+
       public InvocationContext updateThreadContextAndReturn(InvocationContext ic) {
          threadInvocationContex = ic;
          return ic;
+      }
+   }
+
+   private Transaction getRunningTx() {
+      try {
+         return tm == null ? null : tm.getTransaction();
+      } catch (SystemException e) {
+         throw new CacheException(e);
       }
    }
 }

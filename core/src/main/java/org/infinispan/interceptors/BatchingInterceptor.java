@@ -24,7 +24,7 @@ package org.infinispan.interceptors;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.container.InvocationContextContainer;
+import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
 
@@ -63,7 +63,7 @@ public class BatchingInterceptor extends CommandInterceptor {
          try {
             transactionManager.resume(tx);
             //this will make the call with a tx invocation context
-            return invokeNextInterceptor(icc.getLocalInvocationContext(true), command);
+            return invokeNextInterceptor(icc.getLocalInvocationContext(), command);
          } finally {
             if (transactionManager.getTransaction() != null && batchContainer.isSuspendTxAfterInvocation())
                transactionManager.suspend();

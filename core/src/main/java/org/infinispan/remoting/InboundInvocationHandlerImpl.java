@@ -3,7 +3,7 @@ package org.infinispan.remoting;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.config.Configuration;
-import org.infinispan.context.container.InvocationContextContainer;
+import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.Inject;

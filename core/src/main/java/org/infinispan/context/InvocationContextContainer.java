@@ -1,12 +1,10 @@
-package org.infinispan.context.container;
+package org.infinispan.context;
 
-import org.infinispan.context.impl.InitiatorTxInvocationContext;
+import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
-import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.NonVolatile;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.transaction.xa.GlobalTransaction;
 
 /**
  * // TODO: Mircea: Document this!
@@ -18,11 +16,11 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 @NonVolatile
 @Scope(Scopes.NAMED_CACHE)
 public interface InvocationContextContainer {
-   InvocationContext getLocalInvocationContext(boolean prepareForCall);
+   InvocationContext getLocalInvocationContext();
 
-   InitiatorTxInvocationContext getInitiatorTxInvocationContext();
+   LocalTxInvocationContext getInitiatorTxInvocationContext();
 
-   RemoteTxInvocationContext getRemoteTxInvocationContext(GlobalTransaction globalTransaction, boolean create);
+   RemoteTxInvocationContext getRemoteTxInvocationContext();
 
    InvocationContext getRemoteNonTxInvocationContext();
 

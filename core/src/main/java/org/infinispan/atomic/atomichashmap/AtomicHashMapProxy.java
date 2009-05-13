@@ -27,7 +27,7 @@ import org.infinispan.batch.AutoBatchSupport;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.container.InvocationContextContainer;
+import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -125,7 +125,7 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
    public V put(K key, V value) {
       try {
          startAtomic();
-         InvocationContext ctx = icc.getLocalInvocationContext(true);
+         InvocationContext ctx = icc.getLocalInvocationContext();
          AtomicHashMap<K, V> deltaMapForWrite = getDeltaMapForWrite(ctx);
          return deltaMapForWrite.put(key, value);
       }
@@ -137,7 +137,7 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
    public V remove(Object key) {
       try {
          startAtomic();
-         InvocationContext ic = icc.getLocalInvocationContext(true);
+         InvocationContext ic = icc.getLocalInvocationContext();
          return getDeltaMapForWrite(ic).remove(key);
       }
       finally {
@@ -148,7 +148,7 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
    public void putAll(Map<? extends K, ? extends V> m) {
       try {
          startAtomic();
-         InvocationContext ic = icc.getLocalInvocationContext(true);
+         InvocationContext ic = icc.getLocalInvocationContext();
          getDeltaMapForWrite(ic).putAll(m);
       }
       finally {
@@ -159,7 +159,7 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
    public void clear() {
       try {
          startAtomic();
-         InvocationContext ic = icc.getLocalInvocationContext(true);
+         InvocationContext ic = icc.getLocalInvocationContext();
          getDeltaMapForWrite(ic).clear();
       }
       finally {

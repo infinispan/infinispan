@@ -41,7 +41,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.DataContainer;
-import org.infinispan.context.container.InvocationContextContainer;
+import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -49,6 +49,7 @@ import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.transaction.xa.TransactionTable;
 
 import java.util.Collection;
 import java.util.List;
@@ -70,11 +71,13 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private InterceptorChain interceptorChain;
    private DistributionManager distributionManager;
    private InvocationContextContainer icc;
+   private TransactionTable txTable;
 
    @Inject
    public void setupDependencies(DataContainer container, CacheNotifier notifier, Cache cache,
                                  InterceptorChain interceptorChain, CacheLoaderManager clManager,
-                                 DistributionManager distributionManager, InvocationContextContainer icc) {
+                                 DistributionManager distributionManager, InvocationContextContainer icc,
+                                 TransactionTable txTable) {
       this.dataContainer = container;
       this.notifier = notifier;
       this.cache = cache;
@@ -82,6 +85,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
       this.cacheLoaderManager = clManager;
       this.distributionManager = distributionManager;
       this.icc = icc;
+      this.txTable = txTable;
    }
 
    @Start(priority = 1)
@@ -205,18 +209,18 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case PrepareCommand.COMMAND_ID:
             PrepareCommand pc = (PrepareCommand) c;
-            pc.init(interceptorChain, icc);
+            pc.init(interceptorChain, icc, txTable);
             pc.initialize(notifier);
             if (pc.getModifications() != null)
                for (ReplicableCommand nested : pc.getModifications()) initializeReplicableCommand(nested);
             break;
          case CommitCommand.COMMAND_ID:
             CommitCommand commitCommand = (CommitCommand) c;
-            commitCommand.init(interceptorChain, icc);
+            commitCommand.init(interceptorChain, icc, txTable);
             break;
          case RollbackCommand.COMMAND_ID:
             RollbackCommand rollbackCommand = (RollbackCommand) c;
-            rollbackCommand.init(interceptorChain, icc);
+            rollbackCommand.init(interceptorChain, icc, txTable);
             break;
          case ClearCommand.COMMAND_ID:
             ClearCommand cc = (ClearCommand) c;

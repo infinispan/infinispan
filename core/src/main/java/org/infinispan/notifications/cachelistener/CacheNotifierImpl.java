@@ -23,7 +23,7 @@ package org.infinispan.notifications.cachelistener;
 
 import org.infinispan.Cache;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.container.InvocationContextContainer;
+import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.notifications.AbstractListenerImpl;
@@ -241,7 +241,7 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
 
    private void setTx(InvocationContext ctx, EventImpl e) {
       if (ctx.isInTxScope()) {
-         GlobalTransaction tx = ((TxInvocationContext) ctx).getClusterTransactionId();
+         GlobalTransaction tx = ((TxInvocationContext) ctx).getGlobalTransaction();
          e.setTransactionId(tx);
       }
    }

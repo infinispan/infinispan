@@ -17,16 +17,21 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.impl.InitiatorTxInvocationContext;
+import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.transaction.TransactionLog;
-import org.infinispan.transaction.xa.TxEnlistingManager;
 import org.infinispan.transaction.xa.TransactionXaAdapter;
+import org.infinispan.transaction.xa.TransactionTable;
 
+import javax.transaction.RollbackException;
+import javax.transaction.Status;
+import javax.transaction.SystemException;
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -39,8 +44,9 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class TxInterceptor extends CommandInterceptor {
 
-   private TxEnlistingManager txEnlistingManager;
+   private TransactionManager tm;
    private TransactionLog transactionLog;
+   private TransactionTable txTable;
 
    private final AtomicLong prepares = new AtomicLong(0);
    private final AtomicLong commits = new AtomicLong(0);
@@ -49,9 +55,10 @@ public class TxInterceptor extends CommandInterceptor {
 
 
    @Inject
-   public void init(TxEnlistingManager txEnlistingManager, TransactionLog transactionLog) {
-      this.txEnlistingManager = txEnlistingManager;
+   public void init(TransactionManager tm, TransactionTable txTable, TransactionLog transactionLog) {
+      this.tm = tm;
       this.transactionLog = transactionLog;
+      this.txTable = txTable;
       setStatisticsEnabled(configuration.isExposeJmxStatistics());
    }
 
@@ -69,7 +76,7 @@ public class TxInterceptor extends CommandInterceptor {
       if (!command.isOnePhaseCommit()) {
          transactionLog.logPrepare(command);
       } else {
-         transactionLog.logOnePhaseCommit(ctx.getClusterTransactionId(), Arrays.asList(command.getModifications()));
+         transactionLog.logOnePhaseCommit(ctx.getGlobalTransaction(), Arrays.asList(command.getModifications()));
       }
       if (getStatisticsEnabled()) prepares.incrementAndGet();
       return invokeNextInterceptor(ctx, command);
@@ -88,12 +95,12 @@ public class TxInterceptor extends CommandInterceptor {
       transactionLog.rollback(command.getGlobalTransaction());
       return invokeNextInterceptor(ctx, command);
    }
-   
+
    @Override
-   public Object visitLockControlCommand(InvocationContext ctx, LockControlCommand command) throws Throwable{
+   public Object visitLockControlCommand(InvocationContext ctx, LockControlCommand command) throws Throwable {
       return enlistReadAndInvokeNext(ctx, command);
    }
-   
+
    /**
     * Designed to be overridden.  Returns a VisitableCommand fit for replaying locally, based on the modification passed
     * in.  If a null value is returned, this means that the command should not be replayed.
@@ -153,25 +160,38 @@ public class TxInterceptor extends CommandInterceptor {
 
    private Object enlistReadAndInvokeNext(InvocationContext ctx, VisitableCommand command) throws Throwable {
       if (shouldEnlist(ctx)) {
-         TransactionXaAdapter xaAdapter = txEnlistingManager.enlist(ctx);
-         InitiatorTxInvocationContext initiatorTxContext = (InitiatorTxInvocationContext) ctx;
-         initiatorTxContext.setXaCache(xaAdapter);
+         TransactionXaAdapter xaAdapter = enlist();
+         LocalTxInvocationContext localTxContext = (LocalTxInvocationContext) ctx;
+         localTxContext.setXaCache(xaAdapter);
       }
       return invokeNextInterceptor(ctx, command);
    }
 
    private Object enlistWriteAndInvokeNext(InvocationContext ctx, WriteCommand command) throws Throwable {
       if (shouldEnlist(ctx)) {
-         TransactionXaAdapter xaAdapter = txEnlistingManager.enlist(ctx);
-         InitiatorTxInvocationContext initiatorTxContext = (InitiatorTxInvocationContext) ctx;
+         TransactionXaAdapter xaAdapter = enlist();
+         LocalTxInvocationContext localTxContext = (LocalTxInvocationContext) ctx;
          if (!isLocalModeForced(ctx)) {
             xaAdapter.addModification(command);
          }
-         initiatorTxContext.setXaCache(xaAdapter);
+         localTxContext.setXaCache(xaAdapter);
       }
       if (!ctx.isInTxScope())
          transactionLog.logNoTxWrite(command);
       return invokeNextInterceptor(ctx, command);
+   }
+
+   public TransactionXaAdapter enlist() throws SystemException, RollbackException {
+      Transaction transaction = tm.getTransaction();
+      if (transaction == null) throw new IllegalStateException("This should only be called in an tx scope");
+      int status = transaction.getStatus();
+      if (!isValid(status)) throw new IllegalStateException("Transaction " + transaction +
+            " is not in a valid state to be invoking cache operations on.");
+      return txTable.getOrCreateXaAdapter(transaction);
+   }
+
+   private boolean isValid(int status) {
+      return status == Status.STATUS_ACTIVE || status == Status.STATUS_PREPARING;
    }
 
    private boolean shouldEnlist(InvocationContext ctx) {
