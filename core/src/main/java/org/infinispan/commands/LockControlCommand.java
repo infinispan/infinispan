@@ -24,6 +24,7 @@ package org.infinispan.commands;
 import java.util.Collection;
 
 import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
+import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
@@ -63,6 +64,19 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
 
    public boolean isUnlock() {
       return !isLock();
+   }
+   
+   @Override
+   public Object perform(InvocationContext ignored) throws Throwable {
+      if (ignored != null)
+         throw new IllegalStateException("Expected null context!");
+
+      boolean remoteTxinitiated = txTable.getRemoteTransaction(globalTx) != null ? true : false;
+      if (!remoteTxinitiated) {         
+         //create bogus modifications (we do not know modifications ahead of time)
+         txTable.createRemoteTransaction(globalTx, new WriteCommand[] {});
+      } 
+      return super.perform(ignored);
    }
 
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
