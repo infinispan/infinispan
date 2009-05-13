@@ -155,7 +155,7 @@ public class TransactionXaAdapter implements CacheTransaction, XAResource {
          return false;
       }
       TransactionXaAdapter other = (TransactionXaAdapter) xaResource;
-      return other.globalTx.equals(this.globalTx);
+      return other.equals(this);
    }
 
    public Xid[] recover(int i) throws XAException {
@@ -214,5 +214,33 @@ public class TransactionXaAdapter implements CacheTransaction, XAResource {
 
    public void clearLookedUpEntries() {
       if (lookedUpEntries != null) lookedUpEntries.clear();
+   }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof TransactionXaAdapter)) return false;
+
+      TransactionXaAdapter that = (TransactionXaAdapter) o;
+
+      if (!globalTx.equals(that.globalTx)) return false;
+
+      return true;
+   }
+
+   @Override
+   public int hashCode() {
+      return globalTx.hashCode();
+   }
+
+   @Override
+   public String toString() {
+      return "TransactionXaAdapter{" +
+            "modifications=" + modifications +
+            ", lookedUpEntries=" + lookedUpEntries +
+            ", globalTx=" + globalTx +
+            ", transaction=" + transaction +
+            ", txTimeout=" + txTimeout +
+            '}';
    }
 }
