@@ -23,14 +23,10 @@ package org.infinispan.interceptors;
 
 
 import org.infinispan.commands.LockControlCommand;
-import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
-import org.infinispan.commands.write.ClearCommand;
-import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -69,12 +65,8 @@ public class CallInterceptor extends CommandInterceptor {
    }
 
    @Override
-   public Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
+   final public Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
       if (trace) log.trace("Executing command: " + command + ".");
-      return invokeCommand(ctx, command);
-   }
-
-   private Object invokeCommand(InvocationContext ctx, ReplicableCommand command) throws Throwable {
       Object retval;
       try {
          retval = command.perform(ctx);
@@ -89,20 +81,5 @@ public class CallInterceptor extends CommandInterceptor {
          throw t;
       }
       return retval;
-   }
-
-   @Override
-   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      return invokeCommand(ctx, command);
-   }
-
-   @Override
-   public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      return invokeCommand(ctx, command);
-   }
-
-   @Override
-   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-      return invokeCommand(ctx, command);
    }
 }
