@@ -4,9 +4,10 @@ import javax.transaction.xa.Xid;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * // TODO: Mircea: Document this!
+ * Implementation of Xid.
  *
- * @author
+ * @author Mircea.Markus@jboss.com
+ * @since 4.0
  */
 public class DummyXid implements Xid {
 

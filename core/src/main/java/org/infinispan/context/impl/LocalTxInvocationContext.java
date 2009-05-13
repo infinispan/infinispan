@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * // TODO: Mircea: Document this!
+ * Invocation context to be used for locally originated transactions.
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.0

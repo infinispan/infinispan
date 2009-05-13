@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * // TODO: Mircea: Document this!
+ * Support class for {@link org.infinispan.context.impl.TxInvocationContext}.
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.0

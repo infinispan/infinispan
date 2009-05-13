@@ -31,18 +31,30 @@ package org.infinispan.context;
  */
 public interface InvocationContext extends EntryLookup, FlagContainer, Cloneable {
 
+   /**
+    * Returns true if the call was originated locally, false if it is the result of a remote rpc.
+    */
    boolean isOriginLocal();
 
+   /**
+    * Returns true if this call is performed in the context of an transaction, false otherwise.
+    */
    boolean isInTxScope();
 
+   /**
+    * Returns the in behalf of which locks will be aquired.
+    */
    Object getLockOwner();
 
-   public InvocationContext clone();
-
+   /**
+    * Returns true if the context has any locked entries associated with it.
+    */
    boolean hasLockedEntries();
 
    boolean isUseFutureReturnType();
 
    void setUseFutureReturnType(boolean useFutureReturnType);
+
+   public InvocationContext clone();
 
 }

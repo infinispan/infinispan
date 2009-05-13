@@ -11,9 +11,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * // TODO: Mircea: Document this!
+ * Defines the state of a remotelly originated transaction.
  *
- * @author
+ * @author Mircea.Markus@jboss.com
+ * @since 4.0
  */
 public class RemoteTransaction implements CacheTransaction, Cloneable {
 

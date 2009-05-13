@@ -38,9 +38,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 
 /**
- * Container and factory for thread locals
+ * Default implementation for {@link org.infinispan.context.InvocationContextContainer}.
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
+ * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
 public class InvocationContextContainerImpl implements InvocationContextContainer {

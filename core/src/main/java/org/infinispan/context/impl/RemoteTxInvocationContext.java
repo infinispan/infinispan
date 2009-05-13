@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * // TODO: Mircea: Document this!
+ * Context to be used for transaction that originated remotelly.
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.0

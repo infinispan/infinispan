@@ -8,7 +8,7 @@ import org.infinispan.util.InfinispanCollections;
 import java.util.Map;
 
 /**
- * // TODO: Mircea: Document this!
+ * Context to be used for non transactional calls, both remote and local.
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.0

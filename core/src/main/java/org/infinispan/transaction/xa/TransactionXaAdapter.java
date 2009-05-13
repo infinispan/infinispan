@@ -25,7 +25,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * // TODO: Mircea: Document this!
+ * This acts both as an local {@link org.infinispan.transaction.xa.CacheTransaction} and implementor of an
+ * {@link javax.transaction.xa.XAResource} that will be called by tx manager on various tx stages.
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.0

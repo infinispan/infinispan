@@ -36,11 +36,13 @@ import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * // TODO: Mircea: Document this!
+ * Interceptor in charge with handling transaction related operations, e.g enlisting cache as an transaction participant,
+ * propagating remotely initiated changes.
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
  * @author Mircea.Markus@jboss.com
  * @since 4.0
+ * @see org.infinispan.transaction.xa.TransactionXaAdapter
  */
 public class TxInterceptor extends CommandInterceptor {
 

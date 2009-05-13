@@ -19,13 +19,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * // TODO: Mircea: Document this!
+ * Repository for {@link org.infinispan.transaction.xa.RemoteTransaction} and {@link
+ * org.infinispan.transaction.xa.TransactionXaAdapter}s (locally originated trasactions).
  *
- * @author
+ * @author Mircea.Markus@jboss.com
+ * @since 4.0
  */
 public class TransactionTable {
 
    private static Log log = LogFactory.getLog(TransactionTable.class);
+   private static boolean trace = log.isTraceEnabled();
 
    private Map<Transaction, TransactionXaAdapter> localTransactions = new HashMap<Transaction, TransactionXaAdapter>();
 
@@ -48,13 +51,23 @@ public class TransactionTable {
       this.icc = icc;
       this.invoker = invoker;
       this.notifier = notifier;
-   }  
+   }
 
 
+   /**
+    * Returns the {@link org.infinispan.transaction.xa.RemoteTransaction} associated with the supplied transaction id.
+    * Returns null if no such association exists.
+    */
    public RemoteTransaction getRemoteTransaction(GlobalTransaction txId) {
       return remoteTransactions.get(txId);
    }
 
+   /**
+    * Creates and register a {@link org.infinispan.transaction.xa.RemoteTransaction} based on the supplied params.
+    * Returns the created transaction.
+    * @throws IllegalStateException if an attempt to create a {@link org.infinispan.transaction.xa.RemoteTransaction}
+    * for an already registered id is made.
+    */
    public RemoteTransaction createRemoteTransaction(GlobalTransaction globalTx, WriteCommand[] modifications) {
       RemoteTransaction remoteTransaction = new RemoteTransaction(modifications, globalTx);
       RemoteTransaction transaction = remoteTransactions.put(globalTx, remoteTransaction);
@@ -63,12 +76,16 @@ public class TransactionTable {
          log.error(message);
          throw new IllegalStateException(message);
       }
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.trace("Created and regostered tremote transaction " + remoteTransaction);
       }
       return remoteTransaction;
    }
 
+   /**
+    * Returns the {@link org.infinispan.transaction.xa.TransactionXaAdapter} corresponding to the supplied transaction.
+    * If none exists, will be created first.
+    */
    public TransactionXaAdapter getOrCreateXaAdapter(Transaction transaction, InvocationContext ctx) {
       TransactionXaAdapter current = localTransactions.get(transaction);
       if (current == null) {
@@ -87,10 +104,18 @@ public class TransactionTable {
       return current;
    }
 
+   /**
+    * Removes the {@link org.infinispan.transaction.xa.TransactionXaAdapter} coresponding to the given tx. Returns true
+    * if such an tx exists.
+    */
    public boolean removeLocalTransaction(Transaction tx) {
       return localTransactions.remove(tx) != null;
    }
 
+   /**
+    * Removes the {@link org.infinispan.transaction.xa.RemoteTransaction} coresponding to the given tx. Returns true 
+    * if such an tx exists.
+    */
    public boolean removeRemoteTransaction(GlobalTransaction txId) {
       return remoteTransactions.remove(txId) != null;
    }

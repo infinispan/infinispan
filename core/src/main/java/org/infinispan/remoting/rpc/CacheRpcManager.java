@@ -17,7 +17,7 @@ import org.infinispan.util.logging.LogFactory;
 import java.util.List;
 
 /**
- * // TODO: Mircea: Document this!
+ * Class that encapsulates the logic for replicating commands through cluster participants.
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.0
@@ -87,10 +87,10 @@ public class CacheRpcManager {
          if (trace) log.trace("responses=" + rsps);
          if (sync) checkResponses(rsps);
       } catch (CacheException e) {
-         log.error("Replication exception",e);
+         log.error("Replication exception", e);
          throw e;
       } catch (Exception ex) {
-         log.error("Unexpected exception",ex);
+         log.error("Unexpected exception", ex);
          throw new ReplicationException("Unexpected exception while replicating", ex);
       }
    }
