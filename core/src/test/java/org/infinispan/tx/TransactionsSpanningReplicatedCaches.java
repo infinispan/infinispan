@@ -150,22 +150,46 @@ public class TransactionsSpanningReplicatedCaches extends MultipleCacheManagersT
       c1.put("c1key", "c1value");
       assert c1.get("c1key").equals("c1value");
       assert c1Replica.get("c1key").equals("c1value");
-  }
+   }
 
-  public void testSimpleCommit() throws Exception {
+   public void testSimpleCommit() throws Exception {
       Cache c1 = cm1.getCache("c1");
       Cache c1Replica = cm2.getCache("c1");
 
 
-     assert c1.isEmpty();
-     assert c1Replica.isEmpty();
+      assert c1.isEmpty();
+      assert c1Replica.isEmpty();
 
-     TransactionManager tm = TestingUtil.getTransactionManager(c1);
-     tm.begin();
+      TransactionManager tm = TestingUtil.getTransactionManager(c1);
+      tm.begin();
       c1.put("c1key", "c1value");
-     tm.commit();
+      tm.commit();
 
       assert c1.get("c1key").equals("c1value");
       assert c1Replica.get("c1key").equals("c1value");
-  }
+   }
+
+   public void testPutIfAbsent() throws Exception {
+      Cache c1 = cm1.getCache("c1");
+      Cache c1Replica = cm2.getCache("c1");
+
+
+      assert c1.isEmpty();
+      assert c1Replica.isEmpty();
+
+      TransactionManager tm = TestingUtil.getTransactionManager(c1);
+      tm.begin();
+      c1.put("c1key", "c1value");
+      tm.commit();
+
+      assert c1.get("c1key").equals("c1value");
+      assert c1Replica.get("c1key").equals("c1value");
+
+      tm.begin();
+      c1.putIfAbsent("c1key", "SHOULD_NOT_GET_INSERTED");
+      tm.commit();
+
+      assert c1.get("c1key").equals("c1value");
+      assert c1Replica.get("c1key").equals("c1value");
+   }
 }
