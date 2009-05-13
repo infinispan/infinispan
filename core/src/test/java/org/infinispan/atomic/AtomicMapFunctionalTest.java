@@ -73,10 +73,10 @@ public class AtomicMapFunctionalTest {
       AtomicMap<String, String> map = cache.getAtomicMap("key");
       assert map.isEmpty();
       InvocationContextContainer icc = TestingUtil.extractComponent(cache, InvocationContextContainer.class);
-      InvocationContext ic = icc.getLocalInvocationContext();
+      InvocationContext ic = icc.createInvocationContext();
       ic.setFlags(SKIP_LOCKING);
       log.debug("Doing a put");
-      assert icc.getThreadContext().hasFlag(SKIP_LOCKING);
+      assert icc.getInvocationContext().hasFlag(SKIP_LOCKING);
       map.put("a", "b");
       log.debug("Put complete");
       assert map.get("a").equals("b");
@@ -89,7 +89,7 @@ public class AtomicMapFunctionalTest {
       AtomicMap<String, String> map = cache.getAtomicMap("key");
       tm.begin();
       assert map.isEmpty();
-      TestingUtil.extractComponent(cache, InvocationContextContainer.class).getLocalInvocationContext().setFlags(SKIP_LOCKING);
+      TestingUtil.extractComponent(cache, InvocationContextContainer.class).createInvocationContext().setFlags(SKIP_LOCKING);
       map.put("a", "b");
       assert map.get("a").equals("b");
       Transaction t = tm.suspend();
@@ -108,7 +108,7 @@ public class AtomicMapFunctionalTest {
       assert map.isEmpty();
       map.put("x", "y");
       assert map.get("x").equals("y");
-      TestingUtil.extractComponent(cache, InvocationContextContainer.class).getLocalInvocationContext().setFlags(SKIP_LOCKING);
+      TestingUtil.extractComponent(cache, InvocationContextContainer.class).createInvocationContext().setFlags(SKIP_LOCKING);
       log.debug("Doing a put");
       map.put("a", "b");
       log.debug("Put complete");

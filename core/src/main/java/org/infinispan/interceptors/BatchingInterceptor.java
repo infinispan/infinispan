@@ -63,7 +63,7 @@ public class BatchingInterceptor extends CommandInterceptor {
          try {
             transactionManager.resume(tx);
             //this will make the call with a tx invocation context
-            return invokeNextInterceptor(icc.getLocalInvocationContext(), command);
+            return invokeNextInterceptor(icc.createInvocationContext(), command);
          } finally {
             if (transactionManager.getTransaction() != null && batchContainer.isSuspendTxAfterInvocation())
                transactionManager.suspend();

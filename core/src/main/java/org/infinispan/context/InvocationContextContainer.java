@@ -22,28 +22,28 @@ public interface InvocationContextContainer {
     * If we are in a tx scope this will return an {@link org.infinispan.context.impl.TxInvocationContext}. Otherwise it
     * will return an {@link org.infinispan.context.impl.NonTxInvocationContext}. Either way, both context will be marked
     * as local, i.e. {@link InvocationContext#isOriginLocal()} will be true. The context is also associated with the
-    * current thread, so further calls to {@link #getThreadContext()} will return same instace.
+    * current thread, so further calls to {@link #getInvocationContext()} will return same instace.
     */
-   InvocationContext getLocalInvocationContext();
+   InvocationContext createInvocationContext();
 
    /**
     * Returns a {@link org.infinispan.context.impl.LocalTxInvocationContext}. The context is also associated with the
-    * current thread, so further calls to {@link #getThreadContext()} will return same instace.
+    * current thread, so further calls to {@link #getInvocationContext()} will return same instace.
     */
-   LocalTxInvocationContext getLocalTxInvocationContext();
+   LocalTxInvocationContext createTxInvocationContext();
 
    /**
     * Returns an {@link org.infinispan.context.impl.RemoteTxInvocationContext}. The context is also associated with the
-    * current thread, so further calls to {@link #getThreadContext()} will return same instace.
+    * current thread, so further calls to {@link #getInvocationContext()} will return same instace.
     */
-   RemoteTxInvocationContext getRemoteTxInvocationContext();
+   RemoteTxInvocationContext createRemoteTxInvocationContext();
 
    /**
     * Returns an {@link org.infinispan.context.impl.NonTxInvocationContext} whose {@link
     * org.infinispan.context.impl.NonTxInvocationContext#isOriginLocal()} flag will be true. The context is also
-    * associated with the current thread, so further calls to {@link #getThreadContext()} will return same instace.
+    * associated with the current thread, so further calls to {@link #getInvocationContext()} will return same instace.
     */
-   InvocationContext getRemoteNonTxInvocationContext();
+   InvocationContext createRemoteInvocationContext();
 
    /**
     * Returns the {@link InvocationContext}  that is currently associated with the calling thread. Important:
@@ -52,7 +52,7 @@ public interface InvocationContextContainer {
     *
     * @throws IllegalStateException if there is no context associated with the current thread.
     */
-   InvocationContext getThreadContext();
+   InvocationContext getInvocationContext();
 
    /**
     * Dissasociates thread's invocation context and returns the existing value.

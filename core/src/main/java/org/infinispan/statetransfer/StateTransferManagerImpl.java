@@ -218,7 +218,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
    private void processCommitLog(ObjectInput oi) throws Exception {
       if (trace) log.trace("Applying commit log");
       Object object = marshaller.objectFromObjectStream(oi);
-      RemoteTxInvocationContext ctx = invocationContextContainer.getRemoteTxInvocationContext();
+      RemoteTxInvocationContext ctx = invocationContextContainer.createRemoteTxInvocationContext();
       while (object instanceof TransactionLog.LogEntry) {
          TransactionLog.LogEntry logEntry = (TransactionLog.LogEntry) object;
          RemoteTransaction remoteTransaction = txTable.getRemoteTransaction(logEntry.getTransaction());
@@ -260,7 +260,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
             if (!transactionLog.hasPendingPrepare(command)) {
                if (trace) log.trace("Applying pending prepare {0}", command);
                commandsFactory.initializeReplicableCommand(command);
-               RemoteTxInvocationContext ctx = invocationContextContainer.getRemoteTxInvocationContext();
+               RemoteTxInvocationContext ctx = invocationContextContainer.createRemoteTxInvocationContext();
                RemoteTransaction transaction = txTable.createRemoteTransaction(command.getGlobalTransaction(), command.getModifications());
                ctx.setRemoteTransaction(transaction);
                ctx.setFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_CACHE_STATUS_CHECK);

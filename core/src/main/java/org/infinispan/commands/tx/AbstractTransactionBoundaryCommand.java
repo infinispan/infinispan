@@ -75,7 +75,7 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
          if (trace) log.info("Not found RemoteTransaction for tx id: " + globalTx);
          return null;
       }
-      RemoteTxInvocationContext ctxt = icc.getRemoteTxInvocationContext();
+      RemoteTxInvocationContext ctxt = icc.createRemoteTxInvocationContext();
       ctxt.setRemoteTransaction(transaction);
       try {
          if (trace) log.trace("About to execute tx command :" + this);

@@ -69,7 +69,7 @@ public class TreeStructureSupport extends AutoBatchSupport {
             if (!exists(parent)) createNodeInCache(parent);
             AtomicMap<Object, Fqn> parentStructure = getStructure(parent);
             // don't lock parents for child insert/removes!
-            icc.getThreadContext().setFlags(Flag.SKIP_LOCKING);
+            icc.getInvocationContext().setFlags(Flag.SKIP_LOCKING);
             parentStructure.put(fqn.getLastElement(), fqn);
          }
          cache.getAtomicMap(structureKey);

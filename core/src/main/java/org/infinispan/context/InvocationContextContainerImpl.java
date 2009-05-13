@@ -59,7 +59,7 @@ public class InvocationContextContainerImpl implements InvocationContextContaine
       this.transactionTable = transactionTable;
    }
 
-   public InvocationContext getLocalInvocationContext() {
+   public InvocationContext createInvocationContext() {
       Transaction tx = getRunningTx();
       InvocationContext existing = icTl.get();
       if (tx != null) {
@@ -81,13 +81,12 @@ public class InvocationContextContainerImpl implements InvocationContextContaine
          } else {
             nonTxContext = (NonTxInvocationContext) existing;
          }
-         nonTxContext.prepareForCall();
          nonTxContext.setOriginLocal(true);
          return nonTxContext;
       }
    }
 
-   public LocalTxInvocationContext getLocalTxInvocationContext() {
+   public LocalTxInvocationContext createTxInvocationContext() {
       InvocationContext existing = icTl.get();
       if (existing != null && existing instanceof LocalTxInvocationContext) {
          return (LocalTxInvocationContext) existing;
@@ -97,7 +96,7 @@ public class InvocationContextContainerImpl implements InvocationContextContaine
       return localTxContext;
    }
 
-   public RemoteTxInvocationContext getRemoteTxInvocationContext() {
+   public RemoteTxInvocationContext createRemoteTxInvocationContext() {
       InvocationContext existing = icTl.get();
       if (existing != null && existing instanceof RemoteTxInvocationContext) {
          return (RemoteTxInvocationContext) existing;
@@ -107,11 +106,10 @@ public class InvocationContextContainerImpl implements InvocationContextContaine
       return remoteTxContext;
    }
 
-   public NonTxInvocationContext getRemoteNonTxInvocationContext() {
+   public NonTxInvocationContext createRemoteInvocationContext() {
       InvocationContext existing = icTl.get();
       if (existing != null && existing instanceof NonTxInvocationContext) {
          NonTxInvocationContext context = (NonTxInvocationContext) existing;
-         context.prepareForCall();
          context.setOriginLocal(false);
          return context;
       }
@@ -121,7 +119,7 @@ public class InvocationContextContainerImpl implements InvocationContextContaine
       return remoteNonTxContext;
    }
 
-   public InvocationContext getThreadContext() {
+   public InvocationContext getInvocationContext() {
       InvocationContext invocationContext = icTl.get();
       if (invocationContext == null)
          throw new IllegalStateException("This method can only be called after associating the current thread with a context");

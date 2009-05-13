@@ -125,7 +125,7 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
    public V put(K key, V value) {
       try {
          startAtomic();
-         InvocationContext ctx = icc.getLocalInvocationContext();
+         InvocationContext ctx = icc.createInvocationContext();
          AtomicHashMap<K, V> deltaMapForWrite = getDeltaMapForWrite(ctx);
          return deltaMapForWrite.put(key, value);
       }
@@ -137,7 +137,7 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
    public V remove(Object key) {
       try {
          startAtomic();
-         InvocationContext ic = icc.getLocalInvocationContext();
+         InvocationContext ic = icc.createInvocationContext();
          return getDeltaMapForWrite(ic).remove(key);
       }
       finally {
@@ -148,7 +148,7 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
    public void putAll(Map<? extends K, ? extends V> m) {
       try {
          startAtomic();
-         InvocationContext ic = icc.getLocalInvocationContext();
+         InvocationContext ic = icc.createInvocationContext();
          getDeltaMapForWrite(ic).putAll(m);
       }
       finally {
@@ -159,7 +159,7 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
    public void clear() {
       try {
          startAtomic();
-         InvocationContext ic = icc.getLocalInvocationContext();
+         InvocationContext ic = icc.createInvocationContext();
          getDeltaMapForWrite(ic).clear();
       }
       finally {

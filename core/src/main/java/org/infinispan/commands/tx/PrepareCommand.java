@@ -80,7 +80,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
       RemoteTransaction remoteTransaction = txTable.createRemoteTransaction(globalTx, modifications);
 
       //2. then set it on the invocation context
-      RemoteTxInvocationContext ctx = icc.getRemoteTxInvocationContext();
+      RemoteTxInvocationContext ctx = icc.createRemoteTxInvocationContext();
       ctx.setRemoteTransaction(remoteTransaction);
 
       if (trace) log.trace("Invoking remotly orginated prepare: " + this);

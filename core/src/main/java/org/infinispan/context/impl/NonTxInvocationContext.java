@@ -65,8 +65,9 @@ public class NonTxInvocationContext extends AbstractInvocationContext {
       if (lookedUpEntries == null) lookedUpEntries = new BidirectionalLinkedHashMap<Object, CacheEntry>(4);
    }
 
-   public void prepareForCall() {
-      reset();
+   @Override
+   public void reset() {
+      super.reset();
       clearLookedUpEntries();
    }
 

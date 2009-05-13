@@ -40,7 +40,7 @@ public abstract class BaseRpcCommand implements CacheRpcCommand {
 
    protected final Object processVisitableCommand(ReplicableCommand cacheCommand) throws Throwable {
       if (cacheCommand instanceof VisitableCommand) {
-         InvocationContext ctx = icc.getRemoteNonTxInvocationContext();
+         InvocationContext ctx = icc.createRemoteInvocationContext();
          if (trace) log.trace("Invoking command " + cacheCommand + ", with originLocal flag set to " + ctx.isOriginLocal() + ".");
          return interceptorChain.invoke(ctx, (VisitableCommand) cacheCommand);
          // we only need to return values for a set of remote calls; not every call.

@@ -82,7 +82,7 @@ public class ClusteredGetCommand implements CacheRpcCommand {
             // hack -> the call is here to make sure that the current thread is associated with
             // the remote InvocationCOntext in order to make sure that ClusterCL won't trigger a recurring cluster get
             // which might result in infinite loops 
-            icc.getRemoteNonTxInvocationContext();
+            icc.createRemoteInvocationContext();
             // lookup
             if (cacheLoaderManager != null && cacheLoaderManager.getCacheLoader() != null) {
                cacheEntry = cacheLoaderManager.getCacheLoader().load(key);

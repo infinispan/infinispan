@@ -75,7 +75,7 @@ public class OwnableReentrantLock extends AbstractQueuedSynchronizer implements 
     *         otherwise.
     */
    protected final Object currentRequestor() {
-      InvocationContext invocationContext = icc.getThreadContext();
+      InvocationContext invocationContext = icc.getInvocationContext();
       Object o = invocationContext.getLockOwner();
       return o;
    }

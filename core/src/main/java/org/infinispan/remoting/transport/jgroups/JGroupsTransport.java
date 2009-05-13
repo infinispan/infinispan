@@ -372,7 +372,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
             // and roll back any tx and break any locks
 //               List<org.jgroups.Address> removed = toJGroupsAddressList(members);
 //               removed.removeAll(newMembers);
-//               spi.getLocalInvocationContext().getOptionOverrides().setSkipCacheStatusCheck(true);
+//               spi.createInvocationContext().getOptionOverrides().setSkipCacheStatusCheck(true);
 //                  if (root != null)
 //                  {
             //removeLocksForDeadMembers(root.getDelegationTarget(), removed);

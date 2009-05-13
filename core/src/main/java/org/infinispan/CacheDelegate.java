@@ -227,7 +227,7 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
    }
 
    private InvocationContext getInvocationContext() {
-      return icc.getLocalInvocationContext();
+      return icc.createInvocationContext();
    }
 
    public void lock(K key) {
