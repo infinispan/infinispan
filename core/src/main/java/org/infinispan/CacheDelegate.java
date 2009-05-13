@@ -23,7 +23,7 @@ package org.infinispan;
 
 import org.infinispan.atomic.AtomicMap;
 import org.infinispan.atomic.AtomicMapCache;
-import org.infinispan.atomic.atomichashmap.AtomicHashMap;
+import org.infinispan.atomic.AtomicHashMap;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.LockControlCommand;

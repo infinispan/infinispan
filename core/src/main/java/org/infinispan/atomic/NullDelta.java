@@ -21,7 +21,7 @@
  */
 package org.infinispan.atomic;
 
-import org.infinispan.atomic.atomichashmap.AtomicHashMap;
+import org.infinispan.atomic.AtomicHashMap;
 
 import java.io.IOException;
 import java.io.ObjectInput;

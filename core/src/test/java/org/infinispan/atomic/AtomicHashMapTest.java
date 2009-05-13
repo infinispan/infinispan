@@ -25,8 +25,8 @@ package org.infinispan.atomic;
 
 import org.easymock.EasyMock;
 import org.testng.annotations.Test;
-import org.infinispan.atomic.atomichashmap.AtomicHashMap;
-import org.infinispan.atomic.atomichashmap.AtomicHashMapDelta;
+import org.infinispan.atomic.AtomicHashMap;
+import org.infinispan.atomic.AtomicHashMapDelta;
 
 import java.io.IOException;
 import java.io.ObjectOutput;

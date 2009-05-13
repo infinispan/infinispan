@@ -19,43 +19,28 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.atomic.operations;
+package org.infinispan.atomic;
 
-import org.infinispan.atomic.Operation;
+import org.infinispan.util.FastCopyHashMap;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Map;
 
 
-public class RemoveOperation<K, V> extends Operation<K, V> {
-   private K key;
-   private V oldValue;
+public class ClearOperation<K, V> extends Operation<K, V> {
+   FastCopyHashMap<K, V> originalEntries;
 
-   public RemoveOperation() {
+   public ClearOperation() {
    }
 
-   public RemoveOperation(K key, V oldValue) {
-      this.key = key;
-      this.oldValue = oldValue;
+   ClearOperation(FastCopyHashMap<K, V> originalEntries) {
+      this.originalEntries = originalEntries;
    }
 
    public void rollback(Map<K, V> delegate) {
-      if (oldValue != null) delegate.put(key, oldValue);
+      if (!originalEntries.isEmpty()) delegate.putAll(originalEntries);
    }
 
    public void replay(Map<K, V> delegate) {
-      delegate.remove(key);
-   }
-
-   @Override
-   public void writeExternal(ObjectOutput out) throws IOException {
-      out.writeObject(key);
-   }
-
-   @Override
-   public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-      key = (K) in.readObject();
+      delegate.clear();
    }
 }

@@ -23,7 +23,7 @@ package org.infinispan.tree;
 
 import org.infinispan.Cache;
 import org.infinispan.atomic.AtomicMap;
-import org.infinispan.atomic.atomichashmap.AtomicHashMapProxy;
+import org.infinispan.atomic.AtomicHashMapProxy;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContextContainer;

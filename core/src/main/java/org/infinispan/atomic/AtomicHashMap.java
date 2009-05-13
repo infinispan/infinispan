@@ -19,17 +19,10 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.atomic.atomichashmap;
+package org.infinispan.atomic;
 
 import net.jcip.annotations.NotThreadSafe;
 import org.infinispan.Cache;
-import org.infinispan.atomic.AtomicMap;
-import org.infinispan.atomic.DeltaAware;
-import org.infinispan.atomic.operations.PutOperation;
-import org.infinispan.atomic.operations.RemoveOperation;
-import org.infinispan.atomic.operations.ClearOperation;
-import org.infinispan.atomic.Delta;
-import org.infinispan.atomic.NullDelta;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.util.FastCopyHashMap;

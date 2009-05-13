@@ -23,7 +23,7 @@ package org.infinispan.marshall.jboss;
 
 import net.jcip.annotations.Immutable;
 import org.infinispan.CacheException;
-import org.infinispan.atomic.atomichashmap.AtomicHashMap;
+import org.infinispan.atomic.AtomicHashMap;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
