@@ -24,8 +24,8 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.transaction.TransactionLog;
-import org.infinispan.transaction.xa.TransactionXaAdapter;
 import org.infinispan.transaction.xa.TransactionTable;
+import org.infinispan.transaction.xa.TransactionXaAdapter;
 
 import javax.transaction.RollbackException;
 import javax.transaction.Status;
@@ -36,13 +36,13 @@ import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Interceptor in charge with handling transaction related operations, e.g enlisting cache as an transaction participant,
- * propagating remotely initiated changes.
+ * Interceptor in charge with handling transaction related operations, e.g enlisting cache as an transaction
+ * participant, propagating remotely initiated changes.
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
  * @author Mircea.Markus@jboss.com
- * @since 4.0
  * @see org.infinispan.transaction.xa.TransactionXaAdapter
+ * @since 4.0
  */
 public class TxInterceptor extends CommandInterceptor {
 
@@ -170,17 +170,21 @@ public class TxInterceptor extends CommandInterceptor {
    }
 
    private Object enlistWriteAndInvokeNext(InvocationContext ctx, WriteCommand command) throws Throwable {
+      TransactionXaAdapter xaAdapter = null;
+      boolean shouldAddMod = false;
       if (shouldEnlist(ctx)) {
-         TransactionXaAdapter xaAdapter = enlist(ctx);
+         xaAdapter = enlist(ctx);
          LocalTxInvocationContext localTxContext = (LocalTxInvocationContext) ctx;
          if (!isLocalModeForced(ctx)) {
-            xaAdapter.addModification(command);
+            shouldAddMod = true;
          }
          localTxContext.setXaCache(xaAdapter);
       }
       if (!ctx.isInTxScope())
          transactionLog.logNoTxWrite(command);
-      return invokeNextInterceptor(ctx, command);
+      Object rv = invokeNextInterceptor(ctx, command);
+      if (command.isSuccessful() && shouldAddMod) xaAdapter.addModification(command);
+      return rv;
    }
 
    public TransactionXaAdapter enlist(InvocationContext ctx) throws SystemException, RollbackException {

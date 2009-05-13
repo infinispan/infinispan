@@ -36,6 +36,8 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.base.BaseRpcInterceptor;
 
+import java.util.concurrent.Callable;
+
 /**
  * Takes care of replicating modifications to other caches in a cluster. Also listens for prepare(), commit() and
  * rollback() messages which are received 'side-ways' (see docs/design/Refactoring.txt).
@@ -44,7 +46,6 @@ import org.infinispan.interceptors.base.BaseRpcInterceptor;
  * @since 4.0
  */
 public class ReplicationInterceptor extends BaseRpcInterceptor {
-
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (!ctx.isInTxScope()) throw new IllegalStateException("This should not be possible!");
@@ -73,7 +74,7 @@ public class ReplicationInterceptor extends BaseRpcInterceptor {
       return retVal;
    }
 
-   
+
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (ctx.isOriginLocal() && !configuration.isOnePhaseCommit()) {
@@ -111,11 +112,20 @@ public class ReplicationInterceptor extends BaseRpcInterceptor {
     * If we are within one transaction we won't do any replication as replication would only be performed at commit
     * time. If the operation didn't originate locally we won't do any replication either.
     */
-   private Object handleCrudMethod(InvocationContext ctx, WriteCommand command) throws Throwable {
+   private Object handleCrudMethod(final InvocationContext ctx, final WriteCommand command) throws Throwable {
       // FIRST pass this call up the chain.  Only if it succeeds (no exceptions) locally do we attempt to replicate.
-      Object returnValue = invokeNextInterceptor(ctx, command);
+      final Object returnValue = invokeNextInterceptor(ctx, command);
       if (!isLocalModeForced(ctx) && command.isSuccessful() && ctx.isOriginLocal() && !ctx.isInTxScope()) {
-         rpcManager.broadcastReplicableCommand(command, isSynchronous(ctx));
+         if (ctx.isUseFutureReturnType()) {
+            return submitRpcCall(new Callable<Object>() {
+               public Object call() throws Exception {
+                  rpcManager.broadcastReplicableCommand(command, true);
+                  return null;
+               }
+            }, returnValue);
+         } else {
+            rpcManager.broadcastReplicableCommand(command, isSynchronous(ctx));
+         }
       }
       return returnValue;
    }

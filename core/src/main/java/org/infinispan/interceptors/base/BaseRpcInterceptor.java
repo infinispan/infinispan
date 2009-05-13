@@ -23,9 +23,18 @@ package org.infinispan.interceptors.base;
 
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.remoting.rpc.CacheRpcManager;
+
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Acts as a base for all RPC calls - subclassed by
@@ -37,11 +46,15 @@ import org.infinispan.remoting.rpc.CacheRpcManager;
 public abstract class BaseRpcInterceptor extends CommandInterceptor {
 
    protected CacheRpcManager rpcManager;
+   protected ExecutorService asyncExecutorService;
 
    @Inject
-   public void init(CacheRpcManager rpcManager) {
+   public void init(CacheRpcManager rpcManager,
+                    @ComponentName(KnownComponentNames.ASYNC_SERIALIZATION_EXECUTOR) ExecutorService e) {
       this.rpcManager = rpcManager;
+      this.asyncExecutorService = e;
    }
+
    protected boolean defaultSynchronous;
 
    @Start
@@ -65,4 +78,35 @@ public abstract class BaseRpcInterceptor extends CommandInterceptor {
       }
       return false;
    }
+
+   protected final <X> Future<X> submitRpcCall(Callable<Object> c, final Object returnValue) {
+      final Future f = asyncExecutorService.submit(c);
+      return new Future<X>() {
+
+         public boolean cancel(boolean mayInterruptIfRunning) {
+            return f.cancel(mayInterruptIfRunning);
+         }
+
+         public boolean isCancelled() {
+            return f.isCancelled();
+         }
+
+         public boolean isDone() {
+            return f.isDone();
+         }
+
+         @SuppressWarnings("unchecked")
+         public X get() throws InterruptedException, ExecutionException {
+            f.get(); // wait for f to complete first
+            return (X) returnValue;
+         }
+
+         @SuppressWarnings("unchecked")
+         public X get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+            f.get(timeout, unit);
+            return (X) returnValue;
+         }
+      };
+   }
+
 }

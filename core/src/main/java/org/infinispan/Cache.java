@@ -72,6 +72,9 @@ import java.util.concurrent.TimeUnit;
  * especially advantageous if the cache uses distribution and the three keys map to different cache instances in the
  * cluster.
  * <p/>
+ * Also, the use of async operations when within a transaction return your local value only, as expected.  A Future is
+ * still returned though for API consistency.
+ * <p/>
  * <h3>Constructing a Cache</h3> An instance of the Cache is usually obtained by using a {@link CacheManager}.
  * <pre>
  *   CacheManager cm = new DefaultCacheManager(); // optionally pass in a default configuration
