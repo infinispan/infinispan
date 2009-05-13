@@ -23,60 +23,11 @@ package org.infinispan.interceptors;
 
 
 import org.infinispan.commands.VisitableCommand;
-import org.infinispan.commands.tx.CommitCommand;
-import org.infinispan.commands.tx.PrepareCommand;
-import org.infinispan.commands.tx.RollbackCommand;
-import org.infinispan.commands.write.ClearCommand;
-import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commands.write.PutMapCommand;
-import org.infinispan.commands.write.RemoveCommand;
-import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
 
 public class InvocationContextInterceptor extends CommandInterceptor {
-
-   @Override
-   public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-      return handleAll(ctx, command);
-   }
-
-   @Override
-   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      return handleAll(ctx, command);
-   }
-
-   @Override
-   public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      return handleAll(ctx, command);
-   }
-
-   @Override
-   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-      return handleAll(ctx, command);
-   }
-
-   @Override
-   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-      return handleAll(ctx, command);
-   }
-
-   @Override
-   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      return handleAll(ctx, command);
-   }
-
-   @Override
-   public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
-      return handleAll(ctx, command);
-   }
-
-   @Override
-   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      return handleAll(ctx, command);
-   }
 
    @Override
    public Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
@@ -102,8 +53,8 @@ public class InvocationContextInterceptor extends CommandInterceptor {
             return null;
          } else {
             log.error("Execution error: ", th);
+            throw th;
          }
-         throw th;
       } finally {
          ctx.reset();
       }
