@@ -34,6 +34,4 @@ import org.infinispan.commands.VisitableCommand;
 public interface TransactionBoundaryCommand extends VisitableCommand, CacheRpcCommand {
 
    GlobalTransaction getGlobalTransaction();
-
-   void GlobalTransaction(GlobalTransaction gtx);
 }

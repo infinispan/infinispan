@@ -68,10 +68,6 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
       return globalTx;
    }
 
-   public void GlobalTransaction(GlobalTransaction gtx) {
-      this.globalTx = gtx;
-   }
-
    public Object perform(InvocationContext ctx) throws Throwable {
       if (ctx != null) throw new IllegalStateException("Expected null context!");
       RemoteTransaction transaction = txTable.getRemoteTransaction(globalTx);
