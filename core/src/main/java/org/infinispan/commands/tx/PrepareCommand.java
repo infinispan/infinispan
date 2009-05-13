@@ -30,6 +30,8 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.RemoteTransaction;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.Arrays;
 import java.util.List;
@@ -42,6 +44,9 @@ import java.util.List;
  * @since 4.0
  */
 public class PrepareCommand extends AbstractTransactionBoundaryCommand {
+
+   private static Log log = LogFactory.getLog(PrepareCommand.class);
+   private boolean trace = log.isTraceEnabled();
 
    public static final byte COMMAND_ID = 12;
 
@@ -77,7 +82,8 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
       //2. then set it on the invocation context
       RemoteTxInvocationContext ctx = icc.getRemoteTxInvocationContext();
       ctx.setRemoteTransaction(remoteTransaction);
-      
+
+      if (trace) log.trace("Invoking remotly orginated prepare: " + this);
       notifier.notifyTransactionRegistered(ctx.getGlobalTransaction(), ctx);
       return invoker.invoke(ctx, this);
    }

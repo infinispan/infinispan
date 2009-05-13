@@ -103,7 +103,6 @@ public class NodeReplicatedMoveTest extends MultipleCacheManagersTest {
 
    }
 
-   @Test (enabled = false)
    public void testReplTxRollback() throws Exception {
       System.out.println(TreeStructureSupport.printTree(cache1, true));
       Node<Object, Object> rootNode = cache1.getRoot();

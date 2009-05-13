@@ -77,7 +77,7 @@ public class TransactionTable {
          throw new IllegalStateException(message);
       }
       if (trace) {
-         log.trace("Created and regostered tremote transaction " + remoteTransaction);
+         log.trace("Created and registered remote transaction " + remoteTransaction);
       }
       return remoteTransaction;
    }
@@ -117,7 +117,11 @@ public class TransactionTable {
     * if such an tx exists.
     */
    public boolean removeRemoteTransaction(GlobalTransaction txId) {
-      return remoteTransactions.remove(txId) != null;
+      boolean existed = remoteTransactions.remove(txId) != null;
+      if (trace) {
+         log.trace("Removed " + txId + " from transaction table. Returning " + existed);
+      }
+      return existed;
    }
 
    public int getRemoteTxCount() {
