@@ -21,6 +21,7 @@
  */
 package org.infinispan.container.entries;
 
+import org.infinispan.atomic.AtomicHashMap;
 import org.infinispan.container.DataContainer;
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.*;
 import org.infinispan.util.logging.Log;
@@ -150,6 +151,10 @@ public class ReadCommittedEntry implements MVCCEntry {
          if (trace)
             log.trace("Updating entry (key={0} removed={1} valid={2} changed={3} created={4} value={5}]", getKey(),
                       isRemoved(), isValid(), isChanged(), isCreated(), value);
+
+         // Ugh!
+         if (value instanceof AtomicHashMap) ((AtomicHashMap) value).commit();
+
          if (isRemoved()) {
             container.remove(key);
          } else {

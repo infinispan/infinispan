@@ -46,6 +46,7 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
    FastCopyHashMap<K, V> delegate;
    private AtomicHashMapDelta delta = null;
    private volatile AtomicHashMapProxy proxy;
+   volatile boolean copied = false;
 
    /**
     * Construction only allowed through this factory method.  This factory is intended for use internally by the
@@ -62,8 +63,14 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
       delegate = new FastCopyHashMap<K, V>();
    }
 
+   public AtomicHashMap(boolean isCopy) {
+      this();
+      copied = isCopy;
+   }
+
    public void commit() {
-      if (delta != null) delta = null;
+      copied = false;
+      delta = null;
    }
 
    public int size() {
@@ -107,7 +114,7 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
 
    public V remove(Object key) {
       V oldValue = delegate.remove(key);
-      RemoveOperation<K, V> op = new RemoveOperation<K, V>((K)key, oldValue);
+      RemoveOperation<K, V> op = new RemoveOperation<K, V>((K) key, oldValue);
       getDelta().addOperation(op);
       return oldValue;
    }
@@ -120,7 +127,7 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
    public void clear() {
       FastCopyHashMap<K, V> originalEntries = (FastCopyHashMap<K, V>) delegate.clone();
       ClearOperation<K, V> op = new ClearOperation<K, V>(originalEntries);
-      if (delta!= null ) delta.addOperation(op);
+      if (delta != null) delta.addOperation(op);
       delegate.clear();
    }
 
@@ -148,6 +155,7 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
          AtomicHashMap clone = (AtomicHashMap) super.clone();
          clone.delegate = (FastCopyHashMap) delegate.clone();
          clone.proxy = proxy;
+         clone.copied = true;
          return clone;
       }
       catch (CloneNotSupportedException e) {

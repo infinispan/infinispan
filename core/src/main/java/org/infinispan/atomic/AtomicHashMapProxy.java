@@ -22,9 +22,9 @@
 package org.infinispan.atomic;
 
 import org.infinispan.Cache;
-import org.infinispan.atomic.AtomicMap;
 import org.infinispan.batch.AutoBatchSupport;
 import org.infinispan.batch.BatchContainer;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
@@ -61,8 +61,12 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
    }
 
    private AtomicHashMap<K, V> getDeltaMapForWrite(InvocationContext ctx) {
-      if (ctx.hasLockedKey(deltaMapKey)) {
-         return (AtomicHashMap<K, V>) cache.get(deltaMapKey);
+      CacheEntry lookedUpEntry = ctx.lookupEntry(deltaMapKey);
+      boolean lockedAndCopied = lookedUpEntry != null && lookedUpEntry.isChanged() &&
+            ((AtomicHashMap) lookedUpEntry.getValue()).copied;
+
+      if (lockedAndCopied) {
+         return getDeltaMapForRead();
       } else {
          // acquire WL
          boolean suppressLocks = ctx.hasFlag(Flag.SKIP_LOCKING);
@@ -77,7 +81,7 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
 
          AtomicHashMap map = getDeltaMapForRead();
          // copy for write
-         AtomicHashMap copy = map == null ? new AtomicHashMap() : map.copyForWrite();
+         AtomicHashMap copy = map == null ? new AtomicHashMap(true) : map.copyForWrite();
          copy.initForWriting();
          // reinstate the flag
          if (suppressLocks) ctx.setFlags(Flag.SKIP_LOCKING);
