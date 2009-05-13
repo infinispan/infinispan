@@ -200,7 +200,7 @@ public class TxInterceptor extends CommandInterceptor {
 
    private boolean isLocalModeForced(InvocationContext icx) {
       if (icx.hasFlag(Flag.CACHE_MODE_LOCAL)) {
-         if (log.isDebugEnabled()) log.debug("LOCAL mode forced on invocation.  Suppressing clustered events.");
+         if (trace) log.debug("LOCAL mode forced on invocation.  Suppressing clustered events.");
          return true;
       }
       return false;

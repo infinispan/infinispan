@@ -41,6 +41,7 @@ import org.infinispan.util.logging.LogFactory;
 public abstract class AbstractTransactionBoundaryCommand implements TransactionBoundaryCommand {
 
    private static Log log = LogFactory.getLog(AbstractTransactionBoundaryCommand.class);
+   private static boolean trace = log.isTraceEnabled();
 
    protected GlobalTransaction globalTx;
    protected String cacheName;
@@ -75,7 +76,7 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
       if (ctx != null) throw new IllegalStateException("Expected null context!");
       RemoteTransaction transaction = txTable.getRemoteTransaction(globalTx);
       if (transaction == null) {
-         if (log.isInfoEnabled()) log.info("Not found RemoteTransaction for tx id: " + globalTx);
+         if (trace) log.info("Not found RemoteTransaction for tx id: " + globalTx);
          return null;
       }
       RemoteTxInvocationContext ctxt = icc.getRemoteTxInvocationContext();

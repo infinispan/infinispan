@@ -22,9 +22,6 @@
 package org.infinispan.transaction.tm;
 
 
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
 import javax.transaction.NotSupportedException;
@@ -43,8 +40,7 @@ import java.util.List;
  * @since 4.0
  */
 public class DummyUserTransaction implements UserTransaction, java.io.Serializable {
-   static final Log logger_ = LogFactory.getLog(DummyUserTransaction.class);
-   DummyTransactionManager tm_;
+   DummyTransactionManager tm;
    private static final long serialVersionUID = -6568400755677046127L;
 
    /**
@@ -53,7 +49,7 @@ public class DummyUserTransaction implements UserTransaction, java.io.Serializab
    List<Synchronization> l = new ArrayList<Synchronization>();
 
    public DummyUserTransaction(DummyTransactionManager tm) {
-      tm_ = tm;
+      this.tm = tm;
    }
 
 
@@ -65,7 +61,7 @@ public class DummyUserTransaction implements UserTransaction, java.io.Serializab
     * @throws SystemException       If the transaction service fails in an unexpected way.
     */
    public void begin() throws NotSupportedException, SystemException {
-      tm_.begin();
+      tm.begin();
    }
 
    /**
@@ -83,7 +79,7 @@ public class DummyUserTransaction implements UserTransaction, java.io.Serializab
          throws RollbackException, HeuristicMixedException,
                 HeuristicRollbackException, SecurityException, SystemException {
 
-      tm_.commit();
+      tm.commit();
    }
 
    /**
@@ -95,7 +91,7 @@ public class DummyUserTransaction implements UserTransaction, java.io.Serializab
     * @throws SystemException       If the transaction service fails in an unexpected way.
     */
    public void rollback() throws IllegalStateException, SystemException {
-      tm_.rollback();
+      tm.rollback();
    }
 
    /**
@@ -105,7 +101,7 @@ public class DummyUserTransaction implements UserTransaction, java.io.Serializab
     * @throws SystemException       If the transaction service fails in an unexpected way.
     */
    public void setRollbackOnly() throws IllegalStateException, SystemException {
-      tm_.setRollbackOnly();
+      tm.setRollbackOnly();
    }
 
    /**
@@ -115,7 +111,7 @@ public class DummyUserTransaction implements UserTransaction, java.io.Serializab
     * @throws SystemException If the transaction service fails in an unexpected way.
     */
    public int getStatus() throws SystemException {
-      return tm_.getStatus();
+      return tm.getStatus();
    }
 
    /**

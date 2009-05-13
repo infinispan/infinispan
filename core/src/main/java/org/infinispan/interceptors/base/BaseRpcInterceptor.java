@@ -60,7 +60,7 @@ public abstract class BaseRpcInterceptor extends CommandInterceptor {
 
    protected final boolean isLocalModeForced(InvocationContext ctx) {
       if (ctx.hasFlag(Flag.CACHE_MODE_LOCAL)) {
-         if (log.isDebugEnabled()) log.debug("LOCAL mode forced on invocation.  Suppressing clustered events.");
+         if (trace) log.debug("LOCAL mode forced on invocation.  Suppressing clustered events.");
          return true;
       }
       return false;

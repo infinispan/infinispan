@@ -25,6 +25,7 @@ import java.util.List;
 public class CacheRpcManager {
 
    private static Log log = LogFactory.getLog(CacheRpcManager.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private Configuration configuration;
    private boolean stateTransferEnabled;
@@ -69,7 +70,7 @@ public class CacheRpcManager {
    }
 
    public void multicastRpcCommand(List<Address> recipients, CacheRpcCommand command, boolean sync, boolean useOutOfBandMessage) throws ReplicationException {
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.trace("invoking method " + command.getClass().getSimpleName() + ", members=" + rpcManager.getTransport().getMembers() + ", mode=" +
                configuration.getCacheMode() + ", exclude_self=" + true + ", timeout=" +
                configuration.getSyncReplTimeout());
@@ -83,7 +84,7 @@ public class CacheRpcManager {
                                           sync ? ResponseMode.SYNCHRONOUS : ResponseMode.ASYNCHRONOUS, // is synchronised?
                                           configuration.getSyncReplTimeout(), useOutOfBandMessage, stateTransferEnabled
          );
-         if (log.isTraceEnabled()) log.trace("responses=" + rsps);
+         if (trace) log.trace("responses=" + rsps);
          if (sync) checkResponses(rsps);
       } catch (CacheException e) {
          log.error("Replication exception",e);
@@ -112,8 +113,8 @@ public class CacheRpcManager {
             if (rsp != null && rsp instanceof Throwable) {
                // lets print a stack trace first.
                Throwable throwable = (Throwable) rsp;
-               if (log.isDebugEnabled()) {
-                  log.debug("Received Throwable from remote cache", throwable);
+               if (trace) {
+                  log.trace("Received Throwable from remote cache", throwable);
                }
                throw new ReplicationException(throwable);
             }

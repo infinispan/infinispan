@@ -26,11 +26,9 @@ import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.transaction.xa.TransactionXaAdapter;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.TransactionTable;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import org.infinispan.transaction.xa.TransactionXaAdapter;
 
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
@@ -46,8 +44,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * @since 4.0
  */
 public class InvocationContextContainerImpl implements InvocationContextContainer {
-
-   private static Log log = LogFactory.getLog(InvocationContextContainerImpl.class);
 
    private TransactionManager tm;
    private TransactionTable transactionTable;

@@ -33,6 +33,7 @@ import java.util.Map;
 public class TransactionXaAdapter implements CacheTransaction, XAResource {
 
    private static Log log = LogFactory.getLog(TransactionXaAdapter.class);
+   private static boolean trace = log.isTraceEnabled();
 
    private int txTimeout;
 
@@ -70,13 +71,13 @@ public class TransactionXaAdapter implements CacheTransaction, XAResource {
 
    public int prepare(Xid xid) throws XAException {
       if (configuration.isOnePhaseCommit()) {
-         if (log.isTraceEnabled())
+         if (trace)
             log.trace("Recieved prepare for tx: " + xid + " . Skipping call as 1PC will be used.");
          return XA_OK;
       }
 
       PrepareCommand prepareCommand = commandsFactory.buildPrepareCommand(globalTx, modifications, configuration.isOnePhaseCommit());
-      if (log.isTraceEnabled()) log.trace("Sending prepare command through the chain: " + prepareCommand);
+      if (trace) log.trace("Sending prepare command through the chain: " + prepareCommand);
 
       LocalTxInvocationContext ctx = icc.getLocalTxInvocationContext();
       ctx.setXaCache(this);
@@ -90,12 +91,12 @@ public class TransactionXaAdapter implements CacheTransaction, XAResource {
    }
 
    public void commit(Xid xid, boolean b) throws XAException {
-      if (log.isTraceEnabled()) log.trace("commiting TransactionXaAdapter: " + globalTx);
+      if (trace) log.trace("commiting TransactionXaAdapter: " + globalTx);
       try {
          LocalTxInvocationContext ctx = icc.getLocalTxInvocationContext();
          ctx.setXaCache(this);
          if (configuration.isOnePhaseCommit()) {
-            if (log.isTraceEnabled()) log.trace("Doing an 1PC prepare call on the interceptor chain");
+            if (trace) log.trace("Doing an 1PC prepare call on the interceptor chain");
             PrepareCommand command = commandsFactory.buildPrepareCommand(globalTx, modifications, true);
             try {
                invoker.invoke(ctx, command);
@@ -134,19 +135,19 @@ public class TransactionXaAdapter implements CacheTransaction, XAResource {
    }
 
    public void start(Xid xid, int i) throws XAException {
-      if (log.isTraceEnabled()) log.trace("start called");
+      if (trace) log.trace("start called");
    }
 
    public void end(Xid xid, int i) throws XAException {
-      if (log.isTraceEnabled()) log.trace("end called");
+      if (trace) log.trace("end called");
    }
 
    public void forget(Xid xid) throws XAException {
-      if (log.isTraceEnabled()) log.trace("forget called");
+      if (trace) log.trace("forget called");
    }
 
    public int getTransactionTimeout() throws XAException {
-      if (log.isTraceEnabled()) log.trace("start called");
+      if (trace) log.trace("start called");
       return txTimeout;
    }
 
@@ -159,7 +160,7 @@ public class TransactionXaAdapter implements CacheTransaction, XAResource {
    }
 
    public Xid[] recover(int i) throws XAException {
-      if (log.isTraceEnabled()) log.trace("recover called: " + i);
+      if (trace) log.trace("recover called: " + i);
       return null; //todo validate with javadoc
    }
 

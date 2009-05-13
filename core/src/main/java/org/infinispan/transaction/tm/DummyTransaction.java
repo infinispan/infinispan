@@ -45,8 +45,10 @@ import java.util.Set;
  * @since 4.0
  */
 public class DummyTransaction implements Transaction {
-   private volatile int status = Status.STATUS_UNKNOWN;
    private static final Log log = LogFactory.getLog(DummyTransaction.class);
+   private static boolean trace = log.isTraceEnabled();
+
+   private volatile int status = Status.STATUS_UNKNOWN;
    protected DummyBaseTransactionManager tm_;
    protected DummyXid xid = new DummyXid();
 
@@ -239,8 +241,8 @@ public class DummyTransaction implements Transaction {
             throw new IllegalStateException("illegal status: " + status + " tx=" + this);
       }
 
-      if (log.isDebugEnabled()) {
-         log.debug("registering synchronization handler " + sync);
+      if (trace) {
+         log.trace("registering synchronization handler " + sync);
       }
       syncs.add(sync);
 
@@ -250,8 +252,8 @@ public class DummyTransaction implements Transaction {
       boolean retval = true;
       if (syncs == null) return true;
       for (Synchronization s : syncs) {
-         if (log.isDebugEnabled()) {
-            log.debug("processing beforeCompletion for " + s);
+         if (trace) {
+            log.trace("processing beforeCompletion for " + s);
          }
          try {
             s.beforeCompletion();
@@ -284,8 +286,8 @@ public class DummyTransaction implements Transaction {
    protected void notifyAfterCompletion(int status) {
       if (syncs == null) return;
       for (Synchronization s : syncs) {
-         if (log.isDebugEnabled()) {
-            log.debug("processing afterCompletion for " + s);
+         if (trace) {
+            log.trace("processing afterCompletion for " + s);
          }
          try {
             s.afterCompletion(status);
