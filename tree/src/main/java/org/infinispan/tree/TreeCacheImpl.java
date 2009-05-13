@@ -158,7 +158,7 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
    }
 
    public Node<K, V> getNode(Fqn fqn, Flag... flags) {
-      icc.getInvocationContext().setFlags(flags);
+      icc.createInvocationContext().setFlags(flags);
       return getNode(fqn);
    }
 
@@ -208,7 +208,8 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
 
    public void move(Fqn nodeToMoveFqn, Fqn newParentFqn) throws NodeNotExistsException {
       if (trace) log.trace("Moving node '" + nodeToMoveFqn + "' to '" + newParentFqn + "'");
-      if (nodeToMoveFqn == null || newParentFqn == null) throw new NullPointerException("Cannot accept null parameters!");
+      if (nodeToMoveFqn == null || newParentFqn == null)
+         throw new NullPointerException("Cannot accept null parameters!");
 
       if (nodeToMoveFqn.getParent().equals(newParentFqn)) {
          if (trace) log.trace("Not doing anything as this node is equal with its parent");
@@ -227,7 +228,7 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
          if (!exists(newParentFqn)) {
             // then we need to silently create the new parent
             createNodeInCache(newParentFqn);
-            if (trace) log.trace("The new parent ("+newParentFqn +") did not exists, was created");
+            if (trace) log.trace("The new parent (" + newParentFqn + ") did not exists, was created");
          }
 
          // create an empty node for this new parent
