@@ -78,7 +78,7 @@ public class TransactionXaAdapter implements CacheTransaction, XAResource {
       PrepareCommand prepareCommand = commandsFactory.buildPrepareCommand(globalTx, modifications, configuration.isOnePhaseCommit());
       if (log.isTraceEnabled()) log.trace("Sending prepare command through the chain: " + prepareCommand);
 
-      LocalTxInvocationContext ctx = icc.getInitiatorTxInvocationContext();
+      LocalTxInvocationContext ctx = icc.getLocalTxInvocationContext();
       ctx.setXaCache(this);
       try {
          invoker.invoke(ctx, prepareCommand);
@@ -92,7 +92,7 @@ public class TransactionXaAdapter implements CacheTransaction, XAResource {
    public void commit(Xid xid, boolean b) throws XAException {
       if (log.isTraceEnabled()) log.trace("commiting TransactionXaAdapter: " + globalTx);
       try {
-         LocalTxInvocationContext ctx = icc.getInitiatorTxInvocationContext();
+         LocalTxInvocationContext ctx = icc.getLocalTxInvocationContext();
          ctx.setXaCache(this);
          if (configuration.isOnePhaseCommit()) {
             if (log.isTraceEnabled()) log.trace("Doing an 1PC prepare call on the interceptor chain");
@@ -120,7 +120,7 @@ public class TransactionXaAdapter implements CacheTransaction, XAResource {
 
    public void rollback(Xid xid) throws XAException {
       RollbackCommand rollbackCommand = commandsFactory.buildRollbackCommand(globalTx);
-      LocalTxInvocationContext ctx = icc.getInitiatorTxInvocationContext();
+      LocalTxInvocationContext ctx = icc.getLocalTxInvocationContext();
       ctx.setXaCache(this);
       try {
          invoker.invoke(ctx, rollbackCommand);

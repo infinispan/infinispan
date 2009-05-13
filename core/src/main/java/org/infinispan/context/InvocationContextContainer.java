@@ -18,7 +18,7 @@ import org.infinispan.factories.scopes.Scopes;
 public interface InvocationContextContainer {
    InvocationContext getLocalInvocationContext();
 
-   LocalTxInvocationContext getInitiatorTxInvocationContext();
+   LocalTxInvocationContext getLocalTxInvocationContext();
 
    RemoteTxInvocationContext getRemoteTxInvocationContext();
 
@@ -26,7 +26,7 @@ public interface InvocationContextContainer {
 
    InvocationContext getThreadContext();
 
-   Object suspend();
+   InvocationContext suspend();
 
-   void resume(Object backup);
+   void resume(InvocationContext ic);
 }

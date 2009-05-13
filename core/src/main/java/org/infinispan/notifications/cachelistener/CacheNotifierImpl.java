@@ -114,7 +114,7 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
    public void notifyCacheEntryCreated(Object key, boolean pre, InvocationContext ctx) {
       if (!cacheEntryCreatedListeners.isEmpty()) {
          boolean originLocal = ctx.isOriginLocal();
-         Object contexts = icc.suspend();
+         InvocationContext contexts = icc.suspend();
          EventImpl e = new EventImpl();
          e.setCache(cache);
          e.setOriginLocal(originLocal);
@@ -130,7 +130,7 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
    public void notifyCacheEntryModified(Object key, Object value, boolean pre, InvocationContext ctx) {
       if (!cacheEntryModifiedListeners.isEmpty()) {
          boolean originLocal = ctx.isOriginLocal();
-         Object contexts = icc.suspend();
+         InvocationContext contexts = icc.suspend();
          EventImpl e = new EventImpl();
          e.setCache(cache);
          e.setOriginLocal(originLocal);
@@ -147,7 +147,7 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
    public void notifyCacheEntryRemoved(Object key, Object value, boolean pre, InvocationContext ctx) {
       if (!cacheEntryRemovedListeners.isEmpty()) {
          boolean originLocal = ctx.isOriginLocal();
-         Object contexts = icc.suspend();
+         InvocationContext contexts = icc.suspend();
          EventImpl e = new EventImpl();
          e.setCache(cache);
          e.setOriginLocal(originLocal);
@@ -163,7 +163,7 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
 
    public void notifyCacheEntryVisited(Object key, boolean pre, InvocationContext ctx) {
       if (!cacheEntryVisitedListeners.isEmpty()) {
-         Object contexts = icc.suspend();
+         InvocationContext contexts = icc.suspend();
          EventImpl e = new EventImpl();
          e.setCache(cache);
          e.setPre(pre);
@@ -178,7 +178,7 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
    public void notifyCacheEntryEvicted(final Object key, final boolean pre, InvocationContext ctx) {
       if (!cacheEntryEvictedListeners.isEmpty()) {
          final boolean originLocal = ctx.isOriginLocal();
-         Object contexts = icc.suspend();
+         InvocationContext contexts = icc.suspend();
          EventImpl e = new EventImpl();
          e.setCache(cache);
          e.setOriginLocal(originLocal);
@@ -194,7 +194,7 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
    public void notifyCacheEntryInvalidated(final Object key, final boolean pre, InvocationContext ctx) {
       if (!cacheEntryInvalidatedListeners.isEmpty()) {
          final boolean originLocal = ctx.isOriginLocal();
-         Object contexts = icc.suspend();
+         InvocationContext contexts = icc.suspend();
          EventImpl e = new EventImpl();
          e.setCache(cache);
          e.setOriginLocal(originLocal);
@@ -210,7 +210,7 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
    public void notifyCacheEntryLoaded(Object key, boolean pre, InvocationContext ctx) {
       if (!cacheEntryLoadedListeners.isEmpty()) {
          boolean originLocal = ctx.isOriginLocal();
-         Object contexts = icc.suspend();
+         InvocationContext contexts = icc.suspend();
          EventImpl e = new EventImpl();
          e.setCache(cache);
          e.setOriginLocal(originLocal);
@@ -226,7 +226,7 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
    public void notifyCacheEntryActivated(Object key, boolean pre, InvocationContext ctx) {
       if (!cacheEntryActivatedListeners.isEmpty()) {
          boolean originLocal = ctx.isOriginLocal();
-         Object contexts = icc.suspend();
+         InvocationContext contexts = icc.suspend();
          EventImpl e = new EventImpl();
          e.setCache(cache);
          e.setOriginLocal(originLocal);
@@ -248,7 +248,7 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
 
    public void notifyCacheEntryPassivated(Object key, boolean pre, InvocationContext ctx) {
       if (!cacheEntryPassivatedListeners.isEmpty()) {
-         Object contexts = icc.suspend();
+         InvocationContext contexts = icc.suspend();
          EventImpl e = new EventImpl();
          e.setCache(cache);
          e.setPre(pre);
@@ -263,7 +263,7 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
    public void notifyTransactionCompleted(GlobalTransaction transaction, boolean successful, InvocationContext ctx) {
       if (!transactionCompletedListeners.isEmpty()) {
          boolean isOriginLocal = ctx.isOriginLocal();
-         Object contexts = icc.suspend();
+         InvocationContext contexts = icc.suspend();
          EventImpl e = new EventImpl();
          e.setCache(cache);
          e.setOriginLocal(isOriginLocal);
@@ -278,7 +278,7 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
    public void notifyTransactionRegistered(GlobalTransaction globalTransaction, InvocationContext ctx) {
       if (!transactionRegisteredListeners.isEmpty()) {
          boolean isOriginLocal = ctx.isOriginLocal();
-         Object contexts = icc.suspend();
+         InvocationContext contexts = icc.suspend();
          EventImpl e = new EventImpl();
          e.setCache(cache);
          e.setOriginLocal(isOriginLocal);

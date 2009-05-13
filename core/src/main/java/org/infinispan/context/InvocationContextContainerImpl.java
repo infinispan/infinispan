@@ -52,13 +52,7 @@ public class InvocationContextContainerImpl implements InvocationContextContaine
    private TransactionManager tm;
    private TransactionTable transactionTable;
 
-
-   private ThreadLocal<PossibleContexts> contextsTl = new ThreadLocal<PossibleContexts>() {
-      @Override
-      protected PossibleContexts initialValue() {
-         return new PossibleContexts();
-      }
-   };
+   ThreadLocal<InvocationContext> icTl = new ThreadLocal<InvocationContext>();
 
    private Map<GlobalTransaction, RemoteTxInvocationContext> remoteTxMap = new ConcurrentHashMap<GlobalTransaction, RemoteTxInvocationContext>(20);
 
@@ -69,96 +63,82 @@ public class InvocationContextContainerImpl implements InvocationContextContaine
    }
 
    public InvocationContext getLocalInvocationContext() {
-      PossibleContexts contexts = contextsTl.get();
       Transaction tx = getRunningTx();
+      InvocationContext existing = icTl.get();
       if (tx != null) {
-         contexts.initInitiatorInvicationContext();
-         LocalTxInvocationContext context = contexts.localTxInvocationContext;
+         LocalTxInvocationContext localContext;
+         if ((existing == null) || !(existing instanceof LocalTxInvocationContext)) {
+            localContext = new LocalTxInvocationContext();
+            icTl.set(localContext);
+         } else {
+            localContext = (LocalTxInvocationContext) existing;
+         }
          TransactionXaAdapter xaAdapter = transactionTable.getXaCacheAdapter(tx);
-         context.setXaCache(xaAdapter);
-         return contexts.updateThreadContextAndReturn(context);
+         localContext.setXaCache(xaAdapter);
+         return localContext;
       } else {
-         contexts.initNonTxInvocationContext();
-         contexts.nonTxInvocationContext.prepareForCall();
-         contexts.nonTxInvocationContext.setOriginLocal(true);
-         return contexts.updateThreadContextAndReturn(contexts.nonTxInvocationContext);
+         NonTxInvocationContext nonTxContext;
+         if ((existing == null) || !(existing instanceof NonTxInvocationContext)) {
+            nonTxContext = new NonTxInvocationContext();
+            icTl.set(nonTxContext);
+         } else {
+            nonTxContext = (NonTxInvocationContext) existing;
+         }
+         nonTxContext.prepareForCall();
+         nonTxContext.setOriginLocal(true);
+         return nonTxContext;
       }
    }
 
-   public LocalTxInvocationContext getInitiatorTxInvocationContext() {
-      PossibleContexts contexts = contextsTl.get();
-      contexts.initInitiatorInvicationContext();
-      contexts.updateThreadContextAndReturn(contexts.localTxInvocationContext);
-      return contexts.localTxInvocationContext;
+   public LocalTxInvocationContext getLocalTxInvocationContext() {
+      InvocationContext existing = icTl.get();
+      if (existing != null && existing instanceof LocalTxInvocationContext) {
+         return (LocalTxInvocationContext) existing;
+      }
+      LocalTxInvocationContext localTxContext = new LocalTxInvocationContext();
+      icTl.set(localTxContext);
+      return localTxContext;
    }
 
    public RemoteTxInvocationContext getRemoteTxInvocationContext() {
-      PossibleContexts contexts = contextsTl.get();
-      contexts.initRemoteTxInvocationContext();
-      contexts.updateThreadContextAndReturn(contexts.remoteTxContext);
-      return contexts.remoteTxContext;
+      InvocationContext existing = icTl.get();
+      if (existing != null && existing instanceof RemoteTxInvocationContext) {
+         return (RemoteTxInvocationContext) existing;
+      }
+      RemoteTxInvocationContext remoteTxContext = new RemoteTxInvocationContext();
+      icTl.set(remoteTxContext);
+      return remoteTxContext;
    }
 
-   public InvocationContext getRemoteNonTxInvocationContext() {
-      PossibleContexts contexts = contextsTl.get();
-      contexts.initRemoteNonTxInvocationContext();
-      contexts.remoteNonTxContext.prepareForCall();
-      return contexts.updateThreadContextAndReturn(contexts.remoteNonTxContext);
+   public NonTxInvocationContext getRemoteNonTxInvocationContext() {
+      InvocationContext existing = icTl.get();
+      if (existing != null && existing instanceof NonTxInvocationContext) {
+         NonTxInvocationContext context = (NonTxInvocationContext) existing;
+         context.prepareForCall();
+         context.setOriginLocal(false);
+         return context;
+      }
+      NonTxInvocationContext remoteNonTxContext = new NonTxInvocationContext();
+      remoteNonTxContext.setOriginLocal(false);
+      icTl.set(remoteNonTxContext);
+      return remoteNonTxContext;
    }
 
    public InvocationContext getThreadContext() {
-      InvocationContext invocationContext = contextsTl.get().threadInvocationContex;
+      InvocationContext invocationContext = icTl.get();
       if (invocationContext == null)
          throw new IllegalStateException("This method can only be called after associating the current thread with a context");
       return invocationContext;
    }
 
-
-   public Object suspend() {
-      PossibleContexts result = contextsTl.get();
-      contextsTl.remove();
-      return result;
+   public InvocationContext suspend() {
+      InvocationContext invocationContext = icTl.get();
+      icTl.remove();
+      return invocationContext;
    }
 
-   public void resume(Object backup) {
-      contextsTl.set((PossibleContexts) backup);
-   }
-
-   public static class PossibleContexts {
-      private NonTxInvocationContext nonTxInvocationContext;
-      private LocalTxInvocationContext localTxInvocationContext;
-      private NonTxInvocationContext remoteNonTxContext;
-      private RemoteTxInvocationContext remoteTxContext;
-      private InvocationContext threadInvocationContex;
-
-      public void initInitiatorInvicationContext() {
-         if (localTxInvocationContext == null) {
-            localTxInvocationContext = new LocalTxInvocationContext();
-         }
-      }
-
-      public void initNonTxInvocationContext() {
-         if (nonTxInvocationContext == null) {
-            nonTxInvocationContext = new NonTxInvocationContext();
-         }
-      }
-
-      public void initRemoteNonTxInvocationContext() {
-         if (remoteNonTxContext == null) {
-            remoteNonTxContext = new NonTxInvocationContext();
-         }
-      }
-
-      public void initRemoteTxInvocationContext() {
-         if (remoteTxContext == null) {
-            remoteTxContext = new RemoteTxInvocationContext();
-         }
-      }
-
-      public InvocationContext updateThreadContextAndReturn(InvocationContext ic) {
-         threadInvocationContex = ic;
-         return ic;
-      }
+   public void resume(InvocationContext ctxt) {
+      if (ctxt != null) icTl.set(ctxt);
    }
 
    private Transaction getRunningTx() {
