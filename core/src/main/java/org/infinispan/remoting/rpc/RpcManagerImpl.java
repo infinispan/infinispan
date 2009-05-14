@@ -22,6 +22,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.text.NumberFormat;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
@@ -67,18 +68,25 @@ public class RpcManagerImpl implements RpcManager {
    }
 
    public List<Response> invokeRemotely(List<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter, boolean stateTransferEnabled) throws Exception {
-      try {
-         List<Response> result = t.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue, responseFilter, stateTransferEnabled);
-         if (isStatisticsEnabled()) replicationCount.incrementAndGet();
-         return result;
-      } catch (CacheException e) {
-         if (log.isTraceEnabled()) log.trace("replicaiton exception: ", e);
-         if (isStatisticsEnabled()) replicationFailures.incrementAndGet();
-         throw e;
-      } catch (Throwable th) {
-         log.error("unexpected error while replicating", th);
-         if (isStatisticsEnabled()) replicationFailures.incrementAndGet();
-         throw new CacheException(th);
+      List<Address> members = t.getMembers();
+      if (members.size() < 2) {
+         if (log.isDebugEnabled()) 
+            log.debug("We're the only member in the cluster; Don't invoke remotely.");
+         return Collections.emptyList();
+      } else {
+         try {
+            List<Response> result = t.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue, responseFilter, stateTransferEnabled);
+            if (isStatisticsEnabled()) replicationCount.incrementAndGet();
+            return result;
+         } catch (CacheException e) {
+            if (log.isTraceEnabled()) log.trace("replicaiton exception: ", e);
+            if (isStatisticsEnabled()) replicationFailures.incrementAndGet();
+            throw e;
+         } catch (Throwable th) {
+            log.error("unexpected error while replicating", th);
+            if (isStatisticsEnabled()) replicationFailures.incrementAndGet();
+            throw new CacheException(th);
+         }
       }
    }
 

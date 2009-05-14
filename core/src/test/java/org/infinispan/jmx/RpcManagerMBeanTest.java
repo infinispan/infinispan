@@ -2,6 +2,7 @@ package org.infinispan.jmx;
 
 import org.easymock.EasyMock;
 import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.createNiceMock;
 import static org.easymock.EasyMock.replay;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
@@ -19,7 +20,10 @@ import org.testng.annotations.Test;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
+
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -111,8 +115,13 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
       Transport originalTransport = rpcManager.getTransport();
 
       try {
+         Address mockAddress1 = createNiceMock(Address.class);
+         Address mockAddress2 = createNiceMock(Address.class);
+         List<Address> memberList = new ArrayList<Address>(2);
+         memberList.add(mockAddress1);
+         memberList.add(mockAddress2);
          Transport transport = createMock(Transport.class);
-         EasyMock.expect(transport.getMembers()).andReturn(new LinkedList<Address>()).anyTimes();
+         EasyMock.expect(transport.getMembers()).andReturn(memberList).anyTimes();
          replay(transport);
          rpcManager.setTransport(transport);
          cache1.put("a5", "b5");
