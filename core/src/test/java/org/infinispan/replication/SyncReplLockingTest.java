@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
  */
-@Test(groups = "functional", testName = "replication.SyncReplLockingTest")
+@Test(groups = "functional", testName = "replication.SyncReplLockingTest", enabled = false, description = "TODO: Temporarily disabled.  Enable before BETA1")
 public class SyncReplLockingTest extends MultipleCacheManagersTest {
    Cache<String, String> cache1, cache2;
    String k = "key", v = "value";
@@ -37,13 +37,11 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
       cache2 = manager(1).getCache("replSync");
    }
 
-   @Test(enabled = true)
    public void testLockingWithExplicitUnlock() throws Exception {
       lockingWithExplicitUnlockHelper(false);
       lockingWithExplicitUnlockHelper(true);
    }
 
-   @Test(enabled = true)
    public void testLocksReleasedWithoutExplicitUnlock() throws Exception {
       locksReleasedWithoutExplicitUnlockHelper(false);
       locksReleasedWithoutExplicitUnlockHelper(true);
@@ -78,7 +76,6 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
       assert cache2.isEmpty();
    }
 
-   @Test(enabled = true)
    public void testConcurrentLocking() throws Exception {
       assertClusterSize("Should only be 2  caches in the cluster!!!", 2);
 

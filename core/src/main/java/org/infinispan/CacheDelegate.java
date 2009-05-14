@@ -228,12 +228,14 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
    }
 
    public void lock(K key) {
+      if (true) throw new UnsupportedOperationException("Not yet implemented");
       if (key == null)
          throw new IllegalArgumentException("Cannot lock null key");
       lock(Collections.singletonList(key));
    }
 
    public void lock(Collection<? extends K> keys) {
+      if (true) throw new UnsupportedOperationException("Not yet implemented");
       if (keys == null || keys.isEmpty())
          throw new IllegalArgumentException("Cannot lock empty list of keys");
       LockControlCommand command = commandsFactory.buildLockControlCommand(keys, true);
@@ -241,12 +243,14 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
    }
 
    public void unlock(K key) {
+      if (true) throw new UnsupportedOperationException("Not yet implemented");
       if (key == null)
          throw new IllegalArgumentException("Cannot unlock null key");
       unlock(Collections.singletonList(key));
    }
 
    public void unlock(Collection<? extends K> keys) {
+      if (true) throw new UnsupportedOperationException("Not yet implemented");
       if (keys == null || keys.isEmpty())
          throw new IllegalArgumentException("Cannot unlock empty list of keys");
       LockControlCommand command = commandsFactory.buildLockControlCommand(keys, false);
