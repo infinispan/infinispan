@@ -135,16 +135,16 @@ public class LockingInterceptor extends CommandInterceptor {
          doAfterCall(ctx);
       }
    }
-   
+
    @Override
    public Object visitLockControlCommand(InvocationContext ctx, LockControlCommand c) throws Throwable {
       try {
-         if(ctx.isOriginLocal() && ctx.isInTxScope()){
+         if (ctx.isOriginLocal() && ctx.isInTxScope()) {
             c.attachGlobalTransaction((GlobalTransaction) ctx.getLockOwner());
          }
          if (c.isLock()) {
             for (Object key : c.getKeys()) {
-               entryFactory.wrapEntryForWriting(ctx, key, false, false, false, false);
+               entryFactory.wrapEntryForWriting(ctx, key, true, false, false, false);
             }
          } else if (c.isUnlock()) {
             for (Object key : c.getKeys()) {
@@ -241,7 +241,7 @@ public class LockingInterceptor extends CommandInterceptor {
    private void doAfterCall(InvocationContext ctx) {
       // for non-transactional stuff.
       if (!ctx.isInTxScope()) {
-            cleanupLocks(ctx, ctx.getLockOwner(), true);
+         cleanupLocks(ctx, ctx.getLockOwner(), true);
       } else {
          if (trace) log.trace("Transactional.  Not cleaning up locks till the transaction ends.");
          if (useReadCommitted) {
