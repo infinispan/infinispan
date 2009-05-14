@@ -48,6 +48,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;
 
 
@@ -116,7 +117,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
          List<WriteCommand> mods = Arrays.asList(command.getModifications());
          Transaction runningTransaction = ctx.getRunningTransaction();
          if (runningTransaction == null) throw new IllegalStateException("we must have an associated transaction");
-         broadcastInvalidate(mods, runningTransaction, ctx);
+         broadcastInvalidateForPrepare(mods, runningTransaction, ctx);
       } else {
          if (trace) log.trace("Nothing to invalidate - no modifications in the transaction.");
       }
@@ -127,13 +128,13 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
       Object retval = invokeNextInterceptor(ctx, command);
       if (command.isSuccessful() && !ctx.isInTxScope()) {
          if (keys != null && keys.length != 0) {
-            invalidateAcrossCluster(isSynchronous(ctx), ctx, keys);
+            return invalidateAcrossCluster(isSynchronous(ctx), ctx, keys, ctx.isUseFutureReturnType(), retval);
          }
       }
       return retval;
    }
 
-   private void broadcastInvalidate(List<WriteCommand> modifications, Transaction tx, InvocationContext ctx) throws Throwable {
+   private void broadcastInvalidateForPrepare(List<WriteCommand> modifications, Transaction tx, InvocationContext ctx) throws Throwable {
       if (ctx.isInTxScope() && !isLocalModeForced(ctx)) {
          if (modifications == null || modifications.isEmpty()) return;
          InvalidationFilterVisitor filterVisitor = new InvalidationFilterVisitor(modifications.size());
@@ -143,7 +144,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
             log.debug("Modification list contains a putForExternalRead operation.  Not invalidating.");
          } else {
             try {
-               invalidateAcrossCluster(defaultSynchronous, ctx, filterVisitor.result.toArray());
+               invalidateAcrossCluster(defaultSynchronous, ctx, filterVisitor.result.toArray(), false, null);
             }
             catch (Throwable t) {
                log.warn("Unable to broadcast evicts as a part of the prepare phase.  Rolling back.", t);
@@ -184,16 +185,28 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
    }
 
 
-   protected void invalidateAcrossCluster(boolean synchronous, InvocationContext ctx, Object[] keys) throws Throwable {
+   protected Object invalidateAcrossCluster(boolean synchronous, InvocationContext ctx, Object[] keys, boolean useFuture,
+                                            final Object retvalForFuture) throws Throwable {
       if (!isLocalModeForced(ctx)) {
          // increment invalidations counter if statistics maintained
          incrementInvalidations();
-         InvalidateCommand command = commandsFactory.buildInvalidateCommand(keys);
+         final InvalidateCommand command = commandsFactory.buildInvalidateCommand(keys);
          if (log.isDebugEnabled())
             log.debug("Cache [" + rpcManager.getLocalAddress() + "] replicating " + command);
          // voila, invalidated!
-         rpcManager.broadcastReplicableCommand(command, synchronous);
+         if (useFuture) {
+            return submitRpcCall(new Callable<Object>() {
+               public Object call() throws Exception {
+                  rpcManager.broadcastReplicableCommand(command, true);
+                  return null;
+               }
+            }, retvalForFuture);
+         } else {
+            rpcManager.broadcastReplicableCommand(command, synchronous);
+         }
       }
+
+      return retvalForFuture;
    }
 
    private void incrementInvalidations() {
