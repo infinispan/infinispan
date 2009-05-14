@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
  */
-@Test(groups = "functional", testName = "replication.SyncReplLockingTest", enabled = false, description = "TODO: Temporarily disabled.  Enable before BETA1")
+@Test(groups = "functional", testName = "replication.SyncReplLockingTest")
 public class SyncReplLockingTest extends MultipleCacheManagersTest {
    Cache<String, String> cache1, cache2;
    String k = "key", v = "value";
