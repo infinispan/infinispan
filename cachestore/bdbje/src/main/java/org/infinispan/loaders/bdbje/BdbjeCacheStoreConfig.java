@@ -26,57 +26,67 @@ import org.infinispan.loaders.AbstractCacheStoreConfig;
  * @since 4.0
  */
 public class BdbjeCacheStoreConfig extends AbstractCacheStoreConfig {
-   private String location = "Infinispan-BdbjeCacheStore";
-   private long lockAcquistionTimeout = 60 * 1000;
-   private int maxTxRetries = 5;
-   private String cacheDbName;
-   private String catalogDbName;
+    private String location = "Infinispan-BdbjeCacheStore";
+    private long lockAcquistionTimeout = 60 * 1000;
+    private int maxTxRetries = 5;
+    private String cacheDbName;
+    private String catalogDbName;
+    private String expiryDbName;
 
-   public BdbjeCacheStoreConfig() {
-      setCacheLoaderClassName(BdbjeCacheStore.class.getName());
-   }
+    public String getExpiryDbName() {
+        return expiryDbName;
+    }
 
-   public int getMaxTxRetries() {
-      return maxTxRetries;
-   }
-
-   public void setMaxTxRetries(int maxTxRetries) {
-      this.maxTxRetries = maxTxRetries;
-   }
+    public void setExpiryDbName(String expiryDbName) {
+        this.expiryDbName = expiryDbName;
+    }
 
 
-   public long getLockAcquistionTimeout() {
-      return lockAcquistionTimeout;
-   }
+    public BdbjeCacheStoreConfig() {
+        setCacheLoaderClassName(BdbjeCacheStore.class.getName());
+    }
 
-   public void setLockAcquistionTimeout(long lockAcquistionTimeout) {
-      this.lockAcquistionTimeout = lockAcquistionTimeout;
-   }
+    public int getMaxTxRetries() {
+        return maxTxRetries;
+    }
 
-   public String getLocation() {
-      return location;
-   }
-
-   public void setLocation(String location) {
-      testImmutability("location");
-      this.location = location;
-   }
+    public void setMaxTxRetries(int maxTxRetries) {
+        this.maxTxRetries = maxTxRetries;
+    }
 
 
-   public String getCacheDbName() {
-      return cacheDbName;
-   }
+    public long getLockAcquistionTimeout() {
+        return lockAcquistionTimeout;
+    }
 
-   public void setCacheDbName(String cacheDbName) {
-      this.cacheDbName = cacheDbName;
-   }
+    public void setLockAcquistionTimeout(long lockAcquistionTimeout) {
+        this.lockAcquistionTimeout = lockAcquistionTimeout;
+    }
 
-   public String getCatalogDbName() {
-      return catalogDbName;
-   }
+    public String getLocation() {
+        return location;
+    }
 
-   public void setCatalogDbName(String catalogDbName) {
-      this.catalogDbName = catalogDbName;
-   }
+    public void setLocation(String location) {
+        testImmutability("location");
+        this.location = location;
+    }
+
+
+    public String getCacheDbName() {
+        return cacheDbName;
+    }
+
+    public void setCacheDbName(String cacheDbName) {
+        this.cacheDbName = cacheDbName;
+    }
+
+    public String getCatalogDbName() {
+        return catalogDbName;
+    }
+
+    public void setCatalogDbName(String catalogDbName) {
+        this.catalogDbName = catalogDbName;
+    }
 
 }
