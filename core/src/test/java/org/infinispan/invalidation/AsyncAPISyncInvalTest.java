@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-@Test(groups = "functional", testName = "replication.AsyncAPISyncInvalTest")
+@Test(groups = "functional", testName = "invalidation.AsyncAPISyncInvalTest")
 public class AsyncAPISyncInvalTest extends MultipleCacheManagersTest {
 
    Cache<Key, String> c1, c2;

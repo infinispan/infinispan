@@ -129,4 +129,8 @@ public class CacheRpcManager {
    public Address getLocalAddress() {
       return rpcManager != null ? rpcManager.getLocalAddress() : null;
    }
+
+   public List<Address> getMembers() {
+      return rpcManager.getTransport().getMembers();
+   }
 }

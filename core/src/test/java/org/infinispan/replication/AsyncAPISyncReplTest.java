@@ -20,7 +20,7 @@ import java.util.concurrent.Future;
 @Test(groups = "functional", testName = "replication.AsyncAPISyncReplTest")
 public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
 
-   Cache<Key, String> c1, c2;
+   protected Cache<Key, String> c1, c2;
 
    @SuppressWarnings("unchecked")
    protected void createCacheManagers() throws Throwable {
@@ -42,7 +42,7 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
    protected void resetListeners() {
    }
 
-   private void assertOnAllCaches(Key k, String v) {
+   protected void assertOnAllCaches(Key k, String v) {
       Object real;
       assert Util.safeEquals((real = c1.get(k)), v) : "Error on cache 1.  Expected " + v + " and got " + real;
       assert Util.safeEquals((real = c2.get(k)), v) : "Error on cache 2.  Expected " + v + " and got " + real;
@@ -61,6 +61,7 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
 
       // put
       Future<String> f = c1.putAsync(key, v);
+      System.out.println("Future is of type " + f.getClass().getName());
       assert f != null;
       assert !f.isDone();
       assert c2.get(key) == null;
