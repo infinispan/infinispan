@@ -84,14 +84,17 @@ pageTracker._trackPageview();
                            <tasks>
                               <!-- this is a dependency of single_jar assembly -->
                               <mkdir dir="target"/>
-                              <zip destfile="target/infinispan-all.jar">
+                              <jar destfile="target/infinispan-all.jar">
                                  <fileset dir="cachestore/bdbje/target/classes"/>
                                  <fileset dir="cachestore/jdbc/target/classes"/>
                                  <fileset dir="cachestore/s3/target/classes"/>
                                  <fileset dir="cachestore/jdbm/target/classes"/>
                                  <fileset dir="core/target/classes"/>
                                  <fileset dir="tree/target/classes"/>
-                              </zip>
+                                 <manifest>
+                                   <attribute name="Main-Class" value="org.infinispan.Version" />
+                                 </manifest>
+                              </jar>
                            </tasks>
                         </configuration>
                      </execution>
