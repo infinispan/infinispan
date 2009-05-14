@@ -22,7 +22,7 @@
 package org.infinispan.marshall.jboss.externalizers;
 
 import org.infinispan.commands.control.StateTransferControlCommand;
-import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.transport.Transport;
 import org.jboss.marshalling.Creator;
 
 import java.io.IOException;
@@ -41,10 +41,10 @@ public class StateTransferControlCommandExternalizer extends ReplicableCommandEx
     */
    private static final long serialVersionUID = -3743458410265076691L;
 
-   private RpcManager rpcManager;
+   private Transport transport;
 
-   public void init(RpcManager rpcManager) {
-      this.rpcManager = rpcManager;
+   public void init(Transport transport) {
+      this.transport = transport;
    }
 
    /**
@@ -56,7 +56,7 @@ public class StateTransferControlCommandExternalizer extends ReplicableCommandEx
    public Object createExternal(Class<?> subjectType, ObjectInput input, Creator defaultCreator)
          throws IOException, ClassNotFoundException {
       StateTransferControlCommand command = new StateTransferControlCommand();
-      command.init(rpcManager);
+      command.init(transport);
       return command;
    }
 }

@@ -12,12 +12,12 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
-import org.infinispan.remoting.rpc.ResponseFilter;
-import org.infinispan.remoting.rpc.ResponseMode;
-import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.responses.ClusteredGetResponseValidityFilter;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
+import org.infinispan.remoting.rpc.ResponseFilter;
+import org.infinispan.remoting.rpc.ResponseMode;
+import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
@@ -73,7 +73,7 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    public boolean isLocal(Object key) {
-      return consistentHash.locate(key, replCount).contains(rpcManager.getLocalAddress());
+      return consistentHash.locate(key, replCount).contains(rpcManager.getTransport().getAddress());
    }
 
    public List<Address> locate(Object key) {
@@ -94,7 +94,7 @@ public class DistributionManagerImpl implements DistributionManager {
 
       ResponseFilter filter = new ClusteredGetResponseValidityFilter(locate(key));
       List<Response> responses = rpcManager.invokeRemotely(locate(key), get, ResponseMode.SYNCHRONOUS,
-                                                           configuration.getSyncReplTimeout(), false, filter, false);
+                                                           configuration.getSyncReplTimeout(), false, filter);
 
       if (!responses.isEmpty()) {
          for (Response r : responses) {

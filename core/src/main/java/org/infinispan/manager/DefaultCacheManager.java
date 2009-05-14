@@ -38,8 +38,8 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.Lifecycle;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
-import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.Transport;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -311,20 +311,20 @@ public class DefaultCacheManager implements CacheManager {
 
    public List<Address> getMembers() {
       if (globalComponentRegistry == null) return null;
-      RpcManager rpcManager = globalComponentRegistry.getComponent(RpcManager.class);
-      return rpcManager == null ? null : rpcManager.getTransport().getMembers();
+      Transport t = globalComponentRegistry.getComponent(Transport.class);
+      return t == null ? null : t.getMembers();
    }
 
    public Address getAddress() {
       if (globalComponentRegistry == null) return null;
-      RpcManager rpcManager = globalComponentRegistry.getComponent(RpcManager.class);
-      return rpcManager == null ? null : rpcManager.getLocalAddress();
+      Transport t = globalComponentRegistry.getComponent(Transport.class);
+      return t == null ? null : t.getAddress();
    }
 
    public boolean isCoordinator() {
       if (globalComponentRegistry == null) return false;
-      RpcManager rpcManager = globalComponentRegistry.getComponent(RpcManager.class);
-      return rpcManager != null && rpcManager.getTransport().isCoordinator();
+      Transport t = globalComponentRegistry.getComponent(Transport.class);
+      return t != null && t.isCoordinator();
    }
 
    private Cache createCache(String cacheName) {

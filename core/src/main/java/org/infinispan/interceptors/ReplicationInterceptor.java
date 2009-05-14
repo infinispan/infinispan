@@ -21,6 +21,7 @@
  */
 package org.infinispan.interceptors;
 
+import org.infinispan.AsyncReturnValue;
 import org.infinispan.commands.LockControlCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -35,8 +36,6 @@ import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.base.BaseRpcInterceptor;
-
-import java.util.concurrent.Callable;
 
 /**
  * Takes care of replicating modifications to other caches in a cluster. Also listens for prepare(), commit() and
@@ -117,14 +116,9 @@ public class ReplicationInterceptor extends BaseRpcInterceptor {
       final Object returnValue = invokeNextInterceptor(ctx, command);
       if (!isLocalModeForced(ctx) && command.isSuccessful() && ctx.isOriginLocal() && !ctx.isInTxScope()) {
          if (ctx.isUseFutureReturnType()) {
-            return submitRpcCall(new Callable<Object>() {
-               public Object call() throws Exception {
-                  rpcManager.broadcastReplicableCommand(command, true);
-                  return null;
-               }
-            }, returnValue);
+            return new AsyncReturnValue(rpcManager.broadcastRpcCommandInFuture(command), returnValue);
          } else {
-            rpcManager.broadcastReplicableCommand(command, isSynchronous(ctx));
+            rpcManager.broadcastRpcCommand(command, isSynchronous(ctx));
          }
       }
       return returnValue;

@@ -32,8 +32,8 @@ import org.infinispan.remoting.rpc.RpcManager;
  * @since 4.0
  */
 @DefaultFactoryFor(classes = RpcManager.class)
-public class RpcManagerFactory extends EmptyConstructorFactory implements AutoInstantiableFactory {
-   
+public class RpcManagerFactory extends EmptyConstructorNamedCacheFactory implements AutoInstantiableFactory {
+
    @Override
    public <T> T construct(Class<T> componentType) {
       // only do this if we have a transport configured!

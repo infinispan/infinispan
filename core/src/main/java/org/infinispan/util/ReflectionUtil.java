@@ -66,7 +66,12 @@ public class ReflectionUtil {
     */
    private static void inspectRecursively(Class c, List<Method> s, Class<? extends Annotation> annotationType) {
       // Superclass first
-      if (!c.equals(Object.class)) inspectRecursively(c.getSuperclass(), s, annotationType);
+      if (!c.equals(Object.class)) {
+         if (!c.isInterface()) {
+            inspectRecursively(c.getSuperclass(), s, annotationType);
+            for (Class ifc : c.getInterfaces()) inspectRecursively(ifc, s, annotationType);
+         }
+      }
 
       for (Method m : c.getDeclaredMethods()) {
          // don't bother if this method has already been overridden by a subclass

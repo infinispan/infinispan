@@ -80,10 +80,10 @@ public class ClusterCacheLoader extends AbstractCacheLoader {
 
    private List<Response> doRemoteCall(ClusteredGetCommand clusteredGetCommand) throws CacheLoaderException {
       Set<Address> validMembers = new HashSet<Address>(rpcManager.getTransport().getMembers());
-      validMembers.remove(rpcManager.getLocalAddress());
+      validMembers.remove(rpcManager.getTransport().getAddress());
       ResponseFilter filter = new ClusteredGetResponseValidityFilter(validMembers);
       try {
-         return rpcManager.invokeRemotely(null, clusteredGetCommand, ResponseMode.WAIT_FOR_VALID_RESPONSE, config.getRemoteCallTimeout(), false, filter, false);
+         return rpcManager.invokeRemotely(null, clusteredGetCommand, ResponseMode.WAIT_FOR_VALID_RESPONSE, config.getRemoteCallTimeout(), false, filter);
       } catch (Exception e) {
          log.error("error while doing remote call", e);
          throw new CacheLoaderException(e);

@@ -81,18 +81,19 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
    // Lifecycle and setup stuff
    // ------------------------------------------------------------------------------------------------------------------
 
-   public void initialize(GlobalConfiguration c, Properties p, Marshaller marshaller, ExecutorService asyncExecutor,
-                          InboundInvocationHandler inboundInvocationHandler, CacheManagerNotifier notifier, long distributedSyncTimeout) {
+   public void initialize(GlobalConfiguration c, Marshaller marshaller, ExecutorService asyncExecutor,
+                          InboundInvocationHandler inboundInvocationHandler, CacheManagerNotifier notifier) {
       this.c = c;
-      this.p = p;
       this.marshaller = marshaller;
       this.asyncExecutor = asyncExecutor;
       this.inboundInvocationHandler = inboundInvocationHandler;
       this.notifier = notifier;
-      this.distributedSyncTimeout = distributedSyncTimeout;
    }
 
    public void start() {
+      p = c.getTransportProperties();
+      distributedSyncTimeout = c.getDistributedSyncTimeout();
+
       log.info("Starting JGroups Channel");
 
       initChannelAndRPCDispatcher();

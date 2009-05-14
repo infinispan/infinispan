@@ -2,7 +2,7 @@ package org.infinispan.commands.control;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.transport.Transport;
 
 /**
  * A command that informs caches participating in a state transfer of the various stages in the state transfer process.
@@ -12,7 +12,7 @@ import org.infinispan.remoting.rpc.RpcManager;
  */
 public class StateTransferControlCommand implements ReplicableCommand {
    public static final int COMMAND_ID = 15;
-   RpcManager rpcManager;
+   Transport transport;
    boolean enabled;
 
    public StateTransferControlCommand() {
@@ -22,15 +22,15 @@ public class StateTransferControlCommand implements ReplicableCommand {
       this.enabled = enabled;
    }
 
-   public void init(RpcManager rpcManager) {
-      this.rpcManager = rpcManager;
+   public void init(Transport transport) {
+      this.transport = transport;
    }
 
    public Object perform(InvocationContext ctx) throws Throwable {
       if (enabled)
-         rpcManager.getTransport().getDistributedSync().acquireSync();
+         transport.getDistributedSync().acquireSync();
       else
-         rpcManager.getTransport().getDistributedSync().releaseSync();
+         transport.getDistributedSync().releaseSync();
       return null;
    }
 

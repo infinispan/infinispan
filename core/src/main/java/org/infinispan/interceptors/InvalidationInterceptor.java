@@ -21,6 +21,7 @@
  */
 package org.infinispan.interceptors;
 
+import org.infinispan.AsyncReturnValue;
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
@@ -48,7 +49,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;
 
 
@@ -98,7 +98,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
    public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
       // just broadcast the clear command - this is simplest!
       Object retval = invokeNextInterceptor(ctx, command);
-      if (ctx.isOriginLocal()) rpcManager.broadcastReplicableCommand(command, defaultSynchronous);
+      if (ctx.isOriginLocal()) rpcManager.broadcastRpcCommand(command, defaultSynchronous);
       return retval;
    }
 
@@ -192,17 +192,12 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
          incrementInvalidations();
          final InvalidateCommand command = commandsFactory.buildInvalidateCommand(keys);
          if (log.isDebugEnabled())
-            log.debug("Cache [" + rpcManager.getLocalAddress() + "] replicating " + command);
+            log.debug("Cache [" + rpcManager.getTransport().getAddress() + "] replicating " + command);
          // voila, invalidated!
          if (useFuture) {
-            return submitRpcCall(new Callable<Object>() {
-               public Object call() throws Exception {
-                  rpcManager.broadcastReplicableCommand(command, true);
-                  return null;
-               }
-            }, retvalForFuture);
+            return new AsyncReturnValue(rpcManager.broadcastRpcCommandInFuture(command), retvalForFuture);
          } else {
-            rpcManager.broadcastReplicableCommand(command, synchronous);
+            rpcManager.broadcastRpcCommand(command, synchronous);
          }
       }
 

@@ -19,7 +19,7 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.transport.Transport;
 
 /**
  * Specifically used to create un-initialized {@link org.infinispan.commands.ReplicableCommand}s from a byte stream.
@@ -29,11 +29,11 @@ import org.infinispan.remoting.rpc.RpcManager;
  */
 @Scope(Scopes.GLOBAL)
 public class RemoteCommandFactory {
-   RpcManager rpcManager;
+   Transport transport;
 
    @Inject
-   public void init(RpcManager rpcManager) {
-      this.rpcManager = rpcManager;
+   public void inject(Transport transport) {
+      this.transport = transport;
    }
 
    /**
@@ -55,7 +55,7 @@ public class RemoteCommandFactory {
             break;
          case LockControlCommand.COMMAND_ID:
             command = new LockControlCommand();
-            break;   
+            break;
          case PutMapCommand.COMMAND_ID:
             command = new PutMapCommand();
             break;
@@ -94,7 +94,7 @@ public class RemoteCommandFactory {
             break;
          case StateTransferControlCommand.COMMAND_ID:
             command = new StateTransferControlCommand();
-            ((StateTransferControlCommand) command).init(rpcManager);
+            ((StateTransferControlCommand) command).init(transport);
             break;
          case ClusteredGetCommand.COMMAND_ID:
             command = new ClusteredGetCommand();

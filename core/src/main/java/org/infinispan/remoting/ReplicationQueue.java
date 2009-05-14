@@ -30,10 +30,10 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.remoting.rpc.ResponseMode;
+import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.remoting.rpc.ResponseMode;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -146,7 +146,7 @@ public class ReplicationQueue {
             log.trace("Flushing {0} elements", toReplicateSize);
             MultipleRpcCommand multipleRpcCommand = commandsFactory.buildReplicateCommand(toReplicate);
             // send to all live caches in the cluster
-            rpcManager.invokeRemotely(null, multipleRpcCommand, ResponseMode.ASYNCHRONOUS, configuration.getSyncReplTimeout(), stateTransferEnabled);
+            rpcManager.invokeRemotely(null, multipleRpcCommand, ResponseMode.ASYNCHRONOUS, configuration.getSyncReplTimeout());
          }
          catch (Throwable t) {
             log.error("failed replicating " + toReplicate.size() + " elements in replication queue", t);

@@ -2,7 +2,12 @@ package org.infinispan.remoting.transport;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.annotations.ComponentName;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.NonVolatile;
+import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.lifecycle.Lifecycle;
@@ -15,7 +20,6 @@ import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.statetransfer.StateTransferException;
 
 import java.util.List;
-import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -33,16 +37,16 @@ public interface Transport extends Lifecycle {
    /**
     * Initializes the transport with global cache configuration and transport-specific properties.
     *
-    * @param c                      global cache-wide configuration
-    * @param p                      properties to set
-    * @param marshaller             marshaller to use for marshalling and unmarshalling
-    * @param asyncExecutor          executor to use for asynchronous calls
-    * @param handler                handler for invoking remotely originating calls on the local cache
-    * @param notifier               notifier to use
-    * @param distributedSyncTimeout timeout to wait for distributed syncs
+    * @param c             global cache-wide configuration
+    * @param marshaller    marshaller to use for marshalling and unmarshalling
+    * @param asyncExecutor executor to use for asynchronous calls
+    * @param handler       handler for invoking remotely originating calls on the local cache
+    * @param notifier      notifier to use
     */
-   void initialize(GlobalConfiguration c, Properties p, Marshaller marshaller, ExecutorService asyncExecutor,
-                   InboundInvocationHandler handler, CacheManagerNotifier notifier, long distributedSyncTimeout);
+   @Inject
+   void initialize(GlobalConfiguration c, Marshaller marshaller,
+                   @ComponentName(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncExecutor,
+                   InboundInvocationHandler handler, CacheManagerNotifier notifier);
 
    /**
     * Invokes an RPC call on other caches in the cluster.
@@ -112,4 +116,11 @@ public interface Transport extends Lifecycle {
     * @return true if the implementation supports state transfer, false otherwise.
     */
    boolean isSupportStateTransfer();
+
+   @Start(priority = 10)
+   void start();
+
+   @Stop
+   void stop();
+
 }

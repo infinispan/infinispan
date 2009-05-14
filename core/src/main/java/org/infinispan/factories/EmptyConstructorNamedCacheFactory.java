@@ -33,7 +33,6 @@ import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.VersionAwareMarshaller;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
-import org.infinispan.remoting.rpc.CacheRpcManager;
 import org.infinispan.transaction.TransactionLog;
 
 /**
@@ -43,7 +42,7 @@ import org.infinispan.transaction.TransactionLog;
  * @since 4.0
  */
 @DefaultFactoryFor(classes = {CacheNotifier.class, EntryFactory.class, CommandsFactory.class,
-                              CacheLoaderManager.class, InvocationContextContainer.class, CacheRpcManager.class,
+                              CacheLoaderManager.class, InvocationContextContainer.class,
                               BatchContainer.class, TransactionLog.class, EvictionManager.class, InvocationContextContainer.class})
 public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
    @Override
@@ -54,7 +53,7 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
             if (componentType.equals(Marshaller.class)) {
                componentImpl = VersionAwareMarshaller.class;
             } else if (componentType.equals(InvocationContextContainer.class)) {
-                  componentImpl = InvocationContextContainerImpl.class;
+               componentImpl = InvocationContextContainerImpl.class;
             } else {
                // add an "Impl" to the end of the class name and try again
                componentImpl = getClass().getClassLoader().loadClass(componentType.getName() + "Impl");

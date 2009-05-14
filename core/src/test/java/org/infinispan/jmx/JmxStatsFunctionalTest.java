@@ -37,7 +37,7 @@ public class JmxStatsFunctionalTest {
    /**
     * Create a local cache, two replicated caches and see that everithing is correctly registered.
     */
-   public void testDefaultDomanin() {
+   public void testDefaultDomain() {
       assert !existsDomains("infinispan");
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
       globalConfiguration.setExposeGlobalJmxStatistics(true);
@@ -58,15 +58,17 @@ public class JmxStatsFunctionalTest {
       cm.getCache("remote2");
 
       assert existsObject("infinispan:cache-name=local_cache(local),jmx-resource=CacheMgmtInterceptor");
-      assert existsObject("infinispan:cache-name=[global],jmx-resource=RpcManager");
+      assert existsObject("infinispan:cache-name=remote1(repl_sync),jmx-resource=RpcManager");
       assert existsObject("infinispan:cache-name=remote1(repl_sync),jmx-resource=CacheMgmtInterceptor");
+      assert existsObject("infinispan:cache-name=remote2(invalidation_async),jmx-resource=RpcManager");
       assert existsObject("infinispan:cache-name=remote2(invalidation_async),jmx-resource=CacheMgmtInterceptor");
 
       TestingUtil.killCacheManagers(cm);
 
       assert !existsObject("infinispan:cache-name=local_cache(local),jmx-resource=CacheMgmtInterceptor");
-      assert !existsObject("infinispan:cache-name=[global],jmx-resource=RpcManager");
+      assert !existsObject("infinispan:cache-name=remote1(repl_sync),jmx-resource=RpcManager");
       assert !existsObject("infinispan:cache-name=remote1(repl_sync),jmx-resource=CacheMgmtInterceptor");
+      assert !existsObject("infinispan:cache-name=remote2(invalidation_async),jmx-resource=RpcManager");
       assert !existsObject("infinispan:cache-name=remote2(invalidation_async),jmx-resource=CacheMgmtInterceptor");
    }
 
@@ -105,7 +107,7 @@ public class JmxStatsFunctionalTest {
       cm.getCache("remote1");
 
       assert !existsObject("infinispan:cache-name=local_cache(local),jmx-resource=CacheMgmtInterceptor");
-      assert existsObject("infinispan:cache-name=[global],jmx-resource=RpcManager");
+      assert existsObject("infinispan:cache-name=[global],jmx-resource=CacheManager");
       assert !existsObject("infinispan:cache-name=remote1(repl_sync),jmx-resource=CacheMgmtInterceptor");
    }
 

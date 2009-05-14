@@ -22,80 +22,66 @@
 package org.infinispan.remoting.rpc;
 
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.factories.annotations.NonVolatile;
-import org.infinispan.factories.scopes.Scope;
-import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.lifecycle.Lifecycle;
+import org.infinispan.remoting.ReplicationException;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.statetransfer.StateTransferException;
 
 import java.util.List;
+import java.util.concurrent.Future;
 
 /**
- * Provides a mechanism for communicating with other caches in the cluster.
- * <p/>
- * Implementations have a simple lifecycle: <ul> <li>start() - starts the underlying communication channel based on
- * configuration options injected, and connects the channel</li> <li>stop() - stops the dispatcher and releases
- * resources</li> </ul>
+ * Provides a mechanism for communicating with other caches in the cluster, by formatting and passing requests down to
+ * the registered {@link Transport}.
  *
  * @author Manik Surtani
  * @since 4.0
  */
-@Scope(Scopes.GLOBAL)
-@NonVolatile
-public interface RpcManager extends Lifecycle {
-   // TODO this needs to be re-thought regarding adding a transport-independent mechanism of unicasts for distribution based on consistent hashes
+public interface RpcManager {
    /**
     * Invokes an RPC call on other caches in the cluster.
     *
-    * @param recipients           a list of Addresses to invoke the call on.  If this is null, the call is broadcast to
-    *                             the entire cluster.
-    * @param rpcCommand           the cache command to invoke
-    * @param mode                 the response mode to use
-    * @param timeout              a timeout after which to throw a replication exception.
-    * @param usePriorityQueue     if true, a priority queue is used to deliver messages.  May not be supported by all
-    *                             implementations.
-    * @param responseFilter       a response filter with which to filter out failed/unwanted/invalid responses.
-    * @param stateTransferEnabled if true, additional replaying is considered if messages need to be re-sent during the
-    *                             course of a state transfer
+    * @param recipients       a list of Addresses to invoke the call on.  If this is null, the call is broadcast to the
+    *                         entire cluster.
+    * @param rpcCommand       the cache command to invoke
+    * @param mode             the response mode to use
+    * @param timeout          a timeout after which to throw a replication exception.
+    * @param usePriorityQueue if true, a priority queue is used to deliver messages.  May not be supported by all
+    *                         implementations.
+    * @param responseFilter   a response filter with which to filter out failed/unwanted/invalid responses.
     * @return a list of responses from each member contacted.
     * @throws Exception in the event of problems.
     */
-   List<Response> invokeRemotely(List<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter, boolean stateTransferEnabled) throws Exception;
+   List<Response> invokeRemotely(List<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter) throws Exception;
 
    /**
     * Invokes an RPC call on other caches in the cluster.
     *
-    * @param recipients           a list of Addresses to invoke the call on.  If this is null, the call is broadcast to
-    *                             the entire cluster.
-    * @param rpcCommand           the cache command to invoke
-    * @param mode                 the response mode to use
-    * @param timeout              a timeout after which to throw a replication exception.
-    * @param usePriorityQueue     if true, a priority queue is used to deliver messages.  May not be supported by all
-    *                             implementations.
-    * @param stateTransferEnabled if true, additional replaying is considered if messages need to be re-sent during the
-    *                             course of a state transfer
+    * @param recipients       a list of Addresses to invoke the call on.  If this is null, the call is broadcast to the
+    *                         entire cluster.
+    * @param rpcCommand       the cache command to invoke
+    * @param mode             the response mode to use
+    * @param timeout          a timeout after which to throw a replication exception.
+    * @param usePriorityQueue if true, a priority queue is used to deliver messages.  May not be supported by all
+    *                         implementations.
     * @return a list of responses from each member contacted.
     * @throws Exception in the event of problems.
     */
-   List<Response> invokeRemotely(List<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, boolean stateTransferEnabled) throws Exception;
+   List<Response> invokeRemotely(List<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue) throws Exception;
 
    /**
     * Invokes an RPC call on other caches in the cluster.
     *
-    * @param recipients           a list of Addresses to invoke the call on.  If this is null, the call is broadcast to
-    *                             the entire cluster.
-    * @param rpcCommand           the cache command to invoke
-    * @param mode                 the response mode to use
-    * @param timeout              a timeout after which to throw a replication exception.
-    * @param stateTransferEnabled if true, additional replaying is considered if messages need to be re-sent during the
-    *                             course of a state transfer
+    * @param recipients a list of Addresses to invoke the call on.  If this is null, the call is broadcast to the entire
+    *                   cluster.
+    * @param rpcCommand the cache command to invoke
+    * @param mode       the response mode to use
+    * @param timeout    a timeout after which to throw a replication exception.
     * @return a list of responses from each member contacted.
     * @throws Exception in the event of problems.
     */
-   List<Response> invokeRemotely(List<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean stateTransferEnabled) throws Exception;
+   List<Response> invokeRemotely(List<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout) throws Exception;
 
    /**
     * Initiates a state retrieval process from neighbouring caches.  This method will block until it either times out,
@@ -107,6 +93,92 @@ public interface RpcManager extends Lifecycle {
     *          in the event of problems
     */
    void retrieveState(String cacheName, long timeout) throws StateTransferException;
+
+   /**
+    * Broadcasts an RPC command to the entire cluster.
+    *
+    * @param rpc  command to execute remotely
+    * @param sync if true, the transport will operate in sync mode.  Otherwise, it will operate in async mode.
+    * @throws ReplicationException in the event of problems
+    */
+   void broadcastRpcCommand(ReplicableCommand rpc, boolean sync) throws ReplicationException;
+
+   /**
+    * Broadcasts an RPC command to the entire cluster.
+    *
+    * @param rpc              command to execute remotely
+    * @param sync             if true, the transport will operate in sync mode.  Otherwise, it will operate in async
+    *                         mode.
+    * @param usePriorityQueue if true, a priority queue is used
+    * @throws ReplicationException in the event of problems
+    */
+   void broadcastRpcCommand(ReplicableCommand rpc, boolean sync, boolean usePriorityQueue) throws ReplicationException;
+
+   /**
+    * The same as {@link #broadcastRpcCommand(org.infinispan.commands.ReplicableCommand, boolean)} except that the task
+    * is passed to the transport executor and a Future is returned.  The transport always deals with this
+    * synchronously.
+    *
+    * @param rpc command to execute remotely
+    * @return a future
+    */
+   Future<Object> broadcastRpcCommandInFuture(ReplicableCommand rpc);
+
+   /**
+    * The same as {@link #broadcastRpcCommand(org.infinispan.commands.ReplicableCommand, boolean, boolean)} except that
+    * the task is passed to the transport executor and a Future is returned.  The transport always deals with this
+    * synchronously.
+    *
+    * @param rpc              command to execute remotely
+    * @param usePriorityQueue if true, a priority queue is used
+    * @return a future
+    */
+   Future<Object> broadcastRpcCommandInFuture(ReplicableCommand rpc, boolean usePriorityQueue);
+
+   /**
+    * Broadcasts an RPC command to a specified set of recipients
+    *
+    * @param recipients recipients to invoke remote command on
+    * @param rpc        command to execute remotely
+    * @param sync       if true, the transport will operate in sync mode.  Otherwise, it will operate in async mode.
+    * @throws ReplicationException in the event of problems
+    */
+   void anycastRpcCommand(List<Address> recipients, ReplicableCommand rpc, boolean sync) throws ReplicationException;
+
+   /**
+    * Broadcasts an RPC command to a specified set of recipients
+    *
+    * @param recipients       recipients to invoke remote command on
+    * @param rpc              command to execute remotely
+    * @param sync             if true, the transport will operate in sync mode.  Otherwise, it will operate in async
+    *                         mode.
+    * @param usePriorityQueue if true, a priority queue is used
+    * @throws ReplicationException in the event of problems
+    */
+   void anycastRpcCommand(List<Address> recipients, ReplicableCommand rpc, boolean sync, boolean usePriorityQueue) throws ReplicationException;
+
+   /**
+    * The same as {@link #anycastRpcCommand(java.util.List, org.infinispan.commands.ReplicableCommand, boolean)} except
+    * that the task is passed to the transport executor and a Future is returned.  The transport always deals with this
+    * synchronously.
+    *
+    * @param recipients recipients to invoke remote call on
+    * @param rpc        command to execute remotely
+    * @return a future
+    */
+   Future<Object> anycastRpcCommandInFuture(List<Address> recipients, ReplicableCommand rpc);
+
+   /**
+    * The same as {@link #anycastRpcCommand(java.util.List, org.infinispan.commands.ReplicableCommand, boolean)} except
+    * that the task is passed to the transport executor and a Future is returned.  The transport always deals with this
+    * synchronously.
+    *
+    * @param recipients       recipients to invoke remote call on
+    * @param rpc              command to execute remotely
+    * @param usePriorityQueue if true, a priority queue is used
+    * @return a future
+    */
+   Future<Object> anycastRpcCommandInFuture(List<Address> recipients, ReplicableCommand rpc, boolean usePriorityQueue);
 
    /**
     * @return a reference to the underlying transport.
@@ -122,9 +194,4 @@ public interface RpcManager extends Lifecycle {
     *         a null otherwise.
     */
    Address getCurrentStateTransferSource();
-
-   /**
-    * Returns the local address.
-    */
-   public Address getLocalAddress();
 }

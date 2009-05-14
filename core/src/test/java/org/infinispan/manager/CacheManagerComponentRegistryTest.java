@@ -1,17 +1,17 @@
 package org.infinispan.manager;
 
 import org.infinispan.Cache;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.interceptors.BatchingInterceptor;
 import org.infinispan.interceptors.InterceptorChain;
-import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.transaction.tm.DummyTransactionManager;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -52,9 +52,9 @@ public class CacheManagerComponentRegistryTest {
       assert TestingUtil.extractComponent(transactional, TransactionManager.class) instanceof DummyTransactionManager;
 
       // assert force-shared components
-      assert TestingUtil.extractComponent(c, RpcManager.class) != null;
-      assert TestingUtil.extractComponent(transactional, RpcManager.class) != null;
-      assert TestingUtil.extractComponent(c, RpcManager.class) == TestingUtil.extractComponent(transactional, RpcManager.class);
+      assert TestingUtil.extractComponent(c, Transport.class) != null;
+      assert TestingUtil.extractComponent(transactional, Transport.class) != null;
+      assert TestingUtil.extractComponent(c, Transport.class) == TestingUtil.extractComponent(transactional, Transport.class);
    }
 
    public void testForceUnsharedComponents() throws NamedCacheNotFoundException {

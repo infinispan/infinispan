@@ -1,9 +1,7 @@
 package org.infinispan.jmx;
 
 import org.easymock.EasyMock;
-import static org.easymock.EasyMock.createMock;
-import static org.easymock.EasyMock.createNiceMock;
-import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.*;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
@@ -20,7 +18,6 @@ import org.testng.annotations.Test;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -59,16 +56,16 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
 
       Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
       config.setExposeJmxStatistics(true);
-      defineCacheOnAllManagers("repl_sync_cache", config);
-      cache1 = manager(0).getCache("repl_sync_cache");
-      cache2 = manager(1).getCache("repl_sync_cache");
+      String cachename = "repl_sync_cache";
+      defineCacheOnAllManagers(cachename, config);
+      cache1 = manager(0).getCache(cachename);
+      cache2 = manager(1).getCache(cachename);
       mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
-      rpcManager1 = new ObjectName("RpcManagerMBeanTest:cache-name=[global],jmx-resource=RpcManager");
-      rpcManager2 = new ObjectName("RpcManagerMBeanTest2:cache-name=[global],jmx-resource=RpcManager");
+      rpcManager1 = new ObjectName("RpcManagerMBeanTest:cache-name=" + cachename + "(repl_sync),jmx-resource=RpcManager");
+      rpcManager2 = new ObjectName("RpcManagerMBeanTest2:cache-name=" + cachename + "(repl_sync),jmx-resource=RpcManager");
    }
 
    public void testEnableJmxStats() throws Exception {
-
       assert mBeanServer.isRegistered(rpcManager1);
       assert mBeanServer.isRegistered(rpcManager2);
 
@@ -87,7 +84,7 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
 
       cache1.put("key", "value2");
       assert cache2.get("key").equals("value2");
-      assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals("1");
+      assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals("1") : "Expected 1, was " + mBeanServer.getAttribute(rpcManager1, "ReplicationCount");
       assert mBeanServer.getAttribute(rpcManager1, "ReplicationFailures").equals("0");
       mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals("N/A");
 
@@ -110,7 +107,7 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
       cache1.put("a3", "b3");
       cache1.put("a4", "b4");
       assert mBeanServer.getAttribute(rpcManager1, "SuccessRatio").equals("100%");
-      RpcManagerImpl rpcManager = (RpcManagerImpl) TestingUtil.extractGlobalComponent(manager(0), RpcManager.class);
+      RpcManagerImpl rpcManager = (RpcManagerImpl) TestingUtil.extractComponent(cache1, RpcManager.class);
       Transport originalTransport = rpcManager.getTransport();
 
       try {

@@ -45,11 +45,11 @@ import org.infinispan.container.entries.TransientCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.infinispan.marshall.MarshalledValue;
 import org.infinispan.marshall.jboss.externalizers.*;
-import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.ExtendedResponse;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.responses.UnsuccessfulResponse;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.FastCopyHashMap;
@@ -116,16 +116,16 @@ public class ExternalizerClassFactory implements ClassExternalizerFactory {
       EXTERNALIZERS.put(MortalCacheEntry.class.getName(), InternalCachedEntryExternalizer.class.getName());
       EXTERNALIZERS.put(TransientCacheEntry.class.getName(), InternalCachedEntryExternalizer.class.getName());
       EXTERNALIZERS.put(TransientMortalCacheEntry.class.getName(), InternalCachedEntryExternalizer.class.getName());
-      
+
       EXTERNALIZERS.put(InvalidateL1Command.class.getName(), ReplicableCommandExternalizer.class.getName());
    }
 
    private final Map<Class<?>, Externalizer> externalizers = new WeakHashMap<Class<?>, Externalizer>();
-   private final RpcManager rpcManager;
+   private final Transport transport;
    private final CustomObjectTable objectTable;
 
-   public ExternalizerClassFactory(RpcManager rpcManager, CustomObjectTable objectTable) {
-      this.rpcManager = rpcManager;
+   public ExternalizerClassFactory(Transport transport, CustomObjectTable objectTable) {
+      this.transport = transport;
       this.objectTable = objectTable;
    }
 
@@ -135,7 +135,7 @@ public class ExternalizerClassFactory implements ClassExternalizerFactory {
             Class typeClazz = Util.loadClass(entry.getKey());
             Externalizer ext = (Externalizer) Util.getInstance(entry.getValue());
             if (ext instanceof StateTransferControlCommandExternalizer) {
-               ((StateTransferControlCommandExternalizer) ext).init(rpcManager);
+               ((StateTransferControlCommandExternalizer) ext).init(transport);
             }
             externalizers.put(typeClazz, ext);
             objectTable.add(ext);

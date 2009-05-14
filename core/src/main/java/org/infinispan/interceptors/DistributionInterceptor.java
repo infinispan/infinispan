@@ -17,6 +17,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.DistAsyncReturnValue;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -30,11 +31,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * The interceptor that handles distribution of entries across a cluster, as well as transparent lookup
@@ -173,7 +170,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
          List<Address> recipients = new ArrayList<Address>(ctx.getTransactionParticipants());
-         rpcManager.multicastRpcCommand(recipients, command, configuration.isSyncCommitPhase(), true);
+         rpcManager.anycastRpcCommand(recipients, command, configuration.isSyncCommitPhase(), true);
       }
       return invokeNextInterceptor(ctx, command);
    }
@@ -188,7 +185,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
          List<Address> recipients = new ArrayList<Address>(ctx.getTransactionParticipants());
          if (trace) log.trace("Multicasting PrepareCommand to recipients : " + recipients);
          // this method will return immediately if we're the only member (because exclude_self=true)
-         rpcManager.multicastRpcCommand(recipients, command, sync, false);
+         rpcManager.anycastRpcCommand(recipients, command, sync);
       }
       return retVal;
    }
@@ -197,7 +194,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
          List<Address> recipients = new ArrayList<Address>(ctx.getTransactionParticipants());
-         rpcManager.multicastRpcCommand(recipients, command, configuration.isSyncRollbackPhase(), true);
+         rpcManager.anycastRpcCommand(recipients, command, configuration.isSyncRollbackPhase(), true);
       }
       return invokeNextInterceptor(ctx, command);
    }
@@ -241,13 +238,13 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
                boolean sync = isSynchronous(ctx);
 
                // if L1 caching is used make sure we broadcast an invalidate message
-               if (isL1CacheEnabled && rec != null && rpcManager.getMembers().size() > rec.size()) {
+               if (isL1CacheEnabled && rec != null && rpcManager.getTransport().getMembers().size() > rec.size()) {
                   InvalidateCommand ic = cf.buildInvalidateFromL1Command(recipientGenerator.getKeys());
                   f1 = submitRpc(null, ic, sync, useFuture);
                }
                f2 = submitRpc(rec, command, sync, useFuture);
 
-               if (f2 != null) return new DistributionCommunicationFuture(f1, f2, returnValue);
+               if (f2 != null) return new DistAsyncReturnValue(f1, f2, returnValue);
             }
          } else {
             if (!localModeForced) {
@@ -260,64 +257,11 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       return returnValue;
    }
 
-   private class DistributionCommunicationFuture implements Future<Object> {
-      final Future<Object> invalFuture, replFuture;
-      final Object returnValue;
-
-      private DistributionCommunicationFuture(Future<Object> invalFuture, Future<Object> replFuture, Object returnValue) {
-         this.invalFuture = invalFuture;
-         this.replFuture = replFuture;
-         this.returnValue = returnValue;
-      }
-
-      public boolean cancel(boolean mayInterruptIfRunning) {
-         boolean invalCancelled = true;
-         if (invalFuture != null) invalCancelled = invalFuture.cancel(mayInterruptIfRunning);
-         return replFuture.cancel(mayInterruptIfRunning) && invalCancelled;
-      }
-
-      public boolean isCancelled() {
-         return replFuture.isCancelled() && (invalFuture == null || invalFuture.isCancelled());
-      }
-
-      public boolean isDone() {
-         return replFuture.isDone() && (invalFuture == null || invalFuture.isDone());
-      }
-
-      public Object get() throws InterruptedException, ExecutionException {
-         if (invalFuture != null) invalFuture.get();
-         replFuture.get();
-         return returnValue;
-      }
-
-      public Object get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-         if (invalFuture != null) invalFuture.get(timeout, unit);
-         replFuture.get(timeout, unit);
-         return returnValue;
-      }
-   }
-
-
    private Future<Object> submitRpc(final List<Address> recipients, final WriteCommand cmd, final boolean sync, boolean useFuture) {
       if (useFuture) {
-         Callable<Object> c = new Callable<Object>() {
-            public Object call() {
-               if (recipients == null) {
-                  rpcManager.broadcastReplicableCommand(cmd, true);
-               } else {
-                  rpcManager.multicastReplicableCommand(recipients, cmd, true);
-               }
-               return null;
-            }
-         };
-
-         return asyncExecutorService.submit(c);
+         return rpcManager.anycastRpcCommandInFuture(recipients, cmd);
       } else {
-         if (recipients == null) {
-            rpcManager.broadcastReplicableCommand(cmd, sync);
-         } else {
-            rpcManager.multicastReplicableCommand(recipients, cmd, sync);
-         }
+         rpcManager.anycastRpcCommand(recipients, cmd, sync);
          return null;
       }
    }

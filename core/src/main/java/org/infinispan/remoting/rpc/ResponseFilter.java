@@ -5,7 +5,7 @@ import org.infinispan.remoting.transport.Address;
 
 /**
  * A mechanism of filtering RPC responses.  Used with {@link RpcManager#invokeRemotely(java.util.List,
- * org.infinispan.commands.ReplicableCommand, ResponseMode, long, boolean, ResponseFilter, boolean)}
+ * org.infinispan.commands.ReplicableCommand, ResponseMode, long, boolean, ResponseFilter)}
  *
  * @author Manik Surtani
  * @since 4.0

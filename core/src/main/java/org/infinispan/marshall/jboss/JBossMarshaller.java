@@ -29,7 +29,7 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.io.ByteBuffer;
 import org.infinispan.io.ExposedByteArrayOutputStream;
 import org.infinispan.marshall.AbstractMarshaller;
-import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -68,7 +68,7 @@ public class JBossMarshaller extends AbstractMarshaller {
 ///   private boolean trace;
 
    @Inject
-   public void init(ClassLoader defaultCl, RpcManager rpcManager) {
+   public void init(ClassLoader defaultCl, Transport transport) {
       log.debug("Using JBoss Marshalling based marshaller.");
 
 //      trace = log.isTraceEnabled();
@@ -83,7 +83,7 @@ public class JBossMarshaller extends AbstractMarshaller {
 
       classTable = createMagicNumberClassTable();
       objectTable = createCustomObjectTable();
-      externalizerFactoryAndObjectTable = createCustomExternalizerFactory(rpcManager, objectTable);
+      externalizerFactoryAndObjectTable = createCustomExternalizerFactory(transport, objectTable);
 
       configuration = new MarshallingConfiguration();
       configuration.setCreator(new SunReflectiveCreator());
@@ -185,8 +185,8 @@ public class JBossMarshaller extends AbstractMarshaller {
       return classTable;
    }
 
-   protected ExternalizerClassFactory createCustomExternalizerFactory(RpcManager rpcManager, CustomObjectTable objectTable) {
-      ExternalizerClassFactory externalizerFactory = new ExternalizerClassFactory(rpcManager, objectTable);
+   protected ExternalizerClassFactory createCustomExternalizerFactory(Transport transport, CustomObjectTable objectTable) {
+      ExternalizerClassFactory externalizerFactory = new ExternalizerClassFactory(transport, objectTable);
       externalizerFactory.init();
       return externalizerFactory;
    }

@@ -9,7 +9,7 @@ import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
-import org.infinispan.remoting.rpc.CacheRpcManager;
+import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -39,11 +39,11 @@ public class TransactionTable {
    private InvocationContextContainer icc;
    private InterceptorChain invoker;
    private CacheNotifier notifier;
-   private CacheRpcManager rpcManager;
+   private RpcManager rpcManager;
 
 
    @Inject
-   public void initialize(CommandsFactory commandsFactory, CacheRpcManager rpcManager, Configuration configuration,
+   public void initialize(CommandsFactory commandsFactory, RpcManager rpcManager, Configuration configuration,
                           InvocationContextContainer icc, InterceptorChain invoker, CacheNotifier notifier) {
       this.commandsFactory = commandsFactory;
       this.rpcManager = rpcManager;
@@ -65,8 +65,9 @@ public class TransactionTable {
    /**
     * Creates and register a {@link org.infinispan.transaction.xa.RemoteTransaction} based on the supplied params.
     * Returns the created transaction.
+    *
     * @throws IllegalStateException if an attempt to create a {@link org.infinispan.transaction.xa.RemoteTransaction}
-    * for an already registered id is made.
+    *                               for an already registered id is made.
     */
    public RemoteTransaction createRemoteTransaction(GlobalTransaction globalTx, WriteCommand[] modifications) {
       RemoteTransaction remoteTransaction = new RemoteTransaction(modifications, globalTx);
@@ -89,7 +90,7 @@ public class TransactionTable {
    public TransactionXaAdapter getOrCreateXaAdapter(Transaction transaction, InvocationContext ctx) {
       TransactionXaAdapter current = localTransactions.get(transaction);
       if (current == null) {
-         Address localAddress = rpcManager != null ? rpcManager.getLocalAddress() : null;
+         Address localAddress = rpcManager != null ? rpcManager.getTransport().getAddress() : null;
          GlobalTransaction tx = localAddress == null ? new GlobalTransaction(false) : new GlobalTransaction(localAddress, false);
          current = new TransactionXaAdapter(tx, icc, invoker, commandsFactory, configuration, this, transaction);
          localTransactions.put(transaction, current);
@@ -113,8 +114,8 @@ public class TransactionTable {
    }
 
    /**
-    * Removes the {@link org.infinispan.transaction.xa.RemoteTransaction} coresponding to the given tx. Returns true 
-    * if such an tx exists.
+    * Removes the {@link org.infinispan.transaction.xa.RemoteTransaction} coresponding to the given tx. Returns true if
+    * such an tx exists.
     */
    public boolean removeRemoteTransaction(GlobalTransaction txId) {
       boolean existed = remoteTransactions.remove(txId) != null;
