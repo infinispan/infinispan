@@ -8,10 +8,10 @@
          <property name="threadNamePrefix" value="AsyncListenerThread"/>
       </asyncListenerExecutor>
 
-      <asyncSerializationExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
+      <asyncTransportExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
          <property name="maxThreads" value="25"/>
          <property name="threadNamePrefix" value="AsyncSerializationThread"/>
-      </asyncSerializationExecutor>
+      </asyncTransportExecutor>
 
       <evictionScheduledExecutor factory="org.infinispan.executors.DefaultScheduledExecutorFactory">
          <property name="threadNamePrefix" value="EvictionThread"/>
@@ -50,7 +50,7 @@
    <namedCache name="asyncRepl">
       <clustering mode="repl">
          <stateRetrieval fetchInMemoryState="false"/>
-         <async useAsyncSerialization="false"/>
+         <async asyncMarshalling="false"/>
       </clustering>
    </namedCache>
 

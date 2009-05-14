@@ -83,7 +83,7 @@ public class ConfigurationParserTest {
       Configuration c = new Configuration();
       parser.configureLazyDeserialization(e, c);
 
-      assert c.isUseAsyncSerialization();
+      assert c.isUseAsyncMarshalling();
    }
 
    public void testJmxStatisticsDefaults() throws Exception {
@@ -123,7 +123,7 @@ public class ConfigurationParserTest {
       XmlConfigurationParserImpl parser = new XmlConfigurationParserImpl();
       String xml = "<clustering mode=\"invalidation\">\n" +
             "         <stateRetrieval timeout=\"20000\" fetchInMemoryState=\"false\"/>\n" +
-            "         <async useReplQueue=\"true\" replQueueInterval=\"10000\" replQueueMaxElements=\"500\"/>\n" +
+            "         <async useReplQueue=\"true\" replQueueInterval=\"10000\" replQueueMaxElements=\"500\" asyncMarshalling=\"false\"/>\n" +
             "      </clustering>";
       Element e = XmlConfigHelper.stringToElement(xml);
 
@@ -136,6 +136,7 @@ public class ConfigurationParserTest {
       assert c.isUseReplQueue();
       assert c.getReplQueueInterval() == 10000;
       assert c.getReplQueueMaxElements() == 500;
+      assert c.isUseAsyncMarshalling() == false;
    }
 
    public void testClusteringDefaults() throws Exception {

@@ -55,10 +55,6 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       this.globalConfiguration = globalConfiguration;
    }
 
-   public boolean isUseAsyncSerialization() {
-      return useAsyncSerialization;
-   }
-
    public boolean isStateTransferEnabled() {
       return fetchInMemoryState || (cacheLoaderManagerConfig != null && cacheLoaderManagerConfig.isFetchPersistentState());
    }
@@ -199,7 +195,6 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    private boolean writeSkewCheck = false;
    private int concurrencyLevel = 500;
    private boolean invocationBatchingEnabled;
-   private boolean useAsyncSerialization = true;
    private long evictionWakeUpInterval = 5000;
    private EvictionStrategy evictionStrategy = EvictionStrategy.NONE;
    private int evictionMaxEntries = -1;
@@ -213,7 +208,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    private long rehashWaitTime = 60000;
    private boolean useLockStriping = true;
    private boolean unsafeUnreliableReturnValues = false;
-   private boolean asyncMarshalling = true;
+   private boolean useAsyncMarshalling = true;
 
    @Start(priority = 1)
    private void correctIsolationLevels() {
@@ -429,11 +424,6 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       this.useLazyDeserialization = useLazyDeserialization;
    }
 
-   public void setUseAsyncSerialization(boolean useAsyncSerialization) {
-      testImmutability("useAsyncSerialization");
-      this.useAsyncSerialization = useAsyncSerialization;
-   }
-
    public void setL1CacheEnabled(boolean l1CacheEnabled) {
       testImmutability("l1CacheEnabled");
       this.l1CacheEnabled = l1CacheEnabled;
@@ -464,17 +454,17 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       this.rehashWaitTime = rehashWaitTime;
    }
 
-   public void setAsyncMarshalling(boolean asyncMarshalling) {
-      testImmutability("asyncMarshalling");
-      this.asyncMarshalling = asyncMarshalling;
+   public void setUseAsyncMarshalling(boolean useAsyncMarshalling) {
+      testImmutability("useAsyncMarshalling");
+      this.useAsyncMarshalling = useAsyncMarshalling;
    }
 
    // ------------------------------------------------------------------------------------------------------------
    //   GETTERS
    // ------------------------------------------------------------------------------------------------------------
 
-   public boolean isAsyncMarshalling() {
-      return asyncMarshalling;
+   public boolean isUseAsyncMarshalling() {
+      return useAsyncMarshalling;
    }
 
    public boolean isUseReplQueue() {
@@ -604,7 +594,6 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       if (syncCommitPhase != that.syncCommitPhase) return false;
       if (syncReplTimeout != that.syncReplTimeout) return false;
       if (syncRollbackPhase != that.syncRollbackPhase) return false;
-      if (useAsyncSerialization != that.useAsyncSerialization) return false;
       if (useLazyDeserialization != that.useLazyDeserialization) return false;
       if (useLockStriping != that.useLockStriping) return false;
       if (useReplQueue != that.useReplQueue) return false;
@@ -622,7 +611,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       if (isolationLevel != that.isolationLevel) return false;
       if (transactionManagerLookupClass != null ? !transactionManagerLookupClass.equals(that.transactionManagerLookupClass) : that.transactionManagerLookupClass != null)
          return false;
-      if (asyncMarshalling != that.asyncMarshalling) return false;
+      if (useAsyncMarshalling != that.useAsyncMarshalling) return false;
 
       return true;
    }
@@ -650,7 +639,6 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       result = 31 * result + (writeSkewCheck ? 1 : 0);
       result = 31 * result + concurrencyLevel;
       result = 31 * result + (invocationBatchingEnabled ? 1 : 0);
-      result = 31 * result + (useAsyncSerialization ? 1 : 0);
       result = 31 * result + (int) (evictionWakeUpInterval ^ (evictionWakeUpInterval >>> 32));
       result = 31 * result + (evictionStrategy != null ? evictionStrategy.hashCode() : 0);
       result = 31 * result + evictionMaxEntries;
@@ -662,7 +650,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       result = 31 * result + (l1OnRehash ? 1 : 0);
       result = 31 * result + (consistentHashClass != null ? consistentHashClass.hashCode() : 0);
       result = 31 * result + numOwners;
-      result = 31 * result + (asyncMarshalling ? 1 : 0);
+      result = 31 * result + (useAsyncMarshalling ? 1 : 0);
       return result;
    }
 

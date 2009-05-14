@@ -63,14 +63,14 @@ public class XmlFileParsingTest {
 
       assert c.getCacheMode() == Configuration.CacheMode.REPL_ASYNC;
       assert !c.isUseReplQueue();
-      assert !c.isUseAsyncSerialization();
+      assert !c.isUseAsyncMarshalling();
       assert !c.isFetchInMemoryState();
 
       c = namedCaches.get("asyncReplQueue");
 
       assert c.getCacheMode() == Configuration.CacheMode.REPL_ASYNC;
       assert c.isUseReplQueue();
-      assert c.isUseAsyncSerialization();
+      assert c.isUseAsyncMarshalling();
       assert !c.isFetchInMemoryState();
 
       c = namedCaches.get("txSyncRepl");
@@ -149,7 +149,7 @@ public class XmlFileParsingTest {
       assert c.getTransactionManagerLookupClass() == null;
       assert c.getCacheMode() == Configuration.CacheMode.REPL_ASYNC;
       assert !c.isUseReplQueue();
-      assert !c.isUseAsyncSerialization();
+      assert !c.isUseAsyncMarshalling();
       assert !c.isFetchInMemoryState();
       assert c.getLockAcquisitionTimeout() == 1000;
       assert c.getIsolationLevel() == IsolationLevel.READ_COMMITTED;
@@ -163,7 +163,7 @@ public class XmlFileParsingTest {
       assert c.isUseReplQueue();
       assert c.getReplQueueInterval() == 1234;
       assert c.getReplQueueMaxElements() == 100;
-      assert c.isUseAsyncSerialization();
+      assert c.isUseAsyncMarshalling();
       assert !c.isFetchInMemoryState();
       assert c.getLockAcquisitionTimeout() == 1000;
       assert c.getIsolationLevel() == IsolationLevel.READ_COMMITTED;

@@ -135,7 +135,7 @@ public class XmlConfigurationParserImpl extends XmlParserBase implements XmlConf
          if (globalElement != null) {
             globalElement.normalize();
             configureAsyncListenerExecutor(getSingleElementInCoreNS("asyncListenerExecutor", globalElement), gc);
-            configureAsyncSerializationExecutor(getSingleElementInCoreNS("asyncSerializationExecutor", globalElement), gc);
+            configureAsyncSerializationExecutor(getSingleElementInCoreNS("asyncTransportExecutor", globalElement), gc);
             configureEvictionScheduledExecutor(getSingleElementInCoreNS("evictionScheduledExecutor", globalElement), gc);
             configureReplicationQueueScheduledExecutor(getSingleElementInCoreNS("replicationQueueScheduledExecutor", globalElement), gc);
             configureTransport(getSingleElementInCoreNS("transport", globalElement), gc);
@@ -345,10 +345,8 @@ public class XmlConfigurationParserImpl extends XmlParserBase implements XmlConf
       if (existsAttribute(tmp)) config.setReplQueueInterval(getLong(tmp));
       tmp = getAttributeValue(element, "replQueueMaxElements");
       if (existsAttribute(tmp)) config.setReplQueueMaxElements(getInt(tmp));
-      tmp = getAttributeValue(element, "useAsyncSerialization");
-      if (existsAttribute(tmp)) config.setUseAsyncSerialization(getBoolean(tmp));
       tmp = getAttributeValue(element, "asyncMarshalling");
-      if (existsAttribute(tmp)) config.setAsyncMarshalling(getBoolean(tmp));
+      if (existsAttribute(tmp)) config.setUseAsyncMarshalling(getBoolean(tmp));
    }
 
    void configureLocking(Element element, Configuration config) {

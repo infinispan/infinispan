@@ -180,7 +180,6 @@
       <xs:attribute name="useReplQueue" type="tns:booleanType"/>
       <xs:attribute name="replQueueInterval" type="tns:positiveNumber"/>
       <xs:attribute name="replQueueMaxElements" type="tns:positiveNumber"/>
-      <xs:attribute name="useAsyncSerialization" type="tns:booleanType"/>
    </xs:complexType>
 
    <xs:complexType name="evictionType">

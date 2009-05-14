@@ -14,10 +14,10 @@
          <property name="threadNamePrefix" value="AsyncListenerThread"/>
       </asyncListenerExecutor>
 
-      <asyncSerializationExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
+      <asyncTransportExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
          <property name="maxThreads" value="25"/>
          <property name="threadNamePrefix" value="AsyncSerializationThread"/>
-      </asyncSerializationExecutor>
+      </asyncTransportExecutor>
 
       <evictionScheduledExecutor factory="org.infinispan.executors.DefaultScheduledExecutorFactory">
          <property name="threadNamePrefix" value="EvictionThread"/>
@@ -112,6 +112,12 @@
    <!-- ************************************** -->
    <!-- Individually configured "named" caches -->
    <!-- ************************************** -->
+
+   <namedCache name="asyncCache">
+      <clustering mode="replication">
+         <async asyncMarshalling="true"/>
+      </clustering>
+   </namedCache>
 
    <!-- Note that any of the elements appearing in a namedCache section can also appear in the default section as a template. -->
    <namedCache name="evictionCache">
