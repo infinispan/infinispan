@@ -35,6 +35,9 @@
                   <outputDirectory>etc</outputDirectory>
                   <excludes>
                      <exclude>**/*.sh</exclude>
+                     <exclude>**/*.bat</excludes>
+                     <exclude>**/*.cmd</exclude>
+                     <exclude>**/*.py</exclude>
                   </excludes>
                </fileSet>
 
