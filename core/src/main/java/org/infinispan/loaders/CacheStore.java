@@ -117,13 +117,13 @@ public interface CacheStore extends CacheLoader {
     * Commits a transaction that has been previously prepared.
     * <p/>
     * This method <i>may</b> be invoked on a transaction for which there is <i>no</i> prior {@link
-    * #prepare(java.util.List}.  The implementation would need to deal with
-    * this case acordingly.  Typically, this would be a no-op, after ensuring any resources attached to the transaction
-    * are cleared up.
+    * #prepare(java.util.List, org.infinispan.transaction.xa.GlobalTransaction, boolean)}.  The implementation would
+    * need to deal with this case acordingly.  Typically, this would be a no-op, after ensuring any resources attached
+    * to the transaction are cleared up.
     * <p/>
     * Also note that this method <i>may</i> be invoked on a thread which is different from the {@link
-    * #prepare(java.util.List} invocation.  As such, {@link ThreadLocal}s
-    * should not be relied upon to maintain transaction context.
+    * #prepare(java.util.List, org.infinispan.transaction.xa.GlobalTransaction, boolean)} invocation.  As such, {@link
+    * ThreadLocal}s should not be relied upon to maintain transaction context.
     * <p/>
     *
     * @param tx tx to commit
@@ -135,13 +135,13 @@ public interface CacheStore extends CacheLoader {
     * Rolls back a transaction that has been previously prepared
     * <p/>
     * This method <i>may</b> be invoked on a transaction for which there is <i>no</i> prior {@link
-    * #prepare(java.util.List}.  The implementation would need to deal with
-    * this case acordingly.  Typically, this would be a no-op, after ensuring any resources attached to the transaction
-    * are cleared up.
+    * #prepare(java.util.List, org.infinispan.transaction.xa.GlobalTransaction, boolean)}.  The implementation would
+    * need to deal with this case acordingly.  Typically, this would be a no-op, after ensuring any resources attached
+    * to the transaction are cleared up.
     * <p/>
     * Also note that this method <i>may</i> be invoked on a thread which is different from the {@link
-    * #prepare(java.util.List} invocation.  As such, {@link ThreadLocal}s
-    * should not be relied upon to maintain transaction context.
+    * #prepare(java.util.List, org.infinispan.transaction.xa.GlobalTransaction, boolean)} invocation.  As such, {@link
+    * ThreadLocal}s should not be relied upon to maintain transaction context.
     * <p/>
     *
     * @param tx tx to roll back
