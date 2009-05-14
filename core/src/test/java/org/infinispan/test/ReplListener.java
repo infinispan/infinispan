@@ -8,7 +8,10 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -31,6 +34,7 @@ public class ReplListener {
    CountDownLatch latch = new CountDownLatch(1);
    volatile boolean sawAtLeastOneInvocation = false;
    boolean expectAny = false;
+   private Log log = LogFactory.getLog(ReplListener.class);
 
    /**
     * This listener atatches itself to a cache and when {@link #expect(Class[])} is invoked, will start checking for
@@ -89,21 +93,29 @@ public class ReplListener {
     * @param commands commands to expect (not counting transaction boundary commands like PrepareCommand and
     *                 CommitCommand)
     */
+   @SuppressWarnings("unchecked")
    public void expectWithTx(Class<? extends VisitableCommand>... commands) {
-      expect(PrepareCommand.class);
-      expect(commands);
+      List<Class<? extends VisitableCommand>> cmdsToExpect = new ArrayList<Class<? extends VisitableCommand>>();
+      cmdsToExpect.add(PrepareCommand.class);
+      if (commands != null) cmdsToExpect.addAll(Arrays.asList(commands));
       //this is because for async replication we have an 1pc transaction
-      if (c.getConfiguration().getCacheMode().isSynchronous()) expect(CommitCommand.class);
+      if (c.getConfiguration().getCacheMode().isSynchronous()) cmdsToExpect.add(CommitCommand.class);
+
+      expect(cmdsToExpect.toArray(new Class[cmdsToExpect.size()]));
    }
 
    /**
     * Expects any commands, within transactional scope (i.e., as a payload to a PrepareCommand).  If the cache mode is
     * synchronous, a CommitCommand is expected as well.
     */
+   @SuppressWarnings("unchecked")
    public void expectAnyWithTx() {
-      expect(PrepareCommand.class);
+      List<Class<? extends VisitableCommand>> cmdsToExpect = new ArrayList<Class<? extends VisitableCommand>>(2);
+      cmdsToExpect.add(PrepareCommand.class);
       //this is because for async replication we have an 1pc transaction
-      if (c.getConfiguration().getCacheMode().isSynchronous()) expect(CommitCommand.class);
+      if (c.getConfiguration().getCacheMode().isSynchronous()) cmdsToExpect.add(CommitCommand.class);
+
+      expect(cmdsToExpect.toArray(new Class[cmdsToExpect.size()]));
    }
 
    /**
@@ -118,7 +130,8 @@ public class ReplListener {
             this.expectedCommands = new LinkedList<Class<? extends VisitableCommand>>();
          }
          this.expectedCommands.addAll(Arrays.asList(expectedCommands));
-
+         log.trace("Setting expected commands to {0}", this.expectedCommands);
+         log.trace("Record eagerly is {0}, and eager commands are {1}", recordCommandsEagerly, eagerCommands);
          if (recordCommandsEagerly) {
             this.expectedCommands.removeAll(eagerCommands);
             if (!eagerCommands.isEmpty()) sawAtLeastOneInvocation = true;
@@ -143,6 +156,7 @@ public class ReplListener {
    public void waitForRpc(long time, TimeUnit unit) {
       assert expectedCommands != null : "there are no replication expectations; please use ReplListener.expect() before calling this method";
       try {
+         log.trace("Expect Any is {0}, saw at least one? {1} Expected {2}", expectAny, sawAtLeastOneInvocation, expectedCommands);
          boolean successful = (expectAny && sawAtLeastOneInvocation) || (!expectAny && expectedCommands.isEmpty());
          if (!successful && !latch.await(time, unit)) {
             assert false : "Waiting for more than " + time + " " + unit + " and following commands did not replicate: " + expectedCommands + " on cache [" + c.getCacheManager().getAddress() + "]";
@@ -156,11 +170,16 @@ public class ReplListener {
          expectAny = false;
          sawAtLeastOneInvocation = false;
          latch = new CountDownLatch(1);
+         eagerCommands.clear();
       }
    }
 
    public Cache<?, ?> getCache() {
       return c;
+   }
+
+   public void resetEager() {
+      eagerCommands.clear();
    }
 
    protected class ReplListenerInterceptor extends CommandInterceptor {
