@@ -144,13 +144,7 @@ public class LockingInterceptor extends CommandInterceptor {
          }
          if (c.isLock()) {
             for (Object key : c.getKeys()) {
-               boolean needed = entryFactory.acquireLock(ctx, key);
-               if (trace) {
-                  if (needed)
-                     log.trace("Key " + key + " was needed and acquired by " + ctx.getLockOwner());
-                  else
-                     log.trace("Key " + key + " was already held by " + ctx.getLockOwner());
-               }
+               entryFactory.wrapEntryForWriting(ctx, key, false, false, false, false);
             }
          } else if (c.isUnlock()) {
             for (Object key : c.getKeys()) {
