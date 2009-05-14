@@ -96,15 +96,16 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
     * org.jgroups.blocks.RspFilter)} except that this version is aware of {@link ReplicableCommand} objects.
     */
    public RspList invokeRemoteCommands(Vector<Address> dests, ReplicableCommand command, int mode, long timeout,
-                                       boolean anycasting, boolean oob, RspFilter filter, boolean supportReplay)
+                                       boolean anycasting, boolean oob, RspFilter filter, boolean supportReplay, boolean asyncMarshalling)
          throws NotSerializableException, ExecutionException, InterruptedException {
+
       ReplicationTask task = new ReplicationTask(command, oob, dests, mode, timeout, anycasting, filter, supportReplay);
 
-      if (mode == GroupRequest.GET_NONE) {
+      if (asyncMarshalling) {
          asyncExecutor.submit(task);
          return null; // don't wait for a response!
       } else {
-         RspList response = null;
+         RspList response;
          try {
             response = task.call();
          } catch (Exception e) {

@@ -50,7 +50,7 @@ public abstract class BaseRpcInterceptor extends CommandInterceptor {
 
    @Inject
    public void init(CacheRpcManager rpcManager,
-                    @ComponentName(KnownComponentNames.ASYNC_SERIALIZATION_EXECUTOR) ExecutorService e) {
+                    @ComponentName(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR) ExecutorService e) {
       this.rpcManager = rpcManager;
       this.asyncExecutorService = e;
    }

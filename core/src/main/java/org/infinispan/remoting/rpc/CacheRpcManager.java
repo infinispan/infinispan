@@ -69,6 +69,10 @@ public class CacheRpcManager {
       }
    }
 
+   private ResponseMode getResponseMode(boolean sync) {
+      return sync ? ResponseMode.SYNCHRONOUS : configuration.isAsyncMarshalling() ? ResponseMode.ASYNCHRONOUS : ResponseMode.ASYNCHRONOUS_WITH_SYNC_MARSHALLING;
+   }
+
    public void multicastRpcCommand(List<Address> recipients, CacheRpcCommand command, boolean sync, boolean useOutOfBandMessage) throws ReplicationException {
       if (trace) {
          log.trace("invoking method " + command.getClass().getSimpleName() + ", members=" + rpcManager.getTransport().getMembers() + ", mode=" +
@@ -81,7 +85,7 @@ public class CacheRpcManager {
       try {
          rsps = rpcManager.invokeRemotely(recipients,
                                           command,
-                                          sync ? ResponseMode.SYNCHRONOUS : ResponseMode.ASYNCHRONOUS, // is synchronised?
+                                          getResponseMode(sync),
                                           configuration.getSyncReplTimeout(), useOutOfBandMessage, stateTransferEnabled
          );
          if (trace) log.trace("responses=" + rsps);

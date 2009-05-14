@@ -347,6 +347,8 @@ public class XmlConfigurationParserImpl extends XmlParserBase implements XmlConf
       if (existsAttribute(tmp)) config.setReplQueueMaxElements(getInt(tmp));
       tmp = getAttributeValue(element, "useAsyncSerialization");
       if (existsAttribute(tmp)) config.setUseAsyncSerialization(getBoolean(tmp));
+      tmp = getAttributeValue(element, "asyncMarshalling");
+      if (existsAttribute(tmp)) config.setAsyncMarshalling(getBoolean(tmp));
    }
 
    void configureLocking(Element element, Configuration config) {

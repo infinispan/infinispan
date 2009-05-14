@@ -8,10 +8,10 @@ import org.infinispan.marshall.Marshaller;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.InboundInvocationHandler;
 import org.infinispan.remoting.ReplicationException;
-import org.infinispan.remoting.rpc.ResponseFilter;
-import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.rpc.ResponseFilter;
+import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.DistributedSync;
 import org.infinispan.remoting.transport.Transport;
@@ -289,13 +289,13 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
       boolean unlock = true;
       // if there is a FLUSH in progress, block till it completes
       flushTracker.blockUntilReleased(distributedSyncTimeout, MILLISECONDS);
-
+      boolean asyncMarshalling = mode == ResponseMode.ASYNCHRONOUS;
       try {
          RspList rsps = dispatcher.invokeRemoteCommands(toJGroupsAddressVector(recipients), rpcCommand, toJGroupsMode(mode),
                                                         timeout, false, usePriorityQueue,
-                                                        toJGroupsFilter(responseFilter), supportReplay);
+                                                        toJGroupsFilter(responseFilter), supportReplay, asyncMarshalling);
 
-         if (mode == ResponseMode.ASYNCHRONOUS) return Collections.emptyList();// async case
+         if (mode.isAsynchronous()) return Collections.emptyList();// async case
 
          if (trace)
             log.trace("Cache [{0}]: responses for command {1}:\n{2}", getAddress(), rpcCommand.getClass().getSimpleName(), rsps);
@@ -341,6 +341,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
    private int toJGroupsMode(ResponseMode mode) {
       switch (mode) {
          case ASYNCHRONOUS:
+         case ASYNCHRONOUS_WITH_SYNC_MARSHALLING:
             return GroupRequest.GET_NONE;
          case SYNCHRONOUS:
             return GroupRequest.GET_ALL;

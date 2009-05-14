@@ -26,7 +26,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
          if (componentName.equals(KnownComponentNames.ASYNC_NOTIFICATION_EXECUTOR)) {
             return (T) buildAndConfigureExecutorService(globalConfiguration.getAsyncListenerExecutorFactoryClass(),
                                                         globalConfiguration.getAsyncListenerExecutorProperties());
-         } else if (componentName.equals(KnownComponentNames.ASYNC_SERIALIZATION_EXECUTOR)) {
+         } else if (componentName.equals(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR)) {
             return (T) buildAndConfigureExecutorService(globalConfiguration.getAsyncSerializationExecutorFactoryClass(),
                                                         globalConfiguration.getAsyncSerializationExecutorProperties());
          } else if (componentName.equals(KnownComponentNames.EVICTION_SCHEDULED_EXECUTOR)) {

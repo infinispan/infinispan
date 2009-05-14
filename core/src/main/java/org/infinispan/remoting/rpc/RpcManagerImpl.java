@@ -49,7 +49,7 @@ public class RpcManagerImpl implements RpcManager {
    @Inject
    public void injectDependencies(GlobalConfiguration globalConfiguration, Transport t, InboundInvocationHandler handler,
                                   Marshaller marshaller,
-                                  @ComponentName(KnownComponentNames.ASYNC_SERIALIZATION_EXECUTOR) ExecutorService e,
+                                  @ComponentName(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR) ExecutorService e,
                                   CacheManagerNotifier notifier) {
       this.t = t;
       this.t.initialize(globalConfiguration, globalConfiguration.getTransportProperties(), marshaller, e, handler,
@@ -71,7 +71,7 @@ public class RpcManagerImpl implements RpcManager {
          List<Response> result = t.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue, responseFilter, stateTransferEnabled);
          if (isStatisticsEnabled()) replicationCount.incrementAndGet();
          return result;
-      } catch (CacheException  e) {
+      } catch (CacheException e) {
          if (log.isTraceEnabled()) log.trace("replicaiton exception: ", e);
          if (isStatisticsEnabled()) replicationFailures.incrementAndGet();
          throw e;

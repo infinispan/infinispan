@@ -19,7 +19,7 @@
          <xs:element name="globalJmxStatistics" type="tns:globalJmxStatisticsType" minOccurs="0" maxOccurs="1"/>
          <xs:element name="transport" type="tns:transportConfigType" minOccurs="0" maxOccurs="1"/>
          <xs:element name="asyncListenerExecutor" type="tns:executorConfigurationType" minOccurs="0" maxOccurs="1"/>
-         <xs:element name="asyncSerializationExecutor" type="tns:executorConfigurationType" minOccurs="0"
+         <xs:element name="asyncTransportExecutor" type="tns:executorConfigurationType" minOccurs="0"
                      maxOccurs="1"/>
          <xs:element name="evictionScheduledExecutor" type="tns:executorConfigurationType" minOccurs="0"
                      maxOccurs="1"/>
@@ -176,6 +176,7 @@
    </xs:complexType>
 
    <xs:complexType name="asyncType">
+      <xs:attribute name="asyncMarshalling" type="tns:booleanType"/>
       <xs:attribute name="useReplQueue" type="tns:booleanType"/>
       <xs:attribute name="replQueueInterval" type="tns:positiveNumber"/>
       <xs:attribute name="replQueueMaxElements" type="tns:positiveNumber"/>

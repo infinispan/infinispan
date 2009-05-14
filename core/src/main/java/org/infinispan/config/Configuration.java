@@ -213,6 +213,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    private long rehashWaitTime = 60000;
    private boolean useLockStriping = true;
    private boolean unsafeUnreliableReturnValues = false;
+   private boolean asyncMarshalling = true;
 
    @Start(priority = 1)
    private void correctIsolationLevels() {
@@ -463,10 +464,18 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       this.rehashWaitTime = rehashWaitTime;
    }
 
+   public void setAsyncMarshalling(boolean asyncMarshalling) {
+      testImmutability("asyncMarshalling");
+      this.asyncMarshalling = asyncMarshalling;
+   }
+
    // ------------------------------------------------------------------------------------------------------------
    //   GETTERS
    // ------------------------------------------------------------------------------------------------------------
 
+   public boolean isAsyncMarshalling() {
+      return asyncMarshalling;
+   }
 
    public boolean isUseReplQueue() {
       return useReplQueue;
@@ -613,6 +622,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       if (isolationLevel != that.isolationLevel) return false;
       if (transactionManagerLookupClass != null ? !transactionManagerLookupClass.equals(that.transactionManagerLookupClass) : that.transactionManagerLookupClass != null)
          return false;
+      if (asyncMarshalling != that.asyncMarshalling) return false;
 
       return true;
    }
@@ -652,6 +662,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       result = 31 * result + (l1OnRehash ? 1 : 0);
       result = 31 * result + (consistentHashClass != null ? consistentHashClass.hashCode() : 0);
       result = 31 * result + numOwners;
+      result = 31 * result + (asyncMarshalling ? 1 : 0);
       return result;
    }
 
