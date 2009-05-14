@@ -26,8 +26,8 @@ import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.transaction.xa.TransactionTable;
 import org.infinispan.transaction.xa.RemoteTransaction;
+import org.infinispan.transaction.xa.TransactionTable;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -111,7 +111,6 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
       return "AbstractTransactionBoundaryCommand{" +
             "globalTx=" + globalTx +
             ", cacheName='" + cacheName + '\'' +
-            ", invoker=" + invoker +
             '}';
    }
 }
