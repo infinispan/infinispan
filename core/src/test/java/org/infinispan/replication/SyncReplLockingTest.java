@@ -9,6 +9,8 @@ package org.infinispan.replication;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
@@ -37,11 +39,13 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
       cache2 = manager(1).getCache("replSync");
    }
 
+   @Test(enabled=true)
    public void testLockingWithExplicitUnlock() throws Exception {
       lockingWithExplicitUnlockHelper(false);
       lockingWithExplicitUnlockHelper(true);
    }
 
+   @Test(enabled=true)
    public void testLocksReleasedWithoutExplicitUnlock() throws Exception {
       locksReleasedWithoutExplicitUnlockHelper(false);
       locksReleasedWithoutExplicitUnlockHelper(true);
@@ -74,6 +78,42 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
       cache2.remove(k);
       assert cache1.isEmpty();
       assert cache2.isEmpty();
+   }
+   
+   @Test(enabled=true)
+   public void testConcurrentLocking() throws Exception {
+      assertClusterSize("Should only be 2  caches in the cluster!!!", 2);
+
+      assertNull("Should be null", cache1.get(k));
+      assertNull("Should be null", cache2.get(k));
+      final AtomicBoolean writeBlocked = new AtomicBoolean(false);
+      
+      Thread t = new Thread(){@Override
+         public void run() {
+            log.info("Concurrent non-tx write started....");
+            long start = System.currentTimeMillis();
+            cache2.put(k, "JBC");   
+            long duration = System.currentTimeMillis() - start;
+            log.info("Concurrent non-tx write finished");
+            writeBlocked.set(duration > 1000);               
+         }};
+
+      String name = "Infinispan";
+      TransactionManager mgr = TestingUtil.getTransactionManager(cache1);
+      mgr.begin();
+      //lock node and start other thread whose write should now block
+      cache1.getAdvancedCache().lock(k);
+      t.start();
+      
+      //hold lock 
+      TestingUtil.sleepThread(3000);
+      cache1.put(k, name);
+      mgr.commit();
+
+      cache2.remove(k);
+      assert cache1.isEmpty();
+      assert cache2.isEmpty();
+      assert writeBlocked.get();
    }
 
    private void locksReleasedWithoutExplicitUnlockHelper(boolean lockPriorToPut) throws Exception {
