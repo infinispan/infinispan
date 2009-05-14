@@ -45,7 +45,6 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       Object real;
       assert Util.safeEquals((real = c1.get(k)), v) : "Error on cache 1.  Expected " + v + " and got " + real;
       assert Util.safeEquals((real = c2.get(k)), v) : "Error on cache 2.  Expected " + v + " and got " + real;
-      ;
    }
 
    public void testAsyncMethods() throws ExecutionException, InterruptedException {
@@ -150,6 +149,7 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
 
       key.allowSerialization();
       c1.put(key, v);
+      asyncWait();
 
       f = c1.replaceAsync(key, v5);
       assert f != null;
