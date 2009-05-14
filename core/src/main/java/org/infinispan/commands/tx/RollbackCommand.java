@@ -43,16 +43,10 @@ public class RollbackCommand extends AbstractTransactionBoundaryCommand {
    }
 
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
-      return visitor.visitRollbackCommand((TxInvocationContext)ctx, this);
+      return visitor.visitRollbackCommand((TxInvocationContext) ctx, this);
    }
 
    public byte getCommandId() {
       return COMMAND_ID;
-   }
-
-   public String toString() {
-      return "RollbackCommand{" +
-            "gtx=" + globalTx +
-            '}';
    }
 }

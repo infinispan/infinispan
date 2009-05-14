@@ -43,16 +43,10 @@ public class CommitCommand extends AbstractTransactionBoundaryCommand {
    }
 
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
-      return visitor.visitCommitCommand((TxInvocationContext)ctx, this);
+      return visitor.visitCommitCommand((TxInvocationContext) ctx, this);
    }
 
    public byte getCommandId() {
       return COMMAND_ID;
-   }
-
-   public String toString() {
-      return "CommitCommand {" +
-            "gtx=" + globalTx +
-            '}';
    }
 }

@@ -21,16 +21,14 @@
  */
 package org.infinispan.commands;
 
-import java.util.Collection;
-
 import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
+import java.util.Collection;
+
 /**
- * 
- * 
  * @author Vladimir Blagojevic (<a href="mailto:vblagoje@redhat.com">vblagoje@redhat.com</a>)
  * @param
  * @since 4.0
@@ -40,7 +38,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
    private Collection keys;
    private boolean lock;
 
-   
+
    public LockControlCommand() {
    }
 
@@ -49,8 +47,8 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
       this.keys = keys;
       this.lock = lock;
    }
-   
-   public void attachGlobalTransaction (GlobalTransaction gtx){
+
+   public void attachGlobalTransaction(GlobalTransaction gtx) {
       globalTx = gtx;
    }
 
@@ -65,17 +63,17 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
    public boolean isUnlock() {
       return !isLock();
    }
-   
+
    @Override
    public Object perform(InvocationContext ignored) throws Throwable {
       if (ignored != null)
          throw new IllegalStateException("Expected null context!");
 
       boolean remoteTxinitiated = txTable.getRemoteTransaction(globalTx) != null ? true : false;
-      if (!remoteTxinitiated) {         
+      if (!remoteTxinitiated) {
          //create bogus modifications (we do not know modifications ahead of time)
-         txTable.createRemoteTransaction(globalTx, new WriteCommand[] {});
-      } 
+         txTable.createRemoteTransaction(globalTx, new WriteCommand[]{});
+      }
       return super.perform(ignored);
    }
 
@@ -86,9 +84,9 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
    public byte getCommandId() {
       return COMMAND_ID;
    }
-   
+
    public Object[] getParameters() {
-      return new Object[]{globalTx, cacheName,keys,lock};
+      return new Object[]{globalTx, cacheName, keys, lock};
    }
 
    public void setParameters(int commandId, Object[] args) {
@@ -99,7 +97,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
       keys = (Collection) args[2];
       lock = (Boolean) args[3];
    }
-   
+
    public boolean equals(Object o) {
       if (this == o)
          return true;
@@ -121,11 +119,10 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
 
    @Override
    public String toString() {
-      return "LockControlCommand{" + 
-         "globalTx=" + globalTx + 
-         ", cacheName='" + cacheName+ 
-         ", invoker=" + invoker + 
-         ", lock=" + lock + 
-         ", keys=" + keys + '}';
+      return "LockControlCommand{" +
+            "gtx=" + globalTx +
+            ", cacheName='" + cacheName +
+            ", lock=" + lock +
+            ", keys=" + keys + '}';
    }
 }
