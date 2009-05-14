@@ -17,12 +17,12 @@ import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.modifications.Store;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
+import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ReflectionUtil;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.transaction.Transaction;
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -250,7 +250,7 @@ public class BdbjeCacheStoreTest {
    @Test
    public void testNoExceptionOnRollback() throws Exception {
       start();
-      Transaction tx = createMock(Transaction.class);
+      GlobalTransaction tx = new GlobalTransaction(false);
       replayAll();
       cs.start();
       cs.rollback(tx);
@@ -291,7 +291,7 @@ public class BdbjeCacheStoreTest {
       cs.start();
       try {
          txn = currentTransaction.beginTransaction(null);
-         Transaction t = createMock(Transaction.class);
+         GlobalTransaction t = new GlobalTransaction(false);
          cs.prepare(Collections.singletonList(new Store(InternalEntryFactory.create("k", "v"))), t, false);
          cs.commit(t);
          assert false : "should have gotten an exception";
@@ -313,7 +313,8 @@ public class BdbjeCacheStoreTest {
       replayAll();
       cs.start();
       try {
-         cs.prepare(Collections.singletonList(new Store(InternalEntryFactory.create("k", "v"))), createMock(Transaction.class), false);
+         GlobalTransaction tx = new GlobalTransaction(false);
+         cs.prepare(Collections.singletonList(new Store(InternalEntryFactory.create("k", "v"))), tx, false);
          assert false : "should have gotten an exception";
       } catch (CacheLoaderException e) {
          assert ex.equals(e.getCause());

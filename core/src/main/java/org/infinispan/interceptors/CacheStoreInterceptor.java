@@ -53,7 +53,6 @@ import org.infinispan.loaders.modifications.Store;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.LogFactory;
 
-import javax.transaction.Transaction;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -72,8 +71,8 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    private CacheLoaderManagerConfig loaderConfig = null;
-   private HashMap<Transaction, Integer> txStores = new HashMap<Transaction, Integer>();
-   private Map<Transaction, Set<Object>> preparingTxs = new ConcurrentHashMap<Transaction, Set<Object>>();
+   private HashMap<GlobalTransaction, Integer> txStores = new HashMap<GlobalTransaction, Integer>();
+   private Map<GlobalTransaction, Set<Object>> preparingTxs = new ConcurrentHashMap<GlobalTransaction, Set<Object>>();
    private final AtomicLong cacheStores = new AtomicLong(0);
    CacheStore store;
    private CacheLoaderManager loaderManager;
@@ -114,7 +113,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       if (!skip(ctx, command)) {
          if (ctx.hasModifications()) {
             // this is a commit call.
-            Transaction tx = ctx.getRunningTransaction();
+            GlobalTransaction tx = ctx.getGlobalTransaction();
             log.trace("Calling loader.commit() for transaction {0}", tx);
             try {
                store.commit(tx);
@@ -143,7 +142,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       if (!skip(ctx, command)) {
          if (trace) log.trace("transactional so don't put stuff in the cloader yet.");
          if (ctx.hasModifications()) {
-            Transaction tx = ctx.getRunningTransaction();
+            GlobalTransaction tx = ctx.getGlobalTransaction();
             // this is a rollback method
             if (preparingTxs.containsKey(tx)) {
                preparingTxs.remove(tx);
@@ -245,7 +244,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       log.trace("Converted method calls to cache loader modifications.  List size: {0}", numMods);
 
       if (numMods > 0) {
-         Transaction tx = transactionContext.getRunningTransaction();
+         GlobalTransaction tx = transactionContext.getGlobalTransaction();
          store.prepare(modsBuilder.modifications, tx, onePhase);
 
          preparingTxs.put(tx, modsBuilder.affectedKeys);

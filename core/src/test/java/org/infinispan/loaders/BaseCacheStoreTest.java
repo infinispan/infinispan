@@ -12,12 +12,12 @@ import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
+import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.Util;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.transaction.Transaction;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -204,7 +204,7 @@ public abstract class BaseCacheStoreTest {
       mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
       mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
       mods.add(new Remove("k1"));
-      Transaction tx = EasyMock.createNiceMock(Transaction.class);
+      GlobalTransaction tx = new GlobalTransaction(true);
       cs.prepare(mods, tx, true);
 
       assert cs.load("k2").getValue().equals("v2");
@@ -229,7 +229,7 @@ public abstract class BaseCacheStoreTest {
       mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
       mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
       mods.add(new Remove("k1"));
-      Transaction tx = EasyMock.createNiceMock(Transaction.class);
+      GlobalTransaction tx = new GlobalTransaction(false);
       cs.prepare(mods, tx, false);
 
       assert !cs.containsKey("k1");
@@ -271,7 +271,7 @@ public abstract class BaseCacheStoreTest {
       mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
       mods.add(new Remove("k1"));
       mods.add(new Remove("old"));
-      Transaction tx = EasyMock.createNiceMock(Transaction.class);
+      GlobalTransaction tx = new GlobalTransaction(false);
       cs.prepare(mods, tx, false);
 
       assert !cs.containsKey("k1");
@@ -313,7 +313,7 @@ public abstract class BaseCacheStoreTest {
       mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
       mods.add(new Remove("k1"));
       mods.add(new Remove("old"));
-      final Transaction tx = EasyMock.createNiceMock(Transaction.class);
+      final GlobalTransaction tx = new GlobalTransaction(false);
       cs.prepare(mods, tx, false);
 
       Thread t = new Thread(new Runnable() {
@@ -353,7 +353,7 @@ public abstract class BaseCacheStoreTest {
 
    public void testCommitAndRollbackWithoutPrepare() throws CacheLoaderException {
       cs.store(InternalEntryFactory.create("old", "old"));
-      Transaction tx = EasyMock.createNiceMock(Transaction.class);
+      GlobalTransaction tx = new GlobalTransaction(false);
       cs.commit(tx);
       cs.store(InternalEntryFactory.create("old", "old"));
       cs.rollback(tx);

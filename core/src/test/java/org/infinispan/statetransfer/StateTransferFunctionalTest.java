@@ -16,7 +16,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
-@Test(groups = "functional", testName = "statetransfer.StateTransferFunctionalTest", enabled = false)
+@Test(groups = "functional", testName = "statetransfer.StateTransferFunctionalTest", invocationCount = 1)
 public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
 
    protected static final String ADDRESS_CLASSNAME = Address.class.getName();

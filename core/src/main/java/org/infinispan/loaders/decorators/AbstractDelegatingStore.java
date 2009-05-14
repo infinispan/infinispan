@@ -1,6 +1,7 @@
 package org.infinispan.loaders.decorators;
 
 import org.infinispan.Cache;
+import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
@@ -8,7 +9,6 @@ import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.marshall.Marshaller;
 
-import javax.transaction.Transaction;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.List;
@@ -65,15 +65,15 @@ public class AbstractDelegatingStore implements CacheStore {
       delegate.purgeExpired();
    }
 
-   public void commit(Transaction tx) throws CacheLoaderException {
+   public void commit(GlobalTransaction tx) throws CacheLoaderException {
       delegate.commit(tx);
    }
 
-   public void rollback(Transaction tx) {
+   public void rollback(GlobalTransaction tx) {
       delegate.rollback(tx);
    }
 
-   public void prepare(List<? extends Modification> list, Transaction tx, boolean isOnePhase) throws CacheLoaderException {
+   public void prepare(List<? extends Modification> list, GlobalTransaction tx, boolean isOnePhase) throws CacheLoaderException {
       delegate.prepare(list, tx, isOnePhase);
    }
 

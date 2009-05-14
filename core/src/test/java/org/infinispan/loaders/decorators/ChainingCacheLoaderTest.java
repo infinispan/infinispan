@@ -1,6 +1,5 @@
 package org.infinispan.loaders.decorators;
 
-import org.easymock.EasyMock;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.io.UnclosableObjectInputStream;
@@ -15,10 +14,10 @@ import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
+import org.infinispan.transaction.xa.GlobalTransaction;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
-import javax.transaction.Transaction;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -170,7 +169,7 @@ public class ChainingCacheLoaderTest extends BaseCacheStoreTest {
       list.add(new Store(InternalEntryFactory.create("k5", "v5", lifespan)));
       list.add(new Store(InternalEntryFactory.create("k6", "v6")));
       list.add(new Remove("k6"));
-      Transaction t = EasyMock.createNiceMock(Transaction.class);
+      GlobalTransaction t = new GlobalTransaction(false);
       cs.prepare(list, t, true);
 
       CacheStore[] allStores = new CacheStore[]{cs, store1, store2}; // for iteration
@@ -205,8 +204,8 @@ public class ChainingCacheLoaderTest extends BaseCacheStoreTest {
       list.add(new Store(InternalEntryFactory.create("k5", "v5", lifespan)));
       list.add(new Store(InternalEntryFactory.create("k6", "v6")));
       list.add(new Remove("k6"));
-      Transaction t = EasyMock.createNiceMock(Transaction.class);
-      cs.prepare(list, t, false);
+      GlobalTransaction tx = new GlobalTransaction(false);
+      cs.prepare(list, tx, false);
 
       CacheStore[] allStores = new CacheStore[]{cs, store1, store2}; // for iteration
 
@@ -214,7 +213,7 @@ public class ChainingCacheLoaderTest extends BaseCacheStoreTest {
          for (CacheStore s : allStores) assert !s.containsKey("k" + i);
       }
 
-      cs.commit(t);
+      cs.commit(tx);
 
       for (int i = 1; i < 7; i++) {
          if (i < 4 || i == 6) {

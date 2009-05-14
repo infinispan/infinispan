@@ -1,6 +1,7 @@
 package org.infinispan.loaders;
 
 import org.infinispan.Cache;
+import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
@@ -9,7 +10,6 @@ import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import javax.transaction.Transaction;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
@@ -27,7 +27,7 @@ import java.util.concurrent.Executors;
  */
 public abstract class AbstractCacheStore extends AbstractCacheLoader implements CacheStore {
 
-   private final Map<Transaction, List<? extends Modification>> transactions = new ConcurrentHashMap<Transaction, List<? extends Modification>>();
+   private final Map<GlobalTransaction, List<? extends Modification>> transactions = new ConcurrentHashMap<GlobalTransaction, List<? extends Modification>>();
 
    private static Log log = LogFactory.getLog(AbstractCacheStore.class);
 
@@ -93,7 +93,7 @@ public abstract class AbstractCacheStore extends AbstractCacheLoader implements 
       }
    }
 
-   public void prepare(List<? extends Modification> mods, Transaction tx, boolean isOnePhase) throws CacheLoaderException {
+   public void prepare(List<? extends Modification> mods, GlobalTransaction tx, boolean isOnePhase) throws CacheLoaderException {
       if (isOnePhase) {
          applyModifications(mods);
       } else {
@@ -101,11 +101,11 @@ public abstract class AbstractCacheStore extends AbstractCacheLoader implements 
       }
    }
 
-   public void rollback(Transaction tx) {
+   public void rollback(GlobalTransaction tx) {
       transactions.remove(tx);
    }
 
-   public void commit(Transaction tx) throws CacheLoaderException {
+   public void commit(GlobalTransaction tx) throws CacheLoaderException {
       List<? extends Modification> list = transactions.remove(tx);
       if (list != null && !list.isEmpty()) applyModifications(list);
    }

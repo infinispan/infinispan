@@ -14,6 +14,7 @@ import com.sleepycat.je.OperationStatus;
 import com.sleepycat.je.Transaction;
 import com.sleepycat.util.ExceptionUnwrapper;
 import org.infinispan.Cache;
+import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.AbstractCacheStore;
 import org.infinispan.loaders.CacheLoaderConfig;
@@ -45,7 +46,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p/>
  * All data access is transactional.  Any attempted reads to locked records will block.  The maximum duration of this is
  * set in nanoseconds via the parameter {@link org.infinispan.loaders.bdbje.BdbjeCacheStoreConfig#getLockAcquistionTimeout()}.
- * Calls to {@link BdbjeCacheStore#prepare(java.util.List, javax.transaction.Transaction, boolean) prepare} will attempt
+ * Calls to {@link org.infinispan.loaders.CacheStore#prepare(java.util.List prepare} will attempt
  * to resolve deadlocks, retrying up to {@link org.infinispan.loaders.bdbje.BdbjeCacheStoreConfig#getMaxTxRetries()}
  * attempts.
  * <p/>
@@ -72,7 +73,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
    private StoredMap<Object, InternalCacheEntry> cacheMap;
 
    private PreparableTransactionRunner transactionRunner;
-   private Map<javax.transaction.Transaction, Transaction> txnMap;
+   private Map<GlobalTransaction, Transaction> txnMap;
    private CurrentTransaction currentTransaction;
    private BdbjeResourceFactory factory;
 
@@ -121,7 +122,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
    }
 
    private void openTransactionServices() {
-      txnMap = new ConcurrentHashMap<javax.transaction.Transaction, Transaction>();
+      txnMap = new ConcurrentHashMap<GlobalTransaction, Transaction>();
       currentTransaction = factory.createCurrentTransaction(env);
       transactionRunner = factory.createPreparableTransactionRunner(env);
    }
@@ -222,7 +223,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
     * {@inheritDoc} delegates to {@link BdbjeCacheStore#applyModifications(java.util.List)}, if <code>isOnePhase</code>.
     * Otherwise, delegates to {@link BdbjeCacheStore#prepare(java.util.List, javax.transaction.Transaction) prepare}.
     */
-   public void prepare(List<? extends Modification> mods, javax.transaction.Transaction tx, boolean isOnePhase) throws CacheLoaderException {
+   public void prepare(List<? extends Modification> mods, GlobalTransaction tx, boolean isOnePhase) throws CacheLoaderException {
       if (isOnePhase) {
          applyModifications(mods);
       } else {
@@ -258,7 +259,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
     * @param tx   transaction identifier
     * @throws CacheLoaderException in the event of problems writing to the store
     */
-   protected void prepare(List<? extends Modification> mods, javax.transaction.Transaction tx) throws CacheLoaderException {
+   protected void prepare(List<? extends Modification> mods, GlobalTransaction tx) throws CacheLoaderException {
       if (trace) log.trace("preparing transaction {0}", tx);
       try {
          transactionRunner.prepare(new ModificationsTransactionWorker(this, mods));
@@ -278,7 +279,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
     * This implementation calls {@link BdbjeCacheStore#completeTransaction(javax.transaction.Transaction, boolean)
     * completeTransaction} with an argument of false.
     */
-   public void rollback(javax.transaction.Transaction tx) {
+   public void rollback(GlobalTransaction tx) {
       try {
          completeTransaction(tx, false);
       } catch (Exception e) {
@@ -292,7 +293,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
     * This implementation calls {@link BdbjeCacheStore#completeTransaction(javax.transaction.Transaction, boolean)
     * completeTransaction} with an argument of true.
     */
-   public void commit(javax.transaction.Transaction tx) throws CacheLoaderException {
+   public void commit(GlobalTransaction tx) throws CacheLoaderException {
       completeTransaction(tx, true);
    }
 
@@ -304,7 +305,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
     * @param commit true to commit false to abort
     * @throws CacheLoaderException if there are problems committing or aborting the transaction
     */
-   protected void completeTransaction(javax.transaction.Transaction tx, boolean commit) throws CacheLoaderException {
+   protected void completeTransaction(GlobalTransaction tx, boolean commit) throws CacheLoaderException {
       Transaction txn = txnMap.remove(tx);
       if (txn != null) {
          if (trace) log.trace("{0} sleepycat transaction {1}", commit ? "committing" : "aborting", txn);

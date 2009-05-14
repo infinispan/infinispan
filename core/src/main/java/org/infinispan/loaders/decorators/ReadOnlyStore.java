@@ -3,8 +3,8 @@ package org.infinispan.loaders.decorators;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.modifications.Modification;
+import org.infinispan.transaction.xa.GlobalTransaction;
 
-import javax.transaction.Transaction;
 import java.io.ObjectInput;
 import java.util.List;
 
@@ -47,17 +47,17 @@ public class ReadOnlyStore extends AbstractDelegatingStore {
    }
 
    @Override
-   public void commit(Transaction tx) {
+   public void commit(GlobalTransaction tx) {
       // no-op
    }
 
    @Override
-   public void rollback(Transaction tx) {
+   public void rollback(GlobalTransaction tx) {
       // no-op
    }
 
    @Override
-   public void prepare(List<? extends Modification> list, Transaction tx, boolean isOnePhase) {
+   public void prepare(List<? extends Modification> list, GlobalTransaction tx, boolean isOnePhase) {
       // no-op
    }
 }

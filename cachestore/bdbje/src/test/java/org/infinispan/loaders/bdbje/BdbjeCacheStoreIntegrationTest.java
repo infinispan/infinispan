@@ -1,6 +1,5 @@
 package org.infinispan.loaders.bdbje;
 
-import org.easymock.EasyMock;
 import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.loaders.BaseCacheStoreTest;
 import org.infinispan.loaders.CacheLoaderException;
@@ -10,12 +9,12 @@ import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.transaction.xa.GlobalTransaction;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import javax.transaction.Transaction;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -62,7 +61,7 @@ public class BdbjeCacheStoreIntegrationTest extends BaseCacheStoreTest {
       mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
       mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
       mods.add(new Remove("k1"));
-      Transaction tx = EasyMock.createNiceMock(Transaction.class);
+      GlobalTransaction tx = new GlobalTransaction(false);
       cs.prepare(mods, tx, false);
       cs.commit(tx);
 
@@ -98,7 +97,7 @@ public class BdbjeCacheStoreIntegrationTest extends BaseCacheStoreTest {
       mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
       mods.add(new Remove("k1"));
       mods.add(new Remove("old"));
-      Transaction tx = EasyMock.createNiceMock(Transaction.class);
+      GlobalTransaction tx = new GlobalTransaction(false);
       cs.prepare(mods, tx, false);
       cs.rollback(tx);
 

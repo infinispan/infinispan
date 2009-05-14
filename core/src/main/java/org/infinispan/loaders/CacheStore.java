@@ -2,8 +2,8 @@ package org.infinispan.loaders;
 
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.modifications.Modification;
+import org.infinispan.transaction.xa.GlobalTransaction;
 
-import javax.transaction.Transaction;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.List;
@@ -111,40 +111,40 @@ public interface CacheStore extends CacheLoader {
     *                      immediately
     * @throws CacheLoaderException in the event of problems writing to the store
     */
-   void prepare(List<? extends Modification> modifications, Transaction tx, boolean isOnePhase) throws CacheLoaderException;
+   void prepare(List<? extends Modification> modifications, GlobalTransaction tx, boolean isOnePhase) throws CacheLoaderException;
 
    /**
     * Commits a transaction that has been previously prepared.
     * <p/>
     * This method <i>may</b> be invoked on a transaction for which there is <i>no</i> prior {@link
-    * #prepare(java.util.List, javax.transaction.Transaction, boolean)}.  The implementation would need to deal with
+    * #prepare(java.util.List}.  The implementation would need to deal with
     * this case acordingly.  Typically, this would be a no-op, after ensuring any resources attached to the transaction
     * are cleared up.
     * <p/>
     * Also note that this method <i>may</i> be invoked on a thread which is different from the {@link
-    * #prepare(java.util.List, javax.transaction.Transaction, boolean)} invocation.  As such, {@link ThreadLocal}s
+    * #prepare(java.util.List} invocation.  As such, {@link ThreadLocal}s
     * should not be relied upon to maintain transaction context.
     * <p/>
     *
     * @param tx tx to commit
     * @throws CacheLoaderException in the event of problems writing to the store
     */
-   void commit(Transaction tx) throws CacheLoaderException;
+   void commit(GlobalTransaction tx) throws CacheLoaderException;
 
    /**
     * Rolls back a transaction that has been previously prepared
     * <p/>
     * This method <i>may</b> be invoked on a transaction for which there is <i>no</i> prior {@link
-    * #prepare(java.util.List, javax.transaction.Transaction, boolean)}.  The implementation would need to deal with
+    * #prepare(java.util.List}.  The implementation would need to deal with
     * this case acordingly.  Typically, this would be a no-op, after ensuring any resources attached to the transaction
     * are cleared up.
     * <p/>
     * Also note that this method <i>may</i> be invoked on a thread which is different from the {@link
-    * #prepare(java.util.List, javax.transaction.Transaction, boolean)} invocation.  As such, {@link ThreadLocal}s
+    * #prepare(java.util.List} invocation.  As such, {@link ThreadLocal}s
     * should not be relied upon to maintain transaction context.
     * <p/>
     *
     * @param tx tx to roll back
     */
-   void rollback(Transaction tx);
+   void rollback(GlobalTransaction tx);
 }

@@ -30,6 +30,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
@@ -218,11 +219,9 @@ public class StateTransferManagerImpl implements StateTransferManager {
    private void processCommitLog(ObjectInput oi) throws Exception {
       if (trace) log.trace("Applying commit log");
       Object object = marshaller.objectFromObjectStream(oi);
-      RemoteTxInvocationContext ctx = invocationContextContainer.createRemoteTxInvocationContext();
       while (object instanceof TransactionLog.LogEntry) {
          TransactionLog.LogEntry logEntry = (TransactionLog.LogEntry) object;
-         RemoteTransaction remoteTransaction = txTable.getRemoteTransaction(logEntry.getTransaction());
-         ctx.setRemoteTransaction(remoteTransaction);
+         InvocationContext ctx = invocationContextContainer.createRemoteInvocationContext();
          WriteCommand[] mods = logEntry.getModifications();
          if (trace) log.trace("Mods = {0}", Arrays.toString(mods));
          for (WriteCommand mod : mods) {

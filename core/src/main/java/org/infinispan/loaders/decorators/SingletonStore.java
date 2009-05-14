@@ -1,6 +1,7 @@
 package org.infinispan.loaders.decorators;
 
 import org.infinispan.Cache;
+import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.CacheLoaderException;
@@ -16,7 +17,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import javax.transaction.Transaction;
 import java.io.ObjectInput;
 import java.util.List;
 import java.util.Set;
@@ -132,17 +132,17 @@ public class SingletonStore extends AbstractDelegatingStore {
    }
 
    @Override
-   public void commit(Transaction tx) throws CacheLoaderException {
+   public void commit(GlobalTransaction tx) throws CacheLoaderException {
       if (active) super.commit(tx);
    }
 
    @Override
-   public void rollback(Transaction tx) {
+   public void rollback(GlobalTransaction tx) {
       if (active) super.rollback(tx);
    }
 
    @Override
-   public void prepare(List<? extends Modification> list, Transaction tx, boolean isOnePhase) throws CacheLoaderException {
+   public void prepare(List<? extends Modification> list, GlobalTransaction tx, boolean isOnePhase) throws CacheLoaderException {
       if (active) super.prepare(list, tx, isOnePhase);
    }
 

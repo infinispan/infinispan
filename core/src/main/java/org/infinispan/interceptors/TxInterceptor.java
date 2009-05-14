@@ -75,27 +75,39 @@ public class TxInterceptor extends CommandInterceptor {
             }
          }
       }
+      //if it is remote and 2PC then first log the tx only after replying mods
+      //(TxInterceptor line 338)
       if (!command.isOnePhaseCommit()) {
          transactionLog.logPrepare(command);
-      } else {
-         transactionLog.logOnePhaseCommit(ctx.getGlobalTransaction(), Arrays.asList(command.getModifications()));
       }
       if (getStatisticsEnabled()) prepares.incrementAndGet();
-      return invokeNextInterceptor(ctx, command);
+      try {
+         return invokeNextInterceptor(ctx, command);
+      } finally {
+         if (command.isOnePhaseCommit()) {
+            transactionLog.logOnePhaseCommit(ctx.getGlobalTransaction(), Arrays.asList(command.getModifications()));
+         }
+      }
    }
 
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (getStatisticsEnabled()) commits.incrementAndGet();
-      transactionLog.logCommit(command.getGlobalTransaction());
-      return invokeNextInterceptor(ctx, command);
+      try {
+         return invokeNextInterceptor(ctx, command);
+      } finally {
+         transactionLog.logCommit(command.getGlobalTransaction());
+      }
    }
 
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (getStatisticsEnabled()) rollbacks.incrementAndGet();
-      transactionLog.rollback(command.getGlobalTransaction());
-      return invokeNextInterceptor(ctx, command);
+      try {
+         return invokeNextInterceptor(ctx, command);
+      } finally {
+         transactionLog.rollback(command.getGlobalTransaction());
+      }
    }
 
    @Override
