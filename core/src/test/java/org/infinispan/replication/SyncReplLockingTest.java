@@ -67,8 +67,10 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
    }
 
    public void testLocksReleasedWithoutExplicitUnlock() throws Exception {
-      locksReleasedWithoutExplicitUnlockHelper(false);
-      locksReleasedWithoutExplicitUnlockHelper(true);
+      locksReleasedWithoutExplicitUnlockHelper(false,false);
+      locksReleasedWithoutExplicitUnlockHelper(true,false);
+      locksReleasedWithoutExplicitUnlockHelper(false,true);
+      locksReleasedWithoutExplicitUnlockHelper(true,true);
    }
    
    public void testConcurrentNonTxLocking() throws Exception {
@@ -166,7 +168,8 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
       assert cache2.isEmpty();
    }
 
-   private void locksReleasedWithoutExplicitUnlockHelper(boolean lockPriorToPut) throws Exception {
+   private void locksReleasedWithoutExplicitUnlockHelper(boolean lockPriorToPut, boolean useCommit)
+            throws Exception {
       assertClusterSize("Should only be 2  caches in the cluster!!!", 2);
 
       assertNull("Should be null", cache1.get(k));
@@ -180,10 +183,19 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
       cache1.put(k, name);
       if (!lockPriorToPut)
          cache1.getAdvancedCache().lock(k);
-      mgr.commit();
 
-      assertEquals(name, cache1.get(k));
-      assertEquals("Should have replicated", name, cache2.get(k));
+      if (useCommit)
+         mgr.commit();
+      else
+         mgr.rollback();
+
+      if (useCommit) {
+         assertEquals(name, cache1.get(k));
+         assertEquals("Should have replicated", name, cache2.get(k));
+      } else {
+         assertEquals(null, cache1.get(k));
+         assertEquals("Should not have replicated", null, cache2.get(k));
+      }
 
       cache2.remove(k);
       assert cache1.isEmpty();
