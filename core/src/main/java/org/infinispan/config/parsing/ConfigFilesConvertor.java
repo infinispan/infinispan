@@ -19,7 +19,7 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.config;
+package org.infinispan.config.parsing;
 
 import org.infinispan.util.FileLookup;
 import org.w3c.dom.Document;
@@ -34,6 +34,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -41,7 +42,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.ByteArrayInputStream;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Class used for converting different configuration files to INFINISPAN format.
@@ -50,6 +52,10 @@ import java.io.ByteArrayInputStream;
  * @since 4.0
  */
 public class ConfigFilesConvertor {
+
+
+   private static final String JBOSS_CACHE3X = "JBossCache3x";
+   public static final String[] SUPPORTED_FORMATS = {JBOSS_CACHE3X};
 
    public void parse(InputStream is, OutputStream os, String xsltFile) throws Exception {
       InputStream xsltInStream = new FileLookup().lookupFile(xsltFile);
@@ -67,7 +73,7 @@ public class ConfigFilesConvertor {
       StreamResult result = new StreamResult(byteArrayOutputStream);
       transformer.transform(source, result);
 
-      InputStream indentation = new FileLookup().lookupFile("C:\\jboss\\ifspn\\zzzz_trunk_pristine\\src\\main\\resources\\xslt\\indent.xslt");
+      InputStream indentation = new FileLookup().lookupFile("xslt/indent.xslt");
       // Use a Transformer for output
       transformer = getTransformer(indentation);
       StreamResult finalResult = new StreamResult(os);
@@ -106,6 +112,27 @@ public class ConfigFilesConvertor {
          System.err.println("Missing property 'destination'.");
          System.exit(1);
       }
+      String type = System.getProperty("type");
+      if (type == null) {
+         System.err.println("Missing property 'type'.");
+         System.exit(1);
+      }
+
+      List<String> stringList = Arrays.asList(SUPPORTED_FORMATS);
+      if (!stringList.contains(type)) {
+         System.err.println("Unsupported transformation type: " + type + ". Supported formats are: " + stringList);
+      }
+
+      if (type.equals(JBOSS_CACHE3X)) {
+         transformFromJbossCache3x(sourceName, destinationName);
+      }
+      
+      System.out.println("---");
+      System.out.println("New configuration file [" + destinationName + "] successfully created.");
+      System.out.println("---");
+   }
+
+   private static void transformFromJbossCache3x(String sourceName, String destinationName) throws Exception {
       File oldConfig = new File(sourceName);
       if (!oldConfig.exists()) {
          System.err.println("File specified as input ('" + sourceName + ") does not exist.");
@@ -116,7 +143,7 @@ public class ConfigFilesConvertor {
       File destination = new File(destinationName);
       if (!destination.exists()) destination.createNewFile();
       FileOutputStream fos = new FileOutputStream(destinationName);
-      convertor.parse(is, fos, "C:\\jboss\\ifspn\\zzzz_trunk_pristine\\src\\main\\resources\\xslt\\jbc3x2infinispan4x.xslt");
+      convertor.parse(is, fos, "xslt/jbc3x2infinispan4x.xslt");
       fos.close();
       is.close();
 
@@ -127,7 +154,7 @@ public class ConfigFilesConvertor {
       is = new FileInputStream(oldConfig);
       fos = new FileOutputStream(jgroupsConfigFile);
       convertor = new ConfigFilesConvertor();
-      convertor.parse(is, fos, "C:\\jboss\\ifspn\\zzzz_trunk_pristine\\src\\main\\resources\\xslt\\jgroupsFileGen.xslt");
+      convertor.parse(is, fos, "xslt/jgroupsFileGen.xslt");
       is.close();
       fos.close();
 
@@ -136,9 +163,6 @@ public class ConfigFilesConvertor {
       if (jgroupsConfigFile.length() < 5) {
          jgroupsConfigFile.delete();
       }
-      System.out.println("---");
-      System.out.println("New configuration file [" + destinationName + "] successfully created.");
-      System.out.println("---");
    }
 
    private Transformer getTransformer(InputStream xsltInStream) throws TransformerConfigurationException {
@@ -147,7 +171,7 @@ public class ConfigFilesConvertor {
       return tFactory.newTransformer(stylesource);
    }
 
-   private Document getInputDocument(InputStream is)  throws ParserConfigurationException, SAXException, IOException {
+   private Document getInputDocument(InputStream is) throws ParserConfigurationException, SAXException, IOException {
       DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
       DocumentBuilder builder = factory.newDocumentBuilder();
       return builder.parse(is);
