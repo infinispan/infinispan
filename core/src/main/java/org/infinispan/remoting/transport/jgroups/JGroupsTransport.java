@@ -68,7 +68,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
    static final Log log = LogFactory.getLog(JGroupsTransport.class);
    static final boolean trace = log.isTraceEnabled();
    GlobalConfiguration c;
-   Properties p;
+   Properties props;
    InboundInvocationHandler inboundInvocationHandler;
    Marshaller marshaller;
    ExecutorService asyncExecutor;
@@ -91,7 +91,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
    }
 
    public void start() {
-      p = c.getTransportProperties();
+      props = c.getTransportProperties();
       distributedSyncTimeout = c.getDistributedSyncTimeout();
 
       log.info("Starting JGroups Channel");
@@ -149,9 +149,9 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
       // in order of preference - we first look for an external JGroups file, then a set of XML properties, and
       // finally the legacy JGroups String properties.
       String cfg;
-      if (p != null) {
-         if (p.containsKey(CONFIGURATION_FILE)) {
-            cfg = p.getProperty(CONFIGURATION_FILE);
+      if (props != null) {
+         if (props.containsKey(CONFIGURATION_FILE)) {
+            cfg = props.getProperty(CONFIGURATION_FILE);
             try {
                channel = new JChannel(new FileLookup().lookupFileLocation(cfg));
             } catch (Exception e) {
@@ -160,8 +160,8 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
             }
          }
 
-         if (p.containsKey(CONFIGURATION_XML)) {
-            cfg = p.getProperty(CONFIGURATION_XML);
+         if (props.containsKey(CONFIGURATION_XML)) {
+            cfg = props.getProperty(CONFIGURATION_XML);
             try {
                channel = new JChannel(XmlConfigHelper.stringToElement(cfg));
             } catch (Exception e) {
@@ -170,8 +170,8 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
             }
          }
 
-         if (p.containsKey(CONFIGURATION_STRING)) {
-            cfg = p.getProperty(CONFIGURATION_STRING);
+         if (props.containsKey(CONFIGURATION_STRING)) {
+            cfg = props.getProperty(CONFIGURATION_STRING);
             try {
                channel = new JChannel(cfg);
             } catch (Exception e) {
@@ -182,7 +182,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
       }
 
       if (channel == null) {
-         log.info("Unable to use any JGroups configuration mechanisms provided in properties {0}.  Using default JGroups configuration!", p);
+         log.info("Unable to use any JGroups configuration mechanisms provided in properties {0}.  Using default JGroups configuration!", props);
          try {
             channel = new JChannel(new FileLookup().lookupFileLocation(DEFAULT_JGROUPS_CONFIGURATION_FILE));
          } catch (ChannelException e) {

@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<xsl:stylesheet xmlns="urn:infinispan:config:4.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
    <xsl:output method="xml" indent="yes" version="1.0" encoding="UTF-8" omit-xml-declaration="no"/>
-   <xsl:template match="/jbosscache">
-      <xsl:element name="infinispan">
 
+   <xsl:template match="/jbosscache">
+
+      <xsl:element name="infinispan">
          <xsl:element name="global">
             <xsl:element name="asyncListenerExecutor">
                <xsl:attribute name="factory">org.infinispan.executors.DefaultExecutorFactory</xsl:attribute>
@@ -27,7 +28,7 @@
                <property name="threadNamePrefix" value="AsyncListenerThread"/>
             </xsl:element>
 
-            <xsl:element name="asyncSerializationExecutor">
+            <xsl:element name="asyncTransportExecutor">
                <xsl:attribute name="factory">org.infinispan.executors.DefaultExecutorFactory</xsl:attribute>
                <xsl:if test="clustering/async[@serializationExecutorPoolSize]">
                   <xsl:element name="property">
@@ -85,7 +86,15 @@
                      </xsl:attribute>
                   </xsl:element>
                </xsl:if>
+               <xsl:if test="clustering/jgroupsConfig/*">
+                  <xsl:element name="property">
+                     <xsl:attribute name="name">configurationFile</xsl:attribute>
+                     <xsl:attribute name="value">jgroupsConfig.xml</xsl:attribute>
+                  </xsl:element>
+               </xsl:if>
+
             </xsl:element>
+
 
             <xsl:element name="serialization">
                <xsl:attribute name="marshallerClass">org.infinispan.marshall.VersionAwareMarshaller</xsl:attribute>
@@ -237,14 +246,11 @@
                            <xsl:value-of select="clustering/async/@replQueueMaxElements"/>
                         </xsl:attribute>
                      </xsl:if>
+                     <xsl:if test="clustering/async[@serializationExecutorPoolSize > 1]">
+                        <xsl:attribute name="asyncMarshalling">true</xsl:attribute>
+                     </xsl:if>
                   </xsl:element>
                </xsl:element>
-
-               <xsl:if test="clustering/jgroupsConfig/*">
-                  <xsl:message terminate="no">WARNING!!! Use 'transport' element under 'global' config to set up
-                     transport!!! Existing JGroups config will be ignored!!
-                  </xsl:message>
-               </xsl:if>
             </xsl:if>
 
             <xsl:if test="loaders">
@@ -298,7 +304,9 @@
                                     <xsl:value-of select="singletonStore/@enabled"/>
                                  </xsl:attribute>
                                  <xsl:if test="singletonStore/properties">
-                                    <xsl:message terminate="no">WARNING!!! Singleton store was changed and needs to be configured manually!!!!</xsl:message>
+                                    <xsl:message terminate="no">WARNING!!! Singleton store was changed and needs to be
+                                       configured manually!!!!
+                                    </xsl:message>
                                  </xsl:if>
                               </xsl:if>
                            </xsl:element>
@@ -339,16 +347,18 @@
                   <xsl:choose>
                      <xsl:when test="@algorithmClass">
                         <xsl:attribute name="strategy">
-                           <xsl:value-of select="substring-before(substring-after(@algorithmClass,'org.jboss.cache.eviction.'),'Algorithm')"/>
+                           <xsl:value-of
+                                 select="substring-before(substring-after(@algorithmClass,'org.jboss.cache.eviction.'),'Algorithm')"/>
                         </xsl:attribute>
                      </xsl:when>
                      <xsl:otherwise>
                         <xsl:attribute name="strategy">
-                           <xsl:value-of select="substring-before(substring-after(/jbosscache/eviction/default/@algorithmClass,'org.jboss.cache.eviction.'),'Algorithm')"/>
+                           <xsl:value-of
+                                 select="substring-before(substring-after(/jbosscache/eviction/default/@algorithmClass,'org.jboss.cache.eviction.'),'Algorithm')"/>
                         </xsl:attribute>
                      </xsl:otherwise>
                   </xsl:choose>
-                  
+
                </xsl:element>
 
             </xsl:element>
