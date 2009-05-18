@@ -38,6 +38,10 @@ public class RemoteTransaction implements CacheTransaction, Cloneable {
    public List<WriteCommand> getModifications() {
       return modifications;
    }
+   
+   public void setModifications(WriteCommand[] modifications){
+      this.modifications = Arrays.asList(modifications);  
+   }
 
    public CacheEntry lookupEntry(Object key) {
       return lookedUpEntries.get(key);

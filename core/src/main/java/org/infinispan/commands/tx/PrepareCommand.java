@@ -74,16 +74,31 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
    }
 
    public final Object perform(InvocationContext ignored) throws Throwable {
-      if (ignored != null) throw new IllegalStateException("Expected null context!");
+      if (ignored != null)
+         throw new IllegalStateException("Expected null context!");
 
-      //1. first create a remote transaction
-      RemoteTransaction remoteTransaction = txTable.createRemoteTransaction(globalTx, modifications);
+      // 1. first create a remote transaction
+      RemoteTransaction remoteTransaction = txTable.getRemoteTransaction(globalTx);
+      boolean remoteTxinitiated = remoteTransaction != null ? true : false;
+      if (!remoteTxinitiated) {
+         remoteTransaction = txTable.createRemoteTransaction(globalTx, modifications);
+      } else {
+         /*
+          * remote tx was already created by Cache#lock() API call
+          * set the proper modifications since lock has none
+          * 
+          * @see LockControlCommand.java 
+          * https://jira.jboss.org/jira/browse/ISPN-48
+          */
+         remoteTransaction.setModifications(modifications);
+      }
 
-      //2. then set it on the invocation context
+      // 2. then set it on the invocation context
       RemoteTxInvocationContext ctx = icc.createRemoteTxInvocationContext();
       ctx.setRemoteTransaction(remoteTransaction);
 
-      if (trace) log.trace("Invoking remotly orginated prepare: " + this);
+      if (trace)
+         log.trace("Invoking remotly orginated prepare: " + this);
       notifier.notifyTransactionRegistered(ctx.getGlobalTransaction(), ctx);
       return invoker.invoke(ctx, this);
    }
