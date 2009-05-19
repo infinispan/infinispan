@@ -24,6 +24,7 @@ package org.infinispan.marshall.jboss;
 import net.jcip.annotations.Immutable;
 import org.infinispan.CacheException;
 import org.infinispan.atomic.AtomicHashMap;
+import org.infinispan.commands.LockControlCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
@@ -40,9 +41,13 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.container.entries.ImmortalCacheEntry;
+import org.infinispan.container.entries.ImmortalCacheValue;
 import org.infinispan.container.entries.MortalCacheEntry;
+import org.infinispan.container.entries.MortalCacheValue;
 import org.infinispan.container.entries.TransientCacheEntry;
+import org.infinispan.container.entries.TransientCacheValue;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
+import org.infinispan.container.entries.TransientMortalCacheValue;
 import org.infinispan.marshall.MarshalledValue;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.ExtendedResponse;
@@ -121,6 +126,13 @@ public class MagicNumberClassTable implements ClassTable {
       MAGIC_NUMBERS.put(TransientMortalCacheEntry.class.getName(), 37);
       
       MAGIC_NUMBERS.put(InvalidateL1Command.class.getName(), 38);
+
+      MAGIC_NUMBERS.put(ImmortalCacheValue.class.getName(), 39);
+      MAGIC_NUMBERS.put(MortalCacheValue.class.getName(), 40);
+      MAGIC_NUMBERS.put(TransientCacheValue.class.getName(), 41);
+      MAGIC_NUMBERS.put(TransientMortalCacheValue.class.getName(), 42);
+      
+      MAGIC_NUMBERS.put(LockControlCommand.class.getName(), 43);
    }
 
    private final Map<Class<?>, Writer> writers = new WeakHashMap<Class<?>, Writer>();

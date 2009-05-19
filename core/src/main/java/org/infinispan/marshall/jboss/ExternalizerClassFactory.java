@@ -24,6 +24,7 @@ package org.infinispan.marshall.jboss;
 import net.jcip.annotations.Immutable;
 import org.infinispan.CacheException;
 import org.infinispan.atomic.AtomicHashMap;
+import org.infinispan.commands.LockControlCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
@@ -40,15 +41,18 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.container.entries.ImmortalCacheEntry;
+import org.infinispan.container.entries.ImmortalCacheValue;
 import org.infinispan.container.entries.MortalCacheEntry;
+import org.infinispan.container.entries.MortalCacheValue;
 import org.infinispan.container.entries.TransientCacheEntry;
+import org.infinispan.container.entries.TransientCacheValue;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
+import org.infinispan.container.entries.TransientMortalCacheValue;
 import org.infinispan.marshall.MarshalledValue;
 import org.infinispan.marshall.jboss.externalizers.*;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.ExtendedResponse;
 import org.infinispan.remoting.responses.SuccessfulResponse;
-import org.infinispan.remoting.responses.UnsuccessfulResponse;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -93,7 +97,6 @@ public class ExternalizerClassFactory implements ClassExternalizerFactory {
       EXTERNALIZERS.put("org.infinispan.transaction.TransactionLog$LogEntry", TransactionLogExternalizer.class.getName());
       EXTERNALIZERS.put(ExtendedResponse.class.getName(), ExtendedResponseExternalizer.class.getName());
       EXTERNALIZERS.put(SuccessfulResponse.class.getName(), SuccessfulResponseExternalizer.class.getName());
-      EXTERNALIZERS.put(UnsuccessfulResponse.class.getName(), UnsuccessfulResponseExternalizer.class.getName());
       EXTERNALIZERS.put(ExceptionResponse.class.getName(), ExceptionResponseExternalizer.class.getName());
       EXTERNALIZERS.put(AtomicHashMap.class.getName(), DeltaAwareExternalizer.class.getName());
 
@@ -111,13 +114,19 @@ public class ExternalizerClassFactory implements ClassExternalizerFactory {
       EXTERNALIZERS.put(PrepareCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
       EXTERNALIZERS.put(CommitCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
       EXTERNALIZERS.put(RollbackCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
+      EXTERNALIZERS.put(LockControlCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
 
-      EXTERNALIZERS.put(ImmortalCacheEntry.class.getName(), InternalCachedEntryExternalizer.class.getName());
-      EXTERNALIZERS.put(MortalCacheEntry.class.getName(), InternalCachedEntryExternalizer.class.getName());
-      EXTERNALIZERS.put(TransientCacheEntry.class.getName(), InternalCachedEntryExternalizer.class.getName());
-      EXTERNALIZERS.put(TransientMortalCacheEntry.class.getName(), InternalCachedEntryExternalizer.class.getName());
+      EXTERNALIZERS.put(ImmortalCacheEntry.class.getName(), ImmortalCacheEntryExternalizer.class.getName());
+      EXTERNALIZERS.put(MortalCacheEntry.class.getName(), MortalCacheEntryExternalizer.class.getName());
+      EXTERNALIZERS.put(TransientCacheEntry.class.getName(), TransientCacheEntryExternalizer.class.getName());
+      EXTERNALIZERS.put(TransientMortalCacheEntry.class.getName(), TransientMortalCacheEntryExternalizer.class.getName());    
 
       EXTERNALIZERS.put(InvalidateL1Command.class.getName(), ReplicableCommandExternalizer.class.getName());
+      
+      EXTERNALIZERS.put(ImmortalCacheValue.class.getName(), ImmortalCacheValueExternalizer.class.getName());
+      EXTERNALIZERS.put(MortalCacheValue.class.getName(), MortalCacheValueExternalizer.class.getName());
+      EXTERNALIZERS.put(TransientCacheValue.class.getName(), TransientCacheValueExternalizer.class.getName());
+      EXTERNALIZERS.put(TransientMortalCacheValue.class.getName(), TransientMortalCacheValueExternalizer.class.getName());
    }
 
    private final Map<Class<?>, Externalizer> externalizers = new WeakHashMap<Class<?>, Externalizer>();

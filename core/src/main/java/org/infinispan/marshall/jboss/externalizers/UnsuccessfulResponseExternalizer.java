@@ -13,7 +13,7 @@ import java.io.ObjectOutput;
  *
  * @author Manik Surtani
  * @since 4.0
- * @deprecated Not needed RequestIgnoredResponseExternalizer, it's more 
+ * @deprecated Not needed UnsuccessfulResponseExternalizer, it's more 
  * performant adding singleton instance to ObjectTable, see 
  * RequestIgnoredResponse example in CustomObjectTable
  */

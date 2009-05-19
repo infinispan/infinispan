@@ -37,8 +37,10 @@ import java.io.ObjectOutput;
  *
  * @author Galder Zamarreño
  * @since 4.0
+ * @deprecated Use individual cached entry externalizers instead
  */
 @Immutable
+@Deprecated
 public class InternalCachedEntryExternalizer implements Externalizer {
 
    /**

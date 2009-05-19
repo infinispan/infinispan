@@ -27,12 +27,16 @@ import org.infinispan.commands.RemoteCommandFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.ImmortalCacheEntry;
+import org.infinispan.container.entries.ImmortalCacheValue;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.container.entries.MortalCacheEntry;
+import org.infinispan.container.entries.MortalCacheValue;
 import org.infinispan.container.entries.TransientCacheEntry;
+import org.infinispan.container.entries.TransientCacheValue;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
+import org.infinispan.container.entries.TransientMortalCacheValue;
 import org.infinispan.io.ByteBuffer;
 import org.infinispan.io.ExposedByteArrayOutputStream;
 import org.infinispan.io.UnsignedNumeric;
@@ -307,23 +311,23 @@ public class MarshallerImpl extends AbstractMarshaller {
    }
 
    private void marshallInternalCacheValue(InternalCacheValue icv, ObjectOutput out, Map<Object, Integer> refMap) throws IOException {
-      if (icv.getClass().equals(ImmortalCacheEntry.class)) {
+      if (icv.getClass().equals(ImmortalCacheValue.class)) {
          out.writeByte(MAGICNUMBER_ICV_IMMORTAL);
          marshallObject(icv.getValue(), out, refMap);
 
-      } else if (icv.getClass().equals(MortalCacheEntry.class)) {
+      } else if (icv.getClass().equals(MortalCacheValue.class)) {
          out.writeByte(MAGICNUMBER_ICV_MORTAL);
          marshallObject(icv.getValue(), out, refMap);
          writeUnsignedLong(out, icv.getCreated());
          out.writeLong(icv.getLifespan()); // could be negative so should not use unsigned longs
 
-      } else if (icv.getClass().equals(TransientCacheEntry.class)) {
+      } else if (icv.getClass().equals(TransientCacheValue.class)) {
          out.writeByte(MAGICNUMBER_ICV_TRANSIENT);
          marshallObject(icv.getValue(), out, refMap);
          writeUnsignedLong(out, icv.getLastUsed());
          out.writeLong(icv.getMaxIdle()); // could be negative so should not use unsigned longs
 
-      } else if (icv.getClass().equals(TransientMortalCacheEntry.class)) {
+      } else if (icv.getClass().equals(TransientMortalCacheValue.class)) {
          out.writeByte(MAGICNUMBER_ICV_TRANSIENT_MORTAL);
          marshallObject(icv.getValue(), out, refMap);
          writeUnsignedLong(out, icv.getCreated());
@@ -583,17 +587,17 @@ public class MarshallerImpl extends AbstractMarshaller {
    private InternalCacheValue unmarshallInternalCacheValue(byte magic, ObjectInput in, UnmarshalledReferences refMap) throws IOException, ClassNotFoundException {
       Object v = unmarshallObject(in, refMap);
       switch (magic) {
-         case MAGICNUMBER_ICE_IMMORTAL:
+         case MAGICNUMBER_ICV_IMMORTAL:
             return InternalEntryFactory.createValue(v);
-         case MAGICNUMBER_ICE_MORTAL:
+         case MAGICNUMBER_ICV_MORTAL:
             return InternalEntryFactory.createValue(v,
                                                     readUnsignedLong(in), (Long) unmarshallObject(in, refMap),
                                                     -1, -1);
-         case MAGICNUMBER_ICE_TRANSIENT:
+         case MAGICNUMBER_ICV_TRANSIENT:
             return InternalEntryFactory.createValue(v,
                                                     -1, -1,
                                                     readUnsignedLong(in), (Long) unmarshallObject(in, refMap));
-         case MAGICNUMBER_ICE_TRANSIENT_MORTAL:
+         case MAGICNUMBER_ICV_TRANSIENT_MORTAL:
             return InternalEntryFactory.createValue(v,
                                                     readUnsignedLong(in), (Long) unmarshallObject(in, refMap),
                                                     readUnsignedLong(in), (Long) unmarshallObject(in, refMap));
