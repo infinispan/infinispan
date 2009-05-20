@@ -157,7 +157,7 @@ public class ReadCommittedEntry implements MVCCEntry {
 
          if (isRemoved()) {
             container.remove(key);
-         } else {
+         } else if (value != null) {
             container.put(key, value, lifespan, maxIdle);
          }
          reset();
