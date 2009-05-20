@@ -18,6 +18,7 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.statetransfer.StateTransferException;
+import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -27,7 +28,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -180,12 +180,12 @@ public class RpcManagerImpl implements RpcManager {
       }
    }
 
-   public final Future<Object> broadcastRpcCommandInFuture(ReplicableCommand rpc) {
-      return broadcastRpcCommandInFuture(rpc, false);
+   public final void broadcastRpcCommandInFuture(ReplicableCommand rpc, NotifyingNotifiableFuture<Object> l) {
+      broadcastRpcCommandInFuture(rpc, false, l);
    }
 
-   public final Future<Object> broadcastRpcCommandInFuture(ReplicableCommand rpc, boolean usePriorityQueue) {
-      return anycastRpcCommandInFuture(null, rpc, usePriorityQueue);
+   public final void broadcastRpcCommandInFuture(ReplicableCommand rpc, boolean usePriorityQueue, NotifyingNotifiableFuture<Object> l) {
+      anycastRpcCommandInFuture(null, rpc, usePriorityQueue, l);
    }
 
    public final void anycastRpcCommand(List<Address> recipients, ReplicableCommand rpc, boolean sync) throws ReplicationException {
@@ -219,18 +219,19 @@ public class RpcManagerImpl implements RpcManager {
       }
    }
 
-   public final Future<Object> anycastRpcCommandInFuture(List<Address> recipients, ReplicableCommand rpc) {
-      return anycastRpcCommandInFuture(recipients, rpc, false);
+   public final void anycastRpcCommandInFuture(List<Address> recipients, ReplicableCommand rpc, NotifyingNotifiableFuture<Object> l) {
+      anycastRpcCommandInFuture(recipients, rpc, false, l);
    }
 
-   public final Future<Object> anycastRpcCommandInFuture(final List<Address> recipients, final ReplicableCommand rpc, final boolean usePriorityQueue) {
+   public final void anycastRpcCommandInFuture(final List<Address> recipients, final ReplicableCommand rpc, final boolean usePriorityQueue, final NotifyingNotifiableFuture<Object> l) {
       Callable<Object> c = new Callable<Object>() {
          public Object call() {
             anycastRpcCommand(recipients, rpc, true, usePriorityQueue);
+            l.notifyDone();
             return null;
          }
       };
-      return asyncExecutor.submit(c);
+      l.setNetworkFuture(asyncExecutor.submit(c));
    }
 
    public Transport getTransport() {

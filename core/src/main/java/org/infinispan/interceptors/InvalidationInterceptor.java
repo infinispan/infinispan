@@ -21,7 +21,6 @@
  */
 package org.infinispan.interceptors;
 
-import org.infinispan.AsyncReturnValue;
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
@@ -41,6 +40,8 @@ import org.infinispan.interceptors.base.BaseRpcInterceptor;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.concurrent.NotifyingFutureImpl;
+import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
@@ -195,7 +196,9 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
             log.debug("Cache [" + rpcManager.getTransport().getAddress() + "] replicating " + command);
          // voila, invalidated!
          if (useFuture) {
-            return new AsyncReturnValue(rpcManager.broadcastRpcCommandInFuture(command), retvalForFuture);
+            NotifyingNotifiableFuture<Object> future = new NotifyingFutureImpl(retvalForFuture);
+            rpcManager.broadcastRpcCommandInFuture(command, future);
+            return future;
          } else {
             rpcManager.broadcastRpcCommand(command, synchronous);
          }

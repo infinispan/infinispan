@@ -8,11 +8,11 @@ import org.infinispan.eviction.EvictionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.util.concurrent.NotifyingFuture;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -123,29 +123,29 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
 
 
    // -- async methods --
-   Future<V> putAsync(K key, V value, Flag... flags);
+   NotifyingFuture<V> putAsync(K key, V value, Flag... flags);
 
-   Future<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags);
+   NotifyingFuture<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags);
 
-   Future<V> putIfAbsentAsync(K key, V value, Flag... flags);
+   NotifyingFuture<V> putIfAbsentAsync(K key, V value, Flag... flags);
 
-   Future<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags);
+   NotifyingFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags);
 
-   Future<Void> putAllAsync(Map<? extends K, ? extends V> map, Flag... flags);
+   NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> map, Flag... flags);
 
-   Future<Void> putAllAsync(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags);
+   NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags);
 
-   Future<V> removeAsync(Object key, Flag... flags);
+   NotifyingFuture<V> removeAsync(Object key, Flag... flags);
 
-   Future<Void> clearAsync(Flag... flags);
+   NotifyingFuture<Void> clearAsync(Flag... flags);
 
-   Future<V> replaceAsync(K k, V v, Flag... flags);
+   NotifyingFuture<V> replaceAsync(K k, V v, Flag... flags);
 
-   Future<Boolean> replaceAsync(K k, V oV, V nV, Flag... flags);
+   NotifyingFuture<Boolean> replaceAsync(K k, V oV, V nV, Flag... flags);
 
-   Future<V> replaceAsync(K k, V v, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, Flag... flags);
+   NotifyingFuture<V> replaceAsync(K k, V v, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, Flag... flags);
 
-   Future<Boolean> replaceAsync(K k, V oV, V nV, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, Flag... flags);
+   NotifyingFuture<Boolean> replaceAsync(K k, V oV, V nV, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, Flag... flags);
 
    boolean containsKey(Object key, Flag... flags);
 

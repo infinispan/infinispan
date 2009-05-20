@@ -17,13 +17,15 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.distribution.DistAsyncReturnValue;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.BaseRpcInterceptor;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Immutables;
+import org.infinispan.util.concurrent.AggregatingNotifyingFutureImpl;
+import org.infinispan.util.concurrent.NotifyingFutureImpl;
+import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -31,7 +33,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Future;
 
 /**
  * The interceptor that handles distribution of entries across a cluster, as well as transparent lookup
@@ -233,37 +234,35 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
             if (ctx.isOriginLocal()) {
                List<Address> rec = recipientGenerator.generateRecipients();
                if (trace) log.trace("Invoking command {0} on hosts {1}", command, rec);
-               Future<Object> f1 = null, f2;
                boolean useFuture = ctx.isUseFutureReturnType();
                boolean sync = isSynchronous(ctx);
-
+               NotifyingNotifiableFuture<Object> future = null;
                // if L1 caching is used make sure we broadcast an invalidate message
                if (isL1CacheEnabled && rec != null && rpcManager.getTransport().getMembers().size() > rec.size()) {
                   InvalidateCommand ic = cf.buildInvalidateFromL1Command(recipientGenerator.getKeys());
-                  f1 = submitRpc(null, ic, sync, useFuture);
+                  if (useFuture) {
+                     future = new AggregatingNotifyingFutureImpl(returnValue, 2);
+                     rpcManager.broadcastRpcCommandInFuture(ic, future);
+                  } else {
+                     rpcManager.broadcastRpcCommand(ic, sync);
+                  }
                }
-               f2 = submitRpc(rec, command, sync, useFuture);
 
-               if (f2 != null) return new DistAsyncReturnValue(f1, f2, returnValue);
+               if (useFuture) {
+                  if (future == null) future = new NotifyingFutureImpl(returnValue);
+                  rpcManager.anycastRpcCommandInFuture(rec, command, future);
+                  return future;
+               } else {
+                  rpcManager.anycastRpcCommand(rec, command, sync);
+               }
             }
          } else {
             if (!localModeForced) {
                ((TxInvocationContext) ctx).addTransactionParticipants(recipientGenerator.generateRecipients());
-            } else {
-               // add to list of participants
             }
          }
       }
       return returnValue;
-   }
-
-   private Future<Object> submitRpc(final List<Address> recipients, final WriteCommand cmd, final boolean sync, boolean useFuture) {
-      if (useFuture) {
-         return rpcManager.anycastRpcCommandInFuture(recipients, cmd);
-      } else {
-         rpcManager.anycastRpcCommand(recipients, cmd, sync);
-         return null;
-      }
    }
 
    interface RecipientGenerator {

@@ -3,22 +3,23 @@ package org.infinispan;
 import org.infinispan.config.Configuration;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.util.concurrent.NotifyingFuture;
 
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-/**                                                                 
- * This is a convenient base class for implementing a cache delegate. The only constructor takes a {@link Cache} argument, to
- * which each method call is delegated. One can extend this class and override the method sub-set it is interested in.
- * There is also an similar implmentation for {@link org.infinispan.AdvancedCache}:
- * {@link org.infinispan.AbstractDelegatingAdvancedCache}.
+/**
+ * This is a convenient base class for implementing a cache delegate. The only constructor takes a {@link Cache}
+ * argument, to which each method call is delegated. One can extend this class and override the method sub-set it is
+ * interested in. There is also an similar implmentation for {@link org.infinispan.AdvancedCache}: {@link
+ * org.infinispan.AbstractDelegatingAdvancedCache}.
  *
- * @see org.infinispan.AbstractDelegatingAdvancedCache
  * @author Mircea.Markus@jboss.com
+ * @see org.infinispan.AbstractDelegatingAdvancedCache
  */
-public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
+public class AbstractDelegatingCache<K, V> implements Cache<K, V> {
 
    private Cache<K, V> cache;
 
@@ -96,6 +97,78 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
 
    public boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       return cache.replace(key, oldValue, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
+   }
+
+   public NotifyingFuture<V> putAsync(K key, V value) {
+      return cache.putAsync(key, value);
+   }
+
+   public NotifyingFuture<V> putAsync(K key, V value, long lifespan, TimeUnit unit) {
+      return cache.putAsync(key, value, lifespan, unit);
+   }
+
+   public NotifyingFuture<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      return cache.putAsync(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+   }
+
+   public NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data) {
+      return cache.putAllAsync(data);
+   }
+
+   public NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit unit) {
+      return cache.putAllAsync(data, lifespan, unit);
+   }
+
+   public NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      return cache.putAllAsync(data, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+   }
+
+   public NotifyingFuture<Void> clearAsync() {
+      return cache.clearAsync();
+   }
+
+   public NotifyingFuture<V> putIfAbsentAsync(K key, V value) {
+      return cache.putIfAbsentAsync(key, value);
+   }
+
+   public NotifyingFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit unit) {
+      return cache.putIfAbsentAsync(key, value, lifespan, unit);
+   }
+
+   public NotifyingFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      return cache.putIfAbsentAsync(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+   }
+
+   public NotifyingFuture<V> removeAsync(Object key) {
+      return cache.removeAsync(key);
+   }
+
+   public NotifyingFuture<Boolean> removeAsync(Object key, Object value) {
+      return cache.removeAsync(key, value);
+   }
+
+   public NotifyingFuture<V> replaceAsync(K key, V value) {
+      return cache.replaceAsync(key, value);
+   }
+
+   public NotifyingFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit unit) {
+      return cache.replaceAsync(key, value, lifespan, unit);
+   }
+
+   public NotifyingFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      return cache.replaceAsync(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+   }
+
+   public NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue) {
+      return cache.replaceAsync(key, oldValue, newValue);
+   }
+
+   public NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit unit) {
+      return cache.replaceAsync(key, oldValue, newValue, lifespan, unit);
+   }
+
+   public NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      return cache.replaceAsync(key, oldValue, newValue, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
    }
 
    public AdvancedCache<K, V> getAdvancedCache() {

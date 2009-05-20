@@ -28,10 +28,10 @@ import org.infinispan.loaders.CacheStore;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.notifications.Listenable;
+import org.infinispan.util.concurrent.NotifyingFuture;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -54,15 +54,16 @@ import java.util.concurrent.TimeUnit;
  * <h3>Asynchronous operations</h3> Cache also supports the use of "async" remote operations.  Note that these methods
  * only really make sense if you are using a clustered cache.  I.e., when used in LOCAL mode, these "async" operations
  * offer no benefit whatsoever.  These methods, such as {@link #putAsync(Object, Object)} offer the best of both worlds
- * between a fully synchronous and a fully asynchronous cache in that a {@link Future} is returned.  The <tt>Future</tt>
- * can then be ignored or thrown away for typical asynchronous behaviour, or queried for synchronous behaviour, which
- * would block until any remote calls complete.  Note that all remote calls are, as far as the transport is concerned,
- * synchronous.  This allows you the guarantees that remote calls succeed, while not blocking your application thread
- * unnecessarily.  For example, usage such as the following could benefit from the async operations:
+ * between a fully synchronous and a fully asynchronous cache in that a {@link NotifyingFuture} is returned.  The
+ * <tt>NotifyingFuture</tt> can then be ignored or thrown away for typical asynchronous behaviour, or queried for
+ * synchronous behaviour, which would block until any remote calls complete.  Note that all remote calls are, as far as
+ * the transport is concerned, synchronous.  This allows you the guarantees that remote calls succeed, while not
+ * blocking your application thread unnecessarily.  For example, usage such as the following could benefit from the
+ * async operations:
  * <pre>
- *   Future f1 = cache.putAsync("key1", "value1");
- *   Future f2 = cache.putAsync("key2", "value2");
- *   Future f3 = cache.putAsync("key3", "value3");
+ *   NotifyingFuture f1 = cache.putAsync("key1", "value1");
+ *   NotifyingFuture f2 = cache.putAsync("key2", "value2");
+ *   NotifyingFuture f3 = cache.putAsync("key3", "value3");
  *   f1.get();
  *   f2.get();
  *   f3.get();
@@ -72,8 +73,8 @@ import java.util.concurrent.TimeUnit;
  * especially advantageous if the cache uses distribution and the three keys map to different cache instances in the
  * cluster.
  * <p/>
- * Also, the use of async operations when within a transaction return your local value only, as expected.  A Future is
- * still returned though for API consistency.
+ * Also, the use of async operations when within a transaction return your local value only, as expected.  A
+ * NotifyingFuture is still returned though for API consistency.
  * <p/>
  * <h3>Constructing a Cache</h3> An instance of the Cache is usually obtained by using a {@link CacheManager}.
  * <pre>
@@ -310,7 +311,7 @@ public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable 
     * @param value value to store
     * @return a future containing the old value replaced.
     */
-   Future<V> putAsync(K key, V value);
+   NotifyingFuture<V> putAsync(K key, V value);
 
    /**
     * Asynchronous version of {@link #put(Object, Object, long, TimeUnit)} .  This method does not block on remote
@@ -323,7 +324,7 @@ public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable 
     * @param unit     time unit for lifespan
     * @return a future containing the old value replaced
     */
-   Future<V> putAsync(K key, V value, long lifespan, TimeUnit unit);
+   NotifyingFuture<V> putAsync(K key, V value, long lifespan, TimeUnit unit);
 
    /**
     * Asynchronous version of {@link #put(Object, Object, long, TimeUnit, long, TimeUnit)}.  This method does not block
@@ -339,7 +340,7 @@ public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable 
     * @param maxIdleUnit  time unit for max idle time
     * @return a future containing the old value replaced
     */
-   Future<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit);
+   NotifyingFuture<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit);
 
    /**
     * Asynchronous version of {@link #putAll(Map)}.  This method does not block on remote calls, even if your cache mode
@@ -348,7 +349,7 @@ public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable 
     * @param data to store
     * @return a future containing a void return type
     */
-   Future<Void> putAllAsync(Map<? extends K, ? extends V> data);
+   NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data);
 
    /**
     * Asynchronous version of {@link #putAll(Map, long, TimeUnit)}.  This method does not block on remote calls, even if
@@ -359,7 +360,7 @@ public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable 
     * @param unit     time unit for lifespan
     * @return a future containing a void return type
     */
-   Future<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit unit);
+   NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit unit);
 
    /**
     * Asynchronous version of {@link #putAll(Map, long, TimeUnit, long, TimeUnit)}.  This method does not block on
@@ -374,7 +375,7 @@ public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable 
     * @param maxIdleUnit  time unit for max idle time
     * @return a future containing a void return type
     */
-   Future<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit);
+   NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit);
 
    /**
     * Asynchronous version of {@link #clear()}.  This method does not block on remote calls, even if your cache mode is
@@ -382,7 +383,7 @@ public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable 
     *
     * @return a future containing a void return type
     */
-   Future<Void> clearAsync();
+   NotifyingFuture<Void> clearAsync();
 
    /**
     * Asynchronous version of {@link #putIfAbsent(Object, Object)}.  This method does not block on remote calls, even if
@@ -393,7 +394,7 @@ public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable 
     * @param value value to store
     * @return a future containing the old value replaced.
     */
-   Future<V> putIfAbsentAsync(K key, V value);
+   NotifyingFuture<V> putIfAbsentAsync(K key, V value);
 
    /**
     * Asynchronous version of {@link #putIfAbsent(Object, Object, long, TimeUnit)} .  This method does not block on
@@ -406,7 +407,7 @@ public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable 
     * @param unit     time unit for lifespan
     * @return a future containing the old value replaced
     */
-   Future<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit unit);
+   NotifyingFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit unit);
 
    /**
     * Asynchronous version of {@link #putIfAbsent(Object, Object, long, TimeUnit, long, TimeUnit)}.  This method does
@@ -422,7 +423,7 @@ public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable 
     * @param maxIdleUnit  time unit for max idle time
     * @return a future containing the old value replaced
     */
-   Future<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit);
+   NotifyingFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit);
 
    /**
     * Asynchronous version of {@link #remove(Object)}.  This method does not block on remote calls, even if your cache
@@ -431,7 +432,7 @@ public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable 
     * @param key key to remove
     * @return a future containing the value removed
     */
-   Future<V> removeAsync(Object key);
+   NotifyingFuture<V> removeAsync(Object key);
 
    /**
     * Asynchronous version of {@link #remove(Object, Object)}.  This method does not block on remote calls, even if your
@@ -441,7 +442,7 @@ public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable 
     * @param value value to match on
     * @return a future containing a boolean, indicating whether the entry was removed or not
     */
-   Future<Boolean> removeAsync(Object key, Object value);
+   NotifyingFuture<Boolean> removeAsync(Object key, Object value);
 
    /**
     * Asynchronous version of {@link #replace(Object, Object)}.  This method does not block on remote calls, even if
@@ -451,7 +452,7 @@ public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable 
     * @param value value to store
     * @return a future containing the previous value overwritten
     */
-   Future<V> replaceAsync(K key, V value);
+   NotifyingFuture<V> replaceAsync(K key, V value);
 
    /**
     * Asynchronous version of {@link #replace(Object, Object, long, TimeUnit)}.  This method does not block on remote
@@ -464,7 +465,7 @@ public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable 
     * @param unit     time unit for lifespan
     * @return a future containing the previous value overwritten
     */
-   Future<V> replaceAsync(K key, V value, long lifespan, TimeUnit unit);
+   NotifyingFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit unit);
 
    /**
     * Asynchronous version of {@link #replace(Object, Object, long, TimeUnit, long, TimeUnit)}.  This method does not
@@ -480,7 +481,7 @@ public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable 
     * @param maxIdleUnit  time unit for max idle time
     * @return a future containing the previous value overwritten
     */
-   Future<V> replaceAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit);
+   NotifyingFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit);
 
    /**
     * Asynchronous version of {@link #replace(Object, Object, Object)}.  This method does not block on remote calls,
@@ -492,7 +493,7 @@ public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable 
     * @param newValue value to store
     * @return a future containing a boolean, indicating whether the entry was replaced or not
     */
-   Future<Boolean> replaceAsync(K key, V oldValue, V newValue);
+   NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue);
 
    /**
     * Asynchronous version of {@link #replace(Object, Object, Object, long, TimeUnit)}.  This method does not block on
@@ -506,7 +507,7 @@ public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable 
     * @param unit     time unit for lifespan
     * @return a future containing a boolean, indicating whether the entry was replaced or not
     */
-   Future<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit unit);
+   NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit unit);
 
    /**
     * Asynchronous version of {@link #replace(Object, Object, Object, long, TimeUnit, long, TimeUnit)}.  This method
@@ -523,7 +524,7 @@ public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable 
     * @param maxIdleUnit  time unit for max idle time
     * @return a future containing a boolean, indicating whether the entry was replaced or not
     */
-   Future<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit);
+   NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit);
 
 
    AdvancedCache<K, V> getAdvancedCache();

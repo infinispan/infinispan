@@ -27,9 +27,9 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.statetransfer.StateTransferException;
+import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 
 import java.util.List;
-import java.util.concurrent.Future;
 
 /**
  * Provides a mechanism for communicating with other caches in the cluster, by formatting and passing requests down to
@@ -119,10 +119,10 @@ public interface RpcManager {
     * is passed to the transport executor and a Future is returned.  The transport always deals with this
     * synchronously.
     *
-    * @param rpc command to execute remotely
-    * @return a future
+    * @param rpc    command to execute remotely
+    * @param future the future which will be passed back to the user
     */
-   Future<Object> broadcastRpcCommandInFuture(ReplicableCommand rpc);
+   void broadcastRpcCommandInFuture(ReplicableCommand rpc, NotifyingNotifiableFuture<Object> future);
 
    /**
     * The same as {@link #broadcastRpcCommand(org.infinispan.commands.ReplicableCommand, boolean, boolean)} except that
@@ -131,9 +131,9 @@ public interface RpcManager {
     *
     * @param rpc              command to execute remotely
     * @param usePriorityQueue if true, a priority queue is used
-    * @return a future
+    * @param future           the future which will be passed back to the user
     */
-   Future<Object> broadcastRpcCommandInFuture(ReplicableCommand rpc, boolean usePriorityQueue);
+   void broadcastRpcCommandInFuture(ReplicableCommand rpc, boolean usePriorityQueue, NotifyingNotifiableFuture<Object> future);
 
    /**
     * Broadcasts an RPC command to a specified set of recipients
@@ -164,9 +164,9 @@ public interface RpcManager {
     *
     * @param recipients recipients to invoke remote call on
     * @param rpc        command to execute remotely
-    * @return a future
+    * @param future     the future which will be passed back to the user
     */
-   Future<Object> anycastRpcCommandInFuture(List<Address> recipients, ReplicableCommand rpc);
+   void anycastRpcCommandInFuture(List<Address> recipients, ReplicableCommand rpc, NotifyingNotifiableFuture<Object> future);
 
    /**
     * The same as {@link #anycastRpcCommand(java.util.List, org.infinispan.commands.ReplicableCommand, boolean)} except
@@ -176,9 +176,9 @@ public interface RpcManager {
     * @param recipients       recipients to invoke remote call on
     * @param rpc              command to execute remotely
     * @param usePriorityQueue if true, a priority queue is used
-    * @return a future
+    * @param future           the future which will be passed back to the user
     */
-   Future<Object> anycastRpcCommandInFuture(List<Address> recipients, ReplicableCommand rpc, boolean usePriorityQueue);
+   void anycastRpcCommandInFuture(List<Address> recipients, ReplicableCommand rpc, boolean usePriorityQueue, NotifyingNotifiableFuture<Object> future);
 
    /**
     * @return a reference to the underlying transport.
