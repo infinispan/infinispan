@@ -1,6 +1,7 @@
 package org.infinispan.interceptors;
 
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.LockControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -164,6 +165,14 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       return handleWriteCommand(ctx, command,
                                 new SingleKeyRecipientGenerator(command.getKey()));
+   }
+   
+   public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
+      if (ctx.isOriginLocal()) {
+         List<Address> recipients = new ArrayList<Address>(ctx.getTransactionParticipants());
+         rpcManager.anycastRpcCommand(recipients, command, true, true);
+      }
+      return invokeNextInterceptor(ctx, command);
    }
 
    // ---- TX boundard commands

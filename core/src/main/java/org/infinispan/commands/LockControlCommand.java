@@ -25,6 +25,7 @@ import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
+import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.RemoteTransaction;
 
@@ -54,6 +55,10 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
    public Collection getKeys() {
       return keys;
    }
+   
+   public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
+      return visitor.visitLockControlCommand((TxInvocationContext) ctx, this);
+   }
 
    @Override
    public Object perform(InvocationContext ignored) throws Throwable {
@@ -70,10 +75,6 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
          ctxt.setRemoteTransaction(transaction);   
       }
       return invoker.invoke(ctxt, this);
-   }
-
-   public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
-      return visitor.visitLockControlCommand(ctx, this);
    }
 
    public byte getCommandId() {

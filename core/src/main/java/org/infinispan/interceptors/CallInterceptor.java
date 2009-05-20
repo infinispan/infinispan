@@ -59,7 +59,7 @@ public class CallInterceptor extends CommandInterceptor {
    }
    
    @Override
-   public Object visitLockControlCommand(InvocationContext ctx, LockControlCommand c) throws Throwable {
+   public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand c) throws Throwable {
       if (trace) log.trace("Suppressing invocation of method handleLockControlCommand.");
       return null;
    }

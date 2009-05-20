@@ -83,8 +83,23 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
    ComponentRegistry getComponentRegistry();
 
 
+   /**
+    * Locks a given key eagerly across cache nodes in a cluster.
+    * <p>
+    * A key can be locked eagerly in the context of a transaction only
+    *
+    * @param key the key to lock
+    */
    void lock(K key);
 
+   /**
+    * Locks collections of keys eagerly across cache nodes in a cluster.
+    * <p>
+    * Collections of keys can be locked eagerly in the context of a transaction only
+    * 
+    * 
+    * @param key the key to lock
+    */
    void lock(Collection<? extends K> keys);
 
    RpcManager getRpcManager();

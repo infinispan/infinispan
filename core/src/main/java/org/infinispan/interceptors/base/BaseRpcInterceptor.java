@@ -21,8 +21,10 @@
  */
 package org.infinispan.interceptors.base;
 
+import org.infinispan.commands.LockControlCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -49,6 +51,16 @@ public abstract class BaseRpcInterceptor extends CommandInterceptor {
    public void init() {
       defaultSynchronous = configuration.getCacheMode().isSynchronous();
    }
+   
+   @Override
+   public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
+      Object retVal = invokeNextInterceptor(ctx, command);
+      if (ctx.isOriginLocal()) {
+         rpcManager.broadcastRpcCommand(command, true, false);
+      }
+      return retVal;
+   }
+
 
    protected final boolean isSynchronous(InvocationContext ctx) {
       if (ctx.hasFlag(Flag.FORCE_SYNCHRONOUS))

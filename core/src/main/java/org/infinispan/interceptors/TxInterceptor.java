@@ -111,7 +111,7 @@ public class TxInterceptor extends CommandInterceptor {
    }
 
    @Override
-   public Object visitLockControlCommand(InvocationContext ctx, LockControlCommand command) throws Throwable {
+   public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
       return enlistReadAndInvokeNext(ctx, command);
    }
 

@@ -137,7 +137,8 @@ public class LockingInterceptor extends CommandInterceptor {
    }
 
    @Override
-   public Object visitLockControlCommand(InvocationContext ctx, LockControlCommand c) throws Throwable {
+   public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand c)
+            throws Throwable {
       try {
          if (ctx.isOriginLocal() && ctx.isInTxScope()) {
             c.attachGlobalTransaction((GlobalTransaction) ctx.getLockOwner());
@@ -147,7 +148,11 @@ public class LockingInterceptor extends CommandInterceptor {
          }
          return invokeNextInterceptor(ctx, c);
       } finally {
-         doAfterCall(ctx);
+         if (ctx.isInTxScope()) {
+            doAfterCall(ctx);
+         } else {
+            throw new IllegalStateException( "Attempting to lock but there is no transactional context in scope. " + ctx);
+         }
       }
    }
 

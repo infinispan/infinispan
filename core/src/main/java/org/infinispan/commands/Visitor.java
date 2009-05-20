@@ -73,5 +73,5 @@ public interface Visitor {
    Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand invalidateCommand) throws Throwable;
    
    // locking commands
-   Object visitLockControlCommand(InvocationContext ctx, LockControlCommand command) throws Throwable;
+   Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable;
 }

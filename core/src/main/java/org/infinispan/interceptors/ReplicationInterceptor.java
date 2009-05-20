@@ -66,16 +66,6 @@ public class ReplicationInterceptor extends BaseRpcInterceptor {
    }
 
    @Override
-   public Object visitLockControlCommand(InvocationContext ctx, LockControlCommand command) throws Throwable {
-      Object retVal = invokeNextInterceptor(ctx, command);
-      if (ctx.isOriginLocal()) {
-         rpcManager.broadcastRpcCommand(command, true, false);
-      }
-      return retVal;
-   }
-
-
-   @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (ctx.isOriginLocal() && !configuration.isOnePhaseCommit()) {
          rpcManager.broadcastRpcCommand(command, configuration.isSyncRollbackPhase(), true);
