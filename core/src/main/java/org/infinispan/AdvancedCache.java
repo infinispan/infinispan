@@ -98,7 +98,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * Collections of keys can be locked eagerly in the context of a transaction only
     * 
     * 
-    * @param key the key to lock
+    * @param keys collection of keys to lock
     */
    void lock(Collection<? extends K> keys);
 
