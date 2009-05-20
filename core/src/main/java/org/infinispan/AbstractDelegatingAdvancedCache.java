@@ -265,12 +265,4 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
    public void lock(Collection<? extends K> keys) {
       cache.lock(keys);
    }
-
-   public void unlock(K key) {
-      cache.unlock(key);
-   }
-
-   public void unlock(Collection<? extends K> keys) {
-      cache.unlock(keys);
-   }
 }

@@ -236,20 +236,7 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
    public void lock(Collection<? extends K> keys) {
       if (keys == null || keys.isEmpty())
          throw new IllegalArgumentException("Cannot lock empty list of keys");
-      LockControlCommand command = commandsFactory.buildLockControlCommand(keys, true);
-      invoker.invoke(getInvocationContext(), command);
-   }
-
-   public void unlock(K key) {
-      if (key == null)
-         throw new IllegalArgumentException("Cannot unlock null key");
-      unlock(Collections.singletonList(key));
-   }
-
-   public void unlock(Collection<? extends K> keys) {
-      if (keys == null || keys.isEmpty())
-         throw new IllegalArgumentException("Cannot unlock empty list of keys");
-      LockControlCommand command = commandsFactory.buildLockControlCommand(keys, false);
+      LockControlCommand command = commandsFactory.buildLockControlCommand(keys);
       invoker.invoke(getInvocationContext(), command);
    }
 

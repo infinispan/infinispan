@@ -34,7 +34,6 @@ import org.infinispan.config.Configuration;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
-import org.infinispan.util.concurrent.locks.LockManager;
 import org.testng.annotations.Test;
 
 /**
@@ -61,12 +60,7 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
       cache1 = manager(0).getCache("replSync");
       cache2 = manager(1).getCache("replSync");
    }
-
-   public void testLockingWithExplicitUnlock() throws Exception {
-      lockingWithExplicitUnlockHelper(false);
-      lockingWithExplicitUnlockHelper(true);
-   }
-
+   
    public void testLocksReleasedWithoutExplicitUnlock() throws Exception {
       locksReleasedWithoutExplicitUnlockHelper(false,false);
       locksReleasedWithoutExplicitUnlockHelper(true,false);
@@ -98,8 +92,6 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
       
       //do a dummy read
       cache1.get(k);
-  
-      cache1.getAdvancedCache().unlock(k);
       mgr.commit();
 
       assertNoLocks(cache1);
@@ -108,35 +100,7 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
       //TODO fails since assert cache1.isEmpty() is false because lock() creates an entry in data container 
       //cleanup();
    }
-   
-   private void lockingWithExplicitUnlockHelper(boolean lockPriorToPut) throws Exception {
-      assertClusterSize("Should only be 2  caches in the cluster!!!", 2);
-
-      assertNull("Should be null", cache1.get(k));
-      assertNull("Should be null", cache2.get(k));
-
-      String name = "Vladimir";
-      TransactionManager mgr = TestingUtil.getTransactionManager(cache1);
-      mgr.begin();
-      if (lockPriorToPut)
-         cache1.getAdvancedCache().lock(k);
-
-      cache1.put(k, v);
-
-      cache1.put(k, name);
-      if (!lockPriorToPut)
-         cache1.getAdvancedCache().lock(k);
-
-      cache1.getAdvancedCache().unlock(k);
-      mgr.commit();
-
-      assertEquals(name, cache1.get(k));
-      assertEquals("Should have replicated", name, cache2.get(k));
-
-      cache2.remove(k);
-      cleanup();
-   }
-
+ 
    private void concurrentLockingHelper(final boolean sameNode, final boolean useTx)
             throws Exception {
       assertClusterSize("Should only be 2  caches in the cluster!!!", 2);

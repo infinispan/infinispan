@@ -87,10 +87,6 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
 
    void lock(Collection<? extends K> keys);
 
-   void unlock(K key);
-
-   void unlock(Collection<? extends K> keys);
-
    RpcManager getRpcManager();
 
    BatchContainer getBatchContainer();

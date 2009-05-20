@@ -38,16 +38,13 @@ import java.util.Collection;
 public class LockControlCommand extends AbstractTransactionBoundaryCommand {
    public static final int COMMAND_ID = 3;
    private Collection keys;
-   private boolean lock;
-
 
    public LockControlCommand() {
    }
 
-   public LockControlCommand(Collection keys, String cacheName, boolean lock) {
+   public LockControlCommand(Collection keys, String cacheName) {
       this.cacheName = cacheName;
       this.keys = keys;
-      this.lock = lock;
    }
 
    public void attachGlobalTransaction(GlobalTransaction gtx) {
@@ -56,14 +53,6 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
 
    public Collection getKeys() {
       return keys;
-   }
-
-   public boolean isLock() {
-      return lock;
-   }
-
-   public boolean isUnlock() {
-      return !isLock();
    }
 
    @Override
@@ -92,7 +81,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
    }
 
    public Object[] getParameters() {
-      return new Object[]{globalTx, cacheName, keys, lock};
+      return new Object[]{globalTx, cacheName, keys};
    }
 
    public void setParameters(int commandId, Object[] args) {
@@ -101,7 +90,6 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
       globalTx = (GlobalTransaction) args[0];
       cacheName = (String) args[1];
       keys = (Collection) args[2];
-      lock = (Boolean) args[3];
    }
 
    public boolean equals(Object o) {
@@ -118,9 +106,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
 
    public int hashCode() {
       int result = super.hashCode();
-      result = 31 * result + (keys != null ? keys.hashCode() : 0);
-      result = 31 * result + (lock ? 1 : 0);
-      return result;
+      return 31 * result + (keys != null ? keys.hashCode() : 0);
    }
 
    @Override
@@ -128,7 +114,6 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
       return "LockControlCommand{" +
             "gtx=" + globalTx +
             ", cacheName='" + cacheName +
-            ", lock=" + lock +
             ", keys=" + keys + '}';
    }
 }

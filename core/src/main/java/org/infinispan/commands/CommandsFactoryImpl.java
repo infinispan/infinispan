@@ -237,7 +237,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
       }
    }
 
-   public LockControlCommand buildLockControlCommand(Collection keys, boolean lock) {
-      return new LockControlCommand(keys, cacheName, lock);
+   public LockControlCommand buildLockControlCommand(Collection keys) {
+      return new LockControlCommand(keys, cacheName);
    }
 }

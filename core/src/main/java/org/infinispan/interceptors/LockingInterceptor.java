@@ -142,16 +142,8 @@ public class LockingInterceptor extends CommandInterceptor {
          if (ctx.isOriginLocal() && ctx.isInTxScope()) {
             c.attachGlobalTransaction((GlobalTransaction) ctx.getLockOwner());
          }
-         if (c.isLock()) {
-            for (Object key : c.getKeys()) {
-               entryFactory.wrapEntryForWriting(ctx, key, true, false, false, false);
-            }
-         } else if (c.isUnlock()) {
-            for (Object key : c.getKeys()) {
-               entryFactory.releaseLock(key);
-               if (trace)
-                  log.trace("Unlocked key " + key);
-            }
+         for (Object key : c.getKeys()) {
+            entryFactory.wrapEntryForWriting(ctx, key, true, false, false, false);
          }
          return invokeNextInterceptor(ctx, c);
       } finally {
