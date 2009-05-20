@@ -56,6 +56,8 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.responses.ResponseGenerator;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.statetransfer.StateTransferManager;
+import org.infinispan.util.concurrent.FutureListener;
+import org.infinispan.util.concurrent.NotifyingFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -67,7 +69,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import java.util.concurrent.TimeoutException;
@@ -387,11 +388,11 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
       return (Boolean) invoker.invoke(ctx, command);
    }
 
-   public final Future<V> putAsync(K key, V value, Flag... flags) {
+   public final NotifyingFuture<V> putAsync(K key, V value, Flag... flags) {
       return putAsync(key, value, MILLISECONDS.toMillis(defaultLifespan), MILLISECONDS, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS, flags);
    }
 
-   public final Future<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags) {
+   public final NotifyingFuture<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags) {
       InvocationContext ctx = getInvocationContext();
       if (flags != null) ctx.setFlags(flags);
       ctx.setUseFutureReturnType(true);
@@ -399,11 +400,11 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
       return wrapInFuture(invoker.invoke(ctx, command));
    }
 
-   public final Future<V> putIfAbsentAsync(K key, V value, Flag... flags) {
+   public final NotifyingFuture<V> putIfAbsentAsync(K key, V value, Flag... flags) {
       return putIfAbsentAsync(key, value, MILLISECONDS.toMillis(defaultLifespan), MILLISECONDS, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS, flags);
    }
 
-   public final Future<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags) {
+   public final NotifyingFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags) {
       InvocationContext ctx = getInvocationContext();
       if (flags != null) ctx.setFlags(flags);
       ctx.setUseFutureReturnType(true);
@@ -412,11 +413,11 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
       return wrapInFuture(invoker.invoke(ctx, command));
    }
 
-   public final Future<Void> putAllAsync(Map<? extends K, ? extends V> map, Flag... flags) {
+   public final NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> map, Flag... flags) {
       return putAllAsync(map, MILLISECONDS.toMillis(defaultLifespan), MILLISECONDS, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS, flags);
    }
 
-   public final Future<Void> putAllAsync(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags) {
+   public final NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags) {
       InvocationContext ctx = getInvocationContext();
       if (flags != null) ctx.setFlags(flags);
       ctx.setUseFutureReturnType(true);
@@ -424,7 +425,7 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
       return wrapInFuture(invoker.invoke(ctx, command));
    }
 
-   public final Future<V> removeAsync(Object key, Flag... flags) {
+   public final NotifyingFuture<V> removeAsync(Object key, Flag... flags) {
       InvocationContext ctx = getInvocationContext();
       if (flags != null) ctx.setFlags(flags);
       ctx.setUseFutureReturnType(true);
@@ -432,7 +433,7 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
       return wrapInFuture(invoker.invoke(ctx, command));
    }
 
-   public final Future<Void> clearAsync(Flag... flags) {
+   public final NotifyingFuture<Void> clearAsync(Flag... flags) {
       InvocationContext ctx = getInvocationContext();
       if (flags != null) ctx.setFlags(flags);
       ctx.setUseFutureReturnType(true);
@@ -440,15 +441,15 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
       return wrapInFuture(invoker.invoke(ctx, command));
    }
 
-   public final Future<V> replaceAsync(K k, V v, Flag... flags) {
+   public final NotifyingFuture<V> replaceAsync(K k, V v, Flag... flags) {
       return replaceAsync(k, v, MILLISECONDS.toMillis(defaultLifespan), MILLISECONDS, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS, flags);
    }
 
-   public final Future<Boolean> replaceAsync(K k, V oV, V nV, Flag... flags) {
+   public final NotifyingFuture<Boolean> replaceAsync(K k, V oV, V nV, Flag... flags) {
       return replaceAsync(k, oV, nV, MILLISECONDS.toMillis(defaultLifespan), MILLISECONDS, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS, flags);
    }
 
-   public final Future<V> replaceAsync(K k, V v, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, Flag... flags) {
+   public final NotifyingFuture<V> replaceAsync(K k, V v, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, Flag... flags) {
       InvocationContext ctx = getInvocationContext();
       if (flags != null) ctx.setFlags(flags);
       ctx.setUseFutureReturnType(true);
@@ -456,7 +457,7 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
       return wrapInFuture(invoker.invoke(ctx, command));
    }
 
-   public final Future<Boolean> replaceAsync(K k, V oV, V nV, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, Flag... flags) {
+   public final NotifyingFuture<Boolean> replaceAsync(K k, V oV, V nV, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, Flag... flags) {
       InvocationContext ctx = getInvocationContext();
       if (flags != null) ctx.setFlags(flags);
       ctx.setUseFutureReturnType(true);
@@ -566,11 +567,11 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
     * @return a future
     */
    @SuppressWarnings("unchecked")
-   private <X> Future<X> wrapInFuture(final Object retval) {
-      if (retval instanceof Future) {
-         return (Future<X>) retval;
+   private <X> NotifyingFuture<X> wrapInFuture(final Object retval) {
+      if (retval instanceof NotifyingFuture) {
+         return (NotifyingFuture<X>) retval;
       } else {
-         return new Future<X>() {
+         return new NotifyingFuture<X>() {
             public boolean cancel(boolean mayInterruptIfRunning) {
                return true;
             }
@@ -591,56 +592,61 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
             public X get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
                return get();
             }
+
+            public NotifyingFuture<X> attachListener(FutureListener<X> futureListener) {
+               futureListener.futureDone(this);
+               return this;
+            }
          };
       }
    }
 
-   public final Future<V> putAsync(K key, V value) {
+   public final NotifyingFuture<V> putAsync(K key, V value) {
       return putAsync(key, value, MILLISECONDS.toMillis(defaultLifespan), MILLISECONDS, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS);
    }
 
-   public final Future<V> putAsync(K key, V value, long lifespan, TimeUnit unit) {
+   public final NotifyingFuture<V> putAsync(K key, V value, long lifespan, TimeUnit unit) {
       return putAsync(key, value, lifespan, unit, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS);
    }
 
-   public final Future<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+   public final NotifyingFuture<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
       InvocationContext ctx = getInvocationContext();
       ctx.setUseFutureReturnType(true);
       PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, lifespanUnit.toMillis(lifespan), maxIdleUnit.toMillis(maxIdle));
       return wrapInFuture(invoker.invoke(ctx, command));
    }
 
-   public final Future<Void> putAllAsync(Map<? extends K, ? extends V> data) {
+   public final NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data) {
       return putAllAsync(data, MILLISECONDS.toMillis(defaultLifespan), MILLISECONDS, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS);
    }
 
-   public final Future<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit unit) {
+   public final NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit unit) {
       return putAllAsync(data, lifespan, unit, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS);
    }
 
-   public final Future<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+   public final NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
       InvocationContext ctx = getInvocationContext();
       ctx.setUseFutureReturnType(true);
       PutMapCommand command = commandsFactory.buildPutMapCommand(data, lifespanUnit.toMillis(lifespan), maxIdleUnit.toMillis(maxIdle));
       return wrapInFuture(invoker.invoke(ctx, command));
    }
 
-   public final Future<Void> clearAsync() {
+   public final NotifyingFuture<Void> clearAsync() {
       InvocationContext ctx = getInvocationContext();
       ctx.setUseFutureReturnType(true);
       ClearCommand command = commandsFactory.buildClearCommand();
       return wrapInFuture(invoker.invoke(ctx, command));
    }
 
-   public final Future<V> putIfAbsentAsync(K key, V value) {
+   public final NotifyingFuture<V> putIfAbsentAsync(K key, V value) {
       return putIfAbsentAsync(key, value, MILLISECONDS.toMillis(defaultLifespan), MILLISECONDS, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS);
    }
 
-   public final Future<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit unit) {
+   public final NotifyingFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit unit) {
       return putIfAbsentAsync(key, value, lifespan, unit, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS);
    }
 
-   public final Future<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+   public final NotifyingFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
       InvocationContext ctx = getInvocationContext();
       ctx.setUseFutureReturnType(true);
       PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, lifespanUnit.toMillis(lifespan), maxIdleUnit.toMillis(maxIdle));
@@ -648,41 +654,41 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
       return wrapInFuture(invoker.invoke(ctx, command));
    }
 
-   public final Future<V> removeAsync(Object key) {
+   public final NotifyingFuture<V> removeAsync(Object key) {
       InvocationContext ctx = getInvocationContext();
       ctx.setUseFutureReturnType(true);
       RemoveCommand command = commandsFactory.buildRemoveCommand(key, null);
       return wrapInFuture(invoker.invoke(ctx, command));
    }
 
-   public final Future<Boolean> removeAsync(Object key, Object value) {
+   public final NotifyingFuture<Boolean> removeAsync(Object key, Object value) {
       InvocationContext ctx = getInvocationContext();
       ctx.setUseFutureReturnType(true);
       RemoveCommand command = commandsFactory.buildRemoveCommand(key, value);
       return wrapInFuture(invoker.invoke(ctx, command));
    }
 
-   public final Future<V> replaceAsync(K key, V value) {
+   public final NotifyingFuture<V> replaceAsync(K key, V value) {
       return replaceAsync(key, value, MILLISECONDS.toMillis(defaultLifespan), MILLISECONDS, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS);
    }
 
-   public final Future<V> replaceAsync(K key, V value, long lifespan, TimeUnit unit) {
+   public final NotifyingFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit unit) {
       return replaceAsync(key, value, lifespan, unit, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS);
    }
 
-   public final Future<V> replaceAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+   public final NotifyingFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
       return replaceAsync(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit, (Flag[]) null);
    }
 
-   public final Future<Boolean> replaceAsync(K key, V oldValue, V newValue) {
+   public final NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue) {
       return replaceAsync(key, oldValue, newValue, MILLISECONDS.toMillis(defaultLifespan), MILLISECONDS, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS);
    }
 
-   public final Future<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit unit) {
+   public final NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit unit) {
       return replaceAsync(key, oldValue, newValue, lifespan, unit, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS);
    }
 
-   public final Future<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+   public final NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
       InvocationContext ctx = getInvocationContext();
       ctx.setUseFutureReturnType(true);
       ReplaceCommand command = commandsFactory.buildReplaceCommand(key, oldValue, newValue, lifespanUnit.toMillis(lifespan), maxIdleUnit.toMillis(maxIdle));
