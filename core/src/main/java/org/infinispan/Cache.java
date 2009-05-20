@@ -48,8 +48,8 @@ import java.util.concurrent.TimeUnit;
  * {@link ConcurrentMap#keySet()}, {@link ConcurrentMap#values()} and {@link ConcurrentMap#entrySet()} are expensive
  * (prohibitively so when using a distributed cache) and frequent use of these methods is not recommended.
  * <p/>
- * Also, like many {@link ConcurrentMap} implementations, Cache does not support the use of <tt>null</tt> keys (although
- * <tt>null</tt> values are allowed).
+ * Also, like many {@link ConcurrentMap} implementations, Cache does not support the use of <tt>null</tt> keys or
+ * values.
  * <p/>
  * <h3>Asynchronous operations</h3> Cache also supports the use of "async" remote operations.  Note that these methods
  * only really make sense if you are using a clustered cache.  I.e., when used in LOCAL mode, these "async" operations
