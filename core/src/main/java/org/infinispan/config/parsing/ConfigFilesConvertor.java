@@ -83,7 +83,7 @@ public class ConfigFilesConvertor {
    }
 
    /**
-    * Writes to the <b>os</b> the 3.x configuration file resulted by transforming the 2.x configuration file passed in
+    * Writes to the <b>os</b> the infinispan 4.x configuration file resulted by transforming configuration file passed in
     * as <b>inputFile</b>. Transformation is performed according to the <b>xsltFile</b>. Both <b>inputFile</b> and he
     * xslt file are looked up using a {@link org.jboss.cache.util.FileLookup}
     */
@@ -158,7 +158,6 @@ public class ConfigFilesConvertor {
       is.close();
       fos.close();
 
-      System.out.println("jgroupsConfigFile.length() = " + jgroupsConfigFile.length());
       //now this means that the generated file is basically empty, so delete ie
       if (jgroupsConfigFile.length() < 5) {
          jgroupsConfigFile.delete();

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+<xsl:stylesheet xmlns="urn:infinispan:config:4.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
    <xsl:output method="xml" indent="yes" version="1.0" encoding="UTF-8" omit-xml-declaration="no"/>
 
    <xsl:template match="/jbosscache">
@@ -153,10 +153,8 @@
                   <xsl:if test="transaction[@transactionManagerLookupClass]">
                      <xsl:if
                            test="not(starts-with(transaction/@transactionManagerLookupClass,'org.jboss.cache'))">
-                        <xsl:message terminate="no">WARNING!!! Custom 'transactionManagerLookupClass' is being used.
-                           This cannot
-                           be automatically transformed.
-                        </xsl:message>
+                        <xsl:message terminate="no">WARNING! Custom 'transactionManagerLookupClass' is being used. This cannot be automatically transformed.</xsl:message>
+                        <!-- TODO Custom 'transactionManagerLookupClass' is being used. This cannot be automatically transformed. -->
                      </xsl:if>
                      <xsl:attribute name="transactionManagerLookupClass">
                         <xsl:value-of
@@ -230,139 +228,204 @@
                         </xsl:if>
                      </xsl:element>
                   </xsl:if>
-                  <xsl:element name="async">
-                     <xsl:if test="clustering/async[@useReplQueue]">
-                        <xsl:attribute name="useReplQueue">
-                           <xsl:value-of select="clustering/async/@useReplQueue"/>
-                        </xsl:attribute>
-                     </xsl:if>
-                     <xsl:if test="clustering/async[@replQueueInterval]">
-                        <xsl:attribute name="replQueueInterval">
-                           <xsl:value-of select="clustering/async/@replQueueInterval"/>
-                        </xsl:attribute>
-                     </xsl:if>
-                     <xsl:if test="clustering/async[@replQueueMaxElements]">
-                        <xsl:attribute name="replQueueMaxElements">
-                           <xsl:value-of select="clustering/async/@replQueueMaxElements"/>
-                        </xsl:attribute>
-                     </xsl:if>
-                     <xsl:if test="clustering/async[@serializationExecutorPoolSize > 1]">
-                        <xsl:attribute name="asyncMarshalling">true</xsl:attribute>
-                     </xsl:if>
-                  </xsl:element>
-               </xsl:element>
-            </xsl:if>
-
-            <xsl:if test="loaders">
-               <xsl:element name="loaders">
-                  <xsl:if test="loaders[@passivation]">
-                     <xsl:attribute name="passivation">
-                        <xsl:value-of select="loaders/@passivation"/>
-                     </xsl:attribute>
-                  </xsl:if>
-                  <xsl:if test="loaders[@shared]">
-                     <xsl:attribute name="shared">
-                        <xsl:value-of select="loaders/@shared"/>
-                     </xsl:attribute>
-                  </xsl:if>
-                  <xsl:if test="loaders/preload">
-                     <xsl:message terminate="no">WARNING!!! Preload elements cannot be automatically transformed, please
-                        do it manually!
-                     </xsl:message>
-                  </xsl:if>
-                  <xsl:for-each select="loaders/loader">
-                     <xsl:element name="loader">
-                        <xsl:attribute name="class">
-                           <xsl:value-of select="@class"/>
-                        </xsl:attribute>
-                        <xsl:if test="@fetchPersistentState">
-                           <xsl:attribute name="fetchPersistentState">
-                              <xsl:value-of select="@fetchPersistentState"/>
+                  <xsl:if test="clustering/async">
+                     <xsl:element name="async">
+                        <xsl:if test="clustering/async[@useReplQueue]">
+                           <xsl:attribute name="useReplQueue">
+                              <xsl:value-of select="clustering/async/@useReplQueue"/>
                            </xsl:attribute>
                         </xsl:if>
-                        <xsl:if test="@ignoreModifications">
-                           <xsl:attribute name="ignoreModifications">
-                              <xsl:value-of select="@ignoreModifications"/>
+                        <xsl:if test="clustering/async[@replQueueInterval]">
+                           <xsl:attribute name="replQueueInterval">
+                              <xsl:value-of select="clustering/async/@replQueueInterval"/>
                            </xsl:attribute>
                         </xsl:if>
-                        <xsl:if test="@purgeOnStartup">
-                           <xsl:attribute name="purgeOnStartup">
-                              <xsl:value-of select="@purgeOnStartup"/>
+                        <xsl:if test="clustering/async[@replQueueMaxElements]">
+                           <xsl:attribute name="replQueueMaxElements">
+                              <xsl:value-of select="clustering/async/@replQueueMaxElements"/>
                            </xsl:attribute>
                         </xsl:if>
-                        <xsl:if test="properties">
-                           <xsl:message terminate="no">INFO: Please configure cache loader props manually!</xsl:message>
-                           <properties>
-                              <property name="...set name here..." value="...set value here..."/>
-                              <property name="...set name here..." value="...set value here..."/>
-                           </properties>
-                        </xsl:if>
-                        <xsl:if test="singletonStore">
-                           <xsl:element name="singletonStore">
-                              <xsl:if test="singletonStore[@enabled]">
-                                 <xsl:attribute name="enabled">
-                                    <xsl:value-of select="singletonStore/@enabled"/>
-                                 </xsl:attribute>
-                                 <xsl:if test="singletonStore/properties">
-                                    <xsl:message terminate="no">WARNING!!! Singleton store was changed and needs to be
-                                       configured manually!!!!
-                                    </xsl:message>
-                                 </xsl:if>
-                              </xsl:if>
-                           </xsl:element>
-
+                        <xsl:if test="clustering/async[@serializationExecutorPoolSize > 1]">
+                           <xsl:attribute name="asyncMarshalling">true</xsl:attribute>
                         </xsl:if>
                      </xsl:element>
-                  </xsl:for-each>
+                  </xsl:if>
                </xsl:element>
             </xsl:if>
+
+            <xsl:call-template name="generateLoaders"/>
          </default>
 
-         <xsl:for-each select="eviction/*">
+         <xsl:for-each select="eviction/region">
             <xsl:element name="namedCache">
-               <xsl:attribute name="name">
-                  <xsl:choose>
-                     <xsl:when test="@name">
-                        <xsl:value-of select="@name"/>
-                     </xsl:when>
-                     <xsl:otherwise>default</xsl:otherwise>
-                  </xsl:choose>
-               </xsl:attribute>
-               <xsl:element name="eviction">
-                  <xsl:if test="/jbosscache/eviction[@wakeUpInterval]">
-                     <xsl:attribute name="wakeUpInterval">
-                        <xsl:value-of select="/jbosscache/eviction/@wakeUpInterval"/>
-                     </xsl:attribute>
-                  </xsl:if>
-                  <xsl:if test="property[@name='maxNodes']">
-                     <xsl:attribute name="maxEntries">
-                        <xsl:value-of select="normalize-space(property[@name='maxNodes']/@value)"/>
-                     </xsl:attribute>
-                  </xsl:if>
-                  <xsl:if test="@algorithmClass and not(starts-with(@algorithmClass,'org.jboss.cache'))">
-                     <xsl:message terminate="no">WARNING!!! Custom eviction 'algorithmClass' is being used.
-                        This cannot be automatically transformed. Plese do this manually.
-                     </xsl:message>
-                  </xsl:if>
-                  <xsl:choose>
-                     <xsl:when test="@algorithmClass">
-                        <xsl:attribute name="strategy">
-                           <xsl:value-of
-                                 select="substring-before(substring-after(@algorithmClass,'org.jboss.cache.eviction.'),'Algorithm')"/>
-                        </xsl:attribute>
-                     </xsl:when>
-                     <xsl:otherwise>
-                        <xsl:attribute name="strategy">
-                           <xsl:value-of
-                                 select="substring-before(substring-after(/jbosscache/eviction/default/@algorithmClass,'org.jboss.cache.eviction.'),'Algorithm')"/>
-                        </xsl:attribute>
-                     </xsl:otherwise>
-                  </xsl:choose>
-
-               </xsl:element>
-
+               <xsl:call-template name="evictionAttributes"/>
+               <xsl:call-template name="generateLoaders"/>
             </xsl:element>
          </xsl:for-each>
       </xsl:element>
+
+      <xsl:message terminate="no">IMPORTANT: Please take a look at the generated file for (possible) TODOs about the elements that couldn't be converted automatically!</xsl:message>
+   </xsl:template>
+
+   <xsl:template name="generateLoaders">
+      <xsl:if test="loaders">
+         <xsl:element name="loaders">
+            <xsl:if test="loaders[@passivation]">
+               <xsl:attribute name="passivation">
+                  <xsl:value-of select="loaders/@passivation"/>
+               </xsl:attribute>
+            </xsl:if>
+            <xsl:if test="loaders[@shared]">
+               <xsl:attribute name="shared">
+                  <xsl:value-of select="loaders/@shared"/>
+               </xsl:attribute>
+            </xsl:if>
+            <xsl:if test="loaders/preload">
+               <xsl:message terminate="no">WARNING! Preload elements cannot be automatically transformed, please do it manually!</xsl:message>
+               <!-- TODO - Preload elements cannot be automatically transformed, please do it manually!-->
+            </xsl:if>
+            <xsl:for-each select="loaders/loader">
+               <xsl:element name="loader">
+                  <xsl:attribute name="class">
+                     <xsl:choose>
+                        <xsl:when test="@class='org.jboss.cache.loader.JDBCCacheLoader'">
+                           <xsl:text>org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore</xsl:text>
+                        </xsl:when>
+                        <xsl:otherwise>
+                           <xsl:choose>
+                              <xsl:when test="@class='org.jboss.cache.loader.FileCacheLoader'">
+                                 <xsl:text>org.infinispan.loaders.file.FileCacheStore</xsl:text>
+                              </xsl:when>
+                              <xsl:otherwise>
+                                 <xsl:choose>
+                                    <xsl:when test="@class='org.jboss.cache.loader.bdbje.BdbjeCacheLoader'">
+                                       <xsl:text>org.infinispan.loaders.bdbje.BdbjeCacheStore</xsl:text>
+                                    </xsl:when>
+                                    <xsl:otherwise>
+                                       <xsl:choose>
+                                          <xsl:when
+                                                test="@class='org.jboss.cache.loader.jdbm.JdbmCacheLoader' or @class='org.jboss.cache.loader.jdbm.JdbmCacheLoader2'">
+                                             <xsl:text>org.infinispan.loaders.jdbm.JdbmCacheStore</xsl:text>
+                                          </xsl:when>
+                                          <xsl:otherwise>
+                                             <xsl:choose>
+                                                <xsl:when test="@class='org.jboss.cache.loader.s3.S3CacheLoader'">
+                                                   <xsl:text>org.infinispan.loaders.s3.S3CacheStore</xsl:text>
+                                                </xsl:when>
+                                                <xsl:otherwise>
+                                                   <xsl:message terminate="no">WARNING! Cannot convert classloader's class, please do it manually!</xsl:message>
+                                                   <!--TODO Cannot convert classloader's class, please do it manually!-->
+                                                </xsl:otherwise>
+                                             </xsl:choose>
+                                          </xsl:otherwise>
+                                       </xsl:choose>
+                                    </xsl:otherwise>
+                                 </xsl:choose>
+                              </xsl:otherwise>
+                           </xsl:choose>
+                        </xsl:otherwise>
+                     </xsl:choose>
+                  </xsl:attribute>
+                  <xsl:if test="@fetchPersistentState">
+                     <xsl:attribute name="fetchPersistentState">
+                        <xsl:value-of select="@fetchPersistentState"/>
+                     </xsl:attribute>
+                  </xsl:if>
+                  <xsl:if test="@ignoreModifications">
+                     <xsl:attribute name="ignoreModifications">
+                        <xsl:value-of select="@ignoreModifications"/>
+                     </xsl:attribute>
+                  </xsl:if>
+                  <xsl:if test="@purgeOnStartup">
+                     <xsl:attribute name="purgeOnStartup">
+                        <xsl:value-of select="@purgeOnStartup"/>
+                     </xsl:attribute>
+                  </xsl:if>
+                  <xsl:if test="@async">
+                     <async enabled="true"/>
+                  </xsl:if>
+                  <xsl:if test="properties">
+                     <xsl:message terminate="no">WARNING! Please configure cache loader props manually!</xsl:message>
+                     <properties>
+                        <!--<property name="TODO set name here..." value="...set value here..."/>-->
+                        <!--<property name="TODO set name here..." value="...set value here..."/>-->
+                     </properties>
+                  </xsl:if>
+                  <xsl:if test="singletonStore">
+                     <xsl:element name="singletonStore">
+                        <xsl:if test="singletonStore[@enabled]">
+                           <xsl:attribute name="enabled">
+                              <xsl:value-of select="singletonStore/@enabled"/>
+                           </xsl:attribute>
+                           <xsl:if test="singletonStore/properties">
+                              <xsl:message terminate="no">WARNING! Singleton store was changed and needs to be configured manually!</xsl:message>
+                              <!-- TODO Singleton store was changed and needs to be configured manually-->
+                           </xsl:if>
+                        </xsl:if>
+                     </xsl:element>
+
+                  </xsl:if>
+               </xsl:element>
+            </xsl:for-each>
+         </xsl:element>
+         <xsl:if test="/jbosscache/eviction/default">
+            <xsl:for-each select="/jbosscache/eviction/default">
+               <xsl:call-template name="evictionAttributes"/>
+            </xsl:for-each>
+         </xsl:if>
+      </xsl:if>
+   </xsl:template>
+
+   <xsl:template name="evictionAttributes">
+
+      <xsl:if test="@name">
+         <xsl:attribute name="name">
+            <xsl:value-of select="@name"/>
+         </xsl:attribute>
+      </xsl:if>
+      <xsl:element name="eviction">
+         <xsl:if test="/jbosscache/eviction[@wakeUpInterval]">
+            <xsl:attribute name="wakeUpInterval">
+               <xsl:value-of select="/jbosscache/eviction/@wakeUpInterval"/>
+            </xsl:attribute>
+         </xsl:if>
+         <xsl:if test="property[@name='maxNodes']">
+            <xsl:attribute name="maxEntries">
+               <xsl:value-of select="normalize-space(property[@name='maxNodes']/@value)"/>
+            </xsl:attribute>
+         </xsl:if>
+         <xsl:if test="@algorithmClass and not(starts-with(@algorithmClass,'org.jboss.cache'))">
+            <xsl:message terminate="no">WARNING! Custom eviction 'algorithmClass' is being used. This cannot be automatically transformed. Plese do this manually. </xsl:message>
+            <!--TODO Custom eviction 'algorithmClass' is being used. This cannot be automatically transformed. Plese do this manually.-->
+         </xsl:if>
+         <xsl:choose>
+            <xsl:when test="@algorithmClass">
+               <xsl:attribute name="strategy">
+                  <xsl:value-of
+                        select="substring-before(substring-after(@algorithmClass,'org.jboss.cache.eviction.'),'Algorithm')"/>
+               </xsl:attribute>
+            </xsl:when>
+            <xsl:otherwise>
+               <xsl:attribute name="strategy">
+                  <xsl:value-of
+                        select="substring-before(substring-after(/jbosscache/eviction/default/@algorithmClass,'org.jboss.cache.eviction.'),'Algorithm')"/>
+               </xsl:attribute>
+            </xsl:otherwise>
+         </xsl:choose>
+      </xsl:element>
+      <xsl:if test="property[@name='timeToLive'] or property[@name='maxAge']">
+         <xsl:element name="expiration">
+            <xsl:if test="property[@name='timeToLive']">
+               <xsl:attribute name="maxIdle">
+                  <xsl:value-of select="property[@name='timeToLive']/@value"/>
+               </xsl:attribute>
+            </xsl:if>
+            <xsl:if test="property[@name='maxAge']">
+               <xsl:attribute name="lifespan">
+                  <xsl:value-of select="property[@name='maxAge']/@value"/>
+               </xsl:attribute>
+            </xsl:if>
+         </xsl:element>
+      </xsl:if>
    </xsl:template>
 </xsl:stylesheet>

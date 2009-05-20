@@ -13,6 +13,6 @@ then
       CLASSPATH=$CLASSPATH:$JAR
    done
 fi
-CLASSPATH=../modules/core/infinispan-core.jar:$CLASSPATH
+CLASSPATH=../modules/core/infinispan-core.jar$CLASSPATH
 echo classpath is $CLASSPATH
-java -classpath $CLASSPATH -Dsource=$1 -Ddestination=$2 org.jboss.cache.config.parsing.ConfigFilesConvertor
+java -classpath $CLASSPATH -Dsource=$1 -Ddestination=$2 -Dtype=$3 org.infinispan.config.parsing.ConfigFilesConvertor
