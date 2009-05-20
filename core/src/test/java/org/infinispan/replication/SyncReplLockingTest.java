@@ -37,9 +37,9 @@ import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.testng.annotations.Test;
 
 /**
- * Tests for lock/unlock API
+ * Tests for lock API
  * 
- * Introduce lock() and unlock() API methods
+ * Introduce lock() API methods
  * https://jira.jboss.org/jira/browse/ISPN-48
  * 
  * 
@@ -97,8 +97,7 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
       assertNoLocks(cache1);
       assertNoLocks(cache2);
       
-      //TODO fails since assert cache1.isEmpty() is false because lock() creates an entry in data container 
-      //cleanup();
+      cleanup();
    }
  
    private void concurrentLockingHelper(final boolean sameNode, final boolean useTx)
@@ -189,8 +188,10 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
       cleanup();
    }
    
+   @SuppressWarnings("unchecked")
    protected void assertNoLocks(Cache cache) {
       /*
+       * TODO
        * cache.keySet() is not implemented yet
        * LockManager lm = TestingUtil.extractLockManager(cache);
        * for (Object key : cache.keySet()) assert !lm.isLocked(key);
