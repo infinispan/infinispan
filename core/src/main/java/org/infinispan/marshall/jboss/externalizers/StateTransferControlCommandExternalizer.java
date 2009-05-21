@@ -21,12 +21,12 @@
  */
 package org.infinispan.marshall.jboss.externalizers;
 
-import org.infinispan.commands.control.StateTransferControlCommand;
+import org.infinispan.commands.control.StateTransferControlCommand; 
 import org.infinispan.remoting.transport.Transport;
-import org.jboss.marshalling.Creator;
+import org.jboss.marshalling.Marshaller;
+import org.jboss.marshalling.Unmarshaller;
 
 import java.io.IOException;
-import java.io.ObjectInput;
 
 /**
  * StateTransferControlCommandExternalizer.
@@ -35,26 +35,21 @@ import java.io.ObjectInput;
  * @since 4.0
  */
 public class StateTransferControlCommandExternalizer extends ReplicableCommandExternalizer {
-
-   /**
-    * The serialVersionUID
-    */
+   /** The serialVersionUID */
    private static final long serialVersionUID = -3743458410265076691L;
-
    private Transport transport;
 
    public void init(Transport transport) {
       this.transport = transport;
    }
 
-   /**
-    * In this case, subjectType will contain the class name of the ReplicableCommand subclass to create.
-    * <p/>
-    * Note that StateTransferControlCommand might need to be treated differently!!! Todo: check outcome of email sent to
-    * dev list.
-    */
-   public Object createExternal(Class<?> subjectType, ObjectInput input, Creator defaultCreator)
-         throws IOException, ClassNotFoundException {
+   @Override
+   protected void writeClass(Marshaller output, Class<?> subjectType) throws IOException {
+      // No-op
+   }
+
+   @Override
+   protected Object createExternal(Unmarshaller input) throws IOException, ClassNotFoundException {
       StateTransferControlCommand command = new StateTransferControlCommand();
       command.init(transport);
       return command;

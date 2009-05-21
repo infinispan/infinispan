@@ -27,6 +27,8 @@ import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.marshall.jboss.MarshallUtil;
 import org.jboss.marshalling.Creator;
 import org.jboss.marshalling.Externalizer;
+import org.jboss.marshalling.Marshaller;
+import org.jboss.marshalling.Unmarshaller;
 
 import java.io.IOException;
 import java.io.ObjectInput;

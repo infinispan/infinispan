@@ -3,6 +3,8 @@ package org.infinispan.marshall.jboss.externalizers;
 import org.infinispan.remoting.responses.UnsuccessfulResponse;
 import org.jboss.marshalling.Creator;
 import org.jboss.marshalling.Externalizer;
+import org.jboss.marshalling.Marshaller;
+import org.jboss.marshalling.Unmarshaller;
 
 import java.io.IOException;
 import java.io.ObjectInput;

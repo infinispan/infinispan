@@ -21,15 +21,15 @@
  */
 package org.infinispan.marshall.jboss.externalizers;
 
-import net.jcip.annotations.Immutable;
+ import net.jcip.annotations.Immutable;
+
+import org.infinispan.marshall.jboss.Externalizer;
 import org.infinispan.remoting.responses.ExtendedResponse;
 import org.infinispan.remoting.responses.Response;
-import org.jboss.marshalling.Creator;
-import org.jboss.marshalling.Externalizer;
+import org.jboss.marshalling.Marshaller;
+import org.jboss.marshalling.Unmarshaller;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 
 /**
  * ExtendedResponseExternalizer.
@@ -39,26 +39,19 @@ import java.io.ObjectOutput;
  */
 @Immutable
 public class ExtendedResponseExternalizer implements Externalizer {
-   /**
-    * The serialVersionUID
-    */
+   /** The serialVersionUID */
    private static final long serialVersionUID = 1529506931234856884L;
 
-   public void writeExternal(Object subject, ObjectOutput output) throws IOException {
+   public void writeObject(Marshaller output, Object subject) throws IOException {
       ExtendedResponse er = (ExtendedResponse) subject;
       output.writeBoolean(er.isReplayIgnoredRequests());
       output.writeObject(er.getResponse());
    }
 
-   public Object createExternal(Class<?> subjectType, ObjectInput input, Creator defaultCreator)
-         throws IOException, ClassNotFoundException {
+   public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
       boolean replayIgnoredRequests = input.readBoolean();
       Response response = (Response) input.readObject();
       return new ExtendedResponse(response, replayIgnoredRequests);
    }
 
-   public void readExternal(Object subject, ObjectInput input) throws IOException,
-                                                                      ClassNotFoundException {
-      // No-op
-   }
 }

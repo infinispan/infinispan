@@ -21,15 +21,15 @@
  */
 package org.infinispan.marshall.jboss.externalizers;
 
-import net.jcip.annotations.Immutable;
+ import net.jcip.annotations.Immutable;
+
+import org.infinispan.marshall.jboss.Externalizer;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.jboss.marshalling.Creator;
-import org.jboss.marshalling.Externalizer;
+import org.jboss.marshalling.Marshaller;
+import org.jboss.marshalling.Unmarshaller;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 
 /**
  * GlobalTransactionExternalizer.
@@ -39,29 +39,22 @@ import java.io.ObjectOutput;
  */
 @Immutable
 public class GlobalTransactionExternalizer implements Externalizer {
-
-   /**
-    * The serialVersionUID
-    */
+   /** The serialVersionUID */
    private static final long serialVersionUID = -8677909497367726531L;
 
-   public void writeExternal(Object subject, ObjectOutput output) throws IOException {
+   public void writeObject(Marshaller output, Object subject) throws IOException {
       GlobalTransaction gtx = (GlobalTransaction) subject;
       output.writeLong(gtx.getId());
-      output.writeObject(gtx.getAddress());
+      output.writeObject(gtx.getAddress());      
    }
 
-   public Object createExternal(Class<?> subjectType, ObjectInput input, Creator defaultCreator)
-         throws IOException, ClassNotFoundException {
-      return new GlobalTransaction();
-   }
-
-   public void readExternal(Object subject, ObjectInput input) throws IOException,
-                                                                      ClassNotFoundException {
-      GlobalTransaction gtx = (GlobalTransaction) subject;
+   public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
+      GlobalTransaction gtx = new GlobalTransaction();
       long id = input.readLong();
       Object address = input.readObject();
       gtx.setId(id);
       gtx.setAddress((Address) address);
+      return gtx;
    }
+
 }

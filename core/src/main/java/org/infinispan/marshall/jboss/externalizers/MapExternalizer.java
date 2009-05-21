@@ -21,16 +21,15 @@
  */
 package org.infinispan.marshall.jboss.externalizers;
 
-import net.jcip.annotations.Immutable;
 import org.infinispan.CacheException;
+import org.infinispan.marshall.jboss.ClassExternalizer;
 import org.infinispan.marshall.jboss.MarshallUtil;
+import org.infinispan.marshall.jboss.Externalizer;
 import org.infinispan.util.Util;
-import org.jboss.marshalling.Creator;
-import org.jboss.marshalling.Externalizer;
+import org.jboss.marshalling.Marshaller;
+import org.jboss.marshalling.Unmarshaller;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Map;
 
 /**
@@ -40,29 +39,29 @@ import java.util.Map;
  * @author Galder Zamarreño
  * @since 4.0
  */
-@Immutable
-public class MapExternalizer implements Externalizer {
-
-   /**
-    * The serialVersionUID
-    */
+public class MapExternalizer implements Externalizer, ClassExternalizer.ClassWritable {
+   /** The serialVersionUID */
    private static final long serialVersionUID = -532896252671303391L;
+   private ClassExternalizer classRw;
 
-   public void writeExternal(Object subject, ObjectOutput output) throws IOException {
+   public void writeObject(Marshaller output, Object subject) throws IOException {
+      classRw.writeClass(output, subject.getClass());
       MarshallUtil.marshallMap((Map) subject, output);
    }
 
-   public Object createExternal(Class<?> subjectType, ObjectInput input, Creator defaultCreator)
-         throws IOException, ClassNotFoundException {
+   public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
+      Class<?> subjectType = classRw.readClass(input);
+      Map subject = null;
       try {
-         return Util.getInstance(subjectType);
+         subject = (Map) Util.getInstance(subjectType);
       } catch (Exception e) {
          throw new CacheException("Unable to create new instance of ReplicableCommand", e);
       }
+      MarshallUtil.unmarshallMap(subject, input);
+      return subject;
    }
 
-   public void readExternal(Object subject, ObjectInput input) throws IOException,
-                                                                      ClassNotFoundException {
-      MarshallUtil.unmarshallMap((Map) subject, input);
+   public void setClassExternalizer(ClassExternalizer classRw) {
+      this.classRw = classRw;
    }
 }

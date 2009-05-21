@@ -19,36 +19,36 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.marshall.jboss.externalizers;
-
-import net.jcip .annotations.Immutable;
-
-import org.infinispan.marshall.jboss.Externalizer;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
-import org.jboss.marshalling.Marshaller;
-import org.jboss.marshalling.Unmarshaller;
+package org.infinispan.marshall.jboss;
 
 import java.io.IOException;
 
+import org.jboss.marshalling.Unmarshaller;
+import org.jboss.marshalling.ObjectTable.Writer;
+
 /**
- * JGroupsAddressExternalizer.
- *
+ * Extended interface that extends capabilities of writing predefined objects 
+ * with the possibility of reading them. Any new externalizer implementations
+ * should implement this interface. 
+ * 
+ * Optionally, Externalizer implementations should implement 
+ * {@code ClassTable.ClassReadWritable} when they want to add class information to the 
+ * marshalled payload. This is useful in cases where ReadWriter implementations
+ * will create, upon read, new instances using reflection.
+ * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-@Immutable
-public class JGroupsAddressExternalizer implements Externalizer {
-   /** The serialVersionUID */
-   private static final long serialVersionUID = 2400716389425727329L;
-
-   public void writeObject(Marshaller output, Object subject) throws IOException {
-      JGroupsAddress address = (JGroupsAddress) subject;
-      output.writeObject(address.getJGroupsAddress());
-   }
-
-   public Object readObject(Unmarshaller unmarshaller) throws IOException, ClassNotFoundException {
-      JGroupsAddress address = new JGroupsAddress();
-      address.setJGroupsAddress((org.jgroups.Address) unmarshaller.readObject());
-      return address;
-   }
+public interface Externalizer extends Writer {
+   
+   /**
+    * Read an instance from the stream.  The instance will have been written by the
+    * {@link #writeObject(Object)} method.
+    *
+    * @param unmarshaller the unmarshaller to read from
+    * @return the object instance
+    * @throws IOException if an I/O error occurs
+    * @throws ClassNotFoundException if a class could not be found
+    */
+   Object readObject(Unmarshaller unmarshaller) throws IOException, ClassNotFoundException;
 }

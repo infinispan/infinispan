@@ -22,41 +22,36 @@
 package org.infinispan.marshall.jboss.externalizers;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 
 import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.container.entries.TransientCacheValue;
 import org.infinispan.io.UnsignedNumeric;
-import org.jboss.marshalling.Creator;
-import org.jboss.marshalling.Externalizer;
+import org.infinispan.marshall.jboss.Externalizer;
+import org.jboss.marshalling.Marshaller;
+import org.jboss.marshalling.Unmarshaller;
 
 /**
  * TransientCacheValueExternalizer.
  * 
  * @author Galder Zamarreño
+ * @since 4.0
  */
 public class TransientCacheValueExternalizer implements Externalizer {
    /** The serialVersionUID */
    private static final long serialVersionUID = 7600812173331344919L;
 
-   public void writeExternal(Object subject, ObjectOutput output) throws IOException {
+   public void writeObject(Marshaller output, Object subject) throws IOException {
       TransientCacheValue icv = (TransientCacheValue) subject;
       output.writeObject(icv.getValue());
       UnsignedNumeric.writeUnsignedLong(output, icv.getLastUsed());
       output.writeLong(icv.getMaxIdle()); // could be negative so should not use unsigned longs
    }
-   
-   public Object createExternal(Class<?> subjectType, ObjectInput input, Creator defaultCreator)
-         throws IOException, ClassNotFoundException {
+
+   public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
       Object v = input.readObject();
       long lastUsed = UnsignedNumeric.readUnsignedLong(input);
       Long maxIdle = input.readLong();
       return InternalEntryFactory.createValue(v, -1, -1, lastUsed, maxIdle);
-   }
-   
-   public void readExternal(Object subject, ObjectInput input) throws IOException, ClassNotFoundException {
-      // No-op
    }
 
 }

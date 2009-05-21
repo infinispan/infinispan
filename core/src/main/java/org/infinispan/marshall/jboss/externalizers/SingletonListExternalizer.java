@@ -21,13 +21,13 @@
  */
 package org.infinispan.marshall.jboss.externalizers;
 
-import net.jcip.annotations.Immutable;
-import org.jboss.marshalling.Creator;
-import org.jboss.marshalling.Externalizer;
+import net.jcip.annotations.Immutable; 
+
+import org.infinispan.marshall.jboss.Externalizer;
+import org.jboss.marshalling.Marshaller;
+import org.jboss.marshalling.Unmarshaller;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.List;
 
@@ -39,24 +39,15 @@ import java.util.List;
  */
 @Immutable
 public class SingletonListExternalizer implements Externalizer {
-
-   /**
-    * The serialVersionUID
-    */
+   /** The serialVersionUID */
    private static final long serialVersionUID = -714785461531351642L;
 
-   public void writeExternal(Object subject, ObjectOutput output) throws IOException {
+   public void writeObject(Marshaller output, Object subject) throws IOException {
       output.writeObject(((List) subject).get(0));
    }
 
-   public Object createExternal(Class<?> subjectType, ObjectInput input, Creator defaultCreator)
-         throws IOException, ClassNotFoundException {
+   public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
       return Collections.singletonList(input.readObject());
-   }
-
-   public void readExternal(Object subject, ObjectInput input) throws IOException,
-                                                                      ClassNotFoundException {
-      // No-op since all the work is done during create.
    }
 
 }

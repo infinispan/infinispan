@@ -22,36 +22,34 @@
 package org.infinispan.marshall.jboss.externalizers;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+
+import net.jcip.annotations.Immutable;
 
 import org.infinispan.container.entries.ImmortalCacheValue;
 import org.infinispan.container.entries.InternalEntryFactory;
-import org.jboss.marshalling.Creator;
-import org.jboss.marshalling.Externalizer;
+import org.infinispan.marshall.jboss.Externalizer;
+import org.jboss.marshalling.Marshaller;
+import org.jboss.marshalling.Unmarshaller;
 
 /**
  * ImmortalCacheValueExternalizer.
  * 
  * @author Galder Zamarreño
+ * @since 4.0
  */
+@Immutable
 public class ImmortalCacheValueExternalizer implements Externalizer {
    /** The serialVersionUID */
    private static final long serialVersionUID = 1196375204861850495L;
 
-   public void writeExternal(Object subject, ObjectOutput output) throws IOException {
+   public void writeObject(Marshaller output, Object subject) throws IOException {
       ImmortalCacheValue icv = (ImmortalCacheValue) subject;
-      output.writeObject(icv.getValue());
+      output.writeObject(icv.getValue());      
    }
-   
-   public Object createExternal(Class<?> subjectType, ObjectInput input, Creator defaultCreator)
-         throws IOException, ClassNotFoundException {
+
+   public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
       Object v = input.readObject();
       return InternalEntryFactory.createValue(v);
-   }
-   
-   public void readExternal(Object subject, ObjectInput input) throws IOException, ClassNotFoundException {
-      // No-op
    }
 
 }

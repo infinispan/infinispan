@@ -48,6 +48,7 @@ import org.infinispan.container.entries.TransientCacheEntry;
 import org.infinispan.container.entries.TransientCacheValue;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheValue;
+import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.marshall.MarshalledValue;
 import org.infinispan.marshall.jboss.externalizers.*;
 import org.infinispan.remoting.responses.ExceptionResponse;
@@ -76,93 +77,96 @@ import java.util.WeakHashMap;
  *
  * @author Galder Zamarreño
  * @since 4.0
+ * @deprecated No longer in use. A purely ObjectTable based solution is now in use.
  */
 @Immutable
+@Deprecated
 public class ExternalizerClassFactory implements ClassExternalizerFactory {
    private static final Map<String, String> EXTERNALIZERS = new HashMap<String, String>();
 
-   static {
-      EXTERNALIZERS.put(GlobalTransaction.class.getName(), GlobalTransactionExternalizer.class.getName());
-      EXTERNALIZERS.put(JGroupsAddress.class.getName(), JGroupsAddressExternalizer.class.getName());
-      EXTERNALIZERS.put(ArrayList.class.getName(), ArrayListExternalizer.class.getName());
-      EXTERNALIZERS.put(LinkedList.class.getName(), LinkedListExternalizer.class.getName());
-      EXTERNALIZERS.put(HashMap.class.getName(), MapExternalizer.class.getName());
-      EXTERNALIZERS.put(TreeMap.class.getName(), MapExternalizer.class.getName());
-      EXTERNALIZERS.put(HashSet.class.getName(), SetExternalizer.class.getName());
-      EXTERNALIZERS.put(TreeSet.class.getName(), SetExternalizer.class.getName());
-      EXTERNALIZERS.put("org.infinispan.util.Immutables$ImmutableMapWrapper", ImmutableMapExternalizer.class.getName());
-      EXTERNALIZERS.put(MarshalledValue.class.getName(), MarshalledValueExternalizer.class.getName());
-      EXTERNALIZERS.put(FastCopyHashMap.class.getName(), MapExternalizer.class.getName());
-      EXTERNALIZERS.put("java.util.Collections$SingletonList", SingletonListExternalizer.class.getName());
-      EXTERNALIZERS.put("org.infinispan.transaction.TransactionLog$LogEntry", TransactionLogExternalizer.class.getName());
-      EXTERNALIZERS.put(ExtendedResponse.class.getName(), ExtendedResponseExternalizer.class.getName());
-      EXTERNALIZERS.put(SuccessfulResponse.class.getName(), SuccessfulResponseExternalizer.class.getName());
-      EXTERNALIZERS.put(ExceptionResponse.class.getName(), ExceptionResponseExternalizer.class.getName());
-      EXTERNALIZERS.put(AtomicHashMap.class.getName(), DeltaAwareExternalizer.class.getName());
+//   static {
+//      EXTERNALIZERS.put(GlobalTransaction.class.getName(), GlobalTransactionExternalizer.class.getName());
+//      EXTERNALIZERS.put(JGroupsAddress.class.getName(), JGroupsAddressExternalizer.class.getName());
+//      EXTERNALIZERS.put(ArrayList.class.getName(), ArrayListExternalizer.class.getName());
+//      EXTERNALIZERS.put(LinkedList.class.getName(), LinkedListExternalizer.class.getName());
+//      EXTERNALIZERS.put(HashMap.class.getName(), MapExternalizer.class.getName());
+//      EXTERNALIZERS.put(TreeMap.class.getName(), MapExternalizer.class.getName());
+//      EXTERNALIZERS.put(HashSet.class.getName(), SetExternalizer.class.getName());
+//      EXTERNALIZERS.put(TreeSet.class.getName(), SetExternalizer.class.getName());
+//      EXTERNALIZERS.put("org.infinispan.util.Immutables$ImmutableMapWrapper", ImmutableMapExternalizer.class.getName());
+//      EXTERNALIZERS.put(MarshalledValue.class.getName(), MarshalledValueExternalizer.class.getName());
+//      EXTERNALIZERS.put(FastCopyHashMap.class.getName(), MapExternalizer.class.getName());
+//      EXTERNALIZERS.put("java.util.Collections$SingletonList", SingletonListExternalizer.class.getName());
+//      EXTERNALIZERS.put("org.infinispan.transaction.TransactionLog$LogEntry", TransactionLogExternalizer.class.getName());
+//      EXTERNALIZERS.put(ExtendedResponse.class.getName(), ExtendedResponseExternalizer.class.getName());
+//      EXTERNALIZERS.put(SuccessfulResponse.class.getName(), SuccessfulResponseExternalizer.class.getName());
+//      EXTERNALIZERS.put(ExceptionResponse.class.getName(), ExceptionResponseExternalizer.class.getName());
+//      EXTERNALIZERS.put(AtomicHashMap.class.getName(), DeltaAwareExternalizer.class.getName());
+//
+//      EXTERNALIZERS.put(StateTransferControlCommand.class.getName(), StateTransferControlCommandExternalizer.class.getName());
+//      EXTERNALIZERS.put(ClusteredGetCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
+//      EXTERNALIZERS.put(MultipleRpcCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
+//      EXTERNALIZERS.put(SingleRpcCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
+//      EXTERNALIZERS.put(GetKeyValueCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
+//      EXTERNALIZERS.put(PutKeyValueCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
+//      EXTERNALIZERS.put(RemoveCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
+//      EXTERNALIZERS.put(InvalidateCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
+//      EXTERNALIZERS.put(ReplaceCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
+//      EXTERNALIZERS.put(ClearCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
+//      EXTERNALIZERS.put(PutMapCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
+//      EXTERNALIZERS.put(PrepareCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
+//      EXTERNALIZERS.put(CommitCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
+//      EXTERNALIZERS.put(RollbackCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
+//      EXTERNALIZERS.put(InvalidateL1Command.class.getName(), ReplicableCommandExternalizer.class.getName());
+//      EXTERNALIZERS.put(LockControlCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
+//
+//      EXTERNALIZERS.put(ImmortalCacheEntry.class.getName(), ImmortalCacheEntryExternalizer.class.getName());
+//      EXTERNALIZERS.put(MortalCacheEntry.class.getName(), MortalCacheEntryExternalizer.class.getName());
+//      EXTERNALIZERS.put(TransientCacheEntry.class.getName(), TransientCacheEntryExternalizer.class.getName());
+//      EXTERNALIZERS.put(TransientMortalCacheEntry.class.getName(), TransientMortalCacheEntryExternalizer.class.getName());    
+//      EXTERNALIZERS.put(ImmortalCacheValue.class.getName(), ImmortalCacheValueExternalizer.class.getName());
+//      EXTERNALIZERS.put(MortalCacheValue.class.getName(), MortalCacheValueExternalizer.class.getName());
+//      EXTERNALIZERS.put(TransientCacheValue.class.getName(), TransientCacheValueExternalizer.class.getName());
+//      EXTERNALIZERS.put(TransientMortalCacheValue.class.getName(), TransientMortalCacheValueExternalizer.class.getName());
+//      
+//      EXTERNALIZERS.put(Bucket.class.getName(), BucketExternalizer.class.getName());
+//   }
+//
+//   private final Map<Class<?>, Externalizer> externalizers = new WeakHashMap<Class<?>, Externalizer>();
+//   private final Transport transport;
+//   private final CustomObjectTable objectTable;
+//
+//   public ExternalizerClassFactory(Transport transport, CustomObjectTable objectTable) {
+//      this.transport = transport;
+//      this.objectTable = objectTable;
+//   }
+//
+//   public void init() {
+//      try {
+//         for (Map.Entry<String, String> entry : EXTERNALIZERS.entrySet()) {
+//            Class typeClazz = Util.loadClass(entry.getKey());
+//            Externalizer ext = (Externalizer) Util.getInstance(entry.getValue());
+//            if (ext instanceof StateTransferControlCommandExternalizer) {
+//               ((StateTransferControlCommandExternalizer) ext).init(transport);
+//            }
+//            externalizers.put(typeClazz, ext);
+//            objectTable.add(ext);
+//         }
+//      } catch (IOException e) {
+//         throw new CacheException("Unable to open load magicnumbers.properties", e);
+//      } catch (ClassNotFoundException e) {
+//         throw new CacheException("Unable to load one of the classes defined in the magicnumbers.properties", e);
+//      } catch (Exception e) {
+//         throw new CacheException("Unable to instantiate Externalizer class", e);
+//      }
+//   }
 
-      EXTERNALIZERS.put(StateTransferControlCommand.class.getName(), StateTransferControlCommandExternalizer.class.getName());
-      EXTERNALIZERS.put(ClusteredGetCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
-      EXTERNALIZERS.put(MultipleRpcCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
-      EXTERNALIZERS.put(SingleRpcCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
-      EXTERNALIZERS.put(GetKeyValueCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
-      EXTERNALIZERS.put(PutKeyValueCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
-      EXTERNALIZERS.put(RemoveCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
-      EXTERNALIZERS.put(InvalidateCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
-      EXTERNALIZERS.put(ReplaceCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
-      EXTERNALIZERS.put(ClearCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
-      EXTERNALIZERS.put(PutMapCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
-      EXTERNALIZERS.put(PrepareCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
-      EXTERNALIZERS.put(CommitCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
-      EXTERNALIZERS.put(RollbackCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
-      EXTERNALIZERS.put(LockControlCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
-
-      EXTERNALIZERS.put(ImmortalCacheEntry.class.getName(), ImmortalCacheEntryExternalizer.class.getName());
-      EXTERNALIZERS.put(MortalCacheEntry.class.getName(), MortalCacheEntryExternalizer.class.getName());
-      EXTERNALIZERS.put(TransientCacheEntry.class.getName(), TransientCacheEntryExternalizer.class.getName());
-      EXTERNALIZERS.put(TransientMortalCacheEntry.class.getName(), TransientMortalCacheEntryExternalizer.class.getName());    
-
-      EXTERNALIZERS.put(InvalidateL1Command.class.getName(), ReplicableCommandExternalizer.class.getName());
-      
-      EXTERNALIZERS.put(ImmortalCacheValue.class.getName(), ImmortalCacheValueExternalizer.class.getName());
-      EXTERNALIZERS.put(MortalCacheValue.class.getName(), MortalCacheValueExternalizer.class.getName());
-      EXTERNALIZERS.put(TransientCacheValue.class.getName(), TransientCacheValueExternalizer.class.getName());
-      EXTERNALIZERS.put(TransientMortalCacheValue.class.getName(), TransientMortalCacheValueExternalizer.class.getName());
-   }
-
-   private final Map<Class<?>, Externalizer> externalizers = new WeakHashMap<Class<?>, Externalizer>();
-   private final Transport transport;
-   private final CustomObjectTable objectTable;
-
-   public ExternalizerClassFactory(Transport transport, CustomObjectTable objectTable) {
-      this.transport = transport;
-      this.objectTable = objectTable;
-   }
-
-   public void init() {
-      try {
-         for (Map.Entry<String, String> entry : EXTERNALIZERS.entrySet()) {
-            Class typeClazz = Util.loadClass(entry.getKey());
-            Externalizer ext = (Externalizer) Util.getInstance(entry.getValue());
-            if (ext instanceof StateTransferControlCommandExternalizer) {
-               ((StateTransferControlCommandExternalizer) ext).init(transport);
-            }
-            externalizers.put(typeClazz, ext);
-            objectTable.add(ext);
-         }
-      } catch (IOException e) {
-         throw new CacheException("Unable to open load magicnumbers.properties", e);
-      } catch (ClassNotFoundException e) {
-         throw new CacheException("Unable to load one of the classes defined in the magicnumbers.properties", e);
-      } catch (Exception e) {
-         throw new CacheException("Unable to instantiate Externalizer class", e);
-      }
-   }
-
-   public void stop() {
-      externalizers.clear();
-   }
+//   public void stop() {
+//      externalizers.clear();
+//   }
 
    public Externalizer getExternalizer(Class<?> clazz) {
-      return externalizers.get(clazz);
+//      return externalizers.get(clazz);
+      return null;
    }
 }

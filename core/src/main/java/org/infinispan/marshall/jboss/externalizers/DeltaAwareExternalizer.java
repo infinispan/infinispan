@@ -23,12 +23,11 @@ package org.infinispan.marshall.jboss.externalizers;
 
 import net.jcip.annotations.Immutable;
 import org.infinispan.atomic.DeltaAware;
-import org.jboss.marshalling.Creator;
-import org.jboss.marshalling.Externalizer;
+import org.infinispan.marshall.jboss.Externalizer;
+import org.jboss.marshalling.Marshaller;
+import org.jboss.marshalling.Unmarshaller;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 
 /**
  * DeltaAwareExternalizer.
@@ -38,24 +37,16 @@ import java.io.ObjectOutput;
  */
 @Immutable
 public class DeltaAwareExternalizer implements Externalizer {
-
-   /**
-    * The serialVersionUID
-    */
+   /** The serialVersionUID */
    private static final long serialVersionUID = -1635913024455984627L;
 
-   public void writeExternal(Object subject, ObjectOutput output) throws IOException {
+   public void writeObject(Marshaller output, Object subject) throws IOException {
       DeltaAware dw = (DeltaAware) subject;
-      output.writeObject(dw.delta());
+      output.writeObject(dw.delta());      
    }
 
-   public Object createExternal(Class<?> subjectType, ObjectInput input, Creator defaultCreator)
-         throws IOException, ClassNotFoundException {
+   public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
       return input.readObject();
    }
 
-   public void readExternal(Object subject, ObjectInput input) throws IOException,
-                                                                      ClassNotFoundException {
-      // No-op
-   }
 }

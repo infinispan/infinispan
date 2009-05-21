@@ -21,17 +21,16 @@
  */
 package org.infinispan.marshall.jboss.externalizers;
 
-import net.jcip.annotations.Immutable;
+import net.jcip.annotations.Immutable; 
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.marshall.jboss.MarshallUtil;
+import org.infinispan.marshall.jboss.Externalizer;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.TransactionLog;
-import org.jboss.marshalling.Creator;
-import org.jboss.marshalling.Externalizer;
+import org.jboss.marshalling.Marshaller;
+import org.jboss.marshalling.Unmarshaller;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 
 /**
  * TransactionLogExternalizer.
@@ -41,13 +40,10 @@ import java.io.ObjectOutput;
  */
 @Immutable
 public class TransactionLogExternalizer implements Externalizer {
-
-   /**
-    * The serialVersionUID
-    */
+   /** The serialVersionUID */
    private static final long serialVersionUID = -7341096933735222157L;
 
-   public void writeExternal(Object subject, ObjectOutput output) throws IOException {
+   public void writeObject(Marshaller output, Object subject) throws IOException {
       TransactionLog.LogEntry le = (TransactionLog.LogEntry) subject;
       output.writeObject(le.getTransaction());
       WriteCommand[] cmds = le.getModifications();
@@ -56,8 +52,7 @@ public class TransactionLogExternalizer implements Externalizer {
          output.writeObject(c);
    }
 
-   public Object createExternal(Class<?> subjectType, ObjectInput input, Creator defaultCreator)
-         throws IOException, ClassNotFoundException {
+   public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
       GlobalTransaction gtx = (GlobalTransaction) input.readObject();
       int numCommands = MarshallUtil.readUnsignedInt(input);
       WriteCommand[] cmds = new WriteCommand[numCommands];
@@ -65,8 +60,4 @@ public class TransactionLogExternalizer implements Externalizer {
       return new TransactionLog.LogEntry(gtx, cmds);
    }
 
-   public void readExternal(Object subject, ObjectInput input) throws IOException,
-                                                                      ClassNotFoundException {
-      // No-op since the initialisation the creation and read happens during the create phase.
-   }
 }

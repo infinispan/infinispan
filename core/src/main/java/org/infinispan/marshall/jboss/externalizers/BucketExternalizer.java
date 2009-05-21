@@ -21,36 +21,40 @@
  */
 package org.infinispan.marshall.jboss.externalizers;
 
+import java.io.IOException;
+
 import net.jcip.annotations.Immutable;
-import org.infinispan.marshall.jboss.MarshallUtil;
+
+import org.infinispan.container.entries.InternalCacheEntry;
+
+import org.infinispan.io.UnsignedNumeric;
+import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.marshall.jboss.Externalizer;
 import org.jboss.marshalling.Marshaller;
 import org.jboss.marshalling.Unmarshaller;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-
 /**
- * List externalizer dealing with ArrayList and LinkedList implementations.
- *
+ * BucketExternalizer.
+ * 
  * @author Galder Zamarreño
  * @since 4.0
  */
 @Immutable
-public class ArrayListExternalizer implements Externalizer {
+public class BucketExternalizer implements Externalizer {
    /** The serialVersionUID */
-   private static final long serialVersionUID = 589638638644295615L;
+   private static final long serialVersionUID = -515803326753484284L;
 
    public void writeObject(Marshaller output, Object subject) throws IOException {
-      MarshallUtil.marshallCollection((Collection) subject, output);
+      Bucket b = (Bucket) subject;
+      UnsignedNumeric.writeUnsignedInt(output, b.getNumEntries());
+      for (InternalCacheEntry se : b.getEntries().values()) output.writeObject(se);
    }
 
    public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
-      int size = MarshallUtil.readUnsignedInt(input);
-      ArrayList l = new ArrayList(size);
-      for (int i = 0; i < size; i++) l.add(input.readObject());
-      return l;
+      Bucket b = new Bucket();
+      int numEntries = UnsignedNumeric.readUnsignedInt(input);
+      for (int i = 0; i < numEntries; i++) b.addEntry((InternalCacheEntry) input.readObject());
+      return b;
    }
 
 }

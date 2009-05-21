@@ -23,13 +23,12 @@ package org.infinispan.marshall.jboss.externalizers;
 
 import net.jcip.annotations.Immutable;
 import org.infinispan.marshall.jboss.MarshallUtil;
+import org.infinispan.marshall.jboss.Externalizer;
 import org.infinispan.util.Immutables;
-import org.jboss.marshalling.Creator;
-import org.jboss.marshalling.Externalizer;
+import org.jboss.marshalling.Marshaller;
+import org.jboss.marshalling.Unmarshaller;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -41,25 +40,17 @@ import java.util.Map;
  */
 @Immutable
 public class ImmutableMapExternalizer implements Externalizer {
-
-   /**
-    * The serialVersionUID
-    */
+   /** The serialVersionUID */
    private static final long serialVersionUID = -3592193723750924806L;
 
-   public void writeExternal(Object subject, ObjectOutput output) throws IOException {
-      MarshallUtil.marshallMap((Map) subject, output);
+   public void writeObject(Marshaller output, Object subject) throws IOException {
+      MarshallUtil.marshallMap((Map) subject, output);      
    }
 
-   public Object createExternal(Class<?> subjectType, ObjectInput input, Creator defaultCreator)
-         throws IOException, ClassNotFoundException {
+   public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
       Map map = new HashMap();
       MarshallUtil.unmarshallMap(map, input);
       return Immutables.immutableMapWrap(map);
    }
-
-   public void readExternal(Object subject, ObjectInput input) throws IOException,
-                                                                      ClassNotFoundException {
-      // No-op since all the work is done in createExternal in order to be able to change identity.
-   }
+   
 }

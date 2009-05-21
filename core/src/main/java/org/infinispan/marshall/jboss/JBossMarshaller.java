@@ -57,23 +57,15 @@ import java.io.OutputStream;
 public class JBossMarshaller extends AbstractMarshaller {
    private static final Log log = LogFactory.getLog(JBossMarshaller.class);
    private static final String DEFAULT_MARSHALLER_FACTORY = "org.jboss.marshalling.river.RiverMarshallerFactory";
-   //   private static final int VERSION_400 = 400;
-   //   private static final int DEFAULT_VERSION = VERSION_400;
    private ClassLoader defaultClassLoader;
    private MarshallingConfiguration configuration;
    private MarshallerFactory factory;
-   private MagicNumberClassTable classTable;
    private CustomObjectTable objectTable;
-   private ExternalizerClassFactory externalizerFactoryAndObjectTable;
-///   private boolean trace;
 
    @Inject
    public void init(ClassLoader defaultCl, Transport transport) {
       log.debug("Using JBoss Marshalling based marshaller.");
-
-//      trace = log.isTraceEnabled();
       defaultClassLoader = defaultCl;
-
       try {
          // Todo: Enable different marshaller factories via configuration
          factory = (MarshallerFactory) Util.getInstance(DEFAULT_MARSHALLER_FACTORY);
@@ -81,29 +73,28 @@ public class JBossMarshaller extends AbstractMarshaller {
          throw new CacheException("Unable to load JBoss Marshalling marshaller factory " + DEFAULT_MARSHALLER_FACTORY, e);
       }
 
-      classTable = createMagicNumberClassTable();
-      objectTable = createCustomObjectTable();
-      externalizerFactoryAndObjectTable = createCustomExternalizerFactory(transport, objectTable);
-
+      objectTable = createCustomObjectTable(transport);
       configuration = new MarshallingConfiguration();
       configuration.setCreator(new SunReflectiveCreator());
-      configuration.setClassTable(classTable);
-      configuration.setClassExternalizerFactory(externalizerFactoryAndObjectTable);
       configuration.setObjectTable(objectTable);
+      
+      /* Doubtful: Setting version to 0 reduces the payload avoiding block mode 
+       * (each object in a block) but could potentially be a security issue 
+       * and could spoil things when trying to serialize a spec-compliant 
+       * Serializable object which relies on reading a -1 to know when its data 
+       * ends will "overrun" the buffer if there's no block mode in place. 
+       */ 
+//      configuration.setVersion(0);
 
       // ContextClassResolver provides same functionality as MarshalledValueInputStream
       configuration.setClassResolver(new ContextClassResolver());
-//      // Todo: This is the JBMAR underlying protocol version, don't touch! Think about how to get VAM into JBMAR
-//      configuration.setVersion(DEFAULT_VERSION);
    }
 
    @Stop
    public void stop() {
       // Do not leak classloader when cache is stopped.
       defaultClassLoader = null;
-      classTable.stop();
       objectTable.stop();
-      externalizerFactoryAndObjectTable.stop();
    }
 
    public byte[] objectToByteBuffer(Object obj) throws IOException {
@@ -116,8 +107,11 @@ public class JBossMarshaller extends AbstractMarshaller {
    public ByteBuffer objectToBuffer(Object o) throws IOException {
       ExposedByteArrayOutputStream baos = new ExposedByteArrayOutputStream(128);
       ObjectOutput marshaller = startObjectOutput(baos);
-      objectToObjectStream(o, marshaller);
-      finishObjectOutput(marshaller);
+      try {
+         objectToObjectStream(o, marshaller);
+      } finally {
+         finishObjectOutput(marshaller);
+      }
       return new ByteBuffer(baos.getRawBuffer(), 0, baos.size());
    }
 
@@ -157,8 +151,12 @@ public class JBossMarshaller extends AbstractMarshaller {
                                                                                  ClassNotFoundException {
       ByteArrayInputStream is = new ByteArrayInputStream(buf, offset, length);
       ObjectInput unmarshaller = startObjectInput(is);
-      Object o = objectFromObjectStream(unmarshaller);
-      finishObjectInput(unmarshaller);
+      Object o = null;
+      try {
+         o = objectFromObjectStream(unmarshaller);
+      } finally {
+         finishObjectInput(unmarshaller);
+      }
       return o;
    }
 
@@ -179,20 +177,8 @@ public class JBossMarshaller extends AbstractMarshaller {
       return in.readObject();
    }
 
-   protected MagicNumberClassTable createMagicNumberClassTable() {
-      MagicNumberClassTable classTable = new MagicNumberClassTable();
-      classTable.init();
-      return classTable;
-   }
-
-   protected ExternalizerClassFactory createCustomExternalizerFactory(Transport transport, CustomObjectTable objectTable) {
-      ExternalizerClassFactory externalizerFactory = new ExternalizerClassFactory(transport, objectTable);
-      externalizerFactory.init();
-      return externalizerFactory;
-   }
-
-   private CustomObjectTable createCustomObjectTable() {
-      CustomObjectTable objectTable = new CustomObjectTable();
+   private CustomObjectTable createCustomObjectTable(Transport transport) {
+      CustomObjectTable objectTable = new CustomObjectTable(transport);
       objectTable.init();
       return objectTable;
    }

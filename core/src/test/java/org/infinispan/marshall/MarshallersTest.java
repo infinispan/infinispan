@@ -38,10 +38,15 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.container.entries.ImmortalCacheEntry;
+import org.infinispan.container.entries.ImmortalCacheValue;
 import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.container.entries.MortalCacheEntry;
+import org.infinispan.container.entries.MortalCacheValue;
 import org.infinispan.container.entries.TransientCacheEntry;
+import org.infinispan.container.entries.TransientCacheValue;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
+import org.infinispan.container.entries.TransientMortalCacheValue;
+import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.marshall.jboss.JBossMarshaller;
 import org.infinispan.remoting.responses.ExtendedResponse;
 import org.infinispan.remoting.responses.RequestIgnoredResponse;
@@ -309,6 +314,71 @@ public class MarshallersTest {
 
       TransientMortalCacheEntry entry4 = (TransientMortalCacheEntry) InternalEntryFactory.create("key", "value", System.currentTimeMillis() - 1000, 200000, System.currentTimeMillis(), 4000000);
       checkEqualityAndSize(entry4);
+   }
+   
+   public void testInternalCacheValueMarshalling() throws Exception {
+      byte[] bytes = null;
+      ImmortalCacheValue value1 = (ImmortalCacheValue) InternalEntryFactory.createValue("value", System.currentTimeMillis() - 1000, -1, System.currentTimeMillis(), -1);
+      List<Integer> sizes = new ArrayList<Integer>(2);
+      for (Marshaller marshaller : marshallers) {
+         bytes = marshaller.objectToByteBuffer(value1);
+         ImmortalCacheValue rvalue1 = (ImmortalCacheValue) marshaller.objectFromByteBuffer(bytes);
+         assert rvalue1.getValue().equals(value1.getValue()) : "Writen[" + rvalue1.getValue() + "] and read[" + value1.getValue() + "] objects should be the same";
+         sizes.add(bytes.length);
+      }
+      assert sizes.get(1) < sizes.get(0) : "JBoss Marshaller should write less bytes: bytesJBoss=" + sizes.get(1) + ", bytesHome=" + sizes.get(0);
+
+      sizes.clear();
+      for (Marshaller marshaller : marshallers) {
+         MortalCacheValue value2 = (MortalCacheValue) InternalEntryFactory.createValue("value", System.currentTimeMillis() - 1000, 200000, System.currentTimeMillis(), -1);
+         bytes = marshaller.objectToByteBuffer(value2);
+         MortalCacheValue rvalue2 = (MortalCacheValue) marshaller.objectFromByteBuffer(bytes);
+         assert rvalue2.getValue().equals(value2.getValue()) : "Writen[" + rvalue2.getValue() + "] and read[" + value2.getValue() + "] objects should be the same";
+         sizes.add(bytes.length);
+      }
+      assert sizes.get(1) < sizes.get(0) : "JBoss Marshaller should write less bytes: bytesJBoss=" + sizes.get(1) + ", bytesHome=" + sizes.get(0);
+         
+      sizes.clear();
+      for (Marshaller marshaller : marshallers) {
+         TransientCacheValue value3 = (TransientCacheValue) InternalEntryFactory.createValue("value", System.currentTimeMillis() - 1000, -1, System.currentTimeMillis(), 4000000);
+         bytes = marshaller.objectToByteBuffer(value3);
+         TransientCacheValue rvalue3 = (TransientCacheValue) marshaller.objectFromByteBuffer(bytes);
+         assert rvalue3.getValue().equals(value3.getValue()) : "Writen[" + rvalue3.getValue() + "] and read[" + value3.getValue() + "] objects should be the same";
+         sizes.add(bytes.length);
+      }
+      assert sizes.get(1) < sizes.get(0) : "JBoss Marshaller should write less bytes: bytesJBoss=" + sizes.get(1) + ", bytesHome=" + sizes.get(0);
+      
+      sizes.clear();
+      for (Marshaller marshaller : marshallers) {
+         TransientMortalCacheValue value4 = (TransientMortalCacheValue) InternalEntryFactory.createValue("value", System.currentTimeMillis() - 1000, 200000, System.currentTimeMillis(), 4000000);
+         bytes = marshaller.objectToByteBuffer(value4);
+         TransientMortalCacheValue rvalue4 = (TransientMortalCacheValue) marshaller.objectFromByteBuffer(bytes);
+         assert rvalue4.getValue().equals(value4.getValue()) : "Writen[" + rvalue4.getValue() + "] and read[" + value4.getValue() + "] objects should be the same";
+         sizes.add(bytes.length);
+      }
+      assert sizes.get(1) < sizes.get(0) : "JBoss Marshaller should write less bytes: bytesJBoss=" + sizes.get(1) + ", bytesHome=" + sizes.get(0);
+   }
+   
+   public void testBucketMarshalling() throws Exception {
+      ImmortalCacheEntry entry1 = (ImmortalCacheEntry) InternalEntryFactory.create("key", "value", System.currentTimeMillis() - 1000, -1, System.currentTimeMillis(), -1);
+      MortalCacheEntry entry2 = (MortalCacheEntry) InternalEntryFactory.create("key", "value", System.currentTimeMillis() - 1000, 200000, System.currentTimeMillis(), -1);
+      TransientCacheEntry entry3 = (TransientCacheEntry) InternalEntryFactory.create("key", "value", System.currentTimeMillis() - 1000, -1, System.currentTimeMillis(), 4000000);
+      TransientMortalCacheEntry entry4 = (TransientMortalCacheEntry) InternalEntryFactory.create("key", "value", System.currentTimeMillis() - 1000, 200000, System.currentTimeMillis(), 4000000);
+      Bucket b = new Bucket();
+      b.setBucketName("mybucket");
+      b.addEntry(entry1);
+      b.addEntry(entry2);
+      b.addEntry(entry3);
+      b.addEntry(entry4);
+      
+      List<Integer> sizes = new ArrayList<Integer>(2);
+      for (Marshaller marshaller : marshallers) {
+         byte[] bytes = marshaller.objectToByteBuffer(b);
+         Bucket rb = (Bucket) marshaller.objectFromByteBuffer(bytes);
+         assert rb.getEntries().equals(b.getEntries()) : "Writen[" + b.getEntries() + "] and read[" + rb.getEntries() + "] objects should be the same";         
+         sizes.add(bytes.length);
+      }
+      assert sizes.get(1) < sizes.get(0) : "JBoss Marshaller should write less bytes: bytesJBoss=" + sizes.get(1) + ", bytesHome=" + sizes.get(0);
    }
    
    protected void checkEqualityAndSize(Object writeObj) throws Exception {

@@ -23,14 +23,14 @@ package org.infinispan.marshall.jboss.externalizers;
 
 import net.jcip.annotations.Immutable;
 import org.infinispan.CacheException;
+import org.infinispan.marshall.jboss.ClassExternalizer;
 import org.infinispan.marshall.jboss.MarshallUtil;
+import org.infinispan.marshall.jboss.Externalizer;
 import org.infinispan.util.Util;
-import org.jboss.marshalling.Creator;
-import org.jboss.marshalling.Externalizer;
+import org.jboss.marshalling.Marshaller;
+import org.jboss.marshalling.Unmarshaller;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Set;
 
@@ -41,30 +41,31 @@ import java.util.Set;
  * @since 4.0
  */
 @Immutable
-public class SetExternalizer implements Externalizer {
-
-   /**
-    * The serialVersionUID
-    */
+public class SetExternalizer implements Externalizer, ClassExternalizer.ClassWritable {
+   /** The serialVersionUID */
    private static final long serialVersionUID = -3147427397000304867L;
+   private ClassExternalizer classRw;
 
-   public void writeExternal(Object subject, ObjectOutput output) throws IOException {
+   public void writeObject(Marshaller output, Object subject) throws IOException {
+      classRw.writeClass(output, subject.getClass());
       MarshallUtil.marshallCollection((Collection) subject, output);
    }
 
-   public Object createExternal(Class<?> subjectType, ObjectInput input, Creator defaultCreator)
-         throws IOException, ClassNotFoundException {
+   public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
+      Class<?> subjectType = classRw.readClass(input);
+      Set subject = null;
       try {
-         return Util.getInstance(subjectType);
+         subject = (Set) Util.getInstance(subjectType);
       } catch (Exception e) {
          throw new CacheException("Unable to create new instance of ReplicableCommand", e);
       }
+      int size = MarshallUtil.readUnsignedInt(input);
+      for (int i = 0; i < size; i++) subject.add(input.readObject());
+      return subject;
    }
 
-   public void readExternal(Object subject, ObjectInput input) throws IOException,
-                                                                      ClassNotFoundException {
-      Set set = (Set) subject;
-      int size = MarshallUtil.readUnsignedInt(input);
-      for (int i = 0; i < size; i++) set.add(input.readObject());
+   public void setClassExternalizer(ClassExternalizer classRw) {
+      this.classRw = classRw;
    }
+
 }

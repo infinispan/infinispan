@@ -1,12 +1,11 @@
 package org.infinispan.marshall.jboss.externalizers;
 
+import org.infinispan.marshall.jboss.Externalizer;
 import org.infinispan.remoting.responses.ExceptionResponse;
-import org.jboss.marshalling.Creator;
-import org.jboss.marshalling.Externalizer;
+import org.jboss.marshalling.Marshaller;
+import org.jboss.marshalling.Unmarshaller;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 
 /**
  * Externalizes an ExceptionResponse
@@ -15,17 +14,18 @@ import java.io.ObjectOutput;
  * @since 4.0
  */
 public class ExceptionResponseExternalizer implements Externalizer {
-   public void writeExternal(Object o, ObjectOutput objectOutput) throws IOException {
-      ExceptionResponse er = (ExceptionResponse) o;
-      objectOutput.writeObject(er.getException());
+   /** The serialVersionUID */
+   private static final long serialVersionUID = -8972357475889354040L;
+
+   public void writeObject(Marshaller output, Object subject) throws IOException {
+      ExceptionResponse er = (ExceptionResponse) subject;
+      output.writeObject(er.getException());
    }
 
-   public Object createExternal(Class<?> aClass, ObjectInput objectInput, Creator creator) throws IOException, ClassNotFoundException {
-      return new ExceptionResponse();
+   public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
+      ExceptionResponse er = new ExceptionResponse();
+      er.setException((Exception) input.readObject());
+      return er;
    }
 
-   public void readExternal(Object o, ObjectInput objectInput) throws IOException, ClassNotFoundException {
-      ExceptionResponse er = (ExceptionResponse) o;
-      er.setException((Exception) objectInput.readObject());
-   }
 }

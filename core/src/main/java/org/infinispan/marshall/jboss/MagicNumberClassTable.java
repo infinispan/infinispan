@@ -23,9 +23,7 @@ package org.infinispan.marshall.jboss;
 
 import net.jcip.annotations.Immutable;
 import org.infinispan.CacheException;
-import org.infinispan.atomic.AtomicHashMap;
 import org.infinispan.commands.LockControlCommand;
-import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.MultipleRpcCommand;
@@ -40,37 +38,19 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.container.entries.ImmortalCacheEntry;
-import org.infinispan.container.entries.ImmortalCacheValue;
-import org.infinispan.container.entries.MortalCacheEntry;
-import org.infinispan.container.entries.MortalCacheValue;
-import org.infinispan.container.entries.TransientCacheEntry;
-import org.infinispan.container.entries.TransientCacheValue;
-import org.infinispan.container.entries.TransientMortalCacheEntry;
-import org.infinispan.container.entries.TransientMortalCacheValue;
-import org.infinispan.marshall.MarshalledValue;
-import org.infinispan.remoting.responses.ExceptionResponse;
-import org.infinispan.remoting.responses.ExtendedResponse;
-import org.infinispan.remoting.responses.RequestIgnoredResponse;
-import org.infinispan.remoting.responses.SuccessfulResponse;
-import org.infinispan.remoting.responses.UnsuccessfulResponse;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
-import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.FastCopyHashMap;
 import org.infinispan.util.Util;
-import org.jboss.marshalling.ClassTable;
 import org.jboss.marshalling.Marshaller;
 import org.jboss.marshalling.Unmarshaller;
+import org.jboss.marshalling.util.IdentityIntMap;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Map;
+import java.util.List;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.WeakHashMap;
 
 /**
  * MagicNumberClassTable.
@@ -79,107 +59,71 @@ import java.util.WeakHashMap;
  * @since 4.0
  */
 @Immutable
-public class MagicNumberClassTable implements ClassTable {
-   private static final Map<String, Integer> MAGIC_NUMBERS = new WeakHashMap<String, Integer>();
+public class MagicNumberClassTable implements ClassExternalizer {
+   private static final List<String> MAGIC_NUMBERS = new ArrayList<String>();
 
    static {
-      MAGIC_NUMBERS.put(GlobalTransaction.class.getName(), 1);
-      MAGIC_NUMBERS.put(JGroupsAddress.class.getName(), 2);
-      MAGIC_NUMBERS.put(ArrayList.class.getName(), 3);
-      MAGIC_NUMBERS.put(LinkedList.class.getName(), 4);
-      MAGIC_NUMBERS.put(HashMap.class.getName(), 5);
-      MAGIC_NUMBERS.put(TreeMap.class.getName(), 6);
-      MAGIC_NUMBERS.put(HashSet.class.getName(), 7);
-      MAGIC_NUMBERS.put(TreeSet.class.getName(), 8);
-      MAGIC_NUMBERS.put("org.infinispan.util.Immutables$ImmutableMapWrapper", 9);
-      MAGIC_NUMBERS.put(MarshalledValue.class.getName(), 10);
-      MAGIC_NUMBERS.put(FastCopyHashMap.class.getName(), 11);
-      MAGIC_NUMBERS.put("java.util.Collections$SingletonList", 12);
-      MAGIC_NUMBERS.put("org.infinispan.transaction.TransactionLog$LogEntry", 13);
-
-      MAGIC_NUMBERS.put(RequestIgnoredResponse.class.getName(), 14);
-      MAGIC_NUMBERS.put(ExtendedResponse.class.getName(), 15);
-      MAGIC_NUMBERS.put(ExceptionResponse.class.getName(), 16);
-      MAGIC_NUMBERS.put(SuccessfulResponse.class.getName(), 17);
-      MAGIC_NUMBERS.put(UnsuccessfulResponse.class.getName(), 18);
-
-
-      MAGIC_NUMBERS.put(AtomicHashMap.class.getName(), 19);
-      MAGIC_NUMBERS.put(StateTransferControlCommand.class.getName(), 20);
-      MAGIC_NUMBERS.put(ClusteredGetCommand.class.getName(), 21);
-      MAGIC_NUMBERS.put(MultipleRpcCommand.class.getName(), 22);
-      MAGIC_NUMBERS.put(SingleRpcCommand.class.getName(), 23);
-      MAGIC_NUMBERS.put(GetKeyValueCommand.class.getName(), 24);
-      MAGIC_NUMBERS.put(PutKeyValueCommand.class.getName(), 25);
-      MAGIC_NUMBERS.put(RemoveCommand.class.getName(), 26);
-      MAGIC_NUMBERS.put(InvalidateCommand.class.getName(), 27);
-      MAGIC_NUMBERS.put(ReplaceCommand.class.getName(), 28);
-      MAGIC_NUMBERS.put(ClearCommand.class.getName(), 29);
-      MAGIC_NUMBERS.put(PutMapCommand.class.getName(), 30);
-      MAGIC_NUMBERS.put(PrepareCommand.class.getName(), 31);
-      MAGIC_NUMBERS.put(CommitCommand.class.getName(), 32);
-      MAGIC_NUMBERS.put(RollbackCommand.class.getName(), 33);
-
-      MAGIC_NUMBERS.put(ImmortalCacheEntry.class.getName(), 34);
-      MAGIC_NUMBERS.put(MortalCacheEntry.class.getName(), 35);
-      MAGIC_NUMBERS.put(TransientCacheEntry.class.getName(), 36);
-      MAGIC_NUMBERS.put(TransientMortalCacheEntry.class.getName(), 37);
+      MAGIC_NUMBERS.add(HashMap.class.getName());
+      MAGIC_NUMBERS.add(TreeMap.class.getName());
+      MAGIC_NUMBERS.add(FastCopyHashMap.class.getName());
       
-      MAGIC_NUMBERS.put(InvalidateL1Command.class.getName(), 38);
-
-      MAGIC_NUMBERS.put(ImmortalCacheValue.class.getName(), 39);
-      MAGIC_NUMBERS.put(MortalCacheValue.class.getName(), 40);
-      MAGIC_NUMBERS.put(TransientCacheValue.class.getName(), 41);
-      MAGIC_NUMBERS.put(TransientMortalCacheValue.class.getName(), 42);
+      MAGIC_NUMBERS.add(HashSet.class.getName());
+      MAGIC_NUMBERS.add(TreeSet.class.getName());
       
-      MAGIC_NUMBERS.put(LockControlCommand.class.getName(), 43);
+      MAGIC_NUMBERS.add(ClusteredGetCommand.class.getName());
+      MAGIC_NUMBERS.add(MultipleRpcCommand.class.getName());
+      MAGIC_NUMBERS.add(SingleRpcCommand.class.getName());
+      MAGIC_NUMBERS.add(GetKeyValueCommand.class.getName());
+      MAGIC_NUMBERS.add(PutKeyValueCommand.class.getName());
+      MAGIC_NUMBERS.add(RemoveCommand.class.getName());
+      MAGIC_NUMBERS.add(InvalidateCommand.class.getName());
+      MAGIC_NUMBERS.add(ReplaceCommand.class.getName());
+      MAGIC_NUMBERS.add(ClearCommand.class.getName());
+      MAGIC_NUMBERS.add(PutMapCommand.class.getName());
+      MAGIC_NUMBERS.add(PrepareCommand.class.getName());
+      MAGIC_NUMBERS.add(CommitCommand.class.getName());
+      MAGIC_NUMBERS.add(RollbackCommand.class.getName());
+      MAGIC_NUMBERS.add(InvalidateL1Command.class.getName());
+      MAGIC_NUMBERS.add(LockControlCommand.class.getName());
    }
+   
+   /** Class to int mapping providing magic number to be written. Do not use 
+    * this map for storing user classes. For these, please use weak key based 
+    * maps, i.e WeakHashMap */
+   private final IdentityIntMap<Class<?>> numbers = new IdentityIntMap<Class<?>>();
+   /** Contains list of class objects written. When writing, index of each 
+    * class object object, or magic number, is written, and when reading, index 
+    * is used to find the instance in this list.*/
+   private final List<Class<?>> classes = new ArrayList<Class<?>>();
+   private byte index;
 
-   private final Map<Class<?>, Writer> writers = new WeakHashMap<Class<?>, Writer>();
-   private final Map<Byte, Class<?>> classes = new HashMap<Byte, Class<?>>();
-
-   public void init() {
+   public MagicNumberClassTable() {
       try {
-         for (Map.Entry<String, Integer> entry : MAGIC_NUMBERS.entrySet()) {
-            Class clazz = Util.loadClass(entry.getKey());
-            Byte magicNumber = entry.getValue().byteValue();
-            Writer writer = createWriter(magicNumber);
-            writers.put(clazz, writer);
-            classes.put(magicNumber, clazz);
+         for (String entry : MAGIC_NUMBERS) {
+            Class clazz = Util.loadClass(entry);
+            numbers.put(clazz, index++);
+            classes.add(clazz);
          }
       } catch (ClassNotFoundException e) {
          throw new CacheException("Unable to load one of the classes defined in the magicnumbers.properties", e);
+      } catch (Exception e) {
+         throw new CacheException("Unable to instantiate Externalizer class", e);
       }
    }
 
    public void stop() {
-      writers.clear();
       classes.clear();
+      numbers.clear();
    }
 
-   public Writer getClassWriter(Class<?> clazz) throws IOException {
-      return writers.get(clazz);
+   public void writeClass(Marshaller marshaller, Class<?> clazz) throws IOException {
+      int number = numbers.get(clazz, -1);
+      marshaller.writeByte(number);
    }
 
-   public Class<?> readClass(Unmarshaller unmarshaller) throws IOException, ClassNotFoundException {
-      byte magicNumber = unmarshaller.readByte();
+   public Class<?> readClass(Unmarshaller unmarshaller) throws IOException {
+      int magicNumber = unmarshaller.readUnsignedByte();
       return classes.get(magicNumber);
    }
-
-   protected Writer createWriter(byte magicNumber) {
-      return new MagicNumberWriter(magicNumber);
-   }
-
-   @Immutable
-   static class MagicNumberWriter implements Writer {
-      private final byte magicNumber;
-
-      MagicNumberWriter(byte magicNumber) {
-         this.magicNumber = magicNumber;
-      }
-
-      public void writeClass(Marshaller marshaller, Class<?> clazz) throws IOException {
-         marshaller.writeByte(magicNumber);
-      }
-   }
+   
 }

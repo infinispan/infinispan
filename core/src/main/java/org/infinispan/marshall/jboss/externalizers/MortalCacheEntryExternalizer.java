@@ -22,42 +22,41 @@
 package org.infinispan.marshall.jboss.externalizers;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+
+import net.jcip.annotations.Immutable;
 
 import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.container.entries.MortalCacheEntry;
 import org.infinispan.io.UnsignedNumeric;
-import org.jboss.marshalling.Creator;
-import org.jboss.marshalling.Externalizer;
+import org.infinispan.marshall.jboss.Externalizer;
+import org.jboss.marshalling.Marshaller;
+import org.jboss.marshalling.Unmarshaller;
 
 /**
  * MortalCacheEntryExternalizer.
  * 
  * @author Galder Zamarreño
+ * @since 4.0
  */
+@Immutable
 public class MortalCacheEntryExternalizer implements Externalizer {
    /** The serialVersionUID */
    private static final long serialVersionUID = -6500630714670073716L;
 
-   public void writeExternal(Object subject, ObjectOutput output) throws IOException {
+   public void writeObject(Marshaller output, Object subject) throws IOException {
       MortalCacheEntry ice = (MortalCacheEntry) subject;
       output.writeObject(ice.getKey());
       output.writeObject(ice.getValue());
       UnsignedNumeric.writeUnsignedLong(output, ice.getCreated());
-      output.writeLong(ice.getLifespan()); // could be negative so should not use unsigned longs
+      output.writeLong(ice.getLifespan()); // could be negative so should not use unsigned longs      
    }
-   
-   public Object createExternal(Class<?> subjectType, ObjectInput input, Creator defaultCreator)
-         throws IOException, ClassNotFoundException {
+
+   public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
       Object k = input.readObject();
       Object v = input.readObject();
       long created = UnsignedNumeric.readUnsignedLong(input);
       Long lifespan = input.readLong();
       return InternalEntryFactory.create(k, v, created, lifespan, -1, -1);
    }
-   
-   public void readExternal(Object subject, ObjectInput input) throws IOException, ClassNotFoundException {
-      // No-op
-   }
+
 }

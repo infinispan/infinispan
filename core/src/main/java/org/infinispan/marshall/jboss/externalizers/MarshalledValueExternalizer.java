@@ -24,12 +24,11 @@ package org.infinispan.marshall.jboss.externalizers;
 import net.jcip.annotations.Immutable;
 import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.marshall.MarshalledValue;
-import org.jboss.marshalling.Creator;
-import org.jboss.marshalling.Externalizer;
+import org.infinispan.marshall.jboss.Externalizer;
+import org.jboss.marshalling.Marshaller;
+import org.jboss.marshalling.Unmarshaller;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 
 /**
  * MarshalledValueExternalizer.
@@ -39,32 +38,25 @@ import java.io.ObjectOutput;
  */
 @Immutable
 public class MarshalledValueExternalizer implements Externalizer {
-
-   /**
-    * The serialVersionUID
-    */
+   /** The serialVersionUID */
    private static final long serialVersionUID = 8473423584918714661L;
 
-   public void writeExternal(Object subject, ObjectOutput output) throws IOException {
+   public void writeObject(Marshaller output, Object subject) throws IOException {
       MarshalledValue mv = ((MarshalledValue) subject);
       byte[] raw = mv.getRaw();
       UnsignedNumeric.writeUnsignedInt(output, raw.length);
       output.write(raw);
-      output.writeInt(mv.hashCode());
+      output.writeInt(mv.hashCode());      
    }
 
-   public Object createExternal(Class<?> subjectType, ObjectInput input, Creator defaultCreator)
-         throws IOException, ClassNotFoundException {
-      return new MarshalledValue();
-   }
-
-   public void readExternal(Object subject, ObjectInput input) throws IOException,
-                                                                      ClassNotFoundException {
-      MarshalledValue mv = ((MarshalledValue) subject);
+   public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
+      MarshalledValue mv = new MarshalledValue();
       int length = UnsignedNumeric.readUnsignedInt(input);
       byte[] b = new byte[length];
       input.readFully(b);
       int hc = input.readInt();
       mv.init(b, hc);
+      return mv;
    }
+
 }

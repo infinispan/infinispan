@@ -1,12 +1,13 @@
 package org.infinispan.marshall.jboss.externalizers;
 
+import net.jcip.annotations.Immutable;
+
+import org.infinispan.marshall.jboss.Externalizer; 
 import org.infinispan.remoting.responses.SuccessfulResponse;
-import org.jboss.marshalling.Creator;
-import org.jboss.marshalling.Externalizer;
+import org.jboss.marshalling.Marshaller;
+import org.jboss.marshalling.Unmarshaller;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 
 /**
  * Externalizes a SuccessfulResponse
@@ -14,18 +15,18 @@ import java.io.ObjectOutput;
  * @author Manik Surtani
  * @since 4.0
  */
+@Immutable
 public class SuccessfulResponseExternalizer implements Externalizer {
-   public void writeExternal(Object o, ObjectOutput objectOutput) throws IOException {
-      SuccessfulResponse sr = (SuccessfulResponse) o;
-      objectOutput.writeObject(sr.getResponseValue());
+
+   public void writeObject(Marshaller output, Object subject) throws IOException {
+      SuccessfulResponse sr = (SuccessfulResponse) subject;
+      output.writeObject(sr.getResponseValue());      
    }
 
-   public Object createExternal(Class<?> aClass, ObjectInput objectInput, Creator creator) throws IOException, ClassNotFoundException {
-      return new SuccessfulResponse();
+   public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
+      SuccessfulResponse sr = new SuccessfulResponse();
+      sr.setResponseValue(input.readObject());
+      return sr;
    }
 
-   public void readExternal(Object o, ObjectInput objectInput) throws IOException, ClassNotFoundException {
-      SuccessfulResponse sr = (SuccessfulResponse) o;
-      sr.setResponseValue(objectInput.readObject());
-   }
 }
