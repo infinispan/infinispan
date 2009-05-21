@@ -44,15 +44,15 @@ import java.util.Set;
 public class SetExternalizer implements Externalizer, ClassExternalizer.ClassWritable {
    /** The serialVersionUID */
    private static final long serialVersionUID = -3147427397000304867L;
-   private ClassExternalizer classRw;
+   private ClassExternalizer classExt;
 
    public void writeObject(Marshaller output, Object subject) throws IOException {
-      classRw.writeClass(output, subject.getClass());
+      classExt.writeClass(output, subject.getClass());
       MarshallUtil.marshallCollection((Collection) subject, output);
    }
 
    public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
-      Class<?> subjectType = classRw.readClass(input);
+      Class<?> subjectType = classExt.readClass(input);
       Set subject = null;
       try {
          subject = (Set) Util.getInstance(subjectType);
@@ -64,8 +64,8 @@ public class SetExternalizer implements Externalizer, ClassExternalizer.ClassWri
       return subject;
    }
 
-   public void setClassExternalizer(ClassExternalizer classRw) {
-      this.classRw = classRw;
+   public void setClassExternalizer(ClassExternalizer classExt) {
+      this.classExt = classExt;
    }
 
 }

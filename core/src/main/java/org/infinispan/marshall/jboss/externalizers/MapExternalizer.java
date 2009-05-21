@@ -42,15 +42,15 @@ import java.util.Map;
 public class MapExternalizer implements Externalizer, ClassExternalizer.ClassWritable {
    /** The serialVersionUID */
    private static final long serialVersionUID = -532896252671303391L;
-   private ClassExternalizer classRw;
+   private ClassExternalizer classExt;
 
    public void writeObject(Marshaller output, Object subject) throws IOException {
-      classRw.writeClass(output, subject.getClass());
+      classExt.writeClass(output, subject.getClass());
       MarshallUtil.marshallMap((Map) subject, output);
    }
 
    public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
-      Class<?> subjectType = classRw.readClass(input);
+      Class<?> subjectType = classExt.readClass(input);
       Map subject = null;
       try {
          subject = (Map) Util.getInstance(subjectType);
@@ -61,7 +61,7 @@ public class MapExternalizer implements Externalizer, ClassExternalizer.ClassWri
       return subject;
    }
 
-   public void setClassExternalizer(ClassExternalizer classRw) {
-      this.classRw = classRw;
+   public void setClassExternalizer(ClassExternalizer classExt) {
+      this.classExt = classExt;
    }
 }

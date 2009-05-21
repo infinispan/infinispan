@@ -40,7 +40,7 @@ import java.io.IOException;
 public class ReplicableCommandExternalizer implements Externalizer, ClassExternalizer.ClassWritable {
    /** The serialVersionUID */
    private static final long serialVersionUID = 6915200269446867084L;
-   private ClassExternalizer classRw;
+   private ClassExternalizer classExt;
 
    public void writeObject(Marshaller output, Object subject) throws IOException {
       writeClass(output, subject.getClass());
@@ -68,12 +68,12 @@ public class ReplicableCommandExternalizer implements Externalizer, ClassExterna
    }
    
    protected void writeClass(Marshaller output, Class<?> subjectType) throws IOException {
-      classRw.writeClass(output, subjectType);
+      classExt.writeClass(output, subjectType);
    }
    
    protected Object createExternal(Unmarshaller input) throws IOException, ClassNotFoundException {
       try {
-         Class<?> subjectType = classRw.readClass(input);
+         Class<?> subjectType = classExt.readClass(input);
          ReplicableCommand command = (ReplicableCommand) Util.getInstance(subjectType);
          return command;
       } catch (Exception e) {
@@ -81,7 +81,7 @@ public class ReplicableCommandExternalizer implements Externalizer, ClassExterna
       }
    }
    
-   public void setClassExternalizer(ClassExternalizer classRw) {
-      this.classRw = classRw;
+   public void setClassExternalizer(ClassExternalizer classExt) {
+      this.classExt = classExt;
    }
 }
