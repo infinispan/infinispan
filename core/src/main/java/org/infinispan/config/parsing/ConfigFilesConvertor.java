@@ -166,8 +166,7 @@ public class ConfigFilesConvertor {
       fos.close();
       is.close();
 
-      String jgroupsConfig = destination.getParent() + File.separator + "jgroupsConfig.xml";
-      File jgroupsConfigFile = new File(jgroupsConfig);
+      File jgroupsConfigFile = new File("jgroupsConfig.xml");
       if (jgroupsConfigFile.exists()) jgroupsConfigFile.delete();
       jgroupsConfigFile.createNewFile();
       is = new FileInputStream(oldConfig);
