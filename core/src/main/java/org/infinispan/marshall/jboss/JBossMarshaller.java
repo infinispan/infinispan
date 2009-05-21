@@ -60,7 +60,7 @@ public class JBossMarshaller extends AbstractMarshaller {
    private ClassLoader defaultClassLoader;
    private MarshallingConfiguration configuration;
    private MarshallerFactory factory;
-   private CustomObjectTable objectTable;
+   private ConstantObjectTable objectTable;
 
    @Inject
    public void init(ClassLoader defaultCl, Transport transport) {
@@ -177,8 +177,8 @@ public class JBossMarshaller extends AbstractMarshaller {
       return in.readObject();
    }
 
-   private CustomObjectTable createCustomObjectTable(Transport transport) {
-      CustomObjectTable objectTable = new CustomObjectTable(transport);
+   private ConstantObjectTable createCustomObjectTable(Transport transport) {
+      ConstantObjectTable objectTable = new ConstantObjectTable(transport);
       objectTable.init();
       return objectTable;
    }

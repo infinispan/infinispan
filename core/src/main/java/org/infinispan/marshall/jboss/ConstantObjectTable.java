@@ -102,61 +102,63 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 /**
- * Custom ObjectTable that deals with both constant instances and 
- * externalizer-like ReadWriter implementations.
+ * Constant ObjectTable that marshalls constant instances regardless of whether 
+ * these are generic objects such as UnsuccessfulResponse.INSTANCE, or home grown 
+ * Externalizer implementations. In both cases, this is a hugely efficient way of 
+ * sending around constant singleton objects. 
  *
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class CustomObjectTable implements ObjectTable {
-   private static final Map<String, String> WRITERS = new HashMap<String, String>();
+public class ConstantObjectTable implements ObjectTable {
+   private static final Map<String, String> EXTERNALIZERS = new HashMap<String, String>();
 
    static {
-      WRITERS.put(GlobalTransaction.class.getName(), GlobalTransactionExternalizer.class.getName());
-      WRITERS.put(JGroupsAddress.class.getName(), JGroupsAddressExternalizer.class.getName());
-      WRITERS.put(ArrayList.class.getName(), ArrayListExternalizer.class.getName());
-      WRITERS.put(LinkedList.class.getName(), LinkedListExternalizer.class.getName());
-      WRITERS.put(HashMap.class.getName(), MapExternalizer.class.getName());
-      WRITERS.put(TreeMap.class.getName(), MapExternalizer.class.getName());
-      WRITERS.put(HashSet.class.getName(), SetExternalizer.class.getName());
-      WRITERS.put(TreeSet.class.getName(), SetExternalizer.class.getName());
-      WRITERS.put("org.infinispan.util.Immutables$ImmutableMapWrapper", ImmutableMapExternalizer.class.getName());
-      WRITERS.put(MarshalledValue.class.getName(), MarshalledValueExternalizer.class.getName());
-      WRITERS.put(FastCopyHashMap.class.getName(), MapExternalizer.class.getName());
-      WRITERS.put("java.util.Collections$SingletonList", SingletonListExternalizer.class.getName());
-      WRITERS.put("org.infinispan.transaction.TransactionLog$LogEntry", TransactionLogExternalizer.class.getName());
-      WRITERS.put(ExtendedResponse.class.getName(), ExtendedResponseExternalizer.class.getName());
-      WRITERS.put(SuccessfulResponse.class.getName(), SuccessfulResponseExternalizer.class.getName());
-      WRITERS.put(ExceptionResponse.class.getName(), ExceptionResponseExternalizer.class.getName());
-      WRITERS.put(AtomicHashMap.class.getName(), DeltaAwareExternalizer.class.getName());
+      EXTERNALIZERS.put(GlobalTransaction.class.getName(), GlobalTransactionExternalizer.class.getName());
+      EXTERNALIZERS.put(JGroupsAddress.class.getName(), JGroupsAddressExternalizer.class.getName());
+      EXTERNALIZERS.put(ArrayList.class.getName(), ArrayListExternalizer.class.getName());
+      EXTERNALIZERS.put(LinkedList.class.getName(), LinkedListExternalizer.class.getName());
+      EXTERNALIZERS.put(HashMap.class.getName(), MapExternalizer.class.getName());
+      EXTERNALIZERS.put(TreeMap.class.getName(), MapExternalizer.class.getName());
+      EXTERNALIZERS.put(HashSet.class.getName(), SetExternalizer.class.getName());
+      EXTERNALIZERS.put(TreeSet.class.getName(), SetExternalizer.class.getName());
+      EXTERNALIZERS.put("org.infinispan.util.Immutables$ImmutableMapWrapper", ImmutableMapExternalizer.class.getName());
+      EXTERNALIZERS.put(MarshalledValue.class.getName(), MarshalledValueExternalizer.class.getName());
+      EXTERNALIZERS.put(FastCopyHashMap.class.getName(), MapExternalizer.class.getName());
+      EXTERNALIZERS.put("java.util.Collections$SingletonList", SingletonListExternalizer.class.getName());
+      EXTERNALIZERS.put("org.infinispan.transaction.TransactionLog$LogEntry", TransactionLogExternalizer.class.getName());
+      EXTERNALIZERS.put(ExtendedResponse.class.getName(), ExtendedResponseExternalizer.class.getName());
+      EXTERNALIZERS.put(SuccessfulResponse.class.getName(), SuccessfulResponseExternalizer.class.getName());
+      EXTERNALIZERS.put(ExceptionResponse.class.getName(), ExceptionResponseExternalizer.class.getName());
+      EXTERNALIZERS.put(AtomicHashMap.class.getName(), DeltaAwareExternalizer.class.getName());
 
-      WRITERS.put(StateTransferControlCommand.class.getName(), StateTransferControlCommandExternalizer.class.getName());
-      WRITERS.put(ClusteredGetCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
-      WRITERS.put(MultipleRpcCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
-      WRITERS.put(SingleRpcCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
-      WRITERS.put(GetKeyValueCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
-      WRITERS.put(PutKeyValueCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
-      WRITERS.put(RemoveCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
-      WRITERS.put(InvalidateCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
-      WRITERS.put(ReplaceCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
-      WRITERS.put(ClearCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
-      WRITERS.put(PutMapCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
-      WRITERS.put(PrepareCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
-      WRITERS.put(CommitCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
-      WRITERS.put(RollbackCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
-      WRITERS.put(InvalidateL1Command.class.getName(), ReplicableCommandExternalizer.class.getName());
-      WRITERS.put(LockControlCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
+      EXTERNALIZERS.put(StateTransferControlCommand.class.getName(), StateTransferControlCommandExternalizer.class.getName());
+      EXTERNALIZERS.put(ClusteredGetCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
+      EXTERNALIZERS.put(MultipleRpcCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
+      EXTERNALIZERS.put(SingleRpcCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
+      EXTERNALIZERS.put(GetKeyValueCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
+      EXTERNALIZERS.put(PutKeyValueCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
+      EXTERNALIZERS.put(RemoveCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
+      EXTERNALIZERS.put(InvalidateCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
+      EXTERNALIZERS.put(ReplaceCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
+      EXTERNALIZERS.put(ClearCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
+      EXTERNALIZERS.put(PutMapCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
+      EXTERNALIZERS.put(PrepareCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
+      EXTERNALIZERS.put(CommitCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
+      EXTERNALIZERS.put(RollbackCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
+      EXTERNALIZERS.put(InvalidateL1Command.class.getName(), ReplicableCommandExternalizer.class.getName());
+      EXTERNALIZERS.put(LockControlCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
 
-      WRITERS.put(ImmortalCacheEntry.class.getName(), ImmortalCacheEntryExternalizer.class.getName());
-      WRITERS.put(MortalCacheEntry.class.getName(), MortalCacheEntryExternalizer.class.getName());
-      WRITERS.put(TransientCacheEntry.class.getName(), TransientCacheEntryExternalizer.class.getName());
-      WRITERS.put(TransientMortalCacheEntry.class.getName(), TransientMortalCacheEntryExternalizer.class.getName());    
-      WRITERS.put(ImmortalCacheValue.class.getName(), ImmortalCacheValueExternalizer.class.getName());
-      WRITERS.put(MortalCacheValue.class.getName(), MortalCacheValueExternalizer.class.getName());
-      WRITERS.put(TransientCacheValue.class.getName(), TransientCacheValueExternalizer.class.getName());
-      WRITERS.put(TransientMortalCacheValue.class.getName(), TransientMortalCacheValueExternalizer.class.getName());
+      EXTERNALIZERS.put(ImmortalCacheEntry.class.getName(), ImmortalCacheEntryExternalizer.class.getName());
+      EXTERNALIZERS.put(MortalCacheEntry.class.getName(), MortalCacheEntryExternalizer.class.getName());
+      EXTERNALIZERS.put(TransientCacheEntry.class.getName(), TransientCacheEntryExternalizer.class.getName());
+      EXTERNALIZERS.put(TransientMortalCacheEntry.class.getName(), TransientMortalCacheEntryExternalizer.class.getName());    
+      EXTERNALIZERS.put(ImmortalCacheValue.class.getName(), ImmortalCacheValueExternalizer.class.getName());
+      EXTERNALIZERS.put(MortalCacheValue.class.getName(), MortalCacheValueExternalizer.class.getName());
+      EXTERNALIZERS.put(TransientCacheValue.class.getName(), TransientCacheValueExternalizer.class.getName());
+      EXTERNALIZERS.put(TransientMortalCacheValue.class.getName(), TransientMortalCacheValueExternalizer.class.getName());
       
-      WRITERS.put(Bucket.class.getName(), BucketExternalizer.class.getName());      
+      EXTERNALIZERS.put(Bucket.class.getName(), BucketExternalizer.class.getName());      
    }
 
    /** Contains list of singleton objects written such as constant objects, 
@@ -167,15 +169,15 @@ public class CustomObjectTable implements ObjectTable {
    /** Contains mapping of constant instances to their writers */
    private final Map<Object, Writer> writers = new IdentityHashMap<Object, Writer>();
    /** Contains mapping of custom object externalizer classes to their 
-    * ReadWriter instances. Do not use this map for storing ReadWriter 
+    * Externalizer instances. Do not use this map for storing Externalizer 
     * implementations for user classes. For these, please use weak key based 
     * maps, i.e WeakHashMap */
-   private final Map<Class<?>, Externalizer> readwriters = new IdentityHashMap<Class<?>, Externalizer>();
+   private final Map<Class<?>, Externalizer> externalizers = new IdentityHashMap<Class<?>, Externalizer>();
    private byte index;
    private final Transport transport;
-   private final MagicNumberClassTable classTable = new MagicNumberClassTable();
+   private final NumberClassExternalizer classTable = new NumberClassExternalizer();
    
-   public CustomObjectTable(Transport transport) {
+   public ConstantObjectTable(Transport transport) {
       this.transport = transport;
    }
 
@@ -187,7 +189,7 @@ public class CustomObjectTable implements ObjectTable {
       writers.put(UnsuccessfulResponse.INSTANCE, new InstanceWriter(index++));
       
       try {
-         for (Map.Entry<String, String> entry : WRITERS.entrySet()) {
+         for (Map.Entry<String, String> entry : EXTERNALIZERS.entrySet()) {
             Class typeClazz = Util.loadClass(entry.getKey());
             Externalizer delegate = (Externalizer) Util.getInstance(entry.getValue());
             if (delegate instanceof StateTransferControlCommandExternalizer) {
@@ -198,7 +200,7 @@ public class CustomObjectTable implements ObjectTable {
             }
             Externalizer rwrt = new DelegatingReadWriter(index++, delegate);
             objects.add(rwrt);
-            readwriters.put(typeClazz, rwrt);
+            externalizers.put(typeClazz, rwrt);
          }
          
       } catch (IOException e) {
@@ -214,13 +216,13 @@ public class CustomObjectTable implements ObjectTable {
       classTable.stop();
       writers.clear();
       objects.clear();
-      readwriters.clear();
+      externalizers.clear();
    }
 
    public Writer getObjectWriter(Object o) throws IOException {
       Object singleton = writers.get(o);
       if (singleton == null) {
-         return readwriters.get(o.getClass()); 
+         return externalizers.get(o.getClass()); 
       }
       return writers.get(o);
    }

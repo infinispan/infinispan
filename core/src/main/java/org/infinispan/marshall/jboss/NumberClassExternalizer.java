@@ -59,7 +59,7 @@ import java.util.TreeSet;
  * @since 4.0
  */
 @Immutable
-public class MagicNumberClassTable implements ClassExternalizer {
+public class NumberClassExternalizer implements ClassExternalizer {
    private static final List<String> MAGIC_NUMBERS = new ArrayList<String>();
 
    static {
@@ -97,7 +97,7 @@ public class MagicNumberClassTable implements ClassExternalizer {
    private final List<Class<?>> classes = new ArrayList<Class<?>>();
    private byte index;
 
-   public MagicNumberClassTable() {
+   public NumberClassExternalizer() {
       try {
          for (String entry : MAGIC_NUMBERS) {
             Class clazz = Util.loadClass(entry);
