@@ -83,8 +83,8 @@ public class ConfigFilesConvertor {
    }
 
    /**
-    * Writes to the <b>os</b> the infinispan 4.x configuration file resulted by transforming configuration file passed in
-    * as <b>inputFile</b>. Transformation is performed according to the <b>xsltFile</b>. Both <b>inputFile</b> and he
+    * Writes to the <b>os</b> the infinispan 4.x configuration file resulted by transforming configuration file passed
+    * in as <b>inputFile</b>. Transformation is performed according to the <b>xsltFile</b>. Both <b>inputFile</b> and he
     * xslt file are looked up using a {@link org.jboss.cache.util.FileLookup}
     */
    public void parse(String inputFile, OutputStream os, String xsltFile) throws Exception {
@@ -97,26 +97,37 @@ public class ConfigFilesConvertor {
       }
    }
 
+   private static void help() {
+      System.out.println("Usage:");
+      System.out.println("ConfigFilesConvertor [-source <the file to be transformed>] [-destination <where to store resulting XML>] [-type <the type of the source, possible values being: " + Arrays.asList(SUPPORTED_FORMATS) + " >]");
+   }
+
+
    /**
     * usage : java org.jboss.cache.config.parsing.ConfigFilesConvertor -Dsource=config-2.x.xml
     * -Ddestination=config-3.x.xnl
     */
-   public static void main(String[] argv) throws Exception {
-      String sourceName = System.getProperty("source");
-      if (sourceName == null) {
-         System.err.println("Missing property 'source'.");
-         System.exit(1);
+   public static void main(String[] args) throws Exception {
+      String sourceName = null, destinationName = null, type = null;
+      for (int i = 0; i < args.length; i++) {
+         if (args[i].equals("-source")) {
+            sourceName = args[++i];
+            continue;
+         }
+         if (args[i].equals("-destination")) {
+            destinationName = args[++i];
+            continue;
+         }
+         if (args[i].equals("-type")) {
+            type = args[++i];
+            continue;
+         }
+         help();
       }
-      String destinationName = System.getProperty("destination");
-      if (destinationName == null) {
-         System.err.println("Missing property 'destination'.");
-         System.exit(1);
-      }
-      String type = System.getProperty("type");
-      if (type == null) {
-         System.err.println("Missing property 'type'.");
-         System.exit(1);
-      }
+
+      mustExist(sourceName, "source");
+      mustExist(destinationName, "destination");
+      mustExist(type, "type");
 
       List<String> stringList = Arrays.asList(SUPPORTED_FORMATS);
       if (!stringList.contains(type)) {
@@ -126,10 +137,18 @@ public class ConfigFilesConvertor {
       if (type.equals(JBOSS_CACHE3X)) {
          transformFromJbossCache3x(sourceName, destinationName);
       }
-      
+
       System.out.println("---");
       System.out.println("New configuration file [" + destinationName + "] successfully created.");
       System.out.println("---");
+   }
+
+   private static void mustExist(String sourceName, String what) {
+      if (sourceName == null) {
+         System.err.println("Missing '" + what + "', cannot proceed");
+         help();
+         System.exit(1);
+      }
    }
 
    private static void transformFromJbossCache3x(String sourceName, String destinationName) throws Exception {

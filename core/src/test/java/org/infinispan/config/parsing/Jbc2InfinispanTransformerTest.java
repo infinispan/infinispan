@@ -39,8 +39,6 @@ public class Jbc2InfinispanTransformerTest {
          ByteArrayOutputStream baos = new ByteArrayOutputStream();
          convertor.parse(fileName, baos, XSLT_FILE);
 
-         String baosStr = new String(baos.toByteArray());
-
          XmlConfigurationParser newParser = new XmlConfigurationParserImpl();
          newParser.initialize(new ByteArrayInputStream(baos.toByteArray()));
          GlobalConfiguration globalConfig = newParser.parseGlobalConfiguration();
@@ -121,7 +119,6 @@ public class Jbc2InfinispanTransformerTest {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             convertor.parse(fileName, baos, XSLT_FILE);
 
-            String baosStr = new String(baos.toByteArray());
          }
       } finally {
          Thread.currentThread().setContextClassLoader(existingCl);
