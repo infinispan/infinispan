@@ -21,7 +21,7 @@ import java.util.Map;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-@Test(groups = "unit", testName = "config.Jbc2InfinispanTransformerTest")
+@Test(groups = "unit", testName = "config.parsing.Jbc2InfinispanTransformerTest")
 public class Jbc2InfinispanTransformerTest {
    public static final String XSLT_FILE = "xslt/jbc3x2infinispan4x.xslt";
    private static final String BASE_DIR = "configs/jbosscache3x";
