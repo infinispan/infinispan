@@ -2,6 +2,7 @@ package org.infinispan.interceptors;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.LockControlCommand;
@@ -69,7 +70,7 @@ public class ImplicitEagerLockingInterceptor extends CommandInterceptor {
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       boolean localTxScope = ctx.isInTxScope() & ctx.isOriginLocal();
       if (localTxScope) {
-         lockEagerly(ctx, command.getMap().keySet());
+         lockEagerly(ctx, new HashSet<Object>(command.getMap().keySet()));
       }
       return invokeNextInterceptor(ctx, command);
    }
