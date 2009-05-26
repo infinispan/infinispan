@@ -19,6 +19,11 @@ import org.infinispan.interceptors.base.CommandInterceptor;
  * Interceptor in charge of eager, implicit locking of cache keys across cluster within
  * transactional context
  * 
+ * <p> 
+ * For more details refer to:
+ * https://jira.jboss.org/jira/browse/ISPN-70
+ * https://jira.jboss.org/jira/browse/ISPN-48
+ * 
  * @author <a href="mailto:vblagoje@redhat.com">Vladimir Blagojevic (vblagoje@redhat.com)</a>
  * @since 4.0
  */
@@ -36,7 +41,7 @@ public class ImplicitEagerLockingInterceptor extends CommandInterceptor {
             throws Throwable {
       boolean localTxScope = ctx.isInTxScope() & ctx.isOriginLocal();
       if (localTxScope) {
-         return lockEagerly(ctx, Collections.singleton(command.getKey()));
+         lockEagerly(ctx, Collections.singleton(command.getKey()));
       }
       return invokeNextInterceptor(ctx, command);
    }
@@ -45,7 +50,7 @@ public class ImplicitEagerLockingInterceptor extends CommandInterceptor {
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       boolean localTxScope = ctx.isInTxScope() & ctx.isOriginLocal();
       if (localTxScope) {
-         return lockEagerly(ctx, Collections.singleton(command.getKey()));
+         lockEagerly(ctx, Collections.singleton(command.getKey()));
       }
       return invokeNextInterceptor(ctx, command);
    }
@@ -55,7 +60,7 @@ public class ImplicitEagerLockingInterceptor extends CommandInterceptor {
             throws Throwable {
       boolean localTxScope = ctx.isInTxScope() & ctx.isOriginLocal();
       if (localTxScope) {
-         return lockEagerly(ctx, Collections.singleton(command.getKey()));
+         lockEagerly(ctx, Collections.singleton(command.getKey()));
       }
       return invokeNextInterceptor(ctx, command);
    }
@@ -64,7 +69,7 @@ public class ImplicitEagerLockingInterceptor extends CommandInterceptor {
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       boolean localTxScope = ctx.isInTxScope() & ctx.isOriginLocal();
       if (localTxScope) {
-         return lockEagerly(ctx, command.getMap().keySet());
+         lockEagerly(ctx, command.getMap().keySet());
       }
       return invokeNextInterceptor(ctx, command);
    }
@@ -73,7 +78,7 @@ public class ImplicitEagerLockingInterceptor extends CommandInterceptor {
    public Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
       boolean localTxScope = ctx.isInTxScope() & ctx.isOriginLocal();
       if (localTxScope) {
-         return lockEagerly(ctx, Collections.singleton(command.getKey()));
+         lockEagerly(ctx, Collections.singleton(command.getKey()));
       }
       return invokeNextInterceptor(ctx, command);
    }
@@ -83,7 +88,7 @@ public class ImplicitEagerLockingInterceptor extends CommandInterceptor {
             throws Throwable {
       boolean localTxScope = ctx.isInTxScope() & ctx.isOriginLocal();
       if (localTxScope) {
-         return lockEagerly(ctx, Collections.singleton(command.getKey()));
+         lockEagerly(ctx, Collections.singleton(command.getKey()));
       }
       return invokeNextInterceptor(ctx, command);
    }
