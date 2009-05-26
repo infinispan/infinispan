@@ -104,6 +104,7 @@
       <xs:attribute name="transactionManagerLookupClass" type="xs:string"/>
       <xs:attribute name="syncRollbackPhase" type="tns:booleanType"/>
       <xs:attribute name="syncCommitPhase" type="tns:booleanType"/>
+      <xs:attribute name="useEagerLocking" type="tns:booleanType"/>
    </xs:complexType>
 
    <xs:complexType name="stateRetrievalType">

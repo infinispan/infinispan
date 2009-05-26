@@ -40,6 +40,7 @@ public class ConfigurationParserTest {
       String xml = "<transaction\n" +
             "            transactionManagerLookupClass=\"org.blah.Blah\"\n" +
             "            syncRollbackPhase=\"true\"\n" +
+            "            useEagerLocking=\"true\"\n" +
             "            syncCommitPhase=\"true\"/>";
       Element e = XmlConfigHelper.stringToElement(xml);
 
@@ -49,6 +50,7 @@ public class ConfigurationParserTest {
       assert c.getTransactionManagerLookupClass().equals("org.blah.Blah");
       assert c.isSyncCommitPhase();
       assert c.isSyncRollbackPhase();
+      assert c.isUseEagerLocking();
    }
 
    public void testTransactionsDefaults() throws Exception {

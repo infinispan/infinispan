@@ -137,16 +137,24 @@ public class LockingInterceptor extends CommandInterceptor {
    }
 
    @Override
-   public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand c)
-            throws Throwable {
+   public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand c) throws Throwable {
+      boolean localTxScope = ctx.isOriginLocal() && ctx.isInTxScope();
+      boolean shouldInvokeOnCluster = false;
       try {
-         if (ctx.isOriginLocal() && ctx.isInTxScope()) {
+         if (localTxScope) {
             c.attachGlobalTransaction((GlobalTransaction) ctx.getLockOwner());
          }
          for (Object key : c.getKeys()) {
+            if(c.isImplicit() && localTxScope && !lockManager.ownsLock(key,ctx.getLockOwner())){
+               //if even one key is unlocked we need to invoke this lock command cluster wide... 
+               shouldInvokeOnCluster = true;
+            }
             entryFactory.wrapEntryForWriting(ctx, key, true, false, false, false);
          }
-         return invokeNextInterceptor(ctx, c);
+         if(shouldInvokeOnCluster || c.isExplicit())
+            return invokeNextInterceptor(ctx, c);
+         else
+            return null;
       } finally {
          if (ctx.isInTxScope()) {
             doAfterCall(ctx);

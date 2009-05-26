@@ -190,6 +190,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    private boolean syncCommitPhase = false;
    @Dynamic
    private boolean syncRollbackPhase = false;
+   @Dynamic
+   private boolean useEagerLocking = false;
    private boolean useLazyDeserialization = false;
    private List<CustomInterceptorConfig> customInterceptors = Collections.emptyList();
    private boolean writeSkewCheck = false;
@@ -389,6 +391,11 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       testImmutability("syncRollbackPhase");
       this.syncRollbackPhase = syncRollbackPhase;
    }
+   
+   public void setUseEagerLocking(boolean useEagerLocking) {
+      testImmutability("useEagerLocking");
+      this.useEagerLocking = useEagerLocking;
+   }
 
    public void setUseReplQueue(boolean useReplQueue) {
       testImmutability("useReplQueue");
@@ -526,6 +533,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    public boolean isSyncRollbackPhase() {
       return syncRollbackPhase;
    }
+   
+   public boolean isUseEagerLocking() {
+      return useEagerLocking;
+   }
 
    public long getStateRetrievalTimeout() {
       return stateRetrievalTimeout;
@@ -594,6 +605,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       if (syncCommitPhase != that.syncCommitPhase) return false;
       if (syncReplTimeout != that.syncReplTimeout) return false;
       if (syncRollbackPhase != that.syncRollbackPhase) return false;
+      if (useEagerLocking != that.useEagerLocking) return false;
       if (useLazyDeserialization != that.useLazyDeserialization) return false;
       if (useLockStriping != that.useLockStriping) return false;
       if (useReplQueue != that.useReplQueue) return false;
@@ -634,6 +646,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       result = 31 * result + (cacheLoaderManagerConfig != null ? cacheLoaderManagerConfig.hashCode() : 0);
       result = 31 * result + (syncCommitPhase ? 1 : 0);
       result = 31 * result + (syncRollbackPhase ? 1 : 0);
+      result = 31 * result + (useEagerLocking ? 1 : 0);
       result = 31 * result + (useLazyDeserialization ? 1 : 0);
       result = 31 * result + (customInterceptors != null ? customInterceptors.hashCode() : 0);
       result = 31 * result + (writeSkewCheck ? 1 : 0);

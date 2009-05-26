@@ -240,6 +240,8 @@ public class XmlConfigurationParserImpl extends XmlParserBase implements XmlConf
             // use defaults since the transaction element is still present!
             config.setTransactionManagerLookupClass(GenericTransactionManagerLookup.class.getName());
          }
+         String useEagerLocking = getAttributeValue(element, "useEagerLocking");
+         if (existsAttribute(useEagerLocking)) config.setUseEagerLocking(getBoolean(useEagerLocking));
          String syncRollbackPhase = getAttributeValue(element, "syncRollbackPhase");
          if (existsAttribute(syncRollbackPhase)) config.setSyncRollbackPhase(getBoolean(syncRollbackPhase));
          String syncCommitPhase = getAttributeValue(element, "syncCommitPhase");

@@ -39,13 +39,19 @@ import java.util.Collection;
 public class LockControlCommand extends AbstractTransactionBoundaryCommand {
    public static final int COMMAND_ID = 3;
    private Collection keys;
+   private boolean implicit = false;
 
    public LockControlCommand() {
    }
 
    public LockControlCommand(Collection keys, String cacheName) {
+      this(keys,cacheName,false);
+   }
+   
+   public LockControlCommand(Collection keys, String cacheName, boolean implicit) {
       this.cacheName = cacheName;
       this.keys = keys;
+      this.implicit = implicit;
    }
 
    public void attachGlobalTransaction(GlobalTransaction gtx) {
@@ -56,6 +62,14 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
       return keys;
    }
    
+   public boolean isImplicit() {
+      return implicit;
+   }
+   
+   public boolean isExplicit(){
+      return !isImplicit();
+   }
+
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitLockControlCommand((TxInvocationContext) ctx, this);
    }

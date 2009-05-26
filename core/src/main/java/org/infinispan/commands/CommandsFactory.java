@@ -99,5 +99,5 @@ public interface CommandsFactory {
 
    ClusteredGetCommand buildClusteredGetCommand(Object key);
    
-   LockControlCommand buildLockControlCommand(Collection keys);
+   LockControlCommand buildLockControlCommand(Collection keys, boolean implicit);
 }

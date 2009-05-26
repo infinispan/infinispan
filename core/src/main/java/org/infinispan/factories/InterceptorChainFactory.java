@@ -81,6 +81,9 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          interceptorChain.appendIntereceptor(createInterceptor(DistTxInterceptor.class));
       else
          interceptorChain.appendIntereceptor(createInterceptor(TxInterceptor.class));
+      
+      if(configuration.isUseEagerLocking())
+         interceptorChain.appendIntereceptor(createInterceptor(ImplicitEagerLockingInterceptor.class));
 
       if (configuration.isUseLazyDeserialization())
          interceptorChain.appendIntereceptor(createInterceptor(MarshalledValueInterceptor.class));
