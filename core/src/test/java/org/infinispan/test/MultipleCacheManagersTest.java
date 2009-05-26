@@ -176,4 +176,9 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       LockManager lockManager = TestingUtil.extractLockManager(cache);
       assert !lockManager.isLocked(key) : "expected key '" + key + "' not to be locked, and it is by: " + lockManager.getOwner(key);
    }
+   
+   protected void assertLocked(Cache cache, Object key) {
+      LockManager lockManager = TestingUtil.extractLockManager(cache);
+      assert lockManager.isLocked(key) : "expected key '" + key + "' to be locked, but it is not";
+   }
 }

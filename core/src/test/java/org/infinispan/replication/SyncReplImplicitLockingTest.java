@@ -60,14 +60,9 @@ public class SyncReplImplicitLockingTest extends MultipleCacheManagersTest {
       cache2 = manager(1).getCache("replication.SyncReplImplicitLockingTest");
    }
 
-   public void testLocksReleasedWithoutExplicitUnlock() throws Exception {
-      locksReleasedWithoutExplicitUnlockHelper(false);
-      locksReleasedWithoutExplicitUnlockHelper(true);
-   }
-
-   public void testConcurrentNonTxLocking() throws Exception {
-      concurrentLockingHelper(false, false);
-      concurrentLockingHelper(true, false);
+   public void testBasicOperation() throws Exception {
+      testBasicOperationHelper(false);
+      testBasicOperationHelper(true);
    }
 
    public void testConcurrentTxLocking() throws Exception {
@@ -133,8 +128,10 @@ public class SyncReplImplicitLockingTest extends MultipleCacheManagersTest {
       String name = "Infinispan";
       TransactionManager mgr = TestingUtil.getTransactionManager(cache1);
       mgr.begin();
-      // lock node and start other thread whose write should now block
+      // lock node implicitly and start other thread whose write should now block
       cache1.put(k, name);
+      //automatically locked on another cache node
+      assertLocked(cache2, k);
       t.start();
 
       // wait till the put in thread t times out
@@ -147,7 +144,7 @@ public class SyncReplImplicitLockingTest extends MultipleCacheManagersTest {
       cleanup();
    }
 
-   private void locksReleasedWithoutExplicitUnlockHelper(boolean useCommit) throws Exception {
+   private void testBasicOperationHelper(boolean useCommit) throws Exception {
       assertClusterSize("Should only be 2  caches in the cluster!!!", 2);
 
       assertNull("Should be null", cache1.get(k));
@@ -159,6 +156,9 @@ public class SyncReplImplicitLockingTest extends MultipleCacheManagersTest {
 
       cache1.put(k, name);
 
+      //automatically locked on another cache node
+      assertLocked(cache2, k);
+      
       if (useCommit)
          mgr.commit();
       else
