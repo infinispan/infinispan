@@ -82,7 +82,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       this.distributedSyncTimeout = distributedSyncTimeout;
    }
 
-   protected boolean isValid(Message req) {
+   protected final boolean isValid(Message req) {
       if (req == null || req.getLength() == 0) {
          log.error("message or message buffer is null");
          return false;
