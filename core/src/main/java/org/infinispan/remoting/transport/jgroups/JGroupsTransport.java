@@ -30,6 +30,7 @@ import org.jgroups.Message;
 import org.jgroups.View;
 import org.jgroups.blocks.GroupRequest;
 import org.jgroups.blocks.RspFilter;
+import org.jgroups.protocols.pbcast.FLUSH;
 import org.jgroups.protocols.pbcast.STREAMING_STATE_TRANSFER;
 import org.jgroups.stack.ProtocolStack;
 import org.jgroups.util.Rsp;
@@ -105,6 +106,12 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
          throw new CacheException("Unable to start JGroups Channel", e);
       }
       log.info("Cache local address is {0}", getAddress());
+
+      // ensure that the channel has FLUSH enabled.
+      // see ISPN-83 for details.
+      if (channel.getProtocolStack().findProtocol(FLUSH.class) == null) {
+         log.warn("FLUSH is not present in your JGroups stack!  FLUSH is needed to ensure messages are not dropped while new nodes join the cluster.  Will proceed, but inconsistencies may arise!");
+      }
    }
 
    public void stop() {
