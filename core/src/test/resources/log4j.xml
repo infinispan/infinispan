@@ -48,6 +48,14 @@
       <priority value="INFO"/>
    </category>
 
+   <category name="org.infinispan.remoting.rpc.RpcManagerImpl">
+      <priority value="TRACE"/>
+   </category>
+
+   <category name="org.jgroups">
+      <priority value="TRACE"/>
+   </category>
+
    <category name="org.infinispan.profiling">
       <priority value="WARN"/>
    </category>

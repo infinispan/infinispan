@@ -95,11 +95,11 @@ public class TransactionLog {
       }
    }
 
-   public final void logOnePhaseCommit(GlobalTransaction gtx, List<WriteCommand> modifications) {
+   public final void logOnePhaseCommit(GlobalTransaction gtx, WriteCommand[] modifications) {
       // Just in case...
       if (gtx != null) pendingPrepares.remove(gtx);
-      if (isActive() && modifications != null && modifications.size() > 0)
-         addEntry(gtx, modifications.toArray(new WriteCommand[modifications.size()]));
+      if (isActive() && modifications != null && modifications.length > 0)
+         addEntry(gtx, modifications);
    }
 
    public final void logNoTxWrite(WriteCommand write) {

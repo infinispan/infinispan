@@ -32,7 +32,6 @@ import javax.transaction.Status;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
-import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -81,33 +80,26 @@ public class TxInterceptor extends CommandInterceptor {
          transactionLog.logPrepare(command);
       }
       if (getStatisticsEnabled()) prepares.incrementAndGet();
-      try {
-         return invokeNextInterceptor(ctx, command);
-      } finally {
-         if (command.isOnePhaseCommit()) {
-            transactionLog.logOnePhaseCommit(ctx.getGlobalTransaction(), Arrays.asList(command.getModifications()));
-         }
+      Object result = invokeNextInterceptor(ctx, command);
+      if (command.isOnePhaseCommit()) {
+         transactionLog.logOnePhaseCommit(ctx.getGlobalTransaction(), command.getModifications());
       }
+      return result;
    }
 
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (getStatisticsEnabled()) commits.incrementAndGet();
-      try {
-         return invokeNextInterceptor(ctx, command);
-      } finally {
-         transactionLog.logCommit(command.getGlobalTransaction());
-      }
+      Object result = invokeNextInterceptor(ctx, command);
+      transactionLog.logCommit(command.getGlobalTransaction());
+      return result;
    }
 
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (getStatisticsEnabled()) rollbacks.incrementAndGet();
-      try {
-         return invokeNextInterceptor(ctx, command);
-      } finally {
-         transactionLog.rollback(command.getGlobalTransaction());
-      }
+      transactionLog.rollback(command.getGlobalTransaction());
+      return invokeNextInterceptor(ctx, command);
    }
 
    @Override
@@ -154,7 +146,7 @@ public class TxInterceptor extends CommandInterceptor {
 
    @Override
    public Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
-      return enlistWriteAndInvokeNext(ctx, command);
+      return invokeNextInterceptor(ctx, command);
    }
 
    @Override
@@ -192,9 +184,9 @@ public class TxInterceptor extends CommandInterceptor {
          }
          localTxContext.setXaCache(xaAdapter);
       }
+      Object rv = invokeNextInterceptor(ctx, command);
       if (!ctx.isInTxScope())
          transactionLog.logNoTxWrite(command);
-      Object rv = invokeNextInterceptor(ctx, command);
       if (command.isSuccessful() && shouldAddMod) xaAdapter.addModification(command);
       return rv;
    }

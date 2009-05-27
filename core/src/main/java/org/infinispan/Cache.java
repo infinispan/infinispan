@@ -131,6 +131,7 @@ public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable 
     * a 0 lock acquisition timeout so it does not block in attempting to acquire locks.  It behaves as a no-op if the
     * lock on the entry cannot be acquired <i>immediately</i>.
     * <p/>
+    * Important: this method should not be called from within a tx's scope.  
     *
     * @param key key to evict
     */
