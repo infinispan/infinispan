@@ -87,7 +87,7 @@ public class RpcManagerImpl implements RpcManager {
             if (isStatisticsEnabled()) replicationCount.incrementAndGet();
             return result;
          } catch (CacheException e) {
-            if (log.isTraceEnabled()) log.trace("replicaiton exception: ", e);
+            if (log.isTraceEnabled()) log.trace("replication exception: ", e);
             if (isStatisticsEnabled()) replicationFailures.incrementAndGet();
             throw e;
          } catch (Throwable th) {
