@@ -403,11 +403,15 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
    }
 
    public void block() {
-      // no-op
+      // Set the DistSync to indicate that a JOIN is in progress
+      // See ISPN-83 for more details.  Once ISPN-83 is addressed, this may no longer be needed.
+      flushTracker.signalJoinInProgress();
    }
 
    public void unblock() {
-      // no-op
+      // Set the DistSync to indicate that a JOIN is in progress
+      // See ISPN-83 for more details.  Once ISPN-83 is addressed, this may no longer be needed.
+      flushTracker.signalJoinCompleted();
    }
 
    public void receive(Message msg) {

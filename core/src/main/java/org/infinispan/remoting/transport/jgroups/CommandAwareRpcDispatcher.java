@@ -60,7 +60,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
    protected boolean trace;
    ExecutorService asyncExecutor;
    InboundInvocationHandler inboundInvocationHandler;
-   DistributedSync distributedSync;
+   JGroupsDistSync distributedSync;
    long distributedSyncTimeout;
    private Log log = LogFactory.getLog(CommandAwareRpcDispatcher.class);
    AtomicBoolean newCacheStarting = new AtomicBoolean(false);
@@ -73,7 +73,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                                     JGroupsTransport transport,
                                     ExecutorService asyncExecutor,
                                     InboundInvocationHandler inboundInvocationHandler,
-                                    DistributedSync distributedSync, long distributedSyncTimeout) {
+                                    JGroupsDistSync distributedSync, long distributedSyncTimeout) {
       super(channel, transport, transport, transport);
       this.asyncExecutor = asyncExecutor;
       this.inboundInvocationHandler = inboundInvocationHandler;
@@ -222,6 +222,11 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          if (oob) msg.setFlag(Message.OOB);
          // Replay capability requires responses from all members!
          int mode = supportReplay ? GroupRequest.GET_ALL : this.mode;
+
+         // if there is a JOIN in progress, wait for this to complete.
+         // See ISPN-83 for more details.  Once ISPN-83 is addressed, this may no longer be needed.
+         distributedSync.blockUntilNoJoinsInProgress();
+
          RspList retval = castMessage(dests, msg, mode, timeout, anycasting, filter);
          if (trace) log.trace("responses: {0}", retval);
 
