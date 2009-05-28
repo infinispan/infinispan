@@ -16,7 +16,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
-@Test(groups = "functional", testName = "statetransfer.StateTransferFunctionalTest")
+@Test(groups = "functional", testName = "statetransfer.StateTransferFunctionalTest", enabled = false)
 public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
 
    protected static final String ADDRESS_CLASSNAME = Address.class.getName();
@@ -51,7 +51,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       config.setSyncCommitPhase(true);
       config.setSyncReplTimeout(30000);
       config.setFetchInMemoryState(true);
-      config.setUseLockStriping(false); // reduces the odd chance of a key collission and deadlock
+      config.setUseLockStriping(false); // reduces the odd chance of a key collision and deadlock
       config.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
    }
 
@@ -250,8 +250,10 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
 
       int count = writerThread.result();
 
-      for (int c = 0; c < count; c++)
-         assert new Integer(c).equals(cache2.get("test" + c)) : "Entry under key [test" + c + "] was [" + cache2.get("test" + c) + "] but expected [" + c + "]";
+      for (int c = 0; c < count; c++) {
+         Object o = cache2.get("test" + c);
+         assert new Integer(c).equals(o) : "Entry under key [test" + c + "] was [" + cache2.get("test" + c) + "] but expected [" + c + "]";
+      }
    }
 
    protected void verifyInitialData(Cache<Object, Object> c) {
