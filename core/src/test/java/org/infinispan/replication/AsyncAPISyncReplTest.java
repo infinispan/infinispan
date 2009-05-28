@@ -2,7 +2,10 @@ package org.infinispan.replication;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -203,7 +206,7 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       assert c2.get(key) == null;
       assert f.get() == null;
       tm.commit();
-      asyncWait(true);
+      asyncWait(true, PutKeyValueCommand.class);
       assertOnAllCaches(key, v);
 
       tm.begin();
@@ -214,7 +217,7 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       assert !f.isCancelled();
       assert f.get().equals(v);
       tm.commit();
-      asyncWait(true);
+      asyncWait(true, PutKeyValueCommand.class);
       assertOnAllCaches(key, v2);
 
       // putAll
@@ -226,7 +229,7 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       assert !f2.isCancelled();
       assert f2.get() == null;
       tm.commit();
-      asyncWait(true);
+      asyncWait(true, PutMapCommand.class);
       assertOnAllCaches(key, v3);
 
       // putIfAbsent
@@ -249,7 +252,7 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       assert !f.isCancelled();
       assert f.get().equals(v3);
       tm.commit();
-      asyncWait(true);
+      asyncWait(true, RemoveCommand.class);
       assertOnAllCaches(key, null);
 
       // putIfAbsent again
@@ -261,7 +264,7 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       assert !f.isCancelled();
       assert f.get() == null;
       tm.commit();
-      asyncWait(true);
+      asyncWait(true, PutKeyValueCommand.class);
       assertOnAllCaches(key, v4);
 
       // removecond
@@ -282,7 +285,7 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       assert !f3.isCancelled();
       assert f3.get().equals(true);
       tm.commit();
-      asyncWait(true);
+      asyncWait(true, RemoveCommand.class);
       assertOnAllCaches(key, null);
 
       // replace
@@ -296,7 +299,7 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       assertOnAllCaches(key, null);
 
       c1.put(key, v);
-      asyncWait(false);
+      asyncWait(false, PutKeyValueCommand.class);
 
       tm.begin();
       f = c1.replaceAsync(key, v5);
@@ -306,7 +309,7 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       assert !f.isCancelled();
       assert f.get().equals(v);
       tm.commit();
-      asyncWait(true);
+      asyncWait(true, ReplaceCommand.class);
       assertOnAllCaches(key, v5);
 
       //replace2
@@ -327,7 +330,7 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       assert !f3.isCancelled();
       assert f3.get().equals(true);
       tm.commit();
-      asyncWait(true);
+      asyncWait(true, ReplaceCommand.class);
       assertOnAllCaches(key, v6);
    }
 }
