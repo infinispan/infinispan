@@ -22,6 +22,7 @@
 package org.infinispan.manager;
 
 import org.infinispan.Cache;
+import org.infinispan.Version;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.config.DuplicateCacheNameException;
@@ -402,6 +403,11 @@ public class DefaultCacheManager implements CacheManager {
    @ManagedAttribute(description = "number of running caches")
    public String getCreatedCacheCount() {
       return String.valueOf(this.caches.keySet().size());
+   }
+
+   @ManagedAttribute(description = "Infinispan version")
+   public String getVersion() {
+      return Version.printVersion();
    }
 
    @Override
