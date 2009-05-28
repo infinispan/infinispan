@@ -76,7 +76,13 @@ import java.util.*;
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
  * @author Galder Zamarreño
  * @since 4.0
+ * @deprecated JBoss Marshaller based Marshaller is now use rather than this legacy
+ * home grown marshaller. This marshaller hasn't been removed yet so that we can 
+ * can carry on comparing payload sizes between the different marshallers. This 
+ * will specially help as JBoss Marshaller continues to provide more and more efficient
+ * payloads.  
  */
+@Deprecated
 public class MarshallerImpl extends AbstractMarshaller {
    // magic numbers
    protected static final int MAGICNUMBER_GTX = 1;

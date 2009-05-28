@@ -23,23 +23,22 @@ package org.infinispan.marshall;
 
 import org.infinispan.commands.RemoteCommandFactory;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Stop;
 import org.infinispan.io.ByteBuffer;
 import org.infinispan.io.ExposedByteArrayOutputStream;
+import org.infinispan.marshall.jboss.JBossMarshaller;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.jboss.util.stream.MarshalledValueInputStream;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInput;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 
 /**
- * A delegate to various other marshallers like {@link MarshallerImpl}. This delegating marshaller adds versioning
+ * A delegate to various other marshallers like {@link JBossMarshaller}. This delegating marshaller adds versioning
  * information to the stream when marshalling objects and is able to pick the appropriate marshaller to delegate to
  * based on the versioning information when unmarshalling objects.
  *
@@ -54,14 +53,19 @@ public class VersionAwareMarshaller extends AbstractMarshaller {
    private static final int VERSION_400 = 400;
    private static final int CUSTOM_MARSHALLER = 999;
 
-   private MarshallerImpl defaultMarshaller;
+   private JBossMarshaller defaultMarshaller;
 
    ClassLoader defaultClassLoader;
 
    @Inject
    public void init(ClassLoader loader, RemoteCommandFactory remoteCommandFactory) {
-      defaultMarshaller = new MarshallerImpl();
+      defaultMarshaller = new JBossMarshaller();
       defaultMarshaller.init(loader, remoteCommandFactory);
+   }
+   
+   @Stop
+   public void stop() {
+      defaultMarshaller.stop();
    }
 
    protected int getCustomMarshallerVersionInt() {
@@ -70,35 +74,38 @@ public class VersionAwareMarshaller extends AbstractMarshaller {
 
    public ByteBuffer objectToBuffer(Object obj) throws IOException {
       ExposedByteArrayOutputStream baos = new ExposedByteArrayOutputStream(128);
-      ObjectOutputStream out = new ObjectOutputStream(baos);
-
-      out.writeShort(VERSION_400);
-      log.trace("Wrote version {0}", VERSION_400);
-
-      //now marshall the contents of the object
-      defaultMarshaller.objectToObjectStream(obj, out);
-      out.close();
-
-      // and return bytes.
+      ObjectOutput out = startObjectOutput(baos);
+      try {
+         defaultMarshaller.objectToObjectStream(obj, out);
+      } finally {
+         finishObjectOutput(out);
+      }
       return new ByteBuffer(baos.getRawBuffer(), 0, baos.size());
    }
 
    public Object objectFromByteBuffer(byte[] bytes, int offset, int len) throws IOException, ClassNotFoundException {
-      int versionId;
-      ObjectInputStream in = new MarshalledValueInputStream(new ByteArrayInputStream(bytes, offset, len));
+      ByteArrayInputStream is = new ByteArrayInputStream(bytes, offset, len);
+      ObjectInput in = startObjectInput(is);
+      Object o = null;
       try {
-         versionId = in.readShort();
-         log.trace("Read version {0}", versionId);
+         o = defaultMarshaller.objectFromObjectStream(in);
+      } finally {
+         finishObjectInput(in);
       }
-      catch (Exception e) {
-         log.error("Unable to read version id from first two bytes of stream, barfing.");
-         throw new IOException("Unable to read version id from first two bytes of stream.");
-      }
-      return defaultMarshaller.objectFromObjectStream(in);
+      return o;
    }
 
    public ObjectOutput startObjectOutput(OutputStream os) throws IOException {
-      return defaultMarshaller.startObjectOutput(os);
+      ObjectOutput out = defaultMarshaller.startObjectOutput(os);
+      try {
+         out.writeShort(VERSION_400);
+         if (trace) log.trace("Wrote version {0}", VERSION_400);         
+      } catch (Exception e) {
+         finishObjectOutput(out);
+         log.error("Unable to read version id from first two bytes of stream, barfing.");
+         throw new IOException("Unable to read version id from first two bytes of stream.", e);
+      }
+      return out;
    }
 
    public void finishObjectOutput(ObjectOutput oo) {
@@ -106,13 +113,29 @@ public class VersionAwareMarshaller extends AbstractMarshaller {
    }
 
    public void objectToObjectStream(Object obj, ObjectOutput out) throws IOException {
-      out.writeShort(VERSION_400);
-      log.trace("Wrote version {0}", VERSION_400);
+      /* No need to write version here. Clients should either be calling either:
+       * - startObjectOutput() -> objectToObjectStream() -> finishObjectOutput()  
+       * or
+       * - objectToBuffer() // underneath it calls start/finish
+       * So, there's only need to write version during the start. 
+       * First option is preferred when multiple objects are gonna be written.
+       */
       defaultMarshaller.objectToObjectStream(obj, out);
    }
 
    public ObjectInput startObjectInput(InputStream is) throws IOException {
-      return defaultMarshaller.startObjectInput(is);
+      ObjectInput in = defaultMarshaller.startObjectInput(is);
+      int versionId;
+      try {
+         versionId = in.readShort();
+         if (trace) log.trace("Read version {0}", versionId);
+      }
+      catch (Exception e) {
+         finishObjectInput(in);
+         log.error("Unable to read version id from first two bytes of stream, barfing.");
+         throw new IOException("Unable to read version id from first two bytes of stream.", e);
+      }
+      return in;
    }
 
    public void finishObjectInput(ObjectInput oi) {
@@ -120,23 +143,24 @@ public class VersionAwareMarshaller extends AbstractMarshaller {
    }
 
    public Object objectFromObjectStream(ObjectInput in) throws IOException, ClassNotFoundException {
-      int versionId;
-      try {
-         versionId = in.readShort();
-         log.trace("Read version {0}", versionId);
-      }
-      catch (Exception e) {
-         log.error("Unable to read version id from first two bytes of stream, barfing.");
-         throw new IOException("Unable to read version id from first two bytes of stream.");
-      }
+      /* No need to read version here. Clients should either be calling either:
+       * - startObjectInput() -> objectFromObjectStream() -> finishObjectInput()
+       * or
+       * - objectFromByteBuffer() // underneath it calls start/finish
+       * So, there's only need to read version during the start. 
+       * First option is preferred when multiple objects are gonna be written.
+       */
       return defaultMarshaller.objectFromObjectStream(in);
    }
 
    public byte[] objectToByteBuffer(Object obj) throws IOException {
-      return defaultMarshaller.objectToByteBuffer(obj);
+      ByteBuffer b = objectToBuffer(obj);
+      byte[] bytes = new byte[b.getLength()];
+      System.arraycopy(b.getBuf(), b.getOffset(), bytes, 0, b.getLength());
+      return bytes;
    }
 
    public Object objectFromByteBuffer(byte[] buf) throws IOException, ClassNotFoundException {
-      return defaultMarshaller.objectFromByteBuffer(buf);
+      return objectFromByteBuffer(buf, 0, buf.length);
    }
 }

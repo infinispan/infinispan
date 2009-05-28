@@ -218,24 +218,24 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       MarshalledValue mv = new MarshalledValue(pojo, true);
 
 
-      MarshallerImpl marshaller = new MarshallerImpl();
+      VersionAwareMarshaller marshaller = new VersionAwareMarshaller();
+      marshaller.init(Thread.currentThread().getContextClassLoader(), null);
 
       // start the test
       ByteArrayOutputStream bout = new ByteArrayOutputStream();
-      ObjectOutputStream out = new ObjectOutputStream(bout);
-      marshaller.objectToObjectStream(mv, out);
-      out.close();
+      ObjectOutput oo = marshaller.startObjectOutput(bout);
+      marshaller.objectToObjectStream(mv, oo);
+      marshaller.finishObjectOutput(oo);
       bout.close();
 
       // check that the rest just contains a byte stream which a MarshalledValue will be able to deserialize.
       ByteArrayInputStream bin = new ByteArrayInputStream(bout.toByteArray());
-      ObjectInputStream in = new ObjectInputStream(bin);
-
-      MarshalledValue recreated = (MarshalledValue) marshaller.objectFromObjectStream(in);
+      ObjectInput oi = marshaller.startObjectInput(bin);
+      MarshalledValue recreated = (MarshalledValue) marshaller.objectFromObjectStream(oi);
 
       // there should be nothing more
-      assert in.available() == 0;
-      in.close();
+      assert oi.available() == 0;
+      marshaller.finishObjectInput(oi);
       bin.close();
 
       assertSerialized(recreated);

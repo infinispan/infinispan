@@ -48,6 +48,7 @@ import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheValue;
 import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.marshall.MarshalledValue;
+import org.infinispan.marshall.VersionAwareMarshaller;
 import org.infinispan.remoting.responses.ExtendedResponse;
 import org.infinispan.remoting.responses.RequestIgnoredResponse;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -77,7 +78,8 @@ import java.util.*;
 @Test(groups = "functional", testName = "marshall.jboss.JBossMarshallerTest")
 public class JBossMarshallerTest {
 
-   private final JBossMarshaller marshaller = new JBossMarshaller();
+//   private final JBossMarshaller marshaller = new JBossMarshaller();
+   private final VersionAwareMarshaller marshaller = new VersionAwareMarshaller();
 
    @BeforeTest
    public void setUp() {

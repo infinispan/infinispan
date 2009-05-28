@@ -1,10 +1,10 @@
 package org.infinispan.config.parsing;
 
-import org.infinispan.config.GlobalConfiguration;
+ import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.executors.DefaultExecutorFactory;
 import org.infinispan.executors.DefaultScheduledExecutorFactory;
-import org.infinispan.marshall.MarshallerImpl;
 import org.infinispan.marshall.VersionAwareMarshaller;
+import org.infinispan.marshall.jboss.JBossMarshaller;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.testng.annotations.Test;
 import org.w3c.dom.Element;
@@ -77,14 +77,14 @@ public class GlobalConfigurationParserTest {
 
    public void testMarshalling() throws Exception {
       XmlConfigurationParserImpl parser = new XmlConfigurationParserImpl();
-      String xml = "<serialization marshallerClass=\"org.infinispan.marshall.MarshallerImpl\" version=\"9.2\"\n" +
+      String xml = "<serialization marshallerClass=\"org.infinispan.marshall.jboss.JBossMarshaller\" version=\"9.2\"\n" +
             "                     objectInputStreamPoolSize=\"100\" objectOutputStreamPoolSize=\"100\"/>";
       Element e = XmlConfigHelper.stringToElement(xml);
 
       GlobalConfiguration gc = new GlobalConfiguration();
       parser.configureSerialization(e, gc);
 
-      assert gc.getMarshallerClass().equals(MarshallerImpl.class.getName());
+      assert gc.getMarshallerClass().equals(JBossMarshaller.class.getName());
       assert gc.getMarshallVersionString().equals("9.2");
       assert gc.getObjectInputStreamPoolSize() == 100;
       assert gc.getObjectOutputStreamPoolSize() == 100;
