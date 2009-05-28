@@ -2,6 +2,7 @@ package org.infinispan.test.fwk;
 
 import org.infinispan.config.parsing.JGroupsStackParser;
 import org.infinispan.config.parsing.XmlConfigHelper;
+import org.jgroups.util.Util;
 import org.w3c.dom.Element;
 
 import java.io.BufferedReader;
@@ -22,6 +23,7 @@ public class JGroupsConfigBuilder {
 
    public static final String JGROUPS_STACK;
 
+   private static String bind_addr="127.0.0.1";
    private static String tcpConfig;
    private static String udpConfig;
 
@@ -66,6 +68,11 @@ public class JGroupsConfigBuilder {
    static {
       JGROUPS_STACK = System.getProperties().getProperty("jgroups.stack", "tcp");
       System.out.println("IN USE JGROUPS STACK = " + JGROUPS_STACK);
+      
+      try {
+         bind_addr = Util.getBindAddress(null).getHostAddress();
+      } catch (Exception e) {
+      }
    }
 
    public static String getJGroupsConfig() {
@@ -89,11 +96,11 @@ public class JGroupsConfigBuilder {
          throw new IllegalStateException();
       }
 
-      if (result.indexOf("TCPGOSSIP") < 0) //onluy adjust for TCPPING
+      if (result.indexOf("TCPGOSSIP") < 0) // onluy adjust for TCPPING
       {
          m = TCP_INITIAL_HOST.matcher(result);
          if (m.find()) {
-            result = m.replaceFirst("initial_hosts=" + "127.0.0.1[" + newStartPort + "]");
+            result = m.replaceFirst("initial_hosts=" + bind_addr + "[" + newStartPort + "]");
          }
       }
       return result;
