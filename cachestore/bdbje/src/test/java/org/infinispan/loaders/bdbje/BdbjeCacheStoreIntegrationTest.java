@@ -42,7 +42,7 @@ public class BdbjeCacheStoreIntegrationTest extends BaseCacheStoreTest {
    }
 
    protected CacheStore createCacheStore() throws CacheLoaderException {
-      clearTempDir();
+//      clearTempDir();
       CacheStore cs = new BdbjeCacheStore();
       BdbjeCacheStoreConfig cfg = new BdbjeCacheStoreConfig();
       cfg.setLocation(tmpDirectory);
