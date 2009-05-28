@@ -57,34 +57,43 @@ import java.util.TreeSet;
  *
  * @author Galder Zamarreño
  * @since 4.0
+ * @deprecated With new ObjectTable based solution where there's no need hard need to send
+ * class information around and bearing in mind that instantiation based on reflection is
+ * expensive, moving simple map/set collection handling to the each externalizer.
  */
 @Immutable
+@Deprecated
 public class NumberClassExternalizer implements ClassExternalizer {
    private static final List<String> MAGIC_NUMBERS = new ArrayList<String>();
+   private static final int HASHMAP = 0;
+   private static final int TREEMAP = 1;
+   private static final int FASTCOPYHASHMAP = 2;
+   private static final int HASHSET = 3;
+   private static final int TREESET = 4;
 
    static {
-      MAGIC_NUMBERS.add(HashMap.class.getName());
-      MAGIC_NUMBERS.add(TreeMap.class.getName());
-      MAGIC_NUMBERS.add(FastCopyHashMap.class.getName());
+      MAGIC_NUMBERS.add(HASHMAP, HashMap.class.getName());
+      MAGIC_NUMBERS.add(TREEMAP, TreeMap.class.getName());
+      MAGIC_NUMBERS.add(FASTCOPYHASHMAP, FastCopyHashMap.class.getName());
       
-      MAGIC_NUMBERS.add(HashSet.class.getName());
-      MAGIC_NUMBERS.add(TreeSet.class.getName());
+      MAGIC_NUMBERS.add(HASHSET, HashSet.class.getName());
+      MAGIC_NUMBERS.add(TREESET, TreeSet.class.getName());
       
-      MAGIC_NUMBERS.add(ClusteredGetCommand.class.getName());
-      MAGIC_NUMBERS.add(MultipleRpcCommand.class.getName());
-      MAGIC_NUMBERS.add(SingleRpcCommand.class.getName());
-      MAGIC_NUMBERS.add(GetKeyValueCommand.class.getName());
-      MAGIC_NUMBERS.add(PutKeyValueCommand.class.getName());
-      MAGIC_NUMBERS.add(RemoveCommand.class.getName());
-      MAGIC_NUMBERS.add(InvalidateCommand.class.getName());
-      MAGIC_NUMBERS.add(ReplaceCommand.class.getName());
-      MAGIC_NUMBERS.add(ClearCommand.class.getName());
-      MAGIC_NUMBERS.add(PutMapCommand.class.getName());
-      MAGIC_NUMBERS.add(PrepareCommand.class.getName());
-      MAGIC_NUMBERS.add(CommitCommand.class.getName());
-      MAGIC_NUMBERS.add(RollbackCommand.class.getName());
-      MAGIC_NUMBERS.add(InvalidateL1Command.class.getName());
-      MAGIC_NUMBERS.add(LockControlCommand.class.getName());
+//      MAGIC_NUMBERS.add(ClusteredGetCommand.class.getName());
+//      MAGIC_NUMBERS.add(MultipleRpcCommand.class.getName());
+//      MAGIC_NUMBERS.add(SingleRpcCommand.class.getName());
+//      MAGIC_NUMBERS.add(GetKeyValueCommand.class.getName());
+//      MAGIC_NUMBERS.add(PutKeyValueCommand.class.getName());
+//      MAGIC_NUMBERS.add(RemoveCommand.class.getName());
+//      MAGIC_NUMBERS.add(InvalidateCommand.class.getName());
+//      MAGIC_NUMBERS.add(ReplaceCommand.class.getName());
+//      MAGIC_NUMBERS.add(ClearCommand.class.getName());
+//      MAGIC_NUMBERS.add(PutMapCommand.class.getName());
+//      MAGIC_NUMBERS.add(PrepareCommand.class.getName());
+//      MAGIC_NUMBERS.add(CommitCommand.class.getName());
+//      MAGIC_NUMBERS.add(RollbackCommand.class.getName());
+//      MAGIC_NUMBERS.add(InvalidateL1Command.class.getName());
+//      MAGIC_NUMBERS.add(LockControlCommand.class.getName());
    }
    
    /** Class to int mapping providing magic number to be written. Do not use 
@@ -121,9 +130,22 @@ public class NumberClassExternalizer implements ClassExternalizer {
       marshaller.writeByte(number);
    }
 
-   public Class<?> readClass(Unmarshaller unmarshaller) throws IOException {
+   public Object readClassInstance(Unmarshaller unmarshaller) throws IOException {
       int magicNumber = unmarshaller.readUnsignedByte();
-      return classes.get(magicNumber);
+      switch (magicNumber) {
+         case HASHMAP:
+            return new HashMap();
+         case TREEMAP:
+            return new TreeMap();
+         case FASTCOPYHASHMAP:
+            return new FastCopyHashMap();
+         case HASHSET:
+            return new HashSet();
+         case TREESET:
+            return new TreeSet();
+         default:
+            return null;
+      }
    }
    
 }

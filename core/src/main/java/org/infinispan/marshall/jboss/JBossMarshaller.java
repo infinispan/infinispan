@@ -22,6 +22,7 @@
 package org.infinispan.marshall.jboss;
 
 import org.infinispan.CacheException;
+import org.infinispan.commands.RemoteCommandFactory;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
@@ -29,7 +30,6 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.io.ByteBuffer;
 import org.infinispan.io.ExposedByteArrayOutputStream;
 import org.infinispan.marshall.AbstractMarshaller;
-import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -57,35 +57,61 @@ import java.io.OutputStream;
 public class JBossMarshaller extends AbstractMarshaller {
    private static final Log log = LogFactory.getLog(JBossMarshaller.class);
    private static final String DEFAULT_MARSHALLER_FACTORY = "org.jboss.marshalling.river.RiverMarshallerFactory";
-   private ClassLoader defaultClassLoader;
+   private ClassLoader defaultCl;
    private MarshallingConfiguration configuration;
    private MarshallerFactory factory;
    private ConstantObjectTable objectTable;
+   
+   /**
+    *  Marshaller thread local. JBossMarshaller is a singleton shared by all caches (global component), 
+    *  so no urgent need for static here.
+    *  JBMAR clears pretty much any state during finish(), so no urgent need to clear the thread local 
+    *  since it shouldn't be leaking.
+    */
+   private ThreadLocal<org.jboss.marshalling.Marshaller> marshallerTL = new ThreadLocal<org.jboss.marshalling.Marshaller>() {
+      @Override
+      protected org.jboss.marshalling.Marshaller initialValue() {
+         try {
+            return factory.createMarshaller(configuration);
+         } catch (IOException e) {
+            throw new CacheException(e);
+         }
+      }
+   };
+   
+   /**
+    *  Unmarshaller thread local. JBossMarshaller is a singleton shared by all caches (global component), 
+    *  so no urgent need for static here.
+    *  JBMAR clears pretty much any state during finish(), so no urgent need to clear the thread local 
+    *  since it shouldn't be leaking.
+    */
+   private ThreadLocal<Unmarshaller> unmarshallerTL = new ThreadLocal<Unmarshaller>() {
+      @Override
+      protected Unmarshaller initialValue() {
+         try {
+            return factory.createUnmarshaller(configuration);
+         } catch (IOException e) {
+            throw new CacheException(e);
+         }
+      }
+   };
 
    @Inject
-   public void init(ClassLoader defaultCl, Transport transport) {
+   public void init(ClassLoader defaultCl, RemoteCommandFactory cmdFactory) {
       log.debug("Using JBoss Marshalling based marshaller.");
-      defaultClassLoader = defaultCl;
+      this.defaultCl = defaultCl;
       try {
-         // Todo: Enable different marshaller factories via configuration
+         // TODO: Enable different marshaller factories via configuration
          factory = (MarshallerFactory) Util.getInstance(DEFAULT_MARSHALLER_FACTORY);
       } catch (Exception e) {
          throw new CacheException("Unable to load JBoss Marshalling marshaller factory " + DEFAULT_MARSHALLER_FACTORY, e);
       }
 
-      objectTable = createCustomObjectTable(transport);
+      objectTable = createCustomObjectTable(cmdFactory);
       configuration = new MarshallingConfiguration();
       configuration.setCreator(new SunReflectiveCreator());
       configuration.setObjectTable(objectTable);
       
-      /* Doubtful: Setting version to 0 reduces the payload avoiding block mode 
-       * (each object in a block) but could potentially be a security issue 
-       * and could spoil things when trying to serialize a spec-compliant 
-       * Serializable object which relies on reading a -1 to know when its data 
-       * ends will "overrun" the buffer if there's no block mode in place. 
-       */ 
-//      configuration.setVersion(0);
-
       // ContextClassResolver provides same functionality as MarshalledValueInputStream
       configuration.setClassResolver(new ContextClassResolver());
    }
@@ -93,7 +119,7 @@ public class JBossMarshaller extends AbstractMarshaller {
    @Stop
    public void stop() {
       // Do not leak classloader when cache is stopped.
-      defaultClassLoader = null;
+      defaultCl = null;
       objectTable.stop();
    }
 
@@ -116,7 +142,7 @@ public class JBossMarshaller extends AbstractMarshaller {
    }
 
    public ObjectOutput startObjectOutput(OutputStream os) throws IOException {
-      org.jboss.marshalling.Marshaller marshaller = factory.createMarshaller(configuration);
+      org.jboss.marshalling.Marshaller marshaller = marshallerTL.get();
       marshaller.start(Marshalling.createByteOutput(os));
       return marshaller;
    }
@@ -129,7 +155,7 @@ public class JBossMarshaller extends AbstractMarshaller {
    }
 
    public void objectToObjectStream(Object obj, ObjectOutput out) throws IOException {
-      ClassLoader toUse = defaultClassLoader;
+      ClassLoader toUse = defaultCl;
       Thread current = Thread.currentThread();
       ClassLoader old = current.getContextClassLoader();
       if (old != null) toUse = old;
@@ -161,7 +187,7 @@ public class JBossMarshaller extends AbstractMarshaller {
    }
 
    public ObjectInput startObjectInput(InputStream is) throws IOException {
-      Unmarshaller unmarshaller = factory.createUnmarshaller(configuration);
+      Unmarshaller unmarshaller = unmarshallerTL.get();      
       unmarshaller.start(Marshalling.createByteInput(is));
       return unmarshaller;
    }
@@ -177,8 +203,8 @@ public class JBossMarshaller extends AbstractMarshaller {
       return in.readObject();
    }
 
-   private ConstantObjectTable createCustomObjectTable(Transport transport) {
-      ConstantObjectTable objectTable = new ConstantObjectTable(transport);
+   private ConstantObjectTable createCustomObjectTable(RemoteCommandFactory cmdFactory) {
+      ConstantObjectTable objectTable = new ConstantObjectTable(cmdFactory);
       objectTable.init();
       return objectTable;
    }

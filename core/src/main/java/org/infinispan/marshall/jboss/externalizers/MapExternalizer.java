@@ -21,16 +21,17 @@
  */
 package org.infinispan.marshall.jboss.externalizers;
 
-import org.infinispan.CacheException;
-import org.infinispan.marshall.jboss.ClassExternalizer;
 import org.infinispan.marshall.jboss.MarshallUtil;
 import org.infinispan.marshall.jboss.Externalizer;
-import org.infinispan.util.Util;
+import org.infinispan.util.FastCopyHashMap;
 import org.jboss.marshalling.Marshaller;
 import org.jboss.marshalling.Unmarshaller;
+import org.jboss.marshalling.util.IdentityIntMap;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Map externalizer for all map implementations except immutable maps and singleton maps, i.e. FastCopyHashMap, HashMap,
@@ -39,29 +40,39 @@ import java.util.Map;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class MapExternalizer implements Externalizer, ClassExternalizer.ClassWritable {
-   /** The serialVersionUID */
-   private static final long serialVersionUID = -532896252671303391L;
-   private ClassExternalizer classExt;
+public class MapExternalizer implements Externalizer {
+   private static final int HASHMAP = 0;
+   private static final int TREEMAP = 1;
+   private static final int FASTCOPYHASHMAP = 2;
+   private final IdentityIntMap<Class<?>> numbers = new IdentityIntMap<Class<?>>(3);
+   
+   public MapExternalizer() {
+      numbers.put(HashMap.class, HASHMAP);
+      numbers.put(TreeMap.class, TREEMAP);
+      numbers.put(FastCopyHashMap.class, FASTCOPYHASHMAP);
+   }
 
    public void writeObject(Marshaller output, Object subject) throws IOException {
-      classExt.writeClass(output, subject.getClass());
+      int number = numbers.get(subject.getClass(), -1);
+      output.writeByte(number);
       MarshallUtil.marshallMap((Map) subject, output);
    }
 
    public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
-      Class<?> subjectType = classExt.readClass(input);
+      int magicNumber = input.readUnsignedByte();
       Map subject = null;
-      try {
-         subject = (Map) Util.getInstance(subjectType);
-      } catch (Exception e) {
-         throw new CacheException("Unable to create new instance of ReplicableCommand", e);
+      switch (magicNumber) {
+         case HASHMAP:
+            subject = new HashMap();
+            break;
+         case TREEMAP:
+            subject = new TreeMap();
+            break;
+         case FASTCOPYHASHMAP:
+            subject = new FastCopyHashMap();
+            break;
       }
       MarshallUtil.unmarshallMap(subject, input);
       return subject;
-   }
-
-   public void setClassExternalizer(ClassExternalizer classExt) {
-      this.classExt = classExt;
    }
 }

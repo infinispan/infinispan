@@ -22,17 +22,17 @@
 package org.infinispan.marshall.jboss.externalizers;
 
 import net.jcip.annotations.Immutable;
-import org.infinispan.CacheException;
-import org.infinispan.marshall.jboss.ClassExternalizer;
 import org.infinispan.marshall.jboss.MarshallUtil;
 import org.infinispan.marshall.jboss.Externalizer;
-import org.infinispan.util.Util;
 import org.jboss.marshalling.Marshaller;
 import org.jboss.marshalling.Unmarshaller;
+import org.jboss.marshalling.util.IdentityIntMap;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Set externalizer for all set implementations, i.e. HashSet and TreeSet
@@ -41,31 +41,35 @@ import java.util.Set;
  * @since 4.0
  */
 @Immutable
-public class SetExternalizer implements Externalizer, ClassExternalizer.ClassWritable {
-   /** The serialVersionUID */
-   private static final long serialVersionUID = -3147427397000304867L;
-   private ClassExternalizer classExt;
+public class SetExternalizer implements Externalizer {
+   private static final int HASHSET = 0;
+   private static final int TREESET = 1;
+   private final IdentityIntMap<Class<?>> numbers = new IdentityIntMap<Class<?>>(2);
+   
+   public SetExternalizer() {
+      numbers.put(HashSet.class, HASHSET);
+      numbers.put(TreeSet.class, TREESET);
+   }
 
    public void writeObject(Marshaller output, Object subject) throws IOException {
-      classExt.writeClass(output, subject.getClass());
+      int number = numbers.get(subject.getClass(), -1);
+      output.writeByte(number);
       MarshallUtil.marshallCollection((Collection) subject, output);
    }
 
    public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
-      Class<?> subjectType = classExt.readClass(input);
+      int magicNumber = input.readUnsignedByte();
       Set subject = null;
-      try {
-         subject = (Set) Util.getInstance(subjectType);
-      } catch (Exception e) {
-         throw new CacheException("Unable to create new instance of ReplicableCommand", e);
+      switch (magicNumber) {
+         case HASHSET:
+            subject = new HashSet();
+            break;
+         case TREESET:
+            subject = new TreeSet();
+            break;
       }
       int size = MarshallUtil.readUnsignedInt(input);
       for (int i = 0; i < size; i++) subject.add(input.readObject());
       return subject;
    }
-
-   public void setClassExternalizer(ClassExternalizer classExt) {
-      this.classExt = classExt;
-   }
-
 }

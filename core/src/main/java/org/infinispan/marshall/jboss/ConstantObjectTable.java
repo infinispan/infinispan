@@ -21,11 +21,12 @@
  */
 package org.infinispan.marshall.jboss;
 
-import net.jcip.annotations.Immutable;
+ import net.jcip.annotations.Immutable;
 
 import org.infinispan.CacheException;
 import org.infinispan.atomic.AtomicHashMap;
 import org.infinispan.commands.LockControlCommand;
+import org.infinispan.commands.RemoteCommandFactory;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
@@ -69,7 +70,6 @@ import org.infinispan.marshall.jboss.externalizers.MortalCacheValueExternalizer;
 import org.infinispan.marshall.jboss.externalizers.ReplicableCommandExternalizer;
 import org.infinispan.marshall.jboss.externalizers.SetExternalizer;
 import org.infinispan.marshall.jboss.externalizers.SingletonListExternalizer;
-import org.infinispan.marshall.jboss.externalizers.StateTransferControlCommandExternalizer;
 import org.infinispan.marshall.jboss.externalizers.SuccessfulResponseExternalizer;
 import org.infinispan.marshall.jboss.externalizers.TransactionLogExternalizer;
 import org.infinispan.marshall.jboss.externalizers.TransientCacheEntryExternalizer;
@@ -81,7 +81,6 @@ import org.infinispan.remoting.responses.ExtendedResponse;
 import org.infinispan.remoting.responses.RequestIgnoredResponse;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.responses.UnsuccessfulResponse;
-import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.FastCopyHashMap;
@@ -111,7 +110,8 @@ import java.util.TreeSet;
  * @since 4.0
  */
 public class ConstantObjectTable implements ObjectTable {
-   private static final Map<String, String> EXTERNALIZERS = new HashMap<String, String>();
+   private static final int CAPACITY = 50;
+   private static final Map<String, String> EXTERNALIZERS = new HashMap<String, String>(CAPACITY);
 
    static {
       EXTERNALIZERS.put(GlobalTransaction.class.getName(), GlobalTransactionExternalizer.class.getName());
@@ -132,7 +132,7 @@ public class ConstantObjectTable implements ObjectTable {
       EXTERNALIZERS.put(ExceptionResponse.class.getName(), ExceptionResponseExternalizer.class.getName());
       EXTERNALIZERS.put(AtomicHashMap.class.getName(), DeltaAwareExternalizer.class.getName());
 
-      EXTERNALIZERS.put(StateTransferControlCommand.class.getName(), StateTransferControlCommandExternalizer.class.getName());
+      EXTERNALIZERS.put(StateTransferControlCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
       EXTERNALIZERS.put(ClusteredGetCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
       EXTERNALIZERS.put(MultipleRpcCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
       EXTERNALIZERS.put(SingleRpcCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
@@ -162,45 +162,42 @@ public class ConstantObjectTable implements ObjectTable {
    }
 
    /** Contains list of singleton objects written such as constant objects, 
-    * singleton ReadWriter implementations...etc. When writing, index of each 
+    * singleton Externalizer implementations...etc. When writing, index of each 
     * object is written, and when reading, index is used to find the instance 
     * in this list.*/
-   private final List<Object> objects = new ArrayList<Object>();
-   /** Contains mapping of constant instances to their writers */
-   private final Map<Object, Writer> writers = new IdentityHashMap<Object, Writer>();
-   /** Contains mapping of custom object externalizer classes to their 
-    * Externalizer instances. Do not use this map for storing Externalizer 
-    * implementations for user classes. For these, please use weak key based 
-    * maps, i.e WeakHashMap */
-   private final Map<Class<?>, Externalizer> externalizers = new IdentityHashMap<Class<?>, Externalizer>();
-   private byte index;
-   private final Transport transport;
-   private final NumberClassExternalizer classTable = new NumberClassExternalizer();
+   private final List<Object> objects = new ArrayList<Object>(CAPACITY);
    
-   public ConstantObjectTable(Transport transport) {
-      this.transport = transport;
+   /** Contains mapping of constant instances to their writers and also custom 
+    * object externalizer classes to their Externalizer instances. 
+    * Do not use this map for storing Externalizer implementations for user 
+    * classes. For these, please use weak key based maps, i.e WeakHashMap */
+   private final Map<Class<?>, Writer> writers = new IdentityHashMap<Class<?>, Writer>(CAPACITY);
+
+   private byte index;
+
+   private final RemoteCommandFactory cmdFactory;
+   
+   public ConstantObjectTable(RemoteCommandFactory cmdFactory) {
+      this.cmdFactory = cmdFactory;
    }
 
    public void init() {
       // Init singletons
       objects.add(RequestIgnoredResponse.INSTANCE);
-      writers.put(RequestIgnoredResponse.INSTANCE, new InstanceWriter(index++));
+      writers.put(RequestIgnoredResponse.class, new InstanceWriter(index++));
       objects.add(UnsuccessfulResponse.INSTANCE);
-      writers.put(UnsuccessfulResponse.INSTANCE, new InstanceWriter(index++));
+      writers.put(UnsuccessfulResponse.class, new InstanceWriter(index++));
       
       try {
          for (Map.Entry<String, String> entry : EXTERNALIZERS.entrySet()) {
             Class typeClazz = Util.loadClass(entry.getKey());
             Externalizer delegate = (Externalizer) Util.getInstance(entry.getValue());
-            if (delegate instanceof StateTransferControlCommandExternalizer) {
-               ((StateTransferControlCommandExternalizer) delegate).init(transport);
-            }
-            if (delegate instanceof ClassExternalizer.ClassWritable) {
-               ((ClassExternalizer.ClassWritable) delegate).setClassExternalizer(classTable);
+            if (delegate instanceof ReplicableCommandExternalizer) {
+               ((ReplicableCommandExternalizer) delegate).init(cmdFactory);
             }
             Externalizer rwrt = new DelegatingReadWriter(index++, delegate);
             objects.add(rwrt);
-            externalizers.put(typeClazz, rwrt);
+            writers.put(typeClazz, rwrt);
          }
          
       } catch (IOException e) {
@@ -213,18 +210,12 @@ public class ConstantObjectTable implements ObjectTable {
    }
 
    public void stop() {
-      classTable.stop();
       writers.clear();
       objects.clear();
-      externalizers.clear();
    }
 
    public Writer getObjectWriter(Object o) throws IOException {
-      Object singleton = writers.get(o);
-      if (singleton == null) {
-         return externalizers.get(o.getClass()); 
-      }
-      return writers.get(o);
+      return writers.get(o.getClass());
    }
 
    public Object readObject(Unmarshaller unmarshaller) throws IOException, ClassNotFoundException {

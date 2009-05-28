@@ -21,11 +21,9 @@
  */
 package org.infinispan.marshall.jboss.externalizers;
 
-import org.infinispan.CacheException;
+import org.infinispan.commands.RemoteCommandFactory;
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.marshall.jboss.ClassExternalizer;
 import org.infinispan.marshall.jboss.Externalizer;
-import org.infinispan.util.Util;
 import org.jboss.marshalling.Marshaller;
 import org.jboss.marshalling.Unmarshaller;
 
@@ -37,13 +35,14 @@ import java.io.IOException;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class ReplicableCommandExternalizer implements Externalizer, ClassExternalizer.ClassWritable {
-   /** The serialVersionUID */
-   private static final long serialVersionUID = 6915200269446867084L;
-   private ClassExternalizer classExt;
+public class ReplicableCommandExternalizer implements Externalizer {
+   private RemoteCommandFactory cmdFactory;
+   
+   public void init(RemoteCommandFactory cmdFactory) {
+      this.cmdFactory = cmdFactory;
+   }
 
    public void writeObject(Marshaller output, Object subject) throws IOException {
-      writeClass(output, subject.getClass());
       ReplicableCommand command = (ReplicableCommand) subject;
       output.writeShort(command.getCommandId());
       Object[] args = command.getParameters();
@@ -55,7 +54,6 @@ public class ReplicableCommandExternalizer implements Externalizer, ClassExterna
    }
 
    public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
-      ReplicableCommand command = (ReplicableCommand)createExternal(input);
       short methodId = input.readShort();
       byte numArgs = input.readByte();
       Object[] args = null;
@@ -63,25 +61,6 @@ public class ReplicableCommandExternalizer implements Externalizer, ClassExterna
          args = new Object[numArgs];
          for (int i = 0; i < numArgs; i++) args[i] = input.readObject();
       }
-      command.setParameters(methodId, args);
-      return command;
-   }
-   
-   protected void writeClass(Marshaller output, Class<?> subjectType) throws IOException {
-      classExt.writeClass(output, subjectType);
-   }
-   
-   protected Object createExternal(Unmarshaller input) throws IOException, ClassNotFoundException {
-      try {
-         Class<?> subjectType = classExt.readClass(input);
-         ReplicableCommand command = (ReplicableCommand) Util.getInstance(subjectType);
-         return command;
-      } catch (Exception e) {
-         throw new CacheException("Unable to create new instance of ReplicableCommand", e);
-      }
-   }
-   
-   public void setClassExternalizer(ClassExternalizer classExt) {
-      this.classExt = classExt;
-   }
+      return cmdFactory.fromStream((byte) methodId, args);
+   }   
 }

@@ -33,7 +33,11 @@ import java.io.IOException;
  *
  * @author Galder Zamarreño
  * @since 4.0
+ * @deprecated With new ObjecTable based solution, we're now fully in control of the stream, 
+ * so no need to put class on the wire. As a result, we can use the exact same trick used
+ * by the old marshaller implementation which uses a RemoteCommandFactory to load the class.
  */
+@Deprecated
 public class StateTransferControlCommandExternalizer extends ReplicableCommandExternalizer {
    /** The serialVersionUID */
    private static final long serialVersionUID = -3743458410265076691L;
@@ -43,15 +47,15 @@ public class StateTransferControlCommandExternalizer extends ReplicableCommandEx
       this.transport = transport;
    }
 
-   @Override
-   protected void writeClass(Marshaller output, Class<?> subjectType) throws IOException {
-      // No-op
-   }
-
-   @Override
-   protected Object createExternal(Unmarshaller input) throws IOException, ClassNotFoundException {
-      StateTransferControlCommand command = new StateTransferControlCommand();
-      command.init(transport);
-      return command;
-   }
+//   @Override
+//   protected void writeClass(Marshaller output, Class<?> subjectType) throws IOException {
+//      // No-op
+//   }
+//
+//   @Override
+//   protected Object createExternal(Unmarshaller input) throws IOException, ClassNotFoundException {
+//      StateTransferControlCommand command = new StateTransferControlCommand();
+//      command.init(transport);
+//      return command;
+//   }
 }

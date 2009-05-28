@@ -34,7 +34,11 @@ import org.jboss.marshalling.Unmarshaller;
  *
  * @author Galder Zamarreño
  * @since 4.0
+ * @deprecated With new ObjectTable based solution where there's no need hard need to send
+ * class information around and bearing in mind that instantiation based on reflection is
+ * expensive, moving instantiation to the corresponding externalizer.
  */
+@Deprecated
 public interface ClassExternalizer {
    /**
     * Write the predefined class reference to the stream.
@@ -46,14 +50,14 @@ public interface ClassExternalizer {
    void writeClass(Marshaller output, Class<?> subjectType) throws IOException;
    
    /**
-    * Read a class from the stream.  The class will have been written by the
+    * Read a class from the stream, instantiate it and return it.  The class will have been written by the
     * writeClass(Marshaller, Class) method, as defined above.
     *
     * @param unmarshaller the unmarshaller to read from
-    * @return the class
+    * @return an instance of the class read
     * @throws IOException if an I/O error occurs
     */
-   Class<?> readClass(Unmarshaller input) throws IOException;
+   Object readClassInstance(Unmarshaller input) throws IOException;
       
    /**
     * Classes that provide a shortened version of Class information should
