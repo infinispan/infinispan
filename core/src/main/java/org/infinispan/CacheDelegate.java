@@ -205,7 +205,7 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
 
    public final void evict(K key) {
       EvictCommand command = commandsFactory.buildEvictCommand(key);
-      invoker.invoke(getInvocationContext(), command);
+      invoker.invoke(icc.createNonTxInvocationContext(), command);
    }
 
    public Configuration getConfiguration() {

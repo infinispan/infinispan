@@ -134,7 +134,7 @@ public abstract class LockTestBase {
 
       tm.begin();
       cache.evict("k");
-      assertLocked("k");
+      assertNotLocked("k");
       tm.commit();
       assert !cache.containsKey("k") : "Should not exist";
       assertNoLocks();
@@ -162,7 +162,7 @@ public abstract class LockTestBase {
 
       tm.begin();
       cache.evict("k");
-      assertLocked("k");
+      assertNotLocked("k");
       tm.commit();
       assert !cache.containsKey("k") : "Should not exist";
       assertNoLocks();

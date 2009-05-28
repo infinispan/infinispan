@@ -2,6 +2,7 @@ package org.infinispan.context;
 
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
+import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.factories.annotations.NonVolatile;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -25,6 +26,12 @@ public interface InvocationContextContainer {
     * current thread, so further calls to {@link #getInvocationContext()} will return same instace.
     */
    InvocationContext createInvocationContext();
+
+   /**
+    * Will create an {@link org.infinispan.context.impl.NonTxInvocationContext} with the {@link org.infinispan.context.impl.NonTxInvocationContext#isOriginLocal()}
+    * returning true. 
+    */
+   NonTxInvocationContext createNonTxInvocationContext();
 
    /**
     * Returns a {@link org.infinispan.context.impl.LocalTxInvocationContext}. The context is also associated with the

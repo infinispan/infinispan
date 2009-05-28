@@ -51,8 +51,6 @@ public class InvocationContextContainerImpl implements InvocationContextContaine
 
    ThreadLocal<InvocationContext> icTl = new ThreadLocal<InvocationContext>();
 
-   private Map<GlobalTransaction, RemoteTxInvocationContext> remoteTxMap = new ConcurrentHashMap<GlobalTransaction, RemoteTxInvocationContext>(20);
-
    @Inject
    public void init(TransactionManager tm, TransactionTable transactionTable) {
       this.tm = tm;
@@ -102,6 +100,18 @@ public class InvocationContextContainerImpl implements InvocationContextContaine
          return (RemoteTxInvocationContext) existing;
       }
       RemoteTxInvocationContext remoteTxContext = new RemoteTxInvocationContext();
+      icTl.set(remoteTxContext);
+      return remoteTxContext;
+   }
+
+   public NonTxInvocationContext createNonTxInvocationContext() {
+      InvocationContext existing = icTl.get();
+      if (existing != null && existing instanceof NonTxInvocationContext) {
+         NonTxInvocationContext context = (NonTxInvocationContext) existing;
+         context.setOriginLocal(true);
+         return context;
+      }
+      NonTxInvocationContext remoteTxContext = new NonTxInvocationContext();
       icTl.set(remoteTxContext);
       return remoteTxContext;
    }
