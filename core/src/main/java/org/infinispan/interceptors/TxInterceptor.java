@@ -75,7 +75,6 @@ public class TxInterceptor extends CommandInterceptor {
          }
       }
       //if it is remote and 2PC then first log the tx only after replying mods
-      //(TxInterceptor line 338)
       if (!command.isOnePhaseCommit()) {
          transactionLog.logPrepare(command);
       }
