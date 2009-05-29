@@ -103,7 +103,7 @@ public class VersionAwareMarshaller extends AbstractMarshaller {
       } catch (Exception e) {
          finishObjectOutput(out);
          log.error("Unable to read version id from first two bytes of stream, barfing.");
-         throw new IOException("Unable to read version id from first two bytes of stream.", e);
+         throw new IOException("Unable to read version id from first two bytes of stream : " + e.getMessage());
       }
       return out;
    }
@@ -133,7 +133,7 @@ public class VersionAwareMarshaller extends AbstractMarshaller {
       catch (Exception e) {
          finishObjectInput(in);
          log.error("Unable to read version id from first two bytes of stream, barfing.");
-         throw new IOException("Unable to read version id from first two bytes of stream.", e);
+         throw new IOException("Unable to read version id from first two bytes of stream: " + e.getMessage());
       }
       return in;
    }
