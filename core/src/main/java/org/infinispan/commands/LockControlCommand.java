@@ -86,14 +86,15 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
          throw new IllegalStateException("Expected null context!");
       
       RemoteTxInvocationContext ctxt = icc.createRemoteTxInvocationContext();
+      RemoteTransaction transaction = txTable.getRemoteTransaction(globalTx);
 
-      boolean remoteTxinitiated = txTable.getRemoteTransaction(globalTx) != null ? true : false;
-      RemoteTransaction transaction =null;
+      boolean remoteTxinitiated = transaction != null;
       if (!remoteTxinitiated) {
          //create bogus modifications (we do not know modifications ahead of time)
+         //todo - make a create method that does not require creation of a WriteCommand[]
          transaction = txTable.createRemoteTransaction(globalTx, new WriteCommand[]{});
-         ctxt.setRemoteTransaction(transaction);   
       }
+      ctxt.setRemoteTransaction(transaction);
       return invoker.invoke(ctxt, this);
    }
 

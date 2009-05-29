@@ -79,7 +79,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
 
       // 1. first create a remote transaction
       RemoteTransaction remoteTransaction = txTable.getRemoteTransaction(globalTx);
-      boolean remoteTxinitiated = remoteTransaction != null ? true : false;
+      boolean remoteTxinitiated = remoteTransaction != null;
       if (!remoteTxinitiated) {
          remoteTransaction = txTable.createRemoteTransaction(globalTx, modifications);
       } else {
