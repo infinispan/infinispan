@@ -2,13 +2,15 @@ package org.infinispan.distribution;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
-import org.infinispan.commands.write.InvalidateCommand;
+import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.test.ReplListener;
 import org.testng.annotations.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -40,21 +42,25 @@ public class DistAsyncTxFuncTest extends DistSyncTxFuncTest {
 
    @Override
    protected void asyncWait(Object key, Class<? extends VisitableCommand> command, Cache<?, ?>... cachesOnWhichKeyShouldInval) {
+      if (cachesOnWhichKeyShouldInval == null) cachesOnWhichKeyShouldInval = new Cache[0];
+      List<Cache<?, ?>> cachesOnWhichKeyShouldInvalList = new ArrayList(Arrays.asList(cachesOnWhichKeyShouldInval));
       if (key == null) {
          // test all caches.
          for (ReplListener rl : r) rl.expect(command);
          for (ReplListener rl : r) rl.waitForRpc();
       } else {
          for (Cache<?, ?> c : getOwners(key)) {
-            listenerLookup.get(c).expect(command);
+            if (cachesOnWhichKeyShouldInvalList.remove(c)) {
+               listenerLookup.get(c).expect(command, InvalidateL1Command.class);
+            } else {
+               listenerLookup.get(c).expect(command);
+            }
             listenerLookup.get(c).waitForRpc();
          }
 
-         if (cachesOnWhichKeyShouldInval != null) {
-            for (Cache<?, ?> c : cachesOnWhichKeyShouldInval) {
-               listenerLookup.get(c).expect(InvalidateCommand.class);
-               listenerLookup.get(c).waitForRpc();
-            }
+         for (Cache<?, ?> c : cachesOnWhichKeyShouldInvalList) {
+            listenerLookup.get(c).expect(InvalidateL1Command.class);
+            listenerLookup.get(c).waitForRpc();
          }
       }
    }

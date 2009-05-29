@@ -130,8 +130,8 @@ public class ReplListener {
             this.expectedCommands = new LinkedList<Class<? extends VisitableCommand>>();
          }
          this.expectedCommands.addAll(Arrays.asList(expectedCommands));
-         log.trace("Setting expected commands to {0}", this.expectedCommands);
-         log.trace("Record eagerly is {0}, and eager commands are {1}", recordCommandsEagerly, eagerCommands);
+         info("Setting expected commands to " + this.expectedCommands);
+         info("Record eagerly is " + recordCommandsEagerly + ", and eager commands are " + eagerCommands);
          if (recordCommandsEagerly) {
             this.expectedCommands.removeAll(eagerCommands);
             if (!eagerCommands.isEmpty()) sawAtLeastOneInvocation = true;
@@ -140,6 +140,10 @@ public class ReplListener {
       } finally {
          expectationSetupLock.unlock();
       }
+   }
+
+   private void info(String str) {
+      log.info(" [" + c + "] " + str);
    }
 
    /**
@@ -156,7 +160,7 @@ public class ReplListener {
    public void waitForRpc(long time, TimeUnit unit) {
       assert expectedCommands != null : "there are no replication expectations; please use ReplListener.expect() before calling this method";
       try {
-         log.trace("Expect Any is {0}, saw at least one? {1} Expected {2}", expectAny, sawAtLeastOneInvocation, expectedCommands);
+         info("Expect Any is " + expectAny + ", saw at least one? " + sawAtLeastOneInvocation + " Expected " + expectedCommands);
          boolean successful = (expectAny && sawAtLeastOneInvocation) || (!expectAny && expectedCommands.isEmpty());
          if (!successful && !latch.await(time, unit)) {
             assert false : "Waiting for more than " + time + " " + unit + " and following commands did not replicate: " + expectedCommands + " on cache [" + c.getCacheManager().getAddress() + "]";
@@ -209,11 +213,16 @@ public class ReplListener {
       private void markAsVisited(VisitableCommand cmd) {
          expectationSetupLock.lock();
          try {
-            log.info("Cache [" + c + "] saw command " + cmd);
+            info("ReplListener saw command " + cmd);
             if (expectedCommands != null) {
-               expectedCommands.remove(cmd.getClass());
+               if (expectedCommands.remove(cmd.getClass())) {
+                  info("Successfully removed command: " + cmd.getClass());
+               }                                      
                sawAtLeastOneInvocation = true;
-               if (expectedCommands.isEmpty()) latch.countDown();
+               if (expectedCommands.isEmpty()) {
+                  info("Nothing to wait for, releasing latch");
+                  latch.countDown();
+               }
             } else {
                if (recordCommandsEagerly) eagerCommands.add(cmd.getClass());
             }

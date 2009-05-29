@@ -24,10 +24,10 @@ public class DistSyncTxFuncTest extends BaseDistFunctionalTest {
    protected void init(MagicKey k1, MagicKey k2) {
       // neither key maps on to c4
       c2.put(k1, "value1");
-      asyncWait(k1, PutKeyValueCommand.class);
+      asyncWait(k1, PutKeyValueCommand.class, c1, c3, c4);
 
       c2.put(k2, "value2");
-      asyncWait(k2, PutKeyValueCommand.class);
+      asyncWait(k2, PutKeyValueCommand.class, c1, c3, c4);
 
       assertIsInContainerImmortal(c1, k1);
       assertIsInContainerImmortal(c2, k1);
