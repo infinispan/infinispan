@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
@@ -127,7 +128,7 @@ public class ReplListener {
       expectationSetupLock.lock();
       try {
          if (this.expectedCommands == null) {
-            this.expectedCommands = new LinkedList<Class<? extends VisitableCommand>>();
+            this.expectedCommands = new CopyOnWriteArrayList<Class<? extends VisitableCommand>>();
          }
          this.expectedCommands.addAll(Arrays.asList(expectedCommands));
          info("Setting expected commands to " + this.expectedCommands);
