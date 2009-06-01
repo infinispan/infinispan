@@ -5,6 +5,7 @@ import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -99,7 +100,8 @@ public class DistributionManagerImpl implements DistributionManager {
       if (!responses.isEmpty()) {
          for (Response r : responses) {
             if (r instanceof SuccessfulResponse) {
-               return (InternalCacheEntry) ((SuccessfulResponse) r).getResponseValue();
+               InternalCacheValue cacheValue = (InternalCacheValue) ((SuccessfulResponse) r).getResponseValue();
+               return cacheValue.toInternalCacheEntry(key);
             }
          }
       }

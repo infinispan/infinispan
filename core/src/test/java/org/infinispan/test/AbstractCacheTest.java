@@ -4,7 +4,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
-import org.infinispan.context.InvocationContext;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.manager.CacheManager;
@@ -46,7 +45,7 @@ public class AbstractCacheTest {
             removeInMemoryData(cache);
             clearCacheLoader(cache);
             clearReplicationQueues(cache);
-            InvocationContext invocationContext = ((AdvancedCache) cache).getInvocationContextContainer().createInvocationContext();
+            ((AdvancedCache) cache).getInvocationContextContainer().createInvocationContext();
          }
       }
    }

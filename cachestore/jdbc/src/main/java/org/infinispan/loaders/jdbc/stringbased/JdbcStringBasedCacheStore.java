@@ -2,6 +2,7 @@ package org.infinispan.loaders.jdbc.stringbased;
 
 import org.infinispan.Cache;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.io.ByteBuffer;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
@@ -99,7 +100,7 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
       try {
          connection = connectionFactory.getConnection();
          ps = connection.prepareStatement(sql);
-         ByteBuffer byteBuffer = JdbcUtil.marshall(getMarshaller(), ed);
+         ByteBuffer byteBuffer = JdbcUtil.marshall(getMarshaller(), ed.toInternalCacheValue());
          ps.setBinaryStream(1, byteBuffer.getStream(), byteBuffer.getLength());
          ps.setLong(2, ed.getExpiryTime());
          ps.setString(3, lockingKey);
@@ -147,7 +148,7 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
             InternalCacheEntry se = (InternalCacheEntry) objFromStream;
             readStoredEntries++;
             String key = key2StringMapper.getStringMapping(se.getKey());
-            ByteBuffer buffer = JdbcUtil.marshall(getMarshaller(), se);
+            ByteBuffer buffer = JdbcUtil.marshall(getMarshaller(), se.toInternalCacheValue());
             ps.setBinaryStream(1, buffer.getStream(), buffer.getLength());
             ps.setLong(2, se.getExpiryTime());
             ps.setString(3, key);
@@ -189,8 +190,9 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
          rs.setFetchSize(config.getFetchSize());
          while (rs.next()) {
             InputStream is = rs.getBinaryStream(1);
-            InternalCacheEntry se = (InternalCacheEntry) JdbcUtil.unmarshall(getMarshaller(), is);
-            marshaller.objectToObjectStream(se, objectOutput);
+            InternalCacheValue icv = (InternalCacheValue) JdbcUtil.unmarshall(getMarshaller(), is);
+            Object key = rs.getObject(2);
+            marshaller.objectToObjectStream(icv.toInternalCacheEntry(key), objectOutput);
          }
          marshaller.objectToObjectStream(STRING_STREAM_DELIMITER, objectOutput);
       } catch (SQLException e) {
@@ -257,8 +259,9 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
          Set<InternalCacheEntry> result = new HashSet<InternalCacheEntry>();
          while (rs.next()) {
             InputStream inputStream = rs.getBinaryStream(1);
-            InternalCacheEntry se = (InternalCacheEntry) JdbcUtil.unmarshall(getMarshaller(), inputStream);
-            result.add(se);
+            InternalCacheValue icv = (InternalCacheValue) JdbcUtil.unmarshall(getMarshaller(), inputStream);
+            Object key = rs.getObject(2);
+            result.add(icv.toInternalCacheEntry(key));
          }
          return result;
       } catch (SQLException e) {
@@ -284,7 +287,8 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
          rs = ps.executeQuery();
          if (rs.next()) {
             InputStream inputStream = rs.getBinaryStream(2);
-            InternalCacheEntry storedEntry = (InternalCacheEntry) JdbcUtil.unmarshall(getMarshaller(), inputStream);
+            InternalCacheValue icv = (InternalCacheValue) JdbcUtil.unmarshall(getMarshaller(), inputStream);
+            InternalCacheEntry storedEntry = icv.toInternalCacheEntry(key);
             if (storedEntry.isExpired()) {
                if (log.isTraceEnabled()) {
                   log.trace("Not returning '" + storedEntry + "' as it is expired. It will be removed from DB by purging thread!");

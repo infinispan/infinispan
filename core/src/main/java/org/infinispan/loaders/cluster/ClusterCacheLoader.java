@@ -4,6 +4,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.loaders.AbstractCacheLoader;
@@ -53,9 +54,9 @@ public class ClusterCacheLoader extends AbstractCacheLoader {
          throw new CacheLoaderException("Response length is always 0 or 1, received: " + response);
       Response firstResponse = response.get(0);
       if (firstResponse.isSuccessful() && firstResponse instanceof SuccessfulResponse) {
-         return (InternalCacheEntry) ((SuccessfulResponse) firstResponse).getResponseValue();
+         InternalCacheValue value = (InternalCacheValue) ((SuccessfulResponse) firstResponse).getResponseValue();
+         return value.toInternalCacheEntry(key);
       }
-
       String message = "Unknown response from remote cache: " + response;
       log.error(message);
       throw new CacheLoaderException(message);

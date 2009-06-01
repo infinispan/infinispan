@@ -23,8 +23,8 @@ package org.infinispan.commands.remote;
 
 import org.infinispan.CacheException;
 import org.infinispan.container.DataContainer;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.loaders.CacheLoaderManager;
@@ -73,7 +73,7 @@ public class ClusteredGetCommand implements CacheRpcCommand {
     * @param context invocation context, ignored.
     * @return returns an <code>CacheEntry</code> or null, if no entry is found.
     */
-   public CacheEntry perform(InvocationContext context) throws Throwable {
+   public InternalCacheValue perform(InvocationContext context) throws Throwable {
       if (key != null) {
          InternalCacheEntry cacheEntry = dataContainer.get(key);
          if (trace) log.trace("Found InternalCacheEntry {0} for key {1}", cacheEntry, key);
@@ -88,7 +88,7 @@ public class ClusteredGetCommand implements CacheRpcCommand {
                cacheEntry = cacheLoaderManager.getCacheLoader().load(key);
             }
          }
-         return cacheEntry;
+         return cacheEntry != null ? cacheEntry.toInternalCacheValue() : null;
       } else {
          throw new CacheException("Invalid command. Missing key!");
       }
