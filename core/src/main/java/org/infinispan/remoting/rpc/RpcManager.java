@@ -143,7 +143,7 @@ public interface RpcManager {
     * @param sync       if true, the transport will operate in sync mode.  Otherwise, it will operate in async mode.
     * @throws ReplicationException in the event of problems
     */
-   void anycastRpcCommand(List<Address> recipients, ReplicableCommand rpc, boolean sync) throws ReplicationException;
+   void invokeRemotely(List<Address> recipients, ReplicableCommand rpc, boolean sync) throws ReplicationException;
 
    /**
     * Broadcasts an RPC command to a specified set of recipients
@@ -155,10 +155,10 @@ public interface RpcManager {
     * @param usePriorityQueue if true, a priority queue is used
     * @throws ReplicationException in the event of problems
     */
-   void anycastRpcCommand(List<Address> recipients, ReplicableCommand rpc, boolean sync, boolean usePriorityQueue) throws ReplicationException;
+   void invokeRemotely(List<Address> recipients, ReplicableCommand rpc, boolean sync, boolean usePriorityQueue) throws ReplicationException;
 
    /**
-    * The same as {@link #anycastRpcCommand(java.util.List, org.infinispan.commands.ReplicableCommand, boolean)} except
+    * The same as {@link #invokeRemotely(java.util.List, org.infinispan.commands.ReplicableCommand, boolean)} except
     * that the task is passed to the transport executor and a Future is returned.  The transport always deals with this
     * synchronously.
     *
@@ -166,10 +166,10 @@ public interface RpcManager {
     * @param rpc        command to execute remotely
     * @param future     the future which will be passed back to the user
     */
-   void anycastRpcCommandInFuture(List<Address> recipients, ReplicableCommand rpc, NotifyingNotifiableFuture<Object> future);
+   void invokeRemotelyInFuture(List<Address> recipients, ReplicableCommand rpc, NotifyingNotifiableFuture<Object> future);
 
    /**
-    * The same as {@link #anycastRpcCommand(java.util.List, org.infinispan.commands.ReplicableCommand, boolean)} except
+    * The same as {@link #invokeRemotely(java.util.List, org.infinispan.commands.ReplicableCommand, boolean)} except
     * that the task is passed to the transport executor and a Future is returned.  The transport always deals with this
     * synchronously.
     *
@@ -178,7 +178,7 @@ public interface RpcManager {
     * @param usePriorityQueue if true, a priority queue is used
     * @param future           the future which will be passed back to the user
     */
-   void anycastRpcCommandInFuture(List<Address> recipients, ReplicableCommand rpc, boolean usePriorityQueue, NotifyingNotifiableFuture<Object> future);
+   void invokeRemotelyInFuture(List<Address> recipients, ReplicableCommand rpc, boolean usePriorityQueue, NotifyingNotifiableFuture<Object> future);
 
    /**
     * @return a reference to the underlying transport.

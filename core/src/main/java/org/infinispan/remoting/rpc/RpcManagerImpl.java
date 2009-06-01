@@ -176,7 +176,7 @@ public class RpcManagerImpl implements RpcManager {
       if (useReplicationQueue(sync)) {
          replicationQueue.add(rpc);
       } else {
-         anycastRpcCommand(null, rpc, sync, usePriorityQueue);
+         invokeRemotely(null, rpc, sync, usePriorityQueue);
       }
    }
 
@@ -185,14 +185,14 @@ public class RpcManagerImpl implements RpcManager {
    }
 
    public final void broadcastRpcCommandInFuture(ReplicableCommand rpc, boolean usePriorityQueue, NotifyingNotifiableFuture<Object> l) {
-      anycastRpcCommandInFuture(null, rpc, usePriorityQueue, l);
+      invokeRemotelyInFuture(null, rpc, usePriorityQueue, l);
    }
 
-   public final void anycastRpcCommand(List<Address> recipients, ReplicableCommand rpc, boolean sync) throws ReplicationException {
-      anycastRpcCommand(recipients, rpc, sync, false);
+   public final void invokeRemotely(List<Address> recipients, ReplicableCommand rpc, boolean sync) throws ReplicationException {
+      invokeRemotely(recipients, rpc, sync, false);
    }
 
-   public final void anycastRpcCommand(List<Address> recipients, ReplicableCommand rpc, boolean sync, boolean usePriorityQueue) throws ReplicationException {
+   public final void invokeRemotely(List<Address> recipients, ReplicableCommand rpc, boolean sync, boolean usePriorityQueue) throws ReplicationException {
       if (trace) {
          log.trace("Broadcasting call " + rpc + " to recipient list " + recipients);
       }
@@ -219,14 +219,14 @@ public class RpcManagerImpl implements RpcManager {
       }
    }
 
-   public final void anycastRpcCommandInFuture(List<Address> recipients, ReplicableCommand rpc, NotifyingNotifiableFuture<Object> l) {
-      anycastRpcCommandInFuture(recipients, rpc, false, l);
+   public final void invokeRemotelyInFuture(List<Address> recipients, ReplicableCommand rpc, NotifyingNotifiableFuture<Object> l) {
+      invokeRemotelyInFuture(recipients, rpc, false, l);
    }
 
-   public final void anycastRpcCommandInFuture(final List<Address> recipients, final ReplicableCommand rpc, final boolean usePriorityQueue, final NotifyingNotifiableFuture<Object> l) {
+   public final void invokeRemotelyInFuture(final List<Address> recipients, final ReplicableCommand rpc, final boolean usePriorityQueue, final NotifyingNotifiableFuture<Object> l) {
       Callable<Object> c = new Callable<Object>() {
          public Object call() {
-            anycastRpcCommand(recipients, rpc, true, usePriorityQueue);
+            invokeRemotely(recipients, rpc, true, usePriorityQueue);
             l.notifyDone();
             return null;
          }

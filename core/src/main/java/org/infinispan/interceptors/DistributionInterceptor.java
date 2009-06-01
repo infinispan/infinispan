@@ -170,7 +170,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
          List<Address> recipients = new ArrayList<Address>(ctx.getTransactionParticipants());
-         rpcManager.anycastRpcCommand(recipients, command, true, true);
+         rpcManager.invokeRemotely(recipients, command, true, true);
       }
       return invokeNextInterceptor(ctx, command);
    }
@@ -180,7 +180,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
          List<Address> recipients = new ArrayList<Address>(ctx.getTransactionParticipants());
-         rpcManager.anycastRpcCommand(recipients, command, configuration.isSyncCommitPhase(), true);
+         rpcManager.invokeRemotely(recipients, command, configuration.isSyncCommitPhase(), true);
       }
       return invokeNextInterceptor(ctx, command);
    }
@@ -195,7 +195,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
          List<Address> recipients = new ArrayList<Address>(ctx.getTransactionParticipants());
          if (trace) log.trace("Multicasting PrepareCommand to recipients : " + recipients);
          // this method will return immediately if we're the only member (because exclude_self=true)
-         rpcManager.anycastRpcCommand(recipients, command, sync);
+         rpcManager.invokeRemotely(recipients, command, sync);
       }
       return retVal;
    }
@@ -204,7 +204,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
          List<Address> recipients = new ArrayList<Address>(ctx.getTransactionParticipants());
-         rpcManager.anycastRpcCommand(recipients, command, configuration.isSyncRollbackPhase(), true);
+         rpcManager.invokeRemotely(recipients, command, configuration.isSyncRollbackPhase(), true);
       }
       return invokeNextInterceptor(ctx, command);
    }
@@ -259,10 +259,10 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
 
                if (useFuture) {
                   if (future == null) future = new NotifyingFutureImpl(returnValue);
-                  rpcManager.anycastRpcCommandInFuture(rec, command, future);
+                  rpcManager.invokeRemotelyInFuture(rec, command, future);
                   return future;
                } else {
-                  rpcManager.anycastRpcCommand(rec, command, sync);
+                  rpcManager.invokeRemotely(rec, command, sync);
                }
             }
          } else {
