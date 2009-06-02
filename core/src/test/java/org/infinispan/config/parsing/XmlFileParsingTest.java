@@ -38,8 +38,6 @@ public class XmlFileParsingTest {
 
       assert gc.getMarshallerClass().equals("org.infinispan.marshall.VersionAwareMarshaller");
       assert gc.getMarshallVersionString().equals("1.0");
-      assert gc.getObjectOutputStreamPoolSize() == 100;
-      assert gc.getObjectInputStreamPoolSize() == 100;
 
       Configuration defaultConfiguration = parser.parseDefaultConfiguration();
 

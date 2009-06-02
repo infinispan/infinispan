@@ -269,7 +269,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
 
    public Address getAddress() {
       if (address == null && channel != null) {
-         address = new JGroupsAddress(channel.getLocalAddress());
+         address = new JGroupsAddress(channel.getAddress());
       }
       return address;
    }

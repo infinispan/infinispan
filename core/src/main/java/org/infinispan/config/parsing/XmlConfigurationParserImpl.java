@@ -404,12 +404,6 @@ public class XmlConfigurationParserImpl extends XmlParserBase implements XmlConf
 
          tmp = getAttributeValue(e, "version");
          if (existsAttribute(tmp)) configuration.setMarshallVersion(tmp);
-
-         tmp = getAttributeValue(e, "objectInputStreamPoolSize");
-         if (existsAttribute(tmp)) configuration.setObjectInputStreamPoolSize(getInt(tmp));
-
-         tmp = getAttributeValue(e, "objectOutputStreamPoolSize");
-         if (existsAttribute(tmp)) configuration.setObjectOutputStreamPoolSize(getInt(tmp));
       }
    }
 

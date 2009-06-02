@@ -30,8 +30,6 @@
    </xs:complexType>
 
    <xs:complexType name="sharedSerializationType">
-      <xs:attribute name="objectInputStreamPoolSize" type="tns:positiveNumber"/>
-      <xs:attribute name="objectOutputStreamPoolSize" type="tns:positiveNumber"/>
       <xs:attribute name="version" type="xs:string"/>
       <xs:attribute name="marshallerClass" type="xs:string"/>
    </xs:complexType>

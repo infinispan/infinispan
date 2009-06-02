@@ -23,8 +23,7 @@
 
       <transport transportClass="org.infinispan.remoting.transport.jgroups.JGroupsTransport"/>
 
-      <serialization marshallerClass="org.infinispan.marshall.VersionAwareMarshaller" version="1.0"
-                     objectInputStreamPoolSize="100" objectOutputStreamPoolSize="100"/>
+      <serialization marshallerClass="org.infinispan.marshall.VersionAwareMarshaller" version="1.0"/>
       <globalJmxStatistics enabled="false" jmxDomain="funky_domain"
                            mBeanServerLookup="org.infinispan.jmx.PerThreadMBeanServerLookup"
                            allowDuplicateDomains="true"/>

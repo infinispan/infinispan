@@ -95,22 +95,6 @@
 
             </xsl:element>
 
-
-            <xsl:element name="serialization">
-               <xsl:attribute name="marshallerClass">org.infinispan.marshall.VersionAwareMarshaller</xsl:attribute>
-               <xsl:attribute name="version">1.0</xsl:attribute>
-               <xsl:if test="serialization[@objectInputStreamPoolSize]">
-                  <xsl:attribute name="objectInputStreamPoolSize">
-                     <xsl:value-of select="serialization/@objectInputStreamPoolSize"/>
-                  </xsl:attribute>
-               </xsl:if>
-               <xsl:if test="serialization[@objectOutputStreamPoolSize]">
-                  <xsl:attribute name="objectOutputStreamPoolSize">
-                     <xsl:value-of select="serialization/@objectOutputStreamPoolSize"/>
-                  </xsl:attribute>
-               </xsl:if>
-            </xsl:element>
-
             <xsl:if test="shutdown[@hookBehavior]">
                <xsl:element name="shutdown">
                   <xsl:attribute name="hookBehavior">
@@ -154,7 +138,6 @@
                      <xsl:if
                            test="not(starts-with(transaction/@transactionManagerLookupClass,'org.jboss.cache'))">
                         <xsl:message terminate="no">WARNING! Custom 'transactionManagerLookupClass' is being used. This cannot be automatically transformed.</xsl:message>
-                        <!-- TODO Custom 'transactionManagerLookupClass' is being used. This cannot be automatically transformed. -->
                      </xsl:if>
                      <xsl:attribute name="transactionManagerLookupClass">
                         <xsl:value-of

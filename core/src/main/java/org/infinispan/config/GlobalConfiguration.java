@@ -41,8 +41,6 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    private String replicationQueueScheduledExecutorFactoryClass = DefaultScheduledExecutorFactory.class.getName();
    private TypedProperties replicationQueueScheduledExecutorProperties = EMPTY_PROPERTIES;
    private String marshallerClass = VersionAwareMarshaller.class.getName(); // the default
-   private int objectInputStreamPoolSize = 50; // defaults
-   private int objectOutputStreamPoolSize = 50; // defaults
    private String transportClass = null; // this defaults to a non-clustered cache.
    private TypedProperties transportProperties = EMPTY_PROPERTIES;
    private Configuration defaultConfiguration;
@@ -171,24 +169,6 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    public void setMarshallerClass(String marshallerClass) {
       testImmutability("marshallerClass");
       this.marshallerClass = marshallerClass;
-   }
-
-   public int getObjectInputStreamPoolSize() {
-      return objectInputStreamPoolSize;
-   }
-
-   public void setObjectInputStreamPoolSize(int objectInputStreamPoolSize) {
-      testImmutability("objectInputStreamPoolSize");
-      this.objectInputStreamPoolSize = objectInputStreamPoolSize;
-   }
-
-   public int getObjectOutputStreamPoolSize() {
-      return objectOutputStreamPoolSize;
-   }
-
-   public void setObjectOutputStreamPoolSize(int objectOutputStreamPoolSize) {
-      testImmutability("objectOutputStreamPoolSize");
-      this.objectOutputStreamPoolSize = objectOutputStreamPoolSize;
    }
 
    public String getTransportClass() {
@@ -342,8 +322,6 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
 
       GlobalConfiguration that = (GlobalConfiguration) o;
 
-      if (objectInputStreamPoolSize != that.objectInputStreamPoolSize) return false;
-      if (objectOutputStreamPoolSize != that.objectOutputStreamPoolSize) return false;
       if (marshallVersion != that.marshallVersion) return false;
       if (asyncListenerExecutorFactoryClass != null ? !asyncListenerExecutorFactoryClass.equals(that.asyncListenerExecutorFactoryClass) : that.asyncListenerExecutorFactoryClass != null)
          return false;
@@ -387,8 +365,6 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       result = 31 * result + (replicationQueueScheduledExecutorFactoryClass != null ? replicationQueueScheduledExecutorFactoryClass.hashCode() : 0);
       result = 31 * result + (replicationQueueScheduledExecutorProperties != null ? replicationQueueScheduledExecutorProperties.hashCode() : 0);
       result = 31 * result + (marshallerClass != null ? marshallerClass.hashCode() : 0);
-      result = 31 * result + objectInputStreamPoolSize;
-      result = 31 * result + objectOutputStreamPoolSize;
       result = 31 * result + (transportClass != null ? transportClass.hashCode() : 0);
       result = 31 * result + (transportProperties != null ? transportProperties.hashCode() : 0);
       result = 31 * result + (defaultConfiguration != null ? defaultConfiguration.hashCode() : 0);

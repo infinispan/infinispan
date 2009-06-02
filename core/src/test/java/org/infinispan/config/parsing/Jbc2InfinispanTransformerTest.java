@@ -56,8 +56,6 @@ public class Jbc2InfinispanTransformerTest {
          assert globalConfig.getAsyncListenerExecutorProperties().get("maxThreads").equals("123");
          assert globalConfig.getAsyncListenerExecutorProperties().get("queueSize").equals("1020000");
          assert !defaultConfig.isInvocationBatchingEnabled();
-         assert globalConfig.getObjectInputStreamPoolSize() == 12;
-         assert globalConfig.getObjectOutputStreamPoolSize() == 14;
          assert globalConfig.getMarshallerClass().equals(VersionAwareMarshaller.class.getName());
          assert defaultConfig.isUseLazyDeserialization();
          assert globalConfig.getClusterName().equals("JBossCache-cluster");
@@ -113,7 +111,7 @@ public class Jbc2InfinispanTransformerTest {
          Thread.currentThread().setContextClassLoader(delegatingCl);
          String[] testFiles = {"buddy-replication.xml", "cacheloader-enabled.xml", "eviction-enabled.xml",
                                "external-jgroups-file.xml",
-                               "invalidation-async.xml","total-replication.xml"};
+                               "invalidation-async.xml", "total-replication.xml"};
          for (String name : testFiles) {
             String fileName = getFileName(name);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();

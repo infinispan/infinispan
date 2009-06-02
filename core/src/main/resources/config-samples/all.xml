@@ -43,8 +43,7 @@
       </transport>
 
       <!-- Again, sensible defaults are used here if this is omitted.  -->
-      <serialization marshallerClass="org.infinispan.marshall.VersionAwareMarshaller" version="1.0"
-                     objectInputStreamPoolSize="100" objectOutputStreamPoolSize="100"/>
+      <serialization marshallerClass="org.infinispan.marshall.VersionAwareMarshaller" version="1.0"/>
 
       <!--
          Used to register JVM shutdown hooks.
