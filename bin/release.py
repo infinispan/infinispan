@@ -211,7 +211,7 @@ def updateVersions(version, workingDir):
 
 def buildAndTest(workingDir):
     os.chdir(workingDir)
-    subprocess.check_call(["mvn", "deploy", "-P distribution -Dmaven.test.skip.exec=true"])
+    subprocess.check_call(["mvn", "deploy", "-Pdistribution",  "-Dmaven.test.skip.exec=true"])
 
 def getModuleName(pomFile):
     tree = ElementTree()
