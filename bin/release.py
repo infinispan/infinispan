@@ -158,7 +158,7 @@ def patch(pomFile, version):
     tags.append(getPropertiesVersionTag(tree))
 
     for tag in tags:
-        if tag is not None:
+        if tag is not None and tag.text.endswith("-SNAPSHOT"):
             #print "%s is %s.  Setting to %s" % (str(tag), tag.text, version)
             tag.text=version
             need_to_write = True
