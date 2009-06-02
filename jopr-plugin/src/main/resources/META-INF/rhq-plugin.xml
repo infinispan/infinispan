@@ -1,0 +1,90 @@
+<?xml version="1.0"?>
+<plugin name="infinispan"
+        displayName="infinispanPlugin"
+        package="org.infinispan.jopr.infinispan"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <depends plugin="JMX" useClasses="true"/>
+
+   <server
+         name="infinispan"
+         discovery="InfinispanDiscovery"
+         class="InfinispanComponent"
+         singleton="true"
+
+         >
+
+      <plugin-configuration>
+         <c:simple-property name="connectorAddress" description="JMX Remoting address of the remote JBossOSGi Server"/>
+         <c:simple-property name="objectName" description="ObjectName of the Manager" type="string" readOnly="true"/>
+         <c:template name="default" description="The default setup for JBossOSGi">
+            <c:simple-property name="connectorAddress" displayName="URL of the remote server"
+                               defaultValue="service:jmx:rmi://127.0.0.1/jndi/rmi://127.0.0.1:6996/jmxrmi"/>
+         </c:template>
+      </plugin-configuration>
+
+      <!-- TODO process scans -->
+
+      <metric property="createdCacheCount" displayName="Number of Caches created." displayType="summary" units="none"/>
+      <metric property="definedCacheCount" displayName="Number of Caches defined." displayType="summary" units="none"/>
+
+
+      <service
+            name="Cache"
+            discovery="CacheDiscovery"
+            class="CacheComponent"
+            description="One individual cache in Infinispan"
+            >
+
+         <operation name="Mgmt.resetStatistics" displayName="Reset Statistics (Mgmt)"
+                    description="Reset statistics on the CacheManagement Interceptor"/>
+         <operation name="Tx.resetStatistics" displayName="Reset Statistics (Tx)"
+                    description="Reset statistics on the Transaction Interceptor"/>
+
+         <metric property="Mgmt.averageReadTime" displayName="Average Read Time"
+                 description="Average time to read an entry from the cache"
+                 units="milliseconds" measurementType="dynamic"/>
+         <metric property="Mgmt.averageWriteTime" displayName="Average Write Time"
+                 description="Average time to write an entry to the cache"
+                 units="milliseconds" measurementType="dynamic"/>
+         <metric property="Mgmt.evictions" displayName="Evictions" measurementType="trendsup"
+                 description="How many items got evicted from the cache" displayType="summary"/>
+         <metric property="Mgmt.hitRatio" displayName="Hit Ratio"
+                 description="Hit ratio of this cache" displayType="summary"
+                 units="percentage"/>
+         <metric property="Mgmt.hits" displayName="Hits" description="Number of cache hits"
+                 measurementType="trendsup"/>
+         <metric property="Mgmt.misses" displayName="Misses" description="Number of cache misses"
+                 measurementType="trendsup"/>
+         <metric property="Mgmt.numberOfEntries" displayName="Number of Entries"
+                 description="The number of entries in this cache"/>
+         <metric property="Mgmt.readWriteRatio" displayName="Read write ratio"
+                 description="The ratio between reads and writes of this cache"
+                 units="percentage"/>
+         <metric property="Mgmt.stores" displayName="Stores" description="Number of stores in the cache"
+                 measurementType="trendsup"/>
+
+         <metric property="Mvcc.numerOfLocksAvailable" displayName="Number of Locks availabe"
+                 description="How many locks are still available in this Cache"
+                 units="none" measurementType="dynamic"/>
+         <metric property="Mvcc.concurrencyLevel" displayName="Concurrency Level"/>
+         <!-- TODO description -->
+         <metric property="Mvcc.numberOfLocksHeld" displayName="Number of Locks held"/>
+
+         <metric property="Tx.commits" displayName="Commits"
+                 description="Number of transaction commits performed since last reset"
+                 units="none" measurementType="trendsup" displayType="summary"/>
+         <metric property="Tx.prepares" displayName="Prepares"
+                 description="Number of transaction prepares performed since last reset"
+                 units="none" measurementType="trendsup"/>
+         <metric property="Tx.rollbacks" displayName="Rollbacks"
+                 description="Number of transaction rollbacks performed since last reset"
+                 units="none" measurementType="trendsup" displayType="summary"/>
+      </service>
+
+   </server>
+
+
+</plugin>

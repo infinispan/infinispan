@@ -27,6 +27,7 @@
       <module>cachestore/s3</module>
       <module>cachestore/jdbc</module>
       <module>cachestore/jdbm</module>
+      <module>jopr-plugin</module>
       <module>gui-demo</module>
    </modules>
 
@@ -93,7 +94,7 @@ pageTracker._trackPageview();
                                  <fileset dir="core/target/classes"/>
                                  <fileset dir="tree/target/classes"/>
                                  <manifest>
-                                   <attribute name="Main-Class" value="org.infinispan.Version" />
+                                    <attribute name="Main-Class" value="org.infinispan.Version"/>
                                  </manifest>
                               </jar>
                            </tasks>

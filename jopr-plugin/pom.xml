@@ -1,0 +1,217 @@
+<project
+      xmlns="http://maven.apache.org/POM/4.0.0"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd"
+      >
+
+   <modelVersion>4.0.0</modelVersion>
+
+   <parent>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-plugins-parent</artifactId>
+      <version>1.2.0.GA</version>
+      <!-- TODO adjust RHQ version in the future -->
+   </parent>
+
+   <groupId>org.infinispan</groupId>
+   <artifactId>infinispan-jopr-plugin</artifactId>
+   <packaging>jar</packaging>
+
+   <name>Infinispan JOPR Plugin</name>
+   <description>The Infinispan JOPR Plugin</description>
+
+   <properties>
+      <scm.module.path>plugin/infinispan</scm.module.path>
+      <rhq.defaultDevContainerPath>/jon/dev-container</rhq.defaultDevContainerPath>
+   </properties>
+
+
+   <build>
+      <plugins>
+         <plugin>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <configuration>
+               <source>1.5</source>
+               <target>1.5</target>
+            </configuration>
+         </plugin>
+
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-jar-plugin</artifactId>
+            <configuration>
+               <archive>
+                  <manifest>
+                     <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                     <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                     <mainClass>org.infinispan.Version</mainClass>
+                  </manifest>
+               </archive>
+            </configuration>
+            <executions>
+               <execution>
+                  <id>build-test-jar</id>
+                  <goals>
+                     <goal>test-jar</goal>
+                  </goals>
+                  <configuration>
+                     <archive>
+                        <manifest>
+                           <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                           <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                        </manifest>
+                     </archive>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+
+
+      </plugins>
+   </build>
+
+   <profiles>
+      <profile>
+         <id>dev</id>
+
+         <properties>
+            <rhq.rootDir>../../..</rhq.rootDir>
+            <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+            <rhq.deploymentDir>
+               ${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/rhq-downloads/rhq-plugins
+            </rhq.deploymentDir>
+         </properties>
+
+         <build>
+            <plugins>
+
+               <plugin>
+                  <artifactId>maven-antrun-plugin</artifactId>
+                  <version>1.1</version>
+                  <executions>
+
+                     <execution>
+                        <id>deploy</id>
+                        <phase>compile</phase>
+                        <configuration>
+                           <tasks>
+                              <mkdir dir="${rhq.deploymentDir}"/>
+                              <property name="deployment.file"
+                                        location="${rhq.deploymentDir}/${project.build.finalName}.jar"/>
+                              <echo>*** Updating ${deployment.file}...</echo>
+                              <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}"/>
+                           </tasks>
+                        </configuration>
+                        <goals>
+                           <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                     <execution>
+                        <id>deploy-jar-meta-inf</id>
+                        <phase>package</phase>
+                        <configuration>
+                           <tasks>
+                              <property name="deployment.file"
+                                        location="${rhq.deploymentDir}/${project.build.finalName}.jar"/>
+                              <echo>*** Updating META-INF dir in ${deployment.file}...</echo>
+                              <unjar src="${project.build.directory}/${project.build.finalName}.jar"
+                                     dest="${project.build.outputDirectory}">
+                                 <patternset>
+                                    <include name="META-INF/**"/>
+                                 </patternset>
+                              </unjar>
+                              <jar destfile="${deployment.file}"
+                                   manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF"
+                                   update="true">
+                              </jar>
+                           </tasks>
+                        </configuration>
+                        <goals>
+                           <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                     <execution>
+                        <id>undeploy</id>
+                        <phase>clean</phase>
+                        <configuration>
+                           <tasks>
+                              <property name="deployment.file"
+                                        location="${rhq.deploymentDir}/${project.build.finalName}.jar"/>
+                              <echo>*** Deleting ${deployment.file}...</echo>
+                              <delete file="${deployment.file}"/>
+                           </tasks>
+                        </configuration>
+                        <goals>
+                           <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                  </executions>
+               </plugin>
+
+            </plugins>
+         </build>
+
+      </profile>
+   </profiles>
+
+
+   <repositories>
+      <repository>
+         <snapshots>
+            <enabled>false</enabled>
+         </snapshots>
+         <id>jboss</id>
+         <name>JBoss Repository</name>
+         <url>http://repository.jboss.org/maven2/</url>
+      </repository>
+   </repositories>
+
+   <pluginRepositories>
+      <pluginRepository>
+         <snapshots>
+            <enabled>false</enabled>
+         </snapshots>
+         <id>jboss</id>
+         <name>JBoss Plugin Repository</name>
+         <url>http://repository.jboss.org/maven2/</url>
+      </pluginRepository>
+   </pluginRepositories>
+
+
+   <dependencies>
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-core-domain</artifactId>
+         <version>1.2.0.GA</version>
+         <scope>provided</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-core-plugin-api</artifactId>
+         <version>1.2.0.GA</version>
+         <scope>provided</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-core-native-system</artifactId>
+         <version>1.2.0.GA</version>
+         <scope>provided</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-jmx-plugin</artifactId>
+         <version>1.2.0.GA</version>
+         <scope>provided</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-core</artifactId>
+         <version>4.0.0-SNAPSHOT</version>
+         <scope>test</scope>
+      </dependency>
+   </dependencies>
+</project>
