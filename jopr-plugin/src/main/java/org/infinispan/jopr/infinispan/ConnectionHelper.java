@@ -18,8 +18,8 @@
  */
 package org.infinispan.jopr.infinispan;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.mc4j.ems.connection.ConnectionFactory;
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.settings.ConnectionSettings;
