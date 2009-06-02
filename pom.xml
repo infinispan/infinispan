@@ -1,17 +1,19 @@
-<?xml version='1.0' encoding='UTF-8'?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
    <modelVersion>4.0.0</modelVersion>
 
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-parent</artifactId>
-      <version>4.0.0.ALPHA4</version>
+      <version>4.0.0-SNAPSHOT</version>
       <relativePath>parent/pom.xml</relativePath>
    </parent>
 
    <groupId>org.infinispan</groupId>
    <artifactId>infinispan</artifactId>
-   <version>4.0.0.ALPHA4</version>
+   <version>4.0.0-SNAPSHOT</version>
 
    <name>Infinispan Distribution</name>
    <description>Builds the complete Infinispan distribution bundles</description>
@@ -46,18 +48,18 @@
                         <link>http://java.sun.com/j2se/1.5.0/docs/api/</link>
                         <link>http://java.sun.com/javaee/5/docs/api/</link>
                      </links>
-                     <footer>
-                     &lt;!-- Google Analytics --&gt;
-&lt;script type='text/javascript'&gt;
+                     <footer><![CDATA[
+                     <!-- Google Analytics -->
+<script type='text/javascript'>
 var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
 document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-&lt;/script&gt;
-&lt;script type='text/javascript'&gt;
+</script>
+<script type='text/javascript'>
 try {
 var pageTracker = _gat._getTracker("UA-8601422-4");
 pageTracker._trackPageview();
-} catch(err) {}&lt;/script&gt;
-                     </footer>
+} catch(err) {}</script>
+                     ]]></footer>
                   </configuration>
                   <executions>
                      <execution>
@@ -82,17 +84,17 @@ pageTracker._trackPageview();
                         </goals>
                         <configuration>
                            <tasks>
-                              
-                              <mkdir dir="target" />
+                              <!-- this is a dependency of single_jar assembly -->
+                              <mkdir dir="target"/>
                               <jar destfile="target/infinispan-all.jar">
-                                 <fileset dir="cachestore/bdbje/target/classes" />
-                                 <fileset dir="cachestore/jdbc/target/classes" />
-                                 <fileset dir="cachestore/s3/target/classes" />
-                                 <fileset dir="cachestore/jdbm/target/classes" />
-                                 <fileset dir="core/target/classes" />
-                                 <fileset dir="tree/target/classes" />
+                                 <fileset dir="cachestore/bdbje/target/classes"/>
+                                 <fileset dir="cachestore/jdbc/target/classes"/>
+                                 <fileset dir="cachestore/s3/target/classes"/>
+                                 <fileset dir="cachestore/jdbm/target/classes"/>
+                                 <fileset dir="core/target/classes"/>
+                                 <fileset dir="tree/target/classes"/>
                                  <manifest>
-                                    <attribute name="Main-Class" value="org.infinispan.Version" />
+                                    <attribute name="Main-Class" value="org.infinispan.Version"/>
                                  </manifest>
                               </jar>
                            </tasks>
@@ -106,13 +108,14 @@ pageTracker._trackPageview();
                         </goals>
                         <configuration>
                            <tasks>
-                              <property name="file" value="${project.build.directory}/distribution/${artifactId}-${project-version}-single_jar.zip" />
+                              <property name="file"
+                                        value="${project.build.directory}/distribution/${artifactId}-${project-version}-single_jar.zip"/>
                               <zip destfile="${file}.new">
                                  <zipfileset src="${file}">
-                                    <exclude name="**/.ignore/**" />
+                                    <exclude name="**/.ignore/**"/>
                                  </zipfileset>
                               </zip>
-                              <move file="${file}.new" tofile="${file}" />
+                              <move file="${file}.new" tofile="${file}"/>
                            </tasks>
                         </configuration>
                      </execution>
