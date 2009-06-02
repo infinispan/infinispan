@@ -116,9 +116,9 @@ public class GlobalConfigurationParserTest {
 
    public void testAsyncSerializationExecutor() throws Exception {
       XmlConfigurationParserImpl parser = new XmlConfigurationParserImpl();
-      String xml = "<asyncSerializationExecutor factory=\"com.mycompany.Factory\">\n" +
+      String xml = "<asyncTransportExecutor factory=\"com.mycompany.Factory\">\n" +
             "         <property name=\"maxThreads\" value=\"5\" />" +
-            "      </asyncSerializationExecutor>";
+            "      </asyncTransportExecutor>";
       Element e = XmlConfigHelper.stringToElement(xml);
 
       GlobalConfiguration gc = new GlobalConfiguration();
