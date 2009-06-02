@@ -118,7 +118,7 @@ public class RootElementBuilder {
 
       private void logAndThrowException(SAXParseException exception) {
          log.error("Configuration warning: " + exception.getMessage());
-         throw new ConfigurationException("Incorrect configuration file. Use '-Dhorizon.config.validate=false' to disable validation.", exception);
+         throw new ConfigurationException("Incorrect configuration file. Use '-D" + VALIDATING_SYSTEM_PROPERTY + "=false' to disable validation.", exception);
       }
    }
 
