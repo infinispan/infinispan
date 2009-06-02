@@ -21,8 +21,6 @@
  */
 package org.infinispan.jopr.infinispan;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -42,8 +40,6 @@ import java.util.Set;
  * @author Heiko W. Rupp
  */
 public class InfinispanComponent implements ResourceComponent, MeasurementFacet {
-   private final Log log = LogFactory.getLog(this.getClass());
-
    private ResourceContext context;
    private ConnectionHelper helper;
 
