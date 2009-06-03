@@ -235,9 +235,17 @@
       <!-- END unnenessary deps -->
 
       <dependency>
-         <groupId>org.infinispan</groupId>
+         <groupId>${project-package}</groupId>
          <artifactId>infinispan-core</artifactId>
-         <version>4.0.0-SNAPSHOT</version>
+         <version>${project-version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>${project-package}</groupId>
+         <artifactId>infinispan-core</artifactId>
+         <version>${project-version}</version>
+         <type>test-jar</type>
+         <scope>test</scope>
       </dependency>
    </dependencies>
 </project>

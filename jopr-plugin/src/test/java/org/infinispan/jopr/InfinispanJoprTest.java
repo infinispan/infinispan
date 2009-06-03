@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package de.bsd.Infinitest;
+package org.infinispan.jopr;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
