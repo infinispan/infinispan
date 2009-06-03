@@ -290,29 +290,26 @@ public class MarshallerImpl extends AbstractMarshaller {
          out.writeByte(MAGICNUMBER_ICE_IMMORTAL);
          marshallObject(ice.getKey(), out, refMap);
          marshallObject(ice.getValue(), out, refMap);
-
       } else if (ice.getClass().equals(MortalCacheEntry.class)) {
          out.writeByte(MAGICNUMBER_ICE_MORTAL);
          marshallObject(ice.getKey(), out, refMap);
          marshallObject(ice.getValue(), out, refMap);
          writeUnsignedLong(out, ice.getCreated());
-         out.writeLong(ice.getLifespan()); // could be negative so should not use unsigned longs
-
+         marshallObject(ice.getLifespan(), out, refMap); // could be negative so should not use unsigned longs
       } else if (ice.getClass().equals(TransientCacheEntry.class)) {
          out.writeByte(MAGICNUMBER_ICE_TRANSIENT);
          marshallObject(ice.getKey(), out, refMap);
          marshallObject(ice.getValue(), out, refMap);
          writeUnsignedLong(out, ice.getLastUsed());
-         out.writeLong(ice.getMaxIdle()); // could be negative so should not use unsigned longs
-
+         marshallObject(ice.getMaxIdle(), out, refMap); // could be negative so should not use unsigned longs
       } else if (ice.getClass().equals(TransientMortalCacheEntry.class)) {
          out.writeByte(MAGICNUMBER_ICE_TRANSIENT_MORTAL);
          marshallObject(ice.getKey(), out, refMap);
          marshallObject(ice.getValue(), out, refMap);
          writeUnsignedLong(out, ice.getCreated());
-         out.writeLong(ice.getLifespan()); // could be negative so should not use unsigned longs
+         marshallObject(ice.getLifespan(), out, refMap); // could be negative so should not use unsigned longs
          writeUnsignedLong(out, ice.getLastUsed());
-         out.writeLong(ice.getMaxIdle()); // could be negative so should not use unsigned longs
+         marshallObject(ice.getMaxIdle(), out, refMap); // could be negative so should not use unsigned longs
       }
    }
 
