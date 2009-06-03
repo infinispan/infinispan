@@ -18,6 +18,7 @@
  */
 package org.infinispan.jopr.infinispan;
 
+import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.mc4j.ems.connection.ConnectionFactory;
@@ -89,8 +90,8 @@ public class ConnectionHelper {
             PropertySimple serverUrl = pluginConfig
                   .getSimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY);
 
-            connectionSettings.initializeConnectionType((ConnectionTypeDescriptor) Class.forName(
-                  connectionTypeDescriptorClass).newInstance());
+            connectionSettings.initializeConnectionType((ConnectionTypeDescriptor) Util.getInstance(
+                  connectionTypeDescriptorClass));
             // if not provided use the default serverUrl
             if (null != serverUrl) {
                connectionSettings.setServerUrl(serverUrl.getStringValue());

@@ -24,6 +24,9 @@ package org.infinispan.transaction.lookup;
 
 import javax.transaction.TransactionManager;
 import javax.transaction.UserTransaction;
+
+import org.infinispan.util.Util;
+
 import java.lang.reflect.Method;
 
 /**
@@ -37,8 +40,8 @@ public class JBossStandaloneJTAManagerLookup implements TransactionManagerLookup
 
    public JBossStandaloneJTAManagerLookup() {
       try {
-         manager = Class.forName("com.arjuna.ats.jta.TransactionManager").getMethod("transactionManager");
-         user = Class.forName("com.arjuna.ats.jta.UserTransaction").getMethod("userTransaction");
+         manager = Util.loadClass("com.arjuna.ats.jta.TransactionManager").getMethod("transactionManager");
+         user = Util.loadClass("com.arjuna.ats.jta.UserTransaction").getMethod("userTransaction");
       }
       catch (Exception e) {
          throw new RuntimeException(e);

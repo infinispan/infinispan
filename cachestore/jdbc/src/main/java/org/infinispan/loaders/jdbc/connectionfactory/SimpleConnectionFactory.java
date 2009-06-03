@@ -1,6 +1,7 @@
 package org.infinispan.loaders.jdbc.connectionfactory;
 
 import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -57,7 +58,7 @@ public class SimpleConnectionFactory extends ConnectionFactory {
          if (log.isTraceEnabled()) {
             log.trace("Attempting to load driver " + driverClass);
          }
-         Class.forName(driverClass).newInstance();
+         Util.getInstance(driverClass);
       }
       catch (Throwable th) {
          String message = "Failed loading driver with class: '" + driverClass + "'";

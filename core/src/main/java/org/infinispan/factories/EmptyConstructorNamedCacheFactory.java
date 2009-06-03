@@ -34,6 +34,7 @@ import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.VersionAwareMarshaller;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.transaction.TransactionLog;
+import org.infinispan.util.Util;
 
 /**
  * Simple factory that just uses reflection and an empty constructor of the component type.
@@ -56,11 +57,11 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
                componentImpl = InvocationContextContainerImpl.class;
             } else {
                // add an "Impl" to the end of the class name and try again
-               componentImpl = getClass().getClassLoader().loadClass(componentType.getName() + "Impl");
+               componentImpl = Util.loadClass(componentType.getName() + "Impl");
             }
-            return componentType.cast(componentImpl.newInstance());
+            return componentType.cast(Util.getInstance(componentImpl));
          } else {
-            return componentType.newInstance();
+            return Util.getInstance(componentType);
          }
       }
       catch (Exception e) {

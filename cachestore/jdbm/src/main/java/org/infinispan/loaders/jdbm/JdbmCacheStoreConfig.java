@@ -5,6 +5,7 @@ import java.util.Comparator;
 import org.infinispan.CacheException;
 import org.infinispan.loaders.LockSupportCacheStoreConfig;
 import org.infinispan.marshall.Marshaller;
+import org.infinispan.util.Util;
 
 /**
  * Configures {@link JdbmCacheStore}.
@@ -59,7 +60,7 @@ public class JdbmCacheStoreConfig extends LockSupportCacheStoreConfig {
      */
     public Comparator createComparator() {
         try {
-            return (Comparator) Class.forName(comparatorClassName).newInstance();
+            return (Comparator) Util.getInstance(comparatorClassName);
         } catch (Exception e) {
             throw new CacheException(e);
         }

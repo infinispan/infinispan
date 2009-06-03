@@ -24,6 +24,7 @@ package org.infinispan.jmx;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
+import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -226,7 +227,7 @@ public class ResourceDMBean implements DynamicMBean {
 
    public static Class<?> getClassForName(String name) throws ClassNotFoundException {
       try {
-         Class<?> c = Class.forName(name);
+         Class<?> c = Util.loadClass(name);
          return c;
       }
       catch (ClassNotFoundException cnfe) {

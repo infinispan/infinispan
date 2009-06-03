@@ -25,6 +25,7 @@ import org.infinispan.config.ConfigurationException;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.transaction.tm.BatchModeTransactionManager;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
+import org.infinispan.util.Util;
 
 import javax.transaction.TransactionManager;
 
@@ -44,11 +45,8 @@ public class TransactionManagerFactory extends AbstractNamedCacheComponentFactor
       if (transactionManager == null) {
          // Nope. See if we can look it up from JNDI
          if (configuration.getTransactionManagerLookupClass() != null) {
-            try {
-               ClassLoader cl = Thread.currentThread().getContextClassLoader();
-               if (cl == null) cl = getClass().getClassLoader();
-               Class clazz = cl.loadClass(configuration.getTransactionManagerLookupClass());
-               lookup = (TransactionManagerLookup) clazz.newInstance();
+            try { 
+               lookup = (TransactionManagerLookup) Util.getInstance(configuration.getTransactionManagerLookupClass());
             }
             catch (Exception e) {
                throw new ConfigurationException("Problems looking up transaction manager", e);

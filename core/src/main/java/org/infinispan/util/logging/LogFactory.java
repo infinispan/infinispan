@@ -1,5 +1,7 @@
 package org.infinispan.util.logging;
 
+import org.infinispan.util.Util;
+
 /**
  * Factory that creates {@link Log} instances.
  *
@@ -13,7 +15,7 @@ public class LogFactory {
    static {
       boolean available;
       try {
-         Class.forName("org.apache.log4j.Logger");
+         Util.loadClass("org.apache.log4j.Logger");
          available = true;
       }
       catch (ClassNotFoundException cnfe) {

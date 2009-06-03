@@ -8,6 +8,7 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.InboundInvocationHandler;
 import org.infinispan.transaction.xa.TransactionTable;
+import org.infinispan.util.Util;
 
 /**
  * Factory for building global-scope components which have default empty constructors
@@ -21,11 +22,10 @@ import org.infinispan.transaction.xa.TransactionTable;
 public class EmptyConstructorFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
    public <T> T construct(Class<T> componentType) {
       try {
-         if (componentType.isInterface()) {
-            Class componentImpl = getClass().getClassLoader().loadClass(componentType.getName() + "Impl");
-            return componentType.cast(componentImpl.newInstance());
+         if (componentType.isInterface()) { 
+            return componentType.cast(Util.getInstance(componentType.getName() + "Impl"));
          } else {
-            return componentType.newInstance();
+            return Util.getInstance(componentType);
          }
       }
       catch (Exception e) {
