@@ -317,26 +317,23 @@ public class MarshallerImpl extends AbstractMarshaller {
       if (icv.getClass().equals(ImmortalCacheValue.class)) {
          out.writeByte(MAGICNUMBER_ICV_IMMORTAL);
          marshallObject(icv.getValue(), out, refMap);
-
       } else if (icv.getClass().equals(MortalCacheValue.class)) {
          out.writeByte(MAGICNUMBER_ICV_MORTAL);
          marshallObject(icv.getValue(), out, refMap);
          writeUnsignedLong(out, icv.getCreated());
-         out.writeLong(icv.getLifespan()); // could be negative so should not use unsigned longs
-
+         marshallObject(icv.getLifespan(), out, refMap); // could be negative so should not use unsigned longs
       } else if (icv.getClass().equals(TransientCacheValue.class)) {
          out.writeByte(MAGICNUMBER_ICV_TRANSIENT);
          marshallObject(icv.getValue(), out, refMap);
          writeUnsignedLong(out, icv.getLastUsed());
-         out.writeLong(icv.getMaxIdle()); // could be negative so should not use unsigned longs
-
+         marshallObject(icv.getMaxIdle(), out, refMap); // could be negative so should not use unsigned longs
       } else if (icv.getClass().equals(TransientMortalCacheValue.class)) {
          out.writeByte(MAGICNUMBER_ICV_TRANSIENT_MORTAL);
          marshallObject(icv.getValue(), out, refMap);
          writeUnsignedLong(out, icv.getCreated());
-         out.writeLong(icv.getLifespan()); // could be negative so should not use unsigned longs
+         marshallObject(icv.getLifespan(), out, refMap); // could be negative so should not use unsigned longs
          writeUnsignedLong(out, icv.getLastUsed());
-         out.writeLong(icv.getMaxIdle()); // could be negative so should not use unsigned longs
+         marshallObject(icv.getMaxIdle(), out, refMap); // could be negative so should not use unsigned longs
       }
    }
 
