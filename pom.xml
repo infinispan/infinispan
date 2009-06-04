@@ -162,9 +162,12 @@ pageTracker._trackPageview();
          </build>
       </profile>
 
+      <!-- TODO somehow combine this with the 'distribution' profile so all docs are built together -->
       <profile>
-         <!-- TODO somehow combine this with the 'distribution' profile so all docs are built together -->
          <id>jmxdoc</id>
+         <activation>
+            <activeByDefault>false</activeByDefault>
+         </activation>
          <build>
             <plugins>
                <plugin>
