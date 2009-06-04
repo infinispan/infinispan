@@ -12,6 +12,8 @@ import org.infinispan.Cache;
 import org.infinispan.CacheDelegate;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.container.DataContainer;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.factories.ComponentRegistry;
@@ -30,6 +32,7 @@ import java.io.File;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
@@ -618,5 +621,17 @@ public class TestingUtil {
       } else {
          return null;
       }
+   }
+
+   public static String printCache(Cache cache) {
+      DataContainer dataContainer = TestingUtil.extractComponent(cache, DataContainer.class);
+      Iterator it = dataContainer.iterator();
+      StringBuilder builder = new StringBuilder(cache.getName() + "[");
+      while (it.hasNext()) {
+         CacheEntry ce = (CacheEntry) it.next();
+         builder.append(ce.getKey() + " = " + ce.getValue() + ";");
+      }
+      builder.append("]");
+      return builder.toString();
    }
 }
