@@ -27,9 +27,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
 import java.util.Collections;
 
 /**
@@ -44,6 +42,7 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
    private Cache cache1, cache2;
    private MarshalledValueListenerInterceptor mvli;
    String k = "key", v = "value";
+   private VersionAwareMarshaller marshaller;
 
    protected void createCacheManagers() throws Throwable {
       Configuration replSync = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
@@ -69,6 +68,9 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       chain.removeInterceptor(MarshalledValueListenerInterceptor.class);
       mvli = new MarshalledValueListenerInterceptor();
       chain.addInterceptorAfter(mvli, MarshalledValueInterceptor.class);
+      
+      marshaller = new VersionAwareMarshaller();
+      marshaller.init(Thread.currentThread().getContextClassLoader(), null);
    }
 
    @AfterMethod
@@ -197,7 +199,7 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
 
    public void testEqualsAndHashCode() throws Exception {
       Pojo pojo = new Pojo();
-      MarshalledValue mv = new MarshalledValue(pojo, true);
+      MarshalledValue mv = new MarshalledValue(pojo, true, marshaller);
       assertDeserialized(mv);
       int oldHashCode = mv.hashCode();
 
@@ -205,7 +207,7 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       assertSerialized(mv);
       assert oldHashCode == mv.hashCode();
 
-      MarshalledValue mv2 = new MarshalledValue(pojo, true);
+      MarshalledValue mv2 = new MarshalledValue(pojo, true, marshaller);
       assertSerialized(mv);
       assertDeserialized(mv2);
 
@@ -215,7 +217,7 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
 
    public void assertUseOfMagicNumbers() throws Exception {
       Pojo pojo = new Pojo();
-      MarshalledValue mv = new MarshalledValue(pojo, true);
+      MarshalledValue mv = new MarshalledValue(pojo, true, marshaller);
 
 
       VersionAwareMarshaller marshaller = new VersionAwareMarshaller();
@@ -223,14 +225,14 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
 
       // start the test
       ByteArrayOutputStream bout = new ByteArrayOutputStream();
-      ObjectOutput oo = marshaller.startObjectOutput(bout);
+      ObjectOutput oo = marshaller.startObjectOutput(bout, false);
       marshaller.objectToObjectStream(mv, oo);
       marshaller.finishObjectOutput(oo);
       bout.close();
 
       // check that the rest just contains a byte stream which a MarshalledValue will be able to deserialize.
       ByteArrayInputStream bin = new ByteArrayInputStream(bout.toByteArray());
-      ObjectInput oi = marshaller.startObjectInput(bin);
+      ObjectInput oi = marshaller.startObjectInput(bin, false);
       MarshalledValue recreated = (MarshalledValue) marshaller.objectFromObjectStream(oi);
 
       // there should be nothing more

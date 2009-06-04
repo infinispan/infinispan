@@ -21,7 +21,7 @@
  */
 package org.infinispan.marshall.jboss;
 
- import net.jcip.annotations.Immutable;
+import net.jcip.annotations.Immutable;
 
 import org.infinispan.CacheException;
 import org.infinispan.atomic.AtomicHashMap;
@@ -50,6 +50,8 @@ import org.infinispan.container.entries.TransientCacheEntry;
 import org.infinispan.container.entries.TransientCacheValue;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheValue;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.marshall.MarshalledValue;
 import org.infinispan.marshall.jboss.externalizers.ArrayListExternalizer;
@@ -109,6 +111,7 @@ import java.util.TreeSet;
  * @author Galder Zamarreño
  * @since 4.0
  */
+@Scope(Scopes.GLOBAL)
 public class ConstantObjectTable implements ObjectTable {
    private static final int CAPACITY = 50;
    private static final Map<String, String> EXTERNALIZERS = new HashMap<String, String>(CAPACITY);
@@ -175,13 +178,7 @@ public class ConstantObjectTable implements ObjectTable {
 
    private byte index;
 
-   private final RemoteCommandFactory cmdFactory;
-   
-   public ConstantObjectTable(RemoteCommandFactory cmdFactory) {
-      this.cmdFactory = cmdFactory;
-   }
-
-   public void init() {
+   public void init(RemoteCommandFactory cmdFactory, org.infinispan.marshall.Marshaller ispnMarshaller) {
       // Init singletons
       objects.add(RequestIgnoredResponse.INSTANCE);
       writers.put(RequestIgnoredResponse.class, new InstanceWriter(index++));
@@ -194,6 +191,9 @@ public class ConstantObjectTable implements ObjectTable {
             Externalizer delegate = (Externalizer) Util.getInstance(entry.getValue());
             if (delegate instanceof ReplicableCommandExternalizer) {
                ((ReplicableCommandExternalizer) delegate).init(cmdFactory);
+            }
+            if (delegate instanceof MarshalledValueExternalizer) {
+               ((MarshalledValueExternalizer) delegate).init(ispnMarshaller);
             }
             Externalizer rwrt = new DelegatingReadWriter(index++, delegate);
             objects.add(rwrt);

@@ -53,14 +53,15 @@ public class VersionAwareMarshaller extends AbstractMarshaller {
    private static final int VERSION_400 = 400;
    private static final int CUSTOM_MARSHALLER = 999;
 
-   private JBossMarshaller defaultMarshaller;
+   private final JBossMarshaller defaultMarshaller;
 
-   ClassLoader defaultClassLoader;
+   public VersionAwareMarshaller() {
+      defaultMarshaller = new JBossMarshaller();
+   }
 
    @Inject
    public void init(ClassLoader loader, RemoteCommandFactory remoteCommandFactory) {
-      defaultMarshaller = new JBossMarshaller();
-      defaultMarshaller.init(loader, remoteCommandFactory);
+      defaultMarshaller.init(loader, remoteCommandFactory, this);
    }
    
    @Stop
@@ -74,7 +75,7 @@ public class VersionAwareMarshaller extends AbstractMarshaller {
 
    public ByteBuffer objectToBuffer(Object obj) throws IOException {
       ExposedByteArrayOutputStream baos = new ExposedByteArrayOutputStream(128);
-      ObjectOutput out = startObjectOutput(baos);
+      ObjectOutput out = startObjectOutput(baos, false);
       try {
          defaultMarshaller.objectToObjectStream(obj, out);
       } finally {
@@ -85,7 +86,7 @@ public class VersionAwareMarshaller extends AbstractMarshaller {
 
    public Object objectFromByteBuffer(byte[] bytes, int offset, int len) throws IOException, ClassNotFoundException {
       ByteArrayInputStream is = new ByteArrayInputStream(bytes, offset, len);
-      ObjectInput in = startObjectInput(is);
+      ObjectInput in = startObjectInput(is, false);
       Object o = null;
       try {
          o = defaultMarshaller.objectFromObjectStream(in);
@@ -95,8 +96,8 @@ public class VersionAwareMarshaller extends AbstractMarshaller {
       return o;
    }
 
-   public ObjectOutput startObjectOutput(OutputStream os) throws IOException {
-      ObjectOutput out = defaultMarshaller.startObjectOutput(os);
+   public ObjectOutput startObjectOutput(OutputStream os, boolean isReentrant) throws IOException {
+      ObjectOutput out = defaultMarshaller.startObjectOutput(os, isReentrant);
       try {
          out.writeShort(VERSION_400);
          if (trace) log.trace("Wrote version {0}", VERSION_400);         
@@ -123,8 +124,8 @@ public class VersionAwareMarshaller extends AbstractMarshaller {
       defaultMarshaller.objectToObjectStream(obj, out);
    }
 
-   public ObjectInput startObjectInput(InputStream is) throws IOException {
-      ObjectInput in = defaultMarshaller.startObjectInput(is);
+   public ObjectInput startObjectInput(InputStream is, boolean isReentrant) throws IOException {
+      ObjectInput in = defaultMarshaller.startObjectInput(is, isReentrant);
       int versionId;
       try {
          versionId = in.readShort();

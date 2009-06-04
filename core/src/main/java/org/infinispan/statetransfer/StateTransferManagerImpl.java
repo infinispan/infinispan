@@ -142,7 +142,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
          boolean canProvideState = (transientState || persistentState)
                && (txLogActivated = transactionLog.activate());
          if (log.isDebugEnabled()) log.debug("Generating state.  Can provide? {0}", canProvideState);
-         oo = marshaller.startObjectOutput(out);
+         oo = marshaller.startObjectOutput(out, false);
          marshaller.objectToObjectStream(canProvideState, oo);
 
          if (canProvideState) {
@@ -297,7 +297,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
       if (log.isDebugEnabled()) log.debug("Applying state");
       ObjectInput oi = null;
       try {
-         oi = marshaller.startObjectInput(in);
+         oi = marshaller.startObjectInput(in, false);
          boolean canProvideState = (Boolean) marshaller.objectFromObjectStream(oi);
          if (canProvideState) {
             assertDelimited(oi);

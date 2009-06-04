@@ -31,7 +31,7 @@ public class TestObjectStreamMarshaller extends AbstractMarshaller {
    public TestObjectStreamMarshaller() {
    }
 
-   public ObjectOutput startObjectOutput(OutputStream os) throws IOException {
+   public ObjectOutput startObjectOutput(OutputStream os, boolean isReentrant) throws IOException {
       return new ObjectOutputStream(os);
    }
 
@@ -51,7 +51,7 @@ public class TestObjectStreamMarshaller extends AbstractMarshaller {
       return xs.fromXML(xml);
    }
 
-   public ObjectInput startObjectInput(InputStream is) throws IOException {
+   public ObjectInput startObjectInput(InputStream is, boolean isReentrant) throws IOException {
       return new ObjectInputStream(is);
    }
 

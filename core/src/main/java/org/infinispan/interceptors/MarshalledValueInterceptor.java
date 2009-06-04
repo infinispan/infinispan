@@ -26,8 +26,10 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.marshall.MarshalledValue;
+import org.infinispan.marshall.Marshaller;
 
 import java.io.IOException;
 import java.io.NotSerializableException;
@@ -47,10 +49,18 @@ import java.util.Set;
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @author Mircea.Markus@jboss.com
+ * @author Galder Zamarreño
  * @see org.infinispan.marshall.MarshalledValue
  * @since 4.0
  */
 public class MarshalledValueInterceptor extends CommandInterceptor {
+   private Marshaller marshaller;
+   
+   @Inject
+   protected void injectMarshaller(Marshaller marshaller) {
+      this.marshaller = marshaller;
+   }
+   
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       Set<MarshalledValue> marshalledValues = new HashSet<MarshalledValue>();
@@ -144,6 +154,6 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
    }
 
    protected MarshalledValue createMarshalledValue(Object toWrap, InvocationContext ctx) throws NotSerializableException {
-      return new MarshalledValue(toWrap, ctx.isOriginLocal());
+      return new MarshalledValue(toWrap, ctx.isOriginLocal(), marshaller);
    }
 }

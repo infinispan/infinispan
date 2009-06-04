@@ -23,10 +23,7 @@ package org.infinispan.marshall.jboss;
 
 import org.infinispan.CacheException;
 import org.infinispan.commands.RemoteCommandFactory;
-import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Stop;
-import org.infinispan.factories.scopes.Scope;
-import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.io.ByteBuffer;
 import org.infinispan.io.ExposedByteArrayOutputStream;
 import org.infinispan.marshall.AbstractMarshaller;
@@ -53,7 +50,6 @@ import java.io.OutputStream;
  * @author Galder Zamarreño
  * @since 4.0
  */
-@Scope(Scopes.GLOBAL)
 public class JBossMarshaller extends AbstractMarshaller {
    private static final Log log = LogFactory.getLog(JBossMarshaller.class);
    private static final String DEFAULT_MARSHALLER_FACTORY = "org.jboss.marshalling.river.RiverMarshallerFactory";
@@ -96,8 +92,7 @@ public class JBossMarshaller extends AbstractMarshaller {
       }
    };
 
-   @Inject
-   public void init(ClassLoader defaultCl, RemoteCommandFactory cmdFactory) {
+   public void init(ClassLoader defaultCl, RemoteCommandFactory cmdFactory, org.infinispan.marshall.Marshaller ispnMarshaller) {
       log.debug("Using JBoss Marshalling based marshaller.");
       this.defaultCl = defaultCl;
       try {
@@ -107,7 +102,7 @@ public class JBossMarshaller extends AbstractMarshaller {
          throw new CacheException("Unable to load JBoss Marshalling marshaller factory " + DEFAULT_MARSHALLER_FACTORY, e);
       }
 
-      objectTable = createCustomObjectTable(cmdFactory);
+      objectTable = createCustomObjectTable(cmdFactory, ispnMarshaller);
       configuration = new MarshallingConfiguration();
       configuration.setCreator(new SunReflectiveCreator());
       configuration.setObjectTable(objectTable);
@@ -132,7 +127,7 @@ public class JBossMarshaller extends AbstractMarshaller {
 
    public ByteBuffer objectToBuffer(Object o) throws IOException {
       ExposedByteArrayOutputStream baos = new ExposedByteArrayOutputStream(128);
-      ObjectOutput marshaller = startObjectOutput(baos);
+      ObjectOutput marshaller = startObjectOutput(baos, false);
       try {
          objectToObjectStream(o, marshaller);
       } finally {
@@ -141,8 +136,13 @@ public class JBossMarshaller extends AbstractMarshaller {
       return new ByteBuffer(baos.getRawBuffer(), 0, baos.size());
    }
 
-   public ObjectOutput startObjectOutput(OutputStream os) throws IOException {
-      org.jboss.marshalling.Marshaller marshaller = marshallerTL.get();
+   public ObjectOutput startObjectOutput(OutputStream os, boolean isReentrant) throws IOException {
+      org.jboss.marshalling.Marshaller marshaller;
+      if (isReentrant) {
+         marshaller = factory.createMarshaller(configuration);
+      } else {
+         marshaller = marshallerTL.get();
+      }
       marshaller.start(Marshalling.createByteOutput(os));
       return marshaller;
    }
@@ -176,7 +176,7 @@ public class JBossMarshaller extends AbstractMarshaller {
    public Object objectFromByteBuffer(byte[] buf, int offset, int length) throws IOException,
                                                                                  ClassNotFoundException {
       ByteArrayInputStream is = new ByteArrayInputStream(buf, offset, length);
-      ObjectInput unmarshaller = startObjectInput(is);
+      ObjectInput unmarshaller = startObjectInput(is, false);
       Object o = null;
       try {
          o = objectFromObjectStream(unmarshaller);
@@ -186,8 +186,13 @@ public class JBossMarshaller extends AbstractMarshaller {
       return o;
    }
 
-   public ObjectInput startObjectInput(InputStream is) throws IOException {
-      Unmarshaller unmarshaller = unmarshallerTL.get();      
+   public ObjectInput startObjectInput(InputStream is, boolean isReentrant) throws IOException {
+      Unmarshaller unmarshaller;
+      if (isReentrant) {
+         unmarshaller = factory.createUnmarshaller(configuration);
+      } else {
+         unmarshaller = unmarshallerTL.get();
+      }       
       unmarshaller.start(Marshalling.createByteInput(is));
       return unmarshaller;
    }
@@ -203,9 +208,9 @@ public class JBossMarshaller extends AbstractMarshaller {
       return in.readObject();
    }
 
-   private ConstantObjectTable createCustomObjectTable(RemoteCommandFactory cmdFactory) {
-      ConstantObjectTable objectTable = new ConstantObjectTable(cmdFactory);
-      objectTable.init();
+   private ConstantObjectTable createCustomObjectTable(RemoteCommandFactory cmdFactory, org.infinispan.marshall.Marshaller ispnMarshaller) {
+      ConstantObjectTable objectTable = new ConstantObjectTable();
+      objectTable.init(cmdFactory, ispnMarshaller);
       return objectTable;
    }
 }

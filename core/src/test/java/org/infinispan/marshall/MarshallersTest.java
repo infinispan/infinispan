@@ -73,7 +73,7 @@ import java.util.*;
  * @author Galder Zamarreño
  * @since 4.0
  */
-@Test(groups = "functional", testName = "marshall.MarshallersTest", enabled = false)
+@Test(groups = "functional", testName = "marshall.MarshallersTest", enabled = true)
 public class MarshallersTest {
    
    private final MarshallerImpl home = new MarshallerImpl();
@@ -83,7 +83,7 @@ public class MarshallersTest {
    @BeforeTest
    public void setUp() {
       home.init(Thread.currentThread().getContextClassLoader(), new RemoteCommandFactory());
-      jboss.init(Thread.currentThread().getContextClassLoader(), null);
+      jboss.init(Thread.currentThread().getContextClassLoader(), new RemoteCommandFactory(), jboss);
    }
 
    @AfterTest
@@ -156,8 +156,9 @@ public class MarshallersTest {
 
    public void testMarshalledValueMarshalling() throws Exception {
       GlobalTransaction gtx = new GlobalTransaction(new JGroupsAddress(new IpAddress(12345)), false);
-      MarshalledValue mv = new MarshalledValue(gtx, true);
-      checkEqualityAndSize(mv);
+      int bytesH = marshallAndAssertEquality(home, new MarshalledValue(gtx, true, home));
+      int bytesJ = marshallAndAssertEquality(jboss, new MarshalledValue(gtx, true, jboss));
+      assert bytesJ < bytesH : "JBoss Marshaller should write less bytes: bytesJBoss=" + bytesJ + ", bytesHome=" + bytesH;
    }
 
    public void testSingletonListMarshalling() throws Exception {

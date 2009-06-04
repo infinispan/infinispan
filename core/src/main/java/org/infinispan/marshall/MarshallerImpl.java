@@ -552,7 +552,7 @@ public class MarshallerImpl extends AbstractMarshaller {
       byte[] raw = new byte[sz];
       in.readFully(raw);
       int hc = in.readInt();
-      return new MarshalledValue(raw, hc);
+      return new MarshalledValue(raw, hc, this);
    }
 
    private Bucket unmarshallBucket(ObjectInput input, UnmarshalledReferences references) throws IOException, ClassNotFoundException {
@@ -927,7 +927,7 @@ public class MarshallerImpl extends AbstractMarshaller {
             c.equals(Double.class));
    }
 
-   public ObjectOutput startObjectOutput(OutputStream os) throws IOException {
+   public ObjectOutput startObjectOutput(OutputStream os, boolean isReentrant) throws IOException {
       return new ObjectOutputStream(os);
    }
 
@@ -951,7 +951,7 @@ public class MarshallerImpl extends AbstractMarshaller {
       }
    }
 
-   public ObjectInput startObjectInput(InputStream is) throws IOException {
+   public ObjectInput startObjectInput(InputStream is, boolean isReentrant) throws IOException {
       return new ObjectInputStream(is);
    }
 

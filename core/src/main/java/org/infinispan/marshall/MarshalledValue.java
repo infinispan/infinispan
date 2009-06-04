@@ -23,16 +23,12 @@ package org.infinispan.marshall;
 
 import org.infinispan.CacheException;
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.io.ExposedByteArrayOutputStream;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.jboss.util.stream.MarshalledValueInputStream;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.NotSerializableException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.Arrays;
 
@@ -45,6 +41,7 @@ import java.util.Arrays;
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @author Mircea.Markus@jboss.com
+ * @author Galder Zamarreño
  * @see org.infinispan.interceptors.MarshalledValueInterceptor
  * @since 4.0
  */
@@ -54,8 +51,9 @@ public class MarshalledValue {
    private int cachedHashCode = 0;
    // by default equals() will test on the istance rather than the byte array if conversion is required.
    private transient boolean equalityPreferenceForInstance = true;
+   private final Marshaller marshaller;
 
-   public MarshalledValue(Object instance, boolean equalityPreferenceForInstance) throws NotSerializableException {
+   public MarshalledValue(Object instance, boolean equalityPreferenceForInstance, Marshaller marshaller) throws NotSerializableException {
       if (instance == null) throw new NullPointerException("Null values cannot be wrapped as MarshalledValues!");
 
       if (instance instanceof Serializable)
@@ -63,13 +61,12 @@ public class MarshalledValue {
       else
          throw new NotSerializableException("Marshalled values can only wrap Objects that are serializable!  Instance of " + instance.getClass() + " won't Serialize.");
       this.equalityPreferenceForInstance = equalityPreferenceForInstance;
+      this.marshaller = marshaller;
    }
 
-   public MarshalledValue() {
-   }
-
-   public MarshalledValue(byte[] raw, int cachedHashCode) {
+   public MarshalledValue(byte[] raw, int cachedHashCode, Marshaller marshaller) {
       init(raw, cachedHashCode);
+      this.marshaller = marshaller;
    }
 
    public void init(byte[] raw, int cachedHashCode) {
@@ -81,17 +78,20 @@ public class MarshalledValue {
    public synchronized void serialize() {
       if (raw == null) {
          try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ObjectOutputStream oos = new ObjectOutputStream(baos);
-            oos.writeObject(instance);
-            oos.close();
-            baos.close();
             // Do NOT set instance to null over here, since it may be used elsewhere (e.g., in a cache listener).
             // this will be compacted by the MarshalledValueInterceptor when the call returns.
-            raw = baos.toByteArray();
-         }
-         catch (Exception e) {
+            ExposedByteArrayOutputStream baos = new ExposedByteArrayOutputStream(128);
+            ObjectOutput out = marshaller.startObjectOutput(baos, true);
+            try {
+               marshaller.objectToObjectStream(instance, out);
+            } finally {
+               marshaller.finishObjectOutput(out);
+            }
+            raw = baos.getRawBuffer(); 
+         } catch (Exception e) {
             throw new CacheException("Unable to marshall value " + instance, e);
+         } finally {
+            
          }
       }
    }
@@ -99,12 +99,8 @@ public class MarshalledValue {
    public synchronized void deserialize() {
       if (instance == null) {
          try {
-            ByteArrayInputStream bais = new ByteArrayInputStream(raw);
-            // use a MarshalledValueInputStream since it needs to be aware of any context class loaders on the current thread.
-            ObjectInputStream ois = new MarshalledValueInputStream(bais);
-            instance = ois.readObject();
-            ois.close();
-            bais.close();
+            // Marshaller underneath deals with making sure the right classloader is set.
+            instance = marshaller.objectFromByteBuffer(raw);
          }
          catch (Exception e) {
             throw new CacheException("Unable to unmarshall value", e);
@@ -159,7 +155,7 @@ public class MarshalledValue {
     *
     * @see #nullifyInstance()
     */
-   public synchronized Object get() throws IOException, ClassNotFoundException {
+   public synchronized Object get() {
       if (instance == null) deserialize();
       return instance;
    }
