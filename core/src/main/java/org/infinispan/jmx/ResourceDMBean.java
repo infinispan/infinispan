@@ -357,7 +357,7 @@ public class ResourceDMBean implements DynamicMBean {
                   }
                }
             }
-         } else if (method.isAnnotationPresent(ManagedOperation.class) || isMBeanAnnotationPresentWithExposeAll()) {
+         } else if (method.isAnnotationPresent(ManagedOperation.class)) {
             ManagedOperation op = method.getAnnotation(ManagedOperation.class);
             String attName = method.getName();
             if (isSetMethod(method) || isGetMethod(method)) {
@@ -491,11 +491,6 @@ public class ResourceDMBean implements DynamicMBean {
             return fieldName;
          }
       }
-   }
-
-   private boolean isMBeanAnnotationPresentWithExposeAll() {
-      Class<?> c = getObject().getClass();
-      return c.isAnnotationPresent(MBean.class) && c.getAnnotation(MBean.class).exposeAll();
    }
 
    private class MethodAttributeEntry implements AttributeEntry {

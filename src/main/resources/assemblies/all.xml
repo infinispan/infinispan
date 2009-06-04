@@ -32,9 +32,12 @@
    </formats>
 
    <moduleSets>
+
       <moduleSet>
          <includeSubModules>false</includeSubModules>
-
+         <excludes>
+            <exclude>org.infinispan:infinispan-tools</exclude>
+         </excludes>
          <sources>
             <includeModuleDirectory>false</includeModuleDirectory>
 
@@ -110,6 +113,9 @@
 
       <moduleSet>
          <includeSubModules>false</includeSubModules>
+         <excludes>
+            <exclude>org.infinispan:infinispan-tools</exclude>
+         </excludes>
          <binaries>
             <attachmentClassifier>tests</attachmentClassifier>
             <outputDirectory>test/modules/${module.basedir.name}</outputDirectory>

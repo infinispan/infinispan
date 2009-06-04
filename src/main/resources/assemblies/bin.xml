@@ -28,7 +28,9 @@
    <moduleSets>
       <moduleSet>
          <includeSubModules>false</includeSubModules>
-
+         <excludes>
+            <exclude>org.infinispan:infinispan-tools</exclude>
+         </excludes>
          <sources>
             <includeModuleDirectory>false</includeModuleDirectory>
 
@@ -40,7 +42,7 @@
                   <outputDirectory>etc</outputDirectory>
                   <excludes>
                      <exclude>**/*.sh</exclude>
-  		     <exclude>**/*.bat</exclude>
+                     <exclude>**/*.bat</exclude>
                      <exclude>**/*.cmd</exclude>
                      <exclude>**/*.py</exclude>
                   </excludes>

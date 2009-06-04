@@ -41,7 +41,5 @@ import java.lang.annotation.Target;
 public @interface MBean {
    String objectName() default "";
 
-   boolean exposeAll() default false;
-
    String description() default "";
 }
