@@ -176,14 +176,13 @@ To do this, simply use the maven.test.skip.exec property:
 Again, this is just a shortcut for local use. It SHOULD NEVER BE USED when releasing. Also, make sure "exec" is included
 in the property, if not the tests will not be built, which will prevent a test jar being produced.
 
-2.6. Permutations
+2.6. Test permutations
 -----------------
-We use the term permutation to describe a group execution against a particular config. This allows us to test a variety
-of environments and configurations without rewriting the same basic test over and over again. For example, the jgroups-tcp
-permutation executes the jgroups group using the TCP config. Each permutation requires a maven profile which defines the
-various options, environmental variables, etc. The command to run the jgroups-tcp permutatin is:
+We use the term permutation to describe a test suite execution against a particular config. This allows us to test a variety
+of environments and configurations without rewriting the same basic test over and over again. For example, if we pass 
+JVM parameter -Dprotocol.stack=udp test suite is executed using UDP config. 
 
-   $ mvn -Pjgroups-tcp surefire-report:report
+   $ mvn -Dprotocol.stack=udp surefire-report:report
 
 Each permutation uses its own report directory, and its own html output file name. This allows you to execute multiple
 permutations without wiping the results from the previous run. Note that due to the way maven  operates, only one
