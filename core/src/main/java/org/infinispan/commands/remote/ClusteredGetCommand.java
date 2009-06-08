@@ -32,9 +32,8 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * Issues a clustered get call, for use primarily by the {@link org.infinispan.loader.cluster.ClusterCacheLoader}.  This
- * is not a {@link org.infinispan.commands.VisitableCommand} and hence not passed up the {@link
- * org.infinispan.interceptors.base.CommandInterceptor} chain.
+ * Issues a remote get call.  This is not a {@link org.infinispan.commands.VisitableCommand} and hence not passed up the
+ * {@link org.infinispan.interceptors.base.CommandInterceptor} chain.
  * <p/>
  *
  * @author Mircea.Markus@jboss.com
@@ -42,7 +41,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class ClusteredGetCommand implements CacheRpcCommand {
 
-   public static final byte COMMAND_ID = 22;
+   public static final byte COMMAND_ID = 16;
    private static final Log log = LogFactory.getLog(ClusteredGetCommand.class);
    private static final boolean trace = log.isTraceEnabled();
 
