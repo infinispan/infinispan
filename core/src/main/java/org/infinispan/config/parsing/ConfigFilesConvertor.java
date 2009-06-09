@@ -53,9 +53,9 @@ import java.util.List;
  */
 public class ConfigFilesConvertor {
 
-
    private static final String JBOSS_CACHE3X = "JBossCache3x";
-   public static final String[] SUPPORTED_FORMATS = {JBOSS_CACHE3X};
+   private static final String EHCACHE_CACHE16X = "Ehcache16x";
+   public static final String[] SUPPORTED_FORMATS = {JBOSS_CACHE3X, EHCACHE_CACHE16X};
 
    public void parse(InputStream is, OutputStream os, String xsltFile) throws Exception {
       InputStream xsltInStream = new FileLookup().lookupFile(xsltFile);
@@ -136,12 +136,15 @@ public class ConfigFilesConvertor {
 
       if (type.equals(JBOSS_CACHE3X)) {
          transformFromJbossCache3x(sourceName, destinationName);
+      } else if (type.equals(EHCACHE_CACHE16X)) {
+         transformFromEhcache16x(sourceName, destinationName);
       }
 
       System.out.println("---");
       System.out.println("New configuration file [" + destinationName + "] successfully created.");
       System.out.println("---");
    }
+
 
    private static void mustExist(String sourceName, String what) {
       if (sourceName == null) {
@@ -179,6 +182,28 @@ public class ConfigFilesConvertor {
       //now this means that the generated file is basically empty, so delete ie
       if (jgroupsConfigFile.length() < 5) {
          jgroupsConfigFile.delete();
+      }
+   }
+
+   private static void transformFromEhcache16x(String sourceName, String destinationName) throws Exception {
+      File oldConfig = new File(sourceName);
+      if (!oldConfig.exists()) {
+         System.err.println("File specified as input ('" + sourceName + ") does not exist.");
+         System.exit(1);
+      }
+      ConfigFilesConvertor convertor = new ConfigFilesConvertor();
+      FileInputStream is = new FileInputStream(oldConfig);
+      File destination = new File(destinationName);
+      if (!destination.exists()) {
+         destination.createNewFile();
+      }
+      
+      FileOutputStream fos = new FileOutputStream(destinationName);
+      try {
+         convertor.parse(is, fos, "xslt/ehcache16x2infinispan4x.xslt");
+      } finally {
+         fos.close();
+         is.close();
       }
    }
 
