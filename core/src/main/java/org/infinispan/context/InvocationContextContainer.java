@@ -50,7 +50,7 @@ public interface InvocationContextContainer {
     * org.infinispan.context.impl.NonTxInvocationContext#isOriginLocal()} flag will be true. The context is also
     * associated with the current thread, so further calls to {@link #getInvocationContext()} will return same instace.
     */
-   InvocationContext createRemoteInvocationContext();
+   NonTxInvocationContext createRemoteInvocationContext();
 
    /**
     * Returns the {@link InvocationContext}  that is currently associated with the calling thread. Important:

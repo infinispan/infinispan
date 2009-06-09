@@ -39,6 +39,7 @@ public class GetKeyValueCommand extends AbstractDataCommand {
    private static final Log log = LogFactory.getLog(GetKeyValueCommand.class);
    private static final boolean trace = log.isTraceEnabled();
    private CacheNotifier notifier;
+   private boolean returnCacheEntry;
 
    public GetKeyValueCommand(Object key, CacheNotifier notifier) {
       this.key = key;
@@ -52,6 +53,13 @@ public class GetKeyValueCommand extends AbstractDataCommand {
       return visitor.visitGetKeyValueCommand(ctx, this);
    }
 
+   /**
+    * Will make this method to return an {@link CacheEntry} insted of the coresponding value associated with the key.
+    */
+   public void setReturnCacheEntry(boolean returnCacheEntry) {
+      this.returnCacheEntry = returnCacheEntry;
+   }
+
    public Object perform(InvocationContext ctx) throws Throwable {
       CacheEntry entry = ctx.lookupEntry(key);
       if (entry == null || entry.isNull()) {
@@ -63,7 +71,7 @@ public class GetKeyValueCommand extends AbstractDataCommand {
          return null;
       }
       notifier.notifyCacheEntryVisited(key, true, ctx);
-      Object result = entry.getValue();
+      Object result = returnCacheEntry ? entry : entry.getValue();
       if (trace) log.trace("Found value " + result);
       notifier.notifyCacheEntryVisited(key, false, ctx);
       return result;

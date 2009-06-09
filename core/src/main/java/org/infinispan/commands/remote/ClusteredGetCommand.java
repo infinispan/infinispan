@@ -21,13 +21,18 @@
  */
 package org.infinispan.commands.remote;
 
-import org.infinispan.CacheException;
+import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
+import org.infinispan.container.entries.MVCCEntry;
+import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.loaders.CacheLoaderManager;
+import org.infinispan.context.impl.NonTxInvocationContext;
+import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -49,8 +54,9 @@ public class ClusteredGetCommand implements CacheRpcCommand {
    private String cacheName;
 
    private DataContainer dataContainer;
-   private CacheLoaderManager cacheLoaderManager;
    private InvocationContextContainer icc;
+   private CommandsFactory commandsFactory;
+   private InterceptorChain invoker;
 
    public ClusteredGetCommand() {
    }
@@ -60,10 +66,11 @@ public class ClusteredGetCommand implements CacheRpcCommand {
       this.cacheName = cacheName;
    }
 
-   public void initialize(DataContainer dataContainer, CacheLoaderManager clManager, InvocationContextContainer icc) {
+   public void initialize(DataContainer dataContainer, InvocationContextContainer icc, CommandsFactory commandsFactory, InterceptorChain interceptorChain) {
       this.dataContainer = dataContainer;
-      this.cacheLoaderManager = clManager;
       this.icc = icc;
+      this.commandsFactory = commandsFactory;
+      this.invoker = interceptorChain;
    }
 
    /**
@@ -73,23 +80,22 @@ public class ClusteredGetCommand implements CacheRpcCommand {
     * @return returns an <code>CacheEntry</code> or null, if no entry is found.
     */
    public InternalCacheValue perform(InvocationContext context) throws Throwable {
-      if (key != null) {
-         InternalCacheEntry cacheEntry = dataContainer.get(key);
-         if (trace) log.trace("Found InternalCacheEntry {0} for key {1}", cacheEntry, key);
-         if (cacheEntry == null) {
-            if (trace) log.trace("Checking in cache loader");
-            // hack -> the call is here to make sure that the current thread is associated with
-            // the remote InvocationCOntext in order to make sure that ClusterCL won't trigger a recurring cluster get
-            // which might result in infinite loops 
-            icc.createRemoteInvocationContext();
-            // lookup
-            if (cacheLoaderManager != null && cacheLoaderManager.getCacheLoader() != null) {
-               cacheEntry = cacheLoaderManager.getCacheLoader().load(key);
-            }
-         }
-         return cacheEntry != null ? cacheEntry.toInternalCacheValue() : null;
+      GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key);
+      command.setReturnCacheEntry(true);
+      NonTxInvocationContext invocationContext = icc.createRemoteInvocationContext();
+      CacheEntry cacheEntry = (CacheEntry) invoker.invoke(invocationContext, command);
+      if (cacheEntry == null) {
+         if (trace) log.trace("Did not find anything, returning null");
+         return null;
+      }
+      //this might happen if the value was fetched from a cache loader
+      if (cacheEntry instanceof MVCCEntry) {
+         if (trace) log.trace("Handloing an internal cache entry...");
+         MVCCEntry mvccEntry = (MVCCEntry) cacheEntry;
+         return InternalEntryFactory.createValue(mvccEntry.getValue(), -1, mvccEntry.getLifespan(), -1, mvccEntry.getMaxIdle());
       } else {
-         throw new CacheException("Invalid command. Missing key!");
+         InternalCacheEntry internalCacheEntry = (InternalCacheEntry) cacheEntry;
+         return internalCacheEntry.toInternalCacheValue();
       }
    }
 

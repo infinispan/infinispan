@@ -228,7 +228,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case ClusteredGetCommand.COMMAND_ID:
             ClusteredGetCommand clusteredGetCommand = (ClusteredGetCommand) c;
-            clusteredGetCommand.initialize(dataContainer, cacheLoaderManager, icc);
+            clusteredGetCommand.initialize(dataContainer, icc, this, interceptorChain);
             break;
          case LockControlCommand.COMMAND_ID:
             LockControlCommand lcc = (LockControlCommand)c;
