@@ -1,58 +1,61 @@
 #!/usr/bin/python
 
+from __future__ import with_statement
+
 import re
 import subprocess
+import os
 
-addresses = []
-
+VIEW_TO_USE = '3'
+INPUT_FILE = "infinispan.log"
+OUTPUT_FILE = "infinispan0.log"
+addresses = {}
+new_addresses = {}
 def find(expr):
-  f = open("infinispan.log")
-  try:
+  with open(INPUT_FILE) as f:
     for l in f:
       if expr.match(l):
         handle(l, expr)
         break
-  finally:
-    f.close()
 
 def handle(l, expr):
  # print l
   m = expr.match(l)
   members = m.group(1).strip()
+  i = 1
   for m in members.split(','):
-    addresses.append(m.strip())
+    addresses[m.strip()] = "CACHE%s" % i
+    new_addresses["CACHE%s" % i] = m.strip()
+    i += 1
 
+def main():
 
-VIEW_TO_USE = '3'
+  print """
 
-expr = re.compile('.*Received new cluster view.*\|%s. \[(.*)\].*' % VIEW_TO_USE)
-find(expr)
-#print 'Addresses = %s' % addresses
-i=1
-sed = "sed "
-for a in addresses:
-  sed += "-e 's/%s/%s/g' " % (a, "CACHE%s" % i)
-  i += 1
+	  INFINISPAN Log file fixer.  Makes log files more readable by replacing ugly JGroups addresses to more friendly CACHE1, CACHE2, etc addresses.
 
-sed += " infinispan.log > infinispan0.log"
+	  Usage:
 
-print """
-  
-  INFINISPAN Log file fixer.  Makes log files more readable by replacing ugly JGroups addresses to more friendly CACHE1, CACHE2, etc addresses.
+	    $ bin/fixlogs.py
 
-  Usage:
+	  TODO: be able to specify which view to select as the correct one, and to specify input and output files.
 
-    $ bin/fixlogs.py
+  """ 
+  expr = re.compile('.*Received new cluster view.*\|%s. \[(.*)\].*' % VIEW_TO_USE)
+  find(expr)
 
-  TODO: be able to specify which view to selec as the correct one, and to specify input and output files.
+  with open(INPUT_FILE) as f_in:
+    with open(OUTPUT_FILE, 'w+') as f_out:
+      for l in f_in:
+        for c in addresses.keys():
+          l = l.replace(c, addresses[c])
+        f_out.write(l)
 
-""" 
+  print "Processed %s and generated %s.  The following replacements were made: " % (INPUT_FILE, OUTPUT_FILE)	
+  sorted_keys = new_addresses.keys()
+  sorted_keys.sort()
+  for a in sorted_keys:
+    print "  %s --> %s" % (new_addresses[a], a)
 
-print "TODO execute this sed script automatically!"
-
-print sed
-print "\n\n\n"
-
-#subprocess.call(sed)
-
-
+if __name__ == "__main__":
+	main()
