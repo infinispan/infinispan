@@ -1,10 +1,16 @@
 package org.infinispan.distribution;
 
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.util.ObjectDuplicator;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "distribution.DistSyncFuncTest")
@@ -153,5 +159,40 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest {
       asyncWait(null, ClearCommand.class);
 
       for (Cache<Object, String> c : caches) assert c.isEmpty();
+   }
+   
+   public void testKeyValueEntryCollections() {
+      c1.put("1", "one");
+      asyncWait("1", PutKeyValueCommand.class, getNonOwnersExcludingSelf("1", addressOf(c1)));
+      c2.put("2", "two");
+      asyncWait("2", PutKeyValueCommand.class, getNonOwnersExcludingSelf("2", addressOf(c2)));
+      c3.put("3", "three");
+      asyncWait("3", PutKeyValueCommand.class, getNonOwnersExcludingSelf("3", addressOf(c3)));
+      c4.put("4", "four");
+      asyncWait("4", PutKeyValueCommand.class, getNonOwnersExcludingSelf("4", addressOf(c4)));
+      
+      for (Cache c : caches) {
+         Set expKeys = TestingUtil.getInternalKeys(c);
+         Collection expValues = TestingUtil.getInternalValues(c);
+         
+         Set expKeyEntries = ObjectDuplicator.duplicateSet(expKeys);
+         Collection expValueEntries = ObjectDuplicator.duplicateCollection(expValues);
+         
+         Set keys = c.keySet();
+         for (Object key : keys) assert expKeys.remove(key);
+         assert expKeys.isEmpty() : "Did not see keys " + expKeys + " in iterator!";
+         
+         Collection values = c.values();
+         for (Object value : values) assert expValues.remove(value);
+         assert expValues.isEmpty() : "Did not see keys " + expValues + " in iterator!";
+         
+         Set<Map.Entry> entries = c.entrySet();
+         for (Map.Entry entry : entries) {
+            assert expKeyEntries.remove(entry.getKey());
+            assert expValueEntries.remove(entry.getValue());
+         }
+         assert expKeyEntries.isEmpty() : "Did not see keys " + expKeyEntries + " in iterator!";
+         assert expValueEntries.isEmpty() : "Did not see keys " + expValueEntries + " in iterator!";
+      }      
    }
 }

@@ -37,6 +37,7 @@ import java.util.Set;
  * Factory for generating immutable type wrappers.
  *
  * @author Jason T. Greene
+ * @author Galder Zamarreño
  * @since 4.0
  */
 public class Immutables {
@@ -172,6 +173,16 @@ public class Immutables {
 
       return new ImmutableCollectionWrapper<T>(copy);
    }
+   
+   /**
+    * Wraps a collection with an immutable collection. There is no copying involved.
+    *
+    * @param collection the collection to wrap
+    * @return an immutable collection wrapper that delegates to the original collection
+    */
+   public static <T> Collection<T> immutableCollectionWrap(Collection<? extends T> collection) {
+      return new ImmutableCollectionWrapper<T>(collection);
+   }
 
    @SuppressWarnings("unchecked")
    private static <T> T attemptCopyConstructor(T source, Class<? super T> clazz) {
@@ -193,6 +204,16 @@ public class Immutables {
          copy = new VisitableBidirectionalLinkedHashSet<T>(false, set);
 
       return new ImmutableReversibleOrderedSetWrapper<T>(copy);
+   }
+   
+   /**
+    * Wraps a {@link Map.Entry}} with an immutable {@link Map.Entry}}. There is no copying involved.
+    *
+    * @param entry the mapping to wrap.
+    * @return an immutable {@link Map.Entry}} wrapper that delegates to the original mapping.
+    */
+   public static Map.Entry immutableEntry(Map.Entry entry) {
+      return new ImmutableEntry(entry);
    }
 
 
@@ -321,7 +342,7 @@ public class Immutables {
       }
    }
 
-   static class ImmutableEntry<K, V> implements Entry<K, V> {
+   static class ImmutableEntry<K, V> implements Entry<K, V>, Immutable {
       private K key;
       private V value;
       private int hash;

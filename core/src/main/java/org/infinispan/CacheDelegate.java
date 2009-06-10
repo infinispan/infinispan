@@ -27,8 +27,11 @@ import org.infinispan.atomic.AtomicMapCache;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.LockControlCommand;
+import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.SizeCommand;
+import org.infinispan.commands.read.ValuesCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -75,6 +78,7 @@ import java.util.concurrent.TimeoutException;
 
 /**
  * @author Mircea.Markus@jboss.com
+ * @author Galder Zamarreño
  * @since 4.0
  */
 @NonVolatile
@@ -152,7 +156,7 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
 
    public final int size() {
       SizeCommand command = commandsFactory.buildSizeCommand();
-      return (Integer) invoker.invoke(getInvocationContext(), command);
+      return (Integer) invoker.invoke(icc.createNonTxInvocationContext(), command);
    }
 
    public final boolean isEmpty() {
@@ -188,15 +192,18 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
    }
 
    public Set<K> keySet() {
-      throw new UnsupportedOperationException("TODO implement me"); // TODO implement me
+      KeySetCommand command = commandsFactory.buildKeySetCommand();
+      return (Set<K>) invoker.invoke(icc.createNonTxInvocationContext(), command);
    }
 
    public Collection<V> values() {
-      throw new UnsupportedOperationException("TODO implement me"); // TODO implement me
+      ValuesCommand command = commandsFactory.buildValuesCommand();
+      return (Collection<V>) invoker.invoke(icc.createNonTxInvocationContext(), command);
    }
 
    public Set<Map.Entry<K, V>> entrySet() {
-      throw new UnsupportedOperationException("TODO implement me"); // TODO implement me
+      EntrySetCommand command = commandsFactory.buildEntrySetCommand();
+      return (Set<Map.Entry<K, V>>) invoker.invoke(icc.createNonTxInvocationContext(), command);
    }
 
    public final void putForExternalRead(K key, V value) {

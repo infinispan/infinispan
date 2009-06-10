@@ -1,14 +1,17 @@
 package org.infinispan.container.entries;
 
+import java.util.Map;
+
 import org.infinispan.container.DataContainer;
 
 /**
  * An entry that is stored in the data container
  *
  * @author Manik Surtani
+ * @author Galder Zamarreño
  * @since 4.0
  */
-public interface CacheEntry {
+public interface CacheEntry extends Map.Entry<Object, Object> {
 
    /**
     * Tests whether the entry represents a null value, typically used for repeatable read.

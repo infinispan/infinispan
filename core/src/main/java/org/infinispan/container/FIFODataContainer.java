@@ -2,9 +2,13 @@ package org.infinispan.container;
 
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.util.Immutables;
 
+import java.util.AbstractCollection;
 import java.util.AbstractSet;
+import java.util.Collection;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.concurrent.locks.ReentrantLock;
@@ -25,6 +29,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * <p/>
  *
  * @author Manik Surtani
+ * @author Galder Zamarreño
  * @since 4.0
  */
 public class FIFODataContainer implements DataContainer {
@@ -603,9 +608,28 @@ public class FIFODataContainer implements DataContainer {
 
 
    protected final class KeySet extends AbstractSet<Object> {
-
       public Iterator<Object> iterator() {
          return new KeyIterator();
+      }
+
+      public int size() {
+         return FIFODataContainer.this.size();
+      }
+   }
+   
+   protected final class Values extends AbstractCollection<Object> {
+      public Iterator<Object> iterator() {
+         return new ValueIterator();
+      }
+
+      public int size() {
+         return FIFODataContainer.this.size();
+      }
+   }
+   
+   protected final class EntrySet extends AbstractSet<Map.Entry> {
+      public Iterator<Map.Entry> iterator() {
+         return new ImmutableEntryIterator();
       }
 
       public int size() {
@@ -627,15 +651,27 @@ public class FIFODataContainer implements DataContainer {
       }
    }
 
-   protected final class ValueIterator extends LinkedIterator implements Iterator<InternalCacheEntry> {
+   protected final class EntryIterator extends LinkedIterator implements Iterator<InternalCacheEntry> {
       public InternalCacheEntry next() {
          return current.e;
+      }
+   }
+   
+   protected final class ImmutableEntryIterator extends LinkedIterator implements Iterator<Map.Entry> {
+      public Map.Entry next() {
+         return Immutables.immutableEntry(current.e);
       }
    }
 
    protected final class KeyIterator extends LinkedIterator implements Iterator<Object> {
       public Object next() {
          return current.e.getKey();
+      }
+   }
+   
+   protected final class ValueIterator extends LinkedIterator implements Iterator<Object> {
+      public Object next() {
+         return current.e.getValue();
       }
    }
 
@@ -760,6 +796,14 @@ public class FIFODataContainer implements DataContainer {
       return keySet;
    }
 
+   public Collection<Object> values() {
+      return new Values();
+   }
+   
+   public Set<Map.Entry> entrySet() {
+      return new EntrySet();
+   }
+
    public void purgeExpired() {
       for (InternalCacheEntry ice : this) {
          if (ice.isExpired()) remove(ice.getKey());
@@ -767,6 +811,6 @@ public class FIFODataContainer implements DataContainer {
    }
 
    public Iterator<InternalCacheEntry> iterator() {
-      return new ValueIterator();
+      return new EntryIterator();
    }
 }

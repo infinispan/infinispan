@@ -1,11 +1,16 @@
 package org.infinispan.container;
 
 import net.jcip.annotations.ThreadSafe;
+
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.util.Immutables;
 
+import java.util.AbstractCollection;
 import java.util.AbstractSet;
+import java.util.Collection;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
@@ -27,6 +32,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * and due to the nature of these spin locks, they should only be held for a minimal amount of time.
  *
  * @author Manik Surtani
+ * @author Galder Zamarreño
  * @since 4.0
  */
 @ThreadSafe
@@ -231,6 +237,14 @@ public class SpinLockBasedFIFODataContainer implements DataContainer {
       if (keySet == null) keySet = new KeySet();
       return keySet;
    }
+   
+   public Set<Map.Entry> entrySet() {
+      return new EntrySet();
+   }
+
+   public Collection<Object> values() {
+      return new Values();
+   }
 
    public void purgeExpired() {
       for (InternalCacheEntry ice : this) {
@@ -239,7 +253,7 @@ public class SpinLockBasedFIFODataContainer implements DataContainer {
    }
 
    public Iterator<InternalCacheEntry> iterator() {
-      return new ValueIterator();
+      return new EntryIterator();
    }
 
    // --------------- Internals
@@ -526,9 +540,28 @@ public class SpinLockBasedFIFODataContainer implements DataContainer {
    }
 
    protected final class KeySet extends AbstractSet<Object> {
-
       public Iterator<Object> iterator() {
          return new KeyIterator();
+      }
+
+      public int size() {
+         return SpinLockBasedFIFODataContainer.this.size();
+      }
+   }
+   
+   protected final class Values extends AbstractCollection<Object> {
+      public Iterator<Object> iterator() {
+         return new ValueIterator();
+      }
+      
+      public int size() {
+         return SpinLockBasedFIFODataContainer.this.size();
+      }      
+   }
+   
+   protected final class EntrySet extends AbstractSet<Map.Entry> {
+      public Iterator<Map.Entry> iterator() {
+         return new ImmutableEntryIterator();
       }
 
       public int size() {
@@ -548,7 +581,7 @@ public class SpinLockBasedFIFODataContainer implements DataContainer {
       }
    }
 
-   protected final class ValueIterator extends LinkedIterator implements Iterator<InternalCacheEntry> {
+   protected final class EntryIterator extends LinkedIterator implements Iterator<InternalCacheEntry> {
       public InternalCacheEntry next() {
          LinkedEntry le = nextAux.next;
          if (le == dummyEntry) return null;
@@ -557,6 +590,15 @@ public class SpinLockBasedFIFODataContainer implements DataContainer {
       }
    }
 
+   protected final class ImmutableEntryIterator extends LinkedIterator implements Iterator<Map.Entry> {
+      public Map.Entry next() {
+         LinkedEntry le = nextAux.next;
+         if (le == dummyEntry) return null;
+         nextAux = le.next;
+         return Immutables.immutableEntry(le.entry);
+      }
+   }
+   
    protected final class KeyIterator extends LinkedIterator implements Iterator<Object> {
       public Object next() {
          LinkedEntry le = nextAux.next;
@@ -566,6 +608,15 @@ public class SpinLockBasedFIFODataContainer implements DataContainer {
       }
    }
 
+   protected final class ValueIterator extends LinkedIterator implements Iterator<Object> {
+      public Object next() {
+         LinkedEntry le = nextAux.next;
+         if (le == dummyEntry) return null;
+         nextAux = le.next;
+         return le.entry.getValue();
+      }
+   }
+   
    protected static abstract class SpinLock {
       final AtomicBoolean l = new AtomicBoolean(false);
 

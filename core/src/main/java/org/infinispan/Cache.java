@@ -30,7 +30,9 @@ import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.notifications.Listenable;
 import org.infinispan.util.concurrent.NotifyingFuture;
 
+import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
@@ -90,6 +92,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Mircea.Markus@jboss.com
  * @author Manik Surtani
+ * @author Galder Zamarreño
  * @see CacheManager
  * @see DefaultCacheManager
  * @see <a href="http://www.jboss.org/infinispan/docs">Infinispan documentation</a>
@@ -540,4 +543,47 @@ public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable 
    void compact();
 
    ComponentStatus getStatus();
+
+   /**
+    * Returns a set view of the keys contained in this cache. This set is immutable, so it cannot be modified 
+    * and changes to the cache won't be reflected in the set. When this method is called on a cache configured with 
+    * distribution mode, the set returned only contains the keys locally available in the cache instance. To avoid 
+    * memory issues, there will be not attempt to bring keys from other nodes.
+    * <p/>
+    * This method should only be used for debugging purpouses such as to verify that the cache contains all the keys 
+    * entered. Any other use involving execution of this method on a production system is not recommended.
+    * <p/>
+    * 
+    * @return a set view of the keys contained in this cache.
+    */
+   Set<K> keySet();
+
+   /**
+    * Returns a collection view of the keys contained in this cache. This collection is immutable, so it cannot be modified 
+    * and changes to the cache won't be reflected in the set. When this method is called on a cache configured with 
+    * distribution mode, the collection returned only contains the values locally available in the cache instance. To avoid 
+    * memory issues, there is not attempt to bring values from other nodes.
+    * <p/>
+    * This method should only be used for testing or debugging purpouses such as to verify that the cache contains all the 
+    * values entered. Any other use involving execution of this method on a production system is not recommended.
+    * <p/>
+    * 
+    * @return a collection view of the values contained in this map.
+    */
+   Collection<V> values();
+   
+   /**
+    * Returns a set view of the mappings contained in this cache. This set is immutable, so it cannot be modified 
+    * and changes to the cache won't be reflected in the set. Besides, each element in the returned set is an immutable 
+    * {@link Map.Entry}. When this method is called on a cache configured with distribution mode, the set returned only 
+    * contains the mappings locally available in the cache instance. To avoid memory issues, there will be not attempt 
+    * to bring mappings from other nodes.
+    * <p/>
+    * This method should only be used for debugging purpouses such as to verify that the cache contains all the mappings 
+    * entered. Any other use involving execution of this method on a production system is not recommended.
+    * <p/>
+    * 
+    * @return a set view of the mappings contained in this cache.
+    */
+   Set<Map.Entry<K, V>> entrySet();
 }

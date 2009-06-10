@@ -21,18 +21,25 @@
  */
 package org.infinispan.interceptors;
 
+import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commands.read.KeySetCommand;
+import org.infinispan.commands.read.ValuesCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.marshall.MarshalledValue;
 import org.infinispan.marshall.Marshaller;
+import org.infinispan.util.Immutables;
 
 import java.io.IOException;
 import java.io.NotSerializableException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -111,6 +118,51 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
       Object retVal = invokeNextInterceptor(ctx, command);
       compact(mv);
       return processRetVal(retVal);
+   }
+   
+   @Override
+   public Object visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
+      Set keys = (Set) invokeNextInterceptor(ctx, command);
+      Set copy = new HashSet(keys.size());
+      for (Object key : keys) {
+         if (key instanceof MarshalledValue) {
+            key = ((MarshalledValue) key).get();
+         } 
+         copy.add(key);
+      }
+      return Immutables.immutableSetWrap(copy);
+   }
+
+   @Override
+   public Object visitValuesCommand(InvocationContext ctx, ValuesCommand command) throws Throwable {
+      Collection values = (Collection) invokeNextInterceptor(ctx, command);
+      Collection copy = new ArrayList();  
+      for (Object value : values) {
+         if (value instanceof MarshalledValue) {
+            value = ((MarshalledValue) value).get();
+         }
+         copy.add(value);
+      }
+      return Immutables.immutableCollectionWrap(copy);
+   }
+   
+   @Override
+   public Object visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
+      Set<Map.Entry> entries = (Set<Map.Entry>) invokeNextInterceptor(ctx, command);
+      Set<Map.Entry> copy = new HashSet<Map.Entry>(entries.size());
+      for (Map.Entry entry : entries) {
+         Object key = entry.getKey();
+         Object value = entry.getValue();
+         if (key instanceof MarshalledValue) {
+            key = ((MarshalledValue) key).get();
+         }
+         if (value instanceof MarshalledValue) {
+            value = ((MarshalledValue) value).get();
+         }
+         Map.Entry newEntry = Immutables.immutableEntry(InternalEntryFactory.create(key, value, -1));
+         copy.add(newEntry);
+      }
+      return Immutables.immutableSetWrap(copy);
    }
 
    private Object compactAndProcessRetVal(Set<MarshalledValue> marshalledValues, Object retVal)

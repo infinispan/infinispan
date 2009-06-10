@@ -4,10 +4,14 @@ import net.jcip.annotations.ThreadSafe;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.util.Immutables;
 
+import java.util.AbstractCollection;
 import java.util.AbstractSet;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -22,6 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * This implementation offers O(1) performance for all operations.
  *
  * @author Manik Surtani
+ * @author Galder Zamarreño
  * @since 4.0
  */
 @ThreadSafe
@@ -126,6 +131,14 @@ public class SimpleDataContainer implements DataContainer {
    public Set<Object> keySet() {
       return new KeySet();
    }
+   
+   public Collection<Object> values() {
+      return new Values();
+   }
+
+   public Set<Map.Entry> entrySet() {
+      return new EntrySet();
+   }
 
    public void purgeExpired() {
       for (Iterator<InternalCacheEntry> entries = mortalEntries.values().iterator(); entries.hasNext();) {
@@ -198,13 +211,24 @@ public class SimpleDataContainer implements DataContainer {
          throw new UnsupportedOperationException();
       }
    }
+   
+   private class EntrySet extends AbstractSet<Map.Entry> {
+      public Iterator<Map.Entry> iterator() {
+         return new ImmutableEntryIterator(immortalEntries.values().iterator(), mortalEntries.values().iterator());
+      }
 
-   private class EntryIterator implements Iterator<InternalCacheEntry> {
+      @Override
+      public int size() {
+         return immortalEntries.size() + mortalEntries.size();
+      }
+   }
+
+   private class MortalInmortalIterator {
       Iterator<Iterator<InternalCacheEntry>> metaIterator;
       Iterator<InternalCacheEntry> currentIterator;
       InternalCacheEntry next;
 
-      private EntryIterator(Iterator<InternalCacheEntry> immortalIterator, Iterator<InternalCacheEntry> mortalIterator) {
+      private MortalInmortalIterator(Iterator<InternalCacheEntry> immortalIterator, Iterator<InternalCacheEntry> mortalIterator) {
          metaIterator = Arrays.asList(immortalIterator, mortalIterator).iterator();
          if (metaIterator.hasNext()) currentIterator = metaIterator.next();
       }
@@ -218,13 +242,51 @@ public class SimpleDataContainer implements DataContainer {
          return hasNext;
       }
 
+      public void remove() {
+         throw new UnsupportedOperationException();
+      }
+   }
+   
+   private class EntryIterator extends MortalInmortalIterator implements Iterator<InternalCacheEntry> {
+      private EntryIterator(Iterator<InternalCacheEntry> immortalIterator, Iterator<InternalCacheEntry> mortalIterator) {
+         super(immortalIterator, mortalIterator);
+      }
+      
       @SuppressWarnings("unchecked")
       public InternalCacheEntry next() {
          return currentIterator.next();
       }
+   }
+   
+   private class ImmutableEntryIterator extends MortalInmortalIterator implements Iterator<Map.Entry> {
+      private ImmutableEntryIterator(Iterator<InternalCacheEntry> immortalIterator, Iterator<InternalCacheEntry> mortalIterator) {
+         super(immortalIterator, mortalIterator);
+      }
+      
+      public Map.Entry next() {
+         return Immutables.immutableEntry(currentIterator.next());
+      }
+   }
+   
+   private class Values extends AbstractCollection<Object> {
+      @Override
+      public Iterator<Object> iterator() {         
+         return new ValueIterator(immortalEntries.values().iterator(), mortalEntries.values().iterator());
+      }
 
-      public void remove() {
-         throw new UnsupportedOperationException();
+      @Override
+      public int size() {
+         return immortalEntries.size() + mortalEntries.size();
+      }      
+   }
+   
+   private class ValueIterator extends MortalInmortalIterator implements Iterator<Object> {
+      private ValueIterator(Iterator<InternalCacheEntry> immortalIterator, Iterator<InternalCacheEntry> mortalIterator) {
+         super(immortalIterator, mortalIterator);
+      }
+      
+      public Object next() {
+         return currentIterator.next().getValue();
       }
    }
 }

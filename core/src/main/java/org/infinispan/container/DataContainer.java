@@ -25,12 +25,15 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 
+import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 
 /**
  * The main internal data structure which stores entries
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
+ * @author Galder Zamarreño
  * @since 4.0
  */
 @Scope(Scopes.NAMED_CACHE)
@@ -81,6 +84,23 @@ public interface DataContainer extends Iterable<InternalCacheEntry> {
     * @return a set of keys contained in the container
     */
    Set<Object> keySet();
+
+   /**
+    * @return a set of values contained in the container
+    */
+   Collection<Object> values();
+
+   /**
+    * Returns a mutable set of immutable cache entries exposed as immutable Map.Entry instances. Clients 
+    * of this method such as Cache.entrySet() operation implementors are free to convert the set into an 
+    * immutable set if needed, which is the most common use case. 
+    * 
+    * If a client needs to iterate through a mutable set of mutable cache entries, it should iterate the 
+    * container itself rather than iterating through the return of entrySet().
+    * 
+    * @return a set of immutable cache entries
+    */
+   Set<Map.Entry> entrySet();
 
    /**
     * Purges entries that have passed their expiry time

@@ -5,11 +5,13 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MortalCacheEntry;
 import org.infinispan.container.entries.TransientCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
+import org.infinispan.util.Immutables;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 @Test(groups = "unit", testName = "container.SimpleDataContainerTest")
@@ -137,7 +139,7 @@ public class SimpleDataContainerTest {
       assert expected.isEmpty() : "Did not see keys " + expected + " in iterator!";
    }
 
-   public void testEntrySet() {
+   public void testContainerIteration() {
       dc.put("k1", "v", 6000000, -1);
       dc.put("k2", "v", -1, -1);
       dc.put("k3", "v", -1, 6000000);
@@ -152,6 +154,57 @@ public class SimpleDataContainerTest {
       for (InternalCacheEntry ice : dc) {
          assert expected.remove(ice.getKey());
       }
+
+      assert expected.isEmpty() : "Did not see keys " + expected + " in iterator!";
+   }
+   
+   public void testKeys() {
+      dc.put("k1", "v1", 6000000, -1);
+      dc.put("k2", "v2", -1, -1);
+      dc.put("k3", "v3", -1, 6000000);
+      dc.put("k4", "v4", 6000000, 6000000);
+
+      Set expected = new HashSet();
+      expected.add("k1");
+      expected.add("k2");
+      expected.add("k3");
+      expected.add("k4");
+
+      for (Object o : dc.keySet()) assert expected.remove(o);
+
+      assert expected.isEmpty() : "Did not see keys " + expected + " in iterator!";
+   }
+
+   public void testValues() {
+      dc.put("k1", "v1", 6000000, -1);
+      dc.put("k2", "v2", -1, -1);
+      dc.put("k3", "v3", -1, 6000000);
+      dc.put("k4", "v4", 6000000, 6000000);
+
+      Set expected = new HashSet();
+      expected.add("v1");
+      expected.add("v2");
+      expected.add("v3");
+      expected.add("v4");
+
+      for (Object o : dc.values()) assert expected.remove(o);
+
+      assert expected.isEmpty() : "Did not see keys " + expected + " in iterator!";
+   }
+
+   public void testEntrySet() {
+      dc.put("k1", "v1", 6000000, -1);
+      dc.put("k2", "v2", -1, -1);
+      dc.put("k3", "v3", -1, 6000000);
+      dc.put("k4", "v4", 6000000, 6000000);
+
+      Set expected = new HashSet();
+      expected.add(Immutables.immutableEntry(dc.get("k1")));
+      expected.add(Immutables.immutableEntry(dc.get("k2")));
+      expected.add(Immutables.immutableEntry(dc.get("k3")));
+      expected.add(Immutables.immutableEntry(dc.get("k4")));
+
+      for (Map.Entry o : dc.entrySet()) assert expected.remove(o);
 
       assert expected.isEmpty() : "Did not see keys " + expected + " in iterator!";
    }

@@ -21,8 +21,11 @@
  */
 package org.infinispan.commands;
 
+import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.SizeCommand;
+import org.infinispan.commands.read.ValuesCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -38,6 +41,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 
 /**
  * @author Mircea.Markus@jboss.com
+ * @author Galder Zamarreño
  * @since 4.0
  */
 
@@ -61,6 +65,12 @@ public interface Visitor {
    Object visitSizeCommand(InvocationContext ctx, SizeCommand command) throws Throwable;
 
    Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable;
+   
+   Object visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable;
+   
+   Object visitValuesCommand(InvocationContext ctx, ValuesCommand command) throws Throwable;
+   
+   Object visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable;
 
    // tx commands
 

@@ -18,6 +18,7 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.util.ObjectDuplicator;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -28,7 +29,13 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Tests implicit marshalled values
@@ -195,6 +202,92 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       assertOnlyOneRepresentationExists(mv);
       assertSerialized(mv);
       assertSerializationCounts(2, 1);
+   }
+   
+   public void testKeySetValuesEntrySetCollectionReferences() {
+      Pojo key1 = new Pojo(), value1 = new Pojo(), key2 = new Pojo(), value2 = new Pojo();
+      String key3 = "3", value3 = "three"; 
+      cache1.put(key1, value1);
+      cache1.put(key2, value2);
+      cache1.put(key3, value3);
+      
+      Set expKeys = new HashSet();
+      expKeys.add(key1);
+      expKeys.add(key2);
+      expKeys.add(key3);
+      
+      Set expValues = new HashSet();
+      expValues.add(value1);
+      expValues.add(value2);
+      expValues.add(value3);
+      
+      Set expKeyEntries = ObjectDuplicator.duplicateSet(expKeys);
+      Set expValueEntries = ObjectDuplicator.duplicateSet(expValues);
+      
+      Set keys = cache2.keySet();
+      for (Object key : keys) assert expKeys.remove(key);
+      assert expKeys.isEmpty() : "Did not see keys " + expKeys + " in iterator!";
+      
+      Collection values = cache2.values();
+      for (Object key : values) assert expValues.remove(key);
+      assert expValues.isEmpty() : "Did not see keys " + expValues + " in iterator!";
+      
+      Set<Map.Entry> entries = cache2.entrySet();
+      for (Map.Entry entry : entries) {
+         assert expKeyEntries.remove(entry.getKey());
+         assert expValueEntries.remove(entry.getValue());
+      }
+      assert expKeyEntries.isEmpty() : "Did not see keys " + expKeyEntries + " in iterator!";
+      assert expValueEntries.isEmpty() : "Did not see keys " + expValueEntries + " in iterator!";
+      
+      Collection[] collections = new Collection[]{keys, values, entries};
+      Object newObj = new Object();
+      List newObjCol = new ArrayList();
+      newObjCol.add(newObj);
+      for (Collection col : collections) {
+         try {
+            col.add(newObj);
+            assert false : "Should have thrown a UnsupportedOperationException";
+         } catch (UnsupportedOperationException uoe) {
+         }
+         try {
+            col.addAll(newObjCol);
+            assert false : "Should have thrown a UnsupportedOperationException";
+         } catch (UnsupportedOperationException uoe) {
+         }
+         
+         try {
+            col.clear();
+            assert false : "Should have thrown a UnsupportedOperationException";
+         } catch (UnsupportedOperationException uoe) {
+         }
+         
+         try {
+            col.remove(key1);
+            assert false : "Should have thrown a UnsupportedOperationException";
+         } catch (UnsupportedOperationException uoe) {
+         }
+         
+         try {
+            col.removeAll(newObjCol);
+            assert false : "Should have thrown a UnsupportedOperationException";
+         } catch (UnsupportedOperationException uoe) {
+         }
+         
+         try {
+            col.retainAll(newObjCol);
+            assert false : "Should have thrown a UnsupportedOperationException";
+         } catch (UnsupportedOperationException uoe) {
+         }
+      }
+      
+      for (Map.Entry entry : entries) {
+         try {
+            entry.setValue(newObj);
+            assert false : "Should have thrown a UnsupportedOperationException";
+         } catch (UnsupportedOperationException uoe) {
+         }
+      }
    }
 
    public void testEqualsAndHashCode() throws Exception {

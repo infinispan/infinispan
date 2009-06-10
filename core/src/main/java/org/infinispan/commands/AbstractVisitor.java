@@ -21,8 +21,11 @@
  */
 package org.infinispan.commands;
 
+import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.SizeCommand;
+import org.infinispan.commands.read.ValuesCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -43,6 +46,7 @@ import java.util.Collection;
  *
  * @author Mircea.Markus@jboss.com
  * @author Manik Surtani
+ * @author Galder Zamarreño
  * @since 4.0
  */
 public abstract class AbstractVisitor implements Visitor {
@@ -79,6 +83,18 @@ public abstract class AbstractVisitor implements Visitor {
    }
 
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+      return handleDefault(ctx, command);
+   }
+
+   public Object visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
+      return handleDefault(ctx, command);
+   }
+
+   public Object visitValuesCommand(InvocationContext ctx, ValuesCommand command) throws Throwable {
+      return handleDefault(ctx, command);
+   }
+
+   public Object visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
 

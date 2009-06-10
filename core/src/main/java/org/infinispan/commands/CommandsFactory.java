@@ -22,8 +22,11 @@
 package org.infinispan.commands;
 
 import org.infinispan.commands.control.StateTransferControlCommand;
+import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.SizeCommand;
+import org.infinispan.commands.read.ValuesCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.MultipleRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
@@ -48,6 +51,7 @@ import java.util.Map;
 
 /**
  * @author Mircea.Markus@jboss.com
+ * @author Galder Zamarreño
  * @since 4.0
  */
 @Scope(Scopes.NAMED_CACHE)
@@ -66,6 +70,12 @@ public interface CommandsFactory {
    SizeCommand buildSizeCommand();
 
    GetKeyValueCommand buildGetKeyValueCommand(Object key);
+   
+   KeySetCommand buildKeySetCommand();
+   
+   ValuesCommand buildValuesCommand();
+   
+   EntrySetCommand buildEntrySetCommand();
 
    PutMapCommand buildPutMapCommand(Map map, long lifespanMillis, long maxIdleTimeMillis);
 

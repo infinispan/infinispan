@@ -30,11 +30,14 @@ import org.infinispan.util.concurrent.locks.LockManager;
 import javax.transaction.TransactionManager;
 import java.io.File;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 public class TestingUtil {
    private static Random random = new Random();
@@ -633,5 +636,23 @@ public class TestingUtil {
       }
       builder.append("]");
       return builder.toString();
+   }
+   
+   public static Set getInternalKeys(Cache cache) {
+      DataContainer dataContainer = TestingUtil.extractComponent(cache, DataContainer.class);
+      Set keys = new HashSet();
+      for (CacheEntry entry : dataContainer) {
+         keys.add(entry.getKey());
+      }
+      return keys;
+   }
+   
+   public static Collection getInternalValues(Cache cache) {
+      DataContainer dataContainer = TestingUtil.extractComponent(cache, DataContainer.class);
+      Collection values = new ArrayList();
+      for (CacheEntry entry : dataContainer) {
+         values.add(entry.getValue());
+      }
+      return values;
    }
 }

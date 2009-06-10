@@ -23,8 +23,11 @@ package org.infinispan.commands;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.control.StateTransferControlCommand;
+import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.SizeCommand;
+import org.infinispan.commands.read.ValuesCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.MultipleRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
@@ -57,6 +60,7 @@ import java.util.Map;
 
 /**
  * @author Mircea.Markus@jboss.com
+ * @author Galder Zamarreño
  * @since 4.0
  */
 public class CommandsFactoryImpl implements CommandsFactory {
@@ -68,6 +72,9 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    // some stateless commands can be reused so that they aren't constructed again all the time.
    SizeCommand cachedSizeCommand;
+   KeySetCommand cachedKeySetCommand;
+   ValuesCommand cachedValuesCommand;
+   EntrySetCommand cachedEntrySetCommand;
    private InterceptorChain interceptorChain;
    private DistributionManager distributionManager;
    private InvocationContextContainer icc;
@@ -119,6 +126,27 @@ public class CommandsFactoryImpl implements CommandsFactory {
          cachedSizeCommand = new SizeCommand(dataContainer);
       }
       return cachedSizeCommand;
+   }
+   
+   public KeySetCommand buildKeySetCommand() {
+      if (cachedKeySetCommand == null) {
+         cachedKeySetCommand = new KeySetCommand(dataContainer);
+      }
+      return cachedKeySetCommand;
+   }
+   
+   public ValuesCommand buildValuesCommand() {
+      if (cachedValuesCommand == null) {
+         cachedValuesCommand = new ValuesCommand(dataContainer);
+      }
+      return cachedValuesCommand;
+   }
+
+   public EntrySetCommand buildEntrySetCommand() {
+      if (cachedEntrySetCommand == null) {
+         cachedEntrySetCommand = new EntrySetCommand(dataContainer);
+      }
+      return cachedEntrySetCommand;
    }
 
    public GetKeyValueCommand buildGetKeyValueCommand(Object key) {
