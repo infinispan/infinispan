@@ -80,7 +80,7 @@ public class InvalidateCommand extends RemoveCommand {
 
    @Override
    public String toString() {
-      return "InvalidateCommand{" +
+      return getClass().getSimpleName() + "{" +
             "keys=" + Arrays.toString(keys) +
             '}';
    }

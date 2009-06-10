@@ -39,11 +39,4 @@ public class InvalidateL1Command extends InvalidateCommand {
       }
       return null;
    }
-
-   @Override
-   public String toString() {
-      return "InvalidateL1Command{" +
-            "dm=" + dm +
-            "} " + super.toString();
-   }
 }

@@ -11,4 +11,9 @@ public abstract class ValidResponse implements Response {
    public boolean isValid() {
       return true;
    }
+
+   @Override
+   public String toString() {
+      return getClass().getSimpleName();
+   }
 }

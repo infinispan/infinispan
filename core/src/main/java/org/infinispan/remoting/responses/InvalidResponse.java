@@ -14,4 +14,9 @@ public abstract class InvalidResponse implements Response {
    public boolean isSuccessful() {
       return false;
    }
+
+   @Override
+   public String toString() {
+      return getClass().getSimpleName();
+   }
 }

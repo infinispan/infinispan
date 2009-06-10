@@ -150,4 +150,11 @@ public abstract class AbstractInvocationContext implements InvocationContext {
          throw new IllegalStateException("Impossible!");
       }
    }
+
+   @Override
+   public String toString() {
+      return getClass().getSimpleName() + "{" +
+            "flags=" + flags +
+            '}';
+   }
 }
