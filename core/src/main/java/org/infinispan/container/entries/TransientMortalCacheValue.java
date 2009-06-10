@@ -80,4 +80,9 @@ public class TransientMortalCacheValue extends MortalCacheValue {
             ", lastUsed=" + lastUsed +
             "} " + super.toString();
    }
+
+   @Override
+   public TransientMortalCacheValue clone() {
+      return (TransientMortalCacheValue) super.clone();
+   }
 }

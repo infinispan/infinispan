@@ -109,5 +109,12 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
       result = 31 * result + (int) (cacheValue.lifespan ^ (cacheValue.lifespan >>> 32));
       return result;
    }
+
+   @Override
+   public TransientMortalCacheEntry clone() {
+      TransientMortalCacheEntry clone = (TransientMortalCacheEntry) super.clone();
+      clone.cacheValue = cacheValue.clone();
+      return clone;
+   }
 }
 

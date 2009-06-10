@@ -69,4 +69,12 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
             "key=" + key +
             '}';
    }
+
+   public AbstractInternalCacheEntry clone() {
+      try {
+         return (AbstractInternalCacheEntry) super.clone();
+      } catch (CloneNotSupportedException e) {
+         throw new RuntimeException("Should never happen!", e);
+      }
+   }
 }

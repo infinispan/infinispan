@@ -78,4 +78,9 @@ public class TransientCacheValue extends ImmortalCacheValue {
             ", lastUsed=" + lastUsed +
             "} " + super.toString();
    }
+
+   @Override
+   public TransientCacheValue clone() {
+      return (TransientCacheValue) super.clone();
+   }
 }

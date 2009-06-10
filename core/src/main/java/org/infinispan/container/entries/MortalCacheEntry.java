@@ -37,7 +37,7 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
 
    public InternalCacheEntry setMaxIdle(long maxIdle) {
       if (maxIdle > -1) {
-         TransientMortalCacheEntry tmce = new TransientMortalCacheEntry(key, cacheValue.value );
+         TransientMortalCacheEntry tmce = new TransientMortalCacheEntry(key, cacheValue.value);
          tmce.setMaxIdle(maxIdle);
          return tmce;
       } else {
@@ -90,7 +90,8 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
       MortalCacheEntry that = (MortalCacheEntry) o;
 
       if (key != null ? !key.equals(that.key) : that.key != null) return false;
-      if (cacheValue.value != null ? !cacheValue.value.equals(that.cacheValue.value) : that.cacheValue.value != null) return false;
+      if (cacheValue.value != null ? !cacheValue.value.equals(that.cacheValue.value) : that.cacheValue.value != null)
+         return false;
       if (cacheValue.created != that.cacheValue.created) return false;
       return cacheValue.lifespan == that.cacheValue.lifespan;
    }
@@ -103,4 +104,12 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
       result = 31 * result + (int) (cacheValue.lifespan ^ (cacheValue.lifespan >>> 32));
       return result;
    }
+
+   @Override
+   public MortalCacheEntry clone() {
+      MortalCacheEntry clone = (MortalCacheEntry) super.clone();
+      clone.cacheValue = cacheValue.clone();
+      return clone;
+   }
+
 }

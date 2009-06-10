@@ -6,7 +6,7 @@ package org.infinispan.container.entries;
  * @author Manik Surtani
  * @since 4.0
  */
-public interface InternalCacheEntry extends CacheEntry {
+public interface InternalCacheEntry extends CacheEntry, Cloneable {
    /**
     * @return true if the entry has expired; false otherwise
     */
@@ -78,4 +78,6 @@ public interface InternalCacheEntry extends CacheEntry {
     * @return a new InternalCacheValue encapsulating this InternalCacheEntry's value and expiration information.
     */
    InternalCacheValue toInternalCacheValue();
+
+   InternalCacheEntry clone();
 }

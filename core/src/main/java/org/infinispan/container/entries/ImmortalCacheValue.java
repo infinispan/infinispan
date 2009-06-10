@@ -6,7 +6,7 @@ package org.infinispan.container.entries;
  * @author Manik Surtani
  * @since 4.0
  */
-public class ImmortalCacheValue implements InternalCacheValue {
+public class ImmortalCacheValue implements InternalCacheValue, Cloneable {
    Object value;
 
    ImmortalCacheValue(Object value) {
@@ -73,5 +73,14 @@ public class ImmortalCacheValue implements InternalCacheValue {
       return "ImmortalCacheValue{" +
             "value=" + value +
             '}';
+   }
+
+   @Override
+   public ImmortalCacheValue clone() {
+      try {
+         return (ImmortalCacheValue) super.clone();
+      } catch (CloneNotSupportedException e) {
+         throw new RuntimeException("Should never happen", e);
+      }
    }
 }

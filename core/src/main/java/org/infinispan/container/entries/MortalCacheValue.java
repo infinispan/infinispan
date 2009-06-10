@@ -79,4 +79,9 @@ public class MortalCacheValue extends ImmortalCacheValue {
             ", lifespan=" + lifespan +
             "} " + super.toString();
    }
+
+   @Override
+   public MortalCacheValue clone() {
+      return (MortalCacheValue) super.clone();
+   }
 }

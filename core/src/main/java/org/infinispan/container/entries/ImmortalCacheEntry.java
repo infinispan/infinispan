@@ -94,4 +94,11 @@ public class ImmortalCacheEntry extends AbstractInternalCacheEntry {
       result = 31 * result + (cacheValue != null ? cacheValue.hashCode() : 0);
       return result;
    }
+
+   @Override
+   public ImmortalCacheEntry clone() {
+      ImmortalCacheEntry clone = (ImmortalCacheEntry) super.clone();
+      clone.cacheValue = cacheValue.clone();
+      return clone;
+   }
 }

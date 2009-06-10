@@ -8,7 +8,7 @@ package org.infinispan.container.entries;
  */
 public class TransientCacheEntry extends AbstractInternalCacheEntry {
 
-   private TransientCacheValue cacheValue; 
+   private TransientCacheValue cacheValue;
 
    TransientCacheEntry(Object key, Object value, long maxIdle) {
       this(key, value, maxIdle, System.currentTimeMillis());
@@ -90,7 +90,8 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
       TransientCacheEntry that = (TransientCacheEntry) o;
 
       if (key != null ? !key.equals(that.key) : that.key != null) return false;
-      if (cacheValue.value != null ? !cacheValue.value.equals(that.cacheValue.value) : that.cacheValue.value != null) return false;
+      if (cacheValue.value != null ? !cacheValue.value.equals(that.cacheValue.value) : that.cacheValue.value != null)
+         return false;
       if (cacheValue.lastUsed != that.cacheValue.lastUsed) return false;
       if (cacheValue.maxIdle != that.cacheValue.maxIdle) return false;
 
@@ -105,4 +106,12 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
       result = 31 * result + (int) (cacheValue.maxIdle ^ (cacheValue.maxIdle >>> 32));
       return result;
    }
+
+   @Override
+   public TransientCacheEntry clone() {
+      TransientCacheEntry clone = (TransientCacheEntry) super.clone();
+      clone.cacheValue = cacheValue.clone();
+      return clone;
+   }
+
 }
