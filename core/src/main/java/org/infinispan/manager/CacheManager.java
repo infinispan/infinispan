@@ -41,7 +41,7 @@ import java.util.List;
  * When the system shuts down, it should call {@link #stop()} on the <tt>CacheManager</tt>.  This will ensure all caches
  * within its scope are properly stopped as well.
  * <p/>
- * Sample usage: <code> CacheManager manager = CacheManager.getInstance("my-config-file.xml"); Cache entityCache =
+ * Sample usage: <code> CacheManager manager = new DefaultCacheManager("my-config-file.xml"); Cache entityCache =
  * manager.getCache("myEntityCache"); entityCache.put("aPerson", new Person());
  * <p/>
  * Configuration myNewConfiguration = new Configuration(); myNewConfiguration.setCacheMode(Configuration.CacheMode.LOCAL);
