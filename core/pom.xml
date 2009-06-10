@@ -17,7 +17,7 @@
    <description>Infinispan core module</description>
 
    <properties>
-      <version.jboss.marshalling>1.2.0.CR1</version.jboss.marshalling>
+      <version.jboss.marshalling>1.2.0.CR2</version.jboss.marshalling>
    </properties>
 
    <dependencies>
