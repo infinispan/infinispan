@@ -122,7 +122,7 @@ public class GlobalConfigurationParserTest {
       Element e = XmlConfigHelper.stringToElement(xml);
 
       GlobalConfiguration gc = new GlobalConfiguration();
-      parser.configureAsyncSerializationExecutor(e, gc);
+      parser.configureAsyncTransportExecutor(e, gc);
 
       assert gc.getAsyncTransportExecutorFactoryClass().equals("com.mycompany.Factory");
       assert gc.getAsyncTransportExecutorProperties().size() == 1;
@@ -173,11 +173,11 @@ public class GlobalConfigurationParserTest {
 
    public void testAsyncSerializationExecutorDefaults() throws Exception {
       XmlConfigurationParserImpl parser = new XmlConfigurationParserImpl();
-      String xml = "<asyncSerializationExecutor />";
+      String xml = "<asyncTransportExecutor />";
       Element e = XmlConfigHelper.stringToElement(xml);
 
       GlobalConfiguration gc = new GlobalConfiguration();
-      parser.configureAsyncSerializationExecutor(e, gc);
+      parser.configureAsyncTransportExecutor(e, gc);
 
       assert gc.getAsyncTransportExecutorFactoryClass().equals(DefaultExecutorFactory.class.getName());
       assert gc.getAsyncTransportExecutorProperties().size() == 0;
