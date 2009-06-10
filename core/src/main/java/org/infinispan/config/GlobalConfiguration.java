@@ -34,8 +34,8 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
 
    private String asyncListenerExecutorFactoryClass = DefaultExecutorFactory.class.getName();
    private TypedProperties asyncListenerExecutorProperties = EMPTY_PROPERTIES;
-   private String asyncSerializationExecutorFactoryClass = DefaultExecutorFactory.class.getName();
-   private TypedProperties asyncSerializationExecutorProperties = EMPTY_PROPERTIES;
+   private String asyncTransportExecutorFactoryClass = DefaultExecutorFactory.class.getName();
+   private TypedProperties asyncTransportExecutorProperties = EMPTY_PROPERTIES;
    private String evictionScheduledExecutorFactoryClass = DefaultScheduledExecutorFactory.class.getName();
    private TypedProperties evictionScheduledExecutorProperties = EMPTY_PROPERTIES;
    private String replicationQueueScheduledExecutorFactoryClass = DefaultScheduledExecutorFactory.class.getName();
@@ -135,13 +135,13 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       this.asyncListenerExecutorFactoryClass = asyncListenerExecutorFactoryClass;
    }
 
-   public String getAsyncSerializationExecutorFactoryClass() {
-      return asyncSerializationExecutorFactoryClass;
+   public String getAsyncTransportExecutorFactoryClass() {
+      return asyncTransportExecutorFactoryClass;
    }
 
-   public void setAsyncSerializationExecutorFactoryClass(String asyncSerializationExecutorFactoryClass) {
-      testImmutability("asyncSerializationExecutorFactoryClass");
-      this.asyncSerializationExecutorFactoryClass = asyncSerializationExecutorFactoryClass;
+   public void setAsyncTransportExecutorFactoryClass(String asyncTransportExecutorFactoryClass) {
+      testImmutability("asyncTransportExecutorFactoryClass");
+      this.asyncTransportExecutorFactoryClass = asyncTransportExecutorFactoryClass;
    }
 
    public String getEvictionScheduledExecutorFactoryClass() {
@@ -246,18 +246,18 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       this.asyncListenerExecutorProperties = toTypedProperties(asyncListenerExecutorPropertiesString);
    }
 
-   public Properties getAsyncSerializationExecutorProperties() {
-      return asyncSerializationExecutorProperties;
+   public Properties getAsyncTransportExecutorProperties() {
+      return asyncTransportExecutorProperties;
    }
 
-   public void setAsyncSerializationExecutorProperties(Properties asyncSerializationExecutorProperties) {
-      testImmutability("asyncSerializationExecutorProperties");
-      this.asyncSerializationExecutorProperties = toTypedProperties(asyncSerializationExecutorProperties);
+   public void setAsyncTransportExecutorProperties(Properties asyncTransportExecutorProperties) {
+      testImmutability("asyncTransportExecutorProperties");
+      this.asyncTransportExecutorProperties = toTypedProperties(asyncTransportExecutorProperties);
    }
 
-   public void setAsyncSerializationExecutorProperties(String asyncSerializationExecutorPropertiesString) {
-      testImmutability("asyncSerializationExecutorProperties");
-      this.asyncSerializationExecutorProperties = toTypedProperties(asyncSerializationExecutorPropertiesString);
+   public void setAsyncTransportExecutorProperties(String asyncSerializationExecutorPropertiesString) {
+      testImmutability("asyncTransportExecutorProperties");
+      this.asyncTransportExecutorProperties = toTypedProperties(asyncSerializationExecutorPropertiesString);
    }
 
    public Properties getEvictionScheduledExecutorProperties() {
@@ -327,9 +327,9 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
          return false;
       if (asyncListenerExecutorProperties != null ? !asyncListenerExecutorProperties.equals(that.asyncListenerExecutorProperties) : that.asyncListenerExecutorProperties != null)
          return false;
-      if (asyncSerializationExecutorFactoryClass != null ? !asyncSerializationExecutorFactoryClass.equals(that.asyncSerializationExecutorFactoryClass) : that.asyncSerializationExecutorFactoryClass != null)
+      if (asyncTransportExecutorFactoryClass != null ? !asyncTransportExecutorFactoryClass.equals(that.asyncTransportExecutorFactoryClass) : that.asyncTransportExecutorFactoryClass != null)
          return false;
-      if (asyncSerializationExecutorProperties != null ? !asyncSerializationExecutorProperties.equals(that.asyncSerializationExecutorProperties) : that.asyncSerializationExecutorProperties != null)
+      if (asyncTransportExecutorProperties != null ? !asyncTransportExecutorProperties.equals(that.asyncTransportExecutorProperties) : that.asyncTransportExecutorProperties != null)
          return false;
       if (clusterName != null ? !clusterName.equals(that.clusterName) : that.clusterName != null) return false;
       if (defaultConfiguration != null ? !defaultConfiguration.equals(that.defaultConfiguration) : that.defaultConfiguration != null)
@@ -358,8 +358,8 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    public int hashCode() {
       int result = asyncListenerExecutorFactoryClass != null ? asyncListenerExecutorFactoryClass.hashCode() : 0;
       result = 31 * result + (asyncListenerExecutorProperties != null ? asyncListenerExecutorProperties.hashCode() : 0);
-      result = 31 * result + (asyncSerializationExecutorFactoryClass != null ? asyncSerializationExecutorFactoryClass.hashCode() : 0);
-      result = 31 * result + (asyncSerializationExecutorProperties != null ? asyncSerializationExecutorProperties.hashCode() : 0);
+      result = 31 * result + (asyncTransportExecutorFactoryClass != null ? asyncTransportExecutorFactoryClass.hashCode() : 0);
+      result = 31 * result + (asyncTransportExecutorProperties != null ? asyncTransportExecutorProperties.hashCode() : 0);
       result = 31 * result + (evictionScheduledExecutorFactoryClass != null ? evictionScheduledExecutorFactoryClass.hashCode() : 0);
       result = 31 * result + (evictionScheduledExecutorProperties != null ? evictionScheduledExecutorProperties.hashCode() : 0);
       result = 31 * result + (replicationQueueScheduledExecutorFactoryClass != null ? replicationQueueScheduledExecutorFactoryClass.hashCode() : 0);
@@ -395,6 +395,9 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       GlobalConfiguration gc = new GlobalConfiguration();
       gc.setTransportClass(JGroupsTransport.class.getName());
       gc.setTransportProperties((Properties) null);
+      Properties p = new Properties();
+      p.setProperty("threadNamePrefix", "asyncTransportThread");
+      gc.setAsyncTransportExecutorProperties(p);
       return gc;
    }
 

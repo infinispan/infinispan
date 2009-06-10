@@ -124,9 +124,9 @@ public class GlobalConfigurationParserTest {
       GlobalConfiguration gc = new GlobalConfiguration();
       parser.configureAsyncSerializationExecutor(e, gc);
 
-      assert gc.getAsyncSerializationExecutorFactoryClass().equals("com.mycompany.Factory");
-      assert gc.getAsyncSerializationExecutorProperties().size() == 1;
-      assert gc.getAsyncSerializationExecutorProperties().get("maxThreads").equals("5");
+      assert gc.getAsyncTransportExecutorFactoryClass().equals("com.mycompany.Factory");
+      assert gc.getAsyncTransportExecutorProperties().size() == 1;
+      assert gc.getAsyncTransportExecutorProperties().get("maxThreads").equals("5");
    }
 
    public void testEvictionScheduledExecutor() throws Exception {
@@ -179,8 +179,8 @@ public class GlobalConfigurationParserTest {
       GlobalConfiguration gc = new GlobalConfiguration();
       parser.configureAsyncSerializationExecutor(e, gc);
 
-      assert gc.getAsyncSerializationExecutorFactoryClass().equals(DefaultExecutorFactory.class.getName());
-      assert gc.getAsyncSerializationExecutorProperties().size() == 0;
+      assert gc.getAsyncTransportExecutorFactoryClass().equals(DefaultExecutorFactory.class.getName());
+      assert gc.getAsyncTransportExecutorProperties().size() == 0;
    }
 
    public void testEvictionScheduledExecutorDefaults() throws Exception {

@@ -23,9 +23,9 @@ public class XmlFileParsingTest {
       assert gc.getAsyncListenerExecutorProperties().getProperty("maxThreads").equals("5");
       assert gc.getAsyncListenerExecutorProperties().getProperty("threadNamePrefix").equals("AsyncListenerThread");
 
-      assert gc.getAsyncSerializationExecutorFactoryClass().equals("org.infinispan.executors.DefaultExecutorFactory");
-      assert gc.getAsyncSerializationExecutorProperties().getProperty("maxThreads").equals("25");
-      assert gc.getAsyncSerializationExecutorProperties().getProperty("threadNamePrefix").equals("AsyncSerializationThread");
+      assert gc.getAsyncTransportExecutorFactoryClass().equals("org.infinispan.executors.DefaultExecutorFactory");
+      assert gc.getAsyncTransportExecutorProperties().getProperty("maxThreads").equals("25");
+      assert gc.getAsyncTransportExecutorProperties().getProperty("threadNamePrefix").equals("AsyncSerializationThread");
 
       assert gc.getEvictionScheduledExecutorFactoryClass().equals("org.infinispan.executors.DefaultScheduledExecutorFactory");
       assert gc.getEvictionScheduledExecutorProperties().getProperty("threadNamePrefix").equals("EvictionThread");

@@ -135,7 +135,7 @@ public class XmlConfigurationParserImpl extends XmlParserBase implements XmlConf
          if (globalElement != null) {
             globalElement.normalize();
             configureAsyncListenerExecutor(getSingleElementInCoreNS("asyncListenerExecutor", globalElement), gc);
-            configureAsyncSerializationExecutor(getSingleElementInCoreNS("asyncTransportExecutor", globalElement), gc);
+            configureAsyncTransportExecutor(getSingleElementInCoreNS("asyncTransportExecutor", globalElement), gc);
             configureEvictionScheduledExecutor(getSingleElementInCoreNS("evictionScheduledExecutor", globalElement), gc);
             configureReplicationQueueScheduledExecutor(getSingleElementInCoreNS("replicationQueueScheduledExecutor", globalElement), gc);
             configureTransport(getSingleElementInCoreNS("transport", globalElement), gc);
@@ -416,12 +416,12 @@ public class XmlConfigurationParserImpl extends XmlParserBase implements XmlConf
       }
    }
 
-   void configureAsyncSerializationExecutor(Element e, GlobalConfiguration gc) {
+   void configureAsyncTransportExecutor(Element e, GlobalConfiguration gc) {
       if (e != null) {
          String tmp = getAttributeValue(e, "factory");
-         if (existsAttribute(tmp)) gc.setAsyncSerializationExecutorFactoryClass(tmp);
+         if (existsAttribute(tmp)) gc.setAsyncTransportExecutorFactoryClass(tmp);
          Properties p = XmlConfigHelper.extractProperties(e);
-         if (p != null) gc.setAsyncSerializationExecutorProperties(p);
+         if (p != null) gc.setAsyncTransportExecutorProperties(p);
       }
    }
 
