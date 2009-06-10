@@ -36,7 +36,7 @@ def main():
 
 	  Usage:
 
-	    $ bin/fixlogs.py
+	    $ bin/cleanlogs.py
 
 	  TODO: be able to specify which view to select as the correct one, and to specify input and output files.
 
