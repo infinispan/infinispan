@@ -23,7 +23,6 @@ package org.infinispan.interceptors;
 
 import org.infinispan.commands.LockControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -120,16 +119,6 @@ public class LockingInterceptor extends CommandInterceptor {
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       try {
          entryFactory.wrapEntryForReading(ctx, command.getKey());
-         return invokeNextInterceptor(ctx, command);
-      } finally {
-         doAfterCall(ctx);
-      }
-   }
-
-   @Override
-   public Object visitSizeCommand(InvocationContext ctx, SizeCommand command) throws Throwable {
-      try {
-         if (log.isDebugEnabled()) log.debug("No locking performed for SizeCommands");
          return invokeNextInterceptor(ctx, command);
       } finally {
          doAfterCall(ctx);

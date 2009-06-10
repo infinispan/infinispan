@@ -3,7 +3,6 @@ package org.infinispan.interceptors;
 import org.infinispan.commands.LockControlCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -151,11 +150,6 @@ public class TxInterceptor extends CommandInterceptor {
    @Override
    public Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand invalidateCommand) throws Throwable {
       return enlistWriteAndInvokeNext(ctx, invalidateCommand);
-   }
-
-   @Override
-   public Object visitSizeCommand(InvocationContext ctx, SizeCommand command) throws Throwable {
-      return enlistReadAndInvokeNext(ctx, command);
    }
 
    @Override
