@@ -1,34 +1,34 @@
 package org.infinispan.container.entries;
 
 /**
- * A cache entry that is transient, i.e., it can be considered expired afer a period of not being used
+ * A cache entry that is transient, i.e., it can be considered expired afer a period of not being used.
  *
  * @author Manik Surtani
  * @since 4.0
  */
 public class TransientCacheEntry extends AbstractInternalCacheEntry {
 
-   long maxIdle = -1;
-   long lastUsed;
-
-   TransientCacheEntry() {
-      touch();
-   }
+   private TransientCacheValue cacheValue; 
 
    TransientCacheEntry(Object key, Object value, long maxIdle) {
-      super(key, value);
-      this.maxIdle = maxIdle;
-      touch();
+      this(key, value, maxIdle, System.currentTimeMillis());
    }
 
    TransientCacheEntry(Object key, Object value, long maxIdle, long lastUsed) {
-      super(key, value);
-      this.maxIdle = maxIdle;
-      this.lastUsed = lastUsed;
+      super(key);
+      cacheValue = new TransientCacheValue(value, maxIdle, lastUsed);
+   }
+
+   public Object getValue() {
+      return cacheValue.value;
+   }
+
+   public Object setValue(Object value) {
+      return cacheValue.setValue(value);
    }
 
    public final void touch() {
-      lastUsed = System.currentTimeMillis();
+      cacheValue.lastUsed = System.currentTimeMillis();
    }
 
    public final boolean canExpire() {
@@ -36,21 +36,21 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
    }
 
    public boolean isExpired() {
-      return ExpiryHelper.isExpiredTransient(maxIdle, lastUsed);
+      return cacheValue.isExpired();
    }
 
    public InternalCacheEntry setMaxIdle(long maxIdle) {
       if (maxIdle < 0) {
-         return new ImmortalCacheEntry(key, value);
+         return new ImmortalCacheEntry(key, cacheValue.value);
       } else {
-         this.maxIdle = maxIdle;
+         cacheValue.maxIdle = maxIdle;
          return this;
       }
    }
 
    public InternalCacheEntry setLifespan(long lifespan) {
       if (lifespan > -1) {
-         TransientMortalCacheEntry tmce = new TransientMortalCacheEntry(key, value);
+         TransientMortalCacheEntry tmce = new TransientMortalCacheEntry(key, cacheValue.value);
          tmce.setLifespan(lifespan);
          return tmce;
       } else {
@@ -63,7 +63,7 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
    }
 
    public final long getLastUsed() {
-      return lastUsed;
+      return cacheValue.lastUsed;
    }
 
    public long getLifespan() {
@@ -75,11 +75,11 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
    }
 
    public final long getMaxIdle() {
-      return maxIdle;
+      return cacheValue.maxIdle;
    }
 
    public InternalCacheValue toInternalCacheValue() {
-      return new TransientCacheValue(value, maxIdle, lastUsed);
+      return cacheValue;
    }
 
    @Override
@@ -90,9 +90,9 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
       TransientCacheEntry that = (TransientCacheEntry) o;
 
       if (key != null ? !key.equals(that.key) : that.key != null) return false;
-      if (value != null ? !value.equals(that.value) : that.value != null) return false;
-      if (lastUsed != that.lastUsed) return false;
-      if (maxIdle != that.maxIdle) return false;
+      if (cacheValue.value != null ? !cacheValue.value.equals(that.cacheValue.value) : that.cacheValue.value != null) return false;
+      if (cacheValue.lastUsed != that.cacheValue.lastUsed) return false;
+      if (cacheValue.maxIdle != that.cacheValue.maxIdle) return false;
 
       return true;
    }
@@ -100,9 +100,9 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
    @Override
    public int hashCode() {
       int result = key != null ? key.hashCode() : 0;
-      result = 31 * result + (value != null ? value.hashCode() : 0);
-      result = 31 * result + (int) (lastUsed ^ (lastUsed >>> 32));
-      result = 31 * result + (int) (maxIdle ^ (maxIdle >>> 32));
+      result = 31 * result + (cacheValue.value != null ? cacheValue.value.hashCode() : 0);
+      result = 31 * result + (int) (cacheValue.lastUsed ^ (cacheValue.lastUsed >>> 32));
+      result = 31 * result + (int) (cacheValue.maxIdle ^ (cacheValue.maxIdle >>> 32));
       return result;
    }
 }

@@ -6,97 +6,98 @@ package org.infinispan.container.entries;
  * @author Manik Surtani
  * @since 4.0
  */
-public class TransientMortalCacheEntry extends TransientCacheEntry {
-   private long created;
-   private long lifespan = -1;
+public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
 
-   TransientMortalCacheEntry() {
-      super();
-      created = System.currentTimeMillis();
-   }
+   private TransientMortalCacheValue cacheValue;
 
    TransientMortalCacheEntry(Object key, Object value, long maxIdle, long lifespan) {
-      super(key, value, maxIdle);
-      created = System.currentTimeMillis();
-      this.lifespan = lifespan;
+      super(key);
+      cacheValue = new TransientMortalCacheValue(value, System.currentTimeMillis(), lifespan, maxIdle);
+      touch();
    }
 
    TransientMortalCacheEntry(Object key, Object value) {
-      super(key, value, -1);
-      created = System.currentTimeMillis();
+      super(key);
+      cacheValue = new TransientMortalCacheValue(value, System.currentTimeMillis());
+      touch();
    }
 
    public TransientMortalCacheEntry(Object key, Object value, long maxIdle, long lifespan, long lastUsed, long created) {
-      super(key, value, maxIdle, lastUsed);
-      this.created = created;
-      this.lifespan = lifespan;
+      super(key);
+      this.cacheValue = new TransientMortalCacheValue(value, created, lifespan, maxIdle, lastUsed);
    }
 
-   @Override
    public InternalCacheEntry setLifespan(long lifespan) {
       if (lifespan < 0) {
-         TransientCacheEntry tce = new TransientCacheEntry();
-         tce.key = key;
-         tce.value = value;
-         tce.lastUsed = lastUsed;
-         tce.maxIdle = maxIdle;
-         return tce;
+         return new TransientCacheEntry(key, cacheValue.value, cacheValue.lastUsed, cacheValue.maxIdle);
       } else {
-         this.lifespan = lifespan;
+         this.cacheValue.lifespan = lifespan;
          return this;
       }
    }
 
-   @Override
    public InternalCacheEntry setMaxIdle(long maxIdle) {
       if (maxIdle < 0) {
-         MortalCacheEntry mce = new MortalCacheEntry();
-         mce.key = key;
-         mce.value = value;
-         mce.created = created;
-         mce.lifespan = lifespan;
-         return mce;
+         return new MortalCacheEntry(key, cacheValue.value, cacheValue.lifespan, cacheValue.created);
       } else {
-         this.maxIdle = maxIdle;
+         this.cacheValue.maxIdle = maxIdle;
          return this;
       }
    }
 
-   @Override
+   public Object getValue() {
+      return cacheValue.value;
+   }
+
    public long getLifespan() {
-      return lifespan;
+      return cacheValue.lifespan;
    }
 
-   @Override
+   public final boolean canExpire() {
+      return true;
+   }
+
    public long getCreated() {
-      return created;
+      return cacheValue.created;
    }
 
-   @Override
    public boolean isExpired() {
-      return ExpiryHelper.isExpiredTransientMortal(maxIdle, lastUsed, lifespan, created);
+      return cacheValue.isExpired();
    }
 
-   @Override
    public final long getExpiryTime() {
-      return lifespan > -1 ? created + lifespan : -1;
+      return cacheValue.lifespan > -1 ? cacheValue.created + cacheValue.lifespan : -1;
    }
 
-   @Override
    public InternalCacheValue toInternalCacheValue() {
-      return new TransientMortalCacheValue(value, created, lifespan, maxIdle, lastUsed);
+      return cacheValue;
+   }
+
+   public long getLastUsed() {
+      return cacheValue.lastUsed;
+   }
+
+   public final void touch() {
+      cacheValue.lastUsed = System.currentTimeMillis();
+   }
+
+   public long getMaxIdle() {
+      return cacheValue.maxIdle;
+   }
+
+   public Object setValue(Object value) {
+      return cacheValue.maxIdle;
    }
 
    @Override
    public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
-      if (!super.equals(o)) return false;
 
       TransientMortalCacheEntry that = (TransientMortalCacheEntry) o;
 
-      if (created != that.created) return false;
-      if (lifespan != that.lifespan) return false;
+      if (cacheValue.created != that.cacheValue.created) return false;
+      if (cacheValue.lifespan != that.cacheValue.lifespan) return false;
 
       return true;
    }
@@ -104,8 +105,8 @@ public class TransientMortalCacheEntry extends TransientCacheEntry {
    @Override
    public int hashCode() {
       int result = super.hashCode();
-      result = 31 * result + (int) (created ^ (created >>> 32));
-      result = 31 * result + (int) (lifespan ^ (lifespan >>> 32));
+      result = 31 * result + (int) (cacheValue.created ^ (cacheValue.created >>> 32));
+      result = 31 * result + (int) (cacheValue.lifespan ^ (cacheValue.lifespan >>> 32));
       return result;
    }
 }

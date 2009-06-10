@@ -11,20 +11,12 @@ import org.infinispan.container.DataContainer;
 public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
 
    Object key;
-   Object value;
 
    AbstractInternalCacheEntry() {
    }
 
-   AbstractInternalCacheEntry(Object key, Object value) {
+   AbstractInternalCacheEntry(Object key) {
       this.key = key;
-      this.value = value;
-   }
-
-   public final Object setValue(Object value) {
-      Object old = this.value;
-      this.value = value;
-      return old;
    }
 
    public final void commit(DataContainer container) {
@@ -69,10 +61,6 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
 
    public final Object getKey() {
       return key;
-   }
-
-   public final Object getValue() {
-      return value;
    }
 
    @Override

@@ -35,7 +35,7 @@ public class TransientCacheValue extends ImmortalCacheValue {
    }
 
    @Override
-   public boolean isExpired() {
+   public final boolean isExpired() {
       return ExpiryHelper.isExpiredTransient(maxIdle, lastUsed);
    }
 
@@ -47,5 +47,35 @@ public class TransientCacheValue extends ImmortalCacheValue {
    @Override
    public InternalCacheEntry toInternalCacheEntry(Object key) {
       return new TransientCacheEntry(key, value, maxIdle, lastUsed);
+   }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof TransientCacheValue)) return false;
+      if (!super.equals(o)) return false;
+
+      TransientCacheValue that = (TransientCacheValue) o;
+
+      if (lastUsed != that.lastUsed) return false;
+      if (maxIdle != that.maxIdle) return false;
+
+      return true;
+   }
+
+   @Override
+   public int hashCode() {
+      int result = super.hashCode();
+      result = 31 * result + (int) (maxIdle ^ (maxIdle >>> 32));
+      result = 31 * result + (int) (lastUsed ^ (lastUsed >>> 32));
+      return result;
+   }
+
+   @Override
+   public String toString() {
+      return "TransientCacheValue{" +
+            "maxIdle=" + maxIdle +
+            ", lastUsed=" + lastUsed +
+            "} " + super.toString();
    }
 }

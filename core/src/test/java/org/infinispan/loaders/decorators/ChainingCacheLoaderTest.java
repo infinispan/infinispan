@@ -17,6 +17,7 @@ import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
+import static org.testng.Assert.assertEquals;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -127,12 +128,17 @@ public class ChainingCacheLoaderTest extends BaseCacheStoreTest {
 
       // k1 is on store1
       store1.store(InternalEntryFactory.create("k1", "v1"));
+
+      assertEquals(cs.loadAll().size(), 1);
       // k2 is on store2
       store2.store(InternalEntryFactory.create("k2", "v2"));
+      assertEquals(cs.loadAll().size(), 2);
 
       // k3 is on both
       store1.store(InternalEntryFactory.create("k3", "v3"));
+      assertEquals(cs.loadAll().size(), 3);
       store2.store(InternalEntryFactory.create("k3", "v3"));
+      assertEquals(cs.loadAll().size(), 3);
 
       // k4 is on neither
 
@@ -143,7 +149,7 @@ public class ChainingCacheLoaderTest extends BaseCacheStoreTest {
 
       Set<InternalCacheEntry> all = cs.loadAll();
 
-      assert all.size() == 3;
+      assertEquals(all.size(),3);
       Set<Object> expectedKeys = new HashSet<Object>();
       expectedKeys.add("k1");
       expectedKeys.add("k2");

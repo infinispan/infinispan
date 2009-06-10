@@ -9,6 +9,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+import static org.testng.Assert.assertEquals;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -187,7 +188,7 @@ public class ExpiryTest {
       cache.put("k", "v-old");
       assert cache.get("k").equals("v-old");
       assert cache.replace("k", "v", -1, MILLISECONDS, idleTime, MILLISECONDS) != null;
-      assert cache.get("k").equals("v");
+      assertEquals(cache.get("k"), "v");
 
       Thread.sleep(idleTime + 100);
       assert cache.get("k") == null;

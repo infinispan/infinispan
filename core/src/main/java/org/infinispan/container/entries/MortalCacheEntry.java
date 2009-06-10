@@ -7,27 +7,28 @@ package org.infinispan.container.entries;
  * @since 4.0
  */
 public class MortalCacheEntry extends AbstractInternalCacheEntry {
-   long created;
-   long lifespan = -1;
 
-   MortalCacheEntry() {
-      created = System.currentTimeMillis();
+   private MortalCacheValue cacheValue;
+
+   public Object getValue() {
+      return cacheValue.value;
+   }
+
+   public Object setValue(Object value) {
+      return cacheValue.setValue(value);
    }
 
    MortalCacheEntry(Object key, Object value, long lifespan) {
-      super(key, value);
-      created = System.currentTimeMillis();
-      this.lifespan = lifespan;
+      this(key, value, lifespan, System.currentTimeMillis());
    }
 
    MortalCacheEntry(Object key, Object value, long lifespan, long created) {
-      super(key, value);
-      this.created = created;
-      this.lifespan = lifespan;
+      super(key);
+      cacheValue = new MortalCacheValue(value, created, lifespan);
    }
 
    public final boolean isExpired() {
-      return ExpiryHelper.isExpiredMortal(lifespan, created);
+      return ExpiryHelper.isExpiredMortal(cacheValue.lifespan, cacheValue.created);
    }
 
    public final boolean canExpire() {
@@ -36,7 +37,7 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
 
    public InternalCacheEntry setMaxIdle(long maxIdle) {
       if (maxIdle > -1) {
-         TransientMortalCacheEntry tmce = new TransientMortalCacheEntry(key, value);
+         TransientMortalCacheEntry tmce = new TransientMortalCacheEntry(key, cacheValue.value );
          tmce.setMaxIdle(maxIdle);
          return tmce;
       } else {
@@ -46,15 +47,15 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
 
    public InternalCacheEntry setLifespan(long lifespan) {
       if (lifespan < 0) {
-         return new ImmortalCacheEntry(key, value);
+         return new ImmortalCacheEntry(key, cacheValue.value);
       } else {
-         this.lifespan = lifespan;
+         cacheValue.lifespan = lifespan;
          return this;
       }
    }
 
    public final long getCreated() {
-      return created;
+      return cacheValue.created;
    }
 
    public final long getLastUsed() {
@@ -62,7 +63,7 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
    }
 
    public final long getLifespan() {
-      return lifespan;
+      return cacheValue.lifespan;
    }
 
    public final long getMaxIdle() {
@@ -70,7 +71,7 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
    }
 
    public final long getExpiryTime() {
-      return lifespan > -1 ? created + lifespan : -1;
+      return cacheValue.lifespan > -1 ? cacheValue.created + cacheValue.lifespan : -1;
    }
 
    public final void touch() {
@@ -78,7 +79,7 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
    }
 
    public InternalCacheValue toInternalCacheValue() {
-      return new MortalCacheValue(value, created, lifespan);
+      return cacheValue;
    }
 
    @Override
@@ -89,19 +90,17 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
       MortalCacheEntry that = (MortalCacheEntry) o;
 
       if (key != null ? !key.equals(that.key) : that.key != null) return false;
-      if (value != null ? !value.equals(that.value) : that.value != null) return false;
-      if (created != that.created) return false;
-      if (lifespan != that.lifespan) return false;
-
-      return true;
+      if (cacheValue.value != null ? !cacheValue.value.equals(that.cacheValue.value) : that.cacheValue.value != null) return false;
+      if (cacheValue.created != that.cacheValue.created) return false;
+      return cacheValue.lifespan == that.cacheValue.lifespan;
    }
 
    @Override
    public int hashCode() {
       int result = key != null ? key.hashCode() : 0;
-      result = 31 * result + (value != null ? value.hashCode() : 0);
-      result = 31 * result + (int) (created ^ (created >>> 32));
-      result = 31 * result + (int) (lifespan ^ (lifespan >>> 32));
+      result = 31 * result + (cacheValue.value != null ? cacheValue.value.hashCode() : 0);
+      result = 31 * result + (int) (cacheValue.created ^ (cacheValue.created >>> 32));
+      result = 31 * result + (int) (cacheValue.lifespan ^ (cacheValue.lifespan >>> 32));
       return result;
    }
 }

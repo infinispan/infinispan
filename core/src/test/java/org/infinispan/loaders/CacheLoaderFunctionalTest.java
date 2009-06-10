@@ -178,6 +178,7 @@ public class CacheLoaderFunctionalTest {
       cache.replace("k1", "v1-REPLACED");
       assertNoLocks(cache);
       cache.replace("k2", "v2-REPLACED", lifespan, MILLISECONDS);
+      assertInCacheAndStore("k2", "v2-REPLACED", lifespan);
       assertNoLocks(cache);
       cache.replace("k3", "v3", "v3-REPLACED");
       assertNoLocks(cache);
