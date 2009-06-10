@@ -5,6 +5,7 @@ from __future__ import with_statement
 import re
 import subprocess
 import os
+import sys
 
 VIEW_TO_USE = '3'
 INPUT_FILE = "infinispan.log"
@@ -19,8 +20,9 @@ def find(expr):
         break
 
 def handle(l, expr):
- # print l
   m = expr.match(l)
+  print "Using JGROUPS VIEW line:"
+  print "   %s" % l 
   members = m.group(1).strip()
   i = 1
   for m in members.split(','):
@@ -28,19 +30,35 @@ def handle(l, expr):
     new_addresses["CACHE%s" % i] = m.strip()
     i += 1
 
+def help():
+  print '''
+    INFINISPAN log file fixer.  Makes log files more readable by replacing JGroups addresses with friendly names.
+  '''
+
+def usage():
+  print '''
+    Usage: 
+    $ bin/cleanlogs.py <N> <input_file> <output_file>
+
+    N: (number) the JGroups VIEW ID to use as the definite list of caches.  Choose a view which has the most complete cache list.
+    input_file: path to log file to transform
+    output_file: path to result file
+
+    ** All arguments are mandatory!
+  '''
+
 def main():
+  help()
 
-  print """
+  ### Get args
+  if len(sys.argv) != 4:
+    usage()
+    sys.exit(1)
 
-	  INFINISPAN Log file fixer.  Makes log files more readable by replacing ugly JGroups addresses to more friendly CACHE1, CACHE2, etc addresses.
+  VIEW_TO_USE = int(sys.argv[1])
+  INPUT_FILE = sys.argv[2]
+  OUTPUT_FILE = sys.argv[3]
 
-	  Usage:
-
-	    $ bin/cleanlogs.py
-
-	  TODO: be able to specify which view to select as the correct one, and to specify input and output files.
-
-  """ 
   expr = re.compile('.*Received new cluster view.*\|%s. \[(.*)\].*' % VIEW_TO_USE)
   find(expr)
 
