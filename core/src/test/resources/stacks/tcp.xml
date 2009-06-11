@@ -30,14 +30,14 @@
          oob_thread_pool.queue_max_size="100"
          oob_thread_pool.rejection_policy="run"/>
          
-    <!--<TCPPING timeout="3000"-->
-             <!--initial_hosts="localhost[7800],localhost[7801]}"-->
-             <!--port_range="1"-->
-             <!--num_initial_members="3"/>-->
+    <TCPPING timeout="3000"
+             initial_hosts="localhost[7800],localhost[7801]}"
+             port_range="1"
+             num_initial_members="3"/>
 
-   <MPING bind_addr="127.0.0.1" break_on_coord_rsp="true"
-          mcast_addr="230.8.8.8" mcast_port="17890" ip_ttl="2"
-          num_initial_members="3"/>
+   <!--<MPING bind_addr="127.0.0.1" break_on_coord_rsp="true"-->
+          <!--mcast_addr="230.8.8.8" mcast_port="17890" ip_ttl="2"-->
+          <!--num_initial_members="3"/>-->
    
     <MERGE2 max_interval="30000"
               min_interval="10000"/>
