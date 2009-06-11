@@ -28,6 +28,7 @@ import java.util.List;
  * @author Manik Surtani
  * @since 4.0
  */
+@SuppressWarnings("restriction")
 public class JmxDoclet {
    static String outputDirectory = ".";
    static String header, footer, encoding, title, bottom;
