@@ -83,6 +83,15 @@ public class JGroupsConfigBuilder {
 
    public static String getTcpConfig() {
       loadTcp();
+
+      if (tcpConfig.contains("TCPPING")) {
+         return getTcpConfigWithTCPPINGDiscoevry();
+      } else {
+         return replaceMCastAddressAndPort(tcpConfig);
+      }
+   }
+
+   private static String getTcpConfigWithTCPPINGDiscoevry() {
       // replace mcast_addr
       Matcher m = TCP_START_PORT.matcher(tcpConfig);
       String result;
@@ -109,7 +118,12 @@ public class JGroupsConfigBuilder {
    public static String getUdpConfig() {
       loadUdp();
       // replace mcast_addr
-      Matcher m = UDP_MCAST_ADDRESS.matcher(udpConfig);
+      String config = udpConfig;
+      return replaceMCastAddressAndPort(config);
+   }
+
+   private static String replaceMCastAddressAndPort(String config) {
+      Matcher m = UDP_MCAST_ADDRESS.matcher(config);
       String result;
       if (m.find()) {
          String newAddr = threadMcastIP.get();
