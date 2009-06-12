@@ -181,6 +181,18 @@ public interface RpcManager {
    void invokeRemotelyInFuture(List<Address> recipients, ReplicableCommand rpc, boolean usePriorityQueue, NotifyingNotifiableFuture<Object> future);
 
    /**
+    * The same as {@link #invokeRemotelyInFuture(java.util.List, org.infinispan.commands.ReplicableCommand, boolean,
+    * org.infinispan.util.concurrent.NotifyingNotifiableFuture)} except that you can specify a timeout.
+    *
+    * @param recipients       recipients to invoke remote call on
+    * @param rpc              command to execute remotely
+    * @param usePriorityQueue if true, a priority queue is used
+    * @param future           the future which will be passed back to the user
+    * @param timeout          after which to give up (in millis)
+    */
+   void invokeRemotelyInFuture(final List<Address> recipients, final ReplicableCommand rpc, final boolean usePriorityQueue, final NotifyingNotifiableFuture<Object> future, final long timeout);
+
+   /**
     * @return a reference to the underlying transport.
     */
    Transport getTransport();

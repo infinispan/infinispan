@@ -193,9 +193,11 @@ public class RpcManagerImpl implements RpcManager {
    }
 
    public final void invokeRemotely(List<Address> recipients, ReplicableCommand rpc, boolean sync, boolean usePriorityQueue) throws ReplicationException {
-      if (trace) {
-         log.trace("Broadcasting call " + rpc + " to recipient list " + recipients);
-      }
+      invokeRemotely(recipients, rpc, sync, usePriorityQueue, configuration.getSyncReplTimeout());
+   }
+
+   public final void invokeRemotely(List<Address> recipients, ReplicableCommand rpc, boolean sync, boolean usePriorityQueue, long timeout) throws ReplicationException {
+      if (trace) log.trace("{0} broadcasting call {1} to recipient list {2}", t.getAddress(), rpc, recipients);
 
       if (useReplicationQueue(sync)) {
          replicationQueue.add(rpc);
@@ -205,8 +207,7 @@ public class RpcManagerImpl implements RpcManager {
          }
          List rsps;
          try {
-            rsps = invokeRemotely(recipients, rpc, getResponseMode(sync),
-                                  configuration.getSyncReplTimeout(), usePriorityQueue);
+            rsps = invokeRemotely(recipients, rpc, getResponseMode(sync), timeout, usePriorityQueue);
             if (trace) log.trace("responses=" + rsps);
             if (sync) checkResponses(rsps);
          } catch (CacheException e) {
@@ -224,9 +225,13 @@ public class RpcManagerImpl implements RpcManager {
    }
 
    public final void invokeRemotelyInFuture(final List<Address> recipients, final ReplicableCommand rpc, final boolean usePriorityQueue, final NotifyingNotifiableFuture<Object> l) {
+      invokeRemotelyInFuture(recipients, rpc, usePriorityQueue, l, configuration.getSyncReplTimeout());
+   }
+
+   public final void invokeRemotelyInFuture(final List<Address> recipients, final ReplicableCommand rpc, final boolean usePriorityQueue, final NotifyingNotifiableFuture<Object> l, final long timeout) {
       Callable<Object> c = new Callable<Object>() {
          public Object call() {
-            invokeRemotely(recipients, rpc, true, usePriorityQueue);
+            invokeRemotely(recipients, rpc, true, usePriorityQueue, timeout);
             l.notifyDone();
             return null;
          }
@@ -300,7 +305,7 @@ public class RpcManagerImpl implements RpcManager {
 
    @ManagedAttribute
    public String getAddress() {
-      if (t == null || !isStatisticsEnabled()) return "N/A";
+      if (t == null) return "N/A";
       Address address = t.getAddress();
       return address == null ? "N/A" : address.toString();
    }
