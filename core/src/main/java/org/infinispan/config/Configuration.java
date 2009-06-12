@@ -77,6 +77,15 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       this.unsafeUnreliableReturnValues = unsafeUnreliableReturnValues;
    }
 
+   public void setRehashRpcTimeout(long rehashRpcTimeout) {
+      testImmutability("rehashRpcTimeout");
+      this.rehashRpcTimeout = rehashRpcTimeout;
+   }
+
+   public long getRehashRpcTimeout() {
+      return rehashRpcTimeout;
+   }
+
    /**
     * Cache replication mode.
     */
@@ -211,6 +220,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    private boolean useLockStriping = true;
    private boolean unsafeUnreliableReturnValues = false;
    private boolean useAsyncMarshalling = true;
+   private long rehashRpcTimeout = 60 * 1000 * 10; // 10 minutes
 
    @Start(priority = 1)
    private void correctIsolationLevels() {
@@ -391,7 +401,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       testImmutability("syncRollbackPhase");
       this.syncRollbackPhase = syncRollbackPhase;
    }
-   
+
    public void setUseEagerLocking(boolean useEagerLocking) {
       testImmutability("useEagerLocking");
       this.useEagerLocking = useEagerLocking;
@@ -533,7 +543,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    public boolean isSyncRollbackPhase() {
       return syncRollbackPhase;
    }
-   
+
    public boolean isUseEagerLocking() {
       return useEagerLocking;
    }
@@ -604,6 +614,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       if (stateRetrievalTimeout != that.stateRetrievalTimeout) return false;
       if (syncCommitPhase != that.syncCommitPhase) return false;
       if (syncReplTimeout != that.syncReplTimeout) return false;
+      if (rehashRpcTimeout != that.rehashRpcTimeout) return false;
       if (syncRollbackPhase != that.syncRollbackPhase) return false;
       if (useEagerLocking != that.useEagerLocking) return false;
       if (useLazyDeserialization != that.useLazyDeserialization) return false;
@@ -660,6 +671,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       result = 31 * result + (l1CacheEnabled ? 1 : 0);
       result = 31 * result + (int) (l1Lifespan ^ (l1Lifespan >>> 32));
       result = 31 * result + (int) (rehashWaitTime ^ (rehashWaitTime >>> 32));
+      result = 31 * result + (int) (rehashRpcTimeout ^ (rehashRpcTimeout >>> 32));
       result = 31 * result + (l1OnRehash ? 1 : 0);
       result = 31 * result + (consistentHashClass != null ? consistentHashClass.hashCode() : 0);
       result = 31 * result + numOwners;

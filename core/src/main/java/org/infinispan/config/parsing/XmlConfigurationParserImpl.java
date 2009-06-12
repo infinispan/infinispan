@@ -213,6 +213,8 @@ public class XmlConfigurationParserImpl extends XmlParserBase implements XmlConf
          if (existsAttribute(tmp)) config.setNumOwners(getInt(tmp));
          tmp = getAttributeValue(hash, "rehashWait");
          if (existsAttribute(tmp)) config.setRehashWaitTime(getLong(tmp));
+         tmp = getAttributeValue(hash, "rehashRpcTimeout");
+         if (existsAttribute(tmp)) config.setRehashRpcTimeout(getLong(tmp));
       } else if (getSingleElementInCoreNS("l1", e) != null || getSingleElementInCoreNS("hash", e) != null) {
          throw new ConfigurationException("l1 and hash elements cannot be used with cache modes 'REPLICATION' and 'INVALIDATION'!");
       }

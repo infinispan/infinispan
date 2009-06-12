@@ -89,7 +89,7 @@
 
       <!--
          This element specifies that the cache is clustered.
-         modes supported: replication (r) or invalidation (i).
+         modes supported: distribution (d), replication (r) or invalidation (i).
       -->
       <clustering mode="replication">
 
@@ -167,7 +167,13 @@
    <namedCache name="distributedCache">
       <clustering mode="distribution">
          <sync/>
-         <hash numOwners="3" rehashWait="120000"/>
+         <!--
+            num owners: number of owners for each key.  The larger this number is, the safer your data will be, but the
+                        slower the cluster will be.
+
+            rehashRpcTimeout: timeout used for RPC calls relating to rehashing.  This defaults to 600000 (10 minutes).
+         -->
+         <hash numOwners="3" rehashWait="120000" rehashRpcTimeout="600000"/>
          <l1 enabled="true" lifespan="600000"/>
       </clustering>
    </namedCache>
