@@ -6,9 +6,9 @@ import java.util.LinkedList;
 import java.util.List;
 
 @Test(groups = "unit")
-public class ValueNotifierTest {
+public class WatchableValueTest {
    public void testNotifier() throws InterruptedException {
-      final ValueNotifier vn = new ValueNotifier(10);
+      final WatchableValue vn = new WatchableValue(10);
       final List<Integer> threadsCompleted = new LinkedList<Integer>();
 
 

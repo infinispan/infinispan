@@ -21,10 +21,10 @@ import java.util.concurrent.locks.AbstractQueuedSynchronizer;
  * @author Manik Surtani
  * @since 4.0
  */
-public class ValueNotifier extends AbstractQueuedSynchronizer {
+public class WatchableValue extends AbstractQueuedSynchronizer {
    private static final long serialVersionUID = 1744280161777661090l;
 
-   public ValueNotifier(int initValue) {
+   public WatchableValue(int initValue) {
       setState(initValue);
    }
 
@@ -52,5 +52,9 @@ public class ValueNotifier extends AbstractQueuedSynchronizer {
 
    public final boolean awaitValue(int value, long time, TimeUnit unit) throws InterruptedException {
       return tryAcquireSharedNanos(value, unit.toNanos(time));
+   }
+
+   public int getValue() {
+      return getState();
    }
 }
