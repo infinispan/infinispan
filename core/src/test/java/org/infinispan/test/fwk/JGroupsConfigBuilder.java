@@ -23,7 +23,7 @@ public class JGroupsConfigBuilder {
 
    public static final String JGROUPS_STACK;
 
-   private static String bind_addr="127.0.0.1";
+   private static String bind_addr = "127.0.0.1";
    private static String tcpConfig;
    private static String udpConfig;
 
@@ -66,9 +66,9 @@ public class JGroupsConfigBuilder {
    private static final Pattern UDP_MCAST_PORT = Pattern.compile("mcast_port=[^;]*");
 
    static {
-      JGROUPS_STACK = System.getProperties().getProperty("jgroups.stack", "tcp");
-      System.out.println("IN USE JGROUPS STACK = " + JGROUPS_STACK);
-      
+      JGROUPS_STACK = System.getProperties().getProperty("protocol.stack", "tcp");
+      System.out.println("Transport protocol stack used = " + JGROUPS_STACK);
+
       try {
          bind_addr = Util.getBindAddress(null).getHostAddress();
       } catch (Exception e) {

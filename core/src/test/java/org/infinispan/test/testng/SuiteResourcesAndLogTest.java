@@ -38,7 +38,7 @@ public class SuiteResourcesAndLogTest {
       log("os.version = " + System.getProperty("os.version"));
       log("sun.arch.data.model = " + System.getProperty("sun.arch.data.model"));
       log("sun.cpu.endian = " + System.getProperty("sun.cpu.endian"));
-      log("jgroups.stack = " + System.getProperty("jgroups.stack"));
+      log("protocol.stack = " + System.getProperty("protocol.stack"));
       log("infinispan.marshaller.class = " + System.getProperty("infinispan.marshaller.class"));
       log("~~~~~~~~~~~~~~~~~~~~~~~~~ ENVIRONMENT INFO ~~~~~~~~~~~~~~~~~~~~~~~~~~");
    }

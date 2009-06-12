@@ -198,7 +198,7 @@ to figure out which system properties are passed in to the test when doing somet
 
 E.g., to run a "jgroups" group test in your IDE using TCP instead of the default UDP, set the following:
 
-   -Djgroups.stack=tcp
+   -Dprotocol.stack=tcp
 
 Or, to use JBoss JTA (Arjuna TM) instead of the DummyTransactionManager in a "transaction" group test, set:
 
