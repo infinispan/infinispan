@@ -13,9 +13,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @since 4.0
  */
 public class DefaultScheduledExecutorFactory implements ScheduledExecutorFactory {
+   final static AtomicInteger counter = new AtomicInteger(0);
+
    public ScheduledExecutorService getScheduledExecutor(Properties p) {
       final String threadNamePrefix = p.getProperty("threadNamePrefix", "ScheduledThread");
-      final AtomicInteger counter = new AtomicInteger(0);
       return Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
          public Thread newThread(Runnable r) {
             Thread th = new Thread(r, threadNamePrefix + "-" + counter.getAndIncrement());

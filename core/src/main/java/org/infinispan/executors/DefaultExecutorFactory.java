@@ -17,12 +17,13 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @since 4.0
  */
 public class DefaultExecutorFactory implements ExecutorFactory {
+   private final static AtomicInteger counter = new AtomicInteger(0);
+
    public ExecutorService getExecutor(Properties p) {
       TypedProperties tp = TypedProperties.toTypedProperties(p);
       int maxThreads = tp.getIntProperty("maxThreads", 1);
       int queueSize = tp.getIntProperty("queueSize", 100000);
       final String threadNamePrefix = tp.getProperty("threadNamePrefix", "Thread");
-      final AtomicInteger counter = new AtomicInteger(0);
 
       ThreadFactory tf = new ThreadFactory() {
          public Thread newThread(Runnable r) {
