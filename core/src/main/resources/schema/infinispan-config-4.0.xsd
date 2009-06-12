@@ -114,6 +114,8 @@
       <xs:attribute name="class" type="xs:string"/>
       <xs:attribute name="numOwners" type="tns:positiveNumber"/>
       <xs:attribute name="rehashWait" type="tns:positiveNumber"/>
+      <!-- This timeout is the sync repl timeout passed to JGroups for all rehash-related RPC calls -->
+      <xs:attribute name="rehashRpcTimeout" type="tns:positiveNumber"/>
    </xs:complexType>
 
    <xs:complexType name="l1Type">
