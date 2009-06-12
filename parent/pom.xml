@@ -149,7 +149,7 @@
                <forkMode>none</forkMode>
                <systemProperties>
                   <property>
-                     <name>jgroups.stack</name>
+                     <name>protocol.stack</name>
                      <value>${protocol.stack}</value>
                   </property>
                   <property>
