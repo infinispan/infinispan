@@ -5,7 +5,6 @@ import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.factories.AbstractComponentRegistry;
-import org.infinispan.interceptors.CacheMgmtInterceptor;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -59,7 +58,7 @@ public class ComponentsJmxRegistrationTest {
 
       ComponentsJmxRegistration regComponents = buildRegistrator(first);
       regComponents.registerMBeans();
-      String name = regComponents.getObjectName(CacheMgmtInterceptor.class.getSimpleName());
+      String name = regComponents.getObjectName("Statistics");
       ObjectName name1 = new ObjectName(name);
       assert mBeanServer.isRegistered(name1);
       regComponents.unregisterMBeans();
@@ -86,7 +85,7 @@ public class ComponentsJmxRegistrationTest {
 
       ComponentsJmxRegistration regComponents = buildRegistrator(first);
       regComponents.registerMBeans();
-      String name = regComponents.getObjectName(CacheMgmtInterceptor.class.getSimpleName());
+      String name = regComponents.getObjectName("Statistics");
       ObjectName name1 = new ObjectName(name);
       assertCorrectJmxName(name1, first);
       assert mBeanServer.isRegistered(name1);
@@ -114,8 +113,8 @@ public class ComponentsJmxRegistrationTest {
       replicatedRegComponents.registerMBeans();
       localRegComponents.registerMBeans();
 
-      String replicatedtCMgmtIntName = replicatedRegComponents.getObjectName(CacheMgmtInterceptor.class.getSimpleName());
-      String localCMgmtIntName = localRegComponents.getObjectName(CacheMgmtInterceptor.class.getSimpleName());
+      String replicatedtCMgmtIntName = replicatedRegComponents.getObjectName("Statistics");
+      String localCMgmtIntName = localRegComponents.getObjectName("Statistics");
       ObjectName replObjectName = new ObjectName(replicatedtCMgmtIntName);
       ObjectName localObjName = new ObjectName(localCMgmtIntName);
       assertCorrectJmxName(replObjectName, replicatedCache);

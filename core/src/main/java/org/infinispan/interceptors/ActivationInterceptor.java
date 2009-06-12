@@ -8,6 +8,7 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.loaders.CacheLoaderException;
@@ -15,6 +16,7 @@ import org.infinispan.loaders.CacheStore;
 
 import java.util.concurrent.atomic.AtomicLong;
 
+@MBean(objectName = "Activation", description = "Component that handles activating entries that have been passivated to a CacheStore by loading them into memory.")
 public class ActivationInterceptor extends CacheLoaderInterceptor {
 
    private AtomicLong activations = new AtomicLong(0);
@@ -79,13 +81,13 @@ public class ActivationInterceptor extends CacheLoaderInterceptor {
       notifier.notifyCacheEntryActivated(key, pre, ctx);
    }
 
-   @ManagedAttribute(description = "number of activation events")
+   @ManagedAttribute(description = "Number of activation events")
    public String getActivations() {
       if (!getStatisticsEnabled()) return "N/A";
       return String.valueOf(activations.get());
    }
 
-   @ManagedOperation
+   @ManagedOperation(description = "Resets statistics gathered by this component")
    public void resetStatistics() {
       super.resetStatistics();
       activations.set(0);

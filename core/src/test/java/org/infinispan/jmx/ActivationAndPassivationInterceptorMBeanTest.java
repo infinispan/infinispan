@@ -49,8 +49,8 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
 
       cacheManager.defineCache("test", configuration);
       cache = cacheManager.getCache("test");
-      activationInterceptorObjName = new ObjectName("ActivationAndPassivationInterceptorMBeanTest:cache-name=test(local),jmx-resource=ActivationInterceptor");
-      passivationInterceptorObjName = new ObjectName("ActivationAndPassivationInterceptorMBeanTest:cache-name=test(local),jmx-resource=PassivationInterceptor");
+      activationInterceptorObjName = new ObjectName("ActivationAndPassivationInterceptorMBeanTest:cache-name=test(local),jmx-resource=Activation");
+      passivationInterceptorObjName = new ObjectName("ActivationAndPassivationInterceptorMBeanTest:cache-name=test(local),jmx-resource=Passivation");
 
       threadMBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
       cacheStore = TestingUtil.extractComponent(cache, CacheLoaderManager.class).getCacheStore();

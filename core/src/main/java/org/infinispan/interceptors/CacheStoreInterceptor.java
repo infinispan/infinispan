@@ -42,6 +42,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.JmxStatsCommandInterceptor;
+import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.loaders.CacheLoaderManager;
@@ -69,6 +70,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Bela Ban
  * @since 4.0
  */
+@MBean(objectName = "CacheStore", description = "Component that handles storing of entries to a CacheStore from memory.")
 public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    private CacheLoaderManagerConfig loaderConfig = null;
    private HashMap<GlobalTransaction, Integer> txStores = new HashMap<GlobalTransaction, Integer>();
@@ -76,7 +78,6 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    private final AtomicLong cacheStores = new AtomicLong(0);
    CacheStore store;
    private CacheLoaderManager loaderManager;
-   private boolean statsEnabled;
 
    public CacheStoreInterceptor() {
       log = LogFactory.getLog(getClass());
@@ -303,19 +304,9 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       }
    }
 
-   @ManagedOperation
+   @ManagedOperation(description = "Resets statistics gathered by this component")
    public void resetStatistics() {
       cacheStores.set(0);
-   }
-
-   @ManagedAttribute
-   public boolean getStatisticsEnabled() {
-      return statsEnabled;
-   }
-
-   @ManagedAttribute
-   public void setStatisticsEnabled(boolean enabled) {
-      this.statsEnabled = enabled;
    }
 
    @ManagedAttribute(description = "number of cache loader stores")

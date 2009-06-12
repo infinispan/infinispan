@@ -29,6 +29,7 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.JmxStatsCommandInterceptor;
+import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 
@@ -41,6 +42,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Jerry Gauthier
  * @since 4.0
  */
+@MBean(objectName = "Statistics", description = "General statistics such as timings, hit/miss ratio, etc.")
 public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    private AtomicLong hitTimes = new AtomicLong(0);
    private AtomicLong missTimes = new AtomicLong(0);
@@ -170,7 +172,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       return (System.currentTimeMillis() - reset.get()) / 1000;
    }
 
-   @ManagedOperation
+   @ManagedOperation(description = "Resets statistics gathered by this component")
    public void resetStatistics() {
       hits.set(0);
       misses.set(0);

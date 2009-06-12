@@ -38,7 +38,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Manik Surtani
  * @since 4.0
  */
-@MBean(objectName = "RpcManager")
+@MBean(objectName = "RpcManager", description = "Magaes all remote calls to remote cache instances in the cluster.")
 public class RpcManagerImpl implements RpcManager {
 
    private static final Log log = LogFactory.getLog(RpcManagerImpl.class);
@@ -47,6 +47,7 @@ public class RpcManagerImpl implements RpcManager {
    private Transport t;
    private final AtomicLong replicationCount = new AtomicLong(0);
    private final AtomicLong replicationFailures = new AtomicLong(0);
+   @ManagedAttribute(name = "StatisticsEnabled", description = "Enables or disables the gathering of statistics by this component", writable = true)
    boolean statisticsEnabled = false; // by default, don't gather statistics.
    private volatile Address currentStateTransferSource;
    private boolean stateTransferEnabled;
@@ -271,7 +272,7 @@ public class RpcManagerImpl implements RpcManager {
 
    // -------------------------------------------- JMX information -----------------------------------------------
 
-   @ManagedOperation
+   @ManagedOperation(description = "Resets statistics gathered by this component")
    public void resetStatistics() {
       replicationCount.set(0);
       replicationFailures.set(0);
@@ -293,12 +294,10 @@ public class RpcManagerImpl implements RpcManager {
       return String.valueOf(replicationFailures.get());
    }
 
-   @ManagedAttribute(description = "whether or not jmx statistics are enabled")
    public boolean isStatisticsEnabled() {
       return statisticsEnabled;
    }
 
-   @ManagedAttribute
    public void setStatisticsEnabled(boolean statisticsEnabled) {
       this.statisticsEnabled = statisticsEnabled;
    }
@@ -310,14 +309,14 @@ public class RpcManagerImpl implements RpcManager {
       return address == null ? "N/A" : address.toString();
    }
 
-   @ManagedAttribute
+   @ManagedAttribute(description = "List of members in the cluster")
    public String getMembers() {
       if (t == null || !isStatisticsEnabled()) return "N/A";
       List<Address> addressList = t.getMembers();
       return addressList.toString();
    }
 
-   @ManagedAttribute
+   @ManagedAttribute(description = "Successful replications as a ratio of total replications")
    public String getSuccessRatio() {
       if (replicationCount.get() == 0 || !statisticsEnabled) {
          return "N/A";

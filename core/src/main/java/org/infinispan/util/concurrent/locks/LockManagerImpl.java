@@ -51,7 +51,7 @@ import java.util.concurrent.locks.Lock;
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @since 4.0
  */
-@MBean(objectName = "MvccLockManager", description = "Manager that handles MVCC locks for entries")
+@MBean(objectName = "LockManager", description = "Manager that handles MVCC locks for entries")
 public class LockManagerImpl implements LockManager {
    protected Configuration configuration;
    LockContainer lockContainer;

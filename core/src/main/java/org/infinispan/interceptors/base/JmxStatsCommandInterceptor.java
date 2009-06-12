@@ -33,6 +33,7 @@ import org.infinispan.jmx.annotations.ManagedOperation;
  * @since 4.0
  */
 public abstract class JmxStatsCommandInterceptor extends CommandInterceptor implements JmxStatisticsExposer {
+   @ManagedAttribute(name = "StatisticsEnabled", description = "Enables or disables the gathering of statistics by this component", writable = true)
    private boolean statsEnabled = false;
 
    @Start
@@ -45,7 +46,6 @@ public abstract class JmxStatsCommandInterceptor extends CommandInterceptor impl
     *
     * @return true if statistics are captured
     */
-   @ManagedAttribute
    public boolean getStatisticsEnabled() {
       return statsEnabled;
    }
@@ -53,7 +53,6 @@ public abstract class JmxStatsCommandInterceptor extends CommandInterceptor impl
    /**
     * @param enabled whether gathering statistics for JMX are enabled.
     */
-   @ManagedAttribute
    public void setStatisticsEnabled(boolean enabled) {
       statsEnabled = enabled;
    }
@@ -61,7 +60,7 @@ public abstract class JmxStatsCommandInterceptor extends CommandInterceptor impl
    /**
     * Resets statistics gathered.  Is a no-op, and should be overridden if it is to be meaningful.
     */
-   @ManagedOperation
+   @ManagedOperation(description = "Resets statistics gathered by this component")
    public void resetStatistics() {
    }
 }

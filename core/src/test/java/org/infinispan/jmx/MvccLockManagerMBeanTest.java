@@ -39,7 +39,7 @@ public class MvccLockManagerMBeanTest extends SingleCacheManagerTest {
 
       cacheManager.defineCache("test", configuration);
       cache = cacheManager.getCache("test");
-      lockManagerObjName = new ObjectName("MvccLockManagerMBeanTest:cache-name=test(local),jmx-resource=MvccLockManager");
+      lockManagerObjName = new ObjectName("MvccLockManagerMBeanTest:cache-name=test(local),jmx-resource=LockManager");
 
       threadMBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
       return cacheManager;

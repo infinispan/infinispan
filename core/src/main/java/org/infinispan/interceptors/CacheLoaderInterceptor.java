@@ -35,6 +35,7 @@ import org.infinispan.factories.EntryFactory;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.JmxStatsCommandInterceptor;
+import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.loaders.CacheLoader;
@@ -43,6 +44,7 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 
 import java.util.concurrent.atomic.AtomicLong;
 
+@MBean(objectName = "CacheLoader", description = "Component that handles loading entries from a CacheStore into memory.")
 public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    private final AtomicLong cacheLoads = new AtomicLong(0);
    private final AtomicLong cacheMisses = new AtomicLong(0);
@@ -177,17 +179,17 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
       }
    }
 
-   @ManagedAttribute(description = "number of cache loader loads")
+   @ManagedAttribute(description = "Number of CacheLoader loads")
    public long getCacheLoaderLoads() {
       return cacheLoads.get();
    }
 
-   @ManagedAttribute(description = "number of cache loader misses")
+   @ManagedAttribute(description = "Number of CacheLoader misses")
    public long getCacheLoaderMisses() {
       return cacheMisses.get();
    }
 
-   @ManagedOperation
+   @ManagedOperation(description = "Resets statistics gathered by this component")
    public void resetStatistics() {
       cacheLoads.set(0);
       cacheMisses.set(0);

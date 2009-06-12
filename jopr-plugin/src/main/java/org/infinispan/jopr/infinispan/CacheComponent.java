@@ -56,9 +56,9 @@ public class CacheComponent implements ResourceComponent<InfinispanComponent>, M
    private static final Map<String, String> abbrevToMBean = new HashMap<String, String>();
 
    static {
-      abbrevToMBean.put("Mgmt", "CacheMgmtInterceptor");
-      abbrevToMBean.put("Mvcc", "MvccLockManager");
-      abbrevToMBean.put("Tx", "TxInterceptor");
+      abbrevToMBean.put("Statistics", "Statistics");
+      abbrevToMBean.put("LockManager", "LockManager");
+      abbrevToMBean.put("Transactions", "Transactions");
    }
 
 

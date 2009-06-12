@@ -34,7 +34,7 @@ public class CacheMgmtInterceptorMBeanTest extends SingleCacheManagerTest {
       configuration.setExposeJmxStatistics(true);
       cacheManager.defineCache("test", configuration);
       cache = cacheManager.getCache("test");
-      mgmtInterceptor = new ObjectName("CacheMgmtInterceptorMBeanTest:cache-name=test(local),jmx-resource=CacheMgmtInterceptor");
+      mgmtInterceptor = new ObjectName("CacheMgmtInterceptorMBeanTest:cache-name=test(local),jmx-resource=Statistics");
 
       threadMBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
       return cacheManager;

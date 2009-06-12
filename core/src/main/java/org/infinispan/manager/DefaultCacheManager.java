@@ -89,7 +89,7 @@ import java.util.concurrent.ConcurrentMap;
  */
 @Scope(Scopes.GLOBAL)
 @NonVolatile
-@MBean(objectName = "CacheManager")
+@MBean(objectName = "CacheManager", description = "Component that acts as a manager, factory and container for caches in the system.")
 public class DefaultCacheManager implements CacheManager {
    public static final String DEFAULT_CACHE_NAME = "org.infinispan.manager.DefaultCacheManager.DEFAULT_CACHE_NAME";
    protected GlobalConfiguration globalConfiguration;

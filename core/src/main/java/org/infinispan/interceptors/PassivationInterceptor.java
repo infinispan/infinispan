@@ -8,6 +8,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.JmxStatsCommandInterceptor;
+import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.loaders.CacheLoaderManager;
@@ -21,6 +22,7 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * @since 4.0
  */
+@MBean(objectName = "Passivation", description = "Component that handles passivating entries to a CacheStore on eviction.")
 public class PassivationInterceptor extends JmxStatsCommandInterceptor {
    private final AtomicLong passivations = new AtomicLong(0);
 
@@ -56,7 +58,7 @@ public class PassivationInterceptor extends JmxStatsCommandInterceptor {
       return invokeNextInterceptor(ctx, command);
    }
 
-   @ManagedOperation
+   @ManagedOperation(description = "Resets statistics gathered by this component")
    public void resetStatistics() {
       passivations.set(0);
    }

@@ -20,6 +20,7 @@ import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.transaction.TransactionLog;
@@ -42,6 +43,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @see org.infinispan.transaction.xa.TransactionXaAdapter
  * @since 4.0
  */
+@MBean(objectName = "Transactions", description = "Component that manages the cache's participation in JTA transactions.")
 public class TxInterceptor extends CommandInterceptor {
 
    private TransactionManager tm;
@@ -51,6 +53,7 @@ public class TxInterceptor extends CommandInterceptor {
    private final AtomicLong prepares = new AtomicLong(0);
    private final AtomicLong commits = new AtomicLong(0);
    private final AtomicLong rollbacks = new AtomicLong(0);
+   @ManagedAttribute(name = "StatisticsEnabled", description = "Enables or disables the gathering of statistics by this component", writable = true)
    private boolean statsEnabled;
 
 
@@ -209,19 +212,17 @@ public class TxInterceptor extends CommandInterceptor {
       return false;
    }
 
-   @ManagedOperation
+   @ManagedOperation(description = "Resets statistics gathered by this component")
    public void resetStatistics() {
       prepares.set(0);
       commits.set(0);
       rollbacks.set(0);
    }
 
-   @ManagedAttribute
    public boolean getStatisticsEnabled() {
       return this.statsEnabled;
    }
 
-   @ManagedAttribute
    public void setStatisticsEnabled(boolean enabled) {
       this.statsEnabled = enabled;
    }

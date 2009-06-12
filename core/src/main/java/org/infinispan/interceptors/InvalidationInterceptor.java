@@ -68,6 +68,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
    private final AtomicLong invalidations = new AtomicLong(0);
    protected Map<GlobalTransaction, List<VisitableCommand>> txMods;
    private CommandsFactory commandsFactory;
+   @ManagedAttribute(name = "StatisticsEnabled", description = "Enables or disables the gathering of statistics by this component", writable = true)
    private boolean statsEnabled;
 
    @Inject
@@ -211,17 +212,15 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
       if (statsEnabled) invalidations.incrementAndGet();
    }
 
-   @ManagedOperation
+   @ManagedOperation(description = "Resets statistics gathered by this component")
    public void resetStatistics() {
       invalidations.set(0);
    }
 
-   @ManagedAttribute
    public boolean getStatisticsEnabled() {
       return this.statsEnabled;
    }
 
-   @ManagedAttribute
    public void setStatisticsEnabled(boolean enabled) {
       this.statsEnabled = enabled;
    }

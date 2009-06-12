@@ -38,48 +38,48 @@
             description="One individual cache in Infinispan"
             >
 
-         <operation name="Mgmt.resetStatistics" displayName="Reset Statistics (Mgmt)"
+         <operation name="Statistics.resetStatistics" displayName="Reset Statistics (Statistics)"
                     description="Reset statistics on the CacheManagement Interceptor"/>
-         <operation name="Tx.resetStatistics" displayName="Reset Statistics (Tx)"
+         <operation name="Transactions.resetStatistics" displayName="Reset Statistics (Transactions)"
                     description="Reset statistics on the Transaction Interceptor"/>
 
-         <metric property="Mgmt.averageReadTime" displayName="Average Read Time"
+         <metric property="Statistics.averageReadTime" displayName="Average Read Time"
                  description="Average time to read an entry from the cache"
                  units="milliseconds" measurementType="dynamic"/>
-         <metric property="Mgmt.averageWriteTime" displayName="Average Write Time"
+         <metric property="Statistics.averageWriteTime" displayName="Average Write Time"
                  description="Average time to write an entry to the cache"
                  units="milliseconds" measurementType="dynamic"/>
-         <metric property="Mgmt.evictions" displayName="Evictions" measurementType="trendsup"
+         <metric property="Statistics.evictions" displayName="Evictions" measurementType="trendsup"
                  description="How many items got evicted from the cache" displayType="summary"/>
-         <metric property="Mgmt.hitRatio" displayName="Hit Ratio"
+         <metric property="Statistics.hitRatio" displayName="Hit Ratio"
                  description="Hit ratio of this cache" displayType="summary"
                  units="percentage"/>
-         <metric property="Mgmt.hits" displayName="Hits" description="Number of cache hits"
+         <metric property="Statistics.hits" displayName="Hits" description="Number of cache hits"
                  measurementType="trendsup"/>
-         <metric property="Mgmt.misses" displayName="Misses" description="Number of cache misses"
+         <metric property="Statistics.misses" displayName="Misses" description="Number of cache misses"
                  measurementType="trendsup"/>
-         <metric property="Mgmt.numberOfEntries" displayName="Number of Entries"
+         <metric property="Statistics.numberOfEntries" displayName="Number of Entries"
                  description="The number of entries in this cache"/>
-         <metric property="Mgmt.readWriteRatio" displayName="Read write ratio"
+         <metric property="Statistics.readWriteRatio" displayName="Read write ratio"
                  description="The ratio between reads and writes of this cache"
                  units="percentage"/>
-         <metric property="Mgmt.stores" displayName="Stores" description="Number of stores in the cache"
+         <metric property="Statistics.stores" displayName="Stores" description="Number of stores in the cache"
                  measurementType="trendsup"/>
 
-         <metric property="Mvcc.numerOfLocksAvailable" displayName="Number of Locks availabe"
+         <metric property="LockManager.numerOfLocksAvailable" displayName="Number of Locks availabe"
                  description="How many locks are still available in this Cache"
                  units="none" measurementType="dynamic"/>
-         <metric property="Mvcc.concurrencyLevel" displayName="Concurrency Level"/>
+         <metric property="LockManager.concurrencyLevel" displayName="Concurrency Level"/>
          <!-- TODO description -->
-         <metric property="Mvcc.numberOfLocksHeld" displayName="Number of Locks held"/>
+         <metric property="LockManager.numberOfLocksHeld" displayName="Number of Locks held"/>
 
-         <metric property="Tx.commits" displayName="Commits"
+         <metric property="Transactions.commits" displayName="Commits"
                  description="Number of transaction commits performed since last reset"
                  units="none" measurementType="trendsup" displayType="summary"/>
-         <metric property="Tx.prepares" displayName="Prepares"
+         <metric property="Transactions.prepares" displayName="Prepares"
                  description="Number of transaction prepares performed since last reset"
                  units="none" measurementType="trendsup"/>
-         <metric property="Tx.rollbacks" displayName="Rollbacks"
+         <metric property="Transactions.rollbacks" displayName="Rollbacks"
                  description="Number of transaction rollbacks performed since last reset"
                  units="none" measurementType="trendsup" displayType="summary"/>
       </service>
