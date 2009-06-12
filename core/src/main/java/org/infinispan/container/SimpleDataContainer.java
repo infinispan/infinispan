@@ -189,11 +189,7 @@ public class SimpleDataContainer implements DataContainer {
       Iterator<Object> currentIterator;
 
       private KeyIterator(Iterator<Object> immortalIterator, Iterator<Object> mortalIterator) {
-         // this order is imperative.  We need to iterate through mortal entries before the immortal ones
-         // since some access patterns (Dist rehashing) iterate through the key set and move entries from
-         // being immortal to mortal.  If you iterate through immortal entries first you could
-         // see the same key twice, breaking Set semantics.
-         metaIterator = Arrays.asList(mortalIterator, immortalIterator).iterator();
+         metaIterator = Arrays.asList(immortalIterator, mortalIterator).iterator();
          if (metaIterator.hasNext()) currentIterator = metaIterator.next();
       }
 
