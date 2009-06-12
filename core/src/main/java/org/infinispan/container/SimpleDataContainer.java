@@ -131,7 +131,7 @@ public class SimpleDataContainer implements DataContainer {
    public Set<Object> keySet() {
       return new KeySet();
    }
-   
+
    public Collection<Object> values() {
       return new Values();
    }
@@ -189,7 +189,11 @@ public class SimpleDataContainer implements DataContainer {
       Iterator<Object> currentIterator;
 
       private KeyIterator(Iterator<Object> immortalIterator, Iterator<Object> mortalIterator) {
-         metaIterator = Arrays.asList(immortalIterator, mortalIterator).iterator();
+         // this order is imperative.  We need to iterate through mortal entries before the immortal ones
+         // since some access patterns (Dist rehashing) iterate through the key set and move entries from
+         // being immortal to mortal.  If you iterate through immortal entries first you could
+         // see the same key twice, breaking Set semantics.
+         metaIterator = Arrays.asList(mortalIterator, immortalIterator).iterator();
          if (metaIterator.hasNext()) currentIterator = metaIterator.next();
       }
 
@@ -211,7 +215,7 @@ public class SimpleDataContainer implements DataContainer {
          throw new UnsupportedOperationException();
       }
    }
-   
+
    private class EntrySet extends AbstractSet<Map.Entry> {
       public Iterator<Map.Entry> iterator() {
          return new ImmutableEntryIterator(immortalEntries.values().iterator(), mortalEntries.values().iterator());
@@ -246,45 +250,45 @@ public class SimpleDataContainer implements DataContainer {
          throw new UnsupportedOperationException();
       }
    }
-   
+
    private class EntryIterator extends MortalInmortalIterator implements Iterator<InternalCacheEntry> {
       private EntryIterator(Iterator<InternalCacheEntry> immortalIterator, Iterator<InternalCacheEntry> mortalIterator) {
          super(immortalIterator, mortalIterator);
       }
-      
+
       @SuppressWarnings("unchecked")
       public InternalCacheEntry next() {
          return currentIterator.next();
       }
    }
-   
+
    private class ImmutableEntryIterator extends MortalInmortalIterator implements Iterator<Map.Entry> {
       private ImmutableEntryIterator(Iterator<InternalCacheEntry> immortalIterator, Iterator<InternalCacheEntry> mortalIterator) {
          super(immortalIterator, mortalIterator);
       }
-      
+
       public Map.Entry next() {
          return Immutables.immutableEntry(currentIterator.next());
       }
    }
-   
+
    private class Values extends AbstractCollection<Object> {
       @Override
-      public Iterator<Object> iterator() {         
+      public Iterator<Object> iterator() {
          return new ValueIterator(immortalEntries.values().iterator(), mortalEntries.values().iterator());
       }
 
       @Override
       public int size() {
          return immortalEntries.size() + mortalEntries.size();
-      }      
+      }
    }
-   
+
    private class ValueIterator extends MortalInmortalIterator implements Iterator<Object> {
       private ValueIterator(Iterator<InternalCacheEntry> immortalIterator, Iterator<InternalCacheEntry> mortalIterator) {
          super(immortalIterator, mortalIterator);
       }
-      
+
       public Object next() {
          return currentIterator.next().getValue();
       }
