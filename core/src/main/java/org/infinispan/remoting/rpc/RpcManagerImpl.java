@@ -303,9 +303,9 @@ public class RpcManagerImpl implements RpcManager {
       this.statisticsEnabled = statisticsEnabled;
    }
 
-   @ManagedAttribute
-   public String getAddress() {
-      if (t == null) return "N/A";
+   @ManagedAttribute(name = "Address", description = "The network address associated with this instance")
+   public String getAddressForDisplay() {
+      if (t == null || !isStatisticsEnabled()) return "N/A";
       Address address = t.getAddress();
       return address == null ? "N/A" : address.toString();
    }
