@@ -28,11 +28,12 @@ public class CacheManagerNotifierImplTest {
    public void testNotifyViewChanged() {
       Address a = EasyMock.createNiceMock(Address.class);
       List<Address> addresses = Collections.emptyList();
-      n.notifyViewChange(addresses, a);
+      n.notifyViewChange(addresses, a, 100);
 
       assert cl.invocationCount == 1;
       assert ((ViewChangedEvent) cl.getEvent()).getLocalAddress() == a;
       assert ((ViewChangedEvent) cl.getEvent()).getNewMemberList() == addresses;
+      assert ((ViewChangedEvent) cl.getEvent()).getViewId() == 100;
       assert cl.getEvent().getType() == Event.Type.VIEW_CHANGED;
    }
 

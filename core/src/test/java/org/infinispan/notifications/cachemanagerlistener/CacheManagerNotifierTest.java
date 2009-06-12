@@ -2,11 +2,11 @@ package org.infinispan.notifications.cachemanagerlistener;
 
 import static org.easymock.EasyMock.*;
 import org.infinispan.Cache;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -17,9 +17,8 @@ public class CacheManagerNotifierTest {
    CacheManager cm1;
    CacheManager cm2;
 
-   @AfterMethod 
-   public void tearDown()
-   {
+   @AfterMethod
+   public void tearDown() {
       TestingUtil.killCacheManagers(cm1, cm2);
    }
 
@@ -43,7 +42,7 @@ public class CacheManagerNotifierTest {
       CacheManagerNotifier mockNotifier = createMock(CacheManagerNotifier.class);
       CacheManagerNotifier origNotifier = TestingUtil.replaceComponent(cm1, CacheManagerNotifier.class, mockNotifier, true);
       try {
-         mockNotifier.notifyViewChange(isA(List.class), eq(myAddress));
+         mockNotifier.notifyViewChange(isA(List.class), eq(myAddress), anyInt());
          replay(mockNotifier);
          // start a second cache.
          Cache c2 = cm2.getCache("cache");

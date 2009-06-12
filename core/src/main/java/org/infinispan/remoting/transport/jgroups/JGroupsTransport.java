@@ -113,6 +113,10 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
       }
    }
 
+   public int getViewId() {
+      return (int) channel.getView().getVid().getId();
+   }
+
    public void stop() {
       try {
          if (channel != null && channel.isOpen()) {
@@ -270,6 +274,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
    public Address getAddress() {
       if (address == null && channel != null) {
          address = new JGroupsAddress(channel.getAddress());
+//         address = new JGroupsAddress(channel.getLocalAddress());
       }
       return address;
    }
@@ -396,7 +401,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
 
          // now notify listeners - *after* updating the coordinator. - JBCACHE-662
          if (needNotification && notifier != null) {
-            notifier.notifyViewChange(members, getAddress());
+            notifier.notifyViewChange(members, getAddress(), (int) newView.getVid().getId());
          }
 
          // Wake up any threads that are waiting to know about who the coordinator is

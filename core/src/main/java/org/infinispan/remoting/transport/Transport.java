@@ -123,4 +123,5 @@ public interface Transport extends Lifecycle {
    @Stop
    void stop();
 
+   int getViewId();
 }

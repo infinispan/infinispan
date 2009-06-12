@@ -21,7 +21,7 @@ public interface CacheManagerNotifier extends Listenable {
     * Notifies all registered listeners of a viewChange event.  Note that viewChange notifications are ALWAYS sent
     * immediately.
     */
-   void notifyViewChange(List<Address> members, Address myAddress);
+   void notifyViewChange(List<Address> members, Address myAddress, int viewId);
 
    void notifyCacheStarted(String cacheName);
 
