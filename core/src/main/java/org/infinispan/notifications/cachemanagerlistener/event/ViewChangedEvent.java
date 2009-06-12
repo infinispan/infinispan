@@ -38,4 +38,6 @@ public interface ViewChangedEvent extends Event {
    List<Address> getNewMemberList();
 
    Address getLocalAddress();
+
+   int getViewId();
 }
