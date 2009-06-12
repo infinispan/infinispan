@@ -5,7 +5,7 @@ import org.testng.annotations.Test;
 import java.util.LinkedList;
 import java.util.List;
 
-@Test(groups = "unit")
+@Test(groups = "unit", testName = "util.concurrent.WatchableValueTest")
 public class WatchableValueTest {
    public void testNotifier() throws InterruptedException {
       final WatchableValue vn = new WatchableValue(10);
