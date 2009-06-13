@@ -39,8 +39,10 @@ public class JmxDoclet {
       List<MBeanComponent> mbeans = new LinkedList<MBeanComponent>();
 
       for (ClassDoc cd : classes) {
-         MBeanComponent mbean = toJmxComponent(cd);
-         if (mbean != null) mbeans.add(mbean);
+         if (!cd.isAbstract()) {
+            MBeanComponent mbean = toJmxComponent(cd);
+            if (mbean != null) mbeans.add(mbean);
+         }
       }
 
       // sort components alphabetically
@@ -158,7 +160,8 @@ public class JmxDoclet {
    private static String fromBeanConvention(String getterOrSetter) {
       if (getterOrSetter.startsWith("get") || getterOrSetter.startsWith("set")) {
          String withoutGet = getterOrSetter.substring(4);
-         return Character.toLowerCase(getterOrSetter.charAt(3)) + withoutGet;
+         // not specifically BEAN convention, but this is what is bound in JMX.
+         return Character.toUpperCase(getterOrSetter.charAt(3)) + withoutGet;
       }
       return getterOrSetter;
    }

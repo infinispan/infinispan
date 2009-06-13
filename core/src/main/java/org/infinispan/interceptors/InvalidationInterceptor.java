@@ -37,6 +37,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.BaseRpcInterceptor;
+import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -64,6 +65,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
  * @since 4.0
  */
+@MBean(objectName = "Invalidation", description = "Component responsible for invalidating entries on remote caches when entries are written to locally.")
 public class InvalidationInterceptor extends BaseRpcInterceptor {
    private final AtomicLong invalidations = new AtomicLong(0);
    protected Map<GlobalTransaction, List<VisitableCommand>> txMods;
