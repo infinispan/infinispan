@@ -24,12 +24,6 @@ public class SuiteResourcesAndLogTest {
       log("~~~~~~~~~~~~~~~~~~~~~~~~~ ENVIRONMENT INFO ~~~~~~~~~~~~~~~~~~~~~~~~~~");
       String bindAddress = System.getProperty("bind.address");
       log("bind.address = " + bindAddress);
-//      //todo for some funny reasons MVN ignores bind.address passed in. This is a hack..
-//      if (bindAddress == null)
-//      {
-//         log("Setting bind.address to 127.0.0.1 as it is missing!!!");
-//         System.setProperty("bind.address","127.0.0.1");
-//      }
       log("java.runtime.version = " + System.getProperty("java.runtime.version"));
       log("java.runtime.name =" + System.getProperty("java.runtime.name"));
       log("java.vm.version = " + System.getProperty("java.vm.version"));
@@ -40,6 +34,14 @@ public class SuiteResourcesAndLogTest {
       log("sun.cpu.endian = " + System.getProperty("sun.cpu.endian"));
       log("protocol.stack = " + System.getProperty("protocol.stack"));
       log("infinispan.marshaller.class = " + System.getProperty("infinispan.marshaller.class"));
+      String preferIpV4 = System.getProperty("java.net.preferIpv4Stack");
+      //HACK - for some reason this does not propagate from pom.xml to java. All other props do, strange...
+      if (preferIpV4 == null) {
+         System.setProperty("java.net.preferIpv4Stack","true");
+         preferIpV4 = "true";
+      }
+      log("java.net.preferIpv4Stack = " + preferIpV4);
+      log("java.net.preferIpv6Stack = " + System.getProperty("java.net.preferIpv6Stack"));
       log("~~~~~~~~~~~~~~~~~~~~~~~~~ ENVIRONMENT INFO ~~~~~~~~~~~~~~~~~~~~~~~~~~");
    }
 
