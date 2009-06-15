@@ -134,17 +134,15 @@ public class TestNameVerifier {
    }
 
    // Loop through the list of module names and pass it to the getFilesFromModule()
-   private File[] getAllJavaFiles()  {
+   private File[] getAllJavaFiles() {
       populateModuleList();
       List<File> listOfFiles = new ArrayList<File>();
-      for (int i = 0; i < modules.size(); i++){
-
+      for (String module : modules) {
          // Take in the list from the getFilesFromModule() and add it to the collection here to be converted into an
          // array and then returned.
-         listOfFiles.addAll(getFilesFromModule(modules.get(i)));
+         listOfFiles.addAll(getFilesFromModule(module));
       }
       return listOfFiles.toArray(new File[0]);
-
    }
 
    private void addJavaFiles(File file, ArrayList<File> result) {
@@ -195,7 +193,7 @@ public class TestNameVerifier {
    }
 
    // method that populates the list of module names
-   private void populateModuleList(){
+   private void populateModuleList() {
       modules.add("core");
       modules.add("cachestore/s3");
       modules.add("cachestore/bdbje");
@@ -203,11 +201,10 @@ public class TestNameVerifier {
       modules.add("cachestore/jdbm");
       modules.add("jopr-plugin");
       modules.add("tree");
-
    }
 
    // Old method that Mircea wrote that originally returned an array. Now returns a list and will be added to the list in getAllJavaFiles()
-   private List<File> getFilesFromModule(String moduleName){
+   private List<File> getFilesFromModule(String moduleName) {
       File file = new File(dir);
       if (!file.exists()) {
          // try prepending dir with module name
