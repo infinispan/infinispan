@@ -38,7 +38,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Manik Surtani
  * @since 4.0
  */
-@MBean(objectName = "RpcManager", description = "Magaes all remote calls to remote cache instances in the cluster.")
+@MBean(objectName = "RpcManager", description = "Manages all remote calls to remote cache instances in the cluster.")
 public class RpcManagerImpl implements RpcManager {
 
    private static final Log log = LogFactory.getLog(RpcManagerImpl.class);
