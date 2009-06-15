@@ -36,9 +36,10 @@ public class SuiteResourcesAndLogTest {
       log("infinispan.marshaller.class = " + System.getProperty("infinispan.marshaller.class"));
       String preferIpV4 = System.getProperty("java.net.preferIpv4Stack");
       //HACK - for some reason this does not propagate from pom.xml to java. All other props do, strange...
-      if (preferIpV4 == null) {
+      if (preferIpV4 == null) {                                
+         System.out.println("Enforcing java.net.preferIpv4Stack");
          System.setProperty("java.net.preferIpv4Stack","true");
-         preferIpV4 = "true";
+         preferIpV4 = System.getProperty("java.net.preferIpv4Stack");
       }
       log("java.net.preferIpv4Stack = " + preferIpV4);
       log("java.net.preferIpv6Stack = " + System.getProperty("java.net.preferIpv6Stack"));
