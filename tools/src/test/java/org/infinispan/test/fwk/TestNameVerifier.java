@@ -142,7 +142,7 @@ public class TestNameVerifier {
          // array and then returned.
          listOfFiles.addAll(getFilesFromModule(module));
       }
-      return listOfFiles.toArray(new File[0]);
+      return listOfFiles.toArray(new File[listOfFiles.size()]);
    }
 
    private void addJavaFiles(File file, ArrayList<File> result) {
