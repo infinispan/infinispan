@@ -21,7 +21,7 @@ import javax.transaction.TransactionManager;
 import java.io.Serializable;
 import java.util.List;
 
-@Test(groups = "functional", testName = "distribution.BaseDistFunctionalTest")
+@Test(groups = "functional", testName = "distribution.BaseDistFunctionalTest", enabled = false)
 public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
    protected Cache<Object, String> c1, c2, c3, c4;
    protected List<Cache<Object, String>> caches;

@@ -5,7 +5,7 @@ import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.ReplListener;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "distribution.AsyncAPIAsyncDistTest")
+@Test(groups = "functional", testName = "distribution.AsyncAPIAsyncDistTest", enabled = false)
 public class AsyncAPIAsyncDistTest extends AsyncAPISyncDistTest {
 
    ReplListener rl;

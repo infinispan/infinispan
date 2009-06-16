@@ -1,9 +1,5 @@
 package org.infinispan.distribution;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
-
 import org.infinispan.Cache;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -13,7 +9,11 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.util.ObjectDuplicator;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "distribution.DistSyncFuncTest")
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+
+@Test(groups = "functional", testName = "distribution.DistSyncFuncTest", enabled = false)
 public class DistSyncFuncTest extends BaseDistFunctionalTest {
 
    public DistSyncFuncTest() {

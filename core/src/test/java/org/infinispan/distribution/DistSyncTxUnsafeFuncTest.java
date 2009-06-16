@@ -2,7 +2,7 @@ package org.infinispan.distribution;
 
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "distribution.DistSyncTxUnsafeFuncTest")
+@Test(groups = "functional", testName = "distribution.DistSyncTxUnsafeFuncTest", enabled = false)
 public class DistSyncTxUnsafeFuncTest extends DistSyncTxFuncTest {
    public DistSyncTxUnsafeFuncTest() {
       sync = true;
