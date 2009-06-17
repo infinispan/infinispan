@@ -25,10 +25,10 @@ import net.jcip.annotations.Immutable;
 import org.infinispan.marshall.jboss.MarshallUtil;
 import org.infinispan.marshall.jboss.Externalizer;
 import org.infinispan.util.Immutables;
-import org.jboss.marshalling.Marshaller;
-import org.jboss.marshalling.Unmarshaller;
 
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -41,11 +41,11 @@ import java.util.Map;
 @Immutable
 public class ImmutableMapExternalizer implements Externalizer {
 
-   public void writeObject(Marshaller output, Object subject) throws IOException {
+   public void writeObject(ObjectOutput output, Object subject) throws IOException {
       MarshallUtil.marshallMap((Map) subject, output);      
    }
 
-   public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
+   public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
       Map map = new HashMap();
       MarshallUtil.unmarshallMap(map, input);
       return Immutables.immutableMapWrap(map);

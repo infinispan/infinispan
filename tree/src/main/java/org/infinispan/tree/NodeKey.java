@@ -25,17 +25,15 @@ package org.infinispan.tree;
 
 import org.infinispan.util.Util;
 
-import java.io.Serializable;
-
 /**
  * A class that represents the key to a node
  *
  * @author Manik Surtani
  * @since 4.0
  */
-public class NodeKey implements Serializable {
-   Fqn fqn;
-   Type contents;
+public class NodeKey {
+   final Fqn fqn;
+   final Type contents;
 
    public static enum Type {
       DATA, STRUCTURE
@@ -44,6 +42,14 @@ public class NodeKey implements Serializable {
    public NodeKey(Fqn fqn, Type contents) {
       this.contents = contents;
       this.fqn = fqn;
+   }
+   
+   public Fqn getFqn() {
+      return fqn;
+   }
+
+   public Type getContents() {
+      return contents;
    }
 
    public boolean equals(Object o) {

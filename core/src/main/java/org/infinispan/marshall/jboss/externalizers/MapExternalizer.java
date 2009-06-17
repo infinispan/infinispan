@@ -24,11 +24,11 @@ package org.infinispan.marshall.jboss.externalizers;
 import org.infinispan.marshall.jboss.MarshallUtil;
 import org.infinispan.marshall.jboss.Externalizer;
 import org.infinispan.util.FastCopyHashMap;
-import org.jboss.marshalling.Marshaller;
-import org.jboss.marshalling.Unmarshaller;
 import org.jboss.marshalling.util.IdentityIntMap;
 
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
@@ -52,13 +52,13 @@ public class MapExternalizer implements Externalizer {
       numbers.put(FastCopyHashMap.class, FASTCOPYHASHMAP);
    }
 
-   public void writeObject(Marshaller output, Object subject) throws IOException {
+   public void writeObject(ObjectOutput output, Object subject) throws IOException {
       int number = numbers.get(subject.getClass(), -1);
       output.writeByte(number);
       MarshallUtil.marshallMap((Map) subject, output);
    }
 
-   public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
+   public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
       int magicNumber = input.readUnsignedByte();
       Map subject = null;
       switch (magicNumber) {

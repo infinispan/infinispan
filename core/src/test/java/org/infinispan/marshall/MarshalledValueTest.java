@@ -19,6 +19,8 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.ObjectDuplicator;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -428,6 +430,7 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       int i;
       boolean b;
       static int serializationCount, deserializationCount;
+      final Log log = LogFactory.getLog(Pojo.class);
 
       public boolean equals(Object o) {
          if (this == o) return true;
@@ -452,6 +455,7 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
          out.writeInt(i);
          out.writeBoolean(b);
          serializationCount++;
+         log.trace("serializationCount=" + serializationCount);
       }
 
       public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {

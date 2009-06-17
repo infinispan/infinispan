@@ -22,6 +22,8 @@
 package org.infinispan.marshall.jboss.externalizers;
 
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 import net.jcip.annotations.Immutable;
 
@@ -29,8 +31,6 @@ import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.container.entries.TransientCacheValue;
 import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.marshall.jboss.Externalizer;
-import org.jboss.marshalling.Marshaller;
-import org.jboss.marshalling.Unmarshaller;
 
 /**
  * TransientCacheValueExternalizer.
@@ -41,14 +41,14 @@ import org.jboss.marshalling.Unmarshaller;
 @Immutable
 public class TransientCacheValueExternalizer implements Externalizer {
 
-   public void writeObject(Marshaller output, Object subject) throws IOException {
+   public void writeObject(ObjectOutput output, Object subject) throws IOException {
       TransientCacheValue icv = (TransientCacheValue) subject;
       output.writeObject(icv.getValue());
       UnsignedNumeric.writeUnsignedLong(output, icv.getLastUsed());
       output.writeLong(icv.getMaxIdle()); // could be negative so should not use unsigned longs
    }
 
-   public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
+   public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
       Object v = input.readObject();
       long lastUsed = UnsignedNumeric.readUnsignedLong(input);
       Long maxIdle = input.readLong();

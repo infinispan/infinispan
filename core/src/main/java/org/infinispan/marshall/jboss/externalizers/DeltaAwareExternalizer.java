@@ -24,10 +24,10 @@ package org.infinispan.marshall.jboss.externalizers;
 import net.jcip.annotations.Immutable;
 import org.infinispan.atomic.DeltaAware;
 import org.infinispan.marshall.jboss.Externalizer;
-import org.jboss.marshalling.Marshaller;
-import org.jboss.marshalling.Unmarshaller;
 
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
  * DeltaAwareExternalizer.
@@ -38,12 +38,12 @@ import java.io.IOException;
 @Immutable
 public class DeltaAwareExternalizer implements Externalizer {
 
-   public void writeObject(Marshaller output, Object subject) throws IOException {
+   public void writeObject(ObjectOutput output, Object subject) throws IOException {
       DeltaAware dw = (DeltaAware) subject;
       output.writeObject(dw.delta());      
    }
 
-   public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
+   public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
       return input.readObject();
    }
 

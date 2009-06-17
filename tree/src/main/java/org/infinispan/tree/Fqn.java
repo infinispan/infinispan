@@ -25,11 +25,6 @@ package org.infinispan.tree;
 import net.jcip.annotations.Immutable;
 import org.infinispan.util.Immutables;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -80,7 +75,7 @@ import java.util.List;
  * @since 4.0
  */
 @Immutable
-public class Fqn implements Comparable<Fqn>, Externalizable {
+public class Fqn implements Comparable<Fqn> {
    /**
     * Separator between FQN elements.
     */
@@ -237,23 +232,6 @@ public class Fqn implements Comparable<Fqn>, Externalizable {
    }
 
    /**
-    * Retrieves an Fqn read from an object input stream, typically written to using {@link
-    * #writeExternal(java.io.ObjectOutput)}.
-    *
-    * @param in input stream
-    * @return an Fqn
-    * @throws IOException            in the event of a problem reading the stream
-    * @throws ClassNotFoundException in the event of classes that comprise the element list of this Fqn not being found
-    * @since 4.0
-    */
-   public static Fqn fromExternalStream(ObjectInput in) throws IOException, ClassNotFoundException {
-      Fqn f = new Fqn();
-      f.readExternal(in);
-      return f;
-   }
-
-
-   /**
     * Obtains an ancestor of the current Fqn.  Literally performs <code>elements.subList(0, generation)</code> such that
     * if <code> generation == Fqn.size() </code> then the return value is the Fqn itself (current generation), and if
     * <code> generation == Fqn.size() - 1 </code> then the return value is the same as <code> Fqn.getParent() </code>
@@ -352,20 +330,6 @@ public class Fqn implements Comparable<Fqn>, Externalizable {
       }
       return stringRepresentation;
    }
-
-   public void writeExternal(ObjectOutput out) throws IOException {
-      out.writeShort(size);
-      for (Object element : elements) {
-         out.writeObject(element);
-      }
-   }
-
-   public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-      size = in.readShort();
-      this.elements = new ArrayList(size);
-      for (int i = 0; i < size; i++) elements.add(in.readObject());
-   }
-
 
    /**
     * Returns true if this Fqn is child of parentFqn. Example usage:

@@ -24,10 +24,10 @@ package org.infinispan.marshall.jboss.externalizers;
 import org.infinispan.commands.RemoteCommandFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.marshall.jboss.Externalizer;
-import org.jboss.marshalling.Marshaller;
-import org.jboss.marshalling.Unmarshaller;
 
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
  * ReplicableCommandExternalizer.
@@ -42,7 +42,7 @@ public class ReplicableCommandExternalizer implements Externalizer {
       this.cmdFactory = cmdFactory;
    }
 
-   public void writeObject(Marshaller output, Object subject) throws IOException {
+   public void writeObject(ObjectOutput output, Object subject) throws IOException {
       ReplicableCommand command = (ReplicableCommand) subject;
       output.writeShort(command.getCommandId());
       Object[] args = command.getParameters();
@@ -53,7 +53,7 @@ public class ReplicableCommandExternalizer implements Externalizer {
       }
    }
 
-   public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
+   public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
       short methodId = input.readShort();
       byte numArgs = input.readByte();
       Object[] args = null;

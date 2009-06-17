@@ -26,10 +26,10 @@ package org.infinispan.marshall.jboss.externalizers;
 import org.infinispan.marshall.jboss.Externalizer;
 import org.infinispan.remoting.responses.ExtendedResponse;
 import org.infinispan.remoting.responses.Response;
-import org.jboss.marshalling.Marshaller;
-import org.jboss.marshalling.Unmarshaller;
 
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
  * ExtendedResponseExternalizer.
@@ -40,13 +40,13 @@ import java.io.IOException;
 @Immutable
 public class ExtendedResponseExternalizer implements Externalizer {
 
-   public void writeObject(Marshaller output, Object subject) throws IOException {
+   public void writeObject(ObjectOutput output, Object subject) throws IOException {
       ExtendedResponse er = (ExtendedResponse) subject;
       output.writeBoolean(er.isReplayIgnoredRequests());
       output.writeObject(er.getResponse());
    }
 
-   public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
+   public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
       boolean replayIgnoredRequests = input.readBoolean();
       Response response = (Response) input.readObject();
       return new ExtendedResponse(response, replayIgnoredRequests);

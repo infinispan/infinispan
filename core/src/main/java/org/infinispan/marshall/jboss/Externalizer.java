@@ -22,9 +22,8 @@
 package org.infinispan.marshall.jboss;
 
 import java.io.IOException;
-
-import org.jboss.marshalling.Unmarshaller;
-import org.jboss.marshalling.ObjectTable.Writer;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
  * Extended interface that extends capabilities of writing predefined objects 
@@ -42,16 +41,26 @@ import org.jboss.marshalling.ObjectTable.Writer;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public interface Externalizer extends Writer {
+public interface Externalizer {
+   
+   /**
+    * Write the predefined object reference to the stream.
+    *
+    * @param output the object output to write to
+    * @param object the object reference to write
+    * @throws IOException if an I/O error occurs
+    */
+   void writeObject(ObjectOutput output, Object object) throws IOException;
    
    /**
     * Read an instance from the stream.  The instance will have been written by the
     * {@link #writeObject(Object)} method.
     *
-    * @param unmarshaller the unmarshaller to read from
+    * @param input the object input to read from
     * @return the object instance
     * @throws IOException if an I/O error occurs
     * @throws ClassNotFoundException if a class could not be found
     */
-   Object readObject(Unmarshaller unmarshaller) throws IOException, ClassNotFoundException;
+   Object readObject(ObjectInput input) throws IOException, ClassNotFoundException;
+
 }

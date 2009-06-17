@@ -26,10 +26,10 @@ package org.infinispan.marshall.jboss.externalizers;
 import org.infinispan.marshall.jboss.Externalizer;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.jboss.marshalling.Marshaller;
-import org.jboss.marshalling.Unmarshaller;
 
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
  * GlobalTransactionExternalizer.
@@ -40,13 +40,13 @@ import java.io.IOException;
 @Immutable
 public class GlobalTransactionExternalizer implements Externalizer {
 
-   public void writeObject(Marshaller output, Object subject) throws IOException {
+   public void writeObject(ObjectOutput output, Object subject) throws IOException {
       GlobalTransaction gtx = (GlobalTransaction) subject;
       output.writeLong(gtx.getId());
       output.writeObject(gtx.getAddress());      
    }
 
-   public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
+   public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
       GlobalTransaction gtx = new GlobalTransaction();
       long id = input.readLong();
       Object address = input.readObject();

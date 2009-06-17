@@ -23,14 +23,14 @@ package org.infinispan.marshall.jboss.externalizers;
 
 import net.jcip.annotations.Immutable; 
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.marshall.jboss.MarshallUtil;
+import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.marshall.jboss.Externalizer;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.TransactionLog;
-import org.jboss.marshalling.Marshaller;
-import org.jboss.marshalling.Unmarshaller;
 
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
  * TransactionLogExternalizer.
@@ -41,18 +41,18 @@ import java.io.IOException;
 @Immutable
 public class TransactionLogExternalizer implements Externalizer {
 
-   public void writeObject(Marshaller output, Object subject) throws IOException {
+   public void writeObject(ObjectOutput output, Object subject) throws IOException {
       TransactionLog.LogEntry le = (TransactionLog.LogEntry) subject;
       output.writeObject(le.getTransaction());
       WriteCommand[] cmds = le.getModifications();
-      MarshallUtil.writeUnsignedInt(output, cmds.length);
+      UnsignedNumeric.writeUnsignedInt(output, cmds.length);
       for (WriteCommand c : cmds)
          output.writeObject(c);
    }
 
-   public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
+   public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
       GlobalTransaction gtx = (GlobalTransaction) input.readObject();
-      int numCommands = MarshallUtil.readUnsignedInt(input);
+      int numCommands = UnsignedNumeric.readUnsignedInt(input);
       WriteCommand[] cmds = new WriteCommand[numCommands];
       for (int i = 0; i < numCommands; i++) cmds[i] = (WriteCommand) input.readObject();
       return new TransactionLog.LogEntry(gtx, cmds);

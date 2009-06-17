@@ -24,10 +24,10 @@ package org.infinispan.marshall.jboss.externalizers;
 import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.marshall.MarshalledValue;
 import org.infinispan.marshall.jboss.Externalizer;
-import org.jboss.marshalling.Marshaller;
-import org.jboss.marshalling.Unmarshaller;
 
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
  * MarshalledValueExternalizer.
@@ -42,7 +42,7 @@ public class MarshalledValueExternalizer implements Externalizer {
       this.ispnMarshaller = ispnMarshaller;
    }
    
-   public void writeObject(Marshaller output, Object subject) throws IOException {
+   public void writeObject(ObjectOutput output, Object subject) throws IOException {
       MarshalledValue mv = ((MarshalledValue) subject);
       byte[] raw = mv.getRaw();
       UnsignedNumeric.writeUnsignedInt(output, raw.length);
@@ -50,7 +50,7 @@ public class MarshalledValueExternalizer implements Externalizer {
       output.writeInt(mv.hashCode());      
    }
 
-   public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
+   public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
       int length = UnsignedNumeric.readUnsignedInt(input);
       byte[] raw = new byte[length];
       input.readFully(raw);

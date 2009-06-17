@@ -22,12 +22,14 @@
 package org.infinispan.marshall.jboss.externalizers;
 
 import net.jcip.annotations.Immutable;
+
+import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.marshall.jboss.MarshallUtil;
 import org.infinispan.marshall.jboss.Externalizer;
-import org.jboss.marshalling.Marshaller;
-import org.jboss.marshalling.Unmarshaller;
 
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -39,15 +41,13 @@ import java.util.Collection;
  */
 @Immutable
 public class ArrayListExternalizer implements Externalizer {
-   /** The serialVersionUID */
-   private static final long serialVersionUID = 589638638644295615L;
 
-   public void writeObject(Marshaller output, Object subject) throws IOException {
+   public void writeObject(ObjectOutput output, Object subject) throws IOException {
       MarshallUtil.marshallCollection((Collection) subject, output);
    }
 
-   public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
-      int size = MarshallUtil.readUnsignedInt(input);
+   public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      int size = UnsignedNumeric.readUnsignedInt(input);
       ArrayList l = new ArrayList(size);
       for (int i = 0; i < size; i++) l.add(input.readObject());
       return l;

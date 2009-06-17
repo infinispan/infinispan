@@ -19,35 +19,55 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.marshall.jboss.externalizers;
+package org.infinispan.tree.marshall.exts;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import static org.infinispan.tree.NodeKey.Type.*;
 
-import net.jcip.annotations.Immutable;
-
-import org.infinispan.container.entries.ImmortalCacheValue;
-import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.marshall.jboss.Externalizer;
+import org.infinispan.tree.Fqn;
+import org.infinispan.tree.NodeKey;
 
 /**
- * ImmortalCacheValueExternalizer.
+ * NodeKeyExternalizer.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-@Immutable
-public class ImmortalCacheValueExternalizer implements Externalizer {
+public class NodeKeyExternalizer implements Externalizer {
+   private static final byte DATA_BYTE = 1;
+   private static final byte STRUCTURE_BYTE = 2;
 
-   public void writeObject(ObjectOutput output, Object subject) throws IOException {
-      ImmortalCacheValue icv = (ImmortalCacheValue) subject;
-      output.writeObject(icv.getValue());      
+   public void writeObject(ObjectOutput output, Object object) throws IOException {
+      NodeKey key = (NodeKey) object;
+      output.writeObject(key.getFqn());
+      byte type = 0;
+      switch (key.getContents()) {
+         case DATA:
+            type = DATA_BYTE;
+            break;
+         case STRUCTURE:
+            type = STRUCTURE_BYTE;
+            break;
+      }
+      output.write(type);
    }
-
+   
    public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-      Object v = input.readObject();
-      return InternalEntryFactory.createValue(v);
+      Fqn fqn = (Fqn) input.readObject();
+      int typeb = input.readUnsignedByte();
+      NodeKey.Type type = null; 
+      switch (typeb) {
+         case DATA_BYTE:
+            type = DATA;
+            break;
+         case STRUCTURE_BYTE:
+            type = STRUCTURE;
+            break;
+      }
+      return new NodeKey(fqn, type);
    }
 
 }

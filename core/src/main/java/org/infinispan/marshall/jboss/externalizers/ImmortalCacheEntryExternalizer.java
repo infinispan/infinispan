@@ -22,14 +22,14 @@
 package org.infinispan.marshall.jboss.externalizers;
 
 import  java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 import net.jcip.annotations.Immutable;
 
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.marshall.jboss.Externalizer;
-import org.jboss.marshalling.Marshaller;
-import org.jboss.marshalling.Unmarshaller;
 
 /**
  * ImmortalCacheEntryExternalizer.
@@ -40,13 +40,13 @@ import org.jboss.marshalling.Unmarshaller;
 @Immutable
 public class ImmortalCacheEntryExternalizer implements Externalizer {
    
-   public void writeObject(Marshaller output, Object subject) throws IOException {
+   public void writeObject(ObjectOutput output, Object subject) throws IOException {
       ImmortalCacheEntry ice = (ImmortalCacheEntry) subject;
       output.writeObject(ice.getKey());
       output.writeObject(ice.getValue());      
    }
 
-   public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
+   public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
       Object k = input.readObject();
       Object v = input.readObject();
       return InternalEntryFactory.create(k, v);

@@ -25,10 +25,9 @@ import net.jcip .annotations.Immutable;
 
 import org.infinispan.marshall.jboss.Externalizer;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
-import org.jboss.marshalling.Marshaller;
-import org.jboss.marshalling.Unmarshaller;
-
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
  * JGroupsAddressExternalizer.
@@ -39,12 +38,12 @@ import java.io.IOException;
 @Immutable
 public class JGroupsAddressExternalizer implements Externalizer {
 
-   public void writeObject(Marshaller output, Object subject) throws IOException {
+   public void writeObject(ObjectOutput output, Object subject) throws IOException {
       JGroupsAddress address = (JGroupsAddress) subject;
       output.writeObject(address.getJGroupsAddress());
    }
 
-   public Object readObject(Unmarshaller unmarshaller) throws IOException, ClassNotFoundException {
+   public Object readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
       JGroupsAddress address = new JGroupsAddress();
       address.setJGroupsAddress((org.jgroups.Address) unmarshaller.readObject());
       return address;

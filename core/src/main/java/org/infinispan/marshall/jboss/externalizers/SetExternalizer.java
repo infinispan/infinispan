@@ -22,13 +22,15 @@
 package org.infinispan.marshall.jboss.externalizers;
 
 import net.jcip.annotations.Immutable;
+
+import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.marshall.jboss.MarshallUtil;
 import org.infinispan.marshall.jboss.Externalizer;
-import org.jboss.marshalling.Marshaller;
-import org.jboss.marshalling.Unmarshaller;
 import org.jboss.marshalling.util.IdentityIntMap;
 
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -51,13 +53,13 @@ public class SetExternalizer implements Externalizer {
       numbers.put(TreeSet.class, TREESET);
    }
 
-   public void writeObject(Marshaller output, Object subject) throws IOException {
+   public void writeObject(ObjectOutput output, Object subject) throws IOException {
       int number = numbers.get(subject.getClass(), -1);
       output.writeByte(number);
       MarshallUtil.marshallCollection((Collection) subject, output);
    }
 
-   public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
+   public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
       int magicNumber = input.readUnsignedByte();
       Set subject = null;
       switch (magicNumber) {
@@ -68,7 +70,7 @@ public class SetExternalizer implements Externalizer {
             subject = new TreeSet();
             break;
       }
-      int size = MarshallUtil.readUnsignedInt(input);
+      int size = UnsignedNumeric.readUnsignedInt(input);
       for (int i = 0; i < size; i++) subject.add(input.readObject());
       return subject;
    }

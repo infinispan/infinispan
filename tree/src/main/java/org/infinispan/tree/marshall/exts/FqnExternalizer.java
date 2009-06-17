@@ -19,35 +19,36 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.marshall.jboss.externalizers;
+package org.infinispan.tree.marshall.exts;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.List;
 
-import net.jcip.annotations.Immutable;
-
-import org.infinispan.container.entries.ImmortalCacheValue;
-import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.marshall.jboss.Externalizer;
+import org.infinispan.tree.Fqn;
 
 /**
- * ImmortalCacheValueExternalizer.
+ * FqnExternalizer.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-@Immutable
-public class ImmortalCacheValueExternalizer implements Externalizer {
+public class FqnExternalizer implements Externalizer {
 
-   public void writeObject(ObjectOutput output, Object subject) throws IOException {
-      ImmortalCacheValue icv = (ImmortalCacheValue) subject;
-      output.writeObject(icv.getValue());      
+   public void writeObject(ObjectOutput output, Object object) throws IOException {
+      Fqn fqn = (Fqn) object;
+      output.writeShort(fqn.size());
+      for (Object element : fqn.peekElements()) output.writeObject(element);
    }
 
    public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-      Object v = input.readObject();
-      return InternalEntryFactory.createValue(v);
+      short size = input.readShort();
+      List elements = new ArrayList(size);
+      for (int i = 0; i < size; i++) elements.add(input.readObject());
+      return Fqn.fromList(elements);
    }
 
 }

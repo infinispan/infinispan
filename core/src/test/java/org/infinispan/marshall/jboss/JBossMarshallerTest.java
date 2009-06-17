@@ -46,12 +46,9 @@ import org.infinispan.container.entries.TransientCacheEntry;
 import org.infinispan.container.entries.TransientCacheValue;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheValue;
-import org.infinispan.io.ExposedByteArrayOutputStream;
 import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.marshall.MarshalledValue;
-import org.infinispan.marshall.MarshalledValueTest;
 import org.infinispan.marshall.VersionAwareMarshaller;
-import org.infinispan.marshall.MarshalledValueTest.Pojo;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.ExtendedResponse;
 import org.infinispan.remoting.responses.RequestIgnoredResponse;
@@ -70,7 +67,8 @@ import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
-import java.io.ByteArrayInputStream;
+import java.io.Externalizable;
+import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.*;
@@ -167,12 +165,12 @@ public class JBossMarshallerTest {
    }
    
    public void testMarshalledValueGetMarshalling() throws Exception {
-      MarshalledValueTest.Pojo ext = new MarshalledValueTest.Pojo();
+      Pojo ext = new Pojo();
       MarshalledValue mv = new MarshalledValue(ext, true, marshaller);
       byte[] bytes = marshaller.objectToByteBuffer(mv);
       MarshalledValue rmv = (MarshalledValue) marshaller.objectFromByteBuffer(bytes);
       assert rmv.equals(mv) : "Writen[" + mv + "] and read[" + rmv + "] objects should be the same";
-      assert rmv.get() instanceof Pojo;
+      assert rmv.get() instanceof Pojo;         
    }
 
    public void testSingletonListMarshalling() throws Exception {
@@ -350,4 +348,40 @@ public class JBossMarshallerTest {
       assert readObj.equals(writeObj) : "Writen[" + writeObj + "] and read[" + readObj + "] objects should be the same";
    }
 
+   static class Pojo implements Externalizable {
+      int i;
+      boolean b;
+      static int serializationCount, deserializationCount;
+
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (o == null || getClass() != o.getClass()) return false;
+
+         Pojo pojo = (Pojo) o;
+
+         if (b != pojo.b) return false;
+         if (i != pojo.i) return false;
+
+         return true;
+      }
+
+      public int hashCode() {
+         int result;
+         result = i;
+         result = 31 * result + (b ? 1 : 0);
+         return result;
+      }
+
+      public void writeExternal(ObjectOutput out) throws IOException {
+         out.writeInt(i);
+         out.writeBoolean(b);
+         serializationCount++;
+      }
+
+      public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+         i = in.readInt();
+         b = in.readBoolean();
+         deserializationCount++;
+      }
+   }
 }

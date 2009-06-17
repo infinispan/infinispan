@@ -21,8 +21,6 @@
  */
 package org.infinispan.marshall.jboss;
 
-import net.jcip.annotations.Immutable;
-
 import org.infinispan.CacheException;
 import org.infinispan.atomic.AtomicHashMap;
 import org.infinispan.commands.LockControlCommand;
@@ -87,11 +85,15 @@ import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.FastCopyHashMap;
 import org.infinispan.util.Util;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.jboss.marshalling.Marshaller;
 import org.jboss.marshalling.ObjectTable;
 import org.jboss.marshalling.Unmarshaller;
 
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -113,6 +115,7 @@ import java.util.TreeSet;
  */
 @Scope(Scopes.GLOBAL)
 public class ConstantObjectTable implements ObjectTable {
+   private static final Log log = LogFactory.getLog(ConstantObjectTable.class);
    private static final int CAPACITY = 50;
    private static final Map<String, String> EXTERNALIZERS = new HashMap<String, String>(CAPACITY);
 
@@ -161,7 +164,10 @@ public class ConstantObjectTable implements ObjectTable {
       EXTERNALIZERS.put(TransientCacheValue.class.getName(), TransientCacheValueExternalizer.class.getName());
       EXTERNALIZERS.put(TransientMortalCacheValue.class.getName(), TransientMortalCacheValueExternalizer.class.getName());
       
-      EXTERNALIZERS.put(Bucket.class.getName(), BucketExternalizer.class.getName());      
+      EXTERNALIZERS.put(Bucket.class.getName(), BucketExternalizer.class.getName());
+      
+      EXTERNALIZERS.put("org.infinispan.tree.NodeKey", "org.infinispan.tree.marshall.exts.NodeKeyExternalizer");
+      EXTERNALIZERS.put("org.infinispan.tree.Fqn", "org.infinispan.tree.marshall.exts.FqnExternalizer");
    }
 
    /** Contains list of singleton objects written such as constant objects, 
@@ -174,36 +180,36 @@ public class ConstantObjectTable implements ObjectTable {
     * object externalizer classes to their Externalizer instances. 
     * Do not use this map for storing Externalizer implementations for user 
     * classes. For these, please use weak key based maps, i.e WeakHashMap */
-   private final Map<Class<?>, Writer> writers = new IdentityHashMap<Class<?>, Writer>(CAPACITY);
+   private final Map<Class<?>, ExternalizerAdapter> writers = new IdentityHashMap<Class<?>, ExternalizerAdapter>(CAPACITY);
 
    private byte index;
 
    public void init(RemoteCommandFactory cmdFactory, org.infinispan.marshall.Marshaller ispnMarshaller) {
       // Init singletons
       objects.add(RequestIgnoredResponse.INSTANCE);
-      writers.put(RequestIgnoredResponse.class, new InstanceWriter(index++));
+      writers.put(RequestIgnoredResponse.class, new ExternalizerAdapter(index++, new InstanceWriter()));
       objects.add(UnsuccessfulResponse.INSTANCE);
-      writers.put(UnsuccessfulResponse.class, new InstanceWriter(index++));
+      writers.put(UnsuccessfulResponse.class, new ExternalizerAdapter(index++, new InstanceWriter()));
       
       try {
          for (Map.Entry<String, String> entry : EXTERNALIZERS.entrySet()) {
-            Class typeClazz = Util.loadClass(entry.getKey());
-            Externalizer delegate = (Externalizer) Util.getInstance(entry.getValue());
-            if (delegate instanceof ReplicableCommandExternalizer) {
-               ((ReplicableCommandExternalizer) delegate).init(cmdFactory);
+            try {
+               Class typeClazz = Util.loadClass(entry.getKey());
+               Externalizer delegate = (Externalizer) Util.getInstance(entry.getValue());
+               if (delegate instanceof ReplicableCommandExternalizer) {
+                  ((ReplicableCommandExternalizer) delegate).init(cmdFactory);
+               }
+               if (delegate instanceof MarshalledValueExternalizer) {
+                  ((MarshalledValueExternalizer) delegate).init(ispnMarshaller);
+               }
+               ExternalizerAdapter rwrt = new ExternalizerAdapter(index++, delegate);
+               objects.add(rwrt);
+               writers.put(typeClazz, rwrt);               
+            } catch (ClassNotFoundException e) {
+               log.debug("Unable to load class" + e.getMessage());
             }
-            if (delegate instanceof MarshalledValueExternalizer) {
-               ((MarshalledValueExternalizer) delegate).init(ispnMarshaller);
-            }
-            Externalizer rwrt = new DelegatingReadWriter(index++, delegate);
-            objects.add(rwrt);
-            writers.put(typeClazz, rwrt);
          }
          
-      } catch (IOException e) {
-         throw new CacheException("Unable to open load magicnumbers.properties", e);
-      } catch (ClassNotFoundException e) {
-         throw new CacheException("Unable to load one of the classes defined in the magicnumbers.properties", e);
       } catch (Exception e) {
          throw new CacheException("Unable to instantiate Externalizer class", e);
       }
@@ -220,42 +226,210 @@ public class ConstantObjectTable implements ObjectTable {
 
    public Object readObject(Unmarshaller unmarshaller) throws IOException, ClassNotFoundException {
       Object o = objects.get(unmarshaller.readUnsignedByte());
-      if (o instanceof Externalizer) {
-         return ((Externalizer) o).readObject(unmarshaller);
+      if (o instanceof ExternalizerAdapter) {
+         return ((ExternalizerAdapter) o).readObject(unmarshaller);
       }
       return o;
    }
    
-   @Immutable
-   static class InstanceWriter implements Writer {
-      private final byte id;
-
-      InstanceWriter(byte objectId) {
-         this.id = objectId;
+   static class InstanceWriter implements Externalizer {
+      public void writeObject(ObjectOutput output, Object object) throws IOException {
+         // no-op
       }
-
-      public void writeObject(Marshaller marshaller, Object object) throws IOException {
-         marshaller.write(id);
+      
+      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         throw new CacheException("Read on constant instances shouldn't be called");
       }
-   }   
+   }
    
-   @Immutable
-   static class DelegatingReadWriter implements Externalizer {
-      private final byte id;
-      private final Externalizer delegate;
-
-      DelegatingReadWriter(byte objectId, Externalizer delegate) {
+   class ExternalizerAdapter implements Writer {
+      final byte id;
+      final Externalizer externalizer;
+      
+      ExternalizerAdapter(byte objectId, Externalizer externalizer) {
          this.id = objectId;
-         this.delegate = delegate;
+         this.externalizer = externalizer;
+      }
+      
+      public Object readObject(Unmarshaller unmarshaller) throws IOException, ClassNotFoundException {
+         return externalizer.readObject(new ObjectInputAdapter(unmarshaller));
       }
 
       public void writeObject(Marshaller marshaller, Object object) throws IOException {
          marshaller.write(id);
-         delegate.writeObject(marshaller, object);
+         externalizer.writeObject(new ObjectOutputAdapter(marshaller), object);
+      }
+   }
+
+   static class ObjectInputAdapter implements ObjectInput {
+      final ObjectInput input;
+      
+      ObjectInputAdapter(ObjectInput input) {
+         this.input = input;
       }
 
-      public Object readObject(Unmarshaller unmarshaller) throws IOException, ClassNotFoundException {
-         return delegate.readObject(unmarshaller);
+      public int available() throws IOException {
+         return input.available();
       }
-   }   
+
+      public void close() throws IOException {
+         input.close();
+      }
+
+      public int read() throws IOException {
+         return input.read();
+      }
+
+      public int read(byte[] b) throws IOException {
+         return input.read(b);
+      }
+
+      public int read(byte[] b, int off, int len) throws IOException {
+         return input.read(b, off, len);
+      }
+
+      public Object readObject() throws ClassNotFoundException, IOException {
+         return input.readObject();
+      }
+
+      public long skip(long n) throws IOException {
+         return input.skip(n);
+      }
+
+      public boolean readBoolean() throws IOException {
+         return input.readBoolean();
+      }
+
+      public byte readByte() throws IOException {
+         return input.readByte();
+      }
+
+      public char readChar() throws IOException {
+         return input.readChar();
+      }
+
+      public double readDouble() throws IOException {
+         return input.readDouble();
+      }
+
+      public float readFloat() throws IOException {
+         return input.readFloat();
+      }
+
+      public void readFully(byte[] b) throws IOException {
+         input.readFully(b);
+      }
+
+      public void readFully(byte[] b, int off, int len) throws IOException {
+         input.readFully(b, off, len);
+      }
+
+      public int readInt() throws IOException {
+         return input.readInt();
+      }
+
+      public String readLine() throws IOException {
+         return input.readLine();
+      }
+
+      public long readLong() throws IOException {
+         return input.readLong();
+      }
+
+      public short readShort() throws IOException {
+         return input.readShort();
+      }
+
+      public String readUTF() throws IOException {
+         return input.readUTF();
+      }
+
+      public int readUnsignedByte() throws IOException {
+         return input.readUnsignedByte();
+      }
+
+      public int readUnsignedShort() throws IOException {
+         return input.readUnsignedShort();
+      }
+
+      public int skipBytes(int n) throws IOException {
+         return input.skipBytes(n);
+      }
+   }
+   
+   static class ObjectOutputAdapter implements ObjectOutput {
+      final ObjectOutput output;
+      
+      ObjectOutputAdapter(ObjectOutput output) {
+         this.output = output;
+      }
+
+      public void close() throws IOException {
+         output.close();
+      }
+
+      public void flush() throws IOException {
+         output.flush();
+      }
+
+      public void write(int b) throws IOException {
+         output.write((int)b);
+      }
+
+      public void write(byte[] b) throws IOException {
+         output.write(b);
+      }
+
+      public void write(byte[] b, int off, int len) throws IOException {
+         output.write(b, off, len);      
+      }
+
+      public void writeObject(Object obj) throws IOException {
+         output.writeObject(obj);
+      }
+
+      public void writeBoolean(boolean v) throws IOException {
+         output.writeBoolean(v);
+      }
+
+      public void writeByte(int v) throws IOException {
+         output.writeByte(v);
+      }
+
+      public void writeBytes(String s) throws IOException {
+         output.writeBytes(s);
+      }
+
+      public void writeChar(int v) throws IOException {
+         output.writeChar(v);      
+      }
+
+      public void writeChars(String s) throws IOException {
+         output.writeChars(s);
+      }
+
+      public void writeDouble(double v) throws IOException {
+         output.writeDouble(v);
+      }
+
+      public void writeFloat(float v) throws IOException {
+         output.writeFloat(v);      
+      }
+
+      public void writeInt(int v) throws IOException {
+         output.writeInt(v);
+      }
+
+      public void writeLong(long v) throws IOException {
+         output.writeLong(v);      
+      }
+
+      public void writeShort(int v) throws IOException {
+         output.writeShort(v);
+      }
+
+      public void writeUTF(String str) throws IOException {
+         output.writeUTF(str);      
+      }
+   }
 }
