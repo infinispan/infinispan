@@ -26,7 +26,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import static org.infinispan.tree.NodeKey.Type.*;
 
-import org.infinispan.marshall.jboss.Externalizer;
+import org.infinispan.marshall.Externalizer;
 import org.infinispan.tree.Fqn;
 import org.infinispan.tree.NodeKey;
 
