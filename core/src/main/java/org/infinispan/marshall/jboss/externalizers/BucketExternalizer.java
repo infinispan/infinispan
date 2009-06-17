@@ -41,8 +41,6 @@ import org.jboss.marshalling.Unmarshaller;
  */
 @Immutable
 public class BucketExternalizer implements Externalizer {
-   /** The serialVersionUID */
-   private static final long serialVersionUID = -515803326753484284L;
 
    public void writeObject(Marshaller output, Object subject) throws IOException {
       Bucket b = (Bucket) subject;

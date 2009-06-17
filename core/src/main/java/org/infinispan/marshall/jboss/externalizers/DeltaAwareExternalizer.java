@@ -37,8 +37,6 @@ import java.io.IOException;
  */
 @Immutable
 public class DeltaAwareExternalizer implements Externalizer {
-   /** The serialVersionUID */
-   private static final long serialVersionUID = -1635913024455984627L;
 
    public void writeObject(Marshaller output, Object subject) throws IOException {
       DeltaAware dw = (DeltaAware) subject;

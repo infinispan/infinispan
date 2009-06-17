@@ -40,8 +40,6 @@ import org.jboss.marshalling.Unmarshaller;
  */
 @Immutable
 public class MortalCacheEntryExternalizer implements Externalizer {
-   /** The serialVersionUID */
-   private static final long serialVersionUID = -6500630714670073716L;
 
    public void writeObject(Marshaller output, Object subject) throws IOException {
       MortalCacheEntry ice = (MortalCacheEntry) subject;

@@ -39,8 +39,6 @@ import java.io.IOException;
  */
 @Immutable
 public class ExtendedResponseExternalizer implements Externalizer {
-   /** The serialVersionUID */
-   private static final long serialVersionUID = 1529506931234856884L;
 
    public void writeObject(Marshaller output, Object subject) throws IOException {
       ExtendedResponse er = (ExtendedResponse) subject;

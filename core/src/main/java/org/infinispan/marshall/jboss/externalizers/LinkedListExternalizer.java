@@ -39,8 +39,6 @@ import java.util.LinkedList;
  */
 @Immutable
 public class LinkedListExternalizer implements Externalizer {
-   /** The serialVersionUID */
-   private static final long serialVersionUID = -3222803557498456230L;
 
    public void writeObject(Marshaller output, Object subject) throws IOException {
       MarshallUtil.marshallCollection((Collection) subject, output);

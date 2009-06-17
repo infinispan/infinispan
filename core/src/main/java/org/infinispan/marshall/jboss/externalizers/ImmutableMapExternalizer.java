@@ -40,8 +40,6 @@ import java.util.Map;
  */
 @Immutable
 public class ImmutableMapExternalizer implements Externalizer {
-   /** The serialVersionUID */
-   private static final long serialVersionUID = -3592193723750924806L;
 
    public void writeObject(Marshaller output, Object subject) throws IOException {
       MarshallUtil.marshallMap((Map) subject, output);      

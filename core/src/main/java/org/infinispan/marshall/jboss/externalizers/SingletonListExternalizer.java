@@ -39,8 +39,6 @@ import java.util.List;
  */
 @Immutable
 public class SingletonListExternalizer implements Externalizer {
-   /** The serialVersionUID */
-   private static final long serialVersionUID = -714785461531351642L;
 
    public void writeObject(Marshaller output, Object subject) throws IOException {
       output.writeObject(((List) subject).get(0));

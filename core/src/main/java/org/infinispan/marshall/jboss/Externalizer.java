@@ -29,28 +29,15 @@ import org.jboss.marshalling.ObjectTable.Writer;
 /**
  * Extended interface that extends capabilities of writing predefined objects 
  * with the possibility of reading them. Any new externalizer implementations
- * should implement this interface. 
- * 
- * Optionally, Externalizer implementations should implement 
- * {@code ClassTable.ClassReadWritable} when they want to add class information to the 
- * marshalled payload. This is useful in cases where ReadWriter implementations
- * will create, upon read, new instances using reflection.
+ * should implement this interface. Implementations are free to write class 
+ * information to the wire as they wish. See {@link ReplicableCommandExternalizer} 
+ * for an such example.
  * 
  * To add a new non-user Externalizer, follow these steps:
  * 
  * 1. Create an implementation of Externalizer.
  * 
  * 2. Add Class to Externalizer mapping to ConstantObjectTable.EXTERNALIZERS
- * 
- * 3. (Optional) If Externalizer implementation instantiates instances using reflection, 
- * like ReplicableCommandExternalizer, you need to do these further steps on top:
- * 
- * 3.1. You need to write class information to the stream and read it when unmarshalling
- * so that this information can be using during reflection. So, Externalizer implementations 
- * need to implement ClassExternalizer.ClassWritable so that the corresponding ClassExternalizer 
- * is injected.
- * 
- * 3.2 Add Externalizer implementation to the NumberClassExternalizer.MAGIC_NUMBERS list.
  * 
  * @author Galder Zamarreño
  * @since 4.0

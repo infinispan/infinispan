@@ -38,8 +38,6 @@ import java.io.IOException;
  */
 @Immutable
 public class JGroupsAddressExternalizer implements Externalizer {
-   /** The serialVersionUID */
-   private static final long serialVersionUID = 2400716389425727329L;
 
    public void writeObject(Marshaller output, Object subject) throws IOException {
       JGroupsAddress address = (JGroupsAddress) subject;

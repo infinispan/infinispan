@@ -39,8 +39,6 @@ import org.jboss.marshalling.Unmarshaller;
  */
 @Immutable
 public class ImmortalCacheValueExternalizer implements Externalizer {
-   /** The serialVersionUID */
-   private static final long serialVersionUID = 1196375204861850495L;
 
    public void writeObject(Marshaller output, Object subject) throws IOException {
       ImmortalCacheValue icv = (ImmortalCacheValue) subject;

@@ -23,6 +23,8 @@ package org.infinispan.marshall.jboss.externalizers;
 
 import java.io.IOException;
 
+import net.jcip.annotations.Immutable;
+
 import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.infinispan.io.UnsignedNumeric;
@@ -36,9 +38,8 @@ import org.jboss.marshalling.Unmarshaller;
  * @author Galder Zamarreño
  * @since 4.0
  */
+@Immutable
 public class TransientMortalCacheEntryExternalizer implements Externalizer {
-   /** The serialVersionUID */
-   private static final long serialVersionUID = -1076893995615398371L;
 
    public void writeObject(Marshaller output, Object subject) throws IOException {
       TransientMortalCacheEntry ice = (TransientMortalCacheEntry) subject;

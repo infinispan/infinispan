@@ -39,8 +39,6 @@ import java.io.IOException;
  */
 @Immutable
 public class GlobalTransactionExternalizer implements Externalizer {
-   /** The serialVersionUID */
-   private static final long serialVersionUID = -8677909497367726531L;
 
    public void writeObject(Marshaller output, Object subject) throws IOException {
       GlobalTransaction gtx = (GlobalTransaction) subject;

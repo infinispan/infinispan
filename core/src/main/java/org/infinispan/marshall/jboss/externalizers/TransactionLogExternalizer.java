@@ -40,8 +40,6 @@ import java.io.IOException;
  */
 @Immutable
 public class TransactionLogExternalizer implements Externalizer {
-   /** The serialVersionUID */
-   private static final long serialVersionUID = -7341096933735222157L;
 
    public void writeObject(Marshaller output, Object subject) throws IOException {
       TransactionLog.LogEntry le = (TransactionLog.LogEntry) subject;
