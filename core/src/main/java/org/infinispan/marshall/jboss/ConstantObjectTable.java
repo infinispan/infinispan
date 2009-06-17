@@ -51,6 +51,7 @@ import org.infinispan.container.entries.TransientMortalCacheValue;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.loaders.bucket.Bucket;
+import org.infinispan.marshall.Externalizer;
 import org.infinispan.marshall.MarshalledValue;
 import org.infinispan.marshall.exts.ArrayListExternalizer;
 import org.infinispan.marshall.exts.BucketExternalizer;

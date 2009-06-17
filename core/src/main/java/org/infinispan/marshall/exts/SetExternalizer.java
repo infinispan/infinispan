@@ -24,8 +24,8 @@ package org.infinispan.marshall.exts;
 import net.jcip.annotations.Immutable;
 
 import org.infinispan.io.UnsignedNumeric;
-import org.infinispan.marshall.jboss.MarshallUtil;
-import org.infinispan.marshall.jboss.Externalizer;
+import org.infinispan.marshall.Externalizer;
+import org.infinispan.marshall.MarshallUtil;
 import org.jboss.marshalling.util.IdentityIntMap;
 
 import java.io.IOException;

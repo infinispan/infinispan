@@ -28,7 +28,7 @@ import java.io.ObjectOutput;
 import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.container.entries.MortalCacheValue;
 import org.infinispan.io.UnsignedNumeric;
-import org.infinispan.marshall.jboss.Externalizer;
+import org.infinispan.marshall.Externalizer;
 
 /**
  * MortalCacheValueExternalizer.

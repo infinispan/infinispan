@@ -31,7 +31,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 
 import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.loaders.bucket.Bucket;
-import org.infinispan.marshall.jboss.Externalizer;
+import org.infinispan.marshall.Externalizer;
 
 /**
  * BucketExternalizer.

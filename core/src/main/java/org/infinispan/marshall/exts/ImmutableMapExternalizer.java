@@ -22,8 +22,9 @@
 package org.infinispan.marshall.exts;
 
 import net.jcip.annotations.Immutable;
-import org.infinispan.marshall.jboss.MarshallUtil;
-import org.infinispan.marshall.jboss.Externalizer;
+
+import org.infinispan.marshall.Externalizer;
+import org.infinispan.marshall.MarshallUtil;
 import org.infinispan.util.Immutables;
 
 import java.io.IOException;

@@ -30,7 +30,7 @@ import net.jcip.annotations.Immutable;
 import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.infinispan.io.UnsignedNumeric;
-import org.infinispan.marshall.jboss.Externalizer;
+import org.infinispan.marshall.Externalizer;
 
 /**
  * TransientMortalCacheEntryExternalizer.

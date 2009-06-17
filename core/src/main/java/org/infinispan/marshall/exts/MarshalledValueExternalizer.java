@@ -22,8 +22,8 @@
 package org.infinispan.marshall.exts;
 
 import org.infinispan.io.UnsignedNumeric;
+import org.infinispan.marshall.Externalizer;
 import org.infinispan.marshall.MarshalledValue;
-import org.infinispan.marshall.jboss.Externalizer;
 
 import java.io.IOException;
 import java.io.ObjectInput;

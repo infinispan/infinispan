@@ -23,7 +23,7 @@ package org.infinispan.marshall.exts;
 
 import org.infinispan.commands.RemoteCommandFactory;
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.marshall.jboss.Externalizer;
+import org.infinispan.marshall.Externalizer;
 
 import java.io.IOException;
 import java.io.ObjectInput;

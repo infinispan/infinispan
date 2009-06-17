@@ -23,7 +23,7 @@ package org.infinispan.marshall.exts;
 
  import net.jcip.annotations.Immutable;
 
-import org.infinispan.marshall.jboss.Externalizer;
+import org.infinispan.marshall.Externalizer;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
 

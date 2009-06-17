@@ -21,8 +21,8 @@
  */
 package org.infinispan.marshall.exts;
 
-import org.infinispan.marshall.jboss.MarshallUtil;
-import org.infinispan.marshall.jboss.Externalizer;
+import org.infinispan.marshall.Externalizer;
+import org.infinispan.marshall.MarshallUtil;
 import org.infinispan.util.FastCopyHashMap;
 import org.jboss.marshalling.util.IdentityIntMap;
 
