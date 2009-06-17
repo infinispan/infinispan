@@ -21,7 +21,6 @@
  */
 package org.infinispan.interceptors;
 
-import org.infinispan.commands.LockControlCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -46,6 +45,7 @@ import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
  * @since 4.0
  */
 public class ReplicationInterceptor extends BaseRpcInterceptor {
+
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (!ctx.isInTxScope()) throw new IllegalStateException("This should not be possible!");
@@ -60,6 +60,7 @@ public class ReplicationInterceptor extends BaseRpcInterceptor {
       Object retVal = invokeNextInterceptor(ctx, command);
       if (ctx.isOriginLocal() && command.hasModifications()) {
          boolean async = configuration.getCacheMode() == Configuration.CacheMode.REPL_ASYNC;
+         boolean useDeadlockDetection = configuration.isUseDeadlockDetection();
          rpcManager.broadcastRpcCommand(command, !async, false);
       }
       return retVal;

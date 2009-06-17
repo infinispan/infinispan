@@ -43,6 +43,8 @@ import java.util.concurrent.TimeUnit;
 public class Configuration extends AbstractNamedCacheConfigurationBean {
    private static final long serialVersionUID = 5553791890144997466L;
 
+   private boolean useDeadlockDetection = false;
+
    // reference to a global configuration
    private GlobalConfiguration globalConfiguration;
 
@@ -85,6 +87,15 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    public long getRehashRpcTimeout() {
       return rehashRpcTimeout;
    }
+   
+   public boolean isUseDeadlockDetection() {
+      return useDeadlockDetection;
+   }
+
+   public void setUseDeadlockDetection(boolean useDeadlockDetection) {
+      this.useDeadlockDetection = useDeadlockDetection;
+   }
+   
 
    /**
     * Cache replication mode.
@@ -401,7 +412,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       testImmutability("syncRollbackPhase");
       this.syncRollbackPhase = syncRollbackPhase;
    }
-
+   
    public void setUseEagerLocking(boolean useEagerLocking) {
       testImmutability("useEagerLocking");
       this.useEagerLocking = useEagerLocking;
@@ -543,7 +554,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    public boolean isSyncRollbackPhase() {
       return syncRollbackPhase;
    }
-
+   
    public boolean isUseEagerLocking() {
       return useEagerLocking;
    }

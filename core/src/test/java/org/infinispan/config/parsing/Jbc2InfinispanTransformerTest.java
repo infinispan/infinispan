@@ -127,7 +127,7 @@ public class Jbc2InfinispanTransformerTest {
       return BASE_DIR + File.separator + s;
    }
 
-   static class TestClassLoader extends ClassLoader {
+   public static class TestClassLoader extends ClassLoader {
       private ClassLoader existing;
 
       TestClassLoader(ClassLoader existing) {

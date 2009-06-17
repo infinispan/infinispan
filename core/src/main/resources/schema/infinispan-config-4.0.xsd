@@ -203,7 +203,7 @@
 
    <xs:complexType name="loadersType">
       <xs:sequence>
-         <xs:element name="loader" maxOccurs="unbounded">
+         <xs:element name="loader" minOccurs="0" maxOccurs="unbounded">
             <xs:complexType>
                <xs:all>
                   <xs:element name="properties" type="tns:propertiesType"/>

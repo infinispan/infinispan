@@ -460,13 +460,13 @@
     <defaultCache
             maxElementsInMemory="10000"
             eternal="false"
-            timeToIdleSeconds="120"
-            timeToLiveSeconds="120"
+            timeToIdleSeconds="121"
+            timeToLiveSeconds="122"
             overflowToDisk="true"
             diskSpoolBufferSizeMB="30"
             maxElementsOnDisk="10000000"
             diskPersistent="false"
-            diskExpiryThreadIntervalSeconds="120"
+            diskExpiryThreadIntervalSeconds="119"
             memoryStoreEvictionPolicy="LRU"
             />
 
@@ -555,8 +555,8 @@
     <cache name="sampleDistributedCache2"
            maxElementsInMemory="10"
            eternal="false"
-           timeToIdleSeconds="100"
-           timeToLiveSeconds="100"
+           timeToIdleSeconds="102"
+           timeToLiveSeconds="101"
            overflowToDisk="false">
         <cacheEventListenerFactory
                 class="net.sf.ehcache.distribution.RMICacheReplicatorFactory"

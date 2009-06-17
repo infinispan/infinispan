@@ -168,9 +168,13 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
          }
       } else {
          CacheLoaderConfig cfg = clmConfig.getFirstCacheLoaderConfig();
-         tmpLoader = createCacheLoader(cfg, cache);
-         if (cfg instanceof CacheStoreConfig)
+         if (cfg != null) {
+            tmpLoader = createCacheLoader(cfg, cache);
+            if (cfg instanceof CacheStoreConfig)
             assertNotSingletonAndShared(((CacheStoreConfig) cfg));
+         } else {
+            return null;
+         }
       }
 
       // Update the config with those actually used by the loaders

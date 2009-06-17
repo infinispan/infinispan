@@ -11,15 +11,14 @@
       <xsl:element name="infinispan">
 
          <xsl:element name="global">
-            <xsl:element name="asyncListenerExecutor">
-               <xsl:attribute name="factory">org.infinispan.executors.DefaultExecutorFactory</xsl:attribute>
-               <property name="threadNamePrefix" value="AsyncListenerThread"/>
-            </xsl:element>
 
-            <xsl:element name="asyncSerializationExecutor">
-               <xsl:attribute name="factory">org.infinispan.executors.DefaultExecutorFactory</xsl:attribute>
-               <property name="threadNamePrefix" value="AsyncSerializationThread"/>
-            </xsl:element>
+            <asyncListenerExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
+               <property name="threadNamePrefix" value="AsyncTransportThread"/>
+            </asyncListenerExecutor>
+
+            <asyncTransportExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
+               <property name="threadNamePrefix" value="AsyncListenerThread"/>
+            </asyncTransportExecutor>
 
             <evictionScheduledExecutor factory="org.infinispan.executors.DefaultScheduledExecutorFactory">
                <property name="threadNamePrefix" value="EvictionThread"/>
@@ -29,117 +28,143 @@
                <property name="threadNamePrefix" value="ReplicationQueueThread"/>
             </replicationQueueScheduledExecutor>
 
-            <xsl:element name="globalJmxStatistics">
-               <xsl:attribute name="jmxDomain">infinispan</xsl:attribute>
-               <xsl:attribute name="enabled">
-                  <xsl:text>true</xsl:text>
-               </xsl:attribute>
-            </xsl:element>
+            <globalJmxStatistics jmxDomain="infinispan" enabled="true"/>
 
-            <xsl:element name="shutdown">
-               <xsl:attribute name="hookBehavior">
-                  <xsl:text>DEFAULT</xsl:text>
-               </xsl:attribute>
-            </xsl:element>
+            <shutdown hookBehavior="DEFAULT"/>
          </xsl:element>
 
-         <xsl:element name="default">
-            <xsl:if test="defaultCache[@memoryStoreEvictionPolicy]">
-               <xsl:if test="contains(defaultCache[@memoryStoreEvictionPolicy], 'LRU')">
-                  <xsl:element name="eviction">
-                     <xsl:attribute name="strategy">
-                        <xsl:value-of select="defaultCache/@memoryStoreEvictionPolicy"/>
-                     </xsl:attribute>
-                  </xsl:element>
-               </xsl:if>
-               <xsl:if test="contains(defaultCache[@memoryStoreEvictionPolicy], 'FIFO')">
-                  <xsl:element name="eviction">
-                     <xsl:attribute name="strategy">
-                        <xsl:value-of select="defaultCache/@memoryStoreEvictionPolicy"/>
-                     </xsl:attribute>
-                  </xsl:element>
-               </xsl:if>
-               <xsl:if test="contains(defaultCache[@memoryStoreEvictionPolicy], 'LFU')">
-                  <xsl:message terminate="no">WARNING!!! Infinispan does not support LFU eviction. Using LRU instead.
-                  </xsl:message>
-                  <xsl:element name="eviction">
-                     <xsl:attribute name="strategy">
-                        <xsl:text>LRU</xsl:text>
-                     </xsl:attribute>
-                  </xsl:element>
-               </xsl:if>
-            </xsl:if>
+         <xsl:for-each select="defaultCache">
+            <xsl:element name="default">
+               <xsl:call-template name="generateCache"/>
+            </xsl:element>
+         </xsl:for-each>
 
-         </xsl:element>
          <xsl:for-each select="cache">
             <xsl:element name="namedCache">
                <xsl:attribute name="name">
                   <xsl:value-of select="@name"/>
                </xsl:attribute>
-               <xsl:element name="eviction">
-                  <xsl:attribute name="strategy">
-                     <xsl:choose>
-                        <xsl:when test="contains(@memoryStoreEvictionPolicy, 'LRU')">
-                           <xsl:text>LRU</xsl:text>
-                        </xsl:when>
-                        <xsl:otherwise>
-                           <xsl:choose>
-                              <xsl:when test="contains(@memoryStoreEvictionPolicy, 'FIFO')">
-                                 <xsl:text>FIFO</xsl:text>
-                              </xsl:when>
-                              <xsl:otherwise>
-                                 <xsl:choose>
-                                    <xsl:when test="contains(@memoryStoreEvictionPolicy, 'LFU')">
-                                       <xsl:text>LRU</xsl:text>
-                                    </xsl:when>
-                                    <xsl:otherwise>
-                                       <xsl:text>NONE</xsl:text>
-                                    </xsl:otherwise>
-                                 </xsl:choose>
-                              </xsl:otherwise>
-                           </xsl:choose>
-                        </xsl:otherwise>
-                     </xsl:choose>
-                  </xsl:attribute>
-               </xsl:element>
-               <!-- <expiration lifespan="60000" maxIdle="1000" /> -->
-               <xsl:element name="expiration">
-                  
-               </xsl:element>
-
-               <xsl:if test="cacheEventListenerFactory">
-                  <xsl:element name="clustering">
-                     <xsl:if test="cacheEventListenerFactory/@properties">
-                        <xsl:attribute name="mode">
-                           <!-- Replication, Invalidation, Distribution-->
-                           <xsl:text>distribution</xsl:text>
-                        </xsl:attribute>
-                        <!-- TODO remove spaces -->
-                        <xsl:choose>
-                           <xsl:when test="contains(cacheEventListenerFactory/@properties, 'replicateAsynchronously=false')">
-                              <xsl:element name="sync">
-                                 <!-- replQueueInterval="100" replQueueMaxElements="200" ?? -->
-                                 <xsl:attribute name="useReplQueue">
-                                    <xsl:text>true</xsl:text>
-                                 </xsl:attribute>
-                              </xsl:element>
-                           </xsl:when>
-                           <xsl:otherwise>
-                              <xsl:element name="async">
-                                 <!-- replQueueInterval="100" replQueueMaxElements="200" ?? -->
-                                 <xsl:attribute name="useReplQueue">
-                                    <xsl:text>true</xsl:text>
-                                 </xsl:attribute>
-                              </xsl:element>
-                           </xsl:otherwise>
-                        </xsl:choose>
-                     </xsl:if>
-                  </xsl:element>
-               </xsl:if>
+               <xsl:call-template name="generateCache"/>
             </xsl:element>
          </xsl:for-each>
       </xsl:element>
+   </xsl:template>
 
+   <xsl:template name="generateCache">
+      <xsl:if test="@memoryStoreEvictionPolicy">
+         <xsl:element name="eviction">
+            <xsl:attribute name="strategy">
+               <xsl:if test="contains(@memoryStoreEvictionPolicy, 'LRU') or contains(@memoryStoreEvictionPolicy, 'FIFO')">
+                  <xsl:value-of select="@memoryStoreEvictionPolicy"/>
+               </xsl:if>
 
+               <xsl:if test="contains(@memoryStoreEvictionPolicy, 'LFU')">
+                  <xsl:message terminate="no">WARNING!!! Infinispan does not support LFU eviction. Using LRU instead.
+                  </xsl:message>
+                  <xsl:text>LRU</xsl:text>
+               </xsl:if>
+            </xsl:attribute>
+
+            <xsl:attribute name="wakeUpInterval">
+               <xsl:choose>
+                  <xsl:when test="@diskExpiryThreadIntervalSeconds">
+                     <xsl:value-of select="concat(@diskExpiryThreadIntervalSeconds,'000')"/>
+                  </xsl:when>
+                  <xsl:otherwise>
+                     <!-- by default the value is 120 seconds in EHCache-->
+                     <xsl:value-of select="120000"/>
+                  </xsl:otherwise>
+               </xsl:choose>
+            </xsl:attribute>
+
+            <xsl:if test="@maxElementsInMemory">
+               <xsl:attribute name="maxEntries">
+                  <xsl:value-of select="@maxElementsInMemory"/>
+               </xsl:attribute>
+            </xsl:if>
+         </xsl:element>
+      </xsl:if>
+
+      <xsl:if
+            test="(@timeToIdleSeconds or @timeToLiveSeconds) and not(@eternal = 'true')">
+         <xsl:element name="expiration">
+            <xsl:if test="@timeToIdleSeconds">
+               <xsl:attribute name="maxIdle">
+                  <xsl:value-of select="@timeToIdleSeconds"/>
+               </xsl:attribute>
+            </xsl:if>
+            <xsl:if test="@timeToLiveSeconds">
+               <xsl:attribute name="lifespan">
+                  <xsl:value-of select="@timeToLiveSeconds"/>
+               </xsl:attribute>
+            </xsl:if>
+         </xsl:element>
+      </xsl:if>
+
+      <xsl:choose>
+         <xsl:when test="@overflowToDisk='true'">
+            <xsl:if test="/ehcache/defaultCache[@overflowToDisk = 'false'] or not(@name)">
+               <xsl:element name="loaders">
+                  <xsl:attribute name="passivation">true</xsl:attribute>
+                  <xsl:attribute name="preload">
+                     <xsl:value-of select="string(@diskPersistent = 'true')"/>
+                  </xsl:attribute>
+                  <xsl:element name="loader">
+                     <xsl:attribute name="class">org.infinispan.loaders.file.FileCacheStore</xsl:attribute>
+                     <xsl:attribute name="purgeOnStartup">
+                        <xsl:value-of select="string(@diskPersistent = 'true')"/>
+                     </xsl:attribute>
+                     <xsl:if test="/ehcache/diskStore[@path]">
+                        <properties>
+                           <xsl:element name="property">
+                              <xsl:attribute name="name">location</xsl:attribute>
+                              <xsl:attribute name="value">
+                                 <xsl:choose>
+                                    <xsl:when
+                                          test="/ehcache/diskStore[@path='user.home' or @path='user.dir' or @path='java.io.tmpdir']">
+                                       <xsl:value-of select="concat('${',/ehcache/diskStore/@path,'}')"/>
+                                    </xsl:when>
+                                    <xsl:otherwise>
+                                       <xsl:value-of select="/ehcache/diskStore/@path"/>
+                                    </xsl:otherwise>
+                                 </xsl:choose>
+                              </xsl:attribute>
+                           </xsl:element>
+                        </properties>
+                     </xsl:if>
+                  </xsl:element>
+               </xsl:element>
+            </xsl:if>
+         </xsl:when>
+         <xsl:otherwise>
+            <xsl:if test="/ehcache/defaultCache[@overflowToDisk = 'true']">
+               <!-- if this cache does not overflow to disk then override the possible cache loader definition from 'defaultCache' -->
+               <loaders/>
+            </xsl:if>
+         </xsl:otherwise>
+      </xsl:choose>
+      <xsl:if test="cacheEventListenerFactory">
+         <xsl:element name="clustering">
+            <xsl:attribute name="mode">
+               <xsl:choose>
+                  <xsl:when test="contains(cacheEventListenerFactory/@properties, 'replicatePutsViaCopy=false')">
+                     <xsl:text>invalidation</xsl:text>
+                  </xsl:when>
+                  <xsl:otherwise>
+                     <xsl:text>distribution</xsl:text>
+                  </xsl:otherwise>
+               </xsl:choose>
+            </xsl:attribute>
+            <xsl:choose>
+               <xsl:when
+                     test="contains(cacheEventListenerFactory/@properties, 'replicateAsynchronously=false')">
+                  <sync/>
+               </xsl:when>
+               <xsl:otherwise>
+                  <async/>
+               </xsl:otherwise>
+            </xsl:choose>
+         </xsl:element>
+      </xsl:if>
    </xsl:template>
 </xsl:stylesheet>
