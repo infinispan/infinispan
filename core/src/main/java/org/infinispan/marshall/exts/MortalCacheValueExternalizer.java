@@ -19,33 +19,37 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.marshall.jboss.externalizers;
-
-import net.jcip.annotations.Immutable; 
-
-import org.infinispan.marshall.jboss.Externalizer;
+package org.infinispan.marshall.exts;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.List;
+
+import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.container.entries.MortalCacheValue;
+import org.infinispan.io.UnsignedNumeric;
+import org.infinispan.marshall.jboss.Externalizer;
 
 /**
- * SingletonListExternalizer.
- *
+ * MortalCacheValueExternalizer.
+ * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-@Immutable
-public class SingletonListExternalizer implements Externalizer {
+public class MortalCacheValueExternalizer implements Externalizer {
 
    public void writeObject(ObjectOutput output, Object subject) throws IOException {
-      output.writeObject(((List) subject).get(0));
+      MortalCacheValue icv = (MortalCacheValue) subject;
+      output.writeObject(icv.getValue());
+      UnsignedNumeric.writeUnsignedLong(output, icv.getCreated());
+      output.writeLong(icv.getLifespan()); // could be negative so should not use unsigned longs
    }
 
    public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-      return Collections.singletonList(input.readObject());
+      Object v = input.readObject();
+      long created = UnsignedNumeric.readUnsignedLong(input);
+      Long lifespan = input.readLong();
+      return InternalEntryFactory.createValue(v, created, lifespan, -1, -1);
    }
 
 }

@@ -19,35 +19,43 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.marshall.jboss.externalizers;
+package org.infinispan.marshall.exts;
+
+import org.infinispan.io.UnsignedNumeric;
+import org.infinispan.marshall.MarshalledValue;
+import org.infinispan.marshall.jboss.Externalizer;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-import net.jcip.annotations.Immutable;
-
-import org.infinispan.container.entries.ImmortalCacheValue;
-import org.infinispan.container.entries.InternalEntryFactory;
-import org.infinispan.marshall.jboss.Externalizer;
-
 /**
- * ImmortalCacheValueExternalizer.
- * 
+ * MarshalledValueExternalizer.
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */
-@Immutable
-public class ImmortalCacheValueExternalizer implements Externalizer {
-
+public class MarshalledValueExternalizer implements Externalizer {
+   private org.infinispan.marshall.Marshaller ispnMarshaller;
+   
+   public void init(org.infinispan.marshall.Marshaller ispnMarshaller) {
+      this.ispnMarshaller = ispnMarshaller;
+   }
+   
    public void writeObject(ObjectOutput output, Object subject) throws IOException {
-      ImmortalCacheValue icv = (ImmortalCacheValue) subject;
-      output.writeObject(icv.getValue());      
+      MarshalledValue mv = ((MarshalledValue) subject);
+      byte[] raw = mv.getRaw();
+      UnsignedNumeric.writeUnsignedInt(output, raw.length);
+      output.write(raw);
+      output.writeInt(mv.hashCode());      
    }
 
    public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-      Object v = input.readObject();
-      return InternalEntryFactory.createValue(v);
+      int length = UnsignedNumeric.readUnsignedInt(input);
+      byte[] raw = new byte[length];
+      input.readFully(raw);
+      int hc = input.readInt();
+      return new MarshalledValue(raw, hc, ispnMarshaller);
    }
 
 }

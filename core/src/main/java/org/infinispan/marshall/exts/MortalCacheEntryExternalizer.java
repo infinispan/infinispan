@@ -19,48 +19,42 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.marshall.jboss.externalizers;
-
-import org.infinispan.commands.RemoteCommandFactory;
-import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.marshall.jboss.Externalizer;
+package org.infinispan.marshall.exts;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
+import net.jcip.annotations.Immutable;
+
+import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.container.entries.MortalCacheEntry;
+import org.infinispan.io.UnsignedNumeric;
+import org.infinispan.marshall.jboss.Externalizer;
+
 /**
- * ReplicableCommandExternalizer.
- *
+ * MortalCacheEntryExternalizer.
+ * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class ReplicableCommandExternalizer implements Externalizer {
-   private RemoteCommandFactory cmdFactory;
-   
-   public void init(RemoteCommandFactory cmdFactory) {
-      this.cmdFactory = cmdFactory;
-   }
+@Immutable
+public class MortalCacheEntryExternalizer implements Externalizer {
 
    public void writeObject(ObjectOutput output, Object subject) throws IOException {
-      ReplicableCommand command = (ReplicableCommand) subject;
-      output.writeShort(command.getCommandId());
-      Object[] args = command.getParameters();
-      byte numArgs = (byte) (args == null ? 0 : args.length);
-      output.writeByte(numArgs);
-      for (int i = 0; i < numArgs; i++) {
-         output.writeObject(args[i]);
-      }
+      MortalCacheEntry ice = (MortalCacheEntry) subject;
+      output.writeObject(ice.getKey());
+      output.writeObject(ice.getValue());
+      UnsignedNumeric.writeUnsignedLong(output, ice.getCreated());
+      output.writeLong(ice.getLifespan()); // could be negative so should not use unsigned longs      
    }
 
    public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-      short methodId = input.readShort();
-      byte numArgs = input.readByte();
-      Object[] args = null;
-      if (numArgs > 0) {
-         args = new Object[numArgs];
-         for (int i = 0; i < numArgs; i++) args[i] = input.readObject();
-      }
-      return cmdFactory.fromStream((byte) methodId, args);
-   }   
+      Object k = input.readObject();
+      Object v = input.readObject();
+      long created = UnsignedNumeric.readUnsignedLong(input);
+      Long lifespan = input.readLong();
+      return InternalEntryFactory.create(k, v, created, lifespan, -1, -1);
+   }
+
 }

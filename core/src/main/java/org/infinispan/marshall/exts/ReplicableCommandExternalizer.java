@@ -19,59 +19,48 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.marshall.jboss.externalizers;
+package org.infinispan.marshall.exts;
 
-import net.jcip.annotations.Immutable;
-
-import org.infinispan.io.UnsignedNumeric;
-import org.infinispan.marshall.jboss.MarshallUtil;
+import org.infinispan.commands.RemoteCommandFactory;
+import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.marshall.jboss.Externalizer;
-import org.jboss.marshalling.util.IdentityIntMap;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.TreeSet;
 
 /**
- * Set externalizer for all set implementations, i.e. HashSet and TreeSet
+ * ReplicableCommandExternalizer.
  *
  * @author Galder Zamarreño
  * @since 4.0
  */
-@Immutable
-public class SetExternalizer implements Externalizer {
-   private static final int HASHSET = 0;
-   private static final int TREESET = 1;
-   private final IdentityIntMap<Class<?>> numbers = new IdentityIntMap<Class<?>>(2);
+public class ReplicableCommandExternalizer implements Externalizer {
+   private RemoteCommandFactory cmdFactory;
    
-   public SetExternalizer() {
-      numbers.put(HashSet.class, HASHSET);
-      numbers.put(TreeSet.class, TREESET);
+   public void init(RemoteCommandFactory cmdFactory) {
+      this.cmdFactory = cmdFactory;
    }
 
    public void writeObject(ObjectOutput output, Object subject) throws IOException {
-      int number = numbers.get(subject.getClass(), -1);
-      output.writeByte(number);
-      MarshallUtil.marshallCollection((Collection) subject, output);
+      ReplicableCommand command = (ReplicableCommand) subject;
+      output.writeShort(command.getCommandId());
+      Object[] args = command.getParameters();
+      byte numArgs = (byte) (args == null ? 0 : args.length);
+      output.writeByte(numArgs);
+      for (int i = 0; i < numArgs; i++) {
+         output.writeObject(args[i]);
+      }
    }
 
    public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-      int magicNumber = input.readUnsignedByte();
-      Set subject = null;
-      switch (magicNumber) {
-         case HASHSET:
-            subject = new HashSet();
-            break;
-         case TREESET:
-            subject = new TreeSet();
-            break;
+      short methodId = input.readShort();
+      byte numArgs = input.readByte();
+      Object[] args = null;
+      if (numArgs > 0) {
+         args = new Object[numArgs];
+         for (int i = 0; i < numArgs; i++) args[i] = input.readObject();
       }
-      int size = UnsignedNumeric.readUnsignedInt(input);
-      for (int i = 0; i < size; i++) subject.add(input.readObject());
-      return subject;
-   }
+      return cmdFactory.fromStream((byte) methodId, args);
+   }   
 }

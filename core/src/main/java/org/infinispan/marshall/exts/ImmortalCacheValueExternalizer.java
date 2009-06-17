@@ -19,33 +19,35 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.marshall.jboss.externalizers;
+package org.infinispan.marshall.exts;
 
-import net.jcip .annotations.Immutable;
-
-import org.infinispan.marshall.jboss.Externalizer;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
+import net.jcip.annotations.Immutable;
+
+import org.infinispan.container.entries.ImmortalCacheValue;
+import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.marshall.jboss.Externalizer;
+
 /**
- * JGroupsAddressExternalizer.
- *
+ * ImmortalCacheValueExternalizer.
+ * 
  * @author Galder Zamarreño
  * @since 4.0
  */
 @Immutable
-public class JGroupsAddressExternalizer implements Externalizer {
+public class ImmortalCacheValueExternalizer implements Externalizer {
 
    public void writeObject(ObjectOutput output, Object subject) throws IOException {
-      JGroupsAddress address = (JGroupsAddress) subject;
-      output.writeObject(address.getJGroupsAddress());
+      ImmortalCacheValue icv = (ImmortalCacheValue) subject;
+      output.writeObject(icv.getValue());      
    }
 
-   public Object readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
-      JGroupsAddress address = new JGroupsAddress();
-      address.setJGroupsAddress((org.jgroups.Address) unmarshaller.readObject());
-      return address;
+   public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      Object v = input.readObject();
+      return InternalEntryFactory.createValue(v);
    }
+
 }

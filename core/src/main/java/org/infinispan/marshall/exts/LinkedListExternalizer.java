@@ -19,43 +19,38 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.marshall.jboss.externalizers;
+package org.infinispan.marshall.exts;
 
-import net.jcip.annotations.Immutable; 
-import org.infinispan.commands.write.WriteCommand;
+import net.jcip.annotations.Immutable;
+
 import org.infinispan.io.UnsignedNumeric;
+import org.infinispan.marshall.jboss.MarshallUtil;
 import org.infinispan.marshall.jboss.Externalizer;
-import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.transaction.TransactionLog;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collection;
+import java.util.LinkedList;
 
 /**
- * TransactionLogExternalizer.
+ * LinkedListExternalizer.
  *
  * @author Galder Zamarreño
  * @since 4.0
  */
 @Immutable
-public class TransactionLogExternalizer implements Externalizer {
+public class LinkedListExternalizer implements Externalizer {
 
    public void writeObject(ObjectOutput output, Object subject) throws IOException {
-      TransactionLog.LogEntry le = (TransactionLog.LogEntry) subject;
-      output.writeObject(le.getTransaction());
-      WriteCommand[] cmds = le.getModifications();
-      UnsignedNumeric.writeUnsignedInt(output, cmds.length);
-      for (WriteCommand c : cmds)
-         output.writeObject(c);
+      MarshallUtil.marshallCollection((Collection) subject, output);
    }
 
    public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-      GlobalTransaction gtx = (GlobalTransaction) input.readObject();
-      int numCommands = UnsignedNumeric.readUnsignedInt(input);
-      WriteCommand[] cmds = new WriteCommand[numCommands];
-      for (int i = 0; i < numCommands; i++) cmds[i] = (WriteCommand) input.readObject();
-      return new TransactionLog.LogEntry(gtx, cmds);
+      int size = UnsignedNumeric.readUnsignedInt(input);
+      LinkedList l = new LinkedList();
+      for (int i = 0; i < size; i++) l.add(input.readObject());
+      return l;
    }
 
 }

@@ -19,38 +19,40 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.marshall.jboss.externalizers;
+package org.infinispan.marshall.exts;
 
-import net.jcip.annotations.Immutable;
+ import net.jcip.annotations.Immutable;
 
-import org.infinispan.io.UnsignedNumeric;
-import org.infinispan.marshall.jboss.MarshallUtil;
 import org.infinispan.marshall.jboss.Externalizer;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.transaction.xa.GlobalTransaction;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Collection;
-import java.util.LinkedList;
 
 /**
- * LinkedListExternalizer.
+ * GlobalTransactionExternalizer.
  *
  * @author Galder Zamarreño
  * @since 4.0
  */
 @Immutable
-public class LinkedListExternalizer implements Externalizer {
+public class GlobalTransactionExternalizer implements Externalizer {
 
    public void writeObject(ObjectOutput output, Object subject) throws IOException {
-      MarshallUtil.marshallCollection((Collection) subject, output);
+      GlobalTransaction gtx = (GlobalTransaction) subject;
+      output.writeLong(gtx.getId());
+      output.writeObject(gtx.getAddress());      
    }
 
    public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-      int size = UnsignedNumeric.readUnsignedInt(input);
-      LinkedList l = new LinkedList();
-      for (int i = 0; i < size; i++) l.add(input.readObject());
-      return l;
+      GlobalTransaction gtx = new GlobalTransaction();
+      long id = input.readLong();
+      Object address = input.readObject();
+      gtx.setId(id);
+      gtx.setAddress((Address) address);
+      return gtx;
    }
 
 }

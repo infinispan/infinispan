@@ -19,37 +19,43 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.marshall.jboss.externalizers;
+package org.infinispan.marshall.exts;
 
-import  java.io.IOException;
+import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 import net.jcip.annotations.Immutable;
 
-import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.container.entries.TransientMortalCacheValue;
+import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.marshall.jboss.Externalizer;
 
 /**
- * ImmortalCacheEntryExternalizer.
+ * TransientMortalCacheValueExternalizer.
  * 
  * @author Galder Zamarreño
- * @since 4.0 
+ * @since 4.0
  */
 @Immutable
-public class ImmortalCacheEntryExternalizer implements Externalizer {
-   
+public class TransientMortalCacheValueExternalizer implements Externalizer {
+
    public void writeObject(ObjectOutput output, Object subject) throws IOException {
-      ImmortalCacheEntry ice = (ImmortalCacheEntry) subject;
-      output.writeObject(ice.getKey());
-      output.writeObject(ice.getValue());      
+      TransientMortalCacheValue icv = (TransientMortalCacheValue) subject;
+      output.writeObject(icv.getValue());
+      UnsignedNumeric.writeUnsignedLong(output, icv.getCreated());
+      output.writeLong(icv.getLifespan()); // could be negative so should not use unsigned longs
+      UnsignedNumeric.writeUnsignedLong(output, icv.getLastUsed());
+      output.writeLong(icv.getMaxIdle()); // could be negative so should not use unsigned longs
    }
 
    public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-      Object k = input.readObject();
       Object v = input.readObject();
-      return InternalEntryFactory.create(k, v);
+      long created = UnsignedNumeric.readUnsignedLong(input);
+      Long lifespan = input.readLong();
+      long lastUsed = UnsignedNumeric.readUnsignedLong(input);
+      Long maxIdle = input.readLong();
+      return InternalEntryFactory.createValue(v, created, lifespan, lastUsed, maxIdle);
    }
-
 }

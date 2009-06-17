@@ -19,36 +19,37 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.marshall.jboss.externalizers;
+package org.infinispan.marshall.exts;
 
-import net.jcip.annotations.Immutable;
-import org.infinispan.marshall.jboss.MarshallUtil;
+ import net.jcip.annotations.Immutable;
+
 import org.infinispan.marshall.jboss.Externalizer;
-import org.infinispan.util.Immutables;
+import org.infinispan.remoting.responses.ExtendedResponse;
+import org.infinispan.remoting.responses.Response;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
- * ImmutableExternalizer.
+ * ExtendedResponseExternalizer.
  *
  * @author Galder Zamarreño
  * @since 4.0
  */
 @Immutable
-public class ImmutableMapExternalizer implements Externalizer {
+public class ExtendedResponseExternalizer implements Externalizer {
 
    public void writeObject(ObjectOutput output, Object subject) throws IOException {
-      MarshallUtil.marshallMap((Map) subject, output);      
+      ExtendedResponse er = (ExtendedResponse) subject;
+      output.writeBoolean(er.isReplayIgnoredRequests());
+      output.writeObject(er.getResponse());
    }
 
    public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-      Map map = new HashMap();
-      MarshallUtil.unmarshallMap(map, input);
-      return Immutables.immutableMapWrap(map);
+      boolean replayIgnoredRequests = input.readBoolean();
+      Response response = (Response) input.readObject();
+      return new ExtendedResponse(response, replayIgnoredRequests);
    }
-   
+
 }

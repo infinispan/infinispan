@@ -1,4 +1,4 @@
-package org.infinispan.marshall.jboss.externalizers;
+package org.infinispan.marshall.exts;
 
 import net.jcip.annotations.Immutable;
 

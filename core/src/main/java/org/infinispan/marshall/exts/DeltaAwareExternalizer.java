@@ -19,40 +19,32 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.marshall.jboss.externalizers;
+package org.infinispan.marshall.exts;
+
+import net.jcip.annotations.Immutable;
+import org.infinispan.atomic.DeltaAware;
+import org.infinispan.marshall.jboss.Externalizer;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-import net.jcip.annotations.Immutable;
-
-import org.infinispan.container.entries.InternalCacheEntry;
-
-import org.infinispan.io.UnsignedNumeric;
-import org.infinispan.loaders.bucket.Bucket;
-import org.infinispan.marshall.jboss.Externalizer;
-
 /**
- * BucketExternalizer.
- * 
+ * DeltaAwareExternalizer.
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */
 @Immutable
-public class BucketExternalizer implements Externalizer {
+public class DeltaAwareExternalizer implements Externalizer {
 
    public void writeObject(ObjectOutput output, Object subject) throws IOException {
-      Bucket b = (Bucket) subject;
-      UnsignedNumeric.writeUnsignedInt(output, b.getNumEntries());
-      for (InternalCacheEntry se : b.getEntries().values()) output.writeObject(se);
+      DeltaAware dw = (DeltaAware) subject;
+      output.writeObject(dw.delta());      
    }
 
    public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-      Bucket b = new Bucket();
-      int numEntries = UnsignedNumeric.readUnsignedInt(input);
-      for (int i = 0; i < numEntries; i++) b.addEntry((InternalCacheEntry) input.readObject());
-      return b;
+      return input.readObject();
    }
 
 }

@@ -19,43 +19,40 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.marshall.jboss.externalizers;
-
-import org.infinispan.io.UnsignedNumeric;
-import org.infinispan.marshall.MarshalledValue;
-import org.infinispan.marshall.jboss.Externalizer;
+package org.infinispan.marshall.exts;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
+import net.jcip.annotations.Immutable;
+
+import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.container.entries.TransientCacheValue;
+import org.infinispan.io.UnsignedNumeric;
+import org.infinispan.marshall.jboss.Externalizer;
+
 /**
- * MarshalledValueExternalizer.
- *
+ * TransientCacheValueExternalizer.
+ * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class MarshalledValueExternalizer implements Externalizer {
-   private org.infinispan.marshall.Marshaller ispnMarshaller;
-   
-   public void init(org.infinispan.marshall.Marshaller ispnMarshaller) {
-      this.ispnMarshaller = ispnMarshaller;
-   }
-   
+@Immutable
+public class TransientCacheValueExternalizer implements Externalizer {
+
    public void writeObject(ObjectOutput output, Object subject) throws IOException {
-      MarshalledValue mv = ((MarshalledValue) subject);
-      byte[] raw = mv.getRaw();
-      UnsignedNumeric.writeUnsignedInt(output, raw.length);
-      output.write(raw);
-      output.writeInt(mv.hashCode());      
+      TransientCacheValue icv = (TransientCacheValue) subject;
+      output.writeObject(icv.getValue());
+      UnsignedNumeric.writeUnsignedLong(output, icv.getLastUsed());
+      output.writeLong(icv.getMaxIdle()); // could be negative so should not use unsigned longs
    }
 
    public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-      int length = UnsignedNumeric.readUnsignedInt(input);
-      byte[] raw = new byte[length];
-      input.readFully(raw);
-      int hc = input.readInt();
-      return new MarshalledValue(raw, hc, ispnMarshaller);
+      Object v = input.readObject();
+      long lastUsed = UnsignedNumeric.readUnsignedLong(input);
+      Long maxIdle = input.readLong();
+      return InternalEntryFactory.createValue(v, -1, -1, lastUsed, maxIdle);
    }
 
 }

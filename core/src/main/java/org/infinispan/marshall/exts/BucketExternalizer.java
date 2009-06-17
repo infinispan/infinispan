@@ -19,7 +19,7 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.marshall.jboss.externalizers;
+package org.infinispan.marshall.exts;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -27,34 +27,32 @@ import java.io.ObjectOutput;
 
 import net.jcip.annotations.Immutable;
 
-import org.infinispan.container.entries.InternalEntryFactory;
-import org.infinispan.container.entries.MortalCacheEntry;
+import org.infinispan.container.entries.InternalCacheEntry;
+
 import org.infinispan.io.UnsignedNumeric;
+import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.marshall.jboss.Externalizer;
 
 /**
- * MortalCacheEntryExternalizer.
+ * BucketExternalizer.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
 @Immutable
-public class MortalCacheEntryExternalizer implements Externalizer {
+public class BucketExternalizer implements Externalizer {
 
    public void writeObject(ObjectOutput output, Object subject) throws IOException {
-      MortalCacheEntry ice = (MortalCacheEntry) subject;
-      output.writeObject(ice.getKey());
-      output.writeObject(ice.getValue());
-      UnsignedNumeric.writeUnsignedLong(output, ice.getCreated());
-      output.writeLong(ice.getLifespan()); // could be negative so should not use unsigned longs      
+      Bucket b = (Bucket) subject;
+      UnsignedNumeric.writeUnsignedInt(output, b.getNumEntries());
+      for (InternalCacheEntry se : b.getEntries().values()) output.writeObject(se);
    }
 
    public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-      Object k = input.readObject();
-      Object v = input.readObject();
-      long created = UnsignedNumeric.readUnsignedLong(input);
-      Long lifespan = input.readLong();
-      return InternalEntryFactory.create(k, v, created, lifespan, -1, -1);
+      Bucket b = new Bucket();
+      int numEntries = UnsignedNumeric.readUnsignedInt(input);
+      for (int i = 0; i < numEntries; i++) b.addEntry((InternalCacheEntry) input.readObject());
+      return b;
    }
 
 }

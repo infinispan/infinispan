@@ -19,37 +19,33 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.marshall.jboss.externalizers;
+package org.infinispan.marshall.exts;
 
- import net.jcip.annotations.Immutable;
+import net.jcip.annotations.Immutable; 
 
 import org.infinispan.marshall.jboss.Externalizer;
-import org.infinispan.remoting.responses.ExtendedResponse;
-import org.infinispan.remoting.responses.Response;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collections;
+import java.util.List;
 
 /**
- * ExtendedResponseExternalizer.
+ * SingletonListExternalizer.
  *
  * @author Galder Zamarreño
  * @since 4.0
  */
 @Immutable
-public class ExtendedResponseExternalizer implements Externalizer {
+public class SingletonListExternalizer implements Externalizer {
 
    public void writeObject(ObjectOutput output, Object subject) throws IOException {
-      ExtendedResponse er = (ExtendedResponse) subject;
-      output.writeBoolean(er.isReplayIgnoredRequests());
-      output.writeObject(er.getResponse());
+      output.writeObject(((List) subject).get(0));
    }
 
    public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-      boolean replayIgnoredRequests = input.readBoolean();
-      Response response = (Response) input.readObject();
-      return new ExtendedResponse(response, replayIgnoredRequests);
+      return Collections.singletonList(input.readObject());
    }
 
 }

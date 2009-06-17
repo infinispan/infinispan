@@ -19,32 +19,59 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.marshall.jboss.externalizers;
+package org.infinispan.marshall.exts;
 
 import net.jcip.annotations.Immutable;
-import org.infinispan.atomic.DeltaAware;
+
+import org.infinispan.io.UnsignedNumeric;
+import org.infinispan.marshall.jboss.MarshallUtil;
 import org.infinispan.marshall.jboss.Externalizer;
+import org.jboss.marshalling.util.IdentityIntMap;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
- * DeltaAwareExternalizer.
+ * Set externalizer for all set implementations, i.e. HashSet and TreeSet
  *
  * @author Galder Zamarreño
  * @since 4.0
  */
 @Immutable
-public class DeltaAwareExternalizer implements Externalizer {
+public class SetExternalizer implements Externalizer {
+   private static final int HASHSET = 0;
+   private static final int TREESET = 1;
+   private final IdentityIntMap<Class<?>> numbers = new IdentityIntMap<Class<?>>(2);
+   
+   public SetExternalizer() {
+      numbers.put(HashSet.class, HASHSET);
+      numbers.put(TreeSet.class, TREESET);
+   }
 
    public void writeObject(ObjectOutput output, Object subject) throws IOException {
-      DeltaAware dw = (DeltaAware) subject;
-      output.writeObject(dw.delta());      
+      int number = numbers.get(subject.getClass(), -1);
+      output.writeByte(number);
+      MarshallUtil.marshallCollection((Collection) subject, output);
    }
 
    public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-      return input.readObject();
+      int magicNumber = input.readUnsignedByte();
+      Set subject = null;
+      switch (magicNumber) {
+         case HASHSET:
+            subject = new HashSet();
+            break;
+         case TREESET:
+            subject = new TreeSet();
+            break;
+      }
+      int size = UnsignedNumeric.readUnsignedInt(input);
+      for (int i = 0; i < size; i++) subject.add(input.readObject());
+      return subject;
    }
-
 }
