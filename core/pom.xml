@@ -22,7 +22,7 @@
       <version.jboss.common.core>2.2.14.GA</version.jboss.common.core>
       <version.jboss.logging.spi>2.1.0.GA</version.jboss.logging.spi>
       <version.jboss.marshalling>1.2.0.CR2</version.jboss.marshalling>
-      <version.jgroups>2.8.0.Beta1</version.jgroups>
+      <version.jgroups>2.8.0.Beta2</version.jgroups>
       <version.jta>1.1</version.jta>
       <version.xstream>1.2</version.xstream>
    </properties>
