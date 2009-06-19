@@ -79,7 +79,12 @@ public class FileCacheStore extends BucketBasedCacheStore {
             BufferedOutputStream bos = new BufferedOutputStream(fos, streamBufferSize);
 
             while (numBytes > totalBytesRead) {
-               bytesRead = objectInput.read(buffer, 0, streamBufferSize);
+               if ((numBytes - totalBytesRead) > streamBufferSize) {
+                  bytesRead = objectInput.read(buffer, 0, streamBufferSize);
+               } else {
+                  bytesRead = objectInput.read(buffer, 0, numBytes - totalBytesRead);
+               }
+               
                if (bytesRead == -1) break;
                totalBytesRead += bytesRead;
                bos.write(buffer, 0, bytesRead);
