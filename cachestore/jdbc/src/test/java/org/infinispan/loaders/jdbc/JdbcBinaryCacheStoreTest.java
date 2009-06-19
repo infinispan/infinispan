@@ -24,7 +24,7 @@ public class JdbcBinaryCacheStoreTest extends BaseCacheStoreTest {
       TableManipulation tm = UnitTestDatabaseManager.buildDefaultTableManipulation();
       JdbcBinaryCacheStoreConfig config = new JdbcBinaryCacheStoreConfig(connectionFactoryConfig, tm);
       JdbcBinaryCacheStore jdbcBucketCacheStore = new JdbcBinaryCacheStore();
-      jdbcBucketCacheStore.init(config, null, new TestObjectStreamMarshaller());
+      jdbcBucketCacheStore.init(config, null, getMarshaller());
       jdbcBucketCacheStore.start();
       assert jdbcBucketCacheStore.getConnectionFactory() != null;
       return jdbcBucketCacheStore;

@@ -7,6 +7,7 @@ import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
+import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.AfterMethod;
@@ -40,7 +41,7 @@ public class JdbcStringBasedCacheStoreTest2 {
       config.setKey2StringMapperClass(PersonKey2StringMapper.class.getName());
       config.setPurgeSynchronously(true);
       cacheStore = new JdbcStringBasedCacheStore();
-      cacheStore.init(config, null, new TestObjectStreamMarshaller());
+      cacheStore.init(config, null, getMarshaller());
       cacheStore.start();
    }
 
@@ -134,5 +135,9 @@ public class JdbcStringBasedCacheStoreTest2 {
 
       JdbcStringBasedCacheStore store = (JdbcStringBasedCacheStore) cacheStore;
       return store.getConnectionFactory();
+   }
+   
+   protected Marshaller getMarshaller() {
+      return new TestObjectStreamMarshaller(false);
    }
 }

@@ -2,6 +2,8 @@ package org.infinispan.loaders.jdbc.mixed;
 
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.io.UnclosableObjectInputStream;
+import org.infinispan.io.UnclosableObjectOutputStream;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.jdbc.TableManipulation;
@@ -9,6 +11,7 @@ import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.infinispan.loaders.jdbc.stringbased.DefaultKey2StringMapper;
 import org.infinispan.loaders.jdbc.stringbased.Person;
+import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.AfterMethod;
@@ -18,8 +21,8 @@ import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Set;
 
 /**
@@ -38,7 +41,6 @@ public class JdbcMixedCacheStoreTest {
    private static final Person MIRCEA = new Person("Mircea", "Markus", 28);
    private static final Person MANIK = new Person("Manik", "Surtani", 18);
 
-
    @BeforeTest
    public void createCacheStore() throws CacheLoaderException {
       stringsTm = UnitTestDatabaseManager.buildDefaultTableManipulation();
@@ -51,7 +53,7 @@ public class JdbcMixedCacheStoreTest {
 
       cacheStoreConfig.setKey2StringMapperClass(DefaultKey2StringMapper.class.getName());
       cacheStore = new JdbcMixedCacheStore();
-      cacheStore.init(cacheStoreConfig, null, new TestObjectStreamMarshaller(true));
+      cacheStore.init(cacheStoreConfig, null, getMarshaller());
       cacheStore.start();
    }
 
@@ -109,12 +111,26 @@ public class JdbcMixedCacheStoreTest {
       cacheStore.store(InternalEntryFactory.create(MIRCEA, "value1"));
       cacheStore.store(InternalEntryFactory.create(MANIK, "value2"));
       assertRowCounts(2, 2);
-      ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-      ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
-      cacheStore.toStream(objectOutputStream);
-      cacheStore.clear();
+      Marshaller marshaller = getMarshaller();
+      ByteArrayOutputStream out = new ByteArrayOutputStream();
+      ObjectOutput oo = marshaller.startObjectOutput(out, false);
+      try {
+         cacheStore.toStream(new UnclosableObjectOutputStream(oo));
+      } finally {
+         marshaller.finishObjectOutput(oo);
+         out.close();
+         cacheStore.clear();         
+      }
       assertRowCounts(0, 0);
-      cacheStore.fromStream(new ObjectInputStream(new ByteArrayInputStream(byteArrayOutputStream.toByteArray())));
+      
+      ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
+      ObjectInput oi = marshaller.startObjectInput(in, false);
+      try {
+         cacheStore.fromStream(new UnclosableObjectInputStream(oi));         
+      } finally {
+         marshaller.finishObjectInput(oi);
+         in.close();
+      }
       assertRowCounts(2, 2);
       assert cacheStore.load("String").getValue().equals("someValue");
       assert cacheStore.load("String2").getValue().equals("someValue");
@@ -167,7 +183,6 @@ public class JdbcMixedCacheStoreTest {
    }
 
    public void testTableConflict() {
-
    }
 
    private void assertRowCounts(int binary, int strings) {
@@ -176,24 +191,22 @@ public class JdbcMixedCacheStoreTest {
    }
 
    private void assertStringsRowCount(int rowCount) {
-
       JdbcMixedCacheStore store = (JdbcMixedCacheStore) cacheStore;
       ConnectionFactory connectionFactory = store.getConnectionFactory();
       String tableName = stringsTm.getTableName();
       int value = UnitTestDatabaseManager.rowCount(connectionFactory, tableName);
       assert value == rowCount : "Expected " + rowCount + " rows, actual value is " + value;
-
    }
 
    private void assertBinaryRowCount(int rowCount) {
-
       JdbcMixedCacheStore store = (JdbcMixedCacheStore) cacheStore;
       ConnectionFactory connectionFactory = store.getConnectionFactory();
       String tableName = binaryTm.getTableName();
       int value = UnitTestDatabaseManager.rowCount(connectionFactory, tableName);
       assert value == rowCount : "Expected " + rowCount + " rows, actual value is " + value;
-
    }
 
-
+   protected Marshaller getMarshaller() {
+      return new TestObjectStreamMarshaller(false);
+   }
 }

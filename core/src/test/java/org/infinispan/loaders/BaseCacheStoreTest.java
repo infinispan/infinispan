@@ -21,8 +21,8 @@ import org.testng.annotations.Test;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -429,20 +429,27 @@ public abstract class BaseCacheStoreTest {
       cs.store(InternalEntryFactory.create("k2", "v2"));
       cs.store(InternalEntryFactory.create("k3", "v3"));
 
+      Marshaller marshaller = getMarshaller();
       ByteArrayOutputStream out = new ByteArrayOutputStream();
-      ObjectOutputStream oos = new ObjectOutputStream(out);
+      ObjectOutput oo = marshaller.startObjectOutput(out, false);
+      try {
+         cs.toStream(new UnclosableObjectOutputStream(oo));
+      } finally {
+         marshaller.finishObjectOutput(oo);
+         out.close();
+         cs.clear();         
+      }
 
-      cs.toStream(new UnclosableObjectOutputStream(oos));
-      oos.flush();
-      oos.close();
-      out.close();
-      cs.clear();
-
-      ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(out.toByteArray()));
-      cs.fromStream(new UnclosableObjectInputStream(ois));
+      ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
+      ObjectInput oi = marshaller.startObjectInput(in, false);
+      try {
+         cs.fromStream(new UnclosableObjectInputStream(oi));         
+      } finally {
+         marshaller.finishObjectInput(oi);
+         in.close();
+      }
 
       Set<InternalCacheEntry> set = cs.loadAll();
-
       assert set.size() == 3;
       Set expected = new HashSet();
       expected.add("k1");
@@ -457,31 +464,40 @@ public abstract class BaseCacheStoreTest {
       cs.store(InternalEntryFactory.create("k2", "v2"));
       cs.store(InternalEntryFactory.create("k3", "v3"));
 
+      Marshaller marshaller = getMarshaller();
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       byte[] dummyStartBytes = {1, 2, 3, 4, 5, 6, 7, 8};
       byte[] dummyEndBytes = {8, 7, 6, 5, 4, 3, 2, 1};
-      out.write(dummyStartBytes);
-      ObjectOutputStream oos = new ObjectOutputStream(out);
-      cs.toStream(new UnclosableObjectOutputStream(oos));
-      oos.flush();
-      oos.close();
-      out.write(dummyEndBytes);
-      out.close();
-      cs.clear();
+      ObjectOutput oo = marshaller.startObjectOutput(out, false);
+      try {
+         oo.write(dummyStartBytes);
+         cs.toStream(new UnclosableObjectOutputStream(oo));
+         oo.flush();
+         oo.write(dummyEndBytes);
+      } finally {
+         marshaller.finishObjectOutput(oo);
+         out.close();
+         cs.clear();         
+      }
 
       // first pop the start bytes
       byte[] dummy = new byte[8];
       ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
-      int bytesRead = in.read(dummy, 0, 8);
-      assert bytesRead == 8;
-      for (int i = 1; i < 9; i++) assert dummy[i - 1] == i : "Start byte stream corrupted!";
-      cs.fromStream(new UnclosableObjectInputStream(new ObjectInputStream(in)));
-      bytesRead = in.read(dummy, 0, 8);
-      assert bytesRead == 8;
-      for (int i = 8; i > 0; i--) assert dummy[8 - i] == i : "Start byte stream corrupted!";
-
-      Set<InternalCacheEntry> set = cs.loadAll();
-
+      ObjectInput oi = marshaller.startObjectInput(in, false);
+      try {
+         int bytesRead = oi.read(dummy, 0, 8);
+         assert bytesRead == 8;
+         for (int i = 1; i < 9; i++) assert dummy[i - 1] == i : "Start byte stream corrupted!";      
+         cs.fromStream(new UnclosableObjectInputStream(oi));
+         bytesRead = oi.read(dummy, 0, 8);
+         assert bytesRead == 8;
+         for (int i = 8; i > 0; i--) assert dummy[8 - i] == i : "Start byte stream corrupted!";                  
+      } finally {
+         marshaller.finishObjectInput(oi);
+         in.close();
+      }
+      
+      Set<InternalCacheEntry> set = cs.loadAll(); 
       assert set.size() == 3;
       Set expected = new HashSet();
       expected.add("k1");
@@ -490,7 +506,7 @@ public abstract class BaseCacheStoreTest {
       for (InternalCacheEntry se : set) assert expected.remove(se.getKey());
       assert expected.isEmpty();
    }
-
+   
    public void testConfigFile() throws Exception {
       Class<? extends CacheLoaderConfig> cfgClass = cs.getConfigurationClass();
       CacheLoaderConfig clc = Util.getInstance(cfgClass);
