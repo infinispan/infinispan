@@ -35,7 +35,7 @@ public class InternalEntryFactory {
 
    public static final InternalCacheValue createValue(Object v, long created, long lifespan, long lastUsed, long maxIdle) {
       if (lifespan < 0 && maxIdle < 0) return new ImmortalCacheValue(v);
-      if (lifespan > -1 && maxIdle < 0) return new MortalCacheValue(v, lifespan, created);
+      if (lifespan > -1 && maxIdle < 0) return new MortalCacheValue(v, created, lifespan);
       if (lifespan < 0 && maxIdle > -1) return new TransientCacheValue(v, maxIdle, lastUsed);
       return new TransientMortalCacheValue(v, maxIdle, lifespan, lastUsed, created);
    }
