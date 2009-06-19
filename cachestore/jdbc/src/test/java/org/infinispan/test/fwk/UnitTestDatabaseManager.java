@@ -6,7 +6,6 @@ import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.infinispan.loaders.jdbc.connectionfactory.PooledConnectionFactory;
-import org.infinispan.util.Util;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -34,7 +33,7 @@ public class UnitTestDatabaseManager {
 
    static {
       try {
-         Util.loadClass("org.hsqldb.jdbcDriver");
+         Class.forName("org.hsqldb.jdbcDriver");
       } catch (ClassNotFoundException e) {
          throw new RuntimeException(e);
       }
