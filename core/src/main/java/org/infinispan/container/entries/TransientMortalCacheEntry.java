@@ -116,5 +116,13 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
       clone.cacheValue = cacheValue.clone();
       return clone;
    }
+   
+   @Override
+   public String toString() {
+      return getClass().getSimpleName() + "{" +
+            "cacheValue=" + cacheValue + 
+            "} " + super.toString();
+   }
+
 }
 
