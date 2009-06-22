@@ -7,7 +7,7 @@ import org.infinispan.loaders.LockSupportCacheStoreConfig;
  * of the {@link FileCacheStore}.
  * <p/>
  * <ul> <li><tt>location</tt> - a location on disk where the store can write internal files.  This defaults to
- * <tt>Horizon-FileCacheStore</tt> in the current working directory.</li> <li><tt>purgeSynchronously</tt> - whether
+ * <tt>Infinispan-FileCacheStore</tt> in the current working directory.</li> <li><tt>purgeSynchronously</tt> - whether
  * {@link org.infinispan.loaders.CacheStore#purgeExpired()} calls happen synchronously or not.  By default, this is set
  * to <tt>false</tt>.</li> <li><tt>streamBufferSize</tt> - when writing state to disk, a buffered stream is used.  This
  * parameter allows you to tune the buffer size.  Larger buffers are usually faster but take up more (temporary) memory,
