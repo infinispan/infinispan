@@ -17,7 +17,6 @@
    <description>Infinispan core module</description>
 
    <properties>
-      <version.commons.logging>1.1.1</version.commons.logging>
       <version.log4j>1.2.14</version.log4j>
       <version.jboss.common.core>2.2.14.GA</version.jboss.common.core>
       <version.jboss.logging.spi>2.1.0.GA</version.jboss.logging.spi>
@@ -28,13 +27,6 @@
    </properties>
 
    <dependencies>
-      <!-- Weird dep that should be removed soon -->
-      <dependency>
-         <groupId>commons-logging</groupId>
-         <artifactId>commons-logging</artifactId>
-         <version>${version.commons.logging}</version>
-      </dependency>
-
       <dependency>
          <groupId>jgroups</groupId>
          <artifactId>jgroups</artifactId>
