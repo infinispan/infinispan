@@ -1,5 +1,6 @@
 package org.infinispan.loaders;
 
+import org.infinispan.config.ConfigurationAttribute;
 import org.infinispan.config.PluggableConfigurationComponent;
 import org.infinispan.loaders.decorators.AsyncStoreConfig;
 import org.infinispan.loaders.decorators.SingletonStoreConfig;
@@ -41,6 +42,9 @@ public class AbstractCacheStoreConfig extends PluggableConfigurationComponent im
       return cacheLoaderClassName;
    }
 
+   @ConfigurationAttribute(name = "class", 
+            containingElement = "loader", 
+            description = "Full class name of a cache loader")
    public void setCacheLoaderClassName(String className) {
       if (className == null || className.length() == 0) return;
       testImmutability("cacheLoaderClassName");
@@ -55,11 +59,17 @@ public class AbstractCacheStoreConfig extends PluggableConfigurationComponent im
       return fetchPersistentState;
    }
 
+   @ConfigurationAttribute(name = "fetchPersistentState", 
+            containingElement = "loader", 
+            description = "If true, fetch persistent state on state transfer")
    public void setFetchPersistentState(boolean fetchPersistentState) {
       testImmutability("fetchPersistentState");
       this.fetchPersistentState = fetchPersistentState;
    }
 
+   @ConfigurationAttribute(name = "ignoreModifications", 
+            containingElement = "loader",
+            description = "If true, store operations will not be sent to this loader")
    public void setIgnoreModifications(boolean ignoreModifications) {
       testImmutability("ignoreModifications");
       this.ignoreModifications = ignoreModifications;
@@ -69,6 +79,9 @@ public class AbstractCacheStoreConfig extends PluggableConfigurationComponent im
       return ignoreModifications;
    }
 
+   @ConfigurationAttribute(name = "purgeOnStartup", 
+            containingElement = "loader", 
+            description = "If true, purge node state on startup")
    public void setPurgeOnStartup(boolean purgeOnStartup) {
       testImmutability("purgeOnStartup");
       this.purgeOnStartup = purgeOnStartup;

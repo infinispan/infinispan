@@ -25,6 +25,14 @@ import java.util.Properties;
  */
 @NonVolatile
 @Scope(Scopes.GLOBAL)
+@ConfigurationElements(elements = {
+         @ConfigurationElement(name = "global", parent = "infinispan", description = ""),
+         @ConfigurationElement(name = "asyncListenerExecutor", parent = "global", description = ""), 
+         @ConfigurationElement(name = "evictionScheduledExecutor", parent = "global", description = ""),
+         @ConfigurationElement(name = "replicationQueueScheduledExecutor", parent = "global", description = ""),  
+         @ConfigurationElement(name = "globalJmxStatistics", parent = "global", description = ""),   
+         @ConfigurationElement(name = "asyncTransportExecutor", parent = "global", description = "")
+})
 public class GlobalConfiguration extends AbstractConfigurationBean {
 
    /**
@@ -60,6 +68,9 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       return exposeGlobalJmxStatistics;
    }
 
+   @ConfigurationAttribute(name = "enabled", 
+            containingElement = "globalJmxStatistics", 
+            description = "If true, global JMX statistics are published")
    public void setExposeGlobalJmxStatistics(boolean exposeGlobalJmxStatistics) {
       testImmutability("exposeGlobalManagementStatistics");
       this.exposeGlobalJmxStatistics = exposeGlobalJmxStatistics;
@@ -69,6 +80,9 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
     * If JMX statistics are enabled then all 'published' JMX objects will appear under this name. This is optional, if
     * not specified an object name will be created for you by default.
     */
+   @ConfigurationAttribute(name = "jmxDomain", 
+            containingElement = "globalJmxStatistics", 
+            description = "If JMX statistics are enabled then all 'published' JMX objects will appear under this name")
    public void setJmxDomain(String jmxObjectName) {
       testImmutability("jmxNameBase");
       this.jmxDomain = jmxObjectName;
@@ -130,6 +144,9 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       return asyncListenerExecutorFactoryClass;
    }
 
+   @ConfigurationAttribute(name = "factory", 
+            containingElement = "asyncListenerExecutor", 
+            description = "ExecutorService factory class for asynchronous listeners")
    public void setAsyncListenerExecutorFactoryClass(String asyncListenerExecutorFactoryClass) {
       testImmutability("asyncListenerExecutorFactoryClass");
       this.asyncListenerExecutorFactoryClass = asyncListenerExecutorFactoryClass;
@@ -148,6 +165,9 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       return evictionScheduledExecutorFactoryClass;
    }
 
+   @ConfigurationAttribute(name = "factory", 
+            containingElement = "evictionScheduledExecutor", 
+            description = "ExecutorService factory class for eviction threads")
    public void setEvictionScheduledExecutorFactoryClass(String evictionScheduledExecutorFactoryClass) {
       testImmutability("evictionScheduledExecutorFactoryClass");
       this.evictionScheduledExecutorFactoryClass = evictionScheduledExecutorFactoryClass;
@@ -157,6 +177,9 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       return replicationQueueScheduledExecutorFactoryClass;
    }
 
+   @ConfigurationAttribute(name = "factory", 
+            containingElement = "replicationQueueScheduledExecutor", 
+            description = "ExecutorService factory class for replication queue threads")
    public void setReplicationQueueScheduledExecutorFactoryClass(String replicationQueueScheduledExecutorFactoryClass) {
       testImmutability("replicationQueueScheduledExecutorFactoryClass");
       this.replicationQueueScheduledExecutorFactoryClass = replicationQueueScheduledExecutorFactoryClass;
@@ -235,7 +258,11 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    public Properties getAsyncListenerExecutorProperties() {
       return asyncListenerExecutorProperties;
    }
+   
 
+   @ConfigurationProperties(elements = {
+            @ConfigurationProperty(name = "maxThreads", parentElement = "asyncListenerExecutor"),
+            @ConfigurationProperty(name = "threadNamePrefix", parentElement = "asyncListenerExecutor") })
    public void setAsyncListenerExecutorProperties(Properties asyncListenerExecutorProperties) {
       testImmutability("asyncListenerExecutorProperties");
       this.asyncListenerExecutorProperties = toTypedProperties(asyncListenerExecutorProperties);
