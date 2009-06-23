@@ -133,7 +133,7 @@ public class JmxDoclet {
       }
 
       // and field level annotations
-      for (FieldDoc field : cd.fields()) {
+      for (FieldDoc field : cd.fields(false)) {
          for (AnnotationDesc a : field.annotations()) {
             String annotationName = a.annotationType().qualifiedTypeName();
             if (annotationName.equals(ManagedAttribute.class.getName())) {

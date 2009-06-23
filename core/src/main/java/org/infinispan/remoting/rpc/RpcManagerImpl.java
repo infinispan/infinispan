@@ -47,7 +47,6 @@ public class RpcManagerImpl implements RpcManager {
    private Transport t;
    private final AtomicLong replicationCount = new AtomicLong(0);
    private final AtomicLong replicationFailures = new AtomicLong(0);
-   @ManagedAttribute(name = "StatisticsEnabled", description = "Enables or disables the gathering of statistics by this component", writable = true)
    boolean statisticsEnabled = false; // by default, don't gather statistics.
    private volatile Address currentStateTransferSource;
    private boolean stateTransferEnabled;
@@ -294,6 +293,7 @@ public class RpcManagerImpl implements RpcManager {
       return String.valueOf(replicationFailures.get());
    }
 
+   @ManagedAttribute(name = "StatisticsEnabled", description = "Enables or disables the gathering of statistics by this component", writable = true)   
    public boolean isStatisticsEnabled() {
       return statisticsEnabled;
    }
