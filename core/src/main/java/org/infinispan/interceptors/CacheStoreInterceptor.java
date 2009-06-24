@@ -55,7 +55,6 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -73,7 +72,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @MBean(objectName = "CacheStore", description = "Component that handles storing of entries to a CacheStore from memory.")
 public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    private CacheLoaderManagerConfig loaderConfig = null;
-   private HashMap<GlobalTransaction, Integer> txStores = new HashMap<GlobalTransaction, Integer>();
+   private Map<GlobalTransaction, Integer> txStores = new ConcurrentHashMap<GlobalTransaction, Integer>();
    private Map<GlobalTransaction, Set<Object>> preparingTxs = new ConcurrentHashMap<GlobalTransaction, Set<Object>>();
    private final AtomicLong cacheStores = new AtomicLong(0);
    CacheStore store;
