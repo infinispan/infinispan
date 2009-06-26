@@ -162,11 +162,15 @@ public class PutKeyValueCommand extends AbstractDataCommand implements DataWrite
 
    @Override
    public String toString() {
-      return "PutKeyValueCommand{" +
-            "key=" + key +
-            ", value=" + value +
-            ", putIfAbsent=" + putIfAbsent +
-            '}';
+      return new StringBuilder()
+            .append("PutKeyValueCommand{")
+            .append("key=").append(key)
+            .append(", value=").append(value)
+            .append(", putIfAbsent=").append(putIfAbsent)
+            .append(", lifespanMillis=").append(lifespanMillis)
+            .append(", maxIdleTimeMillis=").append(maxIdleTimeMillis)
+            .append("}")
+            .toString();
    }
 
    public boolean isSuccessful() {
