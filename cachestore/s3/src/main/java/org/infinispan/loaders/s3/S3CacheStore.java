@@ -6,6 +6,8 @@ import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.loaders.bucket.BucketBasedCacheStore;
+import org.infinispan.loaders.s3.jclouds.JCloudsBucket;
+import org.infinispan.loaders.s3.jclouds.JCloudsConnection;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -44,7 +46,7 @@ public class S3CacheStore extends BucketBasedCacheStore {
     * {@inheritDoc} This initializes the internal <tt>s3Connection</tt> to a default implementation
     */
    public void init(CacheLoaderConfig config, Cache cache, Marshaller m) {
-      init(config, cache, m, null, null);
+      init(config, cache, m, new JCloudsConnection(), new JCloudsBucket());
    }
 
    @Override
