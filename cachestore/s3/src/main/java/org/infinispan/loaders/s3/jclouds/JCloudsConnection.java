@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * An JClouds implementation of {@link S3Connection}. This implementation uses the threadsafe {@link
- * S3HttpNioConnectionPoolClientModule} transport.
+ * HttpNioConnectionPoolClientModule} transport.
  *
  * @author Adrian Cole
  * @link http://code.google.com/p/jclouds
@@ -78,8 +78,7 @@ public class JCloudsConnection
          // TODO proxy host/port
          Module loggingModule = org.infinispan.util.logging.LogFactory.IS_LOG4J_AVAILABLE ? new Log4JLoggingModule()
                : new JDKLoggingModule();
-         this.context = S3ContextFactory.createS3Context(properties,
-                                                         new HttpNioConnectionPoolClientModule(), loggingModule);
+         this.context = S3ContextFactory.createContext(config.getAwsAccessKey(),config.getAwsSecretKey()).withModules(new HttpNioConnectionPoolClientModule(), loggingModule).build();
          this.s3Service = context.getConnection();
          if (this.s3Service == null) {
             throw new S3ConnectionException("Could not connect");
