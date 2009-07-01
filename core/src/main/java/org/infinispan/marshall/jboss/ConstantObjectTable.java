@@ -207,7 +207,7 @@ public class ConstantObjectTable implements ObjectTable {
                objects.add(rwrt);
                writers.put(typeClazz, rwrt);               
             } catch (ClassNotFoundException e) {
-               log.debug("Unable to load class" + e.getMessage());
+               if (log.isDebugEnabled()) log.debug("Unable to load class (ignore if class belonging to a module not in use): {0}", e.getMessage());
             }
          }
          
