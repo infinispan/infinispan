@@ -17,6 +17,13 @@
    <properties>
       <jclouds.aws.accesskeyid></jclouds.aws.accesskeyid>
       <jclouds.aws.secretaccesskey></jclouds.aws.secretaccesskey>
+      <version.jclouds>1.0-beta-2</version.jclouds>
+      <version.log4j>1.2.14</version.log4j>
+      <version.commons.io>1.4</version.commons.io>
+      <version.xstream>1.2</version.xstream>
+      <version.guice>2.0-r943</version.guice>      
+      <version.google.collections>1.0-rc1</version.google.collections>
+      <version.httpcore.nio>4.0</version.httpcore.nio>
    </properties>
 
    <dependencies>
@@ -37,25 +44,25 @@
       <dependency>
          <groupId>org.jclouds</groupId>
          <artifactId>jclouds-s3</artifactId>
-         <version>1.0-beta-2</version>
+         <version>${version.jclouds}</version>
       </dependency>
 
       <dependency>
          <groupId>org.jclouds</groupId>
          <artifactId>jclouds-httpnio</artifactId>
-         <version>1.0-beta-2</version>
+         <version>${version.jclouds}</version>
       </dependency>
 
       <dependency>
          <groupId>org.jclouds</groupId>
          <artifactId>jclouds-log4j</artifactId>
-         <version>1.0-beta-2</version>
+         <version>${version.jclouds}</version>
       </dependency>
 
       <dependency>
          <groupId>commons-io</groupId>
          <artifactId>commons-io</artifactId>
-         <version>1.4</version>
+         <version>${version.commons.io}</version>
          <scope>test</scope>
       </dependency>
 
@@ -63,14 +70,14 @@
       <dependency>
          <groupId>xstream</groupId>
          <artifactId>xstream</artifactId>
-         <version>1.2</version>
+         <version>${version.xstream}</version>
          <scope>test</scope>
       </dependency>
 
       <dependency>
          <groupId>log4j</groupId>
          <artifactId>log4j</artifactId>
-         <version>1.2.14</version>
+         <version>${version.log4j}</version>
          <scope>test</scope>
       </dependency>
 
