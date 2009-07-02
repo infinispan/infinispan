@@ -73,9 +73,13 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
                         sb.append("<TR BGCOLOR=\"white\" CLASS=\"TableRowColor\">");
                         sb.append("<TD ALIGN=\"LEFT\" VALIGN=\"TOP\"><tt>").append(a.name()).append("</tt></TD>");
                         sb.append("<TD ALIGN=\"LEFT\" VALIGN=\"TOP\">").append(a.description()).append("</TD>");
+                        
+                        //if default value specified in annotation use it
                         if(a.defaultValue().length() >0){
                            sb.append("<TD ALIGN=\"LEFT\" VALIGN=\"TOP\"><tt>").append(a.defaultValue()).append("</tt></TD>");
                         }
+                        
+                        //otherwise reflect that field and read default value
                         else{
                            try{
                               //reflect default value 
@@ -85,9 +89,12 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
                               sb.append("<TD ALIGN=\"LEFT\" VALIGN=\"TOP\"><tt>").append("N/A").append("</tt></TD>");      
                            }
                         }
+                        
+                        //if allowed values specified for attribute, use it
                         if(a.allowedValues().length() > 0){
                            sb.append("<TD ALIGN=\"LEFT\" VALIGN=\"TOP\">").append(a.allowedValues()).append("</TD>");
                         }
+                        //otherwise, reflect method and use parameter as allowed value
                         else if(isSetterMethod(m)){                           
                            sb.append("<TD ALIGN=\"LEFT\" VALIGN=\"TOP\">").append(m.getParameterTypes()[0].getSimpleName()).append("</TD>");
                         }
