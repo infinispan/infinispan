@@ -31,7 +31,9 @@ import java.util.Properties;
          @ConfigurationElement(name = "evictionScheduledExecutor", parent = "global", description = ""),
          @ConfigurationElement(name = "replicationQueueScheduledExecutor", parent = "global", description = ""),  
          @ConfigurationElement(name = "globalJmxStatistics", parent = "global", description = ""),   
-         @ConfigurationElement(name = "asyncTransportExecutor", parent = "global", description = "")
+         @ConfigurationElement(name = "asyncTransportExecutor", parent = "global", description = ""),
+         @ConfigurationElement(name = "serialization", parent = "global", description = ""),
+         @ConfigurationElement(name = "shutdown", parent = "global", description = "")
 })
 public class GlobalConfiguration extends AbstractConfigurationBean {
 
@@ -156,6 +158,9 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       return asyncTransportExecutorFactoryClass;
    }
 
+   @ConfigurationAttribute(name = "factory", 
+            containingElement = "asyncTransportExecutor", 
+            description = "ExecutorService factory class for async transport")
    public void setAsyncTransportExecutorFactoryClass(String asyncTransportExecutorFactoryClass) {
       testImmutability("asyncTransportExecutorFactoryClass");
       this.asyncTransportExecutorFactoryClass = asyncTransportExecutorFactoryClass;
@@ -189,6 +194,8 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       return marshallerClass;
    }
 
+   @ConfigurationAttribute(name = "serialization", 
+            containingElement = "marshallerClass")
    public void setMarshallerClass(String marshallerClass) {
       testImmutability("marshallerClass");
       this.marshallerClass = marshallerClass;
@@ -198,6 +205,9 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       return transportClass;
    }
 
+   @ConfigurationAttribute(name = "transportClass", 
+            containingElement = "transport", 
+            description = "Transport class, by default null i.e. no transport")
    public void setTransportClass(String transportClass) {
       testImmutability("transportClass");
       this.transportClass = transportClass;
@@ -230,6 +240,8 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       return clusterName;
    }
 
+   @ConfigurationAttribute(name = "clusterName", 
+            containingElement = "transport")
    public void setClusterName(String clusterName) {
       testImmutability("clusterName");
       this.clusterName = clusterName;
@@ -244,6 +256,10 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       this.shutdownHookBehavior = shutdownHookBehavior;
    }
 
+   @ConfigurationAttribute(name = "hookBehavior", 
+            containingElement = "shutdown", 
+            allowedValues = "DEFAULT, REGISTER, DONT_REGISTER", 
+            defaultValue = "DEFAULT")
    public void setShutdownHookBehavior(String shutdownHookBehavior) {
       if (shutdownHookBehavior == null)
          throw new ConfigurationException("Shutdown hook behavior cannot be null", "ShutdownHookBehavior");
@@ -277,6 +293,9 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       return asyncTransportExecutorProperties;
    }
 
+   @ConfigurationProperties(elements = {
+            @ConfigurationProperty(name = "maxThreads", parentElement = "asyncTransportExecutor"),
+            @ConfigurationProperty(name = "threadNamePrefix", parentElement = "asyncTransportExecutor") })
    public void setAsyncTransportExecutorProperties(Properties asyncTransportExecutorProperties) {
       testImmutability("asyncTransportExecutorProperties");
       this.asyncTransportExecutorProperties = toTypedProperties(asyncTransportExecutorProperties);
@@ -291,6 +310,10 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       return evictionScheduledExecutorProperties;
    }
 
+
+   @ConfigurationProperties(elements = {
+            @ConfigurationProperty(name = "maxThreads", parentElement = "evictionScheduledExecutor"),
+            @ConfigurationProperty(name = "threadNamePrefix", parentElement = "evictionScheduledExecutor") })   
    public void setEvictionScheduledExecutorProperties(Properties evictionScheduledExecutorProperties) {
       testImmutability("evictionScheduledExecutorProperties");
       this.evictionScheduledExecutorProperties = toTypedProperties(evictionScheduledExecutorProperties);
@@ -305,6 +328,9 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       return replicationQueueScheduledExecutorProperties;
    }
 
+   @ConfigurationProperties(elements = {
+            @ConfigurationProperty(name = "maxThreads", parentElement = "replicationQueueScheduledExecutor"),
+            @ConfigurationProperty(name = "threadNamePrefix", parentElement = "replicationQueueScheduledExecutor") })      
    public void setReplicationQueueScheduledExecutorProperties(Properties replicationQueueScheduledExecutorProperties) {
       testImmutability("replicationQueueScheduledExecutorProperties");
       this.replicationQueueScheduledExecutorProperties = toTypedProperties(replicationQueueScheduledExecutorProperties);
@@ -323,11 +349,13 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       return Version.decodeVersionForSerialization(marshallVersion);
    }
 
+   @ConfigurationAttribute(name = "serialization", 
+            containingElement = "marshallVersion")
    public void setMarshallVersion(short marshallVersion) {
       testImmutability("marshallVersion");
       this.marshallVersion = marshallVersion;
    }
-
+   
    public void setMarshallVersion(String marshallVersion) {
       testImmutability("marshallVersion");
       this.marshallVersion = Version.getVersionShort(marshallVersion);
@@ -336,7 +364,9 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    public long getDistributedSyncTimeout() {
       return distributedSyncTimeout;
    }
-
+   
+   @ConfigurationAttribute(name = "distributedSyncTimeout", 
+            containingElement = "transport")
    public void setDistributedSyncTimeout(long distributedSyncTimeout) {
       testImmutability("distributedSyncTimeout");
       this.distributedSyncTimeout = distributedSyncTimeout;
