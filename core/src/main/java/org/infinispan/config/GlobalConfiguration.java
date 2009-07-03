@@ -194,8 +194,8 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       return marshallerClass;
    }
 
-   @ConfigurationAttribute(name = "serialization", 
-            containingElement = "marshallerClass")
+   @ConfigurationAttribute(name = "marshallerClass", 
+            containingElement = "serialization")
    public void setMarshallerClass(String marshallerClass) {
       testImmutability("marshallerClass");
       this.marshallerClass = marshallerClass;
@@ -349,8 +349,8 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       return Version.decodeVersionForSerialization(marshallVersion);
    }
 
-   @ConfigurationAttribute(name = "serialization", 
-            containingElement = "marshallVersion")
+   @ConfigurationAttribute(name = "marshallVersion", 
+            containingElement = "serialization")
    public void setMarshallVersion(short marshallVersion) {
       testImmutability("marshallVersion");
       this.marshallVersion = marshallVersion;
