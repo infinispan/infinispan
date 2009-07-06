@@ -349,13 +349,13 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       return Version.decodeVersionForSerialization(marshallVersion);
    }
 
-   @ConfigurationAttribute(name = "marshallVersion", 
-            containingElement = "serialization")
    public void setMarshallVersion(short marshallVersion) {
       testImmutability("marshallVersion");
       this.marshallVersion = marshallVersion;
    }
    
+   @ConfigurationAttribute(name = "version", 
+            containingElement = "serialization")
    public void setMarshallVersion(String marshallVersion) {
       testImmutability("marshallVersion");
       this.marshallVersion = Version.getVersionShort(marshallVersion);
