@@ -21,9 +21,6 @@
       <version.log4j>1.2.14</version.log4j>
       <version.commons.io>1.4</version.commons.io>
       <version.xstream>1.2</version.xstream>
-      <version.guice>2.0-r943</version.guice>      
-      <version.google.collections>1.0-rc1</version.google.collections>
-      <version.httpcore.nio>4.0</version.httpcore.nio>
    </properties>
 
    <dependencies>
