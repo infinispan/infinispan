@@ -187,10 +187,12 @@ public class ConstantObjectTable implements ObjectTable {
 
    public void init(RemoteCommandFactory cmdFactory, org.infinispan.marshall.Marshaller ispnMarshaller) {
       // Init singletons
-      objects.add(RequestIgnoredResponse.INSTANCE);
-      writers.put(RequestIgnoredResponse.class, new ExternalizerAdapter(index++, new InstanceWriter()));
-      objects.add(UnsuccessfulResponse.INSTANCE);
-      writers.put(UnsuccessfulResponse.class, new ExternalizerAdapter(index++, new InstanceWriter()));
+      ExternalizerAdapter adapter = new ExternalizerAdapter(index++, new InstanceWriter(RequestIgnoredResponse.INSTANCE));
+      objects.add(adapter);
+      writers.put(RequestIgnoredResponse.class, adapter);
+      adapter = new ExternalizerAdapter(index++, new InstanceWriter(UnsuccessfulResponse.INSTANCE));
+      objects.add(adapter);
+      writers.put(UnsuccessfulResponse.class, adapter);
       
       try {
          for (Map.Entry<String, String> entry : EXTERNALIZERS.entrySet()) {
@@ -226,20 +228,23 @@ public class ConstantObjectTable implements ObjectTable {
    }
 
    public Object readObject(Unmarshaller unmarshaller) throws IOException, ClassNotFoundException {
-      Object o = objects.get(unmarshaller.readUnsignedByte());
-      if (o instanceof ExternalizerAdapter) {
-         return ((ExternalizerAdapter) o).readObject(unmarshaller);
-      }
-      return o;
+      ExternalizerAdapter adapter = (ExternalizerAdapter) objects.get(unmarshaller.readUnsignedByte());
+      return adapter.readObject(unmarshaller);
    }
    
    static class InstanceWriter implements Externalizer {
+      private final Object singleton;
+      
+      InstanceWriter(Object singleton) {
+         this.singleton = singleton;
+      }
+      
       public void writeObject(ObjectOutput output, Object object) throws IOException {
          // no-op
       }
       
       public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         throw new CacheException("Read on constant instances shouldn't be called");
+         return singleton;
       }
    }
    
