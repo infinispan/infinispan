@@ -10,8 +10,9 @@ import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.util.Map;
+//TODO this is temp test, a duplicate of XmlFileParsingTest, will remove soon (Vladimir)
 
-@Test(groups = "unit", testName = "config.parsing.XmlFileParsingTest")
+@Test(groups = "unit", testName = "config.parsing.XmlFileParsingTest2")
 public class AutomatedXmlFileParsingTest {
 
    public void testNamedCacheFile() throws IOException {
