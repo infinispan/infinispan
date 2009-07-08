@@ -1,6 +1,8 @@
 package org.infinispan.loaders.decorators;
 
 import org.infinispan.config.AbstractNamedCacheConfigurationBean;
+import org.infinispan.config.ConfigurationAttribute;
+import org.infinispan.config.ConfigurationElement;
 
 /**
  * Configuration for the async cache loader
@@ -8,6 +10,7 @@ import org.infinispan.config.AbstractNamedCacheConfigurationBean;
  * @author Manik Surtani
  * @since 4.0
  */
+@ConfigurationElement(name="async", parent="loader")
 public class AsyncStoreConfig extends AbstractNamedCacheConfigurationBean {
    boolean enabled;
    int batchSize = 100;
@@ -19,6 +22,9 @@ public class AsyncStoreConfig extends AbstractNamedCacheConfigurationBean {
       return enabled;
    }
 
+   @ConfigurationAttribute(name = "enabled", 
+            containingElement = "async",
+            description="TODO")
    public void setEnabled(boolean enabled) {
       testImmutability("enabled");
       this.enabled = enabled;
@@ -28,6 +34,9 @@ public class AsyncStoreConfig extends AbstractNamedCacheConfigurationBean {
       return batchSize;
    }
 
+   @ConfigurationAttribute(name = "batchSize", 
+            containingElement = "async",
+            description="TODO")
    public void setBatchSize(int batchSize) {
       testImmutability("batchSize");
       this.batchSize = batchSize;
@@ -55,6 +64,10 @@ public class AsyncStoreConfig extends AbstractNamedCacheConfigurationBean {
       return threadPoolSize;
    }
 
+   
+   @ConfigurationAttribute(name = "threadPoolSize", 
+            containingElement = "async",
+            description="TODO")
    public void setThreadPoolSize(int threadPoolSize) {
       testImmutability("threadPoolSize");
       this.threadPoolSize = threadPoolSize;

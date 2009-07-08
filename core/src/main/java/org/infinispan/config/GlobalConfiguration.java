@@ -101,6 +101,9 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       return mBeanServerLookup;
    }
 
+   @ConfigurationAttribute(name = "mBeanServerLookup", 
+            containingElement = "globalJmxStatistics", 
+            description = "")
    public void setMBeanServerLookup(String mBeanServerLookup) {
       testImmutability("mBeanServerLookup");
       this.mBeanServerLookup = mBeanServerLookup;
@@ -110,6 +113,9 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       return allowDuplicateDomains;
    }
 
+   @ConfigurationAttribute(name = "allowDuplicateDomains", 
+            containingElement = "globalJmxStatistics", 
+            description = "")
    public void setAllowDuplicateDomains(boolean allowDuplicateDomains) {
       testImmutability("allowDuplicateDomains");
       this.allowDuplicateDomains = allowDuplicateDomains;

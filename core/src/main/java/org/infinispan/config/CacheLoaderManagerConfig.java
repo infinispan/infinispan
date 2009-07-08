@@ -21,6 +21,7 @@
  */
 package org.infinispan.config;
 
+import org.infinispan.config.parsing.CacheLoaderManagerConfigReader;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.util.Util;
@@ -37,6 +38,7 @@ import java.util.List;
  * @author <a href="mailto:galder.zamarreno@jboss.com">Galder Zamarreno</a>
  * @since 4.0
  */
+@ConfigurationElement(name="loaders",parent="default",customReader=CacheLoaderManagerConfigReader.class)
 public class CacheLoaderManagerConfig extends AbstractNamedCacheConfigurationBean {
    private static final long serialVersionUID = 2210349340378984424L;
 
@@ -46,11 +48,17 @@ public class CacheLoaderManagerConfig extends AbstractNamedCacheConfigurationBea
 
    private boolean shared;
 
+
+   @ConfigurationAttribute(name = "preload", 
+            containingElement = "loaders")
    public void setPreload(boolean preload) {
       testImmutability("preload");
       this.preload = preload;
    }
 
+
+   @ConfigurationAttribute(name = "passivation", 
+            containingElement = "loaders")
    public void setPassivation(boolean passivation) {
       testImmutability("passivation");
       this.passivation = passivation;
@@ -85,9 +93,15 @@ public class CacheLoaderManagerConfig extends AbstractNamedCacheConfigurationBea
 
    @Override
    public String toString() {
-      return new StringBuilder().append("CacheLoaderManagerConfig{").append("shared=").append(shared).append(", passivation=").append(passivation).append(", preload='").append(preload).append('\'').append(", cacheLoaderConfigs.size()=").append(cacheLoaderConfigs.size()).append('}').toString();
+      return new StringBuilder().append("CacheLoaderManagerConfig{").append("shared=").append(
+               shared).append(", passivation=").append(passivation).append(", preload='").append(
+               preload).append('\'').append(", cacheLoaderConfigs.size()=").append(
+               cacheLoaderConfigs.size()).append('}').toString();
    }
 
+
+   @ConfigurationAttribute(name = "shared", 
+            containingElement = "loaders")
    public void setShared(boolean shared) {
       testImmutability("shared");
       this.shared = shared;

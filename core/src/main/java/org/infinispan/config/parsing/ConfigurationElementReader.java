@@ -19,29 +19,14 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.config;
+package org.infinispan.config.parsing;
 
-import java.lang.annotation.*;
-import org.infinispan.config.parsing.ConfigurationElementReader;
+import org.infinispan.config.AbstractConfigurationBean;
+import org.w3c.dom.Element;
 
-
-/**
- * Represents XML element from a valid Infinispan configuration file. 
- * 
- * @author Vladimir Blagojevic
- * @version $Id: ConfigurationElement.java,v 1.5 2008/05/23 11:11:02 belaban Exp $
- */
-
-@Retention(RetentionPolicy.RUNTIME)
-@Target( { ElementType.TYPE})
-public @interface ConfigurationElement {
+public interface ConfigurationElementReader {
    
-    String name();
+   public void process(Element e, AbstractConfigurationBean c);   
+   public void setParser(AutomatedXmlConfigurationParserImpl parser);
 
-    String parent();
-
-    String description() default "";
-    
-    Class <? extends ConfigurationElementReader> customReader() default ConfigurationElementReader.class;
-      
 }

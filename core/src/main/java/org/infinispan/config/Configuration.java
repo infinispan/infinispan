@@ -21,6 +21,7 @@
  */
 package org.infinispan.config;
 
+import org.infinispan.config.parsing.ClusteringConfigReader;
 import org.infinispan.distribution.DefaultConsistentHash;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.factories.annotations.Inject;
@@ -40,6 +41,20 @@ import java.util.concurrent.TimeUnit;
  * @since 4.0
  */
 @NonVolatile
+@ConfigurationElements(elements = {
+         @ConfigurationElement(name = "default", parent = "infinispan", description = ""),
+         @ConfigurationElement(name = "namedCache", parent = "infinispan", description = ""),
+         @ConfigurationElement(name = "locking", parent = "default", description = ""),
+         @ConfigurationElement(name = "transaction", parent = "default", description = ""), 
+         @ConfigurationElement(name = "jmxStatistics", parent = "default", description = ""),
+         @ConfigurationElement(name = "lazyDeserialization", parent = "default", description = ""),  
+         @ConfigurationElement(name = "invocationBatching", parent = "default", description = ""),   
+         @ConfigurationElement(name = "clustering", parent = "default", description = "", customReader=ClusteringConfigReader.class),
+         @ConfigurationElement(name = "hash", parent = "default", description = ""),
+         @ConfigurationElement(name = "eviction", parent = "default", description = ""),
+         @ConfigurationElement(name = "expiration", parent = "default", description = ""),
+         @ConfigurationElement(name = "customInterceptors", parent = "default", description = "")         
+})
 public class Configuration extends AbstractNamedCacheConfigurationBean {
    private static final long serialVersionUID = 5553791890144997466L;
 
@@ -79,6 +94,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       this.unsafeUnreliableReturnValues = unsafeUnreliableReturnValues;
    }
 
+   @ConfigurationAttribute(name = "rehashRpcTimeout", 
+            containingElement = "hash")    
    public void setRehashRpcTimeout(long rehashRpcTimeout) {
       testImmutability("rehashRpcTimeout");
       this.rehashRpcTimeout = rehashRpcTimeout;
@@ -255,6 +272,9 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       return writeSkewCheck;
    }
 
+
+   @ConfigurationAttribute(name = "writeSkewCheck", 
+            containingElement = "locking")    
    public void setWriteSkewCheck(boolean writeSkewCheck) {
       testImmutability("writeSkewCheck");
       this.writeSkewCheck = writeSkewCheck;
@@ -264,16 +284,23 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       return concurrencyLevel;
    }
 
+
+   @ConfigurationAttribute(name = "concurrencyLevel", 
+            containingElement = "locking")    
    public void setConcurrencyLevel(int concurrencyLevel) {
       testImmutability("concurrencyLevel");
       this.concurrencyLevel = concurrencyLevel;
    }
 
+   @ConfigurationAttribute(name = "replQueueMaxElements", 
+            containingElement = "async")
    public void setReplQueueMaxElements(int replQueueMaxElements) {
       testImmutability("replQueueMaxElements");
       this.replQueueMaxElements = replQueueMaxElements;
    }
 
+   @ConfigurationAttribute(name = "replQueueInterval", 
+            containingElement = "async")
    public void setReplQueueInterval(long replQueueInterval) {
       testImmutability("replQueueInterval");
       this.replQueueInterval = replQueueInterval;
@@ -283,7 +310,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       setReplQueueInterval(timeUnit.toMillis(replQueueInterval));
    }
 
-
+   @ConfigurationAttribute(name = "enabled", 
+            containingElement = "jmxStatistics")   
    public void setExposeJmxStatistics(boolean useMbean) {
       testImmutability("exposeJmxStatistics");
       this.exposeJmxStatistics = useMbean;
@@ -297,16 +325,23 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     * @param enabled if true, batching is enabled.
     * @since 4.0
     */
+   
+   @ConfigurationAttribute(name = "enabled", 
+            containingElement = "invocationBatching") 
    public void setInvocationBatchingEnabled(boolean enabled) {
       testImmutability("invocationBatchingEnabled");
       this.invocationBatchingEnabled = enabled;
    }
 
+   @ConfigurationAttribute(name = "fetchInMemoryState", 
+            containingElement = "stateRetrieval")
    public void setFetchInMemoryState(boolean fetchInMemoryState) {
       testImmutability("fetchInMemoryState");
       this.fetchInMemoryState = fetchInMemoryState;
    }
 
+   @ConfigurationAttribute(name = "lockAcquisitionTimeout", 
+            containingElement = "locking")    
    public void setLockAcquisitionTimeout(long lockAcquisitionTimeout) {
       testImmutability("lockAcquisitionTimeout");
       this.lockAcquisitionTimeout = lockAcquisitionTimeout;
@@ -316,6 +351,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       setLockAcquisitionTimeout(timeUnit.toMillis(lockAcquisitionTimeout));
    }
 
+   @ConfigurationAttribute(name = "replTimeout", 
+            containingElement = "sync")    
    public void setSyncReplTimeout(long syncReplTimeout) {
       testImmutability("syncReplTimeout");
       this.syncReplTimeout = syncReplTimeout;
@@ -330,6 +367,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       this.cacheMode = cacheModeInt;
    }
 
+   @ConfigurationAttribute(name = "mode", 
+            containingElement = "clustering")
    public void setCacheMode(String cacheMode) {
       testImmutability("cacheMode");
       if (cacheMode == null) throw new ConfigurationException("Cache mode cannot be null", "CacheMode");
@@ -352,6 +391,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       return evictionWakeUpInterval;
    }
 
+   @ConfigurationAttribute(name = "wakeUpInterval", 
+            containingElement = "eviction")
    public void setEvictionWakeUpInterval(long evictionWakeUpInterval) {
       testImmutability("evictionWakeUpInterval");
       this.evictionWakeUpInterval = evictionWakeUpInterval;
@@ -365,11 +406,24 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       testImmutability("evictionStrategy");
       this.evictionStrategy = evictionStrategy;
    }
+   
+   @ConfigurationAttribute(name = "strategy", 
+            containingElement = "eviction")
+   public void setEvictionStrategy(String eStrategy){
+      testImmutability("evictionStrategy");
+      this.evictionStrategy = EvictionStrategy.valueOf(uc(eStrategy));
+      if (this.evictionStrategy == null) {
+         log.warn("Unknown evictionStrategy  '" + eStrategy + "', using defaults.");
+         this.evictionStrategy = EvictionStrategy.NONE;
+      }
+   }
 
    public int getEvictionMaxEntries() {
       return evictionMaxEntries;
    }
 
+   @ConfigurationAttribute(name = "maxEntries", 
+            containingElement = "eviction")
    public void setEvictionMaxEntries(int evictionMaxEntries) {
       testImmutability("evictionMaxEntries");
       this.evictionMaxEntries = evictionMaxEntries;
@@ -379,6 +433,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       return expirationLifespan;
    }
 
+   @ConfigurationAttribute(name = "lifespan", 
+            containingElement = "expiration")
    public void setExpirationLifespan(long expirationLifespan) {
       testImmutability("expirationLifespan");
       this.expirationLifespan = expirationLifespan;
@@ -388,11 +444,16 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       return expirationMaxIdle;
    }
 
+   @ConfigurationAttribute(name = "maxIdle", 
+            containingElement = "expiration")
    public void setExpirationMaxIdle(long expirationMaxIdle) {
       testImmutability("expirationMaxIdle");
       this.expirationMaxIdle = expirationMaxIdle;
    }
 
+   @ConfigurationAttribute(name = "transactionManagerLookupClass", 
+            containingElement = "transaction", 
+            description = "")
    public void setTransactionManagerLookupClass(String transactionManagerLookupClass) {
       testImmutability("transactionManagerLookupClass");
       this.transactionManagerLookupClass = transactionManagerLookupClass;
@@ -403,21 +464,29 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       this.cacheLoaderManagerConfig = cacheLoaderManagerConfig;
    }
 
+   @ConfigurationAttribute(name = "syncCommitPhase", 
+            containingElement = "transaction")
    public void setSyncCommitPhase(boolean syncCommitPhase) {
       testImmutability("syncCommitPhase");
       this.syncCommitPhase = syncCommitPhase;
    }
 
+   @ConfigurationAttribute(name = "syncRollbackPhase", 
+            containingElement = "transaction")
    public void setSyncRollbackPhase(boolean syncRollbackPhase) {
       testImmutability("syncRollbackPhase");
       this.syncRollbackPhase = syncRollbackPhase;
    }
    
+   @ConfigurationAttribute(name = "useEagerLocking", 
+            containingElement = "transaction")           
    public void setUseEagerLocking(boolean useEagerLocking) {
       testImmutability("useEagerLocking");
       this.useEagerLocking = useEagerLocking;
    }
 
+   @ConfigurationAttribute(name = "useReplQueue", 
+            containingElement = "async")
    public void setUseReplQueue(boolean useReplQueue) {
       testImmutability("useReplQueue");
       this.useReplQueue = useReplQueue;
@@ -428,6 +497,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       this.isolationLevel = isolationLevel;
    }
 
+   @ConfigurationAttribute(name = "timeout", 
+            containingElement = "stateRetrieval")
    public void setStateRetrievalTimeout(long stateRetrievalTimeout) {
       testImmutability("stateRetrievalTimeout");
       this.stateRetrievalTimeout = stateRetrievalTimeout;
@@ -437,6 +508,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       setStateRetrievalTimeout(timeUnit.toMillis(stateRetrievalTimeout));
    }
 
+   @ConfigurationAttribute(name = "isolationLevel", 
+            containingElement = "locking")    
    public void setIsolationLevel(String isolationLevel) {
       testImmutability("isolationLevel");
       if (isolationLevel == null) throw new ConfigurationException("Isolation level cannot be null", "IsolationLevel");
@@ -447,41 +520,58 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       }
    }
 
+   @ConfigurationAttribute(name = "enabled", 
+            containingElement = "lazyDeserialization") 
    public void setUseLazyDeserialization(boolean useLazyDeserialization) {
       testImmutability("useLazyDeserialization");
       this.useLazyDeserialization = useLazyDeserialization;
    }
 
+   @ConfigurationAttribute(name = "enabled", 
+            containingElement = "l1")   
    public void setL1CacheEnabled(boolean l1CacheEnabled) {
       testImmutability("l1CacheEnabled");
       this.l1CacheEnabled = l1CacheEnabled;
    }
 
+
+   @ConfigurationAttribute(name = "lifespan", 
+            containingElement = "l1")   
    public void setL1Lifespan(long l1Lifespan) {
       testImmutability("l1Lifespan");
       this.l1Lifespan = l1Lifespan;
    }
 
+   @ConfigurationAttribute(name = "onRehash", 
+            containingElement = "l1")   
    public void setL1OnRehash(boolean l1OnRehash) {
       testImmutability("l1OnRehash");
       this.l1OnRehash = l1OnRehash;
    }
 
+   @ConfigurationAttribute(name = "consistentHashClass", 
+            containingElement = "hash")   
    public void setConsistentHashClass(String consistentHashClass) {
       testImmutability("consistentHashClass");
       this.consistentHashClass = consistentHashClass;
    }
-
+   
+   @ConfigurationAttribute(name = "numOwners", 
+            containingElement = "hash")    
    public void setNumOwners(int numOwners) {
       testImmutability("numOwners");
       this.numOwners = numOwners;
    }
 
+   @ConfigurationAttribute(name = "rehashWait", 
+            containingElement = "hash")    
    public void setRehashWaitTime(long rehashWaitTime) {
       testImmutability("rehashWaitTime");
       this.rehashWaitTime = rehashWaitTime;
    }
 
+   @ConfigurationAttribute(name = "asyncMarshalling", 
+            containingElement = "async")
    public void setUseAsyncMarshalling(boolean useAsyncMarshalling) {
       testImmutability("useAsyncMarshalling");
       this.useAsyncMarshalling = useAsyncMarshalling;
