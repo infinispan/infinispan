@@ -37,7 +37,8 @@ public class JdbmCacheStoreVamTest extends JdbmCacheStoreTest {
    @Override
    protected Marshaller getMarshaller() {
       VersionAwareMarshaller marshaller = new VersionAwareMarshaller();
-      marshaller.init(Thread.currentThread().getContextClassLoader(), new RemoteCommandFactory());
+      marshaller.inject(Thread.currentThread().getContextClassLoader(), new RemoteCommandFactory());
+      marshaller.start();
       return marshaller;
    }
 }

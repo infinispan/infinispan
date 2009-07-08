@@ -486,6 +486,16 @@ public abstract class AbstractComponentRegistry implements Lifecycle {
 
    /**
     * Rewires components.  Can only be called if the current state is WIRED or STARTED.
+    * 
+    * Here's an example where rewiring is needed:
+    * 
+    * The reason why rewiring needs to happen is to capture any such config changes.  For example (this is a JBC example):
+    *   1.  Config uses a FileCacheLoader.
+    *   2.  Cache.create() - this will create a CacheLoaderInterceptor with a reference to the FileCacheLoader.
+    *   3.  Add a JDBC CacheLoader to the config
+    *   4.  Call cache.start().  The cache loader manager should recognise this change, create a chaining cache loader.  
+    *       This is a volatile component.  Now the CLI is non-volatile since it doesn't need to be rebuilt.  But it does 
+    *       need to be rewired, since the cache loader now is a ChainingCacheLoader, not a FileCacheLoader.  
     */
    public void rewire() {
       // need to re-inject everything again.

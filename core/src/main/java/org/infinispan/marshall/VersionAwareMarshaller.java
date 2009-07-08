@@ -23,6 +23,7 @@ package org.infinispan.marshall;
 
 import org.infinispan.commands.RemoteCommandFactory;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.io.ByteBuffer;
 import org.infinispan.io.ExposedByteArrayOutputStream;
@@ -54,14 +55,22 @@ public class VersionAwareMarshaller extends AbstractMarshaller {
    private static final int CUSTOM_MARSHALLER = 999;
 
    private final JBossMarshaller defaultMarshaller;
+   private ClassLoader loader;
+   private RemoteCommandFactory remoteCommandFactory;
 
    public VersionAwareMarshaller() {
       defaultMarshaller = new JBossMarshaller();
    }
 
    @Inject
-   public void init(ClassLoader loader, RemoteCommandFactory remoteCommandFactory) {
-      defaultMarshaller.init(loader, remoteCommandFactory, this);
+   public void inject(ClassLoader loader, RemoteCommandFactory remoteCommandFactory) {
+      this.loader = loader;
+      this.remoteCommandFactory = remoteCommandFactory;
+   }
+   
+   @Start
+   public void start() {
+      defaultMarshaller.start(loader, remoteCommandFactory, this);
    }
    
    @Stop

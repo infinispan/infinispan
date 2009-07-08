@@ -23,7 +23,6 @@ package org.infinispan.marshall.jboss;
 
 import org.infinispan.CacheException;
 import org.infinispan.commands.RemoteCommandFactory;
-import org.infinispan.factories.annotations.Stop;
 import org.infinispan.io.ByteBuffer;
 import org.infinispan.io.ExposedByteArrayOutputStream;
 import org.infinispan.marshall.AbstractMarshaller;
@@ -92,7 +91,7 @@ public class JBossMarshaller extends AbstractMarshaller {
       }
    };
 
-   public void init(ClassLoader defaultCl, RemoteCommandFactory cmdFactory, org.infinispan.marshall.Marshaller ispnMarshaller) {
+   public void start(ClassLoader defaultCl, RemoteCommandFactory cmdFactory, org.infinispan.marshall.Marshaller ispnMarshaller) {
       log.debug("Using JBoss Marshalling based marshaller.");
       this.defaultCl = defaultCl;
       try {
@@ -111,11 +110,10 @@ public class JBossMarshaller extends AbstractMarshaller {
       configuration.setClassResolver(new ContextClassResolver());
    }
 
-   @Stop
    public void stop() {
       // Do not leak classloader when cache is stopped.
       defaultCl = null;
-      objectTable.stop();
+      if (objectTable != null) objectTable.stop();
    }
 
    public byte[] objectToByteBuffer(Object obj) throws IOException {

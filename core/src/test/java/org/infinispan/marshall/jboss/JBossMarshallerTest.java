@@ -89,7 +89,8 @@ public class JBossMarshallerTest {
 
    @BeforeTest
    public void setUp() {
-      marshaller.init(Thread.currentThread().getContextClassLoader(), new RemoteCommandFactory());
+      marshaller.inject(Thread.currentThread().getContextClassLoader(), new RemoteCommandFactory());
+      marshaller.start();
    }
 
    @AfterTest

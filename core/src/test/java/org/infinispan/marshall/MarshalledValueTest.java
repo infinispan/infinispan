@@ -79,7 +79,8 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       chain.addInterceptorAfter(mvli, MarshalledValueInterceptor.class);
       
       marshaller = new VersionAwareMarshaller();
-      marshaller.init(Thread.currentThread().getContextClassLoader(), null);
+      marshaller.inject(Thread.currentThread().getContextClassLoader(), null);
+      marshaller.start();
    }
 
    @AfterMethod
@@ -316,7 +317,8 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
 
 
       VersionAwareMarshaller marshaller = new VersionAwareMarshaller();
-      marshaller.init(Thread.currentThread().getContextClassLoader(), null);
+      marshaller.inject(Thread.currentThread().getContextClassLoader(), null);
+      marshaller.start();
 
       // start the test
       ByteArrayOutputStream bout = new ByteArrayOutputStream();

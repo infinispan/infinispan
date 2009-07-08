@@ -33,6 +33,10 @@ import java.lang.annotation.Target;
  * org.infinispan.util.concurrent.locks.LockManager}, though, should <b>never</b> be marked as <tt>@NonVolatile</tt>
  * since based on the configuration, different lock manager implementations may be selected.  LockManager is, hence,
  * <b>not</b> resilient to changes in the configuration.
+ * 
+ * To sum up: A component is marked as NonVolatile when the component is not dependent on configuration changes that may 
+ * happen between create() and start(). This is legacy since from JBoss Cache because in Infinispan there's only start but 
+ * no create. 
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @since 4.0

@@ -30,7 +30,10 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
    private Cache cache;
 
    public void store(InternalCacheEntry ed) {
-      if (ed != null) store.put(ed.getKey(), ed);
+      if (ed != null) {
+         log.trace("Store {0} in dummy map store@{1}", ed, Integer.toHexString(System.identityHashCode(store)));
+         store.put(ed.getKey(), ed);
+      }
    }
 
    @SuppressWarnings("unchecked")
@@ -40,6 +43,7 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
          store.clear();
          for (int i = 0; i < numEntries; i++) {
             InternalCacheEntry e = (InternalCacheEntry) marshaller.objectFromObjectStream(ois);
+            log.trace("Store {0} from stream in dummy store@{1}", e, Integer.toHexString(System.identityHashCode(store)));
             store.put(e.getKey(), e);
          }
       } catch (Exception e) {

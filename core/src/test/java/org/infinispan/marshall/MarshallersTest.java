@@ -83,7 +83,7 @@ public class MarshallersTest {
    @BeforeTest
    public void setUp() {
       home.init(Thread.currentThread().getContextClassLoader(), new RemoteCommandFactory());
-      jboss.init(Thread.currentThread().getContextClassLoader(), new RemoteCommandFactory(), jboss);
+      jboss.start(Thread.currentThread().getContextClassLoader(), new RemoteCommandFactory(), jboss);
    }
 
    @AfterTest
