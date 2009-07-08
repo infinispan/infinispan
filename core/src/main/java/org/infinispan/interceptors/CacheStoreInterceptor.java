@@ -71,10 +71,10 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 @MBean(objectName = "CacheStore", description = "Component that handles storing of entries to a CacheStore from memory.")
 public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
-   private CacheLoaderManagerConfig loaderConfig = null;
+   CacheLoaderManagerConfig loaderConfig = null;
    private Map<GlobalTransaction, Integer> txStores = new ConcurrentHashMap<GlobalTransaction, Integer>();
    private Map<GlobalTransaction, Set<Object>> preparingTxs = new ConcurrentHashMap<GlobalTransaction, Set<Object>>();
-   private final AtomicLong cacheStores = new AtomicLong(0);
+   final AtomicLong cacheStores = new AtomicLong(0);
    CacheStore store;
    private CacheLoaderManager loaderManager;
 
@@ -313,7 +313,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       return cacheStores.get();
    }
 
-   private InternalCacheEntry getStoredEntry(Object key, InvocationContext ctx) {
+   InternalCacheEntry getStoredEntry(Object key, InvocationContext ctx) {
       CacheEntry entry = ctx.lookupEntry(key);
       if (entry instanceof InternalCacheEntry) {
          return (InternalCacheEntry) entry;

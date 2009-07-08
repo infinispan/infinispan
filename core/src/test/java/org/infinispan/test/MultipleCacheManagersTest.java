@@ -44,7 +44,7 @@ import java.util.List;
 @Test(groups = {"functional", "unit"})
 public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
-   private List<CacheManager> cacheManagers = new ArrayList<CacheManager>();
+   protected List<CacheManager> cacheManagers = new ArrayList<CacheManager>();
    private IdentityHashMap<Cache, ReplListener> listeners = new IdentityHashMap<Cache, ReplListener>();
 
    @BeforeClass

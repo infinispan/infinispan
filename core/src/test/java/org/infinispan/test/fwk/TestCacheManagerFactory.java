@@ -41,6 +41,19 @@ public class TestCacheManagerFactory {
       globalConfiguration.setTransportProperties(newTransportProps);
       return new DefaultCacheManager(globalConfiguration);
    }
+   
+   /**
+    * Creates an cache manager that does support clustering with a given default cache configuration.
+    */
+   public static CacheManager createClusteredCacheManager(Configuration defaultCacheConfig) {
+      GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
+      amendMarshaller(globalConfiguration);
+//      amendJmx(globalConfiguration);
+      Properties newTransportProps = new Properties();
+      newTransportProps.put(JGroupsTransport.CONFIGURATION_STRING, JGroupsConfigBuilder.getJGroupsConfig());
+      globalConfiguration.setTransportProperties(newTransportProps);
+      return new DefaultCacheManager(globalConfiguration, defaultCacheConfig);
+   }
 
    /**
     * Creates a cache manager and ammends the supplied configuration in order to avoid conflicts (e.g. jmx, jgroups)

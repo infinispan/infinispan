@@ -1,5 +1,8 @@
 package org.infinispan.container.entries;
 
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
 /**
  * An immortal cache value, to correspond with {@link org.infinispan.container.entries.ImmortalCacheEntry}
  *
@@ -7,6 +10,7 @@ package org.infinispan.container.entries;
  * @since 4.0
  */
 public class ImmortalCacheValue implements InternalCacheValue, Cloneable {
+   private static final Log log = LogFactory.getLog(ImmortalCacheValue.class);
    Object value;
 
    ImmortalCacheValue(Object value) {

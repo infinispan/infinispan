@@ -1,0 +1,182 @@
+/*
+ * JBoss, Home of Professional Open Source.
+ * Copyright 2009, Red Hat Middleware LLC, and individual contributors
+ * as indicated by the @author tags. See the copyright.txt file in the
+ * distribution for a full listing of individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
+package org.infinispan.interceptors;
+
+import java.util.List;
+import java.util.Map;
+
+import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.context.Flag;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.distribution.DistributionManager;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.Transport;
+
+/**
+ * Cache store interceptor specific for the distribution cache mode. Put operations  
+ * has been modified in such way that if they put operation is the result of an L1 put, storing
+ * in the cache store is ignore. This is done so that inmortal entries that get converted into
+ * mortal ones when putting into L1 don't get propagated to the cache store. 
+ * 
+ * Secondly, in a replicated environment where a shared cache store is used, the node in which
+ * the cache operation is executed is the one responsible for interacting with the cache. This 
+ * doesn't work with distributed mode and instead, in a shared cache store situation, the first 
+ * owner of the key is the one responsible for storing it.
+ * 
+ * In the particular case of putAll(), individual keys are checked and if a shared cache store 
+ * environment has been configured, only the first owner of that key will actually store it to 
+ * the cache store. In a unshared environment though, only those nodes that are owners of the key
+ * would store it to their local cache stores.
+ * 
+ * @author Galder Zamarreño
+ * @since 4.0
+ */
+public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
+   DistributionManager dm;
+   Address address;
+
+   @Inject
+   public void inject(DistributionManager dm, Transport transport) {
+      this.dm = dm;
+      this.address = transport.getAddress();
+   }
+      
+   // ---- WRITE commands
+   
+   @Override
+   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      Object returnValue = invokeNextInterceptor(ctx, command);
+      Object key = command.getKey();
+      if (skip(ctx, key) || ctx.isInTxScope() || !command.isSuccessful()) return returnValue;
+      InternalCacheEntry se = getStoredEntry(key, ctx);
+      store.store(se);
+      log.trace("Stored entry {0} under key {1}", se, key);
+      if (getStatisticsEnabled()) cacheStores.incrementAndGet();
+      return returnValue;
+   }
+   
+   @Override
+   public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+      Object returnValue = invokeNextInterceptor(ctx, command);
+      if (skip(ctx) || ctx.isInTxScope()) return returnValue;
+
+      Map<Object, Object> map = command.getMap();
+      for (Object key : map.keySet()) {
+         if (!skip(key)) {
+            InternalCacheEntry se = getStoredEntry(key, ctx);
+            store.store(se);
+            log.trace("Stored entry {0} under key {1}", se, key);            
+         }
+      }
+      if (getStatisticsEnabled()) cacheStores.getAndAdd(map.size());
+      return returnValue;
+   }
+   
+   @Override
+   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+      Object retval = invokeNextInterceptor(ctx, command);
+      Object key = command.getKey();
+      if (!skip(ctx, key) && !ctx.isInTxScope() && command.isSuccessful()) {
+         boolean resp = store.remove(key);
+         log.trace("Removed entry under key {0} and got response {1} from CacheStore", key, resp);
+      }
+      return retval;
+   }
+
+   @Override
+   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command)
+            throws Throwable {
+      Object returnValue = invokeNextInterceptor(ctx, command);
+      Object key = command.getKey();
+      if (skip(ctx, key) || ctx.isInTxScope() || !command.isSuccessful()) return returnValue;
+      
+      InternalCacheEntry se = getStoredEntry(key, ctx);
+      store.store(se);
+      log.trace("Stored entry {0} under key {1}", se, key);
+      if (getStatisticsEnabled()) cacheStores.incrementAndGet();
+
+      return returnValue;
+   }   
+   
+   /**
+    * Method that skips invocation if:
+    *   - No store defined or,
+    *   - The context contains Flag.SKIP_CACHE_STORE or,
+    *   - The store is a shared one and node storing the key is not the 1st owner of the key or,
+    *   - This is an L1 put operation.
+    */
+   private boolean skip(InvocationContext ctx, Object key) {
+      if (store == null) return true;  // could be because the cache loader oes not implement cache store
+      List<Address> addresses = dm.locate(key);
+      if ((loaderConfig.isShared() && !isFirstOwner(addresses)) || ctx.hasFlag(Flag.SKIP_CACHE_STORE) || isL1Put(addresses)) {
+         if (trace)
+            log.trace("Passing up method call and bypassing this interceptor since the cache loader is either shared " +
+                        "and the caller is not the first owner of the key, or the put call is an L1 put, or the call contain a skip cache store flag");
+         return true;
+      }
+      return false;
+   }
+   
+   /**
+    * Method that skips invocation if:
+    *   - No store defined or,
+    *   - The context contains Flag.SKIP_CACHE_STORE or,
+    */
+   private final boolean skip(InvocationContext ctx) {
+      if (store == null) return true;  // could be because the cache loader oes not implement cache store
+      if (ctx.hasFlag(Flag.SKIP_CACHE_STORE)) {
+         if (trace)
+            log.trace("Passing up method call and bypassing this interceptor since the call contain a skip cache store flag");
+         return true;
+      }
+      return false;
+   }
+
+   /**
+    * Method that skips invocation if:
+    *   - The store is a shared one and node storing the key is not the 1st owner of the key or,
+    *   - This is an L1 put operation.
+    */
+   private boolean skip(Object key) {
+      List<Address> addresses = dm.locate(key);
+      if ((loaderConfig.isShared() && !isFirstOwner(addresses)) || isL1Put(addresses)) {
+         if (trace)
+            log.trace("Passing up method call and bypassing this interceptor since the cache loader is either shared " +
+                        "and the caller is not the first owner of the key, or the put call is an L1 put");
+         return true;
+      }
+      return false;
+   }
+
+   private boolean isL1Put(List<Address> addresses) {
+      return !addresses.contains(address);
+   }
+   
+   private boolean isFirstOwner(List<Address> addresses) {
+      return addresses.get(0).equals(address);
+   }
+}

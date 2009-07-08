@@ -113,7 +113,15 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
             interceptorChain.appendIntereceptor(createInterceptor(PassivationInterceptor.class));
          } else {
             interceptorChain.appendIntereceptor(createInterceptor(CacheLoaderInterceptor.class));
-            interceptorChain.appendIntereceptor(createInterceptor(CacheStoreInterceptor.class));
+            switch (configuration.getCacheMode()) {
+               case DIST_SYNC:
+               case DIST_ASYNC:
+                  interceptorChain.appendIntereceptor(createInterceptor(DistCacheStoreInterceptor.class));
+                  break;
+               default:
+                  interceptorChain.appendIntereceptor(createInterceptor(CacheStoreInterceptor.class));
+                  break;
+            }
          }
       }
 
