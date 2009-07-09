@@ -1,32 +1,37 @@
-package org.infinispan.tools.doclet.html;
+package org.infinispan.tools.doclet.config;
+
+import com.sun.javadoc.DocErrorReporter;
+import com.sun.javadoc.RootDoc;
+import com.sun.tools.doclets.formats.html.ConfigurationImpl;
+import org.infinispan.tools.doclet.html.HtmlGenerator;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
-
-import com.sun.javadoc.DocErrorReporter;
-import com.sun.javadoc.RootDoc;
-import com.sun.tools.doclets.formats.html.ConfigurationImpl;
-
 /**
  * A Doclet that generates configuration guide for Infinispan
- * 
+ *
  * @author Vladimir Blagojevic
  * @since 4.0
  */
 @SuppressWarnings("restriction")
 public class ConfigDoclet {
    static String outputDirectory = ".";
-   static String header, footer, encoding, title, bottom;
+   static String header, footer, encoding, title, bottom, cp;
 
    public static boolean start(RootDoc root) throws IOException {
 
+      System.out.println("STARTING CONFIG DOCLET");
+
+
       HtmlGenerator generator = new ConfigHtmlGenerator(encoding, title(), bottom, footer, header,
-               "Infinispan configuration options", Arrays.asList("Configuration", "Infinispan",
-                        "Data Grids", "Documentation", "Reference", "MBeans"));
+                                                        "Infinispan configuration options", Arrays.asList("Configuration", "Infinispan",
+                                                                                                          "Data Grids", "Documentation", "Reference", "MBeans"), cp);
 
       generator.generateHtml(outputDirectory + File.separator + "config.html");
+
+      System.out.println("FINISHING CONFIG DOCLET");
 
       return true;
    }
@@ -47,7 +52,6 @@ public class ConfigDoclet {
 
    public static boolean validOptions(String options[][], DocErrorReporter reporter) {
       for (String[] option : options) {
-         // System.out.println("  >> Option " + Arrays.toString(option));
          if (option[0].equals("-d"))
             outputDirectory = option[1];
          else if (option[0].equals("-encoding"))
@@ -60,15 +64,9 @@ public class ConfigDoclet {
             header = option[1];
          else if (option[0].equals("-doctitle"))
             title = option[1];
+         else if (option[0].equals("-classpath"))
+            cp = option[1];
       }
       return (ConfigurationImpl.getInstance()).validOptions(options, reporter);
-   }
-
-   public static void main(String[] args) throws IOException {
-      HtmlGenerator generator = new ConfigHtmlGenerator(encoding, title(), bottom, footer, header,
-               "Infinispan configuration options", Arrays.asList("Configuration", "Infinispan",
-                        "Data Grids", "Documentation", "Reference", "MBeans"));
-
-      generator.generateHtml(outputDirectory + File.separator + "config.html");
    }
 }

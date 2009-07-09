@@ -181,7 +181,7 @@ pageTracker._trackPageview();
                         <version>4.0.0-SNAPSHOT</version>
                      </docletArtifact>
                      <footer><![CDATA[
-                Google Analytics
+                <!-- Google Analytics -->
 <script type='text/javascript'>
 var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
 document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
@@ -206,5 +206,51 @@ pageTracker._trackPageview();
             </plugins>
          </build>
       </profile>
+
+      <!-- TODO somehow combine this with the 'distribution' profile so all docs are built together -->
+      <profile>
+         <id>configdoc</id>
+         <activation>
+            <activeByDefault>false</activeByDefault>
+         </activation>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-javadoc-plugin</artifactId>
+                  <configuration>
+                     <doclet>org.infinispan.tools.doclet.config.ConfigDoclet</doclet>
+                     <docletArtifact>
+                        <groupId>org.infinispan</groupId>
+                        <artifactId>infinispan-tools</artifactId>
+                        <version>4.0.0-SNAPSHOT</version>
+                     </docletArtifact>
+                     <footer><![CDATA[
+                <!-- Google Analytics -->
+<script type='text/javascript'>
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type='text/javascript'>
+try {
+var pageTracker = _gat._getTracker("UA-8601422-4");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+               ]]></footer>
+                  </configuration>
+                  <executions>
+                     <execution>
+                        <id>javadoc</id>
+                        <phase>package</phase>
+                        <goals>
+                           <goal>aggregate</goal>
+                        </goals>
+                     </execution>
+                  </executions>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+
    </profiles>
 </project>

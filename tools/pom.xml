@@ -21,7 +21,8 @@
          <groupId>${project-package}</groupId>
          <artifactId>infinispan-core</artifactId>
          <version>${project-version}</version>
-      </dependency>      
+      </dependency>
+
       <dependency>
          <groupId>${project-package}</groupId>
          <artifactId>infinispan-core</artifactId>
@@ -29,27 +30,75 @@
          <type>test-jar</type>
          <scope>test</scope>
       </dependency>
+
+      <!-- needs to depend on all other modules it is trying to document! -->
+      <dependency>
+         <groupId>${project-package}</groupId>
+         <artifactId>infinispan-cachestore-bdbje</artifactId>
+         <version>${project-version}</version>
+      </dependency>
+
+
+      <dependency>
+         <groupId>${project-package}</groupId>
+         <artifactId>infinispan-cachestore-jdbc</artifactId>
+         <version>${project-version}</version>
+      </dependency>
+
+
+      <dependency>
+         <groupId>${project-package}</groupId>
+         <artifactId>infinispan-cachestore-jdbm</artifactId>
+         <version>${project-version}</version>
+      </dependency>
+
+
+      <dependency>
+         <groupId>${project-package}</groupId>
+         <artifactId>infinispan-cachestore-s3</artifactId>
+         <version>${project-version}</version>
+      </dependency>
+
+
+      <dependency>
+         <groupId>${project-package}</groupId>
+         <artifactId>infinispan-gui-demo</artifactId>
+         <version>${project-version}</version>
+      </dependency>
+
+
+      <dependency>
+         <groupId>${project-package}</groupId>
+         <artifactId>infinispan-jopr-plugin</artifactId>
+         <version>${project-version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>${project-package}</groupId>
+         <artifactId>infinispan-tree</artifactId>
+         <version>${project-version}</version>
+      </dependency>
    </dependencies>
 
    <profiles>
-     <profile>
-       <id>default-tools.jar</id>
-       <activation>
-         <property>
-           <name>java.vendor</name>
-           <value>Sun Microsystems Inc.</value>
-         </property>
-       </activation>
-       <dependencies>
-         <dependency>
-           <groupId>com.sun</groupId>
-           <artifactId>tools</artifactId>
-           <version>1.4.2</version>
-           <scope>system</scope>
-           <systemPath>${java.home}/../lib/tools.jar</systemPath>
-         </dependency>
-       </dependencies>
-    </profile>
-  </profiles>
+      <profile>
+         <id>default-tools.jar</id>
+         <activation>
+            <property>
+               <name>java.vendor</name>
+               <value>Sun Microsystems Inc.</value>
+            </property>
+         </activation>
+         <dependencies>
+            <dependency>
+               <groupId>com.sun</groupId>
+               <artifactId>tools</artifactId>
+               <version>1.4.2</version>
+               <scope>system</scope>
+               <systemPath>${java.home}/../lib/tools.jar</systemPath>
+            </dependency>
+         </dependencies>
+      </profile>
+   </profiles>
 
 </project>

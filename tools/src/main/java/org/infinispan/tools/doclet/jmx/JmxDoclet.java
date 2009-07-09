@@ -13,7 +13,6 @@ import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.tools.doclet.html.HtmlGenerator;
-import org.infinispan.tools.doclet.html.JmxHtmlGenerator;
 
 import java.io.File;
 import java.io.IOException;

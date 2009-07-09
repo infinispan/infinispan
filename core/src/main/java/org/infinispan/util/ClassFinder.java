@@ -32,11 +32,8 @@ import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-import org.infinispan.util.Util;
-
 /**
  * Find infinispan classes utility
- * 
  */
 public class ClassFinder {
 
@@ -67,18 +64,22 @@ public class ClassFinder {
    public static List<Class<?>> isAssignableFrom(Class<?> clazz) throws Exception {
       return isAssignableFrom(infinispanClasses(), clazz);
    }
-   
+
    public static List<Class<?>> infinispanClasses() throws Exception {
-      List<File> files = new ArrayList<File>();     
-      String javaClassPath = System.getProperty("java.class.path") + File.pathSeparator
-               + System.getProperty("surefire.test.class.path");     
+      String cp = System.getProperty("java.class.path") + File.pathSeparator + System.getProperty("surefire.test.class.path");
+      return infinispanClasses(cp);
+   }
+
+   public static List<Class<?>> infinispanClasses(String javaClassPath) throws Exception {
+      List<File> files = new ArrayList<File>();
 
       // either infinispan jar or a directory of output classes contains infinispan classes
       for (String path : javaClassPath.split(File.pathSeparator)) {
          if ((path.contains("infinispan") && path.endsWith("jar")) || !path.endsWith("jar")) {
-            files.add(new File(path));           
+            files.add(new File(path));
          }
       }
+
       if (files.isEmpty())
          return Collections.emptyList();
       else if (files.size() == 1)
@@ -94,25 +95,33 @@ public class ClassFinder {
 
    private static List<Class<?>> findClassesOnPath(File path) throws Exception {
       List<Class<?>> classes = new ArrayList<Class<?>>();
-      if (path.isDirectory()) {
-         List<File> classFiles = new ArrayList<File>();
-         dir(classFiles, path);
-         for (File cf : classFiles) {
-            Class<?> claz = Util.loadClass(toClassName(cf.getAbsolutePath().toString()));
-            classes.add(claz);
-         }
-      } else {
-         if (path.isFile() && path.getName().endsWith("jar") && path.canRead()) {
-            JarFile jar = new JarFile(path);
-            Enumeration<JarEntry> en = jar.entries();
-            while (en.hasMoreElements()) {
-               JarEntry entry = en.nextElement();
-               if (entry.getName().endsWith("class")) {
-                  Class<?> claz = Util.loadClass(toClassName(entry.getName()));
-                  classes.add(claz);
+      try {
+         if (path.isDirectory()) {
+            List<File> classFiles = new ArrayList<File>();
+            dir(classFiles, path);
+            for (File cf : classFiles) {
+               Class<?> claz = Util.loadClass(toClassName(cf.getAbsolutePath().toString()));
+               classes.add(claz);
+            }
+         } else {
+            if (path.isFile() && path.getName().endsWith("jar") && path.canRead()) {
+               JarFile jar = new JarFile(path);
+               Enumeration<JarEntry> en = jar.entries();
+               while (en.hasMoreElements()) {
+                  JarEntry entry = en.nextElement();
+                  if (entry.getName().endsWith("class")) {
+                     Class<?> claz = Util.loadClass(toClassName(entry.getName()));
+                     classes.add(claz);
+                  }
                }
             }
          }
+      } catch (NoClassDefFoundError e) {
+         // unable to load these classes!!
+         e.printStackTrace();
+      } catch (ClassNotFoundException e) {
+         // unable to load these classes!!
+         e.printStackTrace();
       }
       return classes;
    }

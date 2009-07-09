@@ -1,8 +1,6 @@
-package org.infinispan.tools.doclet.html;
+package org.infinispan.tools.doclet.jmx;
 
-import org.infinispan.tools.doclet.jmx.MBeanAttribute;
-import org.infinispan.tools.doclet.jmx.MBeanComponent;
-import org.infinispan.tools.doclet.jmx.MBeanOperation;
+import org.infinispan.tools.doclet.html.HtmlGenerator;
 
 import java.util.List;
 
