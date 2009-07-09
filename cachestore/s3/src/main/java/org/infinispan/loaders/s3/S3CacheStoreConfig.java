@@ -1,5 +1,8 @@
 package org.infinispan.loaders.s3;
 
+import org.infinispan.config.ConfigurationElement;
+import org.infinispan.config.ConfigurationElements;
+import org.infinispan.config.ConfigurationProperty;
 import org.infinispan.loaders.LockSupportCacheStoreConfig;
 
 /**
@@ -15,6 +18,10 @@ import org.infinispan.loaders.LockSupportCacheStoreConfig;
  * @author Adrian Cole
  * @since 4.0
  */
+@ConfigurationElements(elements = {
+         @ConfigurationElement(name = "loader", parent = "loaders", 
+                  description = "org.infinispan.loaders.s3.S3CacheStoreConfig"),
+         @ConfigurationElement(name = "properties", parent = "loader") })
 public class S3CacheStoreConfig extends LockSupportCacheStoreConfig {
    private String awsAccessKey;
    private String awsSecretKey;
@@ -28,6 +35,8 @@ public class S3CacheStoreConfig extends LockSupportCacheStoreConfig {
       return requestTimeout;
    }
 
+   @ConfigurationProperty(name="requestTimeout",
+            parentElement="properties")
    public void setRequestTimeout(long requestTimeout) {
       this.requestTimeout = requestTimeout;
    }
@@ -37,6 +46,8 @@ public class S3CacheStoreConfig extends LockSupportCacheStoreConfig {
       return maxConnections;
    }
 
+   @ConfigurationProperty(name="maxConnections",
+            parentElement="properties")
    public void setMaxConnections(int maxConnections) {
       this.maxConnections = maxConnections;
    }
@@ -48,6 +59,8 @@ public class S3CacheStoreConfig extends LockSupportCacheStoreConfig {
       return secure;
    }
 
+   @ConfigurationProperty(name="secure",
+            parentElement="properties")
    public void setSecure(boolean secure) {
       this.secure = secure;
    }
@@ -61,6 +74,9 @@ public class S3CacheStoreConfig extends LockSupportCacheStoreConfig {
       return awsAccessKey;
    }
 
+
+   @ConfigurationProperty(name="awsAccessKey",
+            parentElement="properties")
    public void setAwsAccessKey(String awsAccessKey) {
       this.awsAccessKey = awsAccessKey;
    }
@@ -69,6 +85,9 @@ public class S3CacheStoreConfig extends LockSupportCacheStoreConfig {
       return awsSecretKey;
    }
 
+
+   @ConfigurationProperty(name="awsSecretKey",
+            parentElement="properties")
    public void setAwsSecretKey(String awsSecretKey) {
       this.awsSecretKey = awsSecretKey;
    }
@@ -77,6 +96,8 @@ public class S3CacheStoreConfig extends LockSupportCacheStoreConfig {
       return bucket;
    }
 
+   @ConfigurationProperty(name="bucket",
+            parentElement="properties")
    public void setBucket(String bucket) {
       this.bucket = bucket;
    }
@@ -85,6 +106,8 @@ public class S3CacheStoreConfig extends LockSupportCacheStoreConfig {
       return proxyHost;
    }
 
+   @ConfigurationProperty(name="proxyHost",
+            parentElement="properties")
    public void setProxyHost(String proxyHost) {
       this.proxyHost = proxyHost;
    }
@@ -93,6 +116,8 @@ public class S3CacheStoreConfig extends LockSupportCacheStoreConfig {
       return proxyPort;
    }
 
+   @ConfigurationProperty(name="proxyPort",
+            parentElement="properties")
    public void setProxyPort(int proxyPort) {
       this.proxyPort = proxyPort;
    }
