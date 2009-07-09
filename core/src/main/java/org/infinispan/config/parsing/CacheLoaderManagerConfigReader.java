@@ -44,10 +44,8 @@ public class CacheLoaderManagerConfigReader implements ConfigurationElementReade
       this.parser = parser;
    }
 
-   public void process(Element e, AbstractConfigurationBean bean) {
-      
-      CacheLoaderManagerConfig cBean = (CacheLoaderManagerConfig) parser.findAndInstantiateBean(
-               AutomatedXmlConfigurationParserImpl.CONFIG_BEANS, e);
+   public void process(Element e, AbstractConfigurationBean bean) {      
+      CacheLoaderManagerConfig cBean = (CacheLoaderManagerConfig) parser.findAndInstantiateBean(e);
 
       Set<Element> elements = parser.getAllElementsInCoreNS("loader", e);
       if (elements.isEmpty())
@@ -64,8 +62,7 @@ public class CacheLoaderManagerConfigReader implements ConfigurationElementReade
             cl = (CacheLoader) Util.getInstance(clClass);
             clc = Util.getInstance(cl.getConfigurationClass());
          } catch (Exception ex) {
-            throw new ConfigurationException("Unable to instantiate cache loader or configuration",
-                     ex);
+            throw new ConfigurationException("Unable to instantiate cache loader or configuration",ex);
          }
 
          clc.setCacheLoaderClassName(clClass);

@@ -1,3 +1,24 @@
+/*
+ * JBoss, Home of Professional Open Source.
+ * Copyright 2009, Red Hat Middleware LLC, and individual contributors
+ * as indicated by the @author tags. See the copyright.txt file in the
+ * distribution for a full listing of individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.config.parsing;
 
 import java.io.File;
@@ -34,17 +55,14 @@ import org.w3c.dom.NodeList;
  * @author Vladimir Blagojevic
  * @since 4.0
  */
-public class AutomatedXmlConfigurationParserImpl extends XmlParserBase implements XmlConfigurationParser {
-   
-   public static List<Class<?>> INFINISPAN_CLASSES = null;
-   public static  List<Class<?>> CONFIG_BEANS =null;
+public class AutomatedXmlConfigurationParserImpl extends XmlParserBase implements XmlConfigurationParser {   
+   private static  List<Class<?>> CONFIG_BEANS =null;
    
    static {
       String path = System.getProperty("java.class.path") + File.pathSeparator
                + System.getProperty("surefire.test.class.path");
-      try {
-         INFINISPAN_CLASSES = ClassFinder.infinispanClasses();
-         CONFIG_BEANS = ClassFinder.isAssignableFrom(INFINISPAN_CLASSES,AbstractConfigurationBean.class);
+      try {         
+         CONFIG_BEANS = ClassFinder.isAssignableFrom(ClassFinder.infinispanClasses(),AbstractConfigurationBean.class);
       } catch (Exception e) {
          throw new ConfigurationException(
                   "Exception while searching for Infinispan configuration beans, path is " + path,
@@ -114,7 +132,7 @@ public class AutomatedXmlConfigurationParserImpl extends XmlParserBase implement
             return new Configuration();
          } else {
             defaultElement.normalize();            
-            AbstractConfigurationBean bean = findAndInstantiateBean(CONFIG_BEANS, defaultElement);
+            AbstractConfigurationBean bean = findAndInstantiateBean(defaultElement);
             visitElement(defaultElement, bean);
             return (Configuration) bean;
          }
@@ -137,7 +155,7 @@ public class AutomatedXmlConfigurationParserImpl extends XmlParserBase implement
                throw new DuplicateCacheNameException("Named cache " + configurationName + " is declared more than once!");
             }
             try {
-               AbstractConfigurationBean bean = findAndInstantiateBean(CONFIG_BEANS, e);
+               AbstractConfigurationBean bean = findAndInstantiateBean(e);
                visitElement(e, bean);               
                namedCaches.put(configurationName,(Configuration) bean);
             } catch (ConfigurationException ce) {
@@ -154,7 +172,7 @@ public class AutomatedXmlConfigurationParserImpl extends XmlParserBase implement
       if (gc == null) {
          Configuration defaultConfiguration = parseDefaultConfiguration();
          Element globalElement = getSingleElementInCoreNS("global", rootElement);         
-         AbstractConfigurationBean bean = findAndInstantiateBean(CONFIG_BEANS, globalElement);
+         AbstractConfigurationBean bean = findAndInstantiateBean(globalElement);
          visitElement(globalElement, bean);
          gc = (GlobalConfiguration) bean;
          gc.setDefaultConfiguration(defaultConfiguration);
@@ -188,6 +206,10 @@ public class AutomatedXmlConfigurationParserImpl extends XmlParserBase implement
          }
       }
       return null;
+   }
+   
+   public AbstractConfigurationBean findAndInstantiateBean(Element e) throws ConfigurationException {
+      return findAndInstantiateBean(CONFIG_BEANS,e);
    }
    
    private ConfigurationElement findConfigurationElement(Element e, Class<?> bean) {
@@ -252,10 +274,10 @@ public class AutomatedXmlConfigurationParserImpl extends XmlParserBase implement
          }
          NodeList nodeList = e.getChildNodes();
          for (int numChildren = nodeList.getLength(), i = 0; i < numChildren; i++) {
-            Node node = nodeList.item(i);
-            if (node instanceof Element) {               
+            Node child = nodeList.item(i);
+            if (child instanceof Element) {               
                // recursive step
-               visitElement((Element) node, bean);
+               visitElement((Element) child, bean);
             }
          }
       }
@@ -275,11 +297,11 @@ public class AutomatedXmlConfigurationParserImpl extends XmlParserBase implement
                m.invoke(bean, o);
             } catch (Exception ae) {
                throw new ConfigurationException("Illegal attribute value " + attValue + ",type="
-                        + parameterType + ", method=" + m, ae);
+                        + parameterType + ",method=" + m + ",attribute=" + a.name(), ae);
             }
          }
       } else if (isConfigBean) {
-         AbstractConfigurationBean childBean = findAndInstantiateBean(CONFIG_BEANS, node);
+         AbstractConfigurationBean childBean = findAndInstantiateBean(node);
          boolean foundMatchingChild = childBean != null
                   && !bean.getClass().equals(childBean.getClass())
                   && parameterType.isInstance(childBean);
