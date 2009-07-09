@@ -21,6 +21,8 @@
  */
 package org.infinispan.config.parsing;
 
+import java.beans.PropertyEditor;
+import java.beans.PropertyEditorManager;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -295,11 +297,16 @@ public class AutomatedXmlConfigurationParserImpl extends XmlParserBase implement
       boolean matchedAttributeToSetter = a != null && a.containingElement().equals(node.getNodeName());
       boolean isConfigBean = AbstractConfigurationBean.class.isAssignableFrom(parameterType);
       if (matchedAttributeToSetter) {
-         String attValue = getAttributeValue((Element) node, a.name());
-         if (attValue != null && attValue.length() > 0) {
-            Object o = convertToPrimitiveType(attValue, parameterType);
+         String attValue = getAttributeValue(node, a.name());
+         if (attValue != null && attValue.length() > 0) {            
+            PropertyEditor editor = PropertyEditorManager.findEditor(parameterType);
+            if (editor == null) {
+               throw new ConfigurationException("Could not find property editor, type="
+                        + parameterType + ",method=" + m + ",attribute=" + a.name());
+            }
+            editor.setAsText(attValue);
             try {              
-               m.invoke(bean, o);
+               m.invoke(bean, editor.getValue());
             } catch (Exception ae) {
                throw new ConfigurationException("Illegal attribute value " + attValue + ",type="
                         + parameterType + ",method=" + m + ",attribute=" + a.name(), ae);
@@ -341,11 +348,11 @@ public class AutomatedXmlConfigurationParserImpl extends XmlParserBase implement
       }
       boolean matchedPropertyToSetter  = cprops != null && cprops.length >0;
       if(matchedPropertyToSetter){
-         String parentElement = cprops[0].parentElement();
-         String propertyName = cprops[0].name();
+         String parentElement = cprops[0].parentElement();         
          if(parentElement.equals(node.getParentNode().getNodeName())){           
             if(node.getNodeName().equals("property")){
                Properties props = XmlConfigHelper.extractProperties((Element) node.getParentNode());
+               //special case where setter argument is Properties object
                if (Properties.class.isAssignableFrom(parameterType)) {
                   try {
                      m.invoke(bean, props);
@@ -353,21 +360,10 @@ public class AutomatedXmlConfigurationParserImpl extends XmlParserBase implement
                      throw new ConfigurationException("Illegal props " + props + ",type="
                               + parameterType + ", method=" + m, ae);
                   }
-               } else if (parameterType.isAssignableFrom(String.class) || parameterType.isPrimitive()) {
-                  String value = props.getProperty(propertyName);
-                  if (value != null && value.length() > 0) {
-                     Object o = value;
-                     if (parameterType.isPrimitive()) {
-                        o = convertToPrimitiveType(value, parameterType);
-                     }
-                     try {
-                        m.invoke(bean, o);
-                     } catch (Exception ae) {
-                        throw new ConfigurationException("Illegal value of extracted property "
-                                 + value + ", converted to " + o + ",type=" + parameterType
-                                 + ", method=" + m, ae);
-                     }
-                  }
+               } else {
+                  //regular case where setter argument are primitives and String
+                  //follow bean conventions
+                  XmlConfigHelper.setValues(bean, props, false, true);
                }
                //we assume that all other siblings of <property> element are also <property> elements 
                // there no need to iterate them as we have extracted them all using the  method above
@@ -377,23 +373,6 @@ public class AutomatedXmlConfigurationParserImpl extends XmlParserBase implement
          }         
       }
       return false;
-   }
-   
-   private Object convertToPrimitiveType(String attValue, Class<?> clazz) {
-      if (clazz.isPrimitive()) {
-         if (clazz.isAssignableFrom(Boolean.TYPE)) {
-            return Boolean.parseBoolean(attValue);
-         } else if (clazz.isAssignableFrom(Integer.TYPE)) {
-            return Integer.parseInt(attValue);
-         } else if (clazz.isAssignableFrom(Double.TYPE)) {
-            return Double.parseDouble(attValue);
-         } else if (clazz.isAssignableFrom(Long.TYPE)) {
-            return Long.parseLong(attValue);
-         } else if (clazz.isAssignableFrom(Short.TYPE)) {            
-            return Short.parseShort(attValue);
-         }
-      }
-      return attValue;
    }
    
    private void assertInitialized() {
