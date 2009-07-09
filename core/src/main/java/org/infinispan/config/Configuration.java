@@ -21,8 +21,11 @@
  */
 package org.infinispan.config;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.config.parsing.ClusteringConfigReader;
-import org.infinispan.config.parsing.TransactionConfigReader;
 import org.infinispan.distribution.DefaultConsistentHash;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.factories.annotations.Inject;
@@ -30,10 +33,6 @@ import org.infinispan.factories.annotations.NonVolatile;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.util.ReflectionUtil;
 import org.infinispan.util.concurrent.IsolationLevel;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Encapsulates the configuration of a Cache.
@@ -46,7 +45,7 @@ import java.util.concurrent.TimeUnit;
          @ConfigurationElement(name = "default", parent = "infinispan", description = ""),
          @ConfigurationElement(name = "namedCache", parent = "infinispan", description = ""),
          @ConfigurationElement(name = "locking", parent = "default", description = ""),
-         @ConfigurationElement(name = "transaction", parent = "default", description = "", customReader=TransactionConfigReader.class), 
+         @ConfigurationElement(name = "transaction", parent = "default", description = ""), 
          @ConfigurationElement(name = "jmxStatistics", parent = "default", description = ""),
          @ConfigurationElement(name = "lazyDeserialization", parent = "default", description = ""),  
          @ConfigurationElement(name = "invocationBatching", parent = "default", description = ""),   
@@ -457,7 +456,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
    @ConfigurationAttribute(name = "transactionManagerLookupClass", 
             containingElement = "transaction", 
-            description = "")
+            description = "",
+             defaultValue="org.infinispan.transaction.lookup.GenericTransactionManagerLookup")
    public void setTransactionManagerLookupClass(String transactionManagerLookupClass) {
       testImmutability("transactionManagerLookupClass");
       this.transactionManagerLookupClass = transactionManagerLookupClass;

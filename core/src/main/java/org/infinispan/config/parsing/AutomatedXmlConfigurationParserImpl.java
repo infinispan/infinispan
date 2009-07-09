@@ -298,15 +298,21 @@ public class AutomatedXmlConfigurationParserImpl extends XmlParserBase implement
       boolean isConfigBean = AbstractConfigurationBean.class.isAssignableFrom(parameterType);
       if (matchedAttributeToSetter) {
          String attValue = getAttributeValue(node, a.name());
-         if (attValue != null && attValue.length() > 0) {            
+         Object methodAttributeValue = null;
+         if (attValue != null && attValue.length() > 0) {
             PropertyEditor editor = PropertyEditorManager.findEditor(parameterType);
             if (editor == null) {
                throw new ConfigurationException("Could not find property editor, type="
                         + parameterType + ",method=" + m + ",attribute=" + a.name());
             }
             editor.setAsText(attValue);
-            try {              
-               m.invoke(bean, editor.getValue());
+            methodAttributeValue = editor.getValue();
+         } else if (a.defaultValue().length() > 0) {
+            methodAttributeValue = a.defaultValue();
+         }
+         if (methodAttributeValue != null) {
+            try {
+               m.invoke(bean, methodAttributeValue);
             } catch (Exception ae) {
                throw new ConfigurationException("Illegal attribute value " + attValue + ",type="
                         + parameterType + ",method=" + m + ",attribute=" + a.name(), ae);
