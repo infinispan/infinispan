@@ -1,5 +1,6 @@
 package org.infinispan.config.parsing;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,12 +40,19 @@ public class AutomatedXmlConfigurationParserImpl extends XmlParserBase implement
    public static  List<Class<?>> CONFIG_BEANS =null;
    
    static {
+      String path = System.getProperty("java.class.path") + File.pathSeparator
+               + System.getProperty("surefire.test.class.path");
       try {
          INFINISPAN_CLASSES = ClassFinder.infinispanClasses();
          CONFIG_BEANS = ClassFinder.isAssignableFrom(INFINISPAN_CLASSES,AbstractConfigurationBean.class);
-      } catch (Exception e) {        
-        //TODO what to do here?
+      } catch (Exception e) {
+         throw new ConfigurationException(
+                  "Exception while searching for Infinispan configuration beans, path is " + path,
+                  e);
       }
+      if (CONFIG_BEANS == null || CONFIG_BEANS.isEmpty())
+         throw new ConfigurationException("Could not find Infinispan configuration beans, path is "
+                  + path);
    }
 
    // this parser will need to be initialized.
