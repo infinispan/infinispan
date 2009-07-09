@@ -11,7 +11,7 @@ import org.infinispan.config.ConfigurationElement;
 import org.infinispan.config.ConfigurationElements;
 import org.infinispan.config.ConfigurationProperties;
 import org.infinispan.config.ConfigurationProperty;
-import org.infinispan.tools.ClassFinder;
+import org.infinispan.util.ClassFinder;
 
 public class ConfigHtmlGenerator extends HtmlGenerator {
 
