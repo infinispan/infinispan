@@ -69,13 +69,14 @@ public class ClassFinder {
    }
    
    public static List<Class<?>> infinispanClasses() throws Exception {
-      List<File> files = new ArrayList<File>();
-      String javaClassPath = System.getProperty("java.class.path");
+      List<File> files = new ArrayList<File>();     
+      String javaClassPath = System.getProperty("java.class.path") + File.pathSeparator
+               + System.getProperty("surefire.test.class.path");     
 
       // either infinispan jar or a directory of output classes contains infinispan classes
       for (String path : javaClassPath.split(File.pathSeparator)) {
          if ((path.contains("infinispan") && path.endsWith("jar")) || !path.endsWith("jar")) {
-            files.add(new File(path));
+            files.add(new File(path));           
          }
       }
       if (files.isEmpty())
