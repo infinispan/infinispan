@@ -213,7 +213,8 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
 
    @ConfigurationAttribute(name = "transportClass", 
             containingElement = "transport", 
-            description = "Transport class, by default null i.e. no transport")
+            description = "Transport class, by default null i.e. no transport",
+            defaultValue = "org.infinispan.remoting.transport.jgroups.JGroupsTransport")
    public void setTransportClass(String transportClass) {
       testImmutability("transportClass");
       this.transportClass = transportClass;

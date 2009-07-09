@@ -3,6 +3,7 @@ package org.infinispan.config.parsing;
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior;
 import org.infinispan.distribution.DefaultConsistentHash;
 import org.infinispan.loaders.file.FileCacheStoreConfig;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -49,8 +50,11 @@ public class XmlFileParsingTest {
       assert gc.getReplicationQueueScheduledExecutorProperties().getProperty("threadNamePrefix").equals("ReplicationQueueThread");
 
       assert gc.getTransportClass().equals("org.infinispan.remoting.transport.jgroups.JGroupsTransport");
-      assert gc.getTransportProperties().isEmpty();
-
+      assert gc.getClusterName().equals("infinispan-cluster");
+      assert gc.getDistributedSyncTimeout() == 50000;
+      
+      assert gc.getShutdownHookBehavior().equals(ShutdownHookBehavior.REGISTER);
+      
       assert gc.getMarshallerClass().equals("org.infinispan.marshall.VersionAwareMarshaller");
       assert gc.getMarshallVersionString().equals("1.0");
 
