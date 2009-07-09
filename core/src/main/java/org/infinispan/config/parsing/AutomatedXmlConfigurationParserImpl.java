@@ -261,7 +261,8 @@ public class AutomatedXmlConfigurationParserImpl extends XmlParserBase implement
             reader.setParser(this);
             reader.process(e, bean);
          } catch (Exception e1) {
-            throw new ConfigurationException(e1);
+            throw new ConfigurationException("Exception while using custom reader " + readerClass
+                     + " for element " + e.getNodeName(), e1);
          }
       } else {
          //normal processing
@@ -296,7 +297,7 @@ public class AutomatedXmlConfigurationParserImpl extends XmlParserBase implement
       if (matchedAttributeToSetter) {
          String attValue = getAttributeValue((Element) node, a.name());
          if (attValue != null && attValue.length() > 0) {
-            Object o = convertToType(attValue, parameterType);
+            Object o = convertToPrimitiveType(attValue, parameterType);
             try {              
                m.invoke(bean, o);
             } catch (Exception ae) {
@@ -351,19 +352,20 @@ public class AutomatedXmlConfigurationParserImpl extends XmlParserBase implement
                   } catch (Exception ae) {
                      throw new ConfigurationException("Illegal props " + props + ",type="
                               + parameterType + ", method=" + m, ae);
-                  } 
-               } else if (parameterType.isAssignableFrom(String.class) || parameterType.isPrimitive()) {                  
+                  }
+               } else if (parameterType.isAssignableFrom(String.class) || parameterType.isPrimitive()) {
                   String value = props.getProperty(propertyName);
                   if (value != null && value.length() > 0) {
                      Object o = value;
                      if (parameterType.isPrimitive()) {
-                        o = convertToType(value, parameterType);
+                        o = convertToPrimitiveType(value, parameterType);
                      }
                      try {
                         m.invoke(bean, o);
                      } catch (Exception ae) {
-                        throw new ConfigurationException("Illegal value " + o
-                                 + ",type=" + parameterType + ", method=" + m, ae);
+                        throw new ConfigurationException("Illegal value of extracted property "
+                                 + value + ", converted to " + o + ",type=" + parameterType
+                                 + ", method=" + m, ae);
                      }
                   }
                }
@@ -377,7 +379,7 @@ public class AutomatedXmlConfigurationParserImpl extends XmlParserBase implement
       return false;
    }
    
-   private Object convertToType(String attValue, Class<?> clazz) {
+   private Object convertToPrimitiveType(String attValue, Class<?> clazz) {
       if (clazz.isPrimitive()) {
          if (clazz.isAssignableFrom(Boolean.TYPE)) {
             return Boolean.parseBoolean(attValue);
