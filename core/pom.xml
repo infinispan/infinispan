@@ -22,7 +22,7 @@
       <version.jboss.logging.spi>2.1.0.GA</version.jboss.logging.spi>
       <version.jboss.marshalling>1.2.0.CR2</version.jboss.marshalling>
       <version.jgroups>2.8.0.Beta2</version.jgroups>
-      <version.jta>1.1</version.jta>
+      <version.jta>1.0.1.GA</version.jta>
       <version.xstream>1.2</version.xstream>
    </properties>
 
@@ -38,8 +38,8 @@
          exclude this and replace with any valid source of this API, such as a Java EE app server. 
          -->
       <dependency>
-         <groupId>javax.transaction</groupId>
-         <artifactId>jta</artifactId>
+         <groupId>org.jboss.javaee</groupId>
+         <artifactId>jboss-transaction-api</artifactId>
          <version>${version.jta}</version>
       </dependency>
 
