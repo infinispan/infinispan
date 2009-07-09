@@ -1,6 +1,7 @@
 package org.infinispan.loaders;
 
 import org.infinispan.CacheException;
+import org.infinispan.config.ConfigurationAttribute;
 import org.infinispan.config.PluggableConfigurationComponent;
 
 /**
@@ -11,12 +12,15 @@ import org.infinispan.config.PluggableConfigurationComponent;
  */
 public class AbstractCacheLoaderConfig extends PluggableConfigurationComponent implements CacheLoaderConfig {
 
-   private String cacheLoaderClassName;
+   protected String cacheLoaderClassName;
 
    public String getCacheLoaderClassName() {
       return cacheLoaderClassName;
    }
 
+   @ConfigurationAttribute(name = "class", 
+            containingElement = "loader", 
+            description = "Full class name of a cache loader")
    public void setCacheLoaderClassName(String className) {
       if (className == null || className.length() == 0) return;
       testImmutability("cacheLoaderClassName");

@@ -1,7 +1,6 @@
 package org.infinispan.loaders;
 
 import org.infinispan.config.ConfigurationAttribute;
-import org.infinispan.config.PluggableConfigurationComponent;
 import org.infinispan.loaders.decorators.AsyncStoreConfig;
 import org.infinispan.loaders.decorators.SingletonStoreConfig;
 import org.infinispan.util.Util;
@@ -19,7 +18,7 @@ import org.infinispan.util.Util;
  * @version $Id$
  * @since 4.0
  */
-public class AbstractCacheStoreConfig extends PluggableConfigurationComponent implements CacheStoreConfig {
+public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implements CacheStoreConfig {
    private boolean ignoreModifications;
    private boolean fetchPersistentState;
    private boolean purgeOnStartup;
@@ -27,7 +26,6 @@ public class AbstractCacheStoreConfig extends PluggableConfigurationComponent im
    private AsyncStoreConfig asyncStoreConfig = new AsyncStoreConfig();
 
    private boolean purgeSynchronously = false;
-   protected String cacheLoaderClassName;
 
    public boolean isPurgeSynchronously() {
       return purgeSynchronously;
@@ -36,19 +34,6 @@ public class AbstractCacheStoreConfig extends PluggableConfigurationComponent im
    public void setPurgeSynchronously(boolean purgeSynchronously) {
       testImmutability("purgeSynchronously");
       this.purgeSynchronously = purgeSynchronously;
-   }
-
-   public String getCacheLoaderClassName() {
-      return cacheLoaderClassName;
-   }
-
-   @ConfigurationAttribute(name = "class", 
-            containingElement = "loader", 
-            description = "Full class name of a cache loader")
-   public void setCacheLoaderClassName(String className) {
-      if (className == null || className.length() == 0) return;
-      testImmutability("cacheLoaderClassName");
-      this.cacheLoaderClassName = className;
    }
 
    public boolean isPurgeOnStartup() {
@@ -159,11 +144,7 @@ public class AbstractCacheStoreConfig extends PluggableConfigurationComponent im
    @Override
    public AbstractCacheStoreConfig clone() {
       AbstractCacheStoreConfig clone = null;
-      try {
-         clone = (AbstractCacheStoreConfig) super.clone();
-      } catch (CloneNotSupportedException e) {
-         throw new RuntimeException("Should not happen!", e);
-      }
+      clone = (AbstractCacheStoreConfig) super.clone();
       if (singletonStoreConfig != null) clone.setSingletonStoreConfig(singletonStoreConfig.clone());
       if (asyncStoreConfig != null) clone.setAsyncStoreConfig(asyncStoreConfig.clone());
       return clone;
