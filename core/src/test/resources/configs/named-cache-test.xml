@@ -36,7 +36,7 @@
    </default>
 
    <namedCache name="transactional">
-      <transaction transactionManagerLookupClass="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"/>
+      <transaction transactionManagerLookupClass="org.infinispan.transaction.lookup.GenericTransactionManagerLookup" useEagerLocking="true"/>
    </namedCache>
 
    <namedCache name="syncRepl">

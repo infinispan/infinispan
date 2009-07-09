@@ -22,6 +22,7 @@
 package org.infinispan.config;
 
 import org.infinispan.config.parsing.ClusteringConfigReader;
+import org.infinispan.config.parsing.TransactionConfigReader;
 import org.infinispan.distribution.DefaultConsistentHash;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.factories.annotations.Inject;
@@ -45,7 +46,7 @@ import java.util.concurrent.TimeUnit;
          @ConfigurationElement(name = "default", parent = "infinispan", description = ""),
          @ConfigurationElement(name = "namedCache", parent = "infinispan", description = ""),
          @ConfigurationElement(name = "locking", parent = "default", description = ""),
-         @ConfigurationElement(name = "transaction", parent = "default", description = ""), 
+         @ConfigurationElement(name = "transaction", parent = "default", description = "", customReader=TransactionConfigReader.class), 
          @ConfigurationElement(name = "jmxStatistics", parent = "default", description = ""),
          @ConfigurationElement(name = "lazyDeserialization", parent = "default", description = ""),  
          @ConfigurationElement(name = "invocationBatching", parent = "default", description = ""),   

@@ -252,7 +252,7 @@ public class AutomatedXmlConfigurationParserImpl extends XmlParserBase implement
    
    public void visitElement(Element e, AbstractConfigurationBean bean) throws ConfigurationException {     
       ConfigurationElement ce = customReader(e, bean.getClass());      
-      //has customer reader, use it
+      //has custom reader? if so, use it
       if (ce != null) {
          Class<? extends ConfigurationElementReader> readerClass = ce.customReader();
          ConfigurationElementReader reader = null;
@@ -265,20 +265,24 @@ public class AutomatedXmlConfigurationParserImpl extends XmlParserBase implement
          }
       } else {
          //normal processing
-         for (Method m : bean.getClass().getMethods()) {
-            boolean setter = m.getName().startsWith("set") && m.getParameterTypes().length == 1;
-            if (setter) {
-               reflectAndInvokeAttribute(bean, m, e);
-               reflectAndInvokeProperties(bean, m, e);              
-            }
+         visitElementWithNoCustomReader(e, bean);
+      }
+   }
+
+   public void visitElementWithNoCustomReader(Element e, AbstractConfigurationBean bean) {
+      for (Method m : bean.getClass().getMethods()) {
+         boolean setter = m.getName().startsWith("set") && m.getParameterTypes().length == 1;
+         if (setter) {
+            reflectAndInvokeAttribute(bean, m, e);
+            reflectAndInvokeProperties(bean, m, e);              
          }
-         NodeList nodeList = e.getChildNodes();
-         for (int numChildren = nodeList.getLength(), i = 0; i < numChildren; i++) {
-            Node child = nodeList.item(i);
-            if (child instanceof Element) {               
-               // recursive step
-               visitElement((Element) child, bean);
-            }
+      }
+      NodeList nodeList = e.getChildNodes();
+      for (int numChildren = nodeList.getLength(), i = 0; i < numChildren; i++) {
+         Node child = nodeList.item(i);
+         if (child instanceof Element) {               
+            // recursive step
+            visitElement((Element) child, bean);
          }
       }
    }

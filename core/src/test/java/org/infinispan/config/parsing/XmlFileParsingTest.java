@@ -14,9 +14,24 @@ import java.util.Map;
 @Test(groups = "unit", testName = "config.parsing.XmlFileParsingTest")
 public class XmlFileParsingTest {
 
-   public void testNamedCacheFile() throws IOException {
-      XmlConfigurationParser parser = new XmlConfigurationParserImpl("configs/named-cache-test.xml");
-
+   public void testNamedCacheFileRegular()throws IOException {
+      testNamedCacheFile(new XmlConfigurationParserImpl("configs/named-cache-test.xml"));
+   }
+   
+   public void testNamedCacheFileAutomated()throws IOException {
+      testNamedCacheFile(new AutomatedXmlConfigurationParserImpl("configs/named-cache-test.xml"));
+   }
+   
+   public void testConfigurationMergingRegular() throws IOException{
+      testConfigurationMerging(new XmlConfigurationParserImpl("configs/named-cache-test.xml"));
+   }
+   
+   public void testConfigurationMergingRegularAutomated() throws IOException{
+      testConfigurationMerging(new AutomatedXmlConfigurationParserImpl("configs/named-cache-test.xml"));
+   }
+   
+   private void testNamedCacheFile(XmlConfigurationParser parser) throws IOException {
+      
       GlobalConfiguration gc = parser.parseGlobalConfiguration();
 
       assert gc.getAsyncListenerExecutorFactoryClass().equals("org.infinispan.executors.DefaultExecutorFactory");
@@ -50,6 +65,8 @@ public class XmlFileParsingTest {
       Configuration c = namedCaches.get("transactional");
 
       assert c.getTransactionManagerLookupClass().equals("org.infinispan.transaction.lookup.GenericTransactionManagerLookup");
+      assert c.isUseEagerLocking();
+      assert !c.isSyncRollbackPhase();
 
       c = namedCaches.get("syncRepl");
 
@@ -99,6 +116,11 @@ public class XmlFileParsingTest {
       assert csConf.isIgnoreModifications();
       assert csConf.isPurgeOnStartup();
       assert csConf.getLocation().equals("/tmp/FileCacheStore-Location");
+      assert csConf.getSingletonStoreConfig().getPushStateTimeout() == 20000;
+      assert csConf.getSingletonStoreConfig().isPushStateWhenCoordinator() == true;
+      assert csConf.getAsyncStoreConfig().getBatchSize() == 1000;
+      assert csConf.getAsyncStoreConfig().getThreadPoolSize() == 5;
+      assert csConf.getAsyncStoreConfig().isEnabled();
 
       c = namedCaches.get("withouthJmxEnabled");
       assert !c.isExposeJmxStatistics();
@@ -116,8 +138,8 @@ public class XmlFileParsingTest {
       assert c.isL1CacheEnabled();
    }
 
-   public void testConfigurationMerging() throws IOException {
-      XmlConfigurationParser parser = new XmlConfigurationParserImpl("configs/named-cache-test.xml");
+   private void testConfigurationMerging(XmlConfigurationParser parser) throws IOException {
+      
       Configuration defaultCfg = parser.parseDefaultConfiguration();
       Map<String, Configuration> namedCaches = parser.parseNamedConfigurations();
 
