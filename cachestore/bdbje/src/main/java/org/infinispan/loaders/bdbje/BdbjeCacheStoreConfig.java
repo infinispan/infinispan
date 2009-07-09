@@ -1,5 +1,8 @@
 package org.infinispan.loaders.bdbje;
 
+import org.infinispan.config.ConfigurationElement;
+import org.infinispan.config.ConfigurationElements;
+import org.infinispan.config.ConfigurationProperty;
 import org.infinispan.loaders.AbstractCacheStoreConfig;
 
 /**
@@ -25,6 +28,9 @@ import org.infinispan.loaders.AbstractCacheStoreConfig;
  * @version $Id$
  * @since 4.0
  */
+@ConfigurationElements(elements = {
+         @ConfigurationElement(name = "loader", parent = "loaders", description = "org.infinispan.loaders.bdbje.BdbjeCacheStoreConfig"),
+         @ConfigurationElement(name = "properties", parent = "loader") })
 public class BdbjeCacheStoreConfig extends AbstractCacheStoreConfig {
     private String location = "Infinispan-BdbjeCacheStore";
     private long lockAcquistionTimeout = 60 * 1000;
@@ -37,6 +43,9 @@ public class BdbjeCacheStoreConfig extends AbstractCacheStoreConfig {
         return expiryDbName;
     }
 
+
+    @ConfigurationProperty(name="expiryDbName",
+             parentElement="properties")
     public void setExpiryDbName(String expiryDbName) {
         this.expiryDbName = expiryDbName;
     }
@@ -50,6 +59,9 @@ public class BdbjeCacheStoreConfig extends AbstractCacheStoreConfig {
         return maxTxRetries;
     }
 
+
+    @ConfigurationProperty(name="maxTxRetries",
+             parentElement="properties")
     public void setMaxTxRetries(int maxTxRetries) {
         this.maxTxRetries = maxTxRetries;
     }
@@ -59,6 +71,9 @@ public class BdbjeCacheStoreConfig extends AbstractCacheStoreConfig {
         return lockAcquistionTimeout;
     }
 
+
+    @ConfigurationProperty(name="lockAcquistionTimeout",
+             parentElement="properties")
     public void setLockAcquistionTimeout(long lockAcquistionTimeout) {
         this.lockAcquistionTimeout = lockAcquistionTimeout;
     }
@@ -67,6 +82,9 @@ public class BdbjeCacheStoreConfig extends AbstractCacheStoreConfig {
         return location;
     }
 
+
+    @ConfigurationProperty(name="location",
+             parentElement="properties")
     public void setLocation(String location) {
         testImmutability("location");
         this.location = location;
@@ -77,6 +95,9 @@ public class BdbjeCacheStoreConfig extends AbstractCacheStoreConfig {
         return cacheDbName;
     }
 
+
+    @ConfigurationProperty(name="cacheDbName",
+             parentElement="properties")
     public void setCacheDbName(String cacheDbName) {
         this.cacheDbName = cacheDbName;
     }
@@ -85,6 +106,9 @@ public class BdbjeCacheStoreConfig extends AbstractCacheStoreConfig {
         return catalogDbName;
     }
 
+
+    @ConfigurationProperty(name="catalogDbName",
+             parentElement="properties")
     public void setCatalogDbName(String catalogDbName) {
         this.catalogDbName = catalogDbName;
     }
