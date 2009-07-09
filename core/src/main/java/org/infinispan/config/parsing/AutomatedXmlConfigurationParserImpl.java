@@ -29,9 +29,9 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 /**
- * The default XML configuration parser
+ * XML configuration parser that uses reflection API and annotations to read Infinispan configuration files.
  *
- * @author Manik Surtani
+ * @author Vladimir Blagojevic
  * @since 4.0
  */
 public class AutomatedXmlConfigurationParserImpl extends XmlParserBase implements XmlConfigurationParser {
@@ -195,10 +195,10 @@ public class AutomatedXmlConfigurationParserImpl extends XmlParserBase implement
       ConfigurationElements configurationElements = bean.getAnnotation(ConfigurationElements.class);
       ConfigurationElement configurationElement = bean.getAnnotation(ConfigurationElement.class);
 
-      if (configurationElement != null && configurationElements == null) {
+      if (configurationElement != null) {
          ces = new ConfigurationElement[] { configurationElement };
       }
-      if (configurationElements != null && configurationElement == null) {
+      if (configurationElements != null) {
          ces = configurationElements.elements();
       }
       if (ces != null) {
@@ -242,6 +242,7 @@ public class AutomatedXmlConfigurationParserImpl extends XmlParserBase implement
             throw new ConfigurationException(e1);
          }
       } else {
+         //normal processing
          for (Method m : bean.getClass().getMethods()) {
             boolean setter = m.getName().startsWith("set") && m.getParameterTypes().length == 1;
             if (setter) {
@@ -252,10 +253,9 @@ public class AutomatedXmlConfigurationParserImpl extends XmlParserBase implement
          NodeList nodeList = e.getChildNodes();
          for (int numChildren = nodeList.getLength(), i = 0; i < numChildren; i++) {
             Node node = nodeList.item(i);
-            if (node instanceof Element) {
-               Element childNode = (Element) node;
+            if (node instanceof Element) {               
                // recursive step
-               visitElement(childNode, bean);
+               visitElement((Element) node, bean);
             }
          }
       }
@@ -283,8 +283,11 @@ public class AutomatedXmlConfigurationParserImpl extends XmlParserBase implement
          boolean foundMatchingChild = childBean != null
                   && !bean.getClass().equals(childBean.getClass())
                   && parameterType.isInstance(childBean);
-         if (foundMatchingChild) {                   
+         if (foundMatchingChild) {  
+            //recurse into child
+            visitElement(node,childBean);
             try {
+               //and finally invoke setter on father bean
                m.invoke(bean, childBean);
             } catch (Exception ae) {
                throw new ConfigurationException("Illegal bean value " + childBean + ",type="

@@ -100,6 +100,12 @@ public class AutomatedXmlFileParsingTest {
       assert csConf.isIgnoreModifications();
       assert csConf.isPurgeOnStartup();
       assert csConf.getLocation().equals("/tmp/FileCacheStore-Location");
+      assert csConf.getSingletonStoreConfig().getPushStateTimeout() == 20000;
+      assert csConf.getSingletonStoreConfig().isPushStateWhenCoordinator() == true;
+      assert csConf.getAsyncStoreConfig().getBatchSize() == 1000;
+      assert csConf.getAsyncStoreConfig().getThreadPoolSize() == 5;
+      assert csConf.getAsyncStoreConfig().isEnabled();
+
 
       c = namedCaches.get("withouthJmxEnabled");
       assert !c.isExposeJmxStatistics();

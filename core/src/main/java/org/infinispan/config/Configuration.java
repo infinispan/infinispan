@@ -53,6 +53,7 @@ import java.util.concurrent.TimeUnit;
          @ConfigurationElement(name = "hash", parent = "default", description = ""),
          @ConfigurationElement(name = "eviction", parent = "default", description = ""),
          @ConfigurationElement(name = "expiration", parent = "default", description = ""),
+         @ConfigurationElement(name = "unsafe", parent = "default", description = ""),
          @ConfigurationElement(name = "customInterceptors", parent = "default", description = "")         
 })
 public class Configuration extends AbstractNamedCacheConfigurationBean {
@@ -89,6 +90,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       return unsafeUnreliableReturnValues;
    }
 
+   @ConfigurationAttribute(name = "unreliableReturnValues", 
+            containingElement = "unsafe")    
    public void setUnsafeUnreliableReturnValues(boolean unsafeUnreliableReturnValues) {
       testImmutability("unsafeUnreliableReturnValues");
       this.unsafeUnreliableReturnValues = unsafeUnreliableReturnValues;
