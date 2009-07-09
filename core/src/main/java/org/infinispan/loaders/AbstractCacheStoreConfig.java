@@ -69,7 +69,8 @@ public class AbstractCacheStoreConfig extends PluggableConfigurationComponent im
 
    @ConfigurationAttribute(name = "ignoreModifications", 
             containingElement = "loader",
-            description = "If true, store operations will not be sent to this loader")
+            description = "If true, any operation that modifies the cache store (remove, clear, store...etc) " +
+            		"won't be applied to it")
    public void setIgnoreModifications(boolean ignoreModifications) {
       testImmutability("ignoreModifications");
       this.ignoreModifications = ignoreModifications;
