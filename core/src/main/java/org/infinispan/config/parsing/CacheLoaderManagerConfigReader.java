@@ -46,7 +46,10 @@ public class CacheLoaderManagerConfigReader implements ConfigurationElementReade
 
    public void process(Element e, AbstractConfigurationBean bean) {      
       CacheLoaderManagerConfig cBean = (CacheLoaderManagerConfig) parser.findAndInstantiateBean(e);
-
+      
+      //set attributes of <loaders/>
+      parser.visitElementWithNoCustomReader(e, cBean);
+      
       Set<Element> elements = parser.getAllElementsInCoreNS("loader", e);
       if (elements.isEmpty())
          throw new ConfigurationException("No loader elements found!");
