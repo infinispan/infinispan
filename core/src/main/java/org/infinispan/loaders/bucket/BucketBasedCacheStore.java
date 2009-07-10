@@ -31,7 +31,11 @@ public abstract class BucketBasedCacheStore extends LockSupportCacheStore {
       Bucket bucket = loadBucket(lockingKey);
       if (bucket == null) return null;
       InternalCacheEntry se = bucket.getEntry(key);
+
       if (se != null && se.isExpired()) {
+         // We do not actually remove expired items from the store here.  We leave that up to the implementation,
+         // since it may be a costly thing (remote connection, row locking on a JDBC store for example) for a
+         // supposedly quick load operation.
          return null;
       } else {
          return se;

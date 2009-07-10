@@ -3,9 +3,10 @@ package org.infinispan.distribution;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.ReplListener;
-import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "distribution.AsyncAPIAsyncDistTest", enabled = false)
+// For some reason I had to comment this out to ensure the test was disabled!
+
+//@Test(groups = "functional", testName = "distribution.AsyncAPIAsyncDistTest", enabled = false)
 public class AsyncAPIAsyncDistTest extends AsyncAPISyncDistTest {
 
    ReplListener rl;

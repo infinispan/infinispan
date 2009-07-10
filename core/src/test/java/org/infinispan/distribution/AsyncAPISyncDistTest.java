@@ -7,11 +7,12 @@ import org.infinispan.replication.AsyncAPISyncReplTest;
 import org.infinispan.test.data.Key;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.util.Util;
-import org.testng.annotations.Test;
 
 import java.util.List;
 
-@Test(groups = "functional", testName = "distribution.AsyncAPISyncDistTest", enabled = false)
+// For some reason I had to comment this out to ensure the test was disabled!
+
+//@Test(groups = "functional", testName = "distribution.AsyncAPISyncDistTest", enabled = false)
 public class AsyncAPISyncDistTest extends AsyncAPISyncReplTest {
 
    @SuppressWarnings("unchecked")

@@ -16,6 +16,7 @@ import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -35,6 +36,7 @@ public class EvictionManagerImpl implements EvictionManager {
    CacheStore cacheStore;
    boolean enabled;
    int maxEntries;
+   volatile CountDownLatch startLatch = new CountDownLatch(1);
 
    @Inject
    public void initialize(@ComponentName(KnownComponentNames.EVICTION_SCHEDULED_EXECUTOR) ScheduledExecutorService executor,
@@ -63,9 +65,18 @@ public class EvictionManagerImpl implements EvictionManager {
                                                            configuration.getEvictionWakeUpInterval(), TimeUnit.MILLISECONDS);
          }
       }
+      startLatch.countDown();
    }
 
    public void processEviction() {
+      try {
+         startLatch.await();
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+      }
+
+      if (!enabled) return;
+
       long start = 0;
       try {
          if (trace) {
@@ -128,6 +139,7 @@ public class EvictionManagerImpl implements EvictionManager {
 
    @Stop(priority = 5)
    public void stop() {
+      startLatch = new CountDownLatch(1);
       if (evictionTask != null) evictionTask.cancel(true);
    }
 
