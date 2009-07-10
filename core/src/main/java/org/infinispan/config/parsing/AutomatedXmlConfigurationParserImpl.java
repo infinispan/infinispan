@@ -23,7 +23,6 @@ package org.infinispan.config.parsing;
 
 import java.beans.PropertyEditor;
 import java.beans.PropertyEditorManager;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -61,8 +60,7 @@ public class AutomatedXmlConfigurationParserImpl extends XmlParserBase implement
    private static  List<Class<?>> CONFIG_BEANS =null;
    
    static {
-      String path = System.getProperty("java.class.path") + File.pathSeparator
-               + System.getProperty("surefire.test.class.path");
+      String path = ClassFinder.PATH;
       try {         
          CONFIG_BEANS = ClassFinder.isAssignableFrom(ClassFinder.infinispanClasses(),AbstractConfigurationBean.class);
       } catch (Exception e) {
@@ -184,11 +182,14 @@ public class AutomatedXmlConfigurationParserImpl extends XmlParserBase implement
    
    public AbstractConfigurationBean findAndInstantiateBean(List<Class<?>> b, Element e) throws ConfigurationException {
       String name = e.getTagName();
+      String parentName = ((Element)e.getParentNode()).getTagName();
+      if(parentName.equals("namedCache"))
+         parentName = "default";
       for (Class<?> clazz : b) {
          ConfigurationElements elements = clazz.getAnnotation(ConfigurationElements.class);
          if (elements != null) {
             for (ConfigurationElement ce : elements.elements()) {
-               if (ce.name().equals(name)) {
+               if (ce.name().equals(name) && ce.parent().equals(parentName)) {
                   try {
                      return (AbstractConfigurationBean) clazz.newInstance();
                   } catch (Exception e1) {
@@ -198,7 +199,7 @@ public class AutomatedXmlConfigurationParserImpl extends XmlParserBase implement
             }
          } else {
             ConfigurationElement ce = clazz.getAnnotation(ConfigurationElement.class);
-            if (ce != null && ce.name().equals(name)) {
+            if (ce != null && (ce.name().equals(name) && ce.parent().equals(parentName))) {
                try {
                   return (AbstractConfigurationBean) clazz.newInstance();
                } catch (Exception e1) {

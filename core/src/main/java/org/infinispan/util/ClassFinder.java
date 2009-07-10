@@ -36,6 +36,9 @@ import java.util.jar.JarFile;
  * Find infinispan classes utility
  */
 public class ClassFinder {
+   
+   public static String PATH = System.getProperty("java.class.path") + File.pathSeparator
+            + System.getProperty("surefire.test.class.path");
 
    public static List<Class<?>> withAnnotationPresent(List<Class<?>> classes, Class<? extends Annotation> c) {
       List<Class<?>> clazzes = new ArrayList<Class<?>>();
@@ -66,8 +69,7 @@ public class ClassFinder {
    }
 
    public static List<Class<?>> infinispanClasses() throws Exception {
-      String cp = System.getProperty("java.class.path") + File.pathSeparator + System.getProperty("surefire.test.class.path");
-      return infinispanClasses(cp);
+      return infinispanClasses(PATH);
    }
 
    public static List<Class<?>> infinispanClasses(String javaClassPath) throws Exception {

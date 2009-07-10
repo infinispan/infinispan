@@ -31,6 +31,7 @@ import org.infinispan.interceptors.base.CommandInterceptor;
  * @since 4.0
  */
 @Immutable
+@ConfigurationElement(name = "interceptor", parent = "customInterceptors")
 public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean {
    private CommandInterceptor interceptor;
    private boolean isFirst;
@@ -91,6 +92,7 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
    /**
     * Shall this interceptor be the first one in the chain?
     */
+
    public void setFirst(boolean first) {
       testImmutability("first");
       isFirst = first;
@@ -108,6 +110,8 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
     * Put this interceptor at the specified index, after the default chain is built. If the index is not valid (negative
     * or grater than the size of the chain) an {@link ConfigurationException} is thrown at construction time.
     */
+   @ConfigurationAttribute(name = "index", 
+            containingElement = "interceptor") 
    public void setIndex(int index) {
       testImmutability("index");
       this.index = index;
@@ -117,6 +121,8 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
     * Adds the interceptor immediately after the first occurance of an interceptor having the given class. If the chain
     * does not contain such an interceptor then this interceptor definition is ignored.
     */
+   @ConfigurationAttribute(name = "after", 
+            containingElement = "interceptor") 
    public void setAfterInterceptor(String afterClass) {
       testImmutability("after");
       this.after = afterClass;
@@ -134,6 +140,8 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
     * Adds the interceptor immediately before the first occurance of an interceptor having the given class. If the chain
     * does not contain such an interceptor then this interceptor definition is ignored.
     */
+   @ConfigurationAttribute(name = "before", 
+            containingElement = "interceptor") 
    public void setBeforeInterceptor(String beforeClass) {
       testImmutability("before");
       this.before = beforeClass;

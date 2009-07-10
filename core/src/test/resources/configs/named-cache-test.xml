@@ -109,6 +109,17 @@
          <l1 enabled="true" lifespan="600000"/>
       </clustering>
    </namedCache>
+   
+   <!-- Note that any of the elements appearing in a namedCache section can also appear in the default section as a template. -->
+   <namedCache name="evictionCache">
+
+      <!--
+         Eviction configuration.  WakeupInterval defines how often the eviction thread runs, in milliseconds.  0 means
+         the eviction thread will never run.  A separate executor is used for eviction in each cache.
+      -->
+      <eviction wakeUpInterval="500" maxEntries="5000" strategy="FIFO"/>
+      <expiration lifespan="60000" maxIdle="1000"/>
+   </namedCache>
 
    <namedCache name="withouthJmxEnabled">
       <clustering>

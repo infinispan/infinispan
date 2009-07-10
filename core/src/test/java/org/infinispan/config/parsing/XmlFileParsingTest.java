@@ -5,6 +5,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior;
 import org.infinispan.distribution.DefaultConsistentHash;
+import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.loaders.file.FileCacheStoreConfig;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
@@ -144,6 +145,12 @@ public class XmlFileParsingTest {
       c = namedCaches.get("cacheWithCustomInterceptors");
       assert !c.getCustomInterceptors().isEmpty();
       assert c.getCustomInterceptors().size() == 5;
+      
+      c = namedCaches.get("evictionCache");
+      assert c.getEvictionMaxEntries() == 5000;
+      assert c.getEvictionStrategy().equals(EvictionStrategy.FIFO);
+      assert c.getExpirationLifespan() == 60000;
+      assert c.getExpirationMaxIdle() == 1000;
    }
 
    private void testConfigurationMerging(XmlConfigurationParser parser) throws IOException {
