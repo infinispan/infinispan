@@ -1,8 +1,5 @@
 package org.infinispan.container.entries;
 
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 /**
  * A cache entry that is transient, i.e., it can be considered expired afer a period of not being used.
  *
@@ -10,7 +7,6 @@ import org.infinispan.util.logging.LogFactory;
  * @since 4.0
  */
 public class TransientCacheEntry extends AbstractInternalCacheEntry {
-   private static final Log log = LogFactory.getLog(TransientCacheEntry.class);
    private TransientCacheValue cacheValue;
 
    TransientCacheEntry(Object key, Object value, long maxIdle) {
@@ -44,7 +40,6 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
 
    public InternalCacheEntry setMaxIdle(long maxIdle) {
       if (maxIdle < 0) {
-         if (log.isTraceEnabled()) log.trace("Converting {0} into an inmortal cache entry", this);
          return new ImmortalCacheEntry(key, cacheValue.value);
       } else {
          cacheValue.maxIdle = maxIdle;

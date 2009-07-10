@@ -1,8 +1,5 @@
 package org.infinispan.container.entries;
 
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 /**
  * A cache entry that is mortal.  I.e., has a lifespan.
  *
@@ -10,7 +7,6 @@ import org.infinispan.util.logging.LogFactory;
  * @since 4.0
  */
 public class MortalCacheEntry extends AbstractInternalCacheEntry {
-   private static final Log log = LogFactory.getLog(MortalCacheEntry.class);
    private MortalCacheValue cacheValue;
 
    public Object getValue() {
@@ -50,7 +46,6 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
 
    public InternalCacheEntry setLifespan(long lifespan) {
       if (lifespan < 0) {
-         if (log.isTraceEnabled()) log.trace("Converting {0} into an inmortal cache entry", this); 
          return new ImmortalCacheEntry(key, cacheValue.value);
       } else {
          cacheValue.lifespan = lifespan;

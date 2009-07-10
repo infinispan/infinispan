@@ -1,8 +1,5 @@
 package org.infinispan.container.entries;
 
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 /**
  * A cache entry that is immortal/cannot expire
  *
@@ -10,7 +7,6 @@ import org.infinispan.util.logging.LogFactory;
  * @since 4.0
  */
 public class ImmortalCacheEntry extends AbstractInternalCacheEntry {
-   private static final Log log = LogFactory.getLog(ImmortalCacheEntry.class);
    private ImmortalCacheValue cacheValue;
 
    ImmortalCacheEntry(Object key, Object value) {
