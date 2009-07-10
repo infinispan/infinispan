@@ -180,7 +180,7 @@ public class AutomatedXmlConfigurationParserImpl extends XmlParserBase implement
       return gc;
    }
    
-   public AbstractConfigurationBean findAndInstantiateBean(List<Class<?>> b, Element e) throws ConfigurationException {
+   AbstractConfigurationBean findAndInstantiateBean(List<Class<?>> b, Element e) throws ConfigurationException {
       String name = e.getTagName();
       String parentName = ((Element)e.getParentNode()).getTagName();
       if(parentName.equals("namedCache"))
@@ -211,7 +211,7 @@ public class AutomatedXmlConfigurationParserImpl extends XmlParserBase implement
       return null;
    }
    
-   public AbstractConfigurationBean findAndInstantiateBean(Element e) throws ConfigurationException {
+   AbstractConfigurationBean findAndInstantiateBean(Element e) throws ConfigurationException {
       return findAndInstantiateBean(CONFIG_BEANS,e);
    }
    
@@ -253,7 +253,7 @@ public class AutomatedXmlConfigurationParserImpl extends XmlParserBase implement
       return null;
    }
    
-   public void visitElement(Element e, AbstractConfigurationBean bean) throws ConfigurationException {     
+   void visitElement(Element e, AbstractConfigurationBean bean) throws ConfigurationException {     
       ConfigurationElement ce = customReader(e, bean.getClass());      
       //has custom reader? if so, use it
       if (ce != null) {
@@ -273,7 +273,7 @@ public class AutomatedXmlConfigurationParserImpl extends XmlParserBase implement
       }
    }
 
-   public void visitElementWithNoCustomReader(Element e, AbstractConfigurationBean bean) {
+   void visitElementWithNoCustomReader(Element e, AbstractConfigurationBean bean) {
       for (Method m : bean.getClass().getMethods()) {
          boolean setter = m.getName().startsWith("set") && m.getParameterTypes().length == 1;
          if (setter) {
@@ -291,7 +291,7 @@ public class AutomatedXmlConfigurationParserImpl extends XmlParserBase implement
       }
    }
    
-   private void reflectAndInvokeAttribute(AbstractConfigurationBean bean, Method m, Element node) {     
+   void reflectAndInvokeAttribute(AbstractConfigurationBean bean, Method m, Element node) {     
       Class<?> parameterType = m.getParameterTypes()[0];
       // is there a ConfigurationAttribute matching the current node iterated?
       ConfigurationAttribute a = m.getAnnotation(ConfigurationAttribute.class);
@@ -338,7 +338,7 @@ public class AutomatedXmlConfigurationParserImpl extends XmlParserBase implement
       }
    }
    
-   private boolean reflectAndInvokeProperties(AbstractConfigurationBean bean, Method m, Element node){
+   boolean reflectAndInvokeProperties(AbstractConfigurationBean bean, Method m, Element node){
       Class<?> parameterType = m.getParameterTypes()[0];
       
       //how about ConfigurationProperties or ConfigurationProperty matching the current node iterated?

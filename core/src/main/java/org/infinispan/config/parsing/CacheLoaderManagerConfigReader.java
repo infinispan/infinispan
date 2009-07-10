@@ -21,6 +21,7 @@
  */
 package org.infinispan.config.parsing;
 
+import java.lang.reflect.Method;
 import java.util.Set;
 
 import org.infinispan.config.AbstractConfigurationBean;
@@ -48,7 +49,13 @@ public class CacheLoaderManagerConfigReader implements ConfigurationElementReade
       CacheLoaderManagerConfig cBean = (CacheLoaderManagerConfig) parser.findAndInstantiateBean(e);
       
       //set attributes of <loaders/>
-      parser.visitElementWithNoCustomReader(e, cBean);
+      for (Method m : cBean.getClass().getMethods()) {
+         boolean setter = m.getName().startsWith("set") && m.getParameterTypes().length == 1;
+         if (setter) {
+            parser.reflectAndInvokeAttribute(cBean, m, e);
+            parser.reflectAndInvokeProperties(cBean, m, e);              
+         }
+      }
       
       Set<Element> elements = parser.getAllElementsInCoreNS("loader", e);
       if (elements.isEmpty())

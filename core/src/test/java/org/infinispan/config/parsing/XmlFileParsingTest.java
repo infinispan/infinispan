@@ -114,6 +114,9 @@ public class XmlFileParsingTest {
 
       c = namedCaches.get("withLoader");
       CacheLoaderManagerConfig loaderManagerConfig = c.getCacheLoaderManagerConfig();
+      assert loaderManagerConfig.isPreload();
+      assert !loaderManagerConfig.isPassivation();
+      assert !loaderManagerConfig.isShared(); 
       assert loaderManagerConfig.getCacheLoaderConfigs().size() == 1;
       FileCacheStoreConfig csConf = (FileCacheStoreConfig) loaderManagerConfig.getFirstCacheLoaderConfig();
       assert csConf.getCacheLoaderClassName().equals("org.infinispan.loaders.file.FileCacheStore");
