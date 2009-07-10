@@ -92,6 +92,7 @@ public class CacheManagerXmlConfigurationTest {
       String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
             "<infinispan xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:infinispan:config:4.0\">\n" +
             "\n" +
+            "<global/>\n" +
             "    <default>\n" +
             "        <locking concurrencyLevel=\"100\" lockAcquisitionTimeout=\"1000\" />\n" +
             "    </default>\n" +
@@ -99,6 +100,7 @@ public class CacheManagerXmlConfigurationTest {
             "    <namedCache name=\"c1\">\n" +
             "        <transaction transactionManagerLookupClass=\"org.infinispan.transaction.lookup.GenericTransactionManagerLookup\"/>\n" +
             "    </namedCache>\n" +
+            "\n" +            
             "\n" +
             "</infinispan>";
 
