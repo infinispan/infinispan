@@ -140,6 +140,10 @@ public class XmlFileParsingTest {
       assert c.getConsistentHashClass().equals(DefaultConsistentHash.class.getName());
       assert c.getNumOwners() == 3;
       assert c.isL1CacheEnabled();
+      
+      c = namedCaches.get("cacheWithCustomInterceptors");
+      assert !c.getCustomInterceptors().isEmpty();
+      assert c.getCustomInterceptors().size() == 5;
    }
 
    private void testConfigurationMerging(XmlConfigurationParser parser) throws IOException {

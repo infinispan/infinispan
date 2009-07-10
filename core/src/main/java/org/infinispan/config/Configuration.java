@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.config.parsing.ClusteringConfigReader;
+import org.infinispan.config.parsing.CustomInterceptorConfigReader;
 import org.infinispan.distribution.DefaultConsistentHash;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.factories.annotations.Inject;
@@ -54,7 +55,7 @@ import org.infinispan.util.concurrent.IsolationLevel;
          @ConfigurationElement(name = "eviction", parent = "default", description = ""),
          @ConfigurationElement(name = "expiration", parent = "default", description = ""),
          @ConfigurationElement(name = "unsafe", parent = "default", description = ""),
-         @ConfigurationElement(name = "customInterceptors", parent = "default", description = "")         
+         @ConfigurationElement(name = "customInterceptors", parent = "default", customReader=CustomInterceptorConfigReader.class)         
 })
 public class Configuration extends AbstractNamedCacheConfigurationBean {
    private static final long serialVersionUID = 5553791890144997466L;

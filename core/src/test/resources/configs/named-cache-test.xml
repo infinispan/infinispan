@@ -116,5 +116,21 @@
       </clustering>
       <jmxStatistics enabled="false"/>
    </namedCache>
+   
+   
+   <namedCache name="cacheWithCustomInterceptors">
+   
+      <!--
+      Define custom interceptors.  All custom interceptors need to extend org.jboss.cache.interceptors.base.CommandInterceptor
+      Here we use existing class so we can actually load it
+      -->   
+      <customInterceptors>
+         <interceptor position="first" class="org.infinispan.interceptors.CallInterceptor"></interceptor>
+         <interceptor position="last" class="org.infinispan.interceptors.CallInterceptor"/>
+         <interceptor index="3" class="org.infinispan.interceptors.CallInterceptor"/>
+         <interceptor before="org.infinispan.interceptors.CallInterceptor" class="org.infinispan.interceptors.CallInterceptor"/>
+         <interceptor after="org.infinispan.interceptors.CallInterceptor" class="org.infinispan.interceptors.CallInterceptor"/>
+      </customInterceptors>
+   </namedCache>
 
 </infinispan>
