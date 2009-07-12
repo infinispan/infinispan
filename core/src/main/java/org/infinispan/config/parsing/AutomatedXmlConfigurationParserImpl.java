@@ -182,30 +182,26 @@ public class AutomatedXmlConfigurationParserImpl extends XmlParserBase implement
    
    AbstractConfigurationBean findAndInstantiateBean(List<Class<?>> b, Element e) throws ConfigurationException {
       String name = e.getTagName();
-      String parentName = ((Element)e.getParentNode()).getTagName();
-      if(parentName.equals("namedCache"))
+      String parentName = ((Element) e.getParentNode()).getTagName();
+      if (parentName.equals("namedCache"))
          parentName = "default";
       for (Class<?> clazz : b) {
          ConfigurationElements elements = clazz.getAnnotation(ConfigurationElements.class);
-         if (elements != null) {
-            for (ConfigurationElement ce : elements.elements()) {
-               if (ce.name().equals(name) && ce.parent().equals(parentName)) {
-                  try {
+         try {
+            if (elements != null) {
+               for (ConfigurationElement ce : elements.elements()) {
+                  if (ce.name().equals(name) && ce.parent().equals(parentName)) {
                      return (AbstractConfigurationBean) clazz.newInstance();
-                  } catch (Exception e1) {
-                     throw new ConfigurationException("Could not instantiate class " + clazz, e1);
                   }
                }
-            }
-         } else {
-            ConfigurationElement ce = clazz.getAnnotation(ConfigurationElement.class);
-            if (ce != null && (ce.name().equals(name) && ce.parent().equals(parentName))) {
-               try {
+            } else {
+               ConfigurationElement ce = clazz.getAnnotation(ConfigurationElement.class);
+               if (ce != null && (ce.name().equals(name) && ce.parent().equals(parentName))) {
                   return (AbstractConfigurationBean) clazz.newInstance();
-               } catch (Exception e1) {
-                  throw new ConfigurationException("Could not instantiate class " + clazz, e1);
                }
             }
+         } catch (Exception e1) {
+            throw new ConfigurationException("Could not instantiate class " + clazz, e1);
          }
       }
       return null;
@@ -216,9 +212,13 @@ public class AutomatedXmlConfigurationParserImpl extends XmlParserBase implement
    }
    
    private ConfigurationElement findConfigurationElement(Element e, Class<?> bean) {
+      ConfigurationElement result = null;
       ConfigurationElement ces[] = null;
       ConfigurationElements configurationElements = bean.getAnnotation(ConfigurationElements.class);
       ConfigurationElement configurationElement = bean.getAnnotation(ConfigurationElement.class);
+      String parentName = ((Element)e.getParentNode()).getTagName();
+      if(parentName.equals("namedCache"))
+         parentName = "default";
 
       if (configurationElement != null) {
          ces = new ConfigurationElement[] { configurationElement };
@@ -228,36 +228,35 @@ public class AutomatedXmlConfigurationParserImpl extends XmlParserBase implement
       }
       if (ces != null) {
          for (ConfigurationElement el : ces) {
-            if (el.name().equals(e.getNodeName())) {
-               return el;
+            if (el.name().equals(e.getNodeName()) && el.parent().equals(parentName)) {
+               result = el;
+               break;
             }
          }
       }
-      return null;
+      return result;
    }
    
-   private ConfigurationElement customReader(Element e, Class<?> bean) {     
-      ConfigurationElement result = findConfigurationElement(e, bean);
-      if (result == null) {
+   private Class<? extends ConfigurationElementReader> customReader(Element e, Class<?> bean) {
+      Class<? extends ConfigurationElementReader> clazz = null;
+      ConfigurationElement ce = findConfigurationElement(e, bean);
+      if (ce == null) {
          for (Class<?> beanClass : CONFIG_BEANS) {
-            result = findConfigurationElement(e, beanClass);
-            if (result != null)
+            ce = findConfigurationElement(e, beanClass);
+            if (ce != null)
                break;
          }
       }
-      if(result != null){
-         if(!result.customReader().equals(ConfigurationElementReader.class)){
-            return result;
-         }
+      if (ce != null && !ce.customReader().equals(ConfigurationElementReader.class)) {
+         clazz = ce.customReader();
       }
-      return null;
+      return clazz;
    }
    
    void visitElement(Element e, AbstractConfigurationBean bean) throws ConfigurationException {     
-      ConfigurationElement ce = customReader(e, bean.getClass());      
+      Class<? extends ConfigurationElementReader> readerClass = customReader(e, bean.getClass());      
       //has custom reader? if so, use it
-      if (ce != null) {
-         Class<? extends ConfigurationElementReader> readerClass = ce.customReader();
+      if (readerClass != null) {         
          ConfigurationElementReader reader = null;
          try {            
             reader = readerClass.newInstance();
@@ -269,11 +268,11 @@ public class AutomatedXmlConfigurationParserImpl extends XmlParserBase implement
          }
       } else {
          //normal processing
-         visitElementWithNoCustomReader(e, bean);
+         visitElementDefault(e, bean);
       }
    }
 
-   void visitElementWithNoCustomReader(Element e, AbstractConfigurationBean bean) {
+   void visitElementDefault(Element e, AbstractConfigurationBean bean) {
       for (Method m : bean.getClass().getMethods()) {
          boolean setter = m.getName().startsWith("set") && m.getParameterTypes().length == 1;
          if (setter) {
