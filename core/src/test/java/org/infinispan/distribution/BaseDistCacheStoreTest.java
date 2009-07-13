@@ -21,31 +21,25 @@
  */
 package org.infinispan.distribution;
 
-import org.infinispan.config.CacheLoaderManagerConfig;
-import org.infinispan.config.Configuration;
-import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
-import org.infinispan.manager.CacheManager;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-
 /**
  * DistSyncCacheStoreTest.
- * 
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */
 public abstract class BaseDistCacheStoreTest extends BaseDistFunctionalTest {
-   boolean shared;
-   int id;
-
-   @Override
-   protected CacheManager addClusterEnabledCacheManager() {
-      Configuration cfg = new Configuration();
-      CacheLoaderManagerConfig clmc = new CacheLoaderManagerConfig();
-      clmc.setShared(shared);
-      clmc.addCacheLoaderConfig(new DummyInMemoryCacheStore.Cfg(getClass().getSimpleName() + "_" + id++));
-      cfg.setCacheLoaderManagerConfig(clmc);
-      CacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(cfg);
-      cacheManagers.add(cm);
-      return cm;
-   }
+//   boolean shared;
+//   int id;
+//
+//   @Override
+//   protected CacheManager addClusterEnabledCacheManager() {
+//      Configuration cfg = new Configuration();
+//      CacheLoaderManagerConfig clmc = new CacheLoaderManagerConfig();
+//      clmc.setShared(shared);
+//      clmc.addCacheLoaderConfig(new DummyInMemoryCacheStore.Cfg(getClass().getSimpleName() + "_" + id++));
+//      cfg.setCacheLoaderManagerConfig(clmc);
+//      CacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(cfg);
+//      cacheManagers.add(cm);
+//      return cm;
+//   }
 }
