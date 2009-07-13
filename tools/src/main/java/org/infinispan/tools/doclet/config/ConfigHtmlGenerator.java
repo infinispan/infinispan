@@ -48,8 +48,6 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
          sb.append("<div class=\"" +"source" + "\"><pre>");
          sb.append(root.pp(""));
          sb.append("</pre></div>");
-         
-         tree(configBeans);
          for (Class<?> clazz : configBeans) {
             ConfigurationElement ces[] = null;
             ConfigurationElements configurationElements = clazz.getAnnotation(ConfigurationElements.class);
