@@ -83,14 +83,13 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
                      int childCount = n.children.size();
                      int count = 1;
                      for (TreeNode tn : n.children) {
+                        sb.append("<a href=\"").append(
+                                 "#ce_" + tn.parent.name + "_" + tn.name + "\">" + "&lt;"
+                                          + tn.name + "&gt;" + "</a>");
                         if (count < childCount) {
-                           sb.append("<a href=\"").append(
-                                    "#ce_" + tn.parent.name + "_" + tn.name + "\">" + "&lt;"
-                                             + tn.name + "&gt;" + "</a>,");
+                           sb.append(",");
                         } else {
-                           sb.append("<a href=\"").append(
-                                    "#ce_" + tn.parent.name + "_" + tn.name + "\">" + "&lt;"
-                                             + tn.name + "&gt;" + "</a>.");
+                           sb.append(".");
                         }
                         count++;
                      }
