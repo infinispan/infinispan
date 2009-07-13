@@ -25,7 +25,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.List;
+import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import org.infinispan.config.ConfigurationAttribute;
 import org.infinispan.config.ConfigurationElement;
@@ -43,6 +45,37 @@ public class SchemaGeneratorTreeWalker implements TreeWalker {
       super();
       this.xmldoc = xmldoc;
       this.beans = beans;
+   }
+   
+   public void levelOrderTraverse(TreeNode root) {          
+      Queue<TreeNode> q = new LinkedBlockingQueue<TreeNode>();
+      q.add(root);
+      
+      while(!q.isEmpty()){
+         TreeNode treeNode = q.poll();
+         treeNode.accept(this);
+         if(treeNode.hasChildren()){
+            q.addAll(treeNode.getChildren());
+         }
+      }      
+   }
+   
+   public void preOrderTraverse(TreeNode node){
+      node.accept(this);
+      if(node.hasChildren()){
+         for (TreeNode child : node.getChildren()) {
+            preOrderTraverse(child);
+         }
+      }
+   }
+   
+   public void postOrderTraverse(TreeNode node){      
+      if(node.hasChildren()){
+         for (TreeNode child : node.getChildren()) {
+            preOrderTraverse(child);
+         }
+      }
+      node.accept(this);
    }
 
    public void visitNode(TreeNode treeNode) {

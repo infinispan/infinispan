@@ -152,7 +152,7 @@ public class SchemaGenerator {
          xmldoc.getDocumentElement().appendChild(xsElement);
 
          SchemaGeneratorTreeWalker tw = new SchemaGeneratorTreeWalker(xmldoc,beans);
-         root.acceptPreOrderTreeWalker(tw);
+         tw.preOrderTraverse(root);
 
          DOMSource domSource = new DOMSource(xmldoc);
          StreamResult streamResult = new StreamResult(fw);

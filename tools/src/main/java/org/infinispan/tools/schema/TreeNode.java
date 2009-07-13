@@ -55,10 +55,8 @@ public class TreeNode {
       return children;
    }
    
-   public void acceptPreOrderTreeWalker(TreeWalker tw) {
-      tw.visitNode(this);         
-      for (TreeNode child : children)
-         child.acceptPreOrderTreeWalker(tw);         
+   public void accept(TreeWalker tw) {
+      tw.visitNode(this);                     
    }
 
    public boolean equals(Object other) {
