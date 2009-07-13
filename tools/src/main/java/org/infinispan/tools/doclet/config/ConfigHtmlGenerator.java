@@ -55,142 +55,161 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
          //print xml tree into StringBuilder
          tw.preOrderTraverse(root);
          sb.append("</pre></div>");
-         for (Class<?> clazz : configBeans) {
-            ConfigurationElement ces[] = null;
-            ConfigurationElements configurationElements = clazz.getAnnotation(ConfigurationElements.class);
-            ConfigurationElement configurationElement = clazz.getAnnotation(ConfigurationElement.class);
-
-            if (configurationElement != null && configurationElements == null) {
-               ces = new ConfigurationElement[]{configurationElement};
-            }
-            if (configurationElements != null && configurationElement == null) {
-               ces = configurationElements.elements();
-            }
-            if (ces != null) {
-               for (ConfigurationElement ce : ces) {
-                  boolean createdAttributes = false;
-                  boolean createdProperties = false;
-                  sb.append("\n<a name=\"").append("ce_" + ce.parent() +"_" +ce.name() +"\">" + "</a>");
-                  sb.append("<div class=\"section\"><h3><a name=\"" + ce.name() + "\"></a>" + ce.name() +"</h3>");
-                  sb.append("\n<p>");
-                  if (ce.description().length() > 0) {
-                     sb.append(ce.description());
-                  } else {
-                     sb.append("todo");
+         for (Class<?> clazz : configBeans) {            
+            ConfigurationElement ces[] = configurationElementsOnBean(clazz);            
+            for (ConfigurationElement ce : ces) {
+               boolean createdAttributes = false;
+               boolean createdProperties = false;
+               //Name, description, parent and child elements for ce ConfigurationElement
+               generateHeaderForConfigurationElement(sb, tw, root, ce); 
+               for (Method m : clazz.getMethods()) {
+                  ConfigurationAttribute a = m.getAnnotation(ConfigurationAttribute.class);
+                  boolean attribute = a != null && a.containingElement().equals(ce.name());
+                  if (attribute && !createdAttributes) {
+                     // Attributes
+                     sb.append("<table class=\"bodyTable\"> ");
+                     sb.append("<tr class=\"a\"><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr>\n");
+                     createdAttributes = true;
                   }
-                  TreeNode n = tw.findNode(root,ce.name(),ce.parent());
-                  sb.append(" Parent element is " + "<a href=\"").append("#ce_" + n.getParent().getParent().getName() + 
-                           "_" + n.getParent().getName()+ "\">" + "&lt;" + ce.parent() + "&gt;" + "</a>.");    
-                  
-                  if(n != null && !n.getChildren().isEmpty()){
-                     sb.append(" Child elements are ");
-                     int childCount = n.getChildren().size();
-                     int count = 1;
-                     for (TreeNode tn : n.getChildren()) {
-                        sb.append("<a href=\"").append("#ce_" + tn.getParent().getName() + "_" 
-                                 + tn.getName() + "\">" + "&lt;" + tn.getName() + "&gt;" + "</a>");
-                        if (count < childCount) {
-                           sb.append(",");
-                        } else {
-                           sb.append(".");
-                        }
-                        count++;
-                     }
-                     sb.append("\n");
+                  if (attribute) {
+                     generateAttributeTableRow(sb, m, a);
                   }
-                  sb.append("</p>"); 
-                  for (Method m : clazz.getMethods()) {
-                     ConfigurationAttribute a = m.getAnnotation(ConfigurationAttribute.class);
-                     boolean childElement = a != null && a.containingElement().equals(ce.name());
-                     if (childElement && !createdAttributes) {
-                        // Attributes
-                        sb.append("<table class=\"bodyTable\"> ");
-                        sb.append("<tr class=\"a\"><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr>\n");
-                        createdAttributes = true;
+               }
+               if (createdAttributes) {
+                  sb.append("</table></div>");
+               }
+               
+               for (Method m : clazz.getMethods()) {
+                  ConfigurationProperty[] cprops = propertiesElementsOnMethod(m);
+                  for (ConfigurationProperty c : cprops) {
+                     boolean property = c.parentElement().equals(ce.name());
+                     if (property && !createdProperties) {
+                        // custom properties
+                        sb.append("\n<table class=\"bodyTable\"> ");
+                        sb.append("<tr class=\"a\"><th>Property</th><th>Description</th></tr>\n");
+                        createdProperties = true;
                      }
-                     if (childElement) {
-                        sb.append("<tr class=\"b\">");
-                        sb.append("<td>").append("<code>" + a.name() +"</code>").append("</td>\n");
-                        
-                        //if allowed values specified for attribute, use it
-                        if (a.allowedValues().length() > 0) {
-                           sb.append("<td>").append("<code>" + a.allowedValues()+"</code>").append("</td>\n");
-                        }
-                        //otherwise, reflect method and use parameter as allowed value
-                        else if (isSetterMethod(m)) {
-                           sb.append("<td>").append("<code>" + m.getParameterTypes()[0].getSimpleName() + "</code>").append("</td>\n");
-                        }
-                        
-                        //if default value specified in annotation use it
-                        if (a.defaultValue().length() > 0) {
-                           sb.append("<td>").append(a.defaultValue()).append("</td>\n");
-                        }
-
-                        //otherwise reflect that field and read default value
-                        else {
-                           try {
-                              //reflect default value 
-                              Object matchingFieldValue = matchingFieldValue(m);
-                              sb.append("<td>").append(matchingFieldValue).append("</td>\n");
-                           } catch (Exception e) {
-                              sb.append("<td>").append("N/A").append("</td>\n");
-                           }
-                        }                   
-                        if(a.description().length() >0)
-                           sb.append("<td>").append(a.description()).append("</td>\n");
-                        else 
-                           sb.append("<td>").append("todo").append("</td>\n");
-           
-                        sb.append("</tr>\n");
+                     if (property) {
+                        generatePropertyTableRow(sb, c);
                      }
                   }
-                  if (createdAttributes) {
-                     sb.append("</table></div>");
-                  }
-                  
-                  for (Method m : clazz.getMethods()) {
-                     ConfigurationProperty[] cprops = null;
-                     ConfigurationProperties cp = m.getAnnotation(ConfigurationProperties.class);
-                     ConfigurationProperty p = null;
-                     if (cp != null) {
-                        cprops = cp.elements();
-                     } else {
-                        p = m.getAnnotation(ConfigurationProperty.class);
-                        if (p != null) {
-                           cprops = new ConfigurationProperty[]{p};
-                        }
-                     }
-
-                     if (cprops != null) {
-                        for (ConfigurationProperty c : cprops) {
-                           boolean child = c.parentElement().equals(ce.name());
-                           if (child && !createdProperties) {
-                              //custom properties         
-                              sb.append("\n<table class=\"bodyTable\"> ");
-                              sb.append("<tr class=\"a\"><th>Property</th><th>Description</th></tr>\n");        
-                              createdProperties = true;
-                           }
-                           if (child) {
-                              sb.append("<tr class=\"b\">");
-                              sb.append("<td>").append(c.name()).append("</td>\n");                              
-                              if(c.description().length() >0)
-                                 sb.append("<td>").append(c.description()).append("</td>\n");
-                              else 
-                                 sb.append("<td>").append("todo").append("</td>\n"); 
-                              sb.append("</tr>\n");
-                           }
-                        }
-                     }
-                  }
-                  if (createdProperties) {
-                     sb.append("</table></div>");
-                  }                
+               }
+               if (createdProperties) {
+                  sb.append("</table></div>");
                }
             }
-         }
+         }         
       } catch (Exception e) {
       }
       return sb.toString();
+   }
+
+   private void generatePropertyTableRow(StringBuilder sb, ConfigurationProperty c) {
+      sb.append("<tr class=\"b\">");
+      sb.append("<td>").append(c.name()).append("</td>\n");                              
+      if(c.description().length() >0)
+         sb.append("<td>").append(c.description()).append("</td>\n");
+      else 
+         sb.append("<td>").append("todo").append("</td>\n"); 
+      sb.append("</tr>\n");
+   }
+
+   private ConfigurationProperty[] propertiesElementsOnMethod(Method m) {
+      ConfigurationProperty[] cprops = new ConfigurationProperty[0];
+      ConfigurationProperties cp = m.getAnnotation(ConfigurationProperties.class);
+      ConfigurationProperty p = null;
+      if (cp != null) {
+         cprops = cp.elements();
+      } else {
+         p = m.getAnnotation(ConfigurationProperty.class);
+         if (p != null) {
+            cprops = new ConfigurationProperty[]{p};
+         }
+      }
+      return cprops;
+   }
+
+   private void generateAttributeTableRow(StringBuilder sb, Method m, ConfigurationAttribute a) {
+      sb.append("<tr class=\"b\">");
+      sb.append("<td>").append("<code>" + a.name() +"</code>").append("</td>\n");
+      
+      //if allowed values specified for attribute, use it
+      if (a.allowedValues().length() > 0) {
+         sb.append("<td>").append("<code>" + a.allowedValues()+"</code>").append("</td>\n");
+      }
+      //otherwise, reflect method and use parameter as allowed value
+      else if (isSetterMethod(m)) {
+         sb.append("<td>").append("<code>" + m.getParameterTypes()[0].getSimpleName() + "</code>").append("</td>\n");
+      }
+      
+      //if default value specified in annotation use it
+      if (a.defaultValue().length() > 0) {
+         sb.append("<td>").append(a.defaultValue()).append("</td>\n");
+      }
+
+      //otherwise reflect that field and read default value
+      else {
+         try {
+            //reflect default value 
+            Object matchingFieldValue = matchingFieldValue(m);
+            sb.append("<td>").append(matchingFieldValue).append("</td>\n");
+         } catch (Exception e) {
+            sb.append("<td>").append("N/A").append("</td>\n");
+         }
+      }                   
+      if(a.description().length() >0)
+         sb.append("<td>").append(a.description()).append("</td>\n");
+      else 
+         sb.append("<td>").append("todo").append("</td>\n");
+      
+      sb.append("</tr>\n");
+   }
+
+   private void generateHeaderForConfigurationElement(StringBuilder sb, XMLTreeOutputWalker tw,
+            TreeNode root, ConfigurationElement ce) {
+      sb.append("\n<a name=\"").append("ce_" + ce.parent() +"_" +ce.name() +"\">" + "</a>");
+      sb.append("<div class=\"section\"><h3><a name=\"" + ce.name() + "\"></a>" + ce.name() +"</h3>");
+      sb.append("\n<p>");
+      if (ce.description().length() > 0) {
+         sb.append(ce.description());
+      } else {
+         sb.append("todo");
+      }
+      
+      TreeNode n = tw.findNode(root,ce.name(),ce.parent());
+      sb.append(" Parent element is " + "<a href=\"").append("#ce_" + n.getParent().getParent().getName() + 
+               "_" + n.getParent().getName()+ "\">" + "&lt;" + ce.parent() + "&gt;" + "</a>.");    
+      
+      if(!n.getChildren().isEmpty()){
+         sb.append(" Child elements are ");
+         int childCount = n.getChildren().size();
+         int count = 1;
+         for (TreeNode tn : n.getChildren()) {
+            sb.append("<a href=\"").append("#ce_" + tn.getParent().getName() + "_" 
+                     + tn.getName() + "\">" + "&lt;" + tn.getName() + "&gt;" + "</a>");
+            if (count < childCount) {
+               sb.append(",");
+            } else {
+               sb.append(".");
+            }
+            count++;
+         }
+         sb.append("\n");
+      }
+      sb.append("</p>");
+   }
+
+   private ConfigurationElement[] configurationElementsOnBean(Class<?> clazz) {
+      ConfigurationElements configurationElements = clazz.getAnnotation(ConfigurationElements.class);
+      ConfigurationElement configurationElement = clazz.getAnnotation(ConfigurationElement.class);
+      ConfigurationElement ces [] = new ConfigurationElement[0];
+      if (configurationElement != null && configurationElements == null) {
+         ces = new ConfigurationElement[]{configurationElement};
+      }
+      if (configurationElements != null && configurationElement == null) {
+         ces = configurationElements.elements();
+      }
+      return ces;
    }
    
    private boolean isSetterMethod(Method m) {
