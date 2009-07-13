@@ -1,5 +1,10 @@
 package org.infinispan.tools.doclet.config;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.List;
+
 import org.infinispan.config.AbstractConfigurationBean;
 import org.infinispan.config.ConfigurationAttribute;
 import org.infinispan.config.ConfigurationElement;
@@ -7,17 +12,17 @@ import org.infinispan.config.ConfigurationElements;
 import org.infinispan.config.ConfigurationProperties;
 import org.infinispan.config.ConfigurationProperty;
 import org.infinispan.tools.doclet.html.HtmlGenerator;
+import org.infinispan.tools.schema.TreeNode;
+import org.infinispan.tools.schema.XMLTreeOutputWalker;
 import org.infinispan.util.ClassFinder;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
+/**
+ * Infinispan configuration reference guide generator
+ *
+ * @author Vladimir Blagojevic
+ * @version $Id$
+ * @since 4.0
+ */
 public class ConfigHtmlGenerator extends HtmlGenerator {
 
    String classpath;
@@ -43,10 +48,12 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
       List<Class<?>> configBeans;
       try {
          configBeans = getConfigBeans();
-         TreeNode root  = tree(configBeans);     
+         XMLTreeOutputWalker tw = new XMLTreeOutputWalker(sb);
+         TreeNode root = tw.constructTreeFromBeans(configBeans);                 
          
          sb.append("<div class=\"" +"source" + "\"><pre>");
-         sb.append(root.pp(""));
+         //print xml tree into StringBuilder
+         tw.preOrderTraverse(root);
          sb.append("</pre></div>");
          for (Class<?> clazz : configBeans) {
             ConfigurationElement ces[] = null;
@@ -71,19 +78,17 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
                   } else {
                      sb.append("todo");
                   }
-                  TreeNode n = findNode(root,ce.name(),ce.parent());
-                  sb.append(" Parent element is " + "<a href=\"").append(
-                           "#ce_" + n.parent.parent.name + "_" + n.parent.name + "\">" + "&lt;"
-                                    + ce.parent() + "&gt;" + "</a>.");    
+                  TreeNode n = tw.findNode(root,ce.name(),ce.parent());
+                  sb.append(" Parent element is " + "<a href=\"").append("#ce_" + n.getParent().getParent().getName() + 
+                           "_" + n.getParent().getName()+ "\">" + "&lt;" + ce.parent() + "&gt;" + "</a>.");    
                   
-                  if(n != null && !n.children.isEmpty()){
+                  if(n != null && !n.getChildren().isEmpty()){
                      sb.append(" Child elements are ");
-                     int childCount = n.children.size();
+                     int childCount = n.getChildren().size();
                      int count = 1;
-                     for (TreeNode tn : n.children) {
-                        sb.append("<a href=\"").append(
-                                 "#ce_" + tn.parent.name + "_" + tn.name + "\">" + "&lt;"
-                                          + tn.name + "&gt;" + "</a>");
+                     for (TreeNode tn : n.getChildren()) {
+                        sb.append("<a href=\"").append("#ce_" + tn.getParent().getName() + "_" 
+                                 + tn.getName() + "\">" + "&lt;" + tn.getName() + "&gt;" + "</a>");
                         if (count < childCount) {
                            sb.append(",");
                         } else {
@@ -188,55 +193,6 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
       return sb.toString();
    }
    
-   private TreeNode findNode(TreeNode tn, String name, String parent){
-      TreeNode result = null;
-      if(tn.name.equals(name) && tn.parent != null && tn.parent.name.equals(parent)){         
-         result = tn;
-      } else {
-         for (TreeNode child :tn.children){
-            result = findNode(child,name,parent);
-            if(result != null) break;
-         }
-      }
-      return result;
-   }
-   
-   private TreeNode tree(List<Class<?>>configBeans){
-      List<ConfigurationElement> lce = new ArrayList<ConfigurationElement>(7);
-      for (Class<?> clazz : configBeans) {
-         ConfigurationElement ces[] = null;
-         ConfigurationElements configurationElements = clazz.getAnnotation(ConfigurationElements.class);
-         ConfigurationElement configurationElement = clazz.getAnnotation(ConfigurationElement.class);
-
-         if (configurationElement != null && configurationElements == null) {
-            ces = new ConfigurationElement[]{configurationElement};
-         }
-         if (configurationElements != null && configurationElement == null) {
-            ces = configurationElements.elements();
-         }
-         if(ces != null){
-            lce.addAll(Arrays.asList(ces));
-         }
-      }
-      TreeNode root = new TreeNode();
-      root.parent = new TreeNode();
-      root.name = "infinispan";
-      makeTree(lce,root);
-      return root;
-   }
-   
-   private void makeTree(List<ConfigurationElement> lce, TreeNode tn) {
-      for (ConfigurationElement ce : lce) {
-         if(ce.parent().equals(tn.name)){
-            TreeNode child = new TreeNode();
-            child.name = ce.name();
-            child.parent = tn;         
-            tn.children.add(child);
-            makeTree(lce,child);
-         }
-      }
-   }
-
    private boolean isSetterMethod(Method m) {
       return m.getName().startsWith("set") && m.getParameterTypes().length == 1;
    }
@@ -261,43 +217,6 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
       }
       catch (IllegalAccessException iae) {
          throw new IllegalArgumentException("Could not get field " + field, iae);
-      }
-   }
-   
-   private class TreeNode {
-      String name = "";
-      TreeNode parent;
-      Set<TreeNode> children = new HashSet<TreeNode>();
-
-      public String toString() {
-         return name;
-      }
-
-      public String pp(String prefix) {
-         StringBuffer result = new StringBuffer(prefix + "&lt;<a href=\"" + "#ce_" + parent.name
-                  + "_" + name + "\">" + name + "</a>&gt;" + "\n");
-         String newPrefix = prefix + "  ";
-         for (TreeNode child : children)
-            result.append(child.pp(newPrefix));
-         return result.toString();
-      }
-
-      public boolean equals(Object other) {
-         if (other == this)
-            return true;
-         if (!(other instanceof TreeNode))
-            return false;
-         TreeNode tn = (TreeNode) other;
-         return this.parent.name != null && tn.parent != null
-                  && this.parent.name.equals(tn.parent.name) && this.name.equals(tn.name);
-      }
-
-      public int hashCode() {
-         int result = 17;
-         result = 31 * result + name.hashCode();
-         result = 31 * result
-                  + ((parent != null && parent.name != null) ? parent.name.hashCode() : 0);
-         return result;
       }
    }
 }

@@ -23,8 +23,6 @@ package org.infinispan.tools.schema;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -37,16 +35,20 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.infinispan.Version;
 import org.infinispan.config.AbstractConfigurationBean;
-import org.infinispan.config.ConfigurationElement;
-import org.infinispan.config.ConfigurationElements;
 import org.infinispan.util.ClassFinder;
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+/**
+ * Generates XML Schema for Infinispan configuration
+ *
+ * @author Vladimir Blagojevic
+ * @version $Id$
+ * @since 4.0
+ */
 public class SchemaGenerator {
    private final List<Class<?>> beans;
-   private final TreeNode root;
    private final File fileToWrite;
    
    protected SchemaGenerator(File fileToWrite, String searchPath) throws Exception {
@@ -67,53 +69,6 @@ public class SchemaGenerator {
       if (beans.isEmpty())
          throw new IllegalStateException("Could not find AbstractConfigurationBean(s) on your classpath " 
                   + pathUsed);
-      
-      root = tree(beans);
-   }
-   
-   private TreeNode findNode(TreeNode tn, String name, String parent){
-      TreeNode result = null;
-      if(tn.getName().equals(name) && tn.getParent() != null && tn.getParent().getName().equals(parent)){         
-         result = tn;
-      } else {
-         for (TreeNode child :tn.getChildren()){
-            result = findNode(child,name,parent);
-            if(result != null) break;
-         }
-      }
-      return result;
-   }
-   
-   private TreeNode tree(List<Class<?>>configBeans){
-      List<ConfigurationElement> lce = new ArrayList<ConfigurationElement>(7);
-      for (Class<?> clazz : configBeans) {
-         ConfigurationElement ces[] = null;
-         ConfigurationElements configurationElements = clazz.getAnnotation(ConfigurationElements.class);
-         ConfigurationElement configurationElement = clazz.getAnnotation(ConfigurationElement.class);
-
-         if (configurationElement != null && configurationElements == null) {
-            ces = new ConfigurationElement[]{configurationElement};
-         }
-         if (configurationElements != null && configurationElement == null) {
-            ces = configurationElements.elements();
-         }
-         if(ces != null){
-            lce.addAll(Arrays.asList(ces));
-         }
-      }
-      TreeNode root = new TreeNode("infinispan",new TreeNode());      
-      makeTree(lce,root);
-      return root;
-   }
-   
-   private void makeTree(List<ConfigurationElement> lce, TreeNode tn) {
-      for (ConfigurationElement ce : lce) {
-         if(ce.parent().equals(tn.getName())){
-            TreeNode child = new TreeNode(ce.name(),tn);
-            tn.getChildren().add(child);
-            makeTree(lce,child);
-         }
-      }
    }
    
    public static void main(String[] args) throws Exception {
@@ -151,7 +106,8 @@ public class SchemaGenerator {
          xsElement.setAttribute("type", "tns:infinispanType");
          xmldoc.getDocumentElement().appendChild(xsElement);
 
-         SchemaGeneratorTreeWalker tw = new SchemaGeneratorTreeWalker(xmldoc,beans);
+         ConfigurationTreeWalker tw = new SchemaGeneratorTreeWalker(xmldoc,beans);
+         TreeNode root = tw.constructTreeFromBeans(beans);         
          tw.preOrderTraverse(root);
 
          DOMSource domSource = new DOMSource(xmldoc);

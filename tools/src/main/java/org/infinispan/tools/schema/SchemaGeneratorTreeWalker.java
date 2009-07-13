@@ -21,13 +21,9 @@
  */
 package org.infinispan.tools.schema;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.List;
-import java.util.Queue;
 import java.util.Set;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import org.infinispan.config.ConfigurationAttribute;
 import org.infinispan.config.ConfigurationElement;
@@ -36,7 +32,15 @@ import org.infinispan.config.ConfigurationException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-public class SchemaGeneratorTreeWalker implements TreeWalker {
+/**
+ * TreeWalker that generates each node of the XML schema
+ *
+ * @author Vladimir Blagojevic
+ * @see SchemaGenerator
+ * @version $Id$
+ * @since 4.0
+ */
+public class SchemaGeneratorTreeWalker extends ConfigurationTreeWalker{
    
    Document xmldoc;
    private List<Class<?>> beans;
@@ -47,37 +51,6 @@ public class SchemaGeneratorTreeWalker implements TreeWalker {
       this.beans = beans;
    }
    
-   public void levelOrderTraverse(TreeNode root) {          
-      Queue<TreeNode> q = new LinkedBlockingQueue<TreeNode>();
-      q.add(root);
-      
-      while(!q.isEmpty()){
-         TreeNode treeNode = q.poll();
-         treeNode.accept(this);
-         if(treeNode.hasChildren()){
-            q.addAll(treeNode.getChildren());
-         }
-      }      
-   }
-   
-   public void preOrderTraverse(TreeNode node){
-      node.accept(this);
-      if(node.hasChildren()){
-         for (TreeNode child : node.getChildren()) {
-            preOrderTraverse(child);
-         }
-      }
-   }
-   
-   public void postOrderTraverse(TreeNode node){      
-      if(node.hasChildren()){
-         for (TreeNode child : node.getChildren()) {
-            preOrderTraverse(child);
-         }
-      }
-      node.accept(this);
-   }
-
    public void visitNode(TreeNode treeNode) {
       
       Element complexType = xmldoc.createElement("xs:complexType");
@@ -144,27 +117,5 @@ public class SchemaGeneratorTreeWalker implements TreeWalker {
    
    private boolean isSetterMethod(Method m) {
       return m.getName().startsWith("set") && m.getParameterTypes().length == 1;
-   }
-
-   private Object matchingFieldValue(Method m) throws Exception {
-      String name = m.getName();
-      if (!name.startsWith("set")) throw new IllegalArgumentException("Not a setter method");
-
-      String fieldName = name.substring(name.indexOf("set") + 3);
-      fieldName = fieldName.substring(0, 1).toLowerCase() + fieldName.substring(1);
-      Field f = m.getDeclaringClass().getDeclaredField(fieldName);
-      return getField(f, m.getDeclaringClass().newInstance());
-   }
-   
-   private static Object getField(Field field, Object target) {
-      if (!Modifier.isPublic(field.getModifiers())) {
-         field.setAccessible(true);
-      }
-      try {
-         return field.get(target);
-      }
-      catch (IllegalAccessException iae) {
-         throw new IllegalArgumentException("Could not get field " + field, iae);
-      }
    }
 }

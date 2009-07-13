@@ -21,19 +21,44 @@
  */
 package org.infinispan.tools.schema;
 
-import org.infinispan.tools.schema.TreeNode;
+import org.infinispan.tools.doclet.config.ConfigDoclet;
 
 /**
- * TreeWalker visitor
+ * TreeWalker that generates XML pretty print of the configuration tree
  *
  * @author Vladimir Blagojevic
- * @see SchemaGeneratorTreeWalker
- * @see XMLTreeOutputWalker
+ * @see ConfigDoclet
  * @version $Id$
  * @since 4.0
  */
-public interface TreeWalker {
+public class XMLTreeOutputWalker extends ConfigurationTreeWalker {
+   
+   private final StringBuilder sb;
 
-   void visitNode(TreeNode treeNode);
+   public XMLTreeOutputWalker(StringBuilder sb) {
+      super();
+      this.sb = sb;
+   }
 
+   public void visitNode(TreeNode treeNode) {
+      String ident = "";     
+      for(int i = 0; i<=treeNode.getDepth();i++)
+         ident += "  ";
+      sb.append(ident + "&lt;<a href=\"" + "#ce_" + treeNode.getParent().getName()
+               + "_" + treeNode.getName() + "\">" + treeNode.getName() + "</a>&gt;" + "\n");
+
+   }
+   
+   public TreeNode findNode(TreeNode tn, String name, String parent){
+      TreeNode result = null;
+      if(tn.getName().equals(name) && tn.getParent() != null && tn.getParent().getName().equals(parent)){         
+         result = tn;
+      } else {
+         for (TreeNode child :tn.getChildren()){
+            result = findNode(child,name,parent);
+            if(result != null) break;
+         }
+      }
+      return result;
+   }
 }

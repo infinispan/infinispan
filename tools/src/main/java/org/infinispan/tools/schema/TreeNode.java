@@ -24,25 +24,39 @@ package org.infinispan.tools.schema;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * TreeNode of Infinispan configuration
+ *
+ * @author Vladimir Blagojevic
+ * @version $Id$
+ * @since 4.0
+ */
 public class TreeNode {
    private final String name;
    private final TreeNode parent;
+   private final int depth;
    private final Set<TreeNode> children = new HashSet<TreeNode>();
    
-   public TreeNode(String name, TreeNode parent) {
+   public TreeNode(String name, TreeNode parent, int depth) {
       this.name = name;
       this.parent = parent;
+      this.depth = depth;
    }   
    
    public TreeNode() {
       this.name="";
       this.parent=null;
+      this.depth = -1; // :)
    }
 
    public String getName() {
       return name;
    }
-   
+      
+   public int getDepth() {
+      return depth;
+   }
+
    public boolean hasChildren(){
       return !children.isEmpty();
    }
