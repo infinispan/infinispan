@@ -29,7 +29,7 @@ public class ConfigDoclet {
                                                         "Infinispan configuration options", Arrays.asList("Configuration", "Infinispan",
                                                                                                           "Data Grids", "Documentation", "Reference", "MBeans"), cp);
 
-      generator.generateHtml(outputDirectory + File.separator + "config.html");
+      generator.generateHtml(outputDirectory + File.separator + "config.html", "stylesheet2.css");
 
       System.out.println("FINISHING CONFIG DOCLET");
 

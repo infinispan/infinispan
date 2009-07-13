@@ -248,6 +248,25 @@ pageTracker._trackPageview();
                      </execution>
                   </executions>
                </plugin>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-antrun-plugin</artifactId>
+                  <version>1.3</version>
+                  <executions>
+                     <execution>
+                        <id>copy_css</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                           <goal>run</goal>
+                        </goals>
+                        <configuration>
+                           <tasks>
+                              <copy file="tools/src/main/resources/stylesheet2.css" todir="target/site/apidocs"/>
+                           </tasks>
+                        </configuration>
+                     </execution>
+                  </executions>
+               </plugin>
             </plugins>
          </build>
       </profile>

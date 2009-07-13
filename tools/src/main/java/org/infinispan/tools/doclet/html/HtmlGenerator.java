@@ -27,6 +27,10 @@ public abstract class HtmlGenerator {
    }
 
    public void generateHtml(String fileName) throws IOException {
+      generateHtml(fileName, "stylesheet.css");
+   }
+
+   public void generateHtml(String fileName, String styleSheetName) throws IOException {
       FileOutputStream fos = new FileOutputStream(fileName);
       OutputStreamWriter osw = isValid(encoding) ? new OutputStreamWriter(fos, encoding) : new OutputStreamWriter(fos);
       PrintWriter writer = new PrintWriter(osw);
@@ -46,7 +50,7 @@ public abstract class HtmlGenerator {
          writer.println("<TITLE>");
          writer.println(title);
          writer.println("</TITLE>");
-         writer.println("<LINK REL=\"stylesheet\" HREF=\"stylesheet.css\" TYPE=\"text/css\"/>");
+         writer.println("<LINK REL=\"stylesheet\" HREF=\"" + styleSheetName + "\" TYPE=\"text/css\"/>");
 
          writer.println("</HEAD>");
          writer.println("<BODY>");
