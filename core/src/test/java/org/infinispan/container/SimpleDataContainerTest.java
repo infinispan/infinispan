@@ -199,10 +199,10 @@ public class SimpleDataContainerTest {
       dc.put("k4", "v4", 6000000, 6000000);
 
       Set expected = new HashSet();
-      expected.add(Immutables.immutableEntry(dc.get("k1")));
-      expected.add(Immutables.immutableEntry(dc.get("k2")));
-      expected.add(Immutables.immutableEntry(dc.get("k3")));
-      expected.add(Immutables.immutableEntry(dc.get("k4")));
+      expected.add(Immutables.immutableInternalCacheEntry(dc.get("k1")));
+      expected.add(Immutables.immutableInternalCacheEntry(dc.get("k2")));
+      expected.add(Immutables.immutableInternalCacheEntry(dc.get("k3")));
+      expected.add(Immutables.immutableInternalCacheEntry(dc.get("k4")));
 
       for (Map.Entry o : dc.entrySet()) assert expected.remove(o);
 

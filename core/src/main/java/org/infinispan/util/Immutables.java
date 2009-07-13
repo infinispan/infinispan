@@ -33,6 +33,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.infinispan.container.DataContainer;
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.InternalCacheValue;
+
 /**
  * Factory for generating immutable type wrappers.
  *
@@ -215,7 +219,16 @@ public class Immutables {
    public static Map.Entry immutableEntry(Map.Entry entry) {
       return new ImmutableEntry(entry);
    }
-
+   
+   /**
+    * Wraps a {@link InternalCacheEntry}} with an immutable {@link InternalCacheEntry}}. There is no copying involved.
+    *
+    * @param entry the internal cache entry to wrap.
+    * @return an immutable {@link InternalCacheEntry}} wrapper that delegates to the original entry.
+    */
+   public static InternalCacheEntry immutableInternalCacheEntry(InternalCacheEntry entry) {
+      return new ImmutableInternalCacheEntry(entry);
+   }
 
    public interface Immutable {
    }
@@ -342,7 +355,10 @@ public class Immutables {
       }
    }
 
-   static class ImmutableEntry<K, V> implements Entry<K, V>, Immutable {
+   /** 
+    * Immutable version of Map.Entry for traversing immutable collections. 
+    */
+   private static class ImmutableEntry<K, V> implements Entry<K, V>, Immutable {
       private K key;
       private V value;
       private int hash;
@@ -384,6 +400,176 @@ public class Immutables {
 
       public String toString() {
          return getKey() + "=" + getValue();
+      }
+   }
+   
+   /** 
+    * Immutable version of InternalCacheEntry for traversing data containers. 
+    */
+   private static class ImmutableInternalCacheEntry implements InternalCacheEntry, Immutable {
+      private final InternalCacheEntry entry;
+      private final int hash;
+
+      ImmutableInternalCacheEntry(InternalCacheEntry entry) {
+         this.entry = entry;
+         this.hash = entry.hashCode();
+      }
+
+      public Object getKey() {
+         return entry.getKey();
+      }
+
+      public Object getValue() {
+         return entry.getValue();
+      }
+
+      public Object setValue(Object value) {
+         throw new UnsupportedOperationException();
+      }
+
+      @SuppressWarnings("unchecked")
+      public boolean equals(Object o) {
+         if (!(o instanceof InternalCacheEntry))
+            return false;
+
+         InternalCacheEntry entry = (InternalCacheEntry) o;
+         return entry.equals(this.entry);
+      }
+
+      public int hashCode() {
+         return hash;
+      }
+
+      public String toString() {
+         return getKey() + "=" + getValue();
+      }
+
+      public boolean canExpire() {
+         return entry.canExpire();
+      }
+
+      public long getCreated() {
+         return entry.getCreated();
+      }
+
+      public long getExpiryTime() {
+         return entry.getExpiryTime();
+      }
+
+      public long getLastUsed() {
+         return entry.getLastUsed();
+      }
+
+      public boolean isExpired() {
+         return entry.isExpired();
+      }
+
+      public InternalCacheEntry setLifespan(long lifespan) {
+         throw new UnsupportedOperationException();
+      }
+
+      public InternalCacheEntry setMaxIdle(long maxIdle) {
+         throw new UnsupportedOperationException();
+      }
+
+      public InternalCacheValue toInternalCacheValue() {
+         return new ImmutableInternalCacheValue(this);
+      }
+
+      public void touch() {
+         throw new UnsupportedOperationException();
+      }
+
+      public void commit(DataContainer container) {
+         throw new UnsupportedOperationException();
+      }
+
+      public long getLifespan() {
+         return entry.getLifespan();
+      }
+
+      public long getMaxIdle() {
+         return entry.getMaxIdle();
+      }
+
+      public boolean isChanged() {
+         return entry.isChanged();
+      }
+
+      public boolean isCreated() {
+         return entry.isCreated();
+      }
+
+      public boolean isNull() {
+         return entry.isNull();
+      }
+
+      public boolean isRemoved() {
+         return entry.isRemoved();
+      }
+
+      public boolean isValid() {
+         return entry.isValid();
+      }
+
+      public void rollback() {
+         throw new UnsupportedOperationException();
+      }
+
+      public void setCreated(boolean created) {
+         throw new UnsupportedOperationException();
+      }
+
+      public void setRemoved(boolean removed) {
+         throw new UnsupportedOperationException();         
+      }
+
+      public void setValid(boolean valid) {
+         throw new UnsupportedOperationException();
+      }
+      
+      public InternalCacheEntry clone() {
+         return new ImmutableInternalCacheEntry(entry.clone());
+      }
+   }
+   
+   private static class ImmutableInternalCacheValue implements InternalCacheValue, Immutable {
+      private final ImmutableInternalCacheEntry entry;
+      
+      ImmutableInternalCacheValue(ImmutableInternalCacheEntry entry) {
+         this.entry = entry;
+      }
+
+      public boolean canExpire() {
+         return entry.canExpire();
+      }
+
+      public long getCreated() {
+         return entry.getCreated();
+      }
+
+      public long getLastUsed() {
+         return entry.getLastUsed();
+      }
+
+      public long getLifespan() {
+         return entry.getLifespan();
+      }
+
+      public long getMaxIdle() {
+         return entry.getMaxIdle();
+      }
+
+      public Object getValue() {
+         return entry.getValue();
+      }
+
+      public boolean isExpired() {
+         return entry.isExpired();
+      }
+
+      public InternalCacheEntry toInternalCacheEntry(Object key) {
+         return entry;
       }
    }
 

@@ -10,7 +10,6 @@ import java.util.AbstractCollection;
 import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
@@ -238,7 +237,7 @@ public class SpinLockBasedFIFODataContainer implements DataContainer {
       return keySet;
    }
    
-   public Set<Map.Entry> entrySet() {
+   public Set<InternalCacheEntry> entrySet() {
       return new EntrySet();
    }
 
@@ -559,8 +558,8 @@ public class SpinLockBasedFIFODataContainer implements DataContainer {
       }      
    }
    
-   protected final class EntrySet extends AbstractSet<Map.Entry> {
-      public Iterator<Map.Entry> iterator() {
+   protected final class EntrySet extends AbstractSet<InternalCacheEntry> {
+      public Iterator<InternalCacheEntry> iterator() {
          return new ImmutableEntryIterator();
       }
 
@@ -590,12 +589,12 @@ public class SpinLockBasedFIFODataContainer implements DataContainer {
       }
    }
 
-   protected final class ImmutableEntryIterator extends LinkedIterator implements Iterator<Map.Entry> {
-      public Map.Entry next() {
+   protected final class ImmutableEntryIterator extends LinkedIterator implements Iterator<InternalCacheEntry> {
+      public InternalCacheEntry next() {
          LinkedEntry le = nextAux.next;
          if (le == dummyEntry) return null;
          nextAux = le.next;
-         return Immutables.immutableEntry(le.entry);
+         return Immutables.immutableInternalCacheEntry(le.entry);
       }
    }
    

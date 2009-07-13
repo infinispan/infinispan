@@ -26,7 +26,6 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 
 import java.util.Collection;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -100,7 +99,7 @@ public interface DataContainer extends Iterable<InternalCacheEntry> {
     * 
     * @return a set of immutable cache entries
     */
-   Set<Map.Entry> entrySet();
+   Set<InternalCacheEntry> entrySet();
 
    /**
     * Purges entries that have passed their expiry time

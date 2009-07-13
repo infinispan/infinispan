@@ -11,7 +11,6 @@ import java.util.AbstractSet;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -136,7 +135,7 @@ public class SimpleDataContainer implements DataContainer {
       return new Values();
    }
 
-   public Set<Map.Entry> entrySet() {
+   public Set<InternalCacheEntry> entrySet() {
       return new EntrySet();
    }
 
@@ -212,8 +211,8 @@ public class SimpleDataContainer implements DataContainer {
       }
    }
 
-   private class EntrySet extends AbstractSet<Map.Entry> {
-      public Iterator<Map.Entry> iterator() {
+   private class EntrySet extends AbstractSet<InternalCacheEntry> {
+      public Iterator<InternalCacheEntry> iterator() {
          return new ImmutableEntryIterator(immortalEntries.values().iterator(), mortalEntries.values().iterator());
       }
 
@@ -258,13 +257,13 @@ public class SimpleDataContainer implements DataContainer {
       }
    }
 
-   private class ImmutableEntryIterator extends MortalInmortalIterator implements Iterator<Map.Entry> {
+   private class ImmutableEntryIterator extends MortalInmortalIterator implements Iterator<InternalCacheEntry> {
       private ImmutableEntryIterator(Iterator<InternalCacheEntry> immortalIterator, Iterator<InternalCacheEntry> mortalIterator) {
          super(immortalIterator, mortalIterator);
       }
 
-      public Map.Entry next() {
-         return Immutables.immutableEntry(currentIterator.next());
+      public InternalCacheEntry next() {
+         return Immutables.immutableInternalCacheEntry(currentIterator.next());
       }
    }
 

@@ -28,6 +28,7 @@ import org.infinispan.commands.read.ValuesCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
@@ -148,9 +149,9 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
    
    @Override
    public Object visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
-      Set<Map.Entry> entries = (Set<Map.Entry>) invokeNextInterceptor(ctx, command);
-      Set<Map.Entry> copy = new HashSet<Map.Entry>(entries.size());
-      for (Map.Entry entry : entries) {
+      Set<InternalCacheEntry> entries = (Set<InternalCacheEntry>) invokeNextInterceptor(ctx, command);
+      Set<InternalCacheEntry> copy = new HashSet<InternalCacheEntry>(entries.size());
+      for (InternalCacheEntry entry : entries) {
          Object key = entry.getKey();
          Object value = entry.getValue();
          if (key instanceof MarshalledValue) {
@@ -159,7 +160,8 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
          if (value instanceof MarshalledValue) {
             value = ((MarshalledValue) value).get();
          }
-         Map.Entry newEntry = Immutables.immutableEntry(InternalEntryFactory.create(key, value, -1));
+         InternalCacheEntry newEntry = Immutables.immutableInternalCacheEntry(InternalEntryFactory.create(key, value, 
+                  entry.getCreated(), entry.getLifespan(), entry.getLastUsed(), entry.getMaxIdle()));
          copy.add(newEntry);
       }
       return Immutables.immutableSetWrap(copy);

@@ -632,7 +632,7 @@ public class TestingUtil {
       StringBuilder builder = new StringBuilder(cache.getName() + "[");
       while (it.hasNext()) {
          CacheEntry ce = (CacheEntry) it.next();
-         builder.append(ce.getKey() + " = " + ce.getValue() + ";");
+         builder.append(ce.getKey() + "=" + ce.getValue() + ",l=" + ce.getLifespan() + "; ");
       }
       builder.append("]");
       return builder.toString();

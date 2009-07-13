@@ -8,7 +8,6 @@ import java.util.AbstractCollection;
 import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.concurrent.locks.ReentrantLock;
@@ -627,8 +626,8 @@ public class FIFODataContainer implements DataContainer {
       }
    }
    
-   protected final class EntrySet extends AbstractSet<Map.Entry> {
-      public Iterator<Map.Entry> iterator() {
+   protected final class EntrySet extends AbstractSet<InternalCacheEntry> {
+      public Iterator<InternalCacheEntry> iterator() {
          return new ImmutableEntryIterator();
       }
 
@@ -657,9 +656,9 @@ public class FIFODataContainer implements DataContainer {
       }
    }
    
-   protected final class ImmutableEntryIterator extends LinkedIterator implements Iterator<Map.Entry> {
-      public Map.Entry next() {
-         return Immutables.immutableEntry(current.e);
+   protected final class ImmutableEntryIterator extends LinkedIterator implements Iterator<InternalCacheEntry> {
+      public InternalCacheEntry next() {
+         return Immutables.immutableInternalCacheEntry(current.e);
       }
    }
 
@@ -800,7 +799,7 @@ public class FIFODataContainer implements DataContainer {
       return new Values();
    }
    
-   public Set<Map.Entry> entrySet() {
+   public Set<InternalCacheEntry> entrySet() {
       return new EntrySet();
    }
 
