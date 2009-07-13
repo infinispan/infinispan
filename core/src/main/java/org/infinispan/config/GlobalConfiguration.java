@@ -28,6 +28,7 @@ import java.util.Properties;
 @ConfigurationElements(elements = {
          @ConfigurationElement(name = "global", parent = "infinispan", description = ""),
          @ConfigurationElement(name = "asyncListenerExecutor", parent = "global", description = ""), 
+         @ConfigurationElement(name = "transport", parent = "global", description = ""), 
          @ConfigurationElement(name = "evictionScheduledExecutor", parent = "global", description = ""),
          @ConfigurationElement(name = "replicationQueueScheduledExecutor", parent = "global", description = ""),  
          @ConfigurationElement(name = "globalJmxStatistics", parent = "global", description = ""),   
