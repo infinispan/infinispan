@@ -51,6 +51,7 @@ import org.infinispan.util.concurrent.IsolationLevel;
          @ConfigurationElement(name = "lazyDeserialization", parent = "default", description = ""),  
          @ConfigurationElement(name = "invocationBatching", parent = "default", description = ""),   
          @ConfigurationElement(name = "clustering", parent = "default", description = "", customReader=ClusteringConfigReader.class),
+         @ConfigurationElement(name = "stateRetrieval", parent = "clustering"),
          @ConfigurationElement(name = "sync", parent = "clustering"),
          @ConfigurationElement(name = "hash", parent = "clustering"),
          @ConfigurationElement(name = "l1", parent = "clustering"),
