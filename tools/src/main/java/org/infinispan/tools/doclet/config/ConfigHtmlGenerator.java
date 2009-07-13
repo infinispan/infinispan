@@ -13,7 +13,6 @@ import org.infinispan.config.ConfigurationProperties;
 import org.infinispan.config.ConfigurationProperty;
 import org.infinispan.tools.doclet.html.HtmlGenerator;
 import org.infinispan.tools.schema.TreeNode;
-import org.infinispan.tools.schema.XMLTreeOutputWalker;
 import org.infinispan.util.ClassFinder;
 
 /**
