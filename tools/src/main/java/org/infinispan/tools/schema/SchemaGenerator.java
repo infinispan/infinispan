@@ -35,6 +35,7 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.infinispan.Version;
 import org.infinispan.config.AbstractConfigurationBean;
+import org.infinispan.config.parsing.TreeNode;
 import org.infinispan.util.ClassFinder;
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
@@ -103,12 +104,25 @@ public class SchemaGenerator {
         
          Element xsElement = xmldoc.createElement("xs:element");       
          xsElement.setAttribute("name", "infinispan");
-         xsElement.setAttribute("type", "tns:infinispanType");
+         xsElement.setAttribute("type", "tns:infinispanTypeIn");
          xmldoc.getDocumentElement().appendChild(xsElement);
 
          ConfigurationTreeWalker tw = new SchemaGeneratorTreeWalker(xmldoc,beans);
          TreeNode root = tw.constructTreeFromBeans(beans);         
          tw.preOrderTraverse(root);
+         
+         Element property = xmldoc.createElement("xs:complexType");       
+         property.setAttribute("name", "propertyType");
+         Element att = xmldoc.createElement("xs:attribute");       
+         att.setAttribute("name", "name");
+         att.setAttribute("type", "xs:string");
+         property.appendChild(att);
+         att = xmldoc.createElement("xs:attribute");       
+         att.setAttribute("name", "value");
+         att.setAttribute("type", "xs:string");
+         property.appendChild(att);
+         
+         xmldoc.getDocumentElement().appendChild(property);        
 
          DOMSource domSource = new DOMSource(xmldoc);
          StreamResult streamResult = new StreamResult(fw);

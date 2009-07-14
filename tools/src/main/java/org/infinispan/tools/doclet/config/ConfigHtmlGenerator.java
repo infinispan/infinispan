@@ -11,8 +11,8 @@ import org.infinispan.config.ConfigurationElement;
 import org.infinispan.config.ConfigurationElements;
 import org.infinispan.config.ConfigurationProperties;
 import org.infinispan.config.ConfigurationProperty;
+import org.infinispan.config.parsing.TreeNode;
 import org.infinispan.tools.doclet.html.HtmlGenerator;
-import org.infinispan.tools.schema.TreeNode;
 import org.infinispan.util.ClassFinder;
 
 /**
@@ -132,15 +132,13 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
       sb.append("<tr class=\"b\">");
       sb.append("<td>").append("<code>" + a.name() +"</code>").append("</td>\n");
       
-      //if allowed values specified for attribute, use it
-      if (a.allowedValues().length() > 0) {
-         sb.append("<td>").append("<code>" + a.allowedValues()+"</code>").append("</td>\n");
-      }
-      //otherwise, reflect method and use parameter as allowed value
-      else if (isSetterMethod(m)) {
-         sb.append("<td>").append("<code>" + m.getParameterTypes()[0].getSimpleName() + "</code>").append("</td>\n");
-      }
-      
+      sb.append("<td>").append("<code>" + m.getParameterTypes()[0].getSimpleName() + "</code>");
+      if(a.allowedValues().length()>0){
+         sb.append("*  " + a.allowedValues() +"</td>\n");
+      } else{
+         sb.append("</td>\n");
+      }    
+     
       //if default value specified in annotation use it
       if (a.defaultValue().length() > 0) {
          sb.append("<td>").append(a.defaultValue()).append("</td>\n");

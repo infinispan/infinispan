@@ -22,7 +22,7 @@
 package org.infinispan.tools.doclet.config;
 
 import org.infinispan.tools.schema.ConfigurationTreeWalker;
-import org.infinispan.tools.schema.TreeNode;
+import org.infinispan.config.parsing.TreeNode;
 
 /**
  * TreeWalker that generates XML pretty print of the configuration tree

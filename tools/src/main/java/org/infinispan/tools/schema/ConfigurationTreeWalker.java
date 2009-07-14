@@ -29,6 +29,11 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import org.infinispan.config.ConfigurationElement;
 import org.infinispan.config.ConfigurationElements;
+import org.infinispan.config.parsing.RootElementBuilder;
+import org.infinispan.config.parsing.TreeNode;
+import org.infinispan.config.parsing.TreeWalker;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * TreeWalker abstract super class that should be extended for a particular tool
@@ -41,8 +46,11 @@ import org.infinispan.config.ConfigurationElements;
  */
 public abstract class ConfigurationTreeWalker implements TreeWalker{
 
+   protected final Log log;
+   
    public ConfigurationTreeWalker() {
       super();
+      log = LogFactory.getLog(getClass());
    }
 
    public TreeNode constructTreeFromBeans(List<Class<?>>configBeans) {
@@ -106,5 +114,18 @@ public abstract class ConfigurationTreeWalker implements TreeWalker{
          }
       }
       node.accept(this);
+   }
+   
+   public ConfigurationElement[] configurationElementsOnBean(Class<?> clazz) {
+      ConfigurationElements configurationElements = clazz.getAnnotation(ConfigurationElements.class);
+      ConfigurationElement configurationElement = clazz.getAnnotation(ConfigurationElement.class);
+      ConfigurationElement ces [] = new ConfigurationElement[0];
+      if (configurationElement != null && configurationElements == null) {
+         ces = new ConfigurationElement[]{configurationElement};
+      }
+      if (configurationElements != null && configurationElement == null) {
+         ces = configurationElements.elements();
+      }
+      return ces;
    }
 }
