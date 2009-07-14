@@ -23,7 +23,7 @@ public class SingletonStoreConfig extends AbstractNamedCacheConfigurationBean {
       return singletonStoreEnabled;
    }
 
-   @ConfigurationAttribute(name = "singletonStoreEnabled", 
+   @ConfigurationAttribute(name = "enabled", 
             containingElement = "singletonStore",
             description="Switch to enable singleton store")              
    public void setSingletonStoreEnabled(boolean singletonStoreEnabled) {

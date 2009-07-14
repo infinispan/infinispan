@@ -230,6 +230,10 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       this.transportProperties = toTypedProperties(transportProperties);
    }
 
+   @ConfigurationProperties(elements = {
+            @ConfigurationProperty(name = "configurationString", parentElement = "transport"),
+            @ConfigurationProperty(name = "configurationFile", parentElement = "transport"),
+            @ConfigurationProperty(name = "configurationXml", parentElement = "transport") })
    public void setTransportProperties(String transportPropertiesString) {
       testImmutability("transportProperties");
       this.transportProperties = toTypedProperties(transportPropertiesString);

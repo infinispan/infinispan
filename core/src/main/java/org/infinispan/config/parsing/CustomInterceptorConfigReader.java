@@ -49,56 +49,45 @@ public class CustomInterceptorConfigReader implements ConfigurationElementReader
    public void process(Element e, AbstractConfigurationBean bean) {
       NodeList interceptorNodes = e.getElementsByTagName("interceptor");
       List<CustomInterceptorConfig> interceptorConfigs = new ArrayList<CustomInterceptorConfig>(interceptorNodes.getLength());
-      for (int i = 0; i < interceptorNodes.getLength(); i++) {
-         boolean first = false;
-         boolean last = false;
-         int index = -1;
-         String after = null;
-         String before = null;
-
+      for (int i = 0; i < interceptorNodes.getLength(); i++) {                        
          Element interceptorElement = (Element) interceptorNodes.item(i);
+         CustomInterceptorConfig customInterceptorConfig = new CustomInterceptorConfig();
          String position = parser.getAttributeValue(interceptorElement, "position");
-         if (parser.existsAttribute(position) && "first".equalsIgnoreCase(position)) {
-            first = true;
-         }
-         if (parser.existsAttribute(position) && "last".equalsIgnoreCase(position)) {
-            last = true;
-         }
+         if (parser.existsAttribute(position)) {
+            customInterceptorConfig.setPosition(position);
+         }         
          String indexStr = parser.getAttributeValue(interceptorElement, "index");
-         index = parser.existsAttribute(indexStr) ? parser.getInt(indexStr) : -1;
-
-         before = parser.getAttributeValue(interceptorElement, "before");
-         if (!parser.existsAttribute(before))
-            before = null;
-         after = parser.getAttributeValue(interceptorElement, "after");
-         if (!parser.existsAttribute(after))
-            after = null;
-
-         CommandInterceptor interceptor = buildCommandInterceptor(interceptorElement);
-         CustomInterceptorConfig customInterceptorConfig = new CustomInterceptorConfig(interceptor,
-                  first, last, index, after, before);
+         int index = parser.existsAttribute(indexStr) ? parser.getInt(indexStr) : -1;
+         customInterceptorConfig.setIndex(index);
+         String before = parser.getAttributeValue(interceptorElement, "before");
+         if (parser.existsAttribute(before)){
+            customInterceptorConfig.setBeforeInterceptor(before);
+         }
+         String after = parser.getAttributeValue(interceptorElement, "after");
+         if (parser.existsAttribute(after)){
+            customInterceptorConfig.setAfterInterceptor(before);
+         }            
+         
+         String interceptorClass = parser.getAttributeValue(interceptorElement, "class");
+         if (!parser.existsAttribute(interceptorClass))
+            throw new ConfigurationException("Interceptor class cannot be empty!");
+         
+         customInterceptorConfig.setClassName(interceptorClass);
+         
+         CommandInterceptor interceptor;
+         try {
+            interceptor = (CommandInterceptor) Util.loadClass(interceptorClass).newInstance();
+         } catch (Exception ex) {
+            throw new ConfigurationException(
+                     "CommandInterceptor class is not properly loaded in classloader", ex);
+         }
+         Properties p = XmlConfigHelper.extractProperties(interceptorElement);
+         if (p != null)
+            XmlConfigHelper.setValues(interceptor, p, false, true);
+         customInterceptorConfig.setInterceptor(interceptor); 
+         
          interceptorConfigs.add(customInterceptorConfig);
       }
       ((Configuration) bean).setCustomInterceptors(interceptorConfigs);
-   }
-
-   /**
-    * Builds the interceptor based on the interceptor class and also sets all its attributes.
-    */
-   private CommandInterceptor buildCommandInterceptor(Element element) {
-      String interceptorClass = parser.getAttributeValue(element, "class");
-      if (!parser.existsAttribute(interceptorClass))
-         throw new ConfigurationException("Interceptor class cannot be empty!");
-      CommandInterceptor result;
-      try {
-         result = (CommandInterceptor) Util.loadClass(interceptorClass).newInstance();
-      } catch (Exception e) {
-         throw new ConfigurationException(
-                  "CommandInterceptor class is not properly loaded in classloader", e);
-      }
-      Properties p = XmlConfigHelper.extractProperties(element);
-      if (p != null)
-         XmlConfigHelper.setValues(result, p, false, true);
-      return result;
-   }
+   }   
 }

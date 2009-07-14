@@ -23,13 +23,14 @@ package org.infinispan.config;
 
 import java.lang.annotation.*;
 import org.infinispan.config.parsing.ConfigurationElementReader;
+import org.infinispan.config.parsing.ConfigurationElementWriter;
 
 
 /**
  * Represents XML element from a valid Infinispan configuration file. 
  * 
  * @author Vladimir Blagojevic
- * @version $Id: ConfigurationElement.java,v 1.5 2008/05/23 11:11:02 belaban Exp $
+ * @version $Id$
  */
 
 @Retention(RetentionPolicy.RUNTIME)
@@ -43,5 +44,7 @@ public @interface ConfigurationElement {
     String description() default "";
     
     Class <? extends ConfigurationElementReader> customReader() default ConfigurationElementReader.class;
+    
+    Class <? extends ConfigurationElementWriter> customWriter() default ConfigurationElementWriter.class;
       
 }

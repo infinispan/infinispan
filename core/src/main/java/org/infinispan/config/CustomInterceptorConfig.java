@@ -21,6 +21,8 @@
  */
 package org.infinispan.config;
 
+import java.util.Locale;
+
 import net.jcip.annotations.Immutable;
 import org.infinispan.interceptors.base.CommandInterceptor;
 
@@ -39,6 +41,12 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
    private int index = -1;
    private String after;
    private String before;
+   private Position position;   
+   private String className;
+
+   public CustomInterceptorConfig() {
+      super();
+   }
 
    /**
     * Builds a custom interceptor configuration.
@@ -89,6 +97,24 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
       this.interceptor = interceptor;
    }
 
+   public Position getPosition() {
+      return position;
+   }
+
+   public void setPosition(Position position) {
+      this.position = position;
+   }
+
+   public String getClassName() {
+      return className;
+   }
+   
+   @ConfigurationAttribute(name = "class", 
+            containingElement = "interceptor") 
+   public void setClassName(String className) {
+      this.className = className;
+   }
+
    /**
     * Shall this interceptor be the first one in the chain?
     */
@@ -104,6 +130,12 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
    public void setLast(boolean last) {
       testImmutability("last");
       isLast = last;
+   }
+   
+   @ConfigurationAttribute(name = "position", 
+            containingElement = "interceptor") 
+   public void setPosition(String pos) {
+      setPosition(Position.valueOf(uc(pos)));
    }
 
    /**
@@ -158,8 +190,15 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
    /**
     * Returns a the interceptor that we want to add to the chain.
     */
-   public CommandInterceptor getInterceptor() {
+   public CommandInterceptor getInterceptor() {      
       return interceptor;
+   }
+   
+   /**
+    * Returns a the interceptor that we want to add to the chain.
+    */
+   public void setInterceptor(CommandInterceptor interceptor) {      
+      this.interceptor = interceptor;
    }
 
    /**
@@ -244,5 +283,13 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
       dolly.after = after;
       dolly.before = before;
       return dolly;
+   }
+   
+   protected String uc(String s) {
+      return s == null ? null : s.toUpperCase(Locale.ENGLISH);
+   }
+   
+   enum Position {
+      FIRST,LAST;
    }
 }

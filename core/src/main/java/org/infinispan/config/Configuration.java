@@ -32,6 +32,7 @@ import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.NonVolatile;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.config.parsing.CustomIntereceptorsSchemaWriter;
 import org.infinispan.util.ReflectionUtil;
 import org.infinispan.util.concurrent.IsolationLevel;
 
@@ -59,7 +60,9 @@ import org.infinispan.util.concurrent.IsolationLevel;
          @ConfigurationElement(name = "eviction", parent = "default", description = ""),
          @ConfigurationElement(name = "expiration", parent = "default", description = ""),
          @ConfigurationElement(name = "unsafe", parent = "default", description = ""),
-         @ConfigurationElement(name = "customInterceptors", parent = "default", customReader=CustomInterceptorConfigReader.class)         
+         @ConfigurationElement(name = "customInterceptors", parent = "default", 
+                  customReader=CustomInterceptorConfigReader.class,
+                  customWriter=CustomIntereceptorsSchemaWriter.class)         
 })
 public class Configuration extends AbstractNamedCacheConfigurationBean {
    private static final long serialVersionUID = 5553791890144997466L;
@@ -376,7 +379,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    }
 
    @ConfigurationAttribute(name = "mode", 
-            containingElement = "clustering")
+            containingElement = "clustering", allowedValues="LOCAL,REPL,INVALIDATION,DIST")
    public void setCacheMode(String cacheMode) {
       testImmutability("cacheMode");
       if (cacheMode == null) throw new ConfigurationException("Cache mode cannot be null", "CacheMode");
@@ -416,7 +419,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    }
    
    @ConfigurationAttribute(name = "strategy", 
-            containingElement = "eviction")
+            containingElement = "eviction",allowedValues="NONE, FIFO, LRU")
    public void setEvictionStrategy(String eStrategy){
       testImmutability("evictionStrategy");
       this.evictionStrategy = EvictionStrategy.valueOf(uc(eStrategy));
@@ -518,7 +521,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    }
 
    @ConfigurationAttribute(name = "isolationLevel", 
-            containingElement = "locking")    
+            containingElement = "locking",
+            allowedValues="NONE,SERIALIZABLE,REPEATABLE_READ,READ_COMMITTED,READ_UNCOMMITTED")    
    public void setIsolationLevel(String isolationLevel) {
       testImmutability("isolationLevel");
       if (isolationLevel == null) throw new ConfigurationException("Isolation level cannot be null", "IsolationLevel");
