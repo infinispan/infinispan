@@ -119,7 +119,16 @@ public class SchemaGeneratorTreeWalker extends ConfigurationTreeWalker{
                   childElement.setAttribute("maxOccurs", "unbounded");     
                } else {
                   childElement.setAttribute("maxOccurs", "1");            
-               }               
+               }      
+               //add documentation for this child
+               if (cce.description().length() > 0) {
+                  Element annotationElement = xmldoc.createElement("xs:annotation");
+                  childElement.appendChild(annotationElement);
+
+                  Element documentationElement = xmldoc.createElement("xs:documentation");
+                  documentationElement.setTextContent(cce.description());
+                  annotationElement.appendChild(documentationElement);
+               }
                allOrSequence.appendChild(childElement);
             }
             createAttribute(treeNode, complexType);
@@ -193,6 +202,14 @@ public class SchemaGeneratorTreeWalker extends ConfigurationTreeWalker{
                   restrictionValue.setAttribute("value", constraint.trim());
                   restriction.appendChild(restrictionValue);                     
                }                  
+            }
+            //add documentation
+            if (a.description().length() > 0) {
+               Element annotationElement = xmldoc.createElement("xs:annotation");
+               att.appendChild(annotationElement);
+               Element documentationElement = xmldoc.createElement("xs:documentation");
+               documentationElement.setTextContent(a.description());
+               annotationElement.appendChild(documentationElement);
             }
             complexType.appendChild(att);
          }         
