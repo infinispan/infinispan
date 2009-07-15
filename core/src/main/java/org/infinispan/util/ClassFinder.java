@@ -82,16 +82,16 @@ public class ClassFinder {
 
       // either infinispan jar or a directory of output classes contains infinispan classes
       for (String path : javaClassPath.split(File.pathSeparator)) {
-         if ((path.contains("infinispan") && path.endsWith("jar")) || !path.endsWith("jar")) {
+         if (path.contains("infinispan")) {
             files.add(new File(path));
          }
       }
 
-      if (files.isEmpty())
+      log.debug("Looking for infinispan classes in " + files);
+      
+      if (files.isEmpty()) {
          return Collections.emptyList();
-      else if (files.size() == 1)
-         return findClassesOnPath(files.get(0));
-      else {
+      } else {
          Set<Class<?>> classFiles = new HashSet<Class<?>>();
          for (File file : files) {
             classFiles.addAll(findClassesOnPath(file));
@@ -112,7 +112,10 @@ public class ClassFinder {
                claz = Util.loadClass(toClassName(cf.getAbsolutePath().toString()));
                classes.add(claz);
             } catch (Throwable e) {
-               log.warn("Could not load class " + cf.getAbsolutePath().toString());
+               //We catch Throwable because a valid class can contain reference to a class that is not on classpath
+               //thus java.lang.NoClassDefFoundError is thrown
+               log.warn("Could not load class " + toClassName(cf.getAbsolutePath().toString())
+                        + " on path " + cf.getAbsolutePath().toString(),e);
             }
          }
       } else {
@@ -132,7 +135,10 @@ public class ClassFinder {
                      claz = Util.loadClass(toClassName(entry.getName()));
                      classes.add(claz);
                   } catch (Throwable e) {
-                     log.warn("Could not load class " + entry.getName());
+                     //We catch Throwable because a valid class can contain reference to a class that is not on classpath
+                     //thus java.lang.NoClassDefFoundError is thrown
+                     log.warn("Could not load class " + toClassName(entry.getName())
+                              + " as a jar entry with path " + entry.getName(),e);
                   }
                }
             }
