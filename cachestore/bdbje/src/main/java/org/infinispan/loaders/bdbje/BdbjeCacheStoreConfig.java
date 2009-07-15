@@ -3,6 +3,7 @@ package org.infinispan.loaders.bdbje;
 import org.infinispan.config.ConfigurationElement;
 import org.infinispan.config.ConfigurationElements;
 import org.infinispan.config.ConfigurationProperty;
+import org.infinispan.config.ConfigurationElement.Cardinality;
 import org.infinispan.loaders.AbstractCacheStoreConfig;
 
 /**
@@ -29,7 +30,9 @@ import org.infinispan.loaders.AbstractCacheStoreConfig;
  * @since 4.0
  */
 @ConfigurationElements(elements = {
-         @ConfigurationElement(name = "loader", parent = "loaders", description = "org.infinispan.loaders.bdbje.BdbjeCacheStoreConfig"),
+         @ConfigurationElement(name = "loader", parent = "loaders", 
+                  description = "org.infinispan.loaders.bdbje.BdbjeCacheStoreConfig", 
+                  cardinalityInParent=Cardinality.UNBOUNDED),
          @ConfigurationElement(name = "properties", parent = "loader") })
 public class BdbjeCacheStoreConfig extends AbstractCacheStoreConfig {
     private String location = "Infinispan-BdbjeCacheStore";

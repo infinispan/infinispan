@@ -3,6 +3,7 @@ package org.infinispan.loaders.jdbc.mixed;
 import org.infinispan.config.ConfigurationElement;
 import org.infinispan.config.ConfigurationElements;
 import org.infinispan.config.ConfigurationProperty;
+import org.infinispan.config.ConfigurationElement.Cardinality;
 import org.infinispan.loaders.AbstractCacheStoreConfig;
 import org.infinispan.loaders.LockSupportCacheStoreConfig;
 import org.infinispan.loaders.jdbc.TableManipulation;
@@ -17,7 +18,8 @@ import org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStoreConfig;
  */
 @ConfigurationElements(elements = {
          @ConfigurationElement(name = "loader", parent = "loaders", 
-                  description = "org.infinispan.loaders.jdbc.mixed.JdbcMixedCacheStoreConfig"),
+                  description = "org.infinispan.loaders.jdbc.mixed.JdbcMixedCacheStoreConfig",
+                  cardinalityInParent=Cardinality.UNBOUNDED),
          @ConfigurationElement(name = "properties", parent = "loader") })
 public class JdbcMixedCacheStoreConfig extends AbstractCacheStoreConfig {
 

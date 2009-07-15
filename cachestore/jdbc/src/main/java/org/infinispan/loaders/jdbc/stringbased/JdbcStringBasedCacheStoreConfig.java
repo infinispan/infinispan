@@ -3,6 +3,7 @@ package org.infinispan.loaders.jdbc.stringbased;
 import org.infinispan.config.ConfigurationElement;
 import org.infinispan.config.ConfigurationElements;
 import org.infinispan.config.ConfigurationProperty;
+import org.infinispan.config.ConfigurationElement.Cardinality;
 import org.infinispan.loaders.LockSupportCacheStoreConfig;
 import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
@@ -16,7 +17,8 @@ import org.infinispan.util.Util;
  */
 @ConfigurationElements(elements = {
          @ConfigurationElement(name = "loader", parent = "loaders", 
-                  description = "org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStoreConfig"),
+                  description = "org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStoreConfig",
+                  cardinalityInParent=Cardinality.UNBOUNDED),
          @ConfigurationElement(name = "properties", parent = "loader") })
 public class JdbcStringBasedCacheStoreConfig extends LockSupportCacheStoreConfig {
 
