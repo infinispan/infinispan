@@ -32,10 +32,15 @@ import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
 /**
  * Find infinispan classes utility
  */
 public class ClassFinder {
+   
+   private static final Log log = LogFactory.getLog(ClassFinder.class); 
    
    public static String PATH = System.getProperty("java.class.path") + File.pathSeparator
             + System.getProperty("surefire.test.class.path");
@@ -95,35 +100,43 @@ public class ClassFinder {
       }
    }
 
-   private static List<Class<?>> findClassesOnPath(File path) throws Exception {
+   private static List<Class<?>> findClassesOnPath(File path) {
       List<Class<?>> classes = new ArrayList<Class<?>>();
-      try {
-         if (path.isDirectory()) {
-            List<File> classFiles = new ArrayList<File>();
-            dir(classFiles, path);
-            for (File cf : classFiles) {
-               Class<?> claz = Util.loadClass(toClassName(cf.getAbsolutePath().toString()));
+      Class<?> claz = null;
+
+      if (path.isDirectory()) {
+         List<File> classFiles = new ArrayList<File>();
+         dir(classFiles, path);
+         for (File cf : classFiles) {
+            try {
+               claz = Util.loadClass(toClassName(cf.getAbsolutePath().toString()));
                classes.add(claz);
+            } catch (Throwable e) {
+               log.warn("Could not load class " + cf.getAbsolutePath().toString());
             }
-         } else {
-            if (path.isFile() && path.getName().endsWith("jar") && path.canRead()) {
-               JarFile jar = new JarFile(path);
-               Enumeration<JarEntry> en = jar.entries();
-               while (en.hasMoreElements()) {
-                  JarEntry entry = en.nextElement();
-                  if (entry.getName().endsWith("class")) {
-                     Class<?> claz = Util.loadClass(toClassName(entry.getName()));
-                     classes.add(claz);                      
+         }
+      } else {
+         if (path.isFile() && path.getName().endsWith("jar") && path.canRead()) {
+            JarFile jar = null;
+            try {
+               jar = new JarFile(path);
+            } catch (Exception ex) {
+               log.warn("Could not create jar file on path " +path);
+               return classes;
+            }
+            Enumeration<JarEntry> en = jar.entries();
+            while (en.hasMoreElements()) {
+               JarEntry entry = en.nextElement();
+               if (entry.getName().endsWith("class")) {
+                  try {
+                     claz = Util.loadClass(toClassName(entry.getName()));
+                     classes.add(claz);
+                  } catch (Throwable e) {
+                     log.warn("Could not load class " + entry.getName());
                   }
                }
             }
          }
-      } catch (NoClassDefFoundError e) {
-         // unable to load these classes!!
-         e.printStackTrace();
-      } catch (ClassNotFoundException e) {
-         // unable to load these classes!!
-         e.printStackTrace();
       }
       return classes;
    }
