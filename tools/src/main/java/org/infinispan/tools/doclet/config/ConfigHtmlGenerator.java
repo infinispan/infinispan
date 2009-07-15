@@ -47,6 +47,8 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
       List<Class<?>> configBeans;
       try {
          configBeans = getConfigBeans();
+         System.out.println("Found " + configBeans + " on classpath " + classpath);
+         
          XMLTreeOutputWalker tw = new XMLTreeOutputWalker(sb);
          TreeNode root = tw.constructTreeFromBeans(configBeans);                 
          
