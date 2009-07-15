@@ -32,7 +32,6 @@ import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.NonVolatile;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.config.parsing.CustomIntereceptorsSchemaWriter;
 import org.infinispan.util.ReflectionUtil;
 import org.infinispan.util.concurrent.IsolationLevel;
 
@@ -40,6 +39,8 @@ import org.infinispan.util.concurrent.IsolationLevel;
  * Encapsulates the configuration of a Cache.
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
+ * @author Vladimir Blagojevic
+ * @version $Id$
  * @since 4.0
  */
 @NonVolatile
@@ -61,8 +62,7 @@ import org.infinispan.util.concurrent.IsolationLevel;
          @ConfigurationElement(name = "expiration", parent = "default", description = ""),
          @ConfigurationElement(name = "unsafe", parent = "default", description = ""),
          @ConfigurationElement(name = "customInterceptors", parent = "default", 
-                  customReader=CustomInterceptorConfigReader.class,
-                  customWriter=CustomIntereceptorsSchemaWriter.class)         
+                  customReader=CustomInterceptorConfigReader.class)         
 })
 public class Configuration extends AbstractNamedCacheConfigurationBean {
    private static final long serialVersionUID = 5553791890144997466L;

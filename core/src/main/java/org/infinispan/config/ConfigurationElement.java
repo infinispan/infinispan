@@ -37,9 +37,13 @@ import org.infinispan.config.parsing.ConfigurationElementWriter;
 @Target( { ElementType.TYPE})
 public @interface ConfigurationElement {
    
+   public enum Cardinality{ONE, UNBOUNDED};
+   
     String name();
 
     String parent();
+    
+    Cardinality cardinalityInParent() default Cardinality.ONE;
 
     String description() default "";
     

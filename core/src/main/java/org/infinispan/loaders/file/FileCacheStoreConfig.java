@@ -3,6 +3,7 @@ package org.infinispan.loaders.file;
 import org.infinispan.config.ConfigurationElement;
 import org.infinispan.config.ConfigurationElements;
 import org.infinispan.config.ConfigurationProperty;
+import org.infinispan.config.ConfigurationElement.Cardinality;
 import org.infinispan.loaders.LockSupportCacheStoreConfig;
 
 /**
@@ -21,10 +22,14 @@ import org.infinispan.loaders.LockSupportCacheStoreConfig;
  * before timing out and throwing an exception.  By default, this is set to <tt>60000</tt>.</li> </ul>
  *
  * @author Manik Surtani
+ * @autor Vladimir Blagojevic
+ * @version $Id$
  * @since 4.0
  */
 @ConfigurationElements(elements = {
-         @ConfigurationElement(name = "loader", parent = "loaders", description = "org.infinispan.loaders.file.FileCacheStore"),
+         @ConfigurationElement(name = "loader", parent = "loaders", 
+                  description = "org.infinispan.loaders.file.FileCacheStore",
+                  cardinalityInParent=Cardinality.UNBOUNDED),
          @ConfigurationElement(name = "properties", parent = "loader") })
 public class FileCacheStoreConfig extends LockSupportCacheStoreConfig {
    String location = "Infinispan-FileCacheStore";

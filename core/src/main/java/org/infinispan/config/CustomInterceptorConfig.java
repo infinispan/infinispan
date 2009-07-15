@@ -22,19 +22,27 @@
 package org.infinispan.config;
 
 import java.util.Locale;
+import java.util.Properties;
 
 import net.jcip.annotations.Immutable;
+
+import org.infinispan.config.ConfigurationElement.Cardinality;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.util.TypedProperties;
 
 /**
  * Holds information about the custom interceptors defined in the configuration file.
  *
  * @author Mircea.Markus@jboss.com
+ * @author Vladimir Blagojevic
+ * @version $Id$
  * @since 4.0
  */
 @Immutable
-@ConfigurationElement(name = "interceptor", parent = "customInterceptors")
+@ConfigurationElement(name = "interceptor", parent = "customInterceptors" ,
+         cardinalityInParent=Cardinality.UNBOUNDED)
 public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean {
+   
    private CommandInterceptor interceptor;
    private boolean isFirst;
    private boolean isLast;
@@ -43,6 +51,7 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
    private String before;
    private Position position;   
    private String className;
+   private TypedProperties properties = EMPTY_PROPERTIES;
 
    public CustomInterceptorConfig() {
       super();
@@ -95,6 +104,15 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
     */
    public CustomInterceptorConfig(CommandInterceptor interceptor) {
       this.interceptor = interceptor;
+   }
+   
+   public Properties getProperties() {
+      return properties;
+   }
+   
+   @ConfigurationProperty(name = "anyCustomProperty", parentElement = "interceptor")  
+   public void setProperties(Properties properties) {
+      this.properties = toTypedProperties(properties);
    }
 
    public Position getPosition() {

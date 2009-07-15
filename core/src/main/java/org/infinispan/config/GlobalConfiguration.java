@@ -21,6 +21,8 @@ import java.util.Properties;
  * Configuration component that encapsulates the global configuration.
  *
  * @author Manik Surtani
+ * @author Vladimir Blagojevic
+ * @version $Id$
  * @since 4.0
  */
 @NonVolatile
@@ -225,15 +227,15 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       return transportProperties;
    }
 
-   public void setTransportProperties(Properties transportProperties) {
-      testImmutability("transportProperties");
-      this.transportProperties = toTypedProperties(transportProperties);
-   }
-
    @ConfigurationProperties(elements = {
             @ConfigurationProperty(name = "configurationString", parentElement = "transport"),
             @ConfigurationProperty(name = "configurationFile", parentElement = "transport"),
             @ConfigurationProperty(name = "configurationXml", parentElement = "transport") })
+   public void setTransportProperties(Properties transportProperties) {
+      testImmutability("transportProperties");
+      this.transportProperties = toTypedProperties(transportProperties);
+   }
+   
    public void setTransportProperties(String transportPropertiesString) {
       testImmutability("transportProperties");
       this.transportProperties = toTypedProperties(transportPropertiesString);
