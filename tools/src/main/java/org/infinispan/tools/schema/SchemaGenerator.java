@@ -39,7 +39,6 @@ import org.infinispan.config.parsing.TreeNode;
 import org.infinispan.util.ClassFinder;
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 /**
  * Generates XML Schema for Infinispan configuration
@@ -100,37 +99,20 @@ public class SchemaGenerator {
          Document xmldoc = impl.createDocument("http://www.w3.org/2001/XMLSchema", "xs:schema",null);
          xmldoc.getDocumentElement().setAttribute("targetNamespace", "urn:infinispan:config:" + Version.getMajorVersion());
          xmldoc.getDocumentElement().setAttribute("xmlns:tns","urn:infinispan:config:" + Version.getMajorVersion());
-         xmldoc.getDocumentElement().setAttribute("elementFormDefault", "qualified");
-        
-         Element xsElement = xmldoc.createElement("xs:element");       
-         xsElement.setAttribute("name", "infinispan");
-         xsElement.setAttribute("type", "tns:infinispanTypeIn");
-         xmldoc.getDocumentElement().appendChild(xsElement);
+         xmldoc.getDocumentElement().setAttribute("elementFormDefault", "qualified");                 
 
          ConfigurationTreeWalker tw = new SchemaGeneratorTreeWalker(xmldoc,beans);
          TreeNode root = tw.constructTreeFromBeans(beans);         
          tw.preOrderTraverse(root);
-         
-         Element property = xmldoc.createElement("xs:complexType");       
-         property.setAttribute("name", "propertyType");
-         Element att = xmldoc.createElement("xs:attribute");       
-         att.setAttribute("name", "name");
-         att.setAttribute("type", "xs:string");
-         property.appendChild(att);
-         att = xmldoc.createElement("xs:attribute");       
-         att.setAttribute("name", "value");
-         att.setAttribute("type", "xs:string");
-         property.appendChild(att);
-         
-         xmldoc.getDocumentElement().appendChild(property);        
-
+         tw.postTraverseCleanup();
+               
          DOMSource domSource = new DOMSource(xmldoc);
          StreamResult streamResult = new StreamResult(fw);
          TransformerFactory tf = TransformerFactory.newInstance();
          Transformer serializer = tf.newTransformer();
          serializer.setOutputProperty(OutputKeys.METHOD, "xml");
          serializer.setOutputProperty(OutputKeys.INDENT, "yes");
-         serializer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
+         serializer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
          serializer.transform(domSource, streamResult);                 
          fw.flush();
          fw.close();

@@ -21,6 +21,7 @@
  */
 package org.infinispan.tools.schema;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -29,7 +30,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import org.infinispan.config.ConfigurationElement;
 import org.infinispan.config.ConfigurationElements;
-import org.infinispan.config.parsing.RootElementBuilder;
+import org.infinispan.config.ConfigurationException;
+import org.infinispan.config.ConfigurationProperties;
+import org.infinispan.config.ConfigurationProperty;
 import org.infinispan.config.parsing.TreeNode;
 import org.infinispan.config.parsing.TreeWalker;
 import org.infinispan.util.logging.Log;
@@ -116,7 +119,28 @@ public abstract class ConfigurationTreeWalker implements TreeWalker{
       node.accept(this);
    }
    
-   public ConfigurationElement[] configurationElementsOnBean(Class<?> clazz) {
+   public void postTraverseCleanup(){}
+   
+   protected ConfigurationElement findConfigurationElementForBean(Class<?> clazz, String name, String parentName){
+      ConfigurationElement[] onBean = configurationElementsOnBean(clazz);
+      for(ConfigurationElement ce:onBean){
+         if(ce.name().equals(name) && ce.parent().equals(parentName)){
+            return ce;
+         }
+      }
+      return null;
+   }
+   
+   protected ConfigurationElement findConfigurationElement(List<Class<?>> b, String name, String parentName){
+      ConfigurationElement result = null;
+      Class<?> bean = findBean(b, name, parentName);
+      if(bean != null){
+         result = findConfigurationElementForBean(bean, name, parentName);
+      }
+      return result;
+   }
+   
+   protected ConfigurationElement[] configurationElementsOnBean(Class<?> clazz) {
       ConfigurationElements configurationElements = clazz.getAnnotation(ConfigurationElements.class);
       ConfigurationElement configurationElement = clazz.getAnnotation(ConfigurationElement.class);
       ConfigurationElement ces [] = new ConfigurationElement[0];
@@ -127,5 +151,47 @@ public abstract class ConfigurationTreeWalker implements TreeWalker{
          ces = configurationElements.elements();
       }
       return ces;
+   }
+   
+   protected ConfigurationProperty[] propertiesElementsOnMethod(Method m) {
+      ConfigurationProperty[] cprops = new ConfigurationProperty[0];
+      ConfigurationProperties cp = m.getAnnotation(ConfigurationProperties.class);
+      ConfigurationProperty p = null;
+      if (cp != null) {
+         cprops = cp.elements();
+      } else {
+         p = m.getAnnotation(ConfigurationProperty.class);
+         if (p != null) {
+            cprops = new ConfigurationProperty[]{p};
+         }
+      }
+      return cprops;
+   }
+
+   
+   protected Class<?> findBean(List<Class<?>> b, String name, String parentName) throws ConfigurationException {
+      
+      if (parentName.equals("namedCache"))
+         parentName = "default";
+      for (Class<?> clazz : b) {
+         ConfigurationElements elements = clazz.getAnnotation(ConfigurationElements.class);
+         try {
+            if (elements != null) {
+               for (ConfigurationElement ce : elements.elements()) {
+                  if (ce.name().equals(name) && ce.parent().equals(parentName)) {
+                     return clazz;
+                  }
+               }
+            } else {
+               ConfigurationElement ce = clazz.getAnnotation(ConfigurationElement.class);
+               if (ce != null && (ce.name().equals(name) && ce.parent().equals(parentName))) {
+                  return clazz;
+               }
+            }
+         } catch (Exception e1) {
+            throw new ConfigurationException("Could not instantiate class " + clazz, e1);
+         }
+      }
+      return null;
    }
 }

@@ -27,10 +27,9 @@ import java.util.Set;
 
 import org.infinispan.config.ConfigurationAttribute;
 import org.infinispan.config.ConfigurationElement;
-import org.infinispan.config.ConfigurationElements;
 import org.infinispan.config.ConfigurationException;
-import org.infinispan.config.ConfigurationProperties;
 import org.infinispan.config.ConfigurationProperty;
+import org.infinispan.config.ConfigurationElement.Cardinality;
 import org.infinispan.config.parsing.ConfigurationElementWriter;
 import org.infinispan.config.parsing.TreeNode;
 import org.w3c.dom.Document;
@@ -56,30 +55,33 @@ public class SchemaGeneratorTreeWalker extends ConfigurationTreeWalker{
    }
    
    public void visitNode(TreeNode treeNode) {
-      Class<?> bean = findBean(beans, treeNode.getName(), treeNode.getParent().getName());
+      String name = treeNode.getName();
+      String parentName =  treeNode.getParent().getName();
+      Class<?> bean = findBean(beans, name, parentName);
       if (bean == null) {
          log.warn("Did not find bean for node " + treeNode+ ". Should happen only for infinispan node");
          writeInfinispanType();
          return;
       }
       
-      boolean hasCustomWriter = false;
-      ConfigurationElementWriter writer = null;
-      ConfigurationElement[] onBean = configurationElementsOnBean(bean);
-      for(ConfigurationElement ce:onBean){
-         if(ce.name().equals(treeNode.getName()) && ce.parent().equals(treeNode.getParent().getName())){
-            hasCustomWriter = !ce.customWriter().equals(ConfigurationElementWriter.class);
-            if(hasCustomWriter){
-               try {
-               writer = ce.customWriter().newInstance();
-               } catch (Exception e1) {
-                  throw new ConfigurationException("Could not instantiate custom writer ", e1);
-               }
-               break;
-            }
-         }
+      
+      ConfigurationElement ce = findConfigurationElementForBean(bean, name, parentName);
+      if(ce == null){
+         log.warn("Did not find ConfigurationElement for " + treeNode+ ". Verify annotations on all AbstractConfigurationBeans");
+         return;
       }
       
+      log.debug("Visiting node " + name);
+      ConfigurationElementWriter writer = null;
+      boolean hasCustomWriter = !ce.customWriter().equals(ConfigurationElementWriter.class);
+      if(hasCustomWriter){
+         try {
+         writer = ce.customWriter().newInstance();
+         } catch (Exception e1) {
+            throw new ConfigurationException("Could not instantiate custom writer ", e1);
+         }      
+      }
+      log.debug("Visiting node " + name + ((hasCustomWriter)?" will use " + writer:" will use default creation of elements"));     
       if (hasCustomWriter) {         
          try {
             writer.process(treeNode, xmldoc);
@@ -90,17 +92,35 @@ public class SchemaGeneratorTreeWalker extends ConfigurationTreeWalker{
          Element complexType = xmldoc.createElement("xs:complexType");
          complexType.setAttribute("name", treeNode.getName() + "TypeIn" + treeNode.getParent().getName());
          createProperty(treeNode, complexType);
-         if(treeNode.hasChildren()) {         
-            Element all = xmldoc.createElement("xs:all");
-            complexType.appendChild(all);
+         if(treeNode.hasChildren()) {
+            boolean sequence = false;
+            for(TreeNode child:treeNode.getChildren()){
+               ConfigurationElement cce = findConfigurationElement(beans,child.getName(),treeNode.getName());
+               if(cce.cardinalityInParent().equals(Cardinality.UNBOUNDED)){
+                  sequence = true;
+                  break;
+               }
+            }
+            Element allOrSequence = null;
+            if(sequence){
+               allOrSequence = xmldoc.createElement("xs:sequence");
+            } else {
+               allOrSequence = xmldoc.createElement("xs:all");
+            }
+            complexType.appendChild(allOrSequence);
             Set<TreeNode> children = treeNode.getChildren();
             for (TreeNode child : children) {
+               ConfigurationElement cce = findConfigurationElement(beans,child.getName(),treeNode.getName());
                Element childElement = xmldoc.createElement("xs:element");
                childElement.setAttribute("name", child.getName());
                childElement.setAttribute("type", "tns:" + child.getName() + "TypeIn" + child.getParent().getName());
                childElement.setAttribute("minOccurs", "0");
-               childElement.setAttribute("maxOccurs", "1");            
-               all.appendChild(childElement);
+               if(cce.cardinalityInParent().equals(Cardinality.UNBOUNDED)){
+                  childElement.setAttribute("maxOccurs", "unbounded");     
+               } else {
+                  childElement.setAttribute("maxOccurs", "1");            
+               }               
+               allOrSequence.appendChild(childElement);
             }
             createAttribute(treeNode, complexType);
          } else { 
@@ -112,6 +132,8 @@ public class SchemaGeneratorTreeWalker extends ConfigurationTreeWalker{
    }
    
    protected void postProcess(TreeNode treeNode, Element complexType) {
+      
+      //dealing with default/namdeCache intricacies
       if(treeNode.getName().equals("default")){
          Element element = xmldoc.createElement("xs:attribute");
          element.setAttribute("name", "name");
@@ -120,40 +142,27 @@ public class SchemaGeneratorTreeWalker extends ConfigurationTreeWalker{
       }
    }
 
-   private void writeInfinispanType(){
-      Element complexType = xmldoc.createElement("xs:complexType");
-      complexType.setAttribute("name", "infinispanTypeIn");
-      Element seq = xmldoc.createElement("xs:sequence");
-      complexType.appendChild(seq);
+   @Override
+   public void postTraverseCleanup() {
+      //include special property type not visited by TreeWalker
+      Element property = xmldoc.createElement("xs:complexType");       
+      property.setAttribute("name", "propertyType");
+      Element att = xmldoc.createElement("xs:attribute");       
+      att.setAttribute("name", "name");
+      att.setAttribute("type", "xs:string");
+      property.appendChild(att);
+      att = xmldoc.createElement("xs:attribute");       
+      att.setAttribute("name", "value");
+      att.setAttribute("type", "xs:string");
+      property.appendChild(att);
       
-      Element e = xmldoc.createElement("xs:element");
-      e.setAttribute("name", "global");
-      e.setAttribute("type", "tns:globalTypeIninfinispan");
-      e.setAttribute("minOccurs", "0");
-      e.setAttribute("maxOccurs", "1");      
-      seq.appendChild(e);
-      
-      e = xmldoc.createElement("xs:element");
-      e.setAttribute("name", "default");
-      e.setAttribute("type", "tns:defaultTypeIninfinispan");
-      e.setAttribute("minOccurs", "0");
-      e.setAttribute("maxOccurs", "1");      
-      seq.appendChild(e);
-      
-      e = xmldoc.createElement("xs:element");
-      e.setAttribute("name", "namedCache");
-      e.setAttribute("type", "tns:defaultTypeIninfinispan");
-      e.setAttribute("minOccurs", "0");
-      e.setAttribute("maxOccurs", "unbounded");      
-      seq.appendChild(e);
-      
-      xmldoc.getDocumentElement().appendChild(complexType);      
+      xmldoc.getDocumentElement().appendChild(property);            
    }
 
    private void createAttribute(TreeNode treeNode, Element complexType) {
       Class <?> bean = findBean(beans, treeNode.getName(), treeNode.getParent().getName());
       if(bean == null){
-         log.warn("Did not find bean for node " + treeNode + ". Should happen only for infinispan node");
+         log.warn("Did not find bean for node " + treeNode + ". Verify annotations on all AbstractConfigurationBeans");
          return;
       }   
       
@@ -193,79 +202,70 @@ public class SchemaGeneratorTreeWalker extends ConfigurationTreeWalker{
    private void createProperty(TreeNode treeNode, Element complexType) {
       if (treeNode.getParent().getParent() == null)
          return;
-      Class<?> bean = findBean(beans, treeNode.getParent().getName(), treeNode.getParent().getParent().getName());
-      if (bean == null) {
-         log.warn("Did not find bean for node " + treeNode+ ". Should happen only for infinispan node");
-         return;
-      }    
-
-      // need to find all bean declarations for this bean
-      String createdForParentElement = null;
-      for (Method m : bean.getMethods()) {
-         if (propertiesElementsOnMethod(m).length > 0) {
-            for (ConfigurationProperty c : propertiesElementsOnMethod(m)) {
-
-               boolean property = treeNode.getName().equals(c.parentElement());
-               if (property && !c.parentElement().equals(createdForParentElement)) {
-                  createdForParentElement = c.parentElement();
-                  Element prop = xmldoc.createElement("xs:sequence");
-                  Element e = xmldoc.createElement("xs:element");
-                  prop.appendChild(e);
-                  e.setAttribute("name", "property");
-                  e.setAttribute("maxOccurs", "unbounded");
-                  e.setAttribute("minOccurs", "0");
-                  e.setAttribute("type", "tns:propertyType");
-                  complexType.appendChild(prop);
-               }
-            }
-         }
-      }
-   }
-   
-   private ConfigurationProperty[] propertiesElementsOnMethod(Method m) {
-      ConfigurationProperty[] cprops = new ConfigurationProperty[0];
-      ConfigurationProperties cp = m.getAnnotation(ConfigurationProperties.class);
-      ConfigurationProperty p = null;
-      if (cp != null) {
-         cprops = cp.elements();
-      } else {
-         p = m.getAnnotation(ConfigurationProperty.class);
-         if (p != null) {
-            cprops = new ConfigurationProperty[]{p};
-         }
-      }
-      return cprops;
-   }
-
-   
-   private Class<?> findBean(List<Class<?>> b, String name, String parentName) throws ConfigurationException {
       
-      if (parentName.equals("namedCache"))
-         parentName = "default";
-      for (Class<?> clazz : b) {
-         ConfigurationElements elements = clazz.getAnnotation(ConfigurationElements.class);
-         try {
-            if (elements != null) {
-               for (ConfigurationElement ce : elements.elements()) {
-                  if (ce.name().equals(name) && ce.parent().equals(parentName)) {
-                     return clazz;
-                  }
-               }
-            } else {
-               ConfigurationElement ce = clazz.getAnnotation(ConfigurationElement.class);
-               if (ce != null && (ce.name().equals(name) && ce.parent().equals(parentName))) {
-                  return clazz;
-               }
+      Class<?> bean = findBean(beans, treeNode.getName(), treeNode.getParent().getName());
+      if (bean == null) {
+         log.warn("Did not find bean for node " + treeNode+ ". Try parent, maybe property is there...");
+         bean = findBean(beans, treeNode.getParent().getName(), treeNode.getParent().getParent().getName());
+         if(bean == null)
+            return;
+      }    
+      
+      String createdForParentElement = null;
+      for (Method m : bean.getMethods()) {         
+         for (ConfigurationProperty c : propertiesElementsOnMethod(m)) {
+            boolean property = treeNode.getName().equals(c.parentElement());
+            if (property && !c.parentElement().equals(createdForParentElement)) {
+               createdForParentElement = c.parentElement();
+               Element prop = xmldoc.createElement("xs:sequence");
+               Element e = xmldoc.createElement("xs:element");
+               prop.appendChild(e);
+               e.setAttribute("name", "property");
+               e.setAttribute("maxOccurs", "unbounded");
+               e.setAttribute("minOccurs", "0");
+               e.setAttribute("type", "tns:propertyType");
+               complexType.appendChild(prop);
             }
-         } catch (Exception e1) {
-            throw new ConfigurationException("Could not instantiate class " + clazz, e1);
-         }
+         }         
       }
-      return null;
-   }
-   
+   }  
    
    private boolean isSetterMethod(Method m) {
       return m.getName().startsWith("set") && m.getParameterTypes().length == 1;
+   }
+   
+   private void writeInfinispanType() {
+      Element xsElement = xmldoc.createElement("xs:element");
+      xsElement.setAttribute("name", "infinispan");
+      xsElement.setAttribute("type", "tns:infinispanTypeIn");
+      xmldoc.getDocumentElement().appendChild(xsElement);
+
+      Element complexType = xmldoc.createElement("xs:complexType");
+      complexType.setAttribute("name", "infinispanTypeIn");
+      Element seq = xmldoc.createElement("xs:sequence");
+      complexType.appendChild(seq);
+
+      Element e = xmldoc.createElement("xs:element");
+      e.setAttribute("name", "global");
+      e.setAttribute("type", "tns:globalTypeIninfinispan");
+      e.setAttribute("minOccurs", "0");
+      e.setAttribute("maxOccurs", "1");
+      seq.appendChild(e);
+
+      e = xmldoc.createElement("xs:element");
+      e.setAttribute("name", "default");
+      e.setAttribute("type", "tns:defaultTypeIninfinispan");
+      e.setAttribute("minOccurs", "0");
+      e.setAttribute("maxOccurs", "1");
+      seq.appendChild(e);
+
+      e = xmldoc.createElement("xs:element");
+      e.setAttribute("name", "namedCache");
+      e.setAttribute("type", "tns:defaultTypeIninfinispan");
+      e.setAttribute("minOccurs", "0");
+      e.setAttribute("maxOccurs", "unbounded");
+      seq.appendChild(e);
+
+      xmldoc.getDocumentElement().appendChild(complexType);
    }
 }
