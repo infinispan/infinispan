@@ -90,34 +90,30 @@ public class SchemaGenerator {
       sg.generateSchema();
    }
 
-   private void generateSchema() {
-      try {
-         FileWriter fw = new FileWriter(fileToWrite, false);
-         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-         DocumentBuilder builder = factory.newDocumentBuilder();
-         DOMImplementation impl = builder.getDOMImplementation();
-         Document xmldoc = impl.createDocument("http://www.w3.org/2001/XMLSchema", "xs:schema",null);
-         xmldoc.getDocumentElement().setAttribute("targetNamespace", "urn:infinispan:config:" + Version.getMajorVersion());
-         xmldoc.getDocumentElement().setAttribute("xmlns:tns","urn:infinispan:config:" + Version.getMajorVersion());
-         xmldoc.getDocumentElement().setAttribute("elementFormDefault", "qualified");                 
+   private void generateSchema() throws Exception{      
+      FileWriter fw = new FileWriter(fileToWrite, false);
+      DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+      DocumentBuilder builder = factory.newDocumentBuilder();
+      DOMImplementation impl = builder.getDOMImplementation();
+      Document xmldoc = impl.createDocument("http://www.w3.org/2001/XMLSchema", "xs:schema",null);
+      xmldoc.getDocumentElement().setAttribute("targetNamespace", "urn:infinispan:config:" + Version.getMajorVersion());
+      xmldoc.getDocumentElement().setAttribute("xmlns:tns","urn:infinispan:config:" + Version.getMajorVersion());
+      xmldoc.getDocumentElement().setAttribute("elementFormDefault", "qualified");                 
 
-         ConfigurationTreeWalker tw = new SchemaGeneratorTreeWalker(xmldoc,beans);
-         TreeNode root = tw.constructTreeFromBeans(beans);         
-         tw.preOrderTraverse(root);
-         tw.postTraverseCleanup();
-               
-         DOMSource domSource = new DOMSource(xmldoc);
-         StreamResult streamResult = new StreamResult(fw);
-         TransformerFactory tf = TransformerFactory.newInstance();
-         Transformer serializer = tf.newTransformer();
-         serializer.setOutputProperty(OutputKeys.METHOD, "xml");
-         serializer.setOutputProperty(OutputKeys.INDENT, "yes");
-         serializer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-         serializer.transform(domSource, streamResult);                 
-         fw.flush();
-         fw.close();
-      } catch (Exception e) {
-         e.printStackTrace();
-      }      
+      ConfigurationTreeWalker tw = new SchemaGeneratorTreeWalker(xmldoc,beans);
+      TreeNode root = tw.constructTreeFromBeans(beans);         
+      tw.preOrderTraverse(root);
+      tw.postTraverseCleanup();
+            
+      DOMSource domSource = new DOMSource(xmldoc);
+      StreamResult streamResult = new StreamResult(fw);
+      TransformerFactory tf = TransformerFactory.newInstance();
+      Transformer serializer = tf.newTransformer();
+      serializer.setOutputProperty(OutputKeys.METHOD, "xml");
+      serializer.setOutputProperty(OutputKeys.INDENT, "yes");
+      serializer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+      serializer.transform(domSource, streamResult);                 
+      fw.flush();
+      fw.close();      
    }
 }
