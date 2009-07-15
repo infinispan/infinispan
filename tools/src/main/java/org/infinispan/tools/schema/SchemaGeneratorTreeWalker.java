@@ -122,12 +122,7 @@ public class SchemaGeneratorTreeWalker extends ConfigurationTreeWalker{
                }      
                //add documentation for this child
                if (cce.description().length() > 0) {
-                  Element annotationElement = xmldoc.createElement("xs:annotation");
-                  childElement.appendChild(annotationElement);
-
-                  Element documentationElement = xmldoc.createElement("xs:documentation");
-                  documentationElement.setTextContent(cce.description());
-                  annotationElement.appendChild(documentationElement);
+                  addDocumentation(cce.description(), childElement);
                }
                allOrSequence.appendChild(childElement);
             }
@@ -205,15 +200,19 @@ public class SchemaGeneratorTreeWalker extends ConfigurationTreeWalker{
             }
             //add documentation
             if (a.description().length() > 0) {
-               Element annotationElement = xmldoc.createElement("xs:annotation");
-               att.appendChild(annotationElement);
-               Element documentationElement = xmldoc.createElement("xs:documentation");
-               documentationElement.setTextContent(a.description());
-               annotationElement.appendChild(documentationElement);
+               addDocumentation(a.description(), att);
             }
             complexType.appendChild(att);
          }         
       }
+   }
+
+   private void addDocumentation(String doco, Element e) {
+      Element annotationElement = xmldoc.createElement("xs:annotation");
+      e.appendChild(annotationElement);
+      Element documentationElement = xmldoc.createElement("xs:documentation");
+      documentationElement.setTextContent(doco);
+      annotationElement.appendChild(documentationElement);
    }
    
    private void createProperty(TreeNode treeNode, Element complexType) {
