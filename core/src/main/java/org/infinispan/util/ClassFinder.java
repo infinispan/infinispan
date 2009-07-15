@@ -97,33 +97,35 @@ public class ClassFinder {
 
    private static List<Class<?>> findClassesOnPath(File path) throws Exception {
       List<Class<?>> classes = new ArrayList<Class<?>>();
-      try {
-         if (path.isDirectory()) {
-            List<File> classFiles = new ArrayList<File>();
-            dir(classFiles, path);
-            for (File cf : classFiles) {
-               Class<?> claz = Util.loadClass(toClassName(cf.getAbsolutePath().toString()));
+      if (path.isDirectory()) {
+         List<File> classFiles = new ArrayList<File>();
+         dir(classFiles, path);
+         for (File cf : classFiles) {
+            Class<?> claz;
+            try {
+               claz = Util.loadClass(toClassName(cf.getAbsolutePath().toString()));
                classes.add(claz);
+            } catch (Exception e) {
+               e.printStackTrace();
             }
-         } else {
-            if (path.isFile() && path.getName().endsWith("jar") && path.canRead()) {
-               JarFile jar = new JarFile(path);
-               Enumeration<JarEntry> en = jar.entries();
-               while (en.hasMoreElements()) {
-                  JarEntry entry = en.nextElement();
-                  if (entry.getName().endsWith("class")) {
-                     Class<?> claz = Util.loadClass(toClassName(entry.getName()));
+         }
+      } else {
+         if (path.isFile() && path.getName().endsWith("jar") && path.canRead()) {
+            JarFile jar = new JarFile(path);
+            Enumeration<JarEntry> en = jar.entries();
+            while (en.hasMoreElements()) {
+               JarEntry entry = en.nextElement();
+               if (entry.getName().endsWith("class")) {
+                  Class<?> claz;
+                  try {
+                     claz = Util.loadClass(toClassName(entry.getName()));
                      classes.add(claz);
+                  } catch (Exception e) {
+                     e.printStackTrace();
                   }
                }
             }
          }
-      } catch (NoClassDefFoundError e) {
-         // unable to load these classes!!
-         e.printStackTrace();
-      } catch (ClassNotFoundException e) {
-         // unable to load these classes!!
-         e.printStackTrace();
       }
       return classes;
    }
