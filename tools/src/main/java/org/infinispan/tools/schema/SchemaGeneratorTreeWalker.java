@@ -23,8 +23,6 @@ package org.infinispan.tools.schema;
 
 import java.lang.reflect.Method;
 import java.util.List;
-import java.util.Set;
-
 import org.infinispan.config.ConfigurationAttribute;
 import org.infinispan.config.ConfigurationElement;
 import org.infinispan.config.ConfigurationException;
@@ -55,23 +53,19 @@ public class SchemaGeneratorTreeWalker extends ConfigurationTreeWalker{
    }
    
    public void visitNode(TreeNode treeNode) {
-      String name = treeNode.getName();
-      String parentName =  treeNode.getParent().getName();
-      Class<?> bean = findBean(beans, name, parentName);
+      Class<?> bean = findBean(beans, treeNode.getName(), treeNode.getParent().getName());
       if (bean == null) {
          log.warn("Did not find bean for node " + treeNode+ ". Should happen only for infinispan node");
          writeInfinispanType();
          return;
       }
-      
-      
-      ConfigurationElement ce = findConfigurationElementForBean(bean, name, parentName);
+           
+      ConfigurationElement ce = findConfigurationElementForBean(bean, treeNode.getName(), treeNode.getParent().getName());
       if(ce == null){
          log.warn("Did not find ConfigurationElement for " + treeNode+ ". Verify annotations on all AbstractConfigurationBeans");
          return;
       }
       
-      log.debug("Visiting node " + name);
       ConfigurationElementWriter writer = null;
       boolean hasCustomWriter = !ce.customWriter().equals(ConfigurationElementWriter.class);
       if(hasCustomWriter){
@@ -81,7 +75,7 @@ public class SchemaGeneratorTreeWalker extends ConfigurationTreeWalker{
             throw new ConfigurationException("Could not instantiate custom writer ", e1);
          }      
       }
-      log.debug("Visiting node " + name + ((hasCustomWriter)?" will use " + writer:" will use default creation of elements"));     
+      log.debug("Visiting " + treeNode.getName() + ((hasCustomWriter)?" will use " + writer:""));     
       if (hasCustomWriter) {         
          try {
             writer.process(treeNode, xmldoc);
@@ -108,8 +102,8 @@ public class SchemaGeneratorTreeWalker extends ConfigurationTreeWalker{
                allOrSequence = xmldoc.createElement("xs:all");
             }
             complexType.appendChild(allOrSequence);
-            Set<TreeNode> children = treeNode.getChildren();
-            for (TreeNode child : children) {
+            
+            for (TreeNode child : treeNode.getChildren()) {
                ConfigurationElement cce = findConfigurationElement(beans,child.getName(),treeNode.getName());
                Element childElement = xmldoc.createElement("xs:element");
                childElement.setAttribute("name", child.getName());
@@ -126,10 +120,10 @@ public class SchemaGeneratorTreeWalker extends ConfigurationTreeWalker{
                }
                allOrSequence.appendChild(childElement);
             }
-            createAttribute(treeNode, complexType);
+            createAttribute(treeNode, complexType);            
          } else { 
             createAttribute(treeNode, complexType);         
-         }
+         }         
          postProcess(treeNode,complexType);
          xmldoc.getDocumentElement().appendChild(complexType);
       }
@@ -137,7 +131,7 @@ public class SchemaGeneratorTreeWalker extends ConfigurationTreeWalker{
    
    protected void postProcess(TreeNode treeNode, Element complexType) {
       
-      //dealing with default/namdeCache intricacies
+      //dealing with default/namedCache intricacies
       if(treeNode.getName().equals("default")){
          Element element = xmldoc.createElement("xs:attribute");
          element.setAttribute("name", "name");
