@@ -134,7 +134,7 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
       
       sb.append("<td>").append("<code>" + m.getParameterTypes()[0].getSimpleName() + "</code>");
       if(a.allowedValues().length()>0){
-         sb.append("*  " + a.allowedValues() +"</td>\n");
+         sb.append("*  (" + a.allowedValues().replace(',', '|') +")</td>\n");
       } else{
          sb.append("</td>\n");
       }    
