@@ -102,6 +102,7 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
          }         
       } catch (Exception e) {
          System.out.println("Exception while generating configuration reference " + e);
+         System.out.println("Classpath is  " + classpath);
          e.printStackTrace();
       }
       return sb.toString();
