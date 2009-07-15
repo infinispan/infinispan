@@ -25,30 +25,77 @@ import java.lang.annotation.*;
 import org.infinispan.config.parsing.ConfigurationElementReader;
 import org.infinispan.config.parsing.ConfigurationElementWriter;
 
-
 /**
- * Represents XML element from a valid Infinispan configuration file. 
+ * Represents XML element from a valid Infinispan configuration file.
+ * <p>
  * 
+ * Each ConfigurationElement should annotate the most derived subclass of AbstractConfigurationBean
+ * that contains setter methods for XML attributes of the corresponding XML element (the one that
+ * ConfigurationElement represents)
+ * 
+ * <p>
+ * For example, CacheLoaderManagerConfig is annotated with
+ * <code>@ConfigurationElement(name="loaders",parent="default")</code> annotation since
+ * CacheLoaderManagerConfig is the most derived subclass of AbstractConfigurationBean that contains
+ * setter methods for attributes contained in <code><loaders></code> XML element.
+ * 
+ * @see GlobalConfiguration
+ * @see Configuration
+ * @see CacheLoaderManagerConfig
  * @author Vladimir Blagojevic
  * @version $Id$
  */
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target( { ElementType.TYPE})
+@Target( { ElementType.TYPE })
 public @interface ConfigurationElement {
-   
-   public enum Cardinality{ONE, UNBOUNDED};
-   
-    String name();
 
-    String parent();
-    
-    Cardinality cardinalityInParent() default Cardinality.ONE;
+   public enum Cardinality {
+      ONE, UNBOUNDED
+   };
 
-    String description() default "";
-    
-    Class <? extends ConfigurationElementReader> customReader() default ConfigurationElementReader.class;
-    
-    Class <? extends ConfigurationElementWriter> customWriter() default ConfigurationElementWriter.class;
-      
+   /**
+    * Returns name of corresponding XML element
+    * 
+    * @return
+    */
+   String name();
+
+   /**
+    * Returns name of corresponding XML element.
+    * 
+    * @return
+    */
+   String parent();
+
+   /**
+    * Returns Cardinality.ONE if parent ConfigurationElement can have zero or one child defined by
+    * this ConfigurationElement. In case parent can have multiple ConfigurationElement with the same
+    * name returns Cardinality.UNBOUNDED
+    * 
+    * @return
+    */
+   Cardinality cardinalityInParent() default Cardinality.ONE;
+
+   /**
+    * Returns description of this element
+    * 
+    * @return
+    */
+   String description() default "";
+
+   /**
+    * Returns class of customer parser needed to process this ConfigurationElement
+    * 
+    * @return
+    */
+   Class<? extends ConfigurationElementReader> customReader() default ConfigurationElementReader.class;
+
+   /**
+    * Returns class of customer writer for this ConfigurationElement
+    * 
+    * @return
+    */
+   Class<? extends ConfigurationElementWriter> customWriter() default ConfigurationElementWriter.class;
+
 }

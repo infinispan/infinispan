@@ -24,24 +24,58 @@ package org.infinispan.config;
 import java.lang.annotation.*;
 
 /**
- *  Represents an attribute of any XML element from a valid Infinispan configuration file. 
+ * Represents an attribute of any XML element from a valid Infinispan configuration file.
+ * <p>
+ * 
+ * Each ConfigurationAttribute should annotate the corresponding setter method in ancestor hierarchy
+ * of the appropriate AbstractConfigurationBean.
+ * <p>
+ * 
+ * ConfigurationAttribute should annotate the corresponding setter methods with one parameter that
+ * could be either primitive or java.lang.String.
+ * 
  * 
  * @author Vladimir Blagojevic
- * @version $Id: ConfigurationAttribute.java,v 1.5 2008/05/23 11:11:02 belaban Exp $
+ * @version $Id$
  */
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target( { ElementType.METHOD })
 public @interface ConfigurationAttribute {
 
+   /**
+    * Returns name of corresponding XML (ConfigurationElement) element that declares this attribute
+    * 
+    * @return
+    */
    String containingElement();
 
+   /**
+    * Returns name of this attribute. Should match the corresponding attribute in XML
+    * 
+    * @return
+    */
    String name();
 
+   /**
+    * Returns comma delimited list of allowed values for this attribute
+    * 
+    * @return
+    */
    String allowedValues() default "";
 
+   /**
+    * Returns default value for this attribute
+    * 
+    * @return
+    */
    String defaultValue() default "";
 
+   /**
+    * Returns description of this attribute
+    * 
+    * @return
+    */
    String description() default "";
 
 }

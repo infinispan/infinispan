@@ -24,18 +24,40 @@ package org.infinispan.config;
 import java.lang.annotation.*;
 
 /**
- * Represents a property element from a valid Infinispan configuration file. 
+ * Represents a property element from a valid Infinispan configuration file.
+ * <p>
+ * 
+ * Each ConfigurationProperty should annotate the corresponding setter method in ancestor hierarchy
+ * of the appropriate AbstractConfigurationBean. Parameter of the corresponding setter should be
+ * either Properties or java.lang.String
+ * <p>
  * 
  * @author Vladimir Blagojevic
- * @version $Id: ConfigurationProperty.java,v 1.5 2008/05/23 11:11:02 belaban Exp $
+ * @version $Id$
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target( { ElementType.METHOD, ElementType.FIELD })
 public @interface ConfigurationProperty {
 
+   /**
+    * Returns name of corresponding XML (ConfigurationElement) element that declares this property
+    * 
+    * @return
+    */
    String parentElement();
 
+   /**
+    * Returns name of this property. Should return the value of corresponding name attribute in
+    * <property> XML element
+    * 
+    * @return
+    */
    String name();
 
+   /**
+    * Returns description of this property
+    * 
+    * @return
+    */
    String description() default "";
 }
