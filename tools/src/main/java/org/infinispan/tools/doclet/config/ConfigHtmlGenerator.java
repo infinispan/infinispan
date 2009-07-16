@@ -46,8 +46,7 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
 
       List<Class<?>> configBeans;
       try {
-         configBeans = getConfigBeans();
-         System.out.println("Found " + configBeans + " on classpath " + classpath);
+         configBeans = getConfigBeans();        
          
          XMLTreeOutputWalker tw = new XMLTreeOutputWalker(sb);
          TreeNode root = tw.constructTreeFromBeans(configBeans);                 
@@ -212,10 +211,6 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
          ces = configurationElements.elements();
       }
       return ces;
-   }
-   
-   private boolean isSetterMethod(Method m) {
-      return m.getName().startsWith("set") && m.getParameterTypes().length == 1;
    }
 
    private Object matchingFieldValue(Method m) throws Exception {

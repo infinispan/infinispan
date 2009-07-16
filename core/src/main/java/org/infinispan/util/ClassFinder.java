@@ -86,9 +86,7 @@ public class ClassFinder {
             files.add(new File(path));
          }
       }
-
-      log.debug("Looking for infinispan classes in " + files);
-      
+      log.debug("Looking for infinispan classes in " + files);     
       if (files.isEmpty()) {
          return Collections.emptyList();
       } else {
@@ -108,14 +106,17 @@ public class ClassFinder {
          List<File> classFiles = new ArrayList<File>();
          dir(classFiles, path);
          for (File cf : classFiles) {
+            String clazz = null;
             try {
-               claz = Util.loadClass(toClassName(cf.getAbsolutePath().toString()));
+               clazz = toClassName(cf.getAbsolutePath().toString());
+               claz = Util.loadClass(clazz);
                classes.add(claz);
+            } catch (NoClassDefFoundError ncdfe) {
+               log.warn(cf.getAbsolutePath().toString() + " has reference to a class "
+                        + ncdfe.getMessage() + " that could not be loaded from classpath");
             } catch (Throwable e) {
-               //We catch Throwable because a valid class can contain reference to a class that is not on classpath
-               //thus java.lang.NoClassDefFoundError is thrown
-               log.warn("Could not load class " + toClassName(cf.getAbsolutePath().toString())
-                        + " on path " + cf.getAbsolutePath().toString(),e);
+               // Catch all since we do not want skip iteration
+               log.warn("On path " + cf.getAbsolutePath().toString() + " could not load class "+ clazz, e);
             }
          }
       } else {
@@ -124,21 +125,24 @@ public class ClassFinder {
             try {
                jar = new JarFile(path);
             } catch (Exception ex) {
-               log.warn("Could not create jar file on path " +path);
+               log.warn("Could not create jar file on path " + path);
                return classes;
             }
             Enumeration<JarEntry> en = jar.entries();
             while (en.hasMoreElements()) {
                JarEntry entry = en.nextElement();
                if (entry.getName().endsWith("class")) {
+                  String clazz = null;
                   try {
-                     claz = Util.loadClass(toClassName(entry.getName()));
+                     clazz = toClassName(entry.getName());
+                     claz = Util.loadClass(clazz);
                      classes.add(claz);
+                  } catch (NoClassDefFoundError ncdfe) {
+                     log.warn(entry.getName() + " has reference to a class " + ncdfe.getMessage()
+                              + " that could not be loaded from classpath");
                   } catch (Throwable e) {
-                     //We catch Throwable because a valid class can contain reference to a class that is not on classpath
-                     //thus java.lang.NoClassDefFoundError is thrown
-                     log.warn("Could not load class " + toClassName(entry.getName())
-                              + " as a jar entry with path " + entry.getName(),e);
+                     // Catch all since we do not want skip iteration
+                     log.warn("From jar path " + entry.getName() + " could not load class "+ clazz, e);
                   }
                }
             }
