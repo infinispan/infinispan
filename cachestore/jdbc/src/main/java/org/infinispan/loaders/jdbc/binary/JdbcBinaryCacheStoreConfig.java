@@ -15,7 +15,7 @@ import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
  */
 @ConfigurationElements(elements = {
          @ConfigurationElement(name = "loader", parent = "loaders", 
-                  description = "org.infinispan.loaders.jdbc.binary.JdbcBinaryCacheStoreConfig",
+                  description = "org.infinispan.loaders.jdbc.binary.JdbcBinaryCacheStore",
                   cardinalityInParent=Cardinality.UNBOUNDED),
          @ConfigurationElement(name = "properties", parent = "loader") })
 public class JdbcBinaryCacheStoreConfig extends LockSupportCacheStoreConfig {

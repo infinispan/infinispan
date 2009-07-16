@@ -17,7 +17,7 @@ import org.infinispan.util.Util;
  */
 @ConfigurationElements(elements = {
          @ConfigurationElement(name = "loader", parent = "loaders", 
-                  description = "org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStoreConfig",
+                  description = "org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore",
                   cardinalityInParent=Cardinality.UNBOUNDED),
          @ConfigurationElement(name = "properties", parent = "loader") })
 public class JdbcStringBasedCacheStoreConfig extends LockSupportCacheStoreConfig {

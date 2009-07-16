@@ -369,7 +369,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    }
    
    @ConfigurationAttribute(name = "version", 
-            containingElement = "serialization")
+            containingElement = "serialization", defaultValue=Version.version)
    public void setMarshallVersion(String marshallVersion) {
       testImmutability("marshallVersion");
       this.marshallVersion = Version.getVersionShort(marshallVersion);

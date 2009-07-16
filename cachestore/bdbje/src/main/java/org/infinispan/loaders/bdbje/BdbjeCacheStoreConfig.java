@@ -31,7 +31,7 @@ import org.infinispan.loaders.AbstractCacheStoreConfig;
  */
 @ConfigurationElements(elements = {
          @ConfigurationElement(name = "loader", parent = "loaders", 
-                  description = "org.infinispan.loaders.bdbje.BdbjeCacheStoreConfig", 
+                  description = "org.infinispan.loaders.bdbje.BdbjeCacheStore", 
                   cardinalityInParent=Cardinality.UNBOUNDED),
          @ConfigurationElement(name = "properties", parent = "loader") })
 public class BdbjeCacheStoreConfig extends AbstractCacheStoreConfig {

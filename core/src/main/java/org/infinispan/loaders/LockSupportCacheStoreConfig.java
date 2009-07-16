@@ -26,7 +26,7 @@ public class LockSupportCacheStoreConfig extends AbstractCacheStoreConfig {
     */
    @ConfigurationProperty(name = "lockConcurrencyLevel", 
             parentElement = "properties", 
-            description = "Concurrency level as integer. Default is 2048")
+            description = "Concurrency level as integer. Default is " + DEFAULT_CONCURRENCY_LEVEL)
    public void setLockConcurrencyLevel(int lockConcurrencyLevel) {
       testImmutability("lockConcurrencyLevel");
       this.lockConcurrencyLevel = lockConcurrencyLevel;
@@ -38,7 +38,7 @@ public class LockSupportCacheStoreConfig extends AbstractCacheStoreConfig {
 
    @ConfigurationProperty(name = "lockAcquistionTimeout", 
             parentElement = "properties",
-            description= "Default lock acquisition timeout as long. Default is 60000")
+            description= "Default lock acquisition timeout as long. Default is " + DEFAULT_LOCK_ACQUISITION_TIMEOUT)
    public void setLockAcquistionTimeout(long lockAcquistionTimeout) {
       testImmutability("lockAcquistionTimeout");
       this.lockAcquistionTimeout = lockAcquistionTimeout;

@@ -72,7 +72,7 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
                      createdAttributes = true;
                   }
                   if (attribute) {
-                     generateAttributeTableRow(sb, m, a);
+                     generateAttributeTableRow(clazz,sb, m, a);
                   }
                }
                if (createdAttributes) {
@@ -132,7 +132,7 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
       return cprops;
    }
 
-   private void generateAttributeTableRow(StringBuilder sb, Method m, ConfigurationAttribute a) {
+   private void generateAttributeTableRow(Class<?> bean,StringBuilder sb, Method m, ConfigurationAttribute a) {
       sb.append("<tr class=\"b\">");
       sb.append("<td>").append("<code>" + a.name() +"</code>").append("</td>\n");
       
@@ -157,9 +157,9 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
       else {
          try {
             //reflect default value 
-            Object matchingFieldValue = matchingFieldValue(m);
+            Object matchingFieldValue = matchingFieldValue(bean,m);
             sb.append("<td>").append(matchingFieldValue).append("</td>\n");
-         } catch (Exception e) {
+         } catch (Exception e) {            
             sb.append("<td>").append("N/A").append("</td>\n");
          }
       }                   
@@ -218,15 +218,14 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
       return ces;
    }
 
-   private Object matchingFieldValue(Method m) throws Exception {
+   private Object matchingFieldValue(Class<?> bean, Method m) throws Exception {
       String name = m.getName();
       if (!name.startsWith("set")) throw new IllegalArgumentException("Not a setter method");
 
       String fieldName = name.substring(name.indexOf("set") + 3);
       fieldName = fieldName.substring(0, 1).toLowerCase() + fieldName.substring(1);
       Field f = m.getDeclaringClass().getDeclaredField(fieldName);
-      return getField(f, m.getDeclaringClass().newInstance());
-
+      return getField(f, bean.newInstance());
    }
 
    private static Object getField(Field field, Object target) {

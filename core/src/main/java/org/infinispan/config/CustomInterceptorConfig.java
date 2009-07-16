@@ -47,8 +47,8 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
    private boolean isFirst;
    private boolean isLast;
    private int index = -1;
-   private String after;
-   private String before;
+   private String afterInterceptor;
+   private String beforeInterceptor;
    private Position position;   
    private String className;
    private TypedProperties properties = EMPTY_PROPERTIES;
@@ -73,8 +73,8 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
       isFirst = first;
       isLast = last;
       this.index = index;
-      this.after = after;
-      this.before = before;
+      this.afterInterceptor = after;
+      this.beforeInterceptor = before;
    }
 
    /**
@@ -93,8 +93,8 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
       isFirst = first;
       isLast = last;
       this.index = index;
-      this.after = after == null ? null : after.getName();
-      this.before = before == null ? null : before.getName();
+      this.afterInterceptor = after == null ? null : after.getName();
+      this.beforeInterceptor = before == null ? null : before.getName();
    }
 
    /**
@@ -175,7 +175,7 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
             containingElement = "interceptor") 
    public void setAfterInterceptor(String afterClass) {
       testImmutability("after");
-      this.after = afterClass;
+      this.afterInterceptor = afterClass;
    }
 
    /**
@@ -194,7 +194,7 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
             containingElement = "interceptor") 
    public void setBeforeInterceptor(String beforeClass) {
       testImmutability("before");
-      this.before = beforeClass;
+      this.beforeInterceptor = beforeClass;
    }
 
    /**
@@ -244,14 +244,14 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
     * @see #getAfter()
     */
    public String getAfter() {
-      return after;
+      return afterInterceptor;
    }
 
    /**
     * @see #getBefore()
     */
    public String getBefore() {
-      return before;
+      return beforeInterceptor;
    }
 
    public String toString() {
@@ -260,8 +260,8 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
             ", isFirst=" + isFirst +
             ", isLast=" + isLast +
             ", index=" + index +
-            ", after='" + after + '\'' +
-            ", before='" + before + '\'' +
+            ", after='" + afterInterceptor + '\'' +
+            ", before='" + beforeInterceptor + '\'' +
             '}';
    }
 
@@ -274,8 +274,8 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
       if (index != that.index) return false;
       if (isFirst != that.isFirst) return false;
       if (isLast != that.isLast) return false;
-      if (after != null ? !after.equals(that.after) : that.after != null) return false;
-      if (before != null ? !before.equals(that.before) : that.before != null) return false;
+      if (afterInterceptor != null ? !afterInterceptor.equals(that.afterInterceptor) : that.afterInterceptor != null) return false;
+      if (beforeInterceptor != null ? !beforeInterceptor.equals(that.beforeInterceptor) : that.beforeInterceptor != null) return false;
       if (interceptor != null ? !interceptor.equals(that.interceptor) : that.interceptor != null)
          return false;
       return true;
@@ -287,8 +287,8 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
       result = 31 * result + (isFirst ? 1 : 0);
       result = 31 * result + (isLast ? 1 : 0);
       result = 31 * result + index;
-      result = 31 * result + (after != null ? after.hashCode() : 0);
-      result = 31 * result + (before != null ? before.hashCode() : 0);
+      result = 31 * result + (afterInterceptor != null ? afterInterceptor.hashCode() : 0);
+      result = 31 * result + (beforeInterceptor != null ? beforeInterceptor.hashCode() : 0);
       return result;
    }
 
@@ -298,8 +298,8 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
       dolly.interceptor = interceptor;
       dolly.isFirst = isFirst;
       dolly.isLast = isLast;
-      dolly.after = after;
-      dolly.before = before;
+      dolly.afterInterceptor = afterInterceptor;
+      dolly.beforeInterceptor = beforeInterceptor;
       return dolly;
    }
    

@@ -18,7 +18,7 @@ import org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStoreConfig;
  */
 @ConfigurationElements(elements = {
          @ConfigurationElement(name = "loader", parent = "loaders", 
-                  description = "org.infinispan.loaders.jdbc.mixed.JdbcMixedCacheStoreConfig",
+                  description = "org.infinispan.loaders.jdbc.mixed.JdbcMixedCacheStore",
                   cardinalityInParent=Cardinality.UNBOUNDED),
          @ConfigurationElement(name = "properties", parent = "loader") })
 public class JdbcMixedCacheStoreConfig extends AbstractCacheStoreConfig {

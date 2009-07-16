@@ -21,7 +21,7 @@ import org.infinispan.loaders.LockSupportCacheStoreConfig;
  */
 @ConfigurationElements(elements = {
          @ConfigurationElement(name = "loader", parent = "loaders", 
-                  description = "org.infinispan.loaders.s3.S3CacheStoreConfig",
+                  description = "org.infinispan.loaders.s3.S3CacheStore",
                   cardinalityInParent=Cardinality.UNBOUNDED),
          @ConfigurationElement(name = "properties", parent = "loader") })
 public class S3CacheStoreConfig extends LockSupportCacheStoreConfig {
