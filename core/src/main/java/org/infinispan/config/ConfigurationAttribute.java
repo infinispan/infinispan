@@ -31,8 +31,8 @@ import java.lang.annotation.*;
  * of the appropriate AbstractConfigurationBean.
  * <p>
  * 
- * ConfigurationAttribute should annotate the corresponding setter methods with one parameter that
- * could be either primitive or java.lang.String.
+ * ConfigurationAttribute should annotate the corresponding setter methods having one parameter that
+ * could be either any primitive or java.lang.String.
  * 
  * 
  * @author Vladimir Blagojevic
@@ -58,11 +58,11 @@ public @interface ConfigurationAttribute {
    String name();
 
    /**
-    * Returns comma delimited list of allowed values for this attribute
+    * Returns an array of String values representing allowed values for this attribute
     * 
     * @return
     */
-   String allowedValues() default "";
+   String [] allowedValues() default {};
 
    /**
     * Returns default value for this attribute

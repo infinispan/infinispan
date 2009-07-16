@@ -62,7 +62,7 @@ public @interface ConfigurationElement {
    String name();
 
    /**
-    * Returns name of corresponding XML element.
+    * Returns name of corresponding parent XML element.
     * 
     * @return
     */
@@ -85,14 +85,14 @@ public @interface ConfigurationElement {
    String description() default "";
 
    /**
-    * Returns class of customer parser needed to process this ConfigurationElement
+    * Returns class of custom parser needed to process this ConfigurationElement
     * 
     * @return
     */
    Class<? extends ConfigurationElementReader> customReader() default ConfigurationElementReader.class;
 
    /**
-    * Returns class of customer writer for this ConfigurationElement
+    * Returns class of custom writer for this ConfigurationElement
     * 
     * @return
     */

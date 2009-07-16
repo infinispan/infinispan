@@ -175,7 +175,7 @@ public class SchemaGeneratorTreeWalker extends ConfigurationTreeWalker{
             }                            
             Element att = xmldoc.createElement("xs:attribute");
             att.setAttribute("name", a.name());
-            boolean hasRestriction = a.allowedValues().length()>0;
+            boolean hasRestriction = a.allowedValues().length >0;
             if(!hasRestriction){
                att.setAttribute("type", "xs:" + type);
             }
@@ -185,7 +185,7 @@ public class SchemaGeneratorTreeWalker extends ConfigurationTreeWalker{
                Element restriction = xmldoc.createElement("xs:restriction");
                restriction.setAttribute("base", "xs:" + type);
                simpleType.appendChild(restriction);
-               String [] values = a.allowedValues().split(",");
+               String [] values = a.allowedValues();
                for (String constraint : values) {
                   Element restrictionValue = xmldoc.createElement("xs:enumeration");                     
                   restrictionValue.setAttribute("value", constraint.trim());

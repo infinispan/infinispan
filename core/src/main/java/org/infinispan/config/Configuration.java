@@ -379,7 +379,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    }
 
    @ConfigurationAttribute(name = "mode", 
-            containingElement = "clustering", allowedValues="LOCAL,REPL,INVALIDATION,DIST")
+            containingElement = "clustering", allowedValues={"LOCAL","REPL","INVALIDATION","DIST"})
    public void setCacheMode(String cacheMode) {
       testImmutability("cacheMode");
       if (cacheMode == null) throw new ConfigurationException("Cache mode cannot be null", "CacheMode");
@@ -419,7 +419,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    }
    
    @ConfigurationAttribute(name = "strategy", 
-            containingElement = "eviction",allowedValues="NONE, FIFO, LRU")
+            containingElement = "eviction",allowedValues={"NONE", "FIFO", "LRU"})
    public void setEvictionStrategy(String eStrategy){
       testImmutability("evictionStrategy");
       this.evictionStrategy = EvictionStrategy.valueOf(uc(eStrategy));
@@ -522,7 +522,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
    @ConfigurationAttribute(name = "isolationLevel", 
             containingElement = "locking",
-            allowedValues="NONE,SERIALIZABLE,REPEATABLE_READ,READ_COMMITTED,READ_UNCOMMITTED")    
+            allowedValues={"NONE","SERIALIZABLE","REPEATABLE_READ","READ_COMMITTED","READ_UNCOMMITTED"})    
    public void setIsolationLevel(String isolationLevel) {
       testImmutability("isolationLevel");
       if (isolationLevel == null) throw new ConfigurationException("Isolation level cannot be null", "IsolationLevel");

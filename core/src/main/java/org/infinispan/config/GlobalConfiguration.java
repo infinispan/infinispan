@@ -272,7 +272,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
 
    @ConfigurationAttribute(name = "hookBehavior", 
             containingElement = "shutdown", 
-            allowedValues = "DEFAULT, REGISTER, DONT_REGISTER", 
+            allowedValues = {"DEFAULT", "REGISTER", "DONT_REGISTER"}, 
             defaultValue = "DEFAULT")
    public void setShutdownHookBehavior(String shutdownHookBehavior) {
       if (shutdownHookBehavior == null)
