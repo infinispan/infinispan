@@ -17,9 +17,9 @@
          >
 
       <plugin-configuration>
-         <c:simple-property name="connectorAddress" description="JMX Remoting address of the remote JBossOSGi Server"/>
+         <c:simple-property name="connectorAddress" description="JMX Remoting address of the remote Infinispan Instance"/>
          <c:simple-property name="objectName" description="ObjectName of the Manager" type="string" readOnly="true"/>
-         <c:template name="default" description="The default setup for JBossOSGi">
+         <c:template name="default" description="The default setup for Infinispan">
             <c:simple-property name="connectorAddress" displayName="URL of the remote server"
                                defaultValue="service:jmx:rmi://127.0.0.1/jndi/rmi://127.0.0.1:6996/jmxrmi"/>
          </c:template>
