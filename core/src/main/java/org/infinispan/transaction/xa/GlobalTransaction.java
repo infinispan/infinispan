@@ -33,10 +33,12 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Uniquely identifies a transaction that spans all JVMs in a cluster. This is used when replicating all modifications
  * in a transaction; the PREPARE and COMMIT (or ROLLBACK) messages have to have a unique identifier to associate the
- * changes with<br>
+ * changes with<br>. GlobalTransaction should be instantiated thorough {@link org.infinispan.transaction.xa.GlobalTransactionFactory} class, 
+ * as their type depends on the runtime configuration.
  *
  * @author <a href="mailto:bela@jboss.org">Bela Ban</a> Apr 12, 2003
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
+ * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
 public class GlobalTransaction implements Externalizable, Cloneable {
