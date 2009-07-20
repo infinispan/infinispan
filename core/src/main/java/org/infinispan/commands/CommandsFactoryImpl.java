@@ -49,7 +49,6 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.InterceptorChain;
-import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.TransactionTable;
@@ -67,7 +66,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private DataContainer dataContainer;
    private CacheNotifier notifier;
    private Cache cache;
-   private CacheLoaderManager cacheLoaderManager;
    private String cacheName;
 
    // some stateless commands can be reused so that they aren't constructed again all the time.
@@ -82,14 +80,12 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Inject
    public void setupDependencies(DataContainer container, CacheNotifier notifier, Cache cache,
-                                 InterceptorChain interceptorChain, CacheLoaderManager clManager,
-                                 DistributionManager distributionManager, InvocationContextContainer icc,
-                                 TransactionTable txTable) {
+                                 InterceptorChain interceptorChain, DistributionManager distributionManager,
+                                 InvocationContextContainer icc, TransactionTable txTable) {
       this.dataContainer = container;
       this.notifier = notifier;
       this.cache = cache;
       this.interceptorChain = interceptorChain;
-      this.cacheLoaderManager = clManager;
       this.distributionManager = distributionManager;
       this.icc = icc;
       this.txTable = txTable;

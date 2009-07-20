@@ -45,6 +45,7 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ReversibleOrderedSet;
 import org.infinispan.util.concurrent.IsolationLevel;
+import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.LockManager;
 
 import java.util.ArrayList;
@@ -83,7 +84,7 @@ public class LockingInterceptor extends CommandInterceptor {
          return invokeNextInterceptor(ctx, command);
       } finally {
          if (ctx.isInTxScope()) {
-            cleanupLocks(ctx, ctx.getLockOwner(), true);
+            cleanupLocks(ctx, true);
          } else {
             throw new IllegalStateException("Attempting to do a commit or rollback but there is no transactional context in scope. " + ctx);
          }
@@ -96,7 +97,7 @@ public class LockingInterceptor extends CommandInterceptor {
          return invokeNextInterceptor(ctx, command);
       } finally {
          if (ctx.isInTxScope()) {
-            cleanupLocks(ctx, ctx.getLockOwner(), false);
+            cleanupLocks(ctx, false);
          } else {
             throw new IllegalStateException("Attempting to do a commit or rollback but there is no transactional context in scope. " + ctx);
          }
@@ -107,9 +108,12 @@ public class LockingInterceptor extends CommandInterceptor {
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       try {
          return invokeNextInterceptor(ctx, command);
+      } catch (TimeoutException te) {
+         cleanupLocks(ctx, false);
+         throw te;
       } finally {
          if (command.isOnePhaseCommit())
-            cleanupLocks(ctx, ctx.getLockOwner(), true);
+            cleanupLocks(ctx, true);
       }
    }
 
@@ -235,7 +239,7 @@ public class LockingInterceptor extends CommandInterceptor {
    private void doAfterCall(InvocationContext ctx) {
       // for non-transactional stuff.
       if (!ctx.isInTxScope()) {
-         cleanupLocks(ctx, ctx.getLockOwner(), true);
+         cleanupLocks(ctx, true);
       } else {
          if (trace) log.trace("Transactional.  Not cleaning up locks till the transaction ends.");
          if (useReadCommitted) {
@@ -260,14 +264,12 @@ public class LockingInterceptor extends CommandInterceptor {
       }
    }
 
-   private void cleanupLocks(InvocationContext ctx, Object owner, boolean commit) {
-      // clean up.
-      // unlocking needs to be done in reverse order.
-      ReversibleOrderedSet<Map.Entry<Object, CacheEntry>> entries = ctx.getLookedUpEntries().entrySet();
-      Iterator<Map.Entry<Object, CacheEntry>> it = entries.reverseIterator();
-      if (trace) log.trace("Number of entries in context: {0}", entries.size());
-
+   private void cleanupLocks(InvocationContext ctx, boolean commit) {
       if (commit) {
+         Object owner = ctx.getLockOwner();
+         ReversibleOrderedSet<Map.Entry<Object, CacheEntry>> entries = ctx.getLookedUpEntries().entrySet();
+         Iterator<Map.Entry<Object, CacheEntry>> it = entries.reverseIterator();
+         if (trace) log.trace("Number of entries in context: {0}", entries.size());
          while (it.hasNext()) {
             Map.Entry<Object, CacheEntry> e = it.next();
             CacheEntry entry = e.getValue();
@@ -287,27 +289,11 @@ public class LockingInterceptor extends CommandInterceptor {
             }
          }
       } else {
-         while (it.hasNext()) {
-            Map.Entry<Object, CacheEntry> e = it.next();
-            CacheEntry entry = e.getValue();
-            Object key = e.getKey();
-            boolean needToUnlock = lockManager.possiblyLocked(entry);
-            // could be null with read-committed
-            if (entry != null && entry.isChanged()) entry.rollback();
-            else {
-               if (trace) log.trace("Entry for key {0} is null, not calling rollbackUpdate", key);
-            }
-            // and then unlock
-            if (needToUnlock) {
-               if (trace) log.trace("Releasing lock on [" + key + "] for owner " + owner);
-               lockManager.unlock(key, owner);
-            }
-         }
+         lockManager.releaseLocks(ctx);
       }
    }
 
    protected void commitEntry(InvocationContext ctx, CacheEntry entry) {
       entry.commit(dataContainer);
    }
-
 }

@@ -127,7 +127,15 @@
       </clustering>
       <jmxStatistics enabled="false"/>
    </namedCache>
-   
+
+   <namedCache name="withDeadlockDetection">
+      <clustering>
+         <sync replTimeout="20000"/>
+      </clustering>
+      <jmxStatistics enabled="false"/>
+      <deadlockDetection enabled="true" spinDuration="1221"/>
+   </namedCache>
+
    
    <namedCache name="cacheWithCustomInterceptors">
    

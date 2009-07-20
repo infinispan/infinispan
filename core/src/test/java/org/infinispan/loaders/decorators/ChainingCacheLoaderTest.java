@@ -15,9 +15,9 @@ import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import static org.testng.Assert.assertEquals;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
-import static org.testng.Assert.assertEquals;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -175,7 +175,7 @@ public class ChainingCacheLoaderTest extends BaseCacheStoreTest {
       list.add(new Store(InternalEntryFactory.create("k5", "v5", lifespan)));
       list.add(new Store(InternalEntryFactory.create("k6", "v6")));
       list.add(new Remove("k6"));
-      GlobalTransaction t = new GlobalTransaction(false);
+      GlobalTransaction t = gtf.newGlobalTransaction(null, false);
       cs.prepare(list, t, true);
 
       CacheStore[] allStores = new CacheStore[]{cs, store1, store2}; // for iteration
@@ -210,7 +210,7 @@ public class ChainingCacheLoaderTest extends BaseCacheStoreTest {
       list.add(new Store(InternalEntryFactory.create("k5", "v5", lifespan)));
       list.add(new Store(InternalEntryFactory.create("k6", "v6")));
       list.add(new Remove("k6"));
-      GlobalTransaction tx = new GlobalTransaction(false);
+      GlobalTransaction tx = gtf.newGlobalTransaction(null, false);
       cs.prepare(list, tx, false);
 
       CacheStore[] allStores = new CacheStore[]{cs, store1, store2}; // for iteration

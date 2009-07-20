@@ -26,17 +26,7 @@ import org.infinispan.atomic.DeltaAware;
 import org.infinispan.commands.RemoteCommandFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.container.entries.ImmortalCacheEntry;
-import org.infinispan.container.entries.ImmortalCacheValue;
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.InternalCacheValue;
-import org.infinispan.container.entries.InternalEntryFactory;
-import org.infinispan.container.entries.MortalCacheEntry;
-import org.infinispan.container.entries.MortalCacheValue;
-import org.infinispan.container.entries.TransientCacheEntry;
-import org.infinispan.container.entries.TransientCacheValue;
-import org.infinispan.container.entries.TransientMortalCacheEntry;
-import org.infinispan.container.entries.TransientMortalCacheValue;
+import org.infinispan.container.entries.*;
 import org.infinispan.io.ByteBuffer;
 import org.infinispan.io.ExposedByteArrayOutputStream;
 import org.infinispan.io.UnsignedNumeric;
@@ -49,8 +39,9 @@ import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.responses.UnsuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
-import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.TransactionLog;
+import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.transaction.xa.GlobalTransactionFactory;
 import org.infinispan.util.FastCopyHashMap;
 import org.infinispan.util.Immutables;
 import org.infinispan.util.Util;
@@ -146,6 +137,8 @@ public class MarshallerImpl extends AbstractMarshaller {
    private RemoteCommandFactory remoteCommandFactory;
    protected ClassLoader defaultClassLoader;
    protected boolean useRefs = false;
+
+   protected GlobalTransactionFactory gtxFactory = new GlobalTransactionFactory();
 
    public void init(ClassLoader defaultClassLoader, RemoteCommandFactory remoteCommandFactory) {
       this.defaultClassLoader = defaultClassLoader;
@@ -630,7 +623,7 @@ public class MarshallerImpl extends AbstractMarshaller {
 
 
    private GlobalTransaction unmarshallGlobalTransaction(ObjectInput in, UnmarshalledReferences refMap) throws IOException, ClassNotFoundException {
-      GlobalTransaction gtx = new GlobalTransaction();
+      GlobalTransaction gtx = gtxFactory.instantiateGlobalTransaction();
       long id = in.readLong();
       Object address = unmarshallObject(in, refMap);
       gtx.setId(id);

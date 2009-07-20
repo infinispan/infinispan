@@ -23,10 +23,10 @@ package org.infinispan.transaction.xa;
 
 import org.infinispan.remoting.transport.Address;
 
-import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.io.Externalizable;
 import java.util.concurrent.atomic.AtomicLong;
 
 
@@ -47,33 +47,23 @@ public class GlobalTransaction implements Externalizable, Cloneable {
 
    private long id = -1;
 
-   private transient Address addr = null;
+   protected transient Address addr = null;
    private transient int hash_code = -1;  // in the worst case, hashCode() returns 0, then increases, so we're safe here
    private transient boolean remote = false;
 
    /**
     * empty ctor used by externalization.
     */
-   public GlobalTransaction() {
+   GlobalTransaction() {
    }
 
-   public GlobalTransaction(Address addr, boolean remote) {
+   GlobalTransaction(Address addr, boolean remote) {
       this.id = sid.incrementAndGet();
       this.addr = addr;
       this.remote = remote;
    }
 
-   public GlobalTransaction(long id, Address addr) {
-      this.id = id;
-      this.addr = addr;
-      this.remote = true;
-   }
-
-   public GlobalTransaction(boolean remote) {
-      this(null, remote);
-   }
-
-   public Object getAddress() {
+   public Address getAddress() {
       return addr;
    }
 

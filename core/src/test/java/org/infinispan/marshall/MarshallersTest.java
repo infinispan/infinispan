@@ -56,6 +56,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.transaction.TransactionLog;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.transaction.xa.GlobalTransactionFactory;
 import org.infinispan.util.FastCopyHashMap;
 import org.infinispan.util.Immutables;
 import org.jgroups.stack.IpAddress;
@@ -77,6 +78,7 @@ import java.util.*;
 public class MarshallersTest {
    
    private final MarshallerImpl home = new MarshallerImpl();
+   private GlobalTransactionFactory gtf = new GlobalTransactionFactory();
    private final JBossMarshaller jboss = new JBossMarshaller();
    private final Marshaller[] marshallers = new Marshaller[] {home, jboss};
    
@@ -97,7 +99,7 @@ public class MarshallersTest {
    }
    
    public void testGlobalTransactionMarshalling() throws Exception {
-      GlobalTransaction gtx = new GlobalTransaction(new JGroupsAddress(new IpAddress(12345)), false);
+      GlobalTransaction gtx = gtf.newGlobalTransaction(new JGroupsAddress(new IpAddress(12345)), false);
       checkEqualityAndSize(gtx);
    }
    
@@ -105,7 +107,7 @@ public class MarshallersTest {
       List l1 = new ArrayList();
       List l2 = new LinkedList();
       for (int i = 0; i < 10; i++) {
-         GlobalTransaction gtx = new GlobalTransaction(new JGroupsAddress(new IpAddress(1000 * i)), false);
+         GlobalTransaction gtx = gtf.newGlobalTransaction(new JGroupsAddress(new IpAddress(1000 * i)), false);
          l1.add(gtx);
          l2.add(gtx);
       }
@@ -119,7 +121,7 @@ public class MarshallersTest {
       Map m3 = new HashMap();
       Map<Integer, GlobalTransaction> m4 = new FastCopyHashMap<Integer, GlobalTransaction>();
       for (int i = 0; i < 10; i++) {
-         GlobalTransaction gtx = new GlobalTransaction(new JGroupsAddress(new IpAddress(1000 * i)), false);
+         GlobalTransaction gtx = gtf.newGlobalTransaction(new JGroupsAddress(new IpAddress(1000 * i)), false);
          m1.put(1000 * i, gtx);
          m2.put(1000 * i, gtx);
          m4.put(1000 * i, gtx);
@@ -155,20 +157,20 @@ public class MarshallersTest {
    }
 
    public void testMarshalledValueMarshalling() throws Exception {
-      GlobalTransaction gtx = new GlobalTransaction(new JGroupsAddress(new IpAddress(12345)), false);
+      GlobalTransaction gtx = gtf.newGlobalTransaction(new JGroupsAddress(new IpAddress(12345)), false);
       int bytesH = marshallAndAssertEquality(home, new MarshalledValue(gtx, true, home));
       int bytesJ = marshallAndAssertEquality(jboss, new MarshalledValue(gtx, true, jboss));
       assert bytesJ < bytesH : "JBoss Marshaller should write less bytes: bytesJBoss=" + bytesJ + ", bytesHome=" + bytesH;
    }
 
    public void testSingletonListMarshalling() throws Exception {
-      GlobalTransaction gtx = new GlobalTransaction(new JGroupsAddress(new IpAddress(12345)), false);
+      GlobalTransaction gtx = gtf.newGlobalTransaction(new JGroupsAddress(new IpAddress(12345)), false);
       List l = Collections.singletonList(gtx);
       checkEqualityAndSize(l);
    }
    
    public void testTransactionLogMarshalling() throws Exception {
-      GlobalTransaction gtx = new GlobalTransaction(new JGroupsAddress(new IpAddress(12345)), false);
+      GlobalTransaction gtx = gtf.newGlobalTransaction(new JGroupsAddress(new IpAddress(12345)), false);
       PutKeyValueCommand command = new PutKeyValueCommand("k", "v", false, null, 0, 0);
       TransactionLog.LogEntry entry = new TransactionLog.LogEntry(gtx, command);
       
@@ -282,14 +284,14 @@ public class MarshallersTest {
 
       Map m1 = new HashMap();
       for (int i = 0; i < 10; i++) {
-         GlobalTransaction gtx = new GlobalTransaction(new JGroupsAddress(new IpAddress(1000 * i)), false);
+         GlobalTransaction gtx = gtf.newGlobalTransaction(new JGroupsAddress(new IpAddress(1000 * i)), false);
          m1.put(1000 * i, gtx);
       }
       PutMapCommand c10 = new PutMapCommand(m1, null, 0, 0);
       checkEqualityAndSize(c10);
 
       Address local = new JGroupsAddress(new IpAddress(12345));
-      GlobalTransaction gtx = new GlobalTransaction(local, false);
+      GlobalTransaction gtx = gtf.newGlobalTransaction(local, false);
       PrepareCommand c11 = new PrepareCommand(gtx, true, c5, c6, c8, c10);
       checkEqualityAndSize(c11);
 

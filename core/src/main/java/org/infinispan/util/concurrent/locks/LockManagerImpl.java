@@ -58,7 +58,7 @@ public class LockManagerImpl implements LockManager {
    private TransactionManager transactionManager;
    private InvocationContextContainer invocationContextContainer;
    private static final Log log = LogFactory.getLog(LockManagerImpl.class);
-   private static final boolean trace = log.isTraceEnabled();
+   protected static final boolean trace = log.isTraceEnabled();
 
    @Inject
    public void injectDependencies(Configuration configuration, TransactionManager transactionManager, InvocationContextContainer invocationContextContainer) {
@@ -85,7 +85,7 @@ public class LockManagerImpl implements LockManager {
       return false;
    }
 
-   private long getLockAcquisitionTimeout(InvocationContext ctx) {
+   protected long getLockAcquisitionTimeout(InvocationContext ctx) {
       return ctx.hasFlag(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT) ?
             0 : configuration.getLockAcquisitionTimeout();
    }
@@ -141,6 +141,32 @@ public class LockManagerImpl implements LockManager {
 
    public final boolean possiblyLocked(CacheEntry entry) {
       return entry == null || entry.isChanged() || entry.isNull();
+   }
+
+   public void releaseLocks(InvocationContext ctx) {
+      Object owner = ctx.getLockOwner();
+      // clean up.
+      // unlocking needs to be done in reverse order.
+      ReversibleOrderedSet<Map.Entry<Object, CacheEntry>> entries = ctx.getLookedUpEntries().entrySet();
+      Iterator<Map.Entry<Object, CacheEntry>> it = entries.reverseIterator();
+      if (trace) log.trace("Number of entries in context: {0}", entries.size());
+
+      while (it.hasNext()) {
+         Map.Entry<Object, CacheEntry> e = it.next();
+         CacheEntry entry = e.getValue();
+         Object key = e.getKey();
+         boolean needToUnlock = possiblyLocked(entry);
+         // could be null with read-committed
+         if (entry != null && entry.isChanged()) entry.rollback();
+         else {
+            if (trace) log.trace("Entry for key {0} is null, not calling rollbackUpdate", key);
+         }
+         // and then unlock
+         if (needToUnlock) {
+            if (trace) log.trace("Releasing lock on [" + key + "] for owner " + owner);
+            unlock(key, owner);
+         }
+      }
    }
 
    @ManagedAttribute(writable = false, description = "The concurrency level that the MVCC Lock Manager has been configured with.")

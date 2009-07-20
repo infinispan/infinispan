@@ -21,10 +21,6 @@
  */
 package org.infinispan.config;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
 import org.infinispan.config.parsing.ClusteringConfigReader;
 import org.infinispan.config.parsing.CustomInterceptorConfigReader;
 import org.infinispan.distribution.DefaultConsistentHash;
@@ -34,6 +30,10 @@ import org.infinispan.factories.annotations.NonVolatile;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.util.ReflectionUtil;
 import org.infinispan.util.concurrent.IsolationLevel;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Encapsulates the configuration of a Cache.
@@ -61,13 +61,16 @@ import org.infinispan.util.concurrent.IsolationLevel;
          @ConfigurationElement(name = "eviction", parent = "default", description = ""),
          @ConfigurationElement(name = "expiration", parent = "default", description = ""),
          @ConfigurationElement(name = "unsafe", parent = "default", description = ""),
-         @ConfigurationElement(name = "customInterceptors", parent = "default", 
+         @ConfigurationElement(name = "deadlockDetection", parent = "default", description = ""),
+         @ConfigurationElement(name = "customInterceptors", parent = "default",
                   customReader=CustomInterceptorConfigReader.class)         
 })
 public class Configuration extends AbstractNamedCacheConfigurationBean {
    private static final long serialVersionUID = 5553791890144997466L;
 
-   private boolean useDeadlockDetection = false;
+   private boolean enableDeadlockDetection = false;
+
+   private long deadlockDetectionSpinDuration = 100;
 
    // reference to a global configuration
    private GlobalConfiguration globalConfiguration;
@@ -83,6 +86,28 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
    public boolean isStateTransferEnabled() {
       return fetchInMemoryState || (cacheLoaderManagerConfig != null && cacheLoaderManagerConfig.isFetchPersistentState());
+   }
+
+
+   public long getDeadlockDetectionSpinDuration() {
+      return deadlockDetectionSpinDuration;
+   }
+
+   @ConfigurationAttribute(name = "spinDuration",  containingElement = "deadlockDetection")
+   public void setDeadlockDetectionSpinDuration(long eagerDeadlockSpinDuration) {
+      testImmutability("eagerDeadlockSpinDuration");
+      this.deadlockDetectionSpinDuration = eagerDeadlockSpinDuration;
+   }
+
+
+   public boolean isEnableDeadlockDetection() {
+      return enableDeadlockDetection;
+   }
+
+   @ConfigurationAttribute(name = "enabled",  containingElement = "deadlockDetection")
+   public void setEnableDeadlockDetection(boolean useEagerDeadlockDetection) {
+      testImmutability("enableDeadlockDetection");
+      this.enableDeadlockDetection = useEagerDeadlockDetection;
    }
 
    public void setUseLockStriping(boolean useLockStriping) {
@@ -115,15 +140,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    public long getRehashRpcTimeout() {
       return rehashRpcTimeout;
    }
-   
-   public boolean isUseDeadlockDetection() {
-      return useDeadlockDetection;
-   }
 
-   public void setUseDeadlockDetection(boolean useDeadlockDetection) {
-      this.useDeadlockDetection = useDeadlockDetection;
-   }
-   
 
    /**
     * Cache replication mode.

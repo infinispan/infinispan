@@ -127,7 +127,7 @@ public class TransactionXaAdapter implements CacheTransaction, XAResource {
       try {
          invoker.invoke(ctx, rollbackCommand);
       } catch (Throwable e) {
-         log.error("Exception while ", e);
+         log.error("Exception while rollback", e);
          throw new XAException(XAException.XA_HEURHAZ);
       } finally {
          txTable.removeLocalTransaction(transaction);
@@ -136,11 +136,11 @@ public class TransactionXaAdapter implements CacheTransaction, XAResource {
    }
 
    public void start(Xid xid, int i) throws XAException {
-      if (trace) log.trace("start called");
+      if (trace) log.trace("start called on tx " + this.globalTx);
    }
 
    public void end(Xid xid, int i) throws XAException {
-      if (trace) log.trace("end called");
+      if (trace) log.trace("end called on tx " + this.globalTx);
    }
 
    public void forget(Xid xid) throws XAException {

@@ -19,6 +19,7 @@ import org.infinispan.loaders.modifications.Store;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.transaction.xa.GlobalTransactionFactory;
 import org.infinispan.util.ReflectionUtil;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -52,8 +53,9 @@ public class BdbjeCacheStoreTest {
 
     private PreparableTransactionRunner runner;
     private CurrentTransaction currentTransaction;
+   private GlobalTransactionFactory gtf;
 
-    private class MockBdbjeResourceFactory extends BdbjeResourceFactory {
+   private class MockBdbjeResourceFactory extends BdbjeResourceFactory {
 
         @Override
         public PreparableTransactionRunner createPreparableTransactionRunner(Environment env) {
@@ -272,7 +274,8 @@ public class BdbjeCacheStoreTest {
     @Test
     public void testNoExceptionOnRollback() throws Exception {
         start();
-        GlobalTransaction tx = new GlobalTransaction(false);
+       gtf = new GlobalTransactionFactory();
+       GlobalTransaction tx = gtf.newGlobalTransaction(null, false);
         replayAll();
         cs.start();
         cs.rollback(tx);
@@ -313,7 +316,7 @@ public class BdbjeCacheStoreTest {
         cs.start();
         try {
             txn = currentTransaction.beginTransaction(null);
-            GlobalTransaction t = new GlobalTransaction(false);
+            GlobalTransaction t = gtf.newGlobalTransaction(null, false);
             cs.prepare(Collections.singletonList(new Store(InternalEntryFactory.create("k", "v"))), t, false);
             cs.commit(t);
             assert false : "should have gotten an exception";
@@ -335,7 +338,7 @@ public class BdbjeCacheStoreTest {
         replayAll();
         cs.start();
         try {
-            GlobalTransaction tx = new GlobalTransaction(false);
+            GlobalTransaction tx = gtf.newGlobalTransaction(null, false);
             cs.prepare(Collections.singletonList(new Store(InternalEntryFactory.create("k", "v"))), tx, false);
             assert false : "should have gotten an exception";
         } catch (CacheLoaderException e) {

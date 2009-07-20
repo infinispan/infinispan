@@ -107,6 +107,7 @@
          -->
          <!--<async useReplQueue="true" replQueueInterval="10000" replQueueMaxElements="500"/>-->
       </clustering>
+
    </default>
 
    <!-- ************************************** -->
@@ -161,6 +162,8 @@
             <async enabled="true" batchSize="1000" threadPoolSize="5"/>
          </loader>
       </loaders>
+      
+      <deadlockDetection enabled="true" spinDuration="1000"/>
 
    </namedCache>
 

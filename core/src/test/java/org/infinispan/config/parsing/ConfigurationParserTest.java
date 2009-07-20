@@ -110,6 +110,18 @@ public class ConfigurationParserTest {
       assert c.isInvocationBatchingEnabled();
    }
 
+   public void testDeadlockDetection() throws Exception {
+      XmlConfigurationParserImpl parser = new XmlConfigurationParserImpl();
+      String xml = "<deadlockDetection enabled=\"true\" spinDuration=\"123\"/>";
+      Element e = XmlConfigHelper.stringToElement(xml);
+
+      Configuration c = new Configuration();
+      parser.configureDeadlockDetection(e, c);
+
+      assert c.isEnableDeadlockDetection();
+      assert c.getDeadlockDetectionSpinDuration() == 123;
+   }
+
    public void testInvocationBatchingDefaults() throws Exception {
       XmlConfigurationParserImpl parser = new XmlConfigurationParserImpl();
       String xml = "<invocationBatching />";

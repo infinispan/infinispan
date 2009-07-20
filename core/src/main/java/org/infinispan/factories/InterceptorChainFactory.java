@@ -22,6 +22,7 @@
 package org.infinispan.factories;
 
 
+import org.infinispan.CacheException;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.config.CustomInterceptorConfig;
@@ -89,6 +90,10 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          interceptorChain.appendIntereceptor(createInterceptor(MarshalledValueInterceptor.class));
 
       interceptorChain.appendIntereceptor(createInterceptor(NotificationInterceptor.class));
+
+      if (configuration.isEnableDeadlockDetection()) {
+         interceptorChain.appendIntereceptor(createInterceptor(DeadlockDetectingInterceptor.class));
+      }
 
       switch (configuration.getCacheMode()) {
          case REPL_SYNC:
@@ -168,6 +173,8 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
    public <T> T construct(Class<T> componentType) {
       try {
          return componentType.cast(buildInterceptorChain());
+      } catch (CacheException ce) {
+         throw ce;
       }
       catch (Exception e) {
          throw new ConfigurationException("Unable to build interceptor chain", e);

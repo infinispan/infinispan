@@ -10,6 +10,7 @@ import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.transaction.xa.GlobalTransactionFactory;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Parameters;
@@ -28,6 +29,7 @@ import java.util.List;
 public class BdbjeCacheStoreIntegrationTest extends BaseCacheStoreTest {
 
    private String tmpDirectory;
+   private GlobalTransactionFactory gts = new GlobalTransactionFactory();
 
    @BeforeTest
    @Parameters({"basedir"})
@@ -61,7 +63,7 @@ public class BdbjeCacheStoreIntegrationTest extends BaseCacheStoreTest {
       mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
       mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
       mods.add(new Remove("k1"));
-      GlobalTransaction tx = new GlobalTransaction(false);
+      GlobalTransaction tx = gts.newGlobalTransaction(null, false);
       cs.prepare(mods, tx, false);
       cs.commit(tx);
 
@@ -97,7 +99,7 @@ public class BdbjeCacheStoreIntegrationTest extends BaseCacheStoreTest {
       mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
       mods.add(new Remove("k1"));
       mods.add(new Remove("old"));
-      GlobalTransaction tx = new GlobalTransaction(false);
+      GlobalTransaction tx = gts.newGlobalTransaction(null, false);
       cs.prepare(mods, tx, false);
       cs.rollback(tx);
 

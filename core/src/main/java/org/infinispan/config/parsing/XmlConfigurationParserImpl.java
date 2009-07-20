@@ -142,6 +142,7 @@ public class XmlConfigurationParserImpl extends XmlParserBase implements XmlConf
             configureShutdown(getSingleElementInCoreNS("shutdown", globalElement), gc);
             configureSerialization(getSingleElementInCoreNS("serialization", globalElement), gc);
             configureGlobalJmxStatistics(getSingleElementInCoreNS("globalJmxStatistics", globalElement), gc);
+            configureGlobalJmxStatistics(getSingleElementInCoreNS("globalJmxStatistics", globalElement), gc);
          }
       }
 
@@ -161,7 +162,18 @@ public class XmlConfigurationParserImpl extends XmlParserBase implements XmlConf
       configureCacheLoaders(getSingleElementInCoreNS("loaders", e), c);
       configureCustomInterceptors(getSingleElementInCoreNS("customInterceptors", e), c);
       configureUnsafe(getSingleElementInCoreNS("unsafe", e), c);
+      configureDeadlockDetection(getSingleElementInCoreNS("deadlockDetection", e), c);
       return c;
+   }
+
+   void configureDeadlockDetection(Element element, Configuration c) {
+      if (element == null) return; //might me missing
+      String enabled = getAttributeValue(element, "enabled");
+      if (existsAttribute(enabled))
+         c.setEnableDeadlockDetection(getBoolean(enabled));
+      String spinDuration = getAttributeValue(element, "spinDuration");
+      if (existsAttribute(spinDuration))
+         c.setDeadlockDetectionSpinDuration(getLong(spinDuration));
    }
 
    private void assertInitialized() {

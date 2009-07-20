@@ -154,6 +154,10 @@ public class XmlFileParsingTest {
       assert c.getEvictionStrategy().equals(EvictionStrategy.FIFO);
       assert c.getExpirationLifespan() == 60000;
       assert c.getExpirationMaxIdle() == 1000;
+
+      c = namedCaches.get("withDeadlockDetection");
+      assert c.isEnableDeadlockDetection();
+      assert c.getDeadlockDetectionSpinDuration() == 1221;
    }
 
    private void testConfigurationMerging(XmlConfigurationParser parser) throws IOException {

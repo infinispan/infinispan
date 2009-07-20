@@ -104,4 +104,9 @@ public interface LockManager {
     * @return true if the entry *might* be locked, false if the entry definitely is *not* locked.
     */
    boolean possiblyLocked(CacheEntry entry);
+
+   /**
+    * Cleanups the locks within the given context.
+    */
+   void releaseLocks(InvocationContext ctx);
 }

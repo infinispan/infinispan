@@ -21,11 +21,10 @@
  */
 package org.infinispan.marshall.exts;
 
- import net.jcip.annotations.Immutable;
-
 import org.infinispan.marshall.Externalizer;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.transaction.xa.GlobalTransactionFactory;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -37,22 +36,23 @@ import java.io.ObjectOutput;
  * @author Galder Zamarreño
  * @since 4.0
  */
-@Immutable
 public class GlobalTransactionExternalizer implements Externalizer {
+
+   protected GlobalTransactionFactory gtxFactory = new GlobalTransactionFactory();
+
 
    public void writeObject(ObjectOutput output, Object subject) throws IOException {
       GlobalTransaction gtx = (GlobalTransaction) subject;
       output.writeLong(gtx.getId());
-      output.writeObject(gtx.getAddress());      
+      output.writeObject(gtx.getAddress());
    }
 
    public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-      GlobalTransaction gtx = new GlobalTransaction();
+      GlobalTransaction gtx = gtxFactory.instantiateGlobalTransaction();
       long id = input.readLong();
       Object address = input.readObject();
       gtx.setId(id);
       gtx.setAddress((Address) address);
       return gtx;
    }
-
 }

@@ -195,8 +195,8 @@ public class EntryFactoryImpl implements EntryFactory {
             return true;
          } else {
             Object owner = lockManager.getOwner(key);
-            throw new TimeoutException("Unable to acquire lock on key [" + key + "] after [" + getLockAcquisitionTimeout(ctx)
-                  + "] milliseconds for requestor [" + ctx.getLockOwner() + "]! Lock held by [" + owner + "]");
+            throw new TimeoutException("Unable to acquire lock on key [" + key + "] for requestor [" +
+                  ctx.getLockOwner() + "]! Lock held by [" + owner + "]");
          }
       }
 

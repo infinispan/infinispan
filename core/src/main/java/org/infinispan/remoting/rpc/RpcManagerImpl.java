@@ -75,7 +75,7 @@ public class RpcManagerImpl implements RpcManager {
       return !sync && replicationQueue != null && replicationQueue.isEnabled();
    }
 
-   public final List<Response> invokeRemotely(List<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter) throws Exception {
+   public final List<Response> invokeRemotely(List<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter) {
       List<Address> members = t.getMembers();
       if (members.size() < 2) {
          if (log.isDebugEnabled())
@@ -87,7 +87,10 @@ public class RpcManagerImpl implements RpcManager {
             if (isStatisticsEnabled()) replicationCount.incrementAndGet();
             return result;
          } catch (CacheException e) {
-            if (log.isTraceEnabled()) log.trace("replication exception: ", e);
+            if (log.isTraceEnabled()) {
+               log.trace("replication exception: ", e);
+            }
+
             if (isStatisticsEnabled()) replicationFailures.incrementAndGet();
             throw e;
          } catch (Throwable th) {
@@ -98,7 +101,7 @@ public class RpcManagerImpl implements RpcManager {
       }
    }
 
-   public final List<Response> invokeRemotely(List<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue) throws Exception {
+   public final List<Response> invokeRemotely(List<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue) {
       return invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue, null);
    }
 
@@ -206,17 +209,9 @@ public class RpcManagerImpl implements RpcManager {
             rpc = cf.buildSingleRpcCommand(rpc);
          }
          List rsps;
-         try {
             rsps = invokeRemotely(recipients, rpc, getResponseMode(sync), timeout, usePriorityQueue);
             if (trace) log.trace("responses=" + rsps);
             if (sync) checkResponses(rsps);
-         } catch (CacheException e) {
-            log.error("Replication exception", e);
-            throw e;
-         } catch (Exception ex) {
-            log.error("Unexpected exception", ex);
-            throw new ReplicationException("Unexpected exception while replicating", ex);
-         }
       }
    }
 

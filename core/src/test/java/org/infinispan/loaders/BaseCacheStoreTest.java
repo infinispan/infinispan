@@ -13,6 +13,7 @@ import org.infinispan.loaders.modifications.Store;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.transaction.xa.GlobalTransactionFactory;
 import org.infinispan.util.Util;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -38,6 +39,8 @@ public abstract class BaseCacheStoreTest {
    protected abstract CacheStore createCacheStore() throws Exception;
 
    protected CacheStore cs;
+
+   protected GlobalTransactionFactory gtf = new GlobalTransactionFactory();
 
    @BeforeMethod
    public void setUp() throws Exception {
@@ -204,7 +207,7 @@ public abstract class BaseCacheStoreTest {
       mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
       mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
       mods.add(new Remove("k1"));
-      GlobalTransaction tx = new GlobalTransaction(true);
+      GlobalTransaction tx = gtf.newGlobalTransaction(null, true);
       cs.prepare(mods, tx, true);
 
       assert cs.load("k2").getValue().equals("v2");
@@ -229,7 +232,7 @@ public abstract class BaseCacheStoreTest {
       mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
       mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
       mods.add(new Remove("k1"));
-      GlobalTransaction tx = new GlobalTransaction(false);
+      GlobalTransaction tx = gtf.newGlobalTransaction(null, false);
       cs.prepare(mods, tx, false);
 
       assert !cs.containsKey("k1");
@@ -271,7 +274,7 @@ public abstract class BaseCacheStoreTest {
       mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
       mods.add(new Remove("k1"));
       mods.add(new Remove("old"));
-      GlobalTransaction tx = new GlobalTransaction(false);
+      GlobalTransaction tx = gtf.newGlobalTransaction(null, false);
       cs.prepare(mods, tx, false);
 
       assert !cs.containsKey("k1");
@@ -313,7 +316,7 @@ public abstract class BaseCacheStoreTest {
       mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
       mods.add(new Remove("k1"));
       mods.add(new Remove("old"));
-      final GlobalTransaction tx = new GlobalTransaction(false);
+      final GlobalTransaction tx = gtf.newGlobalTransaction(null, false);
       cs.prepare(mods, tx, false);
 
       Thread t = new Thread(new Runnable() {
@@ -353,7 +356,7 @@ public abstract class BaseCacheStoreTest {
 
    public void testCommitAndRollbackWithoutPrepare() throws CacheLoaderException {
       cs.store(InternalEntryFactory.create("old", "old"));
-      GlobalTransaction tx = new GlobalTransaction(false);
+      GlobalTransaction tx = gtf.newGlobalTransaction(null, false);
       cs.commit(tx);
       cs.store(InternalEntryFactory.create("old", "old"));
       cs.rollback(tx);

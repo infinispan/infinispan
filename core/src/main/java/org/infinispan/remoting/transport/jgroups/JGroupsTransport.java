@@ -310,7 +310,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
          if (mode.isAsynchronous()) return Collections.emptyList();// async case
 
          if (trace)
-            log.trace("Cache [{0}]: responses for command {1}:\n{2}", getAddress(), rpcCommand.getClass().getSimpleName(), rsps);
+            log.trace("Cache [{0}], is caller thread interupted? {3}: responses for command {1}:\n{2}", getAddress(), rpcCommand.getClass().getSimpleName(), rsps, Thread.currentThread().isInterrupted());
 
          // short-circuit no-return-value calls.
          if (rsps == null) return Collections.emptyList();
@@ -333,7 +333,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
                      Exception e = ((ExceptionResponse) value).getException();
                      if (!(e instanceof ReplicationException)) {
                         // if we have any application-level exceptions make sure we throw them!!
-                        if (trace) log.trace("Recieved exception '{0}' from {1}", e, rsp.getSender());
+                        if (trace) log.trace("Received exception from " + rsp.getSender(), e);
                         throw e;
                      }
                   }

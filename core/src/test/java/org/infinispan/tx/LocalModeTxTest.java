@@ -85,4 +85,5 @@ public class LocalModeTxTest extends SingleCacheManagerTest {
       assert c.get("key").equals("value");
       assert !c.isEmpty();
    }
+
 }

@@ -53,7 +53,7 @@ public interface RpcManager {
     * @return a list of responses from each member contacted.
     * @throws Exception in the event of problems.
     */
-   List<Response> invokeRemotely(List<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter) throws Exception;
+   List<Response> invokeRemotely(List<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter);
 
    /**
     * Invokes an RPC call on other caches in the cluster.
@@ -68,7 +68,7 @@ public interface RpcManager {
     * @return a list of responses from each member contacted.
     * @throws Exception in the event of problems.
     */
-   List<Response> invokeRemotely(List<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue) throws Exception;
+   List<Response> invokeRemotely(List<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue);
 
    /**
     * Invokes an RPC call on other caches in the cluster.

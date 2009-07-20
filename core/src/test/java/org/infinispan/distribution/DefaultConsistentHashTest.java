@@ -107,4 +107,8 @@ class TestAddress implements Address {
    public int hashCode() {
       return addressNum;
    }
+
+   public int compareTo(Object o) {
+      return this.addressNum - ((TestAddress)o).addressNum;
+   }
 }

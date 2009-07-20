@@ -60,6 +60,7 @@
          <xs:element name="loaders" type="tns:loadersType" minOccurs="0" maxOccurs="1"/>
          <xs:element name="customInterceptors" type="tns:customInterceptorsType" minOccurs="0" maxOccurs="1"/>
          <xs:element name="clustering" type="tns:clusteringType" minOccurs="0" maxOccurs="1"/>
+         <xs:element name="deadlockDetection" type="tns:deadlockDetectionType" minOccurs="0" maxOccurs="1"/>
          <xs:element name="unsafe" type="tns:unsafeType" minOccurs="0" maxOccurs="1"/>
       </xs:all>
       <xs:attribute name="name" type="xs:string"/>
@@ -273,6 +274,11 @@
             </xs:complexType>
          </xs:element>
       </xs:sequence>
+   </xs:complexType>
+
+   <xs:complexType name="deadlockDetectionType">
+      <xs:attribute name="enabled" type="tns:booleanType"/>
+      <xs:attribute name="spinDuration" type="xs:integer"/>
    </xs:complexType>
 
    <xs:complexType name="propertyType">

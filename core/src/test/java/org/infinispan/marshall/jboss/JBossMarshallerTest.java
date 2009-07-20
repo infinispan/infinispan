@@ -59,6 +59,7 @@ import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.statetransfer.Person;
 import org.infinispan.transaction.TransactionLog;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.transaction.xa.GlobalTransactionFactory;
 import org.infinispan.util.FastCopyHashMap;
 import org.infinispan.util.Immutables;
 import org.infinispan.util.concurrent.TimeoutException;
@@ -87,6 +88,8 @@ public class JBossMarshallerTest {
 //   private final JBossMarshaller marshaller = new JBossMarshaller();
    private final VersionAwareMarshaller marshaller = new VersionAwareMarshaller();
 
+   private GlobalTransactionFactory gtf = new GlobalTransactionFactory();
+
    @BeforeTest
    public void setUp() {
       marshaller.inject(Thread.currentThread().getContextClassLoader(), new RemoteCommandFactory());
@@ -105,7 +108,7 @@ public class JBossMarshallerTest {
 
    public void testGlobalTransactionMarshalling() throws Exception {
       JGroupsAddress jGroupsAddress = new JGroupsAddress(new IpAddress(12345));
-      GlobalTransaction gtx = new GlobalTransaction(jGroupsAddress, false);
+      GlobalTransaction gtx = gtf.newGlobalTransaction(jGroupsAddress, false);
       marshallAndAssertEquality(gtx);
    }
 
@@ -114,7 +117,7 @@ public class JBossMarshallerTest {
       List l2 = new LinkedList();
       for (int i = 0; i < 10; i++) {
          JGroupsAddress jGroupsAddress = new JGroupsAddress(new IpAddress(1000 * i));
-         GlobalTransaction gtx = new GlobalTransaction(jGroupsAddress, false);
+         GlobalTransaction gtx = gtf.newGlobalTransaction(jGroupsAddress, false);
          l1.add(gtx);
          l2.add(gtx);
       }
@@ -129,7 +132,7 @@ public class JBossMarshallerTest {
       Map<Integer, GlobalTransaction> m4 = new FastCopyHashMap<Integer, GlobalTransaction>();
       for (int i = 0; i < 10; i++) {
          JGroupsAddress jGroupsAddress = new JGroupsAddress(new IpAddress(1000 * i));
-         GlobalTransaction gtx = new GlobalTransaction(jGroupsAddress, false);
+         GlobalTransaction gtx = gtf.newGlobalTransaction(jGroupsAddress, false);
          m1.put(1000 * i, gtx);
          m2.put(1000 * i, gtx);
          m4.put(1000 * i, gtx);
@@ -175,13 +178,13 @@ public class JBossMarshallerTest {
    }
 
    public void testSingletonListMarshalling() throws Exception {
-      GlobalTransaction gtx = new GlobalTransaction(new JGroupsAddress(new IpAddress(12345)), false);
+      GlobalTransaction gtx = gtf.newGlobalTransaction(new JGroupsAddress(new IpAddress(12345)), false);
       List l = Collections.singletonList(gtx);
       marshallAndAssertEquality(l);
    }
 
    public void testTransactionLogMarshalling() throws Exception {
-      GlobalTransaction gtx = new GlobalTransaction(new JGroupsAddress(new IpAddress(12345)), false);
+      GlobalTransaction gtx = gtf.newGlobalTransaction(new JGroupsAddress(new IpAddress(12345)), false);
       PutKeyValueCommand command = new PutKeyValueCommand("k", "v", false, null, 0, 0);
       TransactionLog.LogEntry entry = new TransactionLog.LogEntry(gtx, command);
       byte[] bytes = marshaller.objectToByteBuffer(entry);
@@ -257,14 +260,14 @@ public class JBossMarshallerTest {
 
       Map m1 = new HashMap();
       for (int i = 0; i < 10; i++) {
-         GlobalTransaction gtx = new GlobalTransaction(new JGroupsAddress(new IpAddress(1000 * i)), false);
+         GlobalTransaction gtx = gtf.newGlobalTransaction(new JGroupsAddress(new IpAddress(1000 * i)), false);
          m1.put(1000 * i, gtx);
       }
       PutMapCommand c10 = new PutMapCommand(m1, null, 0, 0);
       marshallAndAssertEquality(c10);
 
       Address local = new JGroupsAddress(new IpAddress(12345));
-      GlobalTransaction gtx = new GlobalTransaction(local, false);
+      GlobalTransaction gtx = gtf.newGlobalTransaction(local, false);
       PrepareCommand c11 = new PrepareCommand(gtx, true, c5, c6, c8, c10);
       marshallAndAssertEquality(c11);
 

@@ -80,7 +80,7 @@ public class TxInterceptor extends CommandInterceptor {
       if (!command.isOnePhaseCommit()) {
          transactionLog.logPrepare(command);
       }
-      if (getStatisticsEnabled()) prepares.incrementAndGet();
+      if (this.statsEnabled) prepares.incrementAndGet();
       Object result = invokeNextInterceptor(ctx, command);
       if (command.isOnePhaseCommit()) {
          transactionLog.logOnePhaseCommit(ctx.getGlobalTransaction(), command.getModifications());
@@ -90,7 +90,7 @@ public class TxInterceptor extends CommandInterceptor {
 
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      if (getStatisticsEnabled()) commits.incrementAndGet();
+      if (this.statsEnabled) commits.incrementAndGet();
       Object result = invokeNextInterceptor(ctx, command);
       transactionLog.logCommit(command.getGlobalTransaction());
       return result;
@@ -98,7 +98,7 @@ public class TxInterceptor extends CommandInterceptor {
 
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
-      if (getStatisticsEnabled()) rollbacks.incrementAndGet();
+      if (this.statsEnabled) rollbacks.incrementAndGet();
       transactionLog.rollback(command.getGlobalTransaction());
       return invokeNextInterceptor(ctx, command);
    }
@@ -217,10 +217,6 @@ public class TxInterceptor extends CommandInterceptor {
       prepares.set(0);
       commits.set(0);
       rollbacks.set(0);
-   }
-
-   public boolean getStatisticsEnabled() {
-      return this.statsEnabled;
    }
 
    public void setStatisticsEnabled(boolean enabled) {

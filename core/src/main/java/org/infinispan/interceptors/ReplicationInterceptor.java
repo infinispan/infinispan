@@ -60,7 +60,6 @@ public class ReplicationInterceptor extends BaseRpcInterceptor {
       Object retVal = invokeNextInterceptor(ctx, command);
       if (ctx.isOriginLocal() && command.hasModifications()) {
          boolean async = configuration.getCacheMode() == Configuration.CacheMode.REPL_ASYNC;
-         boolean useDeadlockDetection = configuration.isUseDeadlockDetection();
          rpcManager.broadcastRpcCommand(command, !async, false);
       }
       return retVal;

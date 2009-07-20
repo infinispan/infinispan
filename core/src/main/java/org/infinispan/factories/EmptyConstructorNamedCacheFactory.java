@@ -52,7 +52,8 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
          if (componentType.isInterface()) {
             Class componentImpl;
             if (componentType.equals(Marshaller.class)) {
-               componentImpl = VersionAwareMarshaller.class;
+               VersionAwareMarshaller versionAwareMarshaller = Util.getInstance(VersionAwareMarshaller.class);
+               return componentType.cast(versionAwareMarshaller);
             } else if (componentType.equals(InvocationContextContainer.class)) {
                componentImpl = InvocationContextContainerImpl.class;
             } else {

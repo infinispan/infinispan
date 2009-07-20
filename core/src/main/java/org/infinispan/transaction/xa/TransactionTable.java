@@ -40,17 +40,19 @@ public class TransactionTable {
    private InterceptorChain invoker;
    private CacheNotifier notifier;
    private RpcManager rpcManager;
+   private GlobalTransactionFactory gtf;
 
 
    @Inject
    public void initialize(CommandsFactory commandsFactory, RpcManager rpcManager, Configuration configuration,
-                          InvocationContextContainer icc, InterceptorChain invoker, CacheNotifier notifier) {
+                          InvocationContextContainer icc, InterceptorChain invoker, CacheNotifier notifier, GlobalTransactionFactory gtf) {
       this.commandsFactory = commandsFactory;
       this.rpcManager = rpcManager;
       this.configuration = configuration;
       this.icc = icc;
       this.invoker = invoker;
       this.notifier = notifier;
+      this.gtf = gtf;
    }
 
 
@@ -91,7 +93,7 @@ public class TransactionTable {
       TransactionXaAdapter current = localTransactions.get(transaction);
       if (current == null) {
          Address localAddress = rpcManager != null ? rpcManager.getTransport().getAddress() : null;
-         GlobalTransaction tx = localAddress == null ? new GlobalTransaction(false) : new GlobalTransaction(localAddress, false);
+         GlobalTransaction tx = gtf.newGlobalTransaction(localAddress, false);
          current = new TransactionXaAdapter(tx, icc, invoker, commandsFactory, configuration, this, transaction);
          localTransactions.put(transaction, current);
          try {
@@ -135,5 +137,9 @@ public class TransactionTable {
 
    public TransactionXaAdapter getXaCacheAdapter(Transaction tx) {
       return localTransactions.get(tx);
+   }
+
+   public boolean containRemoteTx(GlobalTransaction globalTransaction) {
+      return remoteTransactions.containsKey(globalTransaction);
    }
 }
