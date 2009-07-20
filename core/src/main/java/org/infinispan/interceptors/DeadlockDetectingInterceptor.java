@@ -1,8 +1,11 @@
 package org.infinispan.interceptors;
 
+import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
@@ -51,8 +54,7 @@ public class DeadlockDetectingInterceptor extends CommandInterceptor {
       }
    }
 
-   @Override
-   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+   private Object handleDataCommand(InvocationContext ctx, DataCommand command) throws Throwable {
       if (ctx.isInTxScope()) {
          DeadlockDetectingGlobalTransaction gtx = (DeadlockDetectingGlobalTransaction) ctx.getLockOwner();
          gtx.setLockInterntion(command.getKey());
@@ -79,6 +81,21 @@ public class DeadlockDetectingInterceptor extends CommandInterceptor {
             throw ie;
          }
       }
+   }
+
+   @Override
+   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      return handleDataCommand(ctx, command);
+   }
+
+   @Override
+   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+      return handleDataCommand(ctx, command);
+   }
+
+   @Override
+   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+      return handleDataCommand(ctx, command);
    }
 
    @Override
