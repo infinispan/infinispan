@@ -123,14 +123,8 @@ public class LoadersElementParser extends XmlParserBase {
          asc.setEnabled(async);
 
          if (async) {
-            String tmp = getAttributeValue(element, "batchSize");
-            if (existsAttribute(tmp)) asc.setBatchSize(getInt(tmp));
-
-            tmp = getAttributeValue(element, "pollWait");
-            if (existsAttribute(tmp)) asc.setPollWait(getLong(tmp));
-
-            tmp = getAttributeValue(element, "queueSize");
-            if (existsAttribute(tmp)) asc.setQueueSize(getInt(tmp));
+            String tmp = getAttributeValue(element, "mapLockTimeout");
+            if (existsAttribute(tmp)) asc.setMapLockTimeout(getLong(tmp));
 
             tmp = getAttributeValue(element, "threadPoolSize");
             if (existsAttribute(tmp)) asc.setThreadPoolSize(getInt(tmp));

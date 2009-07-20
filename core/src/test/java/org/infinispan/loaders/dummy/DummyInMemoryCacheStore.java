@@ -22,6 +22,7 @@ import java.util.concurrent.ConcurrentMap;
 
 public class DummyInMemoryCacheStore extends AbstractCacheStore {
    private static final Log log = LogFactory.getLog(DummyInMemoryCacheStore.class);
+   private static final boolean trace = log.isTraceEnabled(); 
    static final ConcurrentMap<String, Map> stores = new ConcurrentHashMap<String, Map>();
    String storeName = "__DEFAULT_STORES__";
    Map<Object, InternalCacheEntry> store;
@@ -31,7 +32,7 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
 
    public void store(InternalCacheEntry ed) {
       if (ed != null) {
-         log.trace("Store {0} in dummy map store@{1}", ed, Integer.toHexString(System.identityHashCode(store)));
+         if (trace) log.trace("Store {0} in dummy map store@{1}", ed, Integer.toHexString(System.identityHashCode(store)));
          store.put(ed.getKey(), ed);
       }
    }
@@ -43,7 +44,7 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
          store.clear();
          for (int i = 0; i < numEntries; i++) {
             InternalCacheEntry e = (InternalCacheEntry) marshaller.objectFromObjectStream(ois);
-            log.trace("Store {0} from stream in dummy store@{1}", e, Integer.toHexString(System.identityHashCode(store)));
+            if (trace) log.trace("Store {0} from stream in dummy store@{1}", e, Integer.toHexString(System.identityHashCode(store)));
             store.put(e.getKey(), e);
          }
       } catch (Exception e) {
@@ -61,10 +62,12 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
    }
 
    public void clear() {
+      if (trace) log.trace("Clear store");
       store.clear();
    }
 
    public boolean remove(Object key) {
+      if (trace) log.trace("Remove {0} from dummy store", key);
       return store.remove(key) != null;
    }
 

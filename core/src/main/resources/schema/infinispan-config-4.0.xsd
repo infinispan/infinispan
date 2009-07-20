@@ -216,11 +216,21 @@
                   </xs:element>
                   <xs:element name="async" minOccurs="0" maxOccurs="1">
                      <xs:complexType>
-                        <xs:attribute name="enabled" type="tns:booleanType"/>
-                        <xs:attribute name="batchSize" type="tns:positiveNumber"/>
-                        <xs:attribute name="pollWait" type="tns:positiveNumber"/>
-                        <xs:attribute name="queueSize" type="tns:positiveNumber"/>
-                        <xs:attribute name="threadPoolSize" type="tns:positiveNumber"/>
+                        <xs:attribute name="enabled" type="tns:booleanType">
+                           <xs:annotation>
+                              <xs:documentation>If true, modifications are stored in the cache store asynchronously.</xs:documentation>
+                           </xs:annotation>
+                        </xs:attribute>
+                        <xs:attribute name="mapLockTimeout" type="tns:positiveNumber">
+									<xs:annotation>
+   									<xs:documentation>Lock timeout for access to map containing latest state.</xs:documentation>
+									</xs:annotation>                        
+                        </xs:attribute>
+                        <xs:attribute name="threadPoolSize" type="tns:positiveNumber">
+									<xs:annotation>
+   									<xs:documentation>Size of the thread pool whose threads are responsible for applying the modifications.</xs:documentation>
+									</xs:annotation>                        
+                        </xs:attribute>
                      </xs:complexType>
                   </xs:element>
                </xs:all>

@@ -1,5 +1,7 @@
 package org.infinispan.loaders.decorators;
 
+import net.jcip.annotations.GuardedBy;
+
 import org.infinispan.CacheException;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.CacheLoaderException;
@@ -14,15 +16,22 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * The AsyncStore is a delegating CacheStore that extends AbstractDelegatingStore, overriding methods to that should not
@@ -39,73 +48,72 @@ import java.util.concurrent.atomic.AtomicInteger;
  * to define whether cache loader operations are to be asynchronous.  If not specified, a cache loader operation is
  * assumed synchronous and this decorator is not applied.
  * <p/>
+ * Write operations affecting same key are now coalesced so that only the final state is actually stored.
+ * <p/>
  *
  * @author Manik Surtani
+ * @author Galder Zamarreño 
  * @since 4.0
  */
 public class AsyncStore extends AbstractDelegatingStore {
-
    private static final Log log = LogFactory.getLog(AsyncStore.class);
    private static final boolean trace = log.isTraceEnabled();
-
-   private static AtomicInteger threadId = new AtomicInteger(0);
+   private static final AtomicInteger threadId = new AtomicInteger(0);
+   private final AtomicBoolean stopped = new AtomicBoolean(true);
+   private final AsyncStoreConfig asyncStoreConfig;
+   
+   /** Approximate count of number of modified keys. At points, it could contain negative values. */
+   private final AtomicInteger count = new AtomicInteger(0);
+   private final ReentrantLock lock = new ReentrantLock();
+   private final Condition notEmpty  = lock.newCondition();
 
    private ExecutorService executor;
-   private AtomicBoolean stopped = new AtomicBoolean(true);
-   private BlockingQueue<Modification> queue;
    private List<Future> processorFutures;
-   private AsyncStoreConfig asyncStoreConfig;
-
-   public AsyncStore(CacheStore cacheStore, AsyncStoreConfig asyncStoreConfig) {
-      super(cacheStore);
+   private final ReadWriteLock mapLock = new ReentrantReadWriteLock();
+   private final Lock read = mapLock.readLock();
+   private final Lock write = mapLock.writeLock();
+   @GuardedBy("mapLock") private ConcurrentMap<Object, Modification> state;
+   
+   public AsyncStore(CacheStore delegate, AsyncStoreConfig asyncStoreConfig) {
+      super(delegate);
       this.asyncStoreConfig = asyncStoreConfig;
    }
-
+   
    public void store(InternalCacheEntry ed) {
-      enqueue(new Store(ed));
+      enqueue(ed.getKey(), new Store(ed));
    }
-
-   public void clear() {
-      enqueue(new Clear());
-   }
-
+   
    public boolean remove(Object key) {
-      enqueue(new Remove(key));
+      enqueue(key, new Remove(key));
       return true;
    }
-
+   
+   public void clear() {
+      Clear clear = new Clear();
+      enqueue(clear, clear);
+   }
+   
    public void purgeExpired() {
-      enqueue(new PurgeExpired());
+      PurgeExpired purge = new PurgeExpired();
+      enqueue(purge, purge);
    }
-
-   private void enqueue(final Modification mod) {
-      try {
-         if (stopped.get()) {
-            throw new CacheException("AsyncStore stopped; no longer accepting more entries.");
-         }
-         log.trace("Enqueuing modification {0}", mod);
-         queue.put(mod);
-      } catch (Exception e) {
-         throw new CacheException("Unable to enqueue asynchronous task", e);
-      }
-   }
-
+   
    @Override
    public void start() throws CacheLoaderException {
-      queue = new LinkedBlockingQueue<Modification>(asyncStoreConfig.getQueueSize());
+      state = new ConcurrentHashMap<Object, Modification>();
       log.info("Async cache loader starting {0}", this);
       stopped.set(false);
       super.start();
       int poolSize = asyncStoreConfig.getThreadPoolSize();
       executor = Executors.newFixedThreadPool(poolSize, new ThreadFactory() {
          public Thread newThread(Runnable r) {
-            Thread t = new Thread(r, "AsyncStore-" + threadId.getAndIncrement());
+            Thread t = new Thread(r, "CoalescedAsyncStore-" + threadId.getAndIncrement());
             t.setDaemon(true);
             return t;
          }
       });
       processorFutures = new ArrayList<Future>(poolSize);
-      for (int i = 0; i < poolSize; i++) processorFutures.add(executor.submit(new AsyncProcessor()));
+      for (int i = 0; i < poolSize; i++) processorFutures.add(executor.submit(createAsyncProcessor()));
    }
 
    @Override
@@ -119,48 +127,114 @@ public class AsyncStore extends AbstractDelegatingStore {
             while (!terminated) {
                terminated = executor.awaitTermination(60, TimeUnit.SECONDS);
             }
-         }
-         catch (InterruptedException e) {
+         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
          }
       }
       executor = null;
       super.stop();
    }
-
-   protected void applyModificationsSync(List<Modification> mods) throws CacheLoaderException {
-      for (Modification m : mods) {
-         switch (m.getType()) {
+   
+   protected void applyModificationsSync(ConcurrentMap<Object, Modification> mods) throws CacheLoaderException {
+      Set<Map.Entry<Object, Modification>> entries = mods.entrySet();
+      for (Map.Entry<Object, Modification> entry : entries) {
+         Modification mod = entry.getValue();
+         switch (mod.getType()) {
             case STORE:
-               Store s = (Store) m;
-               super.store(s.getStoredEntry());
+               super.store(((Store)mod).getStoredEntry());
+               break;
+            case REMOVE:
+               super.remove(entry.getKey());
                break;
             case CLEAR:
                super.clear();
                break;
-            case REMOVE:
-               Remove r = (Remove) m;
-               super.remove(r.getKey());
-               break;
             case PURGE_EXPIRED:
                super.purgeExpired();
                break;
-            default:
-               throw new IllegalArgumentException("Unknown modification type " + m.getType());
          }
+      }      
+   }
+   
+   protected Runnable createAsyncProcessor() {
+      return new AsyncProcessor();
+   }
+   
+   private void enqueue(Object key, Modification mod) {
+      try {
+         if (stopped.get()) {
+            throw new CacheException("AsyncStore stopped; no longer accepting more entries.");
+         }
+         if (trace) log.trace("Enqueuing modification {0}", mod);
+         Modification prev = null;
+         int c = -1;
+         boolean unlock = false;      
+         try {
+            acquireLock(read);
+            unlock = true;
+            prev = state.put(key, mod); // put the key's latest state in updates
+         } finally {
+            if (unlock) read.unlock();
+         }
+         /* Increment can happen outside the lock cos worst case scenario a false not empty would 
+          * be sent if the swap and decrement happened between the put and the increment. In this 
+          * case, the corresponding processor would see the map empty and would wait again. This 
+          * means that we're allowing count to potentially go negative but that's not a problem. */  
+         if (prev == null) c = count.getAndIncrement();
+         if (c == 0) signalNotEmpty();
+      } catch (Exception e) {
+         throw new CacheException("Unable to enqueue asynchronous task", e);
       }
    }
 
-
+   private void acquireLock(Lock lock) {
+      try {
+         if (!lock.tryLock(asyncStoreConfig.getMapLockTimeout(), TimeUnit.MILLISECONDS))
+            throw new CacheException("Unable to acquire lock on update map");
+      } catch (InterruptedException ie) {
+         // restore interrupted status
+         Thread.currentThread().interrupt();
+      }
+   }
+   
+   private void signalNotEmpty() {
+      lock.lock();
+      try {
+          notEmpty.signal();
+      } finally {
+          lock.unlock();
+      }
+   }
+   
+   private void awaitNotEmpty() throws InterruptedException {
+      lock.lockInterruptibly();
+      try {
+         try {
+            while (count.get() == 0)
+                notEmpty.await();
+         } catch (InterruptedException ie) {
+            notEmpty.signal(); // propagate to a non-interrupted thread
+            throw ie;
+         }         
+      } finally {
+         lock.unlock();
+      }
+   }
+   
+   private int decrementAndGet(int delta) {
+      for (;;) {
+         int current = count.get();
+         int next = current - delta;
+         if (count.compareAndSet(current, next)) return next;
+     }
+   }
+   
    /**
-    * Processes (by batch if possible) a queue of {@link Modification}s.
-    *
-    * @author manik surtani
+    * Processes modifications taking the latest updates from a state map.
     */
-   private class AsyncProcessor implements Runnable {
-      // Modifications to invoke as a single put
-      private final List<Modification> mods = new ArrayList<Modification>(asyncStoreConfig.getBatchSize());
-
+   class AsyncProcessor implements Runnable {
+      private ConcurrentMap<Object, Modification> swap = new ConcurrentHashMap<Object, Modification>();
+      
       public void run() {
          while (!Thread.interrupted()) {
             try {
@@ -172,38 +246,44 @@ public class AsyncStore extends AbstractDelegatingStore {
          }
 
          try {
-            if (trace) log.trace("Process remaining batch {0}", mods.size());
-            put(mods);
-            if (trace) log.trace("Process remaining queued {0}", queue.size());
-            while (!queue.isEmpty()) run0();
-         }
-         catch (InterruptedException e) {
-            log.trace("remaining interrupted");
+            if (trace) log.trace("Process remaining batch {0}", swap.size());
+            put(swap);
+            if (trace) log.trace("Process remaining queued {0}", state.size());
+            while (!state.isEmpty()) run0();
+         } catch (InterruptedException e) {
+            if (trace) log.trace("Remaining interrupted");
          }
       }
-
-      private void run0() throws InterruptedException {
-         log.trace("Checking for modifications");
-         int i = queue.drainTo(mods, asyncStoreConfig.getBatchSize());
-         if (i == 0) {
-            Modification m = queue.take();
-            mods.add(m);
+      
+      void run0() throws InterruptedException {
+         if (trace) log.trace("Checking for modifications");
+         boolean unlock = false;
+         try {
+            acquireLock(write);
+            unlock = true;
+            swap = state;
+            state = new ConcurrentHashMap<Object, Modification>();
+         } finally {
+            if (unlock) write.unlock();
          }
+         
+         int size = swap.size();
+         if (size == 0) 
+            awaitNotEmpty();
+         else 
+            decrementAndGet(size);
 
-         if (trace) log.trace("Calling put(List) with {0} modifications", mods.size());
-         put(mods);
-         mods.clear();
+         if (trace) log.trace("Calling put(List) with {0} modifications", size);
+         put(swap);
       }
-
-      private void put(List<Modification> mods) {
+      
+      void put(ConcurrentMap<Object, Modification> mods) {
          try {
             AsyncStore.this.applyModificationsSync(mods);
-         }
-         catch (Exception e) {
-            if (log.isWarnEnabled()) log.warn("Failed to process async modifications: " + e);
+         } catch (Exception e) {
+            if (log.isWarnEnabled()) log.warn("Failed to process async modifications", e);
             if (log.isDebugEnabled()) log.debug("Exception: ", e);
          }
       }
    }
-
 }

@@ -165,7 +165,7 @@ public class ConfigurationParserTest {
                   "               <property name=\"location\" value=\"blahblah\"/>\n" +
                   "            </properties>\n" +
                   "            <singletonStore enabled=\"true\" pushStateWhenCoordinator=\"true\" pushStateTimeout=\"20000\"/>\n" +
-                  "            <async enabled=\"true\" batchSize=\"15\"/>\n" +
+                  "            <async enabled=\"true\" threadPoolSize=\"10\" mapLockTimeout=\"10000\"/>\n" +
                   "         </loader>\n" +
                   "      </loaders>      ";
       Element e = XmlConfigHelper.stringToElement(xml);
@@ -183,10 +183,8 @@ public class ConfigurationParserTest {
       CacheStoreConfig iclc = (CacheStoreConfig) clc.getFirstCacheLoaderConfig();
       assert iclc.getCacheLoaderClassName().equals(FileCacheStore.class.getName());
       assert iclc.getAsyncStoreConfig().isEnabled();
-      assert iclc.getAsyncStoreConfig().getBatchSize() == 15;
-      assert iclc.getAsyncStoreConfig().getPollWait() == 100;
-      assert iclc.getAsyncStoreConfig().getQueueSize() == 10000;
-      assert iclc.getAsyncStoreConfig().getThreadPoolSize() == 1;
+      assert iclc.getAsyncStoreConfig().getMapLockTimeout() == 10000;
+      assert iclc.getAsyncStoreConfig().getThreadPoolSize() == 10;
       assert iclc.isFetchPersistentState();
       assert iclc.isIgnoreModifications();
       assert iclc.isPurgeOnStartup();
