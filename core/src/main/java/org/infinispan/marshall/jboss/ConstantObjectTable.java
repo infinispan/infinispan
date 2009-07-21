@@ -48,12 +48,16 @@ import org.infinispan.container.entries.TransientCacheEntry;
 import org.infinispan.container.entries.TransientCacheValue;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheValue;
-import org.infinispan.factories.scopes.Scope;
-import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.marshall.Externalizer;
+import org.infinispan.marshall.Marshallable;
 import org.infinispan.marshall.MarshalledValue;
-import org.infinispan.marshall.exts.*;
+import org.infinispan.marshall.exts.ArrayListExternalizer;
+import org.infinispan.marshall.exts.LinkedListExternalizer;
+import org.infinispan.marshall.exts.MapExternalizer;
+import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
+import org.infinispan.marshall.exts.SetExternalizer;
+import org.infinispan.marshall.exts.SingletonListExternalizer;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.ExtendedResponse;
 import org.infinispan.remoting.responses.RequestIgnoredResponse;
@@ -63,6 +67,7 @@ import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.transaction.xa.DeadlockDetectingGlobalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.FastCopyHashMap;
+import org.infinispan.util.ReflectionUtil;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -71,15 +76,13 @@ import org.jboss.marshalling.ObjectTable;
 import org.jboss.marshalling.Unmarshaller;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
@@ -92,158 +95,152 @@ import java.util.TreeSet;
  * @author Galder Zamarreño
  * @since 4.0
  */
-@Scope(Scopes.GLOBAL)
 public class ConstantObjectTable implements ObjectTable {
    private static final Log log = LogFactory.getLog(ConstantObjectTable.class);
-   private static final int CAPACITY = 50;
-   private static final Map<String, String> EXTERNALIZERS = new HashMap<String, String>(CAPACITY);
+   private static final Map<String, String> JDK_EXTERNALIZERS = new HashMap<String, String>();
+   static final Set<String> MARSHALLABLES = new HashSet<String>();
 
    static {
-      EXTERNALIZERS.put(GlobalTransaction.class.getName(), GlobalTransactionExternalizer.class.getName());
-      EXTERNALIZERS.put(DeadlockDetectingGlobalTransaction.class.getName(), DeadlockDetectingGlobalTransactionExternalizer.class.getName());
-      EXTERNALIZERS.put(JGroupsAddress.class.getName(), JGroupsAddressExternalizer.class.getName());
-      EXTERNALIZERS.put(ArrayList.class.getName(), ArrayListExternalizer.class.getName());
-      EXTERNALIZERS.put(LinkedList.class.getName(), LinkedListExternalizer.class.getName());
-      EXTERNALIZERS.put(HashMap.class.getName(), MapExternalizer.class.getName());
-      EXTERNALIZERS.put(TreeMap.class.getName(), MapExternalizer.class.getName());
-      EXTERNALIZERS.put(HashSet.class.getName(), SetExternalizer.class.getName());
-      EXTERNALIZERS.put(TreeSet.class.getName(), SetExternalizer.class.getName());
-      EXTERNALIZERS.put("org.infinispan.util.Immutables$ImmutableMapWrapper", ImmutableMapExternalizer.class.getName());
-      EXTERNALIZERS.put(MarshalledValue.class.getName(), MarshalledValueExternalizer.class.getName());
-      EXTERNALIZERS.put(FastCopyHashMap.class.getName(), MapExternalizer.class.getName());
-      EXTERNALIZERS.put("java.util.Collections$SingletonList", SingletonListExternalizer.class.getName());
-      EXTERNALIZERS.put("org.infinispan.transaction.TransactionLog$LogEntry", TransactionLogExternalizer.class.getName());
-      EXTERNALIZERS.put(ExtendedResponse.class.getName(), ExtendedResponseExternalizer.class.getName());
-      EXTERNALIZERS.put(SuccessfulResponse.class.getName(), SuccessfulResponseExternalizer.class.getName());
-      EXTERNALIZERS.put(ExceptionResponse.class.getName(), ExceptionResponseExternalizer.class.getName());
-      EXTERNALIZERS.put(AtomicHashMap.class.getName(), DeltaAwareExternalizer.class.getName());
-
-      EXTERNALIZERS.put(StateTransferControlCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
-      EXTERNALIZERS.put(ClusteredGetCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
-      EXTERNALIZERS.put(MultipleRpcCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
-      EXTERNALIZERS.put(SingleRpcCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
-      EXTERNALIZERS.put(GetKeyValueCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
-      EXTERNALIZERS.put(PutKeyValueCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
-      EXTERNALIZERS.put(RemoveCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
-      EXTERNALIZERS.put(InvalidateCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
-      EXTERNALIZERS.put(ReplaceCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
-      EXTERNALIZERS.put(ClearCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
-      EXTERNALIZERS.put(PutMapCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
-      EXTERNALIZERS.put(PrepareCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
-      EXTERNALIZERS.put(CommitCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
-      EXTERNALIZERS.put(RollbackCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
-      EXTERNALIZERS.put(InvalidateL1Command.class.getName(), ReplicableCommandExternalizer.class.getName());
-      EXTERNALIZERS.put(LockControlCommand.class.getName(), ReplicableCommandExternalizer.class.getName());
-
-      EXTERNALIZERS.put(ImmortalCacheEntry.class.getName(), ImmortalCacheEntryExternalizer.class.getName());
-      EXTERNALIZERS.put(MortalCacheEntry.class.getName(), MortalCacheEntryExternalizer.class.getName());
-      EXTERNALIZERS.put(TransientCacheEntry.class.getName(), TransientCacheEntryExternalizer.class.getName());
-      EXTERNALIZERS.put(TransientMortalCacheEntry.class.getName(), TransientMortalCacheEntryExternalizer.class.getName());    
-      EXTERNALIZERS.put(ImmortalCacheValue.class.getName(), ImmortalCacheValueExternalizer.class.getName());
-      EXTERNALIZERS.put(MortalCacheValue.class.getName(), MortalCacheValueExternalizer.class.getName());
-      EXTERNALIZERS.put(TransientCacheValue.class.getName(), TransientCacheValueExternalizer.class.getName());
-      EXTERNALIZERS.put(TransientMortalCacheValue.class.getName(), TransientMortalCacheValueExternalizer.class.getName());
+      JDK_EXTERNALIZERS.put(ArrayList.class.getName(), ArrayListExternalizer.class.getName());
+      JDK_EXTERNALIZERS.put(LinkedList.class.getName(), LinkedListExternalizer.class.getName());
+      JDK_EXTERNALIZERS.put(HashMap.class.getName(), MapExternalizer.class.getName());
+      JDK_EXTERNALIZERS.put(TreeMap.class.getName(), MapExternalizer.class.getName());
+      JDK_EXTERNALIZERS.put(HashSet.class.getName(), SetExternalizer.class.getName());
+      JDK_EXTERNALIZERS.put(TreeSet.class.getName(), SetExternalizer.class.getName());
+      JDK_EXTERNALIZERS.put("java.util.Collections$SingletonList", SingletonListExternalizer.class.getName());
       
-      EXTERNALIZERS.put(Bucket.class.getName(), BucketExternalizer.class.getName());
+      MARSHALLABLES.add(GlobalTransaction.class.getName());
+      MARSHALLABLES.add(DeadlockDetectingGlobalTransaction.class.getName());
+      MARSHALLABLES.add(JGroupsAddress.class.getName());
+      MARSHALLABLES.add("org.infinispan.util.Immutables$ImmutableMapWrapper");
+      MARSHALLABLES.add(MarshalledValue.class.getName());
+      MARSHALLABLES.add(FastCopyHashMap.class.getName());
       
-      EXTERNALIZERS.put("org.infinispan.tree.NodeKey", "org.infinispan.tree.marshall.exts.NodeKeyExternalizer");
-      EXTERNALIZERS.put("org.infinispan.tree.Fqn", "org.infinispan.tree.marshall.exts.FqnExternalizer");
+      MARSHALLABLES.add("org.infinispan.transaction.TransactionLog$LogEntry");
+      MARSHALLABLES.add(ExtendedResponse.class.getName());
+      MARSHALLABLES.add(SuccessfulResponse.class.getName());
+      MARSHALLABLES.add(ExceptionResponse.class.getName());
+      MARSHALLABLES.add(RequestIgnoredResponse.class.getName());
+      MARSHALLABLES.add(UnsuccessfulResponse.class.getName());
+
+      MARSHALLABLES.add(StateTransferControlCommand.class.getName());
+      MARSHALLABLES.add(ClusteredGetCommand.class.getName());
+      MARSHALLABLES.add(MultipleRpcCommand.class.getName());
+      MARSHALLABLES.add(SingleRpcCommand.class.getName());
+      MARSHALLABLES.add(GetKeyValueCommand.class.getName());
+      MARSHALLABLES.add(PutKeyValueCommand.class.getName());
+      MARSHALLABLES.add(RemoveCommand.class.getName());
+      MARSHALLABLES.add(InvalidateCommand.class.getName());
+      MARSHALLABLES.add(ReplaceCommand.class.getName());
+      MARSHALLABLES.add(ClearCommand.class.getName());
+      MARSHALLABLES.add(PutMapCommand.class.getName());
+      MARSHALLABLES.add(PrepareCommand.class.getName());
+      MARSHALLABLES.add(CommitCommand.class.getName());
+      MARSHALLABLES.add(RollbackCommand.class.getName());
+      MARSHALLABLES.add(InvalidateL1Command.class.getName());
+      MARSHALLABLES.add(LockControlCommand.class.getName());
+
+      MARSHALLABLES.add(ImmortalCacheEntry.class.getName());
+      MARSHALLABLES.add(MortalCacheEntry.class.getName());
+      MARSHALLABLES.add(TransientCacheEntry.class.getName());
+      MARSHALLABLES.add(TransientMortalCacheEntry.class.getName());    
+      MARSHALLABLES.add(ImmortalCacheValue.class.getName());
+      MARSHALLABLES.add(MortalCacheValue.class.getName());
+      MARSHALLABLES.add(TransientCacheValue.class.getName());
+      MARSHALLABLES.add(TransientMortalCacheValue.class.getName());
+      
+      MARSHALLABLES.add(AtomicHashMap.class.getName());
+      MARSHALLABLES.add(Bucket.class.getName());
+      
+      MARSHALLABLES.add("org.infinispan.tree.NodeKey");
+      MARSHALLABLES.add("org.infinispan.tree.Fqn");
    }
 
-   /** Contains list of singleton objects written such as constant objects, 
-    * singleton Externalizer implementations...etc. When writing, index of each 
-    * object is written, and when reading, index is used to find the instance 
-    * in this list.*/
-   private final List<Object> objects = new ArrayList<Object>(CAPACITY);
-   
-   /** Contains mapping of constant instances to their writers and also custom 
-    * object externalizer classes to their Externalizer instances. 
-    * Do not use this map for storing Externalizer implementations for user 
-    * classes. For these, please use weak key based maps, i.e WeakHashMap */
-   private final Map<Class<?>, ExternalizerAdapter> writers = new IdentityHashMap<Class<?>, ExternalizerAdapter>(CAPACITY);
+   /** Contains mapping of classes to their corresponding Externalizer classes via ExternalizerAdapter instances. */
+   private final Map<Class<?>, ExternalizerAdapter> writers = new IdentityHashMap<Class<?>, ExternalizerAdapter>();
 
-   private byte index;
+   /** Contains mapping of ids to their corresponding Externalizer classes via ExternalizerAdapter instances. */
+   private final Map<Integer, ExternalizerAdapter> readers = new HashMap<Integer, ExternalizerAdapter>();
 
-   public void init(RemoteCommandFactory cmdFactory, org.infinispan.marshall.Marshaller ispnMarshaller) {
-      // Init singletons
-      ExternalizerAdapter adapter = new ExternalizerAdapter(index++, new InstanceWriter(RequestIgnoredResponse.INSTANCE));
-      objects.add(adapter);
-      writers.put(RequestIgnoredResponse.class, adapter);
-      adapter = new ExternalizerAdapter(index++, new InstanceWriter(UnsuccessfulResponse.INSTANCE));
-      objects.add(adapter);
-      writers.put(UnsuccessfulResponse.class, adapter);
+   public void start(RemoteCommandFactory cmdFactory, org.infinispan.marshall.Marshaller ispnMarshaller) {
+      HashSet<Integer> ids = new HashSet<Integer>();
       
       try {
-         for (Map.Entry<String, String> entry : EXTERNALIZERS.entrySet()) {
+         for (Map.Entry<String, String> entry : JDK_EXTERNALIZERS.entrySet()) {
             try {
-               Class typeClazz = Util.loadClass(entry.getKey());
-               Externalizer delegate = (Externalizer) Util.getInstance(entry.getValue());
-               if (delegate instanceof ReplicableCommandExternalizer) {
-                  ((ReplicableCommandExternalizer) delegate).init(cmdFactory);
-               }
-               if (delegate instanceof MarshalledValueExternalizer) {
-                  ((MarshalledValueExternalizer) delegate).init(ispnMarshaller);
-               }
-               ExternalizerAdapter rwrt = new ExternalizerAdapter(index++, delegate);
-               objects.add(rwrt);
-               writers.put(typeClazz, rwrt);               
+               Class clazz = Util.loadClass(entry.getKey());
+               Externalizer ext = (Externalizer) Util.getInstance(entry.getValue());
+               Marshallable marshallable = ReflectionUtil.getAnnotation(ext.getClass(), Marshallable.class);
+               int id = marshallable.id();
+               ids.add(id);
+               ExternalizerAdapter adapter = new ExternalizerAdapter(id, ext);
+               writers.put(clazz, adapter);               
+               readers.put(id, adapter);
             } catch (ClassNotFoundException e) {
                if (log.isDebugEnabled()) log.debug("Unable to load class (ignore if class belonging to a module not in use): {0}", e.getMessage());
             }
          }
          
+         for (String marshallableClass : MARSHALLABLES) {
+            try {
+               Class clazz = Util.loadClass(marshallableClass);
+               Marshallable marshallable = ReflectionUtil.getAnnotation(clazz, Marshallable.class);
+               if (marshallable != null && !marshallable.externalizer().equals(Externalizer.class)) {
+                  int id = marshallable.id();
+                  Externalizer ext = (Externalizer) Util.getInstance(marshallable.externalizer());
+                  if (!ids.add(id)) throw new CacheException("Duplicat id found! id=" + id + " in " + ext.getClass().getName() + " is shared by another marshallable class.");
+                  if (ext instanceof ReplicableCommandExternalizer) {
+                     ((ReplicableCommandExternalizer) ext).inject(cmdFactory);
+                  }
+                  if (ext instanceof MarshalledValue.Externalizer) {
+                     ((MarshalledValue.Externalizer) ext).inject(ispnMarshaller);
+                  }
+                  
+                  ExternalizerAdapter adapter = new ExternalizerAdapter(id, ext);
+                  writers.put(clazz, adapter);
+                  readers.put(id, adapter);
+               }               
+            } catch (ClassNotFoundException e) {
+               if (log.isDebugEnabled()) log.debug("Unable to load class (ignore if class belonging to a module not in use): {0}", e.getMessage());
+            }
+         }
       } catch (Exception e) {
          throw new CacheException("Unable to instantiate Externalizer class", e);
       }
+      
+      
    }
 
    public void stop() {
       writers.clear();
-      objects.clear();
+      readers.clear();
    }
 
    public Writer getObjectWriter(Object o) throws IOException {
-      return writers.get(o.getClass());
+      return writers.get(o.getClass());      
    }
 
-   public Object readObject(Unmarshaller unmarshaller) throws IOException, ClassNotFoundException {
-      ExternalizerAdapter adapter = (ExternalizerAdapter) objects.get(unmarshaller.readUnsignedByte());
-      return adapter.readObject(unmarshaller);
+   public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
+      ExternalizerAdapter adapter = (ExternalizerAdapter) readers.get(input.readUnsignedByte());
+      return adapter.readObject(input);
    }
-   
-   static class InstanceWriter implements Externalizer {
-      private final Object singleton;
-      
-      InstanceWriter(Object singleton) {
-         this.singleton = singleton;
-      }
-      
-      public void writeObject(ObjectOutput output, Object object) throws IOException {
-         // no-op
-      }
-      
-      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return singleton;
-      }
-   }
-   
-   class ExternalizerAdapter implements Writer {
-      final byte id;
+     
+   static class ExternalizerAdapter implements Writer {
+      final int id;
       final Externalizer externalizer;
       
-      ExternalizerAdapter(byte objectId, Externalizer externalizer) {
-         this.id = objectId;
+      ExternalizerAdapter(int id, Externalizer externalizer) {
+         this.id = id;
          this.externalizer = externalizer;
       }
       
-      public Object readObject(Unmarshaller unmarshaller) throws IOException, ClassNotFoundException {
-         return externalizer.readObject(unmarshaller);
+      public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
+         return externalizer.readObject(input);
       }
 
-      public void writeObject(Marshaller marshaller, Object object) throws IOException {
-         marshaller.write(id);
-         externalizer.writeObject(marshaller, object);
+      public void writeObject(Marshaller output, Object object) throws IOException {
+         output.write(id);
+         externalizer.writeObject(output, object);
       }
-   }
-   
+   }   
 }

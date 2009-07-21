@@ -38,6 +38,7 @@ import org.infinispan.marshall.Externalizer;
  * 
  * @author Galder Zamarreño
  * @since 4.0
+ * @deprecated Externalizer implementation now within {@link Bucket}
  */
 @Immutable
 public class BucketExternalizer implements Externalizer {

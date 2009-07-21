@@ -14,6 +14,7 @@ import java.io.ObjectOutput;
  *
  * @author Manik Surtani
  * @since 4.0
+ * @deprecated Externalizer implementation now within {@link SuccessfulResponse}
  */
 @Immutable
 public class SuccessfulResponseExternalizer implements Externalizer {

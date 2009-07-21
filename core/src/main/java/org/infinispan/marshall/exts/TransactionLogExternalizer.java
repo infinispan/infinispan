@@ -37,6 +37,7 @@ import java.io.ObjectOutput;
  *
  * @author Galder Zamarreño
  * @since 4.0
+ * @deprecated Externalizer implementation now within {@link TransactionLog.LogEntry}
  */
 @Immutable
 public class TransactionLogExternalizer implements Externalizer {

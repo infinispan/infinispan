@@ -35,7 +35,9 @@ import java.io.ObjectOutput;
  *
  * @author Galder Zamarreño
  * @since 4.0
+ * @deprecated Externalizer implementation now within {@link GlobalTransaction}
  */
+@Deprecated
 public class GlobalTransactionExternalizer implements Externalizer {
 
    protected GlobalTransactionFactory gtxFactory = new GlobalTransactionFactory();

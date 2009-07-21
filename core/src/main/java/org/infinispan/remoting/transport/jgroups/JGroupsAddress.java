@@ -1,5 +1,11 @@
 package org.infinispan.remoting.transport.jgroups;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
+import org.infinispan.marshall.Ids;
+import org.infinispan.marshall.Marshallable;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -8,6 +14,7 @@ import org.infinispan.remoting.transport.Address;
  * @author Manik Surtani
  * @since 4.0
  */
+@Marshallable(externalizer = JGroupsAddress.Externalizer.class, id = Ids.JGROUPS_ADDRESS)
 public class JGroupsAddress implements Address {
    org.jgroups.Address address;
 
@@ -50,5 +57,18 @@ public class JGroupsAddress implements Address {
 
    public void setJGroupsAddress(org.jgroups.Address address) {
       this.address = address;
+   }
+   
+   public static class Externalizer implements org.infinispan.marshall.Externalizer {
+      public void writeObject(ObjectOutput output, Object subject) throws IOException {
+         JGroupsAddress address = (JGroupsAddress) subject;
+         output.writeObject(address.address);
+      }
+
+      public Object readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
+         JGroupsAddress address = new JGroupsAddress();
+         address.address = (org.jgroups.Address) unmarshaller.readObject();
+         return address;
+      }
    }
 }

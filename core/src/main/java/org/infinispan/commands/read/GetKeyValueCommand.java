@@ -24,6 +24,9 @@ package org.infinispan.commands.read;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.marshall.Ids;
+import org.infinispan.marshall.Marshallable;
+import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -34,6 +37,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @since 4.0
  */
+@Marshallable(externalizer = ReplicableCommandExternalizer.class, id = Ids.GET_KEY_VALUE_COMMAND)
 public class GetKeyValueCommand extends AbstractDataCommand {
    public static final byte COMMAND_ID = 4;
    private static final Log log = LogFactory.getLog(GetKeyValueCommand.class);

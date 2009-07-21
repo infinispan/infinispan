@@ -21,12 +21,13 @@
  */
 package org.infinispan.transaction.xa;
 
+import org.infinispan.marshall.Ids;
+import org.infinispan.marshall.Marshallable;
 import org.infinispan.remoting.transport.Address;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.io.Externalizable;
 import java.util.concurrent.atomic.AtomicLong;
 
 
@@ -41,7 +42,8 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public class GlobalTransaction implements Externalizable, Cloneable {
+@Marshallable(externalizer = GlobalTransaction.Externalizer.class, id = Ids.GLOBAL_TRANSACTION)
+public class GlobalTransaction implements Cloneable {
 
    private static final long serialVersionUID = 8011434781266976149L;
 
@@ -75,17 +77,6 @@ public class GlobalTransaction implements Externalizable, Cloneable {
 
    public boolean isRemote() {
       return remote;
-   }
-
-   public void writeExternal(ObjectOutput out) throws IOException {
-      out.writeLong(id);
-      out.writeObject(addr);
-   }
-
-   public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-      id = in.readLong();
-      addr = (Address) in.readObject();
-      hash_code = -1;
    }
 
    @Override
@@ -129,6 +120,23 @@ public class GlobalTransaction implements Externalizable, Cloneable {
          return super.clone();
       } catch (CloneNotSupportedException e) {
          throw new IllegalStateException("Impossible!");
+      }
+   }
+   
+   public static class Externalizer implements org.infinispan.marshall.Externalizer {
+      protected GlobalTransactionFactory gtxFactory = new GlobalTransactionFactory();
+      
+      public void writeObject(ObjectOutput output, Object subject) throws IOException {
+         GlobalTransaction gtx = (GlobalTransaction) subject;
+         output.writeLong(gtx.id);
+         output.writeObject(gtx.addr);      
+      }
+
+      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         GlobalTransaction gtx = gtxFactory.instantiateGlobalTransaction();
+         gtx.id = input.readLong();
+         gtx.addr = (Address) input.readObject();
+         return gtx;
       }
    }
 }

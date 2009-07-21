@@ -26,6 +26,9 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.marshall.Ids;
+import org.infinispan.marshall.Marshallable;
+import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.RemoteTransaction;
 
@@ -42,6 +45,7 @@ import java.util.Collection;
  * @param
  * @since 4.0
  */
+@Marshallable(externalizer = ReplicableCommandExternalizer.class, id = Ids.LOCK_CONTROL_COMMAND)
 public class LockControlCommand extends AbstractTransactionBoundaryCommand {
    public static final int COMMAND_ID = 3;
    private Collection keys;

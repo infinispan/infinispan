@@ -1,11 +1,20 @@
 package org.infinispan.container.entries;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
+import org.infinispan.io.UnsignedNumeric;
+import org.infinispan.marshall.Ids;
+import org.infinispan.marshall.Marshallable;
+
 /**
  * A mortal cache value, to correspond with {@link org.infinispan.container.entries.MortalCacheEntry}
  *
  * @author Manik Surtani
  * @since 4.0
  */
+@Marshallable(externalizer = MortalCacheValue.Externalizer.class, id = Ids.MORTAL_VALUE)
 public class MortalCacheValue extends ImmortalCacheValue {
 
    long created;
@@ -83,5 +92,21 @@ public class MortalCacheValue extends ImmortalCacheValue {
    @Override
    public MortalCacheValue clone() {
       return (MortalCacheValue) super.clone();
+   }
+   
+   public static class Externalizer implements org.infinispan.marshall.Externalizer {
+      public void writeObject(ObjectOutput output, Object subject) throws IOException {
+         MortalCacheValue icv = (MortalCacheValue) subject;
+         output.writeObject(icv.value);
+         UnsignedNumeric.writeUnsignedLong(output, icv.created);
+         output.writeLong(icv.lifespan); // could be negative so should not use unsigned longs
+      }
+
+      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         Object v = input.readObject();
+         long created = UnsignedNumeric.readUnsignedLong(input);
+         Long lifespan = input.readLong();
+         return new MortalCacheValue(v, created, lifespan);
+      }
    }
 }

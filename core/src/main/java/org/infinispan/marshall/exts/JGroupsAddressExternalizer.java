@@ -34,6 +34,7 @@ import java.io.ObjectOutput;
  *
  * @author Galder Zamarreño
  * @since 4.0
+ * @deprecated Externalizer implementation now within {@link JGroupsAddress}
  */
 @Immutable
 public class JGroupsAddressExternalizer implements Externalizer {

@@ -32,6 +32,10 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
+import org.infinispan.marshall.Marshallable;
+import org.infinispan.marshall.Ids;
+import org.infinispan.marshall.exts.MapExternalizer;
+
 /**
  * A HashMap that is optimized for fast shallow copies.
  * <p/>
@@ -40,6 +44,7 @@ import java.util.Set;
  * @author Jason T. Greene
  * @since 4.0
  */
+@Marshallable(externalizer = MapExternalizer.class, id = Ids.FASTCOPY_HASHMAP)
 public class FastCopyHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V>, Cloneable, Serializable {
    /**
     * Serialization ID

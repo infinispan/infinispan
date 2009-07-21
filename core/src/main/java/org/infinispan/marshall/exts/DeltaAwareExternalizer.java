@@ -22,6 +22,8 @@
 package org.infinispan.marshall.exts;
 
 import net.jcip.annotations.Immutable;
+
+import org.infinispan.atomic.AtomicHashMap;
 import org.infinispan.atomic.DeltaAware;
 import org.infinispan.marshall.Externalizer;
 
@@ -34,6 +36,7 @@ import java.io.ObjectOutput;
  *
  * @author Galder Zamarreño
  * @since 4.0
+ * @deprecated Externalizer implementation now within {@link AtomicHashMap} 
  */
 @Immutable
 public class DeltaAwareExternalizer implements Externalizer {

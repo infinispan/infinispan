@@ -23,8 +23,15 @@ package org.infinispan.tree;
 
 
 import net.jcip.annotations.Immutable;
+
+import org.infinispan.marshall.Ids;
+import org.infinispan.marshall.Marshallable;
 import org.infinispan.util.Immutables;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -75,6 +82,7 @@ import java.util.List;
  * @since 4.0
  */
 @Immutable
+@Marshallable(externalizer = Fqn.Externalizer.class, id = Ids.FQN)
 public class Fqn implements Comparable<Fqn> {
    /**
     * Separator between FQN elements.
@@ -492,5 +500,20 @@ public class Fqn implements Comparable<Fqn> {
          throw new IllegalArgumentException("Old ancestor must be an ancestor of the current Fqn!");
       Fqn subFqn = this.getSubFqn(oldAncestor.size(), size());
       return Fqn.fromRelativeFqn(newAncestor, subFqn);
+   }
+   
+   public static class Externalizer implements org.infinispan.marshall.Externalizer {
+      public void writeObject(ObjectOutput output, Object object) throws IOException {
+         Fqn fqn = (Fqn) object;
+         output.writeShort(fqn.size);
+         for (Object element : fqn.elements) output.writeObject(element);
+      }
+
+      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         short size = input.readShort();
+         List elements = new ArrayList(size);
+         for (int i = 0; i < size; i++) elements.add(input.readObject());
+         return Fqn.fromList(elements);
+      }
    }
 }

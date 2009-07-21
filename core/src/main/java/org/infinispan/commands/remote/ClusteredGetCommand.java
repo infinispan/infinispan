@@ -33,6 +33,9 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.marshall.Ids;
+import org.infinispan.marshall.Marshallable;
+import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -44,6 +47,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
+@Marshallable(externalizer = ReplicableCommandExternalizer.class, id = Ids.CLUSTERED_GET_COMMAND)
 public class ClusteredGetCommand implements CacheRpcCommand {
 
    public static final byte COMMAND_ID = 16;

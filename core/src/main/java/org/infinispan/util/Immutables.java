@@ -21,6 +21,9 @@
  */
 package org.infinispan.util;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -36,6 +39,9 @@ import java.util.Set;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
+import org.infinispan.marshall.Ids;
+import org.infinispan.marshall.MarshallUtil;
+import org.infinispan.marshall.Marshallable;
 
 /**
  * Factory for generating immutable type wrappers.
@@ -612,6 +618,7 @@ public class Immutables {
       }
    }
 
+   @Marshallable(externalizer = ImmutableMapWrapper.Externalizer.class, id = Ids.IMMUTABLE_MAP)
    private static class ImmutableMapWrapper<K, V> implements Map<K, V>, Serializable, Immutable {
       private static final long serialVersionUID = 708144227046742221L;
 
@@ -679,6 +686,18 @@ public class Immutables {
 
       public String toString() {
          return map.toString();
+      }
+      
+      public static class Externalizer implements org.infinispan.marshall.Externalizer {
+         public void writeObject(ObjectOutput output, Object subject) throws IOException {
+            MarshallUtil.marshallMap((Map) subject, output);      
+         }
+
+         public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+            Map map = new HashMap();
+            MarshallUtil.unmarshallMap(map, input);
+            return Immutables.immutableMapWrap(map);
+         }
       }
    }
 }

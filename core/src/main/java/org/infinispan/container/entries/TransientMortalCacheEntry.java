@@ -1,11 +1,20 @@
 package org.infinispan.container.entries;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
+import org.infinispan.io.UnsignedNumeric;
+import org.infinispan.marshall.Ids;
+import org.infinispan.marshall.Marshallable;
+
 /**
  * A cache entry that is both transient and mortal.
  *
  * @author Manik Surtani
  * @since 4.0
  */
+@Marshallable(externalizer = TransientMortalCacheEntry.Externalizer.class, id = Ids.TRANSIENT_MORTAL_ENTRY)
 public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
 
    private TransientMortalCacheValue cacheValue;
@@ -124,5 +133,26 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
             "} " + super.toString();
    }
 
+   public static class Externalizer implements org.infinispan.marshall.Externalizer {
+      public void writeObject(ObjectOutput output, Object subject) throws IOException {
+         TransientMortalCacheEntry ice = (TransientMortalCacheEntry) subject;
+         output.writeObject(ice.key);
+         output.writeObject(ice.cacheValue.value);
+         UnsignedNumeric.writeUnsignedLong(output, ice.cacheValue.created);
+         output.writeLong(ice.cacheValue.lifespan); // could be negative so should not use unsigned longs
+         UnsignedNumeric.writeUnsignedLong(output, ice.cacheValue.lastUsed);
+         output.writeLong(ice.cacheValue.maxIdle); // could be negative so should not use unsigned longs
+      }
+
+      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         Object k = input.readObject();
+         Object v = input.readObject();
+         long created = UnsignedNumeric.readUnsignedLong(input);
+         Long lifespan = input.readLong();
+         long lastUsed = UnsignedNumeric.readUnsignedLong(input);
+         Long maxIdle = input.readLong();
+         return new TransientMortalCacheEntry(k, v, maxIdle, lifespan, lastUsed, created);
+      }
+   }
 }
 

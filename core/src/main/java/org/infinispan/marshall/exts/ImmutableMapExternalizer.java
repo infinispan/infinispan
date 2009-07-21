@@ -38,6 +38,7 @@ import java.util.Map;
  *
  * @author Galder Zamarreño
  * @since 4.0
+ * @deprecated Externalizer implementation now within {@link Immutables.ImmutableMapWrapper}
  */
 @Immutable
 public class ImmutableMapExternalizer implements Externalizer {

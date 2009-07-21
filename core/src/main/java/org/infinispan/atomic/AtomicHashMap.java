@@ -25,8 +25,13 @@ import net.jcip.annotations.NotThreadSafe;
 import org.infinispan.Cache;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.marshall.Ids;
+import org.infinispan.marshall.Marshallable;
 import org.infinispan.util.FastCopyHashMap;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -42,6 +47,7 @@ import java.util.Set;
  * @since 4.0
  */
 @NotThreadSafe
+@Marshallable(externalizer = AtomicHashMap.Externalizer.class, id = Ids.ATOMIC_HASH_MAP)
 public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneable {
    FastCopyHashMap<K, V> delegate;
    private AtomicHashMapDelta delta = null;
@@ -181,5 +187,16 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
    private AtomicHashMapDelta getDelta() {
       if (delta == null) delta = new AtomicHashMapDelta();
       return delta;
+   }
+   
+   public static class Externalizer implements org.infinispan.marshall.Externalizer {
+      public void writeObject(ObjectOutput output, Object subject) throws IOException {
+         DeltaAware dw = (DeltaAware) subject;
+         output.writeObject(dw.delta());      
+      }
+
+      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         return input.readObject();
+      }
    }
 }

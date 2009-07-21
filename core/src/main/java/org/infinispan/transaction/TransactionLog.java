@@ -23,11 +23,16 @@ package org.infinispan.transaction;
 
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.io.UnsignedNumeric;
+import org.infinispan.marshall.Ids;
+import org.infinispan.marshall.Marshallable;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.io.IOException;
+import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,6 +52,7 @@ public class TransactionLog {
    private final BlockingQueue<LogEntry> entries = new LinkedBlockingQueue<LogEntry>();
    private AtomicBoolean active = new AtomicBoolean();
 
+   @Marshallable(externalizer = LogEntry.Externalizer.class, id = Ids.TRANSACTION_LOG_ENTRY)
    public static class LogEntry {
       private final GlobalTransaction transaction;
       private final WriteCommand[] modifications;
@@ -62,6 +68,24 @@ public class TransactionLog {
 
       public WriteCommand[] getModifications() {
          return modifications;
+      }
+      
+      public static class Externalizer implements org.infinispan.marshall.Externalizer {
+         public void writeObject(ObjectOutput output, Object subject) throws IOException {
+            TransactionLog.LogEntry le = (TransactionLog.LogEntry) subject;
+            output.writeObject(le.transaction);
+            WriteCommand[] cmds = le.modifications;
+            UnsignedNumeric.writeUnsignedInt(output, cmds.length);
+            for (WriteCommand c : cmds) output.writeObject(c);
+         }
+
+         public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+            GlobalTransaction gtx = (GlobalTransaction) input.readObject();
+            int numCommands = UnsignedNumeric.readUnsignedInt(input);
+            WriteCommand[] cmds = new WriteCommand[numCommands];
+            for (int i = 0; i < numCommands; i++) cmds[i] = (WriteCommand) input.readObject();
+            return new TransactionLog.LogEntry(gtx, cmds);
+         }
       }
    }
 

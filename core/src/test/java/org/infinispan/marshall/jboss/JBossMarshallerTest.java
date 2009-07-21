@@ -21,6 +21,7 @@
  */
 package org.infinispan.marshall.jboss;
 
+import org.infinispan.CacheException;
 import org.infinispan.commands.RemoteCommandFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
@@ -47,6 +48,8 @@ import org.infinispan.container.entries.TransientCacheValue;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheValue;
 import org.infinispan.loaders.bucket.Bucket;
+import org.infinispan.marshall.Ids;
+import org.infinispan.marshall.Marshallable;
 import org.infinispan.marshall.MarshalledValue;
 import org.infinispan.marshall.VersionAwareMarshaller;
 import org.infinispan.remoting.responses.ExceptionResponse;
@@ -345,7 +348,32 @@ public class JBossMarshallerTest {
       ExceptionResponse rer = (ExceptionResponse) marshaller.objectFromByteBuffer(bytes);
       assert rer.getException().getClass().equals(er.getException().getClass()) : "Writen[" + er.getException().getClass() + "] and read[" + rer.getException().getClass() + "] objects should be the same";
    }
+   
+   public void testDuplicateExternalizerId() throws Exception {
+      JBossMarshaller jbmarshaller = new JBossMarshaller();
+      ConstantObjectTable.MARSHALLABLES.add(DuplicateIdClass.class.getName());
+      try {
+         jbmarshaller.start(Thread.currentThread().getContextClassLoader(), new RemoteCommandFactory(), marshaller);
+         assert false : "Should have thrown a CacheException reporting the duplicate id";
+      } catch (CacheException ce) {
+      } finally {
+         jbmarshaller.stop();
+         ConstantObjectTable.MARSHALLABLES.remove(DuplicateIdClass.class.getName());
+      }
+   }
 
+//   TODO: fix unit test, will be done as part of https://jira.jboss.org/jira/browse/ISPN-136   
+//   public void testAtomicHashMap() throws Exception {
+//      AtomicHashMap m = new AtomicHashMap();
+//      m.initForWriting();
+//      m.put("k1", "v1");
+//      m.put("k1", "v2");
+//      m.put("k1", "v3");
+//      byte[] bytes = marshaller.objectToByteBuffer(m);
+//      AtomicHashMapDelta d = (AtomicHashMapDelta) marshaller.objectFromByteBuffer(bytes);
+//      assert d.getChangeLogSize() == ((AtomicHashMapDelta) m.delta()).getChangeLogSize();
+//   }
+   
    protected void marshallAndAssertEquality(Object writeObj) throws Exception {
       byte[] bytes = marshaller.objectToByteBuffer(writeObj);
       Object readObj = marshaller.objectFromByteBuffer(bytes);
@@ -388,4 +416,16 @@ public class JBossMarshallerTest {
          deserializationCount++;
       }
    }
+
+   @Marshallable(externalizer = DuplicateIdClass.Externalizer.class, id = Ids.ARRAY_LIST)
+   static class DuplicateIdClass {
+      public static class Externalizer implements org.infinispan.marshall.Externalizer {
+         public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+            return null;
+         }
+         public void writeObject(ObjectOutput output, Object object) throws IOException {
+         }
+      }
+   }
+   
 }

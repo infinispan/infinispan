@@ -1,11 +1,20 @@
 package org.infinispan.container.entries;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
+import org.infinispan.io.UnsignedNumeric;
+import org.infinispan.marshall.Ids;
+import org.infinispan.marshall.Marshallable;
+
 /**
  * A transient, mortal cache value to correspond with {@link org.infinispan.container.entries.TransientMortalCacheEntry}
  *
  * @author Manik Surtani
  * @since 4.0
  */
+@Marshallable(externalizer = TransientMortalCacheValue.Externalizer.class, id = Ids.TRANSIENT_MORTAL_VALUE)
 public class TransientMortalCacheValue extends MortalCacheValue {
    long maxIdle = -1;
    long lastUsed;
@@ -84,5 +93,25 @@ public class TransientMortalCacheValue extends MortalCacheValue {
    @Override
    public TransientMortalCacheValue clone() {
       return (TransientMortalCacheValue) super.clone();
+   }
+   
+   public static class Externalizer implements org.infinispan.marshall.Externalizer {
+      public void writeObject(ObjectOutput output, Object subject) throws IOException {
+         TransientMortalCacheValue icv = (TransientMortalCacheValue) subject;
+         output.writeObject(icv.value);
+         UnsignedNumeric.writeUnsignedLong(output, icv.created);
+         output.writeLong(icv.lifespan); // could be negative so should not use unsigned longs
+         UnsignedNumeric.writeUnsignedLong(output, icv.lastUsed);
+         output.writeLong(icv.maxIdle); // could be negative so should not use unsigned longs
+      }
+
+      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         Object v = input.readObject();
+         long created = UnsignedNumeric.readUnsignedLong(input);
+         Long lifespan = input.readLong();
+         long lastUsed = UnsignedNumeric.readUnsignedLong(input);
+         Long maxIdle = input.readLong();
+         return new TransientMortalCacheValue(v, created, lifespan, maxIdle, lastUsed);
+      }      
    }
 }

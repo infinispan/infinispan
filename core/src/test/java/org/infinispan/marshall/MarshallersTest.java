@@ -157,9 +157,9 @@ public class MarshallersTest {
    }
 
    public void testMarshalledValueMarshalling() throws Exception {
-      GlobalTransaction gtx = gtf.newGlobalTransaction(new JGroupsAddress(new IpAddress(12345)), false);
-      int bytesH = marshallAndAssertEquality(home, new MarshalledValue(gtx, true, home));
-      int bytesJ = marshallAndAssertEquality(jboss, new MarshalledValue(gtx, true, jboss));
+      IpAddress addr = new IpAddress(12345);
+      int bytesH = marshallAndAssertEquality(home, new MarshalledValue(addr, true, home));
+      int bytesJ = marshallAndAssertEquality(jboss, new MarshalledValue(addr, true, jboss));
       assert bytesJ < bytesH : "JBoss Marshaller should write less bytes: bytesJBoss=" + bytesJ + ", bytesHome=" + bytesH;
    }
 

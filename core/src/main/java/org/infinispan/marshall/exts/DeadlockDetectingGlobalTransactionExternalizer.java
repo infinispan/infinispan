@@ -11,6 +11,7 @@ import java.io.ObjectOutput;
  * Externalizer for {@link DeadlockDetectingGlobalTransaction}.
  *
  * @author Mircea.Markus@jboss.com
+ * @deprecated Externalizer implementation now within {@link DeadlockDetectingGlobalTransaction}
  */
 public class DeadlockDetectingGlobalTransactionExternalizer extends GlobalTransactionExternalizer {
 

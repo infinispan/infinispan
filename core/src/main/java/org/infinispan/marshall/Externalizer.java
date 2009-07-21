@@ -25,6 +25,8 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
+import org.infinispan.marshall.jboss.ConstantObjectTable;
+
 /**
  * Extended interface that extends capabilities of writing predefined objects 
  * with the possibility of reading them. Any new externalizer implementations
@@ -32,11 +34,15 @@ import java.io.ObjectOutput;
  * information to the wire as they wish. See {@link ReplicableCommandExternalizer} 
  * for an such example.
  * 
- * To add a new non-user Externalizer, follow these steps:
+ * To add a new {@link Externalizer}, follow these steps:
  * 
- * 1. Create an implementation of Externalizer.
+ * 1. Create an implementation of {@link Externalizer}.
  * 
- * 2. Add Class to Externalizer mapping to ConstantObjectTable.EXTERNALIZERS
+ * 2. Add class that {@link Externalizer} implementation marshalls to set in 
+ * {@link ConstantObjectTable.MARSHALLABLES}
+ * 
+ * 3. Annotate the class being marshalled with {@link Marshallable} indicating the 
+ * {@link Externalizer} implementation and a unique index number.
  * 
  * @author Galder Zamarreño
  * @since 4.0

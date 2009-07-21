@@ -208,7 +208,7 @@ public class JBossMarshaller extends AbstractMarshaller {
 
    private ConstantObjectTable createCustomObjectTable(RemoteCommandFactory cmdFactory, org.infinispan.marshall.Marshaller ispnMarshaller) {
       ConstantObjectTable objectTable = new ConstantObjectTable();
-      objectTable.init(cmdFactory, ispnMarshaller);
+      objectTable.start(cmdFactory, ispnMarshaller);
       return objectTable;
    }
 }

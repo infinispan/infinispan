@@ -1,9 +1,14 @@
 package org.infinispan.transaction.xa;
 
+import org.infinispan.marshall.Ids;
+import org.infinispan.marshall.Marshallable;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Set;
 
@@ -12,6 +17,7 @@ import java.util.Set;
  *
  * @author Mircea.Markus@jboss.com
  */
+@Marshallable(externalizer = DeadlockDetectingGlobalTransaction.Externalizer.class, id = Ids.DEADLOCK_DETECTING_GLOBAL_TRANSACTION)
 public class DeadlockDetectingGlobalTransaction extends GlobalTransaction {
 
    private static Log log = LogFactory.getLog(DeadlockDetectingGlobalTransaction.class);
@@ -161,5 +167,25 @@ public class DeadlockDetectingGlobalTransaction extends GlobalTransaction {
     */
    public void setLockInterntion(Object lockInterntion) {
       this.lockInterntion = lockInterntion;
+   }
+   
+   public static class Externalizer extends GlobalTransaction.Externalizer {
+      public Externalizer() {
+         gtxFactory = new GlobalTransactionFactory(true);
+      }
+
+      @Override
+      public void writeObject(ObjectOutput output, Object subject) throws IOException {
+         super.writeObject(output, subject);
+         DeadlockDetectingGlobalTransaction ddGt = (DeadlockDetectingGlobalTransaction) subject;
+         output.writeLong(ddGt.getCoinToss());
+      }
+
+      @Override
+      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         DeadlockDetectingGlobalTransaction ddGt = (DeadlockDetectingGlobalTransaction) super.readObject(input);
+         ddGt.setCoinToss(input.readLong());
+         return ddGt;
+      }
    }
 }

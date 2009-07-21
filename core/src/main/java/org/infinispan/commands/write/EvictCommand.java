@@ -23,12 +23,16 @@ package org.infinispan.commands.write;
 
 import org.infinispan.commands.Visitor;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.marshall.Ids;
+import org.infinispan.marshall.Marshallable;
+import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 
 /**
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
+@Marshallable(externalizer = ReplicableCommandExternalizer.class, id = Ids.EVICT_COMMAND)
 public class EvictCommand extends RemoveCommand {
 
    public EvictCommand(Object key, CacheNotifier notifier) {

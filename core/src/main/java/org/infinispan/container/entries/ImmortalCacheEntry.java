@@ -1,11 +1,19 @@
 package org.infinispan.container.entries;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
+import org.infinispan.marshall.Ids;
+import org.infinispan.marshall.Marshallable;
+
 /**
  * A cache entry that is immortal/cannot expire
  *
  * @author Manik Surtani
  * @since 4.0
  */
+@Marshallable(externalizer = ImmortalCacheEntry.Externalizer.class, id = Ids.IMMORTAL_ENTRY)
 public class ImmortalCacheEntry extends AbstractInternalCacheEntry {
    private ImmortalCacheValue cacheValue;
 
@@ -99,5 +107,19 @@ public class ImmortalCacheEntry extends AbstractInternalCacheEntry {
       ImmortalCacheEntry clone = (ImmortalCacheEntry) super.clone();
       clone.cacheValue = cacheValue.clone();
       return clone;
+   }
+   
+   public static class Externalizer implements org.infinispan.marshall.Externalizer {
+      public void writeObject(ObjectOutput output, Object subject) throws IOException {
+         ImmortalCacheEntry ice = (ImmortalCacheEntry) subject;
+         output.writeObject(ice.key);
+         output.writeObject(ice.cacheValue.value);      
+      }
+
+      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         Object k = input.readObject();
+         Object v = input.readObject();
+         return new ImmortalCacheEntry(k, v);
+      }
    }
 }

@@ -35,7 +35,9 @@ import org.infinispan.tree.NodeKey;
  * 
  * @author Galder Zamarreño
  * @since 4.0
+ * @deprecated Externalizer implementation now within NodeKey
  */
+@Deprecated
 public class NodeKeyExternalizer implements Externalizer {
    private static final byte DATA_BYTE = 1;
    private static final byte STRUCTURE_BYTE = 2;

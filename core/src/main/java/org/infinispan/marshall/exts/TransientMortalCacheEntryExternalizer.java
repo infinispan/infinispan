@@ -37,6 +37,7 @@ import org.infinispan.marshall.Externalizer;
  * 
  * @author Galder Zamarreño
  * @since 4.0
+ * @deprecated Externalizer implementation now within {@link TransientMortalCacheEntry}
  */
 @Immutable
 public class TransientMortalCacheEntryExternalizer implements Externalizer {

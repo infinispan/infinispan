@@ -21,11 +21,19 @@
 */
 package org.infinispan.remoting.responses;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
+import org.infinispan.marshall.Marshallable;
+import org.infinispan.marshall.Ids;
+
 /**
  * A response with extended information
  *
  * @author Jason T. Greene
  */
+@Marshallable(externalizer = ExtendedResponse.Externalizer.class, id = Ids.EXTENDED_RESPONSE)
 public class ExtendedResponse extends ValidResponse {
    private final boolean replayIgnoredRequests;
    private final Response response;
@@ -45,5 +53,19 @@ public class ExtendedResponse extends ValidResponse {
 
    public boolean isSuccessful() {
       return response.isSuccessful();
+   }
+   
+   public static class Externalizer implements org.infinispan.marshall.Externalizer {
+      public void writeObject(ObjectOutput output, Object subject) throws IOException {
+         ExtendedResponse er = (ExtendedResponse) subject;
+         output.writeBoolean(er.replayIgnoredRequests);
+         output.writeObject(er.response);
+      }
+
+      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         boolean replayIgnoredRequests = input.readBoolean();
+         Response response = (Response) input.readObject();
+         return new ExtendedResponse(response, replayIgnoredRequests);
+      }
    }
 }

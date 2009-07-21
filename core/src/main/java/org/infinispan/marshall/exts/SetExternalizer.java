@@ -25,7 +25,9 @@ import net.jcip.annotations.Immutable;
 
 import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.marshall.Externalizer;
+import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.MarshallUtil;
+import org.infinispan.marshall.Marshallable;
 import org.jboss.marshalling.util.IdentityIntMap;
 
 import java.io.IOException;
@@ -43,6 +45,7 @@ import java.util.TreeSet;
  * @since 4.0
  */
 @Immutable
+@Marshallable(id = Ids.JDK_SETS)
 public class SetExternalizer implements Externalizer {
    private static final int HASHSET = 0;
    private static final int TREESET = 1;

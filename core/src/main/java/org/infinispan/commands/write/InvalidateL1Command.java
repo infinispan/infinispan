@@ -2,6 +2,9 @@ package org.infinispan.commands.write;
 
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.marshall.Ids;
+import org.infinispan.marshall.Marshallable;
+import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 
 /**
@@ -10,6 +13,7 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
  * @author Manik Surtani
  * @since 4.0
  */
+@Marshallable(externalizer = ReplicableCommandExternalizer.class, id = Ids.INVALIDATE_L1_COMMAND)
 public class InvalidateL1Command extends InvalidateCommand {
    public static final int COMMAND_ID = 7;
    private DistributionManager dm;

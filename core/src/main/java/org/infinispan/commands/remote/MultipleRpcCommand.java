@@ -25,6 +25,9 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.TransactionBoundaryCommand;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.marshall.Ids;
+import org.infinispan.marshall.Marshallable;
+import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -41,6 +44,7 @@ import java.util.List;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
+@Marshallable(externalizer = ReplicableCommandExternalizer.class, id = Ids.MULTIPLE_RPC_COMMAND)
 public class MultipleRpcCommand extends BaseRpcCommand {
 
    public static final byte COMMAND_ID = 2;

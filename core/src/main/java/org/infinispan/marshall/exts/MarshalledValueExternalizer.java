@@ -34,6 +34,7 @@ import java.io.ObjectOutput;
  *
  * @author Galder Zamarreño
  * @since 4.0
+ * @deprecated Externalizer implementation now within {@link MarshalledValue}
  */
 public class MarshalledValueExternalizer implements Externalizer {
    private org.infinispan.marshall.Marshaller ispnMarshaller;

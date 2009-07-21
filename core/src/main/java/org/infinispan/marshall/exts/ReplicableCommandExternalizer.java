@@ -38,7 +38,7 @@ import java.io.ObjectOutput;
 public class ReplicableCommandExternalizer implements Externalizer {
    private RemoteCommandFactory cmdFactory;
    
-   public void init(RemoteCommandFactory cmdFactory) {
+   public void inject(RemoteCommandFactory cmdFactory) {
       this.cmdFactory = cmdFactory;
    }
 

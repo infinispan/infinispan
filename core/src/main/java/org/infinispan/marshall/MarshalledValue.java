@@ -24,10 +24,13 @@ package org.infinispan.marshall;
 import org.infinispan.CacheException;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.io.ExposedByteArrayOutputStream;
+import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
+import java.io.IOException;
 import java.io.NotSerializableException;
+import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.Arrays;
@@ -45,6 +48,7 @@ import java.util.Arrays;
  * @see org.infinispan.interceptors.MarshalledValueInterceptor
  * @since 4.0
  */
+@Marshallable(externalizer = MarshalledValue.Externalizer.class, id = Ids.MARSHALLED_VALUE)
 public class MarshalledValue {
    protected Object instance;
    protected byte[] raw;
@@ -215,5 +219,29 @@ public class MarshalledValue {
             type.equals(Long.class) || type.equals(Float.class) || type.equals(Double.class) ||
             (type.isArray() && isTypeExcluded(type.getComponentType())) || type.equals(GlobalTransaction.class) || Address.class.isAssignableFrom(type) ||
             ReplicableCommand.class.isAssignableFrom(type) || type.equals(MarshalledValue.class);
+   }
+   
+   public static class Externalizer implements org.infinispan.marshall.Externalizer {
+      private Marshaller marshaller;
+      
+      public void inject(Marshaller marshaller) {
+         this.marshaller = marshaller;
+      }
+      
+      public void writeObject(ObjectOutput output, Object subject) throws IOException {
+         MarshalledValue mv = ((MarshalledValue) subject);
+         byte[] raw = mv.getRaw();
+         UnsignedNumeric.writeUnsignedInt(output, raw.length);
+         output.write(raw);
+         output.writeInt(mv.hashCode());      
+      }
+
+      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         int length = UnsignedNumeric.readUnsignedInt(input);
+         byte[] raw = new byte[length];
+         input.readFully(raw);
+         int hc = input.readInt();
+         return new MarshalledValue(raw, hc, marshaller);
+      }
    }
 }

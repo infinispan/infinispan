@@ -24,6 +24,9 @@ package org.infinispan.commands.write;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.marshall.Ids;
+import org.infinispan.marshall.Marshallable;
+import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 
 import java.util.Map;
@@ -33,6 +36,7 @@ import java.util.Map.Entry;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
+@Marshallable(externalizer = ReplicableCommandExternalizer.class, id = Ids.PUT_MAP_COMMAND)
 public class PutMapCommand implements WriteCommand {
    public static final byte COMMAND_ID = 9;
 

@@ -19,38 +19,31 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.marshall.exts;
+package org.infinispan.marshall;
 
-import  java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
-import net.jcip.annotations.Immutable;
-
-import org.infinispan.container.entries.ImmortalCacheEntry;
-import org.infinispan.container.entries.InternalEntryFactory;
-import org.infinispan.marshall.Externalizer;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * ImmortalCacheEntryExternalizer.
+ * This annotation is used for those classes that need to be marshalled/unmarshalled between nodes
+ * in the cluster or to/from cahe stores. Such classes need to provide an implementation for 
+ * {@link Externalizer} interface and a unique index number (see {@link Ids} for index numbers 
+ * currently allocated).
  * 
  * @author Galder Zamarreño
- * @since 4.0 
- * @deprecated Externalizer implementation now within {@link ImmortalCacheEntry}
+ * @since 4.0
  */
-@Immutable
-public class ImmortalCacheEntryExternalizer implements Externalizer {
+//ensure this annotation is available at runtime.
+@Retention(RetentionPolicy.RUNTIME)
+
+// only applies to classes.
+@Target(ElementType.TYPE) 
+public @interface Marshallable {
    
-   public void writeObject(ObjectOutput output, Object subject) throws IOException {
-      ImmortalCacheEntry ice = (ImmortalCacheEntry) subject;
-      output.writeObject(ice.getKey());
-      output.writeObject(ice.getValue());      
-   }
-
-   public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-      Object k = input.readObject();
-      Object v = input.readObject();
-      return InternalEntryFactory.create(k, v);
-   }
-
+   Class<? extends Externalizer> externalizer() default Externalizer.class;
+   
+   int id();
+   
 }

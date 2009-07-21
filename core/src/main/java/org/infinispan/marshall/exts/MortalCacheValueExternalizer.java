@@ -35,6 +35,7 @@ import org.infinispan.marshall.Externalizer;
  * 
  * @author Galder Zamarreño
  * @since 4.0
+ * @deprecated Externalizer implementation now within {@link MortalCacheValue}
  */
 public class MortalCacheValueExternalizer implements Externalizer {
 
