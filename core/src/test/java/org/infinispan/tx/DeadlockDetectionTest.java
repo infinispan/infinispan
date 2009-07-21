@@ -43,24 +43,23 @@ import java.util.concurrent.CountDownLatch;
  * Functional test for deadlock detection.
  *
  * @author Mircea.Markus@jboss.com
- *         <p/>
- *         TODO - test for deadlock on invalidation
  *          TODO - add test deadlock with distribution
  */
 @Test(testName = "tx.DeadlockDetectionTest", groups = "functional")
 public class DeadlockDetectionTest extends MultipleCacheManagersTest {
 
-   private ControlledRpcManager controlledRpcManager1;
-   private ControlledRpcManager controlledRpcManager2;
-   private CountDownLatch replicationLatch;
-   private ExecutorThread t1;
-   private ExecutorThread t2;
-   private DeadlockDetectingLockManager ddLm1;
-   private DeadlockDetectingLockManager ddLm2;
+   protected ControlledRpcManager controlledRpcManager1;
+   protected ControlledRpcManager controlledRpcManager2;
+   protected CountDownLatch replicationLatch;
+   protected ExecutorThread t1;
+   protected ExecutorThread t2;
+   protected DeadlockDetectingLockManager ddLm1;
+   protected DeadlockDetectingLockManager ddLm2;
 
+   protected Configuration.CacheMode cacheMode = Configuration.CacheMode.REPL_SYNC;
 
    protected void createCacheManagers() throws Throwable {
-      Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
+      Configuration config = getDefaultClusteredConfig(cacheMode);
       config.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
       config.setEnableDeadlockDetection(true);
       config.setSyncCommitPhase(true);
@@ -466,7 +465,7 @@ public class DeadlockDetectionTest extends MultipleCacheManagersTest {
       }
    }
 
-   private boolean xor(boolean b1, boolean b2) {
+   protected boolean xor(boolean b1, boolean b2) {
       return (b1 || b2) && !(b1 && b2);
    }
 
