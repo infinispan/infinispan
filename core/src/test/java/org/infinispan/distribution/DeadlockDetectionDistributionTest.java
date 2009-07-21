@@ -6,7 +6,7 @@ import static org.testng.Assert.fail;
 import org.testng.annotations.Test;
 
 /**
- * Test deadlock detection when cache is configured for invalidation.
+ * Test deadlock detection when cache is configured for distribution.
  *
  * @author Mircea.Markus@jboss.com
  */
