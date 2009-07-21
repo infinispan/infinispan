@@ -25,7 +25,9 @@ import java.util.Set;
  * This interceptor populates the {@link org.infinispan.transaction.xa.DeadlockDetectingGlobalTransaction} with
  * appropriate information needed in order to accomplish deadlock detection. It MUST process populate data before the
  * replication takes place, so it will do all the tasks before calling {@link org.infinispan.interceptors.base.CommandInterceptor#invokeNextInterceptor(org.infinispan.context.InvocationContext,
- * org.infinispan.commands.VisitableCommand)}
+ * org.infinispan.commands.VisitableCommand)}.
+ *
+ * Note: for local caches, deadlock detection dos NOT work for aggregate operations (clear, putAll).
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.0
