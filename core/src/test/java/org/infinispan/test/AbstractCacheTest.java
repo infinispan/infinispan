@@ -118,4 +118,9 @@ public class AbstractCacheTest {
       configuration.setFetchInMemoryState(false);
       return configuration;
    }
+
+
+   protected boolean xor(boolean b1, boolean b2) {
+      return (b1 || b2) && !(b1 && b2);
+   }
 }

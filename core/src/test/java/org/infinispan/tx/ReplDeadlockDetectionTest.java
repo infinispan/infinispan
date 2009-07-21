@@ -1,6 +1,5 @@
 package org.infinispan.tx;
 
-import org.infinispan.Cache;
 import org.infinispan.api.mvcc.LockAssert;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.config.Configuration;
@@ -19,40 +18,33 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.statetransfer.StateTransferException;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.PerCacheExecutorThread;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.concurrent.locks.DeadlockDetectingLockManager;
 import org.infinispan.util.concurrent.locks.LockManager;
-import org.infinispan.util.concurrent.locks.DeadlockDetectedException;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-import static org.testng.Assert.assertEquals;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.transaction.TransactionManager;
-import javax.transaction.RollbackException;
 import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 
 /**
  * Functional test for deadlock detection.
  *
  * @author Mircea.Markus@jboss.com
- *          TODO - add test deadlock with distribution
+ *
  */
-@Test(testName = "tx.DeadlockDetectionTest", groups = "functional")
-public class DeadlockDetectionTest extends MultipleCacheManagersTest {
+@Test(testName = "tx.ReplDeadlockDetectionTest", groups = "functional")
+public class ReplDeadlockDetectionTest extends MultipleCacheManagersTest {
 
    protected ControlledRpcManager controlledRpcManager1;
    protected ControlledRpcManager controlledRpcManager2;
    protected CountDownLatch replicationLatch;
-   protected ExecutorThread t1;
-   protected ExecutorThread t2;
+   protected PerCacheExecutorThread t1;
+   protected PerCacheExecutorThread t2;
    protected DeadlockDetectingLockManager ddLm1;
    protected DeadlockDetectingLockManager ddLm2;
 
@@ -95,8 +87,8 @@ public class DeadlockDetectionTest extends MultipleCacheManagersTest {
 
    @BeforeMethod
    public void beforeMethod() {
-      t1 = new ExecutorThread(cache(0, "test"), 1);
-      t2 = new ExecutorThread(cache(1, "test"), 2);
+      t1 = new PerCacheExecutorThread(cache(0, "test"), 1);
+      t2 = new PerCacheExecutorThread(cache(1, "test"), 2);
       replicationLatch = new CountDownLatch(1);
       controlledRpcManager1.setReplicationLatch(replicationLatch);
       controlledRpcManager2.setReplicationLatch(replicationLatch);
@@ -138,19 +130,19 @@ public class DeadlockDetectionTest extends MultipleCacheManagersTest {
    public void testDeadlockDetectedTwoTransactions() throws Exception {
       t1.setKeyValue("key", "value1");
       t2.setKeyValue("key", "value2");
-      assert OperationsResult.BEGGIN_TX_OK == t1.execute(Operations.BEGGIN_TX);
-      assert OperationsResult.BEGGIN_TX_OK == t2.execute(Operations.BEGGIN_TX);
+      assert PerCacheExecutorThread.OperationsResult.BEGGIN_TX_OK == t1.execute(PerCacheExecutorThread.Operations.BEGGIN_TX);
+      assert PerCacheExecutorThread.OperationsResult.BEGGIN_TX_OK == t2.execute(PerCacheExecutorThread.Operations.BEGGIN_TX);
       System.out.println("After beggin");
 
-      t1.execute(Operations.PUT_KEY_VALUE);
-      t2.execute(Operations.PUT_KEY_VALUE);
+      t1.execute(PerCacheExecutorThread.Operations.PUT_KEY_VALUE);
+      t2.execute(PerCacheExecutorThread.Operations.PUT_KEY_VALUE);
       System.out.println("After put key value");
 
       t1.clearResponse();
       t2.clearResponse();
 
-      t1.executeNoResponse(Operations.COMMIT_TX);
-      t2.executeNoResponse(Operations.COMMIT_TX);
+      t1.executeNoResponse(PerCacheExecutorThread.Operations.COMMIT_TX);
+      t2.executeNoResponse(PerCacheExecutorThread.Operations.COMMIT_TX);
 
       System.out.println("Now replication is triggered");
       replicationLatch.countDown();
@@ -188,72 +180,6 @@ public class DeadlockDetectionTest extends MultipleCacheManagersTest {
       LockAssert.assertNoLocks(cache(0, "test"));
    }
 
-   public void testLocalVsLocalTxDeadlock() {
-      CacheManager cm = null;
-      try {
-         cm = TestCacheManagerFactory.createLocalCacheManager();
-         Configuration configuration = new Configuration();
-         configuration.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
-         configuration.setEnableDeadlockDetection(true);
-         configuration.setUseLockStriping(false);
-         configuration.setExposeJmxStatistics(true);
-         cm.defineCache("test", configuration);
-         Cache localCache = cm.getCache("test");
-         DeadlockDetectingLockManager lockManager = (DeadlockDetectingLockManager) TestingUtil.extractLockManager(localCache);
-
-         ExecutorThread t1 = new ExecutorThread(localCache, 0);
-         ExecutorThread t2 = new ExecutorThread(localCache, 1);
-
-
-         assert OperationsResult.BEGGIN_TX_OK == t1.execute(Operations.BEGGIN_TX);
-         assert OperationsResult.BEGGIN_TX_OK == t2.execute(Operations.BEGGIN_TX);
-         System.out.println("After beggin");
-
-         t1.setKeyValue("k1", "value_1_t1");
-         t2.setKeyValue("k2", "value_2_t2");
-
-         assert OperationsResult.PUT_KEY_VALUE_OK == t1.execute(Operations.PUT_KEY_VALUE);
-         assert OperationsResult.PUT_KEY_VALUE_OK == t2.execute(Operations.PUT_KEY_VALUE);
-
-         System.out.println("After first PUT");
-         assert lockManager.isLocked("k1");
-         assert lockManager.isLocked("k2");
-
-
-         t1.setKeyValue("k2", "value_2_t1");
-         t2.setKeyValue("k1", "value_1_t2");
-         t1.executeNoResponse(Operations.PUT_KEY_VALUE);
-         t2.executeNoResponse(Operations.PUT_KEY_VALUE);
-
-         Object response1 = t1.waitForResponse();
-         Object response2 = t2.waitForResponse();
-
-         assert xor(response1 instanceof DeadlockDetectedException, response2 instanceof DeadlockDetectedException) : "expected one and only one exception: " + response1 + ", " + response2;
-         assert xor(response1 == OperationsResult.PUT_KEY_VALUE_OK, response2 == OperationsResult.PUT_KEY_VALUE_OK) : "expected one and only one exception: " + response1 + ", " + response2;
-
-         assert lockManager.isLocked("k1");
-         assert lockManager.isLocked("k2");
-         assert lockManager.getOwner("k1") == lockManager.getOwner("k2");
-
-         if (response1 instanceof Exception) {
-            assert OperationsResult.COMMIT_TX_OK == t2.execute(Operations.COMMIT_TX);
-            assertEquals("value_1_t2", localCache.get("k1"));
-            assertEquals("value_2_t2", localCache.get("k2"));
-            assert t1.execute(Operations.COMMIT_TX) instanceof RollbackException;
-         } else {
-            assert OperationsResult.COMMIT_TX_OK == t1.execute(Operations.COMMIT_TX);
-            assertEquals("value_1_t1", localCache.get("k1"));
-            assertEquals("value_2_t1", localCache.get("k2"));
-            assert t2.execute(Operations.COMMIT_TX) instanceof RollbackException;
-         }
-         assert lockManager.getNumberOfLocksHeld() == 0;
-         assertEquals(lockManager.getDetectedDeadlocks(), 1);
-      } finally {
-         TestingUtil.killCacheManagers(cm);
-      }
-   }
-
-
    public void testDeadlockDetectedOneTx() throws Exception {
       t1.setKeyValue("key", "value1");
 
@@ -263,11 +189,11 @@ public class DeadlockDetectionTest extends MultipleCacheManagersTest {
       assert lm2.isLocked("key");
 
 
-      assert OperationsResult.BEGGIN_TX_OK == t1.execute(Operations.BEGGIN_TX) : "but received " + t1.lastResponse();
-      t1.execute(Operations.PUT_KEY_VALUE);
+      assert PerCacheExecutorThread.OperationsResult.BEGGIN_TX_OK == t1.execute(PerCacheExecutorThread.Operations.BEGGIN_TX) : "but received " + t1.lastResponse();
+      t1.execute(PerCacheExecutorThread.Operations.PUT_KEY_VALUE);
 
       t1.clearResponse();
-      t1.executeNoResponse(Operations.COMMIT_TX);
+      t1.executeNoResponse(PerCacheExecutorThread.Operations.COMMIT_TX);
 
       replicationLatch.countDown();
       System.out.println("Now replication is triggered");
@@ -296,11 +222,11 @@ public class DeadlockDetectionTest extends MultipleCacheManagersTest {
       assert lm2.isLocked("key");
 
 
-      assert OperationsResult.BEGGIN_TX_OK == t1.execute(Operations.BEGGIN_TX) : "but received " + t1.lastResponse();
-      t1.execute(Operations.PUT_KEY_VALUE);
+      assert PerCacheExecutorThread.OperationsResult.BEGGIN_TX_OK == t1.execute(PerCacheExecutorThread.Operations.BEGGIN_TX) : "but received " + t1.lastResponse();
+      t1.execute(PerCacheExecutorThread.Operations.PUT_KEY_VALUE);
 
       t1.clearResponse();
-      t1.executeNoResponse(Operations.COMMIT_TX);
+      t1.executeNoResponse(PerCacheExecutorThread.Operations.COMMIT_TX);
 
       replicationLatch.countDown();
 
@@ -312,161 +238,13 @@ public class DeadlockDetectionTest extends MultipleCacheManagersTest {
 
       Object t1CommitRsp = t1.lastResponse();
 
-      assert t1CommitRsp == OperationsResult.COMMIT_TX_OK : "expected true, received " + t1.lastResponse();
+      assert t1CommitRsp == PerCacheExecutorThread.OperationsResult.COMMIT_TX_OK : "expected true, received " + t1.lastResponse();
 
       LockManager lm1 = TestingUtil.extractComponent(cache(0, "test"), LockManager.class);
       assert !lm1.isLocked("key") : "It is locked by " + lm1.getOwner("key");
 
       assert !lm2.isLocked("key");
       assert !lm1.isLocked("key");
-   }
-
-   public static enum Operations {
-      BEGGIN_TX, COMMIT_TX, PUT_KEY_VALUE, STOP_THREAD
-   }
-
-   public static enum OperationsResult {
-      BEGGIN_TX_OK, COMMIT_TX_OK, PUT_KEY_VALUE_OK, STOP_THREAD_OK
-   }
-
-   public static final class ExecutorThread extends Thread {
-
-      private static Log log = LogFactory.getLog(ExecutorThread.class);
-
-      private Cache<Object, Object> cache;
-      private BlockingQueue<Object> toExecute = new ArrayBlockingQueue<Object>(1);
-      private volatile Object response;
-      private CountDownLatch responseLatch = new CountDownLatch(1);
-
-      private volatile Object key, value;
-
-      public void setKeyValue(Object key, Object value) {
-         this.key = key;
-         this.value = value;
-      }
-
-      public ExecutorThread(Cache<Object, Object> cache, int index) {
-         super("ExecutorThread-" + index);
-         this.cache = cache;
-         start();
-      }
-
-      public Object execute(Operations op) {
-         try {
-            responseLatch = new CountDownLatch(1);
-            toExecute.put(op);
-            responseLatch.await();
-            return response;
-         } catch (InterruptedException e) {
-            throw new RuntimeException("Unexpected", e);
-         }
-      }
-
-      public void executeNoResponse(Operations op) {
-         try {
-            responseLatch = null;
-            response = null;
-            toExecute.put(op);
-         } catch (InterruptedException e) {
-            throw new RuntimeException("Unexpected", e);
-         }
-      }
-
-      @Override
-      public void run() {
-         Operations operation;
-         boolean run = true;
-         while (run) {
-            try {
-               operation = (Operations) toExecute.take();
-            } catch (InterruptedException e) {
-               throw new RuntimeException(e);
-            }
-            System.out.println("about to process operation " + operation);
-            switch (operation) {
-               case BEGGIN_TX: {
-                  TransactionManager txManager = TestingUtil.getTransactionManager(cache);
-                  try {
-                     txManager.begin();
-                     setResponse(OperationsResult.BEGGIN_TX_OK);
-                  } catch (Exception e) {
-                     log.trace("Failure on beggining tx", e);
-                     setResponse(e);
-                  }
-                  break;
-               }
-               case COMMIT_TX: {
-                  TransactionManager txManager = TestingUtil.getTransactionManager(cache);
-                  try {
-                     txManager.commit();
-                     setResponse(OperationsResult.COMMIT_TX_OK);
-                  } catch (Exception e) {
-                     log.trace("Exception while committing tx", e);
-                     setResponse(e);
-                  }
-                  break;
-               }
-               case PUT_KEY_VALUE: {
-                  try {
-                     cache.put(key, value);
-                     log.trace("Successfully exucuted putKeyValue(" + key + ", " + value + ")");
-                     setResponse(OperationsResult.PUT_KEY_VALUE_OK);
-                  } catch (Exception e) {
-                     log.trace("Exception while executing putKeyValue(" + key + ", " + value + ")", e);
-                     setResponse(e);
-                  }
-                  break;
-               }
-               case STOP_THREAD: {
-                  System.out.println("Exiting...");
-                  toExecute = null;
-                  run = false;
-                  break;
-               }
-            }
-            if (responseLatch != null) responseLatch.countDown();
-         }
-         setResponse("EXIT");
-      }
-
-      private void setResponse(Object e) {
-         log.trace("setResponse to " + e);
-         response = e;
-      }
-
-      public void stopThread() {
-         execute(Operations.STOP_THREAD);
-         while (!this.getState().equals(State.TERMINATED)) {
-            try {
-               Thread.sleep(50);
-            } catch (InterruptedException e) {
-               throw new IllegalStateException(e);
-            }
-         }
-      }
-
-      public Object lastResponse() {
-         return response;
-      }
-
-      public void clearResponse() {
-         response = null;
-      }
-
-      public Object waitForResponse() {
-         while (response == null) {
-            try {
-               Thread.sleep(50);
-            } catch (InterruptedException e) {
-               throw new RuntimeException(e);
-            }
-         }
-         return response;
-      }
-   }
-
-   protected boolean xor(boolean b1, boolean b2) {
-      return (b1 || b2) && !(b1 && b2);
    }
 
    public static final class ControlledRpcManager implements RpcManager {
