@@ -19,19 +19,33 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 
 /**
- * Test for benchmarking the performance of deadlock detection code. It startes multiple threads that operate on the
- * same   
+ * Test for benchmarking the performance of deadlock detection code. Performance is measured as number of successful
+ * transactions per minute.
+ * <pre>
+ * Test description:
+ *    We use a fixed size pool of keys ({@link #KEY_POOL_SIZE}) on which each transaction operates. A number of threads ({@link #THREAD_COUNT})
+ * repeatedly starts transactions and tries to acquire locks on a random subset of this pool, by executing put
+ * operations on each key. If all locks were successfully acquired then the tx tries to commit: only if it succeeds this tx is counted as successful.
+ * The number of elements in this subset is the transaction size ({@link #TX_SIZE}). The greater transaction 
+ * size is, the higher chance for deadlock situation to occur.
+ * On each thread these transactions are being repeatedly executed (each time on a different, random key set) for a given time
+ * interval ({@link #BENCHMARK_DURATION}). At the end, the number of successful transactions from each thread is cumulated, and this
+ * defines throughput (successful tx) per time unit (by default one minute).
+ * </pre>
+ * There are two different benchmark methods, one for local cache {@link #testLocalDifferentTxSize()} and one for replicated caches
+ * {@link #testReplDifferentTxSize()}.
+ * 
  *
  * @author Mircea.Markus@jboss.com
  */
-@Test (groups = "profiling", enabled = true, testName = "profiling.DeadlockDetectionPerformanceTest")
+@Test(groups = "profiling", enabled = true, testName = "profiling.DeadlockDetectionPerformanceTest")
 public class DeadlockDetectionPerformanceTest {
 
    public static final int KEY_POOL_SIZE = 10;
 
    public static int TX_SIZE = 5;
 
-   public static final int THREAD_COUNT = 3;
+   public static int THREAD_COUNT = 5;
 
    public static final long BENCHMARK_DURATION = 60000;
 
@@ -60,9 +74,10 @@ public class DeadlockDetectionPerformanceTest {
          runLocalTest();
       }
    }
-   
+
    @Test(invocationCount = 10, enabled = false)
    public void testReplDifferentTxSize() throws Exception {
+      THREAD_COUNT = 2;
       USE_DLD = false;
       for (int i = 2; i < KEY_POOL_SIZE; i++) {
          TX_SIZE = i;
