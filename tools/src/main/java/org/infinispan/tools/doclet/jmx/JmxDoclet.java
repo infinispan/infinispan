@@ -133,8 +133,10 @@ public class JmxDoclet {
 
       // and field level annotations
       for (FieldDoc field : cd.fields(false)) {
+
          for (AnnotationDesc a : field.annotations()) {
             String annotationName = a.annotationType().qualifiedTypeName();
+
             if (annotationName.equals(ManagedAttribute.class.getName())) {
                isMBean = true;
                MBeanAttribute attr = new MBeanAttribute();
@@ -150,6 +152,7 @@ public class JmxDoclet {
       if (isMBean) {
          Collections.sort(mbc.attributes);
          Collections.sort(mbc.operations);
+
          return mbc;
       } else {
          return null;

@@ -223,6 +223,10 @@ public class TxInterceptor extends CommandInterceptor {
       this.statsEnabled = enabled;
    }
 
+   public boolean isStatisticsEnabled() {
+      return this.statsEnabled;
+   }
+
    @ManagedAttribute(description = "number of transaction prepares")
    public long getPrepares() {
       return prepares.get();

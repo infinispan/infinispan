@@ -163,19 +163,33 @@ public class TestNameVerifier {
 
    public void verifyTestName() throws Exception {
       File[] javaFiles = getAllJavaFiles();
-      StringBuilder errorMessage = new StringBuilder("Following test class(es) do not have an appropriate test name: \n");
+      StringBuilder errorMessage = new StringBuilder("Following test class(es) do not have an appropriate test names: \n");
       boolean hasErrors = false;
       for (File file : javaFiles) {
          String expectedName = incorrectTestName(file);
          if (expectedName != null) {
-            errorMessage.append(file.getAbsoluteFile()).append(" expected test name is: '").append(expectedName).append("' \n");
+            errorMessage.append(file.getAbsoluteFile()).append(" (Expected test name '").append(expectedName).append("', was '").append(existingTestName(file)).append("'\n");
             hasErrors = true;
          }
       }
-      assert !hasErrors : errorMessage.append("The rules for writting UTs are being descibed here: https://www.jboss.org/community/docs/DOC-13315");
+      assert !hasErrors : errorMessage.append("The rules for writing unit tests are described on http://www.jboss.org/community/wiki/ParallelTestSuite");
    }
 
    private String incorrectTestName(File file) throws Exception {
+      String fileAsStr = getFileAsString(file);
+
+      boolean containsTestAnnotation = atAnnotationPattern.matcher(fileAsStr).find();
+      if (!containsTestAnnotation) return null;
+
+      String expectedTestName = getTestName(fileAsStr, file.getName());
+      if (expectedTestName == null) return null; //this happens when the class is abstract
+
+      String existingTestName = existingTestName(file);
+      if (existingTestName == null || !existingTestName.equals(expectedTestName)) return expectedTestName;
+      return null;
+   }
+
+   private String existingTestName(File file) throws Exception {
       String fileAsStr = getFileAsString(file);
 
       boolean containsTestAnnotation = atAnnotationPattern.matcher(fileAsStr).find();
@@ -187,9 +201,7 @@ public class TestNameVerifier {
       if (!matcher.find()) return expectedTestName;
       String name = matcher.group().trim();
       int firstIndexOfQuote = name.indexOf('"');
-      String existingTestName = name.substring(firstIndexOfQuote + 1, name.length() - 1); //to ignore last quote
-      if (!existingTestName.equals(expectedTestName)) return expectedTestName;
-      return null;
+      return name.substring(firstIndexOfQuote + 1, name.length() - 1);
    }
 
    // method that populates the list of module names
