@@ -1,4 +1,4 @@
-package org.infinispan.statetransfer;
+package org.infinispan.test.data;
 
 import java.io.Serializable;
 
