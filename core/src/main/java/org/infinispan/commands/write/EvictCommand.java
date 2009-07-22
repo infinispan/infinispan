@@ -35,6 +35,9 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 @Marshallable(externalizer = ReplicableCommandExternalizer.class, id = Ids.EVICT_COMMAND)
 public class EvictCommand extends RemoveCommand {
 
+   public EvictCommand() {
+   }
+
    public EvictCommand(Object key, CacheNotifier notifier) {
       this.key = key;
       this.notifier = notifier;

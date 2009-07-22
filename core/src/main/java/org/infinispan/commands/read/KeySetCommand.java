@@ -21,23 +21,27 @@
  */
 package org.infinispan.commands.read;
 
-import java.util.Set;
-
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.DataContainer;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.util.Immutables;
 
+import java.util.Set;
+
 /**
  * KeySetCommand.
- * 
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */
 public class KeySetCommand implements VisitableCommand {
    private final DataContainer container;
-   
+
+   public KeySetCommand() {
+      container = null;
+   }
+
    public KeySetCommand(DataContainer container) {
       this.container = container;
    }
@@ -59,14 +63,14 @@ public class KeySetCommand implements VisitableCommand {
    }
 
    public void setParameters(int commandId, Object[] parameters) {
-       // no-op
+      // no-op
    }
 
    @Override
    public String toString() {
       return "KeySetCommand{" +
             "set=" + container.keySet() +
-            '}';   
+            '}';
    }
-   
+
 }

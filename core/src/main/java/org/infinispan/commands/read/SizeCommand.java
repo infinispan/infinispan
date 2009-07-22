@@ -35,6 +35,9 @@ import org.infinispan.context.InvocationContext;
 public class SizeCommand implements VisitableCommand {
    private DataContainer container;
 
+   public SizeCommand() {
+   }
+
    public SizeCommand(DataContainer container) {
       this.container = container;
    }

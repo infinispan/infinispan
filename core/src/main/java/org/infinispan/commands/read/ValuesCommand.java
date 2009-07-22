@@ -21,23 +21,27 @@
  */
 package org.infinispan.commands.read;
 
-import java.util.Collection;
-
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.DataContainer;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.util.Immutables;
 
+import java.util.Collection;
+
 /**
  * ValuesCommand.
- * 
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */
 public class ValuesCommand implements VisitableCommand {
    private final DataContainer container;
-   
+
+   public ValuesCommand() {
+      container = null;
+   }
+
    public ValuesCommand(DataContainer container) {
       this.container = container;
    }
@@ -61,12 +65,12 @@ public class ValuesCommand implements VisitableCommand {
    public void setParameters(int commandId, Object[] parameters) {
       // no-op
    }
-   
+
    @Override
    public String toString() {
       return "ValuesCommand{" +
             "values=" + container.values() +
-            '}';   
+            '}';
    }
 
 }

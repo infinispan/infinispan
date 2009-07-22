@@ -21,27 +21,31 @@
  */
 package org.infinispan.commands.read;
 
-import java.util.Set;
-
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.DataContainer;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.util.Immutables;
 
+import java.util.Set;
+
 /**
  * EntrySetCommand.
- * 
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */
 public class EntrySetCommand implements VisitableCommand {
    private final DataContainer container;
 
+   public EntrySetCommand() {
+      container = null;
+   }
+
    public EntrySetCommand(DataContainer container) {
       this.container = container;
    }
-   
+
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitEntrySetCommand(ctx, this);
    }
@@ -66,6 +70,6 @@ public class EntrySetCommand implements VisitableCommand {
    public String toString() {
       return "EntrySetCommand{" +
             "set=" + container.entrySet() +
-            '}';   
+            '}';
    }
 }
