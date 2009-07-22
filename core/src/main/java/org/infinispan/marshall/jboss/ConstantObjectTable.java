@@ -23,8 +23,8 @@ package org.infinispan.marshall.jboss;
 
 import org.infinispan.CacheException;
 import org.infinispan.atomic.AtomicHashMap;
-import org.infinispan.commands.LockControlCommand;
 import org.infinispan.commands.RemoteCommandFactory;
+import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
@@ -87,10 +87,9 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 /**
- * Constant ObjectTable that marshalls constant instances regardless of whether 
- * these are generic objects such as UnsuccessfulResponse.INSTANCE, or home grown 
- * Externalizer implementations. In both cases, this is a hugely efficient way of 
- * sending around constant singleton objects. 
+ * Constant ObjectTable that marshalls constant instances regardless of whether these are generic objects such as
+ * UnsuccessfulResponse.INSTANCE, or home grown Externalizer implementations. In both cases, this is a hugely efficient
+ * way of sending around constant singleton objects.
  *
  * @author Galder Zamarreño
  * @since 4.0
@@ -108,14 +107,14 @@ public class ConstantObjectTable implements ObjectTable {
       JDK_EXTERNALIZERS.put(HashSet.class.getName(), SetExternalizer.class.getName());
       JDK_EXTERNALIZERS.put(TreeSet.class.getName(), SetExternalizer.class.getName());
       JDK_EXTERNALIZERS.put("java.util.Collections$SingletonList", SingletonListExternalizer.class.getName());
-      
+
       MARSHALLABLES.add(GlobalTransaction.class.getName());
       MARSHALLABLES.add(DeadlockDetectingGlobalTransaction.class.getName());
       MARSHALLABLES.add(JGroupsAddress.class.getName());
       MARSHALLABLES.add("org.infinispan.util.Immutables$ImmutableMapWrapper");
       MARSHALLABLES.add(MarshalledValue.class.getName());
       MARSHALLABLES.add(FastCopyHashMap.class.getName());
-      
+
       MARSHALLABLES.add("org.infinispan.transaction.TransactionLog$LogEntry");
       MARSHALLABLES.add(ExtendedResponse.class.getName());
       MARSHALLABLES.add(SuccessfulResponse.class.getName());
@@ -143,28 +142,32 @@ public class ConstantObjectTable implements ObjectTable {
       MARSHALLABLES.add(ImmortalCacheEntry.class.getName());
       MARSHALLABLES.add(MortalCacheEntry.class.getName());
       MARSHALLABLES.add(TransientCacheEntry.class.getName());
-      MARSHALLABLES.add(TransientMortalCacheEntry.class.getName());    
+      MARSHALLABLES.add(TransientMortalCacheEntry.class.getName());
       MARSHALLABLES.add(ImmortalCacheValue.class.getName());
       MARSHALLABLES.add(MortalCacheValue.class.getName());
       MARSHALLABLES.add(TransientCacheValue.class.getName());
       MARSHALLABLES.add(TransientMortalCacheValue.class.getName());
-      
+
       MARSHALLABLES.add(AtomicHashMap.class.getName());
       MARSHALLABLES.add(Bucket.class.getName());
-      
+
       MARSHALLABLES.add("org.infinispan.tree.NodeKey");
       MARSHALLABLES.add("org.infinispan.tree.Fqn");
    }
 
-   /** Contains mapping of classes to their corresponding Externalizer classes via ExternalizerAdapter instances. */
+   /**
+    * Contains mapping of classes to their corresponding Externalizer classes via ExternalizerAdapter instances.
+    */
    private final Map<Class<?>, ExternalizerAdapter> writers = new IdentityHashMap<Class<?>, ExternalizerAdapter>();
 
-   /** Contains mapping of ids to their corresponding Externalizer classes via ExternalizerAdapter instances. */
+   /**
+    * Contains mapping of ids to their corresponding Externalizer classes via ExternalizerAdapter instances.
+    */
    private final Map<Integer, ExternalizerAdapter> readers = new HashMap<Integer, ExternalizerAdapter>();
 
    public void start(RemoteCommandFactory cmdFactory, org.infinispan.marshall.Marshaller ispnMarshaller) {
       HashSet<Integer> ids = new HashSet<Integer>();
-      
+
       try {
          for (Map.Entry<String, String> entry : JDK_EXTERNALIZERS.entrySet()) {
             try {
@@ -174,13 +177,14 @@ public class ConstantObjectTable implements ObjectTable {
                int id = marshallable.id();
                ids.add(id);
                ExternalizerAdapter adapter = new ExternalizerAdapter(id, ext);
-               writers.put(clazz, adapter);               
+               writers.put(clazz, adapter);
                readers.put(id, adapter);
             } catch (ClassNotFoundException e) {
-               if (log.isDebugEnabled()) log.debug("Unable to load class (ignore if class belonging to a module not in use): {0}", e.getMessage());
+               if (log.isDebugEnabled())
+                  log.debug("Unable to load class (ignore if class belonging to a module not in use): {0}", e.getMessage());
             }
          }
-         
+
          for (String marshallableClass : MARSHALLABLES) {
             try {
                Class clazz = Util.loadClass(marshallableClass);
@@ -188,27 +192,29 @@ public class ConstantObjectTable implements ObjectTable {
                if (marshallable != null && !marshallable.externalizer().equals(Externalizer.class)) {
                   int id = marshallable.id();
                   Externalizer ext = (Externalizer) Util.getInstance(marshallable.externalizer());
-                  if (!ids.add(id)) throw new CacheException("Duplicat id found! id=" + id + " in " + ext.getClass().getName() + " is shared by another marshallable class.");
+                  if (!ids.add(id))
+                     throw new CacheException("Duplicat id found! id=" + id + " in " + ext.getClass().getName() + " is shared by another marshallable class.");
                   if (ext instanceof ReplicableCommandExternalizer) {
                      ((ReplicableCommandExternalizer) ext).inject(cmdFactory);
                   }
                   if (ext instanceof MarshalledValue.Externalizer) {
                      ((MarshalledValue.Externalizer) ext).inject(ispnMarshaller);
                   }
-                  
+
                   ExternalizerAdapter adapter = new ExternalizerAdapter(id, ext);
                   writers.put(clazz, adapter);
                   readers.put(id, adapter);
-               }               
+               }
             } catch (ClassNotFoundException e) {
-               if (log.isDebugEnabled()) log.debug("Unable to load class (ignore if class belonging to a module not in use): {0}", e.getMessage());
+               if (log.isDebugEnabled())
+                  log.debug("Unable to load class (ignore if class belonging to a module not in use): {0}", e.getMessage());
             }
          }
       } catch (Exception e) {
          throw new CacheException("Unable to instantiate Externalizer class", e);
       }
-      
-      
+
+
    }
 
    public void stop() {
@@ -217,23 +223,23 @@ public class ConstantObjectTable implements ObjectTable {
    }
 
    public Writer getObjectWriter(Object o) throws IOException {
-      return writers.get(o.getClass());      
+      return writers.get(o.getClass());
    }
 
    public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
       ExternalizerAdapter adapter = (ExternalizerAdapter) readers.get(input.readUnsignedByte());
       return adapter.readObject(input);
    }
-     
+
    static class ExternalizerAdapter implements Writer {
       final int id;
       final Externalizer externalizer;
-      
+
       ExternalizerAdapter(int id, Externalizer externalizer) {
          this.id = id;
          this.externalizer = externalizer;
       }
-      
+
       public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
          return externalizer.readObject(input);
       }
@@ -242,5 +248,5 @@ public class ConstantObjectTable implements ObjectTable {
          output.write(id);
          externalizer.writeObject(output, object);
       }
-   }   
+   }
 }

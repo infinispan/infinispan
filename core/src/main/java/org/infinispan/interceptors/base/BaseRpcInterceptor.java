@@ -21,7 +21,7 @@
  */
 package org.infinispan.interceptors.base;
 
-import org.infinispan.commands.LockControlCommand;
+import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -51,7 +51,7 @@ public abstract class BaseRpcInterceptor extends CommandInterceptor {
    public void init() {
       defaultSynchronous = configuration.getCacheMode().isSynchronous();
    }
-   
+
    @Override
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
       Object retVal = invokeNextInterceptor(ctx, command);

@@ -19,8 +19,9 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.commands;
+package org.infinispan.commands.control;
 
+import org.infinispan.commands.Visitor;
 import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
@@ -36,11 +37,9 @@ import java.util.Collection;
 
 /**
  * LockControlCommand is a command that enables distributed locking across infinispan nodes.
- * <p> 
- * For more details refer to:
- * https://jira.jboss.org/jira/browse/ISPN-70
- * https://jira.jboss.org/jira/browse/ISPN-48
- * 
+ * <p/>
+ * For more details refer to: https://jira.jboss.org/jira/browse/ISPN-70 https://jira.jboss.org/jira/browse/ISPN-48
+ *
  * @author Vladimir Blagojevic (<a href="mailto:vblagoje@redhat.com">vblagoje@redhat.com</a>)
  * @param
  * @since 4.0
@@ -55,9 +54,9 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
    }
 
    public LockControlCommand(Collection keys, String cacheName) {
-      this(keys,cacheName,false);
+      this(keys, cacheName, false);
    }
-   
+
    public LockControlCommand(Collection keys, String cacheName, boolean implicit) {
       this.cacheName = cacheName;
       this.keys = keys;
@@ -71,12 +70,12 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
    public Collection getKeys() {
       return keys;
    }
-   
+
    public boolean isImplicit() {
       return implicit;
    }
-   
-   public boolean isExplicit(){
+
+   public boolean isExplicit() {
       return !isImplicit();
    }
 
@@ -88,7 +87,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
    public Object perform(InvocationContext ignored) throws Throwable {
       if (ignored != null)
          throw new IllegalStateException("Expected null context!");
-      
+
       RemoteTxInvocationContext ctxt = icc.createRemoteTxInvocationContext();
       RemoteTransaction transaction = txTable.getRemoteTransaction(globalTx);
 

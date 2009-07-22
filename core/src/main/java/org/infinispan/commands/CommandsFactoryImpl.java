@@ -22,6 +22,7 @@
 package org.infinispan.commands;
 
 import org.infinispan.Cache;
+import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -123,14 +124,14 @@ public class CommandsFactoryImpl implements CommandsFactory {
       }
       return cachedSizeCommand;
    }
-   
+
    public KeySetCommand buildKeySetCommand() {
       if (cachedKeySetCommand == null) {
          cachedKeySetCommand = new KeySetCommand(dataContainer);
       }
       return cachedKeySetCommand;
    }
-   
+
    public ValuesCommand buildValuesCommand() {
       if (cachedValuesCommand == null) {
          cachedValuesCommand = new ValuesCommand(dataContainer);
@@ -255,9 +256,9 @@ public class CommandsFactoryImpl implements CommandsFactory {
             clusteredGetCommand.initialize(dataContainer, icc, this, interceptorChain);
             break;
          case LockControlCommand.COMMAND_ID:
-            LockControlCommand lcc = (LockControlCommand)c;
-            lcc.init(interceptorChain, icc,txTable);
-            break;    
+            LockControlCommand lcc = (LockControlCommand) c;
+            lcc.init(interceptorChain, icc, txTable);
+            break;
       }
    }
 

@@ -1,11 +1,7 @@
 package org.infinispan.interceptors;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.LockControlCommand;
+import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -16,15 +12,16 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+
 /**
- * Interceptor in charge of eager, implicit locking of cache keys across cluster within
- * transactional context
- * 
- * <p> 
- * For more details refer to:
- * https://jira.jboss.org/jira/browse/ISPN-70
- * https://jira.jboss.org/jira/browse/ISPN-48
- * 
+ * Interceptor in charge of eager, implicit locking of cache keys across cluster within transactional context
+ * <p/>
+ * <p/>
+ * For more details refer to: https://jira.jboss.org/jira/browse/ISPN-70 https://jira.jboss.org/jira/browse/ISPN-48
+ *
  * @author <a href="mailto:vblagoje@redhat.com">Vladimir Blagojevic (vblagoje@redhat.com)</a>
  * @since 4.0
  */
@@ -39,7 +36,7 @@ public class ImplicitEagerLockingInterceptor extends CommandInterceptor {
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command)
-            throws Throwable {
+         throws Throwable {
       boolean localTxScope = ctx.isInTxScope() & ctx.isOriginLocal();
       if (localTxScope) {
          lockEagerly(ctx, Collections.singleton(command.getKey()));
@@ -58,7 +55,7 @@ public class ImplicitEagerLockingInterceptor extends CommandInterceptor {
 
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command)
-            throws Throwable {
+         throws Throwable {
       boolean localTxScope = ctx.isInTxScope() & ctx.isOriginLocal();
       if (localTxScope) {
          lockEagerly(ctx, Collections.singleton(command.getKey()));
@@ -86,7 +83,7 @@ public class ImplicitEagerLockingInterceptor extends CommandInterceptor {
 
    @Override
    public Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command)
-            throws Throwable {
+         throws Throwable {
       boolean localTxScope = ctx.isInTxScope() & ctx.isOriginLocal();
       if (localTxScope) {
          lockEagerly(ctx, Collections.singleton(command.getKey()));

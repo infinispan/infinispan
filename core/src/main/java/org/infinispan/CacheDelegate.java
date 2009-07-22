@@ -26,7 +26,7 @@ import org.infinispan.atomic.AtomicMap;
 import org.infinispan.atomic.AtomicMapCache;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.LockControlCommand;
+import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
@@ -244,7 +244,7 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
    public void lock(Collection<? extends K> keys) {
       if (keys == null || keys.isEmpty())
          throw new IllegalArgumentException("Cannot lock empty list of keys");
-      LockControlCommand command = commandsFactory.buildLockControlCommand(keys,false);
+      LockControlCommand command = commandsFactory.buildLockControlCommand(keys, false);
       invoker.invoke(getInvocationContext(), command);
    }
 

@@ -1,6 +1,7 @@
 package org.infinispan.commands;
 
 import org.infinispan.CacheException;
+import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;

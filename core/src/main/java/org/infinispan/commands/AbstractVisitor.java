@@ -21,6 +21,7 @@
  */
 package org.infinispan.commands;
 
+import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
@@ -141,8 +142,8 @@ public abstract class AbstractVisitor implements Visitor {
          command.acceptVisitor(ctx, this);
       }
    }
-   
-   public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable{
+
+   public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
 }

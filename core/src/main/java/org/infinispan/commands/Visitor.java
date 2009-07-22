@@ -21,6 +21,7 @@
  */
 package org.infinispan.commands;
 
+import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
@@ -65,11 +66,11 @@ public interface Visitor {
    Object visitSizeCommand(InvocationContext ctx, SizeCommand command) throws Throwable;
 
    Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable;
-   
+
    Object visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable;
-   
+
    Object visitValuesCommand(InvocationContext ctx, ValuesCommand command) throws Throwable;
-   
+
    Object visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable;
 
    // tx commands
@@ -81,7 +82,7 @@ public interface Visitor {
    Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable;
 
    Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand invalidateCommand) throws Throwable;
-   
+
    // locking commands
    Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable;
 }

@@ -21,6 +21,7 @@
  */
 package org.infinispan.commands;
 
+import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -70,11 +71,11 @@ public interface CommandsFactory {
    SizeCommand buildSizeCommand();
 
    GetKeyValueCommand buildGetKeyValueCommand(Object key);
-   
+
    KeySetCommand buildKeySetCommand();
-   
+
    ValuesCommand buildValuesCommand();
-   
+
    EntrySetCommand buildEntrySetCommand();
 
    PutMapCommand buildPutMapCommand(Map map, long lifespanMillis, long maxIdleTimeMillis);
@@ -108,6 +109,6 @@ public interface CommandsFactory {
    StateTransferControlCommand buildStateTransferControlCommand(boolean block);
 
    ClusteredGetCommand buildClusteredGetCommand(Object key);
-   
+
    LockControlCommand buildLockControlCommand(Collection keys, boolean implicit);
 }

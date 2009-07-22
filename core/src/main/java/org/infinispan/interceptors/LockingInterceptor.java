@@ -21,7 +21,7 @@
  */
 package org.infinispan.interceptors;
 
-import org.infinispan.commands.LockControlCommand;
+import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -138,13 +138,13 @@ public class LockingInterceptor extends CommandInterceptor {
             c.attachGlobalTransaction((GlobalTransaction) ctx.getLockOwner());
          }
          for (Object key : c.getKeys()) {
-            if(c.isImplicit() && localTxScope && !lockManager.ownsLock(key,ctx.getLockOwner())){
+            if (c.isImplicit() && localTxScope && !lockManager.ownsLock(key, ctx.getLockOwner())) {
                //if even one key is unlocked we need to invoke this lock command cluster wide... 
                shouldInvokeOnCluster = true;
             }
             entryFactory.wrapEntryForWriting(ctx, key, true, false, false, false);
          }
-         if(shouldInvokeOnCluster || c.isExplicit())
+         if (shouldInvokeOnCluster || c.isExplicit())
             return invokeNextInterceptor(ctx, c);
          else
             return null;
@@ -152,7 +152,7 @@ public class LockingInterceptor extends CommandInterceptor {
          if (ctx.isInTxScope()) {
             doAfterCall(ctx);
          } else {
-            throw new IllegalStateException( "Attempting to lock but there is no transactional context in scope. " + ctx);
+            throw new IllegalStateException("Attempting to lock but there is no transactional context in scope. " + ctx);
          }
       }
    }
