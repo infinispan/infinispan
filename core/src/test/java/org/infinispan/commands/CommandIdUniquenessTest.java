@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-@Test
+@Test(groups = "unit", testName = "commands.CommandIdUniquenessTest")
 public class CommandIdUniquenessTest {
    public void testCommandIdUniqueness() throws Exception {
       List<Class<?>> commands = ClassFinder.isAssignableFrom(ReplicableCommand.class);
