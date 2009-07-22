@@ -21,6 +21,7 @@
  */
 package org.infinispan.commands.read;
 
+import org.infinispan.commands.LocalCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.DataContainer;
@@ -35,12 +36,8 @@ import java.util.Collection;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class ValuesCommand implements VisitableCommand {
+public class ValuesCommand implements VisitableCommand, LocalCommand {
    private final DataContainer container;
-
-   public ValuesCommand() {
-      container = null;
-   }
 
    public ValuesCommand(DataContainer container) {
       this.container = container;

@@ -21,6 +21,7 @@
  */
 package org.infinispan.commands.read;
 
+import org.infinispan.commands.LocalCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.DataContainer;
@@ -35,12 +36,8 @@ import java.util.Set;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class EntrySetCommand implements VisitableCommand {
+public class EntrySetCommand implements VisitableCommand, LocalCommand {
    private final DataContainer container;
-
-   public EntrySetCommand() {
-      container = null;
-   }
 
    public EntrySetCommand(DataContainer container) {
       this.container = container;

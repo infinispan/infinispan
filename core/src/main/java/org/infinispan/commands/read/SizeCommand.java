@@ -21,6 +21,7 @@
  */
 package org.infinispan.commands.read;
 
+import org.infinispan.commands.LocalCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.DataContainer;
@@ -32,11 +33,8 @@ import org.infinispan.context.InvocationContext;
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @since 4.0
  */
-public class SizeCommand implements VisitableCommand {
-   private DataContainer container;
-
-   public SizeCommand() {
-   }
+public class SizeCommand implements VisitableCommand, LocalCommand {
+   private final DataContainer container;
 
    public SizeCommand(DataContainer container) {
       this.container = container;

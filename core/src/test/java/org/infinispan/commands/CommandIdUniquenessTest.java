@@ -4,10 +4,8 @@ import org.infinispan.util.ClassFinder;
 import org.testng.annotations.Test;
 
 import java.lang.reflect.Modifier;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -16,18 +14,15 @@ public class CommandIdUniquenessTest {
    public void testCommandIdUniqueness() throws Exception {
       List<Class<?>> commands = ClassFinder.isAssignableFrom(ReplicableCommand.class);
       SortedMap<Byte, String> cmdIds = new TreeMap<Byte, String>();
-      Set<String> nonReplicableCommands = new HashSet<String>();
 
       for (Class<?> c : commands) {
-         if (!c.isInterface() && !Modifier.isAbstract(c.getModifiers())) {
+         if (!c.isInterface() && !Modifier.isAbstract(c.getModifiers()) && !LocalCommand.class.isAssignableFrom(c)) {
             System.out.println("Testing " + c.getSimpleName());
             ReplicableCommand cmd = (ReplicableCommand) c.newInstance();
             byte b = cmd.getCommandId();
+            assert b > 0 : "Command " + c.getSimpleName() + " has a command id of " + b + " and does not implement LocalCommand!";
             assert !cmdIds.containsKey(b) : "Command ID [" + b + "] is duplicated in " + c.getSimpleName() + " and " + cmdIds.get(b);
-            if (b <= 0)
-               nonReplicableCommands.add(c.getSimpleName());
-            else
-               cmdIds.put(b, c.getSimpleName());
+            cmdIds.put(b, c.getSimpleName());
          }
       }
 
@@ -38,7 +33,6 @@ public class CommandIdUniquenessTest {
          assert e.getKey() == i : "Expected ID " + i + " for command " + e.getValue() + " but was " + e.getKey();
       }
 
-      System.out.println("Non-replicable commands: " + nonReplicableCommands);
       System.out.println("Next available ID is " + (i + 1));
    }
 }
