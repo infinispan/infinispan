@@ -239,6 +239,7 @@
                <xs:attribute name="fetchPersistentState" type="tns:booleanType"/>
                <xs:attribute name="ignoreModifications" type="tns:booleanType"/>
                <xs:attribute name="purgeOnStartup" type="tns:booleanType"/>
+               <xs:attribute name="purgeSynchronously" type="tns:booleanType"/>
             </xs:complexType>
          </xs:element>
       </xs:sequence>
