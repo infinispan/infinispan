@@ -40,7 +40,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * // TODO: MANIK: Document this
+ * Command coresponding to the 1st phase of 2PC.
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @author Mircea.Markus@jboss.com
@@ -104,7 +104,13 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
       if (trace)
          log.trace("Invoking remotly orginated prepare: " + this);
       notifier.notifyTransactionRegistered(ctx.getGlobalTransaction(), ctx);
-      return invoker.invoke(ctx, this);
+      try {
+         return invoker.invoke(ctx, this);
+      } finally {
+         if (this.isOnePhaseCommit()) {
+            txTable.removeRemoteTransaction(globalTx);
+         }
+      }
    }
 
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
