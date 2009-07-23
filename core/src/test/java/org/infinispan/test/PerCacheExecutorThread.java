@@ -14,7 +14,7 @@ import java.util.concurrent.CountDownLatch;
  *
  * @author Mircea.Markus@jboss.com
  * @see Operations
- * @see PerCacheExecutorThread.OperationsResult
+ * @see OperationsResult
  */
 public final class PerCacheExecutorThread extends Thread {
 
@@ -69,7 +69,7 @@ public final class PerCacheExecutorThread extends Thread {
          } catch (InterruptedException e) {
             throw new RuntimeException(e);
          }
-         System.out.println("about to process operation " + operation);
+         log.trace("about to process operation " + operation);
          switch (operation) {
             case BEGGIN_TX: {
                TransactionManager txManager = TestingUtil.getTransactionManager(cache);
@@ -96,7 +96,7 @@ public final class PerCacheExecutorThread extends Thread {
             case PUT_KEY_VALUE: {
                try {
                   cache.put(key, value);
-                  log.trace("Successfully exucuted putKeyValue(" + key + ", " + value + ")");
+                  log.trace("Successfully executed putKeyValue(" + key + ", " + value + ")");
                   setResponse(OperationsResult.PUT_KEY_VALUE_OK);
                } catch (Exception e) {
                   log.trace("Exception while executing putKeyValue(" + key + ", " + value + ")", e);
@@ -107,7 +107,7 @@ public final class PerCacheExecutorThread extends Thread {
             case REMOVE_KEY: {
                try {
                   cache.remove(key);
-                  log.trace("Successfully exucuted remove(" + key + ")");
+                  log.trace("Successfully executed remove(" + key + ")");
                   setResponse(OperationsResult.REMOVE_KEY_OK);
                } catch (Exception e) {
                   log.trace("Exception while executing remove(" + key + ")", e);
@@ -118,7 +118,7 @@ public final class PerCacheExecutorThread extends Thread {
             case REPLACE_KEY_VALUE: {
                try {
                   cache.replace(key, value);
-                  log.trace("Successfully exucuted replace(" + key + "," + value + ")");
+                  log.trace("Successfully executed replace(" + key + "," + value + ")");
                   setResponse(OperationsResult.REPLACE_KEY_VALUE_OK);
                } catch (Exception e) {
                   log.trace("Exception while executing replace(" + key + "," + value + ")", e);
@@ -127,7 +127,7 @@ public final class PerCacheExecutorThread extends Thread {
                break;
             }
             case STOP_THREAD: {
-               System.out.println("Exiting...");
+               log.trace("Exiting...");
                toExecute = null;
                run = false;
                break;
@@ -138,7 +138,6 @@ public final class PerCacheExecutorThread extends Thread {
          }
          if (responseLatch != null) responseLatch.countDown();
       }
-      setResponse("EXIT");
    }
 
    private void setResponse(Object e) {

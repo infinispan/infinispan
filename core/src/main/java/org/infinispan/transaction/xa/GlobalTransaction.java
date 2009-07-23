@@ -79,6 +79,10 @@ public class GlobalTransaction implements Cloneable {
       return remote;
    }
 
+   public void setRemote(boolean remote) {
+      this.remote = remote;
+   }
+
    @Override
    public int hashCode() {
       if (hash_code == -1) {

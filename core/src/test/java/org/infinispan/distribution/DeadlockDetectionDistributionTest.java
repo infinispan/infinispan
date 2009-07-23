@@ -24,10 +24,6 @@ public class DeadlockDetectionDistributionTest extends ReplDeadlockDetectionTest
 
 
    //following methods are overridden as TestNG will otherwise run them even if I mark the class as enabled = false
-   @Override
-   public void testDeadlockDetectionAndAsyncCaches() {
-      throw new IllegalStateException("TODO - please implement me!!!"); //todo implement!!!
-   }
 
    @Override
    public void testExpectedInnerStructure() {

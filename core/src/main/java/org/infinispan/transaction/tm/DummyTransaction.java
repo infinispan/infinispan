@@ -332,4 +332,12 @@ public class DummyTransaction implements Transaction {
    public void setStatus(int stat) {
       this.status = stat;
    }
+
+   @Override
+   public String toString() {
+      return "DummyTransaction{" +
+            "xid=" + xid +
+            ", status=" + status +
+            '}';
+   }
 }

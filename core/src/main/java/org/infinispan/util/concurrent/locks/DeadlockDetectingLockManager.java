@@ -24,11 +24,15 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
 
    private static final Log log = LogFactory.getLog(DeadlockDetectingLockManager.class);
 
-   private volatile long spinDuration;
+   protected volatile long spinDuration;
 
-   private volatile boolean exposeJmxStats;
+   protected volatile boolean exposeJmxStats;
 
-   private AtomicLong detectedDeadlocks = new AtomicLong(0);
+   private volatile boolean isSync;
+
+   private AtomicLong detectedRemoteDeadlocks = new AtomicLong(0);
+
+   private AtomicLong detectedLocalDeadlocks = new AtomicLong(0);
 
    private AtomicLong locallyInterruptedTransactions = new AtomicLong(0);
 
@@ -38,12 +42,12 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
    public void init() {
       spinDuration = configuration.getDeadlockDetectionSpinDuration();
       exposeJmxStats = configuration.isExposeJmxStatistics();
+      isSync = configuration.getCacheMode().isSynchronous();
    }
 
    public boolean lockAndRecord(Object key, InvocationContext ctx) throws InterruptedException {
       long lockTimeout = getLockAcquisitionTimeout(ctx);
       if (trace) log.trace("Attempting to lock {0} with acquisition timeout of {1} millis", key, lockTimeout);
-
 
       if (ctx.isInTxScope()) {
          if (trace) log.trace("Using early dead lock detection");
@@ -64,10 +68,10 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
                   continue; //try to acquire lock again, for the rest of the time
                }
                DeadlockDetectingGlobalTransaction lockOwnerTx = (DeadlockDetectingGlobalTransaction) owner;
-               if (!ctx.isOriginLocal() && !lockOwnerTx.isRemote()) {
+               if (isSync && !ctx.isOriginLocal() && !lockOwnerTx.isRemote()) {
                   return remoteVsRemoteDld(key, ctx, lockTimeout, start, now, lockOwnerTx);
                }
-               if (ctx.isOriginLocal() && !lockOwnerTx.isRemote()) {
+               if ((ctx.isOriginLocal() && !lockOwnerTx.isRemote()) || (!isSync && !ctx.isOriginLocal() && !lockOwnerTx.isRemote())) {
                   localVsLocalDld(ctx, lockOwnerTx);
                }
             }
@@ -94,7 +98,7 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
             log.trace("deadlock situation detected. Shall I interrupt?" + iShouldInterrupt );
          if (iShouldInterrupt) {
             lockOwnerTx.interruptProcessingThread();
-            if (exposeJmxStats) detectedDeadlocks.incrementAndGet();
+            if (exposeJmxStats) detectedLocalDeadlocks.incrementAndGet();
          }
       }
    }
@@ -109,7 +113,7 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
       if (thisShouldInterrupt && isDeadLock) {
          lockOwnerTx.interruptProcessingThread();
          if (exposeJmxStats) {
-            detectedDeadlocks.incrementAndGet();
+            detectedRemoteDeadlocks.incrementAndGet();
             locallyInterruptedTransactions.incrementAndGet();
          }
          return lockForTheRemainingTime(key, lockTimeout, start, now);
@@ -119,7 +123,7 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
          if (trace)
             log.trace("Not trying to acquire lock anymore, as we're in deadlock and this will be rollback at origin");
          if (exposeJmxStats) {
-            detectedDeadlocks.incrementAndGet();
+            detectedRemoteDeadlocks.incrementAndGet();
          }
          remoteGlobalTransaction.setMarkedForRollback(true);
          throw new DeadlockDetectedException("Deadlock situation detected on tx: " + remoteTxContext.getLockOwner());
@@ -149,16 +153,27 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
       return locallyInterruptedTransactions.get();
    }
 
-   @ManagedAttribute(description = "Total number of deadlocks detected")
-   public long getDetectedDeadlocks() {
-      return detectedDeadlocks.get();
+   @ManagedAttribute(description = "Number of remote deadlocks detected")
+   public long getDetectedRemoteDeadlocks() {
+      return detectedRemoteDeadlocks.get();
+   }
+
+   @ManagedAttribute (description = "Number of local detected deadlocks")
+   public long getDetectedLocalDeadlocks() {
+      return detectedLocalDeadlocks.get();
+   }
+
+   @ManagedAttribute (description = "Total number of local detected deadlocks")
+   public long getTotalNumberOfDetectedDeadlocks() {
+      return detectedRemoteDeadlocks.get() + detectedLocalDeadlocks.get();
    }
 
    @ManagedOperation(description = "Resets statistics gathered by this component")
    public void resetStatistics() {
       overlapWithNotDeadlockAwareLockOwners.set(0);
       locallyInterruptedTransactions.set(0);
-      detectedDeadlocks.set(0);
+      detectedRemoteDeadlocks.set(0);
+      detectedLocalDeadlocks.set(0);
    }
 
 }

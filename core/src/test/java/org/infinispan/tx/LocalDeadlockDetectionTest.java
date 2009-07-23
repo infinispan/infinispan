@@ -187,7 +187,7 @@ public class LocalDeadlockDetectionTest extends SingleCacheManagerTest {
          assert t2.execute(PerCacheExecutorThread.Operations.COMMIT_TX) instanceof RollbackException;
       }
       assert lockManager.getNumberOfLocksHeld() == 0;
-      assertEquals(lockManager.getDetectedDeadlocks(), 1);
+      assertEquals(lockManager.getDetectedLocalDeadlocks(), 1);
    }
 
 }

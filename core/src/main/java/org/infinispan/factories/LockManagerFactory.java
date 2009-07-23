@@ -22,10 +22,9 @@
 package org.infinispan.factories;
 
 import org.infinispan.factories.annotations.DefaultFactoryFor;
+import org.infinispan.util.concurrent.locks.DeadlockDetectingLockManager;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.concurrent.locks.LockManagerImpl;
-import org.infinispan.util.concurrent.locks.DeadlockDetectingLockManager;
-import org.infinispan.config.ConfigurationException;
 
 /**
  * // TODO: MANIK: Document this
@@ -37,9 +36,6 @@ import org.infinispan.config.ConfigurationException;
 public class LockManagerFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
    public <T> T construct(Class<T> componentType) {
       if (configuration.isEnableDeadlockDetection()) {
-         if (!configuration.getCacheMode().isSynchronous()) {
-            throw new ConfigurationException("Eager Dead lock detection can only be used for sync caches!");
-         }
          return (T) new DeadlockDetectingLockManager();
       } else {
          return (T) new LockManagerImpl();

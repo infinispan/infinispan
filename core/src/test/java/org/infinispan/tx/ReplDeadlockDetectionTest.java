@@ -3,11 +3,9 @@ package org.infinispan.tx;
 import org.infinispan.api.mvcc.LockAssert;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.config.Configuration;
-import org.infinispan.config.ConfigurationException;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.interceptors.DeadlockDetectingInterceptor;
 import org.infinispan.interceptors.InterceptorChain;
-import org.infinispan.manager.CacheManager;
 import org.infinispan.remoting.ReplicationException;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.ResponseFilter;
@@ -17,9 +15,8 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.statetransfer.StateTransferException;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.PerCacheExecutorThread;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.concurrent.locks.DeadlockDetectingLockManager;
@@ -103,22 +100,6 @@ public class ReplDeadlockDetectionTest extends MultipleCacheManagersTest {
       ((DeadlockDetectingLockManager) TestingUtil.extractLockManager(cache(1, "test"))).resetStatistics();
    }
 
-   public void testDeadlockDetectionAndAsyncCaches() {
-      Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC);
-      config.setEnableDeadlockDetection(true);
-      config.setUseLockStriping(false);
-      CacheManager cm = TestCacheManagerFactory.createClusteredCacheManager();
-      cm.defineCache("test", config);
-      try {
-         cm.getCache("test");
-         assert false : "Exception expected";
-      } catch (ConfigurationException e) {
-         //expected
-         System.out.println("Error message is " + e.getMessage());
-      }
-      cm.stop();
-   }
-
    public void testExpectedInnerStructure() {
       LockManager lockManager = TestingUtil.extractComponent(cache(0, "test"), LockManager.class);
       assert lockManager instanceof DeadlockDetectingLockManager;
@@ -171,7 +152,7 @@ public class ReplDeadlockDetectionTest extends MultipleCacheManagersTest {
          assert o.equals("value1");
       }
 
-      assert ddLm1.getDetectedDeadlocks() + ddLm2.getDetectedDeadlocks() >= 1;
+      assert ddLm1.getDetectedRemoteDeadlocks() + ddLm2.getDetectedRemoteDeadlocks() >= 1;
 
       LockManager lm1 = TestingUtil.extractComponent(cache(0, "test"), LockManager.class);
       assert !lm1.isLocked("key") : "It is locked by " + lm1.getOwner("key");

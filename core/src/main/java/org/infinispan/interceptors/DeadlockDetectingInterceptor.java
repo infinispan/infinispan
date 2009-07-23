@@ -26,7 +26,7 @@ import java.util.Set;
  * appropriate information needed in order to accomplish deadlock detection. It MUST process populate data before the
  * replication takes place, so it will do all the tasks before calling {@link org.infinispan.interceptors.base.CommandInterceptor#invokeNextInterceptor(org.infinispan.context.InvocationContext,
  * org.infinispan.commands.VisitableCommand)}.
- *
+ * <p/>
  * Note: for local caches, deadlock detection dos NOT work for aggregate operations (clear, putAll).
  *
  * @author Mircea.Markus@jboss.com
@@ -65,21 +65,29 @@ public class DeadlockDetectingInterceptor extends CommandInterceptor {
       try {
          return invokeNextInterceptor(ctx, command);
       } catch (InterruptedException ie) {
-         if (ctx.isOriginLocal() && ctx.isInTxScope()) {
+         if (ctx.isInTxScope()) {
             lockManager.releaseLocks(ctx);
-            Transaction transaction = txManager.getTransaction();
-            if (trace)
-               log.trace("Marking the transaction for rollback! : " + transaction);
-            if (transaction == null) {
-               throw new IllegalStateException("We're running in a local transaction, there MUST be one " +
-                     "associated witht the local thread but none found! " + transaction);
+            if (ctx.isOriginLocal()) {
+               Transaction transaction = txManager.getTransaction();
+               if (trace)
+                  log.trace("Marking the transaction for rollback! : " + transaction);
+               if (transaction == null) {
+                  throw new IllegalStateException("We're running in a local transaction, there MUST be one " +
+                        "associated witht the local thread but none found! " + transaction);
+               }
+               transaction.setRollbackOnly();
+               txTable.removeLocalTransaction(transaction);
+               throw new DeadlockDetectedException("Deadlock request was detected for locally originated tx " + transaction +
+                     "; it was marked for rollback");
+            } else {
+               DeadlockDetectingGlobalTransaction gtx = (DeadlockDetectingGlobalTransaction) ctx.getLockOwner();
+               gtx.setMarkedForRollback(true);
+               throw new DeadlockDetectedException("Deadlock request was detected for remotely originated tx " + gtx +
+                     "; it was marked for rollback");
             }
-            transaction.setRollbackOnly();
-            throw new DeadlockDetectedException("Deadlock request was detected, tx " + transaction +
-                  " was marked for rollback");
          } else {
             if (trace)
-               log.trace("Received an interrupt request, but we're not running within deadlock detection scenario, so passing it up the stack", ie);
+               log.trace("Received an interrupt request, but we're not running within the scope of a transaction, so passing it up the stack", ie);
             throw ie;
          }
       }

@@ -161,10 +161,12 @@ public class ReplListener {
    public void waitForRpc(long time, TimeUnit unit) {
       assert expectedCommands != null : "there are no replication expectations; please use ReplListener.expect() before calling this method";
       try {
-         info("Expect Any is " + expectAny + ", saw at least one? " + sawAtLeastOneInvocation + " Expected " + expectedCommands);
          boolean successful = (expectAny && sawAtLeastOneInvocation) || (!expectAny && expectedCommands.isEmpty());
+         info("Expect Any is " + expectAny + ", saw at least one? " + sawAtLeastOneInvocation + " Successful? " + successful + " Expected commands " + expectedCommands);
          if (!successful && !latch.await(time, unit)) {
             assert false : "Waiting for more than " + time + " " + unit + " and following commands did not replicate: " + expectedCommands + " on cache [" + c.getCacheManager().getAddress() + "]";
+         } else {
+            info("Exiting wait for rpc with expected commands " + expectedCommands);
          }
       }
       catch (InterruptedException e) {

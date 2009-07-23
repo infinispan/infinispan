@@ -49,6 +49,8 @@ public class DeadlockDetectionPerformanceTest {
 
    public static final long BENCHMARK_DURATION = 60000;
 
+   public static boolean NO_COLISION = false;
+
    public static boolean USE_DLD = true;
 
    public static List<String> keyPool;
@@ -63,6 +65,21 @@ public class DeadlockDetectionPerformanceTest {
 
    @Test(invocationCount = 10, enabled = false)
    public void testLocalDifferentTxSize() throws Exception {
+      USE_DLD = false;
+      for (int i = 2; i < KEY_POOL_SIZE; i++) {
+         TX_SIZE = i;
+         runLocalTest();
+      }
+      USE_DLD = true;
+      for (int i = 2; i < KEY_POOL_SIZE; i++) {
+         TX_SIZE = i;
+         runLocalTest();
+      }
+   }
+
+   @Test(invocationCount = 5, enabled = false)
+   public void testLocalDifferentTxSizeNoCollision() throws Exception {
+      NO_COLISION = true;
       USE_DLD = false;
       for (int i = 2; i < KEY_POOL_SIZE; i++) {
          TX_SIZE = i;
@@ -215,7 +232,9 @@ public class DeadlockDetectionPerformanceTest {
          result.add(key);
       }
       ArrayList resultList = new ArrayList(result);
-      Collections.shuffle(resultList);
+      if (!NO_COLISION) {
+         Collections.shuffle(resultList);
+      }
       return resultList;
    }
 }

@@ -54,7 +54,7 @@ import java.util.concurrent.locks.Lock;
 @MBean(objectName = "LockManager", description = "Manager that handles MVCC locks for entries")
 public class LockManagerImpl implements LockManager {
    protected Configuration configuration;
-   LockContainer lockContainer;
+   protected LockContainer lockContainer;
    private TransactionManager transactionManager;
    private InvocationContextContainer invocationContextContainer;
    private static final Log log = LogFactory.getLog(LockManagerImpl.class);
