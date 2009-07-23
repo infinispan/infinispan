@@ -24,6 +24,8 @@ package org.infinispan.atomic;
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
 import org.infinispan.atomic.Operation;
+import org.infinispan.marshall.Ids;
+import org.infinispan.marshall.Marshallable;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -39,6 +41,7 @@ import java.util.List;
  * @author Manik Surtani (<a href="mailto:manik AT jboss DOT org">manik AT jboss DOT org</a>)
  * @since 4.0
  */
+@Marshallable(externalizer = AtomicHashMapDelta.Externalizer.class, id = Ids.ATOMIC_HASH_MAP_DELTA)
 public class AtomicHashMapDelta implements Delta {
    private static final Log log = LogFactory.getLog(AtomicHashMapDelta.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -65,16 +68,6 @@ public class AtomicHashMapDelta implements Delta {
       changelog.add(o);
    }
 
-   public void writeExternal(ObjectOutput out) throws IOException {
-      if (trace) log.trace("Serializing changelog " + changelog);
-      out.writeObject(changelog);
-   }
-
-   public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-      changelog = (List<Operation>) in.readObject();
-      if (trace) log.trace("Deserialized changelog " + changelog);
-   }
-
    @Override
    public String toString() {
       return "AtomicHashMapDelta{" +
@@ -84,5 +77,20 @@ public class AtomicHashMapDelta implements Delta {
 
    public int getChangeLogSize() {
       return changelog == null ? 0 : changelog.size();
+   }
+   
+   public static class Externalizer implements org.infinispan.marshall.Externalizer {
+      public void writeObject(ObjectOutput output, Object object) throws IOException {
+         AtomicHashMapDelta delta = (AtomicHashMapDelta) object;        
+         if (trace) log.trace("Serializing changelog " + delta.changelog);
+         output.writeObject(delta.changelog);
+      }
+
+      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         AtomicHashMapDelta delta = new AtomicHashMapDelta();
+         delta.changelog = (List<Operation>) input.readObject();
+         if (trace) log.trace("Deserialized changelog " + delta.changelog);
+         return delta;
+      }
    }
 }

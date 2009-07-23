@@ -23,11 +23,9 @@
 
 package org.infinispan.atomic;
 
-import org.easymock.EasyMock;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
-import java.io.ObjectOutput;
 
 @Test(groups = "unit", testName = "atomic.AtomicHashMapTest")
 public class AtomicHashMapTest {
@@ -35,10 +33,6 @@ public class AtomicHashMapTest {
       AtomicHashMap m = new AtomicHashMap();
       Delta d = m.delta();
       assert d instanceof NullDelta;
-      ObjectOutput out = EasyMock.createMock(ObjectOutput.class);
-      EasyMock.replay(out);
-      d.writeExternal(out);
-      EasyMock.verify(out);
 
       AtomicHashMap newMap = new AtomicHashMap();
       newMap.initForWriting();
@@ -59,10 +53,6 @@ public class AtomicHashMapTest {
       assert m.size() == 1;
       Delta d = m.delta();
       assert d instanceof NullDelta;
-      ObjectOutput out = EasyMock.createMock(ObjectOutput.class);
-      EasyMock.replay(out);
-      d.writeExternal(out);
-      EasyMock.verify(out);
 
       AtomicHashMap newMap = new AtomicHashMap();
       newMap.initForWriting();

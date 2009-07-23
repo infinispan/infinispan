@@ -21,22 +21,21 @@
  */
 package org.infinispan.atomic;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Map;
 
-public abstract class Operation<K, V> implements Externalizable {
+/**
+ * An atomic operation.
+ * <p/>
+ *
+ * @author (various)
+ * @param <K>
+ * @param <V>
+ * @since 4.0
+ */
+public abstract class Operation<K, V> {
+   
    public abstract void replay(Map<K, V> delegate);
 
    public abstract void rollback(Map<K, V> delegate);
-
-   public void writeExternal(ObjectOutput out) throws IOException {
-      //no op
-   }
-
-   public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-      //no op
-   }
+   
 }

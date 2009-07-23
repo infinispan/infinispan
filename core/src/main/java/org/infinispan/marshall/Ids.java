@@ -56,7 +56,7 @@ public interface Ids {
    static final byte TRANSIENT_MORTAL_VALUE = 17;
 
    // internal collections
-   static final byte FASTCOPY_HASHMAP = 18;
+   static final byte FASTCOPY_HASH_MAP = 18;
    static final byte IMMUTABLE_MAP = 19;
    static final byte ATOMIC_HASH_MAP = 20;
 
@@ -86,6 +86,10 @@ public interface Ids {
    static final byte TRANSACTION_LOG_ENTRY = 41; 
    static final byte BUCKET = 42;
    static final byte DEADLOCK_DETECTING_GLOBAL_TRANSACTION = 43;
+   static final byte ATOMIC_HASH_MAP_DELTA = 46;
+   static final byte ATOMIC_PUT_OPERATION = 47;
+   static final byte ATOMIC_REMOVE_OPERATION = 48;
+   static final byte ATOMIC_CLEAR_OPERATION = 49;
    
    /** ids for infinispan tree classes **/
 

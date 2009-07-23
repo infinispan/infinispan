@@ -21,15 +21,13 @@
  */
 package org.infinispan.atomic;
 
-import java.io.Externalizable;
-
 /**
  * Represents changes made to a {@link DeltaAware} implementation.  Should be efficiently externalizable.
  *
  * @author Manik Surtani (<a href="mailto:manik AT jboss DOT org">manik AT jboss DOT org</a>)
  * @since 4.0
  */
-public interface Delta extends Externalizable {
+public interface Delta {
    /**
     * Merge the current set of deltas with a given {@link DeltaAware} instance, and return a coherent and complete
     * {@link DeltaAware} instance.  Implementations should be able to deal with null values passed in, or values of a

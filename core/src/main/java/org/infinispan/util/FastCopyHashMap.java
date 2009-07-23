@@ -44,7 +44,7 @@ import org.infinispan.marshall.exts.MapExternalizer;
  * @author Jason T. Greene
  * @since 4.0
  */
-@Marshallable(externalizer = MapExternalizer.class, id = Ids.FASTCOPY_HASHMAP)
+@Marshallable(externalizer = MapExternalizer.class, id = Ids.FASTCOPY_HASH_MAP)
 public class FastCopyHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V>, Cloneable, Serializable {
    /**
     * Serialization ID

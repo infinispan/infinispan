@@ -26,7 +26,19 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Map;
 
+import org.infinispan.marshall.Ids;
+import org.infinispan.marshall.Marshallable;
 
+/**
+ * An atomic put operation.
+ * <p/>
+ *
+ * @author (various)
+ * @param <K>
+ * @param <V>
+ * @since 4.0
+ */
+@Marshallable(externalizer = PutOperation.Externalizer.class, id = Ids.ATOMIC_PUT_OPERATION)
 public class PutOperation<K, V> extends Operation<K, V> {
    private K key;
    private V oldValue;
@@ -52,16 +64,18 @@ public class PutOperation<K, V> extends Operation<K, V> {
       delegate.put(key, newValue);
    }
 
-   @Override
-   public void writeExternal(ObjectOutput out) throws IOException {
-      // don't bother writing out the old value since it will never be rolled back
-      out.writeObject(key);
-      out.writeObject(newValue);
-   }
+   public static class Externalizer implements org.infinispan.marshall.Externalizer {
+      public void writeObject(ObjectOutput output, Object object) throws IOException {
+         PutOperation put = (PutOperation) object;
+         output.writeObject(put.key);
+         output.writeObject(put.newValue);
+      }
 
-   @Override
-   public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-      key = (K) in.readObject();
-      newValue = (V) in.readObject();
+      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         PutOperation put = new PutOperation();
+         put.key = input.readObject();
+         put.newValue = input.readObject();         
+         return put;
+      }
    }
 }

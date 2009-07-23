@@ -22,6 +22,9 @@
 package org.infinispan.marshall.jboss;
 
 import org.infinispan.CacheException;
+import org.infinispan.atomic.AtomicHashMap;
+import org.infinispan.atomic.AtomicHashMapDelta;
+import org.infinispan.atomic.NullDelta;
 import org.infinispan.commands.RemoteCommandFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
@@ -80,7 +83,6 @@ import java.util.*;
 /**
  * JBossMarshallingMarshallerTest.
  * <p/>
- * TODO: AtomicHashMap missing.
  *
  * @author Galder Zamarreño
  * @since 4.0
@@ -362,17 +364,63 @@ public class JBossMarshallerTest {
       }
    }
 
-//   TODO: fix unit test, will be done as part of https://jira.jboss.org/jira/browse/ISPN-136   
-//   public void testAtomicHashMap() throws Exception {
-//      AtomicHashMap m = new AtomicHashMap();
-//      m.initForWriting();
-//      m.put("k1", "v1");
-//      m.put("k1", "v2");
-//      m.put("k1", "v3");
-//      byte[] bytes = marshaller.objectToByteBuffer(m);
-//      AtomicHashMapDelta d = (AtomicHashMapDelta) marshaller.objectFromByteBuffer(bytes);
-//      assert d.getChangeLogSize() == ((AtomicHashMapDelta) m.delta()).getChangeLogSize();
-//   }
+   public void testAtomicHashMap() throws Exception {
+      AtomicHashMap<String, String> m = new AtomicHashMap<String, String>();
+      m.initForWriting();
+      m.put("k1", "v1");
+      m.put("k1", "v2");
+      m.put("k1", "v3");
+      assert m.size() == 1;
+      byte[] bytes = marshaller.objectToByteBuffer(m);
+      AtomicHashMapDelta d = (AtomicHashMapDelta) marshaller.objectFromByteBuffer(bytes);
+      assert d.getChangeLogSize() == 3;
+      AtomicHashMap<String, String> merged = new AtomicHashMap<String, String>();
+      merged = (AtomicHashMap) d.merge(merged);
+      for (Map.Entry<String, String> entry : merged.entrySet()) {
+         assert m.get(entry.getKey()).equals(entry.getValue());
+      }
+      assert merged.size() == 1;
+      
+      m = new AtomicHashMap();
+      assert m.size() == 0;
+      bytes = marshaller.objectToByteBuffer(m);
+      NullDelta nulld = (NullDelta) marshaller.objectFromByteBuffer(bytes);
+      assert nulld == NullDelta.INSTANCE;
+      
+      m = new AtomicHashMap<String, String>();
+      m.initForWriting();
+      m.put("k1", "v1");
+      m.put("k2", "v2");
+      m.put("k3", "v3");
+      m.remove("k1");
+      assert m.size() == 2;
+      bytes = marshaller.objectToByteBuffer(m);
+      d = (AtomicHashMapDelta) marshaller.objectFromByteBuffer(bytes);
+      assert d.getChangeLogSize() == 4;
+      merged = new AtomicHashMap<String, String>();
+      merged = (AtomicHashMap) d.merge(merged);
+      for (Map.Entry<String, String> entry : merged.entrySet()) {
+         assert m.get(entry.getKey()).equals(entry.getValue());
+      }
+      assert merged.size() == 2;
+      
+      m = new AtomicHashMap<String, String>();
+      m.initForWriting();
+      m.put("k5", "v1");
+      m.put("k5", "v2");
+      m.put("k5", "v3");
+      m.clear();
+      assert m.size() == 0;
+      bytes = marshaller.objectToByteBuffer(m);
+      d = (AtomicHashMapDelta) marshaller.objectFromByteBuffer(bytes);
+      assert d.getChangeLogSize() == 4;
+      merged = new AtomicHashMap<String, String>();
+      merged = (AtomicHashMap) d.merge(merged);
+      for (Map.Entry<String, String> entry : merged.entrySet()) {
+         assert m.get(entry.getKey()).equals(entry.getValue());
+      }
+      assert merged.size() == 0;
+   }
 
    protected void marshallAndAssertEquality(Object writeObj) throws Exception {
       byte[] bytes = marshaller.objectToByteBuffer(writeObj);

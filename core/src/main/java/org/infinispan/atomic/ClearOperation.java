@@ -21,15 +21,29 @@
  */
 package org.infinispan.atomic;
 
+import org.infinispan.marshall.Ids;
+import org.infinispan.marshall.Marshallable;
 import org.infinispan.util.FastCopyHashMap;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Map;
 
-
+/**
+ * An atomic clear operation.
+ * <p/>
+ *
+ * @author (various)
+ * @param <K>
+ * @param <V>
+ * @since 4.0
+ */
+@Marshallable(externalizer = ClearOperation.Externalizer.class, id = Ids.ATOMIC_CLEAR_OPERATION)
 public class ClearOperation<K, V> extends Operation<K, V> {
    FastCopyHashMap<K, V> originalEntries;
 
-   public ClearOperation() {
+   ClearOperation() {
    }
 
    ClearOperation(FastCopyHashMap<K, V> originalEntries) {
@@ -42,5 +56,15 @@ public class ClearOperation<K, V> extends Operation<K, V> {
 
    public void replay(Map<K, V> delegate) {
       delegate.clear();
+   }
+   
+   public static class Externalizer implements org.infinispan.marshall.Externalizer {
+      public void writeObject(ObjectOutput output, Object object) throws IOException {
+         // no-op;         
+      }
+
+      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         return new ClearOperation();
+      }
    }
 }

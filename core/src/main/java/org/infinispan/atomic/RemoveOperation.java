@@ -26,7 +26,19 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Map;
 
+import org.infinispan.marshall.Ids;
+import org.infinispan.marshall.Marshallable;
 
+/**
+ * An atomic remove operation.
+ * <p/>
+ *
+ * @author (various)
+ * @param <K>
+ * @param <V>
+ * @since 4.0
+ */
+@Marshallable(externalizer = RemoveOperation.Externalizer.class, id = Ids.ATOMIC_REMOVE_OPERATION)
 public class RemoveOperation<K, V> extends Operation<K, V> {
    private K key;
    private V oldValue;
@@ -46,14 +58,17 @@ public class RemoveOperation<K, V> extends Operation<K, V> {
    public void replay(Map<K, V> delegate) {
       delegate.remove(key);
    }
-
-   @Override
-   public void writeExternal(ObjectOutput out) throws IOException {
-      out.writeObject(key);
-   }
-
-   @Override
-   public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-      key = (K) in.readObject();
+   
+   public static class Externalizer implements org.infinispan.marshall.Externalizer {
+      public void writeObject(ObjectOutput output, Object object) throws IOException {
+         RemoveOperation remove = (RemoveOperation) object;
+         output.writeObject(remove.key);
+      }
+      
+      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         RemoveOperation remove = new RemoveOperation();
+         remove.key = input.readObject();
+         return remove;
+      }
    }
 }

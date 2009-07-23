@@ -23,8 +23,12 @@ package org.infinispan.marshall.jboss;
 
 import org.infinispan.CacheException;
 import org.infinispan.atomic.AtomicHashMap;
-import org.infinispan.commands.RemoteCommandFactory;
+import org.infinispan.atomic.AtomicHashMapDelta;
+import org.infinispan.atomic.ClearOperation;
+import org.infinispan.atomic.PutOperation;
+import org.infinispan.atomic.RemoveOperation;
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.RemoteCommandFactory;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
@@ -150,9 +154,12 @@ public class ConstantObjectTable implements ObjectTable {
 
       MARSHALLABLES.add(AtomicHashMap.class.getName());
       MARSHALLABLES.add(Bucket.class.getName());
-
       MARSHALLABLES.add("org.infinispan.tree.NodeKey");
       MARSHALLABLES.add("org.infinispan.tree.Fqn");
+      MARSHALLABLES.add(AtomicHashMapDelta.class.getName());
+      MARSHALLABLES.add(PutOperation.class.getName());
+      MARSHALLABLES.add(RemoveOperation.class.getName());
+      MARSHALLABLES.add(ClearOperation.class.getName());
    }
 
    /**
@@ -213,8 +220,6 @@ public class ConstantObjectTable implements ObjectTable {
       } catch (Exception e) {
          throw new CacheException("Unable to instantiate Externalizer class", e);
       }
-
-
    }
 
    public void stop() {
