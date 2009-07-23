@@ -68,7 +68,7 @@ public class VersionAwareMarshaller extends AbstractMarshaller {
       this.remoteCommandFactory = remoteCommandFactory;
    }
    
-   @Start
+   @Start(priority = 9) // should start before Transport component
    public void start() {
       defaultMarshaller.start(loader, remoteCommandFactory, this);
    }
