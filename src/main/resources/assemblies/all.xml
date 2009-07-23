@@ -9,7 +9,7 @@
          + lib (contains dependencies)
       + tree
          - infinispan-tree.jar
-         + lib (excluding core and transitive dependencies)
+         + lib (excluding core)
 
       .. etc ...
 
@@ -35,9 +35,90 @@
 
       <moduleSet>
          <includeSubModules>false</includeSubModules>
-         <excludes>
-            <exclude>org.infinispan:infinispan-tools</exclude>
-         </excludes>
+         <includes>
+            <include>org.infinispan:infinispan-core</include>
+         </includes>
+         <sources>
+            <includeModuleDirectory>false</includeModuleDirectory>
+
+            <fileSets>
+
+               <!-- resources -->
+               <fileSet>
+                  <directory>src/main/resources</directory>
+                  <outputDirectory>etc</outputDirectory>
+                  <excludes>
+                     <exclude>**/*.sh</exclude>
+                     <exclude>**/*.bat</exclude>
+                     <exclude>**/*.cmd</exclude>
+                     <exclude>**/*.py</exclude>
+                  </excludes>
+               </fileSet>
+
+               <!-- Executable resources -->
+               <fileSet>
+                  <directory>src/main/resources</directory>
+                  <outputDirectory>bin</outputDirectory>
+                  <includes>
+                     <include>**/*.sh</include>
+                     <include>**/*.bat</include>
+                     <include>**/*.cmd</include>
+                     <include>**/*.py</include>
+                  </includes>
+                  <fileMode>0777</fileMode>
+               </fileSet>
+
+               <!-- Log4j XML -->
+               <fileSet>
+                  <directory>src/test/resources</directory>
+                  <outputDirectory>etc</outputDirectory>
+                  <includes>
+                     <include>log4j.xml</include>
+                  </includes>
+               </fileSet>
+
+               <!-- EULAs and license files -->
+               <fileSet>
+                  <directory>src/main/release</directory>
+                  <outputDirectory></outputDirectory>
+                  <includes>
+                     <include>**/*.txt</include>
+                  </includes>
+               </fileSet>
+
+            </fileSets>
+
+         </sources>
+
+         <binaries>
+
+            <outputDirectory>modules/${module.basedir.name}</outputDirectory>
+            <outputFileNameMapping>
+               ${module.artifactId}.${module.extension}
+            </outputFileNameMapping>
+            <unpack>false</unpack>
+
+            <dependencySets>
+               <dependencySet>
+                  <useTransitiveDependencies>false</useTransitiveDependencies>
+                  <outputDirectory>modules/${module.basedir.name}/lib</outputDirectory>
+               </dependencySet>
+            </dependencySets>
+
+         </binaries>
+      </moduleSet>
+
+      <moduleSet>
+         <includeSubModules>false</includeSubModules>
+         <includes>
+            <include>org.infinispan:infinispan-cachestore-bdbje</include>
+            <include>org.infinispan:infinispan-cachestore-jdbc</include>
+            <include>org.infinispan:infinispan-cachestore-jdbm</include>
+            <include>org.infinispan:infinispan-cachestore-s3</include>
+            <include>org.infinispan:infinispan-gui-demo</include>
+            <include>org.infinispan:infinispan-jopr-plugin</include>
+            <include>org.infinispan:infinispan-tree</include>
+         </includes>
          <sources>
             <includeModuleDirectory>false</includeModuleDirectory>
 
@@ -103,7 +184,8 @@
                   <excludes>
                      <exclude>infinispan-core*</exclude>
                   </excludes>
-                  <useTransitiveDependencies>false</useTransitiveDependencies>
+                  <useTransitiveDependencies>true</useTransitiveDependencies>
+                  <useTransitiveFiltering>true</useTransitiveFiltering>
                   <outputDirectory>modules/${module.basedir.name}/lib</outputDirectory>
                </dependencySet>
             </dependencySets>
