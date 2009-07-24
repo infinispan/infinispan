@@ -55,7 +55,8 @@ public class ConfigFilesConvertor {
 
    private static final String JBOSS_CACHE3X = "JBossCache3x";
    private static final String EHCACHE_CACHE16X = "Ehcache16x";
-   public static final String[] SUPPORTED_FORMATS = {JBOSS_CACHE3X, EHCACHE_CACHE16X};
+   private static final String EHCACHE_CACHE15X = "Ehcache15x";
+   public static final String[] SUPPORTED_FORMATS = {JBOSS_CACHE3X, EHCACHE_CACHE15X, EHCACHE_CACHE16X};
 
    public void parse(InputStream is, OutputStream os, String xsltFile) throws Exception {
       InputStream xsltInStream = new FileLookup().lookupFile(xsltFile);
@@ -136,8 +137,8 @@ public class ConfigFilesConvertor {
 
       if (type.equals(JBOSS_CACHE3X)) {
          transformFromJbossCache3x(sourceName, destinationName);
-      } else if (type.equals(EHCACHE_CACHE16X)) {
-         transformFromEhcache16x(sourceName, destinationName);
+      } else if (type.equals(EHCACHE_CACHE15X) || type.equals(EHCACHE_CACHE16X)) {
+         transformFromEhcache15X_16x(sourceName, destinationName);
       }
 
       System.out.println("---");
@@ -185,7 +186,7 @@ public class ConfigFilesConvertor {
       }
    }
 
-   private static void transformFromEhcache16x(String sourceName, String destinationName) throws Exception {
+   private static void transformFromEhcache15X_16x(String sourceName, String destinationName) throws Exception {
       File oldConfig = new File(sourceName);
       if (!oldConfig.exists()) {
          System.err.println("File specified as input ('" + sourceName + ") does not exist.");
