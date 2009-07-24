@@ -7,6 +7,7 @@ import org.infinispan.io.ByteBuffer;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.LockSupportCacheStore;
+import org.infinispan.loaders.jdbc.DataManiulationHelper;
 import org.infinispan.loaders.jdbc.JdbcUtil;
 import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
@@ -22,7 +23,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -53,6 +53,7 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
    private Key2StringMapper key2StringMapper;
    private ConnectionFactory connectionFactory;
    private TableManipulation tableManipulation;
+   private DataManiulationHelper dmHelper;
 
    public void init(CacheLoaderConfig config, Cache cache, Marshaller m) {
       super.init(config, cache, m);
@@ -69,8 +70,40 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
          doConnectionFactoryInitialization(connectionFactory);
       }
       this.key2StringMapper = config.getKey2StringMapper();
+      dmHelper = new DataManiulationHelper(connectionFactory, tableManipulation, marshaller) {
+
+         @Override
+         public void loadAllProcess(ResultSet rs, Set<InternalCacheEntry> result) throws SQLException, CacheLoaderException {
+            InputStream inputStream = rs.getBinaryStream(1);
+            InternalCacheValue icv = (InternalCacheValue) JdbcUtil.unmarshall(getMarshaller(), inputStream);
+            Object key = rs.getObject(2);
+            result.add(icv.toInternalCacheEntry(key));
+         }
+
+         @Override
+         public void toStreamProcess(ResultSet rs, InputStream is, ObjectOutput objectOutput) throws CacheLoaderException, SQLException, IOException {
+            InternalCacheValue icv = (InternalCacheValue) JdbcUtil.unmarshall(getMarshaller(), is);
+            Object key = rs.getObject(2);
+            marshaller.objectToObjectStream(icv.toInternalCacheEntry(key), objectOutput);
+         }
+
+         public boolean fromStreamProcess(Object objFromStream, PreparedStatement ps, ObjectInput objectInput) throws SQLException, CacheLoaderException {
+            if (objFromStream instanceof InternalCacheEntry) {
+               InternalCacheEntry se = (InternalCacheEntry) objFromStream;
+               String key = key2StringMapper.getStringMapping(se.getKey());
+               ByteBuffer buffer = JdbcUtil.marshall(getMarshaller(), se.toInternalCacheValue());
+               ps.setBinaryStream(1, buffer.getStream(), buffer.getLength());
+               ps.setLong(2, se.getExpiryTime());
+               ps.setString(3, key);
+               return true;
+            } else {
+               return false;
+            }
+         }
+      };
    }
 
+   @Override
    public void stop() throws CacheLoaderException {
       tableManipulation.stop();
       if (config.isManageConnectionFactory()) {
@@ -78,6 +111,7 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
       }
    }
 
+   @Override
    protected String getLockFromKey(Object key) throws CacheLoaderException {
       if (!key2StringMapper.isSupportedType(key.getClass())) {
          throw new UnsupportedKeyTypeException(key);
@@ -85,6 +119,7 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
       return key2StringMapper.getStringMapping(key);
    }
 
+   @Override
    public void storeLockSafe(InternalCacheEntry ed, String lockingKey) throws CacheLoaderException {
       InternalCacheEntry existingOne = loadLockSafe(ed, lockingKey);
       String sql;
@@ -113,6 +148,7 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
       }
    }
 
+   @Override
    public boolean removeLockSafe(Object key, String keyStr) throws CacheLoaderException {
       Connection connection = null;
       PreparedStatement ps = null;
@@ -133,97 +169,24 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
       }
    }
 
+   @Override
    public void fromStreamLockSafe(ObjectInput objectInput) throws CacheLoaderException {
-      Connection conn = null;
-      PreparedStatement ps = null;
-      try {
-         conn = connectionFactory.getConnection();
-         String sql = tableManipulation.getInsertRowSql();
-         ps = conn.prepareStatement(sql);
-
-         int readStoredEntries = 0;
-         int batchSize = config.getBatchSize();
-         Object objFromStream = marshaller.objectFromObjectStream(objectInput);
-         while (objFromStream instanceof InternalCacheEntry) {
-            InternalCacheEntry se = (InternalCacheEntry) objFromStream;
-            readStoredEntries++;
-            String key = key2StringMapper.getStringMapping(se.getKey());
-            ByteBuffer buffer = JdbcUtil.marshall(getMarshaller(), se.toInternalCacheValue());
-            ps.setBinaryStream(1, buffer.getStream(), buffer.getLength());
-            ps.setLong(2, se.getExpiryTime());
-            ps.setString(3, key);
-            ps.addBatch();
-            if (readStoredEntries % batchSize == 0) {
-               ps.executeBatch();
-               if (log.isTraceEnabled())
-                  log.trace("Executing batch " + (readStoredEntries / batchSize) + ", batch size is " + batchSize);
-            }
-            objFromStream = marshaller.objectFromObjectStream(objectInput);
-         }
-         if (readStoredEntries % batchSize != 0)
-            ps.executeBatch();//flush the batch
-         if (log.isTraceEnabled())
-            log.trace("Successfully inserted " + readStoredEntries + " buckets into the database, batch size is " + batchSize);
-      } catch (IOException ex) {
-         logAndThrow(ex, "I/O failure while integrating state into store");
-      } catch (SQLException e) {
-         logAndThrow(e, "SQL failure while integrating state into store");
-      } catch (ClassNotFoundException e) {
-         logAndThrow(e, "Unexpected failure while integrating state into store");
-      } finally {
-         JdbcUtil.safeClose(ps);
-         connectionFactory.releaseConnection(conn);
-      }
+      dmHelper.fromStreamSupport(objectInput);
    }
 
+   @Override
    protected void toStreamLockSafe(ObjectOutput objectOutput) throws CacheLoaderException {
-      //now write our data
-      Connection connection = null;
-      PreparedStatement ps = null;
-      ResultSet rs = null;
-      try {
-         String sql = tableManipulation.getLoadAllRowsSql();
-         if (log.isTraceEnabled()) log.trace("Running sql '" + sql);
-         connection = connectionFactory.getConnection();
-         ps = connection.prepareStatement(sql);
-         rs = ps.executeQuery();
-         rs.setFetchSize(config.getFetchSize());
-         while (rs.next()) {
-            InputStream is = rs.getBinaryStream(1);
-            InternalCacheValue icv = (InternalCacheValue) JdbcUtil.unmarshall(getMarshaller(), is);
-            Object key = rs.getObject(2);
-            marshaller.objectToObjectStream(icv.toInternalCacheEntry(key), objectOutput);
-         }
-         marshaller.objectToObjectStream(STRING_STREAM_DELIMITER, objectOutput);
-      } catch (SQLException e) {
-         logAndThrow(e, "SQL Error while storing string keys to database");
-      } catch (IOException e) {
-         logAndThrow(e, "I/O Error while storing string keys to database");
-      }
-      finally {
-         JdbcUtil.safeClose(rs);
-         JdbcUtil.safeClose(ps);
-         connectionFactory.releaseConnection(connection);
-      }
+      dmHelper.toStreamSupport(objectOutput, STRING_STREAM_DELIMITER);
    }
 
    @Override
    protected void clearLockSafe() throws CacheLoaderException {
-      Connection conn = null;
-      PreparedStatement ps = null;
-      try {
-         String sql = tableManipulation.getDeleteAllRowsSql();
-         conn = connectionFactory.getConnection();
-         ps = conn.prepareStatement(sql);
-         int result = ps.executeUpdate();
-         if (log.isTraceEnabled())
-            log.trace("Successfully removed " + result + " rows.");
-      } catch (SQLException ex) {
-         logAndThrow(ex, "Failed clearing JdbcBinaryCacheStore");
-      } finally {
-         JdbcUtil.safeClose(ps);
-         connectionFactory.releaseConnection(conn);
-      }
+      dmHelper.clear();
+   }
+
+   @Override
+   protected Set<InternalCacheEntry> loadAllLockSafe() throws CacheLoaderException {
+      return dmHelper.loadAllSupport();
    }
 
    @Override
@@ -246,35 +209,8 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
       }
    }
 
-   protected Set<InternalCacheEntry> loadAllLockSafe() throws CacheLoaderException {
-      Connection conn = null;
-      PreparedStatement ps = null;
-      ResultSet rs = null;
-      try {
-         String sql = tableManipulation.getLoadAllRowsSql();
-         conn = connectionFactory.getConnection();
-         ps = conn.prepareStatement(sql);
-         rs = ps.executeQuery();
-         rs.setFetchSize(config.getFetchSize());
-         Set<InternalCacheEntry> result = new HashSet<InternalCacheEntry>();
-         while (rs.next()) {
-            InputStream inputStream = rs.getBinaryStream(1);
-            InternalCacheValue icv = (InternalCacheValue) JdbcUtil.unmarshall(getMarshaller(), inputStream);
-            Object key = rs.getObject(2);
-            result.add(icv.toInternalCacheEntry(key));
-         }
-         return result;
-      } catch (SQLException e) {
-         String message = "SQL error while fetching all StoredEntries";
-         log.error(message, e);
-         throw new CacheLoaderException(message, e);
-      } finally {
-         JdbcUtil.safeClose(rs);
-         JdbcUtil.safeClose(ps);
-         connectionFactory.releaseConnection(conn);
-      }
-   }
 
+   @Override
    protected InternalCacheEntry loadLockSafe(Object key, String lockingKey) throws CacheLoaderException {
       Connection conn = null;
       PreparedStatement ps = null;

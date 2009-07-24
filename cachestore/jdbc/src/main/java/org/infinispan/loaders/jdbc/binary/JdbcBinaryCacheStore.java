@@ -9,6 +9,7 @@ import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.loaders.bucket.BucketBasedCacheStore;
 import org.infinispan.loaders.jdbc.JdbcUtil;
 import org.infinispan.loaders.jdbc.TableManipulation;
+import org.infinispan.loaders.jdbc.DataManiulationHelper;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.util.logging.Log;
@@ -51,6 +52,7 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
    private JdbcBinaryCacheStoreConfig config;
    private ConnectionFactory connectionFactory;
    private TableManipulation tableManipulation;
+   private DataManiulationHelper dmHelper;
 
    public void init(CacheLoaderConfig config, Cache cache, Marshaller m) {
       if (log.isTraceEnabled())
@@ -67,6 +69,36 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
          factory.start(config.getConnectionFactoryConfig());
          doConnectionFactoryInitialization(factory);
       }
+      dmHelper = new DataManiulationHelper(connectionFactory, tableManipulation, marshaller) {
+         @Override
+         public void loadAllProcess(ResultSet rs, Set<InternalCacheEntry> result) throws SQLException, CacheLoaderException {
+            InputStream binaryStream = rs.getBinaryStream(1);
+            Bucket bucket = (Bucket) JdbcUtil.unmarshall(getMarshaller(), binaryStream);
+            result.addAll(bucket.getStoredEntries());
+         }
+
+         @Override
+         public void toStreamProcess(ResultSet rs, InputStream is, ObjectOutput objectOutput) throws CacheLoaderException, SQLException, IOException {
+            InputStream inputStream = rs.getBinaryStream(1);
+            Bucket bucket = (Bucket) JdbcUtil.unmarshall(getMarshaller(), inputStream);
+            String bucketName = rs.getString(2);
+            marshaller.objectToObjectStream(bucketName, objectOutput);
+            marshaller.objectToObjectStream(bucket, objectOutput);
+         }
+
+         public boolean fromStreamProcess(Object bucketName, PreparedStatement ps, ObjectInput objectInput) throws SQLException, CacheLoaderException, IOException, ClassNotFoundException {
+            if (bucketName instanceof String) {
+               Bucket bucket = (Bucket) marshaller.objectFromObjectStream(objectInput);
+               ByteBuffer buffer = JdbcUtil.marshall(getMarshaller(), bucket);
+               ps.setBinaryStream(1, buffer.getStream(), buffer.getLength());
+               ps.setLong(2, bucket.timestampOfFirstEntryToExpire());
+               ps.setString(3, (String) bucketName);
+               return true;
+            } else {
+               return false;
+            }
+         }
+      };
    }
 
    public void stop() throws CacheLoaderException {
@@ -95,7 +127,7 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
             throw new CacheLoaderException("Unexpected insert result: '" + insertedRows + "'. Expected values is 1");
          }
       } catch (SQLException ex) {
-         logAndThrow(ex, "sql failure while inserting bucket: " + bucket);
+         DataManiulationHelper.logAndThrow(ex, "sql failure while inserting bucket: " + bucket);
       } finally {
          JdbcUtil.safeClose(ps);
          connectionFactory.releaseConnection(conn);
@@ -121,7 +153,7 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
             throw new CacheLoaderException("Unexpected  update result: '" + updatedRows + "'. Expected values is 1");
          }
       } catch (SQLException e) {
-         logAndThrow(e, "sql failure while updating bucket: " + bucket);
+         DataManiulationHelper.logAndThrow(e, "sql failure while updating bucket: " + bucket);
       } finally {
          JdbcUtil.safeClose(ps);
          connectionFactory.releaseConnection(conn);
@@ -159,127 +191,23 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
    }
 
    public Set<InternalCacheEntry> loadAllLockSafe() throws CacheLoaderException {
-      Connection conn = null;
-      PreparedStatement ps = null;
-      ResultSet rs = null;
-      try {
-         String sql = tableManipulation.getLoadAllRowsSql();
-         if (log.isTraceEnabled()) {
-            log.trace("Running loadAll. Sql: '" + sql + "'");
-         }
-         conn = connectionFactory.getConnection();
-         ps = conn.prepareStatement(sql);
-         rs = ps.executeQuery();
-         rs.setFetchSize(config.getFetchSize());
-         Set<InternalCacheEntry> result = new HashSet<InternalCacheEntry>();
-         while (rs.next()) {
-            InputStream binaryStream = rs.getBinaryStream(1);
-            Bucket bucket = (Bucket) JdbcUtil.unmarshall(getMarshaller(), binaryStream);
-            result.addAll(bucket.getStoredEntries());
-         }
-         return result;
-      } catch (SQLException e) {
-         String message = "sql failure while loading key: ";
-         log.error(message, e);
-         throw new CacheLoaderException(message, e);
-      } finally {
-         JdbcUtil.safeClose(rs);
-         JdbcUtil.safeClose(ps);
-         connectionFactory.releaseConnection(conn);
-      }
+      return dmHelper.loadAllSupport();
    }
 
    protected void fromStreamLockSafe(ObjectInput objectInput) throws CacheLoaderException {
-      Connection conn = null;
-      PreparedStatement ps = null;
-      try {
-         conn = connectionFactory.getConnection();
-         String sql = tableManipulation.getInsertRowSql();
-         ps = conn.prepareStatement(sql);
-
-         int readBuckets = 0;
-         int batchSize = config.getBatchSize();
-         Object bucketName = marshaller.objectFromObjectStream(objectInput);
-         while (bucketName instanceof String) {
-            Bucket bucket = (Bucket) marshaller.objectFromObjectStream(objectInput);
-            readBuckets++;
-            ByteBuffer buffer = JdbcUtil.marshall(getMarshaller(), bucket);
-            ps.setBinaryStream(1, buffer.getStream(), buffer.getLength());
-            ps.setLong(2, bucket.timestampOfFirstEntryToExpire());
-            ps.setString(3, (String) bucketName);
-            if (readBuckets % batchSize == 0) {
-               ps.executeBatch();
-               if (log.isTraceEnabled())
-                  log.trace("Executing batch " + (readBuckets / batchSize) + ", batch size is " + batchSize);
-            } else {
-               ps.addBatch();
-            }
-            bucketName = marshaller.objectFromObjectStream(objectInput);
-         }
-         if (readBuckets % batchSize != 0)
-            ps.executeBatch();//flush the batch
-         if (log.isTraceEnabled())
-            log.trace("Successfully inserted " + readBuckets + " buckets into the database, batch size is " + batchSize);
-      } catch (IOException ex) {
-         logAndThrow(ex, "I/O failure while integrating state into store");
-      } catch (SQLException e) {
-         logAndThrow(e, "SQL failure while integrating state into store");
-      } catch (ClassNotFoundException e) {
-         logAndThrow(e, "Unexpected failure while integrating state into store");
-      } finally {
-         JdbcUtil.safeClose(ps);
-         connectionFactory.releaseConnection(conn);
-      }
+      dmHelper.fromStreamSupport(objectInput);
    }
 
    protected void toStreamLockSafe(ObjectOutput objectOutput) throws CacheLoaderException {
-      Connection conn = null;
-      PreparedStatement ps = null;
-      ResultSet rs = null;
-      try {
-         conn = connectionFactory.getConnection();
-         String sql = tableManipulation.getLoadAllRowsSql();
-         ps = conn.prepareStatement(sql);
-         rs = ps.executeQuery();
-         rs.setFetchSize(config.getFetchSize());
-         while (rs.next()) {
-            InputStream inputStream = rs.getBinaryStream(1);
-            Bucket bucket = (Bucket) JdbcUtil.unmarshall(getMarshaller(), inputStream);
-            String bucketName = rs.getString(2);
-            marshaller.objectToObjectStream(bucketName, objectOutput);
-            marshaller.objectToObjectStream(bucket, objectOutput);
-         }
-         marshaller.objectToObjectStream(BINARY_STREAM_DELIMITER, objectOutput);
-      } catch (SQLException ex) {
-         logAndThrow(ex, "SQL failure while writing store's content to stream");
-      }
-      catch (IOException e) {
-         logAndThrow(e, "IO failure while writing store's content to stream");
-      } finally {
-         JdbcUtil.safeClose(rs);
-         JdbcUtil.safeClose(ps);
-         connectionFactory.releaseConnection(conn);
-      }
+      dmHelper.toStreamSupport(objectOutput, BINARY_STREAM_DELIMITER);
    }
 
+   @Override
    protected void clearLockSafe() throws CacheLoaderException {
-      Connection conn = null;
-      PreparedStatement ps = null;
-      try {
-         String sql = tableManipulation.getDeleteAllRowsSql();
-         conn = connectionFactory.getConnection();
-         ps = conn.prepareStatement(sql);
-         int result = ps.executeUpdate();
-         if (log.isTraceEnabled())
-            log.trace("Successfully removed " + result + " rows.");
-      } catch (SQLException ex) {
-         logAndThrow(ex, "Failed clearing JdbcBinaryCacheStore");
-      } finally {
-         JdbcUtil.safeClose(ps);
-         connectionFactory.releaseConnection(conn);
-      }
+      dmHelper.clear();
    }
 
+   @Override
    public void purgeInternal() throws CacheLoaderException {
       Connection conn = null;
       PreparedStatement ps = null;
@@ -309,7 +237,7 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
          //if something happens make sure buckets locks are being release
          releaseLocks(expiredBuckets);
          connectionFactory.releaseConnection(conn);
-         logAndThrow(ex, "Failed clearing JdbcBinaryCacheStore");
+         DataManiulationHelper.logAndThrow(ex, "Failed clearing JdbcBinaryCacheStore");
       } finally {
          JdbcUtil.safeClose(ps);
          JdbcUtil.safeClose(rs);
@@ -353,7 +281,7 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
          //if something happens make sure buckets locks are being release
          releaseLocks(emptyBuckets);
          connectionFactory.releaseConnection(conn);
-         logAndThrow(ex, "Failed clearing JdbcBinaryCacheStore");
+         DataManiulationHelper.logAndThrow(ex, "Failed clearing JdbcBinaryCacheStore");
       } finally {
          //release locks for the updated buckets.This won't include empty buckets, as these were migrated to emptyBuckets
          releaseLocks(expiredBuckets);
@@ -386,7 +314,7 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
          }
       } catch (SQLException ex) {
          //if something happens make sure buckets locks are being release
-         logAndThrow(ex, "Failed clearing JdbcBinaryCacheStore");
+         DataManiulationHelper.logAndThrow(ex, "Failed clearing JdbcBinaryCacheStore");
       } finally {
          releaseLocks(emptyBuckets);
          JdbcUtil.safeClose(ps);
@@ -402,11 +330,6 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
 
    public Class<? extends CacheLoaderConfig> getConfigurationClass() {
       return JdbcBinaryCacheStoreConfig.class;
-   }
-
-   protected void logAndThrow(Exception e, String message) throws CacheLoaderException {
-      log.error(message, e);
-      throw new CacheLoaderException(message, e);
    }
 
    public ConnectionFactory getConnectionFactory() {

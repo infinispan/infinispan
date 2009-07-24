@@ -62,10 +62,10 @@ public class JdbcMixedCacheStore extends AbstractCacheStore {
       ConnectionFactoryConfig factoryConfig = config.getConnectionFactoryConfig();
       sharedConnectionFactory = ConnectionFactory.getConnectionFactory(factoryConfig.getConnectionFactoryClass());
       sharedConnectionFactory.start(factoryConfig);
-      binaryCacheStore.start();
       binaryCacheStore.doConnectionFactoryInitialization(sharedConnectionFactory);
-      stringBasedCacheStore.start();
+      binaryCacheStore.start();
       stringBasedCacheStore.doConnectionFactoryInitialization(sharedConnectionFactory);
+      stringBasedCacheStore.start();
    }
 
    @Override
