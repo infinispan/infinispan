@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <ehcache xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:noNamespaceSchemaLocation="ehcache.xsd" >
+         xsi:noNamespaceSchemaLocation="ehcache-1.6.xsd" >
 
     <!--
     CacheManager Configuration
     ==========================
     An ehcache.xml corresponds to a single CacheManager.
 
-    See instructions below or the ehcache schema (ehcache.xsd) on how to configure.
+    See instructions below or the ehcache schema (ehcache-1.6.xsd) on how to configure.
 
     System property tokens can be specified in this file which are replaced when the configuration
     is loaded. For example multicastGroupPort=${multicastGroupPort} can be replaced with the

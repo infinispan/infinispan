@@ -1,18 +1,19 @@
 package org.infinispan.config.parsing;
 
 import org.infinispan.Cache;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.test.TestingUtil;
 import static org.testng.Assert.assertEquals;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -21,32 +22,39 @@ import java.io.File;
 public class EHCache2InfinispanTransformerTest {
 
    public static final String XSLT_FILE = "xslt/ehcache16x2infinispan4x.xslt";
-   private static final String BASE_DIR = "configs/ehcache16";
+   private static final String BASE_DIR = "configs/ehcache";
    ConfigFilesConvertor convertor = new ConfigFilesConvertor();
 
+   public void testEhCache16File() throws Exception {
+      testAllFile("/ehcache-1.6RC1.xml");
+   }
+
+   public void testEhCache15File() throws Exception {
+      testAllFile("/ehcache-1.5.xml");
+   }
 
    /**
     * Transforms and tests the transformation of a complex file.
     */
-   public void testAllFile() throws Exception {
+   private void testAllFile(String ehCacheFile) throws Exception {
       ClassLoader existingCl = Thread.currentThread().getContextClassLoader();
       DefaultCacheManager dcm = null;
       Cache<Object, Object> sampleDistributedCache2 = null;
       try {
          ClassLoader delegatingCl = new Jbc2InfinispanTransformerTest.TestClassLoader(existingCl);
          Thread.currentThread().setContextClassLoader(delegatingCl);
-         String fileName = getFileName("/ehcache-configuration.xml");
+         String fileName = getFileName(ehCacheFile);
          ByteArrayOutputStream baos = new ByteArrayOutputStream();
          convertor.parse(fileName, baos, XSLT_FILE);
 
 
-//         File out = new File("zzzz.xml");
-//         if (out.exists()) out.delete();
-//         out.createNewFile();
-//         FileOutputStream fos = new FileOutputStream(out);
-//         fos.write(baos.toByteArray());
-//         baos.close();
-//         fos.close();
+         File out = new File("zzzz2.xml");
+         if (out.exists()) out.delete();
+         out.createNewFile();
+         FileOutputStream fos = new FileOutputStream(out);
+         fos.write(baos.toByteArray());
+         baos.close();
+         fos.close();
 
          dcm = new DefaultCacheManager(new ByteArrayInputStream(baos.toByteArray()));
          Cache<Object,Object> defaultCache = dcm.getCache();
