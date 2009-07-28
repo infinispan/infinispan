@@ -419,6 +419,23 @@
             <protocol.stack>tcp</protocol.stack>
          </properties>
       </profile>
-
+	  <profile>
+		<id>jaxb</id>
+        <activation>
+			<jdk>1.5</jdk>
+        </activation>
+		<dependencies> 
+			<dependency>
+				<groupId>javax.xml.bind</groupId>
+                <artifactId>jaxb-api</artifactId>
+                <version>2.1</version>
+            </dependency>
+            <dependency>
+                <groupId>com.sun.xml.bind</groupId>
+                <artifactId>jaxb-impl</artifactId>
+                <version>2.1.3</version>
+            </dependency> 
+		</dependencies> 
+	  </profile>
    </profiles>
 </project>
