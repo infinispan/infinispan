@@ -1,5 +1,11 @@
 package org.infinispan.loaders;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlType;
+
 import org.infinispan.config.ConfigurationAttribute;
 import org.infinispan.loaders.decorators.AsyncStoreConfig;
 import org.infinispan.loaders.decorators.SingletonStoreConfig;
@@ -18,14 +24,29 @@ import org.infinispan.util.Util;
  * @version $Id$
  * @since 4.0
  */
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlType(propOrder={"singletonStore","async"})
 public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implements CacheStoreConfig {
-   private boolean ignoreModifications;
-   private boolean fetchPersistentState;
-   private boolean purgeOnStartup;
-   private SingletonStoreConfig singletonStoreConfig = new SingletonStoreConfig();
-   private AsyncStoreConfig asyncStoreConfig = new AsyncStoreConfig();
+   
+   @XmlAttribute
+   private Boolean ignoreModifications = false;
+   
+   @XmlAttribute
+   private Boolean fetchPersistentState = false;
+   
+   @XmlAttribute
+   private Boolean purgeOnStartup = false;
+   
+   @XmlAttribute
+   private Boolean purgeSynchronously = false;
+   
+   @XmlElement
+   private SingletonStoreConfig singletonStore = new SingletonStoreConfig();
+   
+   @XmlElement
+   private AsyncStoreConfig async = new AsyncStoreConfig();
 
-   private boolean purgeSynchronously = false;
+   
 
    public boolean isPurgeSynchronously() {
       return purgeSynchronously;
@@ -74,21 +95,21 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
    }
 
    public SingletonStoreConfig getSingletonStoreConfig() {
-      return singletonStoreConfig;
+      return singletonStore;
    }
 
    public void setSingletonStoreConfig(SingletonStoreConfig singletonStoreConfig) {
-      testImmutability("singletonStoreConfig");
-      this.singletonStoreConfig = singletonStoreConfig;
+      testImmutability("singletonStore");
+      this.singletonStore = singletonStoreConfig;
    }
 
    public AsyncStoreConfig getAsyncStoreConfig() {
-      return asyncStoreConfig;
+      return async;
    }
 
    public void setAsyncStoreConfig(AsyncStoreConfig asyncStoreConfig) {
-      testImmutability("asyncStoreConfig");
-      this.asyncStoreConfig = asyncStoreConfig;
+      testImmutability("async");
+      this.async = asyncStoreConfig;
    }
 
    @Override
@@ -107,8 +128,8 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
       return Util.safeEquals(this.cacheLoaderClassName, other.cacheLoaderClassName)
             && (this.ignoreModifications == other.ignoreModifications)
             && (this.fetchPersistentState == other.fetchPersistentState)
-            && Util.safeEquals(this.singletonStoreConfig, other.singletonStoreConfig)
-            && Util.safeEquals(this.asyncStoreConfig, other.asyncStoreConfig)
+            && Util.safeEquals(this.singletonStore, other.singletonStore)
+            && Util.safeEquals(this.async, other.async)
             && Util.safeEquals(this.purgeSynchronously, other.purgeSynchronously);
    }
 
@@ -122,8 +143,8 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
       result = 31 * result + (cacheLoaderClassName == null ? 0 : cacheLoaderClassName.hashCode());
       result = 31 * result + (ignoreModifications ? 0 : 1);
       result = 31 * result + (fetchPersistentState ? 0 : 1);
-      result = 31 * result + (singletonStoreConfig == null ? 0 : singletonStoreConfig.hashCode());
-      result = 31 * result + (asyncStoreConfig == null ? 0 : asyncStoreConfig.hashCode());
+      result = 31 * result + (singletonStore == null ? 0 : singletonStore.hashCode());
+      result = 31 * result + (async == null ? 0 : async.hashCode());
       result = 31 * result + (purgeOnStartup ? 0 : 1);
       return result;
    }
@@ -135,8 +156,8 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
             .append(", fetchPersistentState=").append(fetchPersistentState)
             .append(", properties=").append(properties)
             .append(", purgeOnStartup=").append(purgeOnStartup).append("},")
-            .append(", SingletonStoreConfig{").append(singletonStoreConfig).append('}')
-            .append(", AsyncStoreConfig{").append(asyncStoreConfig).append('}')
+            .append(", singletonStore{").append(singletonStore).append('}')
+            .append(", async{").append(async).append('}')
             .append(", purgeSynchronously{").append(purgeSynchronously).append('}')
             .toString();
    }
@@ -145,8 +166,8 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
    public AbstractCacheStoreConfig clone() {
       AbstractCacheStoreConfig clone = null;
       clone = (AbstractCacheStoreConfig) super.clone();
-      if (singletonStoreConfig != null) clone.setSingletonStoreConfig(singletonStoreConfig.clone());
-      if (asyncStoreConfig != null) clone.setAsyncStoreConfig(asyncStoreConfig.clone());
+      if (singletonStore != null) clone.setSingletonStoreConfig(singletonStore.clone());
+      if (async != null) clone.setAsyncStoreConfig(async.clone());
       return clone;
    }
 }

@@ -3,6 +3,7 @@ package org.infinispan.loaders;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.config.CacheLoaderManagerConfig;
+import org.infinispan.config.CloneableConfigurationComponent;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.CustomInterceptorConfig;
 import org.infinispan.container.DataContainer;
@@ -88,10 +89,10 @@ public class ConcurrentLoadAndEvictTest extends SingleCacheManagerTest {
       assert !TestingUtil.extractComponent(cache, DataContainer.class).containsKey("a");
    }
 
-   public static class SlowDownInterceptor extends CommandInterceptor {
+   public static class SlowDownInterceptor extends CommandInterceptor implements CloneableConfigurationComponent{
       volatile boolean enabled = false;
-      CountDownLatch getLatch = new CountDownLatch(1);
-      CountDownLatch evictLatch = new CountDownLatch(1);
+      transient CountDownLatch getLatch = new CountDownLatch(1);
+      transient CountDownLatch evictLatch = new CountDownLatch(1);
 
       @Override
       public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
@@ -115,5 +116,12 @@ public class ConcurrentLoadAndEvictTest extends SingleCacheManagerTest {
             if (enabled) evictLatch.countDown();
          }
       }
+      public SlowDownInterceptor clone(){
+         try {
+            return (SlowDownInterceptor) super.clone();
+         } catch (CloneNotSupportedException e) {
+            throw new RuntimeException("Should not happen", e);
+         }
+      }    
    }
 }

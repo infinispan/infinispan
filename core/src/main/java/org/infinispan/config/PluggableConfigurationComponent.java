@@ -22,10 +22,16 @@
 package org.infinispan.config;
 
 import org.infinispan.config.parsing.XmlConfigHelper;
+import org.infinispan.util.TypedProperties;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Properties;
+
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlType;
 
 /**
  * A configuration component where the implementation class can be specified, and comes with its own set of properties.
@@ -33,8 +39,10 @@ import java.util.Properties;
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @since 4.0
  */
+@XmlAccessorType(XmlAccessType.FIELD)
 public abstract class PluggableConfigurationComponent extends AbstractNamedCacheConfigurationBean {
-   protected Properties properties = EMPTY_PROPERTIES;
+   @XmlElement(name="properties")
+   protected TypedProperties properties = EMPTY_PROPERTIES;
 
    public Properties getProperties() {
       return properties;
@@ -42,7 +50,7 @@ public abstract class PluggableConfigurationComponent extends AbstractNamedCache
 
    public void setProperties(Properties properties) {
       testImmutability("properties");
-      this.properties = properties;
+      this.properties = toTypedProperties(properties);
    }
 
    public void setProperties(String properties) throws IOException {
@@ -53,7 +61,7 @@ public abstract class PluggableConfigurationComponent extends AbstractNamedCache
       // replace any "\" that is not preceded by a backslash with "\\"
       properties = XmlConfigHelper.escapeBackslashes(properties);
       ByteArrayInputStream is = new ByteArrayInputStream(properties.trim().getBytes("ISO8859_1"));
-      this.properties = new Properties();
+      this.properties = new TypedProperties();
       this.properties.load(is);
       is.close();
    }
@@ -82,7 +90,7 @@ public abstract class PluggableConfigurationComponent extends AbstractNamedCache
    @Override
    public PluggableConfigurationComponent clone() throws CloneNotSupportedException {
       PluggableConfigurationComponent clone = (PluggableConfigurationComponent) super.clone();
-      if (properties != null) clone.properties = (Properties) properties.clone();
+      if (properties != null) clone.properties = (TypedProperties) properties.clone();
       return clone;
    }
 }

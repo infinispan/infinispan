@@ -21,13 +21,18 @@
  */
 package org.infinispan.config;
 
+import java.util.LinkedList;
+import java.util.List;
+
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+
 import org.infinispan.config.parsing.CacheLoaderManagerConfigReader;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.util.Util;
-
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  * Holds the configuration of the cache loader chain.  ALL cache loaders should be defined using this class, adding
@@ -39,14 +44,22 @@ import java.util.List;
  * @since 4.0
  */
 @ConfigurationElement(name="loaders",parent="default",customReader=CacheLoaderManagerConfigReader.class)
+@XmlAccessorType(XmlAccessType.FIELD)
 public class CacheLoaderManagerConfig extends AbstractNamedCacheConfigurationBean {
    private static final long serialVersionUID = 2210349340378984424L;
 
-   private boolean passivation;
-   private boolean preload;
+   @XmlAttribute
+   private Boolean passivation = false;
+   
+   @XmlAttribute
+   private Boolean preload = false;
+   
+   @XmlAttribute
+   private Boolean shared = false;
+  
+   @XmlElement(name="loader")
    private List<CacheLoaderConfig> cacheLoaderConfigs = new LinkedList<CacheLoaderConfig>();
 
-   private boolean shared;
 
 
    @ConfigurationAttribute(name = "preload", 

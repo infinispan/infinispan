@@ -27,6 +27,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.config.DuplicateCacheNameException;
 import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.config.InfinispanConfiguration;
 import org.infinispan.config.parsing.XmlConfigurationParser;
 import org.infinispan.config.parsing.XmlConfigurationParserImpl;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -204,7 +205,7 @@ public class DefaultCacheManager implements CacheManager {
     */
    public DefaultCacheManager(String configurationFile, boolean start) throws IOException {
       try {
-         initialize(new XmlConfigurationParserImpl(configurationFile));
+         initialize(InfinispanConfiguration.newInfinispanConfiguration(configurationFile));
       }
       catch (RuntimeException re) {
          throw new ConfigurationException(re);
@@ -235,7 +236,7 @@ public class DefaultCacheManager implements CacheManager {
     */
    public DefaultCacheManager(InputStream configurationStream, boolean start) throws IOException {
       try {
-         initialize(new XmlConfigurationParserImpl(configurationStream));
+         initialize(InfinispanConfiguration.newInfinispanConfiguration(configurationStream));
       } catch (ConfigurationException ce) {
          throw ce;
       } catch (RuntimeException re) {

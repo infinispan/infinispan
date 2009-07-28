@@ -1,5 +1,14 @@
 package org.infinispan.config;
 
+import java.util.Properties;
+
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlTransient;
+import javax.xml.bind.annotation.XmlType;
+
 import org.infinispan.CacheException;
 import org.infinispan.Version;
 import org.infinispan.executors.DefaultExecutorFactory;
@@ -14,8 +23,6 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.marshall.VersionAwareMarshaller;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.util.TypedProperties;
-
-import java.util.Properties;
 
 /**
  * Configuration component that encapsulates the global configuration.
@@ -38,39 +45,51 @@ import java.util.Properties;
          @ConfigurationElement(name = "serialization", parent = "global", description = ""),
          @ConfigurationElement(name = "shutdown", parent = "global", description = "")
 })
+@XmlAccessorType(XmlAccessType.FIELD)
+@XmlType(propOrder={})
 public class GlobalConfiguration extends AbstractConfigurationBean {
+
+   public GlobalConfiguration() {
+      super();
+   }
 
    /**
     * Default replication version, from {@link org.infinispan.Version#getVersionShort}.
     */
    public static final short DEFAULT_MARSHALL_VERSION = Version.getVersionShort();
-
-   private String asyncListenerExecutorFactoryClass = DefaultExecutorFactory.class.getName();
-   private TypedProperties asyncListenerExecutorProperties = EMPTY_PROPERTIES;
-   private String asyncTransportExecutorFactoryClass = DefaultExecutorFactory.class.getName();
-   private TypedProperties asyncTransportExecutorProperties = EMPTY_PROPERTIES;
-   private String evictionScheduledExecutorFactoryClass = DefaultScheduledExecutorFactory.class.getName();
-   private TypedProperties evictionScheduledExecutorProperties = EMPTY_PROPERTIES;
-   private String replicationQueueScheduledExecutorFactoryClass = DefaultScheduledExecutorFactory.class.getName();
-   private TypedProperties replicationQueueScheduledExecutorProperties = EMPTY_PROPERTIES;
-   private String marshallerClass = VersionAwareMarshaller.class.getName(); // the default
-   private String transportClass = null; // this defaults to a non-clustered cache.
-   private TypedProperties transportProperties = EMPTY_PROPERTIES;
+   
+   @XmlElement
+   private FactoryClassWithPropertiesType asyncListenerExecutor = new FactoryClassWithPropertiesType(DefaultExecutorFactory.class.getName());
+   
+   @XmlElement
+   private FactoryClassWithPropertiesType asyncTransportExecutor= new FactoryClassWithPropertiesType(DefaultExecutorFactory.class.getName());
+   
+   @XmlElement
+   private FactoryClassWithPropertiesType evictionScheduledExecutor= new FactoryClassWithPropertiesType(DefaultScheduledExecutorFactory.class.getName());
+   
+   @XmlElement
+   private FactoryClassWithPropertiesType replicationQueueScheduledExecutor= new FactoryClassWithPropertiesType(DefaultScheduledExecutorFactory.class.getName());
+   
+   @XmlElement
+   private GlobalJmxStatisticsType globalJmxStatistics = new GlobalJmxStatisticsType();
+   
+   @XmlElement
+   private TransportType transport = new TransportType();
+  
+   @XmlElement
+   private SerializationType serialization = new SerializationType();
+   
+   @XmlTransient
    private Configuration defaultConfiguration;
-   private String clusterName = "Infinispan-Cluster";
-   private ShutdownHookBehavior shutdownHookBehavior = ShutdownHookBehavior.DEFAULT;
-   private short marshallVersion = DEFAULT_MARSHALL_VERSION;
+   
+   @XmlElement
+   private ShutdownType shutdown = new ShutdownType();
 
+   @XmlTransient
    private GlobalComponentRegistry gcr;
-   private long distributedSyncTimeout = 60000; // default
-
-   private boolean exposeGlobalJmxStatistics = false;
-   private String jmxDomain = "infinispan";
-   private String mBeanServerLookup = PlatformMBeanServerLookup.class.getName();
-   private boolean allowDuplicateDomains = false;
 
    public boolean isExposeGlobalJmxStatistics() {
-      return exposeGlobalJmxStatistics;
+      return globalJmxStatistics.enabled;
    }
 
    @ConfigurationAttribute(name = "enabled", 
@@ -78,7 +97,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
             description = "If true, global JMX statistics are published")
    public void setExposeGlobalJmxStatistics(boolean exposeGlobalJmxStatistics) {
       testImmutability("exposeGlobalManagementStatistics");
-      this.exposeGlobalJmxStatistics = exposeGlobalJmxStatistics;
+      globalJmxStatistics.setEnabled(exposeGlobalJmxStatistics);
    }
 
    /**
@@ -89,39 +108,36 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
             containingElement = "globalJmxStatistics", 
             description = "If JMX statistics are enabled then all 'published' JMX objects will appear under this name")
    public void setJmxDomain(String jmxObjectName) {
-      testImmutability("jmxNameBase");
-      this.jmxDomain = jmxObjectName;
+      globalJmxStatistics.setJmxDomain(jmxObjectName);
    }
 
    /**
     * @see #setJmxDomain(String)
     */
    public String getJmxDomain() {
-      return jmxDomain;
+      return globalJmxStatistics.jmxDomain;
    }
 
    public String getMBeanServerLookup() {
-      return mBeanServerLookup;
+      return globalJmxStatistics.mBeanServerLookup;
    }
 
    @ConfigurationAttribute(name = "mBeanServerLookup", 
             containingElement = "globalJmxStatistics", 
             description = "")
    public void setMBeanServerLookup(String mBeanServerLookup) {
-      testImmutability("mBeanServerLookup");
-      this.mBeanServerLookup = mBeanServerLookup;
+      globalJmxStatistics.setMBeanServerLookup(mBeanServerLookup);
    }
 
    public boolean isAllowDuplicateDomains() {
-      return allowDuplicateDomains;
+      return globalJmxStatistics.allowDuplicateDomains;
    }
 
    @ConfigurationAttribute(name = "allowDuplicateDomains", 
             containingElement = "globalJmxStatistics", 
             description = "")
    public void setAllowDuplicateDomains(boolean allowDuplicateDomains) {
-      testImmutability("allowDuplicateDomains");
-      this.allowDuplicateDomains = allowDuplicateDomains;
+      globalJmxStatistics.setAllowDuplicateDomains(allowDuplicateDomains);
    }
 
    /**
@@ -144,7 +160,16 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
 
    @Inject
    private void injectDependencies(GlobalComponentRegistry gcr) {
-      this.gcr = gcr;
+      this.gcr = gcr;     
+      gcr.registerComponent(asyncListenerExecutor, "asyncListenerExecutor");
+      gcr.registerComponent(asyncTransportExecutor, "asyncTransportExecutor");
+      gcr.registerComponent(evictionScheduledExecutor, "evictionScheduledExecutor");
+      gcr.registerComponent(replicationQueueScheduledExecutor, "replicationQueueScheduledExecutor");
+      gcr.registerComponent(replicationQueueScheduledExecutor, "replicationQueueScheduledExecutor");
+      gcr.registerComponent(globalJmxStatistics, "globalJmxStatistics");
+      gcr.registerComponent(transport, "transport");
+      gcr.registerComponent(serialization, "serialization");
+      gcr.registerComponent(shutdown, "shutdown");
    }
 
    protected boolean hasComponentStarted() {
@@ -152,66 +177,61 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    }
 
    public String getAsyncListenerExecutorFactoryClass() {
-      return asyncListenerExecutorFactoryClass;
+      return asyncListenerExecutor.factory;
    }
 
    @ConfigurationAttribute(name = "factory", 
             containingElement = "asyncListenerExecutor", 
             description = "ExecutorService factory class for asynchronous listeners")
    public void setAsyncListenerExecutorFactoryClass(String asyncListenerExecutorFactoryClass) {
-      testImmutability("asyncListenerExecutorFactoryClass");
-      this.asyncListenerExecutorFactoryClass = asyncListenerExecutorFactoryClass;
+      asyncListenerExecutor.setFactory(asyncListenerExecutorFactoryClass);
    }
 
    public String getAsyncTransportExecutorFactoryClass() {
-      return asyncTransportExecutorFactoryClass;
+      return asyncTransportExecutor.factory;
    }
 
    @ConfigurationAttribute(name = "factory", 
             containingElement = "asyncTransportExecutor", 
             description = "ExecutorService factory class for async transport")
    public void setAsyncTransportExecutorFactoryClass(String asyncTransportExecutorFactoryClass) {
-      testImmutability("asyncTransportExecutorFactoryClass");
-      this.asyncTransportExecutorFactoryClass = asyncTransportExecutorFactoryClass;
+      this.asyncTransportExecutor.setFactory(asyncTransportExecutorFactoryClass);
    }
 
    public String getEvictionScheduledExecutorFactoryClass() {
-      return evictionScheduledExecutorFactoryClass;
+      return evictionScheduledExecutor.factory;
    }
 
    @ConfigurationAttribute(name = "factory", 
             containingElement = "evictionScheduledExecutor", 
             description = "ExecutorService factory class for eviction threads")
    public void setEvictionScheduledExecutorFactoryClass(String evictionScheduledExecutorFactoryClass) {
-      testImmutability("evictionScheduledExecutorFactoryClass");
-      this.evictionScheduledExecutorFactoryClass = evictionScheduledExecutorFactoryClass;
+      evictionScheduledExecutor.setFactory(evictionScheduledExecutorFactoryClass);
    }
 
    public String getReplicationQueueScheduledExecutorFactoryClass() {
-      return replicationQueueScheduledExecutorFactoryClass;
+      return replicationQueueScheduledExecutor.factory;
    }
 
    @ConfigurationAttribute(name = "factory", 
             containingElement = "replicationQueueScheduledExecutor", 
             description = "ExecutorService factory class for replication queue threads")
    public void setReplicationQueueScheduledExecutorFactoryClass(String replicationQueueScheduledExecutorFactoryClass) {
-      testImmutability("replicationQueueScheduledExecutorFactoryClass");
-      this.replicationQueueScheduledExecutorFactoryClass = replicationQueueScheduledExecutorFactoryClass;
+      replicationQueueScheduledExecutor.setFactory(replicationQueueScheduledExecutorFactoryClass);
    }
 
    public String getMarshallerClass() {
-      return marshallerClass;
+      return serialization.marshallerClass;
    }
 
    @ConfigurationAttribute(name = "marshallerClass", 
             containingElement = "serialization")
    public void setMarshallerClass(String marshallerClass) {
-      testImmutability("marshallerClass");
-      this.marshallerClass = marshallerClass;
+      serialization.setMarshallerClass(marshallerClass);
    }
 
    public String getTransportClass() {
-      return transportClass;
+      return transport.transportClass;
    }
 
    @ConfigurationAttribute(name = "transportClass", 
@@ -219,12 +239,11 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
             description = "Transport class, by default null i.e. no transport",
             defaultValue = "org.infinispan.remoting.transport.jgroups.JGroupsTransport")
    public void setTransportClass(String transportClass) {
-      testImmutability("transportClass");
-      this.transportClass = transportClass;
+      transport.setTransportClass(transportClass);
    }
 
    public Properties getTransportProperties() {
-      return transportProperties;
+      return transport.properties;
    }
 
    @ConfigurationProperties(elements = {
@@ -232,13 +251,11 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
             @ConfigurationProperty(name = "configurationFile", parentElement = "transport"),
             @ConfigurationProperty(name = "configurationXml", parentElement = "transport") })
    public void setTransportProperties(Properties transportProperties) {
-      testImmutability("transportProperties");
-      this.transportProperties = toTypedProperties(transportProperties);
+      transport.setProperties(toTypedProperties(transportProperties));
    }
    
    public void setTransportProperties(String transportPropertiesString) {
-      testImmutability("transportProperties");
-      this.transportProperties = toTypedProperties(transportPropertiesString);
+      transport.setProperties(toTypedProperties(transportPropertiesString));
    }
 
    public Configuration getDefaultConfiguration() {
@@ -246,28 +263,25 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    }
 
    public void setDefaultConfiguration(Configuration defaultConfiguration) {
-      testImmutability("defaultConfiguration");
       this.defaultConfiguration = defaultConfiguration;
    }
 
    public String getClusterName() {
-      return clusterName;
+      return transport.clusterName;
    }
 
    @ConfigurationAttribute(name = "clusterName", 
             containingElement = "transport")
    public void setClusterName(String clusterName) {
-      testImmutability("clusterName");
-      this.clusterName = clusterName;
+      transport.setClusterName(clusterName);
    }
 
    public ShutdownHookBehavior getShutdownHookBehavior() {
-      return shutdownHookBehavior;
+      return shutdown.hookBehavior;
    }
 
    public void setShutdownHookBehavior(ShutdownHookBehavior shutdownHookBehavior) {
-      testImmutability("shutdownHookBehavior");
-      this.shutdownHookBehavior = shutdownHookBehavior;
+      shutdown.setHookBehavior(shutdownHookBehavior);
    }
 
    @ConfigurationAttribute(name = "hookBehavior", 
@@ -286,7 +300,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    }
 
    public Properties getAsyncListenerExecutorProperties() {
-      return asyncListenerExecutorProperties;
+      return asyncListenerExecutor.properties;
    }
    
 
@@ -294,34 +308,30 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
             @ConfigurationProperty(name = "maxThreads", parentElement = "asyncListenerExecutor"),
             @ConfigurationProperty(name = "threadNamePrefix", parentElement = "asyncListenerExecutor") })
    public void setAsyncListenerExecutorProperties(Properties asyncListenerExecutorProperties) {
-      testImmutability("asyncListenerExecutorProperties");
-      this.asyncListenerExecutorProperties = toTypedProperties(asyncListenerExecutorProperties);
+      asyncListenerExecutor.setProperties(toTypedProperties(asyncListenerExecutorProperties));
    }
 
    public void setAsyncListenerExecutorProperties(String asyncListenerExecutorPropertiesString) {
-      testImmutability("asyncListenerExecutorProperties");
-      this.asyncListenerExecutorProperties = toTypedProperties(asyncListenerExecutorPropertiesString);
+      asyncListenerExecutor.setProperties(toTypedProperties(asyncListenerExecutorPropertiesString));
    }
 
    public Properties getAsyncTransportExecutorProperties() {
-      return asyncTransportExecutorProperties;
+      return asyncTransportExecutor.properties;
    }
 
    @ConfigurationProperties(elements = {
             @ConfigurationProperty(name = "maxThreads", parentElement = "asyncTransportExecutor"),
             @ConfigurationProperty(name = "threadNamePrefix", parentElement = "asyncTransportExecutor") })
    public void setAsyncTransportExecutorProperties(Properties asyncTransportExecutorProperties) {
-      testImmutability("asyncTransportExecutorProperties");
-      this.asyncTransportExecutorProperties = toTypedProperties(asyncTransportExecutorProperties);
+      this.asyncTransportExecutor.setProperties(toTypedProperties(asyncTransportExecutorProperties));
    }
 
    public void setAsyncTransportExecutorProperties(String asyncSerializationExecutorPropertiesString) {
-      testImmutability("asyncTransportExecutorProperties");
-      this.asyncTransportExecutorProperties = toTypedProperties(asyncSerializationExecutorPropertiesString);
+      this.asyncTransportExecutor.setProperties(toTypedProperties(asyncSerializationExecutorPropertiesString));
    }
 
    public Properties getEvictionScheduledExecutorProperties() {
-      return evictionScheduledExecutorProperties;
+      return evictionScheduledExecutor.properties;
    }
 
 
@@ -329,61 +339,55 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
             @ConfigurationProperty(name = "maxThreads", parentElement = "evictionScheduledExecutor"),
             @ConfigurationProperty(name = "threadNamePrefix", parentElement = "evictionScheduledExecutor") })   
    public void setEvictionScheduledExecutorProperties(Properties evictionScheduledExecutorProperties) {
-      testImmutability("evictionScheduledExecutorProperties");
-      this.evictionScheduledExecutorProperties = toTypedProperties(evictionScheduledExecutorProperties);
+      evictionScheduledExecutor.setProperties(toTypedProperties(evictionScheduledExecutorProperties));
    }
 
    public void setEvictionScheduledExecutorProperties(String evictionScheduledExecutorPropertiesString) {
-      testImmutability("evictionScheduledExecutorProperties");
-      this.evictionScheduledExecutorProperties = toTypedProperties(evictionScheduledExecutorPropertiesString);
+      evictionScheduledExecutor.setProperties(toTypedProperties(evictionScheduledExecutorPropertiesString));
    }
 
    public Properties getReplicationQueueScheduledExecutorProperties() {
-      return replicationQueueScheduledExecutorProperties;
+      return replicationQueueScheduledExecutor.properties;
    }
 
    @ConfigurationProperties(elements = {
             @ConfigurationProperty(name = "maxThreads", parentElement = "replicationQueueScheduledExecutor"),
             @ConfigurationProperty(name = "threadNamePrefix", parentElement = "replicationQueueScheduledExecutor") })      
    public void setReplicationQueueScheduledExecutorProperties(Properties replicationQueueScheduledExecutorProperties) {
-      testImmutability("replicationQueueScheduledExecutorProperties");
-      this.replicationQueueScheduledExecutorProperties = toTypedProperties(replicationQueueScheduledExecutorProperties);
+      this.replicationQueueScheduledExecutor.setProperties(toTypedProperties(replicationQueueScheduledExecutorProperties));
    }
 
    public void setReplicationQueueScheduledExecutorProperties(String replicationQueueScheduledExecutorPropertiesString) {
-      testImmutability("replicationQueueScheduledExecutorProperties");
-      this.replicationQueueScheduledExecutorProperties = toTypedProperties(replicationQueueScheduledExecutorPropertiesString);
+      this.replicationQueueScheduledExecutor.setProperties(toTypedProperties(replicationQueueScheduledExecutorPropertiesString));
    }
 
    public short getMarshallVersion() {
-      return marshallVersion;
+      return Version.getVersionShort(serialization.version);
    }
 
    public String getMarshallVersionString() {
-      return Version.decodeVersionForSerialization(marshallVersion);
+      return serialization.version;
    }
 
    public void setMarshallVersion(short marshallVersion) {
       testImmutability("marshallVersion");
-      this.marshallVersion = marshallVersion;
+      serialization.version = Version.decodeVersionForSerialization(marshallVersion);
    }
    
    @ConfigurationAttribute(name = "version", 
             containingElement = "serialization", defaultValue=Version.version)
    public void setMarshallVersion(String marshallVersion) {
-      testImmutability("marshallVersion");
-      this.marshallVersion = Version.getVersionShort(marshallVersion);
+      serialization.setVersion(marshallVersion);
    }
 
    public long getDistributedSyncTimeout() {
-      return distributedSyncTimeout;
+      return transport.distributedSyncTimeout;
    }
    
    @ConfigurationAttribute(name = "distributedSyncTimeout", 
             containingElement = "transport")
    public void setDistributedSyncTimeout(long distributedSyncTimeout) {
-      testImmutability("distributedSyncTimeout");
-      this.distributedSyncTimeout = distributedSyncTimeout;
+      transport.distributedSyncTimeout = distributedSyncTimeout;
    }
 
    @Override
@@ -393,56 +397,56 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
 
       GlobalConfiguration that = (GlobalConfiguration) o;
 
-      if (marshallVersion != that.marshallVersion) return false;
-      if (asyncListenerExecutorFactoryClass != null ? !asyncListenerExecutorFactoryClass.equals(that.asyncListenerExecutorFactoryClass) : that.asyncListenerExecutorFactoryClass != null)
+      if (serialization.version != that.serialization.version) return false;
+      if (asyncListenerExecutor.factory != null ? !asyncListenerExecutor.factory.equals(that.asyncListenerExecutor.factory) : that.asyncListenerExecutor.factory != null)
          return false;
-      if (asyncListenerExecutorProperties != null ? !asyncListenerExecutorProperties.equals(that.asyncListenerExecutorProperties) : that.asyncListenerExecutorProperties != null)
+      if (asyncListenerExecutor.properties != null ? !asyncListenerExecutor.properties.equals(that.asyncListenerExecutor.properties) : that.asyncListenerExecutor.properties != null)
          return false;
-      if (asyncTransportExecutorFactoryClass != null ? !asyncTransportExecutorFactoryClass.equals(that.asyncTransportExecutorFactoryClass) : that.asyncTransportExecutorFactoryClass != null)
+      if (asyncTransportExecutor.factory != null ? !asyncTransportExecutor.factory.equals(that.asyncTransportExecutor.factory) : that.asyncTransportExecutor.factory != null)
          return false;
-      if (asyncTransportExecutorProperties != null ? !asyncTransportExecutorProperties.equals(that.asyncTransportExecutorProperties) : that.asyncTransportExecutorProperties != null)
+      if (asyncTransportExecutor.properties != null ? !asyncTransportExecutor.properties.equals(that.asyncTransportExecutor.properties) : that.asyncTransportExecutor.properties != null)
          return false;
-      if (clusterName != null ? !clusterName.equals(that.clusterName) : that.clusterName != null) return false;
+      if (transport.clusterName != null ? !transport.clusterName.equals(that.transport.clusterName) : that.transport.clusterName != null) return false;
       if (defaultConfiguration != null ? !defaultConfiguration.equals(that.defaultConfiguration) : that.defaultConfiguration != null)
          return false;
-      if (evictionScheduledExecutorFactoryClass != null ? !evictionScheduledExecutorFactoryClass.equals(that.evictionScheduledExecutorFactoryClass) : that.evictionScheduledExecutorFactoryClass != null)
+      if (evictionScheduledExecutor.factory != null ? !evictionScheduledExecutor.factory.equals(that.evictionScheduledExecutor.factory) : that.evictionScheduledExecutor.factory != null)
          return false;
-      if (evictionScheduledExecutorProperties != null ? !evictionScheduledExecutorProperties.equals(that.evictionScheduledExecutorProperties) : that.evictionScheduledExecutorProperties != null)
+      if (evictionScheduledExecutor.properties != null ? !evictionScheduledExecutor.properties.equals(that.evictionScheduledExecutor.properties) : that.evictionScheduledExecutor.properties  != null)
          return false;
-      if (marshallerClass != null ? !marshallerClass.equals(that.marshallerClass) : that.marshallerClass != null)
+      if (serialization.marshallerClass != null ? !serialization.marshallerClass .equals(that.serialization.marshallerClass ) : that.serialization.marshallerClass  != null)
          return false;
-      if (replicationQueueScheduledExecutorFactoryClass != null ? !replicationQueueScheduledExecutorFactoryClass.equals(that.replicationQueueScheduledExecutorFactoryClass) : that.replicationQueueScheduledExecutorFactoryClass != null)
+      if (replicationQueueScheduledExecutor.factory != null ? !replicationQueueScheduledExecutor.factory .equals(that.replicationQueueScheduledExecutor.factory ) : that.replicationQueueScheduledExecutor.factory  != null)
          return false;
-      if (replicationQueueScheduledExecutorProperties != null ? !replicationQueueScheduledExecutorProperties.equals(that.replicationQueueScheduledExecutorProperties) : that.replicationQueueScheduledExecutorProperties != null)
+      if (replicationQueueScheduledExecutor.properties != null ? !replicationQueueScheduledExecutor.properties.equals(that.replicationQueueScheduledExecutor.properties) : that.replicationQueueScheduledExecutor.properties != null)
          return false;
-      if (shutdownHookBehavior != that.shutdownHookBehavior) return false;
-      if (transportClass != null ? !transportClass.equals(that.transportClass) : that.transportClass != null)
+      if (shutdown != that.shutdown) return false;
+      if (transport.transportClass != null ? !transport.transportClass.equals(that.transport.transportClass) : that.transport.transportClass != null)
          return false;
-      if (transportProperties != null ? !transportProperties.equals(that.transportProperties) : that.transportProperties != null)
+      if (transport.properties != null ? !transport.properties.equals(that.transport.properties) : that.transport.properties != null)
          return false;
-      if (distributedSyncTimeout != that.distributedSyncTimeout) return false;
+      if (transport.distributedSyncTimeout != that.transport.distributedSyncTimeout) return false;
 
       return true;
    }
 
    @Override
    public int hashCode() {
-      int result = asyncListenerExecutorFactoryClass != null ? asyncListenerExecutorFactoryClass.hashCode() : 0;
-      result = 31 * result + (asyncListenerExecutorProperties != null ? asyncListenerExecutorProperties.hashCode() : 0);
-      result = 31 * result + (asyncTransportExecutorFactoryClass != null ? asyncTransportExecutorFactoryClass.hashCode() : 0);
-      result = 31 * result + (asyncTransportExecutorProperties != null ? asyncTransportExecutorProperties.hashCode() : 0);
-      result = 31 * result + (evictionScheduledExecutorFactoryClass != null ? evictionScheduledExecutorFactoryClass.hashCode() : 0);
-      result = 31 * result + (evictionScheduledExecutorProperties != null ? evictionScheduledExecutorProperties.hashCode() : 0);
-      result = 31 * result + (replicationQueueScheduledExecutorFactoryClass != null ? replicationQueueScheduledExecutorFactoryClass.hashCode() : 0);
-      result = 31 * result + (replicationQueueScheduledExecutorProperties != null ? replicationQueueScheduledExecutorProperties.hashCode() : 0);
-      result = 31 * result + (marshallerClass != null ? marshallerClass.hashCode() : 0);
-      result = 31 * result + (transportClass != null ? transportClass.hashCode() : 0);
-      result = 31 * result + (transportProperties != null ? transportProperties.hashCode() : 0);
+      int result = asyncListenerExecutor.factory != null ? asyncListenerExecutor.factory.hashCode() : 0;
+      result = 31 * result + (asyncListenerExecutor.properties != null ? asyncListenerExecutor.properties.hashCode() : 0);
+      result = 31 * result + (asyncTransportExecutor.factory != null ? asyncTransportExecutor.factory.hashCode() : 0);
+      result = 31 * result + (asyncTransportExecutor.properties != null ? asyncTransportExecutor.properties.hashCode() : 0);
+      result = 31 * result + (evictionScheduledExecutor.factory != null ? evictionScheduledExecutor.factory.hashCode() : 0);
+      result = 31 * result + ( evictionScheduledExecutor.properties  != null ? evictionScheduledExecutor.properties.hashCode() : 0);
+      result = 31 * result + (replicationQueueScheduledExecutor.factory  != null ? replicationQueueScheduledExecutor.factory.hashCode() : 0);
+      result = 31 * result + (replicationQueueScheduledExecutor.properties != null ? replicationQueueScheduledExecutor.properties.hashCode() : 0);
+      result = 31 * result + (serialization.marshallerClass  != null ? serialization.marshallerClass .hashCode() : 0);
+      result = 31 * result + (transport.transportClass != null ? transport.transportClass.hashCode() : 0);
+      result = 31 * result + (transport.properties  != null ? transport.properties .hashCode() : 0);
       result = 31 * result + (defaultConfiguration != null ? defaultConfiguration.hashCode() : 0);
-      result = 31 * result + (clusterName != null ? clusterName.hashCode() : 0);
-      result = 31 * result + (shutdownHookBehavior != null ? shutdownHookBehavior.hashCode() : 0);
-      result = 31 * result + (int) marshallVersion;
-      result = (int) (31 * result + distributedSyncTimeout);
+      result = 31 * result + (transport.clusterName  != null ? transport.clusterName .hashCode() : 0);
+      result = 31 * result + (shutdown.hookBehavior.hashCode());
+      result = 31 * result + ((int) serialization.version.hashCode());
+      result = (int) (31 * result + transport.distributedSyncTimeout);
       return result;
    }
 
@@ -483,4 +487,175 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       gc.setTransportProperties((Properties) null);
       return gc;
    }
+   
+   @XmlAccessorType(XmlAccessType.PROPERTY)
+   private static class FactoryClassWithPropertiesType extends AbstractConfigurationBeanWithGCR {
+      
+      @XmlAttribute
+      private String factory;
+      
+      @XmlElement(name="properties")
+      private TypedProperties properties = EMPTY_PROPERTIES;
+
+      public FactoryClassWithPropertiesType(String factory) {
+         super();
+         this.factory = factory;
+      }   
+      
+      public FactoryClassWithPropertiesType() {
+         super();
+         this.factory = "";
+      }
+
+      public void setFactory(String factory) {
+         testImmutability("factory");
+         this.factory = factory;
+      }
+
+      public void setProperties(TypedProperties properties) {
+         testImmutability("properties");
+         this.properties = properties;
+      }         
+   }
+   
+   @XmlAccessorType(XmlAccessType.PROPERTY)
+   private static class TransportType extends AbstractConfigurationBeanWithGCR {
+     
+      private String clusterName = "Infinispan-Cluster";
+      
+      private Long distributedSyncTimeout = 60000L; // default
+     
+      private String transportClass = null; // this defaults to a non-clustered cache.
+      
+      private TypedProperties properties = EMPTY_PROPERTIES;
+
+      @XmlAttribute
+      public void setClusterName(String clusterName) {
+         testImmutability("clusterName");
+         this.clusterName = clusterName;
+      }
+
+      @XmlAttribute
+      public void setDistributedSyncTimeout(Long distributedSyncTimeout) {
+         testImmutability("distributedSyncTimeout");
+         this.distributedSyncTimeout = distributedSyncTimeout;
+      }
+
+      @XmlAttribute
+      public void setTransportClass(String transportClass) {
+         testImmutability("transportClass");
+         this.transportClass = transportClass;
+      }
+
+      @XmlElement
+      public void setProperties(TypedProperties properties) {
+         //testImmutability("properties");
+         //TODO fails JmxStatsFunctionalTest#testMultipleManagersOnSameServerFails
+         this.properties = properties;
+      }     
+   }
+   
+   @XmlAccessorType(XmlAccessType.PROPERTY)
+   private static class SerializationType extends AbstractConfigurationBeanWithGCR {
+      
+      private String marshallerClass = VersionAwareMarshaller.class.getName(); // the default
+      
+      private String version = Version.getMajorVersion();
+      
+      public SerializationType() {        
+         super();
+      }
+
+      @XmlAttribute
+      public void setMarshallerClass(String marshallerClass) {
+         testImmutability("marshallerClass");
+         this.marshallerClass = marshallerClass;
+      }
+
+      @XmlAttribute
+      public void setVersion(String version) {
+         testImmutability("version");
+         this.version = version;
+      }                      
+   }
+   
+   @XmlAccessorType(XmlAccessType.PROPERTY)
+   private static class GlobalJmxStatisticsType extends AbstractConfigurationBeanWithGCR {
+      
+      private Boolean enabled = false;
+      
+      private String jmxDomain = "infinispan";
+      
+      private String mBeanServerLookup = PlatformMBeanServerLookup.class.getName();
+      
+      private Boolean allowDuplicateDomains = false;
+
+      @XmlAttribute
+      public void setEnabled(Boolean enabled) {
+         testImmutability("enabled");
+         this.enabled = enabled;
+      }
+
+      @XmlAttribute
+      public void setJmxDomain(String jmxDomain) {
+         testImmutability("jmxDomain");
+         this.jmxDomain = jmxDomain;
+      }
+
+      @XmlAttribute
+      public void setMBeanServerLookup(String beanServerLookup) {
+         testImmutability("mBeanServerLookup");
+         mBeanServerLookup = beanServerLookup;
+      }
+
+      @XmlAttribute
+      public void setAllowDuplicateDomains(Boolean allowDuplicateDomains) {
+         testImmutability("allowDuplicateDomains");
+         this.allowDuplicateDomains = allowDuplicateDomains;
+      }            
+   }
+   
+   @XmlAccessorType(XmlAccessType.PROPERTY)
+   private static class ShutdownType extends AbstractConfigurationBeanWithGCR {
+      
+      private ShutdownHookBehavior hookBehavior = ShutdownHookBehavior.DEFAULT;
+
+      @XmlAttribute
+      public void setHookBehavior(ShutdownHookBehavior hookBehavior) {
+         testImmutability("hookBehavior");
+         this.hookBehavior = hookBehavior;
+      }               
+   }
+}
+
+class AbstractConfigurationBeanWithGCR extends AbstractConfigurationBean{
+
+   GlobalComponentRegistry gcr = null;
+   
+   
+   @Inject
+   public void inject(GlobalComponentRegistry gcr) {
+      this.gcr = gcr;
+   }
+
+
+   @Override
+   protected boolean hasComponentStarted() {
+      return gcr != null && gcr.getStatus() != null && gcr.getStatus() == ComponentStatus.RUNNING;
+   }
+   
+}
+ class PropertiesType {
+    
+   @XmlElement(name = "property")
+   Property properties[];
+}
+
+class Property {
+   
+   @XmlAttribute
+   String name;
+   
+   @XmlAttribute
+   String value;
 }

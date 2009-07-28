@@ -1,9 +1,13 @@
 package org.infinispan.util;
 
+import org.infinispan.config.TypedPropertiesAdapter;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Properties;
+
+import javax.xml.bind.annotation.XmlType;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 /**
  * Type-aware properties.  Extends the JDK {@link Properties} class to provide accessors that convert values to certain
@@ -12,6 +16,8 @@ import java.util.Properties;
  * @author Manik Surtani
  * @since 4.0
  */
+@XmlJavaTypeAdapter(TypedPropertiesAdapter.class)
+@XmlType(name="properties")
 public class TypedProperties extends Properties {
    private static final Log log = LogFactory.getLog(TypedProperties.class);
 

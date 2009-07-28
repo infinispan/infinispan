@@ -1,5 +1,9 @@
 package org.infinispan.loaders.decorators;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+
 import org.infinispan.config.AbstractNamedCacheConfigurationBean;
 import org.infinispan.config.ConfigurationAttribute;
 import org.infinispan.config.ConfigurationElement;
@@ -12,11 +16,17 @@ import org.infinispan.config.Dynamic;
  * @since 4.0
  */
 @ConfigurationElement(name="async", parent="loader")
+@XmlAccessorType(XmlAccessType.FIELD)
 public class AsyncStoreConfig extends AbstractNamedCacheConfigurationBean {
-   boolean enabled;
-   int threadPoolSize = 1;
+   @XmlAttribute
+   Boolean enabled = false;
+  
+   @XmlAttribute
+   Integer threadPoolSize = 1;
+   
    @Dynamic
-   long mapLockTimeout = 5000;
+   @XmlAttribute
+   Long mapLockTimeout = 5000L;
 
    public boolean isEnabled() {
       return enabled;
@@ -50,7 +60,7 @@ public class AsyncStoreConfig extends AbstractNamedCacheConfigurationBean {
             containingElement = "async",
             description="Lock timeout for access to map containing latest state.")
    public void setMapLockTimeout(long stateLockTimeout) {
-      testImmutability("stateLockTimeout");
+      testImmutability("mapLockTimeout");
       this.mapLockTimeout = stateLockTimeout;
    }   
    
@@ -62,5 +72,4 @@ public class AsyncStoreConfig extends AbstractNamedCacheConfigurationBean {
          throw new RuntimeException("Should not happen!", e);
       }
    }
-
 }

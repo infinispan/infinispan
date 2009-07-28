@@ -14,6 +14,7 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.config.Configuration;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.LocalTxInvocationContext;
@@ -58,7 +59,8 @@ public class TxInterceptor extends CommandInterceptor {
 
 
    @Inject
-   public void init(TransactionManager tm, TransactionTable txTable, TransactionLog transactionLog) {
+   public void init(TransactionManager tm, TransactionTable txTable, TransactionLog transactionLog, Configuration c) {
+      this.configuration = c;
       this.tm = tm;
       this.transactionLog = transactionLog;
       this.txTable = txTable;

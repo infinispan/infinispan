@@ -1,8 +1,12 @@
 package org.infinispan.config.parsing;
 
+import java.io.IOException;
+import java.util.Map;
+
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.config.InfinispanConfiguration;
 import org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior;
 import org.infinispan.distribution.DefaultConsistentHash;
 import org.infinispan.eviction.EvictionStrategy;
@@ -10,27 +14,19 @@ import org.infinispan.loaders.file.FileCacheStoreConfig;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
-import java.util.Map;
-
 @Test(groups = "unit", testName = "config.parsing.XmlFileParsingTest")
 public class XmlFileParsingTest {
+  
+   public void testNamedCacheFileJaxb() throws Exception {
+      testNamedCacheFile(InfinispanConfiguration.newInfinispanConfiguration(
+               "configs/named-cache-test.xml", "schema/infinispan-config-4.0.xsd"));
+   }
 
-   public void testNamedCacheFileRegular()throws IOException {
-      testNamedCacheFile(new XmlConfigurationParserImpl("configs/named-cache-test.xml"));
+   public void testConfigurationMergingJaxb() throws Exception {
+      testConfigurationMerging(InfinispanConfiguration
+               .newInfinispanConfiguration("configs/named-cache-test.xml"));
    }
    
-   public void testNamedCacheFileAutomated()throws IOException {
-      testNamedCacheFile(new AutomatedXmlConfigurationParserImpl("configs/named-cache-test.xml"));
-   }
-   
-   public void testConfigurationMergingRegular() throws IOException{
-      testConfigurationMerging(new XmlConfigurationParserImpl("configs/named-cache-test.xml"));
-   }
-   
-   public void testConfigurationMergingRegularAutomated() throws IOException{
-      testConfigurationMerging(new AutomatedXmlConfigurationParserImpl("configs/named-cache-test.xml"));
-   }
    
    private void testNamedCacheFile(XmlConfigurationParser parser) throws IOException {
       

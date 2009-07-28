@@ -1,5 +1,9 @@
 package org.infinispan.loaders;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+
 import org.infinispan.CacheException;
 import org.infinispan.config.ConfigurationAttribute;
 import org.infinispan.config.PluggableConfigurationComponent;
@@ -10,8 +14,10 @@ import org.infinispan.config.PluggableConfigurationComponent;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
+@XmlAccessorType(XmlAccessType.FIELD)
 public class AbstractCacheLoaderConfig extends PluggableConfigurationComponent implements CacheLoaderConfig {
 
+   @XmlAttribute(name="class")
    protected String cacheLoaderClassName;
 
    public String getCacheLoaderClassName() {

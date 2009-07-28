@@ -4,27 +4,37 @@
    <global>
 
       <asyncListenerExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
-         <property name="maxThreads" value="5"/>
-         <property name="threadNamePrefix" value="AsyncListenerThread"/>
+      	 <properties>
+         	<property name="maxThreads" value="5"/>
+         	<property name="threadNamePrefix" value="AsyncListenerThread"/>
+         </properties>         
       </asyncListenerExecutor>
 
       <asyncTransportExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
+      	<properties>	
          <property name="maxThreads" value="25"/>
          <property name="threadNamePrefix" value="AsyncSerializationThread"/>
+         </properties>
       </asyncTransportExecutor>
 
       <evictionScheduledExecutor factory="org.infinispan.executors.DefaultScheduledExecutorFactory">
+      <properties>
          <property name="threadNamePrefix" value="EvictionThread"/>
+         </properties>
       </evictionScheduledExecutor>
 
       <replicationQueueScheduledExecutor factory="org.infinispan.executors.DefaultScheduledExecutorFactory">
+      <properties>
          <property name="threadNamePrefix" value="ReplicationQueueThread"/>
+         </properties>
       </replicationQueueScheduledExecutor>
 
       <transport transportClass = "org.infinispan.remoting.transport.jgroups.JGroupsTransport" clusterName="infinispan-cluster" 
       		distributedSyncTimeout="50000">
          <!-- Note that the JGroups transport uses sensible defaults if no configuration property is defined. -->
+         <properties>
          <property name="configurationFile" value="udp.xml"/>
+         </properties>
          <!-- See the JGroupsTransport javadocs for more flags -->
       </transport>
 
@@ -46,29 +56,29 @@
    </namedCache>
 
    <namedCache name="syncRepl">
-      <clustering mode="repl">
+      <clustering mode="REPL_SYNC">
          <stateRetrieval fetchInMemoryState="false"/>
          <sync replTimeout="15000"/>
       </clustering>
    </namedCache>
 
    <namedCache name="asyncRepl">
-      <clustering mode="repl">
+      <clustering mode="REPL_ASYNC">
          <stateRetrieval fetchInMemoryState="false"/>
          <async asyncMarshalling="false"/>
       </clustering>
    </namedCache>
 
    <namedCache name="asyncReplQueue">
-      <clustering mode="repl">
+      <clustering mode="REPL_ASYNC">
          <stateRetrieval fetchInMemoryState="false"/>
          <async useReplQueue="true" replQueueInterval="1234" replQueueMaxElements="100"/>
       </clustering>
    </namedCache>
 
    <namedCache name="txSyncRepl">
-      <transaction/>
-      <clustering mode="repl">
+      <transaction transactionManagerLookupClass="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"/>
+      <clustering mode="REPL_SYNC">
          <stateRetrieval fetchInMemoryState="false"/>
          <sync replTimeout="15000"/>
       </clustering>
@@ -103,7 +113,7 @@
    </namedCache>
 
    <namedCache name="dist">
-      <clustering mode="distribution">
+      <clustering mode="DIST_SYNC">
          <sync/>
          <hash numOwners="3" rehashWait="120000"/>
          <l1 enabled="true" lifespan="600000"/>
@@ -144,8 +154,8 @@
       Here we use existing class so we can actually load it
       -->   
       <customInterceptors>
-         <interceptor position="first" class="org.infinispan.interceptors.CallInterceptor"></interceptor>
-         <interceptor position="last" class="org.infinispan.interceptors.CallInterceptor"/>
+         <interceptor position="FIRST" class="org.infinispan.interceptors.CallInterceptor"></interceptor>
+         <interceptor position="LAST" class="org.infinispan.interceptors.CallInterceptor"/>
          <interceptor index="3" class="org.infinispan.interceptors.CallInterceptor"/>
          <interceptor before="org.infinispan.interceptors.CallInterceptor" class="org.infinispan.interceptors.CallInterceptor"/>
          <interceptor after="org.infinispan.interceptors.CallInterceptor" class="org.infinispan.interceptors.CallInterceptor"/>

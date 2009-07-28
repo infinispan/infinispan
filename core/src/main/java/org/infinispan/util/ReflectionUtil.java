@@ -28,6 +28,7 @@ import org.infinispan.util.logging.LogFactory;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -41,6 +42,7 @@ import java.util.List;
  */
 public class ReflectionUtil {
    private static final Log log = LogFactory.getLog(ReflectionUtil.class);
+   
 
    /**
     * Returns a set of Methods that contain the given method annotation.  This includes all public, protected, package
@@ -55,6 +57,40 @@ public class ReflectionUtil {
       inspectRecursively(c, annotated, annotationType);
       return annotated;
    }
+   
+   private static void getAnnotatedFieldHelper(List<Field> list, Class<?> c, Class<? extends Annotation> annotationType) {
+      Field[] declaredFields = c.getDeclaredFields();
+      for (Field field : declaredFields) {
+         if (field.isAnnotationPresent(annotationType)) {
+            list.add(field);
+         }
+      }
+   }
+   
+   public static List<Field> getAnnotatedFields(Class<?> c, Class<? extends Annotation> annotationType){
+      List<Field> fields = new ArrayList<Field>();
+      for(;!c.equals(Object.class);c=c.getSuperclass()){
+         getAnnotatedFieldHelper(fields, c, annotationType);
+      }
+      return fields;
+   }
+   
+   private static void getFieldsHelper(List<Field> list, Class<?> c, Class<?> type) {
+      Field[] declaredFields = c.getDeclaredFields();
+      for (Field field : declaredFields) {
+         if (type.isAssignableFrom(field.getType())) {
+            list.add(field);
+         }
+      }
+   }
+   
+   public static List<Field> getFields(Class<?> c, Class<?> type){
+      List<Field> fields = new ArrayList<Field>();
+      for(;!c.equals(Object.class);c=c.getSuperclass()){
+         getFieldsHelper(fields, c, type);
+      }
+      return fields;
+   }
 
    /**
     * Inspects a class and its superclasses (all the way to {@link Object} for method instances that contain a given
@@ -65,20 +101,20 @@ public class ReflectionUtil {
     * @param annotationType
     */
    private static void inspectRecursively(Class c, List<Method> s, Class<? extends Annotation> annotationType) {
-      // Superclass first
-      if (!c.equals(Object.class)) {
-         if (!c.isInterface()) {
-            inspectRecursively(c.getSuperclass(), s, annotationType);
-            for (Class ifc : c.getInterfaces()) inspectRecursively(ifc, s, annotationType);
-         }
-      }
-
+      
       for (Method m : c.getDeclaredMethods()) {
          // don't bother if this method has already been overridden by a subclass
          if (!alreadyFound(m, s) && m.isAnnotationPresent(annotationType)) {
             s.add(m);
          }
-      }
+      }       
+      
+      if (!c.equals(Object.class)) {
+         if (!c.isInterface()) {
+            inspectRecursively(c.getSuperclass(), s, annotationType);
+            for (Class ifc : c.getInterfaces()) inspectRecursively(ifc, s, annotationType);
+         }
+      }      
    }
 
    /**
@@ -137,6 +173,23 @@ public class ReflectionUtil {
          throw new CacheException("Unable to invoke method " + method + " on object " + //instance +
                (parameters != null ? " with parameters " + Arrays.asList(parameters) : ""), e);
       }
+   }
+   
+   public static Method findGetterForField(Class<?> c, String fieldName) throws NoSuchMethodException{      
+      for(Method m:c.getDeclaredMethods()){
+         String name = m.getName();
+         String s = null;
+         if(name.startsWith("get")){
+            s = name.substring(3);            
+         } else if (name.startsWith("is")){
+            s = name.substring(2);            
+         }
+         
+         if (s!= null && s.equalsIgnoreCase(fieldName)){
+            return m;
+         }
+      }
+      throw new NoSuchMethodException("Cannot find getter method  for field " + fieldName + " in " + c + " or superclasses");
    }
 
    /**
