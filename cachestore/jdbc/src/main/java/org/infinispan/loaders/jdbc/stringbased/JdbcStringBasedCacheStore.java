@@ -54,10 +54,12 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
    private ConnectionFactory connectionFactory;
    private TableManipulation tableManipulation;
    private DataManiulationHelper dmHelper;
+   private String cacheName;
 
    public void init(CacheLoaderConfig config, Cache cache, Marshaller m) {
       super.init(config, cache, m);
       this.config = (JdbcStringBasedCacheStoreConfig) config;
+      this.cacheName = cache.getName();
    }
 
    @Override
@@ -267,10 +269,15 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
    public void doConnectionFactoryInitialization(ConnectionFactory connectionFactory) throws CacheLoaderException {
       this.connectionFactory = connectionFactory;
       tableManipulation = config.getTableManipulation();
+      tableManipulation.setCacheName(cacheName);
       tableManipulation.start(connectionFactory);
    }
 
    public ConnectionFactory getConnectionFactory() {
       return connectionFactory;
+   }
+
+   public TableManipulation getTableManipulation() {
+      return tableManipulation;
    }
 }

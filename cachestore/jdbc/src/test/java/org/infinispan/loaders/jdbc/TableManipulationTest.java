@@ -31,6 +31,7 @@ public class TableManipulationTest {
       cfg = UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
       connection = DriverManager.getConnection(cfg.getConnectionUrl(), cfg.getUserName(), cfg.getPassword());
       tableManipulation = UnitTestDatabaseManager.buildDefaultTableManipulation();
+      tableManipulation.setCacheName("aName");
    }
 
    @AfterTest
@@ -132,7 +133,7 @@ public class TableManipulationTest {
       assert tableManipulation.tableExists(connection);
       PreparedStatement ps = null;
       try {
-         ps = connection.prepareStatement("INSERT INTO horizon_jdbc(ID_COLUMN) values(?)");
+         ps = connection.prepareStatement("INSERT INTO " + tableManipulation.getTableName() + "(ID_COLUMN) values(?)");
          ps.setString(1, System.currentTimeMillis() + "");
          assert 1 == ps.executeUpdate();
       } finally {

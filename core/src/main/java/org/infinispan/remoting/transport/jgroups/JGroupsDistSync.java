@@ -29,13 +29,17 @@ public class JGroupsDistSync implements DistributedSync {
    private final ReclosableLatch flushWaitGate = new ReclosableLatch(false);
    private final ReclosableLatch joinInProgress = new ReclosableLatch(false);
    private static final Log log = LogFactory.getLog(JGroupsDistSync.class);
+   public static final boolean trace = log.isTraceEnabled();
+
 
    public void blockUntilNoJoinsInProgress() {
-      while (true) {
+      while (Thread.currentThread().isInterrupted()) {
          try {
             joinInProgress.await();
             return;
          } catch (InterruptedException ie) {
+            if (trace)
+               log.trace("Interrupted while waiting for the joinInProgress gate");
             Thread.currentThread().interrupt();
          }
       }
@@ -107,10 +111,14 @@ public class JGroupsDistSync implements DistributedSync {
    }
 
    public void signalJoinInProgress() {
+      if (trace)
+         log.trace("Closing joinInProgress gate");
       joinInProgress.close();
    }
 
    public void signalJoinCompleted() {
+      if (trace)
+         log.trace("Releasing " + joinInProgress + " gate");
       joinInProgress.open();
    }
 }

@@ -127,4 +127,12 @@ public class JdbcMixedCacheStore extends AbstractCacheStore {
    public ConnectionFactory getConnectionFactory() {
       return sharedConnectionFactory;
    }
+
+   public JdbcBinaryCacheStore getBinaryCacheStore() {
+      return binaryCacheStore;
+   }
+
+   public JdbcStringBasedCacheStore getStringBasedCacheStore() {
+      return stringBasedCacheStore;
+   }
 }

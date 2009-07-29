@@ -120,7 +120,7 @@ public class UnitTestDatabaseManager {
 
    public static TableManipulation buildDefaultTableManipulation() {
 
-      return new TableManipulation("ID_COLUMN", "VARCHAR(255)", "HORIZON_JDBC", "DATA_COLUMN",
+      return new TableManipulation("ID_COLUMN", "VARCHAR(255)", "ISPN_JDBC", "DATA_COLUMN",
                                    "BINARY", "TIMESTAMP_COLUMN", "BIGINT");
 
    }

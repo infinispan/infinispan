@@ -1,5 +1,6 @@
 package org.infinispan.loaders.jdbc.mixed;
 
+import org.infinispan.CacheDelegate;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.io.UnclosableObjectInputStream;
@@ -44,16 +45,16 @@ public class JdbcMixedCacheStoreTest {
    @BeforeTest
    public void createCacheStore() throws CacheLoaderException {
       stringsTm = UnitTestDatabaseManager.buildDefaultTableManipulation();
-      stringsTm.setTableName("STRINGS_TABLE");
+      stringsTm.setTableNamePrefix("STRINGS_TABLE");
       binaryTm = UnitTestDatabaseManager.buildDefaultTableManipulation();
-      binaryTm.setTableName("BINARY_TABLE");
+      binaryTm.setTableNamePrefix("BINARY_TABLE");
       cfc = UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
       JdbcMixedCacheStoreConfig cacheStoreConfig = new JdbcMixedCacheStoreConfig(cfc, binaryTm, stringsTm);
       cacheStoreConfig.setPurgeSynchronously(true);
 
       cacheStoreConfig.setKey2StringMapperClass(DefaultKey2StringMapper.class.getName());
       cacheStore = new JdbcMixedCacheStore();
-      cacheStore.init(cacheStoreConfig, null, getMarshaller());
+      cacheStore.init(cacheStoreConfig, new CacheDelegate("aName"), getMarshaller());
       cacheStore.start();
    }
 
@@ -180,9 +181,6 @@ public class JdbcMixedCacheStoreTest {
       Thread.sleep(1200);
       cacheStore.purgeExpired();
       assertRowCounts(1, 1);
-   }
-
-   public void testTableConflict() {
    }
 
    private void assertRowCounts(int binary, int strings) {

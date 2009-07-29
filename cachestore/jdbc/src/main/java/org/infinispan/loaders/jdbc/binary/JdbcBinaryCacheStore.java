@@ -53,12 +53,14 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
    private ConnectionFactory connectionFactory;
    private TableManipulation tableManipulation;
    private DataManiulationHelper dmHelper;
+   private String cacheName;
 
    public void init(CacheLoaderConfig config, Cache cache, Marshaller m) {
       if (log.isTraceEnabled())
          log.trace("Initializing JdbcBinaryCacheStore " + config);
       super.init(config, cache, m);
       this.config = (JdbcBinaryCacheStoreConfig) config;
+      this.cacheName = cache.getName();
    }
 
    public void start() throws CacheLoaderException {
@@ -345,6 +347,11 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
    public void doConnectionFactoryInitialization(ConnectionFactory connectionFactory) throws CacheLoaderException {
       this.connectionFactory = connectionFactory;
       tableManipulation = config.getTableManipulation();
+      tableManipulation.setCacheName(cacheName);
       tableManipulation.start(connectionFactory);
+   }
+
+   public TableManipulation getTableManipulation() {
+      return tableManipulation;
    }
 }

@@ -71,13 +71,21 @@ public class JdbcStringBasedCacheStoreConfig extends LockSupportCacheStoreConfig
    }
 
    /**
+    * Sets the prefix for the name of the table where the data will be stored. "_<cache name>" will be appended
+    * to this prefix in order to enforce unique table names for each cache.
+    */
+   @ConfigurationProperty(name="stringsTableNamePrefix", parentElement="properties")
+   public void setStringsTableNamePrefix(String stringsTableNamePrefix) {
+      testImmutability("tableManipulation");
+      this.tableManipulation.setTableNamePrefix(stringsTableNamePrefix);
+   }
+
+   /**
     * Sets the name of the table where data will be stored.
     */
-   @ConfigurationProperty(name="stringsTableName",
-            parentElement="properties")
-   public void setStringsTableName(String stringsTableName) {
+   public void setCacheName(String cacheName) {
       testImmutability("tableManipulation");
-      this.tableManipulation.setTableName(stringsTableName);
+      this.tableManipulation.setCacheName(cacheName);
    }
 
    /**
@@ -87,8 +95,7 @@ public class JdbcStringBasedCacheStoreConfig extends LockSupportCacheStoreConfig
     * </pre>
     * Mandatory.
     */
-   @ConfigurationProperty(name="idColumnName",
-            parentElement="properties")
+   @ConfigurationProperty(name="idColumnName", parentElement="properties")
    public void setIdColumnName(String idColumnName) {
       testImmutability("tableManipulation");
       this.tableManipulation.setIdColumnName(idColumnName);
@@ -97,8 +104,7 @@ public class JdbcStringBasedCacheStoreConfig extends LockSupportCacheStoreConfig
    /**
     * Sets the name of the column where the StoredEntry will be binary stored. Mandatory.
     */
-   @ConfigurationProperty(name="dataColumnName",
-            parentElement="properties")
+   @ConfigurationProperty(name="dataColumnName", parentElement="properties")
    public void setDataColumnName(String dataColumnName) {
       testImmutability("tableManipulation");
       this.tableManipulation.setDataColumnName(dataColumnName);
@@ -107,15 +113,23 @@ public class JdbcStringBasedCacheStoreConfig extends LockSupportCacheStoreConfig
    /**
     * Sets the name of the column where the timestamp (Long in java) will be stored. Mandatory.
     */
-   @ConfigurationProperty(name="timestampColumnName",
-            parentElement="properties")
+   @ConfigurationProperty(name="timestampColumnName", parentElement="properties")
    public void setTimestampColumnName(String timestampColumnName) {
       testImmutability("tableManipulation");
       this.tableManipulation.setTimestampColumnName(timestampColumnName);
    }
 
-   @ConfigurationProperty(name="connectionFactoryClass",
-            parentElement="properties")
+   /**
+    * Sets the prefix for the name of the table where the data will be stored. "_<cache name>" will be appended
+    * to this prefix in order to enforce unique table names for each cache.
+    */
+   @ConfigurationProperty(name="timestampColumnType", parentElement="properties")
+   public void setTimestampColumnType(String timestampColumnType) {
+      testImmutability("tableManipulation");
+      this.tableManipulation.setTimestampColumnType(timestampColumnType);
+   }
+
+   @ConfigurationProperty(name="connectionFactoryClass", parentElement="properties")
    public void setConnectionFactoryClass(String connectionFactoryClass) {
       testImmutability("connectionFactoryConfig");
       this.connectionFactoryConfig.setConnectionFactoryClass(connectionFactoryClass);
@@ -163,8 +177,7 @@ public class JdbcStringBasedCacheStoreConfig extends LockSupportCacheStoreConfig
     * The name of the driver used for connecting to the database. Mandatory, will be loaded before initiating the first
     * connection.
     */
-   @ConfigurationProperty(name="driverClass",
-            parentElement="properties")
+   @ConfigurationProperty(name="driverClass", parentElement="properties")
    public void setDriverClass(String driverClassName) {
       testImmutability("connectionFactoryConfig");
       this.connectionFactoryConfig.setDriverClass(driverClassName);
@@ -173,8 +186,7 @@ public class JdbcStringBasedCacheStoreConfig extends LockSupportCacheStoreConfig
    /**
     * sql equivalent for java's String. Mandatory.
     */
-   @ConfigurationProperty(name="idColumnType",
-            parentElement="properties")
+   @ConfigurationProperty(name="idColumnType", parentElement="properties")
    public void setIdColumnType(String idColumnType) {
       testImmutability("tableManipulation");
       this.tableManipulation.setIdColumnType(idColumnType);
@@ -183,8 +195,7 @@ public class JdbcStringBasedCacheStoreConfig extends LockSupportCacheStoreConfig
    /**
     * Sets the type of the column where data will be binary stored. BLOB-like type, DBMS dependent. Mandatory.
     */
-   @ConfigurationProperty(name="dataColumnType",
-            parentElement="properties")
+   @ConfigurationProperty(name="dataColumnType", parentElement="properties")
    public void setDataColumnType(String dataColumnType) {
       testImmutability("tableManipulation");
       this.tableManipulation.setDataColumnType(dataColumnType);
@@ -252,4 +263,12 @@ public class JdbcStringBasedCacheStoreConfig extends LockSupportCacheStoreConfig
    public int getBatchSize() {
       return this.tableManipulation.getBatchSize();
    }
+
+   @Override
+   public JdbcStringBasedCacheStoreConfig clone() {
+      JdbcStringBasedCacheStoreConfig result = (JdbcStringBasedCacheStoreConfig) super.clone();
+      result.connectionFactoryConfig = connectionFactoryConfig.clone();
+      result.tableManipulation = tableManipulation.clone();
+      return result;
+   }   
 }

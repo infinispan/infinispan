@@ -55,59 +55,55 @@ public class JdbcBinaryCacheStoreConfig extends LockSupportCacheStoreConfig {
    /**
     * If true, the table will be created when cache store is stopped. Default to <tt>false</tt>.
     */
-   @ConfigurationProperty(name="dropTableOnExit",
-            parentElement="properties")
+   @ConfigurationProperty(name="dropTableOnExit", parentElement="properties")
    public void setDropTableOnExit(boolean dropTableOnExit) {
       testImmutability("tableManipulation");
       this.tableManipulation.setDropTableOnExit(dropTableOnExit);
    }
 
-   @ConfigurationProperty(name="bucketTableName",
-            parentElement="properties")
-   public void setBucketTableName(String bucketTableName) {
+   /**
+    * Sets the prefix for the name of the table where the data will be stored. "_<cache name>" will be appended
+    * to this prefix in order to enforce unique table names for each cache.
+    */
+   @ConfigurationProperty(name="bucketTableNamePrefix", parentElement="properties")
+   public void setBucketTableNamePrefix(String bucketTableName) {
       testImmutability("tableManipulation");
-      this.tableManipulation.setTableName(bucketTableName);
+      this.tableManipulation.setTableNamePrefix(bucketTableName);
    }
 
 
-   @ConfigurationProperty(name="idColumnName",
-            parentElement="properties")
+   @ConfigurationProperty(name="idColumnName", parentElement="properties")
    public void setIdColumnName(String idColumnName) {
       testImmutability("tableManipulation");
       this.tableManipulation.setIdColumnName(idColumnName);
    }
 
-   @ConfigurationProperty(name="idColumnType",
-            parentElement="properties")
+   @ConfigurationProperty(name="idColumnType", parentElement="properties")
    public void setIdColumnType(String idColumnType) {
       testImmutability("tableManipulation");
       this.tableManipulation.setIdColumnType(idColumnType);
    }
 
-   @ConfigurationProperty(name="dataColumnName",
-            parentElement="properties")
+   @ConfigurationProperty(name="dataColumnName", parentElement="properties")
    public void setDataColumnName(String dataColumnName) {
       testImmutability("tableManipulation");
       this.tableManipulation.setDataColumnName(dataColumnName);
    }
 
-   @ConfigurationProperty(name="dataColumnType",
-            parentElement="properties")
+   @ConfigurationProperty(name="dataColumnType", parentElement="properties")
    public void setDataColumnType(String dataColumnType) {
       testImmutability("tableManipulation");
       this.tableManipulation.setDataColumnType(dataColumnType);
    }
 
-   @ConfigurationProperty(name="timestampColumnName",
-            parentElement="properties")
+   @ConfigurationProperty(name="timestampColumnName", parentElement="properties")
    public void setTimestampColumnName(String timestampColumnName) {
       testImmutability("tableManipulation");
       this.tableManipulation.setTimestampColumnName(timestampColumnName);
    }
 
 
-   @ConfigurationProperty(name="timestampColumnType",
-            parentElement="properties")
+   @ConfigurationProperty(name="timestampColumnType", parentElement="properties")
    public void setTimestampColumnType(String timestampColumnType) {
       testImmutability("tableManipulation");
       this.tableManipulation.setTimestampColumnType(timestampColumnType);
@@ -117,8 +113,7 @@ public class JdbcBinaryCacheStoreConfig extends LockSupportCacheStoreConfig {
     * Url connection to the database.
     */
    
-   @ConfigurationProperty(name="connectionUrl",
-            parentElement="properties")
+   @ConfigurationProperty(name="connectionUrl", parentElement="properties")
    public void setConnectionUrl(String connectionUrl) {
       testImmutability("connectionFactoryConfig");
       this.connectionFactoryConfig.setConnectionUrl(connectionUrl);
@@ -127,8 +122,7 @@ public class JdbcBinaryCacheStoreConfig extends LockSupportCacheStoreConfig {
    /**
     * Databse user name.
     */
-   @ConfigurationProperty(name="userName",
-            parentElement="properties")
+   @ConfigurationProperty(name="userName", parentElement="properties")
    public void setUserName(String userName) {
       testImmutability("connectionFactoryConfig");
       this.connectionFactoryConfig.setUserName(userName);
@@ -137,8 +131,7 @@ public class JdbcBinaryCacheStoreConfig extends LockSupportCacheStoreConfig {
    /**
     * Database username's password.
     */
-   @ConfigurationProperty(name="password",
-            parentElement="properties")
+   @ConfigurationProperty(name="password", parentElement="properties")
    public void setPassword(String password) {
       testImmutability("connectionFactoryConfig");
       this.connectionFactoryConfig.setPassword(password);
@@ -147,8 +140,7 @@ public class JdbcBinaryCacheStoreConfig extends LockSupportCacheStoreConfig {
    /**
     * Driver class, will be loaded before initializing the {@link org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory}
     */
-   @ConfigurationProperty(name="driverClass",
-            parentElement="properties")
+   @ConfigurationProperty(name="driverClass", parentElement="properties")
    public void setDriverClass(String driverClass) {
       testImmutability("connectionFactoryConfig");
       this.connectionFactoryConfig.setDriverClass(driverClass);
@@ -159,8 +151,7 @@ public class JdbcBinaryCacheStoreConfig extends LockSupportCacheStoreConfig {
     *
     * @see org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory
     */
-   @ConfigurationProperty(name="connectionFactoryClass",
-            parentElement="properties")
+   @ConfigurationProperty(name="connectionFactoryClass", parentElement="properties")
    public void setConnectionFactoryClass(String connectionFactoryClass) {
       testImmutability("connectionFactoryConfig");
       this.connectionFactoryConfig.setConnectionFactoryClass(connectionFactoryClass);
@@ -191,8 +182,7 @@ public class JdbcBinaryCacheStoreConfig extends LockSupportCacheStoreConfig {
    /**
     * @see org.infinispan.loaders.jdbc.TableManipulation#getFetchSize()
     */
-   @ConfigurationProperty(name="fetchSize",
-            parentElement="properties")
+   @ConfigurationProperty(name="fetchSize", parentElement="properties")
    public void setFetchSize(int fetchSize) {
       testImmutability("tableManipulation");
       this.tableManipulation.setFetchSize(fetchSize);
@@ -201,8 +191,7 @@ public class JdbcBinaryCacheStoreConfig extends LockSupportCacheStoreConfig {
    /**
     * @see org.infinispan.loaders.jdbc.TableManipulation#getBatchSize()
     */
-   @ConfigurationProperty(name="batchSize",
-            parentElement="properties")
+   @ConfigurationProperty(name="batchSize", parentElement="properties")
    public void setBatchSize(int batchSize) {
       testImmutability("tableManipulation");
       this.tableManipulation.setBatchSize(batchSize);

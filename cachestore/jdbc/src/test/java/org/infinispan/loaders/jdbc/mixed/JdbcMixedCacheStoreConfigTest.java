@@ -44,17 +44,17 @@ public class JdbcMixedCacheStoreConfigTest {
    }
 
    public void testSameTableName() {
-      config.setTableNameForBinary("table");
+      config.setTableNamePrefixForBinary("table");
       try {
-         config.setTableNameForStrings("table");
+         config.setTableNamePrefixForStrings("table");
          assert false : "expection expected as same table name is not allowed for both cache stores";
       } catch (Exception e) {
          //expected
       }
       //and the other way around
-      config.setTableNameForStrings("table2");
+      config.setTableNamePrefixForStrings("table2");
       try {
-         config.setTableNameForBinary("table2");
+         config.setTableNamePrefixForBinary("table2");
          assert false : "expection expected as same table name is not allowed for both cache stores";
       } catch (Exception e) {
          //expected

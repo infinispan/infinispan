@@ -29,6 +29,8 @@ public class TableManipulation implements Cloneable {
    private String idColumnName;
    private String idColumnType;
    private String tableName;
+   private String tableNamePrefix;
+   private String cacheName;
    private String dataColumnName;
    private String dataColumnType;
    private String timestampColumnName;
@@ -53,11 +55,11 @@ public class TableManipulation implements Cloneable {
    private String selectExpiredRowsSql;
    private String deleteExpiredRowsSql;
 
-   public TableManipulation(String idColumnName, String idColumnType, String tableName, String dataColumnName,
+   public TableManipulation(String idColumnName, String idColumnType, String tableNamePrefix, String dataColumnName,
                             String dataColumnType, String timestampColumnName, String timestampColumnType) {
       this.idColumnName = idColumnName;
       this.idColumnType = idColumnType;
-      this.tableName = tableName;
+      this.tableNamePrefix = tableNamePrefix;
       this.dataColumnName = dataColumnName;
       this.dataColumnType = dataColumnType;
       this.timestampColumnName = timestampColumnName;
@@ -68,7 +70,7 @@ public class TableManipulation implements Cloneable {
    }
 
    public boolean tableExists(Connection connection, String tableName) throws CacheLoaderException {
-      assrtNotNull(tableName, "table name is mandatory");
+      assrtNotNull(getTableName(), "table name is mandatory");
       ResultSet rs = null;
       try {
          // (a j2ee spec compatible jdbc driver has to fully
@@ -119,7 +121,7 @@ public class TableManipulation implements Cloneable {
    public void createTable(Connection conn) throws CacheLoaderException {
       // removed CONSTRAINT clause as this causes problems with some databases, like Informix.
       assertMandatoryElemenetsPresent();
-      String creatTableDdl = "CREATE TABLE " + tableName + "(" + idColumnName + " " + idColumnType
+      String creatTableDdl = "CREATE TABLE " + getTableName() + "(" + idColumnName + " " + idColumnType
             + " NOT NULL, " + dataColumnName + " " + dataColumnType + ", "
             + timestampColumnName + " " + timestampColumnType +
             ", PRIMARY KEY (" + idColumnName + "))";
@@ -131,7 +133,8 @@ public class TableManipulation implements Cloneable {
    private void assertMandatoryElemenetsPresent() throws CacheLoaderException {
       assrtNotNull(idColumnType, "idColumnType needed in order to create table");
       assrtNotNull(idColumnName, "idColumnName needed in order to create table");
-      assrtNotNull(tableName, "tableName needed in order to create table");
+      assrtNotNull(tableNamePrefix, "tableNamePrefix needed in order to create table");
+      assrtNotNull(cacheName, "cacheName needed in order to create table");
       assrtNotNull(dataColumnName, "dataColumnName needed in order to create table");
       assrtNotNull(dataColumnType, "dataColumnType needed in order to create table");
       assrtNotNull(timestampColumnName, "timestampColumnName needed in order to create table");
@@ -156,8 +159,8 @@ public class TableManipulation implements Cloneable {
    }
 
    public void dropTable(Connection conn) throws CacheLoaderException {
-      String dropTableDdl = "DROP TABLE " + tableName;
-      String clearTable = "DELETE FROM " + tableName;
+      String dropTableDdl = "DROP TABLE " + getTableName();
+      String clearTable = "DELETE FROM " + getTableName();
       executeUpdateSql(conn, clearTable);
       if (log.isTraceEnabled())
          log.trace("Dropping table with following DDL '" + dropTableDdl + "\'");
@@ -180,8 +183,8 @@ public class TableManipulation implements Cloneable {
       this.idColumnType = idColumnType;
    }
 
-   public void setTableName(String tableName) {
-      this.tableName = tableName;
+   public void setTableNamePrefix(String tableNamePrefix) {
+      this.tableNamePrefix = tableNamePrefix;
    }
 
    public void setDataColumnName(String dataColumnName) {
@@ -221,7 +224,7 @@ public class TableManipulation implements Cloneable {
       if (isCreateTableOnStart()) {
          Connection conn = this.connectionFactory.getConnection();
          try {
-            if (!tableExists(conn, tableName)) {
+            if (!tableExists(conn, getTableName())) {
                createTable(conn);
             }
          } finally {
@@ -243,42 +246,42 @@ public class TableManipulation implements Cloneable {
 
    public String getInsertRowSql() {
       if (insertRowSql == null) {
-         insertRowSql = "INSERT INTO " + tableName + " (" + dataColumnName + ", " + timestampColumnName + ", " + idColumnName + ") VALUES(?,?,?)";
+         insertRowSql = "INSERT INTO " + getTableName() + " (" + dataColumnName + ", " + timestampColumnName + ", " + idColumnName + ") VALUES(?,?,?)";
       }
       return insertRowSql;
    }
 
    public String getUpdateRowSql() {
       if (updateRowSql == null) {
-         updateRowSql = "UPDATE " + tableName + " SET " + dataColumnName + " = ? , " + timestampColumnName + "=? WHERE " + idColumnName + " = ?";
+         updateRowSql = "UPDATE " + getTableName() + " SET " + dataColumnName + " = ? , " + timestampColumnName + "=? WHERE " + idColumnName + " = ?";
       }
       return updateRowSql;
    }
 
    public String getSelectRowSql() {
       if (selectRowSql == null) {
-         selectRowSql = "SELECT " + idColumnName + ", " + dataColumnName + " FROM " + tableName + " WHERE " + idColumnName + " = ?";
+         selectRowSql = "SELECT " + idColumnName + ", " + dataColumnName + " FROM " + getTableName() + " WHERE " + idColumnName + " = ?";
       }
       return selectRowSql;
    }
 
    public String getDeleteRowSql() {
       if (deleteRowSql == null) {
-         deleteRowSql = "DELETE FROM " + tableName + " WHERE " + idColumnName + " = ?";
+         deleteRowSql = "DELETE FROM " + getTableName() + " WHERE " + idColumnName + " = ?";
       }
       return deleteRowSql;
    }
 
    public String getLoadAllRowsSql() {
       if (loadAllRowsSql == null) {
-         loadAllRowsSql = "SELECT " + dataColumnName + "," + idColumnName + " FROM " + tableName;
+         loadAllRowsSql = "SELECT " + dataColumnName + "," + idColumnName + " FROM " + getTableName();
       }
       return loadAllRowsSql;
    }
 
    public String getDeleteAllRowsSql() {
       if (deleteAllRows == null) {
-         deleteAllRows = "DELETE FROM " + tableName;
+         deleteAllRows = "DELETE FROM " + getTableName();
       }
       return deleteAllRows;
    }
@@ -292,7 +295,7 @@ public class TableManipulation implements Cloneable {
 
    public String getDeleteExpiredRowsSql() {
       if (deleteExpiredRowsSql == null) {
-         deleteExpiredRowsSql = "DELETE FROM " + tableName + " WHERE " + timestampColumnName + "< ? AND " + timestampColumnName + "> 0";
+         deleteExpiredRowsSql = "DELETE FROM " + getTableName() + " WHERE " + timestampColumnName + "< ? AND " + timestampColumnName + "> 0";
       }
       return deleteExpiredRowsSql;
    }
@@ -307,7 +310,17 @@ public class TableManipulation implements Cloneable {
    }
 
    public String getTableName() {
+      if (tableName == null) {
+         if (tableNamePrefix == null || cacheName == null) {
+            throw new IllegalStateException("Both tableNamePrefix and cacheName must be non null at this point!");
+         }
+         tableName = tableNamePrefix + "_" + cacheName;
+      }
       return tableName;
+   }
+
+   public String getTableNamePrefix() {
+      return tableNamePrefix;
    }
 
    public boolean tableExists(Connection connection) throws CacheLoaderException {
@@ -368,5 +381,10 @@ public class TableManipulation implements Cloneable {
     */
    public void setBatchSize(int batchSize) {
       this.batchSize = batchSize;
+   }
+
+   public void setCacheName(String cacheName) {
+      this.cacheName = cacheName;
+      this.tableName = null;
    }
 }
