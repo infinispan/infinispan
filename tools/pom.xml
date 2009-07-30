@@ -102,6 +102,11 @@
    </profiles>
      <build>
     <plugins>
+      <!-- 
+      Generates XML schema for Infinispan configuration files
+      Run with mvn exec:java
+      For more details see:
+      http://mojo.codehaus.org/exec-maven-plugin/usage.html -->
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
