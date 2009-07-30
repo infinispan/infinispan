@@ -26,7 +26,13 @@ import java.util.Map.Entry;
 
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 import org.infinispan.util.TypedProperties;
-
+/**
+ * TypedPropertiesAdapter is JAXB XmlAdapter for TypedProperties.
+ *
+ * @author Vladimir Blagojevic
+ * @version $Id$
+ * @since 4.0
+ */
 public class TypedPropertiesAdapter extends XmlAdapter<PropertiesType, TypedProperties> {
 
    @Override

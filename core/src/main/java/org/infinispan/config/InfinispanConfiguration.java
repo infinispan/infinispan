@@ -39,6 +39,19 @@ import javax.xml.validation.SchemaFactory;
 
 import org.infinispan.config.parsing.XmlConfigurationParser;
 import org.infinispan.util.FileLookup;
+/**
+ * InfinispanConfiguration encapsulates root component of Infinispan XML configuration
+ * 
+ * <p>
+ * Note that class InfinispanConfiguration contains JAXB annotations. These annotations determine how XML
+ * configuration files are read into instances of configuration class hierarchy as well as they
+ * provide meta data for configuration file XML schema generation. Please modify these annotations
+ * and Java element types they annotate with utmost understanding and care.
+ *
+ * @author Vladimir Blagojevic
+ * @version $Id$
+ * @since 4.0
+ */
 
 @XmlRootElement(name = "infinispan")
 @XmlAccessorType(XmlAccessType.FIELD)

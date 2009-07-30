@@ -19,6 +19,12 @@ import org.infinispan.util.Util;
  * synchronously or not.  By default, this is set to <tt>false</tt>.</li>
  * <p/>
  * </ul>
+ * 
+ * <p>
+ * Note that class AbstractCacheStoreConfig contains JAXB annotations. These annotations determine how XML
+ * configuration files are read into instances of configuration class hierarchy as well as they
+ * provide meta data for configuration file XML schema generation. Please modify these annotations
+ * and Java element types they annotate with utmost understanding and care.
  *
  * @author Mircea.Markus@jboss.com
  * @version $Id$

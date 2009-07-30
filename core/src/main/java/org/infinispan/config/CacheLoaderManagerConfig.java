@@ -37,11 +37,19 @@ import org.infinispan.util.Util;
 /**
  * Holds the configuration of the cache loader chain.  ALL cache loaders should be defined using this class, adding
  * individual cache loaders to the chain by calling {@link CacheLoaderManagerConfig#addCacheLoaderConfig}
+ * 
+ * <p>
+ * Note that class CacheLoaderManagerConfig contains JAXB annotations. These annotations determine how XML
+ * configuration files are read into instances of configuration class hierarchy as well as they
+ * provide meta data for configuration file XML schema generation. Please modify these annotations
+ * and Java element types they annotate with utmost understanding and care.
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
  * @author Brian Stansberry
+ * @author Vladimir Blagojevic 
  * @author <a href="mailto:galder.zamarreno@jboss.com">Galder Zamarreno</a>
  * @since 4.0
+ * @version $Id$
  */
 @ConfigurationElement(name="loaders",parent="default",customReader=CacheLoaderManagerConfigReader.class)
 @XmlAccessorType(XmlAccessType.FIELD)

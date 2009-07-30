@@ -26,13 +26,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.lang.reflect.Field;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -47,18 +42,22 @@ import org.infinispan.config.parsing.ClusteringConfigReader;
 import org.infinispan.config.parsing.CustomInterceptorConfigReader;
 import org.infinispan.distribution.DefaultConsistentHash;
 import org.infinispan.eviction.EvictionStrategy;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.NonVolatile;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
-import org.infinispan.util.ReflectionUtil;
 import org.infinispan.util.concurrent.IsolationLevel;
-
 
 /**
  * Encapsulates the configuration of a Cache.
- *
+ * 
+ * <p>
+ * Note that class Configuration contains JAXB annotations. These annotations determine how XML
+ * configuration files are read into instances of configuration class hierarchy as well as they
+ * provide meta data for configuration file XML schema generation. Please modify these annotations
+ * and Java element types they annotate with utmost understanding and care.
+ * 
+ * 
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
  * @author Vladimir Blagojevic
  * @version $Id$

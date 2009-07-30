@@ -10,9 +10,18 @@ import org.infinispan.config.PluggableConfigurationComponent;
 
 /**
  * Abstract base class for CacheLoaderConfigs.
+ * 
+ * <p>
+ * Note that class AbstractCacheLoaderConfig contains JAXB annotations. These annotations determine how XML
+ * configuration files are read into instances of configuration class hierarchy as well as they
+ * provide meta data for configuration file XML schema generation. Please modify these annotations
+ * and Java element types they annotate with utmost understanding and care.
  *
  * @author Mircea.Markus@jboss.com
+ * @autor Vladimir Blagojevic
  * @since 4.0
+ * @version $Id$
+ * 
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 public class AbstractCacheLoaderConfig extends PluggableConfigurationComponent implements CacheLoaderConfig {

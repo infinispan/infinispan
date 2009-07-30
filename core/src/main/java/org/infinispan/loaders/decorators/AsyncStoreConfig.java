@@ -11,9 +11,18 @@ import org.infinispan.config.Dynamic;
 
 /**
  * Configuration for the async cache loader
+ * 
+ * <p>
+ * Note that class AsyncStoreConfig contains JAXB annotations. These annotations determine how XML
+ * configuration files are read into instances of configuration class hierarchy as well as they
+ * provide meta data for configuration file XML schema generation. Please modify these annotations
+ * and Java element types they annotate with utmost understanding and care.
+ *
  *
  * @author Manik Surtani
+ * @author Vladimir Blagojevic
  * @since 4.0
+ * @version $Id$
  */
 @ConfigurationElement(name="async", parent="loader")
 @XmlAccessorType(XmlAccessType.FIELD)
