@@ -32,23 +32,24 @@ import javax.xml.transform.stream.StreamResult;
 import org.infinispan.Version;
 import org.infinispan.config.InfinispanConfiguration;
 
+/**
+ * Generates XML schema using JAXB annotations from our configuration class hierarchy.
+ * 
+ * @author Vladimir Blagojevic
+ * @version $Id$
+ * @since 4.0
+ */
 public class JaxbSchemaGenerator {
 
-   /**
-    * FIXME Comment this
-    * 
-    * @param args
-    * @throws Exception 
-    */
    public static void main(String[] args) throws Exception {
       final File baseDir = new File(".");
-      class MySchemaOutputResolver extends SchemaOutputResolver {
+      class InfinispanSchemaOutputResolver extends SchemaOutputResolver {
           public Result createOutput( String namespaceUri, String suggestedFileName ) throws IOException {
               return new StreamResult(new File(baseDir,"infinispan-config-" +Version.getMajorVersion()+ ".xsd"));
           }
       }
       JAXBContext context = JAXBContext.newInstance(InfinispanConfiguration.class);
-      context.generateSchema(new MySchemaOutputResolver()); 
+      context.generateSchema(new InfinispanSchemaOutputResolver()); 
    }
 
 }
