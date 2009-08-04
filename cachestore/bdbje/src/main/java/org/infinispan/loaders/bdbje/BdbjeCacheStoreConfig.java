@@ -29,90 +29,108 @@ import org.infinispan.loaders.AbstractCacheStoreConfig;
  * @since 4.0
  */
 @ConfigurationElements(elements = {
-         @ConfigurationElement(name = "loader", parent = "loaders", 
-                  description = "org.infinispan.loaders.bdbje.BdbjeCacheStore", 
-                  cardinalityInParent=Cardinality.UNBOUNDED),
-         @ConfigurationElement(name = "properties", parent = "loader") })
+      @ConfigurationElement(name = "loader", parent = "loaders",
+                            description = "org.infinispan.loaders.bdbje.BdbjeCacheStore",
+                            cardinalityInParent = Cardinality.UNBOUNDED),
+      @ConfigurationElement(name = "properties", parent = "loader")})
 public class BdbjeCacheStoreConfig extends AbstractCacheStoreConfig {
-    private String location = "Infinispan-BdbjeCacheStore";
-    private long lockAcquistionTimeout = 60 * 1000;
-    private int maxTxRetries = 5;
-    private String cacheDbName;
-    private String catalogDbName;
-    private String expiryDbName;
+   private String location = "Infinispan-BdbjeCacheStore";
+   private long lockAcquistionTimeout = 60 * 1000;
+   private int maxTxRetries = 5;
+   private String cacheDbNamePrefix;
+   private String catalogDbName;
+   private String expiryDbPrefix;
+   private String cacheName;
 
-    public String getExpiryDbName() {
-        return expiryDbName;
-    }
+   public String getExpiryDbPrefix() {
+      return expiryDbPrefix;
+   }
 
+   public String getExpiryDbName() {
+      if (expiryDbPrefix != null) {
+         return expiryDbPrefix + "_" + cacheName;
+      } else {
+         return cacheName + "_expiry";
+      }
+   }
 
-    @ConfigurationProperty(name="expiryDbName",
-             parentElement="properties")
-    public void setExpiryDbName(String expiryDbName) {
-        this.expiryDbName = expiryDbName;
-    }
-
-
-    public BdbjeCacheStoreConfig() {
-        setCacheLoaderClassName(BdbjeCacheStore.class.getName());
-    }
-
-    public int getMaxTxRetries() {
-        return maxTxRetries;
-    }
+   @ConfigurationProperty(name = "expiryDbNamePrefix", parentElement = "properties")
+   public void setExpiryDbNamePrefix(String expiryDbName) {
+      this.expiryDbPrefix = expiryDbName;
+   }
 
 
-    @ConfigurationProperty(name="maxTxRetries",
-             parentElement="properties")
-    public void setMaxTxRetries(int maxTxRetries) {
-        this.maxTxRetries = maxTxRetries;
-    }
+   public BdbjeCacheStoreConfig() {
+      setCacheLoaderClassName(BdbjeCacheStore.class.getName());
+   }
+
+   public int getMaxTxRetries() {
+      return maxTxRetries;
+   }
 
 
-    public long getLockAcquistionTimeout() {
-        return lockAcquistionTimeout;
-    }
+   @ConfigurationProperty(name = "maxTxRetries",
+                          parentElement = "properties")
+   public void setMaxTxRetries(int maxTxRetries) {
+      this.maxTxRetries = maxTxRetries;
+   }
 
 
-    @ConfigurationProperty(name="lockAcquistionTimeout",
-             parentElement="properties")
-    public void setLockAcquistionTimeout(long lockAcquistionTimeout) {
-        this.lockAcquistionTimeout = lockAcquistionTimeout;
-    }
-
-    public String getLocation() {
-        return location;
-    }
+   public long getLockAcquistionTimeout() {
+      return lockAcquistionTimeout;
+   }
 
 
-    @ConfigurationProperty(name="location",
-             parentElement="properties")
-    public void setLocation(String location) {
-        testImmutability("location");
-        this.location = location;
-    }
+   @ConfigurationProperty(name = "lockAcquistionTimeout",
+                          parentElement = "properties")
+   public void setLockAcquistionTimeout(long lockAcquistionTimeout) {
+      this.lockAcquistionTimeout = lockAcquistionTimeout;
+   }
+
+   public String getLocation() {
+      return location;
+   }
 
 
-    public String getCacheDbName() {
-        return cacheDbName;
-    }
+   @ConfigurationProperty(name = "location",
+                          parentElement = "properties")
+   public void setLocation(String location) {
+      testImmutability("location");
+      this.location = location;
+   }
 
 
-    @ConfigurationProperty(name="cacheDbName",
-             parentElement="properties")
-    public void setCacheDbName(String cacheDbName) {
-        this.cacheDbName = cacheDbName;
-    }
-
-    public String getCatalogDbName() {
-        return catalogDbName;
-    }
+   public String getCacheDbNamePrefix() {
+      return cacheDbNamePrefix;
+   }
 
 
-    @ConfigurationProperty(name="catalogDbName",
-             parentElement="properties")
-    public void setCatalogDbName(String catalogDbName) {
-        this.catalogDbName = catalogDbName;
-    }
+   @ConfigurationProperty(name = "cacheDbNamePrefix",
+                          parentElement = "properties")
+   public void setCacheDbNamePrefix(String cacheDbNamePrefix) {
+      this.cacheDbNamePrefix = cacheDbNamePrefix;
+   }
 
+   public String getCatalogDbName() {
+      return catalogDbName;
+   }
+
+
+   @ConfigurationProperty(name = "catalogDbName",
+                          parentElement = "properties")
+   public void setCatalogDbName(String catalogDbName) {
+      this.catalogDbName = catalogDbName;
+   }
+
+   void setCacheName(String name) {
+      this.cacheName = name;
+   }
+
+   public String getCacheDbName() {
+      if (cacheDbNamePrefix != null) {
+         return cacheDbNamePrefix + "_" + cacheName;
+      } else {
+         return cacheName;
+      }
+   }
 }

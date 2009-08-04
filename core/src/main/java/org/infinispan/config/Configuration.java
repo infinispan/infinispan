@@ -21,23 +21,6 @@
  */
 package org.infinispan.config;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlTransient;
-import javax.xml.bind.annotation.XmlType;
-
 import org.infinispan.config.parsing.ClusteringConfigReader;
 import org.infinispan.config.parsing.CustomInterceptorConfigReader;
 import org.infinispan.distribution.DefaultConsistentHash;
@@ -47,6 +30,18 @@ import org.infinispan.factories.annotations.NonVolatile;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
+import org.infinispan.CacheException;
+
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlTransient;
+import javax.xml.bind.annotation.XmlType;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Encapsulates the configuration of a Cache.
@@ -97,95 +92,6 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    @XmlAttribute
    private String name;
 
-
-   /**
-    * Cache replication mode.
-    */
-   public static enum CacheMode {
-      /**
-       * Data is not replicated.
-       */
-      LOCAL,
-
-      /**
-       * Data replicated synchronously.
-       */
-      REPL_SYNC,
-
-      /**
-       * Data replicated asynchronously.
-       */
-      REPL_ASYNC,
-
-      /**
-       * Data invalidated synchronously.
-       */
-      INVALIDATION_SYNC,
-
-      /**
-       * Data invalidated asynchronously.
-       */
-      INVALIDATION_ASYNC,
-
-      /**
-       * Synchronous DIST
-       */
-      DIST_SYNC,
-
-      /**
-       * Async DIST
-       */
-      DIST_ASYNC;
-
-      /**
-       * Returns true if the mode is invalidation, either sync or async.
-       */
-      public boolean isInvalidation() {
-         return this == INVALIDATION_SYNC || this == INVALIDATION_ASYNC;
-      }
-
-      public boolean isSynchronous() {
-         return this == REPL_SYNC || this == DIST_SYNC || this == INVALIDATION_SYNC || this == LOCAL;
-      }
-
-      public boolean isClustered() {
-         return this != LOCAL;
-      }
-
-      public boolean isDistributed() {
-         return this == DIST_SYNC || this == DIST_ASYNC;
-      }
-
-      public boolean isReplicated() {
-         return this == REPL_SYNC || this == REPL_ASYNC;
-      }
-
-      public CacheMode toSync() {
-         switch (this) {
-            case REPL_ASYNC:
-               return REPL_SYNC;
-            case INVALIDATION_ASYNC:
-               return INVALIDATION_SYNC;
-            case DIST_ASYNC:
-               return DIST_SYNC;
-            default:
-               return this;
-         }
-      }
-
-      public CacheMode toAsync() {
-         switch (this) {
-            case REPL_SYNC:
-               return REPL_ASYNC;
-            case INVALIDATION_SYNC:
-               return INVALIDATION_ASYNC;
-            case DIST_SYNC:
-               return DIST_ASYNC;
-            default:
-               return this;
-         }
-      }
-   }
 
    // ------------------------------------------------------------------------------------------------------------
    //   CONFIGURATION OPTIONS
@@ -796,29 +702,25 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
    @Override
    public Configuration clone() {
-      
-      Configuration obj = null;
       try {
-          // Write the object out to a byte array
-          ByteArrayOutputStream bos = new ByteArrayOutputStream();
-          ObjectOutputStream out = new ObjectOutputStream(bos);
-          out.writeObject(this);
-          out.flush();
-          out.close();
-
-          // Make an input stream from the byte array and read
-          // a copy of the object back in.
-          ObjectInputStream in = new ObjectInputStream(
-              new ByteArrayInputStream(bos.toByteArray()));
-          obj= (Configuration) in.readObject();
+         Configuration dolly = (Configuration) super.clone();
+         if (globalConfiguration!= null) dolly.globalConfiguration = globalConfiguration.clone();
+         if (locking != null) dolly.locking = (LockingType) locking.clone();
+         if (loaders != null) dolly.loaders = loaders.clone();
+         if (transaction != null) dolly.transaction = (TransactionType) transaction.clone();
+         if (customInterceptors != null) dolly.customInterceptors = customInterceptors.clone();
+         if (eviction != null) dolly.eviction = (EvictionType) eviction.clone();
+         if (expiration != null) dolly.expiration = (ExpirationType) expiration.clone();
+         if (unsafe != null) dolly.unsafe = (UnsafeType) unsafe.clone();
+         if (clustering != null) dolly.clustering = clustering.clone();
+         if (jmxStatistics != null) dolly.jmxStatistics = (BooleanAttributeType) jmxStatistics.clone();
+         if (lazyDeserialization != null) dolly.lazyDeserialization = (BooleanAttributeType) lazyDeserialization.clone();
+         if (invocationBatching != null) dolly.invocationBatching = (BooleanAttributeType) invocationBatching.clone();
+         if (deadlockDetection != null) dolly.deadlockDetection = (DeadlockDetectionType) deadlockDetection.clone();
+         return dolly;
+      } catch (CloneNotSupportedException e) {
+         throw new CacheException("Unexpected!",e);
       }
-      catch(IOException e) {
-          e.printStackTrace();
-      }
-      catch(ClassNotFoundException cnfe) {
-          cnfe.printStackTrace();
-      }
-      return obj;
    }
 
    public boolean isUsingCacheLoaders() {
@@ -982,6 +884,17 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       public void setMode(CacheMode mode) {
          testImmutability("mode");
          this.mode = mode;
+      }
+
+      @Override
+      public ClusteringType clone() throws CloneNotSupportedException {
+         ClusteringType dolly = (ClusteringType) super.clone();
+         dolly.sync = (SyncType) sync.clone();
+         dolly.stateRetrieval = (StateRetrievalType) stateRetrieval.clone();
+         dolly.l1 = (L1Type) l1.clone();
+         dolly.async = (AsyncType) async.clone();
+         dolly.hash = (HashType) hash.clone();
+         return dolly;
       }
    }
    
@@ -1247,5 +1160,107 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       
       @XmlElement(name="interceptor")
       private List<CustomInterceptorConfig> customInterceptors= new ArrayList<CustomInterceptorConfig>();
+
+      @Override
+      public CustomInterceptorsType clone() throws CloneNotSupportedException {
+         CustomInterceptorsType dolly = (CustomInterceptorsType) super.clone();
+         if (customInterceptors != null) {
+            dolly.customInterceptors = new ArrayList<CustomInterceptorConfig>();
+            for (CustomInterceptorConfig config: customInterceptors) {
+               CustomInterceptorConfig clone = config.clone();
+               dolly.customInterceptors.add(clone);
+            }
+         }
+         return dolly;
+      }
+   }
+
+   /**
+    * Cache replication mode.
+    */
+   public static enum CacheMode {
+      /**
+       * Data is not replicated.
+       */
+      LOCAL,
+
+      /**
+       * Data replicated synchronously.
+       */
+      REPL_SYNC,
+
+      /**
+       * Data replicated asynchronously.
+       */
+      REPL_ASYNC,
+
+      /**
+       * Data invalidated synchronously.
+       */
+      INVALIDATION_SYNC,
+
+      /**
+       * Data invalidated asynchronously.
+       */
+      INVALIDATION_ASYNC,
+
+      /**
+       * Synchronous DIST
+       */
+      DIST_SYNC,
+
+      /**
+       * Async DIST
+       */
+      DIST_ASYNC;
+
+      /**
+       * Returns true if the mode is invalidation, either sync or async.
+       */
+      public boolean isInvalidation() {
+         return this == INVALIDATION_SYNC || this == INVALIDATION_ASYNC;
+      }
+
+      public boolean isSynchronous() {
+         return this == REPL_SYNC || this == DIST_SYNC || this == INVALIDATION_SYNC || this == LOCAL;
+      }
+
+      public boolean isClustered() {
+         return this != LOCAL;
+      }
+
+      public boolean isDistributed() {
+         return this == DIST_SYNC || this == DIST_ASYNC;
+      }
+
+      public boolean isReplicated() {
+         return this == REPL_SYNC || this == REPL_ASYNC;
+      }
+
+      public CacheMode toSync() {
+         switch (this) {
+            case REPL_ASYNC:
+               return REPL_SYNC;
+            case INVALIDATION_ASYNC:
+               return INVALIDATION_SYNC;
+            case DIST_ASYNC:
+               return DIST_SYNC;
+            default:
+               return this;
+         }
+      }
+
+      public CacheMode toAsync() {
+         switch (this) {
+            case REPL_SYNC:
+               return REPL_ASYNC;
+            case INVALIDATION_SYNC:
+               return INVALIDATION_ASYNC;
+            case DIST_SYNC:
+               return DIST_ASYNC;
+            default:
+               return this;
+         }
+      }
    }
 }

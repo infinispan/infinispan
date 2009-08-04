@@ -21,8 +21,10 @@
  */
 package org.infinispan.config;
 
-import java.util.Locale;
-import java.util.Properties;
+import net.jcip.annotations.Immutable;
+import org.infinispan.config.ConfigurationElement.Cardinality;
+import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.util.TypedProperties;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -30,12 +32,8 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
-
-import net.jcip.annotations.Immutable;
-
-import org.infinispan.config.ConfigurationElement.Cardinality;
-import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.util.TypedProperties;
+import java.util.Locale;
+import java.util.Properties;
 
 /**
  * Holds information about the custom interceptors defined in the configuration file.
@@ -326,11 +324,7 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
    @Override
    public CustomInterceptorConfig clone() throws CloneNotSupportedException {
       CustomInterceptorConfig dolly = (CustomInterceptorConfig) super.clone();
-      dolly.interceptor = interceptor;
-      dolly.isFirst = isFirst;
-      dolly.isLast = isLast;
-      dolly.after = after;
-      dolly.before = before;
+      if (properties != null) dolly.properties = (TypedProperties) properties.clone();
       return dolly;
    }
    

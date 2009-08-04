@@ -129,9 +129,9 @@ public class BdbjeCacheStore extends AbstractCacheStore {
     private void openSleepyCatResources() throws CacheLoaderException {
         if (trace) log.trace("creating je environment with home dir {0}", cfg.getLocation());
 
-        if (cfg.getCacheDbName() == null) cfg.setCacheDbName(cache.getName());
-        if (cfg.getCatalogDbName() == null) cfg.setCatalogDbName(cfg.getCacheDbName() + "_class_catalog");
-        if (cfg.getExpiryDbName() == null) cfg.setExpiryDbName(cfg.getCacheDbName() + "_expiry");
+       cfg.setCacheName(cache.getName());
+        if (cfg.getCatalogDbName() == null)
+           cfg.setCatalogDbName(cfg.getCacheDbName() + "_class_catalog");
 
         File location = verifyOrCreateEnvironmentDirectory(new File(cfg.getLocation()));
         try {

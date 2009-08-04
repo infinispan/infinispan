@@ -6,6 +6,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
+import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.marshall.Marshaller;
 
@@ -103,5 +104,9 @@ public class AbstractDelegatingStore implements CacheStore {
 
    public void stop() throws CacheLoaderException {
       delegate.stop();
+   }
+
+   public CacheStoreConfig getCacheStoreConfig() {
+      return delegate.getCacheStoreConfig();
    }
 }

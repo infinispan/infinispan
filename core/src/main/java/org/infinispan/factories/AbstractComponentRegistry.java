@@ -25,7 +25,6 @@ import org.infinispan.CacheException;
 import org.infinispan.Version;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
-import org.infinispan.config.RuntimeConfig;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.annotations.Inject;

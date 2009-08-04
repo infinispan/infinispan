@@ -6,6 +6,8 @@ import org.infinispan.manager.CacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
@@ -40,6 +42,8 @@ import java.util.concurrent.CountDownLatch;
  */
 @Test(groups = "profiling", enabled = true, testName = "profiling.DeadlockDetectionPerformanceTest")
 public class DeadlockDetectionPerformanceTest {
+
+   private static Log log = LogFactory.getLog(DeadlockDetectionPerformanceTest.class);
 
    public static final int KEY_POOL_SIZE = 10;
 
@@ -107,6 +111,16 @@ public class DeadlockDetectionPerformanceTest {
       }
    }
 
+   @Test(invocationCount = 5, enabled = false)
+   public void testReplDifferentTxSizeDldOnly() throws Exception {
+      THREAD_COUNT = 3;
+      USE_DLD = true;
+      for (int i = 2; i < KEY_POOL_SIZE; i++) {
+         TX_SIZE = i;
+         runDistributedTest();
+      }
+   }
+
    private void runDistributedTest() throws Exception {
       CacheManager cm = null;
       List<CacheManager> managers = new ArrayList<CacheManager>();
@@ -128,6 +142,7 @@ public class DeadlockDetectionPerformanceTest {
          Thread.sleep(BENCHMARK_DURATION);
          joinThreadsAndPrintResult(executorThreads);
       } finally {
+         log.trace("About to kill cache managers: " + managers);
          TestingUtil.killCacheManagers(managers);
       }
    }
@@ -213,6 +228,12 @@ public class DeadlockDetectionPerformanceTest {
                failedTx++;
             }
          }
+         info("Exiting thread " + getName() + " which lived " + (System.currentTimeMillis() - start) + " milliseconds");
+      }
+
+      private void info(String s) {
+         System.out.println( "[" + getName() + "] " + s);
+         log.trace(s);
       }
 
       public int getFailedTx() {

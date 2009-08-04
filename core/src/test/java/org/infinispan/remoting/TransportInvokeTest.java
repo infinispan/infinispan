@@ -21,19 +21,11 @@
  */
 package org.infinispan.remoting;
 
-import static org.easymock.EasyMock.createNiceMock;
-import static org.easymock.EasyMock.createMock;
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.replay;
-import static org.easymock.EasyMock.verify;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.transaction.TransactionManager;
-
+import static org.easymock.EasyMock.*;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
+import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.rpc.RpcManagerImpl;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -41,8 +33,10 @@ import org.infinispan.test.ReplListener;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.testng.annotations.Test;
-import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.remoting.rpc.RpcManagerImpl;
+
+import javax.transaction.TransactionManager;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * TransportInvokeTest.
@@ -77,6 +71,7 @@ public class TransportInvokeTest extends MultipleCacheManagersTest {
          List<Address> memberList = new ArrayList<Address>(1);
          memberList.add(mockAddress1);
          expect(mockTransport.getMembers()).andReturn(memberList).anyTimes();
+         expect(mockTransport.getAddress()).andReturn(null).anyTimes();
          rpcManager.setTransport(mockTransport);
          // Transport invoke remote should not be called.
          replay(mockAddress1, mockTransport);

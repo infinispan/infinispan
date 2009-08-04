@@ -1,15 +1,15 @@
 package org.infinispan.loaders;
 
+import org.infinispan.config.ConfigurationAttribute;
+import org.infinispan.loaders.decorators.AsyncStoreConfig;
+import org.infinispan.loaders.decorators.SingletonStoreConfig;
+import org.infinispan.util.Util;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
-
-import org.infinispan.config.ConfigurationAttribute;
-import org.infinispan.loaders.decorators.AsyncStoreConfig;
-import org.infinispan.loaders.decorators.SingletonStoreConfig;
-import org.infinispan.util.Util;
 
 /**
  * Configures {@link AbstractCacheStore}.  This allows you to tune a number of characteristics of the {@link
@@ -169,8 +169,7 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
 
    @Override
    public AbstractCacheStoreConfig clone() {
-      AbstractCacheStoreConfig clone = null;
-      clone = (AbstractCacheStoreConfig) super.clone();
+      AbstractCacheStoreConfig clone = (AbstractCacheStoreConfig) super.clone();
       if (singletonStore != null) clone.setSingletonStoreConfig(singletonStore.clone());
       if (async != null) clone.setAsyncStoreConfig(async.clone());
       return clone;

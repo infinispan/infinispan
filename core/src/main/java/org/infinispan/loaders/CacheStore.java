@@ -147,4 +147,9 @@ public interface CacheStore extends CacheLoader {
     * @param tx tx to roll back
     */
    void rollback(GlobalTransaction tx);
+
+   /**
+    * Returns the configuration object associated to this cache store config.
+    */
+   public CacheStoreConfig getCacheStoreConfig();
 }

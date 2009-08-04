@@ -21,7 +21,6 @@
  */
 package org.infinispan.factories;
 
-import org.infinispan.config.RuntimeConfig;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.remoting.rpc.RpcManager;
 

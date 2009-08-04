@@ -21,18 +21,17 @@
  */
 package org.infinispan.config;
 
-import java.util.LinkedList;
-import java.util.List;
+import org.infinispan.config.parsing.CacheLoaderManagerConfigReader;
+import org.infinispan.loaders.CacheLoaderConfig;
+import org.infinispan.loaders.CacheStoreConfig;
+import org.infinispan.util.Util;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
-
-import org.infinispan.config.parsing.CacheLoaderManagerConfigReader;
-import org.infinispan.loaders.CacheLoaderConfig;
-import org.infinispan.loaders.CacheStoreConfig;
-import org.infinispan.util.Util;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Holds the configuration of the cache loader chain.  ALL cache loaders should be defined using this class, adding
@@ -165,7 +164,7 @@ public class CacheLoaderManagerConfig extends AbstractNamedCacheConfigurationBea
          for (CacheLoaderConfig clc : cacheLoaderConfigs) {
             clcs.add(clc.clone());
          }
-         clone.setCacheLoaderConfigs(clcs);
+         clone.cacheLoaderConfigs = clcs;
       }
       return clone;
    }

@@ -82,8 +82,9 @@ public class BdbjeCacheStoreTest {
                 return cacheDb;
             else if (name.equals(cfg.getCatalogDbName()))
                 return catalogDb;
-            else
+            else if (name.equals(cfg.getExpiryDbName()))
                 return expiryDb;
+            else throw new IllegalStateException("Unknown name:" + name);
         }
 
         @Override

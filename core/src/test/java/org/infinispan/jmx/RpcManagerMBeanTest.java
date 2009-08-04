@@ -118,11 +118,13 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
          memberList.add(mockAddress2);
          Transport transport = createMock(Transport.class);
          EasyMock.expect(transport.getMembers()).andReturn(memberList).anyTimes();
+         EasyMock.expect(transport.getAddress()).andReturn(null).anyTimes();
          replay(transport);
          rpcManager.setTransport(transport);
          cache1.put("a5", "b5");
          assert false : "rpc manager should had thrown an expception";
       } catch (Throwable e) {
+         e.printStackTrace();
          //expected
          assertEquals(mBeanServer.getAttribute(rpcManager1, "SuccessRatio"), ("80%"));
       }

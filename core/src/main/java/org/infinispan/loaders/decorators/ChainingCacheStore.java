@@ -150,4 +150,8 @@ public class ChainingCacheStore implements CacheStore {
    public LinkedHashMap<CacheStore, CacheLoaderConfig> getStores() {
       return stores;
    }
+
+   public CacheStoreConfig getCacheStoreConfig() {
+      return null;
+   }
 }

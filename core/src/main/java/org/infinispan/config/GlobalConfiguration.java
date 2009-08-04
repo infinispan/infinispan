@@ -1,14 +1,5 @@
 package org.infinispan.config;
 
-import java.util.Properties;
-
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlTransient;
-import javax.xml.bind.annotation.XmlType;
-
 import org.infinispan.CacheException;
 import org.infinispan.Version;
 import org.infinispan.executors.DefaultExecutorFactory;
@@ -23,6 +14,14 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.marshall.VersionAwareMarshaller;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.util.TypedProperties;
+
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlTransient;
+import javax.xml.bind.annotation.XmlType;
+import java.util.Properties;
 
 /**
  * Configuration component that encapsulates the global configuration.
@@ -520,7 +519,14 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       public void setProperties(TypedProperties properties) {
          testImmutability("properties");
          this.properties = properties;
-      }         
+      }
+
+      @Override
+      public FactoryClassWithPropertiesType clone() throws CloneNotSupportedException {
+         FactoryClassWithPropertiesType dolly = (FactoryClassWithPropertiesType) super.clone();
+         dolly.properties = (TypedProperties) properties.clone();
+         return dolly;
+      }
    }
    
    @XmlAccessorType(XmlAccessType.PROPERTY)
@@ -557,7 +563,14 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
          //testImmutability("properties");
          //TODO fails JmxStatsFunctionalTest#testMultipleManagersOnSameServerFails
          this.properties = properties;
-      }     
+      }
+
+      @Override
+      public TransportType clone() throws CloneNotSupportedException {
+         TransportType dolly = (TransportType) super.clone();
+         dolly.properties = (TypedProperties) properties.clone();
+         return dolly;
+      }
    }
    
    @XmlAccessorType(XmlAccessType.PROPERTY)

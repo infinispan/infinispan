@@ -3,6 +3,7 @@ package org.infinispan.manager;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.DuplicateCacheNameException;
+import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.factories.annotations.NonVolatile;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -102,4 +103,9 @@ public interface CacheManager extends Lifecycle, Listenable {
    boolean isCoordinator();
 
    ComponentStatus getStatus();
+
+   /**
+    * Returns the global configuration object associated to this CacheManager.
+    */
+   public GlobalConfiguration getGlobalConfiguration();
 }

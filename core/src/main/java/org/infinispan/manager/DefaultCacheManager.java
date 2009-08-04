@@ -29,7 +29,6 @@ import org.infinispan.config.DuplicateCacheNameException;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.config.InfinispanConfiguration;
 import org.infinispan.config.parsing.XmlConfigurationParser;
-import org.infinispan.config.parsing.XmlConfigurationParserImpl;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.InternalCacheFactory;
 import org.infinispan.factories.annotations.NonVolatile;
@@ -383,6 +382,10 @@ public class DefaultCacheManager implements CacheManager {
 
    public ComponentStatus getStatus() {
       return globalComponentRegistry.getStatus();
+   }
+
+   public GlobalConfiguration getGlobalConfiguration() {
+      return globalConfiguration;
    }
 
    @ManagedAttribute(description = "the defined cache names and their status")

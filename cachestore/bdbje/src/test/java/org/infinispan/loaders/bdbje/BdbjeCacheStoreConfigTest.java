@@ -67,8 +67,8 @@ public class BdbjeCacheStoreConfigTest {
 
     @Test
     public void testSetCacheDb() {
-        config.setCacheDbName("foo");
-        assert config.getCacheDbName().equals("foo");
+        config.setCacheDbNamePrefix("foo");
+        assert config.getCacheDbNamePrefix().equals("foo");
     }
 
     @Test
@@ -79,8 +79,8 @@ public class BdbjeCacheStoreConfigTest {
 
     @Test
     public void testSetExpiryDb() {
-        config.setExpiryDbName("foo");
-        assert config.getExpiryDbName().equals("foo");
+        config.setExpiryDbNamePrefix("foo");
+        assert config.getExpiryDbPrefix().equals("foo");
     }
 
 }

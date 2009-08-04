@@ -105,6 +105,10 @@ public abstract class AbstractCacheStore extends AbstractCacheLoader implements 
       transactions.remove(tx);
    }
 
+   public CacheStoreConfig getCacheStoreConfig() {
+      return config;
+   }
+
    public void commit(GlobalTransaction tx) throws CacheLoaderException {
       List<? extends Modification> list = transactions.remove(tx);
       if (list != null && !list.isEmpty()) applyModifications(list);
