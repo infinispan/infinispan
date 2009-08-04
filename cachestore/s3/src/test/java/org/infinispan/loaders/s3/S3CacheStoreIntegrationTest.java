@@ -29,7 +29,6 @@ import org.testng.annotations.Test;
 
 /**
  * @author Adrian Cole
- * @version $Id$
  * @since 4.0
  */
 @Test(groups = "unit", sequential = true, testName = "loaders.s3.S3CacheStoreIntegrationTest")

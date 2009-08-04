@@ -43,7 +43,6 @@ import org.infinispan.config.parsing.ConfigurationElementWriter;
  * @see Configuration
  * @see CacheLoaderManagerConfig
  * @author Vladimir Blagojevic
- * @version $Id$
  */
 
 @Retention(RetentionPolicy.RUNTIME)

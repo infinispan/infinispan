@@ -20,7 +20,6 @@ import org.infinispan.config.ConfigurationElement;
  * @author Manik Surtani
  * @author Vladimir Blagojevic
  * @since 4.0
- * @version $Id$
  */
 @ConfigurationElement(name="singletonStore", parent="loader")
 @XmlAccessorType(XmlAccessType.FIELD)

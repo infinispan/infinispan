@@ -23,7 +23,6 @@ import org.infinispan.util.Util;
  * @author Manik Surtani
  * @author Vladimir Blagojevic
  * @since 4.0
- * @version $Id$
  */
 @XmlJavaTypeAdapter(CacheLoaderConfigAdapter.class)
 public interface CacheLoaderConfig extends Cloneable {

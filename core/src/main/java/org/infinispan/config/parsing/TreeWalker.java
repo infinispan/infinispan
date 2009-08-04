@@ -27,7 +27,6 @@ package org.infinispan.config.parsing;
  * @author Vladimir Blagojevic
  * @see SchemaGeneratorTreeWalker
  * @see XMLTreeOutputWalker
- * @version $Id: TreeWalker.java 562 2009-07-13 22:47:19Z vblagojevic@jboss.com $
  * @since 4.0
  */
 public interface TreeWalker {

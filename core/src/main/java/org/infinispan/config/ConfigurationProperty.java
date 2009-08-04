@@ -33,7 +33,6 @@ import java.lang.annotation.*;
  * <p>
  * 
  * @author Vladimir Blagojevic
- * @version $Id$
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target( { ElementType.METHOD, ElementType.FIELD })

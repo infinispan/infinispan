@@ -11,7 +11,6 @@ import java.util.Set;
  * Stores Infinispan Buckets in a map instead of a live S3 Bucket.
  *
  * @author Adrian Cole
- * @version $Id: $
  * @since 4.0
  */
 public class MockS3Bucket implements S3Bucket<Map<String, Bucket>, org.infinispan.loaders.s3.MockS3Connection> {

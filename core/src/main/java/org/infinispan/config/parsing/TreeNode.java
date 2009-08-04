@@ -28,7 +28,6 @@ import java.util.Set;
  * TreeNode of Infinispan configuration
  *
  * @author Vladimir Blagojevic
- * @version $Id: TreeNode.java 562 2009-07-13 22:47:19Z vblagojevic@jboss.com $
  * @since 4.0
  */
 public class TreeNode {

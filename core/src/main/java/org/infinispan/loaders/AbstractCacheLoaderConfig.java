@@ -20,7 +20,6 @@ import org.infinispan.config.PluggableConfigurationComponent;
  * @author Mircea.Markus@jboss.com
  * @autor Vladimir Blagojevic
  * @since 4.0
- * @version $Id$
  * 
  */
 @XmlAccessorType(XmlAccessType.FIELD)

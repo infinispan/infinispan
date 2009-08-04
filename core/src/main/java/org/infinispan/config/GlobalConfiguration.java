@@ -35,7 +35,6 @@ import org.infinispan.util.TypedProperties;
  *
  * @author Manik Surtani
  * @author Vladimir Blagojevic
- * @version $Id$
  * @since 4.0
  */
 @NonVolatile

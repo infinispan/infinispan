@@ -22,7 +22,6 @@ import java.util.List;
 
 /**
  * @author Adrian Cole
- * @version $Id$
  * @since 4.0
  */
 @Test(groups = "unit", enabled = true, testName = "loaders.bdbje.BdbjeCacheStoreIntegrationTest")

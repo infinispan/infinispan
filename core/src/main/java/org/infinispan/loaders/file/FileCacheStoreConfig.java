@@ -23,7 +23,6 @@ import org.infinispan.loaders.LockSupportCacheStoreConfig;
  *
  * @author Manik Surtani
  * @autor Vladimir Blagojevic
- * @version $Id$
  * @since 4.0
  */
 @ConfigurationElements(elements = {

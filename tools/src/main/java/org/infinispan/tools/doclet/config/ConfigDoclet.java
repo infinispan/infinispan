@@ -13,7 +13,6 @@ import java.util.Arrays;
  * A Doclet that generates configuration guide for Infinispan
  *
  * @author Vladimir Blagojevic
- * @version $Id$
  * @since 4.0
  */
 @SuppressWarnings("restriction")

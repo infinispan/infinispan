@@ -19,7 +19,6 @@ import org.testng.annotations.Test;
  * Unit tests that cover {@link  PreparableTransactionRunner }
  *
  * @author Adrian Cole
- * @version $Id$
  * @since 4.0
  */
 @Test(groups = "unit", enabled = true, testName = "loaders.bdbje.PreparableTransactionRunnerTest")

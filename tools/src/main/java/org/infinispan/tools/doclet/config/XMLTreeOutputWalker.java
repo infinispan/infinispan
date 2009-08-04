@@ -29,7 +29,6 @@ import org.infinispan.config.parsing.TreeNode;
  *
  * @author Vladimir Blagojevic
  * @see ConfigDoclet
- * @version $Id$
  * @since 4.0
  */
 public class XMLTreeOutputWalker extends ConfigurationTreeWalker {

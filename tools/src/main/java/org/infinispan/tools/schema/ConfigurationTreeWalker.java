@@ -44,7 +44,6 @@ import org.infinispan.util.logging.LogFactory;
  * @author Vladimir Blagojevic
  * @see SchemaGeneratorTreeWalker
  * @see XMLTreeOutputWalker
- * @version $Id$
  * @since 4.0
  */
 public abstract class ConfigurationTreeWalker implements TreeWalker{

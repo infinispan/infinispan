@@ -38,7 +38,6 @@ import org.w3c.dom.Element;
  *
  * @author Vladimir Blagojevic
  * @see SchemaGenerator
- * @version $Id$
  * @since 4.0
  */
 public class SchemaGeneratorTreeWalker extends ConfigurationTreeWalker{

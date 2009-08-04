@@ -19,7 +19,6 @@ import org.infinispan.util.ClassFinder;
  * Infinispan configuration reference guide generator
  *
  * @author Vladimir Blagojevic
- * @version $Id$
  * @since 4.0
  */
 public class ConfigHtmlGenerator extends HtmlGenerator {

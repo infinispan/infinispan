@@ -27,7 +27,6 @@ import org.infinispan.util.Util;
  * and Java element types they annotate with utmost understanding and care.
  *
  * @author Mircea.Markus@jboss.com
- * @version $Id$
  * @since 4.0
  */
 @XmlAccessorType(XmlAccessType.FIELD)

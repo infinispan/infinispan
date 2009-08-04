@@ -17,7 +17,6 @@ import java.util.Collections;
  * Unit tests that cover {@link  ModificationsTransactionWorker }
  *
  * @author Adrian Cole
- * @version $Id$
  * @since 4.0
  */
 @Test(groups = "unit", enabled = true, testName = "loaders.bdbje.ModificationsTransactionWorkerTest")

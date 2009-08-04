@@ -30,7 +30,6 @@ import java.lang.annotation.Target;
  * Represents a list of XML property elements from a valid Infinispan configuration file. 
  * 
  * @author Vladimir Blagojevic
- * @version $Id$
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target( { ElementType.METHOD })

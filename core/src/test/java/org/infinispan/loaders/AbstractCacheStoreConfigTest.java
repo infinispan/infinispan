@@ -8,7 +8,6 @@ import org.testng.annotations.Test;
  * Unit tests that cover {@link  AbstractCacheStoreConfig }
  *
  * @author Adrian Cole
- * @version $Id$
  * @since 4.0
  */
 @Test(groups = "unit", testName = "loaders.AbstractCacheStoreConfigTest")

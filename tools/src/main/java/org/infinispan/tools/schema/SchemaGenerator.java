@@ -44,7 +44,6 @@ import org.w3c.dom.Document;
  * Generates XML Schema for Infinispan configuration
  *
  * @author Vladimir Blagojevic
- * @version $Id$
  * @since 4.0
  */
 public class SchemaGenerator {

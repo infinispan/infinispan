@@ -48,7 +48,6 @@ import java.util.Set;
  * (key,"m") == meta and (key,"v") == value.
  *
  * @author Elias Ross
- * @version $Id: JdbmCacheLoader.java 7261 2008-12-07 18:53:38Z genman $
  */
 @ThreadSafe
 public class JdbmCacheStore extends AbstractCacheStore {

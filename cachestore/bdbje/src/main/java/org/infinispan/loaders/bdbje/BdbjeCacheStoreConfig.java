@@ -26,7 +26,6 @@ import org.infinispan.loaders.AbstractCacheStoreConfig;
  * Please see {@link AbstractCacheStoreConfig} for more configuration parameters.
  *
  * @author Adrian Cole
- * @version $Id$
  * @since 4.0
  */
 @ConfigurationElements(elements = {

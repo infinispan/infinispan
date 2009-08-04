@@ -60,7 +60,6 @@ import org.infinispan.util.concurrent.IsolationLevel;
  * 
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
  * @author Vladimir Blagojevic
- * @version $Id$
  * @since 4.0
  */
 @NonVolatile

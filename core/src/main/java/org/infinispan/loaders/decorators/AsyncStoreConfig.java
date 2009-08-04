@@ -22,7 +22,6 @@ import org.infinispan.config.Dynamic;
  * @author Manik Surtani
  * @author Vladimir Blagojevic
  * @since 4.0
- * @version $Id$
  */
 @ConfigurationElement(name="async", parent="loader")
 @XmlAccessorType(XmlAccessType.FIELD)

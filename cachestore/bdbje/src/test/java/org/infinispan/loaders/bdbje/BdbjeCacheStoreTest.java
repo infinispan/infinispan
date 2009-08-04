@@ -33,7 +33,6 @@ import java.util.Collections;
 
 /**
  * @author Adrian Cole
- * @version $Id$
  * @since 4.0
  */
 @Test(groups = "unit", enabled = true, testName = "loaders.bdbje.BdbjeCacheStoreTest")

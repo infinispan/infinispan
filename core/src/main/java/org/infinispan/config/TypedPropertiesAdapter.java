@@ -30,7 +30,6 @@ import org.infinispan.util.TypedProperties;
  * TypedPropertiesAdapter is JAXB XmlAdapter for TypedProperties.
  *
  * @author Vladimir Blagojevic
- * @version $Id$
  * @since 4.0
  */
 public class TypedPropertiesAdapter extends XmlAdapter<PropertiesType, TypedProperties> {

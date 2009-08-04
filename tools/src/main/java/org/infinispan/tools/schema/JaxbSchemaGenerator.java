@@ -36,7 +36,6 @@ import org.infinispan.config.InfinispanConfiguration;
  * Generates XML schema using JAXB annotations from our configuration class hierarchy.
  * 
  * @author Vladimir Blagojevic
- * @version $Id$
  * @since 4.0
  */
 public class JaxbSchemaGenerator {

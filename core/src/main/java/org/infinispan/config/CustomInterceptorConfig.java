@@ -48,7 +48,6 @@ import org.infinispan.util.TypedProperties;
  *
  * @author Mircea.Markus@jboss.com
  * @author Vladimir Blagojevic
- * @version $Id$
  * @since 4.0
  */
 @Immutable

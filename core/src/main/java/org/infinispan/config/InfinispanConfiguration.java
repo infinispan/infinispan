@@ -49,7 +49,6 @@ import org.infinispan.util.FileLookup;
  * and Java element types they annotate with utmost understanding and care.
  *
  * @author Vladimir Blagojevic
- * @version $Id$
  * @since 4.0
  */
 

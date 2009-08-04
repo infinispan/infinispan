@@ -36,7 +36,6 @@ import java.lang.annotation.*;
  * 
  * 
  * @author Vladimir Blagojevic
- * @version $Id$
  */
 
 @Retention(RetentionPolicy.RUNTIME)

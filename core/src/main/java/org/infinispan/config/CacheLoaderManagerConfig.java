@@ -49,7 +49,6 @@ import org.infinispan.util.Util;
  * @author Vladimir Blagojevic 
  * @author <a href="mailto:galder.zamarreno@jboss.com">Galder Zamarreno</a>
  * @since 4.0
- * @version $Id$
  */
 @ConfigurationElement(name="loaders",parent="default",customReader=CacheLoaderManagerConfigReader.class)
 @XmlAccessorType(XmlAccessType.FIELD)
