@@ -52,12 +52,13 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       if (cleanup == CleanupPhase.AFTER_TEST) callCreateCacheManagers();
    }
 
-   private void callCreateCacheManagers() {
+   private void callCreateCacheManagers() throws Throwable {
       try {
          createCacheManagers();
       } catch (Throwable th) {
          th.printStackTrace();
          log.error("Error in test setup: " + th);
+         throw th;
       }
    }
 
@@ -176,7 +177,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       LockManager lockManager = TestingUtil.extractLockManager(cache);
       assert !lockManager.isLocked(key) : "expected key '" + key + "' not to be locked, and it is by: " + lockManager.getOwner(key);
    }
-   
+
    protected void assertLocked(Cache cache, Object key) {
       LockManager lockManager = TestingUtil.extractLockManager(cache);
       assert lockManager.isLocked(key) : "expected key '" + key + "' to be locked, but it is not";
