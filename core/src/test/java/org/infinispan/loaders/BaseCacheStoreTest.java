@@ -17,8 +17,8 @@ import org.infinispan.manager.CacheManager;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.marshall.VersionAwareMarshaller;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.GlobalTransactionFactory;
 import org.infinispan.util.Util;
@@ -620,5 +620,7 @@ public abstract class BaseCacheStoreTest {
       second.put("key2","val2");
       assert second.get("key2").equals("val2");
       assert first.get("key2") == null;
+      
+      TestingUtil.killCacheManagers(localCacheManager);
    }
 }
