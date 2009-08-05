@@ -23,6 +23,7 @@ package org.infinispan.marshall;
 
 import org.infinispan.commands.RemoteCommandFactory;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.NonVolatile;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.io.ByteBuffer;
@@ -43,10 +44,11 @@ import java.io.OutputStream;
  * information to the stream when marshalling objects and is able to pick the appropriate marshaller to delegate to
  * based on the versioning information when unmarshalling objects.
  *
- * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
+ * @author Manik Surtani
  * @author Galder Zamarreño
  * @since 4.0
  */
+@NonVolatile
 public class VersionAwareMarshaller extends AbstractMarshaller {
    private static final Log log = LogFactory.getLog(VersionAwareMarshaller.class);
    private boolean trace = log.isTraceEnabled();
@@ -67,12 +69,13 @@ public class VersionAwareMarshaller extends AbstractMarshaller {
       this.loader = loader;
       this.remoteCommandFactory = remoteCommandFactory;
    }
-   
-   @Start(priority = 9) // should start before Transport component
+
+   @Start(priority = 9)
+   // should start before Transport component
    public void start() {
       defaultMarshaller.start(loader, remoteCommandFactory, this);
    }
-   
+
    @Stop
    public void stop() {
       defaultMarshaller.stop();
@@ -109,7 +112,7 @@ public class VersionAwareMarshaller extends AbstractMarshaller {
       ObjectOutput out = defaultMarshaller.startObjectOutput(os, isReentrant);
       try {
          out.writeShort(VERSION_400);
-         if (trace) log.trace("Wrote version {0}", VERSION_400);         
+         if (trace) log.trace("Wrote version {0}", VERSION_400);
       } catch (Exception e) {
          finishObjectOutput(out);
          log.error("Unable to read version id from first two bytes of stream, barfing.");
