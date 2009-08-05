@@ -2,9 +2,6 @@ package org.infinispan.loaders;
 
 import org.easymock.EasyMock;
 import org.infinispan.Cache;
-import org.infinispan.config.CacheLoaderManagerConfig;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.io.UnclosableObjectInputStream;
@@ -13,12 +10,8 @@ import org.infinispan.loaders.modifications.Clear;
 import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
-import org.infinispan.manager.CacheManager;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
-import org.infinispan.marshall.VersionAwareMarshaller;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.GlobalTransactionFactory;
 import org.infinispan.util.Util;
@@ -32,13 +25,17 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
+/**
+ * This is a base class containing various unit tests for each and every different CacheStore implementations. 
+ * If you need to add Cache/CacheManager tests that need to be run for each cache store/loader implementation,
+ * then use BaseCacheStoreFunctionalTest. 
+ */
 @SuppressWarnings("unchecked")
 // this needs to be here for the test to run in an IDE
 @Test(groups = "unit", testName = "loaders.BaseCacheStoreTest")
@@ -590,37 +587,4 @@ public abstract class BaseCacheStoreTest {
       if (!exceptions.isEmpty()) throw exceptions.get(0);
    }
 
-   public void testTwoCachesSameCacheStore() {
-      CacheManager localCacheManager = TestCacheManagerFactory.createLocalCacheManager();
-      GlobalConfiguration configuration = localCacheManager.getGlobalConfiguration();
-      CacheStoreConfig config = cs.getCacheStoreConfig();
-      assert config != null;
-      CacheLoaderManagerConfig clmConfig = new CacheLoaderManagerConfig();
-      clmConfig.setCacheLoaderConfigs(Collections.singletonList((CacheLoaderConfig)config));
-      configuration.getDefaultConfiguration().setCacheLoaderManagerConfig(clmConfig);
-      localCacheManager.defineCache("first", new Configuration());
-      localCacheManager.defineCache("second", new Configuration());
-
-      Cache first = localCacheManager.getCache("first");
-      Cache second = localCacheManager.getCache("second");
-      assert first.getConfiguration().getCacheLoaderManagerConfig().getCacheLoaderConfigs().size() == 1;
-      assert second.getConfiguration().getCacheLoaderManagerConfig().getCacheLoaderConfigs().size() == 1;
-
-      //TODO - this is a hack as VAM.start does not get called, for some reason. This should be removed.
-      VersionAwareMarshaller firstVam = (VersionAwareMarshaller) TestingUtil.extractComponent(first, Marshaller.class);
-      firstVam.start();
-      VersionAwareMarshaller secondVam = (VersionAwareMarshaller) TestingUtil.extractComponent(first, Marshaller.class);
-      secondVam.start();
-
-
-      first.put("key", "val");
-      assert first.get("key").equals("val");
-      assert second.get("key") == null;
-
-      second.put("key2","val2");
-      assert second.get("key2").equals("val2");
-      assert first.get("key2") == null;
-      
-      TestingUtil.killCacheManagers(localCacheManager);
-   }
 }

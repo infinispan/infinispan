@@ -283,9 +283,5 @@ public class ChainingCacheLoaderTest extends BaseCacheStoreTest {
       // no op
    }
 
-   @Override
-   public void testTwoCachesSameCacheStore() {
-      //this does not apply 
-   }
 }
 
