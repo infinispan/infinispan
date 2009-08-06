@@ -21,6 +21,7 @@
  */
 package org.infinispan.loaders;
 
+import java.util.Arrays;
 import java.util.Collections;
 
 import org.infinispan.Cache;
@@ -43,12 +44,12 @@ public abstract class BaseCacheStoreFunctionalTest {
    
    protected abstract CacheStoreConfig createCacheStoreConfig() throws Exception;
    
-   protected CacheStoreConfig csc;
+   protected CacheStoreConfig csConfig;
    
    @BeforeMethod
    public void setUp() throws Exception {
       try {
-         csc = createCacheStoreConfig();
+         csConfig = createCacheStoreConfig();
       } catch (Exception e) {
          //in IDEs this won't be printed which makes debugging harder
          e.printStackTrace();
@@ -58,31 +59,58 @@ public abstract class BaseCacheStoreFunctionalTest {
 
    public void testTwoCachesSameCacheStore() {
       CacheManager localCacheManager = TestCacheManagerFactory.createLocalCacheManager();
-      GlobalConfiguration configuration = localCacheManager.getGlobalConfiguration();
-      CacheStoreConfig config = csc;
-      assert config != null;
-      CacheLoaderManagerConfig clmConfig = new CacheLoaderManagerConfig();
-      clmConfig.setCacheLoaderConfigs(Collections.singletonList((CacheLoaderConfig)config));
-      configuration.getDefaultConfiguration().setCacheLoaderManagerConfig(clmConfig);
-      localCacheManager.defineCache("first", new Configuration());
-      localCacheManager.defineCache("second", new Configuration());
+      try {
+         GlobalConfiguration configuration = localCacheManager.getGlobalConfiguration();
+         CacheLoaderManagerConfig clmConfig = new CacheLoaderManagerConfig();
+         clmConfig.setCacheLoaderConfigs(Collections.singletonList((CacheLoaderConfig)csConfig));
+         configuration.getDefaultConfiguration().setCacheLoaderManagerConfig(clmConfig);
+         localCacheManager.defineCache("first", new Configuration());
+         localCacheManager.defineCache("second", new Configuration());
 
-      Cache first = localCacheManager.getCache("first");
-      Cache second = localCacheManager.getCache("second");
-      assert first.getConfiguration().getCacheLoaderManagerConfig().getCacheLoaderConfigs().size() == 1;
-      assert second.getConfiguration().getCacheLoaderManagerConfig().getCacheLoaderConfigs().size() == 1;
+         Cache first = localCacheManager.getCache("first");
+         Cache second = localCacheManager.getCache("second");
+         assert first.getConfiguration().getCacheLoaderManagerConfig().getCacheLoaderConfigs().size() == 1;
+         assert second.getConfiguration().getCacheLoaderManagerConfig().getCacheLoaderConfigs().size() == 1;
 
-      first.start();
-      second.start();
+         first.start();
+         second.start();
 
-      first.put("key", "val");
-      assert first.get("key").equals("val");
-      assert second.get("key") == null;
+         first.put("key", "val");
+         assert first.get("key").equals("val");
+         assert second.get("key") == null;
 
-      second.put("key2","val2");
-      assert second.get("key2").equals("val2");
-      assert first.get("key2") == null;
-      
-      TestingUtil.killCacheManagers(localCacheManager);
+         second.put("key2","val2");
+         assert second.get("key2").equals("val2");
+         assert first.get("key2") == null;         
+      } finally {
+         TestingUtil.killCacheManagers(localCacheManager);
+      }
+   }
+   
+   public void testPreloading() {
+      doRunPreloadingTest(60000);
+      doRunPreloadingTest(60000);
+      doRunPreloadingTest(70000);
+      doRunPreloadingTest(70000);
+   }
+   
+   private void doRunPreloadingTest(int count) {
+      CacheManager local = TestCacheManagerFactory.createLocalCacheManager();
+      try {
+         CacheLoaderManagerConfig cacheLoaders = new CacheLoaderManagerConfig();
+         cacheLoaders.setPreload(true);
+         CacheLoaderManagerConfig clmConfig = new CacheLoaderManagerConfig();
+         clmConfig.setCacheLoaderConfigs(Collections.singletonList((CacheLoaderConfig)csConfig));
+         local.getGlobalConfiguration().getDefaultConfiguration().setCacheLoaderManagerConfig(clmConfig);
+         Cache cache = local.getCache("testPreloading");
+         cache.start();
+         byte[] bytes = new byte[count];
+         Arrays.fill(bytes, (byte) 1);
+         cache.put("test_object", bytes);
+         int cacheSize =  cache.size();
+         assert 1 == cacheSize;      
+      } finally {
+         TestingUtil.killCacheManagers(local);
+      }
    }
 }
