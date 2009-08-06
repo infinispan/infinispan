@@ -75,7 +75,6 @@ public class TcpMPingEnvironmentTest {
                success = false;
                break;
             }
-            System.out.println("view = " + view);
             success = success && (view.size() == channels.length);
          }
          if (success) return;
@@ -85,7 +84,7 @@ public class TcpMPingEnvironmentTest {
    }
 
 
-   public void initiChannel(JChannel channel) throws Exception {
+   private void initiChannel(JChannel channel) throws Exception {
       openedChannles.add(channel);
       channel.setOpt(org.jgroups.Channel.LOCAL, false);
       channel.setOpt(org.jgroups.Channel.AUTO_RECONNECT, true);
