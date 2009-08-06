@@ -76,11 +76,12 @@ public class TcpMPingEnvironmentTest {
                break;
             }
             success = success && (view.size() == channels.length);
+            if (view.size() > channels.length) assert false : "Clusters see each other!";
          }
          if (success) return;
          Thread.sleep(1000);
       }
-      fail("Could not for cluster in given timeout");
+      fail("Could not form cluster in given timeout");
    }
 
 
