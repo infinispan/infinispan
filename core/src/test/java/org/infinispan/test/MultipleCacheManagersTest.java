@@ -88,7 +88,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       }
    }
 
-   private void assertSupportedConfig() {
+   protected void assertSupportedConfig() {
       for (CacheManager cm : cacheManagers) {
          for (Cache cache : getRunningCaches(cm)) {
             Configuration config = cache.getConfiguration();
