@@ -1,21 +1,25 @@
 package org.infinispan.test.fwk;
 
-import org.jgroups.JChannel;
-import org.jgroups.View;
-import org.testng.annotations.Test;
-import org.testng.annotations.AfterMethod;
-import static org.testng.Assert.fail;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.jgroups.JChannel;
+import org.jgroups.View;
+import static org.testng.Assert.fail;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.Test;
 
-import java.util.List;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.MulticastSocket;
+import java.net.SocketAddress;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 /**
  * The purpose of this class is to test that/if tcp + mping works fine in the given environment.
  *
- *  @author Mircea.Markus@jboss.com
+ * @author Mircea.Markus@jboss.com
  */
 @Test(testName = "test,fwk.TcpMPingEnvironmentTest", groups = "functional")
 public class TcpMPingEnvironmentTest {
@@ -65,6 +69,27 @@ public class TcpMPingEnvironmentTest {
       expectView(second1, second2, second3);
       success = true;
    }
+
+
+   public void testMcastSocketCreation() throws Exception {
+      InetAddress mcast_addr = InetAddress.getByName("228.10.10.5");
+      SocketAddress saddr = new InetSocketAddress(mcast_addr, 43589);
+      MulticastSocket retval = null;
+      try {
+         success = false;
+         retval = new MulticastSocket(saddr);
+         success = true;
+      } finally {
+         if (retval != null) {
+            try {
+               retval.close();
+            } catch (Exception e) {
+               e.printStackTrace();
+            }
+         }
+      }
+   }
+
 
    private void expectView(JChannel... channels) throws Exception {
       for (int i = 0; i < 20; i++) {
