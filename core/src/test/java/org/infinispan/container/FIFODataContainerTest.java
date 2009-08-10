@@ -10,7 +10,7 @@ import org.testng.annotations.Test;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 
-@Test(groups = "unit", testName = "container.FIFODataContainerTest")
+@Test(groups = "unit", testName = "container.FIFODataContainerTest", enabled = false)
 public class FIFODataContainerTest extends SimpleDataContainerTest {
 
    @Override
