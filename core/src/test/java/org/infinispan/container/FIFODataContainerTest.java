@@ -10,7 +10,7 @@ import org.testng.annotations.Test;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 
-@Test(groups = "unit", testName = "container.FIFODataContainerTest", enabled = false)
+@Test(groups = "unit", testName = "container.FIFODataContainerTest")
 public class FIFODataContainerTest extends SimpleDataContainerTest {
 
    @Override
@@ -141,6 +141,7 @@ public class FIFODataContainerTest extends SimpleDataContainerTest {
       assert aldc.tail.p == aldc.head;
    }
 
+   @Test (enabled = false)
    public void testMultithreadAccess() throws InterruptedException {
       assert dc.size() == 0;
       int NUM_THREADS = 10;
