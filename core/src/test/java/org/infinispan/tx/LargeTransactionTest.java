@@ -4,21 +4,27 @@ import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.manager.DefaultCacheManager;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
 
 /**
- *  Test for: https://jira.jboss.org/jira/browse/ISPN-149.
+ * Test for: https://jira.jboss.org/jira/browse/ISPN-149.
  *
  * @author Mircea.Markus@jboss.com
  */
 @Test(testName = "tx.LargeTransactionTest", groups = "functional")
 public class LargeTransactionTest extends MultipleCacheManagersTest {
-   private Cache cache;
+
+   private static Log log = LogFactory.getLog(LargeTransactionTest.class);
+
+   private Cache cache1;
+   private Cache cache2;
 
    protected void createCacheManagers() throws Throwable {
 
@@ -27,33 +33,51 @@ public class LargeTransactionTest extends MultipleCacheManagersTest {
       c.setCacheMode(Configuration.CacheMode.REPL_SYNC);
       c.setSyncReplTimeout(30000);
       c.setLockAcquisitionTimeout(60000);
+      c.setSyncCommitPhase(true);
+      c.setSyncRollbackPhase(true);
       c.setUseLockStriping(false);
 
-      CacheManager manager = new DefaultCacheManager(TestCacheManagerFactory.getGlobalConfigurtion(), c);
+      CacheManager manager = new DefaultCacheManager(TestCacheManagerFactory.getGlobalClusteredConfigurtion(), c);
+      manager.start();
+      manager.getCache();
       registerCacheManager(manager);
-      cache = manager.getCache("TestCache");
+      cache1 = manager.getCache("TestCache");
+      assert cache1.getConfiguration().getCacheMode().equals(Configuration.CacheMode.REPL_SYNC);
+      cache1.start();
 
-      manager = new DefaultCacheManager(TestCacheManagerFactory.getGlobalConfigurtion(), c);
+      manager = new DefaultCacheManager(TestCacheManagerFactory.getGlobalClusteredConfigurtion(), c);
+      manager.start();
       registerCacheManager(manager);
-      manager.getCache("TestCache");
+      cache2 = manager.getCache("TestCache");
+      assert cache1.getConfiguration().getCacheMode().equals(Configuration.CacheMode.REPL_SYNC);
    }
 
-   @Override
-   protected void assertSupportedConfig() {
-      //yep!
-   }
-
-   public void simpleTest() throws Exception {
-      TransactionManager tm = TestingUtil.getTransactionManager(cache);
+   public void testLargeTx() throws Exception {
+      TransactionManager tm = TestingUtil.getTransactionManager(cache1);
       tm.begin();
       for (int i = 0; i < 200; i++)
-         cache.put("key" + i, "value" + i);
+         cache1.put("key" + i, "value" + i);
+      log.trace("___________ before commit");
       tm.commit();
 
-      Cache cache2 = cache(1, "TestCache");
       for (int i = 0; i < 200; i++) {
-         assert cache2.get("key" + i).equals("value+i");
+         assert cache2.get("key" + i).equals("value"+i);
       }
+   }
 
+   public void testSinglePutInTx() throws Exception {
+      TransactionManager tm = TestingUtil.getTransactionManager(cache1);
+
+      tm.begin();
+      cache1.put("key", "val");
+      log.trace("___________ before commit");
+      tm.commit();
+
+      assert cache2.get("key").equals("val");
+   }
+
+   public void testSimplePutNoTx() {
+      cache1.put("key", "val");
+      assert cache2.get("key").equals("val");
    }
 }

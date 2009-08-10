@@ -46,8 +46,8 @@ public class ReplicableCommandExternalizer implements Externalizer {
       ReplicableCommand command = (ReplicableCommand) subject;
       output.writeShort(command.getCommandId());
       Object[] args = command.getParameters();
-      byte numArgs = (byte) (args == null ? 0 : args.length);
-      output.writeByte(numArgs);
+      int numArgs = (args == null ? 0 : args.length);
+      output.writeInt(numArgs);
       for (int i = 0; i < numArgs; i++) {
          output.writeObject(args[i]);
       }
@@ -55,7 +55,7 @@ public class ReplicableCommandExternalizer implements Externalizer {
 
    public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
       short methodId = input.readShort();
-      byte numArgs = input.readByte();
+      int numArgs = input.readInt();
       Object[] args = null;
       if (numArgs > 0) {
          args = new Object[numArgs];

@@ -212,7 +212,8 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
     *
     * @throws Exception
     */
-   public void testSimpleCacheModeLocal() throws Exception {
+   public void
+   testSimpleCacheModeLocal() throws Exception {
       cacheModeLocalTest(false);
    }
 

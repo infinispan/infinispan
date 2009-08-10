@@ -29,8 +29,8 @@ public class TestCacheManagerFactory {
       return new DefaultCacheManager(globalConfiguration);
    }
 
-   public static GlobalConfiguration getGlobalConfigurtion() {
-      GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
+   public static GlobalConfiguration getGlobalClusteredConfigurtion() {
+      GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
       amendMarshaller(globalConfiguration);
       return globalConfiguration;
    }
