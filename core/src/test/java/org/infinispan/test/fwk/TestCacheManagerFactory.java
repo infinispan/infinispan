@@ -29,12 +29,6 @@ public class TestCacheManagerFactory {
       return new DefaultCacheManager(globalConfiguration);
    }
 
-   public static GlobalConfiguration getGlobalClusteredConfigurtion() {
-      GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
-      amendMarshaller(globalConfiguration);
-      return globalConfiguration;
-   }
-
    /**
     * Creates an cache manager that does support clustering.
     */
