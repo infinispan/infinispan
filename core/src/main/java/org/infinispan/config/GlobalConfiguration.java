@@ -78,7 +78,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    private GlobalJmxStatisticsType globalJmxStatistics = new GlobalJmxStatisticsType();
    
    @XmlElement
-   private TransportType transport = new TransportType();
+   private TransportType transport = new TransportType(null);
   
    @XmlElement
    private SerializationType serialization = new SerializationType();
@@ -539,6 +539,16 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       private String transportClass = null; // this defaults to a non-clustered cache.
       
       private TypedProperties properties = EMPTY_PROPERTIES;
+
+      public TransportType() {
+         super();
+         transportClass = JGroupsTransport.class.getName();
+      }
+      
+      public TransportType(String transportClass) {
+         super();
+         this.transportClass = transportClass;
+      }
 
       @XmlAttribute
       public void setClusterName(String clusterName) {
