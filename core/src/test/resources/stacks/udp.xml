@@ -1,7 +1,7 @@
 <config xmlns="urn:org:jgroups"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="urn:org:jgroups file:schema/JGroups-2.8.xsd">
-    <UDP
+   <UDP
          mcast_addr="${jgroups.udp.mcast_addr:228.10.10.10}"
          mcast_port="${jgroups.udp.mcast_port:45588}"
          tos="8"
@@ -16,7 +16,7 @@
          ip_ttl="${jgroups.udp.ip_ttl:2}"
          enable_bundling="true"
          enable_diagnostics="true"
-         
+
          thread_naming_pattern="pl"
 
          thread_pool.enabled="true"
@@ -35,30 +35,28 @@
          oob_thread_pool.queue_max_size="100"
          oob_thread_pool.rejection_policy="Run"/>
 
-    <PING timeout="1000" num_initial_members="3"/>
-    <MERGE2 max_interval="30000" min_interval="10000"/>
-    <FD_SOCK/>
-       <!--
-      Note that this is an atypically short timeout and a small number of retries
-      configured this way to speed up unit testing, since we know all nodes run in the same JVM
-      and hence failure detections will be very quick.
-   	   -->
-    <FD timeout="3000" max_tries="3" shun="true"/>
-    <VERIFY_SUSPECT timeout="1500"/>
-    <pbcast.NAKACK use_stats_for_retransmission="false"
-                   exponential_backoff="150"
-                   use_mcast_xmit="true" gc_lag="0"
-                   retransmit_timeout="50,300,600,1200"
-                   discard_delivered_msgs="false"/>
-    <UNICAST timeout="300,600,1200"/>
-    <pbcast.STABLE stability_delay="1000" desired_avg_gossip="50000"
-                   max_bytes="400000"/>   
-    <pbcast.GMS print_local_addr="false" join_timeout="3000"
-                shun="false"
-                view_bundling="true"/>
-    <FC max_credits="500000" min_threshold="0.20"/>
-    <FRAG2 frag_size="60000"/>
-    <pbcast.STREAMING_STATE_TRANSFER />
-    <!-- <pbcast.STATE_TRANSFER/> -->
-    <pbcast.FLUSH timeout="0"/>
+   <PING timeout="1000" num_initial_members="3"/>
+   <MERGE2 max_interval="30000" min_interval="10000"/>
+   <FD_SOCK/>
+   <!--
+       Note that this is an atypically short timeout and a small number of retries
+       configured this way to speed up unit testing, since we know all nodes run in the same JVM
+       and hence failure detections will be very quick.
+          -->
+   <FD timeout="3000" max_tries="3"/>
+   <VERIFY_SUSPECT timeout="1500"/>
+   <pbcast.NAKACK use_stats_for_retransmission="false"
+                  exponential_backoff="150"
+                  use_mcast_xmit="true" gc_lag="0"
+                  retransmit_timeout="50,300,600,1200"
+                  discard_delivered_msgs="false"/>
+   <UNICAST timeout="300,600,1200"/>
+   <pbcast.STABLE stability_delay="1000" desired_avg_gossip="50000"
+                  max_bytes="400000"/>
+   <pbcast.GMS print_local_addr="false" join_timeout="3000" view_bundling="true"/>
+   <FC max_credits="500000" min_threshold="0.20"/>
+   <FRAG2 frag_size="60000"/>
+   <pbcast.STREAMING_STATE_TRANSFER/>
+   <!-- <pbcast.STATE_TRANSFER/> -->
+   <pbcast.FLUSH timeout="0"/>
 </config>
