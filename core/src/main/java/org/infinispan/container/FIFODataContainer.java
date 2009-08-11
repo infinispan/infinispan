@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -90,6 +91,21 @@ public class FIFODataContainer implements DataContainer {
    }
 
    // links and link management
+
+   /**
+    * Back off
+    *
+    * @param nanos nanos to back off for.  If -1, starts at a default
+    * @return next time, back off for these nanos
+    */
+   private static final long backoffStart = 10000;
+
+   private long backoff(long nanos) {
+      long actualNanos = nanos < 0 ? backoffStart : nanos;
+      LockSupport.parkNanos(actualNanos);
+      long newNanos = actualNanos << 1;
+      return newNanos > 10000000 ? backoffStart : newNanos;
+   }
 
    /**
     * Tests whether a given linked entry is marked for deletion.  In this implementation, being "marked" means that it
@@ -229,18 +245,16 @@ public class FIFODataContainer implements DataContainer {
     */
    protected final void linkAtEnd(LinkedEntry entry) {
       LinkedEntry prev = tail.p;
-//      long backOffNanos = 100000; // start at 0.1 millis
+      long backoffTime = -1;
       for (; ;) {
          entry.p = prev;
          entry.n = tail;
          if (prev.casNext(tail, entry)) break;
          prev = correctPrev(prev, tail);
-
-//         LockSupport.parkNanos(backOffNanos);
-//         backOffNanos <<= 1;
+         backoffTime = backoff(backoffTime);
       }
 
-//      backOffNanos = 100000; // start at 0.1 millis
+      backoffTime = -1;
       for (; ;) {
          LinkedEntry l1 = tail.p;
          if (isMarkedForRemoval(l1) || entry.n != tail) break;
@@ -248,8 +262,7 @@ public class FIFODataContainer implements DataContainer {
             if (isMarkedForRemoval(entry.p)) entry = correctPrev(entry, tail);
             break;
          }
-//         LockSupport.parkNanos(backOffNanos);
-//         backOffNanos <<= 1;
+         backoffTime = backoff(backoffTime);
       }
    }
 
@@ -306,7 +319,7 @@ public class FIFODataContainer implements DataContainer {
     */
    protected final LinkedEntry correctPrev(LinkedEntry suggestedPreviousEntry, LinkedEntry currentEntry) {
       LinkedEntry lastLink = null, link1, prev2;
-//      long backOffNanos = 100000; // start at 0.1 millis
+      long backoffTime = -1;
       while (true) {
          link1 = currentEntry.p;
          if (isMarkedForRemoval(link1)) break;
@@ -334,8 +347,7 @@ public class FIFODataContainer implements DataContainer {
             if (isMarkedForRemoval(suggestedPreviousEntry.p)) continue;
             break;
          }
-//         LockSupport.parkNanos(backOffNanos);
-//         backOffNanos <<= 1;
+         backoffTime = backoff(backoffTime);
       }
       return suggestedPreviousEntry;
    }
@@ -615,7 +627,7 @@ public class FIFODataContainer implements DataContainer {
          return FIFODataContainer.this.size();
       }
    }
-   
+
    protected final class Values extends AbstractCollection<Object> {
       public Iterator<Object> iterator() {
          return new ValueIterator();
@@ -625,7 +637,7 @@ public class FIFODataContainer implements DataContainer {
          return FIFODataContainer.this.size();
       }
    }
-   
+
    protected final class EntrySet extends AbstractSet<InternalCacheEntry> {
       public Iterator<InternalCacheEntry> iterator() {
          return new ImmutableEntryIterator();
@@ -655,7 +667,7 @@ public class FIFODataContainer implements DataContainer {
          return current.e;
       }
    }
-   
+
    protected final class ImmutableEntryIterator extends LinkedIterator implements Iterator<InternalCacheEntry> {
       public InternalCacheEntry next() {
          return Immutables.immutableInternalCacheEntry(current.e);
@@ -667,7 +679,7 @@ public class FIFODataContainer implements DataContainer {
          return current.e.getKey();
       }
    }
-   
+
    protected final class ValueIterator extends LinkedIterator implements Iterator<Object> {
       public Object next() {
          return current.e.getValue();
@@ -798,7 +810,7 @@ public class FIFODataContainer implements DataContainer {
    public Collection<Object> values() {
       return new Values();
    }
-   
+
    public Set<InternalCacheEntry> entrySet() {
       return new EntrySet();
    }
