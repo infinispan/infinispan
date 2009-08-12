@@ -331,24 +331,6 @@ public class XmlConfigHelper {
     * @return a DOM Element
     * @throws Exception if unable to parse the String or if it doesn't contain valid XML.
     */
-   public static Element stringToElementInCoreNS(String xml) throws Exception {
-      xml = "<wrapper xmlns='" + RootElementBuilder.HORIZON_NS + "'>" + xml + "</wrapper>";
-      ByteArrayInputStream bais = new ByteArrayInputStream(xml.getBytes("utf8"));
-      DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-      factory.setNamespaceAware(true);
-      DocumentBuilder builder = factory.newDocumentBuilder();
-      Document d = builder.parse(bais);
-      bais.close();
-      return getFirstChildElement(d.getDocumentElement());
-   }
-
-   /**
-    * Converts a String representing an XML snippet into an {@link org.w3c.dom.Element}.
-    *
-    * @param xml snippet as a string
-    * @return a DOM Element
-    * @throws Exception if unable to parse the String or if it doesn't contain valid XML.
-    */
    public static Element stringToElement(String xml) throws Exception {
       ByteArrayInputStream bais = new ByteArrayInputStream(xml.getBytes("utf8"));
       DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();

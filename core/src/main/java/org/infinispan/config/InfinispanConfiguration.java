@@ -56,6 +56,8 @@ import org.infinispan.util.FileLookup;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class InfinispanConfiguration implements XmlConfigurationParser {
    
+   public static final String VALIDATING_SYSTEM_PROPERTY = "infinispan.config.validate";
+   
    @XmlElement
    private GlobalConfiguration global;
    
@@ -139,9 +141,12 @@ public class InfinispanConfiguration implements XmlConfigurationParser {
       try {
          JAXBContext jc = JAXBContext.newInstance(InfinispanConfiguration.class);
          Unmarshaller u = jc.createUnmarshaller();
-         if (schema != null) {
+         String s = System.getProperty(VALIDATING_SYSTEM_PROPERTY);
+         boolean isValidatingOff = s!=null && !Boolean.parseBoolean(s);
+         
+         if (schema != null && !isValidatingOff) {
             SchemaFactory factory = SchemaFactory.newInstance("http://www.w3.org/2001/XMLSchema");
-            u.setSchema(factory.newSchema(new StreamSource(schema)));
+            u.setSchema(factory.newSchema(new StreamSource(schema)));      
          }
          InfinispanConfiguration doc = (InfinispanConfiguration) u.unmarshal(config);
          //legacy, don't ask
