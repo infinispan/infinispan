@@ -141,7 +141,6 @@ public class FIFODataContainerTest extends SimpleDataContainerTest {
       assert aldc.tail.p == aldc.head;
    }
 
-   @Test (enabled = false)
    public void testMultithreadAccess() throws InterruptedException {
       assert dc.size() == 0;
       int NUM_THREADS = 10;
