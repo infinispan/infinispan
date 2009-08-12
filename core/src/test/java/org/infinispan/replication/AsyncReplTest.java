@@ -9,6 +9,7 @@
 package org.infinispan.replication;
 
 import org.infinispan.Cache;
+import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -18,7 +19,6 @@ import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 @Test(groups = "functional", testName = "replication.AsyncReplTest")
 public class AsyncReplTest extends MultipleCacheManagersTest {
@@ -37,18 +37,18 @@ public class AsyncReplTest extends MultipleCacheManagersTest {
 
       String key = "key";
 
-      replListener(cache2).expectAny();
+      replListener(cache2).expect(PutKeyValueCommand.class);
       cache1.put(key, "value1");
       // allow for replication
-      replListener(cache2).waitForRpc(60, TimeUnit.SECONDS);
+      replListener(cache2).waitForRpc();
       assertEquals("value1", cache1.get(key));
       assertEquals("value1", cache2.get(key));
 
-      replListener(cache2).expectAny();
+      replListener(cache2).expect(PutKeyValueCommand.class);
       cache1.put(key, "value2");
       assertEquals("value2", cache1.get(key));
 
-      replListener(cache2).waitForRpc(60, TimeUnit.SECONDS);
+      replListener(cache2).waitForRpc();
 
       assertEquals("value2", cache1.get(key));
       assertEquals("value2", cache2.get(key));
@@ -56,7 +56,7 @@ public class AsyncReplTest extends MultipleCacheManagersTest {
 
    public void testWithTx() throws Exception {
       String key = "key";
-      replListener(cache2).expectAny();
+      replListener(cache2).expect(PutKeyValueCommand.class);
       cache1.put(key, "value1");
       // allow for replication
       replListener(cache2).waitForRpc();
@@ -67,12 +67,12 @@ public class AsyncReplTest extends MultipleCacheManagersTest {
 
       TransactionManager mgr = TestingUtil.getTransactionManager(cache1);
       mgr.begin();
-      replListener(cache2).expectAnyWithTx();
+      replListener(cache2).expectWithTx(PutKeyValueCommand.class);
       cache1.put(key, "value2");
       assertEquals("value2", cache1.get(key));
       assertEquals("value1", cache2.get(key));
       mgr.commit();
-      replListener(cache2).waitForRpc(60, TimeUnit.SECONDS);
+      replListener(cache2).waitForRpc();
       assertNotLocked(cache1, key);
 
       assertEquals("value2", cache1.get(key));
