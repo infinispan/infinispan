@@ -2,7 +2,6 @@ package org.infinispan.manager;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
-import org.infinispan.config.DuplicateCacheNameException;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.factories.annotations.NonVolatile;
 import org.infinispan.factories.scopes.Scope;
@@ -46,28 +45,61 @@ import java.util.List;
  * manager.getCache("myEntityCache"); entityCache.put("aPerson", new Person());
  * <p/>
  * Configuration myNewConfiguration = new Configuration(); myNewConfiguration.setCacheMode(Configuration.CacheMode.LOCAL);
- * manager.defineCache("myLocalCache", myNewConfiguration); Cache localCache = manager.getCache("myLocalCache");
+ * manager.defineConfiguration("myLocalCache", myNewConfiguration); Cache localCache = manager.getCache("myLocalCache");
  * </code>
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
+ * @author Galder Zamarreño
  * @since 4.0
  */
 @Scope(Scopes.GLOBAL)
 @NonVolatile
 public interface CacheManager extends Lifecycle, Listenable {
    /**
-    * Defines a named cache.  Named caches can be defined by using this method, in which case the configuration passed
-    * in is used to override the default configuration used when this cache manager instance was created.
+    * Defines a named cache's configuration using the following algorithm:
     * <p/>
-    * The other way to define named caches is declaratively, in the XML file passed in to the cache manager.
+    * If cache name hasn't been defined before, this method creates a clone of the default cache's configuration, 
+    * applies a clone of the configuration overrides passed in and returns this configuration instance.
     * <p/>
-    * A combination of approaches may also be used, provided the names do not conflict.
+    * If cache name has been previously defined, this method creates a clone of this cache's existing configuration, 
+    * applies a clone of the configuration overrides passed in and returns the configuration instance.
+    * <p/>
+    * The other way to define named cache's configuration is declaratively, in the XML file passed in to the cache 
+    * manager.  This method enables you to override certain properties that have previously been defined via XML.
+    * <p/>
+    * Passing a brand new Configuration instance as configuration override without having called any of its setters
+    * will effectively return the named cache's configuration since no overrides where passed to it.
     *
-    * @param cacheName             name of cache to define
-    * @param configurationOverride configuration overrides to use
-    * @throws DuplicateCacheNameException if the name is already in use.
+    * @param cacheName              name of cache whose configuration is being defined
+    * @param configurationOverride  configuration overrides to use
+    * @return a cloned configuration instance
     */
-   void defineCache(String cacheName, Configuration configurationOverride) throws DuplicateCacheNameException;
+   Configuration defineConfiguration(String cacheName, Configuration configurationOverride);
+
+   /**
+    * Defines a named cache's configuration using the following algorithm:
+    * <p/>
+    * Regardless of whether the cache name has been defined or not, this method creates a clone of the configuration 
+    * of the cache whose name matches the given template cache name, then applies a clone of the configuration overrides 
+    * passed in and finally returns this configuration instance.
+    * <p/>  
+    * The other way to define named cache's configuration is declaratively, in the XML file passed in to the cache manager.  
+    * This method enables you to override certain properties that have previously been defined via XML.
+    * <p/>
+    * Passing a brand new Configuration instance as configuration override without having called any of its setters
+    * will effectively return the named cache's configuration since no overrides where passed to it.
+    * <p/>
+    * If templateName is null or there isn't any named cache with that name, this methods works exactly like 
+    * {@link #defineConfiguration(String, Configuration)} in the sense that the base configuration used is the
+    * default cache configuration.
+    *
+    * @param cacheName              name of cache whose configuration is being defined
+    * @param templateName           name of cache to which to which apply overrides if cache name has not been previously 
+    *                               defined
+    * @param configurationOverride  configuration overrides to use
+    * @return a cloned configuration instance
+    */
+   Configuration defineConfiguration(String cacheName, String templateCacheName, Configuration configurationOverride);
 
    /**
     * Retrieves the default cache associated with this cache manager.
@@ -84,7 +116,8 @@ public interface CacheManager extends Lifecycle, Listenable {
     * <p/>
     * When creating a new cache, this method will use the configuration passed in to the CacheManager on construction,
     * as a template, and then optionally apply any overrides previously defined for the named cache using the {@link
-    * #defineCache(String, org.infinispan.config.Configuration)} method, or declared in the configuration file.
+    * #defineConfiguration(String, Configuration)} or {@link #defineConfiguration(String, String, Configuration)} methods, 
+    * or declared in the configuration file.
     *
     * @param cacheName name of cache to retrieve
     * @return a cache instance identified by cacheName

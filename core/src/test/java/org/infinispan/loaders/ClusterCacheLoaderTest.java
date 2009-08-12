@@ -41,8 +41,8 @@ public class ClusterCacheLoaderTest extends MultipleCacheManagersTest {
       config2.setCacheLoaderManagerConfig(clMngrConfig2);
 
 
-      cacheManager1.defineCache("clusteredCl", config1);
-      cacheManager2.defineCache("clusteredCl", config2);
+      cacheManager1.defineConfiguration("clusteredCl", config1);
+      cacheManager2.defineConfiguration("clusteredCl", config2);
       cache1 = cache(0, "clusteredCl");
       cache2 = cache(1, "clusteredCl");
       CacheLoaderManager manager2 = cache2.getAdvancedCache().getComponentRegistry().getComponent(CacheLoaderManager.class);

@@ -3,7 +3,6 @@ package org.infinispan.manager;
 import org.infinispan.Cache;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.config.Configuration;
-import org.infinispan.config.DuplicateCacheNameException;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
@@ -109,13 +108,10 @@ public class CacheManagerXmlConfigurationTest {
 
       assert cm.getCache() != null;
       assert cm.getCache("c1") != null;
-      try {
-         cm.defineCache("c1", new Configuration());
-         assert false : "Should fail";
-      }
-      catch (DuplicateCacheNameException expected) {
-
-      }
+      Configuration c1Config = cm.getCache("c1").getConfiguration();
+      assert c1Config != null;
+      Configuration redefinedConfig = cm.defineConfiguration("c1", new Configuration());
+      assert c1Config.equals(redefinedConfig);
    }
 }
 

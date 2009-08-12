@@ -38,8 +38,8 @@ public class TxInterceptorMBeanTest extends MultipleCacheManagersTest {
       Configuration configuration = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
       configuration.setExposeJmxStatistics(true);
       configuration.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
-      cacheManager1.defineCache("test", configuration);
-      cacheManager2.defineCache("test", configuration.clone());
+      cacheManager1.defineConfiguration("test", configuration);
+      cacheManager2.defineConfiguration("test", configuration.clone());
       cache1 = cacheManager1.getCache("test");
       cache2 = cacheManager2.getCache("test");
       txInterceptor = new ObjectName("TxInterceptorMBeanTest:cache-name=test(repl_sync),jmx-resource=Transactions");

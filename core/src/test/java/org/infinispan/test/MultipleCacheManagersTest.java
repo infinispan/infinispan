@@ -119,9 +119,9 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       return cm;
    }
 
-   protected void defineCacheOnAllManagers(String cacheName, Configuration c) {
+   protected void defineConfigurationOnAllManagers(String cacheName, Configuration c) {
       for (CacheManager cm : cacheManagers) {
-         cm.defineCache(cacheName, c);
+         cm.defineConfiguration(cacheName, c);
       }
    }
 
@@ -129,7 +129,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       List<Cache<K, V>> caches = new ArrayList<Cache<K, V>>(numMembersInCluster);
       for (int i = 0; i < numMembersInCluster; i++) {
          CacheManager cm = addClusterEnabledCacheManager();
-         cm.defineCache(cacheName, c);
+         cm.defineConfiguration(cacheName, c);
          Cache<K, V> cache = cm.getCache(cacheName);
          caches.add(cache);
       }

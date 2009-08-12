@@ -32,7 +32,7 @@ public class CacheMgmtInterceptorMBeanTest extends SingleCacheManagerTest {
 
       Configuration configuration = getDefaultClusteredConfig(Configuration.CacheMode.LOCAL);
       configuration.setExposeJmxStatistics(true);
-      cacheManager.defineCache("test", configuration);
+      cacheManager.defineConfiguration("test", configuration);
       cache = cacheManager.getCache("test");
       mgmtInterceptor = new ObjectName("CacheMgmtInterceptorMBeanTest:cache-name=test(local),jmx-resource=Statistics");
 

@@ -19,8 +19,8 @@ public class TransactionsSpanningCaches extends SingleCacheManagerTest {
       Configuration c = new Configuration();
       c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
       CacheManager cm = TestCacheManagerFactory.createCacheManager(c);
-      cm.defineCache("c1", c);
-      cm.defineCache("c2", c);
+      cm.defineConfiguration("c1", c);
+      cm.defineConfiguration("c2", c);
       return cm;
    }
 

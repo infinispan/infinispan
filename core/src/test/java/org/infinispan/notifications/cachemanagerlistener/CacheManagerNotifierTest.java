@@ -28,8 +28,8 @@ public class CacheManagerNotifierTest {
       Configuration c = new Configuration();
       c.setCacheMode(Configuration.CacheMode.REPL_SYNC);
       c.setFetchInMemoryState(false);
-      cm1.defineCache("cache", c);
-      cm2.defineCache("cache", c);
+      cm1.defineConfiguration("cache", c);
+      cm2.defineConfiguration("cache", c);
 
       cm1.getCache("cache");
 
@@ -60,7 +60,7 @@ public class CacheManagerNotifierTest {
       CacheManagerNotifier mockNotifier = createMock(CacheManagerNotifier.class);
       CacheManagerNotifier origNotifier = TestingUtil.replaceComponent(cm1, CacheManagerNotifier.class, mockNotifier, true);
       try {
-         cm1.defineCache("testCache", new Configuration());
+         cm1.defineConfiguration("testCache", new Configuration());
          mockNotifier.notifyCacheStarted("testCache");
          replay(mockNotifier);
          // start a second cache.

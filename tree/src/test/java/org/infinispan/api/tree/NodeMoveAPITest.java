@@ -52,7 +52,7 @@ public class NodeMoveAPITest extends SingleCacheManagerTest {
       c.setFetchInMemoryState(false);
       c.setInvocationBatchingEnabled(true);
       c.setLockAcquisitionTimeout(1000);
-      cm.defineCache("test", c);
+      cm.defineConfiguration("test", c);
       cache = cm.getCache("test");
       tm = TestingUtil.extractComponent(cache, TransactionManager.class);
       treeCache = new TreeCacheImpl(cache);

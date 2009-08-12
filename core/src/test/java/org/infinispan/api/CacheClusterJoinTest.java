@@ -25,7 +25,7 @@ public class CacheClusterJoinTest extends MultipleCacheManagersTest {
       cfg = new Configuration();
       cfg.setCacheMode(CacheMode.REPL_SYNC);
       cfg.setFetchInMemoryState(false);
-      cm1.defineCache("cache", cfg);
+      cm1.defineConfiguration("cache", cfg);
    }
 
    public void testGetMembers() throws Exception {
@@ -36,7 +36,7 @@ public class CacheClusterJoinTest extends MultipleCacheManagersTest {
       Object coord = memb1.get(0);
 
       cm2 = addClusterEnabledCacheManager();
-      cm2.defineCache("cache", cfg.clone());
+      cm2.defineConfiguration("cache", cfg.clone());
       cm2.getCache("cache"); // this will make sure any lazy components are started.
       TestingUtil.blockUntilViewsReceived(50000, true, cm1, cm2);
       memb1 = cm1.getMembers();
@@ -56,7 +56,7 @@ public class CacheClusterJoinTest extends MultipleCacheManagersTest {
       assert cm1.isCoordinator() : "Should be coordinator!";
 
       cm2 = addClusterEnabledCacheManager();
-      cm2.defineCache("cache", cfg.clone());
+      cm2.defineConfiguration("cache", cfg.clone());
       cm2.getCache("cache"); // this will make sure any lazy components are started.
       assert cm1.isCoordinator();
       assert !cm2.isCoordinator();

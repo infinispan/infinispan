@@ -35,7 +35,7 @@ public abstract class CacheAPITest extends SingleCacheManagerTest {
       c.setIsolationLevel(getIsolationLevel());
       c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
       CacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
-      cm.defineCache("test", c);
+      cm.defineConfiguration("test", c);
       cache = cm.getCache("test");
       return cm;
    }

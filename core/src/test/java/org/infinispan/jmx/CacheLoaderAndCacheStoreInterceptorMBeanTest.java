@@ -45,7 +45,7 @@ public class CacheLoaderAndCacheStoreInterceptorMBeanTest extends SingleCacheMan
       configuration.setExposeJmxStatistics(true);
       configuration.setCacheLoaderManagerConfig(clManagerConfig);
 
-      cacheManager.defineCache("test", configuration);
+      cacheManager.defineConfiguration("test", configuration);
       cache = cacheManager.getCache("test");
       loaderInterceptorObjName = new ObjectName("CacheLoaderAndCacheStoreInterceptorMBeanTest:cache-name=test(local),jmx-resource=CacheLoader");
       storeInterceptorObjName = new ObjectName("CacheLoaderAndCacheStoreInterceptorMBeanTest:cache-name=test(local),jmx-resource=CacheStore");

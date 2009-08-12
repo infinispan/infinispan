@@ -44,7 +44,7 @@ public class CacheManagerComponentRegistryTest {
 
       Configuration overrides = new Configuration();
       overrides.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
-      cm.defineCache("transactional", overrides);
+      cm.defineConfiguration("transactional", overrides);
       Cache transactional = cm.getCache("transactional");
 
       // assert components.
@@ -70,7 +70,7 @@ public class CacheManagerComponentRegistryTest {
 
       Configuration overrides = new Configuration();
       overrides.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
-      cm.defineCache("transactional", overrides);
+      cm.defineConfiguration("transactional", overrides);
       Cache transactional = cm.getCache("transactional");
 
       // assert components.
@@ -88,7 +88,7 @@ public class CacheManagerComponentRegistryTest {
 
       Configuration overrides = new Configuration();
       overrides.setInvocationBatchingEnabled(true);
-      cm.defineCache("overridden", overrides);
+      cm.defineConfiguration("overridden", overrides);
       Cache overridden = cm.getCache("overridden");
 
       // assert components.

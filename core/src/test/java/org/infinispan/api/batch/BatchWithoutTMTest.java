@@ -105,7 +105,7 @@ public class BatchWithoutTMTest extends AbstractBatchTest {
    private Cache<String, String> createCache(boolean enableBatch, String name) {
       Configuration c = new Configuration();
       c.setInvocationBatchingEnabled(enableBatch);
-      cm.defineCache(name, c);
+      cm.defineConfiguration(name, c);
       return cm.getCache(name);
    }
 }

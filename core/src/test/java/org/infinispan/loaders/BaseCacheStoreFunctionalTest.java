@@ -64,8 +64,8 @@ public abstract class BaseCacheStoreFunctionalTest {
          CacheLoaderManagerConfig clmConfig = new CacheLoaderManagerConfig();
          clmConfig.setCacheLoaderConfigs(Collections.singletonList((CacheLoaderConfig)csConfig));
          configuration.getDefaultConfiguration().setCacheLoaderManagerConfig(clmConfig);
-         localCacheManager.defineCache("first", new Configuration());
-         localCacheManager.defineCache("second", new Configuration());
+         localCacheManager.defineConfiguration("first", new Configuration());
+         localCacheManager.defineConfiguration("second", new Configuration());
 
          Cache first = localCacheManager.getCache("first");
          Cache second = localCacheManager.getCache("second");

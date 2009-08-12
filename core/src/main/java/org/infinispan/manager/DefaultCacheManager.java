@@ -25,7 +25,6 @@ import org.infinispan.Cache;
 import org.infinispan.Version;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
-import org.infinispan.config.DuplicateCacheNameException;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.config.InfinispanConfiguration;
 import org.infinispan.config.parsing.XmlConfigurationParser;
@@ -83,10 +82,11 @@ import java.util.concurrent.ConcurrentMap;
  * manager.getCache("myEntityCache"); entityCache.put("aPerson", new Person());
  * <p/>
  * Configuration myNewConfiguration = new Configuration(); myNewConfiguration.setCacheMode(Configuration.CacheMode.LOCAL);
- * manager.defineCache("myLocalCache", myNewConfiguration); Cache localCache = manager.getCache("myLocalCache");
+ * manager.defineConfiguration("myLocalCache", myNewConfiguration); Cache localCache = manager.getCache("myLocalCache");
  * </code>
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
+ * @author Galder Zamarreño
  * @since 4.0
  */
 @Scope(Scopes.GLOBAL)
@@ -256,31 +256,48 @@ public class DefaultCacheManager implements CacheManager {
 
    private void initialize(XmlConfigurationParser initializedParser) {
       globalConfiguration = initializedParser.parseGlobalConfiguration();
-      configurationOverrides.putAll(initializedParser.parseNamedConfigurations());
+      for (Map.Entry<String, Configuration> entry : initializedParser.parseNamedConfigurations().entrySet()) {
+         Configuration c = globalConfiguration.getDefaultConfiguration().clone();
+         c.applyOverrides(entry.getValue());
+         configurationOverrides.put(entry.getKey(), c);
+         
+      }
       globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this);
    }
 
-   /**
-    * Defines a named cache.  Named caches can be defined by using this method, in which case the configuration passed
-    * in is used to override the default configuration used when this cache manager instance was created.
-    * <p/>
-    * The other way to define named caches is declaratively, in the XML file passed in to the cache manager.
-    * <p/>
-    * A combination of approaches may also be used, provided the names do not conflict.
-    *
-    * @param cacheName             name of cache to define
-    * @param configurationOverride configuration overrides to use
-    * @throws DuplicateCacheNameException if the name is already in use.
-    */
-   public void defineCache(String cacheName, Configuration configurationOverride) throws DuplicateCacheNameException {
-      if (cacheName == null || configurationOverrides == null)
+   /** {@inheritDoc} */
+   public Configuration defineConfiguration(String cacheName, Configuration configurationOverride) {
+      return defineConfiguration(cacheName, configurationOverride, globalConfiguration.getDefaultConfiguration(), true);
+   }
+
+   /** {@inheritDoc} */
+   public Configuration defineConfiguration(String cacheName, String templateName, Configuration configurationOverride) {
+      if (templateName != null) {
+         Configuration c = configurationOverrides.get(templateName);
+         if (c != null)
+            return defineConfiguration(cacheName, configurationOverride, c, false);
+         return defineConfiguration(cacheName, configurationOverride);
+      } 
+      return defineConfiguration(cacheName, configurationOverride);
+   }
+
+   private Configuration defineConfiguration(String cacheName, Configuration configOverride, Configuration defaultConfigIfNotPresent, boolean checkExisting) {
+      if (cacheName == null || configOverride == null)
          throw new NullPointerException("Null arguments not allowed");
       if (cacheName.equals(DEFAULT_CACHE_NAME))
          throw new IllegalArgumentException("Cache name cannot be used as it is a reserved, internal name");
-      if (configurationOverrides.putIfAbsent(cacheName, configurationOverride.clone()) != null)
-         throw new DuplicateCacheNameException("Cache name [" + cacheName + "] already in use!");
+      if (checkExisting) {
+         Configuration existing = configurationOverrides.get(cacheName);
+         if (existing != null) {
+            existing.applyOverrides(configOverride);
+            return existing.clone();
+         }
+      } 
+      Configuration configuration = defaultConfigIfNotPresent.clone();
+      configuration.applyOverrides(configOverride.clone());
+      configurationOverrides.put(cacheName, configuration);
+      return configuration;
    }
-
 
    /**
     * Retrieves the default cache associated with this cache manager.  Note that the default cache does not need to be
@@ -300,7 +317,8 @@ public class DefaultCacheManager implements CacheManager {
     * <p/>
     * When creating a new cache, this method will use the configuration passed in to the CacheManager on construction,
     * as a template, and then optionally apply any overrides previously defined for the named cache using the {@link
-    * #defineCache(String, org.infinispan.config.Configuration)} method, or declared in the configuration file.
+    * #defineConfiguration(String, Configuration)} or {@link #defineConfiguration(String, String, Configuration)} methods, 
+    * or declared in the configuration file.
     *
     * @param cacheName name of cache to retrieve
     * @return a cache instance identified by cacheName
@@ -339,11 +357,11 @@ public class DefaultCacheManager implements CacheManager {
    }
 
    private Cache createCache(String cacheName) {
-      Configuration c = globalConfiguration.getDefaultConfiguration().clone();
-      if (!cacheName.equals(DEFAULT_CACHE_NAME)) {
-         Configuration overrides = configurationOverrides.get(cacheName);
-         if (overrides != null) c.applyOverrides(overrides);
-      }
+      Configuration c = null;
+      if (cacheName.equals(DEFAULT_CACHE_NAME) || !configurationOverrides.containsKey(cacheName)) 
+         c = globalConfiguration.getDefaultConfiguration().clone();
+      else 
+         c = configurationOverrides.get(cacheName);
 
       c.assertValid();
       Cache cache = new InternalCacheFactory().createCache(c, globalComponentRegistry, cacheName);

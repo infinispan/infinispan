@@ -57,11 +57,11 @@ public class SingletonStoreTest extends MultipleCacheManagersTest {
       conf.setCacheLoaderManagerConfig(pushingCfg);
 
       // cannot define on ALL cache managers since the same dummy in memory CL bin will be used!
-      cm0.defineCache("pushing", conf);
+      cm0.defineConfiguration("pushing", conf);
       ((DummyInMemoryCacheStore.Cfg) conf.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStore("Store-" + storeCounter.getAndIncrement());
-      cm1.defineCache("pushing", conf);
+      cm1.defineConfiguration("pushing", conf);
       ((DummyInMemoryCacheStore.Cfg) conf.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStore("Store-" + storeCounter.getAndIncrement());
-      cm2.defineCache("pushing", conf);
+      cm2.defineConfiguration("pushing", conf);
 
       conf = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
       cfg = new DummyInMemoryCacheStore.Cfg();
@@ -75,11 +75,11 @@ public class SingletonStoreTest extends MultipleCacheManagersTest {
       conf.setCacheLoaderManagerConfig(nonPushingCfg);
 
       // cannot define on ALL cache managers since the same dummy in memory CL bin will be used!
-      cm0.defineCache("nonPushing", conf);
+      cm0.defineConfiguration("nonPushing", conf);
       ((DummyInMemoryCacheStore.Cfg) conf.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStore("Store-" + storeCounter.getAndIncrement());
-      cm1.defineCache("nonPushing", conf);
+      cm1.defineConfiguration("nonPushing", conf);
       ((DummyInMemoryCacheStore.Cfg) conf.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStore("Store-" + storeCounter.getAndIncrement());
-      cm2.defineCache("nonPushing", conf);
+      cm2.defineConfiguration("nonPushing", conf);
    }
 
    private Cache[] getCaches(String name) {

@@ -65,7 +65,7 @@ public class SyncReplTest extends MultipleCacheManagersTest {
       assert cache2.isEmpty();
 
       Configuration newConf = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
-      defineCacheOnAllManagers("newCache", newConf);
+      defineConfigurationOnAllManagers("newCache", newConf);
       Cache altCache1 = manager(0).getCache("newCache");
       Cache altCache2 = manager(1).getCache("newCache");
 
@@ -95,7 +95,7 @@ public class SyncReplTest extends MultipleCacheManagersTest {
       assert cache2.isEmpty();
 
       Configuration newConf = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
-      defineCacheOnAllManagers("newCache2", newConf);
+      defineConfigurationOnAllManagers("newCache2", newConf);
       Cache altCache1 = manager(0).getCache("newCache2");
 
       try {
@@ -123,7 +123,7 @@ public class SyncReplTest extends MultipleCacheManagersTest {
       List<Response> emptyResponses = Collections.emptyList();
       try {
          Configuration asyncCache = getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC);
-         defineCacheOnAllManagers("asyncCache", asyncCache);
+         defineConfigurationOnAllManagers("asyncCache", asyncCache);
          Cache asyncCache1 = manager(0).getCache("asyncCache");
 
          // replace the transport with a mock object

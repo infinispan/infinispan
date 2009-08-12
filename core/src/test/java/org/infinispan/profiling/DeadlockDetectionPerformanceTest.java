@@ -131,7 +131,7 @@ public class DeadlockDetectionPerformanceTest {
             cm = TestCacheManagerFactory.createClusteredCacheManager();
             Configuration configuration = getConfiguration();
             configuration.setCacheMode(Configuration.CacheMode.REPL_SYNC);
-            cm.defineCache("test", configuration);
+            cm.defineConfiguration("test", configuration);
             Cache distCache = cm.getCache("test");
             ExecutorThread executorThread = new ExecutorThread(startLatch, distCache);
             executorThreads.add(executorThread);
@@ -151,7 +151,7 @@ public class DeadlockDetectionPerformanceTest {
       CacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
       try {
          Configuration configuration = getConfiguration();
-         cm.defineCache("test", configuration);
+         cm.defineConfiguration("test", configuration);
          Cache localCache = cm.getCache("test");
 
          CountDownLatch startLatch = new CountDownLatch(1);

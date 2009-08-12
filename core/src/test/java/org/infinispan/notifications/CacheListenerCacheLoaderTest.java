@@ -32,12 +32,12 @@ public class CacheListenerCacheLoaderTest {
       DummyInMemoryCacheStore.Cfg clc = new DummyInMemoryCacheStore.Cfg("no_passivation");
       clmc.addCacheLoaderConfig(clc);
       c.setCacheLoaderManagerConfig(clmc);
-      cm.defineCache("no_passivation", c);
+      cm.defineConfiguration("no_passivation", c);
 
       c = c.clone();
       ((DummyInMemoryCacheStore.Cfg) c.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStore("passivation");
       c.getCacheLoaderManagerConfig().setPassivation(true);
-      cm.defineCache("passivation", c);
+      cm.defineConfiguration("passivation", c);
    }
 
    @AfterMethod

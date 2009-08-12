@@ -37,7 +37,7 @@ public class LocalDeadlockDetectionTest extends SingleCacheManagerTest {
       configuration.setEnableDeadlockDetection(true);
       configuration.setUseLockStriping(false);
       configuration.setExposeJmxStatistics(true);
-      cacheManager.defineCache("test", configuration);
+      cacheManager.defineConfiguration("test", configuration);
       cache = cacheManager.getCache("test");
       lockManager = (DeadlockDetectingLockManager) TestingUtil.extractLockManager(cache);
       return cacheManager;

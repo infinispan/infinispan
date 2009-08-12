@@ -53,7 +53,7 @@ public class ComponentsJmxRegistrationTest {
       cm.start();
       Configuration configuration = config();
       configuration.setCacheMode(Configuration.CacheMode.LOCAL);
-      cm.defineCache("first", configuration);
+      cm.defineConfiguration("first", configuration);
       Cache first = cm.getCache("first");
 
       ComponentsJmxRegistration regComponents = buildRegistrator(first);
@@ -80,7 +80,7 @@ public class ComponentsJmxRegistrationTest {
       cm.start();
       Configuration configurationOverride = config();
       configurationOverride.setCacheMode(Configuration.CacheMode.REPL_SYNC);
-      cm.defineCache("first", configurationOverride);
+      cm.defineConfiguration("first", configurationOverride);
       Cache first = cm.getCache("first");
 
       ComponentsJmxRegistration regComponents = buildRegistrator(first);
@@ -103,8 +103,8 @@ public class ComponentsJmxRegistrationTest {
       Configuration local = config();
       replicated.setCacheMode(Configuration.CacheMode.REPL_SYNC);
       local.setCacheMode(Configuration.CacheMode.LOCAL);
-      cm.defineCache("replicated", replicated);
-      cm.defineCache("local", local);
+      cm.defineConfiguration("replicated", replicated);
+      cm.defineConfiguration("local", local);
       Cache replicatedCache = cm.getCache("replicated");
       Cache localCache = cm.getCache("local");
 

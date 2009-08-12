@@ -232,7 +232,7 @@ public class CacheLoaderFunctionalTest {
       Configuration preloadingCfg = cfg.clone();
       preloadingCfg.getCacheLoaderManagerConfig().setPreload(true);
       ((DummyInMemoryCacheStore.Cfg) preloadingCfg.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStore("preloadingCache");
-      cm.defineCache("preloadingCache", preloadingCfg);
+      cm.defineConfiguration("preloadingCache", preloadingCfg);
       Cache preloadingCache = cm.getCache("preloadingCache");
       CacheStore preloadingStore = TestingUtil.extractComponent(preloadingCache, CacheLoaderManager.class).getCacheStore();
 
@@ -275,7 +275,7 @@ public class CacheLoaderFunctionalTest {
       CacheStoreConfig firstCacheLoaderConfig = (CacheStoreConfig) purgingCfg.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig();
       firstCacheLoaderConfig.setPurgeOnStartup(true);
       ((DummyInMemoryCacheStore.Cfg) purgingCfg.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig()).setStore("purgingCache");
-      cm.defineCache("purgingCache", purgingCfg);
+      cm.defineConfiguration("purgingCache", purgingCfg);
       Cache purgingCache = cm.getCache("purgingCache");
       CacheStore purgingStore = TestingUtil.extractComponent(purgingCache, CacheLoaderManager.class).getCacheStore();
 

@@ -39,7 +39,7 @@ public class MarshalledValueInterceptorTest {
 
       Configuration configuration = new Configuration();
       configuration.setUseLazyDeserialization(true);
-      cm.defineCache("someCache", configuration);
+      cm.defineConfiguration("someCache", configuration);
       Cache c = cm.getCache("someCache");
 
       assert TestingUtil.findInterceptor(c, MarshalledValueInterceptor.class) != null;
@@ -49,7 +49,7 @@ public class MarshalledValueInterceptorTest {
    public void testDisabledInterceptorStack() {
       Configuration cfg = new Configuration();
       cfg.setUseLazyDeserialization(false);
-      cm.defineCache("a", cfg);
+      cm.defineConfiguration("a", cfg);
       Cache c = cm.getCache("a");
       assert TestingUtil.findInterceptor(c, MarshalledValueInterceptor.class) == null;
    }

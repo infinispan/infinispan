@@ -45,13 +45,13 @@ public class JmxStatsFunctionalTest {
       cm = TestCacheManagerFactory.createCacheManager(globalConfiguration);
 
       Configuration localCache = config();//local by default
-      cm.defineCache("local_cache", localCache);
+      cm.defineConfiguration("local_cache", localCache);
       Configuration remote1 = config();//local by default
       remote1.setCacheMode(Configuration.CacheMode.REPL_SYNC);
-      cm.defineCache("remote1", remote1);
+      cm.defineConfiguration("remote1", remote1);
       Configuration remote2 = config();//local by default
       remote2.setCacheMode(Configuration.CacheMode.INVALIDATION_ASYNC);
-      cm.defineCache("remote2", remote2);
+      cm.defineConfiguration("remote2", remote2);
 
       cm.getCache("local_cache");
       cm.getCache("remote1");
@@ -81,7 +81,7 @@ public class JmxStatsFunctionalTest {
       cm = TestCacheManagerFactory.createCacheManager(globalConfiguration);
 
       Configuration localCache = config();//local by default
-      cm.defineCache("local_cache", localCache);
+      cm.defineConfiguration("local_cache", localCache);
       cm.getCache("local_cache");
 
       assert existsObject("mircea_jmx_domain:cache-name=local_cache(local),jmx-resource=Statistics");
@@ -97,11 +97,11 @@ public class JmxStatsFunctionalTest {
 
       Configuration localCache = config();//local by default
       localCache.setExposeJmxStatistics(false);
-      cm.defineCache("local_cache", localCache);
+      cm.defineConfiguration("local_cache", localCache);
       Configuration remote1 = config();//local by default
       remote1.setExposeJmxStatistics(false);
       remote1.setCacheMode(Configuration.CacheMode.REPL_SYNC);
-      cm.defineCache("remote1", remote1);
+      cm.defineConfiguration("remote1", remote1);
 
       cm.getCache("local_cache");
       cm.getCache("remote1");
@@ -120,11 +120,11 @@ public class JmxStatsFunctionalTest {
 
       Configuration localCache = config();//local by default
       localCache.setExposeJmxStatistics(true);
-      cm.defineCache("local_cache", localCache);
+      cm.defineConfiguration("local_cache", localCache);
       Configuration remote1 = config();//local by default
       remote1.setExposeJmxStatistics(true);
       remote1.setCacheMode(Configuration.CacheMode.REPL_SYNC);
-      cm.defineCache("remote1", remote1);
+      cm.defineConfiguration("remote1", remote1);
 
       cm.getCache("local_cache");
       cm.getCache("remote1");
@@ -141,7 +141,7 @@ public class JmxStatsFunctionalTest {
       cm = TestCacheManagerFactory.createCacheManager(globalConfiguration);
       Configuration localCache = config();//local by default
       localCache.setExposeJmxStatistics(true);
-      cm.defineCache("local_cache", localCache);
+      cm.defineConfiguration("local_cache", localCache);
       cm.getCache("local_cache");
       assert existsObject("infinispan:cache-name=local_cache(local),jmx-resource=Statistics");
 
@@ -152,7 +152,7 @@ public class JmxStatsFunctionalTest {
       cm2 = TestCacheManagerFactory.createCacheManager(globalConfiguration);
       Configuration localCache2 = config();//local by default
       localCache2.setExposeJmxStatistics(true);
-      cm2.defineCache("local_cache", localCache);
+      cm2.defineConfiguration("local_cache", localCache);
       try {
          cm2.getCache("local_cache");
          assert false : "exception expected";
@@ -170,7 +170,7 @@ public class JmxStatsFunctionalTest {
       cm = TestCacheManagerFactory.createCacheManager(globalConfiguration);
       Configuration localCache = config();//local by default
       localCache.setExposeJmxStatistics(true);
-      cm.defineCache("local_cache", localCache);
+      cm.defineConfiguration("local_cache", localCache);
       cm.getCache("local_cache");
       assert existsObject("infinispan:cache-name=local_cache(local),jmx-resource=Statistics");
 
@@ -181,7 +181,7 @@ public class JmxStatsFunctionalTest {
       cm2 = TestCacheManagerFactory.createCacheManager(globalConfiguration2);
       Configuration localCache2 = config();//local by default
       localCache2.setExposeJmxStatistics(true);
-      cm2.defineCache("local_cache", localCache);
+      cm2.defineConfiguration("local_cache", localCache);
       cm2.getCache("local_cache");
       assert existsObject("infinispan2:cache-name=local_cache(local),jmx-resource=Statistics");
 
@@ -192,7 +192,7 @@ public class JmxStatsFunctionalTest {
       cm3 = TestCacheManagerFactory.createCacheManager(globalConfiguration3);
       Configuration localCache3 = config();//local by default
       localCache3.setExposeJmxStatistics(true);
-      cm3.defineCache("local_cache", localCache);
+      cm3.defineConfiguration("local_cache", localCache);
       cm3.getCache("local_cache");
       assert existsObject("infinispan3:cache-name=local_cache(local),jmx-resource=Statistics");
    }
@@ -205,7 +205,7 @@ public class JmxStatsFunctionalTest {
       cm = TestCacheManagerFactory.createCacheManager(globalConfiguration);
       Configuration localCache = config();//local by default
       localCache.setExposeJmxStatistics(true);
-      cm.defineCache("local_cache", localCache);
+      cm.defineConfiguration("local_cache", localCache);
       cm.getCache("local_cache");
       assert existsObject("infinispan:cache-name=local_cache(local),jmx-resource=Statistics");
 
@@ -221,7 +221,7 @@ public class JmxStatsFunctionalTest {
       globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
       cm = TestCacheManagerFactory.createCacheManager(globalConfiguration);
       Configuration localCache = config();//local by default
-      cm.defineCache("local_cache", localCache);
+      cm.defineConfiguration("local_cache", localCache);
       cm.getCache("local_cache");
       assert existsObject("infinispan:cache-name=local_cache(local),jmx-resource=Statistics");
 
@@ -234,7 +234,7 @@ public class JmxStatsFunctionalTest {
       Configuration remoteCache = new Configuration();
       remoteCache.setExposeJmxStatistics(true);
       remoteCache.setCacheMode(Configuration.CacheMode.REPL_SYNC);
-      cm2.defineCache("remote_cache", remoteCache);
+      cm2.defineConfiguration("remote_cache", remoteCache);
       cm2.getCache("remote_cache");
       assert existsObject("infinispan2:cache-name=remote_cache(repl_sync),jmx-resource=Statistics");
 

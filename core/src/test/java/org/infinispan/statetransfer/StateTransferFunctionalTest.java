@@ -59,7 +59,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
 
    protected CacheManager createCacheManager() {
       CacheManager cm = addClusterEnabledCacheManager();
-      cm.defineCache(cacheName, config.clone());
+      cm.defineConfiguration(cacheName, config.clone());
       return cm;
    }
 

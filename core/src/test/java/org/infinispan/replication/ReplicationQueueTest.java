@@ -48,11 +48,11 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
       config.setReplQueueInterval(REPL_QUEUE_INTERVAL);
       config.setReplQueueMaxElements(REPL_QUEUE_MAX_ELEMENTS);
       creationTime = System.currentTimeMillis();
-      manager(0).defineCache("replQueue", config);
+      manager(0).defineConfiguration("replQueue", config);
 
       Configuration conf2 = config.clone();
       conf2.setUseReplQueue(false);
-      manager(1).defineCache("replQueue", conf2);
+      manager(1).defineConfiguration("replQueue", conf2);
 
       cache1 = cache(0, "replQueue");
       cache2 = cache(1, "replQueue");

@@ -47,7 +47,7 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
       configuration.setExposeJmxStatistics(true);
       configuration.setCacheLoaderManagerConfig(clManagerConfig);
 
-      cacheManager.defineCache("test", configuration);
+      cacheManager.defineConfiguration("test", configuration);
       cache = cacheManager.getCache("test");
       activationInterceptorObjName = new ObjectName("ActivationAndPassivationInterceptorMBeanTest:cache-name=test(local),jmx-resource=Activation");
       passivationInterceptorObjName = new ObjectName("ActivationAndPassivationInterceptorMBeanTest:cache-name=test(local),jmx-resource=Passivation");

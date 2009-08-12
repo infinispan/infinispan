@@ -50,7 +50,7 @@ public class InfinispanJoprTest {
       config.setEvictionMaxEntries(123);
       config.setExpirationMaxIdle(180000);
       
-      manager.defineCache(MY_CUSTOM_CACHE, config);
+      manager.defineConfiguration(MY_CUSTOM_CACHE, config);
       Cache<String,String> cache = manager.getCache(MY_CUSTOM_CACHE);
 
       cache.put("myKey", "myValue");

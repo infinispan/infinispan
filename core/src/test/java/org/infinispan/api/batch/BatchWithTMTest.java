@@ -96,7 +96,7 @@ public class BatchWithTMTest extends AbstractBatchTest {
       c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
       c.setInvocationBatchingEnabled(true);
       assert c.getTransactionManagerLookupClass() != null : "Should have a transaction manager lookup class attached!!";
-      cm.defineCache(name, c);
+      cm.defineConfiguration(name, c);
       return cm.getCache(name);
    }
 }

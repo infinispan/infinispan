@@ -22,10 +22,10 @@ public class MixedModeTest extends MultipleCacheManagersTest {
       Configuration local = getDefaultClusteredConfig(Configuration.CacheMode.LOCAL);
 
       createClusteredCaches(2, "replSync", replSync);
-      defineCacheOnAllManagers("replAsync", replAsync);
-      defineCacheOnAllManagers("invalSync", invalSync);
-      defineCacheOnAllManagers("invalAsync", invalAsync);
-      defineCacheOnAllManagers("local", local);
+      defineConfigurationOnAllManagers("replAsync", replAsync);
+      defineConfigurationOnAllManagers("invalSync", invalSync);
+      defineConfigurationOnAllManagers("invalAsync", invalAsync);
+      defineConfigurationOnAllManagers("local", local);
 
       replSyncCache1 = cache(0, "replSync").getAdvancedCache();
       replSyncCache2 = cache(1, "replSync").getAdvancedCache();

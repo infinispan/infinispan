@@ -17,11 +17,11 @@ public abstract class AbstractProfileTest extends SingleCacheManagerTest {
       Configuration cfg = new Configuration();
       cfg.setConcurrencyLevel(2000);
       cacheManager = new DefaultCacheManager(GlobalConfiguration.getClusteredDefault());
-      cacheManager.defineCache(LOCAL_CACHE_NAME, cfg);
+      cacheManager.defineConfiguration(LOCAL_CACHE_NAME, cfg);
       Configuration replCfg = cfg.clone();
       replCfg.setCacheMode(Configuration.CacheMode.REPL_SYNC);
       replCfg.setFetchInMemoryState(false);
-      cacheManager.defineCache(REPL_SYNC_CACHE_NAME, replCfg);
+      cacheManager.defineConfiguration(REPL_SYNC_CACHE_NAME, replCfg);
       return cacheManager;
    }
 }

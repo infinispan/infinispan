@@ -57,7 +57,7 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
       Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
       config.setExposeJmxStatistics(true);
       String cachename = "repl_sync_cache";
-      defineCacheOnAllManagers(cachename, config);
+      defineConfigurationOnAllManagers(cachename, config);
       cache1 = manager(0).getCache(cachename);
       cache2 = manager(1).getCache(cachename);
       mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();

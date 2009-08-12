@@ -28,8 +28,8 @@ public class TransactionsSpanningReplicatedCaches extends MultipleCacheManagersT
       Configuration c = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
       c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
 
-      defineCacheOnAllManagers("c1", c);
-      defineCacheOnAllManagers("c2", c);
+      defineConfigurationOnAllManagers("c1", c);
+      defineConfigurationOnAllManagers("c2", c);
    }
 
    public void testCommitSpanningCaches() throws Exception {

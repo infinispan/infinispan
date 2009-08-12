@@ -37,7 +37,7 @@ public class MvccLockManagerMBeanTest extends SingleCacheManagerTest {
       configuration.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
       configuration.setConcurrencyLevel(CONCURRENCY_LEVEL);
 
-      cacheManager.defineCache("test", configuration);
+      cacheManager.defineConfiguration("test", configuration);
       cache = cacheManager.getCache("test");
       lockManagerObjName = new ObjectName("MvccLockManagerMBeanTest:cache-name=test(local),jmx-resource=LockManager");
 

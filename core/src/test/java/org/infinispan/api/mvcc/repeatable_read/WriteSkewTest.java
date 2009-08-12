@@ -56,7 +56,7 @@ public class WriteSkewTest {
    public void testDontCheckWriteSkew() throws Exception {
       Configuration noWriteSkewCheck = new Configuration();
       noWriteSkewCheck.setWriteSkewCheck(false);
-      cacheManager.defineCache("noWriteSkewCheck", noWriteSkewCheck);
+      cacheManager.defineConfiguration("noWriteSkewCheck", noWriteSkewCheck);
       cache = cacheManager.getCache("noWriteSkewCheck");
       postStart();
       doTest(true);
@@ -65,7 +65,7 @@ public class WriteSkewTest {
    public void testCheckWriteSkew() throws Exception {
       Configuration writeSkewCheck = new Configuration();
       writeSkewCheck.setWriteSkewCheck(true);
-      cacheManager.defineCache("writeSkewCheck", writeSkewCheck);
+      cacheManager.defineConfiguration("writeSkewCheck", writeSkewCheck);
       cache = cacheManager.getCache("writeSkewCheck");
       postStart();
       doTest(false);

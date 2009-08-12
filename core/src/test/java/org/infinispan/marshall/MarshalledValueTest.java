@@ -360,7 +360,7 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       clmc.setCacheLoaderConfigs(Collections.singletonList((CacheLoaderConfig) clc));
       cacheCofig.setCacheLoaderManagerConfig(clmc);
 
-      defineCacheOnAllManagers("replSync2", cacheCofig);
+      defineConfigurationOnAllManagers("replSync2", cacheCofig);
       cache1 = cache(0, "replSync2");
       cache2 = cache(1, "replSync2");
 

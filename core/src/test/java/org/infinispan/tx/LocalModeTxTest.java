@@ -42,7 +42,7 @@ public class LocalModeTxTest extends SingleCacheManagerTest {
       Configuration cfg = new Configuration();
       cfg.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
       CacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
-      cm.defineCache("test", cfg);
+      cm.defineConfiguration("test", cfg);
       c = cm.getCache("test");
       return cm;
    }
