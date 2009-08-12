@@ -12,8 +12,8 @@ INPUT_FILE = "infinispan.log"
 OUTPUT_FILE = "infinispan0.log"
 addresses = {}
 new_addresses = {}
-def find(expr):
-  with open(INPUT_FILE) as f:
+def find(filename, expr):
+  with open(filename) as f:
     for l in f:
       if expr.match(l):
         handle(l, expr)
@@ -60,7 +60,7 @@ def main():
   OUTPUT_FILE = sys.argv[3]
 
   expr = re.compile('.*Received new cluster view.*\|%s. \[(.*)\].*' % VIEW_TO_USE)
-  find(expr)
+  find(INPUT_FILE, expr)
 
   with open(INPUT_FILE) as f_in:
     with open(OUTPUT_FILE, 'w+') as f_out:
