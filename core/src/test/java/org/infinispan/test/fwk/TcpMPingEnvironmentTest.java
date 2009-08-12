@@ -21,7 +21,7 @@ import java.util.Properties;
  *
  * @author Mircea.Markus@jboss.com
  */
-@Test(testName = "test,fwk.TcpMPingEnvironmentTest", groups = "functional")
+@Test(testName = "test.fwk.TcpMPingEnvironmentTest", groups = "functional")
 public class TcpMPingEnvironmentTest {
 
    Log log = LogFactory.getLog(TcpMPingEnvironmentTest.class);
