@@ -22,8 +22,6 @@
 package org.infinispan.config;
 
 import java.lang.annotation.*;
-import org.infinispan.config.parsing.ConfigurationElementReader;
-import org.infinispan.config.parsing.ConfigurationElementWriter;
 
 /**
  * Represents XML element from a valid Infinispan configuration file.
@@ -82,19 +80,5 @@ public @interface ConfigurationElement {
     * @return
     */
    String description() default "";
-
-   /**
-    * Returns class of custom parser needed to process this ConfigurationElement
-    * 
-    * @return
-    */
-   Class<? extends ConfigurationElementReader> customReader() default ConfigurationElementReader.class;
-
-   /**
-    * Returns class of custom writer for this ConfigurationElement
-    * 
-    * @return
-    */
-   Class<? extends ConfigurationElementWriter> customWriter() default ConfigurationElementWriter.class;
 
 }

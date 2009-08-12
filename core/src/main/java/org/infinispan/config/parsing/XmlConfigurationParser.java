@@ -4,8 +4,6 @@ import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.config.GlobalConfiguration;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Map;
 
 /**
@@ -15,24 +13,6 @@ import java.util.Map;
  * @since 4.0
  */
 public interface XmlConfigurationParser {
-   /**
-    * Initializes the parser with a String that represents the name of the configuration file to parse.  Parsers would
-    * attempt to find this file on the classpath first, and failing that, treat the String as an absolute path name on
-    * the file system.
-    *
-    * @param fileName name of file that contains the XML configuration
-    * @throws java.io.IOException if there is a problem reading the configuration file
-    */
-   void initialize(String fileName) throws IOException;
-
-   /**
-    * Initializes the parser with a stream that contains the contents of an XML configuration file to parse.
-    *
-    * @param inputStream stream to read from
-    * @throws IOException if there is a problem reading from the stream
-    */
-   void initialize(InputStream inputStream) throws IOException;
-
    /**
     * Parses the default template configuration.
     *

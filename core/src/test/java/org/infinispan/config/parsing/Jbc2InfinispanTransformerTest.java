@@ -3,6 +3,7 @@ package org.infinispan.config.parsing;
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.config.InfinispanConfiguration;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.loaders.decorators.AsyncStoreConfig;
@@ -40,8 +41,7 @@ public class Jbc2InfinispanTransformerTest {
          ByteArrayOutputStream baos = new ByteArrayOutputStream();
          convertor.parse(fileName, baos, XSLT_FILE);
 
-         XmlConfigurationParser newParser = new XmlConfigurationParserImpl();
-         newParser.initialize(new ByteArrayInputStream(baos.toByteArray()));
+         XmlConfigurationParser newParser = InfinispanConfiguration.newInfinispanConfiguration(new ByteArrayInputStream(baos.toByteArray()));
          GlobalConfiguration globalConfig = newParser.parseGlobalConfiguration();
          Map<String, Configuration> map = newParser.parseNamedConfigurations();
          Configuration defaultConfig = globalConfig.getDefaultConfiguration();

@@ -164,13 +164,6 @@ public class InfinispanConfiguration implements XmlConfigurationParser {
       super();
    }
   
-   public void initialize(String fileName) throws IOException {
-   }
-   
-   public void initialize(InputStream configuration) throws IOException {
-    
-   }
-
    private static InputStream findInputStream(String fileName) throws FileNotFoundException {
       if (fileName == null)
          throw new NullPointerException("File name cannot be null!");

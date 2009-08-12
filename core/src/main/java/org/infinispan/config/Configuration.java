@@ -21,8 +21,6 @@
  */
 package org.infinispan.config;
 
-import org.infinispan.config.parsing.ClusteringConfigReader;
-import org.infinispan.config.parsing.CustomInterceptorConfigReader;
 import org.infinispan.distribution.DefaultConsistentHash;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.factories.annotations.Inject;
@@ -66,7 +64,7 @@ import java.util.concurrent.TimeUnit;
          @ConfigurationElement(name = "jmxStatistics", parent = "default", description = ""),
          @ConfigurationElement(name = "lazyDeserialization", parent = "default", description = ""),  
          @ConfigurationElement(name = "invocationBatching", parent = "default", description = ""),   
-         @ConfigurationElement(name = "clustering", parent = "default", description = "", customReader=ClusteringConfigReader.class),
+         @ConfigurationElement(name = "clustering", parent = "default", description = ""),
          @ConfigurationElement(name = "stateRetrieval", parent = "clustering"),
          @ConfigurationElement(name = "sync", parent = "clustering"),
          @ConfigurationElement(name = "hash", parent = "clustering"),
@@ -76,8 +74,7 @@ import java.util.concurrent.TimeUnit;
          @ConfigurationElement(name = "expiration", parent = "default", description = ""),
          @ConfigurationElement(name = "unsafe", parent = "default", description = ""),
          @ConfigurationElement(name = "deadlockDetection", parent = "default", description = ""),
-         @ConfigurationElement(name = "customInterceptors", parent = "default",
-                  customReader=CustomInterceptorConfigReader.class)         
+         @ConfigurationElement(name = "customInterceptors", parent = "default")         
 })
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(propOrder={})

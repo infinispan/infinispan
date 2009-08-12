@@ -21,7 +21,6 @@
  */
 package org.infinispan.config;
 
-import org.infinispan.config.parsing.CacheLoaderManagerConfigReader;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.util.Util;
@@ -49,7 +48,7 @@ import java.util.List;
  * @author <a href="mailto:galder.zamarreno@jboss.com">Galder Zamarreno</a>
  * @since 4.0
  */
-@ConfigurationElement(name="loaders",parent="default",customReader=CacheLoaderManagerConfigReader.class)
+@ConfigurationElement(name="loaders",parent="default")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class CacheLoaderManagerConfig extends AbstractNamedCacheConfigurationBean {
    private static final long serialVersionUID = 2210349340378984424L;
