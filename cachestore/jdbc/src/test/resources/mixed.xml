@@ -6,21 +6,29 @@
 
       <!-- Note that if these are left blank, defaults are used.  See the user guide for what these defaults are -->
       <asyncListenerExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
-         <property name="maxThreads" value="5"/>
-         <property name="threadNamePrefix" value="AsyncListenerThread"/>
+         <properties>
+            <property name="maxThreads" value="5"/>
+            <property name="threadNamePrefix" value="AsyncListenerThread"/>
+         </properties>
       </asyncListenerExecutor>
 
       <asyncTransportExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
-         <property name="maxThreads" value="25"/>
-         <property name="threadNamePrefix" value="AsyncSerializationThread"/>
+         <properties>
+            <property name="maxThreads" value="25"/>
+            <property name="threadNamePrefix" value="AsyncSerializationThread"/>
+         </properties>
       </asyncTransportExecutor>
 
       <evictionScheduledExecutor factory="org.infinispan.executors.DefaultScheduledExecutorFactory">
-         <property name="threadNamePrefix" value="EvictionThread"/>
+         <properties>
+            <property name="threadNamePrefix" value="EvictionThread"/>
+         </properties>
       </evictionScheduledExecutor>
 
       <replicationQueueScheduledExecutor factory="org.infinispan.executors.DefaultScheduledExecutorFactory">
-         <property name="threadNamePrefix" value="ReplicationQueueThread"/>
+         <properties>
+            <property name="threadNamePrefix" value="ReplicationQueueThread"/>
+         </properties>
       </replicationQueueScheduledExecutor>
 
       <globalJmxStatistics enabled="false" jmxDomain="infinispan"/>

@@ -6,21 +6,29 @@
 
       <!-- Note that if these are left blank, defaults are used.  See the user guide for what these defaults are -->
       <asyncListenerExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
-         <property name="maxThreads" value="5"/>
-         <property name="threadNamePrefix" value="AsyncListenerThread"/>
+         <properties>
+            <property name="maxThreads" value="5"/>
+            <property name="threadNamePrefix" value="AsyncListenerThread"/>
+         </properties>
       </asyncListenerExecutor>
 
       <asyncTransportExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
-         <property name="maxThreads" value="25"/>
-         <property name="threadNamePrefix" value="AsyncSerializationThread"/>
+         <properties>
+            <property name="maxThreads" value="25"/>
+            <property name="threadNamePrefix" value="AsyncSerializationThread"/>
+         </properties>
       </asyncTransportExecutor>
 
       <evictionScheduledExecutor factory="org.infinispan.executors.DefaultScheduledExecutorFactory">
-         <property name="threadNamePrefix" value="EvictionThread"/>
+         <properties>
+            <property name="threadNamePrefix" value="EvictionThread"/>
+         </properties>
       </evictionScheduledExecutor>
 
       <replicationQueueScheduledExecutor factory="org.infinispan.executors.DefaultScheduledExecutorFactory">
-         <property name="threadNamePrefix" value="ReplicationQueueThread"/>
+         <properties>
+            <property name="threadNamePrefix" value="ReplicationQueueThread"/>
+         </properties>
       </replicationQueueScheduledExecutor>
 
       <globalJmxStatistics enabled="false" jmxDomain="infinispan"/>
@@ -45,8 +53,10 @@
                <property name="dataColumnName" value="DATA_COLUMN"/>
                <property name="timestampColumnName" value="TIMESTAMP_COLUMN"/>
                <property name="timestampColumnType" value="BIGINT"/>
-               <property name="connectionFactoryClass" value="org.infinispan.loaders.jdbc.connectionfactory.SimpleConnectionFactory"/>
-               <property name="connectionUrl" value="org.infinispan.loaders.jdbc.connectionfactory.SimpleConnectionFactory"/>
+               <property name="connectionFactoryClass"
+                         value="org.infinispan.loaders.jdbc.connectionfactory.SimpleConnectionFactory"/>
+               <property name="connectionUrl"
+                         value="org.infinispan.loaders.jdbc.connectionfactory.SimpleConnectionFactory"/>
                <property name="connectionUrl" value="jdbc:hsqldb:mem:infinispan_string_based"/>
                <property name="userName" value="sa"/>
                <property name="driverClass" value="org.hsqldb.jdbcDriver"/>
@@ -65,4 +75,4 @@
 
    <namedCache name="second"/>
 
-   </infinispan>
+</infinispan>
