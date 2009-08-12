@@ -41,7 +41,9 @@ import org.infinispan.lifecycle.Lifecycle;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.util.FileLookup;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -203,8 +205,9 @@ public class DefaultCacheManager implements CacheManager {
     * @throws java.io.IOException if there is a problem with the configuration file.
     */
    public DefaultCacheManager(String configurationFile, boolean start) throws IOException {
+      String schemaFileName = "schema/infinispan-config-" +Version.getMajorVersion()+ ".xsd";
       try {
-         initialize(InfinispanConfiguration.newInfinispanConfiguration(configurationFile));
+         initialize(InfinispanConfiguration.newInfinispanConfiguration(configurationFile,schemaFileName));
       }
       catch (RuntimeException re) {
          throw new ConfigurationException(re);
@@ -234,8 +237,15 @@ public class DefaultCacheManager implements CacheManager {
     * @throws java.io.IOException if there is a problem reading the configuration stream
     */
    public DefaultCacheManager(InputStream configurationStream, boolean start) throws IOException {
+      String schemaFileName = "schema/infinispan-config-" +Version.getMajorVersion()+ ".xsd";
+      FileLookup fileLookup = new FileLookup();
+      InputStream schemaStream = fileLookup.lookupFile(schemaFileName);
+      if (schemaStream == null)
+         throw new FileNotFoundException("Schema file " +schemaFileName 
+                  + " could not be found, either on the classpath or on the file system!");
+      
       try {
-         initialize(InfinispanConfiguration.newInfinispanConfiguration(configurationStream));
+         initialize(InfinispanConfiguration.newInfinispanConfiguration(configurationStream,schemaStream));
       } catch (ConfigurationException ce) {
          throw ce;
       } catch (RuntimeException re) {

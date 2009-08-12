@@ -144,6 +144,31 @@
       <jmxStatistics enabled="false"/>
       <deadlockDetection enabled="true" spinDuration="1221"/>
    </namedCache>
+   
+   <namedCache name="withJDBCLoader">
+      <clustering>
+         <sync replTimeout="20000"/>
+      </clustering>
+      <jmxStatistics enabled="false"/>
+      <deadlockDetection enabled="true" spinDuration="1221"/>
+      <loaders passivation="true" shared="true" preload="true"> 
+      	<loader class="org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore" fetchPersistentState="true" 
+                        ignoreModifications="true" purgeOnStartup="true"> 
+           <properties> 
+             <property name="connectionFactoryClass" value="org.infinispan.loaders.jdbc.connectionfactory.PooledConnectionFactory"/> 
+             <property name="connectionUrl" value="jdbc://some-url"/> 
+             <property name="userName" value="root"/> 
+             <property name="driverClass" value="org.dbms.Driver"/> 
+             <property name="idColumnType" value="VARCHAR2(256)"/> 
+             <property name="dataColumnType" value="BLOB"/> 
+             <property name="dropTableOnExit" value="true"/> 
+             <property name="createTableOnStart" value="false"/>                     
+            </properties>
+           <singletonStore enabled="true" pushStateWhenCoordinator="true" pushStateTimeout="20000"/> 
+            <async enabled="true" threadPoolSize="10" mapLockTimeout="10000"/> 
+       </loader>
+     </loaders>   
+   </namedCache>
 
    
    <namedCache name="cacheWithCustomInterceptors">

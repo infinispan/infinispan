@@ -1,7 +1,10 @@
 package org.infinispan.config.parsing;
 
+import java.util.Map;
+
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
+import org.infinispan.config.InfinispanConfiguration;
 import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.loaders.decorators.SingletonStoreConfig;
 import org.infinispan.loaders.jdbc.TableManipulation;
@@ -10,35 +13,15 @@ import org.infinispan.loaders.jdbc.connectionfactory.PooledConnectionFactory;
 import org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore;
 import org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStoreConfig;
 import org.testng.annotations.Test;
-import org.w3c.dom.Element;
 
 @Test(groups = "unit", testName = "config.parsing.JdbcConfigurationParserTest")
 public class JdbcConfigurationParserTest {
+   
    public void testCacheLoaders() throws Exception {
-      XmlConfigurationParserImpl parser = new XmlConfigurationParserImpl();
-      String xml =
-            "      <loaders passivation=\"true\" shared=\"true\" preload=\"true\">\n" +
-                  "         <loader class=\"org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore\" fetchPersistentState=\"true\"\n" +
-                  "                 ignoreModifications=\"true\" purgeOnStartup=\"true\">\n" +
-                  "            <properties>\n" +
-                  "               <property name=\"connectionFactoryClass\" value=\"org.infinispan.loaders.jdbc.connectionfactory.PooledConnectionFactory\"/>\n" +
-                  "               <property name=\"connectionUrl\" value=\"jdbc://some-url\"/>\n" +
-                  "               <property name=\"userName\" value=\"root\"/>\n" +
-                  "               <property name=\"driverClass\" value=\"org.dbms.Driver\"/>\n" +
-                  "               <property name=\"idColumnType\" value=\"VARCHAR2(256)\"/>\n" +
-                  "               <property name=\"dataColumnType\" value=\"BLOB\"/>\n" +
-                  "               <property name=\"dropTableOnExit\" value=\"true\"/>\n" +
-                  "               <property name=\"createTableOnStart\" value=\"false\"/>\n" +
-                  "            </properties>\n" +
-                  "            <singletonStore enabled=\"true\" pushStateWhenCoordinator=\"true\" pushStateTimeout=\"20000\"/>\n" +
-                  "            <async enabled=\"true\" threadPoolSize=\"10\" mapLockTimeout=\"10000\"/>\n" +
-                  "         </loader>\n" +
-                  "      </loaders>      ";
-      Element e = XmlConfigHelper.stringToElement(xml);
-
-      Configuration c = new Configuration();
-      parser.configureCacheLoaders(e, c);
-
+   
+      InfinispanConfiguration configuration = InfinispanConfiguration.newInfinispanConfiguration("configs/named-cache-test.xml");
+      Map<String, Configuration> namedConfigurations = configuration.parseNamedConfigurations();
+      Configuration c = namedConfigurations.get("withJDBCLoader");
       CacheLoaderManagerConfig clc = c.getCacheLoaderManagerConfig();
       assert clc != null;
       assert clc.isFetchPersistentState();

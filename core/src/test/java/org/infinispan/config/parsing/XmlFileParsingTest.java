@@ -3,6 +3,7 @@ package org.infinispan.config.parsing;
 import java.io.IOException;
 import java.util.Map;
 
+import org.infinispan.Version;
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
@@ -18,8 +19,9 @@ import org.testng.annotations.Test;
 public class XmlFileParsingTest {
   
    public void testNamedCacheFileJaxb() throws Exception {
+      String schemaFileName = "infinispan-config-" +Version.getMajorVersion()+ ".xsd";
       testNamedCacheFile(InfinispanConfiguration.newInfinispanConfiguration(
-               "configs/named-cache-test.xml", "schema/infinispan-config-4.0.xsd"));
+               "configs/named-cache-test.xml","schema/"+schemaFileName));
    }
 
    public void testConfigurationMergingJaxb() throws Exception {
