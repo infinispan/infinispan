@@ -24,6 +24,7 @@ package org.infinispan.marshall.exts;
 import org.infinispan.commands.RemoteCommandFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.marshall.Externalizer;
+import org.infinispan.io.UnsignedNumeric;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -47,7 +48,8 @@ public class ReplicableCommandExternalizer implements Externalizer {
       output.writeShort(command.getCommandId());
       Object[] args = command.getParameters();
       int numArgs = (args == null ? 0 : args.length);
-      output.writeInt(numArgs);
+
+      UnsignedNumeric.writeUnsignedInt(output,numArgs);
       for (int i = 0; i < numArgs; i++) {
          output.writeObject(args[i]);
       }
@@ -55,7 +57,7 @@ public class ReplicableCommandExternalizer implements Externalizer {
 
    public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
       short methodId = input.readShort();
-      int numArgs = input.readInt();
+      int numArgs = UnsignedNumeric.readUnsignedInt(input);
       Object[] args = null;
       if (numArgs > 0) {
          args = new Object[numArgs];
