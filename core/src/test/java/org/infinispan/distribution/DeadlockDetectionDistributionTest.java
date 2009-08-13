@@ -10,7 +10,7 @@ import org.testng.annotations.Test;
  *
  * @author Mircea.Markus@jboss.com
  */
-@Test(groups = "functional", enabled = false, testName = "tx.DeadlockDetectionDistributionTest")
+@Test(groups = "functional", enabled = false, testName = "distribution.DeadlockDetectionDistributionTest")
 public class DeadlockDetectionDistributionTest extends ReplDeadlockDetectionTest {
 
    public DeadlockDetectionDistributionTest() {
