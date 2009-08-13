@@ -42,7 +42,7 @@ public class CacheManagerNotifierTest {
       CacheManagerNotifier mockNotifier = createMock(CacheManagerNotifier.class);
       CacheManagerNotifier origNotifier = TestingUtil.replaceComponent(cm1, CacheManagerNotifier.class, mockNotifier, true);
       try {
-         mockNotifier.notifyViewChange(isA(List.class), eq(myAddress), anyInt());
+         mockNotifier.notifyViewChange(isA(List.class), isA(List.class), eq(myAddress), anyInt());
          replay(mockNotifier);
          // start a second cache.
          Cache c2 = cm2.getCache("cache");

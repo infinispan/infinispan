@@ -45,7 +45,7 @@ import java.util.List;
  * @since 4.0
  */
 @Marshallable(externalizer = ReplicableCommandExternalizer.class, id = Ids.MULTIPLE_RPC_COMMAND)
-public class MultipleRpcCommand extends BaseRpcCommand {
+public class MultipleRpcCommand extends BaseRpcInvokingCommand {
 
    public static final byte COMMAND_ID = 2;
 
@@ -127,7 +127,6 @@ public class MultipleRpcCommand extends BaseRpcCommand {
    @Override
    public String toString() {
       return "MultipleRpcCommand{" +
-            "interceptorChain=" + interceptorChain +
             ", commands=" + (commands == null ? null : Arrays.asList(commands)) +
             ", cacheName='" + cacheName + '\'' +
             '}';

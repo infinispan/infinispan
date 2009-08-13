@@ -27,11 +27,12 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
-import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.NonTxInvocationContext;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.Marshallable;
@@ -62,6 +63,8 @@ public class ClusteredGetCommand implements CacheRpcCommand {
    private CommandsFactory commandsFactory;
    private InterceptorChain invoker;
 
+   private DistributionManager distributionManager;
+
    public ClusteredGetCommand() {
    }
 
@@ -84,6 +87,8 @@ public class ClusteredGetCommand implements CacheRpcCommand {
     * @return returns an <code>CacheEntry</code> or null, if no entry is found.
     */
    public InternalCacheValue perform(InvocationContext context) throws Throwable {
+      if (distributionManager != null && distributionManager.isAffectedByRehash(key)) return null;
+
       GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key);
       command.setReturnCacheEntry(true);
       NonTxInvocationContext invocationContext = icc.createRemoteInvocationContext();
@@ -143,5 +148,9 @@ public class ClusteredGetCommand implements CacheRpcCommand {
 
    public String getCacheName() {
       return cacheName;
+   }
+
+   public Object getKey() {
+      return key;
    }
 }

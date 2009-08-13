@@ -35,7 +35,9 @@ public interface ViewChangedEvent extends Event {
    /**
     * @return the new view associated with this view change.
     */
-   List<Address> getNewMemberList();
+   List<Address> getNewMembers();
+
+   List<Address> getOldMembers();
 
    Address getLocalAddress();
 

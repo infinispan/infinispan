@@ -1,14 +1,18 @@
 package org.infinispan.distribution;
 
+import org.infinispan.CacheException;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.config.Configuration;
+import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
+import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
@@ -24,9 +28,18 @@ import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.concurrent.locks.LockSupport;
 
 /**
  * The default distribution manager implementation
@@ -44,13 +57,40 @@ public class DistributionManagerImpl implements DistributionManager {
    int replCount;
    ViewChangeListener listener;
    CommandsFactory cf;
+   LinkedBlockingQueue<Runnable> rehashQueue = new LinkedBlockingQueue<Runnable>();
+   ThreadFactory tf = new ThreadFactory() {
+      public Thread newThread(Runnable r) {
+         Thread t = new Thread(r);
+         t.setDaemon(true);
+         t.setPriority(Thread.MIN_PRIORITY);
+         t.setName("Rehasher-" + rpcManager.getTransport().getAddress());
+         return t;
+      }
+   };
+   ExecutorService rehashExecutor = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, rehashQueue, tf);
+
+   TransactionLogger transactionLogger = new TransactionLoggerImpl();
+   volatile boolean rehashInProgress = false;
+   volatile Address joiner;
+   static final AtomicReferenceFieldUpdater<DistributionManagerImpl, Address> JOINER_CAS =
+         AtomicReferenceFieldUpdater.newUpdater(DistributionManagerImpl.class, Address.class, "joiner");
+   private DataContainer dataContainer;
+   private InterceptorChain interceptorChain;
+   private InvocationContextContainer icc;
+   private volatile boolean joinTaskSubmitted = false;
+   volatile boolean joinComplete = false;
+
 
    @Inject
-   public void init(Configuration configuration, RpcManager rpcManager, CacheManagerNotifier notifier, CommandsFactory cf) {
+   public void init(Configuration configuration, RpcManager rpcManager, CacheManagerNotifier notifier, CommandsFactory cf,
+                    DataContainer dataContainer, InterceptorChain interceptorChain, InvocationContextContainer icc) {
       this.configuration = configuration;
       this.rpcManager = rpcManager;
       this.notifier = notifier;
       this.cf = cf;
+      this.dataContainer = dataContainer;
+      this.interceptorChain = interceptorChain;
+      this.icc = icc;
    }
 
    // needs to be AFTER the RpcManager
@@ -61,16 +101,47 @@ public class DistributionManagerImpl implements DistributionManager {
       consistentHash.setCaches(rpcManager.getTransport().getMembers());
       listener = new ViewChangeListener();
       notifier.addListener(listener);
+      if (rpcManager.getTransport().getMembers().size() > 1) {
+         JoinTask joinTask = new JoinTask(rpcManager, cf, configuration, transactionLogger, dataContainer, interceptorChain, icc, this);
+         rehashExecutor.submit(joinTask);
+      } else {
+         joinComplete = true;
+      }
+      joinTaskSubmitted = true;
    }
 
    @Stop(priority = 20)
    public void stop() {
       notifier.removeListener(listener);
+      rehashExecutor.shutdownNow();
+      joinComplete = false;
    }
 
-   public void rehash(Collection<Address> newList) {
+   private Address diff(List<Address> newList, List<Address> oldList) {
+      List<Address> list = new ArrayList<Address>(newList);
+      list.removeAll(oldList);
+      // Could easily be > 1 member joined!
+      return list.size() > 0 ? list.get(0) : null;
+   }
+
+
+   public void rehash(List<Address> newMembers, List<Address> oldMembers) {
+      boolean join = oldMembers == null || oldMembers.size() < newMembers.size();
       // on view change, we should update our view
-      consistentHash.setCaches(newList);
+      log.info("Detected a veiw change.  Member list changed from {0} to {1}", oldMembers, newMembers);
+
+      if (join) {
+         Address joiner = diff(newMembers, oldMembers);
+         log.info("This is a JOIN event!  Wait for notification from new joiner " + joiner);
+      } else {
+         log.info("This is a LEAVE event!");
+         // TODO: implement this stuff!
+         ConsistentHash newCH = new DefaultConsistentHash();
+         newCH.setCaches(newMembers);
+
+         consistentHash = newCH;
+
+      }
    }
 
    public boolean isLocal(Object key) {
@@ -109,11 +180,75 @@ public class DistributionManagerImpl implements DistributionManager {
       return null;
    }
 
+   public ConsistentHash getConsistentHash() {
+      return consistentHash;
+   }
+
+   public void setConsistentHash(ConsistentHash consistentHash) {
+      log.trace("Installing new consistent hash {0}", consistentHash);
+      this.consistentHash = consistentHash;
+   }
+
+   public boolean isAffectedByRehash(Object key) {
+      if (rehashInProgress) {
+         throw new UnsupportedOperationException("TODO implement me");
+      } else {
+         return false;
+      }
+   }
+
+   public TransactionLogger getTransactionLogger() {
+      return transactionLogger;
+   }
+
+   public List<Address> requestPermissionToJoin(Address joiner) {
+      if (JOINER_CAS.compareAndSet(this, null, joiner))
+         return new LinkedList<Address>(consistentHash.getCaches());
+      else
+         return null;
+   }
+
+   public void notifyJoinComplete(Address joiner) {
+      log.trace("Received notification that {0} has completed a join.  Current 'joiner' flag is {1}, setting this to null.", joiner, this.joiner);
+      if (this.joiner != null) {
+         if (this.joiner.equals(joiner)) this.joiner = null;
+      }
+   }
+
+   public void informRehashOnJoin(Address joiner, boolean starting) {
+      log.trace("Informed of a JOIN by {0}.  Starting? {1}", joiner, starting);
+      if (!starting) {
+         if (consistentHash instanceof UnionConsistentHash) {
+            UnionConsistentHash uch = (UnionConsistentHash) consistentHash;
+            consistentHash = uch.getNewConsistentHash();
+         }
+         rehashInProgress = false;
+      } else {
+         ConsistentHash chOld = consistentHash;
+         if (chOld instanceof UnionConsistentHash) throw new RuntimeException("Not expecting a union CH!");
+         this.joiner = joiner;
+         rehashInProgress = true;
+
+         ConsistentHash chNew;
+         try {
+            chNew = (ConsistentHash) Util.getInstance(configuration.getConsistentHashClass());
+         } catch (Exception e) {
+            throw new CacheException("Unable to create instance of " + configuration.getConsistentHashClass(), e);
+         }
+         List<Address> newAddresses = new LinkedList<Address>(chOld.getCaches());
+         newAddresses.add(joiner);
+         chNew.setCaches(newAddresses);
+         consistentHash = new UnionConsistentHash(chOld, chNew);
+      }
+      log.trace("New CH is {0}", consistentHash);
+   }
+
    @Listener
    public class ViewChangeListener {
       @ViewChanged
       public void handleViewChange(ViewChangedEvent e) {
-         rehash(e.getNewMemberList());
+         while (!joinTaskSubmitted) LockSupport.parkNanos(100 * 1000000);
+         rehash(e.getNewMembers(), e.getOldMembers());
       }
    }
 }

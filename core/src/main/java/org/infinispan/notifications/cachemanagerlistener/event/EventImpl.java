@@ -16,18 +16,19 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
    String cacheName;
    CacheManager cacheManager;
    Type type;
-   List<Address> newMemberList;
+   List<Address> newMembers, oldMembers;
    Address localAddress;
    int viewId;
 
    public EventImpl() {
    }
 
-   public EventImpl(String cacheName, CacheManager cacheManager, Type type, List<Address> newMemberList, Address localAddress, int viewId) {
+   public EventImpl(String cacheName, CacheManager cacheManager, Type type, List<Address> newMemberList, List<Address> oldMemberList, Address localAddress, int viewId) {
       this.cacheName = cacheName;
       this.cacheManager = cacheManager;
       this.type = type;
-      this.newMemberList = newMemberList;
+      this.newMembers = newMemberList;
+      this.oldMembers = oldMemberList;
       this.localAddress = localAddress;
       this.viewId = viewId;
    }
@@ -56,12 +57,20 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
       this.type = type;
    }
 
-   public List<Address> getNewMemberList() {
-      return newMemberList;
+   public List<Address> getNewMembers() {
+      return newMembers;
    }
 
-   public void setNewMemberList(List<Address> newMemberList) {
-      this.newMemberList = newMemberList;
+   public void setNewMembers(List<Address> newMembers) {
+      this.newMembers = newMembers;
+   }
+
+   public void setOldMembers(List<Address> oldMembers) {
+      this.oldMembers = oldMembers;
+   }
+
+   public List<Address> getOldMembers() {
+      return this.oldMembers;
    }
 
    public Address getLocalAddress() {
@@ -90,7 +99,9 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
       if (viewId != event.viewId) return false;
       if (cacheName != null ? !cacheName.equals(event.cacheName) : event.cacheName != null) return false;
       if (localAddress != null ? !localAddress.equals(event.localAddress) : event.localAddress != null) return false;
-      if (newMemberList != null ? !newMemberList.equals(event.newMemberList) : event.newMemberList != null)
+      if (newMembers != null ? !newMembers.equals(event.newMembers) : event.newMembers != null)
+         return false;
+      if (oldMembers != null ? !oldMembers.equals(event.oldMembers) : event.oldMembers != null)
          return false;
       if (type != event.type) return false;
 
@@ -101,7 +112,8 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
    public int hashCode() {
       int result = cacheName != null ? cacheName.hashCode() : 0;
       result = 31 * result + (type != null ? type.hashCode() : 0);
-      result = 31 * result + (newMemberList != null ? newMemberList.hashCode() : 0);
+      result = 31 * result + (newMembers != null ? newMembers.hashCode() : 0);
+      result = 31 * result + (oldMembers != null ? oldMembers.hashCode() : 0);
       result = 31 * result + (localAddress != null ? localAddress.hashCode() : 0);
       result = 31 * result + viewId;
       return result;
@@ -112,7 +124,8 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
       return "EventImpl{" +
             "cacheName='" + cacheName + '\'' +
             ", type=" + type +
-            ", newMemberList=" + newMemberList +
+            ", newMembers=" + newMembers +
+            ", oldMembers=" + oldMembers +
             ", localAddress=" + localAddress +
             ", viewId=" + viewId +
             '}';

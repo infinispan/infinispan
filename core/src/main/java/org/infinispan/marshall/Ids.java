@@ -23,35 +23,39 @@ package org.infinispan.marshall;
 
 /**
  * Indexes.
- * 
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */
 public interface Ids {
-   /** ids for jdk classes **/
-   
+   /**
+    * ids for jdk classes *
+    */
+
    static final byte ARRAY_LIST = 0;
    static final byte LINKED_LIST = 1;
    static final byte JDK_MAPS = 2;
    static final byte JDK_SETS = 3;
-   static final byte SINGLETON_LIST = 4; 
+   static final byte SINGLETON_LIST = 4;
 
-   /** ids for infinispan core classes **/
+   /**
+    * ids for infinispan core classes *
+    */
 
    // responses
    static final byte SUCCESSFUL_RESPONSE = 5;
-   static final byte EXTENDED_RESPONSE = 6; 
+   static final byte EXTENDED_RESPONSE = 6;
    static final byte EXCEPTION_RESPONSE = 7;
    static final byte UNSUCCESSFUL_RESPONSE = 8;
    static final byte REQUEST_IGNORED_RESPONSE = 9;
-   
+
    // entries and values
-   static final byte IMMORTAL_ENTRY = 10; 
+   static final byte IMMORTAL_ENTRY = 10;
    static final byte MORTAL_ENTRY = 11;
    static final byte TRANSIENT_ENTRY = 12;
    static final byte TRANSIENT_MORTAL_ENTRY = 13;
-   static final byte IMMORTAL_VALUE = 14; 
-   static final byte MORTAL_VALUE = 15; 
+   static final byte IMMORTAL_VALUE = 14;
+   static final byte MORTAL_VALUE = 15;
    static final byte TRANSIENT_VALUE = 16;
    static final byte TRANSIENT_MORTAL_VALUE = 17;
 
@@ -68,10 +72,10 @@ public interface Ids {
    static final byte GET_KEY_VALUE_COMMAND = 25;
    static final byte PUT_KEY_VALUE_COMMAND = 26;
    static final byte REMOVE_COMMAND = 27;
-   static final byte INVALIDATE_COMMAND = 28; 
+   static final byte INVALIDATE_COMMAND = 28;
    static final byte REPLACE_COMMAND = 29;
    static final byte CLEAR_COMMAND = 30;
-   static final byte PUT_MAP_COMMAND = 31; 
+   static final byte PUT_MAP_COMMAND = 31;
    static final byte PREPARE_COMMAND = 32;
    static final byte COMMIT_COMMAND = 33;
    static final byte ROLLBACK_COMMAND = 34;
@@ -83,16 +87,27 @@ public interface Ids {
    static final byte GLOBAL_TRANSACTION = 38;
    static final byte JGROUPS_ADDRESS = 39;
    static final byte MARSHALLED_VALUE = 40;
-   static final byte TRANSACTION_LOG_ENTRY = 41; 
+   static final byte TRANSACTION_LOG_ENTRY = 41;
    static final byte BUCKET = 42;
    static final byte DEADLOCK_DETECTING_GLOBAL_TRANSACTION = 43;
+
+   /**
+    * ids for infinispan tree classes *
+    */
+
+   static final byte NODE_KEY = 44;
+   static final byte FQN = 45;
+
    static final byte ATOMIC_HASH_MAP_DELTA = 46;
    static final byte ATOMIC_PUT_OPERATION = 47;
    static final byte ATOMIC_REMOVE_OPERATION = 48;
    static final byte ATOMIC_CLEAR_OPERATION = 49;
-   
-   /** ids for infinispan tree classes **/
 
-   static final byte NODE_KEY = 44;
-   static final byte FQN = 45;
+   static final byte GET_CONSISTENT_HASH_COMMAND = 50;
+   static final byte PUSH_STATE_COMMAND = 51;
+   static final byte PULL_STATE_COMMAND = 52;
+   static final byte INSTALL_CONSISTENT_HASH_COMMAND = 53;
+   static final byte DEFAULT_CONSISTENT_HASH = 54;
+   static final byte UNION_CONSISTENT_HASH = 55;
+   static final byte JOIN_COMPLETE_COMMAND = 56;
 }

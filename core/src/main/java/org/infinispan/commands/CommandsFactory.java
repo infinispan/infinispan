@@ -21,7 +21,12 @@
  */
 package org.infinispan.commands;
 
+import org.infinispan.commands.control.GetConsistentHashCommand;
+import org.infinispan.commands.control.InstallConsistentHashCommand;
+import org.infinispan.commands.control.JoinCompleteCommand;
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.control.PullStateCommand;
+import org.infinispan.commands.control.PushStateCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -42,8 +47,11 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.container.entries.InternalCacheValue;
+import org.infinispan.distribution.ConsistentHash;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
 import java.util.Collection;
@@ -111,4 +119,14 @@ public interface CommandsFactory {
    ClusteredGetCommand buildClusteredGetCommand(Object key);
 
    LockControlCommand buildLockControlCommand(Collection keys, boolean implicit);
+
+   GetConsistentHashCommand buildGetConsistentHashCommand(Address joiner);
+
+   InstallConsistentHashCommand buildInstallConsistentHashCommand(Address joiner, boolean starting);
+
+   PushStateCommand buildPushStateCommand(Address sender, Map<Object, InternalCacheValue> state);
+
+   PullStateCommand buildPullStateCommand(Address requestor, ConsistentHash newCH);
+
+   JoinCompleteCommand buildJoinCompleteCommand(Address joiner);
 }

@@ -19,8 +19,6 @@ import java.util.Map;
 @Scope(Scopes.NAMED_CACHE)
 public interface DistributionManager {
 
-   void rehash(Collection<Address> newList);
-
    boolean isLocal(Object key);
 
    /**
@@ -57,5 +55,43 @@ public interface DistributionManager {
     * @return an internal cache entry, or null if it cannot be located
     */
    InternalCacheEntry retrieveFromRemoteSource(Object key) throws Exception;
+
+   ConsistentHash getConsistentHash();
+
+   void setConsistentHash(ConsistentHash consistentHash);
+
+   /**
+    * Tests whether a given key is affected by a rehash that may be in progress.
+    *
+    * @param key key to test
+    * @return whether a key is affected by a rehash
+    */
+   boolean isAffectedByRehash(Object key);
+
+   TransactionLogger getTransactionLogger();
+
+   /**
+    * "Asks" a coordinator if a joiner may join.  Used to serialize joins such that only a single joiner comes in at any
+    * given time.
+    *
+    * @param joiner joiner who wants to join
+    * @return a consistent hash prior to the joiner joining (if the joiner is allowed to join), otherwise null.
+    */
+   List<Address> requestPermissionToJoin(Address joiner);
+
+   /**
+    * Notifies a coordinator when a join completes
+    *
+    * @param joiner joiner who has completed.
+    */
+   void notifyJoinComplete(Address joiner);
+
+   /**
+    * This will cause all nodes to add the joiner to their UnionCH
+    *
+    * @param joiner
+    * @param starting
+    */
+   void informRehashOnJoin(Address joiner, boolean starting);
 }
 

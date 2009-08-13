@@ -22,7 +22,12 @@
 package org.infinispan.commands;
 
 import org.infinispan.Cache;
+import org.infinispan.commands.control.GetConsistentHashCommand;
+import org.infinispan.commands.control.InstallConsistentHashCommand;
+import org.infinispan.commands.control.JoinCompleteCommand;
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.control.PullStateCommand;
+import org.infinispan.commands.control.PushStateCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -44,13 +49,18 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.distribution.ConsistentHash;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.TransactionTable;
 
@@ -78,11 +88,14 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private DistributionManager distributionManager;
    private InvocationContextContainer icc;
    private TransactionTable txTable;
+   private Configuration configuration;
+   private CacheLoaderManager cacheLoaderManager;
 
    @Inject
    public void setupDependencies(DataContainer container, CacheNotifier notifier, Cache cache,
                                  InterceptorChain interceptorChain, DistributionManager distributionManager,
-                                 InvocationContextContainer icc, TransactionTable txTable) {
+                                 InvocationContextContainer icc, TransactionTable txTable, CacheLoaderManager cacheLoaderManager,
+                                 Configuration configuration) {
       this.dataContainer = container;
       this.notifier = notifier;
       this.cache = cache;
@@ -90,6 +103,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
       this.distributionManager = distributionManager;
       this.icc = icc;
       this.txTable = txTable;
+      this.configuration = configuration;
+      this.cacheLoaderManager = cacheLoaderManager;
    }
 
    @Start(priority = 1)
@@ -259,10 +274,46 @@ public class CommandsFactoryImpl implements CommandsFactory {
             LockControlCommand lcc = (LockControlCommand) c;
             lcc.init(interceptorChain, icc, txTable);
             break;
+         case GetConsistentHashCommand.COMMAND_ID:
+            GetConsistentHashCommand gchc = (GetConsistentHashCommand) c;
+            gchc.initialize(distributionManager);
+            break;
+         case InstallConsistentHashCommand.COMMAND_ID:
+            InstallConsistentHashCommand ichc = (InstallConsistentHashCommand) c;
+            ichc.initialize(distributionManager);
+            break;
+         case PullStateCommand.COMMAND_ID:
+            PullStateCommand psc = (PullStateCommand) c;
+            psc.init(dataContainer, cacheLoaderManager, distributionManager, configuration);
+            break;
+         case JoinCompleteCommand.COMMAND_ID:
+            JoinCompleteCommand jcc = (JoinCompleteCommand) c;
+            jcc.init(distributionManager);
+            break;
       }
    }
 
    public LockControlCommand buildLockControlCommand(Collection keys, boolean implicit) {
       return new LockControlCommand(keys, cacheName, implicit);
+   }
+
+   public GetConsistentHashCommand buildGetConsistentHashCommand(Address joiner) {
+      return new GetConsistentHashCommand(cacheName, joiner);
+   }
+
+   public InstallConsistentHashCommand buildInstallConsistentHashCommand(Address joiner, boolean starting) {
+      return new InstallConsistentHashCommand(cacheName, joiner, starting);
+   }
+
+   public PushStateCommand buildPushStateCommand(Address sender, Map<Object, InternalCacheValue> state) {
+      return new PushStateCommand(cacheName, sender, state);
+   }
+
+   public PullStateCommand buildPullStateCommand(Address requestor, ConsistentHash newCH) {
+      return new PullStateCommand(cacheName, requestor, newCH);
+   }
+
+   public JoinCompleteCommand buildJoinCompleteCommand(Address joiner) {
+      return new JoinCompleteCommand(cacheName, joiner);
    }
 }

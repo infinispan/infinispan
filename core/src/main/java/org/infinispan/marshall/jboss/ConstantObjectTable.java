@@ -27,8 +27,13 @@ import org.infinispan.atomic.AtomicHashMapDelta;
 import org.infinispan.atomic.ClearOperation;
 import org.infinispan.atomic.PutOperation;
 import org.infinispan.atomic.RemoveOperation;
-import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.RemoteCommandFactory;
+import org.infinispan.commands.control.GetConsistentHashCommand;
+import org.infinispan.commands.control.InstallConsistentHashCommand;
+import org.infinispan.commands.control.JoinCompleteCommand;
+import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.control.PullStateCommand;
+import org.infinispan.commands.control.PushStateCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
@@ -52,6 +57,8 @@ import org.infinispan.container.entries.TransientCacheEntry;
 import org.infinispan.container.entries.TransientCacheValue;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheValue;
+import org.infinispan.distribution.DefaultConsistentHash;
+import org.infinispan.distribution.UnionConsistentHash;
 import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.marshall.Externalizer;
 import org.infinispan.marshall.Marshallable;
@@ -142,6 +149,11 @@ public class ConstantObjectTable implements ObjectTable {
       MARSHALLABLES.add(RollbackCommand.class.getName());
       MARSHALLABLES.add(InvalidateL1Command.class.getName());
       MARSHALLABLES.add(LockControlCommand.class.getName());
+      MARSHALLABLES.add(GetConsistentHashCommand.class.getName());
+      MARSHALLABLES.add(PushStateCommand.class.getName());
+      MARSHALLABLES.add(PullStateCommand.class.getName());
+      MARSHALLABLES.add(InstallConsistentHashCommand.class.getName());
+      MARSHALLABLES.add(JoinCompleteCommand.class.getName());
 
       MARSHALLABLES.add(ImmortalCacheEntry.class.getName());
       MARSHALLABLES.add(MortalCacheEntry.class.getName());
@@ -160,6 +172,8 @@ public class ConstantObjectTable implements ObjectTable {
       MARSHALLABLES.add(PutOperation.class.getName());
       MARSHALLABLES.add(RemoveOperation.class.getName());
       MARSHALLABLES.add(ClearOperation.class.getName());
+      MARSHALLABLES.add(DefaultConsistentHash.class.getName());
+      MARSHALLABLES.add(UnionConsistentHash.class.getName());
    }
 
    /**
@@ -198,9 +212,9 @@ public class ConstantObjectTable implements ObjectTable {
                Marshallable marshallable = ReflectionUtil.getAnnotation(clazz, Marshallable.class);
                if (marshallable != null && !marshallable.externalizer().equals(Externalizer.class)) {
                   int id = marshallable.id();
-                  Externalizer ext = (Externalizer) Util.getInstance(marshallable.externalizer());
+                  Externalizer ext = Util.getInstance(marshallable.externalizer());
                   if (!ids.add(id))
-                     throw new CacheException("Duplicat id found! id=" + id + " in " + ext.getClass().getName() + " is shared by another marshallable class.");
+                     throw new CacheException("Duplicate id found! id=" + id + " in " + ext.getClass().getName() + " is shared by another marshallable class.");
                   if (ext instanceof ReplicableCommandExternalizer) {
                      ((ReplicableCommandExternalizer) ext).inject(cmdFactory);
                   }

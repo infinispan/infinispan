@@ -46,6 +46,7 @@ import org.infinispan.container.entries.TransientCacheEntry;
 import org.infinispan.container.entries.TransientCacheValue;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheValue;
+import org.infinispan.distribution.DefaultConsistentHash;
 import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.marshall.jboss.JBossMarshaller;
 import org.infinispan.remoting.responses.ExtendedResponse;
@@ -67,21 +68,20 @@ import org.testng.annotations.Test;
 import java.util.*;
 
 /**
- * Test for home grown and JBoss Marshalling based marshallers where data written 
- * and size of payloads are compared. It's disabled by default because JBoss 
- * Marshalling for the moment generates bigger payloads in most cases.  
- * 
+ * Test for home grown and JBoss Marshalling based marshallers where data written and size of payloads are compared.
+ * It's disabled by default because JBoss Marshalling for the moment generates bigger payloads in most cases.
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */
 @Test(groups = "functional", testName = "marshall.MarshallersTest", enabled = true)
 public class MarshallersTest {
-   
+
    private final MarshallerImpl home = new MarshallerImpl();
    private GlobalTransactionFactory gtf = new GlobalTransactionFactory();
    private final JBossMarshaller jboss = new JBossMarshaller();
-   private final Marshaller[] marshallers = new Marshaller[] {home, jboss};
-   
+   private final Marshaller[] marshallers = new Marshaller[]{home, jboss};
+
    @BeforeTest
    public void setUp() {
       home.init(Thread.currentThread().getContextClassLoader(), new RemoteCommandFactory());
@@ -97,12 +97,12 @@ public class MarshallersTest {
       JGroupsAddress address = new JGroupsAddress(new IpAddress(12345));
       checkEqualityAndSize(address);
    }
-   
+
    public void testGlobalTransactionMarshalling() throws Exception {
       GlobalTransaction gtx = gtf.newGlobalTransaction(new JGroupsAddress(new IpAddress(12345)), false);
       checkEqualityAndSize(gtx);
    }
-   
+
    public void testListMarshalling() throws Exception {
       List l1 = new ArrayList();
       List l2 = new LinkedList();
@@ -114,7 +114,7 @@ public class MarshallersTest {
       checkEqualityAndSize(l1);
       checkEqualityAndSize(l2);
    }
-   
+
    public void testMapMarshalling() throws Exception {
       Map m1 = new HashMap();
       Map m2 = new TreeMap();
@@ -129,7 +129,7 @@ public class MarshallersTest {
       Map m5 = Immutables.immutableMapWrap(m3);
       checkEqualityAndSize(m1);
       checkEqualityAndSize(m2);
-      
+
       List<Integer> sizes = new ArrayList<Integer>(2);
       for (Marshaller marshaller : marshallers) {
          byte[] bytes = marshaller.objectToByteBuffer(m4);
@@ -143,7 +143,7 @@ public class MarshallersTest {
 
       checkEqualityAndSize(m5);
    }
-   
+
    public void testSetMarshalling() throws Exception {
       Set s1 = new HashSet();
       Set s2 = new TreeSet();
@@ -168,12 +168,12 @@ public class MarshallersTest {
       List l = Collections.singletonList(gtx);
       checkEqualityAndSize(l);
    }
-   
+
    public void testTransactionLogMarshalling() throws Exception {
       GlobalTransaction gtx = gtf.newGlobalTransaction(new JGroupsAddress(new IpAddress(12345)), false);
       PutKeyValueCommand command = new PutKeyValueCommand("k", "v", false, null, 0, 0);
       TransactionLog.LogEntry entry = new TransactionLog.LogEntry(gtx, command);
-      
+
       List<Integer> sizes = new ArrayList<Integer>(2);
       for (Marshaller marshaller : marshallers) {
          byte[] bytes = marshaller.objectToByteBuffer(entry);
@@ -186,7 +186,7 @@ public class MarshallersTest {
       }
       assert sizes.get(1) < sizes.get(0) : "JBoss Marshaller should write less bytes: bytesJBoss=" + sizes.get(1) + ", bytesHome=" + sizes.get(0);
    }
-   
+
    public void testImmutableResponseMarshalling() throws Exception {
       checkEqualityAndSize(RequestIgnoredResponse.INSTANCE);
       checkEqualityAndSize(UnsuccessfulResponse.INSTANCE);
@@ -208,7 +208,7 @@ public class MarshallersTest {
       }
       assert sizes.get(1) < sizes.get(0) : "JBoss Marshaller should write less bytes: bytesJBoss=" + sizes.get(1) + ", bytesHome=" + sizes.get(0);
    }
-   
+
    public void testReplicableCommandsMarshalling() throws Exception {
       StateTransferControlCommand c1 = new StateTransferControlCommand(true);
 
@@ -252,7 +252,7 @@ public class MarshallersTest {
          byte[] bytes = marshaller.objectToByteBuffer(c7);
          InvalidateCommand rc7 = (InvalidateCommand) marshaller.objectFromByteBuffer(bytes);
          assert rc7.getCommandId() == c7.getCommandId() : "Writen[" + c7.getCommandId() + "] and read[" + rc7.getCommandId() + "] objects should be the same";
-         assert Arrays.equals(rc7.getParameters(), c7.getParameters()) : "Writen[" + c7.getParameters() + "] and read[" + rc7.getParameters() + "] objects should be the same";         
+         assert Arrays.equals(rc7.getParameters(), c7.getParameters()) : "Writen[" + c7.getParameters() + "] and read[" + rc7.getParameters() + "] objects should be the same";
          sizes.add(bytes.length);
       }
       assert sizes.get(1) < sizes.get(0) : "JBoss Marshaller should write less bytes: bytesJBoss=" + sizes.get(1) + ", bytesHome=" + sizes.get(0);
@@ -267,7 +267,7 @@ public class MarshallersTest {
          sizes.add(bytes.length);
       }
       assert sizes.get(1) < sizes.get(0) : "JBoss Marshaller should write less bytes: bytesJBoss=" + sizes.get(1) + ", bytesHome=" + sizes.get(0);
-      
+
       ReplaceCommand c8 = new ReplaceCommand("key", "oldvalue", "newvalue", 0, 0);
       checkEqualityAndSize(c8);
 
@@ -277,7 +277,7 @@ public class MarshallersTest {
          byte[] bytes = marshaller.objectToByteBuffer(c9);
          ClearCommand rc9 = (ClearCommand) marshaller.objectFromByteBuffer(bytes);
          assert rc9.getCommandId() == c9.getCommandId() : "Writen[" + c9.getCommandId() + "] and read[" + rc9.getCommandId() + "] objects should be the same";
-         assert Arrays.equals(rc9.getParameters(), c9.getParameters()) : "Writen[" + c9.getParameters() + "] and read[" + rc9.getParameters() + "] objects should be the same";         
+         assert Arrays.equals(rc9.getParameters(), c9.getParameters()) : "Writen[" + c9.getParameters() + "] and read[" + rc9.getParameters() + "] objects should be the same";
          sizes.add(bytes.length);
       }
       assert sizes.get(1) < sizes.get(0) : "JBoss Marshaller should write less bytes: bytesJBoss=" + sizes.get(1) + ", bytesHome=" + sizes.get(0);
@@ -318,7 +318,7 @@ public class MarshallersTest {
       TransientMortalCacheEntry entry4 = (TransientMortalCacheEntry) InternalEntryFactory.create("key", "value", System.currentTimeMillis() - 1000, 200000, System.currentTimeMillis(), 4000000);
       checkEqualityAndSize(entry4);
    }
-   
+
    public void testInternalCacheValueMarshalling() throws Exception {
       byte[] bytes = null;
       ImmortalCacheValue value1 = (ImmortalCacheValue) InternalEntryFactory.createValue("value", System.currentTimeMillis() - 1000, -1, System.currentTimeMillis(), -1);
@@ -340,7 +340,7 @@ public class MarshallersTest {
          sizes.add(bytes.length);
       }
       assert sizes.get(1) < sizes.get(0) : "JBoss Marshaller should write less bytes: bytesJBoss=" + sizes.get(1) + ", bytesHome=" + sizes.get(0);
-         
+
       sizes.clear();
       for (Marshaller marshaller : marshallers) {
          TransientCacheValue value3 = (TransientCacheValue) InternalEntryFactory.createValue("value", System.currentTimeMillis() - 1000, -1, System.currentTimeMillis(), 4000000);
@@ -350,7 +350,7 @@ public class MarshallersTest {
          sizes.add(bytes.length);
       }
       assert sizes.get(1) < sizes.get(0) : "JBoss Marshaller should write less bytes: bytesJBoss=" + sizes.get(1) + ", bytesHome=" + sizes.get(0);
-      
+
       sizes.clear();
       for (Marshaller marshaller : marshallers) {
          TransientMortalCacheValue value4 = (TransientMortalCacheValue) InternalEntryFactory.createValue("value", System.currentTimeMillis() - 1000, 200000, System.currentTimeMillis(), 4000000);
@@ -361,7 +361,7 @@ public class MarshallersTest {
       }
       assert sizes.get(1) < sizes.get(0) : "JBoss Marshaller should write less bytes: bytesJBoss=" + sizes.get(1) + ", bytesHome=" + sizes.get(0);
    }
-   
+
    public void testBucketMarshalling() throws Exception {
       ImmortalCacheEntry entry1 = (ImmortalCacheEntry) InternalEntryFactory.create("key", "value", System.currentTimeMillis() - 1000, -1, System.currentTimeMillis(), -1);
       MortalCacheEntry entry2 = (MortalCacheEntry) InternalEntryFactory.create("key", "value", System.currentTimeMillis() - 1000, 200000, System.currentTimeMillis(), -1);
@@ -373,17 +373,30 @@ public class MarshallersTest {
       b.addEntry(entry2);
       b.addEntry(entry3);
       b.addEntry(entry4);
-      
+
       List<Integer> sizes = new ArrayList<Integer>(2);
       for (Marshaller marshaller : marshallers) {
          byte[] bytes = marshaller.objectToByteBuffer(b);
          Bucket rb = (Bucket) marshaller.objectFromByteBuffer(bytes);
-         assert rb.getEntries().equals(b.getEntries()) : "Writen[" + b.getEntries() + "] and read[" + rb.getEntries() + "] objects should be the same";         
+         assert rb.getEntries().equals(b.getEntries()) : "Writen[" + b.getEntries() + "] and read[" + rb.getEntries() + "] objects should be the same";
          sizes.add(bytes.length);
       }
       assert sizes.get(1) < sizes.get(0) : "JBoss Marshaller should write less bytes: bytesJBoss=" + sizes.get(1) + ", bytesHome=" + sizes.get(0);
    }
-   
+
+   public void testConsistentHash() throws Exception {
+      DefaultConsistentHash dch = new DefaultConsistentHash();
+      List<Address> caches = new LinkedList<Address>();
+      caches.add(new JGroupsAddress(new org.jgroups.util.UUID()));
+      caches.add(new JGroupsAddress(new org.jgroups.util.UUID()));
+      caches.add(new JGroupsAddress(new org.jgroups.util.UUID()));
+      dch.setCaches(caches);
+
+      byte[] bytes = jboss.objectToByteBuffer(dch);
+      DefaultConsistentHash dch2 = (DefaultConsistentHash) jboss.objectFromByteBuffer(bytes);
+      assert dch2.equals(dch);
+   }
+
    protected void checkEqualityAndSize(Object writeObj) throws Exception {
       int bytesH = marshallAndAssertEquality(home, writeObj);
       int bytesJ = marshallAndAssertEquality(jboss, writeObj);

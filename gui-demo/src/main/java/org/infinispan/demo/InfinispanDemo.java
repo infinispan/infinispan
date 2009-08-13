@@ -441,7 +441,7 @@ public class InfinispanDemo {
    public class CacheListener {
       @ViewChanged
       public void viewChangeEvent(ViewChangedEvent e) {
-         updateClusterTable(e.getNewMemberList());
+         updateClusterTable(e.getNewMembers());
       }
 
       @CacheEntryModified

@@ -25,6 +25,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
@@ -32,7 +33,6 @@ import java.util.concurrent.CountDownLatch;
  * Functional test for deadlock detection.
  *
  * @author Mircea.Markus@jboss.com
- *
  */
 @Test(testName = "tx.ReplDeadlockDetectionTest", groups = "functional")
 public class ReplDeadlockDetectionTest extends MultipleCacheManagersTest {
@@ -242,15 +242,15 @@ public class ReplDeadlockDetectionTest extends MultipleCacheManagersTest {
          this.replicationLatch = replicationLatch;
       }
 
-      public List<Response> invokeRemotely(List<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter) {
+      public List<Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter) {
          return realOne.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue, responseFilter);
       }
 
-      public List<Response> invokeRemotely(List<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue) {
+      public List<Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue) {
          return realOne.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue);
       }
 
-      public List<Response> invokeRemotely(List<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout) throws Exception {
+      public List<Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout) throws Exception {
          return realOne.invokeRemotely(recipients, rpcCommand, mode, timeout);
       }
 
@@ -285,23 +285,23 @@ public class ReplDeadlockDetectionTest extends MultipleCacheManagersTest {
          realOne.broadcastRpcCommandInFuture(rpc, usePriorityQueue, future);
       }
 
-      public void invokeRemotely(List<Address> recipients, ReplicableCommand rpc, boolean sync) throws ReplicationException {
+      public void invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, boolean sync) throws ReplicationException {
          realOne.invokeRemotely(recipients, rpc, sync);
       }
 
-      public void invokeRemotely(List<Address> recipients, ReplicableCommand rpc, boolean sync, boolean usePriorityQueue) throws ReplicationException {
+      public void invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, boolean sync, boolean usePriorityQueue) throws ReplicationException {
          realOne.invokeRemotely(recipients, rpc, sync, usePriorityQueue);
       }
 
-      public void invokeRemotelyInFuture(List<Address> recipients, ReplicableCommand rpc, NotifyingNotifiableFuture<Object> future) {
+      public void invokeRemotelyInFuture(Collection<Address> recipients, ReplicableCommand rpc, NotifyingNotifiableFuture<Object> future) {
          realOne.invokeRemotelyInFuture(recipients, rpc, future);
       }
 
-      public void invokeRemotelyInFuture(List<Address> recipients, ReplicableCommand rpc, boolean usePriorityQueue, NotifyingNotifiableFuture<Object> future) {
+      public void invokeRemotelyInFuture(Collection<Address> recipients, ReplicableCommand rpc, boolean usePriorityQueue, NotifyingNotifiableFuture<Object> future) {
          realOne.invokeRemotelyInFuture(recipients, rpc, usePriorityQueue, future);
       }
 
-      public void invokeRemotelyInFuture(List<Address> recipients, ReplicableCommand rpc, boolean usePriorityQueue, NotifyingNotifiableFuture<Object> future, long timeout) {
+      public void invokeRemotelyInFuture(Collection<Address> recipients, ReplicableCommand rpc, boolean usePriorityQueue, NotifyingNotifiableFuture<Object> future, long timeout) {
          realOne.invokeRemotelyInFuture(recipients, rpc, usePriorityQueue, future, timeout);
       }
 

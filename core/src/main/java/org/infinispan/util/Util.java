@@ -176,7 +176,7 @@ public final class Util {
 
       }
    }
-   
+
    public static void flushAndCloseStream(OutputStream o) {
       if (o == null) return;
       try {
@@ -191,7 +191,7 @@ public final class Util {
 
       }
    }
-   
+
    public static void flushAndCloseOutput(ObjectOutput o) {
       if (o == null) return;
       try {
@@ -206,5 +206,4 @@ public final class Util {
 
       }
    }
-
 }

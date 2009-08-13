@@ -38,6 +38,7 @@ import org.jgroups.util.RspList;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
@@ -144,8 +145,6 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
       // Channel.LOCAL *must* be set to false so we don't see our own messages - otherwise invalidations targeted at
       // remote instances will be received by self.
       channel.setOpt(Channel.LOCAL, false);
-      channel.setOpt(Channel.AUTO_RECONNECT, true);
-      channel.setOpt(Channel.AUTO_GETSTATE, false);
       channel.setOpt(Channel.BLOCK, true);
       dispatcher = new CommandAwareRpcDispatcher(channel, this,
                                                  asyncExecutor, inboundInvocationHandler, flushTracker, distributedSyncTimeout);
@@ -283,7 +282,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
    // outbound RPC
    // ------------------------------------------------------------------------------------------------------------------
 
-   public List<Response> invokeRemotely(List<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout,
+   public List<Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout,
                                         boolean usePriorityQueue, ResponseFilter responseFilter, boolean supportReplay)
          throws Exception {
 
@@ -309,8 +308,8 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
 
          if (mode.isAsynchronous()) return Collections.emptyList();// async case
 
-         if (trace)
-            log.trace("Cache [{0}], is caller thread interupted? {3}: responses for command {1}:\n{2}", getAddress(), rpcCommand.getClass().getSimpleName(), rsps, Thread.currentThread().isInterrupted());
+//         if (trace)
+//            log.trace("Cache [{0}], is caller thread interupted? {3}: responses for command {1}:\n{2}", getAddress(), rpcCommand.getClass().getSimpleName(), rsps, Thread.currentThread().isInterrupted());
 
          // short-circuit no-return-value calls.
          if (rsps == null) return Collections.emptyList();
@@ -373,6 +372,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
 
    public void viewAccepted(View newView) {
       Vector<org.jgroups.Address> newMembers = newView.getMembers();
+      List<Address> oldMembers = null;
       if (log.isInfoEnabled()) log.info("Received new cluster view: {0}", newView);
       synchronized (membersListLock) {
          boolean needNotification = false;
@@ -392,7 +392,8 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
 //                  }
 //            }
 
-            // we need a defensive copy anyway
+            oldMembers = members;
+            // we need a defensive copy anyway            
             members = fromJGroupsAddressList(newMembers);
             needNotification = true;
          }
@@ -401,7 +402,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
 
          // now notify listeners - *after* updating the coordinator. - JBCACHE-662
          if (needNotification && notifier != null) {
-            notifier.notifyViewChange(members, getAddress(), (int) newView.getVid().getId());
+            notifier.notifyViewChange(members, oldMembers, getAddress(), (int) newView.getVid().getId());
          }
 
          // Wake up any threads that are waiting to know about who the coordinator is
@@ -485,7 +486,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
    // Helpers to convert between Address types
    // ------------------------------------------------------------------------------------------------------------------
 
-   private Vector<org.jgroups.Address> toJGroupsAddressVector(List<Address> list) {
+   private Vector<org.jgroups.Address> toJGroupsAddressVector(Collection<Address> list) {
       if (list == null) return null;
       if (list.isEmpty()) return new Vector<org.jgroups.Address>();
 

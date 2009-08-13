@@ -1,7 +1,6 @@
 package org.infinispan.loaders.decorators;
 
 import org.infinispan.Cache;
-import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.CacheLoaderException;
@@ -14,6 +13,7 @@ import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.Event;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -319,7 +319,7 @@ public class SingletonStore extends AbstractDelegatingStore {
        */
       @ViewChanged
       public void viewChange(ViewChangedEvent event) {
-         boolean tmp = isCoordinator(event.getNewMemberList(), event.getLocalAddress());
+         boolean tmp = isCoordinator(event.getNewMembers(), event.getLocalAddress());
 
          if (active != tmp) {
             try {

@@ -15,7 +15,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Mircea.Markus@jboss.com
  */
 @Marshallable(externalizer = ReplicableCommandExternalizer.class, id = Ids.SINGLE_RPC_COMMAND)
-public class SingleRpcCommand extends BaseRpcCommand {
+public class SingleRpcCommand extends BaseRpcInvokingCommand {
    public static final int COMMAND_ID = 1;
    private static Log log = LogFactory.getLog(SingleRpcCommand.class);
    private static boolean trace = log.isTraceEnabled();
@@ -74,7 +74,6 @@ public class SingleRpcCommand extends BaseRpcCommand {
    @Override
    public String toString() {
       return "SingleRpcCommand{" +
-            "interceptorChain=" + interceptorChain +
             ", cacheName='" + cacheName + '\'' +
             ", command=" + command +
             '}';

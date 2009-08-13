@@ -34,7 +34,7 @@ import java.util.concurrent.locks.AbstractQueuedSynchronizer;
  * @since 4.0
  */
 public class ReclosableLatch extends AbstractQueuedSynchronizer {
-   
+
    private static final long serialVersionUID = 1744280161777661090l;
 
    // the following states are used in the AQS.
@@ -77,5 +77,12 @@ public class ReclosableLatch extends AbstractQueuedSynchronizer {
 
    public final boolean await(long time, TimeUnit unit) throws InterruptedException {
       return tryAcquireSharedNanos(1, unit.toNanos(time)); // the 1 is a dummy value that is not used.
+   }
+
+   @Override
+   public String toString() {
+      int s = getState();
+      String q = hasQueuedThreads() ? "non" : "";
+      return "ReclosableLatch [State = " + s + ", " + q + "empty queue]";
    }
 }

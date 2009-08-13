@@ -16,8 +16,9 @@ public interface ConsistentHash {
 
    void setCaches(Collection<Address> caches);
 
+   Collection<Address> getCaches();
+
    List<Address> locate(Object key, int replCount);
 
    Map<Object, List<Address>> locateAll(Collection<Object> keys, int replCount);
-
 }
