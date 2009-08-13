@@ -81,8 +81,7 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
 
          @Override
          public void toStreamProcess(ResultSet rs, InputStream is, ObjectOutput objectOutput) throws CacheLoaderException, SQLException, IOException {
-            InputStream inputStream = rs.getBinaryStream(1);
-            Bucket bucket = (Bucket) JdbcUtil.unmarshall(getMarshaller(), inputStream);
+            Bucket bucket = (Bucket) JdbcUtil.unmarshall(getMarshaller(), is);
             String bucketName = rs.getString(2);
             marshaller.objectToObjectStream(bucketName, objectOutput);
             marshaller.objectToObjectStream(bucket, objectOutput);

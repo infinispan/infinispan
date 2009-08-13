@@ -28,6 +28,9 @@ public class SimpleConnectionFactory extends ConnectionFactory {
       this.connectionUrl = config.getConnectionUrl();
       this.userName = config.getUserName();
       this.password = config.getPassword();
+      if (log.isTraceEnabled()) {
+         log.trace("Starting connection " + this);
+      }
    }
 
    public void stop() {
@@ -77,5 +80,13 @@ public class SimpleConnectionFactory extends ConnectionFactory {
 
    public String getPassword() {
       return password;
+   }
+
+   @Override
+   public String toString() {
+      return "SimpleConnectionFactory{" +
+            "connectionUrl='" + connectionUrl + '\'' +
+            ", userName='" + userName + '\'' +
+            "} " + super.toString();
    }
 }

@@ -111,7 +111,7 @@ public class TableManipulation implements Cloneable {
       catch (SQLException e) {
          // This should not happen. A J2EE compatible JDBC driver is
          // required fully support meta data.
-         throw new IllegalStateException("Error while checking if table aleady exists " + tableName, e);
+         throw new CacheLoaderException("Error while checking if table aleady exists " + tableName, e);
       }
       finally {
          JdbcUtil.safeClose(rs);

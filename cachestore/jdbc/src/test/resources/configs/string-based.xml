@@ -45,21 +45,22 @@
             writeSkewCheck="false"
             concurrencyLevel="500" useLockStriping="false"/>
       <loaders>
-         <loader class="org.infinispan.loaders.jdbc.binary.JdbcBinaryCacheStore" fetchPersistentState="false"
+         <loader class="org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore" fetchPersistentState="false"
                  ignoreModifications="false" purgeOnStartup="false">
             <properties>
-               <property name="bucketTableNamePrefix" value="ISPN_BUCKET_TABLE"/>
+               <property name="stringsTableNamePrefix" value="ISPN_STRING_TABLE"/>
                <property name="idColumnName" value="ID_COLUMN"/>
                <property name="dataColumnName" value="DATA_COLUMN"/>
                <property name="timestampColumnName" value="TIMESTAMP_COLUMN"/>
                <property name="timestampColumnType" value="BIGINT"/>
-               <property name="connectionFactoryClass" value="org.infinispan.loaders.jdbc.connectionfactory.SimpleConnectionFactory"/>
-               <property name="connectionUrl" value="jdbc:hsqldb:mem:infinispan_binary_based"/>
+               <property name="connectionFactoryClass"
+                         value="org.infinispan.loaders.jdbc.connectionfactory.PooledConnectionFactory"/>
+               <property name="connectionUrl" value="jdbc:hsqldb:mem:infinispan_string_based"/>
                <property name="userName" value="sa"/>
                <property name="driverClass" value="org.hsqldb.jdbcDriver"/>
                <property name="idColumnType" value="VARCHAR(255)"/>
                <property name="dataColumnType" value="BINARY"/>
-               <property name="dropTableOnExit" value="false"/>
+               <property name="dropTableOnExit" value="true"/>
                <property name="createTableOnStart" value="true"/>
             </properties>
          </loader>
@@ -72,4 +73,4 @@
 
    <namedCache name="second"/>
 
-   </infinispan>
+</infinispan>

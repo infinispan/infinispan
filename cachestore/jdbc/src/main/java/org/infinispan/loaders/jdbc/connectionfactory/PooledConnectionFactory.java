@@ -42,6 +42,9 @@ public class PooledConnectionFactory extends ConnectionFactory {
       pooledDataSource.setJdbcUrl(config.getConnectionUrl());
       pooledDataSource.setUser(config.getUserName());
       pooledDataSource.setPassword(config.getPassword());
+      if (log.isTraceEnabled()) {
+         log.trace("Started connection factory with config: " + config);
+      }
    }
 
    private void logFileOverride() {
@@ -95,4 +98,6 @@ public class PooledConnectionFactory extends ConnectionFactory {
    public ComboPooledDataSource getPooledDataSource() {
       return pooledDataSource;
    }
+
+
 }

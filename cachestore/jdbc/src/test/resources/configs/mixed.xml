@@ -59,7 +59,7 @@
                <property name="timestampColumnTypeForStrings" value="BIGINT"/>
                <property name="timestampColumnTypeForBinary" value="BIGINT"/>
                <property name="connectionFactoryClass"
-                         value="org.infinispan.loaders.jdbc.connectionfactory.SimpleConnectionFactory"/>
+                         value="org.infinispan.loaders.jdbc.connectionfactory.PooledConnectionFactory"/>
                <property name="connectionUrl" value="jdbc:hsqldb:mem:infinispan_mixed_cs"/>
                <property name="userName" value="sa"/>
                <property name="driverClass" value="org.hsqldb.jdbcDriver"/>

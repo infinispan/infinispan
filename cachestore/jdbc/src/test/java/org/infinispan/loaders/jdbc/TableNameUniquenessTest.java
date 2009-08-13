@@ -28,7 +28,7 @@ import java.sql.Connection;
 public class TableNameUniquenessTest {
 
    public void testForJdbcStringBasedCacheStore() throws Exception {
-      CacheManager cm = new DefaultCacheManager("string-based.xml");
+      CacheManager cm = new DefaultCacheManager("configs/string-based.xml");
       Cache first = cm.getCache("first");
       Cache second = cm.getCache("second");
 
@@ -54,7 +54,7 @@ public class TableNameUniquenessTest {
    }
 
    public void testForJdbcBinaryCacheStore() throws Exception {
-      CacheManager cm = new DefaultCacheManager("binary.xml");
+      CacheManager cm = new DefaultCacheManager("configs/binary.xml");
       Cache first = cm.getCache("first");
       Cache second = cm.getCache("second");
 
@@ -73,7 +73,7 @@ public class TableNameUniquenessTest {
    }
 
    public void testForMixedCacheStore() throws Exception {
-      CacheManager cm = new DefaultCacheManager("mixed.xml");
+      CacheManager cm = new DefaultCacheManager("configs/mixed.xml");
       Cache first = cm.getCache("first");
       Cache second = cm.getCache("second");
 

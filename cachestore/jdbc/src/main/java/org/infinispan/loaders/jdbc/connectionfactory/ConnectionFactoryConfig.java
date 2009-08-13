@@ -73,4 +73,14 @@ public class ConnectionFactoryConfig implements Cloneable {
          throw new IllegalStateException(e);
       }
    }
+
+   @Override
+   public String toString() {
+      return "ConnectionFactoryConfig{" +
+            "connectionFactoryClass='" + connectionFactoryClass + '\'' +
+            ", driverClass='" + driverClass + '\'' +
+            ", connectionUrl='" + connectionUrl + '\'' +
+            ", userName='" + userName + '\'' +
+            '}';
+   }
 }

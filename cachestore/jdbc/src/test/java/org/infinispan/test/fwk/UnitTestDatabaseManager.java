@@ -8,11 +8,8 @@ import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.infinispan.loaders.jdbc.connectionfactory.PooledConnectionFactory;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -33,12 +30,12 @@ public class UnitTestDatabaseManager {
 
    static {
       try {
-         Class.forName("org.hsqldb.jdbcDriver");
+         Class.forName("org.h2.Driver");
       } catch (ClassNotFoundException e) {
          throw new RuntimeException(e);
       }
-      realConfig.setDriverClass("org.hsqldb.jdbcDriver");
-      realConfig.setConnectionUrl("jdbc:hsqldb:mem:infinispan");
+      realConfig.setDriverClass("org.h2.Driver");
+      realConfig.setConnectionUrl("jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=-1");
       realConfig.setConnectionFactoryClass(PooledConnectionFactory.class.getName());
       realConfig.setUserName("sa");
    }
@@ -51,28 +48,34 @@ public class UnitTestDatabaseManager {
 
    public static void shutdownInMemoryDatabase(ConnectionFactoryConfig config) {
 
-      Connection conn = null;
-      Statement st = null;
-      try {
-         String shutDownConnection = getShutdownUrl(config);
-         String url = config.getConnectionUrl();
-         assert url != null;
-         conn = DriverManager.getConnection(shutDownConnection);
-         st = conn.createStatement();
-         st.execute("SHUTDOWN");
-      }
-      catch (Throwable e) {
-         throw new IllegalStateException(e);
-      }
-      finally {
-         try {
-            conn.close();
-            st.close();
-         }
-         catch (SQLException e) {
-            e.printStackTrace();
-         }
-      }
+      
+
+//      Connection conn = null;
+//      Statement st = null;
+//      try {
+//         String shutDownConnection = getShutdownUrl(config);
+//         String url = config.getConnectionUrl();
+//         assert url != null;
+//         try {
+//            conn = DriverManager.getConnection(shutDownConnection);
+//         } catch (SQLException e) {
+//            //expected
+//         }
+////         st = conn.createStatement();
+////         st.execute("SHUTDOWN");
+//      }
+//      catch (Throwable e) {
+//         throw new IllegalStateException(e);
+//      }
+//      finally {
+////         try {
+//////            conn.close();
+//////            st.close();
+////         }
+////         catch (SQLException e) {
+////            e.printStackTrace();
+////         }
+//      }
 
    }
 
@@ -100,7 +103,7 @@ public class UnitTestDatabaseManager {
       Pattern pattern = Pattern.compile("infinispan");
       Matcher matcher = pattern.matcher(jdbcUrl);
       boolean found = matcher.find();
-      assert found : String.format("%1s not found in %1s", pattern, jdbcUrl);
+      assert found : String.format("%1s not found in %2s", pattern, jdbcUrl);
       String newJdbcUrl = matcher.replaceFirst(extractTestName() + userIndex.incrementAndGet());
       result.setConnectionUrl(newJdbcUrl);
       return result;
@@ -121,7 +124,7 @@ public class UnitTestDatabaseManager {
    public static TableManipulation buildDefaultTableManipulation() {
 
       return new TableManipulation("ID_COLUMN", "VARCHAR(255)", "ISPN_JDBC", "DATA_COLUMN",
-                                   "BINARY", "TIMESTAMP_COLUMN", "BIGINT");
+                                   "BLOB", "TIMESTAMP_COLUMN", "BIGINT");
 
    }
 

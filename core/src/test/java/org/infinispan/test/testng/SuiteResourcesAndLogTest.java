@@ -43,6 +43,7 @@ public class SuiteResourcesAndLogTest {
       }
       log("java.net.preferIpv4Stack = " + preferIpV4);
       log("java.net.preferIpv6Stack = " + System.getProperty("java.net.preferIpv6Stack"));
+      log("MAVEN_OPTS = " + System.getProperty("MAVEN_OPTS"));
       log("~~~~~~~~~~~~~~~~~~~~~~~~~ ENVIRONMENT INFO ~~~~~~~~~~~~~~~~~~~~~~~~~~");
    }
 
