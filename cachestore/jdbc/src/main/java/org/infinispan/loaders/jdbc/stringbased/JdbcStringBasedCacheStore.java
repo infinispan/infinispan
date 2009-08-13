@@ -56,7 +56,7 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
    private DataManiulationHelper dmHelper;
    private String cacheName;
 
-   public void init(CacheLoaderConfig config, Cache cache, Marshaller m) {
+   public void init(CacheLoaderConfig config, Cache cache, Marshaller m) throws CacheLoaderException {
       super.init(config, cache, m);
       this.config = (JdbcStringBasedCacheStoreConfig) config;
       this.cacheName = cache.getName();

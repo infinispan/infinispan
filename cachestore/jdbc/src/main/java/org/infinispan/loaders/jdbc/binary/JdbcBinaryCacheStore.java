@@ -55,7 +55,7 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
    private DataManiulationHelper dmHelper;
    private String cacheName;
 
-   public void init(CacheLoaderConfig config, Cache cache, Marshaller m) {
+   public void init(CacheLoaderConfig config, Cache cache, Marshaller m) throws CacheLoaderException {
       if (log.isTraceEnabled())
          log.trace("Initializing JdbcBinaryCacheStore " + config);
       super.init(config, cache, m);
