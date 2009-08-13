@@ -83,4 +83,50 @@
          <scope>test</scope>
       </dependency>
    </dependencies>
+   <build>
+    <plugins>
+      <!-- 
+      Generates XML schema for Infinispan configuration files
+      Run with mvn exec:java
+      For more details see:
+      http://mojo.codehaus.org/exec-maven-plugin/usage.html -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>1.1</version>
+        <executions>
+          <execution>
+          	<phase>process-classes</phase>      
+          	<goals>
+            	<goal>java</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <mainClass>org.infinispan.util.JaxbSchemaGenerator</mainClass>
+        </configuration>
+      </plugin>
+      <plugin>
+           <artifactId>maven-antrun-plugin</artifactId>
+           <executions>
+             <execution>
+               <phase>process-classes</phase>
+               <goals>
+                 <goal>run</goal>
+               </goals>
+               <configuration>
+                 <tasks>                    	
+  					<copy todir="${basedir}/src/main/resources/schema" overwrite="true">
+    					<fileset dir="${basedir}" includes="*.xsd"/>
+  					</copy>  	
+  					<delete>
+    					<fileset dir="${basedir}" includes="*.xsd"/>
+					</delete>  						  					  						
+                 </tasks>
+               </configuration>
+             </execution>
+           </executions>
+         </plugin>      
+    </plugins>
+  </build>
 </project>
