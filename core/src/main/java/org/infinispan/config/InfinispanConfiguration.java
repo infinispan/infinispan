@@ -20,13 +20,9 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 package org.infinispan.config;
- 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+
+import org.infinispan.config.parsing.XmlConfigurationParser;
+import org.infinispan.util.FileLookup;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
@@ -36,17 +32,21 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.SchemaFactory;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import org.infinispan.config.parsing.XmlConfigurationParser;
-import org.infinispan.util.FileLookup;
 /**
  * InfinispanConfiguration encapsulates root component of Infinispan XML configuration
- * 
- * <p>
- * Note that class InfinispanConfiguration contains JAXB annotations. These annotations determine how XML
- * configuration files are read into instances of configuration class hierarchy as well as they
- * provide meta data for configuration file XML schema generation. Please modify these annotations
- * and Java element types they annotate with utmost understanding and care.
+ * <p/>
+ * <p/>
+ * Note that class InfinispanConfiguration contains JAXB annotations. These annotations determine how XML configuration
+ * files are read into instances of configuration class hierarchy as well as they provide meta data for configuration
+ * file XML schema generation. Please modify these annotations and Java element types they annotate with utmost
+ * understanding and care.
  *
  * @author Vladimir Blagojevic
  * @since 4.0
@@ -55,98 +55,88 @@ import org.infinispan.util.FileLookup;
 @XmlRootElement(name = "infinispan")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class InfinispanConfiguration implements XmlConfigurationParser {
-   
+
    public static final String VALIDATING_SYSTEM_PROPERTY = "infinispan.config.validate";
-   
+
    @XmlElement
    private GlobalConfiguration global;
-   
-   @XmlElement(name="default")
+
+   @XmlElement(name = "default")
    private Configuration defaultConfiguration;
-   
-   @XmlElement(name="namedCache")
+
+   @XmlElement(name = "namedCache")
    private List<Configuration> namedCaches;
-   
+
    /**
-    * Factory method to create an instance of Infinispan configuration. If users want to verify
-    * configuration file correctness against Infinispan schema then appropriate schema file name
-    * should be provided as well.
-    * <p>
+    * Factory method to create an instance of Infinispan configuration. If users want to verify configuration file
+    * correctness against Infinispan schema then appropriate schema file name should be provided as well.
+    * <p/>
     * Both configuration file and schema file are looked up in following order:
-    * <p>
-    *  <ol> 
-    *  <li> using current thread's context ClassLoader</li> 
-    *  <li> if fails, the system ClassLoader</li> 
-    *  <li> if fails, attempt is made to load it as a file from the disk </li> 
-    *  </ol> 
-    * 
+    * <p/>
+    * <ol> <li> using current thread's context ClassLoader</li> <li> if fails, the system ClassLoader</li> <li> if
+    * fails, attempt is made to load it as a file from the disk </li> </ol>
+    *
     * @param configFileName configuration file name
     * @param schemaFileName schema file name
     * @return infinispan configuration
-    * @throws IOException if there are any issues creating InfinispanConfiguration object 
+    * @throws IOException if there are any issues creating InfinispanConfiguration object
     */
    public static InfinispanConfiguration newInfinispanConfiguration(String configFileName,
-            String schemaFileName) throws IOException {
+                                                                    String schemaFileName) throws IOException {
 
       InputStream inputStream = configFileName != null ? findInputStream(configFileName) : null;
-      InputStream schemaIS = schemaFileName != null ? findInputStream(schemaFileName) : null;
+      InputStream schemaIS = schemaFileName != null && !skipSchemaValidation() ? findInputStream(schemaFileName) : null;
       return newInfinispanConfiguration(inputStream, schemaIS);
    }
-   
+
    /**
-    * Factory method to create an instance of Infinispan configuration. 
-    * <p>
+    * Factory method to create an instance of Infinispan configuration.
+    * <p/>
     * Configuration file is looked up in following order:
-    * <p>
-    *  <ol> 
-    *  <li> using current thread's context ClassLoader</li> 
-    *  <li> if fails, the system ClassLoader</li> 
-    *  <li> if fails, attempt is made to load it as a file from the disk </li> 
-    *  </ol> 
-    * 
+    * <p/>
+    * <ol> <li> using current thread's context ClassLoader</li> <li> if fails, the system ClassLoader</li> <li> if
+    * fails, attempt is made to load it as a file from the disk </li> </ol>
+    *
     * @param configFileName configuration file name
     * @return returns infinispan configuration
-    * @throws IOException if there are any issues creating InfinispanConfiguration object 
+    * @throws IOException if there are any issues creating InfinispanConfiguration object
     */
    public static InfinispanConfiguration newInfinispanConfiguration(String configFileName)
-            throws IOException {
-      return newInfinispanConfiguration(configFileName,null);
-     
+         throws IOException {
+      return newInfinispanConfiguration(configFileName, null);
+
    }
-   
+
    /**
-    * Factory method to create an instance of Infinispan configuration. 
-    * 
+    * Factory method to create an instance of Infinispan configuration.
+    *
     * @param config configuration input stream
     * @return returns infinispan configuration
-    * @throws IOException if there are any issues creating InfinispanConfiguration object 
+    * @throws IOException if there are any issues creating InfinispanConfiguration object
     */
    public static InfinispanConfiguration newInfinispanConfiguration(InputStream config)
-            throws IOException {
-      return newInfinispanConfiguration(config, null); 
+         throws IOException {
+      return newInfinispanConfiguration(config, null);
    }
-   
+
    /**
-    * Factory method to create an instance of Infinispan configuration. If users want to verify
-    * configuration file correctness against Infinispan schema then appropriate schema input stream
-    * should be provided as well.
+    * Factory method to create an instance of Infinispan configuration. If users want to verify configuration file
+    * correctness against Infinispan schema then appropriate schema input stream should be provided as well.
     *
     * @param config configuration input stream
     * @param schema schema inputstream
     * @return infinispan configuration
-    * @throws IOException if there are any issues creating InfinispanConfiguration object 
+    * @throws IOException if there are any issues creating InfinispanConfiguration object
     */
    public static InfinispanConfiguration newInfinispanConfiguration(InputStream config,
-            InputStream schema) throws IOException {
+                                                                    InputStream schema) throws IOException {
       try {
          JAXBContext jc = JAXBContext.newInstance(InfinispanConfiguration.class);
          Unmarshaller u = jc.createUnmarshaller();
-         String s = System.getProperty(VALIDATING_SYSTEM_PROPERTY);
-         boolean isValidatingOff = s!=null && !Boolean.parseBoolean(s);
-         
-         if (schema != null && !isValidatingOff) {
+
+         if (schema != null && !skipSchemaValidation()) {
             SchemaFactory factory = SchemaFactory.newInstance("http://www.w3.org/2001/XMLSchema");
-            u.setSchema(factory.newSchema(new StreamSource(schema)));      
+            u.setSchema(factory.newSchema(new StreamSource(schema)));
          }
          InfinispanConfiguration doc = (InfinispanConfiguration) u.unmarshal(config);
          //legacy, don't ask
@@ -159,16 +149,20 @@ public class InfinispanConfiguration implements XmlConfigurationParser {
       }
    }
 
+   private static boolean skipSchemaValidation() {
+      String s = System.getProperty(VALIDATING_SYSTEM_PROPERTY);
+      return s != null && !Boolean.parseBoolean(s);
+   }
+
    /**
     * Should never called. Construct InfinispanConfiguration with constructor other than no-arg constructor
-    * <p>
+    * <p/>
     * Needed for reflection
-    * 
     */
    public InfinispanConfiguration() {
       super();
    }
-  
+
    private static InputStream findInputStream(String fileName) throws FileNotFoundException {
       if (fileName == null)
          throw new NullPointerException("File name cannot be null!");
@@ -176,20 +170,20 @@ public class InfinispanConfiguration implements XmlConfigurationParser {
       InputStream is = fileLookup.lookupFile(fileName);
       if (is == null)
          throw new FileNotFoundException("File " + fileName
-                  + " could not be found, either on the classpath or on the file system!");
+               + " could not be found, either on the classpath or on the file system!");
       return is;
-   } 
+   }
 
    public Configuration parseDefaultConfiguration() throws ConfigurationException {
       return defaultConfiguration;
    }
 
    public GlobalConfiguration parseGlobalConfiguration() {
-      return  global;
+      return global;
    }
 
    public Map<String, Configuration> parseNamedConfigurations() throws ConfigurationException {
-      Map<String,Configuration> map = new HashMap<String, Configuration>(7);
+      Map<String, Configuration> map = new HashMap<String, Configuration>(7);
       for (Configuration conf : namedCaches) {
          map.put(conf.getName(), conf);
       }
