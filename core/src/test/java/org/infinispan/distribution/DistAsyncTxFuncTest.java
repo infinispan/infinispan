@@ -3,6 +3,7 @@ package org.infinispan.distribution;
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.ReplListener;
 import org.testng.annotations.Test;
 
@@ -10,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -20,6 +22,7 @@ public class DistAsyncTxFuncTest extends DistSyncTxFuncTest {
    ReplListener r1, r2, r3, r4;
    ReplListener[] r;
    Map<Cache<?, ?>, ReplListener> listenerLookup;
+   List<Address> listenerCaches = new LinkedList<Address>();
 
    public DistAsyncTxFuncTest() {
       sync = false;
@@ -37,7 +40,10 @@ public class DistAsyncTxFuncTest extends DistSyncTxFuncTest {
       r4 = new ReplListener(c4, true, true);
       r = new ReplListener[]{r1, r2, r3, r4};
       listenerLookup = new HashMap<Cache<?, ?>, ReplListener>();
-      for (ReplListener rl : r) listenerLookup.put(rl.getCache(), rl);
+      for (ReplListener rl : r) {
+         listenerCaches.add(addressOf(rl.getCache()));
+         listenerLookup.put(rl.getCache(), rl);
+      }
    }
 
    @Override
@@ -50,6 +56,7 @@ public class DistAsyncTxFuncTest extends DistSyncTxFuncTest {
          for (ReplListener rl : r) rl.waitForRpc();
       } else {
          for (Cache<?, ?> c : getOwners(key)) {
+            log.info("Analysing cache " + addressOf(c) + ".  Listeners are avbl for caches " + listenerCaches);
             if (cachesOnWhichKeyShouldInvalList.remove(c)) {
                listenerLookup.get(c).expect(command, InvalidateL1Command.class);
             } else {
