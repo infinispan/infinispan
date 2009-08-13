@@ -204,6 +204,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       for (Cache<Object, String> c : caches) {
          if (isOwner(c, key)) owners[i++] = c;
       }
+      for (Cache<?, ?> c : owners) assert c != null : "Have not found enough owners for key [" + key + "]";
       return owners;
    }
 
