@@ -94,7 +94,7 @@ public class ChainingCacheStore implements CacheStore {
       for (CacheStore s : stores.keySet()) s.prepare(list, tx, isOnePhase);
    }
 
-   public void init(CacheLoaderConfig config, Cache cache, Marshaller m) {
+   public void init(CacheLoaderConfig config, Cache cache, Marshaller m) throws CacheLoaderException {
       for (Map.Entry<CacheLoader, CacheLoaderConfig> e : loaders.entrySet()) {
          e.getKey().init(e.getValue(), cache, m);
       }

@@ -37,7 +37,7 @@ public abstract class AbstractCacheStore extends AbstractCacheLoader implements 
 
    protected Marshaller marshaller;
 
-   public void init(CacheLoaderConfig config, Cache cache, Marshaller m) {
+   public void init(CacheLoaderConfig config, Cache cache, Marshaller m) throws CacheLoaderException{
       this.config = (AbstractCacheStoreConfig) config;
       this.marshaller = m;
       if (config == null) throw new IllegalStateException("Null config!!!");

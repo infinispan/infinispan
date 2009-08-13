@@ -9,6 +9,7 @@ import org.infinispan.loaders.bucket.BucketBasedCacheStore;
 import org.infinispan.loaders.s3.jclouds.JCloudsBucket;
 import org.infinispan.loaders.s3.jclouds.JCloudsConnection;
 import org.infinispan.marshall.Marshaller;
+import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -45,8 +46,17 @@ public class S3CacheStore extends BucketBasedCacheStore {
    /**
     * {@inheritDoc} This initializes the internal <tt>s3Connection</tt> to a default implementation
     */
-   public void init(CacheLoaderConfig config, Cache cache, Marshaller m) {
-      init(config, cache, m, new JCloudsConnection(), new JCloudsBucket());
+   public void init(CacheLoaderConfig cfg, Cache cache, Marshaller m) throws CacheLoaderException {
+      this.config = (S3CacheStoreConfig) cfg;
+      S3Bucket cloudsBucket = null;
+      S3Connection cloudsConnection = null;
+      try {
+         cloudsConnection = config.getConnectionClass() != null ? (S3Connection) Util.getInstance(config.getConnectionClass()) : new JCloudsConnection();
+         cloudsBucket = config.getBucketClass()!=null ? (S3Bucket) Util.getInstance(config.getBucketClass()) : new JCloudsBucket();
+      } catch (Exception e) {
+         throw new CacheLoaderException(e);
+      }
+      init(cfg, cache, m, cloudsConnection, cloudsBucket);
    }
 
    @Override
@@ -55,7 +65,7 @@ public class S3CacheStore extends BucketBasedCacheStore {
       this.connection.disconnect();
    }
 
-   public void init(CacheLoaderConfig config, Cache cache, Marshaller m, S3Connection connection, S3Bucket bucket) {
+   public void init(CacheLoaderConfig config, Cache cache, Marshaller m, S3Connection connection, S3Bucket bucket) throws CacheLoaderException {
       super.init(config, cache, m);
       this.config = (S3CacheStoreConfig) config;
       this.cache = cache;
@@ -75,10 +85,17 @@ public class S3CacheStore extends BucketBasedCacheStore {
       if (config.getAwsSecretKey() == null)
          throw new IllegalArgumentException("awsSecretKey must be set");
       this.connection.connect(config, marshaller);
-      String s3Bucket = config.getBucket();
-      if (s3Bucket == null)
+      if (config.getBucketPrefix() == null)
          throw new IllegalArgumentException("s3Bucket must be set");
+      String s3Bucket = getThisBucketName();
       this.s3Bucket.init(this.connection, connection.verifyOrCreateBucket(s3Bucket));
+   }
+
+   private String getThisBucketName() {
+      if (log.isTraceEnabled()) {
+         log.trace("Bucket prefix is " + config.getBucketPrefix()  + " and cache name is " + cache.getName());
+      }
+      return config.getBucketPrefix() + "-" + cache.getName().toLowerCase();
    }
 
    @SuppressWarnings("unchecked")
@@ -102,16 +119,16 @@ public class S3CacheStore extends BucketBasedCacheStore {
       } catch (Exception e) {
          throw convertToCacheLoaderException("Error while reading from stream", e);
       }
-      if (config.getBucket().equals(source)) {
+      if (getThisBucketName().equals(source)) {
          log.info("Attempt to load the same s3 bucket ignored");
       } else {
-         connection.copyBucket(source, config.getBucket());
+         connection.copyBucket(source, getThisBucketName());
       }
    }
 
    protected void toStreamLockSafe(ObjectOutput objectOutput) throws CacheLoaderException {
       try {
-         objectOutput.writeObject(config.getBucket());
+         objectOutput.writeObject(getThisBucketName());
       } catch (IOException e) {
          throw convertToCacheLoaderException("Error while writing to stream", e);
       }

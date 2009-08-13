@@ -37,6 +37,7 @@ public class RpcManagerFactory extends EmptyConstructorNamedCacheFactory impleme
    public <T> T construct(Class<T> componentType) {
       // only do this if we have a transport configured!
       if (globalConfiguration.getTransportClass() == null) return null;
+      //todo - throw an excwption if transport is missing
       return super.construct(componentType);
    }
 }

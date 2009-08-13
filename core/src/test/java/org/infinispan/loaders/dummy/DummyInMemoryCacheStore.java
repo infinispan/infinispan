@@ -78,7 +78,7 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
       }
    }
 
-   public void init(CacheLoaderConfig config, Cache cache, Marshaller m) {
+   public void init(CacheLoaderConfig config, Cache cache, Marshaller m) throws CacheLoaderException {
       super.init(config, cache, m);
       this.config = (Cfg) config;
       this.cache = cache;

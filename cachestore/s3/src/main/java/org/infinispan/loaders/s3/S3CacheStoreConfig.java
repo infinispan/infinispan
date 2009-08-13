@@ -27,10 +27,13 @@ import org.infinispan.loaders.LockSupportCacheStoreConfig;
 public class S3CacheStoreConfig extends LockSupportCacheStoreConfig {
    private String awsAccessKey;
    private String awsSecretKey;
-   private String bucket;
+   private String bucketPrefix;
    private String proxyHost;
    private int proxyPort;
    private long requestTimeout = 10000;
+
+   private String bucketClass;
+   private String connectionClass;
 
 
    public long getRequestTimeout() {
@@ -94,14 +97,14 @@ public class S3CacheStoreConfig extends LockSupportCacheStoreConfig {
       this.awsSecretKey = awsSecretKey;
    }
 
-   public String getBucket() {
-      return bucket;
+   public String getBucketPrefix() {
+      return bucketPrefix;
    }
 
-   @ConfigurationProperty(name="bucket",
+   @ConfigurationProperty(name="bucketPrefix",
             parentElement="properties")
-   public void setBucket(String bucket) {
-      this.bucket = bucket;
+   public void setBucketPrefix(String bucketPrefix) {
+      this.bucketPrefix = bucketPrefix;
    }
 
    public String getProxyHost() {
@@ -124,5 +127,19 @@ public class S3CacheStoreConfig extends LockSupportCacheStoreConfig {
       this.proxyPort = proxyPort;
    }
 
+   public String getBucketClass() {
+      return bucketClass;
+   }
 
+   public void setBucketClass(String bucketClass) {
+      this.bucketClass = bucketClass;
+   }
+
+   public String getConnectionClass() {
+      return connectionClass;
+   }
+
+   public void setConnectionClass(String connectionClass) {
+      this.connectionClass = connectionClass;
+   }
 }

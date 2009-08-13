@@ -38,6 +38,9 @@ public class S3CacheStoreFunctionalIntegrationTest extends BaseCacheStoreFunctio
    private String csBucket;
    private String accessKey;
    private String secretKey;
+   String connectionClass;
+   String bucketClass;
+
 
    private static final String sysAWSAccessKeyId = System
          .getProperty("jclouds.aws.accesskeyid");
@@ -56,6 +59,8 @@ public class S3CacheStoreFunctionalIntegrationTest extends BaseCacheStoreFunctio
             secretKey == null || secretKey.trim().equals("")) {
          accessKey = "dummy";
          secretKey = "dummy";
+         connectionClass = MockS3Connection.class.getName();
+         bucketClass = MockS3Bucket.class.getName();
       } else {
          proxyHost = "localhost";  // TODO  not yet used
          proxyPort = 8888; // TODO  not yet used
@@ -64,17 +69,20 @@ public class S3CacheStoreFunctionalIntegrationTest extends BaseCacheStoreFunctio
             + "." + this.getClass().getSimpleName()).toLowerCase();
       System.out.printf("accessKey: %1$s, bucket: %2$s%n", accessKey, csBucket);
    }
-   
+
+
    @Override
    protected CacheStoreConfig createCacheStoreConfig() throws Exception {
       S3CacheStoreConfig cfg = new S3CacheStoreConfig();
-      cfg.setBucket(csBucket);
+      cfg.setBucketPrefix(csBucket);
       cfg.setAwsAccessKey(accessKey);
       cfg.setAwsSecretKey(secretKey);
       cfg.setProxyHost(proxyHost);
       cfg.setProxyPort(proxyPort);
       cfg.setSecure(isSecure);
       cfg.setMaxConnections(maxConnections);
+      cfg.setBucketClass(bucketClass);
+      cfg.setConnectionClass(connectionClass);
       cfg.setPurgeSynchronously(true); // for more accurate unit testing
       return cfg;
    }

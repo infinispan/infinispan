@@ -47,7 +47,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
       return root;
    }
 
-   public void init(CacheLoaderConfig config, Cache cache, Marshaller m) {
+   public void init(CacheLoaderConfig config, Cache cache, Marshaller m) throws CacheLoaderException {
       super.init(config, cache, m);
       this.config = (FileCacheStoreConfig) config;
       this.cache = cache;

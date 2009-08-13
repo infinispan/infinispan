@@ -1,15 +1,6 @@
 package org.infinispan.loaders.s3;
 
-import static org.testng.Assert.assertEquals;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.HashSet;
-import java.util.Set;
-
+import org.infinispan.CacheDelegate;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.io.UnclosableObjectInputStream;
@@ -20,12 +11,21 @@ import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.s3.jclouds.JCloudsBucket;
 import org.infinispan.loaders.s3.jclouds.JCloudsConnection;
 import org.infinispan.marshall.Marshaller;
+import static org.testng.Assert.assertEquals;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Adrian Cole
@@ -89,7 +89,7 @@ public class S3CacheStoreIntegrationTest extends BaseCacheStoreTest {
    private CacheStore createAndStartCacheStore(String bucket) throws Exception {
       S3CacheStore cs = new S3CacheStore();
       S3CacheStoreConfig cfg = new S3CacheStoreConfig();
-      cfg.setBucket(bucket);
+      cfg.setBucketPrefix(bucket);
       cfg.setAwsAccessKey(accessKey);
       cfg.setAwsSecretKey(secretKey);
       cfg.setProxyHost(proxyHost);
@@ -97,7 +97,7 @@ public class S3CacheStoreIntegrationTest extends BaseCacheStoreTest {
       cfg.setSecure(isSecure);
       cfg.setMaxConnections(maxConnections);
       cfg.setPurgeSynchronously(true); // for more accurate unit testing
-      cs.init(cfg, getCache(), getMarshaller(), connectionClass.newInstance(), bucketClass.newInstance());
+      cs.init(cfg, new CacheDelegate("aName"), getMarshaller(), connectionClass.newInstance(), bucketClass.newInstance());
       cs.start();
       return cs;
    }

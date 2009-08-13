@@ -21,7 +21,7 @@ public class AbstractCacheStoreTest {
    private AbstractCacheStoreConfig cfg;
 
    @BeforeMethod
-   public void setUp() throws NoSuchMethodException {
+   public void setUp() throws NoSuchMethodException, CacheLoaderException {
       cs = createMock(AbstractCacheStore.class, AbstractCacheStore.class.getMethod("clear"));
       cfg = new AbstractCacheStoreConfig();
       cs.init(cfg, null, null);
