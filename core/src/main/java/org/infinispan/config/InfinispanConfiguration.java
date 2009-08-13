@@ -85,6 +85,9 @@ public class InfinispanConfiguration implements XmlConfigurationParser {
                                                                     String schemaFileName) throws IOException {
 
       InputStream inputStream = configFileName != null ? findInputStream(configFileName) : null;
+      // TODO the skipSchemaValidation() bit is a temporary fix until the proper schema location algorithm detailed in 
+      // http://lists.jboss.org/pipermail/infinispan-dev/2009-August/001110.html
+      //  is implemented
       InputStream schemaIS = schemaFileName != null && !skipSchemaValidation() ? findInputStream(schemaFileName) : null;
       return newInfinispanConfiguration(inputStream, schemaIS);
    }
