@@ -78,12 +78,12 @@ public class BdbjeCacheStore extends AbstractCacheStore {
      *
      * @see BdbjeCacheStoreConfig
      */
-    public void init(CacheLoaderConfig config, Cache cache, Marshaller m) {
+    public void init(CacheLoaderConfig config, Cache cache, Marshaller m) throws CacheLoaderException {
         BdbjeCacheStoreConfig cfg = (BdbjeCacheStoreConfig) config;
         init(cfg, new BdbjeResourceFactory(cfg), cache, m);
     }
 
-    void init(BdbjeCacheStoreConfig cfg, BdbjeResourceFactory factory, Cache cache, Marshaller m) {
+    void init(BdbjeCacheStoreConfig cfg, BdbjeResourceFactory factory, Cache cache, Marshaller m) throws CacheLoaderException {
         if (trace) log.trace("initializing BdbjeCacheStore");
         printLicense();
         super.init(cfg, cache, m);

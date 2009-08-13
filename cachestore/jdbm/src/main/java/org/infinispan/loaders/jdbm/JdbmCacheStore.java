@@ -72,7 +72,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
    }
 
    @Override
-   public void init(CacheLoaderConfig clc, Cache cache, Marshaller m) {
+   public void init(CacheLoaderConfig clc, Cache cache, Marshaller m) throws CacheLoaderException {
       super.init(clc, cache, m);
       this.config = (JdbmCacheStoreConfig) clc;
       this.cache = cache;
