@@ -194,9 +194,12 @@ public abstract class AbstractConfigurationBean implements CloneableConfiguratio
                field.setAccessible(true);
                fieldValueOverrides = (AbstractConfigurationBean) field.get(overrides);
                fieldValueThis = (AbstractConfigurationBean) field.get(this);
-               if(fieldValueOverrides != null && fieldValueThis!=null){
-                  fieldValueThis.applyOverrides(fieldValueOverrides);
+               if (fieldValueThis == null && fieldValueOverrides != null){
+                  field.set(this, fieldValueOverrides);
                }
+               else if(fieldValueOverrides != null && fieldValueThis!=null){
+                  fieldValueThis.applyOverrides(fieldValueOverrides);
+               } 
             } catch (Exception e) {
                log.warn("Could not apply override for field " + field + " in class " +overrides,e);
             }

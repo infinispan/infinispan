@@ -36,6 +36,9 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
+import javax.xml.bind.annotation.adapters.XmlAdapter;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -852,12 +855,16 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       }
    } 
    
+   @XmlJavaTypeAdapter(ClusteringTypeAdapter.class)
    @XmlAccessorType(XmlAccessType.FIELD)
    @XmlType(propOrder={})
    private static class ClusteringType extends AbstractNamedCacheConfigurationBean {
       
       /** The serialVersionUID */
       private static final long serialVersionUID = 4048135465543498430L;
+      
+      @XmlAttribute(name="mode")
+      private String stringMode;
 
       @XmlTransient
       private CacheMode mode = CacheMode.LOCAL;
@@ -872,17 +879,21 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       private L1Type l1 = new L1Type();
       
       @XmlElement
-      private AsyncType async = new AsyncType();
+      private AsyncType async = new AsyncType(false);
       
       @XmlElement
       private HashType hash = new HashType();
 
-      @XmlAttribute
+      
       public void setMode(CacheMode mode) {
          testImmutability("mode");
          this.mode = mode;
       }
-
+      
+      public boolean isSynchronous() {
+         return !async.readFromXml;
+      }
+      
       @Override
       public ClusteringType clone() throws CloneNotSupportedException {
          ClusteringType dolly = (ClusteringType) super.clone();
@@ -895,9 +906,47 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       }
    }
    
+   private static class ClusteringTypeAdapter extends XmlAdapter<ClusteringType, ClusteringType> {
+
+      @Override
+      public ClusteringType marshal(ClusteringType ct) throws Exception {
+         return ct;        
+      }
+
+      @Override
+      public ClusteringType unmarshal(ClusteringType ct) throws Exception {
+         if(ct.stringMode != null){
+            String mode = ct.stringMode.toLowerCase();
+            if(mode.startsWith("r")){
+               if(ct.isSynchronous())
+                  ct.setMode(CacheMode.REPL_SYNC);
+               else 
+                  ct.setMode(CacheMode.REPL_ASYNC);
+            } else if (mode.startsWith("i")){
+               if(ct.isSynchronous())
+                  ct.setMode(CacheMode.INVALIDATION_SYNC);
+               else 
+                  ct.setMode(CacheMode.INVALIDATION_ASYNC);
+            } else if (mode.startsWith("d")){
+               if(ct.isSynchronous())
+                  ct.setMode(CacheMode.DIST_SYNC);
+               else 
+                  ct.setMode(CacheMode.DIST_ASYNC);
+            }
+            else {
+               throw new ConfigurationException("Invalid clustering mode" + ct.stringMode);
+            }
+         }
+         return ct;
+      }
+   }
+   
    @XmlAccessorType(XmlAccessType.PROPERTY)
    private static class AsyncType extends AbstractNamedCacheConfigurationBean {
 
+      @XmlTransient
+      private boolean readFromXml = false;
+      
       /** The serialVersionUID */
       private static final long serialVersionUID = -7726319188826197399L;
 
@@ -909,6 +958,16 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       
       private Boolean asyncMarshalling=true;
       
+      
+      private AsyncType(boolean readFromXml) {
+         super();
+         this.readFromXml = readFromXml;
+      }
+      
+      private AsyncType(){
+         this(true);
+      }
+
       @XmlAttribute
       public void setUseReplQueue(Boolean useReplQueue) {
          testImmutability("useReplQueue");

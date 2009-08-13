@@ -55,21 +55,21 @@
    </namedCache>
 
    <namedCache name="syncRepl">
-      <clustering mode="REPL_SYNC">
+      <clustering mode="repl">
          <stateRetrieval fetchInMemoryState="false"/>
          <sync replTimeout="15000"/>
       </clustering>
    </namedCache>
 
    <namedCache name="asyncRepl">
-      <clustering mode="REPL_ASYNC">
+      <clustering mode="repl">
          <stateRetrieval fetchInMemoryState="false"/>
          <async asyncMarshalling="false"/>
       </clustering>
    </namedCache>
 
    <namedCache name="asyncReplQueue">
-      <clustering mode="REPL_ASYNC">
+      <clustering mode="repl">
          <stateRetrieval fetchInMemoryState="false"/>
          <async useReplQueue="true" replQueueInterval="1234" replQueueMaxElements="100"/>
       </clustering>
@@ -77,7 +77,7 @@
 
    <namedCache name="txSyncRepl">
       <transaction transactionManagerLookupClass="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"/>
-      <clustering mode="REPL_SYNC">
+      <clustering mode="repl">
          <stateRetrieval fetchInMemoryState="false"/>
          <sync replTimeout="15000"/>
       </clustering>
@@ -112,7 +112,7 @@
    </namedCache>
 
    <namedCache name="dist">
-      <clustering mode="DIST_SYNC">
+      <clustering mode="distribution">
          <sync/>
          <hash numOwners="3" rehashWait="120000"/>
          <l1 enabled="true" lifespan="600000"/>
