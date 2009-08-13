@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 @Test(testName = "distribution.RehashJoinTest", groups = "functional")
 public class RehashJoinTest extends BaseDistFunctionalTest {
@@ -54,7 +55,7 @@ public class RehashJoinTest extends BaseDistFunctionalTest {
       Cache<Object, String> joiner = joinerManager.getCache(cacheName);
 
       // need to wait for the joiner to, well, join.
-      TestingUtil.blockUntilViewsReceived(60000, cacheManagers.toArray(new CacheManager[cacheManagers.size()]));
+      TestingUtil.blockUntilViewsReceived(SECONDS.toMillis(240), cacheManagers.toArray(new CacheManager[cacheManagers.size()]));
 
       // where does the joiner sit in relation to the other caches?
       int joinerPos = locateJoiner(joinerManager.getAddress());
@@ -135,15 +136,16 @@ public class RehashJoinTest extends BaseDistFunctionalTest {
       log.info("Number of cache manager views to wait for: {0}", cacheManagerArray.length);
 
       // need to wait for the joiner to, well, join.
-      TestingUtil.blockUntilViewsReceived(240000, cacheManagerArray);
+      TestingUtil.blockUntilViewsReceived(SECONDS.toMillis(240), cacheManagerArray);
       // where do the joiners sit in relation to the other caches?
 
-      waitForJoinTasksToComplete(120000, joiners);
+
+      waitForJoinTasksToComplete(SECONDS.toMillis(240), joiners);
 
       // need to wait a *short while* before we attempt to locate joiners, since post-join invalidation messages are sent async.
       // TODO replace this with some form of command detection on remote nodes.
       // join tasks happen sequentially as well, so this needs some time to finish
-      TestingUtil.sleepThread(1000);
+      TestingUtil.sleepThread(SECONDS.toMillis(2));
 
       int[] joinersPos = new int[numJoiners];
       for (i = 0; i < numJoiners; i++) joinersPos[i] = locateJoiner(joinerManagers[i].getAddress());
@@ -163,7 +165,7 @@ public class RehashJoinTest extends BaseDistFunctionalTest {
 
    private int locateJoiner(Address joinerAddress) {
       for (Cache c : Arrays.asList(c1, c2, c3, c4)) {
-         DefaultConsistentHash dch = getDefaultConsistentHash(c, 120000);
+         DefaultConsistentHash dch = getDefaultConsistentHash(c, SECONDS.toMillis(240));
          int i = 0;
          for (Address a : dch.positions.values()) {
             if (a.equals(joinerAddress)) return i;
