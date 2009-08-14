@@ -88,21 +88,23 @@ public class JoinTask extends RehashTask {
             log.trace("Requesting old consistent hash from coordinator");
             List<Response> resp = rpcManager.invokeRemotely(coordinator(), commandsFactory.buildGetConsistentHashCommand(self),
                                                             ResponseMode.SYNCHRONOUS, 100000, true);
+            List<Address> addresses = null;
             for (Response r : resp) {
                if (r instanceof SuccessfulResponse) {
-                  List<Address> list = (List<Address>) ((SuccessfulResponse) r).getResponseValue();
-                  chOld = createConsistentHash(list);
+                  addresses = (List<Address>) ((SuccessfulResponse) r).getResponseValue();
                   break;
                }
             }
 
-            log.trace("Retrieved old consistent hash {0}", chOld);
-            if (chOld == null) {
+            log.trace("Retrieved old consistent hash address list {0}", addresses);
+            if (addresses == null) {
                if (sleepTime > maxSleepTime)
                   throw new CacheException("Unable to retrieve old consistent hash from coordinator even after several attempts at sleeping and retrying!");
                log.debug("Sleeping for {0}", Util.prettyPrintTime(sleepTime));
                Thread.sleep(sleepTime); // sleep for a while and retry
                sleepTime *= incrementFactor;
+            } else {
+               chOld = createConsistentHash(addresses);
             }
          } while (chOld == null);
 
