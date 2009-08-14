@@ -21,6 +21,7 @@
  */
 package org.infinispan.config;
 
+import org.infinispan.Version;
 import org.infinispan.config.parsing.XmlConfigurationParser;
 import org.infinispan.util.FileLookup;
 
@@ -35,6 +36,7 @@ import javax.xml.validation.SchemaFactory;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +59,14 @@ import java.util.Map;
 public class InfinispanConfiguration implements XmlConfigurationParser {
 
    public static final String VALIDATING_SYSTEM_PROPERTY = "infinispan.config.validate";
+   
+   public static final String SCHEMA_SYSTEM_PROPERTY = "infinispan.config.schema";
+   
+   private static final String DEFAULT_SCHEMA_LOCATION = "schema/infinispan-config-" + Version.getMajorVersion()+ ".xsd";
+   
+   public static final String SCHEMA_URL_SYSTEM_PROPERTY = "infinispan.config.schema.url";
+   
+   private static final String DEFAULT_SCHEMA_URL= "http://www.jboss.org/infinispan/infinispan-config-" + Version.getMajorVersion()+ ".xsd";
 
    @XmlElement
    private GlobalConfiguration global;
@@ -85,10 +95,7 @@ public class InfinispanConfiguration implements XmlConfigurationParser {
                                                                     String schemaFileName) throws IOException {
 
       InputStream inputStream = configFileName != null ? findInputStream(configFileName) : null;
-      // TODO the skipSchemaValidation() bit is a temporary fix until the proper schema location algorithm detailed in 
-      // http://lists.jboss.org/pipermail/infinispan-dev/2009-August/001110.html
-      //  is implemented
-      InputStream schemaIS = schemaFileName != null && !skipSchemaValidation() ? findInputStream(schemaFileName) : null;
+      InputStream schemaIS = schemaFileName != null ? findInputStream(schemaFileName) : null;
       return newInfinispanConfiguration(inputStream, schemaIS);
    }
 
@@ -107,7 +114,6 @@ public class InfinispanConfiguration implements XmlConfigurationParser {
    public static InfinispanConfiguration newInfinispanConfiguration(String configFileName)
          throws IOException {
       return newInfinispanConfiguration(configFileName, null);
-
    }
 
    /**
@@ -137,7 +143,7 @@ public class InfinispanConfiguration implements XmlConfigurationParser {
          JAXBContext jc = JAXBContext.newInstance(InfinispanConfiguration.class);
          Unmarshaller u = jc.createUnmarshaller();
 
-         if (schema != null && !skipSchemaValidation()) {
+         if (schema != null) {
             SchemaFactory factory = SchemaFactory.newInstance("http://www.w3.org/2001/XMLSchema");
             u.setSchema(factory.newSchema(new StreamSource(schema)));
          }
@@ -155,6 +161,38 @@ public class InfinispanConfiguration implements XmlConfigurationParser {
    private static boolean skipSchemaValidation() {
       String s = System.getProperty(VALIDATING_SYSTEM_PROPERTY);
       return s != null && !Boolean.parseBoolean(s);
+   }
+
+   public static InputStream findSchemaInputStream() {
+      boolean validating = !skipSchemaValidation();
+      if (!validating)
+         return null;
+
+      FileLookup fileLookup = new FileLookup();
+      InputStream is = fileLookup.lookupFile(schemaPath());
+      if (is != null)
+         return is;
+      try {
+         is = new URL(schemaURL()).openStream();
+         return is;
+      } catch (Exception e) {
+      }
+      return null;
+   }
+
+   public static String resolveSchemaPath() {
+      boolean validating = !skipSchemaValidation();
+      if (!validating)
+         return null;
+      return schemaPath();
+   }
+
+   private static String schemaPath() {
+      return System.getProperty(SCHEMA_SYSTEM_PROPERTY, DEFAULT_SCHEMA_LOCATION);
+   }
+
+   private static String schemaURL() {
+      return System.getProperty(SCHEMA_URL_SYSTEM_PROPERTY, DEFAULT_SCHEMA_URL);
    }
 
    /**
