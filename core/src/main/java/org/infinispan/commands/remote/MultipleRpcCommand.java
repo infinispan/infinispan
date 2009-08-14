@@ -127,7 +127,7 @@ public class MultipleRpcCommand extends BaseRpcInvokingCommand {
    @Override
    public String toString() {
       return "MultipleRpcCommand{" +
-            ", commands=" + (commands == null ? null : Arrays.asList(commands)) +
+            "commands=" + (commands == null ? null : Arrays.asList(commands)) +
             ", cacheName='" + cacheName + '\'' +
             '}';
    }

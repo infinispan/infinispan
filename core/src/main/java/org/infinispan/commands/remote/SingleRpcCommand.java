@@ -74,7 +74,7 @@ public class SingleRpcCommand extends BaseRpcInvokingCommand {
    @Override
    public String toString() {
       return "SingleRpcCommand{" +
-            ", cacheName='" + cacheName + '\'' +
+            "cacheName='" + cacheName + '\'' +
             ", command=" + command +
             '}';
    }
