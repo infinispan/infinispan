@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -22,7 +21,7 @@ public class DistAsyncTxFuncTest extends DistSyncTxFuncTest {
    ReplListener r1, r2, r3, r4;
    ReplListener[] r;
    Map<Cache<?, ?>, ReplListener> listenerLookup;
-   List<Address> listenerCaches = new LinkedList<Address>();
+   List<Address> listenerCaches;
 
    public DistAsyncTxFuncTest() {
       sync = false;
@@ -40,6 +39,7 @@ public class DistAsyncTxFuncTest extends DistSyncTxFuncTest {
       r4 = new ReplListener(c4, true, true);
       r = new ReplListener[]{r1, r2, r3, r4};
       listenerLookup = new HashMap<Cache<?, ?>, ReplListener>();
+      listenerCaches = new ArrayList<Address>();
       for (ReplListener rl : r) {
          listenerCaches.add(addressOf(rl.getCache()));
          listenerLookup.put(rl.getCache(), rl);

@@ -108,6 +108,7 @@ public class JoinTask extends RehashTask {
 
          // 2.  new CH instance
          chNew = createConsistentHash(chOld.getCaches(), self);
+         dmi.setConsistentHash(chNew);
 
          // 3.  Enable TX logging
          transactionLogger.enable();
