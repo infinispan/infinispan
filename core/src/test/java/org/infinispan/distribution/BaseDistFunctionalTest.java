@@ -68,11 +68,11 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       List<Cache> clist = new ArrayList<Cache>(cacheManagers.size());
       for (CacheManager cm : cacheManagers) clist.add(cm.getCache(cacheName));
       assert clist.size() == 4;
-      waitForJoinTasksToComplete(SECONDS.toMillis(240), clist.toArray(new Cache[clist.size()]));
+      waitForJoinTasksToComplete(SECONDS.toMillis(480), clist.toArray(new Cache[clist.size()]));
 
       // seed this with an initial cache.  Any one will do.
       Cache seed = caches.get(0);
-      DefaultConsistentHash ch = getDefaultConsistentHash(seed, SECONDS.toMillis(240));
+      DefaultConsistentHash ch = getDefaultConsistentHash(seed, SECONDS.toMillis(480));
       List<Cache<Object, String>> reordered = new ArrayList<Cache<Object, String>>();
 
       for (Address a : ch.positions.values()) {

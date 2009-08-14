@@ -55,10 +55,10 @@ public class RehashJoinTest extends BaseDistFunctionalTest {
       Cache<Object, String> joiner = joinerManager.getCache(cacheName);
 
       // need to wait for the joiner to, well, join.
-      TestingUtil.blockUntilViewsReceived(SECONDS.toMillis(240), cacheManagers.toArray(new CacheManager[cacheManagers.size()]));
+      TestingUtil.blockUntilViewsReceived(SECONDS.toMillis(480), cacheManagers.toArray(new CacheManager[cacheManagers.size()]));
 
       // need to block until this join has completed!
-      waitForJoinTasksToComplete(SECONDS.toMillis(240), joiner);
+      waitForJoinTasksToComplete(SECONDS.toMillis(480), joiner);
 
       // where does the joiner sit in relation to the other caches?
       int joinerPos = locateJoiner(joinerManager.getAddress());
@@ -139,11 +139,11 @@ public class RehashJoinTest extends BaseDistFunctionalTest {
       log.info("Number of cache manager views to wait for: {0}", cacheManagerArray.length);
 
       // need to wait for the joiner to, well, join.
-      TestingUtil.blockUntilViewsReceived(SECONDS.toMillis(240), cacheManagerArray);
+      TestingUtil.blockUntilViewsReceived(SECONDS.toMillis(480), cacheManagerArray);
       // where do the joiners sit in relation to the other caches?
 
 
-      waitForJoinTasksToComplete(SECONDS.toMillis(240), joiners);
+      waitForJoinTasksToComplete(SECONDS.toMillis(480), joiners);
 
       // need to wait a *short while* before we attempt to locate joiners, since post-join invalidation messages are sent async.
       // TODO replace this with some form of command detection on remote nodes.
@@ -168,7 +168,7 @@ public class RehashJoinTest extends BaseDistFunctionalTest {
 
    private int locateJoiner(Address joinerAddress) {
       for (Cache c : Arrays.asList(c1, c2, c3, c4)) {
-         DefaultConsistentHash dch = getDefaultConsistentHash(c, SECONDS.toMillis(240));
+         DefaultConsistentHash dch = getDefaultConsistentHash(c, SECONDS.toMillis(480));
          int i = 0;
          for (Address a : dch.positions.values()) {
             if (a.equals(joinerAddress)) return i;

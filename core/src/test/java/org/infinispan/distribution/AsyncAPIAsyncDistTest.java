@@ -5,6 +5,8 @@ import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.ReplListener;
 import org.testng.annotations.Test;
 
+import java.util.concurrent.TimeUnit;
+
 @Test(groups = "functional", testName = "distribution.AsyncAPIAsyncDistTest")
 public class AsyncAPIAsyncDistTest extends AsyncAPISyncDistTest {
 
@@ -45,6 +47,6 @@ public class AsyncAPIAsyncDistTest extends AsyncAPISyncDistTest {
       }
 
 
-      rl.waitForRpc();
+      rl.waitForRpc(240, TimeUnit.SECONDS);
    }
 }
