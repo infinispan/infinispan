@@ -31,6 +31,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Future;
 
@@ -80,10 +81,10 @@ public class JoinTask extends RehashTask {
          // 1.  Get chOld from coord.
          // this happens in a loop to ensure we receive the correct CH and not a "union".
          // TODO make at least *some* of these configurable!
-         long sleepTime = 500; // sleep time between retries
-         int incrementFactor = 2; // factor by wich to increment retry sleep
-         int maxSleepTime = 600000; // after which we give up!
-
+         long minSleepTime = 500, maxSleepTime = 2000; // sleep time between retries
+         int maxWaitTime = 600000; // after which we give up!
+         Random rand = new Random();
+         long giveupTime = System.currentTimeMillis() + maxWaitTime;
          do {
             log.trace("Requesting old consistent hash from coordinator");
             List<Response> resp = rpcManager.invokeRemotely(coordinator(), commandsFactory.buildGetConsistentHashCommand(self),
@@ -98,15 +99,17 @@ public class JoinTask extends RehashTask {
 
             log.trace("Retrieved old consistent hash address list {0}", addresses);
             if (addresses == null) {
-               if (sleepTime > maxSleepTime)
-                  throw new CacheException("Unable to retrieve old consistent hash from coordinator even after several attempts at sleeping and retrying!");
-               log.debug("Sleeping for {0}", Util.prettyPrintTime(sleepTime));
-               Thread.sleep(sleepTime); // sleep for a while and retry
-               sleepTime *= incrementFactor;
+               long time = rand.nextInt((int) (maxSleepTime - minSleepTime) / 10);
+               time = (time * 10) + minSleepTime;
+               log.debug("Sleeping for {0}", Util.prettyPrintTime(time));
+               Thread.sleep(time); // sleep for a while and retry
             } else {
                chOld = createConsistentHash(addresses);
             }
-         } while (chOld == null);
+         } while (chOld == null && System.currentTimeMillis() < giveupTime);
+
+         if (chOld == null)
+            throw new CacheException("Unable to retrieve old consistent hash from coordinator even after several attempts at sleeping and retrying!");
 
          // 2.  new CH instance
          chNew = createConsistentHash(chOld.getCaches(), self);
