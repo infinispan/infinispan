@@ -53,13 +53,18 @@ public class JaxbSchemaGenerator {
             super();
             this.dir = dir;
          }
-         
+
          public Result createOutput(String namespaceUri, String suggestedFileName)
                   throws IOException {
-            return new StreamResult(new File(dir, "infinispan-config-" + Version.getMajorVersion()+ ".xsd"));
+            return new StreamResult(new File(dir, "infinispan-config-" + Version.getMajorVersion()
+                     + ".xsd"));
          }
       }
       JAXBContext context = JAXBContext.newInstance(InfinispanConfiguration.class);
-      context.generateSchema(new InfinispanSchemaOutputResolver(baseDir));
+      if (!baseDir.exists()) {
+         if (baseDir.mkdirs()) {
+            context.generateSchema(new InfinispanSchemaOutputResolver(baseDir));
+         }
+      }
    }
 }

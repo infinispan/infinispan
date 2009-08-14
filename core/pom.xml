@@ -105,7 +105,7 @@
         <configuration>
           <mainClass>org.infinispan.util.JaxbSchemaGenerator</mainClass>
           <arguments>
-            <argument>${basedir}/src/main/resources/schema</argument>
+            <argument>${basedir}/target/classes/schema</argument>
           </arguments>          
         </configuration>
       </plugin>      
