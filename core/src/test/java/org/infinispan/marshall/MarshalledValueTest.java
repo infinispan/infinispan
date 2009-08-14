@@ -401,6 +401,13 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       assert mv.get() instanceof Pojo;
       assertSerializationCounts(1, 1);
    }
+   
+   public void testEvictWithMarshalledValueKey() {
+      Pojo pojo = new Pojo();
+      cache1.put(pojo, pojo);
+      cache1.evict(pojo);
+      assert !cache1.containsKey(pojo);
+   }
 
    @Listener
    public static class MockListener {

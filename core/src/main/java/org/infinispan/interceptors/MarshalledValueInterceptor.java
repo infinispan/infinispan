@@ -107,6 +107,18 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
       compact(value);
       return processRetVal(retVal);
    }
+   
+   @Override
+   public Object visitEvictCommand(InvocationContext ctx, org.infinispan.commands.write.EvictCommand command) throws Throwable {
+      MarshalledValue value = null;
+      if (!MarshalledValue.isTypeExcluded(command.getKey().getClass())) {
+         value = createMarshalledValue(command.getKey(), ctx);
+         command.setKey(value);
+      }
+      Object retVal = invokeNextInterceptor(ctx, command);
+      compact(value);
+      return processRetVal(retVal);
+   };
 
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
