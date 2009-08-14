@@ -41,13 +41,25 @@ import org.infinispan.config.InfinispanConfiguration;
 public class JaxbSchemaGenerator {
 
    public static void main(String[] args) throws Exception {
-      final File baseDir = new File(".");
+      File baseDir = new File(".");
+      String dir = args[0];
+      if (dir != null && dir.length() > 0) {
+         baseDir = new File(dir);
+      }
       class InfinispanSchemaOutputResolver extends SchemaOutputResolver {
-          public Result createOutput( String namespaceUri, String suggestedFileName ) throws IOException {
-              return new StreamResult(new File(baseDir,"infinispan-config-" +Version.getMajorVersion()+ ".xsd"));
-          }
+         private File dir;
+
+         private InfinispanSchemaOutputResolver(File dir) {
+            super();
+            this.dir = dir;
+         }
+         
+         public Result createOutput(String namespaceUri, String suggestedFileName)
+                  throws IOException {
+            return new StreamResult(new File(dir, "infinispan-config-" + Version.getMajorVersion()+ ".xsd"));
+         }
       }
       JAXBContext context = JAXBContext.newInstance(InfinispanConfiguration.class);
-      context.generateSchema(new InfinispanSchemaOutputResolver()); 
+      context.generateSchema(new InfinispanSchemaOutputResolver(baseDir));
    }
 }
