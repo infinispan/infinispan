@@ -41,9 +41,6 @@ public class DistributionResponseGenerator implements ResponseGenerator {
          }
       }
 
-      if (returnValue == null)
-         return UnsuccessfulResponse.INSTANCE;
-      else
-         return new SuccessfulResponse(returnValue);
+      return new SuccessfulResponse(returnValue);
    }
 }
