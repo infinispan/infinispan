@@ -57,6 +57,9 @@ public class RehashJoinTest extends BaseDistFunctionalTest {
       // need to wait for the joiner to, well, join.
       TestingUtil.blockUntilViewsReceived(SECONDS.toMillis(240), cacheManagers.toArray(new CacheManager[cacheManagers.size()]));
 
+      // need to block until this join has completed!
+      waitForJoinTasksToComplete(SECONDS.toMillis(240), joiner);
+
       // where does the joiner sit in relation to the other caches?
       int joinerPos = locateJoiner(joinerManager.getAddress());
 
