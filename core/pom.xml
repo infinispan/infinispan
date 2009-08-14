@@ -104,29 +104,11 @@
         </executions>
         <configuration>
           <mainClass>org.infinispan.util.JaxbSchemaGenerator</mainClass>
+          <arguments>
+            <argument>${basedir}/src/main/resources/schema</argument>
+          </arguments>          
         </configuration>
-      </plugin>
-      <plugin>
-           <artifactId>maven-antrun-plugin</artifactId>
-           <executions>
-             <execution>
-               <phase>process-classes</phase>
-               <goals>
-                 <goal>run</goal>
-               </goals>
-               <configuration>
-                 <tasks>                    	
-  					<copy todir="${basedir}/src/main/resources/schema" overwrite="true">
-    					<fileset dir="${basedir}" includes="*.xsd"/>
-  					</copy>  	
-  					<delete>
-    					<fileset dir="${basedir}" includes="*.xsd"/>
-					</delete>  						  					  						
-                 </tasks>
-               </configuration>
-             </execution>
-           </executions>
-         </plugin>      
+      </plugin>      
     </plugins>
   </build>
 </project>
