@@ -233,7 +233,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       remoteGetBeforeWrite(ctx, command.isConditional(), recipientGenerator.getKeys());
 
       // if this is local mode then skip distributing
-      if (localModeForced && ctx.isInTxScope()) return invokeNextInterceptor(ctx, command);
+      if (localModeForced) return invokeNextInterceptor(ctx, command);
 
       // FIRST pass this call up the chain.  Only if it succeeds (no exceptions) locally do we attempt to distribute.
       Object returnValue = invokeNextInterceptor(ctx, command);
