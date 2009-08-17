@@ -33,16 +33,17 @@ import javax.transaction.TransactionManager;
  * Uses a number of mechanisms to retrieve a transaction manager.
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
+ * @author Galder Zamarreño
  * @since 4.0
  */
 @DefaultFactoryFor(classes = {TransactionManager.class})
 public class TransactionManagerFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
    public <T> T construct(Class<T> componentType) {
       // See if we had a TransactionManager injected into our config
-      TransactionManager transactionManager = null; //configuration.getRuntimeConfig().getTransactionManager();
-      TransactionManagerLookup lookup = null;
+      TransactionManager transactionManager = null;
+      TransactionManagerLookup lookup = configuration.getTransactionManagerLookup();
 
-      if (transactionManager == null) {
+      if (lookup == null) {
          // Nope. See if we can look it up from JNDI
          if (configuration.getTransactionManagerLookupClass() != null) {
             try { 
@@ -52,16 +53,15 @@ public class TransactionManagerFactory extends AbstractNamedCacheComponentFactor
                throw new ConfigurationException("Problems looking up transaction manager", e);
             }
          }
-
-         try {
-            if (lookup != null) {
-               transactionManager = lookup.getTransactionManager();
-//               configuration.getRuntimeConfig().setTransactionManager(transactionManager);
-            }
+      }
+      
+      try {
+         if (lookup != null) {
+            transactionManager = lookup.getTransactionManager();
          }
-         catch (Exception e) {
-            log.info("failed looking up TransactionManager, will not use transactions", e);
-         }
+      }
+      catch (Exception e) {
+         log.info("failed looking up TransactionManager, will not use transactions", e);
       }
 
       if (transactionManager == null && configuration.isInvocationBatchingEnabled()) {

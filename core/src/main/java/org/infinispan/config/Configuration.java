@@ -27,6 +27,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.NonVolatile;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
+import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.CacheException;
 
@@ -55,7 +56,8 @@ import java.util.concurrent.TimeUnit;
  * 
  * 
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
- * @author Vladimir Blagojevic
+ * @author Vladimir Blagojevic 
+ * @author Galder Zamarreño
  * @since 4.0
  */
 @NonVolatile
@@ -65,8 +67,8 @@ import java.util.concurrent.TimeUnit;
          @ConfigurationElement(name = "locking", parent = "default", description = ""),
          @ConfigurationElement(name = "transaction", parent = "default", description = ""), 
          @ConfigurationElement(name = "jmxStatistics", parent = "default", description = ""),
-         @ConfigurationElement(name = "lazyDeserialization", parent = "default", description = ""),  
-         @ConfigurationElement(name = "invocationBatching", parent = "default", description = ""),   
+         @ConfigurationElement(name = "lazyDeserialization", parent = "default", description = ""),
+         @ConfigurationElement(name = "invocationBatching", parent = "default", description = ""),
          @ConfigurationElement(name = "clustering", parent = "default", description = ""),
          @ConfigurationElement(name = "stateRetrieval", parent = "clustering"),
          @ConfigurationElement(name = "sync", parent = "clustering"),
@@ -77,7 +79,7 @@ import java.util.concurrent.TimeUnit;
          @ConfigurationElement(name = "expiration", parent = "default", description = ""),
          @ConfigurationElement(name = "unsafe", parent = "default", description = ""),
          @ConfigurationElement(name = "deadlockDetection", parent = "default", description = ""),
-         @ConfigurationElement(name = "customInterceptors", parent = "default")         
+         @ConfigurationElement(name = "customInterceptors", parent = "default")
 })
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(propOrder={})
@@ -393,6 +395,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    public void setTransactionManagerLookupClass(String transactionManagerLookupClass) {
       this.transaction.setTransactionManagerLookupClass(transactionManagerLookupClass);
    }
+   
+   public void setTransactionManagerLookup(TransactionManagerLookup transactionManagerLookup) {
+      this.transaction.transactionManagerLookup = transactionManagerLookup;
+   }
 
    public void setCacheLoaderManagerConfig(CacheLoaderManagerConfig cacheLoaderManagerConfig) {
       this.loaders = cacheLoaderManagerConfig;
@@ -551,6 +557,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
    public String getTransactionManagerLookupClass() {
       return transaction.transactionManagerLookupClass;
+   }
+
+   public TransactionManagerLookup getTransactionManagerLookup() {
+      return transaction.transactionManagerLookup;
    }
 
    public CacheLoaderManagerConfig getCacheLoaderManagerConfig() {
@@ -763,6 +773,9 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       private static final long serialVersionUID = -3867090839830874603L;
 
       private String transactionManagerLookupClass;
+      
+      @XmlTransient
+      private TransactionManagerLookup transactionManagerLookup;
       
       @Dynamic
       private Boolean syncCommitPhase = false;
