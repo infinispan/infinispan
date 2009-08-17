@@ -5,6 +5,7 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.ReplListener;
+import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
@@ -89,6 +90,9 @@ public class DistAsyncTxFuncTest extends DistSyncTxFuncTest {
             listenerLookup.get(c).expectAnyWithTx();
             listenerLookup.get(c).waitForRpc(240, TimeUnit.SECONDS);
          }
+
+         // This sucks but for async transactions we still need this!!
+         TestingUtil.sleepThread(500 * keys.length);
       }
    }
 }
