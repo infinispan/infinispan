@@ -42,8 +42,8 @@ public class DistSyncTxFuncTest extends BaseDistFunctionalTest {
 
    public void testTransactionsSpanningKeysCommit() throws Exception {
 //    we need 2 keys that reside on different caches...
-      MagicKey k1 = new MagicKey(c1); // maps on to c1 and c2
-      MagicKey k2 = new MagicKey(c2); // maps on to c2 and c3
+      MagicKey k1 = new MagicKey(c1, "k1"); // maps on to c1 and c2
+      MagicKey k2 = new MagicKey(c2, "k2"); // maps on to c2 and c3
 
       init(k1, k2);
 
@@ -98,8 +98,8 @@ public class DistSyncTxFuncTest extends BaseDistFunctionalTest {
 
    public void testTransactionsSpanningKeysRollback() throws Exception {
       // we need 2 keys that reside on different caches...
-      MagicKey k1 = new MagicKey(c1); // maps on to c1 and c2
-      MagicKey k2 = new MagicKey(c2); // maps on to c2 and c3
+      MagicKey k1 = new MagicKey(c1, "k1"); // maps on to c1 and c2
+      MagicKey k2 = new MagicKey(c2, "k2"); // maps on to c2 and c3
 
       init(k1, k2);
 
@@ -125,8 +125,8 @@ public class DistSyncTxFuncTest extends BaseDistFunctionalTest {
 
    public void testPutFromNonOwner() throws Exception {
       // we need 2 keys that reside on different caches...
-      MagicKey k1 = new MagicKey(c1); // maps on to c1 and c2
-      MagicKey k2 = new MagicKey(c2); // maps on to c2 and c3
+      MagicKey k1 = new MagicKey(c1, "k1"); // maps on to c1 and c2
+      MagicKey k2 = new MagicKey(c2, "k2"); // maps on to c2 and c3
 
       init(k1, k2);
 
@@ -153,8 +153,8 @@ public class DistSyncTxFuncTest extends BaseDistFunctionalTest {
 
    public void testPutIfAbsentFromNonOwner() throws Exception {
       // we need 2 keys that reside on different caches...
-      MagicKey k1 = new MagicKey(c1); // maps on to c1 and c2
-      MagicKey k2 = new MagicKey(c2); // maps on to c2 and c3
+      MagicKey k1 = new MagicKey(c1, "k1"); // maps on to c1 and c2
+      MagicKey k2 = new MagicKey(c2, "k2"); // maps on to c2 and c3
 
       init(k1, k2);
 
@@ -196,8 +196,8 @@ public class DistSyncTxFuncTest extends BaseDistFunctionalTest {
 
    public void testRemoveFromNonOwner() throws Exception {
       // we need 2 keys that reside on different caches...
-      MagicKey k1 = new MagicKey(c1); // maps on to c1 and c2
-      MagicKey k2 = new MagicKey(c2); // maps on to c2 and c3
+      MagicKey k1 = new MagicKey(c1, "k1"); // maps on to c1 and c2
+      MagicKey k2 = new MagicKey(c2, "k2"); // maps on to c2 and c3
 
       init(k1, k2);
 
@@ -227,8 +227,8 @@ public class DistSyncTxFuncTest extends BaseDistFunctionalTest {
 
    public void testConditionalRemoveFromNonOwner() throws Exception {
       // we need 2 keys that reside on different caches...
-      MagicKey k1 = new MagicKey(c1); // maps on to c1 and c2
-      MagicKey k2 = new MagicKey(c2); // maps on to c2 and c3
+      MagicKey k1 = new MagicKey(c1, "k1"); // maps on to c1 and c2
+      MagicKey k2 = new MagicKey(c2, "k2"); // maps on to c2 and c3
 
       init(k1, k2);
 
@@ -266,8 +266,8 @@ public class DistSyncTxFuncTest extends BaseDistFunctionalTest {
 
    public void testReplaceFromNonOwner() throws Exception {
       // we need 2 keys that reside on different caches...
-      MagicKey k1 = new MagicKey(c1); // maps on to c1 and c2
-      MagicKey k2 = new MagicKey(c2); // maps on to c2 and c3
+      MagicKey k1 = new MagicKey(c1, "k1"); // maps on to c1 and c2
+      MagicKey k2 = new MagicKey(c2, "k2"); // maps on to c2 and c3
 
       init(k1, k2);
 
@@ -297,8 +297,8 @@ public class DistSyncTxFuncTest extends BaseDistFunctionalTest {
 
    public void testConditionalReplaceFromNonOwner() throws Exception {
       // we need 2 keys that reside on different caches...
-      MagicKey k1 = new MagicKey(c1); // maps on to c1 and c2
-      MagicKey k2 = new MagicKey(c2); // maps on to c2 and c3
+      MagicKey k1 = new MagicKey(c1, "k1"); // maps on to c1 and c2
+      MagicKey k2 = new MagicKey(c2, "k2"); // maps on to c2 and c3
 
       init(k1, k2);
 

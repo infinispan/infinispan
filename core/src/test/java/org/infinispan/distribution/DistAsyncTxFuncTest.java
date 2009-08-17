@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 @Test(groups = "functional", testName = "distribution.DistAsyncTxFuncTest")
 public class DistAsyncTxFuncTest extends DistSyncTxFuncTest {
@@ -76,14 +77,17 @@ public class DistAsyncTxFuncTest extends DistSyncTxFuncTest {
    protected void asyncTxWait(Object... keys) {
       // Wait for a tx completion event
       if (keys != null) {
+
          Set<Cache<?, ?>> cachesInTx = new HashSet<Cache<?, ?>>();
          for (Object k : keys) {
             cachesInTx.addAll(Arrays.asList(getOwners(k)));
          }
 
+         log.warn("In asyncTxWait, waiting for repl events on caches " + cachesInTx + " on keys " + Arrays.toString(keys));
+
          for (Cache<?, ?> c : cachesInTx) {
             listenerLookup.get(c).expectAnyWithTx();
-            listenerLookup.get(c).waitForRpc();
+            listenerLookup.get(c).waitForRpc(240, TimeUnit.SECONDS);
          }
       }
    }

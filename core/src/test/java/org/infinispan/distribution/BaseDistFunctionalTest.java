@@ -342,8 +342,8 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       @Override
       public String toString() {
          return "MagicKey{" +
-               (name == null ? "" : "name=" + name) +
-               ", hashcode=" + hashcode +
+               (name == null ? "" : "name=" + name + ", ") +
+               "hashcode=" + hashcode +
                ", address='" + address + '\'' +
                '}';
       }
