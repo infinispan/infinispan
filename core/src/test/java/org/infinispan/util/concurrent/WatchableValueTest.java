@@ -8,6 +8,7 @@ import java.util.concurrent.CountDownLatch;
 
 @Test(groups = "unit", testName = "util.concurrent.WatchableValueTest")
 public class WatchableValueTest {
+   @Test(invocationCount = 250, skipFailedInvocations = true)
    public void testNotifier() throws InterruptedException {
       final WatchableValue vn = new WatchableValue(10);
       final List<Integer> threadsCompleted = new LinkedList<Integer>();
@@ -18,8 +19,8 @@ public class WatchableValueTest {
             try {
                threadsReady.countDown();
                vn.awaitValue(50);
-               valueSet1.countDown();
                threadsCompleted.add(1);
+               valueSet1.countDown();
             } catch (Exception e) {
                throw new RuntimeException(e);
             }
@@ -31,8 +32,8 @@ public class WatchableValueTest {
             try {
                threadsReady.countDown();
                vn.awaitValue(50);
-               valueSet1.countDown();
                threadsCompleted.add(2);
+               valueSet1.countDown();
             } catch (Exception e) {
                throw new RuntimeException(e);
             }
@@ -44,8 +45,8 @@ public class WatchableValueTest {
             try {
                threadsReady.countDown();
                vn.awaitValue(40);
-               valueSet2.countDown();
                threadsCompleted.add(3);
+               valueSet2.countDown();
             } catch (Exception e) {
                throw new RuntimeException(e);
             }
