@@ -103,11 +103,8 @@ public interface Ids {
    static final byte ATOMIC_REMOVE_OPERATION = 48;
    static final byte ATOMIC_CLEAR_OPERATION = 49;
 
-   static final byte GET_CONSISTENT_HASH_COMMAND = 50;
-   static final byte PUSH_STATE_COMMAND = 51;
-   static final byte PULL_STATE_COMMAND = 52;
-   static final byte INSTALL_CONSISTENT_HASH_COMMAND = 53;
-   static final byte DEFAULT_CONSISTENT_HASH = 54;
-   static final byte UNION_CONSISTENT_HASH = 55;
-   static final byte JOIN_COMPLETE_COMMAND = 56;
+   static final byte REHASH_CONTROL_COMMAND = 50;
+   static final byte DEFAULT_CONSISTENT_HASH = 51;
+   static final byte UNION_CONSISTENT_HASH = 52;
+   static final byte JOIN_COMPLETE_COMMAND = 53;
 }

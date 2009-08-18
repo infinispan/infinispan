@@ -72,6 +72,7 @@ public class TableNameUniquenessTest {
       assertNoOverlapingState(first, second, firstCs, secondCs);
    }
 
+   @SuppressWarnings("unchecked")
    public void testForMixedCacheStore() throws Exception {
       CacheManager cm = new DefaultCacheManager("configs/mixed.xml");
       Cache first = cm.getCache("first");
@@ -95,13 +96,13 @@ public class TableNameUniquenessTest {
       Person person1 = new Person(29, "Mircea");
       Person person2 = new Person(29, "Manik");
 
-      first.put("k",person1);
+      first.put("k", person1);
       assert firstCs.containsKey("k");
       assert !secondCs.containsKey("k");
       assert first.get("k").equals(person1);
       assert second.get("k") == null;
 
-      second.put("k2",person2);
+      second.put("k2", person2);
       assert second.get("k2").equals(person2);
       assert first.get("k2") == null;
    }
@@ -145,13 +146,13 @@ public class TableNameUniquenessTest {
    }
 
    private void assertNoOverlapingState(Cache first, Cache second, CacheStore firstCs, CacheStore secondCs) throws CacheLoaderException {
-      first.put("k","v");
+      first.put("k", "v");
       assert firstCs.containsKey("k");
       assert !secondCs.containsKey("k");
       assert first.get("k").equals("v");
       assert second.get("k") == null;
 
-      second.put("k2","v2");
+      second.put("k2", "v2");
       assert second.get("k2").equals("v2");
       assert first.get("k2") == null;
    }

@@ -16,7 +16,8 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * // TODO: Manik: Document this
+ * A delegating wrapper that locates keys by getting a union of locations reported by two other ConsistentHash
+ * implementations it delegates to.
  *
  * @author Manik Surtani
  * @since 4.0
@@ -67,5 +68,9 @@ public class UnionConsistentHash extends AbstractConsistentHash {
       public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          return new UnionConsistentHash((ConsistentHash) input.readObject(), (ConsistentHash) input.readObject());
       }
+   }
+
+   public boolean isInSameSubspace(Address a1, Address a2) {
+      throw new UnsupportedOperationException("Not supported by this impl");
    }
 }

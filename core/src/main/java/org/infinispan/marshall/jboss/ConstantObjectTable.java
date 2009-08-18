@@ -28,12 +28,8 @@ import org.infinispan.atomic.ClearOperation;
 import org.infinispan.atomic.PutOperation;
 import org.infinispan.atomic.RemoveOperation;
 import org.infinispan.commands.RemoteCommandFactory;
-import org.infinispan.commands.control.GetConsistentHashCommand;
-import org.infinispan.commands.control.InstallConsistentHashCommand;
-import org.infinispan.commands.control.JoinCompleteCommand;
 import org.infinispan.commands.control.LockControlCommand;
-import org.infinispan.commands.control.PullStateCommand;
-import org.infinispan.commands.control.PushStateCommand;
+import org.infinispan.commands.control.RehashControlCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
@@ -149,11 +145,7 @@ public class ConstantObjectTable implements ObjectTable {
       MARSHALLABLES.add(RollbackCommand.class.getName());
       MARSHALLABLES.add(InvalidateL1Command.class.getName());
       MARSHALLABLES.add(LockControlCommand.class.getName());
-      MARSHALLABLES.add(GetConsistentHashCommand.class.getName());
-      MARSHALLABLES.add(PushStateCommand.class.getName());
-      MARSHALLABLES.add(PullStateCommand.class.getName());
-      MARSHALLABLES.add(InstallConsistentHashCommand.class.getName());
-      MARSHALLABLES.add(JoinCompleteCommand.class.getName());
+      MARSHALLABLES.add(RehashControlCommand.class.getName());
 
       MARSHALLABLES.add(ImmortalCacheEntry.class.getName());
       MARSHALLABLES.add(MortalCacheEntry.class.getName());

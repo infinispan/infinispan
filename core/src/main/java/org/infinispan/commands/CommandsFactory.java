@@ -21,12 +21,8 @@
  */
 package org.infinispan.commands;
 
-import org.infinispan.commands.control.GetConsistentHashCommand;
-import org.infinispan.commands.control.InstallConsistentHashCommand;
-import org.infinispan.commands.control.JoinCompleteCommand;
 import org.infinispan.commands.control.LockControlCommand;
-import org.infinispan.commands.control.PullStateCommand;
-import org.infinispan.commands.control.PushStateCommand;
+import org.infinispan.commands.control.RehashControlCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -120,13 +116,9 @@ public interface CommandsFactory {
 
    LockControlCommand buildLockControlCommand(Collection keys, boolean implicit);
 
-   GetConsistentHashCommand buildGetConsistentHashCommand(Address joiner);
+   RehashControlCommand buildRehashControlCommand(RehashControlCommand.Type subtype, Address sender);
 
-   InstallConsistentHashCommand buildInstallConsistentHashCommand(Address joiner, boolean starting);
+   RehashControlCommand buildRehashControlCommand(RehashControlCommand.Type subtype, Address sender, Map<Object, InternalCacheValue> state);
 
-   PushStateCommand buildPushStateCommand(Address sender, Map<Object, InternalCacheValue> state);
-
-   PullStateCommand buildPullStateCommand(Address requestor, ConsistentHash newCH);
-
-   JoinCompleteCommand buildJoinCompleteCommand(Address joiner);
+   RehashControlCommand buildRehashControlCommand(RehashControlCommand.Type subtype, Address sender, Map<Object, InternalCacheValue> state, ConsistentHash consistentHash);
 }

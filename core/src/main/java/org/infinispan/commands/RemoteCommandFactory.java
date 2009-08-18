@@ -1,12 +1,8 @@
 package org.infinispan.commands;
 
 import org.infinispan.CacheException;
-import org.infinispan.commands.control.GetConsistentHashCommand;
-import org.infinispan.commands.control.InstallConsistentHashCommand;
-import org.infinispan.commands.control.JoinCompleteCommand;
 import org.infinispan.commands.control.LockControlCommand;
-import org.infinispan.commands.control.PullStateCommand;
-import org.infinispan.commands.control.PushStateCommand;
+import org.infinispan.commands.control.RehashControlCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
@@ -105,20 +101,8 @@ public class RemoteCommandFactory {
          case ClusteredGetCommand.COMMAND_ID:
             command = new ClusteredGetCommand();
             break;
-         case GetConsistentHashCommand.COMMAND_ID:
-            command = new GetConsistentHashCommand();
-            break;
-         case InstallConsistentHashCommand.COMMAND_ID:
-            command = new InstallConsistentHashCommand();
-            break;
-         case PushStateCommand.COMMAND_ID:
-            command = new PushStateCommand();
-            break;
-         case PullStateCommand.COMMAND_ID:
-            command = new PullStateCommand(transport);
-            break;
-         case JoinCompleteCommand.COMMAND_ID:
-            command = new JoinCompleteCommand();
+         case RehashControlCommand.COMMAND_ID:
+            command = new RehashControlCommand(transport);
             break;
          default:
             throw new CacheException("Unknown command id " + id + "!");

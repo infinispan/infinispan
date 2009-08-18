@@ -137,4 +137,8 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
             "addresses (in order of hash space position)=" + positions.values() +
             '}';
    }
+
+   public boolean isInSameSubspace(Address a1, Address a2) {
+      throw new UnsupportedOperationException("TODO Implement me!");
+   }
 }

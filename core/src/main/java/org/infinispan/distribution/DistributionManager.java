@@ -4,6 +4,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.loaders.CacheStore;
 import org.infinispan.remoting.transport.Address;
 
 import java.util.Collection;
@@ -93,5 +94,12 @@ public interface DistributionManager {
     * @param starting
     */
    void informRehashOnJoin(Address joiner, boolean starting);
+
+   /**
+    * Retrieves a cache store if one is available and set up for use in rehashing.  May return null!
+    *
+    * @return a cache store is one is available and configured for use in rehashing, or null otherwise.
+    */
+   CacheStore getCacheStoreForRehashing();
 }
 

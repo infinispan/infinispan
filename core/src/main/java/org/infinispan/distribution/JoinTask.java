@@ -2,7 +2,8 @@ package org.infinispan.distribution;
 
 import org.infinispan.CacheException;
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.control.PullStateCommand;
+import org.infinispan.commands.control.RehashControlCommand;
+import static org.infinispan.commands.control.RehashControlCommand.Type.*;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.WriteCommand;
@@ -15,7 +16,7 @@ import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
-import org.infinispan.remoting.rpc.ResponseMode;
+import static org.infinispan.remoting.rpc.ResponseMode.SYNCHRONOUS;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Util;
@@ -73,6 +74,21 @@ public class JoinTask extends RehashTask {
       self = rpcManager.getTransport().getAddress();
    }
 
+   @SuppressWarnings("unchecked")
+   private List<Address> parseResponses(List<Response> resp) {
+      for (Response r : resp) {
+         if (r instanceof SuccessfulResponse) {
+            return (List<Address>) ((SuccessfulResponse) r).getResponseValue();
+         }
+      }
+      return null;
+   }
+
+   @SuppressWarnings("unchecked")
+   private Map<Object, InternalCacheValue> getStateFromResponse(SuccessfulResponse r) {
+      return (Map<Object, InternalCacheValue>) r.getResponseValue();
+   }
+
    protected void performRehash() throws Exception {
       log.trace("Starting rehash on new joiner");
       boolean unlocked = false;
@@ -87,15 +103,10 @@ public class JoinTask extends RehashTask {
          long giveupTime = System.currentTimeMillis() + maxWaitTime;
          do {
             log.trace("Requesting old consistent hash from coordinator");
-            List<Response> resp = rpcManager.invokeRemotely(coordinator(), commandsFactory.buildGetConsistentHashCommand(self),
-                                                            ResponseMode.SYNCHRONOUS, 100000, true);
-            List<Address> addresses = null;
-            for (Response r : resp) {
-               if (r instanceof SuccessfulResponse) {
-                  addresses = (List<Address>) ((SuccessfulResponse) r).getResponseValue();
-                  break;
-               }
-            }
+            List<Response> resp = rpcManager.invokeRemotely(coordinator(),
+                                                            commandsFactory.buildRehashControlCommand(JOIN_REQ, self),
+                                                            SYNCHRONOUS, 100000, true);
+            List<Address> addresses = parseResponses(resp);
 
             log.trace("Retrieved old consistent hash address list {0}", addresses);
             if (addresses == null) {
@@ -119,21 +130,21 @@ public class JoinTask extends RehashTask {
          transactionLogger.enable();
 
          // 4.  Broadcast new temp CH
-         rpcManager.broadcastRpcCommand(commandsFactory.buildInstallConsistentHashCommand(self, true), true, true);
+         rpcManager.broadcastRpcCommand(commandsFactory.buildRehashControlCommand(JOIN_REHASH_START, self), true, true);
 
          // 5.  txLogger being enabled will cause CLusteredGetCommands to return uncertain responses.
 
          // 6.  pull state from everyone.
          Address myAddress = rpcManager.getTransport().getAddress();
-         PullStateCommand cmd = commandsFactory.buildPullStateCommand(myAddress, chNew);
+         RehashControlCommand cmd = commandsFactory.buildRehashControlCommand(PULL_STATE, myAddress, null, chNew);
          // TODO I should be able to process state chunks from different nodes simultaneously!!
          // TODO I should only send this pull state request to nodes which I know will send me state.  Not everyone in chOld!!
-         List<Response> resps = rpcManager.invokeRemotely(chOld.getCaches(), cmd, ResponseMode.SYNCHRONOUS, 10000, true);
+         List<Response> resps = rpcManager.invokeRemotely(chOld.getCaches(), cmd, SYNCHRONOUS, 10000, true);
 
          // 7.  Apply state
          for (Response r : resps) {
             if (r instanceof SuccessfulResponse) {
-               Map<Object, InternalCacheValue> state = (Map<Object, InternalCacheValue>) ((SuccessfulResponse) r).getResponseValue();
+               Map<Object, InternalCacheValue> state = getStateFromResponse((SuccessfulResponse) r);
                for (Map.Entry<Object, InternalCacheValue> e : state.entrySet()) {
                   if (chNew.locate(e.getKey(), configuration.getNumOwners()).contains(myAddress)) {
                      InternalCacheValue v = e.getValue();
@@ -164,8 +175,8 @@ public class JoinTask extends RehashTask {
          // 10.
          // TODO this phase should also "tell" the coord that the join is complete so that other waiting joiners
          // may proceed.  Ideally another command, directed to the coord.
-         rpcManager.broadcastRpcCommand(commandsFactory.buildInstallConsistentHashCommand(self, false), true, true);
-         rpcManager.invokeRemotely(coordinator(), commandsFactory.buildJoinCompleteCommand(self), ResponseMode.SYNCHRONOUS,
+         rpcManager.broadcastRpcCommand(commandsFactory.buildRehashControlCommand(JOIN_REHASH_END, self), true, true);
+         rpcManager.invokeRemotely(coordinator(), commandsFactory.buildRehashControlCommand(JOIN_COMPLETE, self), SYNCHRONOUS,
                                    100000, true);
 
          // 11.

@@ -13,6 +13,8 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.loaders.CacheLoaderManager;
+import org.infinispan.loaders.CacheStore;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
@@ -52,6 +54,7 @@ public class DistributionManagerImpl implements DistributionManager {
    private final boolean trace = log.isTraceEnabled();
    Configuration configuration;
    ConsistentHash consistentHash;
+   CacheLoaderManager cacheLoaderManager;
    RpcManager rpcManager;
    CacheManagerNotifier notifier;
    int replCount;
@@ -83,7 +86,9 @@ public class DistributionManagerImpl implements DistributionManager {
 
    @Inject
    public void init(Configuration configuration, RpcManager rpcManager, CacheManagerNotifier notifier, CommandsFactory cf,
-                    DataContainer dataContainer, InterceptorChain interceptorChain, InvocationContextContainer icc) {
+                    DataContainer dataContainer, InterceptorChain interceptorChain, InvocationContextContainer icc,
+                    CacheLoaderManager cacheLoaderManager) {
+      this.cacheLoaderManager = cacheLoaderManager;
       this.configuration = configuration;
       this.rpcManager = rpcManager;
       this.notifier = notifier;
@@ -250,5 +255,11 @@ public class DistributionManagerImpl implements DistributionManager {
          while (!joinTaskSubmitted) LockSupport.parkNanos(100 * 1000000);
          rehash(e.getNewMembers(), e.getOldMembers());
       }
+   }
+
+   public CacheStore getCacheStoreForRehashing() {
+      if (cacheLoaderManager == null || !cacheLoaderManager.isEnabled() || cacheLoaderManager.isShared())
+         return null;
+      return cacheLoaderManager.getCacheStore();
    }
 }

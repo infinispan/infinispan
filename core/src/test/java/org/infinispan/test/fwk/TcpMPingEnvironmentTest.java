@@ -114,8 +114,6 @@ public class TcpMPingEnvironmentTest {
    private void initiChannel(JChannel channel) throws Exception {
       openedChannles.add(channel);
       channel.setOpt(org.jgroups.Channel.LOCAL, false);
-      channel.setOpt(org.jgroups.Channel.AUTO_RECONNECT, true);
-      channel.setOpt(org.jgroups.Channel.AUTO_GETSTATE, false);
       channel.setOpt(org.jgroups.Channel.BLOCK, true);
       channel.connect("someChannel");
    }

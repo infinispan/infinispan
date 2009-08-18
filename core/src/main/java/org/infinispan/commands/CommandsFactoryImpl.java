@@ -22,12 +22,8 @@
 package org.infinispan.commands;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.control.GetConsistentHashCommand;
-import org.infinispan.commands.control.InstallConsistentHashCommand;
-import org.infinispan.commands.control.JoinCompleteCommand;
 import org.infinispan.commands.control.LockControlCommand;
-import org.infinispan.commands.control.PullStateCommand;
-import org.infinispan.commands.control.PushStateCommand;
+import org.infinispan.commands.control.RehashControlCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -274,21 +270,9 @@ public class CommandsFactoryImpl implements CommandsFactory {
             LockControlCommand lcc = (LockControlCommand) c;
             lcc.init(interceptorChain, icc, txTable);
             break;
-         case GetConsistentHashCommand.COMMAND_ID:
-            GetConsistentHashCommand gchc = (GetConsistentHashCommand) c;
-            gchc.initialize(distributionManager);
-            break;
-         case InstallConsistentHashCommand.COMMAND_ID:
-            InstallConsistentHashCommand ichc = (InstallConsistentHashCommand) c;
-            ichc.initialize(distributionManager);
-            break;
-         case PullStateCommand.COMMAND_ID:
-            PullStateCommand psc = (PullStateCommand) c;
-            psc.init(dataContainer, cacheLoaderManager, distributionManager, configuration);
-            break;
-         case JoinCompleteCommand.COMMAND_ID:
-            JoinCompleteCommand jcc = (JoinCompleteCommand) c;
-            jcc.init(distributionManager);
+         case RehashControlCommand.COMMAND_ID:
+            RehashControlCommand rcc = (RehashControlCommand) c;
+            rcc.init(distributionManager, configuration, dataContainer);
             break;
       }
    }
@@ -297,23 +281,16 @@ public class CommandsFactoryImpl implements CommandsFactory {
       return new LockControlCommand(keys, cacheName, implicit);
    }
 
-   public GetConsistentHashCommand buildGetConsistentHashCommand(Address joiner) {
-      return new GetConsistentHashCommand(cacheName, joiner);
+   public RehashControlCommand buildRehashControlCommand(RehashControlCommand.Type type, Address sender) {
+      return buildRehashControlCommand(type, sender, null, null);
    }
 
-   public InstallConsistentHashCommand buildInstallConsistentHashCommand(Address joiner, boolean starting) {
-      return new InstallConsistentHashCommand(cacheName, joiner, starting);
+   public RehashControlCommand buildRehashControlCommand(RehashControlCommand.Type type, Address sender, Map<Object, InternalCacheValue> state) {
+      return buildRehashControlCommand(type, sender, state, null);
    }
 
-   public PushStateCommand buildPushStateCommand(Address sender, Map<Object, InternalCacheValue> state) {
-      return new PushStateCommand(cacheName, sender, state);
+   public RehashControlCommand buildRehashControlCommand(RehashControlCommand.Type type, Address sender, Map<Object, InternalCacheValue> state, ConsistentHash consistentHash) {
+      return new RehashControlCommand(cacheName, type, sender, state, consistentHash);
    }
 
-   public PullStateCommand buildPullStateCommand(Address requestor, ConsistentHash newCH) {
-      return new PullStateCommand(cacheName, requestor, newCH);
-   }
-
-   public JoinCompleteCommand buildJoinCompleteCommand(Address joiner) {
-      return new JoinCompleteCommand(cacheName, joiner);
-   }
 }
