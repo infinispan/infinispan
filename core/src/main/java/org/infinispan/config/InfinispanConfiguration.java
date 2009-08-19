@@ -37,6 +37,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,14 +60,14 @@ import java.util.Map;
 public class InfinispanConfiguration implements XmlConfigurationParser {
 
    public static final String VALIDATING_SYSTEM_PROPERTY = "infinispan.config.validate";
-   
+
    public static final String SCHEMA_SYSTEM_PROPERTY = "infinispan.config.schema";
-   
-   private static final String DEFAULT_SCHEMA_LOCATION = "schema/infinispan-config-" + Version.getMajorVersion()+ ".xsd";
-   
+
+   private static final String DEFAULT_SCHEMA_LOCATION = "schema/infinispan-config-" + Version.getMajorVersion() + ".xsd";
+
    public static final String SCHEMA_URL_SYSTEM_PROPERTY = "infinispan.config.schema.url";
-   
-   private static final String DEFAULT_SCHEMA_URL= "http://www.jboss.org/infinispan/infinispan-config-" + Version.getMajorVersion()+ ".xsd";
+
+   private static final String DEFAULT_SCHEMA_URL = "http://www.jboss.org/infinispan/infinispan-config-" + Version.getMajorVersion() + ".xsd";
 
    @XmlElement
    private GlobalConfiguration global;
@@ -224,6 +225,7 @@ public class InfinispanConfiguration implements XmlConfigurationParser {
    }
 
    public Map<String, Configuration> parseNamedConfigurations() throws ConfigurationException {
+      if (namedCaches == null) return Collections.emptyMap();
       Map<String, Configuration> map = new HashMap<String, Configuration>(7);
       for (Configuration conf : namedCaches) {
          map.put(conf.getName(), conf);

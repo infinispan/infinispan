@@ -1,37 +1,68 @@
 package org.infinispan.config.parsing;
 
-import java.io.IOException;
-import java.util.Map;
-
 import org.infinispan.Version;
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.config.InfinispanConfiguration;
 import org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior;
+import org.infinispan.config.InfinispanConfiguration;
 import org.infinispan.distribution.DefaultConsistentHash;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.loaders.file.FileCacheStoreConfig;
+import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Map;
+
 @Test(groups = "unit", testName = "config.parsing.XmlFileParsingTest")
 public class XmlFileParsingTest {
-  
+
    public void testNamedCacheFileJaxb() throws Exception {
-      String schemaFileName = "infinispan-config-" +Version.getMajorVersion()+ ".xsd";
+      String schemaFileName = "infinispan-config-" + Version.getMajorVersion() + ".xsd";
       testNamedCacheFile(InfinispanConfiguration.newInfinispanConfiguration(
-               "configs/named-cache-test.xml","schema/"+schemaFileName));
+            "configs/named-cache-test.xml", "schema/" + schemaFileName));
    }
 
    public void testConfigurationMergingJaxb() throws Exception {
       testConfigurationMerging(InfinispanConfiguration
-               .newInfinispanConfiguration("configs/named-cache-test.xml"));
+            .newInfinispanConfiguration("configs/named-cache-test.xml"));
    }
-   
-   
+
+   public void testNoNamedCaches() throws Exception {
+      String config = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+            "\n" +
+            "<infinispan xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:infinispan:config:4.0\">\n" +
+            "   <global>\n" +
+            "      <transport clusterName=\"demoCluster\"/>\n" +
+            "   </global>\n" +
+            "\n" +
+            "   <default>\n" +
+            "      <clustering mode=\"replication\">\n" +
+            "      </clustering>\n" +
+            "   </default>\n" +
+            "</infinispan>";
+
+      InputStream is = new ByteArrayInputStream(config.getBytes());
+      InfinispanConfiguration c = InfinispanConfiguration.newInfinispanConfiguration(is);
+      GlobalConfiguration gc = c.parseGlobalConfiguration();
+      assert gc.getTransportClass().equals(JGroupsTransport.class.getName());
+      assert gc.getClusterName().equals("demoCluster");
+
+      Configuration def = c.parseDefaultConfiguration();
+      assert def.getCacheMode() == Configuration.CacheMode.REPL_SYNC;
+
+      Map<String, Configuration> named = c.parseNamedConfigurations();
+      assert named != null;
+      assert named.isEmpty();
+   }
+
+
    private void testNamedCacheFile(XmlConfigurationParser parser) throws IOException {
-      
+
       GlobalConfiguration gc = parser.parseGlobalConfiguration();
 
       assert gc.getAsyncListenerExecutorFactoryClass().equals("org.infinispan.executors.DefaultExecutorFactory");
@@ -51,9 +82,9 @@ public class XmlFileParsingTest {
       assert gc.getTransportClass().equals("org.infinispan.remoting.transport.jgroups.JGroupsTransport");
       assert gc.getClusterName().equals("infinispan-cluster");
       assert gc.getDistributedSyncTimeout() == 50000;
-      
+
       assert gc.getShutdownHookBehavior().equals(ShutdownHookBehavior.REGISTER);
-      
+
       assert gc.getMarshallerClass().equals("org.infinispan.marshall.VersionAwareMarshaller");
       assert gc.getMarshallVersionString().equals("1.0");
 
@@ -114,7 +145,7 @@ public class XmlFileParsingTest {
       CacheLoaderManagerConfig loaderManagerConfig = c.getCacheLoaderManagerConfig();
       assert loaderManagerConfig.isPreload();
       assert !loaderManagerConfig.isPassivation();
-      assert !loaderManagerConfig.isShared(); 
+      assert !loaderManagerConfig.isShared();
       assert loaderManagerConfig.getCacheLoaderConfigs().size() == 1;
       FileCacheStoreConfig csConf = (FileCacheStoreConfig) loaderManagerConfig.getFirstCacheLoaderConfig();
       assert csConf.getCacheLoaderClassName().equals("org.infinispan.loaders.file.FileCacheStore");
@@ -142,11 +173,11 @@ public class XmlFileParsingTest {
       assert c.getConsistentHashClass().equals(DefaultConsistentHash.class.getName());
       assert c.getNumOwners() == 3;
       assert c.isL1CacheEnabled();
-      
+
       c = namedCaches.get("cacheWithCustomInterceptors");
       assert !c.getCustomInterceptors().isEmpty();
       assert c.getCustomInterceptors().size() == 5;
-      
+
       c = namedCaches.get("evictionCache");
       assert c.getEvictionMaxEntries() == 5000;
       assert c.getEvictionStrategy().equals(EvictionStrategy.FIFO);
@@ -159,7 +190,7 @@ public class XmlFileParsingTest {
    }
 
    private void testConfigurationMerging(XmlConfigurationParser parser) throws IOException {
-      
+
       Configuration defaultCfg = parser.parseDefaultConfiguration();
       Map<String, Configuration> namedCaches = parser.parseNamedConfigurations();
 
