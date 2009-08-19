@@ -185,4 +185,17 @@ public abstract class BaseReplicatedAPITest extends MultipleCacheManagersTest {
       assert cache1.get("key").equals("value1");
       assert cache2.get("key").equals("value1");
    }
+   
+   public void testLocalOnlyClear() {
+      cache1.put("key", "value1", Flag.CACHE_MODE_LOCAL);
+      cache2.put("key", "value2", Flag.CACHE_MODE_LOCAL);
+      assert cache1.get("key").equals("value1");
+      assert cache2.get("key").equals("value2");
+
+      cache1.clear(Flag.CACHE_MODE_LOCAL);
+
+      assert cache1.get("key") == null;
+      assert cache2.get("key") != null;
+      assert cache2.get("key").equals("value2");
+   }
 }

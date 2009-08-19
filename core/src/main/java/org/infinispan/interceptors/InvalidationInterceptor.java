@@ -100,9 +100,11 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
 
    @Override
    public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      // just broadcast the clear command - this is simplest!
       Object retval = invokeNextInterceptor(ctx, command);
-      if (ctx.isOriginLocal()) rpcManager.broadcastRpcCommand(command, defaultSynchronous);
+      if (!isLocalModeForced(ctx)) {
+         // just broadcast the clear command - this is simplest!
+         if (ctx.isOriginLocal()) rpcManager.broadcastRpcCommand(command, defaultSynchronous);
+      }
       return retval;
    }
 
