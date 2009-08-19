@@ -295,6 +295,9 @@
                      <mainClass>org.infinispan.Version</mainClass>
                   </manifest>
                </archive>
+               <excludes>
+                  <exclude>**/log4j.xml</exclude>
+               </excludes>
             </configuration>
             <executions>
                <execution>
