@@ -4,6 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.test.ReplListener;
+import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
 import java.util.HashMap;
@@ -54,5 +55,7 @@ public class DistAsyncFuncTest extends DistSyncFuncTest {
             }
          }
       }
+      // This sucks but for async transactions we still need this!!
+      TestingUtil.sleepThread(1000);
    }
 }
