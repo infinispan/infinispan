@@ -1,5 +1,7 @@
 package org.infinispan.context;
 
+import org.infinispan.Cache;
+
 /**
  * Available flags, which may be set on a per-invocation basis.  These are provided using the {@link
  * org.infinispan.AdvancedCache} interface, using some of the overloaded methods that allow passing in of a variable
@@ -18,9 +20,11 @@ package org.infinispan.context;
  * logging them instead at a low log level</li> <li>{@link #SKIP_REMOTE_LOOKUP} - when used with DIST cache mode, will
  * skip retrieving a remote value either when doing a get() or exists(), or to provide an overwritten value with a put()
  * or remove().  This could render return values for some operations (such as {@link org.infinispan.Cache#put(Object,
- * Object)} or {@link org.infinispan.Cache#remove(Object)} unusable.</li> </ul>
+ * Object)} or {@link org.infinispan.Cache#remove(Object)} unusable.</li> <li> {@link #PUT_FOR_EXTERNAL_READ} - flags the 
+ * invocation as a {@link Cache#putForExternalRead(Object, Object)} call.</li></ul>
  *
  * @author Manik Surtani
+ * @author Galder Zamarreño
  * @since 4.0
  */
 public enum Flag {
@@ -33,5 +37,6 @@ public enum Flag {
    FORCE_SYNCHRONOUS,
    SKIP_CACHE_STORE,
    FAIL_SILENTLY,
-   SKIP_REMOTE_LOOKUP
+   SKIP_REMOTE_LOOKUP,
+   PUT_FOR_EXTERNAL_READ
 }

@@ -32,6 +32,7 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
@@ -62,7 +63,8 @@ import java.util.concurrent.atomic.AtomicLong;
  * broadcast an {@link InvalidateCommand} on the remote caches containing all keys modified.  This allows the remote
  * cache to look up the value in a shared cache loader which would have been updated with the changes.
  *
- * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
+ * @author Manik Surtani
+ * @author Galder Zamarreño
  * @since 4.0
  */
 @MBean(objectName = "Invalidation", description = "Component responsible for invalidating entries on remote caches when entries are written to locally.")
@@ -85,7 +87,10 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      return handleInvalidate(ctx, command, command.getKey());
+      if (!isPutForExternalRead(ctx)) {
+         return handleInvalidate(ctx, command, command.getKey());
+      }
+      return invokeNextInterceptor(ctx, command);
    }
 
    @Override
@@ -214,6 +219,14 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
 
    private void incrementInvalidations() {
       if (statsEnabled) invalidations.incrementAndGet();
+   }
+   
+   private boolean isPutForExternalRead(InvocationContext ctx) {
+      if (ctx.hasFlag(Flag.PUT_FOR_EXTERNAL_READ)) {
+         if (trace) log.debug("Put for external read called.  Suppressing clustered invalidation.");
+         return true;
+      }
+      return false;
    }
 
    @ManagedOperation(description = "Resets statistics gathered by this component")

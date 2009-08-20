@@ -299,7 +299,7 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
             transactionManager.suspend();
          }
          // if the entry exists then this should be a no-op.
-         putIfAbsent(key, value, Flag.FAIL_SILENTLY, Flag.FORCE_ASYNCHRONOUS, Flag.ZERO_LOCK_ACQUISITION_TIMEOUT);
+         putIfAbsent(key, value, Flag.FAIL_SILENTLY, Flag.FORCE_ASYNCHRONOUS, Flag.ZERO_LOCK_ACQUISITION_TIMEOUT, Flag.PUT_FOR_EXTERNAL_READ);
       }
       catch (Exception e) {
          if (log.isDebugEnabled()) log.debug("Caught exception while doing putForExternalRead()", e);

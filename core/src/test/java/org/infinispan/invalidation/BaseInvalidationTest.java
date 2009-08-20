@@ -318,4 +318,15 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
       assert cache2.get("key") != null;
       assert cache2.get("key").equals("value2");
    }
+   
+   public void testPutForExternalRead() throws Exception {
+      cache1.putForExternalRead("key", "value1");
+      Thread.sleep(500); // sleep so that async invalidation (result of PFER) is propagated
+      cache2.putForExternalRead("key", "value2");
+      Thread.sleep(500); // sleep so that async invalidation (result of PFER) is propagated
+      assert cache1.get("key") != null;
+      assert cache1.get("key").equals("value1");
+      assert cache2.get("key") != null;
+      assert cache2.get("key").equals("value2");
+   }
 }
