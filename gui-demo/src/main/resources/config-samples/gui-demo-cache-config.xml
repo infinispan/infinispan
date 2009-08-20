@@ -7,8 +7,8 @@
 
    <default>
       <clustering mode="distribution">
-         <l1 enabled="true" lifespan="10000"/>
-         <hash numOwners="2"/>
+         <l1 enabled="true" lifespan="60000"/>
+         <hash numOwners="2" rehashRpcTimeout="60000"/>
          <sync/>
       </clustering>
    </default>
