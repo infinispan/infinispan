@@ -21,6 +21,10 @@
  */
 package org.infinispan.util;
 
+import org.infinispan.marshall.Ids;
+import org.infinispan.marshall.Marshallable;
+import org.infinispan.marshall.exts.MapExternalizer;
+
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.AbstractCollection;
@@ -31,10 +35,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
-
-import org.infinispan.marshall.Marshallable;
-import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.exts.MapExternalizer;
 
 /**
  * A HashMap that is optimized for fast shallow copies.
@@ -563,7 +563,7 @@ public class FastCopyHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V
       return values;
    }
 
-   private final class Values extends AbstractCollection<V> {
+   public final class Values extends AbstractCollection<V> {
       public Iterator<V> iterator() {
          return new ValueIterator();
       }
@@ -586,7 +586,7 @@ public class FastCopyHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V
       return keySet;
    }
 
-   private class KeySet extends AbstractSet<K> {
+   public class KeySet extends AbstractSet<K> {
       public Iterator<K> iterator() {
          return new KeyIterator();
       }
@@ -615,7 +615,7 @@ public class FastCopyHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V
       return entrySet;
    }
 
-   private class EntrySet extends AbstractSet<Map.Entry<K, V>> {
+   public class EntrySet extends AbstractSet<Map.Entry<K, V>> {
       public Iterator<Map.Entry<K, V>> iterator() {
          return new EntryIterator();
       }

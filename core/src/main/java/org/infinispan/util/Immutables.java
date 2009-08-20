@@ -21,6 +21,13 @@
  */
 package org.infinispan.util;
 
+import org.infinispan.container.DataContainer;
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.InternalCacheValue;
+import org.infinispan.marshall.Ids;
+import org.infinispan.marshall.MarshallUtil;
+import org.infinispan.marshall.Marshallable;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -35,13 +42,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-
-import org.infinispan.container.DataContainer;
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.InternalCacheValue;
-import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.MarshallUtil;
-import org.infinispan.marshall.Marshallable;
 
 /**
  * Factory for generating immutable type wrappers.
@@ -183,7 +183,7 @@ public class Immutables {
 
       return new ImmutableCollectionWrapper<T>(copy);
    }
-   
+
    /**
     * Wraps a collection with an immutable collection. There is no copying involved.
     *
@@ -215,17 +215,17 @@ public class Immutables {
 
       return new ImmutableReversibleOrderedSetWrapper<T>(copy);
    }
-   
+
    /**
     * Wraps a {@link Map.Entry}} with an immutable {@link Map.Entry}}. There is no copying involved.
     *
     * @param entry the mapping to wrap.
     * @return an immutable {@link Map.Entry}} wrapper that delegates to the original mapping.
     */
-   public static Map.Entry immutableEntry(Map.Entry entry) {
-      return new ImmutableEntry(entry);
+   public static <K, V> Map.Entry<K, V> immutableEntry(Map.Entry<K, V> entry) {
+      return new ImmutableEntry<K, V>(entry);
    }
-   
+
    /**
     * Wraps a {@link InternalCacheEntry}} with an immutable {@link InternalCacheEntry}}. There is no copying involved.
     *
@@ -361,8 +361,8 @@ public class Immutables {
       }
    }
 
-   /** 
-    * Immutable version of Map.Entry for traversing immutable collections. 
+   /**
+    * Immutable version of Map.Entry for traversing immutable collections.
     */
    private static class ImmutableEntry<K, V> implements Entry<K, V>, Immutable {
       private K key;
@@ -408,9 +408,9 @@ public class Immutables {
          return getKey() + "=" + getValue();
       }
    }
-   
-   /** 
-    * Immutable version of InternalCacheEntry for traversing data containers. 
+
+   /**
+    * Immutable version of InternalCacheEntry for traversing data containers.
     */
    private static class ImmutableInternalCacheEntry implements InternalCacheEntry, Immutable {
       private final InternalCacheEntry entry;
@@ -527,21 +527,21 @@ public class Immutables {
       }
 
       public void setRemoved(boolean removed) {
-         throw new UnsupportedOperationException();         
+         throw new UnsupportedOperationException();
       }
 
       public void setValid(boolean valid) {
          throw new UnsupportedOperationException();
       }
-      
+
       public InternalCacheEntry clone() {
          return new ImmutableInternalCacheEntry(entry.clone());
       }
    }
-   
+
    private static class ImmutableInternalCacheValue implements InternalCacheValue, Immutable {
       private final ImmutableInternalCacheEntry entry;
-      
+
       ImmutableInternalCacheValue(ImmutableInternalCacheEntry entry) {
          this.entry = entry;
       }
@@ -687,12 +687,13 @@ public class Immutables {
       public String toString() {
          return map.toString();
       }
-      
+
       public static class Externalizer implements org.infinispan.marshall.Externalizer {
          public void writeObject(ObjectOutput output, Object subject) throws IOException {
-            MarshallUtil.marshallMap((Map) subject, output);      
+            MarshallUtil.marshallMap((Map) subject, output);
          }
 
+         @SuppressWarnings("unchecked")
          public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
             Map map = new HashMap();
             MarshallUtil.unmarshallMap(map, input);
