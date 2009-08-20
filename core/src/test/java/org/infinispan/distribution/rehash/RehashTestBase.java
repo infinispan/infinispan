@@ -41,6 +41,10 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
     */
    abstract void waitForRehashCompletion();
 
+   void additionalWait() {
+      TestingUtil.sleepThread(1000);
+   }
+
    protected int locateJoiner(Address joinerAddress) {
       for (Cache c : Arrays.asList(c1, c2, c3, c4)) {
          DefaultConsistentHash dch = getDefaultConsistentHash(c, SECONDS.toMillis(480));
@@ -81,10 +85,9 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
 
       waitForRehashCompletion();
       log.info("Rehash complete");
-
+      additionalWait();
       int i = 0;
       for (MagicKey key : keys) assertOnAllCachesAndOwnership(key, "v" + ++i);
-
       assertProperConsistentHashOnAllCaches();
    }
 
@@ -132,6 +135,7 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
       th.join();
 
       log.info("Rehash complete");
+      additionalWait();
 
       assertOnAllCachesAndOwnership(keys.get(0), "transactionally_replaced");
       assertOnAllCachesAndOwnership(keys.get(1), "v" + 2);
@@ -176,6 +180,7 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
       for (Updater u : updaters) u.join();
 
       waitForRehashCompletion();
+      additionalWait();
 
       log.info("Rehash complete");
 
