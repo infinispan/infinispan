@@ -3,12 +3,17 @@ package org.infinispan.distribution;
 import org.infinispan.CacheException;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.ClusteredGetCommand;
+import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
+import org.infinispan.context.Flag;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
+import static org.infinispan.distribution.ConsistentHashHelper.createConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -35,7 +40,9 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -53,7 +60,8 @@ public class DistributionManagerImpl implements DistributionManager {
    private final Log log = LogFactory.getLog(DistributionManagerImpl.class);
    private final boolean trace = log.isTraceEnabled();
    Configuration configuration;
-   ConsistentHash consistentHash;
+   volatile ConsistentHash consistentHash, oldConsistentHash;
+   Address self;
    CacheLoaderManager cacheLoaderManager;
    RpcManager rpcManager;
    CacheManagerNotifier notifier;
@@ -82,7 +90,8 @@ public class DistributionManagerImpl implements DistributionManager {
    private InvocationContextContainer icc;
    private volatile boolean joinTaskSubmitted = false;
    volatile boolean joinComplete = false;
-
+   final List<Address> leavers = new CopyOnWriteArrayList<Address>();
+   volatile Future<Void> leaveTaskFuture;
 
    @Inject
    public void init(Configuration configuration, RpcManager rpcManager, CacheManagerNotifier notifier, CommandsFactory cf,
@@ -102,12 +111,12 @@ public class DistributionManagerImpl implements DistributionManager {
    @Start(priority = 20)
    public void start() throws Exception {
       replCount = configuration.getNumOwners();
-      consistentHash = (ConsistentHash) Util.getInstance(configuration.getConsistentHashClass());
-      consistentHash.setCaches(rpcManager.getTransport().getMembers());
+      consistentHash = createConsistentHash(configuration, rpcManager.getTransport().getMembers());
+      self = rpcManager.getTransport().getAddress();
       listener = new ViewChangeListener();
       notifier.addListener(listener);
       if (rpcManager.getTransport().getMembers().size() > 1) {
-         JoinTask joinTask = new JoinTask(rpcManager, cf, configuration, transactionLogger, dataContainer, interceptorChain, icc, this);
+         JoinTask joinTask = new JoinTask(rpcManager, cf, configuration, transactionLogger, dataContainer, this);
          rehashExecutor.submit(joinTask);
       } else {
          joinComplete = true;
@@ -122,11 +131,18 @@ public class DistributionManagerImpl implements DistributionManager {
       joinComplete = false;
    }
 
-   private Address diff(List<Address> newList, List<Address> oldList) {
-      List<Address> list = new ArrayList<Address>(newList);
-      list.removeAll(oldList);
-      // Could easily be > 1 member joined!
-      return list.size() > 0 ? list.get(0) : null;
+   final List<Address> diffAll(List<Address> l1, List<Address> l2) {
+      List<Address> largerList = l1.size() > l2.size() ? l1 : l2;
+      List<Address> smallerList = largerList == l1 ? l2 : l1;
+
+      List<Address> list = new ArrayList<Address>(largerList);
+      list.removeAll(smallerList);
+      return list;
+   }
+
+   final Address diff(List<Address> l1, List<Address> l2) {
+      List<Address> l = diffAll(l1, l2);
+      return l.isEmpty() ? null : l.get(0);
    }
 
 
@@ -139,18 +155,51 @@ public class DistributionManagerImpl implements DistributionManager {
          Address joiner = diff(newMembers, oldMembers);
          log.info("This is a JOIN event!  Wait for notification from new joiner " + joiner);
       } else {
-         log.info("This is a LEAVE event!");
-         // TODO: implement this stuff!
-         ConsistentHash newCH = new DefaultConsistentHash();
-         newCH.setCaches(newMembers);
+         Address leaver = diff(newMembers, oldMembers);
+         log.info("This is a LEAVE event!  Node {0} has just left", leaver);
 
-         consistentHash = newCH;
+         boolean willReceiveLeaverState = willReceiveLeaverState(leaver);
+         boolean willSendLeaverState = willSendLeaverState(leaver);
+         try {
+            oldConsistentHash = consistentHash;
+            consistentHash = ConsistentHashHelper.removeAddress(consistentHash, leaver, configuration);
+         } catch (Exception e) {
+            log.fatal("Unable to process leaver!!", e);
+            throw new CacheException(e);
+         }
 
+         if (willReceiveLeaverState) {
+            log.info("Starting transaction logging; expecting state from someone!");
+            transactionLogger.enable();
+         }
+
+         if (willSendLeaverState) {
+            if (leaveTaskFuture != null && (!leaveTaskFuture.isCancelled() || !leaveTaskFuture.isDone())) {
+               leaveTaskFuture.cancel(true);
+            }
+
+            leavers.add(leaver);
+            LeaveTask task = new LeaveTask(this, rpcManager, configuration, leavers, transactionLogger, cf, dataContainer);
+            leaveTaskFuture = rehashExecutor.submit(task);
+
+            log.info("Need to rehash");
+         } else {
+            log.info("Not in same subspace, so ignoring leave event");
+         }
       }
    }
 
+   boolean willSendLeaverState(Address leaver) {
+      return consistentHash.isAdjacent(leaver, self);
+   }
+
+   boolean willReceiveLeaverState(Address leaver) {
+      int dist = consistentHash.getDistance(leaver, self);
+      return dist <= replCount;
+   }
+
    public boolean isLocal(Object key) {
-      return consistentHash.locate(key, replCount).contains(rpcManager.getTransport().getAddress());
+      return consistentHash.locate(key, replCount).contains(self);
    }
 
    public List<Address> locate(Object key) {
@@ -195,8 +244,8 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    public boolean isAffectedByRehash(Object key) {
-      if (rehashInProgress) {
-         throw new UnsupportedOperationException("TODO implement me");
+      if (transactionLogger.isEnabled() && oldConsistentHash != null && !oldConsistentHash.locate(key, replCount).contains(self)) {
+         return true;
       } else {
          return false;
       }
@@ -248,6 +297,18 @@ public class DistributionManagerImpl implements DistributionManager {
       log.trace("New CH is {0}", consistentHash);
    }
 
+   public void applyState(ConsistentHash consistentHash, Map<Object, InternalCacheValue> state) {
+      for (Map.Entry<Object, InternalCacheValue> e : state.entrySet()) {
+         if (consistentHash.locate(e.getKey(), configuration.getNumOwners()).contains(self)) {
+            InternalCacheValue v = e.getValue();
+            PutKeyValueCommand put = cf.buildPutKeyValueCommand(e.getKey(), v.getValue(), v.getLifespan(), v.getMaxIdle());
+            InvocationContext ctx = icc.createInvocationContext();
+            ctx.setFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_REMOTE_LOOKUP);
+            interceptorChain.invoke(ctx, put);
+         }
+      }
+   }
+
    @Listener
    public class ViewChangeListener {
       @ViewChanged
@@ -261,5 +322,41 @@ public class DistributionManagerImpl implements DistributionManager {
       if (cacheLoaderManager == null || !cacheLoaderManager.isEnabled() || cacheLoaderManager.isShared())
          return null;
       return cacheLoaderManager.getCacheStore();
+   }
+
+   public boolean isRehashInProgress() {
+      return !leavers.isEmpty() || rehashInProgress;
+   }
+
+   public void applyReceivedState(Map<Object, InternalCacheValue> state) {
+      applyState(consistentHash, state);
+      boolean unlocked = false;
+      try {
+         drainTransactionLog();
+         unlocked = true;
+      } finally {
+         if (!unlocked) transactionLogger.unlockAndDisable();
+      }
+   }
+
+   void drainTransactionLog() {
+      List<WriteCommand> c;
+      while (transactionLogger.size() > 10) {
+         c = transactionLogger.drain();
+         apply(c);
+      }
+
+      c = transactionLogger.drainAndLock();
+      apply(c);
+
+      transactionLogger.unlockAndDisable();
+   }
+
+   private void apply(List<WriteCommand> c) {
+      for (WriteCommand cmd : c) {
+         InvocationContext ctx = icc.createInvocationContext();
+         ctx.setFlags(Flag.SKIP_REMOTE_LOOKUP);
+         interceptorChain.invoke(ctx, cmd);
+      }
    }
 }

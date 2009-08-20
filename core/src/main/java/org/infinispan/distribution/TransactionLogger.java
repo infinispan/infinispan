@@ -56,4 +56,6 @@ public interface TransactionLogger {
    boolean logIfNeeded(Collection<WriteCommand> commands);
 
    int size();
+
+   boolean isEnabled();
 }

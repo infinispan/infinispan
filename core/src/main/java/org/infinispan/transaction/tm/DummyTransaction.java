@@ -74,7 +74,7 @@ public class DummyTransaction implements Transaction {
    public void commit() throws RollbackException, HeuristicMixedException, HeuristicRollbackException, SecurityException, SystemException {
       try {
          if (!notifyBeforeCompletion()) {
-            log.trace("Not running 2PC as Synchronization.before not successfull");
+            log.trace("Not running 2PC as Synchronization.before not successful");
             return;
          }
 
@@ -310,7 +310,7 @@ public class DummyTransaction implements Transaction {
          try {
             res.rollback(xid);
          } catch (XAException e) {
-            log.warn("Error while rolling back",e);
+            log.warn("Error while rolling back", e);
          }
       }
    }
@@ -322,7 +322,7 @@ public class DummyTransaction implements Transaction {
          try {
             res.commit(xid, false);//todo we only support one phase commit for now, change this!!!
          } catch (XAException e) {
-            log.warn("exception while committing",e);
+            log.warn("exception while committing", e);
             throw new HeuristicMixedException(e.getMessage());
          }
       }

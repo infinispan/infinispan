@@ -74,6 +74,27 @@ public class DefaultConsistentHashTest {
          assert locations.get(k).size() == 3;
       }
    }
+
+   public void testDistances() {
+      Address a1 = new TestAddress(1);
+      Address a2 = new TestAddress(2);
+      Address a3 = new TestAddress(3);
+      Address a4 = new TestAddress(4);
+
+      ConsistentHash ch = new DefaultConsistentHash();
+      ch.setCaches(Arrays.asList(a1, a2, a3, a4));
+
+      assert ch.getDistance(a1, a1) == 0;
+      assert ch.getDistance(a1, a4) == 3;
+      assert ch.getDistance(a1, a3) == 2;
+      assert ch.getDistance(a3, a1) == 2;
+      assert ch.getDistance(a1, a2) == 1;
+      assert ch.getDistance(a2, a1) == 3;
+
+      assert ch.isAdjacent(a1, a2);
+      assert !ch.isAdjacent(a1, a3);
+      assert ch.isAdjacent(a1, a4);
+   }
 }
 
 class TestAddress implements Address {

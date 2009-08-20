@@ -7,8 +7,8 @@ import org.infinispan.remoting.transport.Address;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import static java.lang.Math.min;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -23,7 +23,7 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
    final static int HASH_SPACE = 10240; // no more than 10k nodes?
 
 
-   public void setCaches(Collection<Address> caches) {
+   public void setCaches(List<Address> caches) {
 
       addresses = new ArrayList<Address>(caches);
 
@@ -38,16 +38,19 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
          while (positions.containsKey(positionIndex)) positionIndex = positionIndex + 1 % HASH_SPACE;
          positions.put(positionIndex, a);
       }
+
+      addresses.clear();
+      for (Address a : positions.values()) addresses.add(a);
    }
 
-   public Collection<Address> getCaches() {
+   public List<Address> getCaches() {
       return addresses;
    }
 
    public List<Address> locate(Object key, int replCount) {
       int hash = Math.abs(key.hashCode());
       int clusterSize = addresses.size();
-      int numCopiesToFind = Math.min(replCount, clusterSize);
+      int numCopiesToFind = min(replCount, clusterSize);
 
       List<Address> owners = new ArrayList<Address>(numCopiesToFind);
 
@@ -72,28 +75,27 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
       return owners;
    }
 
-//   public List<Address> locate(Object key, int replicationCount) {
-//      int hash = Math.abs(key.hashCode());
-//      int clusterSize = addresses.size();
-//      int numCopiesToFind = Math.min(replicationCount, clusterSize);
-//
-//      List<Address> results = new ArrayList<Address>(numCopiesToFind);
-//
-//      int copyNumber = 0;
-//
-//      while (results.size() < numCopiesToFind) {
-//         // we mod the index the 2nd time to make sure the index starts again from the beginning when it reaches the end.
-//         // e.g., in a cluster of 10 with 3 copies of data, and a key that maps to node index 9, the next 2 backups should
-//         // be at indexes 0 and 1.
-//
-//         int index = ((hash % clusterSize) + copyNumber) % clusterSize;
-//         Address candidate = addresses.get(index);
-//         results.add(candidate);
-//         copyNumber++;
-//      }
-//
-//      return results;
-//   }
+   public int getDistance(Address a1, Address a2) {
+      if (a1 == null || a2 == null) throw new NullPointerException("Cannot deal with nulls as parameters!");
+
+      int p1 = addresses.indexOf(a1);
+      if (p1 < 0)
+         throw new IllegalArgumentException("Address " + a1 + " not in the addresses list of this consistent hash impl!");
+
+      int p2 = addresses.indexOf(a2);
+      if (p2 < 0)
+         throw new IllegalArgumentException("Address " + a2 + " not in the addresses list of this consistent hash impl!");
+
+      if (p1 <= p2)
+         return p2 - p1;
+      else
+         return addresses.size() - (p1 - p2);
+   }
+
+   public boolean isAdjacent(Address a1, Address a2) {
+      int distance = getDistance(a1, a2);
+      return distance == 1 || distance == addresses.size() - 1;
+   }
 
    @Override
    public boolean equals(Object o) {
@@ -136,9 +138,5 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
       return "DefaultConsistentHash{" +
             "addresses (in order of hash space position)=" + positions.values() +
             '}';
-   }
-
-   public boolean isInSameSubspace(Address a1, Address a2) {
-      throw new UnsupportedOperationException("TODO Implement me!");
    }
 }

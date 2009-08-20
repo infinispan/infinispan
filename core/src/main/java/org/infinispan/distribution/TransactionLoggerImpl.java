@@ -72,4 +72,8 @@ public class TransactionLoggerImpl implements TransactionLogger {
    public int size() {
       return enabled ? 0 : commandQueue.size();
    }
+
+   public boolean isEnabled() {
+      return enabled;
+   }
 }

@@ -21,14 +21,14 @@ public interface ConsistentHash {
     *
     * @param caches caches in cluster.
     */
-   void setCaches(Collection<Address> caches);
+   void setCaches(List<Address> caches);
 
    /**
     * Should return a collection of cache addresses in the cluster.
     *
     * @return collection of cache addresses
     */
-   Collection<Address> getCaches();
+   List<Address> getCaches();
 
    /**
     * Locates a key, given a replication count (number of copies).
@@ -36,7 +36,7 @@ public interface ConsistentHash {
     * @param key       key to locate
     * @param replCount replication count (number of copies)
     * @return a list of addresses where the key resides, where this list is a subset of the addresses set in {@link
-    *         #setCaches(java.util.Collection)}.  Should never be null, and should contain replCount elements or the max
+    *         #setCaches(java.util.List)}.  Should never be null, and should contain replCount elements or the max
     *         number of caches available, whichever is smaller.
     */
    List<Address> locate(Object key, int replCount);
@@ -53,12 +53,23 @@ public interface ConsistentHash {
    Map<Object, List<Address>> locateAll(Collection<Object> keys, int replCount);
 
    /**
-    * Tests whether a group of addresses are in the same subspace of the hash space.  Addresses are in the same subspace
-    * if an arbitrary key mapped to one address could also be mapped to the other.
+    * Calculates the logical distance between two addresses.  This distance is based on where the addresses lie in the
+    * hash space.
     *
     * @param a1 address to test
     * @param a2 address to test
-    * @return true of the two addresses are in the same subspace, false otherwise.
+    * @return the distance between the 2 nodes.  Always a positive number, where the distance between a1 and itself is
+    *         0. The distance between a1 and the next adjacent node is 1 and teh distance between a1 and the previous
+    *         adjacent node is caches.size() - 1.
     */
-   boolean isInSameSubspace(Address a1, Address a2);
+   int getDistance(Address a1, Address a2);
+
+   /**
+    * Tests whether two addresses are logically next to each other in the hash space.
+    *
+    * @param a1 address to test
+    * @param a2 address to test
+    * @return true if adjacent, false if not
+    */
+   boolean isAdjacent(Address a1, Address a2);
 }

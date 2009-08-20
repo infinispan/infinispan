@@ -9,7 +9,6 @@ import org.infinispan.util.Immutables;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -34,11 +33,11 @@ public class UnionConsistentHash extends AbstractConsistentHash {
       this.newCH = newCH;
    }
 
-   public void setCaches(Collection<Address> caches) {
+   public void setCaches(List<Address> caches) {
       // no op
    }
 
-   public Collection<Address> getCaches() {
+   public List<Address> getCaches() {
       return Collections.emptyList();
    }
 
@@ -47,6 +46,14 @@ public class UnionConsistentHash extends AbstractConsistentHash {
       addresses.addAll(oldCH.locate(key, replCount));
       addresses.addAll(newCH.locate(key, replCount));
       return Immutables.immutableListConvert(addresses);
+   }
+
+   public int getDistance(Address a1, Address a2) {
+      throw new UnsupportedOperationException("Unsupported!");
+   }
+
+   public boolean isAdjacent(Address a1, Address a2) {
+      throw new UnsupportedOperationException("Unsupported!");
    }
 
    public ConsistentHash getNewConsistentHash() {
@@ -68,9 +75,5 @@ public class UnionConsistentHash extends AbstractConsistentHash {
       public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          return new UnionConsistentHash((ConsistentHash) input.readObject(), (ConsistentHash) input.readObject());
       }
-   }
-
-   public boolean isInSameSubspace(Address a1, Address a2) {
-      throw new UnsupportedOperationException("Not supported by this impl");
    }
 }

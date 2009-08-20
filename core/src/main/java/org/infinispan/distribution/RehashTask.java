@@ -1,16 +1,25 @@
 package org.infinispan.distribution;
 
+import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.config.Configuration;
+import org.infinispan.container.DataContainer;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.Util;
+import org.infinispan.util.concurrent.NotifyingFutureImpl;
+import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 /**
  * // TODO: Manik: Document this
@@ -23,11 +32,18 @@ public abstract class RehashTask implements Callable<Void> {
    DistributionManagerImpl dmi;
    RpcManager rpcManager;
    Configuration configuration;
+   TransactionLogger transactionLogger;
+   CommandsFactory cf;
+   DataContainer dataContainer;
 
-   protected RehashTask(DistributionManagerImpl dmi, RpcManager rpcManager, Configuration configuration) {
+   protected RehashTask(DistributionManagerImpl dmi, RpcManager rpcManager, Configuration configuration,
+                        TransactionLogger transactionLogger, CommandsFactory cf, DataContainer dataContainer) {
       this.dmi = dmi;
       this.rpcManager = rpcManager;
       this.configuration = configuration;
+      this.transactionLogger = transactionLogger;
+      this.cf = cf;
+      this.dataContainer = dataContainer;
    }
 
    public Void call() throws Exception {
@@ -46,15 +62,39 @@ public abstract class RehashTask implements Callable<Void> {
       return Collections.singleton(rpcManager.getTransport().getCoordinator());
    }
 
-   protected ConsistentHash createConsistentHash(Collection<Address> addresses) throws Exception {
-      ConsistentHash ch = (ConsistentHash) Util.getInstance(configuration.getConsistentHashClass());
-      ch.setCaches(addresses);
-      return ch;
+   protected void invalidateInvalidHolders(ConsistentHash chOld, ConsistentHash chNew) throws ExecutionException, InterruptedException {
+      Map<Address, Set<Object>> invalidations = new HashMap<Address, Set<Object>>();
+      for (Object key : dataContainer.keySet()) {
+         Collection<Address> invalidHolders = getInvalidHolders(key, chOld, chNew);
+         for (Address a : invalidHolders) {
+            Set<Object> s = invalidations.get(a);
+            if (s == null) {
+               s = new HashSet<Object>();
+               invalidations.put(a, s);
+            }
+            s.add(key);
+         }
+      }
+
+      Set<Future> futures = new HashSet<Future>();
+
+      for (Map.Entry<Address, Set<Object>> e : invalidations.entrySet()) {
+         InvalidateCommand ic = cf.buildInvalidateFromL1Command(e.getValue().toArray());
+         NotifyingNotifiableFuture f = new NotifyingFutureImpl(null);
+         rpcManager.invokeRemotelyInFuture(Collections.singletonList(e.getKey()), ic, true, f);
+         futures.add(f);
+      }
+
+      for (Future f : futures) f.get();
    }
 
-   protected ConsistentHash createConsistentHash(Collection<Address> addresses, Address... moreAddresses) throws Exception {
-      List<Address> list = new LinkedList<Address>(addresses);
-      list.addAll(Arrays.asList(moreAddresses));
-      return createConsistentHash(list);
+   protected Collection<Address> getInvalidHolders(Object key, ConsistentHash chOld, ConsistentHash chNew) {
+      List<Address> oldOwners = chOld.locate(key, configuration.getNumOwners());
+      List<Address> newOwners = chNew.locate(key, configuration.getNumOwners());
+
+      List<Address> toInvalidate = new LinkedList<Address>(oldOwners);
+      toInvalidate.removeAll(newOwners);
+
+      return toInvalidate;
    }
 }

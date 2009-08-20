@@ -105,7 +105,7 @@ public class RehashControlCommand extends BaseRpcCommand {
       if (cacheStore != null) {
          for (InternalCacheEntry ice : cacheStore.loadAll()) {
             Object k = ice.getKey();
-            if (shouldAddToMap(k, oldCH, numCopies, self) && !state.containsKey(k))
+            if (!state.containsKey(k) && shouldAddToMap(k, oldCH, numCopies, self))
                state.put(k, ice.toInternalCacheValue());
          }
       }
@@ -124,7 +124,8 @@ public class RehashControlCommand extends BaseRpcCommand {
    }
 
    public Object pushState() {
-      throw new RuntimeException("implement me");
+      distributionManager.applyReceivedState(state);
+      return null;
    }
 
    public byte getCommandId() {

@@ -4,37 +4,23 @@ import org.infinispan.CacheException;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.control.RehashControlCommand;
 import static org.infinispan.commands.control.RehashControlCommand.Type.*;
-import org.infinispan.commands.write.InvalidateCommand;
-import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheValue;
-import org.infinispan.context.Flag;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.interceptors.InterceptorChain;
+import static org.infinispan.distribution.ConsistentHashHelper.createConsistentHash;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import static org.infinispan.remoting.rpc.ResponseMode.SYNCHRONOUS;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Util;
-import org.infinispan.util.concurrent.NotifyingFutureImpl;
-import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
-import java.util.concurrent.Future;
 
 /**
  * 5.  JoinTask: This is a PULL based rehash.  JoinTask is kicked off on the JOINER. 5.1.  Obtain OLD_CH from
@@ -54,23 +40,12 @@ public class JoinTask extends RehashTask {
    private static final Log log = LogFactory.getLog(JoinTask.class);
    ConsistentHash chOld;
    ConsistentHash chNew;
-   //   ConsistentHash chTemp;
-   CommandsFactory commandsFactory;
-   TransactionLogger transactionLogger;
-   DataContainer dataContainer;
-   InterceptorChain interceptorChain;
-   InvocationContextContainer icc;
    Address self;
 
    public JoinTask(RpcManager rpcManager, CommandsFactory commandsFactory, Configuration conf,
-                   TransactionLogger transactionLogger, DataContainer dataContainer, InterceptorChain interceptorChain,
-                   InvocationContextContainer icc, DistributionManagerImpl dmi) {
-      super(dmi, rpcManager, conf);
-      this.commandsFactory = commandsFactory;
-      this.transactionLogger = transactionLogger;
+                   TransactionLogger transactionLogger, DataContainer dataContainer, DistributionManagerImpl dmi) {
+      super(dmi, rpcManager, conf, transactionLogger, commandsFactory, dataContainer);
       this.dataContainer = dataContainer;
-      this.interceptorChain = interceptorChain;
-      this.icc = icc;
       self = rpcManager.getTransport().getAddress();
    }
 
@@ -90,7 +65,8 @@ public class JoinTask extends RehashTask {
    }
 
    protected void performRehash() throws Exception {
-      log.trace("Starting rehash on new joiner");
+      long start = System.currentTimeMillis();
+      if (log.isDebugEnabled()) log.debug("Commencing");
       boolean unlocked = false;
       try {
          dmi.joinComplete = false;
@@ -98,24 +74,24 @@ public class JoinTask extends RehashTask {
          // this happens in a loop to ensure we receive the correct CH and not a "union".
          // TODO make at least *some* of these configurable!
          long minSleepTime = 500, maxSleepTime = 2000; // sleep time between retries
-         int maxWaitTime = 600000; // after which we give up!
+         int maxWaitTime = (int) configuration.getRehashRpcTimeout() * 10; // after which we give up!
          Random rand = new Random();
          long giveupTime = System.currentTimeMillis() + maxWaitTime;
          do {
-            log.trace("Requesting old consistent hash from coordinator");
+            if (log.isTraceEnabled()) log.trace("Requesting old consistent hash from coordinator");
             List<Response> resp = rpcManager.invokeRemotely(coordinator(),
-                                                            commandsFactory.buildRehashControlCommand(JOIN_REQ, self),
-                                                            SYNCHRONOUS, 100000, true);
+                                                            cf.buildRehashControlCommand(JOIN_REQ, self),
+                                                            SYNCHRONOUS, configuration.getRehashRpcTimeout(), true);
             List<Address> addresses = parseResponses(resp);
 
-            log.trace("Retrieved old consistent hash address list {0}", addresses);
+            if (log.isDebugEnabled()) log.debug("Retrieved old consistent hash address list {0}", addresses);
             if (addresses == null) {
                long time = rand.nextInt((int) (maxSleepTime - minSleepTime) / 10);
                time = (time * 10) + minSleepTime;
-               log.debug("Sleeping for {0}", Util.prettyPrintTime(time));
+               if (log.isTraceEnabled()) log.trace("Sleeping for {0}", Util.prettyPrintTime(time));
                Thread.sleep(time); // sleep for a while and retry
             } else {
-               chOld = createConsistentHash(addresses);
+               chOld = createConsistentHash(configuration, addresses);
             }
          } while (chOld == null && System.currentTimeMillis() < giveupTime);
 
@@ -123,109 +99,66 @@ public class JoinTask extends RehashTask {
             throw new CacheException("Unable to retrieve old consistent hash from coordinator even after several attempts at sleeping and retrying!");
 
          // 2.  new CH instance
-         chNew = createConsistentHash(chOld.getCaches(), self);
+         chNew = createConsistentHash(configuration, chOld.getCaches(), self);
          dmi.setConsistentHash(chNew);
 
          // 3.  Enable TX logging
          transactionLogger.enable();
 
          // 4.  Broadcast new temp CH
-         rpcManager.broadcastRpcCommand(commandsFactory.buildRehashControlCommand(JOIN_REHASH_START, self), true, true);
+         rpcManager.broadcastRpcCommand(cf.buildRehashControlCommand(JOIN_REHASH_START, self), true, true);
 
          // 5.  txLogger being enabled will cause CLusteredGetCommands to return uncertain responses.
 
          // 6.  pull state from everyone.
          Address myAddress = rpcManager.getTransport().getAddress();
-         RehashControlCommand cmd = commandsFactory.buildRehashControlCommand(PULL_STATE, myAddress, null, chNew);
+         RehashControlCommand cmd = cf.buildRehashControlCommand(PULL_STATE, myAddress, null, chNew);
          // TODO I should be able to process state chunks from different nodes simultaneously!!
-         // TODO I should only send this pull state request to nodes which I know will send me state.  Not everyone in chOld!!
-         List<Response> resps = rpcManager.invokeRemotely(chOld.getCaches(), cmd, SYNCHRONOUS, 10000, true);
+         List<Address> addressesWhoMaySendStuff = getAddressesWhoMaySendStuff();
+         List<Response> resps = rpcManager.invokeRemotely(addressesWhoMaySendStuff, cmd, SYNCHRONOUS, configuration.getRehashRpcTimeout(), true);
 
          // 7.  Apply state
          for (Response r : resps) {
             if (r instanceof SuccessfulResponse) {
                Map<Object, InternalCacheValue> state = getStateFromResponse((SuccessfulResponse) r);
-               for (Map.Entry<Object, InternalCacheValue> e : state.entrySet()) {
-                  if (chNew.locate(e.getKey(), configuration.getNumOwners()).contains(myAddress)) {
-                     InternalCacheValue v = e.getValue();
-                     PutKeyValueCommand put = commandsFactory.buildPutKeyValueCommand(e.getKey(), v.getValue(), v.getLifespan(), v.getMaxIdle());
-                     InvocationContext ctx = icc.createInvocationContext();
-                     ctx.setFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_REMOTE_LOOKUP);
-                     interceptorChain.invoke(ctx, put);
-                  }
-               }
+               dmi.applyState(chNew, state);
             }
          }
 
          // 8.  Drain logs
-
-         List<WriteCommand> c = null;
-         while (transactionLogger.size() > 10) {
-            c = transactionLogger.drain();
-            apply(c);
-         }
-
-         c = transactionLogger.drainAndLock();
-         apply(c);
-
+         dmi.drainTransactionLog();
          unlocked = true;
-         // 9.
-         transactionLogger.unlockAndDisable();
 
          // 10.
-         // TODO this phase should also "tell" the coord that the join is complete so that other waiting joiners
-         // may proceed.  Ideally another command, directed to the coord.
-         rpcManager.broadcastRpcCommand(commandsFactory.buildRehashControlCommand(JOIN_REHASH_END, self), true, true);
-         rpcManager.invokeRemotely(coordinator(), commandsFactory.buildRehashControlCommand(JOIN_COMPLETE, self), SYNCHRONOUS,
-                                   100000, true);
+         rpcManager.broadcastRpcCommand(cf.buildRehashControlCommand(JOIN_REHASH_END, self), true, true);
+         rpcManager.invokeRemotely(coordinator(), cf.buildRehashControlCommand(JOIN_COMPLETE, self), SYNCHRONOUS,
+                                   configuration.getRehashRpcTimeout(), true);
 
          // 11.
-         Map<Address, Set<Object>> invalidations = new HashMap<Address, Set<Object>>();
-         for (Object key : dataContainer.keySet()) {
-            Collection<Address> invalidHolders = getInvalidHolders(key, chOld, chNew);
-            for (Address a : invalidHolders) {
-               Set<Object> s = invalidations.get(a);
-               if (s == null) {
-                  s = new HashSet<Object>();
-                  invalidations.put(a, s);
-               }
-               s.add(key);
-            }
-         }
+         invalidateInvalidHolders(chOld, chNew);
 
-         Set<Future> futures = new HashSet<Future>();
-
-         for (Map.Entry<Address, Set<Object>> e : invalidations.entrySet()) {
-            InvalidateCommand ic = commandsFactory.buildInvalidateFromL1Command(e.getValue().toArray());
-            NotifyingNotifiableFuture f = new NotifyingFutureImpl(null);
-            rpcManager.invokeRemotelyInFuture(Collections.singletonList(e.getKey()), ic, true, f);
-            futures.add(f);
-         }
-
-         for (Future f : futures) f.get();
+         if (log.isInfoEnabled())
+            log.info("Completed in {0}!", Util.prettyPrintTime(System.currentTimeMillis() - start));
       } catch (Exception e) {
-         log.warn("Caught error performing rehash!", e);
+         log.error("Caught exception!", e);
       } finally {
          if (!unlocked) transactionLogger.unlockAndDisable();
          dmi.joinComplete = true;
       }
    }
 
-   private Collection<Address> getInvalidHolders(Object key, ConsistentHash chOld, ConsistentHash chNew) {
-      List<Address> oldOwners = chOld.locate(key, configuration.getNumOwners());
-      List<Address> newOwners = chNew.locate(key, configuration.getNumOwners());
-
-      List<Address> toInvalidate = new LinkedList<Address>(oldOwners);
-      toInvalidate.removeAll(newOwners);
-
-      return toInvalidate;
-   }
-
-   private void apply(List<WriteCommand> c) {
-      for (WriteCommand cmd : c) {
-         InvocationContext ctx = icc.createInvocationContext();
-         ctx.setFlags(Flag.SKIP_REMOTE_LOOKUP);
-         interceptorChain.invoke(ctx, cmd);
+   // TODO unit test this!!!
+   private List<Address> getAddressesWhoMaySendStuff() {
+      List<Address> caches = chNew.getCaches();
+      int selfIdx = caches.indexOf(self);
+      int replCount = configuration.getNumOwners();
+      if (selfIdx >= replCount - 1) {
+         return caches.subList(selfIdx - replCount + 1, selfIdx);
+      } else {
+         List<Address> l = new LinkedList<Address>(caches.subList(0, selfIdx));
+         int alreadyCollected = l.size();
+         l.addAll(caches.subList(caches.size() - replCount + 1 + alreadyCollected, caches.size()));
+         return l;
       }
    }
 }

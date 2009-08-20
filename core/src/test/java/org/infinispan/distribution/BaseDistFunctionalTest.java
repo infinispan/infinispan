@@ -290,7 +290,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
     * A special type of key that if passed a cache in its constructor, will ensure it will always be assigned to that
     * cache (plus however many additional caches in the hash space)
     */
-   protected static class MagicKey implements Serializable {
+   public static class MagicKey implements Serializable {
       String name = null;
       int hashcode;
       String address;

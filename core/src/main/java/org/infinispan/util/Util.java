@@ -55,7 +55,7 @@ public final class Util {
    }
 
    @SuppressWarnings("unchecked")
-   public static <T> T getInstance(Class<T> clazz) throws Exception {
+   public static <T> T getInstance(Class<T> clazz) throws IllegalAccessException, InstantiationException {
       // first look for a getInstance() constructor
       T instance;
       try {
@@ -70,7 +70,7 @@ public final class Util {
    }
 
    @SuppressWarnings("unchecked")
-   public static Object getInstance(String classname) throws Exception {
+   public static Object getInstance(String classname) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
       if (classname == null) throw new IllegalArgumentException("Cannot load null class!");
       Class clazz = loadClass(classname);
       return getInstance(clazz);
