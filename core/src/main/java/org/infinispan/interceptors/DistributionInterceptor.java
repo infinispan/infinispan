@@ -169,6 +169,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
                                 new SingleKeyRecipientGenerator(command.getKey()));
    }
 
+   @Override
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
          List<Address> recipients = new ArrayList<Address>(ctx.getTransactionParticipants());
