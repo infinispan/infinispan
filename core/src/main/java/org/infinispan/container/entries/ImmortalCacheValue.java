@@ -12,8 +12,6 @@ import org.infinispan.util.logging.LogFactory;
 /**
  * An immortal cache value, to correspond with {@link org.infinispan.container.entries.ImmortalCacheEntry}
  * 
- * TODO: Once {@link org.infinispan.marshall.MarshallerImpl} is gone, make the class package private.
- *
  * @author Manik Surtani
  * @since 4.0
  */
