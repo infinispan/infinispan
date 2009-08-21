@@ -114,7 +114,7 @@ public class JoinTask extends RehashTask {
          Address myAddress = rpcManager.getTransport().getAddress();
          RehashControlCommand cmd = cf.buildRehashControlCommand(PULL_STATE, myAddress, null, chNew);
          // TODO I should be able to process state chunks from different nodes simultaneously!!
-         List<Address> addressesWhoMaySendStuff = getAddressesWhoMaySendStuff();
+         List<Address> addressesWhoMaySendStuff = getAddressesWhoMaySendStuff(configuration.getNumOwners());
          List<Response> resps = rpcManager.invokeRemotely(addressesWhoMaySendStuff, cmd, SYNCHRONOUS, configuration.getRehashRpcTimeout(), true);
 
          // 7.  Apply state
@@ -148,17 +148,25 @@ public class JoinTask extends RehashTask {
    }
 
    // TODO unit test this!!!
-   private List<Address> getAddressesWhoMaySendStuff() {
+   List<Address> getAddressesWhoMaySendStuff(int replCount) {
+      List<Address> l = new LinkedList<Address>();
       List<Address> caches = chNew.getCaches();
       int selfIdx = caches.indexOf(self);
-      int replCount = configuration.getNumOwners();
       if (selfIdx >= replCount - 1) {
-         return caches.subList(selfIdx - replCount + 1, selfIdx);
+         l.addAll(caches.subList(selfIdx - replCount + 1, selfIdx));
       } else {
-         List<Address> l = new LinkedList<Address>(caches.subList(0, selfIdx));
+         l.addAll(caches.subList(0, selfIdx));
          int alreadyCollected = l.size();
          l.addAll(caches.subList(caches.size() - replCount + 1 + alreadyCollected, caches.size()));
-         return l;
       }
+
+      Address plusOne;
+      if (selfIdx == caches.size() - 1)
+         plusOne = caches.get(0);
+      else
+         plusOne = caches.get(selfIdx + 1);
+
+      if (!l.contains(plusOne)) l.add(plusOne);
+      return l;
    }
 }
