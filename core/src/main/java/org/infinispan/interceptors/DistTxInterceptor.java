@@ -1,14 +1,19 @@
 package org.infinispan.interceptors;
 
 import org.infinispan.commands.AbstractVisitor;
-import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.tx.CommitCommand;
+import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.commands.tx.RollbackCommand;
+import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 
@@ -47,6 +52,60 @@ public class DistTxInterceptor extends TxInterceptor {
          throw new RuntimeException(th);
       }
    }
+
+   @Override
+   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand cmd) throws Throwable {
+      dm.getTransactionLogger().logIfNeeded(cmd);
+      return super.visitPrepareCommand(ctx, cmd);
+   }
+
+   @Override
+   public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand cmd) throws Throwable {
+      dm.getTransactionLogger().logIfNeeded(cmd);
+      return super.visitRollbackCommand(ctx, cmd);
+   }
+
+   @Override
+   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand cmd) throws Throwable {
+      dm.getTransactionLogger().logIfNeeded(cmd);
+      return super.visitCommitCommand(ctx, cmd);
+   }
+
+   @Override
+   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      Object o = super.visitPutKeyValueCommand(ctx, command);
+      if (!ctx.isInTxScope() && command.isSuccessful()) dm.getTransactionLogger().logIfNeeded(command);
+      return o;
+   }
+
+   @Override
+   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+      Object o = super.visitRemoveCommand(ctx, command);
+      if (!ctx.isInTxScope() && command.isSuccessful()) dm.getTransactionLogger().logIfNeeded(command);
+      return o;
+   }
+
+   @Override
+   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+      Object o = super.visitReplaceCommand(ctx, command);
+      if (!ctx.isInTxScope() && command.isSuccessful()) dm.getTransactionLogger().logIfNeeded(command);
+      return o;
+   }
+
+   @Override
+   public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+      Object o = super.visitClearCommand(ctx, command);
+      if (!ctx.isInTxScope() && command.isSuccessful()) dm.getTransactionLogger().logIfNeeded(command);
+      return o;
+   }
+
+   @Override
+   public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+      Object o = super.visitPutMapCommand(ctx, command);
+      if (!ctx.isInTxScope() && command.isSuccessful()) dm.getTransactionLogger().logIfNeeded(command);
+      return o;
+   }
+
 
    class ReplayCommandVisitor extends AbstractVisitor {
       @Override

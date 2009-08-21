@@ -96,7 +96,6 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
     * More complex - init some state.  Start a new transaction, and midway trigger a rehash.  Then complete transaction
     * and test results.
     */
-   @Test(enabled = false, description = "Enable after releasing Beta1")
    public void testTransactional() throws Exception {
       final List<MagicKey> keys = init();
       final CountDownLatch l = new CountDownLatch(1);

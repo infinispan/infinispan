@@ -34,6 +34,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.LockManager;
@@ -129,7 +130,7 @@ public class EntryFactoryImpl implements EntryFactory {
             if (mvccEntry != cacheEntry) mvccEntry = (MVCCEntry) cacheEntry;
             mvccEntry.setRemoved(false);
             mvccEntry.setValid(true);
-         }         
+         }
 
          return mvccEntry;
 
@@ -178,7 +179,7 @@ public class EntryFactoryImpl implements EntryFactory {
     * @return true if a lock was needed and acquired, false if it didn't need to acquire the lock (i.e., lock was
     *         already held)
     * @throws InterruptedException if interrupted
-    * @throws org.infinispan.lock.TimeoutException
+    * @throws org.infinispan.util.concurrent.TimeoutException
     *                              if we are unable to acquire the lock after a specified timeout.
     */
    public final boolean acquireLock(InvocationContext ctx, Object key) throws InterruptedException, TimeoutException {
@@ -195,7 +196,7 @@ public class EntryFactoryImpl implements EntryFactory {
             return true;
          } else {
             Object owner = lockManager.getOwner(key);
-            throw new TimeoutException("Unable to acquire lock on key [" + key + "] for requestor [" +
+            throw new TimeoutException("Unable to acquire lock after [" + Util.prettyPrintTime(getLockAcquisitionTimeout(ctx)) + "] on key [" + key + "] for requestor [" +
                   ctx.getLockOwner() + "]! Lock held by [" + owner + "]");
          }
       }

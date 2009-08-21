@@ -22,6 +22,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 @Test(groups = "functional", testName = "distribution.BaseDistFunctionalTest")
@@ -45,6 +46,8 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
          configuration.setIsolationLevel(IsolationLevel.REPEATABLE_READ);
       }
       if (tx) configuration.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
+      configuration.setSyncReplTimeout(60, TimeUnit.SECONDS);
+      configuration.setLockAcquisitionTimeout(45, TimeUnit.SECONDS);
       caches = createClusteredCaches(4, cacheName, configuration);
 
       reorderBasedOnCHPositions();

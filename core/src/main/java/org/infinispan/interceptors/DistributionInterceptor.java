@@ -1,6 +1,7 @@
 package org.infinispan.interceptors;
 
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -31,6 +32,7 @@ import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -181,6 +183,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       if (ctx.isOriginLocal()) {
          List<Address> recipients = new ArrayList<Address>(ctx.getTransactionParticipants());
          rpcManager.invokeRemotely(recipients, command, configuration.isSyncCommitPhase(), true);
+         flushL1Cache(recipients.size(), getKeys(ctx.getModifications()), false, null, configuration.isSyncCommitPhase());
       }
       return invokeNextInterceptor(ctx, command);
    }
@@ -196,6 +199,8 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
          if (trace) log.trace("Multicasting PrepareCommand to recipients : " + recipients);
          // this method will return immediately if we're the only member (because exclude_self=true)
          rpcManager.invokeRemotely(recipients, command, sync);
+         if (command.isOnePhaseCommit())
+            flushL1Cache(recipients.size(), getKeys(ctx.getModifications()), false, null, false);
       }
       return retVal;
    }
@@ -223,6 +228,33 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       return !ctx.hasFlag(Flag.SKIP_REMOTE_LOOKUP) && needReliableReturnValues;
    }
 
+   private Object[] getKeys(List<WriteCommand> mods) {
+      List<Object> l = new LinkedList<Object>();
+      for (WriteCommand m : mods) {
+         if (m instanceof DataCommand) {
+            l.add(((DataCommand) m).getKey());
+         } else if (m instanceof PutMapCommand) {
+            l.addAll(((PutMapCommand) m).getMap().keySet());
+         }
+      }
+      return l.toArray(new Object[l.size()]);
+   }
+
+   private NotifyingNotifiableFuture<Object> flushL1Cache(int numCallRecipients, Object[] keys, boolean useFuture, Object retval, boolean sync) {
+      if (isL1CacheEnabled && numCallRecipients > 0 && rpcManager.getTransport().getMembers().size() > numCallRecipients) {
+         if (trace) log.trace("Invalidating L1 caches");
+         InvalidateCommand ic = cf.buildInvalidateFromL1Command(keys);
+         if (useFuture) {
+            NotifyingNotifiableFuture<Object> future = new AggregatingNotifyingFutureImpl(retval, 2);
+            rpcManager.broadcastRpcCommandInFuture(ic, future);
+            return future;
+         } else {
+            rpcManager.broadcastRpcCommand(ic, sync);
+         }
+      }
+      return null;
+   }
+
    /**
     * If we are within one transaction we won't do any replication as replication would only be performed at commit
     * time. If the operation didn't originate locally we won't do any replication either.
@@ -245,17 +277,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
                if (trace) log.trace("Invoking command {0} on hosts {1}", command, rec);
                boolean useFuture = ctx.isUseFutureReturnType();
                boolean sync = isSynchronous(ctx);
-               NotifyingNotifiableFuture<Object> future = null;
-               // if L1 caching is used make sure we broadcast an invalidate message
-               if (isL1CacheEnabled && rec != null && rpcManager.getTransport().getMembers().size() > rec.size()) {
-                  InvalidateCommand ic = cf.buildInvalidateFromL1Command(recipientGenerator.getKeys());
-                  if (useFuture) {
-                     future = new AggregatingNotifyingFutureImpl(returnValue, 2);
-                     rpcManager.broadcastRpcCommandInFuture(ic, future);
-                  } else {
-                     rpcManager.broadcastRpcCommand(ic, sync);
-                  }
-               }
+               NotifyingNotifiableFuture<Object> future = flushL1Cache(rec == null ? 0 : rec.size(), recipientGenerator.getKeys(), useFuture, returnValue, sync);
 
                if (useFuture) {
                   if (future == null) future = new NotifyingFutureImpl(returnValue);

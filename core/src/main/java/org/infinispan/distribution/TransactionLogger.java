@@ -1,5 +1,8 @@
 package org.infinispan.distribution;
 
+import org.infinispan.commands.tx.CommitCommand;
+import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.WriteCommand;
 
 import java.util.Collection;
@@ -46,6 +49,12 @@ public interface TransactionLogger {
     * @return true if logged, false otherwise
     */
    boolean logIfNeeded(WriteCommand command);
+
+   void logIfNeeded(PrepareCommand command);
+
+   void logIfNeeded(CommitCommand command);
+
+   void logIfNeeded(RollbackCommand command);
 
    /**
     * If logging is enabled, will log the commands and return true.  Otherwise, will just return false.
