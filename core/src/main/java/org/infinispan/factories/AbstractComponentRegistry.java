@@ -72,12 +72,13 @@ import java.util.Stack;
  * Cache configuration can only be changed and will only be reinjected if the cache is not in the {@link
  * org.infinispan.lifecycle.ComponentStatus#RUNNING} state.
  *
- * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
+ * @author Manik Surtani
+ * @author Galder Zamarreño
  * @since 4.0
  */
 @NonVolatile
 @Scope(Scopes.NAMED_CACHE)
-public abstract class AbstractComponentRegistry implements Lifecycle {
+public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable {
 
    // Make sure this is ALWAYS false when being checked in to the code repository!
    public static final boolean DEBUG_DEPENDENCIES = false;
@@ -877,5 +878,12 @@ public abstract class AbstractComponentRegistry implements Lifecycle {
    public Set<Component> getRegisteredComponents() {
       HashSet<Component> defensiveCopy = new HashSet<Component>(componentLookup.values());
       return Collections.unmodifiableSet(defensiveCopy);
+   }
+   
+   @Override
+   public AbstractComponentRegistry clone() throws CloneNotSupportedException {
+      AbstractComponentRegistry dolly = (AbstractComponentRegistry) super.clone();
+      dolly.state = ComponentStatus.INSTANTIATED;
+      return dolly;
    }
 }

@@ -4,7 +4,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 import org.infinispan.factories.ComponentRegistry;
@@ -18,6 +17,7 @@ import org.infinispan.util.ReflectionUtil;
  * Adds named cache specific features to the {@link org.infinispan.config.AbstractConfigurationBean}.
  *
  * @author Manik Surtani
+ * @author Galder Zamarreño
  * @since 4.0
  */
 @Scope(Scopes.NAMED_CACHE)
@@ -77,4 +77,12 @@ public abstract class AbstractNamedCacheConfigurationBean extends AbstractConfig
    protected boolean hasComponentStarted() {
       return cr != null && cr.getStatus() != null && cr.getStatus() == ComponentStatus.RUNNING;
    }
+
+   @Override
+   public AbstractNamedCacheConfigurationBean clone() throws CloneNotSupportedException {
+      AbstractNamedCacheConfigurationBean dolly = (AbstractNamedCacheConfigurationBean) super.clone();
+      if (cr != null) dolly.cr = (ComponentRegistry) cr.clone(); 
+      return dolly;
+   }
+
 }
