@@ -86,12 +86,13 @@ public class TransactionLoggerImpl implements TransactionLogger {
          try {
             if (enabled) {
                PrepareCommand pc = uncommittedPrepares.remove(command.getGlobalTransaction());
-               for (WriteCommand wc : pc.getModifications())
-                  try {
-                     commandQueue.put(wc);
-                  } catch (InterruptedException e) {
-                     Thread.currentThread().interrupt();
-                  }
+               // TODO how can we handle this efficiently and safely?
+//               for (WriteCommand wc : pc.getModifications())
+//                  try {
+//                     commandQueue.put(wc);
+//                  } catch (InterruptedException e) {
+//                     Thread.currentThread().interrupt();
+//                  }
             }
          } finally {
             loggingLock.readLock().unlock();

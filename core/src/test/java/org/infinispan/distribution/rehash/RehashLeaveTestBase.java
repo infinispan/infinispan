@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
 @Test(groups = "functional", testName = "distribution.rehash.RehashLeaveTestBase")
 public abstract class RehashLeaveTestBase extends RehashTestBase {
    void waitForRehashCompletion() {
-      long giveupTime = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(60 * 5);
+      long giveupTime = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(60 * 2);
 
 
       for (Cache c : caches) {
