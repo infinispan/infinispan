@@ -424,13 +424,5 @@
             <defaultTestGroup>transaction</defaultTestGroup>
          </properties>
       </profile>
-      <profile>
-         <id>test-jbossmarshaller</id>
-         <properties>
-            <defaultTestGroup>functional</defaultTestGroup>
-            <marshaller.class>org.infinispan.marshall.jboss.JBossMarshaller</marshaller.class>
-            <protocol.stack>tcp</protocol.stack>
-         </properties>
-      </profile>
    </profiles>
 </project>
