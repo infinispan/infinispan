@@ -22,11 +22,12 @@
 package org.infinispan.transaction.lookup;
 
 
+import org.infinispan.util.Util;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
 import javax.transaction.TransactionManager;
 import javax.transaction.UserTransaction;
-
-import org.infinispan.util.Util;
-
 import java.lang.reflect.Method;
 
 /**
@@ -37,6 +38,7 @@ import java.lang.reflect.Method;
  */
 public class JBossStandaloneJTAManagerLookup implements TransactionManagerLookup {
    private Method manager, user;
+   private static final Log log = LogFactory.getLog(JBossStandaloneJTAManagerLookup.class);
 
    public JBossStandaloneJTAManagerLookup() {
       try {
@@ -49,7 +51,9 @@ public class JBossStandaloneJTAManagerLookup implements TransactionManagerLookup
    }
 
    public TransactionManager getTransactionManager() throws Exception {
-      return (TransactionManager) manager.invoke(null);
+      TransactionManager tm = (TransactionManager) manager.invoke(null);
+      if (log.isInfoEnabled()) log.info("Retrieving transaction manager {0}", tm);
+      return tm;
    }
 
    public UserTransaction getUserTransaction() throws Exception {

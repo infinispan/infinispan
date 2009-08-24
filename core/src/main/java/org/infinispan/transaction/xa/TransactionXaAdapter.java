@@ -25,8 +25,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * This acts both as an local {@link org.infinispan.transaction.xa.CacheTransaction} and implementor of an
- * {@link javax.transaction.xa.XAResource} that will be called by tx manager on various tx stages.
+ * This acts both as an local {@link org.infinispan.transaction.xa.CacheTransaction} and implementor of an {@link
+ * javax.transaction.xa.XAResource} that will be called by tx manager on various tx stages.
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.0
@@ -52,8 +52,8 @@ public class TransactionXaAdapter implements CacheTransaction, XAResource {
    private Transaction transaction;
 
    public TransactionXaAdapter(GlobalTransaction globalTx, InvocationContextContainer icc, InterceptorChain invoker,
-                         CommandsFactory commandsFactory, Configuration configuration, TransactionTable txTable,
-                         Transaction transaction) {
+                               CommandsFactory commandsFactory, Configuration configuration, TransactionTable txTable,
+                               Transaction transaction) {
       this.globalTx = globalTx;
       this.icc = icc;
       this.invoker = invoker;
@@ -91,7 +91,9 @@ public class TransactionXaAdapter implements CacheTransaction, XAResource {
       }
    }
 
-   public void commit(Xid xid, boolean b) throws XAException {
+   public void commit(Xid xid, boolean isOnePhase) throws XAException {
+      // always call prepare() - even if this is just a 1PC!
+      if (isOnePhase) prepare(xid);
       if (trace) log.trace("commiting TransactionXaAdapter: " + globalTx);
       try {
          LocalTxInvocationContext ctx = icc.createTxInvocationContext();
