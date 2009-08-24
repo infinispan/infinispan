@@ -6,7 +6,6 @@ import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.LockManager;
@@ -43,10 +42,9 @@ public abstract class LockTestBase {
    public void setUp() {
       LockTestBaseTL tl = new LockTestBaseTL();
       Configuration defaultCfg = new Configuration();
-      defaultCfg.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
       defaultCfg.setIsolationLevel(repeatableRead ? IsolationLevel.REPEATABLE_READ : IsolationLevel.READ_COMMITTED);
       defaultCfg.setLockAcquisitionTimeout(200); // 200 ms
-      CacheManager cm = TestCacheManagerFactory.createCacheManager(defaultCfg);
+      CacheManager cm = TestCacheManagerFactory.createCacheManager(defaultCfg, true);
       tl.cache = cm.getCache();
       tl.lockManager = TestingUtil.extractComponentRegistry(tl.cache).getComponent(LockManager.class);
       tl.icc = TestingUtil.extractComponentRegistry(tl.cache).getComponent(InvocationContextContainer.class);

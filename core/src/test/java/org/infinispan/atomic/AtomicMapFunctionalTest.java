@@ -8,7 +8,6 @@ import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterMethod;
@@ -29,9 +28,8 @@ public class AtomicMapFunctionalTest {
    public void setUp() {
       Configuration c = new Configuration();
       // these 2 need to be set to use the AtomicMapCache
-      c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
       c.setInvocationBatchingEnabled(true);
-      CacheManager cm = TestCacheManagerFactory.createCacheManager(c);
+      CacheManager cm = TestCacheManagerFactory.createCacheManager(c, true);
       Cache basicCache = cm.getCache();
       cache = (AtomicMapCache<String, String>) basicCache;
       tm = TestingUtil.getTransactionManager(cache);

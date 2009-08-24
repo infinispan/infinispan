@@ -5,9 +5,8 @@ import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
-import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.infinispan.util.ObjectDuplicator;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
@@ -31,9 +30,8 @@ public abstract class CacheAPITest extends SingleCacheManagerTest {
 
    protected CacheManager createCacheManager() throws Exception {
       // start a single cache instance
-      Configuration c = new Configuration();
+      Configuration c = getDefaultStandaloneConfig(true);
       c.setIsolationLevel(getIsolationLevel());
-      c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
       CacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
       cm.defineConfiguration("test", c);
       cache = cm.getCache("test");
@@ -48,7 +46,7 @@ public abstract class CacheAPITest extends SingleCacheManagerTest {
    public void testConfiguration() {
       Configuration c = cache.getConfiguration();
       assert Configuration.CacheMode.LOCAL.equals(c.getCacheMode());
-      assert DummyTransactionManagerLookup.class.getName().equals(c.getTransactionManagerLookupClass());
+      assert null != c.getTransactionManagerLookupClass();
 
       // note that certain values should be immutable.  E.g., CacheMode cannot be changed on the fly.
       try {
@@ -94,7 +92,7 @@ public abstract class CacheAPITest extends SingleCacheManagerTest {
       cache.putAll(data);
 
       assert value.equals(cache.get(key));
-      assert 1 == cache.keySet().size() && 1 == cache.values().size(); 
+      assert 1 == cache.keySet().size() && 1 == cache.values().size();
       assert cache.keySet().contains(key);
       assert cache.values().contains(value);
    }
@@ -164,7 +162,7 @@ public abstract class CacheAPITest extends SingleCacheManagerTest {
    }
 
    public void testRollbackAfterPut() throws Exception {
-      String key = "key", value = "value", key2 = "keyTwo", value2="value2";
+      String key = "key", value = "value", key2 = "keyTwo", value2 = "value2";
       int size = 0;
       cache.put(key, value);
       assert cache.get(key).equals(value);
@@ -173,14 +171,14 @@ public abstract class CacheAPITest extends SingleCacheManagerTest {
       assert cache.keySet().contains(key);
       assert cache.values().contains(value);
 
-      DummyTransactionManager.getInstance().begin();
+      TestingUtil.getTransactionManager(cache).begin();
       cache.put(key2, value2);
       assert cache.get(key2).equals(value2);
       assert !cache.keySet().contains(key2);
       size = 1;
       assert size == cache.size() && size == cache.keySet().size() && size == cache.values().size() && size == cache.entrySet().size();
       assert !cache.values().contains(value2);
-      DummyTransactionManager.getInstance().rollback();
+      TestingUtil.getTransactionManager(cache).rollback();
 
       assert cache.get(key).equals(value);
       size = 1;
@@ -190,8 +188,8 @@ public abstract class CacheAPITest extends SingleCacheManagerTest {
    }
 
    public void testRollbackAfterOverwrite() throws Exception {
-      String key = "key", value = "value", value2= "value2";
-      int size = 0;      
+      String key = "key", value = "value", value2 = "value2";
+      int size = 0;
       cache.put(key, value);
       assert cache.get(key).equals(value);
       size = 1;
@@ -199,14 +197,14 @@ public abstract class CacheAPITest extends SingleCacheManagerTest {
       assert cache.keySet().contains(key);
       assert cache.values().contains(value);
 
-      DummyTransactionManager.getInstance().begin();
+      TestingUtil.getTransactionManager(cache).begin();
       cache.put(key, value2);
       assert cache.get(key).equals(value2);
       size = 1;
       assert size == cache.size() && size == cache.keySet().size() && size == cache.values().size() && size == cache.entrySet().size();
       assert cache.keySet().contains(key);
       assert !cache.values().contains(value2);
-      DummyTransactionManager.getInstance().rollback();
+      TestingUtil.getTransactionManager(cache).rollback();
 
       assert cache.get(key).equals(value);
       size = 1;
@@ -225,12 +223,12 @@ public abstract class CacheAPITest extends SingleCacheManagerTest {
       assert cache.keySet().contains(key);
       assert cache.values().contains(value);
 
-      DummyTransactionManager.getInstance().begin();
+      TestingUtil.getTransactionManager(cache).begin();
       cache.remove(key);
       assert cache.get(key) == null;
       size = 1;
       assert size == cache.size() && size == cache.keySet().size() && size == cache.values().size() && size == cache.entrySet().size();
-      DummyTransactionManager.getInstance().rollback();
+      TestingUtil.getTransactionManager(cache).rollback();
 
       assert cache.get(key).equals(value);
       size = 1;
@@ -249,12 +247,12 @@ public abstract class CacheAPITest extends SingleCacheManagerTest {
       assert cache.keySet().contains(key);
       assert cache.values().contains(value);
 
-      DummyTransactionManager.getInstance().begin();
+      TestingUtil.getTransactionManager(cache).begin();
       cache.clear();
       assert cache.get(key) == null;
       size = 1;
       assert size == cache.size() && size == cache.keySet().size() && size == cache.values().size() && size == cache.entrySet().size();
-      DummyTransactionManager.getInstance().rollback();
+      TestingUtil.getTransactionManager(cache).rollback();
 
       assert cache.get(key).equals(value);
       size = 1;
@@ -312,7 +310,7 @@ public abstract class CacheAPITest extends SingleCacheManagerTest {
       assert size == cache.size() && size == cache.keySet().size() && size == cache.values().size() && size == cache.entrySet().size();
       assert !cache.containsKey(key);
       assert !cache.keySet().contains(key);
-      assert !cache.values().contains(value);      
+      assert !cache.values().contains(value);
 
       Map<String, String> m = new HashMap<String, String>();
       m.put("1", "one");
@@ -339,7 +337,7 @@ public abstract class CacheAPITest extends SingleCacheManagerTest {
       size = 4;
       assert size == cache.size() && size == cache.keySet().size() && size == cache.values().size() && size == cache.entrySet().size();
    }
-   
+
    public void testKeyValueEntryCollections() {
       String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
       Map<String, String> m = new HashMap<String, String>();
@@ -353,23 +351,23 @@ public abstract class CacheAPITest extends SingleCacheManagerTest {
       expKeys.add(key1);
       expKeys.add(key2);
       expKeys.add(key3);
-      
+
       Set expValues = new HashSet();
       expValues.add(value1);
       expValues.add(value2);
       expValues.add(value3);
-      
+
       Set expKeyEntries = ObjectDuplicator.duplicateSet(expKeys);
       Set expValueEntries = ObjectDuplicator.duplicateSet(expValues);
 
       Set<String> keys = cache.keySet();
       for (String key : keys) assert expKeys.remove(key);
       assert expKeys.isEmpty() : "Did not see keys " + expKeys + " in iterator!";
-      
+
       Collection<String> values = cache.values();
       for (String value : values) assert expValues.remove(value);
       assert expValues.isEmpty() : "Did not see keys " + expValues + " in iterator!";
-      
+
       Set<Map.Entry> entries = cache.entrySet();
       for (Map.Entry entry : entries) {
          assert expKeyEntries.remove(entry.getKey());
@@ -378,7 +376,7 @@ public abstract class CacheAPITest extends SingleCacheManagerTest {
       assert expKeyEntries.isEmpty() : "Did not see keys " + expKeyEntries + " in iterator!";
       assert expValueEntries.isEmpty() : "Did not see keys " + expValueEntries + " in iterator!";
    }
-   
+
    public void testImmutabilityOfKeyValueEntryCollections() {
       final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
       Map<String, String> m = new HashMap<String, String>();
@@ -386,7 +384,7 @@ public abstract class CacheAPITest extends SingleCacheManagerTest {
       m.put(key2, value2);
       m.put(key3, value3);
       cache.putAll(m);
-      
+
       Set<String> keys = cache.keySet();
       Collection<String> values = cache.values();
       Set<Map.Entry> entries = cache.entrySet();
@@ -405,32 +403,32 @@ public abstract class CacheAPITest extends SingleCacheManagerTest {
             assert false : "Should have thrown a UnsupportedOperationException";
          } catch (UnsupportedOperationException uoe) {
          }
-         
+
          try {
             col.clear();
             assert false : "Should have thrown a UnsupportedOperationException";
          } catch (UnsupportedOperationException uoe) {
          }
-         
+
          try {
             col.remove(key1);
             assert false : "Should have thrown a UnsupportedOperationException";
          } catch (UnsupportedOperationException uoe) {
          }
-         
+
          try {
             col.removeAll(newObjCol);
             assert false : "Should have thrown a UnsupportedOperationException";
          } catch (UnsupportedOperationException uoe) {
          }
-         
+
          try {
             col.retainAll(newObjCol);
             assert false : "Should have thrown a UnsupportedOperationException";
          } catch (UnsupportedOperationException uoe) {
          }
       }
-      
+
       for (Map.Entry entry : entries) {
          try {
             entry.setValue(newObj);
@@ -439,5 +437,5 @@ public abstract class CacheAPITest extends SingleCacheManagerTest {
          }
       }
    }
-   
+
 }

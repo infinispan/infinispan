@@ -1,10 +1,9 @@
 package org.infinispan.api.tree;
 
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.tree.Fqn;
 import org.infinispan.tree.Node;
 import org.infinispan.tree.TreeCache;
@@ -37,9 +36,8 @@ public class NodeAPITest {
    public void setUp() throws Exception {
       // start a single cache instance
       Configuration c = new Configuration();
-      c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
       c.setInvocationBatchingEnabled(true);
-      CacheManager cm = TestCacheManagerFactory.createCacheManager(c);
+      CacheManager cm = TestCacheManagerFactory.createCacheManager(c, true);
       cache = new TreeCacheImpl(cm.getCache());
       tm = TestingUtil.getTransactionManager(cache.getCache());
    }

@@ -7,7 +7,6 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.data.Address;
 import org.infinispan.test.data.Person;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -48,13 +47,10 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
 
    protected void createCacheManagers() throws Throwable {
       // This impl only really sets up a configuration for use later.
-      config = new Configuration();
-      config.setCacheMode(Configuration.CacheMode.REPL_SYNC);
-      config.setSyncCommitPhase(true);
+      config = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
       config.setSyncReplTimeout(30000);
       config.setFetchInMemoryState(true);
       config.setUseLockStriping(false); // reduces the odd chance of a key collision and deadlock
-      config.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
    }
 
    protected CacheManager createCacheManager() {

@@ -1,7 +1,9 @@
 package org.infinispan.test;
 
 import org.infinispan.Cache;
+import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -57,6 +59,10 @@ public abstract class SingleCacheManagerTest extends AbstractCacheTest {
    @AfterMethod
    protected void clearContent() {
       if (cleanup == CleanupPhase.AFTER_TEST) super.clearContent(cacheManager);
+   }
+
+   protected Configuration getDefaultStandaloneConfig(boolean transactional) {
+      return TestCacheManagerFactory.getDefaultConfiguration(transactional);
    }
 
    protected abstract CacheManager createCacheManager() throws Exception;

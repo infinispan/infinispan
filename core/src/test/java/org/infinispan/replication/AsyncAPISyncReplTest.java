@@ -2,15 +2,14 @@ package org.infinispan.replication;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.data.Key;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.util.Util;
 import org.testng.annotations.Test;
 
@@ -28,8 +27,7 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
    @SuppressWarnings("unchecked")
    protected void createCacheManagers() throws Throwable {
       Configuration c =
-            getDefaultClusteredConfig(sync() ? Configuration.CacheMode.REPL_SYNC : Configuration.CacheMode.REPL_ASYNC);
-      c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
+            getDefaultClusteredConfig(sync() ? Configuration.CacheMode.REPL_SYNC : Configuration.CacheMode.REPL_ASYNC, true);
       List<Cache<Key, String>> l = createClusteredCaches(2, getClass().getSimpleName(), c);
       c1 = l.get(0);
       c2 = l.get(1);

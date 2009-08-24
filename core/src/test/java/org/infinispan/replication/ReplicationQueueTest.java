@@ -1,7 +1,6 @@
 package org.infinispan.replication;
 
 import org.infinispan.Cache;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.executors.ScheduledExecutorFactory;
@@ -9,7 +8,7 @@ import org.infinispan.manager.CacheManager;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
@@ -42,8 +41,7 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
       CacheManager second = TestCacheManagerFactory.createCacheManager(globalConfiguration);
       registerCacheManager(first, second);
 
-      Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC);
-      config.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
+      Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC, true);
       config.setUseReplQueue(true);
       config.setReplQueueInterval(REPL_QUEUE_INTERVAL);
       config.setReplQueueMaxElements(REPL_QUEUE_MAX_ELEMENTS);

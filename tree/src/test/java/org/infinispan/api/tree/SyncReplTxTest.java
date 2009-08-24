@@ -11,7 +11,6 @@ import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.tree.Fqn;
 import org.infinispan.tree.Node;
 import org.infinispan.tree.TreeCache;
@@ -34,13 +33,8 @@ public class SyncReplTxTest extends MultipleCacheManagersTest {
    TreeCache<Object, Object> cache1, cache2;
 
    protected void createCacheManagers() throws Throwable {
-      Configuration c = new Configuration();
-      c.setCacheMode(Configuration.CacheMode.REPL_SYNC);
-      c.setFetchInMemoryState(false);
+      Configuration c = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
       c.setInvocationBatchingEnabled(true);
-      c.setSyncCommitPhase(true);
-      c.setSyncRollbackPhase(true);
-      c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
 
       createClusteredCaches(2, "replSync", c);
 

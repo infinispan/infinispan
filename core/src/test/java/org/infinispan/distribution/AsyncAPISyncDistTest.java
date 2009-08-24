@@ -5,7 +5,6 @@ import org.infinispan.config.Configuration;
 import org.infinispan.context.Flag;
 import org.infinispan.replication.AsyncAPISyncReplTest;
 import org.infinispan.test.data.Key;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.util.Util;
 import org.testng.annotations.Test;
 
@@ -18,8 +17,7 @@ public class AsyncAPISyncDistTest extends AsyncAPISyncReplTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       Configuration c =
-            getDefaultClusteredConfig(sync() ? Configuration.CacheMode.DIST_SYNC : Configuration.CacheMode.DIST_ASYNC);
-      c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
+            getDefaultClusteredConfig(sync() ? Configuration.CacheMode.DIST_SYNC : Configuration.CacheMode.DIST_ASYNC, true);
       List<Cache<Key, String>> l = createClusteredCaches(2, getClass().getSimpleName(), c);
       c1 = l.get(0);
       c2 = l.get(1);

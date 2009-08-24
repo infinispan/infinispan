@@ -17,7 +17,6 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.ReplListener;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.xa.TransactionTable;
 import static org.testng.AssertJUnit.*;
 import org.testng.annotations.Test;
@@ -35,8 +34,7 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
    ReplListener replListener1, replListener2;
 
    protected void createCacheManagers() throws Throwable {
-      Configuration c = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
-      c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
+      Configuration c = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
       createClusteredCaches(2, "replSync", c);
 
       cache1 = cache(0, "replSync");

@@ -17,7 +17,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.util.concurrent.locks.LockManager;
 import static org.testng.AssertJUnit.*;
 import org.testng.annotations.Test;
@@ -38,10 +37,9 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
    }
 
    protected void createCacheManagers() throws Throwable {
-      Configuration c = getDefaultClusteredConfig(isSync ? Configuration.CacheMode.INVALIDATION_SYNC : Configuration.CacheMode.INVALIDATION_ASYNC);
+      Configuration c = getDefaultClusteredConfig(isSync ? Configuration.CacheMode.INVALIDATION_SYNC : Configuration.CacheMode.INVALIDATION_ASYNC, true);
       c.setStateRetrievalTimeout(1000);
       c.setLockAcquisitionTimeout(500);
-      c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
       List<Cache<Object, Object>> caches = createClusteredCaches(2, "invalidation", c);
       cache1 = caches.get(0).getAdvancedCache();
       cache2 = caches.get(1).getAdvancedCache();
@@ -305,7 +303,7 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
       assert cache1.get("key").equals("value1");
       assert cache2.get("key") == null;
    }
-   
+
    public void testLocalOnlyClear() {
       cache1.put("key", "value1", Flag.CACHE_MODE_LOCAL);
       cache2.put("key", "value2", Flag.CACHE_MODE_LOCAL);
@@ -318,7 +316,7 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
       assert cache2.get("key") != null;
       assert cache2.get("key").equals("value2");
    }
-   
+
    public void testPutForExternalRead() throws Exception {
       cache1.putForExternalRead("key", "value1");
       Thread.sleep(500); // sleep so that async invalidation (result of PFER) is propagated

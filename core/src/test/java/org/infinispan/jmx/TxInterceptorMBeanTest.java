@@ -7,7 +7,6 @@ import org.infinispan.manager.CacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -35,9 +34,8 @@ public class TxInterceptorMBeanTest extends MultipleCacheManagersTest {
       CacheManager cacheManager2 = TestCacheManagerFactory.createCacheManager(globalConfiguration.clone());
       registerCacheManager(cacheManager2);
 
-      Configuration configuration = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
+      Configuration configuration = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
       configuration.setExposeJmxStatistics(true);
-      configuration.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
       cacheManager1.defineConfiguration("test", configuration);
       cacheManager2.defineConfiguration("test", configuration.clone());
       cache1 = cacheManager1.getCache("test");

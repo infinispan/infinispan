@@ -10,6 +10,7 @@ import org.infinispan.manager.CacheManager;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -108,10 +109,14 @@ public class AbstractCacheTest {
    /**
     * When multiple test merhods operate on same cluster, sync commit and rollback are mandatory. This is in order to
     * make sure that an commit message will be dispatched in the same test method it was triggered and it will not
-    * interfere with further log messages.
+    * interfere with further log messages.  This is a non-transactional configuraion.
     */
    protected Configuration getDefaultClusteredConfig(Configuration.CacheMode mode) {
-      Configuration configuration = new Configuration();
+      return getDefaultClusteredConfig(mode, false);
+   }
+
+   protected Configuration getDefaultClusteredConfig(Configuration.CacheMode mode, boolean transactional) {
+      Configuration configuration = TestCacheManagerFactory.getDefaultConfiguration(transactional);
       configuration.setCacheMode(mode);
       configuration.setSyncCommitPhase(true);
       configuration.setSyncRollbackPhase(true);

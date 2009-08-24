@@ -21,29 +21,25 @@
  */
 package org.infinispan.replication;
 
+import org.infinispan.Cache;
+import org.infinispan.config.Configuration;
+import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
+import org.testng.annotations.Test;
 
+import javax.transaction.TransactionManager;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import javax.transaction.TransactionManager;
-
-import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
-import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
-import org.testng.annotations.Test;
-
 /**
  * Tests for implicit locking
- * 
- * Transparent eager locking for transactions 
- * https://jira.jboss.org/jira/browse/ISPN-70
- * 
+ * <p/>
+ * Transparent eager locking for transactions https://jira.jboss.org/jira/browse/ISPN-70
+ *
  * @author <a href="mailto:vblagoje@redhat.com">Vladimir Blagojevic (vblagoje@redhat.com)</a>
  */
 @Test(groups = "functional", testName = "replication.SyncReplImplicitLockingTest")
@@ -52,10 +48,9 @@ public class SyncReplImplicitLockingTest extends MultipleCacheManagersTest {
    String k = "key", v = "value";
 
    protected void createCacheManagers() throws Throwable {
-      Configuration replSync = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
+      Configuration replSync = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
       replSync.setLockAcquisitionTimeout(500);
       replSync.setUseEagerLocking(true);
-      replSync.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
       createClusteredCaches(2, "replication.SyncReplImplicitLockingTest", replSync);
 
       cache1 = manager(0).getCache("replication.SyncReplImplicitLockingTest");
@@ -92,7 +87,7 @@ public class SyncReplImplicitLockingTest extends MultipleCacheManagersTest {
    }
 
    private void concurrentLockingHelper(final boolean sameNode, final boolean useTx)
-            throws Exception {
+         throws Exception {
       assertClusterSize("Should only be 2  caches in the cluster!!!", 2);
 
       assertNull("Should be null", cache1.get(k));
@@ -103,7 +98,7 @@ public class SyncReplImplicitLockingTest extends MultipleCacheManagersTest {
          @Override
          public void run() {
             log.info("Concurrent " + (useTx ? "tx" : "non-tx") + " write started "
-                     + (sameNode ? "on same node..." : "on a different node..."));
+                  + (sameNode ? "on same node..." : "on a different node..."));
             TransactionManager mgr = null;
             try {
                if (useTx) {
@@ -132,7 +127,7 @@ public class SyncReplImplicitLockingTest extends MultipleCacheManagersTest {
       mgr.begin();
       // lock node and start other thread whose write should now block
       cache1.put(k, name);
-    //automatically locked on another cache node
+      //automatically locked on another cache node
       assertLocked(cache2, k);
       t.start();
 
@@ -159,24 +154,24 @@ public class SyncReplImplicitLockingTest extends MultipleCacheManagersTest {
       cache1.put(k, name);
       //automatically locked on another cache node
       assertLocked(cache2, k);
-      
+
       String key2 = "name";
       cache1.put(key2, "Vladimir");
       //automatically locked on another cache node
       assertLocked(cache2, key2);
-      
-      String key3="product";
+
+      String key3 = "product";
       String key4 = "org";
-      Map <String,String> newMap = new HashMap<String,String>();
+      Map<String, String> newMap = new HashMap<String, String>();
       newMap.put(key3, "Infinispan");
       newMap.put(key4, "JBoss");
       cache1.putAll(newMap);
-      
+
       //automatically locked on another cache node
       assertLocked(cache2, key3);
       assertLocked(cache2, key4);
-      
-            
+
+
       if (useCommit)
          mgr.commit();
       else

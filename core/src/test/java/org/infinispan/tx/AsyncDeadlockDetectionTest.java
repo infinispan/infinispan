@@ -9,7 +9,6 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.PerCacheExecutorThread;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.xa.TransactionTable;
 import org.infinispan.util.concurrent.locks.DeadlockDetectedException;
 import org.infinispan.util.concurrent.locks.DeadlockDetectingLockManager;
@@ -37,9 +36,7 @@ public class AsyncDeadlockDetectionTest extends MultipleCacheManagersTest {
 
 
    protected void createCacheManagers() throws Throwable {
-      System.out.println("AsyncDeadlockDetectionTest.createCacheManagers");
-      Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC);
-      config.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
+      Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC, true);
       config.setEnableDeadlockDetection(true);
       config.setSyncCommitPhase(true);
       config.setSyncRollbackPhase(true);
@@ -76,7 +73,7 @@ public class AsyncDeadlockDetectionTest extends MultipleCacheManagersTest {
       t1.stopThread();
       ((DeadlockDetectingLockManager) TestingUtil.extractLockManager(cache0)).resetStatistics();
       ((DeadlockDetectingLockManager) TestingUtil.extractLockManager(cache1)).resetStatistics();
-      remoteReplicationInterceptor.executionResponse = null; 
+      remoteReplicationInterceptor.executionResponse = null;
    }
 
    public void testRemoteTxVsLocal() throws Exception {
@@ -124,7 +121,7 @@ public class AsyncDeadlockDetectionTest extends MultipleCacheManagersTest {
       TransactionTable transactionTable0 = TestingUtil.extractComponent(cache0, TransactionTable.class);
       assertEquals(transactionTable0.getLocalTxCount(), 0);
       for (int i = 0; i < 20; i++) {
-         if (! (transactionTable0.getRemoteTxCount() == 0)) Thread.sleep(50);
+         if (!(transactionTable0.getRemoteTxCount() == 0)) Thread.sleep(50);
       }
 
       assertEquals(transactionTable0.getRemoteTxCount(), 0);
@@ -132,20 +129,20 @@ public class AsyncDeadlockDetectionTest extends MultipleCacheManagersTest {
       TransactionTable transactionTable1 = TestingUtil.extractComponent(cache1, TransactionTable.class);
       assertEquals(transactionTable1.getLocalTxCount(), 0);
       for (int i = 0; i < 20; i++) {
-         if (! (transactionTable1.getRemoteTxCount() == 0)) Thread.sleep(50);
+         if (!(transactionTable1.getRemoteTxCount() == 0)) Thread.sleep(50);
       }
       assertEquals(transactionTable1.getRemoteTxCount(), 0);
 
       if (t1Response instanceof DeadlockDetectedException) {
          assertEquals(cache0.get("k1"), "v1_t0");
          assertEquals(cache0.get("k2"), "v2_t0");
-         assertEquals(cache1.get("k1"),"v1_t0");
-         assertEquals(cache1.get("k2"),"v2_t0");
+         assertEquals(cache1.get("k1"), "v1_t0");
+         assertEquals(cache1.get("k2"), "v2_t0");
       } else {
          assertEquals(cache0.get("k1"), "v1_t1");
          assertEquals(cache0.get("k2"), "v2_t1");
-         assertEquals(cache1.get("k1"),"v1_t1");
-         assertEquals(cache1.get("k2"),"v2_t1");
+         assertEquals(cache1.get("k1"), "v1_t1");
+         assertEquals(cache1.get("k2"), "v2_t1");
       }
    }
 

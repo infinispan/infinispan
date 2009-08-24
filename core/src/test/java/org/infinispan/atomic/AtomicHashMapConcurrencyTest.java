@@ -5,7 +5,6 @@ import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -39,9 +38,8 @@ public class AtomicHashMapConcurrencyTest {
       Configuration c = new Configuration();
       c.setLockAcquisitionTimeout(500);
       // these 2 need to be set to use the AtomicMapCache
-      c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
       c.setInvocationBatchingEnabled(true);
-      CacheManager cm = TestCacheManagerFactory.createCacheManager(c);
+      CacheManager cm = TestCacheManagerFactory.createCacheManager(c, true);
       Cache basicCache = cm.getCache();
       cache = (AtomicMapCache<String, String>) basicCache;
       tm = TestingUtil.getTransactionManager(cache);

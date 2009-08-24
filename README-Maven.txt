@@ -202,7 +202,7 @@ E.g., to run a "jgroups" group test in your IDE using TCP instead of the default
 
 Or, to use JBoss JTA (Arjuna TM) instead of the DummyTransactionManager in a "transaction" group test, set:
 
-   -Dorg.infinispan.test.tm=jboss-jta
+   -Dinfinispan.tm=jbosstm
 
 Please refer to the POM file for more properties and permutations.
 

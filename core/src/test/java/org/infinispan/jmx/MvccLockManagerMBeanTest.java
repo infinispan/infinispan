@@ -6,7 +6,6 @@ import org.infinispan.manager.CacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.testng.annotations.Test;
 
 import javax.management.MBeanServer;
@@ -32,9 +31,8 @@ public class MvccLockManagerMBeanTest extends SingleCacheManagerTest {
       globalConfiguration.setJmxDomain("MvccLockManagerMBeanTest");
       cacheManager = TestCacheManagerFactory.createCacheManager(globalConfiguration);
 
-      Configuration configuration = getDefaultClusteredConfig(Configuration.CacheMode.LOCAL);
+      Configuration configuration = getDefaultStandaloneConfig(true);
       configuration.setExposeJmxStatistics(true);
-      configuration.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
       configuration.setConcurrencyLevel(CONCURRENCY_LEVEL);
 
       cacheManager.defineConfiguration("test", configuration);

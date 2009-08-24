@@ -6,7 +6,6 @@ import org.infinispan.test.PerCacheExecutorThread;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.util.concurrent.locks.DeadlockDetectedException;
 import org.infinispan.util.concurrent.locks.DeadlockDetectingLockManager;
 import static org.testng.Assert.assertEquals;
@@ -32,8 +31,7 @@ public class LocalDeadlockDetectionTest extends SingleCacheManagerTest {
 
    protected CacheManager createCacheManager() throws Exception {
       cacheManager = TestCacheManagerFactory.createLocalCacheManager();
-      Configuration configuration = new Configuration();
-      configuration.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
+      Configuration configuration = getDefaultStandaloneConfig(true);
       configuration.setEnableDeadlockDetection(true);
       configuration.setUseLockStriping(false);
       configuration.setExposeJmxStatistics(true);
@@ -60,7 +58,7 @@ public class LocalDeadlockDetectionTest extends SingleCacheManagerTest {
 
    public void testDldPutAndPut() {
       testLocalVsLocalTxDeadlock(PerCacheExecutorThread.Operations.PUT_KEY_VALUE,
-                                 PerCacheExecutorThread.Operations.PUT_KEY_VALUE );
+                                 PerCacheExecutorThread.Operations.PUT_KEY_VALUE);
       if (response1 instanceof Exception) {
          assertEquals("value_1_t2", cache.get("k1"));
          assertEquals("value_2_t2", cache.get("k2"));
@@ -72,7 +70,7 @@ public class LocalDeadlockDetectionTest extends SingleCacheManagerTest {
 
    public void testDldPutAndRemove() {
       testLocalVsLocalTxDeadlock(PerCacheExecutorThread.Operations.PUT_KEY_VALUE,
-                                 PerCacheExecutorThread.Operations.REMOVE_KEY );
+                                 PerCacheExecutorThread.Operations.REMOVE_KEY);
       if (response1 instanceof Exception) {
          assertEquals(cache.get("k1"), null);
          assertEquals("value_2_t2", cache.get("k2"));
@@ -84,7 +82,7 @@ public class LocalDeadlockDetectionTest extends SingleCacheManagerTest {
 
    public void testDldRemoveAndPut() {
       testLocalVsLocalTxDeadlock(PerCacheExecutorThread.Operations.REMOVE_KEY,
-                                 PerCacheExecutorThread.Operations.PUT_KEY_VALUE );
+                                 PerCacheExecutorThread.Operations.PUT_KEY_VALUE);
       if (response1 instanceof Exception) {
          System.out.println("t1 failure");
          assertEquals(cache.get("k1"), "value_1_t2");
@@ -98,7 +96,7 @@ public class LocalDeadlockDetectionTest extends SingleCacheManagerTest {
 
    public void testDldRemoveAndRemove() {
       testLocalVsLocalTxDeadlock(PerCacheExecutorThread.Operations.REMOVE_KEY,
-                                 PerCacheExecutorThread.Operations.REMOVE_KEY );
+                                 PerCacheExecutorThread.Operations.REMOVE_KEY);
       if (response1 instanceof Exception) {
          System.out.println("t1 failure");
          assertEquals(cache.get("k1"), null);

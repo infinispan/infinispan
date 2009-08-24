@@ -13,7 +13,6 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import static org.testng.AssertJUnit.assertEquals;
 import org.testng.annotations.Test;
 
@@ -26,8 +25,7 @@ public class AsyncReplTest extends MultipleCacheManagersTest {
    Cache cache1, cache2;
 
    protected void createCacheManagers() throws Throwable {
-      Configuration asyncConfiguration = getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC);
-      asyncConfiguration.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
+      Configuration asyncConfiguration = getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC, true);
       List<Cache<Object, Object>> caches = createClusteredCaches(2, "asyncRepl", asyncConfiguration);
       cache1 = caches.get(0);
       cache2 = caches.get(1);
@@ -99,7 +97,7 @@ public class AsyncReplTest extends MultipleCacheManagersTest {
       mgr.begin();
       cache1.put(key, "value3");
       mgr.rollback();
-      
+
       assertNotLocked(cache1, key);
 
    }

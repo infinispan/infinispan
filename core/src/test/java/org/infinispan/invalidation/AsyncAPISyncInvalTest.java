@@ -6,7 +6,6 @@ import org.infinispan.config.Configuration;
 import org.infinispan.context.Flag;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.data.Key;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.util.Util;
 import org.testng.annotations.Test;
 
@@ -23,8 +22,7 @@ public class AsyncAPISyncInvalTest extends MultipleCacheManagersTest {
    @SuppressWarnings("unchecked")
    protected void createCacheManagers() throws Throwable {
       Configuration c =
-            getDefaultClusteredConfig(sync() ? Configuration.CacheMode.INVALIDATION_SYNC : Configuration.CacheMode.INVALIDATION_ASYNC);
-      c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
+            getDefaultClusteredConfig(sync() ? Configuration.CacheMode.INVALIDATION_SYNC : Configuration.CacheMode.INVALIDATION_ASYNC, true);
       List<Cache<Key, String>> l = createClusteredCaches(2, getClass().getSimpleName(), c);
       c1 = l.get(0);
       c2 = l.get(1);

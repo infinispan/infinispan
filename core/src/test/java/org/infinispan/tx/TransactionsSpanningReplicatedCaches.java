@@ -5,7 +5,6 @@ import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.testng.annotations.Test;
 
 import javax.transaction.Transaction;
@@ -25,8 +24,7 @@ public class TransactionsSpanningReplicatedCaches extends MultipleCacheManagersT
       cm1 = addClusterEnabledCacheManager();
       cm2 = addClusterEnabledCacheManager();
 
-      Configuration c = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
-      c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
+      Configuration c = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
 
       defineConfigurationOnAllManagers("c1", c);
       defineConfigurationOnAllManagers("c2", c);

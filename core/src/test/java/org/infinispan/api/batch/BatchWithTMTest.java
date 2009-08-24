@@ -1,11 +1,11 @@
 package org.infinispan.api.batch;
 
 import org.infinispan.Cache;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TransactionSetup;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -93,7 +93,7 @@ public class BatchWithTMTest extends AbstractBatchTest {
 
    private Cache<String, String> createCache(String name) {
       Configuration c = new Configuration();
-      c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
+      c.setTransactionManagerLookupClass(TransactionSetup.getManagerLookup());
       c.setInvocationBatchingEnabled(true);
       assert c.getTransactionManagerLookupClass() != null : "Should have a transaction manager lookup class attached!!";
       cm.defineConfiguration(name, c);

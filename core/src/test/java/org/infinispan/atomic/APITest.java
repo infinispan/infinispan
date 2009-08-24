@@ -21,12 +21,11 @@
  */
 package org.infinispan.atomic;
 
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import static org.infinispan.atomic.AtomicHashMapTestAssertions.assertIsEmpty;
 import static org.infinispan.atomic.AtomicHashMapTestAssertions.assertIsEmptyMap;
 import org.infinispan.config.Configuration;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
@@ -46,8 +45,7 @@ public class APITest {
    private void setUp() {
       Configuration c = new Configuration();
       c.setInvocationBatchingEnabled(true);
-      c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
-      cache = (AtomicMapCache) TestCacheManagerFactory.createCacheManager(c).getCache();
+      cache = (AtomicMapCache) TestCacheManagerFactory.createCacheManager(c, true).getCache();
       tm = TestingUtil.getTransactionManager(cache);
    }
 

@@ -26,6 +26,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.text.NumberFormat;
 import java.util.HashMap;
 import java.util.Map;
@@ -54,18 +55,27 @@ public final class Util {
       return cl.loadClass(classname);
    }
 
+   private static Method getFactoryMethod(Class c) {
+      for (Method m : c.getMethods()) {
+         if (m.getName().equals("getInstance") && m.getParameterTypes().length == 0 && Modifier.isStatic(m.getModifiers()))
+            return m;
+      }
+      return null;
+   }
+
    @SuppressWarnings("unchecked")
    public static <T> T getInstance(Class<T> clazz) throws IllegalAccessException, InstantiationException {
       // first look for a getInstance() constructor
-      T instance;
+      T instance = null;
       try {
-         Method factoryMethod = clazz.getMethod("getInstance", new Class[]{});
-         instance = (T) factoryMethod.invoke(null);
+         Method factoryMethod = getFactoryMethod(clazz);
+         if (factoryMethod != null) instance = (T) factoryMethod.invoke(null);
       }
       catch (Exception e) {
          // no factory method or factory method failed.  Try a constructor.
-         instance = clazz.newInstance();
+         instance = null;
       }
+      if (instance == null) instance = clazz.newInstance();
       return instance;
    }
 
@@ -80,6 +90,10 @@ public final class Util {
     * Prevent instantiation
     */
    private Util() {
+   }
+
+   public static Util getInstance() {
+      return null;
    }
 
    /**

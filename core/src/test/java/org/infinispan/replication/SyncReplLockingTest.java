@@ -21,28 +21,23 @@
  */
 package org.infinispan.replication;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
-
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
-import javax.transaction.TransactionManager;
-
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
 import org.testng.annotations.Test;
+
+import javax.transaction.TransactionManager;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tests for lock API
- * 
- * Introduce lock() API methods
- * https://jira.jboss.org/jira/browse/ISPN-48
- * 
- * 
+ * <p/>
+ * Introduce lock() API methods https://jira.jboss.org/jira/browse/ISPN-48
+ *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
  * @author <a href="mailto:vblagoje@redhat.com">Vladimir Blagojevic (vblagoje@redhat.com)</a>
  */
@@ -52,22 +47,21 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
    String k = "key", v = "value";
 
    protected void createCacheManagers() throws Throwable {
-      Configuration replSync = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
+      Configuration replSync = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
       replSync.setLockAcquisitionTimeout(500);
-      replSync.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
       createClusteredCaches(2, "replSync", replSync);
 
       cache1 = manager(0).getCache("replSync");
       cache2 = manager(1).getCache("replSync");
    }
-   
+
    public void testLocksReleasedWithoutExplicitUnlock() throws Exception {
-      locksReleasedWithoutExplicitUnlockHelper(false,false);
-      locksReleasedWithoutExplicitUnlockHelper(true,false);
-      locksReleasedWithoutExplicitUnlockHelper(false,true);
-      locksReleasedWithoutExplicitUnlockHelper(true,true);
+      locksReleasedWithoutExplicitUnlockHelper(false, false);
+      locksReleasedWithoutExplicitUnlockHelper(true, false);
+      locksReleasedWithoutExplicitUnlockHelper(false, true);
+      locksReleasedWithoutExplicitUnlockHelper(true, true);
    }
-   
+
    public void testConcurrentNonTxLocking() throws Exception {
       concurrentLockingHelper(false, false);
       concurrentLockingHelper(true, false);
@@ -77,7 +71,7 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
       concurrentLockingHelper(false, true);
       concurrentLockingHelper(true, true);
    }
-   
+
 
    public void testLocksReleasedWithNoMods() throws Exception {
       assertClusterSize("Should only be 2  caches in the cluster!!!", 2);
@@ -87,21 +81,21 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
 
       TransactionManager mgr = TestingUtil.getTransactionManager(cache1);
       mgr.begin();
-      
+
       cache1.getAdvancedCache().lock(k);
-      
+
       //do a dummy read
       cache1.get(k);
       mgr.commit();
 
       assertNoLocks(cache1);
       assertNoLocks(cache2);
-      
+
       cleanup();
    }
- 
+
    private void concurrentLockingHelper(final boolean sameNode, final boolean useTx)
-            throws Exception {
+         throws Exception {
       assertClusterSize("Should only be 2  caches in the cluster!!!", 2);
 
       assertNull("Should be null", cache1.get(k));
@@ -112,7 +106,7 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
          @Override
          public void run() {
             log.info("Concurrent " + (useTx ? "tx" : "non-tx") + " write started "
-                     + (sameNode ? "on same node..." : "on a different node..."));
+                  + (sameNode ? "on same node..." : "on a different node..."));
             TransactionManager mgr = null;
             try {
                if (useTx) {
@@ -156,7 +150,7 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
    }
 
    private void locksReleasedWithoutExplicitUnlockHelper(boolean lockPriorToPut, boolean useCommit)
-            throws Exception {
+         throws Exception {
       assertClusterSize("Should only be 2  caches in the cluster!!!", 2);
 
       assertNull("Should be null", cache1.get(k));
@@ -187,7 +181,7 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
       cache2.remove(k);
       cleanup();
    }
-   
+
    @SuppressWarnings("unchecked")
    protected void assertNoLocks(Cache cache) {
       /*
@@ -195,10 +189,10 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
        * cache.keySet() is not implemented yet
        * LockManager lm = TestingUtil.extractLockManager(cache);
        * for (Object key : cache.keySet()) assert !lm.isLocked(key);
-       */      
+       */
    }
-   
-   protected void cleanup(){
+
+   protected void cleanup() {
       assert cache1.isEmpty();
       assert cache2.isEmpty();
       cache1.clear();

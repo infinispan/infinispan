@@ -17,7 +17,6 @@ import org.infinispan.statetransfer.StateTransferException;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.PerCacheExecutorThread;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.concurrent.locks.DeadlockDetectingLockManager;
 import org.infinispan.util.concurrent.locks.LockManager;
@@ -48,8 +47,7 @@ public class ReplDeadlockDetectionTest extends MultipleCacheManagersTest {
    protected Configuration.CacheMode cacheMode = Configuration.CacheMode.REPL_SYNC;
 
    protected void createCacheManagers() throws Throwable {
-      Configuration config = getDefaultClusteredConfig(cacheMode);
-      config.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
+      Configuration config = getDefaultClusteredConfig(cacheMode, true);
       config.setEnableDeadlockDetection(true);
       config.setSyncCommitPhase(true);
       config.setSyncRollbackPhase(true);

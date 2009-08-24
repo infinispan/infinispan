@@ -22,12 +22,10 @@
 package org.infinispan.tx;
 
 import org.infinispan.Cache;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 import javax.transaction.Transaction;
@@ -39,11 +37,8 @@ public class LocalModeTxTest extends SingleCacheManagerTest {
    Cache c;
 
    protected CacheManager createCacheManager() {
-      Configuration cfg = new Configuration();
-      cfg.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
-      CacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
-      cm.defineConfiguration("test", cfg);
-      c = cm.getCache("test");
+      CacheManager cm = TestCacheManagerFactory.createLocalCacheManager(true);
+      c = cm.getCache();
       return cm;
    }
 

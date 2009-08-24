@@ -17,7 +17,6 @@ import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.notifications.cachelistener.event.TransactionalEvent;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
@@ -39,9 +38,8 @@ public class SyncCacheListenerTest extends MultipleCacheManagersTest {
    private final static Log log = LogFactory.getLog(SyncCacheListenerTest.class);
 
    protected void createCacheManagers() throws Throwable {
-      Configuration conf = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
+      Configuration conf = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
       conf.setIsolationLevel(IsolationLevel.SERIALIZABLE);
-      conf.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
       conf.setLockAcquisitionTimeout(5000);
 
       List<Cache<Object, Object>> caches = createClusteredCaches(2, "cache", conf);

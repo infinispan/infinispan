@@ -7,7 +7,6 @@ import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.testng.annotations.AfterTest;
@@ -32,10 +31,9 @@ public class WriteSkewTest {
    @BeforeTest
    public void setUp() {
       Configuration c = new Configuration();
-      c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
       c.setLockAcquisitionTimeout(200);
       c.setIsolationLevel(IsolationLevel.REPEATABLE_READ);
-      cacheManager = TestCacheManagerFactory.createCacheManager(c);
+      cacheManager = TestCacheManagerFactory.createCacheManager(c, true);
    }
 
    @AfterTest

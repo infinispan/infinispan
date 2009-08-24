@@ -10,7 +10,6 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.Flag;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.testng.annotations.Test;
 
 import java.util.HashMap;
@@ -24,9 +23,8 @@ public abstract class BaseReplicatedAPITest extends MultipleCacheManagersTest {
    protected boolean isSync;
 
    protected void createCacheManagers() throws Throwable {
-      Configuration c = getDefaultClusteredConfig(isSync ? Configuration.CacheMode.REPL_SYNC : Configuration.CacheMode.REPL_ASYNC);
+      Configuration c = getDefaultClusteredConfig(isSync ? Configuration.CacheMode.REPL_SYNC : Configuration.CacheMode.REPL_ASYNC, true);
       c.setStateRetrievalTimeout(1000);
-      c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
       List<Cache<Object, Object>> caches = createClusteredCaches(2, "replication", c);
       cache1 = caches.get(0).getAdvancedCache();
       cache2 = caches.get(1).getAdvancedCache();
@@ -185,7 +183,7 @@ public abstract class BaseReplicatedAPITest extends MultipleCacheManagersTest {
       assert cache1.get("key").equals("value1");
       assert cache2.get("key").equals("value1");
    }
-   
+
    public void testLocalOnlyClear() {
       cache1.put("key", "value1", Flag.CACHE_MODE_LOCAL);
       cache2.put("key", "value2", Flag.CACHE_MODE_LOCAL);

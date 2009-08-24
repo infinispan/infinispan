@@ -5,8 +5,7 @@ import static org.infinispan.atomic.AtomicHashMapTestAssertions.assertIsEmpty;
 import static org.infinispan.atomic.AtomicHashMapTestAssertions.assertIsEmptyMap;
 import org.infinispan.config.Configuration;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.transaction.tm.DummyTransactionManager;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
 import java.util.List;
@@ -17,8 +16,7 @@ public class ClusteredAPITest extends MultipleCacheManagersTest {
    AtomicMapCache cache1, cache2;
 
    protected void createCacheManagers() throws Throwable {
-      Configuration c = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
-      c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
+      Configuration c = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
       c.setInvocationBatchingEnabled(true);
 
       List<Cache<Object, Object>> caches = createClusteredCaches(2, "atomic", c);
@@ -29,10 +27,10 @@ public class ClusteredAPITest extends MultipleCacheManagersTest {
    public void testReplicationCommit() throws Exception {
       AtomicMap map = cache1.getAtomicMap("map");
 
-      DummyTransactionManager.getInstance().begin();
+      TestingUtil.getTransactionManager(cache1).begin();
       map.put("existing", "existing");
       map.put("blah", "blah");
-      DummyTransactionManager.getInstance().commit();
+      TestingUtil.getTransactionManager(cache1).commit();
 
       assert map.size() == 2;
       assert map.get("blah").equals("blah");
@@ -47,10 +45,10 @@ public class ClusteredAPITest extends MultipleCacheManagersTest {
       assertIsEmptyMap(cache2, "map");
       AtomicMap map = cache1.getAtomicMap("map");
 
-      DummyTransactionManager.getInstance().begin();
+      TestingUtil.getTransactionManager(cache1).begin();
       map.put("existing", "existing");
       map.put("blah", "blah");
-      DummyTransactionManager.getInstance().rollback();
+      TestingUtil.getTransactionManager(cache1).rollback();
 
       assertIsEmpty(map);
       assertIsEmptyMap(cache1, "map");

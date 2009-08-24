@@ -1,12 +1,11 @@
 package org.infinispan.tx;
 
 import org.infinispan.Cache;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 import javax.transaction.Transaction;
@@ -16,9 +15,7 @@ import javax.transaction.TransactionManager;
 public class TransactionsSpanningCaches extends SingleCacheManagerTest {
 
    protected CacheManager createCacheManager() throws Exception {
-      Configuration c = new Configuration();
-      c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
-      CacheManager cm = TestCacheManagerFactory.createCacheManager(c);
+      CacheManager cm = TestCacheManagerFactory.createCacheManager(new Configuration(), true);
       cm.defineConfiguration("c1", c);
       cm.defineConfiguration("c2", c);
       return cm;
