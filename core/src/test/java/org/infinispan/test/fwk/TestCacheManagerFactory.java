@@ -6,6 +6,8 @@ import org.infinispan.manager.CacheManager;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.util.Util;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.Properties;
 
@@ -18,6 +20,7 @@ import java.util.Properties;
 public class TestCacheManagerFactory {
 
    public static final String MARSHALLER = System.getProperties().getProperty("infinispan.marshaller.class");
+   private static Log log = LogFactory.getLog(TestCacheManagerFactory.class);
 
    /**
     * Creates an cache manager that does not support clustering or transactions.
@@ -85,6 +88,9 @@ public class TestCacheManagerFactory {
     * tests in parallel.  This is a non-transactional cache manager.
     */
    public static CacheManager createCacheManager(Configuration defaultCacheConfig) {
+      if (defaultCacheConfig.getTransactionManagerLookup() != null || defaultCacheConfig.getTransactionManagerLookupClass() != null) {
+         log.error("You have passed in a default configuration which has transactional elements set.  If you wish to use transactions, use the TestCacheManagerFactory.createCacheManager(Configuration defaultCacheConfig, boolean transactional) method.");
+      }
       defaultCacheConfig.setTransactionManagerLookup(null);
       defaultCacheConfig.setTransactionManagerLookupClass(null);
       return createCacheManager(defaultCacheConfig, false);

@@ -7,7 +7,6 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.AfterMethod;
@@ -32,9 +31,7 @@ public class CacheNotifierTest {
       Configuration c = new Configuration();
       c.setCacheMode(Configuration.CacheMode.LOCAL);
       c.setIsolationLevel(IsolationLevel.REPEATABLE_READ);
-      c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
-
-      CacheManager cm = TestCacheManagerFactory.createCacheManager(c);
+      CacheManager cm = TestCacheManagerFactory.createCacheManager(c, true);
 
       cache = cm.getCache();
       tm = TestingUtil.getTransactionManager(cache);

@@ -12,7 +12,6 @@ import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
@@ -40,11 +39,10 @@ public class CacheLoaderFunctionalTest {
    @BeforeTest
    public void setUp() {
       cfg = new Configuration();
-      cfg.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
       CacheLoaderManagerConfig clmc = new CacheLoaderManagerConfig();
       clmc.addCacheLoaderConfig(new DummyInMemoryCacheStore.Cfg());
       cfg.setCacheLoaderManagerConfig(clmc);
-      cm = TestCacheManagerFactory.createCacheManager(cfg);
+      cm = TestCacheManagerFactory.createCacheManager(cfg, true);
       cache = cm.getCache();
       store = TestingUtil.extractComponent(cache, CacheLoaderManager.class).getCacheStore();
       tm = TestingUtil.getTransactionManager(cache);
