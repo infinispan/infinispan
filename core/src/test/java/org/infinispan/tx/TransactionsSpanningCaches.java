@@ -16,8 +16,8 @@ public class TransactionsSpanningCaches extends SingleCacheManagerTest {
 
    protected CacheManager createCacheManager() throws Exception {
       CacheManager cm = TestCacheManagerFactory.createCacheManager(new Configuration(), true);
-      cm.defineConfiguration("c1", c);
-      cm.defineConfiguration("c2", c);
+      cm.defineConfiguration("c1", cm.getCache().getConfiguration());
+      cm.defineConfiguration("c2", cm.getCache().getConfiguration());
       return cm;
    }
 
