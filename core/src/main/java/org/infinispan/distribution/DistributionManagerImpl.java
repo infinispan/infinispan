@@ -18,6 +18,9 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.jmx.annotations.MBean;
+import org.infinispan.jmx.annotations.ManagedAttribute;
+import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.notifications.Listener;
@@ -56,6 +59,7 @@ import java.util.concurrent.locks.LockSupport;
  * @author Manik Surtani
  * @since 4.0
  */
+@MBean(objectName = "DistributionManager", description = "Component that handles distribution of content across a cluster")
 public class DistributionManagerImpl implements DistributionManager {
    private final Log log = LogFactory.getLog(DistributionManagerImpl.class);
    private final boolean trace = log.isTraceEnabled();
@@ -89,6 +93,7 @@ public class DistributionManagerImpl implements DistributionManager {
    private InterceptorChain interceptorChain;
    private InvocationContextContainer icc;
    private volatile boolean joinTaskSubmitted = false;
+   @ManagedAttribute(name = "Joined", description = "If true, the node has successfully joined the grid and is considered to hold state.  If false, the join process is still in progress.")
    volatile boolean joinComplete = false;
    final List<Address> leavers = new CopyOnWriteArrayList<Address>();
    volatile Future<Void> leaveTaskFuture;
@@ -243,6 +248,7 @@ public class DistributionManagerImpl implements DistributionManager {
       this.consistentHash = consistentHash;
    }
 
+   @ManagedOperation(description = "Determines whether a given key is affected by an ongoing rehash, if any.")
    public boolean isAffectedByRehash(Object key) {
       if (transactionLogger.isEnabled() && oldConsistentHash != null && !oldConsistentHash.locate(key, replCount).contains(self)) {
          return true;
@@ -324,6 +330,7 @@ public class DistributionManagerImpl implements DistributionManager {
       return cacheLoaderManager.getCacheStore();
    }
 
+   @ManagedAttribute(description = "Checks whether the node is involved in a rehash.")
    public boolean isRehashInProgress() {
       return !leavers.isEmpty() || rehashInProgress;
    }
@@ -358,5 +365,22 @@ public class DistributionManagerImpl implements DistributionManager {
          ctx.setFlags(Flag.SKIP_REMOTE_LOOKUP);
          interceptorChain.invoke(ctx, cmd);
       }
+   }
+
+   @ManagedAttribute(name = "ClusterSize", description = "Size of the cluster in number of nodes")
+   public String getClusterSize() {
+      return rpcManager.getTransport().getMembers().size() + "";
+   }
+
+   @ManagedOperation(description = "Tells you whether a given key is local to this instance of the cache.  Only works with String keys.")
+   public boolean isLocal(String key) {
+      return isLocal(key);
+   }
+
+   @ManagedOperation(description = "Locates an object in a cluster.  Only works with String keys.")
+   public List<String> locateKey(String key) {
+      List<String> l = new LinkedList<String>();
+      for (Address a : locate(key)) l.add(a.toString());
+      return l;
    }
 }

@@ -136,6 +136,15 @@
                   </excludes>
                </fileSet>
 
+               <!-- schema (generated!) -->
+               <fileSet>
+                  <directory>target/classes</directory>
+                  <outputDirectory>etc</outputDirectory>
+                  <includes>
+                     <include>**/*.xsd</include>
+                  </includes>
+               </fileSet>
+
                <!-- Executable resources -->
                <fileSet>
                   <directory>src/main/resources</directory>

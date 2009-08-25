@@ -117,7 +117,7 @@ public class JmxDoclet {
                MBeanAttribute attr = new MBeanAttribute();
 
                // if this is a getter, look at the return type
-               if (method.name().startsWith("get")) {
+               if (method.name().startsWith("get") || method.name().startsWith("is")) {
                   attr.type = method.returnType().simpleTypeName();
                } else if (method.parameters().length > 0) {
                   attr.type = method.parameters()[0].type().simpleTypeName();
@@ -164,6 +164,9 @@ public class JmxDoclet {
          String withoutGet = getterOrSetter.substring(4);
          // not specifically BEAN convention, but this is what is bound in JMX.
          return Character.toUpperCase(getterOrSetter.charAt(3)) + withoutGet;
+      } else if (getterOrSetter.startsWith("is")) {
+         String withoutIs = getterOrSetter.substring(3);
+         return Character.toUpperCase(getterOrSetter.charAt(2)) + withoutIs;
       }
       return getterOrSetter;
    }
