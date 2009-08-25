@@ -1,12 +1,15 @@
-<?xml version='1.0' encoding='UTF-8'?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<project
+      xmlns="http://maven.apache.org/POM/4.0.0"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd"
+      >
 
    <modelVersion>4.0.0</modelVersion>
 
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-parent</artifactId>
-      <version>4.0.0.BETA1</version>
+      <version>4.0.0-SNAPSHOT</version>
       <relativePath>../parent/pom.xml</relativePath>
    </parent>
 
@@ -15,7 +18,7 @@
    <packaging>jar</packaging>
 
    <name>Infinispan JOPR Plugin</name>
-   <version>4.0.0.BETA1</version>
+   <version>4.0.0-SNAPSHOT</version>
    <description>The Infinispan JOPR Plugin</description>
 
    <properties>
@@ -93,10 +96,11 @@
                         <phase>compile</phase>
                         <configuration>
                            <tasks>
-                              <mkdir dir="${rhq.deploymentDir}" />
-                              <property location="${rhq.deploymentDir}/${project.build.finalName}.jar" name="deployment.file" />
+                              <mkdir dir="${rhq.deploymentDir}"/>
+                              <property name="deployment.file"
+                                        location="${rhq.deploymentDir}/${project.build.finalName}.jar"/>
                               <echo>*** Updating ${deployment.file}...</echo>
-                              <jar basedir="${project.build.outputDirectory}" destfile="${deployment.file}" />
+                              <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}"/>
                            </tasks>
                         </configuration>
                         <goals>
@@ -109,14 +113,18 @@
                         <phase>package</phase>
                         <configuration>
                            <tasks>
-                              <property location="${rhq.deploymentDir}/${project.build.finalName}.jar" name="deployment.file" />
+                              <property name="deployment.file"
+                                        location="${rhq.deploymentDir}/${project.build.finalName}.jar"/>
                               <echo>*** Updating META-INF dir in ${deployment.file}...</echo>
-                              <unjar dest="${project.build.outputDirectory}" src="${project.build.directory}/${project.build.finalName}.jar">
+                              <unjar src="${project.build.directory}/${project.build.finalName}.jar"
+                                     dest="${project.build.outputDirectory}">
                                  <patternset>
-                                    <include name="META-INF/**" />
+                                    <include name="META-INF/**"/>
                                  </patternset>
                               </unjar>
-                              <jar destfile="${deployment.file}" manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF" update="true">
+                              <jar destfile="${deployment.file}"
+                                   manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF"
+                                   update="true">
                               </jar>
                            </tasks>
                         </configuration>
@@ -130,9 +138,10 @@
                         <phase>clean</phase>
                         <configuration>
                            <tasks>
-                              <property location="${rhq.deploymentDir}/${project.build.finalName}.jar" name="deployment.file" />
+                              <property name="deployment.file"
+                                        location="${rhq.deploymentDir}/${project.build.finalName}.jar"/>
                               <echo>*** Deleting ${deployment.file}...</echo>
-                              <delete file="${deployment.file}" />
+                              <delete file="${deployment.file}"/>
                            </tasks>
                         </configuration>
                         <goals>
@@ -200,7 +209,7 @@
          <scope>provided</scope>
       </dependency>
 
-      
+      <!-- TODO: This is beyond horrible.  Surely we don't need these dependencies!! -->
 
       <dependency>
          <groupId>org.hibernate</groupId>
@@ -223,7 +232,7 @@
          <scope>provided</scope>
       </dependency>
 
-      
+      <!-- END unnenessary deps -->
 
       <dependency>
          <groupId>${project-package}</groupId>
