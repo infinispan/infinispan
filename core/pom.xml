@@ -21,7 +21,7 @@
       <version.jboss.common.core>2.2.14.GA</version.jboss.common.core>
       <version.jboss.logging.spi>2.1.0.GA</version.jboss.logging.spi>
       <version.jboss.marshalling>1.2.0.CR3</version.jboss.marshalling>
-      <version.jgroups>2.8.0.Beta2</version.jgroups>
+      <version.jgroups>2.8.0.CR1</version.jgroups>
       <version.jta>1.0.1.GA</version.jta>
       <version.xstream>1.2</version.xstream>
    </properties>
@@ -84,31 +84,31 @@
       </dependency>
    </dependencies>
    <build>
-    <plugins>
-      <!-- 
-      Generates XML schema for Infinispan configuration files
-      Run with mvn exec:java
-      For more details see:
-      http://mojo.codehaus.org/exec-maven-plugin/usage.html -->
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
-        <version>1.1</version>
-        <executions>
-          <execution>
-          	<phase>process-classes</phase>      
-          	<goals>
-            	<goal>java</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <mainClass>org.infinispan.util.JaxbSchemaGenerator</mainClass>
-          <arguments>
-            <argument>${basedir}/target/classes/schema</argument>
-          </arguments>          
-        </configuration>
-      </plugin>      
-    </plugins>
-  </build>
+      <plugins>
+         <!--
+        Generates XML schema for Infinispan configuration files
+        Run with mvn exec:java
+        For more details see:
+        http://mojo.codehaus.org/exec-maven-plugin/usage.html -->
+         <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <version>1.1</version>
+            <executions>
+               <execution>
+                  <phase>process-classes</phase>
+                  <goals>
+                     <goal>java</goal>
+                  </goals>
+               </execution>
+            </executions>
+            <configuration>
+               <mainClass>org.infinispan.util.JaxbSchemaGenerator</mainClass>
+               <arguments>
+                  <argument>${basedir}/target/classes/schema</argument>
+               </arguments>
+            </configuration>
+         </plugin>
+      </plugins>
+   </build>
 </project>
