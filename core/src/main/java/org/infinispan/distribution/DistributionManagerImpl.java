@@ -250,11 +250,7 @@ public class DistributionManagerImpl implements DistributionManager {
 
    @ManagedOperation(description = "Determines whether a given key is affected by an ongoing rehash, if any.")
    public boolean isAffectedByRehash(Object key) {
-      if (transactionLogger.isEnabled() && oldConsistentHash != null && !oldConsistentHash.locate(key, replCount).contains(self)) {
-         return true;
-      } else {
-         return false;
-      }
+      return transactionLogger.isEnabled() && oldConsistentHash != null && !oldConsistentHash.locate(key, replCount).contains(self);
    }
 
    public TransactionLogger getTransactionLogger() {
@@ -373,7 +369,7 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    @ManagedOperation(description = "Tells you whether a given key is local to this instance of the cache.  Only works with String keys.")
-   public boolean isLocal(String key) {
+   public boolean isLocatedLocally(String key) {
       return isLocal(key);
    }
 
