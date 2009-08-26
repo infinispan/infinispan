@@ -1,6 +1,5 @@
 package org.infinispan.loaders;
 
-import org.infinispan.config.ConfigurationProperty;
 
 /**
  * Adds configuration support for {@link LockSupportCacheStore}.
@@ -24,9 +23,6 @@ public class LockSupportCacheStoreConfig extends AbstractCacheStoreConfig {
    /**
     * Sets number of threads expected to use this class concurrently.
     */
-   @ConfigurationProperty(name = "lockConcurrencyLevel", 
-            parentElement = "properties", 
-            description = "Concurrency level as integer. Default is " + DEFAULT_CONCURRENCY_LEVEL)
    public void setLockConcurrencyLevel(int lockConcurrencyLevel) {
       testImmutability("lockConcurrencyLevel");
       this.lockConcurrencyLevel = lockConcurrencyLevel;
@@ -36,9 +32,6 @@ public class LockSupportCacheStoreConfig extends AbstractCacheStoreConfig {
       return lockAcquistionTimeout;
    }
 
-   @ConfigurationProperty(name = "lockAcquistionTimeout", 
-            parentElement = "properties",
-            description= "Default lock acquisition timeout as long. Default is " + DEFAULT_LOCK_ACQUISITION_TIMEOUT)
    public void setLockAcquistionTimeout(long lockAcquistionTimeout) {
       testImmutability("lockAcquistionTimeout");
       this.lockAcquistionTimeout = lockAcquistionTimeout;

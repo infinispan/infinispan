@@ -12,6 +12,9 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 /**
  * Type-aware properties.  Extends the JDK {@link Properties} class to provide accessors that convert values to certain
  * types, using default values if a conversion is not possible.
+ * 
+ *
+ * @configRef properties
  *
  * @author Manik Surtani
  * @since 4.0

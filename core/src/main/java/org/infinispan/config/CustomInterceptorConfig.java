@@ -22,7 +22,6 @@
 package org.infinispan.config;
 
 import net.jcip.annotations.Immutable;
-import org.infinispan.config.ConfigurationElement.Cardinality;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.util.TypedProperties;
 
@@ -44,40 +43,40 @@ import java.util.Properties;
  * provide meta data for configuration file XML schema generation. Please modify these annotations
  * and Java element types they annotate with utmost understanding and care.
  *
+ * @configRef interceptor
+ *
  * @author Mircea.Markus@jboss.com
  * @author Vladimir Blagojevic
  * @since 4.0
  */
 @Immutable
-@ConfigurationElement(name = "interceptor", parent = "customInterceptors" ,
-         cardinalityInParent=Cardinality.UNBOUNDED)
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name="interceptor")
 public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean {
    
    @XmlTransient
-   private CommandInterceptor interceptor;
+   protected CommandInterceptor interceptor;
    
    @XmlTransient
-   private boolean isFirst;
+   protected boolean isFirst;
    
    @XmlTransient
-   private boolean isLast;
+   protected boolean isLast;
    
    @XmlAttribute
-   private Integer index = -1;
+   protected Integer index = -1;
    
    @XmlAttribute
-   private String after;
+   protected String after;
    
    @XmlAttribute
-   private String before;
+   protected String before;
    
    @XmlAttribute
-   private Position position;   
+   protected Position position;   
    
    @XmlAttribute(name="class")
-   private String className;
+   protected String className;
    
    @XmlElement
    private TypedProperties properties = EMPTY_PROPERTIES;
@@ -139,7 +138,6 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
       return properties;
    }
    
-   @ConfigurationProperty(name = "anyCustomProperty", parentElement = "interceptor")  
    public void setProperties(Properties properties) {
       this.properties = toTypedProperties(properties);
    }
@@ -156,8 +154,6 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
       return className;
    }
    
-   @ConfigurationAttribute(name = "class", 
-            containingElement = "interceptor") 
    public void setClassName(String className) {
       this.className = className;
    }
@@ -179,8 +175,6 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
       isLast = last;
    }
    
-   @ConfigurationAttribute(name = "position", 
-            containingElement = "interceptor") 
    public void setPosition(String pos) {
       setPosition(Position.valueOf(uc(pos)));
    }
@@ -189,8 +183,6 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
     * Put this interceptor at the specified index, after the default chain is built. If the index is not valid (negative
     * or grater than the size of the chain) an {@link ConfigurationException} is thrown at construction time.
     */
-   @ConfigurationAttribute(name = "index", 
-            containingElement = "interceptor") 
    public void setIndex(int index) {
       testImmutability("index");
       this.index = index;
@@ -200,8 +192,6 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
     * Adds the interceptor immediately after the first occurance of an interceptor having the given class. If the chain
     * does not contain such an interceptor then this interceptor definition is ignored.
     */
-   @ConfigurationAttribute(name = "after", 
-            containingElement = "interceptor") 
    public void setAfterInterceptor(String afterClass) {
       testImmutability("after");
       this.after = afterClass;
@@ -219,8 +209,6 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
     * Adds the interceptor immediately before the first occurance of an interceptor having the given class. If the chain
     * does not contain such an interceptor then this interceptor definition is ignored.
     */
-   @ConfigurationAttribute(name = "before", 
-            containingElement = "interceptor") 
    public void setBeforeInterceptor(String beforeClass) {
       testImmutability("before");
       this.before = beforeClass;

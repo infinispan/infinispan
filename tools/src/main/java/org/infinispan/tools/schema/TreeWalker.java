@@ -19,44 +19,17 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.config;
-
-import java.lang.annotation.*;
+package org.infinispan.tools.schema;
 
 /**
- * Represents a property element from a valid Infinispan configuration file.
- * <p>
- * 
- * Each ConfigurationProperty should annotate the corresponding setter method in ancestor hierarchy
- * of the appropriate AbstractConfigurationBean. Parameter of the corresponding setter should be
- * either Properties or java.lang.String
- * <p>
- * 
+ * TreeWalker visitor
+ *
  * @author Vladimir Blagojevic
+ * @see XMLTreeOutputWalker
+ * @since 4.0
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target( { ElementType.METHOD, ElementType.FIELD })
-public @interface ConfigurationProperty {
+public interface TreeWalker {
 
-   /**
-    * Returns name of corresponding XML (ConfigurationElement) element that declares this property
-    * 
-    * @return
-    */
-   String parentElement();
+   void visitNode(TreeNode treeNode);
 
-   /**
-    * Returns name of this property. Should return the value of corresponding name attribute in
-    * <property> XML element
-    * 
-    * @return
-    */
-   String name();
-
-   /**
-    * Returns description of this property
-    * 
-    * @return
-    */
-   String description() default "";
 }

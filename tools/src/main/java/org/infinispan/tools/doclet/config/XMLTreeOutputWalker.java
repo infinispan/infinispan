@@ -21,8 +21,8 @@
  */
 package org.infinispan.tools.doclet.config;
 
-import org.infinispan.tools.schema.ConfigurationTreeWalker;
-import org.infinispan.config.parsing.TreeNode;
+import org.infinispan.tools.schema.AbstractTreeWalker;
+import org.infinispan.tools.schema.TreeNode;
 
 /**
  * TreeWalker that generates XML pretty print of the configuration tree
@@ -31,7 +31,7 @@ import org.infinispan.config.parsing.TreeNode;
  * @see ConfigDoclet
  * @since 4.0
  */
-public class XMLTreeOutputWalker extends ConfigurationTreeWalker {
+public class XMLTreeOutputWalker extends AbstractTreeWalker {
    
    private final StringBuilder sb;
 
@@ -44,7 +44,12 @@ public class XMLTreeOutputWalker extends ConfigurationTreeWalker {
       String ident = "";     
       for(int i = 0; i<=treeNode.getDepth();i++)
          ident += "  ";
-      sb.append(ident + "&lt;<a href=\"" + "#ce_" + treeNode.getParent().getName()
+      
+      String parentName = treeNode.getParent().getName();
+      if(parentName.startsWith("namedCache")){
+         parentName = "default";
+      }
+      sb.append(ident + "&lt;<a href=\"" + "#ce_" + parentName
                + "_" + treeNode.getName() + "\">" + treeNode.getName() + "</a>&gt;" + "\n");
 
    }

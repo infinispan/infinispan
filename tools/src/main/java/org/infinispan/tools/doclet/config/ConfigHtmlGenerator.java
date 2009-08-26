@@ -1,43 +1,72 @@
 package org.infinispan.tools.doclet.config;
 
+import java.io.InputStream;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
+import org.infinispan.Version;
 import org.infinispan.config.AbstractConfigurationBean;
-import org.infinispan.config.ConfigurationAttribute;
-import org.infinispan.config.ConfigurationElement;
-import org.infinispan.config.ConfigurationElements;
-import org.infinispan.config.ConfigurationProperties;
-import org.infinispan.config.ConfigurationProperty;
-import org.infinispan.config.parsing.TreeNode;
+import org.infinispan.config.InfinispanConfiguration;
 import org.infinispan.tools.doclet.html.HtmlGenerator;
+import org.infinispan.tools.schema.AbstractTreeWalker;
+import org.infinispan.tools.schema.TreeNode;
+import org.infinispan.tools.schema.XSOMSchemaTreeWalker;
 import org.infinispan.util.ClassFinder;
+import org.infinispan.util.FileLookup;
+import org.infinispan.util.TypedProperties;
+
+import com.sun.javadoc.ClassDoc;
+import com.sun.javadoc.FieldDoc;
+import com.sun.javadoc.RootDoc;
+import com.sun.javadoc.Tag;
+import com.sun.xml.xsom.XSAttributeDecl;
+import com.sun.xml.xsom.XSFacet;
+import com.sun.xml.xsom.XSRestrictionSimpleType;
+import com.sun.xml.xsom.XSSchemaSet;
+import com.sun.xml.xsom.parser.XSOMParser;
 
 /**
  * Infinispan configuration reference guide generator
- *
+ * 
  * @author Vladimir Blagojevic
  * @since 4.0
  */
+@SuppressWarnings("restriction")
 public class ConfigHtmlGenerator extends HtmlGenerator {
+   
+   private static final String CONFIG_REF = "configRef";
+   private static final String CONFIG_PROPERTY_REF = "configPropertyRef";
 
    String classpath;
+   RootDoc rootDoc;
 
    public ConfigHtmlGenerator(String encoding, String title, String bottom, String footer,
-                              String header, String metaDescription, List<String> metaKeywords, String classpath) {
+            String header, String metaDescription, List<String> metaKeywords, String classpath) {
       super(encoding, title, bottom, footer, header, metaDescription, metaKeywords);
       this.classpath = classpath;
 
    }
 
+   public RootDoc getRootDoc() {
+      return rootDoc;
+   }
+
+   public void setRootDoc(RootDoc rootDoc) {
+      this.rootDoc = rootDoc;
+   }
+
    protected List<Class<?>> getConfigBeans() throws Exception {
-      return ClassFinder.isAssignableFrom(ClassFinder.infinispanClasses(classpath), AbstractConfigurationBean.class);
+      return ClassFinder.isAssignableFrom(ClassFinder.infinispanClasses(classpath),
+               AbstractConfigurationBean.class);
    }
 
    protected String generateContents() {
-      
+
       StringBuilder sb = new StringBuilder();
       // index of components
       sb.append("<h2>Infinispan configuration options</h2><br/>");
@@ -45,59 +74,48 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
 
       List<Class<?>> configBeans;
       try {
-         configBeans = getConfigBeans();        
-         
+         configBeans = getConfigBeans();
+         configBeans.add(TypedProperties.class);
+         configBeans.add(InfinispanConfiguration.class);
+
          XMLTreeOutputWalker tw = new XMLTreeOutputWalker(sb);
-         TreeNode root = tw.constructTreeFromBeans(configBeans);                 
-         
-         sb.append("<div class=\"" +"source" + "\"><pre>");
-         //print xml tree into StringBuilder
-         tw.preOrderTraverse(root);
+         FileLookup fl = new FileLookup();
+         InputStream file = fl.lookupFile("schema/infinispan-config-" + Version.getMajorVersion()+ ".xsd");
+         XSOMParser reader = new XSOMParser();
+         reader.parse(file);
+         XSSchemaSet xss = reader.getResult();
+         XSOMSchemaTreeWalker w = new XSOMSchemaTreeWalker(xss.getSchema(1), "infinispan");
+         TreeNode root = w.getRoot();
+
+         associateBeansWithTreeNodes(configBeans, root);
+
+         sb.append("<div class=\"" + "source" + "\"><pre>");
+         // print xml tree into StringBuilder
+         tw.preOrderTraverse(root);         
          sb.append("</pre></div>");
-         for (Class<?> clazz : configBeans) {            
-            ConfigurationElement ces[] = configurationElementsOnBean(clazz);            
-            for (ConfigurationElement ce : ces) {
-               boolean createdAttributes = false;
-               boolean createdProperties = false;
-               //Name, description, parent and child elements for ce ConfigurationElement
-               generateHeaderForConfigurationElement(sb, tw, root, ce); 
-               for (Method m : clazz.getMethods()) {
-                  ConfigurationAttribute a = m.getAnnotation(ConfigurationAttribute.class);
-                  boolean attribute = a != null && a.containingElement().equals(ce.name());
-                  if (attribute && !createdAttributes) {
-                     // Attributes
-                     sb.append("<table class=\"bodyTable\"> ");
-                     sb.append("<tr class=\"a\"><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr>\n");
-                     createdAttributes = true;
-                  }
-                  if (attribute) {
-                     generateAttributeTableRow(clazz,sb, m, a);
-                  }
-               }
-               if (createdAttributes) {
-                  sb.append("</table></div>");
-               }
-               
-               for (Method m : clazz.getMethods()) {
-                  ConfigurationProperty[] cprops = propertiesElementsOnMethod(m);
-                  for (ConfigurationProperty c : cprops) {
-                     boolean property = c.parentElement().equals(ce.name());
-                     if (property && !createdProperties) {
-                        // custom properties
-                        sb.append("\n<table class=\"bodyTable\"> ");
-                        sb.append("<tr class=\"a\"><th>Property</th><th>Description</th></tr>\n");
-                        createdProperties = true;
-                     }
-                     if (property) {
-                        generatePropertyTableRow(sb, c);
-                     }
-                  }
-               }
-               if (createdProperties) {
-                  sb.append("</table></div>");
-               }
+         
+         TreeNode node = tw.findNode(root, "namedCache", "infinispan");
+         node.detach();
+
+         PruneTreeWalker ptw = new PruneTreeWalker("property");
+         ptw.postOrderTraverse(root);
+
+         for (TreeNode n : root) {
+            if (n.getName().equals("properties"))
+               continue;
+
+            // Name, description, parent and child elements node
+            generateHeaderForConfigurationElement(sb, tw, n);
+            if (!n.getAttributes().isEmpty()) {
+               generateAttributeTableRows(sb, n);
             }
-         }         
+
+            //has properties?                 
+            if (n.hasChild("properties")) {
+               generatePropertiesTableRows(sb, n);
+            }
+         }
+
       } catch (Exception e) {
          System.out.println("Exception while generating configuration reference " + e);
          System.out.println("Classpath is  " + classpath);
@@ -106,92 +124,159 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
       return sb.toString();
    }
 
-   private void generatePropertyTableRow(StringBuilder sb, ConfigurationProperty c) {
-      sb.append("<tr class=\"b\">");
-      sb.append("<td>").append(c.name()).append("</td>\n");                              
-      if(c.description().length() >0)
-         sb.append("<td>").append(c.description()).append("</td>\n");
-      else 
-         sb.append("<td>").append("todo").append("</td>\n"); 
-      sb.append("</tr>\n");
-   }
-
-   private ConfigurationProperty[] propertiesElementsOnMethod(Method m) {
-      ConfigurationProperty[] cprops = new ConfigurationProperty[0];
-      ConfigurationProperties cp = m.getAnnotation(ConfigurationProperties.class);
-      ConfigurationProperty p = null;
-      if (cp != null) {
-         cprops = cp.elements();
-      } else {
-         p = m.getAnnotation(ConfigurationProperty.class);
-         if (p != null) {
-            cprops = new ConfigurationProperty[]{p};
+   private void associateBeansWithTreeNodes(List<Class<?>> configBeans, TreeNode root) {
+      for (TreeNode n : root) {
+         if (n.getBeanClass() == null) {
+            for (Class<?> clazz : configBeans) {
+               ClassDoc classDoc = rootDoc.classNamed(clazz.getName());
+               if (classDoc != null) {
+                  List<Tag> list = Arrays.asList(classDoc.tags(CONFIG_REF));
+                  for (Tag tag : list) {
+                     String text = tag.text().trim();
+                     if(text.contains(":")){
+                        String strings []= text.split(":");
+                        String parent = strings[1].trim();
+                        String thisNode = strings[0].trim();
+                        if(thisNode.startsWith(n.getName()) && parent.startsWith(n.getParent().getName())){
+                           n.setBeanClass(clazz);
+                        }
+                     }
+                     if (text.startsWith(n.getName()) && n.getBeanClass() == null) {
+                        n.setBeanClass(clazz);
+                     }
+                  }
+               }
+            }
          }
       }
-      return cprops;
    }
 
-   private void generateAttributeTableRow(Class<?> bean,StringBuilder sb, Method m, ConfigurationAttribute a) {
-      sb.append("<tr class=\"b\">");
-      sb.append("<td>").append("<code>" + a.name() +"</code>").append("</td>\n");
-      
-      sb.append("<td>").append("<code>" + m.getParameterTypes()[0].getSimpleName() + "</code>");
-      if(a.allowedValues().length>0){
-         sb.append("* (");
-         for(String s:a.allowedValues()){
-            sb.append(s+'|');
+   private void generatePropertiesTableRows(StringBuilder sb, TreeNode n) {
+      FieldDoc fieldDoc = fieldDocWithTag(n.getBeanClass(),CONFIG_PROPERTY_REF);
+      if (fieldDoc != null) {
+         sb.append("\n<table class=\"bodyTable\"> ");
+         sb.append("<tr class=\"a\"><th>Property</th><th>Description</th></tr>\n");
+         Tag[] tags = fieldDoc.tags(CONFIG_PROPERTY_REF);
+         for (Tag t : tags) {
+            String[] strings = t.text().trim().split(" ");
+            sb.append("<tr class=\"b\">");
+            sb.append("<td>").append(strings[0]).append("</td>\n");
+            if (strings.length > 1)
+               sb.append("<td>").append(strings[1]).append("</td>\n");
+            else
+               sb.append("<td>").append("todo").append("</td>\n");
+
+            sb.append("</tr>\n");
          }
-         sb.deleteCharAt(sb.length()-1);
-         sb.append(")</td>\n");         
-      } else{
-         sb.append("</td>\n");
-      }    
-     
-      //if default value specified in annotation use it
-      if (a.defaultValue().length() > 0) {
-         sb.append("<td>").append(a.defaultValue()).append("</td>\n");
+         sb.append("</table></div>");
+      }
+   }
+
+   private void generateAttributeTableRows(StringBuilder sb, TreeNode n) {
+
+      sb.append("<table class=\"bodyTable\"> ");
+      sb.append("<tr class=\"a\"><th>Attribute</th><th>Type</th><th>Default</th><th>Description</th></tr>\n");
+
+      Class<?> bean = n.getBeanClass();
+      Object object = null;
+      try {
+         Constructor<?>[] constructors = bean.getDeclaredConstructors();
+         for (Constructor<?> c : constructors) {
+            if (c.getParameterTypes().length == 0) {
+               c.setAccessible(true);
+               object = c.newInstance();
+            }
+         }
+      } catch (Exception e) {
       }
 
-      //otherwise reflect that field and read default value
-      else {
-         try {
-            //reflect default value 
-            Object matchingFieldValue = matchingFieldValue(bean,m);
-            sb.append("<td>").append(matchingFieldValue).append("</td>\n");
-         } catch (Exception e) {            
-            sb.append("<td>").append("N/A").append("</td>\n");
+      Set<XSAttributeDecl> attributes = n.getAttributes();
+      for (XSAttributeDecl a : attributes) {
+         sb.append("<tr class=\"b\">");
+         sb.append("<td>").append("<code>" + a.getName() + "</code>").append("</td>\n");
+         sb.append("<td>").append("<code>" + a.getType().getName() + "</code>");
+         
+         XSRestrictionSimpleType restriction = a.getType().asRestriction();
+         Collection<? extends XSFacet> declaredFacets = restriction.getDeclaredFacets();
+
+         // if default value specified in annotation use it
+         if (a.getDefaultValue() != null) {
+            sb.append("<td>").append(a.getDefaultValue().toString()).append("</td>\n");
          }
-      }                   
-      if(a.description().length() >0)
-         sb.append("<td>").append(a.description()).append("</td>\n");
-      else 
-         sb.append("<td>").append("todo").append("</td>\n");
-      
-      sb.append("</tr>\n");
+
+         // otherwise reflect that field and read default value
+         else {
+            boolean valueSet = false;
+            try {
+               Field field = findFieldRecursively(bean, a.getName());
+               Object value = fieldValue(field, object);
+               if (value != null) {
+                  valueSet = true;
+                  sb.append("<td>").append(value.toString()).append("</td>\n");
+               }
+            } catch (Exception e) {
+            } finally {
+               if (!valueSet) {
+                  sb.append("<td>").append("N/A").append("</td>\n");
+               }
+            }
+         }
+
+         boolean docSet = false;
+         FieldDoc fieldDoc = findFieldDocRecursively(bean, a.getName(), CONFIG_REF);
+         //System.out.println("FieldDoc for " + bean + "  " + a.getName() + " is " + fieldDoc);
+         if (fieldDoc != null) {
+            Tag[] tags = fieldDoc.tags(CONFIG_REF);
+            if (tags.length == 1) {
+               docSet = true;
+               String text = tags[0].text().trim();
+               if(text.contains("|")){
+                  text = text.substring(text.indexOf("|")+1);
+                  sb.append("<td>").append(text).append("</td>\n");
+               }              
+            }
+         }
+         if (!docSet) {
+            sb.append("<td>").append("todo").append("</td>\n");
+         }
+         sb.append("</tr>\n");
+      }
+      sb.append("</table></div>");
    }
 
    private void generateHeaderForConfigurationElement(StringBuilder sb, XMLTreeOutputWalker tw,
-            TreeNode root, ConfigurationElement ce) {
-      sb.append("\n<a name=\"").append("ce_" + ce.parent() +"_" +ce.name() +"\">" + "</a>");
-      sb.append("<div class=\"section\"><h3><a name=\"" + ce.name() + "\"></a>" + ce.name() +"</h3>");
+            TreeNode n) {
+      sb.append("\n<a name=\"").append("ce_" + n.getParent().getName() + "_" + n.getName() + "\">" + "</a>");
+      sb.append("<div class=\"section\"><h3><a name=\"" + n.getName() + "\"></a>" + n.getName()
+               + "</h3>");
       sb.append("\n<p>");
-      if (ce.description().length() > 0) {
-         sb.append(ce.description());
-      } else {
-         sb.append("todo");
+      Class<?> beanClass = n.getBeanClass();
+      //System.out.println("Generating " + n + " bean is " + beanClass);
+      ClassDoc classDoc = rootDoc.classNamed(n.getBeanClass().getName());
+      Tag[] tags = classDoc.tags(CONFIG_REF);
+      for (Tag tag : tags) {
+         String text = tag.text().trim();
+         if (text.startsWith(n.getName())) {
+            if(text.contains("|")){
+               sb.append(text.substring(text.indexOf("|")+1));                  
+            }            
+         }
       }
-      
-      TreeNode n = tw.findNode(root,ce.name(),ce.parent());
-      sb.append(" Parent element is " + "<a href=\"").append("#ce_" + n.getParent().getParent().getName() + 
-               "_" + n.getParent().getName()+ "\">" + "&lt;" + ce.parent() + "&gt;" + "</a>.");    
-      
-      if(!n.getChildren().isEmpty()){
+
+      if (n.getParent().getParent() != null) {
+         sb.append(" Parent element is " + "<a href=\"").append(
+                  "#ce_" + n.getParent().getParent().getName() + "_" + n.getParent().getName()
+                           + "\">" + "&lt;" + n.getParent().getName() + "&gt;" + "</a>.");
+      }
+
+      if (!n.getChildren().isEmpty()) {
          sb.append(" Child elements are ");
          int childCount = n.getChildren().size();
          int count = 1;
          for (TreeNode tn : n.getChildren()) {
-            sb.append("<a href=\"").append("#ce_" + tn.getParent().getName() + "_" 
-                     + tn.getName() + "\">" + "&lt;" + tn.getName() + "&gt;" + "</a>");
+            sb.append("<a href=\"").append(
+                     "#ce_" + tn.getParent().getName() + "_" + tn.getName() + "\">" + "&lt;"
+                              + tn.getName() + "&gt;" + "</a>");
             if (count < childCount) {
                sb.append(",");
             } else {
@@ -204,38 +289,78 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
       sb.append("</p>");
    }
 
-   private ConfigurationElement[] configurationElementsOnBean(Class<?> clazz) {
-      ConfigurationElements configurationElements = clazz.getAnnotation(ConfigurationElements.class);
-      ConfigurationElement configurationElement = clazz.getAnnotation(ConfigurationElement.class);
-      ConfigurationElement ces [] = new ConfigurationElement[0];
-      if (configurationElement != null && configurationElements == null) {
-         ces = new ConfigurationElement[]{configurationElement};
+   private Field findFieldRecursively(Class<?> c, String fieldName) {
+      Field f = null;
+      try {
+         f = c.getDeclaredField(fieldName);
+      } catch (NoSuchFieldException e) {
+         ClassDoc classDoc = rootDoc.classNamed(c.getName());
+         for (FieldDoc fd : classDoc.fields()) {
+            for (Tag t : fd.tags(CONFIG_REF)) {
+               if (t.text().equals(fieldName)) {
+                  return findFieldRecursively(c, fd.name());
+               }
+            }
+         }
+         if (!c.equals(Object.class))
+            f = findFieldRecursively(c.getSuperclass(), fieldName);
       }
-      if (configurationElements != null && configurationElement == null) {
-         ces = configurationElements.elements();
-      }
-      return ces;
+      return f;
    }
 
-   private Object matchingFieldValue(Class<?> bean, Method m) throws Exception {
-      String name = m.getName();
-      if (!name.startsWith("set")) throw new IllegalArgumentException("Not a setter method");
-
-      String fieldName = name.substring(name.indexOf("set") + 3);
-      fieldName = fieldName.substring(0, 1).toLowerCase() + fieldName.substring(1);
-      Field f = m.getDeclaringClass().getDeclaredField(fieldName);
-      return getField(f, bean.newInstance());
+   private FieldDoc findFieldDocRecursively(Class<?> c, String fieldName, String tagName) {
+      ClassDoc classDoc = rootDoc.classNamed(c.getName());
+      for (FieldDoc fd : classDoc.fields()) {
+         if (fd.name().equalsIgnoreCase(fieldName)) {
+            return fd;
+         }
+         for (Tag t : fd.tags(tagName)) {
+            if (t.text().trim().startsWith(fieldName)) {
+               return fd;
+            }
+         }
+      }
+      if (c.getSuperclass() != null)
+         findFieldDocRecursively(c.getSuperclass(), fieldName, tagName);
+      return null;
    }
 
-   private static Object getField(Field field, Object target) {
+   private FieldDoc fieldDocWithTag(Class<?> c, String tagName) {
+      ClassDoc classDoc = rootDoc.classNamed(c.getName());
+      for (FieldDoc fd : classDoc.fields()) {
+         if (fd.tags(tagName).length > 0)
+            return fd;
+
+      }
+      if (c.getSuperclass() != null)
+         fieldDocWithTag(c.getSuperclass(), tagName);
+      return null;
+   }
+
+   private static Object fieldValue(Field field, Object target) {
       if (!Modifier.isPublic(field.getModifiers())) {
          field.setAccessible(true);
       }
       try {
          return field.get(target);
-      }
-      catch (IllegalAccessException iae) {
+      } catch (IllegalAccessException iae) {
          throw new IllegalArgumentException("Could not get field " + field, iae);
+      }
+   }
+
+   private static class PruneTreeWalker extends AbstractTreeWalker {
+
+      private String pruneNodeName = "";
+
+      private PruneTreeWalker(String pruneNodeName) {
+         super();
+         this.pruneNodeName = pruneNodeName;
+      }
+
+      public void visitNode(TreeNode treeNode) {
+         if (treeNode.getName().equals(pruneNodeName)) {
+            treeNode.detach();
+         }
       }
    }
 }

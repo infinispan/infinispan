@@ -41,6 +41,8 @@ import java.util.List;
  * configuration files are read into instances of configuration class hierarchy as well as they
  * provide meta data for configuration file XML schema generation. Please modify these annotations
  * and Java element types they annotate with utmost understanding and care.
+ * 
+ * @configRef loaders
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
  * @author Brian Stansberry
@@ -48,35 +50,30 @@ import java.util.List;
  * @author <a href="mailto:galder.zamarreno@jboss.com">Galder Zamarreno</a>
  * @since 4.0
  */
-@ConfigurationElement(name="loaders",parent="default")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class CacheLoaderManagerConfig extends AbstractNamedCacheConfigurationBean {
    private static final long serialVersionUID = 2210349340378984424L;
 
    @XmlAttribute
-   private Boolean passivation = false;
+   protected Boolean passivation = false;
    
    @XmlAttribute
-   private Boolean preload = false;
+   protected Boolean preload = false;
    
    @XmlAttribute
-   private Boolean shared = false;
+   protected Boolean shared = false;
   
    @XmlElement(name="loader")
-   private List<CacheLoaderConfig> cacheLoaderConfigs = new LinkedList<CacheLoaderConfig>();
+   protected List<CacheLoaderConfig> cacheLoaderConfigs = new LinkedList<CacheLoaderConfig>();
 
 
 
-   @ConfigurationAttribute(name = "preload", 
-            containingElement = "loaders")
+   
    public void setPreload(boolean preload) {
       testImmutability("preload");
       this.preload = preload;
    }
 
-
-   @ConfigurationAttribute(name = "passivation", 
-            containingElement = "loaders")
    public void setPassivation(boolean passivation) {
       testImmutability("passivation");
       this.passivation = passivation;
@@ -117,9 +114,6 @@ public class CacheLoaderManagerConfig extends AbstractNamedCacheConfigurationBea
                cacheLoaderConfigs.size()).append('}').toString();
    }
 
-
-   @ConfigurationAttribute(name = "shared", 
-            containingElement = "loaders")
    public void setShared(boolean shared) {
       testImmutability("shared");
       this.shared = shared;

@@ -31,6 +31,8 @@ import java.util.Properties;
  * configuration files are read into instances of configuration class hierarchy as well as they
  * provide meta data for configuration file XML schema generation. Please modify these annotations
  * and Java element types they annotate with utmost understanding and care.
+ * 
+ * @configRef global|Defines global configuration shared among all cache instances
  *
  * @author Manik Surtani
  * @author Vladimir Blagojevic
@@ -38,17 +40,6 @@ import java.util.Properties;
  */
 @NonVolatile
 @Scope(Scopes.GLOBAL)
-@ConfigurationElements(elements = {
-         @ConfigurationElement(name = "global", parent = "infinispan", description = ""),
-         @ConfigurationElement(name = "asyncListenerExecutor", parent = "global", description = ""), 
-         @ConfigurationElement(name = "transport", parent = "global", description = ""), 
-         @ConfigurationElement(name = "evictionScheduledExecutor", parent = "global", description = ""),
-         @ConfigurationElement(name = "replicationQueueScheduledExecutor", parent = "global", description = ""),  
-         @ConfigurationElement(name = "globalJmxStatistics", parent = "global", description = ""),   
-         @ConfigurationElement(name = "asyncTransportExecutor", parent = "global", description = ""),
-         @ConfigurationElement(name = "serialization", parent = "global", description = ""),
-         @ConfigurationElement(name = "shutdown", parent = "global", description = "")
-})
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(propOrder={})
 public class GlobalConfiguration extends AbstractConfigurationBean {
@@ -95,10 +86,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    public boolean isExposeGlobalJmxStatistics() {
       return globalJmxStatistics.enabled;
    }
-
-   @ConfigurationAttribute(name = "enabled", 
-            containingElement = "globalJmxStatistics", 
-            description = "If true, global JMX statistics are published")
+   
    public void setExposeGlobalJmxStatistics(boolean exposeGlobalJmxStatistics) {
       testImmutability("exposeGlobalManagementStatistics");
       globalJmxStatistics.setEnabled(exposeGlobalJmxStatistics);
@@ -108,9 +96,6 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
     * If JMX statistics are enabled then all 'published' JMX objects will appear under this name. This is optional, if
     * not specified an object name will be created for you by default.
     */
-   @ConfigurationAttribute(name = "jmxDomain", 
-            containingElement = "globalJmxStatistics", 
-            description = "If JMX statistics are enabled then all 'published' JMX objects will appear under this name")
    public void setJmxDomain(String jmxObjectName) {
       globalJmxStatistics.setJmxDomain(jmxObjectName);
    }
@@ -126,9 +111,6 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       return globalJmxStatistics.mBeanServerLookup;
    }
 
-   @ConfigurationAttribute(name = "mBeanServerLookup", 
-            containingElement = "globalJmxStatistics", 
-            description = "")
    public void setMBeanServerLookup(String mBeanServerLookup) {
       globalJmxStatistics.setMBeanServerLookup(mBeanServerLookup);
    }
@@ -137,9 +119,6 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       return globalJmxStatistics.allowDuplicateDomains;
    }
 
-   @ConfigurationAttribute(name = "allowDuplicateDomains", 
-            containingElement = "globalJmxStatistics", 
-            description = "")
    public void setAllowDuplicateDomains(boolean allowDuplicateDomains) {
       globalJmxStatistics.setAllowDuplicateDomains(allowDuplicateDomains);
    }
@@ -184,9 +163,6 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       return asyncListenerExecutor.factory;
    }
 
-   @ConfigurationAttribute(name = "factory", 
-            containingElement = "asyncListenerExecutor", 
-            description = "ExecutorService factory class for asynchronous listeners")
    public void setAsyncListenerExecutorFactoryClass(String asyncListenerExecutorFactoryClass) {
       asyncListenerExecutor.setFactory(asyncListenerExecutorFactoryClass);
    }
@@ -195,9 +171,6 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       return asyncTransportExecutor.factory;
    }
 
-   @ConfigurationAttribute(name = "factory", 
-            containingElement = "asyncTransportExecutor", 
-            description = "ExecutorService factory class for async transport")
    public void setAsyncTransportExecutorFactoryClass(String asyncTransportExecutorFactoryClass) {
       this.asyncTransportExecutor.setFactory(asyncTransportExecutorFactoryClass);
    }
@@ -206,9 +179,6 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       return evictionScheduledExecutor.factory;
    }
 
-   @ConfigurationAttribute(name = "factory", 
-            containingElement = "evictionScheduledExecutor", 
-            description = "ExecutorService factory class for eviction threads")
    public void setEvictionScheduledExecutorFactoryClass(String evictionScheduledExecutorFactoryClass) {
       evictionScheduledExecutor.setFactory(evictionScheduledExecutorFactoryClass);
    }
@@ -217,9 +187,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       return replicationQueueScheduledExecutor.factory;
    }
 
-   @ConfigurationAttribute(name = "factory", 
-            containingElement = "replicationQueueScheduledExecutor", 
-            description = "ExecutorService factory class for replication queue threads")
+
    public void setReplicationQueueScheduledExecutorFactoryClass(String replicationQueueScheduledExecutorFactoryClass) {
       replicationQueueScheduledExecutor.setFactory(replicationQueueScheduledExecutorFactoryClass);
    }
@@ -228,8 +196,6 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       return serialization.marshallerClass;
    }
 
-   @ConfigurationAttribute(name = "marshallerClass", 
-            containingElement = "serialization")
    public void setMarshallerClass(String marshallerClass) {
       serialization.setMarshallerClass(marshallerClass);
    }
@@ -238,10 +204,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       return transport.transportClass;
    }
 
-   @ConfigurationAttribute(name = "transportClass", 
-            containingElement = "transport", 
-            description = "Transport class, by default null i.e. no transport",
-            defaultValue = "org.infinispan.remoting.transport.jgroups.JGroupsTransport")
+
    public void setTransportClass(String transportClass) {
       transport.setTransportClass(transportClass);
    }
@@ -250,10 +213,6 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       return transport.properties;
    }
 
-   @ConfigurationProperties(elements = {
-            @ConfigurationProperty(name = "configurationString", parentElement = "transport"),
-            @ConfigurationProperty(name = "configurationFile", parentElement = "transport"),
-            @ConfigurationProperty(name = "configurationXml", parentElement = "transport") })
    public void setTransportProperties(Properties transportProperties) {
       transport.setProperties(toTypedProperties(transportProperties));
    }
@@ -274,8 +233,6 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       return transport.clusterName;
    }
 
-   @ConfigurationAttribute(name = "clusterName", 
-            containingElement = "transport")
    public void setClusterName(String clusterName) {
       transport.setClusterName(clusterName);
    }
@@ -288,10 +245,6 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       shutdown.setHookBehavior(shutdownHookBehavior);
    }
 
-   @ConfigurationAttribute(name = "hookBehavior", 
-            containingElement = "shutdown", 
-            allowedValues = {"DEFAULT", "REGISTER", "DONT_REGISTER"}, 
-            defaultValue = "DEFAULT")
    public void setShutdownHookBehavior(String shutdownHookBehavior) {
       if (shutdownHookBehavior == null)
          throw new ConfigurationException("Shutdown hook behavior cannot be null", "ShutdownHookBehavior");
@@ -308,9 +261,6 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    }
    
 
-   @ConfigurationProperties(elements = {
-            @ConfigurationProperty(name = "maxThreads", parentElement = "asyncListenerExecutor"),
-            @ConfigurationProperty(name = "threadNamePrefix", parentElement = "asyncListenerExecutor") })
    public void setAsyncListenerExecutorProperties(Properties asyncListenerExecutorProperties) {
       asyncListenerExecutor.setProperties(toTypedProperties(asyncListenerExecutorProperties));
    }
@@ -323,9 +273,6 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       return asyncTransportExecutor.properties;
    }
 
-   @ConfigurationProperties(elements = {
-            @ConfigurationProperty(name = "maxThreads", parentElement = "asyncTransportExecutor"),
-            @ConfigurationProperty(name = "threadNamePrefix", parentElement = "asyncTransportExecutor") })
    public void setAsyncTransportExecutorProperties(Properties asyncTransportExecutorProperties) {
       this.asyncTransportExecutor.setProperties(toTypedProperties(asyncTransportExecutorProperties));
    }
@@ -337,11 +284,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    public Properties getEvictionScheduledExecutorProperties() {
       return evictionScheduledExecutor.properties;
    }
-
-
-   @ConfigurationProperties(elements = {
-            @ConfigurationProperty(name = "maxThreads", parentElement = "evictionScheduledExecutor"),
-            @ConfigurationProperty(name = "threadNamePrefix", parentElement = "evictionScheduledExecutor") })   
+  
    public void setEvictionScheduledExecutorProperties(Properties evictionScheduledExecutorProperties) {
       evictionScheduledExecutor.setProperties(toTypedProperties(evictionScheduledExecutorProperties));
    }
@@ -353,10 +296,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    public Properties getReplicationQueueScheduledExecutorProperties() {
       return replicationQueueScheduledExecutor.properties;
    }
-
-   @ConfigurationProperties(elements = {
-            @ConfigurationProperty(name = "maxThreads", parentElement = "replicationQueueScheduledExecutor"),
-            @ConfigurationProperty(name = "threadNamePrefix", parentElement = "replicationQueueScheduledExecutor") })      
+     
    public void setReplicationQueueScheduledExecutorProperties(Properties replicationQueueScheduledExecutorProperties) {
       this.replicationQueueScheduledExecutor.setProperties(toTypedProperties(replicationQueueScheduledExecutorProperties));
    }
@@ -378,8 +318,6 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       serialization.version = Version.decodeVersionForSerialization(marshallVersion);
    }
    
-   @ConfigurationAttribute(name = "version", 
-            containingElement = "serialization", defaultValue=Version.version)
    public void setMarshallVersion(String marshallVersion) {
       serialization.setVersion(marshallVersion);
    }
@@ -388,8 +326,6 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       return transport.distributedSyncTimeout;
    }
    
-   @ConfigurationAttribute(name = "distributedSyncTimeout", 
-            containingElement = "transport")
    public void setDistributedSyncTimeout(long distributedSyncTimeout) {
       transport.distributedSyncTimeout = distributedSyncTimeout;
    }
@@ -492,14 +428,25 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       return gc;
    }
    
+   /**
+    * 
+    * @configRef asyncListenerExecutor
+    * @configRef asyncTransportExecutor
+    * @configRef evictionScheduledExecutor
+    * @configRef replicationQueueScheduledExecutor
+    */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    private static class FactoryClassWithPropertiesType extends AbstractConfigurationBeanWithGCR {
       
       @XmlAttribute
-      private String factory;
+      protected String factory;
       
+      /** 
+       * @configPropertyRef   maxThreads
+       * @configPropertyRef   threadNamePrefix
+       * */
       @XmlElement(name="properties")
-      private TypedProperties properties = EMPTY_PROPERTIES;
+      protected TypedProperties properties = EMPTY_PROPERTIES;
 
       public FactoryClassWithPropertiesType(String factory) {
          super();
@@ -529,16 +476,20 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       }
    }
    
+   /**
+    * 
+    * @configRef transport
+    */   
    @XmlAccessorType(XmlAccessType.PROPERTY)
    private static class TransportType extends AbstractConfigurationBeanWithGCR {
      
-      private String clusterName = "Infinispan-Cluster";
+      protected String clusterName = "Infinispan-Cluster";
       
-      private Long distributedSyncTimeout = 60000L; // default
+      protected Long distributedSyncTimeout = 60000L; // default
      
-      private String transportClass = null; // this defaults to a non-clustered cache.
+      protected String transportClass = null; // this defaults to a non-clustered cache.
       
-      private TypedProperties properties = EMPTY_PROPERTIES;
+      protected TypedProperties properties = EMPTY_PROPERTIES;
 
       public TransportType() {
          super();
@@ -583,12 +534,16 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       }
    }
    
+   /**
+    * 
+    * @configRef serialization
+    */   
    @XmlAccessorType(XmlAccessType.PROPERTY)
    private static class SerializationType extends AbstractConfigurationBeanWithGCR {
       
-      private String marshallerClass = VersionAwareMarshaller.class.getName(); // the default
+      protected String marshallerClass = VersionAwareMarshaller.class.getName(); // the default
       
-      private String version = Version.getMajorVersion();
+      protected String version = Version.getMajorVersion();
       
       public SerializationType() {        
          super();
@@ -607,16 +562,20 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       }                      
    }
    
+   /**
+    * 
+    * @configRef globalJmxStatistics
+    */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    private static class GlobalJmxStatisticsType extends AbstractConfigurationBeanWithGCR {
       
-      private Boolean enabled = false;
+      protected Boolean enabled = false;
       
-      private String jmxDomain = "infinispan";
+      protected String jmxDomain = "infinispan";
       
-      private String mBeanServerLookup = PlatformMBeanServerLookup.class.getName();
+      protected String mBeanServerLookup = PlatformMBeanServerLookup.class.getName();
       
-      private Boolean allowDuplicateDomains = false;
+      protected Boolean allowDuplicateDomains = false;
 
       @XmlAttribute
       public void setEnabled(Boolean enabled) {
@@ -643,10 +602,14 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       }            
    }
    
+   /**
+    * 
+    * @configRef shutdown
+    */   
    @XmlAccessorType(XmlAccessType.PROPERTY)
    private static class ShutdownType extends AbstractConfigurationBeanWithGCR {
       
-      private ShutdownHookBehavior hookBehavior = ShutdownHookBehavior.DEFAULT;
+      protected ShutdownHookBehavior hookBehavior = ShutdownHookBehavior.DEFAULT;
 
       @XmlAttribute
       public void setHookBehavior(ShutdownHookBehavior hookBehavior) {

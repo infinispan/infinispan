@@ -1,13 +1,12 @@
 package org.infinispan.tools.doclet.config;
 
-import com.sun.javadoc.DocErrorReporter;
-import com.sun.javadoc.RootDoc;
-import com.sun.tools.doclets.formats.html.ConfigurationImpl;
-import org.infinispan.tools.doclet.html.HtmlGenerator;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+
+import com.sun.javadoc.DocErrorReporter;
+import com.sun.javadoc.RootDoc;
+import com.sun.tools.doclets.formats.html.ConfigurationImpl;
 
 /**
  * A Doclet that generates configuration guide for Infinispan
@@ -25,9 +24,10 @@ public class ConfigDoclet {
       System.out.println("STARTING CONFIG DOCLET");
 
 
-      HtmlGenerator generator = new ConfigHtmlGenerator(encoding, title(), bottom, footer, header,
+      ConfigHtmlGenerator generator = new ConfigHtmlGenerator(encoding, title(), bottom, footer, header,
                                                         "Infinispan configuration options", Arrays.asList("Configuration", "Infinispan",
                                                                                                           "Data Grids", "Documentation", "Reference", "MBeans"), cp);
+      generator.setRootDoc(root);
 
       generator.generateHtml(outputDirectory + File.separator + "config.html", "stylesheet2.css");
 

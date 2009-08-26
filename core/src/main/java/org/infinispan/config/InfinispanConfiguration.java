@@ -50,6 +50,8 @@ import java.util.Map;
  * files are read into instances of configuration class hierarchy as well as they provide meta data for configuration
  * file XML schema generation. Please modify these annotations and Java element types they annotate with utmost
  * understanding and care.
+ * 
+ * @configRef infinispan|Root of Infinispan configuration.
  *
  * @author Vladimir Blagojevic
  * @since 4.0

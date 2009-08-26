@@ -1,15 +1,14 @@
 package org.infinispan.loaders;
 
-import org.infinispan.config.ConfigurationAttribute;
-import org.infinispan.loaders.decorators.AsyncStoreConfig;
-import org.infinispan.loaders.decorators.SingletonStoreConfig;
-import org.infinispan.util.Util;
-
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
+
+import org.infinispan.loaders.decorators.AsyncStoreConfig;
+import org.infinispan.loaders.decorators.SingletonStoreConfig;
+import org.infinispan.util.Util;
 
 /**
  * Configures {@link AbstractCacheStore}.  This allows you to tune a number of characteristics of the {@link
@@ -25,6 +24,8 @@ import javax.xml.bind.annotation.XmlType;
  * configuration files are read into instances of configuration class hierarchy as well as they
  * provide meta data for configuration file XML schema generation. Please modify these annotations
  * and Java element types they annotate with utmost understanding and care.
+ * 
+ * @configRef loader
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.0
@@ -33,23 +34,35 @@ import javax.xml.bind.annotation.XmlType;
 @XmlType(propOrder={"singletonStore","async"})
 public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implements CacheStoreConfig {
    
+   /** 
+    * @configRef |If true, any operation that modifies the cache store (remove, clear, store...etc) won't be applied to it
+    * */
    @XmlAttribute
-   private Boolean ignoreModifications = false;
+   protected Boolean ignoreModifications = false;
    
+   /**
+    *  @configRef |If true, fetch persistent state on state transfer
+    *  */
    @XmlAttribute
-   private Boolean fetchPersistentState = false;
+   protected Boolean fetchPersistentState = false;
    
+   /**
+    *  @configRef |If true, purge node state on startup
+    *  */
    @XmlAttribute
-   private Boolean purgeOnStartup = false;
+   protected Boolean purgeOnStartup = false;
    
+   /**
+    *  @configRef |If true, and purging is turned on, purge on startup will be done synchronously
+    *  */
    @XmlAttribute
-   private Boolean purgeSynchronously = false;
+   protected Boolean purgeSynchronously = false;
    
    @XmlElement
-   private SingletonStoreConfig singletonStore = new SingletonStoreConfig();
+   protected SingletonStoreConfig singletonStore = new SingletonStoreConfig();
    
    @XmlElement
-   private AsyncStoreConfig async = new AsyncStoreConfig();
+   protected AsyncStoreConfig async = new AsyncStoreConfig();
 
    
 
@@ -70,18 +83,11 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
       return fetchPersistentState;
    }
 
-   @ConfigurationAttribute(name = "fetchPersistentState", 
-            containingElement = "loader", 
-            description = "If true, fetch persistent state on state transfer")
    public void setFetchPersistentState(boolean fetchPersistentState) {
       testImmutability("fetchPersistentState");
       this.fetchPersistentState = fetchPersistentState;
    }
 
-   @ConfigurationAttribute(name = "ignoreModifications", 
-            containingElement = "loader",
-            description = "If true, any operation that modifies the cache store (remove, clear, store...etc) " +
-            		"won't be applied to it")
    public void setIgnoreModifications(boolean ignoreModifications) {
       testImmutability("ignoreModifications");
       this.ignoreModifications = ignoreModifications;
@@ -91,9 +97,6 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
       return ignoreModifications;
    }
 
-   @ConfigurationAttribute(name = "purgeOnStartup", 
-            containingElement = "loader", 
-            description = "If true, purge node state on startup")
    public void setPurgeOnStartup(boolean purgeOnStartup) {
       testImmutability("purgeOnStartup");
       this.purgeOnStartup = purgeOnStartup;

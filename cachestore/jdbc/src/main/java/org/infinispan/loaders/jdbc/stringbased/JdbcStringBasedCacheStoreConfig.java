@@ -1,9 +1,5 @@
 package org.infinispan.loaders.jdbc.stringbased;
 
-import org.infinispan.config.ConfigurationElement;
-import org.infinispan.config.ConfigurationElements;
-import org.infinispan.config.ConfigurationProperty;
-import org.infinispan.config.ConfigurationElement.Cardinality;
 import org.infinispan.loaders.LockSupportCacheStoreConfig;
 import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
@@ -15,11 +11,6 @@ import org.infinispan.util.Util;
  * @author Mircea.Markus@jboss.com
  * @see org.infinispan.loaders.jdbc.stringbased.Key2StringMapper
  */
-@ConfigurationElements(elements = {
-         @ConfigurationElement(name = "loader", parent = "loaders", 
-                  description = "org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore",
-                  cardinalityInParent=Cardinality.UNBOUNDED),
-         @ConfigurationElement(name = "properties", parent = "loader") })
 public class JdbcStringBasedCacheStoreConfig extends LockSupportCacheStoreConfig {
 
    private Key2StringMapper key2StringMapper;
@@ -59,8 +50,6 @@ public class JdbcStringBasedCacheStoreConfig extends LockSupportCacheStoreConfig
     *
     * @see org.infinispan.loaders.jdbc.stringbased.Key2StringMapper
     */
-   @ConfigurationProperty(name="key2StringMapper",
-            parentElement="properties")
    public void setKey2StringMapperClass(String className) {
       testImmutability("key2StringMapper");
       try {
@@ -74,7 +63,6 @@ public class JdbcStringBasedCacheStoreConfig extends LockSupportCacheStoreConfig
     * Sets the prefix for the name of the table where the data will be stored. "_<cache name>" will be appended
     * to this prefix in order to enforce unique table names for each cache.
     */
-   @ConfigurationProperty(name="stringsTableNamePrefix", parentElement="properties")
    public void setStringsTableNamePrefix(String stringsTableNamePrefix) {
       testImmutability("tableManipulation");
       this.tableManipulation.setTableNamePrefix(stringsTableNamePrefix);
@@ -95,7 +83,6 @@ public class JdbcStringBasedCacheStoreConfig extends LockSupportCacheStoreConfig
     * </pre>
     * Mandatory.
     */
-   @ConfigurationProperty(name="idColumnName", parentElement="properties")
    public void setIdColumnName(String idColumnName) {
       testImmutability("tableManipulation");
       this.tableManipulation.setIdColumnName(idColumnName);
@@ -104,7 +91,6 @@ public class JdbcStringBasedCacheStoreConfig extends LockSupportCacheStoreConfig
    /**
     * Sets the name of the column where the StoredEntry will be binary stored. Mandatory.
     */
-   @ConfigurationProperty(name="dataColumnName", parentElement="properties")
    public void setDataColumnName(String dataColumnName) {
       testImmutability("tableManipulation");
       this.tableManipulation.setDataColumnName(dataColumnName);
@@ -113,7 +99,6 @@ public class JdbcStringBasedCacheStoreConfig extends LockSupportCacheStoreConfig
    /**
     * Sets the name of the column where the timestamp (Long in java) will be stored. Mandatory.
     */
-   @ConfigurationProperty(name="timestampColumnName", parentElement="properties")
    public void setTimestampColumnName(String timestampColumnName) {
       testImmutability("tableManipulation");
       this.tableManipulation.setTimestampColumnName(timestampColumnName);
@@ -123,13 +108,11 @@ public class JdbcStringBasedCacheStoreConfig extends LockSupportCacheStoreConfig
     * Sets the prefix for the name of the table where the data will be stored. "_<cache name>" will be appended
     * to this prefix in order to enforce unique table names for each cache.
     */
-   @ConfigurationProperty(name="timestampColumnType", parentElement="properties")
    public void setTimestampColumnType(String timestampColumnType) {
       testImmutability("tableManipulation");
       this.tableManipulation.setTimestampColumnType(timestampColumnType);
    }
 
-   @ConfigurationProperty(name="connectionFactoryClass", parentElement="properties")
    public void setConnectionFactoryClass(String connectionFactoryClass) {
       testImmutability("connectionFactoryConfig");
       this.connectionFactoryConfig.setConnectionFactoryClass(connectionFactoryClass);
@@ -146,8 +129,6 @@ public class JdbcStringBasedCacheStoreConfig extends LockSupportCacheStoreConfig
    /**
     * Jdbc connection string for connecting to the database. Mandatory.
     */
-   @ConfigurationProperty(name="connectionUrl",
-            parentElement="properties")
    public void setConnectionUrl(String connectionUrl) {
       testImmutability("connectionFactoryConfig");
       this.connectionFactoryConfig.setConnectionUrl(connectionUrl);
@@ -156,8 +137,6 @@ public class JdbcStringBasedCacheStoreConfig extends LockSupportCacheStoreConfig
    /**
     * Database username.
     */
-   @ConfigurationProperty(name="userName",
-            parentElement="properties")
    public void setUserName(String userName) {
       testImmutability("connectionFactoryConfig");
       this.connectionFactoryConfig.setUserName(userName);
@@ -166,8 +145,6 @@ public class JdbcStringBasedCacheStoreConfig extends LockSupportCacheStoreConfig
    /**
     * Database username's password.
     */
-   @ConfigurationProperty(name="password",
-            parentElement="properties")
    public void setPassword(String password) {
       testImmutability("connectionFactoryConfig");
       this.connectionFactoryConfig.setPassword(password);
@@ -177,7 +154,6 @@ public class JdbcStringBasedCacheStoreConfig extends LockSupportCacheStoreConfig
     * The name of the driver used for connecting to the database. Mandatory, will be loaded before initiating the first
     * connection.
     */
-   @ConfigurationProperty(name="driverClass", parentElement="properties")
    public void setDriverClass(String driverClassName) {
       testImmutability("connectionFactoryConfig");
       this.connectionFactoryConfig.setDriverClass(driverClassName);
@@ -186,7 +162,6 @@ public class JdbcStringBasedCacheStoreConfig extends LockSupportCacheStoreConfig
    /**
     * sql equivalent for java's String. Mandatory.
     */
-   @ConfigurationProperty(name="idColumnType", parentElement="properties")
    public void setIdColumnType(String idColumnType) {
       testImmutability("tableManipulation");
       this.tableManipulation.setIdColumnType(idColumnType);
@@ -195,22 +170,16 @@ public class JdbcStringBasedCacheStoreConfig extends LockSupportCacheStoreConfig
    /**
     * Sets the type of the column where data will be binary stored. BLOB-like type, DBMS dependent. Mandatory.
     */
-   @ConfigurationProperty(name="dataColumnType", parentElement="properties")
    public void setDataColumnType(String dataColumnType) {
       testImmutability("tableManipulation");
       this.tableManipulation.setDataColumnType(dataColumnType);
    }
 
-   @ConfigurationProperty(name="dropTableOnExit",
-            parentElement="properties")
    public void setDropTableOnExit(boolean dropTableOnExit) {
       testImmutability("tableManipulation");
       this.tableManipulation.setDropTableOnExit(dropTableOnExit);
    }
 
-
-   @ConfigurationProperty(name="createTableOnStart",
-            parentElement="properties")
    public void setCreateTableOnStart(boolean createTableOnStart) {
       testImmutability("tableManipulation");
       this.tableManipulation.setCreateTableOnStart(createTableOnStart);
@@ -233,8 +202,6 @@ public class JdbcStringBasedCacheStoreConfig extends LockSupportCacheStoreConfig
    /**
     * @see org.infinispan.loaders.jdbc.TableManipulation#getFetchSize()
     */
-   @ConfigurationProperty(name="fetchSize",
-            parentElement="properties")
    public void setFetchSize(int fetchSize) {
       testImmutability("tableManipulation");
       this.tableManipulation.setFetchSize(fetchSize);
@@ -243,8 +210,6 @@ public class JdbcStringBasedCacheStoreConfig extends LockSupportCacheStoreConfig
    /**
     * @see org.infinispan.loaders.jdbc.TableManipulation#getBatchSize()
     */
-   @ConfigurationProperty(name="batchSize",
-            parentElement="properties")
    public void setBatchSize(int batchSize) {
       testImmutability("tableManipulation");
       this.tableManipulation.setBatchSize(batchSize);

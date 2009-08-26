@@ -5,7 +5,6 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 
 import org.infinispan.CacheException;
-import org.infinispan.config.ConfigurationAttribute;
 import org.infinispan.config.PluggableConfigurationComponent;
 
 /**
@@ -31,10 +30,7 @@ public class AbstractCacheLoaderConfig extends PluggableConfigurationComponent i
    public String getCacheLoaderClassName() {
       return cacheLoaderClassName;
    }
-
-   @ConfigurationAttribute(name = "class", 
-            containingElement = "loader", 
-            description = "Full class name of a cache loader")
+   
    public void setCacheLoaderClassName(String className) {
       if (className == null || className.length() == 0) return;
       testImmutability("cacheLoaderClassName");
