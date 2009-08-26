@@ -14,5 +14,3 @@ to your JVM.  This allows you to try out and visualize different configurations.
 clustered mode, it would make sense to launch several instances of the demo and watch data move around across different
 instances.
 
-
-TODO There is no Windows .CMD or .BAT versions of runGuiDemo.sh at this time.  Contributions are welcome!  :-)
