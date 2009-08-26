@@ -35,6 +35,7 @@ import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -78,6 +79,9 @@ public class Immutables {
     * @return the immutable copy
     */
    public static <T> List<T> immutableListCopy(List<? extends T> list) {
+      if (list == null) return null;
+      if (list.isEmpty()) return Collections.emptyList();
+      if (list.size() == 1) return Collections.singletonList(list.get(0));
       return new ImmutableListCopy<T>(list);
    }
 
@@ -130,6 +134,9 @@ public class Immutables {
     * @return an immutable set copy
     */
    public static <T> Set<T> immutableSetCopy(Set<? extends T> set) {
+      if (set == null) return null;
+      if (set.isEmpty()) return Collections.emptySet();
+      if (set.size() == 1) return Collections.singleton(set.iterator().next());
       Set<? extends T> copy = ObjectDuplicator.duplicateSet(set);
       if (copy == null)
          // Set uses Collection copy-ctor
@@ -158,6 +165,13 @@ public class Immutables {
     * @return an immutable map copy
     */
    public static <K, V> Map<K, V> immutableMapCopy(Map<? extends K, ? extends V> map) {
+      if (map == null) return null;
+      if (map.isEmpty()) return Collections.emptyMap();
+      if (map.size() == 1) {
+         Map.Entry<? extends K, ? extends V> me = map.entrySet().iterator().next();
+         return Collections.singletonMap(me.getKey(), me.getValue());
+      }
+
       Map<? extends K, ? extends V> copy = ObjectDuplicator.duplicateMap(map);
 
       if (copy == null)
@@ -175,6 +189,10 @@ public class Immutables {
     * @return an immutable copy
     */
    public static <T> Collection<T> immutableCollectionCopy(Collection<? extends T> collection) {
+      if (collection == null) return null;
+      if (collection.isEmpty()) return Collections.emptySet();
+      if (collection.size() == 1) return Collections.singleton(collection.iterator().next());
+
       Collection<? extends T> copy = ObjectDuplicator.duplicateCollection(collection);
       if (copy == null)
          copy = attemptCopyConstructor(collection, Collection.class);
