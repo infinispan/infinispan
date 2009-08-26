@@ -15,12 +15,12 @@ import java.util.Random;
 
 public class FqnGenerator {
 
-   private static final Random r = new Random();   
+   private static final Random r = new Random();
 
    public static Fqn createRandomFqn(int depth) {
       List<String> fqnElements = new ArrayList<String>(depth);
       for (int i = 0; i < depth; i++) fqnElements.add(Integer.toHexString(r.nextInt(Integer.MAX_VALUE)));
-      return Fqn.fromList(fqnElements, true);
+      return Fqn.fromList(fqnElements);
    }
 
 
