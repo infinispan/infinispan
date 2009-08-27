@@ -29,8 +29,8 @@ public class TableNameUniquenessTest {
 
    public void testForJdbcStringBasedCacheStore() throws Exception {
       CacheManager cm = new DefaultCacheManager("configs/string-based.xml");
-      Cache first = cm.getCache("first");
-      Cache second = cm.getCache("second");
+      Cache<String, String> first = cm.getCache("first");
+      Cache<String, String> second = cm.getCache("second");
 
       CacheLoaderConfig firstCacheLoaderConfig = first.getConfiguration().getCacheLoaderManagerConfig().getFirstCacheLoaderConfig();
       assert firstCacheLoaderConfig != null;
@@ -55,8 +55,8 @@ public class TableNameUniquenessTest {
 
    public void testForJdbcBinaryCacheStore() throws Exception {
       CacheManager cm = new DefaultCacheManager("configs/binary.xml");
-      Cache first = cm.getCache("first");
-      Cache second = cm.getCache("second");
+      Cache<String, String> first = cm.getCache("first");
+      Cache<String, String> second = cm.getCache("second");
 
       //TODO - this is a hack as VAM.start does not get called, for some reason. This should be removed.
       VersionAwareMarshaller firstVam = (VersionAwareMarshaller) TestingUtil.extractComponent(first, Marshaller.class);
@@ -145,7 +145,7 @@ public class TableNameUniquenessTest {
       connection.close();
    }
 
-   private void assertNoOverlapingState(Cache first, Cache second, CacheStore firstCs, CacheStore secondCs) throws CacheLoaderException {
+   private void assertNoOverlapingState(Cache<String, String> first, Cache<String, String> second, CacheStore firstCs, CacheStore secondCs) throws CacheLoaderException {
       first.put("k", "v");
       assert firstCs.containsKey("k");
       assert !secondCs.containsKey("k");
