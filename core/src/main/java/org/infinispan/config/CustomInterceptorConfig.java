@@ -75,6 +75,9 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
    @XmlAttribute
    protected Position position;   
    
+   /** 
+    * @configRef class|Fully qualified intereceptor class name
+    * */
    @XmlAttribute(name="class")
    protected String className;
    

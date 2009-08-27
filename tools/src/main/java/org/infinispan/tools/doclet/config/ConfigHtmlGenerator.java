@@ -89,16 +89,17 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
 
          associateBeansWithTreeNodes(configBeans, root);
 
-         sb.append("<div class=\"" + "source" + "\"><pre>");
-         // print xml tree into StringBuilder
-         tw.preOrderTraverse(root);         
-         sb.append("</pre></div>");
-         
          TreeNode node = tw.findNode(root, "namedCache", "infinispan");
          node.detach();
 
          PruneTreeWalker ptw = new PruneTreeWalker("property");
          ptw.postOrderTraverse(root);
+         
+         sb.append("<div class=\"" + "source" + "\"><pre>");
+         // print xml tree into StringBuilder
+         tw.preOrderTraverse(root);         
+         sb.append("</pre></div>");
+                 
 
          for (TreeNode n : root) {
             if (n.getName().equals("properties"))
@@ -133,16 +134,25 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
                   List<Tag> list = Arrays.asList(classDoc.tags(CONFIG_REF));
                   for (Tag tag : list) {
                      String text = tag.text().trim();
+                     
+                     //strip of documentation part
+                     if(text.contains("|")){
+                        text = text.substring(0, text.indexOf("|"));
+                        text.trim();
+                     }                                          
+                     //special parent/child anchor
                      if(text.contains(":")){
                         String strings []= text.split(":");
                         String parent = strings[1].trim();
                         String thisNode = strings[0].trim();
-                        if(thisNode.startsWith(n.getName()) && parent.startsWith(n.getParent().getName())){
+                        if(n.getName().equalsIgnoreCase(thisNode) && n.getParent().getName().equalsIgnoreCase(parent)){
                            n.setBeanClass(clazz);
+                           //System.out.println("Associated " + n.getName() + " with " + clazz);
                         }
                      }
-                     if (text.startsWith(n.getName()) && n.getBeanClass() == null) {
+                     else if (n.getName().equalsIgnoreCase(text) && n.getBeanClass() == null) {
                         n.setBeanClass(clazz);
+                        //System.out.println("Associated " + n.getName() + " with " + clazz);
                      }
                   }
                }
@@ -158,14 +168,17 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
          sb.append("<tr class=\"a\"><th>Property</th><th>Description</th></tr>\n");
          Tag[] tags = fieldDoc.tags(CONFIG_PROPERTY_REF);
          for (Tag t : tags) {
-            String[] strings = t.text().trim().split(" ");
+            String text = t.text().trim();
             sb.append("<tr class=\"b\">");
-            sb.append("<td>").append(strings[0]).append("</td>\n");
-            if (strings.length > 1)
-               sb.append("<td>").append(strings[1]).append("</td>\n");
-            else
+            if(text.contains("|")){
+               String name = text.substring(0,text.indexOf("|"));
+               String doc = text.substring(text.indexOf("|")+1);
+               sb.append("<td>").append(name).append("</td>\n");
+               sb.append("<td>").append(doc).append("</td>\n");
+            } else {
+               sb.append("<td>").append(text).append("</td>\n");
                sb.append("<td>").append("todo").append("</td>\n");
-
+            }           
             sb.append("</tr>\n");
          }
          sb.append("</table></div>");
@@ -188,6 +201,7 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
             }
          }
       } catch (Exception e) {
+         System.out.println("Did noc construct object " + bean);
       }
 
       Set<XSAttributeDecl> attributes = n.getAttributes();
@@ -206,20 +220,19 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
 
          // otherwise reflect that field and read default value
          else {
-            boolean valueSet = false;
+            Field field = null;
+            Object value = null;
             try {
-               Field field = findFieldRecursively(bean, a.getName());
-               Object value = fieldValue(field, object);
+               field = findFieldRecursively(bean, a.getName());
+               value = fieldValue(field, object);
                if (value != null) {
-                  valueSet = true;
                   sb.append("<td>").append(value.toString()).append("</td>\n");
+               } else {
+                  sb.append("<td>").append("null").append("</td>\n");
                }
-            } catch (Exception e) {
-            } finally {
-               if (!valueSet) {
-                  sb.append("<td>").append("N/A").append("</td>\n");
-               }
-            }
+            } catch (Exception e) {               
+               sb.append("<td>").append("N/A").append("</td>\n");
+            } 
          }
 
          boolean docSet = false;
@@ -252,7 +265,7 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
       sb.append("\n<p>");
       Class<?> beanClass = n.getBeanClass();
       //System.out.println("Generating " + n + " bean is " + beanClass);
-      ClassDoc classDoc = rootDoc.classNamed(n.getBeanClass().getName());
+      ClassDoc classDoc = rootDoc.classNamed(beanClass.getName());
       Tag[] tags = classDoc.tags(CONFIG_REF);
       for (Tag tag : tags) {
          String text = tag.text().trim();
@@ -297,7 +310,7 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
          ClassDoc classDoc = rootDoc.classNamed(c.getName());
          for (FieldDoc fd : classDoc.fields()) {
             for (Tag t : fd.tags(CONFIG_REF)) {
-               if (t.text().equals(fieldName)) {
+               if (t.text().startsWith(fieldName)) {
                   return findFieldRecursively(c, fd.name());
                }
             }

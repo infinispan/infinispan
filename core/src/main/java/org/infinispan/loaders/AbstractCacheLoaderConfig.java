@@ -23,7 +23,10 @@ import org.infinispan.config.PluggableConfigurationComponent;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 public class AbstractCacheLoaderConfig extends PluggableConfigurationComponent implements CacheLoaderConfig {
-
+   
+   /** 
+    * @configRef class|Fully qualified name of a cacheloader class
+    * */
    @XmlAttribute(name="class")
    protected String cacheLoaderClassName;
 

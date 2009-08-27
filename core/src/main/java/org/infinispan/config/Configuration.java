@@ -58,7 +58,7 @@ import java.util.concurrent.TimeUnit;
  * 
  * 
  * @configRef default|Configures the default cache and acts as a template for other named caches defined.
- * @configRef namedCache
+ * @configRef namedCache| Configures a named cache that builds up on template provided by default cache.
  * 
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
  * @author Vladimir Blagojevic
@@ -571,15 +571,22 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       if (loaders != null ? !loaders.equals(that.loaders) : that.loaders != null)
          return false;
       if (clustering.mode != that.clustering.mode) return false;
-      if (clustering.hash.consistentHashClass != null ? !clustering.hash.consistentHashClass.equals(that.clustering.hash.consistentHashClass) : that.clustering.hash.consistentHashClass != null)
+      if (clustering.hash.consistentHashClass != null ? 
+               !clustering.hash.consistentHashClass.equals(that.clustering.hash.consistentHashClass) : 
+                  that.clustering.hash.consistentHashClass != null)
          return false;
-      if (customInterceptors.customInterceptors != null ? !customInterceptors.customInterceptors.equals(that.customInterceptors.customInterceptors) : that.customInterceptors.customInterceptors != null)
+      if (customInterceptors.customInterceptors != null ? 
+               !customInterceptors.customInterceptors.equals(that.customInterceptors.customInterceptors) : 
+                  that.customInterceptors.customInterceptors != null)
          return false;
       if (eviction.strategy != that.eviction.strategy) return false;
-      if (globalConfiguration != null ? !globalConfiguration.equals(that.globalConfiguration) : that.globalConfiguration != null)
+      if (globalConfiguration != null ? !globalConfiguration.equals(that.globalConfiguration) : 
+         that.globalConfiguration != null)
          return false;
       if (locking.isolationLevel != that.locking.isolationLevel) return false;
-      if (transaction.transactionManagerLookupClass != null ? !transaction.transactionManagerLookupClass.equals(that.transaction.transactionManagerLookupClass) : that.transaction.transactionManagerLookupClass != null)
+      if (transaction.transactionManagerLookupClass != null ?
+               !transaction.transactionManagerLookupClass.equals(that.transaction.transactionManagerLookupClass) : 
+                  that.transaction.transactionManagerLookupClass != null)
          return false;
       if (clustering.async.asyncMarshalling != that.clustering.async.asyncMarshalling) return false;
 
@@ -600,13 +607,15 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       result = 31 * result + (clustering.mode != null ? clustering.mode.hashCode() : 0);
       result = 31 * result + (int) (clustering.stateRetrieval.timeout ^ (clustering.stateRetrieval.timeout >>> 32));
       result = 31 * result + (locking.isolationLevel != null ? locking.isolationLevel.hashCode() : 0);
-      result = 31 * result + (transaction.transactionManagerLookupClass != null ? transaction.transactionManagerLookupClass.hashCode() : 0);
+      result = 31 * result + (transaction.transactionManagerLookupClass != null ? 
+               transaction.transactionManagerLookupClass.hashCode() : 0);
       result = 31 * result + (loaders != null ? loaders.hashCode() : 0);
       result = 31 * result + (transaction.syncCommitPhase ? 1 : 0);
       result = 31 * result + (transaction.syncRollbackPhase ? 1 : 0);
       result = 31 * result + (transaction.useEagerLocking ? 1 : 0);
       result = 31 * result + (lazyDeserialization.enabled ? 1 : 0);
-      result = 31 * result + (customInterceptors.customInterceptors != null ? customInterceptors.customInterceptors.hashCode() : 0);
+      result = 31 * result + (customInterceptors.customInterceptors != null ? 
+               customInterceptors.customInterceptors.hashCode() : 0);
       result = 31 * result + (locking.writeSkewCheck ? 1 : 0);
       result = 31 * result + locking.concurrencyLevel;
       result = 31 * result + (invocationBatching.enabled  ? 1 : 0);
@@ -749,15 +758,22 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       /** The serialVersionUID */
       private static final long serialVersionUID = 8142143187082119506L;
 
+      /** @configRef |Maximum time to attempt particular lock acquisition*/
       @Dynamic
       protected Long lockAcquisitionTimeout = 10000L;
       
+      /** @configRef |Isolation level*/
       protected IsolationLevel isolationLevel = IsolationLevel.READ_COMMITTED;
       
+      /** @configRef |If true, write skews are tested and exceptions 
+       * are thrown if detected (only for IsolationLevel#REPEATABLE_READ)*/
       protected Boolean writeSkewCheck = false;
     
+      /** @configRef |Toggle to enable/disable shared locks across all 
+       * elements that need to be locked*/
       protected Boolean useLockStriping = true;
       
+      /** @configRef |Concurrency level for number of stripes to create in lock striping*/
       protected Integer concurrencyLevel = 500;   
       
     
@@ -886,7 +902,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    
    /**
     * 
-    * @configRef async:clustering;|Specifies that network communications are asynchronous.  Characteristics of this can be tuned here.
+    * @configRef async:clustering:|Specifies that network communications are asynchronous.  
+    * Characteristics of this can be tuned here.
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    private static class AsyncType extends AbstractNamedCacheConfigurationBean {
@@ -897,12 +914,16 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       /** The serialVersionUID */
       private static final long serialVersionUID = -7726319188826197399L;
 
+      /** @configRef |Toggle to enable/disable queue*/
       protected Boolean useReplQueue=false;
       
+      /** @configRef |Maximum allowed number of requests in a queue*/
       protected Integer replQueueMaxElements=1000;
       
+      /** @configRef |Interval to take requests of the queue*/
       protected Long replQueueInterval=5000L;
       
+      /** @configRef |Toggle to enable/disable asynchronous marshalling*/
       protected Boolean asyncMarshalling=true;
       
       
@@ -950,8 +971,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       /** The serialVersionUID */
       private static final long serialVersionUID = 5757161438110848530L;
 
+      /** @configRef |Maximum lifespan of a cache entry*/
       protected Long lifespan=-1L;
       
+      /** @configRef |Maximum time between two subsequent accesses to a particular cache entry */
       protected Long maxIdle=-1L;
       
       @XmlAttribute
@@ -977,10 +1000,13 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       /** The serialVersionUID */
       private static final long serialVersionUID = -1248563712058858791L;
 
+      /** @configRef |Interval between subsequent eviction runs*/
       protected Long wakeUpInterval=5000L;
     
+      /** @configRef |Eviction strategy */
       protected EvictionStrategy strategy=EvictionStrategy.NONE;
       
+      /** @configRef |Maximum number of entries in a cache instance */
       protected Integer maxEntries=-1;      
       
       @XmlAttribute
@@ -1013,9 +1039,11 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       /** The serialVersionUID */
       private static final long serialVersionUID = 3709234918426217096L;
 
+      /** @configRef |If true, a new cache node with initiate a state transfer upon join*/
       @Dynamic
       protected Boolean fetchInMemoryState = false;
       
+      /** @configRef |Timeout for state transfer*/
       @Dynamic      
       protected Long timeout=10000L;     
       
@@ -1034,7 +1062,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    
    /**
     * 
-    * @configRef sync|Specifies that network communications are synchronous.  Characteristics of this can be tuned here.
+    * @configRef sync|Specifies that network communications are synchronous.  
+    * Characteristics of this can be tuned here.
     * 
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
@@ -1042,6 +1071,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       /** The serialVersionUID */
       private static final long serialVersionUID = 8419216253674289524L;
       
+      /** @configRef |Timeout for synchronous requests*/
       @Dynamic
       protected Long replTimeout=15000L;
       
@@ -1054,7 +1084,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    
    /**
     * 
-    * @configRef hash|Allows fine-tuning of rehashing characteristics.  Only used with the 'distributed' cache mode, and otherwise ignored.
+    * @configRef hash|Allows fine-tuning of rehashing characteristics.  
+    * Only used with the 'distributed' cache mode, and otherwise ignored.
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    private static class HashType extends AbstractNamedCacheConfigurationBean {
@@ -1069,13 +1100,13 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       protected String consistentHashClass = DefaultConsistentHash.class.getName();
       
       
-      /** @configDoc number of owners doco here */
+      /** @configRef |Number of neighbour nodes in rehash task*/
       protected Integer numOwners=2;
       
-      /** @configDoc rehashWait doco here  */
+      /** @configRef |Maximum rehash time  */
       protected Long rehashWait=60000L;
       
-      /** @configDoc rehashRpcTimeout doco here  */
+      /** @configRef |Rehashing timeout */
       protected Long rehashRpcTimeout=60 * 1000 * 10L;     
       
       @XmlAttribute(name="class")
@@ -1105,7 +1136,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    
    /**
     * 
-    * @configRef l1|Enables and defines details of the L1 cache.  Only used with the 'distributed' cache mode, and otherwise ignored.
+    * @configRef l1|Enables and defines details of the L1 cache. 
+    * Only used with the 'distributed' cache mode, and otherwise ignored.
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    private static class L1Type extends AbstractNamedCacheConfigurationBean {
@@ -1113,10 +1145,13 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       /** The serialVersionUID */
       private static final long serialVersionUID = -4703587764861110638L;
 
+      /** @configRef |Toggle to enable/disable L1 cache */
       protected Boolean enabled=true;
 
+      /** @configRef |Maximum lifespan of an entry in L1 cache*/
       protected Long lifespan=600000L;
       
+      /** @configRef |Toggle to enable/disable populating L1 cache after rehash */
       protected Boolean onRehash=true;
       
       @XmlAttribute
@@ -1139,7 +1174,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    }
    /**
     * 
-    * @configRef jmxStatistics|Defines how JMX components are bound to an MBean server
+    * @configRef jmxStatistics|Defines how JMX components are bound to an MBean server.
     * @configRef lazyDeserialization|Defines lazy deserialization characteristics of the cache.
     * @configRef invocationBatching|Defines whether invocation batching is allowed in this cache instance.
     * 
@@ -1150,7 +1185,9 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
      
       /** The serialVersionUID */
       private static final long serialVersionUID = 2296863404153834686L;
-      Boolean enabled = false;
+      
+      /** @configRef |Toggle switch */
+      protected Boolean enabled = false;
       
       @XmlAttribute
       public void setEnabled(Boolean enabled) {
@@ -1169,8 +1206,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       /** The serialVersionUID */
       private static final long serialVersionUID = -7178286048602531152L;
 
+      /** @configRef |Toggle to enable/disable deadlock detection*/
       protected Boolean enabled=false;
       
+      /** @configRef |todo*/
       protected Long spinDuration=100L;
       
       @XmlAttribute
@@ -1195,6 +1234,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       
       /** The serialVersionUID */
       private static final long serialVersionUID = -9200921443651234163L;
+      
+      /** @configRef |See http://www.jboss.org/community/wiki/infinispantechnicalfaqs */
       protected Boolean unreliableReturnValues=false;
       
       @XmlAttribute
@@ -1206,7 +1247,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    
    /**
     * 
-    * @configRef customInterceptors|Configures custom interceptors to be added to the cache
+    * @configRef customInterceptors|Configures custom interceptors to be added to the cache.
     */
    @XmlAccessorType(XmlAccessType.FIELD)
    private static class CustomInterceptorsType extends AbstractNamedCacheConfigurationBean {
