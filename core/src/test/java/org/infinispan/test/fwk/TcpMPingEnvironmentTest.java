@@ -21,7 +21,7 @@ import java.util.Properties;
  *
  * @author Mircea.Markus@jboss.com
  */
-@Test(testName = "test.fwk.TcpMPingEnvironmentTest", groups = "functional", enabled = false,
+@Test(testName = "test.fwk.TcpMPingEnvironmentTest", groups = "functional", enabled = true,
       description = "This test just tests whether the HUdson environment allows proper binding to UDP sockets.")
 public class TcpMPingEnvironmentTest {
 
