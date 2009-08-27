@@ -12,6 +12,7 @@ import org.infinispan.notifications.Listenable;
 import org.infinispan.remoting.transport.Address;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * A <tt>CacheManager</tt> is the primary mechanism for retrieving a {@link org.infinispan.Cache} instance, and is often
@@ -58,20 +59,20 @@ public interface CacheManager extends Lifecycle, Listenable {
    /**
     * Defines a named cache's configuration using the following algorithm:
     * <p/>
-    * If cache name hasn't been defined before, this method creates a clone of the default cache's configuration, 
+    * If cache name hasn't been defined before, this method creates a clone of the default cache's configuration,
     * applies a clone of the configuration overrides passed in and returns this configuration instance.
     * <p/>
-    * If cache name has been previously defined, this method creates a clone of this cache's existing configuration, 
+    * If cache name has been previously defined, this method creates a clone of this cache's existing configuration,
     * applies a clone of the configuration overrides passed in and returns the configuration instance.
     * <p/>
-    * The other way to define named cache's configuration is declaratively, in the XML file passed in to the cache 
+    * The other way to define named cache's configuration is declaratively, in the XML file passed in to the cache
     * manager.  This method enables you to override certain properties that have previously been defined via XML.
     * <p/>
-    * Passing a brand new Configuration instance as configuration override without having called any of its setters
-    * will effectively return the named cache's configuration since no overrides where passed to it.
+    * Passing a brand new Configuration instance as configuration override without having called any of its setters will
+    * effectively return the named cache's configuration since no overrides where passed to it.
     *
-    * @param cacheName              name of cache whose configuration is being defined
-    * @param configurationOverride  configuration overrides to use
+    * @param cacheName             name of cache whose configuration is being defined
+    * @param configurationOverride configuration overrides to use
     * @return a cloned configuration instance
     */
    Configuration defineConfiguration(String cacheName, Configuration configurationOverride);
@@ -79,24 +80,24 @@ public interface CacheManager extends Lifecycle, Listenable {
    /**
     * Defines a named cache's configuration using the following algorithm:
     * <p/>
-    * Regardless of whether the cache name has been defined or not, this method creates a clone of the configuration 
-    * of the cache whose name matches the given template cache name, then applies a clone of the configuration overrides 
+    * Regardless of whether the cache name has been defined or not, this method creates a clone of the configuration of
+    * the cache whose name matches the given template cache name, then applies a clone of the configuration overrides
     * passed in and finally returns this configuration instance.
-    * <p/>  
-    * The other way to define named cache's configuration is declaratively, in the XML file passed in to the cache manager.  
-    * This method enables you to override certain properties that have previously been defined via XML.
     * <p/>
-    * Passing a brand new Configuration instance as configuration override without having called any of its setters
-    * will effectively return the named cache's configuration since no overrides where passed to it.
+    * The other way to define named cache's configuration is declaratively, in the XML file passed in to the cache
+    * manager. This method enables you to override certain properties that have previously been defined via XML.
     * <p/>
-    * If templateName is null or there isn't any named cache with that name, this methods works exactly like 
-    * {@link #defineConfiguration(String, Configuration)} in the sense that the base configuration used is the
-    * default cache configuration.
+    * Passing a brand new Configuration instance as configuration override without having called any of its setters will
+    * effectively return the named cache's configuration since no overrides where passed to it.
+    * <p/>
+    * If templateName is null or there isn't any named cache with that name, this methods works exactly like {@link
+    * #defineConfiguration(String, Configuration)} in the sense that the base configuration used is the default cache
+    * configuration.
     *
-    * @param cacheName              name of cache whose configuration is being defined
-    * @param templateName           name of cache to which to which apply overrides if cache name has not been previously 
-    *                               defined
-    * @param configurationOverride  configuration overrides to use
+    * @param cacheName             name of cache whose configuration is being defined
+    * @param templateName          name of cache to which to which apply overrides if cache name has not been previously
+    *                              defined
+    * @param configurationOverride configuration overrides to use
     * @return a cloned configuration instance
     */
    Configuration defineConfiguration(String cacheName, String templateCacheName, Configuration configurationOverride);
@@ -116,8 +117,8 @@ public interface CacheManager extends Lifecycle, Listenable {
     * <p/>
     * When creating a new cache, this method will use the configuration passed in to the CacheManager on construction,
     * as a template, and then optionally apply any overrides previously defined for the named cache using the {@link
-    * #defineConfiguration(String, Configuration)} or {@link #defineConfiguration(String, String, Configuration)} methods, 
-    * or declared in the configuration file.
+    * #defineConfiguration(String, Configuration)} or {@link #defineConfiguration(String, String, Configuration)}
+    * methods, or declared in the configuration file.
     *
     * @param cacheName name of cache to retrieve
     * @return a cache instance identified by cacheName
@@ -138,7 +139,15 @@ public interface CacheManager extends Lifecycle, Listenable {
    ComponentStatus getStatus();
 
    /**
-    * Returns the global configuration object associated to this CacheManager.
+    * @return the global configuration object associated to this CacheManager
     */
-   public GlobalConfiguration getGlobalConfiguration();
+   GlobalConfiguration getGlobalConfiguration();
+
+   /**
+    * If no named caches are registered, this method returns an empty set.  The default cache is never included in this
+    * set of cache names.
+    *
+    * @return an immutable set of non-default named caches registered with this cache manager.
+    */
+   Set<String> getCacheNames();
 }

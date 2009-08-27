@@ -40,11 +40,12 @@ import org.infinispan.lifecycle.Lifecycle;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.util.FileLookup;
+import org.infinispan.util.Immutables;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -204,9 +205,9 @@ public class DefaultCacheManager implements CacheManager {
     * @param start             if true, the cache manager is started
     * @throws java.io.IOException if there is a problem with the configuration file.
     */
-   public DefaultCacheManager(String configurationFile, boolean start) throws IOException {      
+   public DefaultCacheManager(String configurationFile, boolean start) throws IOException {
       try {
-         initialize(InfinispanConfiguration.newInfinispanConfiguration(configurationFile,InfinispanConfiguration.resolveSchemaPath()));
+         initialize(InfinispanConfiguration.newInfinispanConfiguration(configurationFile, InfinispanConfiguration.resolveSchemaPath()));
       }
       catch (RuntimeException re) {
          throw new ConfigurationException(re);
@@ -235,9 +236,9 @@ public class DefaultCacheManager implements CacheManager {
     * @param start               if true, the cache manager is started
     * @throws java.io.IOException if there is a problem reading the configuration stream
     */
-   public DefaultCacheManager(InputStream configurationStream, boolean start) throws IOException {      
+   public DefaultCacheManager(InputStream configurationStream, boolean start) throws IOException {
       try {
-         initialize(InfinispanConfiguration.newInfinispanConfiguration(configurationStream,InfinispanConfiguration.findSchemaInputStream()));
+         initialize(InfinispanConfiguration.newInfinispanConfiguration(configurationStream, InfinispanConfiguration.findSchemaInputStream()));
       } catch (ConfigurationException ce) {
          throw ce;
       } catch (RuntimeException re) {
@@ -252,24 +253,28 @@ public class DefaultCacheManager implements CacheManager {
          Configuration c = globalConfiguration.getDefaultConfiguration().clone();
          c.applyOverrides(entry.getValue());
          configurationOverrides.put(entry.getKey(), c);
-         
+
       }
       globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this);
    }
 
-   /** {@inheritDoc} */
+   /**
+    * {@inheritDoc}
+    */
    public Configuration defineConfiguration(String cacheName, Configuration configurationOverride) {
       return defineConfiguration(cacheName, configurationOverride, globalConfiguration.getDefaultConfiguration(), true);
    }
 
-   /** {@inheritDoc} */
+   /**
+    * {@inheritDoc}
+    */
    public Configuration defineConfiguration(String cacheName, String templateName, Configuration configurationOverride) {
       if (templateName != null) {
          Configuration c = configurationOverrides.get(templateName);
          if (c != null)
             return defineConfiguration(cacheName, configurationOverride, c, false);
          return defineConfiguration(cacheName, configurationOverride);
-      } 
+      }
       return defineConfiguration(cacheName, configurationOverride);
    }
 
@@ -284,7 +289,7 @@ public class DefaultCacheManager implements CacheManager {
             existing.applyOverrides(configOverride);
             return existing.clone();
          }
-      } 
+      }
       Configuration configuration = defaultConfigIfNotPresent.clone();
       configuration.applyOverrides(configOverride.clone());
       configurationOverrides.put(cacheName, configuration);
@@ -309,8 +314,8 @@ public class DefaultCacheManager implements CacheManager {
     * <p/>
     * When creating a new cache, this method will use the configuration passed in to the CacheManager on construction,
     * as a template, and then optionally apply any overrides previously defined for the named cache using the {@link
-    * #defineConfiguration(String, Configuration)} or {@link #defineConfiguration(String, String, Configuration)} methods, 
-    * or declared in the configuration file.
+    * #defineConfiguration(String, Configuration)} or {@link #defineConfiguration(String, String, Configuration)}
+    * methods, or declared in the configuration file.
     *
     * @param cacheName name of cache to retrieve
     * @return a cache instance identified by cacheName
@@ -350,9 +355,9 @@ public class DefaultCacheManager implements CacheManager {
 
    private Cache createCache(String cacheName) {
       Configuration c = null;
-      if (cacheName.equals(DEFAULT_CACHE_NAME) || !configurationOverrides.containsKey(cacheName)) 
+      if (cacheName.equals(DEFAULT_CACHE_NAME) || !configurationOverrides.containsKey(cacheName))
          c = globalConfiguration.getDefaultConfiguration().clone();
-      else 
+      else
          c = configurationOverrides.get(cacheName);
 
       c.assertValid();
@@ -408,10 +413,19 @@ public class DefaultCacheManager implements CacheManager {
       return globalConfiguration;
    }
 
-   @ManagedAttribute(description = "the defined cache names and their status")
+   public Set<String> getCacheNames() {
+      Set<String> names = new HashSet<String>(configurationOverrides.keySet());
+      names.remove(DEFAULT_CACHE_NAME);
+      if (names.isEmpty())
+         return Collections.emptySet();
+      else
+         return Immutables.immutableSetWrap(names);
+   }
+
+   @ManagedAttribute(description = "The defined cache names and their statuses.  The default cache is not included in this representation.")
    public String getDefinedCacheNames() {
       StringBuilder result = new StringBuilder("[");
-      for (String cacheName : this.configurationOverrides.keySet()) {
+      for (String cacheName : getCacheNames()) {
          boolean started = caches.containsKey(cacheName);
          result.append(cacheName).append(started ? "(created)" : "(not created)");
       }
@@ -419,12 +433,12 @@ public class DefaultCacheManager implements CacheManager {
       return result.toString();
    }
 
-   @ManagedAttribute(description = "the total number of defined caches")
+   @ManagedAttribute(description = "The total number of defined caches, excluding the default cache.")
    public String getDefinedCacheCount() {
-      return String.valueOf(this.configurationOverrides.keySet().size());
+      return String.valueOf(this.configurationOverrides.keySet().size() - 1);
    }
 
-   @ManagedAttribute(description = "number of running caches")
+   @ManagedAttribute(description = "The total number of running caches, including the default cache.")
    public String getCreatedCacheCount() {
       return String.valueOf(this.caches.keySet().size());
    }
