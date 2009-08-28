@@ -701,17 +701,29 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       /** The serialVersionUID */
       private static final long serialVersionUID = -3867090839830874603L;
 
+      /** 
+       * @configRef |Fully qualified class name of a class that is supposed to obtain reference to a transaction manager
+       * */
       protected String transactionManagerLookupClass;
       
       @XmlTransient
       protected TransactionManagerLookup transactionManagerLookup;
       
+      /** 
+       * @configRef |If true, commit phase will be done as a synchronous call
+       * */
       @Dynamic
       protected Boolean syncCommitPhase = false;
       
+      /** 
+       * @configRef |If true, rollback phase will be done as a synchronous call
+       * */
       @Dynamic
       protected Boolean syncRollbackPhase = false;
       
+      /** 
+       * @configRef |If true, eagerly lock cache keys across cluster instead of during two-phase prepare/commit phase
+       * */
       @Dynamic
       protected Boolean useEagerLocking = false;
       
@@ -822,6 +834,9 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       /** The serialVersionUID */
       private static final long serialVersionUID = 4048135465543498430L;
       
+      /** 
+       * @configRef mode|Cache replication mode
+       * */
       @XmlAttribute(name="mode")
       protected String stringMode;
 
@@ -1209,7 +1224,9 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       /** @configRef |Toggle to enable/disable deadlock detection*/
       protected Boolean enabled=false;
       
-      /** @configRef |todo*/
+      /** @configRef |Time period that determines how often is lock acquisition attempted 
+       * within maximum time allowed to acquire a particular lock
+       * */
       protected Long spinDuration=100L;
       
       @XmlAttribute
@@ -1227,7 +1244,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    
    /**
     * 
-    * @configRef unsafe|Allows you to tune various unsafe or non-standard characteristics.  Use with care.
+    * @configRef unsafe|Allows you to tune various unsafe or non-standard characteristics. Certain operations 
+    * such as Cache.put() that are supposed to return the previous value associated with the specified key according 
+    * to the java.util.Map contract will not fulfill this contract if unsafe toggle is turned on. Use with care.  
+    * See details at http://www.jboss.org/community/wiki/infinispantechnicalfaqs
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    private static class UnsafeType  extends AbstractNamedCacheConfigurationBean{
@@ -1235,7 +1255,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       /** The serialVersionUID */
       private static final long serialVersionUID = -9200921443651234163L;
       
-      /** @configRef |See http://www.jboss.org/community/wiki/infinispantechnicalfaqs */
+      /** @configRef |Toggle to enable/disable return value fetching */
       protected Boolean unreliableReturnValues=false;
       
       @XmlAttribute

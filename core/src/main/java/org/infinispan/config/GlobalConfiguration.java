@@ -484,10 +484,10 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    @XmlAccessorType(XmlAccessType.PROPERTY)
    private static class TransportType extends AbstractConfigurationBeanWithGCR {
      
-      /** @configRef |todo */
+      /** @configRef |Cluster name where all cache instances defined are connected */
       protected String clusterName = "Infinispan-Cluster";
       
-      /** @configRef |todo */
+      /** @configRef |todo */ 
       protected Long distributedSyncTimeout = 60000L; // default
      
       /** @configRef | Fully qualified name of a class that implements network transport*/
@@ -584,7 +584,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       /** @configRef |Fully qualified name of class that will attempt to find JMX MBean server */
       protected String mBeanServerLookup = PlatformMBeanServerLookup.class.getName();
       
-      /** @configRef |todo */
+      /** @configRef |If true, multiple cache manager instances could be configured under the same JMX domain */
       protected Boolean allowDuplicateDomains = false;
 
       @XmlAttribute

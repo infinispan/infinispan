@@ -334,7 +334,7 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
          }
       }
       if (c.getSuperclass() != null)
-         findFieldDocRecursively(c.getSuperclass(), fieldName, tagName);
+         return findFieldDocRecursively(c.getSuperclass(), fieldName, tagName);
       return null;
    }
 

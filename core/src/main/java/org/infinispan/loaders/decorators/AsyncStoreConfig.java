@@ -16,7 +16,7 @@ import org.infinispan.config.Dynamic;
  * provide meta data for configuration file XML schema generation. Please modify these annotations
  * and Java element types they annotate with utmost understanding and care.
  *
- * @configRef async:loader:
+ * @configRef async:loader:|Configuration for the async cache loader.
  *
  * @author Manik Surtani
  * @author Vladimir Blagojevic
