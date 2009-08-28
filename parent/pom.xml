@@ -64,8 +64,6 @@
 
    <properties>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-      <project-package>org.infinispan</project-package>
-      <project-version>4.0.0-SNAPSHOT</project-version>
       <defaultTestGroup>functional,unit</defaultTestGroup>
    </properties>
 

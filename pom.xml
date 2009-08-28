@@ -111,7 +111,7 @@ pageTracker._trackPageview();
                         <configuration>
                            <tasks>
                               <property name="file"
-                                        value="${project.build.directory}/distribution/${artifactId}-${project-version}-single_jar.zip"/>
+                                        value="${project.build.directory}/distribution/${artifactId}-${project.version}-single_jar.zip"/>
                               <zip destfile="${file}.new">
                                  <zipfileset src="${file}">
                                     <exclude name="**/.ignore/**"/>
@@ -153,7 +153,7 @@ pageTracker._trackPageview();
                         <descriptor>src/main/resources/assemblies/all.xml</descriptor>
                         <descriptor>src/main/resources/assemblies/src.xml</descriptor>
                      </descriptors>
-                     <finalName>${artifactId}-${project-version}</finalName>
+                     <finalName>${artifactId}-${project.version}</finalName>
                      <outputDirectory>target/distribution</outputDirectory>
                      <workDirectory>target/assembly/work</workDirectory>
                   </configuration>

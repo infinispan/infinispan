@@ -21,15 +21,15 @@
 
    <dependencies>
       <dependency>
-         <groupId>${project-package}</groupId>
+         <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-core</artifactId>
-         <version>${project-version}</version>
+         <version>${project.version}</version>
       </dependency>
 
       <dependency>
-         <groupId>${project-package}</groupId>
+         <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-core</artifactId>
-         <version>${project-version}</version>
+         <version>${project.version}</version>
          <type>test-jar</type>
          <scope>test</scope>
       </dependency>
