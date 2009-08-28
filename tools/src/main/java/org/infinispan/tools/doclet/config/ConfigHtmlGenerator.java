@@ -201,7 +201,7 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
             }
          }
       } catch (Exception e) {
-         System.out.println("Did noc construct object " + bean);
+         System.out.println("Did not construct object " + bean);
       }
 
       Set<XSAttributeDecl> attributes = n.getAttributes();
@@ -210,8 +210,25 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
          sb.append("<td>").append("<code>" + a.getName() + "</code>").append("</td>\n");
          sb.append("<td>").append("<code>" + a.getType().getName() + "</code>");
          
+         boolean isRestricted = false;
          XSRestrictionSimpleType restriction = a.getType().asRestriction();
          Collection<? extends XSFacet> declaredFacets = restriction.getDeclaredFacets();
+         for (XSFacet facet : declaredFacets) {
+            if(facet.getName().equalsIgnoreCase("enumeration")){
+               isRestricted = true;
+               break;
+            }            
+         }
+         if(isRestricted){
+            sb.append("* (");
+            for (XSFacet facet : declaredFacets) {
+               sb.append(facet.getValue().toString() + '|');
+            }            
+            sb.deleteCharAt(sb.length()-1);
+            sb.append(")</td>\n");         
+         } else{
+            sb.append("</td>\n");
+         }           
 
          // if default value specified in annotation use it
          if (a.getDefaultValue() != null) {

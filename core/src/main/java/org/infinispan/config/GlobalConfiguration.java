@@ -540,7 +540,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    
    /**
     * 
-    * @configRef serialization|Serialization and marshalling settings
+    * @configRef serialization|Serialization and marshalling settings.
     */   
    @XmlAccessorType(XmlAccessType.PROPERTY)
    private static class SerializationType extends AbstractConfigurationBeanWithGCR {
@@ -570,7 +570,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    
    /**
     * 
-    * @configRef globalJmxStatistics|Determines global JMX settings for all cache instances 
+    * @configRef globalJmxStatistics|Determines global JMX settings for all cache instances. 
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    private static class GlobalJmxStatisticsType extends AbstractConfigurationBeanWithGCR {
