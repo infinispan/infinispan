@@ -15,10 +15,6 @@
    <name>Infinispan JDBC CacheStore</name>
    <description>Infinispan JDBC CacheStore module</description>
 
-   <properties>
-      <version.log4j>1.2.14</version.log4j>
-   </properties>
-
    <dependencies>
       <dependency>
          <groupId>${project.groupId}</groupId>
@@ -43,7 +39,6 @@
       <dependency>
          <groupId>log4j</groupId>
          <artifactId>log4j</artifactId>
-         <version>${version.log4j}</version>
          <scope>test</scope>
       </dependency>
 
@@ -58,7 +53,6 @@
       <dependency>
          <groupId>xstream</groupId>
          <artifactId>xstream</artifactId>
-         <version>1.2</version>
          <scope>test</scope>
       </dependency>
    </dependencies>

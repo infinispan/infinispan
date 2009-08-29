@@ -67,14 +67,8 @@
       <defaultTestGroup>functional,unit</defaultTestGroup>
    </properties>
 
+
    <dependencies>
-      <dependency>
-         <groupId>net.jcip</groupId>
-         <artifactId>jcip-annotations</artifactId>
-         <version>1.0</version>
-         <optional>true</optional>
-      </dependency>
-      <!-- 5.8 is needed for proper parallel test execution -->
       <dependency>
          <groupId>org.testng</groupId>
          <artifactId>testng</artifactId>
@@ -83,10 +77,10 @@
          <classifier>jdk15</classifier>
       </dependency>
       <dependency>
-         <groupId>org.easymock</groupId>
-         <artifactId>easymockclassextension</artifactId>
-         <version>2.4</version>
-         <scope>test</scope>
+         <groupId>net.jcip</groupId>
+         <artifactId>jcip-annotations</artifactId>
+         <version>1.0</version>
+         <optional>true</optional>
       </dependency>
       <dependency>
          <groupId>org.easymock</groupId>
@@ -95,40 +89,46 @@
          <scope>test</scope>
       </dependency>
       <dependency>
-         <groupId>jboss.jbossts</groupId>
-         <artifactId>jbossjta</artifactId>
-         <version>4.4.0.GA</version>
+         <groupId>org.easymock</groupId>
+         <artifactId>easymock</artifactId>
+         <version>2.4</version>
          <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>jboss.jbossts</groupId>
-         <artifactId>jbossjts</artifactId>
-         <version>4.6.1.GA</version>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>jboss.jbossts</groupId>
-         <artifactId>jbossts-common</artifactId>
-         <version>4.6.1.GA</version>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>commons-logging</groupId>
-         <artifactId>commons-logging</artifactId>
-         <version>1.1.1</version>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>javax.xml.bind</groupId>
-         <artifactId>jaxb-api</artifactId>
-         <version>2.1</version>
-      </dependency>
-      <dependency>
-         <groupId>com.sun.xml.bind</groupId>
-         <artifactId>jaxb-impl</artifactId>
-         <version>2.1.3</version>
       </dependency>
    </dependencies>
+
+   <dependencyManagement>
+      <dependencies>
+         <dependency>
+            <groupId>jboss.jbossts</groupId>
+            <artifactId>jbossjta</artifactId>
+            <version>4.4.0.GA</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>jboss.jbossts</groupId>
+            <artifactId>jbossjts</artifactId>
+            <version>4.6.1.GA</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>jboss.jbossts</groupId>
+            <artifactId>jbossts-common</artifactId>
+            <version>4.6.1.GA</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>1.2.14</version>
+         </dependency>
+         <dependency>
+            <groupId>xstream</groupId>
+            <artifactId>xstream</artifactId>
+            <version>1.2</version>
+            <scope>test</scope>
+         </dependency>
+      </dependencies>
+   </dependencyManagement>
 
    <build>
       <plugins>

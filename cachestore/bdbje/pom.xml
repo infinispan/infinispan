@@ -35,11 +35,9 @@
          <version>3.3.75</version>
       </dependency>
 
-      <!-- used to serialize non-serializable objects for a dummy marshaller -->
       <dependency>
          <groupId>xstream</groupId>
          <artifactId>xstream</artifactId>
-         <version>1.2</version>
          <scope>test</scope>
       </dependency>
 
