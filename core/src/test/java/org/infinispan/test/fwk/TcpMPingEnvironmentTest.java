@@ -99,9 +99,10 @@ public class TcpMPingEnvironmentTest {
       int port = 43589;
       MulticastSocket retval = null;
       try {
-         success = false;
          Enumeration<NetworkInterface> nis = NetworkInterface.getNetworkInterfaces();
-         StringBuilder trace = new StringBuilder();
+         StringBuilder okTrace = new StringBuilder();
+         StringBuilder failureTrace = new StringBuilder();
+         success = true;
          while (nis.hasMoreElements()) {
             retval = new MulticastSocket(port);
             NetworkInterface networkInterface = nis.nextElement();
@@ -109,18 +110,22 @@ public class TcpMPingEnvironmentTest {
             try {
                retval.joinGroup(mcast_addr);
             } catch (IOException e) {
-               String msg = "Failed to bind to " + networkInterface + ". Successfull ones were: " + trace;
-               log.error(msg);
-               throw new RuntimeException(msg);
-
+               String msg = "Failed to bind to " + networkInterface + ".";
+               failureTrace.append(msg).append('\n');
+               success = false;
             }
             String msg = "Successfully bind to " + networkInterface;
-            log.info(msg);
-            System.out.println(msg);
-            trace.append(msg).append('\n');
+            okTrace.append(msg).append('\n');
          }
-         success = true;
-         System.out.println("trace = " + trace);
+         if (success) {
+            log.trace(okTrace);
+            System.out.println("Sucessfull binding! " + okTrace);
+         } else {
+            String message = "Success : " + okTrace + ". Failures : " + failureTrace;
+            log.error(message);
+            System.out.println(message);
+            throw new RuntimeException(message);
+         }
       } finally {
          if (retval != null) {
             try {
