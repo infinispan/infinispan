@@ -109,13 +109,13 @@ public class TcpMPingEnvironmentTest {
             retval.setNetworkInterface(networkInterface);
             try {
                retval.joinGroup(mcast_addr);
+               String msg = "Successfully bind to " + networkInterface;
+               okTrace.append(msg).append('\n');
             } catch (IOException e) {
                String msg = "Failed to bind to " + networkInterface + ".";
                failureTrace.append(msg).append('\n');
                success = false;
             }
-            String msg = "Successfully bind to " + networkInterface;
-            okTrace.append(msg).append('\n');
          }
          if (success) {
             log.trace(okTrace);
