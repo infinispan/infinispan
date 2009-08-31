@@ -30,7 +30,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -311,6 +313,12 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       assert mv.equals(mv2);
    }
 
+   public void testMarshallValueWithCustomReadObjectMethod() {
+      CustomReadObjectMethod obj = new CustomReadObjectMethod();
+      cache1.put("ab-key", obj);
+      assert cache2.get("ab-key").equals(obj);
+   }
+
    public void assertUseOfMagicNumbers() throws Exception {
       Pojo pojo = new Pojo();
       MarshalledValue mv = new MarshalledValue(pojo, true, marshaller);
@@ -471,6 +479,45 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
          i = in.readInt();
          b = in.readBoolean();
          deserializationCount++;
+      }
+   }
+
+   public static class CustomReadObjectMethod implements Serializable {
+      private static final long serialVersionUID = 1L;
+      String lastName;
+      String ssn;
+      transient boolean deserialized;
+
+      public CustomReadObjectMethod( ) {
+         this("Zamarreno", "234-567-8901");
+      }
+
+      public CustomReadObjectMethod(String lastName, String ssn) {
+         this.lastName = lastName;
+         this.ssn = ssn;
+      }
+
+      @Override
+      public boolean equals(Object obj) {
+         if (obj == this) return true;
+         if (!(obj instanceof CustomReadObjectMethod)) return false;
+         CustomReadObjectMethod pk = (CustomReadObjectMethod) obj;
+         if (!lastName.equals(pk.lastName)) return false;
+         if (!ssn.equals(pk.ssn)) return false;
+         return true;
+      }
+
+      @Override
+      public int hashCode( ) {
+         int result = 17;
+         result = result * 31 + lastName.hashCode();
+         result = result * 31 + ssn.hashCode();
+         return result;
+      }
+
+      private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
+         ois.defaultReadObject();
+         deserialized = true;
       }
    }
 }

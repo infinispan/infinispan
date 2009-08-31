@@ -91,7 +91,10 @@ public class MarshalledValue {
             } finally {
                marshaller.finishObjectOutput(out);
             }
-            raw = baos.getRawBuffer(); 
+            byte[] buf = baos.getRawBuffer();
+            int length = baos.size();
+            raw = new byte[length];
+            System.arraycopy(buf, 0, raw, 0, length);
          } catch (Exception e) {
             throw new CacheException("Unable to marshall value " + instance, e);
          } finally {
