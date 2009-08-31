@@ -146,6 +146,7 @@ public class TcpMPingEnvironmentTest {
                String msg = "Successfully bind to " + networkInterface;
                okTrace.append(msg).append('\n');
             } catch (IOException e) {
+               e.printStackTrace();
                String msg = "Failed to bind to " + networkInterface + ".";
                failureTrace.append(msg).append('\n');
                success = false;
