@@ -35,6 +35,7 @@ public class TcpMPingEnvironmentTest {
 
    List<JChannel> openedChannles = new ArrayList<JChannel>();
    private boolean success = false;
+   private static final String IP_ADDRESS = "228.10.10.5";
 
    @AfterMethod
    public void destroyCaches() {
@@ -42,18 +43,23 @@ public class TcpMPingEnvironmentTest {
          ch.disconnect();
          ch.close();
       }
-//      tryPrintRoutingTable();
+//      tryPrintRoutingInfo();
       if (!success) {
          Properties properties = System.getProperties();
          log.trace("System props are " + properties);
          System.out.println("System props are " + properties);
-         tryPrintRoutingTable();
+         tryPrintRoutingInfo();
       }
    }
 
-   private void tryPrintRoutingTable() {
+   private void tryPrintRoutingInfo() {
+      tryExecNativeCommand("/sbin/route", "Routing table is ");
+      tryExecNativeCommand("/sbin/ip route get 228.10.10.5", "/sbin/ip route get " + IP_ADDRESS);
+   }
+
+   private void tryExecNativeCommand(String command, String printPrefix) {
       try {
-         Process p = Runtime.getRuntime().exec("/sbin/route");
+         Process p = Runtime.getRuntime().exec(command);
          InputStream inputStream = p.getInputStream();
          BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
 
@@ -64,12 +70,12 @@ public class TcpMPingEnvironmentTest {
             result.append(line).append('\n');
             line = reader.readLine();
          }
-         log.trace("Routing table is " + result);
-         System.out.println("Routing table is " + result);
+         log.trace(printPrefix + result);
+         System.out.println(printPrefix + result);
          inputStream.close();
       } catch (IOException e) {
-         log.trace("Cannot print routing table!",e);
-         System.out.println("Cannot print routing table!" + e);
+         log.trace("Cannot print " + printPrefix + " !",e);
+         System.out.println("Cannot print " + printPrefix + " !" + e);
          e.printStackTrace();
       }
    }
@@ -104,7 +110,7 @@ public class TcpMPingEnvironmentTest {
 
 
    public void testMcastSocketCreation() throws Exception {
-      InetAddress mcast_addr = InetAddress.getByName("228.10.10.5");
+      InetAddress mcast_addr = InetAddress.getByName(IP_ADDRESS);
       SocketAddress saddr = new InetSocketAddress(mcast_addr, 43589);
       MulticastSocket retval = null;
       try {
@@ -123,7 +129,7 @@ public class TcpMPingEnvironmentTest {
    }
 
    public void testMcastSocketCreation2() throws Exception {
-      InetAddress mcast_addr = InetAddress.getByName("228.10.10.5");
+      InetAddress mcast_addr = InetAddress.getByName(IP_ADDRESS);
       int port = 43589;
       MulticastSocket retval = null;
       try {
