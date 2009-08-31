@@ -11,10 +11,13 @@ import org.testng.annotations.Test;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.MulticastSocket;
+import java.net.NetworkInterface;
 import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.Enumeration;
+import java.io.IOException;
 
 /**
  * The purpose of this class is to test that/if tcp + mping works fine in the given environment.
@@ -80,6 +83,44 @@ public class TcpMPingEnvironmentTest {
          success = false;
          retval = new MulticastSocket(saddr);
          success = true;
+      } finally {
+         if (retval != null) {
+            try {
+               retval.close();
+            } catch (Exception e) {
+               e.printStackTrace();
+            }
+         }
+      }
+   }
+
+   public void testMcastSocketCreation2() throws Exception {
+      InetAddress mcast_addr = InetAddress.getByName("228.10.10.5");
+      int port = 43589;
+      MulticastSocket retval = null;
+      try {
+         success = false;
+         Enumeration<NetworkInterface> nis = NetworkInterface.getNetworkInterfaces();
+         StringBuilder trace = new StringBuilder();
+         while (nis.hasMoreElements()) {
+            retval = new MulticastSocket(port);
+            NetworkInterface networkInterface = nis.nextElement();
+            retval.setNetworkInterface(networkInterface);
+            try {
+               retval.joinGroup(mcast_addr);
+            } catch (IOException e) {
+               String msg = "Failed to bind to " + networkInterface + ". Successfull ones were: " + trace;
+               log.error(msg);
+               throw new RuntimeException(msg);
+
+            }
+            String msg = "Successfully bind to " + networkInterface;
+            log.info(msg);
+            System.out.println(msg);
+            trace.append(msg).append('\n');
+         }
+         success = true;
+         System.out.println("trace = " + trace);
       } finally {
          if (retval != null) {
             try {
