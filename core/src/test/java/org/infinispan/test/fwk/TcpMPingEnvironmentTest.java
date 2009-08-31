@@ -8,16 +8,19 @@ import static org.testng.Assert.fail;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.MulticastSocket;
 import java.net.NetworkInterface;
 import java.net.SocketAddress;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Properties;
-import java.util.Enumeration;
-import java.io.IOException;
 
 /**
  * The purpose of this class is to test that/if tcp + mping works fine in the given environment.
@@ -39,10 +42,35 @@ public class TcpMPingEnvironmentTest {
          ch.disconnect();
          ch.close();
       }
+//      tryPrintRoutingTable();
       if (!success) {
          Properties properties = System.getProperties();
          log.trace("System props are " + properties);
          System.out.println("System props are " + properties);
+         tryPrintRoutingTable();
+      }
+   }
+
+   private void tryPrintRoutingTable() {
+      try {
+         Process p = Runtime.getRuntime().exec("/sbin/route");
+         InputStream inputStream = p.getInputStream();
+         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+
+         String line = reader.readLine();
+         System.out.println("line = " + line);
+         StringBuilder result = new StringBuilder();
+         while (line != null) {
+            result.append(line).append('\n');
+            line = reader.readLine();
+         }
+         log.trace("Routing table is " + result);
+         System.out.println("Routing table is " + result);
+         inputStream.close();
+      } catch (IOException e) {
+         log.trace("Cannot print routing table!",e);
+         System.out.println("Cannot print routing table!" + e);
+         e.printStackTrace();
       }
    }
 
