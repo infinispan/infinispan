@@ -183,7 +183,7 @@ public class SimpleDataContainer implements DataContainer {
       }
    }
 
-   private class KeyIterator implements Iterator<Object> {
+   private static class KeyIterator implements Iterator<Object> {
       Iterator<Iterator<Object>> metaIterator;
       Iterator<Object> currentIterator;
 
