@@ -337,7 +337,7 @@ public class ImmutableListCopy<E> extends AbstractList<E> implements Externaliza
 
       @Override
       public final Iterator<E> iterator() {
-         return listIterator();
+         return super.listIterator();
       }
 
       @Override
