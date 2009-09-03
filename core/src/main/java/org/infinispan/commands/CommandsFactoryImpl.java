@@ -54,7 +54,6 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.InterceptorChain;
-import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -85,13 +84,11 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private InvocationContextContainer icc;
    private TransactionTable txTable;
    private Configuration configuration;
-   private CacheLoaderManager cacheLoaderManager;
 
    @Inject
    public void setupDependencies(DataContainer container, CacheNotifier notifier, Cache cache,
                                  InterceptorChain interceptorChain, DistributionManager distributionManager,
-                                 InvocationContextContainer icc, TransactionTable txTable, CacheLoaderManager cacheLoaderManager,
-                                 Configuration configuration) {
+                                 InvocationContextContainer icc, TransactionTable txTable, Configuration configuration) {
       this.dataContainer = container;
       this.notifier = notifier;
       this.cache = cache;
@@ -100,7 +97,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
       this.icc = icc;
       this.txTable = txTable;
       this.configuration = configuration;
-      this.cacheLoaderManager = cacheLoaderManager;
    }
 
    @Start(priority = 1)
