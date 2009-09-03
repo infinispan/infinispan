@@ -21,6 +21,9 @@
  */
 package org.infinispan.util;
 
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
 import java.io.File;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
@@ -32,9 +35,6 @@ import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 /**
  * Find infinispan classes utility
  */
@@ -42,7 +42,7 @@ public class ClassFinder {
    
    private static final Log log = LogFactory.getLog(ClassFinder.class); 
    
-   public static String PATH = System.getProperty("java.class.path") + File.pathSeparator
+   public static final String PATH = System.getProperty("java.class.path") + File.pathSeparator
             + System.getProperty("surefire.test.class.path");
 
    public static List<Class<?>> withAnnotationPresent(List<Class<?>> classes, Class<? extends Annotation> c) {

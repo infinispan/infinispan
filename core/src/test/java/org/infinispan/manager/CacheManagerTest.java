@@ -98,11 +98,11 @@ public class CacheManagerTest {
 
    public void testDefiningConfigurationWithTemplateName() {
       CacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
-      
+
       Configuration c = new Configuration();
       c.setIsolationLevel(IsolationLevel.NONE);
       Configuration oneCacheConfiguration = cm.defineConfiguration("oneCache", c);
-      assert !oneCacheConfiguration.equals(c);
+      assert oneCacheConfiguration.equals(c);
       assert oneCacheConfiguration.getIsolationLevel().equals(IsolationLevel.NONE);
       
       c = new Configuration();

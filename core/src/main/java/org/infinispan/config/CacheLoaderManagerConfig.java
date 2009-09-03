@@ -141,8 +141,8 @@ public class CacheLoaderManagerConfig extends AbstractNamedCacheConfigurationBea
 
       if (obj instanceof CacheLoaderManagerConfig) {
          CacheLoaderManagerConfig other = (CacheLoaderManagerConfig) obj;
-         return (this.passivation == other.passivation)
-               && (this.shared == other.shared)
+         return (this.passivation.equals(other.passivation))
+               && (this.shared.equals(other.shared))
                && Util.safeEquals(this.preload, other.preload)
                && Util.safeEquals(this.cacheLoaderConfigs, other.cacheLoaderConfigs);
       }

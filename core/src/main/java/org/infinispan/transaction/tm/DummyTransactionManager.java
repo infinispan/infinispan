@@ -39,27 +39,31 @@ import java.util.Properties;
  * @since 4.0
  */
 public class DummyTransactionManager extends DummyBaseTransactionManager {
-   protected static DummyTransactionManager instance = null;
-   protected static DummyUserTransaction utx = null;
+   private static DummyTransactionManager instance = null;
+   private static DummyUserTransaction utx = null;
 
-   protected static Log log = LogFactory.getLog(DummyTransactionManager.class);
+   protected static final Log log = LogFactory.getLog(DummyTransactionManager.class);
 
    private static final long serialVersionUID = 4396695354693176535L;
 
    public static DummyTransactionManager getInstance() {
       if (instance == null) {
-         instance = new DummyTransactionManager();
-         utx = new DummyUserTransaction(instance);
-         try {
-            Properties p = new Properties();
-            Context ctx = new InitialContext(p);
-            ctx.bind("java:/TransactionManager", instance);
-            ctx.bind("UserTransaction", utx);
-         } catch (NoInitialContextException nie) {
-            log.debug(nie.getMessage());
+         synchronized (DummyTransactionManager.class) {
+            if (instance == null) {
+               instance = new DummyTransactionManager();
+               utx = new DummyUserTransaction(instance);
+               try {
+                  Properties p = new Properties();
+                  Context ctx = new InitialContext(p);
+                  ctx.bind("java:/TransactionManager", instance);
+                  ctx.bind("UserTransaction", utx);
+               } catch (NoInitialContextException nie) {
+                  log.debug(nie.getMessage());
 
-         } catch (NamingException e) {
-            log.debug("binding of DummyTransactionManager failed", e);
+               } catch (NamingException e) {
+                  log.debug("binding of DummyTransactionManager failed", e);
+               }
+            }
          }
       }
       return instance;

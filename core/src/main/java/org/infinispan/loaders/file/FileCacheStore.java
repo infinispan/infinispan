@@ -8,6 +8,7 @@ import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.loaders.bucket.BucketBasedCacheStore;
 import org.infinispan.marshall.Marshaller;
+import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -109,20 +110,25 @@ public class FileCacheStore extends BucketBasedCacheStore {
          byte[] buffer = new byte[streamBufferSize];
          for (File file : files) {
             int bytesRead, totalBytesRead = 0;
-            FileInputStream fileInStream = new FileInputStream(file);
-            int sz = fileInStream.available();
-            BufferedInputStream bis = new BufferedInputStream(fileInStream);
-            objectOutput.writeObject(file.getName());
-            objectOutput.writeInt(sz);
+            BufferedInputStream bis = null;
+            FileInputStream fileInStream = null;
+            try {
+               fileInStream = new FileInputStream(file);
+               int sz = fileInStream.available();
+               bis = new BufferedInputStream(fileInStream);
+               objectOutput.writeObject(file.getName());
+               objectOutput.writeInt(sz);
 
-            while (sz > totalBytesRead) {
-               bytesRead = bis.read(buffer, 0, streamBufferSize);
-               if (bytesRead == -1) break;
-               totalBytesRead += bytesRead;
-               objectOutput.write(buffer, 0, bytesRead);
+               while (sz > totalBytesRead) {
+                  bytesRead = bis.read(buffer, 0, streamBufferSize);
+                  if (bytesRead == -1) break;
+                  totalBytesRead += bytesRead;
+                  objectOutput.write(buffer, 0, bytesRead);
+               }
+            } finally {
+               Util.closeStream(bis);
+               Util.closeStream(fileInStream);
             }
-            bis.close();
-            fileInStream.close();
          }
       } catch (IOException e) {
          throw new CacheLoaderException("I/O expcetion while generating stream", e);
@@ -135,8 +141,9 @@ public class FileCacheStore extends BucketBasedCacheStore {
          return;
       }
       for (File f : toDelete) {
-         f.delete();
-         if (f.exists()) log.warn("Had problems removing file {0}", f);
+         if (!f.delete()) {
+            log.warn("Had problems removing file {0}", f);
+         }
       }
    }
 
@@ -210,7 +217,9 @@ public class FileCacheStore extends BucketBasedCacheStore {
          location = "Infinispan-FileCacheStore"; // use relative path!
       location += File.separator + cache.getName();
       root = new File(location);
-      root.mkdirs();
+      if (!root.mkdirs()) {
+         log.warn("Problems creting the directory: " + root);  
+      }
       if (!root.exists()) {
          throw new ConfigurationException("Directory " + root.getAbsolutePath() + " does not exist and cannot be created!");
       }

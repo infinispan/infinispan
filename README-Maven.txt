@@ -168,7 +168,7 @@ This can be achieved by passing in the package name with a wildcard to the test 
 
 2.5. Skipping the test run
 --------------------------
-It is sometimes desirable to install the jboss cache package in your local repository without performing a full test run.
+It is sometimes desirable to install the Infinispan package in your local repository without performing a full test run.
 To do this, simply use the maven.test.skip.exec property:
 
    $ mvn -Dmaven.test.skip.exec=true install

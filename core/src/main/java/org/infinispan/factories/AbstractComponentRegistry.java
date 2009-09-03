@@ -857,6 +857,29 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
          return (priority < o.priority ? -1 : (priority == o.priority ? 0 : 1));
       }
 
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (!(o instanceof PrioritizedMethod)) return false;
+
+         PrioritizedMethod that = (PrioritizedMethod) o;
+
+         if (priority != that.priority) return false;
+         if (component != null ? !component.equals(that.component) : that.component != null) return false;
+         if (method != null ? !method.equals(that.method) : that.method != null) return false;
+
+         return true;
+      }
+
+      @Override
+      public int hashCode() {
+         int result = method != null ? method.hashCode() : 0;
+         result = 31 * result + (component != null ? component.hashCode() : 0);
+         result = 31 * result + priority;
+         return result;
+      }
+
       void invoke() {
          ReflectionUtil.invokeAccessibly(component.instance, method, null);
       }

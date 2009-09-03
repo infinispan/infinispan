@@ -1,14 +1,14 @@
 package org.infinispan.loaders;
 
+import org.infinispan.loaders.decorators.AsyncStoreConfig;
+import org.infinispan.loaders.decorators.SingletonStoreConfig;
+import org.infinispan.util.Util;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
-
-import org.infinispan.loaders.decorators.AsyncStoreConfig;
-import org.infinispan.loaders.decorators.SingletonStoreConfig;
-import org.infinispan.util.Util;
 
 /**
  * Configures {@link AbstractCacheStore}.  This allows you to tune a number of characteristics of the {@link
@@ -134,8 +134,8 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
       AbstractCacheStoreConfig other = (AbstractCacheStoreConfig) obj;
 
       return Util.safeEquals(this.cacheLoaderClassName, other.cacheLoaderClassName)
-            && (this.ignoreModifications == other.ignoreModifications)
-            && (this.fetchPersistentState == other.fetchPersistentState)
+            && (this.ignoreModifications.equals(other.ignoreModifications))
+            && (this.fetchPersistentState.equals(other.fetchPersistentState))
             && Util.safeEquals(this.singletonStore, other.singletonStore)
             && Util.safeEquals(this.async, other.async)
             && Util.safeEquals(this.purgeSynchronously, other.purgeSynchronously);

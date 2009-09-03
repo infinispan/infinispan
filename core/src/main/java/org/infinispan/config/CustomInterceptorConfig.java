@@ -21,7 +21,6 @@
  */
 package org.infinispan.config;
 
-import net.jcip.annotations.Immutable;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.util.TypedProperties;
 
@@ -49,7 +48,6 @@ import java.util.Properties;
  * @author Vladimir Blagojevic
  * @since 4.0
  */
-@Immutable
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name="interceptor")
 public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean {
@@ -303,7 +301,7 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
 
       CustomInterceptorConfig that = (CustomInterceptorConfig) o;
 
-      if (index != that.index) return false;
+      if (index != null && !index.equals(that.index)) return false;
       if (isFirst != that.isFirst) return false;
       if (isLast != that.isLast) return false;
       if (after != null ? !after.equals(that.after) : that.after != null) return false;

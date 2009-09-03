@@ -141,6 +141,7 @@ public class JoinTask extends RehashTask {
             log.info("Completed in {0}!", Util.prettyPrintTime(System.currentTimeMillis() - start));
       } catch (Exception e) {
          log.error("Caught exception!", e);
+         throw new CacheException("Unexpected exception", e);
       } finally {
          if (!unlocked) transactionLogger.unlockAndDisable();
          dmi.joinComplete = true;

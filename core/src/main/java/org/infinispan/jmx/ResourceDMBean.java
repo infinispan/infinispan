@@ -124,7 +124,7 @@ public class ResourceDMBean implements DynamicMBean {
       return obj;
    }
 
-   private void findDescription() {
+   private synchronized void findDescription() {
       MBean mbean = getObject().getClass().getAnnotation(MBean.class);
       if (mbean != null && mbean.description() != null && mbean.description().trim().length() > 0) {
          description = mbean.description();

@@ -535,60 +535,33 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    //   OVERRIDDEN METHODS
    // ------------------------------------------------------------------------------------------------------------
 
+
    @Override
    public boolean equals(Object o) {
       if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+      if (!(o instanceof Configuration)) return false;
 
       Configuration that = (Configuration) o;
 
-      if (locking.concurrencyLevel != that.locking.concurrencyLevel) return false;
-      if (eviction.maxEntries != that.eviction.maxEntries) return false;
-      if (eviction.wakeUpInterval != that.eviction.wakeUpInterval) return false;
-      if (expiration.lifespan != that.expiration.lifespan) return false;
-      if (expiration.maxIdle != that.expiration.maxIdle) return false;
-      if (jmxStatistics.enabled != that.jmxStatistics.enabled) return false;
-      if (clustering.stateRetrieval.fetchInMemoryState != that.clustering.stateRetrieval.fetchInMemoryState) return false;
-      if (invocationBatching.enabled  != that.invocationBatching.enabled ) return false;
-      if (clustering.l1.enabled != that.clustering.l1.enabled) return false;
-      if (clustering.l1.lifespan != that.clustering.l1.lifespan) return false;
-      if (clustering.hash.rehashWait != that.clustering.hash.rehashWait) return false;
-      if (clustering.l1.onRehash != that.clustering.l1.onRehash) return false;
-      if (locking.lockAcquisitionTimeout != that.locking.lockAcquisitionTimeout) return false;
-      if (clustering.hash.numOwners != that.clustering.hash.numOwners) return false;
-      if (clustering.async.replQueueInterval != that.clustering.async.replQueueInterval) return false;
-      if (clustering.async.replQueueMaxElements != that.clustering.async.replQueueMaxElements) return false;
-      if (clustering.stateRetrieval.timeout != that.clustering.stateRetrieval.timeout) return false;
-      if (transaction.syncCommitPhase != that.transaction.syncCommitPhase) return false;
-      if (clustering.sync.replTimeout != that.clustering.sync.replTimeout) return false;
-      if (clustering.hash.rehashRpcTimeout != that.clustering.hash.rehashRpcTimeout) return false;
-      if (transaction.syncRollbackPhase != that.transaction.syncRollbackPhase) return false;
-      if (transaction.useEagerLocking != that.transaction.useEagerLocking) return false;
-      if (lazyDeserialization.enabled != that.lazyDeserialization.enabled) return false;
-      if (locking.useLockStriping != that.locking.useLockStriping) return false;
-      if (clustering.async.useReplQueue != that.clustering.async.useReplQueue) return false;
-      if (locking.writeSkewCheck != that.locking.writeSkewCheck) return false;
-      if (loaders != null ? !loaders.equals(that.loaders) : that.loaders != null)
+      if (clustering != null ? !clustering.equals(that.clustering) : that.clustering != null) return false;
+      if (customInterceptors != null ? !customInterceptors.equals(that.customInterceptors) : that.customInterceptors != null)
          return false;
-      if (clustering.mode != that.clustering.mode) return false;
-      if (clustering.hash.consistentHashClass != null ? 
-               !clustering.hash.consistentHashClass.equals(that.clustering.hash.consistentHashClass) : 
-                  that.clustering.hash.consistentHashClass != null)
+      if (deadlockDetection != null ? !deadlockDetection.equals(that.deadlockDetection) : that.deadlockDetection != null)
          return false;
-      if (customInterceptors.customInterceptors != null ? 
-               !customInterceptors.customInterceptors.equals(that.customInterceptors.customInterceptors) : 
-                  that.customInterceptors.customInterceptors != null)
+      if (eviction != null ? !eviction.equals(that.eviction) : that.eviction != null) return false;
+      if (expiration != null ? !expiration.equals(that.expiration) : that.expiration != null) return false;
+      if (globalConfiguration != null ? !globalConfiguration.equals(that.globalConfiguration) : that.globalConfiguration != null)
          return false;
-      if (eviction.strategy != that.eviction.strategy) return false;
-      if (globalConfiguration != null ? !globalConfiguration.equals(that.globalConfiguration) : 
-         that.globalConfiguration != null)
+      if (invocationBatching != null ? !invocationBatching.equals(that.invocationBatching) : that.invocationBatching != null)
          return false;
-      if (locking.isolationLevel != that.locking.isolationLevel) return false;
-      if (transaction.transactionManagerLookupClass != null ?
-               !transaction.transactionManagerLookupClass.equals(that.transaction.transactionManagerLookupClass) : 
-                  that.transaction.transactionManagerLookupClass != null)
+      if (jmxStatistics != null ? !jmxStatistics.equals(that.jmxStatistics) : that.jmxStatistics != null) return false;
+      if (lazyDeserialization != null ? !lazyDeserialization.equals(that.lazyDeserialization) : that.lazyDeserialization != null)
          return false;
-      if (clustering.async.asyncMarshalling != that.clustering.async.asyncMarshalling) return false;
+      if (loaders != null ? !loaders.equals(that.loaders) : that.loaders != null) return false;
+      if (locking != null ? !locking.equals(that.locking) : that.locking != null) return false;
+      if (name != null ? !name.equals(that.name) : that.name != null) return false;
+      if (transaction != null ? !transaction.equals(that.transaction) : that.transaction != null) return false;
+      if (unsafe != null ? !unsafe.equals(that.unsafe) : that.unsafe != null) return false;
 
       return true;
    }
@@ -596,42 +569,19 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    @Override
    public int hashCode() {
       int result = globalConfiguration != null ? globalConfiguration.hashCode() : 0;
-      result = 31 * result + (locking.useLockStriping ? 1 : 0);
-      result = 31 * result + (clustering.async.useReplQueue ? 1 : 0);
-      result = 31 * result + clustering.async.replQueueMaxElements;
-      result = 31 * result + (int) (clustering.async.replQueueInterval ^ (clustering.async.replQueueInterval >>> 32));
-      result = 31 * result + (jmxStatistics.enabled ? 1 : 0);
-      result = 31 * result + (clustering.stateRetrieval.fetchInMemoryState ? 1 : 0);
-      result = 31 * result + (int) (locking.lockAcquisitionTimeout ^ (locking.lockAcquisitionTimeout >>> 32));
-      result = 31 * result + (int) (clustering.sync.replTimeout ^ (clustering.sync.replTimeout >>> 32));
-      result = 31 * result + (clustering.mode != null ? clustering.mode.hashCode() : 0);
-      result = 31 * result + (int) (clustering.stateRetrieval.timeout ^ (clustering.stateRetrieval.timeout >>> 32));
-      result = 31 * result + (locking.isolationLevel != null ? locking.isolationLevel.hashCode() : 0);
-      result = 31 * result + (transaction.transactionManagerLookupClass != null ? 
-               transaction.transactionManagerLookupClass.hashCode() : 0);
+      result = 31 * result + (name != null ? name.hashCode() : 0);
+      result = 31 * result + (locking != null ? locking.hashCode() : 0);
       result = 31 * result + (loaders != null ? loaders.hashCode() : 0);
-      result = 31 * result + (transaction.syncCommitPhase ? 1 : 0);
-      result = 31 * result + (transaction.syncRollbackPhase ? 1 : 0);
-      result = 31 * result + (transaction.useEagerLocking ? 1 : 0);
-      result = 31 * result + (lazyDeserialization.enabled ? 1 : 0);
-      result = 31 * result + (customInterceptors.customInterceptors != null ? 
-               customInterceptors.customInterceptors.hashCode() : 0);
-      result = 31 * result + (locking.writeSkewCheck ? 1 : 0);
-      result = 31 * result + locking.concurrencyLevel;
-      result = 31 * result + (invocationBatching.enabled  ? 1 : 0);
-      result = 31 * result + (int) (eviction.wakeUpInterval ^ (eviction.wakeUpInterval >>> 32));
-      result = 31 * result + (eviction.strategy != null ? eviction.strategy.hashCode() : 0);
-      result = 31 * result + eviction.maxEntries;
-      result = 31 * result + (int) (expiration.lifespan ^ (expiration.lifespan >>> 32));
-      result = 31 * result + (int) (expiration.maxIdle ^ (expiration.maxIdle >>> 32));
-      result = 31 * result + (clustering.l1.enabled ? 1 : 0);
-      result = 31 * result + (int) (clustering.l1.lifespan ^ (clustering.l1.lifespan >>> 32));
-      result = 31 * result + (int) (clustering.hash.rehashWait ^ (clustering.hash.rehashWait >>> 32));
-      result = 31 * result + (int) (clustering.hash.rehashRpcTimeout ^ (clustering.hash.rehashRpcTimeout >>> 32));
-      result = 31 * result + (clustering.l1.onRehash ? 1 : 0);
-      result = 31 * result + (clustering.hash.consistentHashClass != null ? clustering.hash.consistentHashClass.hashCode() : 0);
-      result = 31 * result + clustering.hash.numOwners;
-      result = 31 * result + (clustering.async.asyncMarshalling ? 1 : 0);
+      result = 31 * result + (transaction != null ? transaction.hashCode() : 0);
+      result = 31 * result + (customInterceptors != null ? customInterceptors.hashCode() : 0);
+      result = 31 * result + (eviction != null ? eviction.hashCode() : 0);
+      result = 31 * result + (expiration != null ? expiration.hashCode() : 0);
+      result = 31 * result + (unsafe != null ? unsafe.hashCode() : 0);
+      result = 31 * result + (clustering != null ? clustering.hashCode() : 0);
+      result = 31 * result + (jmxStatistics != null ? jmxStatistics.hashCode() : 0);
+      result = 31 * result + (lazyDeserialization != null ? lazyDeserialization.hashCode() : 0);
+      result = 31 * result + (invocationBatching != null ? invocationBatching.hashCode() : 0);
+      result = 31 * result + (deadlockDetection != null ? deadlockDetection.hashCode() : 0);
       return result;
    }
 
@@ -639,6 +589,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    public Configuration clone() {
       try {
          Configuration dolly = (Configuration) super.clone();
+         if (clustering != null) dolly.clustering = clustering.clone();
          if (globalConfiguration!= null) dolly.globalConfiguration = globalConfiguration.clone();
          if (locking != null) dolly.locking = (LockingType) locking.clone();
          if (loaders != null) dolly.loaders = loaders.clone();
@@ -758,6 +709,37 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          testImmutability("useEagerLocking");
          this.useEagerLocking = useEagerLocking;
       }
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (!(o instanceof TransactionType)) return false;
+
+         TransactionType that = (TransactionType) o;
+
+         if (syncCommitPhase != null ? !syncCommitPhase.equals(that.syncCommitPhase) : that.syncCommitPhase != null)
+            return false;
+         if (syncRollbackPhase != null ? !syncRollbackPhase.equals(that.syncRollbackPhase) : that.syncRollbackPhase != null)
+            return false;
+         if (transactionManagerLookup != null ? !transactionManagerLookup.equals(that.transactionManagerLookup) : that.transactionManagerLookup != null)
+            return false;
+         if (transactionManagerLookupClass != null ? !transactionManagerLookupClass.equals(that.transactionManagerLookupClass) : that.transactionManagerLookupClass != null)
+            return false;
+         if (useEagerLocking != null ? !useEagerLocking.equals(that.useEagerLocking) : that.useEagerLocking != null)
+            return false;
+
+         return true;
+      }
+
+      @Override
+      public int hashCode() {
+         int result = transactionManagerLookupClass != null ? transactionManagerLookupClass.hashCode() : 0;
+         result = 31 * result + (transactionManagerLookup != null ? transactionManagerLookup.hashCode() : 0);
+         result = 31 * result + (syncCommitPhase != null ? syncCommitPhase.hashCode() : 0);
+         result = 31 * result + (syncRollbackPhase != null ? syncRollbackPhase.hashCode() : 0);
+         result = 31 * result + (useEagerLocking != null ? useEagerLocking.hashCode() : 0);
+         return result;
+      }
    }
    /**
     * 
@@ -820,7 +802,37 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          testImmutability("concurrencyLevel");
          this.concurrencyLevel = concurrencyLevel;
       }
-   } 
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (!(o instanceof LockingType)) return false;
+
+         LockingType that = (LockingType) o;
+
+         if (concurrencyLevel != null ? !concurrencyLevel.equals(that.concurrencyLevel) : that.concurrencyLevel != null)
+            return false;
+         if (isolationLevel != that.isolationLevel) return false;
+         if (lockAcquisitionTimeout != null ? !lockAcquisitionTimeout.equals(that.lockAcquisitionTimeout) : that.lockAcquisitionTimeout != null)
+            return false;
+         if (useLockStriping != null ? !useLockStriping.equals(that.useLockStriping) : that.useLockStriping != null)
+            return false;
+         if (writeSkewCheck != null ? !writeSkewCheck.equals(that.writeSkewCheck) : that.writeSkewCheck != null)
+            return false;
+
+         return true;
+      }
+
+      @Override
+      public int hashCode() {
+         int result = lockAcquisitionTimeout != null ? lockAcquisitionTimeout.hashCode() : 0;
+         result = 31 * result + (isolationLevel != null ? isolationLevel.hashCode() : 0);
+         result = 31 * result + (writeSkewCheck != null ? writeSkewCheck.hashCode() : 0);
+         result = 31 * result + (useLockStriping != null ? useLockStriping.hashCode() : 0);
+         result = 31 * result + (concurrencyLevel != null ? concurrencyLevel.hashCode() : 0);
+         return result;
+      }
+   }
    
    /**
     * 
@@ -877,6 +889,36 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          dolly.async = (AsyncType) async.clone();
          dolly.hash = (HashType) hash.clone();
          return dolly;
+      }
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (!(o instanceof ClusteringType)) return false;
+
+         ClusteringType that = (ClusteringType) o;
+
+         if (async != null ? !async.equals(that.async) : that.async != null) return false;
+         if (hash != null ? !hash.equals(that.hash) : that.hash != null) return false;
+         if (l1 != null ? !l1.equals(that.l1) : that.l1 != null) return false;
+         if (mode != that.mode) return false;
+         if (stateRetrieval != null ? !stateRetrieval.equals(that.stateRetrieval) : that.stateRetrieval != null)
+            return false;
+         if (sync != null ? !sync.equals(that.sync) : that.sync != null) return false;
+
+         return true;
+      }
+
+      @Override
+      public int hashCode() {
+         int result = stringMode != null ? stringMode.hashCode() : 0;
+         result = 31 * result + (mode != null ? mode.hashCode() : 0);
+         result = 31 * result + (sync != null ? sync.hashCode() : 0);
+         result = 31 * result + (stateRetrieval != null ? stateRetrieval.hashCode() : 0);
+         result = 31 * result + (l1 != null ? l1.hashCode() : 0);
+         result = 31 * result + (async != null ? async.hashCode() : 0);
+         result = 31 * result + (hash != null ? hash.hashCode() : 0);
+         return result;
       }
    }
    
@@ -946,7 +988,37 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          super();
          this.readFromXml = readFromXml;
       }
-      
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (!(o instanceof AsyncType)) return false;
+
+         AsyncType asyncType = (AsyncType) o;
+
+         if (readFromXml != asyncType.readFromXml) return false;
+         if (asyncMarshalling != null ? !asyncMarshalling.equals(asyncType.asyncMarshalling) : asyncType.asyncMarshalling != null)
+            return false;
+         if (replQueueInterval != null ? !replQueueInterval.equals(asyncType.replQueueInterval) : asyncType.replQueueInterval != null)
+            return false;
+         if (replQueueMaxElements != null ? !replQueueMaxElements.equals(asyncType.replQueueMaxElements) : asyncType.replQueueMaxElements != null)
+            return false;
+         if (useReplQueue != null ? !useReplQueue.equals(asyncType.useReplQueue) : asyncType.useReplQueue != null)
+            return false;
+
+         return true;
+      }
+
+      @Override
+      public int hashCode() {
+         int result = (readFromXml ? 1 : 0);
+         result = 31 * result + (useReplQueue != null ? useReplQueue.hashCode() : 0);
+         result = 31 * result + (replQueueMaxElements != null ? replQueueMaxElements.hashCode() : 0);
+         result = 31 * result + (replQueueInterval != null ? replQueueInterval.hashCode() : 0);
+         result = 31 * result + (asyncMarshalling != null ? asyncMarshalling.hashCode() : 0);
+         return result;
+      }
+
       private AsyncType(){
          this(true);
       }
@@ -1003,6 +1075,26 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          testImmutability("maxIdle");
          this.maxIdle = maxIdle;
       }
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (!(o instanceof ExpirationType)) return false;
+
+         ExpirationType that = (ExpirationType) o;
+
+         if (lifespan != null ? !lifespan.equals(that.lifespan) : that.lifespan != null) return false;
+         if (maxIdle != null ? !maxIdle.equals(that.maxIdle) : that.maxIdle != null) return false;
+
+         return true;
+      }
+
+      @Override
+      public int hashCode() {
+         int result = lifespan != null ? lifespan.hashCode() : 0;
+         result = 31 * result + (maxIdle != null ? maxIdle.hashCode() : 0);
+         return result;
+      }
    }
    
    /**
@@ -1041,6 +1133,29 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          testImmutability("maxEntries");
          this.maxEntries = maxEntries;
       }
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (!(o instanceof EvictionType)) return false;
+
+         EvictionType that = (EvictionType) o;
+
+         if (maxEntries != null ? !maxEntries.equals(that.maxEntries) : that.maxEntries != null) return false;
+         if (strategy != that.strategy) return false;
+         if (wakeUpInterval != null ? !wakeUpInterval.equals(that.wakeUpInterval) : that.wakeUpInterval != null)
+            return false;
+
+         return true;
+      }
+
+      @Override
+      public int hashCode() {
+         int result = wakeUpInterval != null ? wakeUpInterval.hashCode() : 0;
+         result = 31 * result + (strategy != null ? strategy.hashCode() : 0);
+         result = 31 * result + (maxEntries != null ? maxEntries.hashCode() : 0);
+         return result;
+      }
    }
    
    /**
@@ -1073,6 +1188,27 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          testImmutability("timeout");
          this.timeout = timeout;
       }
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (!(o instanceof StateRetrievalType)) return false;
+
+         StateRetrievalType that = (StateRetrievalType) o;
+
+         if (fetchInMemoryState != null ? !fetchInMemoryState.equals(that.fetchInMemoryState) : that.fetchInMemoryState != null)
+            return false;
+         if (timeout != null ? !timeout.equals(that.timeout) : that.timeout != null) return false;
+
+         return true;
+      }
+
+      @Override
+      public int hashCode() {
+         int result = fetchInMemoryState != null ? fetchInMemoryState.hashCode() : 0;
+         result = 31 * result + (timeout != null ? timeout.hashCode() : 0);
+         return result;
+      }
    }
    
    /**
@@ -1094,6 +1230,24 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       public void setReplTimeout(Long replTimeout) {
          testImmutability("replTimeout");
          this.replTimeout = replTimeout;
+      }
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (!(o instanceof SyncType)) return false;
+
+         SyncType syncType = (SyncType) o;
+
+         if (replTimeout != null ? !replTimeout.equals(syncType.replTimeout) : syncType.replTimeout != null)
+            return false;
+
+         return true;
+      }
+
+      @Override
+      public int hashCode() {
+         return replTimeout != null ? replTimeout.hashCode() : 0;
       }
    }
    
@@ -1147,6 +1301,32 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          testImmutability("rehashRpcTimeout");
          this.rehashRpcTimeout = rehashRpcTimeout;
       }
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (!(o instanceof HashType)) return false;
+
+         HashType hashType = (HashType) o;
+
+         if (consistentHashClass != null ? !consistentHashClass.equals(hashType.consistentHashClass) : hashType.consistentHashClass != null)
+            return false;
+         if (numOwners != null ? !numOwners.equals(hashType.numOwners) : hashType.numOwners != null) return false;
+         if (rehashRpcTimeout != null ? !rehashRpcTimeout.equals(hashType.rehashRpcTimeout) : hashType.rehashRpcTimeout != null)
+            return false;
+         if (rehashWait != null ? !rehashWait.equals(hashType.rehashWait) : hashType.rehashWait != null) return false;
+
+         return true;
+      }
+
+      @Override
+      public int hashCode() {
+         int result = consistentHashClass != null ? consistentHashClass.hashCode() : 0;
+         result = 31 * result + (numOwners != null ? numOwners.hashCode() : 0);
+         result = 31 * result + (rehashWait != null ? rehashWait.hashCode() : 0);
+         result = 31 * result + (rehashRpcTimeout != null ? rehashRpcTimeout.hashCode() : 0);
+         return result;
+      }
    }
    
    /**
@@ -1186,6 +1366,28 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          testImmutability("onRehash");
          this.onRehash = onRehash;
       }
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (!(o instanceof L1Type)) return false;
+
+         L1Type l1Type = (L1Type) o;
+
+         if (enabled != null ? !enabled.equals(l1Type.enabled) : l1Type.enabled != null) return false;
+         if (lifespan != null ? !lifespan.equals(l1Type.lifespan) : l1Type.lifespan != null) return false;
+         if (onRehash != null ? !onRehash.equals(l1Type.onRehash) : l1Type.onRehash != null) return false;
+
+         return true;
+      }
+
+      @Override
+      public int hashCode() {
+         int result = enabled != null ? enabled.hashCode() : 0;
+         result = 31 * result + (lifespan != null ? lifespan.hashCode() : 0);
+         result = 31 * result + (onRehash != null ? onRehash.hashCode() : 0);
+         return result;
+      }
    }
    /**
     * 
@@ -1208,6 +1410,23 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       public void setEnabled(Boolean enabled) {
          testImmutability("enabled");
          this.enabled = enabled;
+      }
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (!(o instanceof BooleanAttributeType)) return false;
+
+         BooleanAttributeType that = (BooleanAttributeType) o;
+
+         if (enabled != null ? !enabled.equals(that.enabled) : that.enabled != null) return false;
+
+         return true;
+      }
+
+      @Override
+      public int hashCode() {
+         return enabled != null ? enabled.hashCode() : 0;
       }
    }
    
@@ -1240,6 +1459,26 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          testImmutability("spinDuration");
          this.spinDuration = spinDuration;
       }
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (!(o instanceof DeadlockDetectionType)) return false;
+
+         DeadlockDetectionType that = (DeadlockDetectionType) o;
+
+         if (enabled != null ? !enabled.equals(that.enabled) : that.enabled != null) return false;
+         if (spinDuration != null ? !spinDuration.equals(that.spinDuration) : that.spinDuration != null) return false;
+
+         return true;
+      }
+
+      @Override
+      public int hashCode() {
+         int result = enabled != null ? enabled.hashCode() : 0;
+         result = 31 * result + (spinDuration != null ? spinDuration.hashCode() : 0);
+         return result;
+      }
    }
    
    /**
@@ -1262,6 +1501,24 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       public void setUnreliableReturnValues(Boolean unreliableReturnValues) {
          testImmutability("unreliableReturnValues");
          this.unreliableReturnValues = unreliableReturnValues;
+      }
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (!(o instanceof UnsafeType)) return false;
+
+         UnsafeType that = (UnsafeType) o;
+
+         if (unreliableReturnValues != null ? !unreliableReturnValues.equals(that.unreliableReturnValues) : that.unreliableReturnValues != null)
+            return false;
+
+         return true;
+      }
+
+      @Override
+      public int hashCode() {
+         return unreliableReturnValues != null ? unreliableReturnValues.hashCode() : 0;
       }
    }
    
@@ -1289,6 +1546,24 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
             }
          }
          return dolly;
+      }
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (!(o instanceof CustomInterceptorsType)) return false;
+
+         CustomInterceptorsType that = (CustomInterceptorsType) o;
+
+         if (customInterceptors != null ? !customInterceptors.equals(that.customInterceptors) : that.customInterceptors != null)
+            return false;
+
+         return true;
+      }
+
+      @Override
+      public int hashCode() {
+         return customInterceptors != null ? customInterceptors.hashCode() : 0;
       }
    }
 

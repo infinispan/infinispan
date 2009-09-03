@@ -364,9 +364,8 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
          return false;
       if (transport.properties != null ? !transport.properties.equals(that.transport.properties) : that.transport.properties != null)
          return false;
-      if (transport.distributedSyncTimeout != that.transport.distributedSyncTimeout) return false;
+      return !(transport.distributedSyncTimeout != null && !transport.distributedSyncTimeout.equals(that.transport.distributedSyncTimeout));
 
-      return true;
    }
 
    @Override

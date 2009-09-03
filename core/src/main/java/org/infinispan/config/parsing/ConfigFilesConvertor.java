@@ -22,6 +22,7 @@
 package org.infinispan.config.parsing;
 
 import org.infinispan.util.FileLookup;
+import org.infinispan.util.Util;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
@@ -53,10 +54,10 @@ import java.util.List;
  */
 public class ConfigFilesConvertor {
 
-   private static final String JBOSS_CACHE3X = "JBossCache3x";
-   private static final String EHCACHE_CACHE16X = "Ehcache16x";
-   private static final String EHCACHE_CACHE15X = "Ehcache15x";
-   public static final String[] SUPPORTED_FORMATS = {JBOSS_CACHE3X, EHCACHE_CACHE15X, EHCACHE_CACHE16X};
+   static final String JBOSS_CACHE3X = "JBossCache3x";
+   static final String EHCACHE_CACHE16X = "Ehcache16x";
+   static final String EHCACHE_CACHE15X = "Ehcache15x";
+   static final String[] SUPPORTED_FORMATS = {JBOSS_CACHE3X, EHCACHE_CACHE15X, EHCACHE_CACHE16X};
 
    public void parse(InputStream is, OutputStream os, String xsltFile) throws Exception {
       InputStream xsltInStream = new FileLookup().lookupFile(xsltFile);
@@ -162,23 +163,38 @@ public class ConfigFilesConvertor {
          System.exit(1);
       }
       ConfigFilesConvertor convertor = new ConfigFilesConvertor();
-      FileInputStream is = new FileInputStream(oldConfig);
-      File destination = new File(destinationName);
-      if (!destination.exists()) destination.createNewFile();
-      FileOutputStream fos = new FileOutputStream(destinationName);
-      convertor.parse(is, fos, "xslt/jbc3x2infinispan4x.xslt");
-      fos.close();
-      is.close();
-
+      FileInputStream is = null;
+      FileOutputStream fos = null;
       File jgroupsConfigFile = new File("jgroupsConfig.xml");
-      if (jgroupsConfigFile.exists()) jgroupsConfigFile.delete();
-      jgroupsConfigFile.createNewFile();
-      is = new FileInputStream(oldConfig);
-      fos = new FileOutputStream(jgroupsConfigFile);
-      convertor = new ConfigFilesConvertor();
-      convertor.parse(is, fos, "xslt/jgroupsFileGen.xslt");
-      is.close();
-      fos.close();
+      try {
+         is = new FileInputStream(oldConfig);
+         File destination = new File(destinationName);
+         if (!destination.exists()) {
+            if (!destination.createNewFile()) {
+               System.err.println("Problems creating destination file: " + destination);
+            }
+         }
+         fos = new FileOutputStream(destinationName);
+         convertor.parse(is, fos, "xslt/jbc3x2infinispan4x.xslt");
+         fos.close();
+         is.close();
+
+
+         if (jgroupsConfigFile.exists())
+            if (!jgroupsConfigFile.delete()) {
+               System.err.println("Problems deleting existing jgroups file: " + jgroupsConfigFile);
+            }
+         if (!jgroupsConfigFile.createNewFile()) {
+            System.err.println("Could not create jgroupsConfigFile: " + jgroupsConfigFile);
+         }
+         is = new FileInputStream(oldConfig);
+         fos = new FileOutputStream(jgroupsConfigFile);
+         convertor = new ConfigFilesConvertor();
+         convertor.parse(is, fos, "xslt/jgroupsFileGen.xslt");
+      } finally {
+         Util.closeStream(is);
+         Util.flushAndCloseStream(fos);
+      }
 
       //now this means that the generated file is basically empty, so delete ie
       if (jgroupsConfigFile.length() < 5) {
@@ -193,18 +209,24 @@ public class ConfigFilesConvertor {
          System.exit(1);
       }
       ConfigFilesConvertor convertor = new ConfigFilesConvertor();
-      FileInputStream is = new FileInputStream(oldConfig);
-      File destination = new File(destinationName);
-      if (!destination.exists()) {
-         destination.createNewFile();
-      }
-      
-      FileOutputStream fos = new FileOutputStream(destinationName);
+      FileInputStream is = null;
+      FileOutputStream fos = null;
+
       try {
+
+         is = new FileInputStream(oldConfig);
+         File destination = new File(destinationName);
+         if (!destination.exists()) {
+            if (!destination.createNewFile()) {
+               System.err.println("Warn! Could not create file " + destination);
+            }
+         }
+
+         fos = new FileOutputStream(destinationName);
          convertor.parse(is, fos, "xslt/ehcache16x2infinispan4x.xslt");
       } finally {
-         fos.close();
-         is.close();
+         Util.flushAndCloseStream(fos);
+         Util.closeStream(is);
       }
    }
 

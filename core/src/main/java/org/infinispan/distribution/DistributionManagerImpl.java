@@ -152,7 +152,7 @@ public class DistributionManagerImpl implements DistributionManager {
 
 
    public void rehash(List<Address> newMembers, List<Address> oldMembers) {
-      boolean join = oldMembers == null || oldMembers.size() < newMembers.size();
+      boolean join = oldMembers.size() < newMembers.size();
       // on view change, we should update our view
       log.info("Detected a veiw change.  Member list changed from {0} to {1}", oldMembers, newMembers);
 

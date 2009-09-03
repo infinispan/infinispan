@@ -24,8 +24,6 @@ package org.infinispan.interceptors;
 import org.infinispan.CacheException;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -47,27 +45,19 @@ import java.util.List;
  */
 @Scope(Scopes.NAMED_CACHE)
 public class InterceptorChain {
+
+   private static final Log log = LogFactory.getLog(InterceptorChain.class);
+
    /**
     * reference to the first interceptor in the chain
     */
-   private CommandInterceptor firstInChain;
-
-   /**
-    * used for invoking commands on the chain
-    */
-   private InvocationContextContainer icc;
-   private static final Log log = LogFactory.getLog(InterceptorChain.class);
+   private volatile CommandInterceptor firstInChain;
 
    /**
     * Constructs an interceptor chain having the supplied interceptor as first.
     */
    public InterceptorChain(CommandInterceptor first) {
       this.firstInChain = first;
-   }
-
-   @Inject
-   public void initialize(InvocationContextContainer icc) {
-      this.icc = icc;
    }
 
    @Start
@@ -108,7 +98,7 @@ public class InterceptorChain {
     * @throws IllegalArgumentException if the position is invalid (e.g. 5 and there are only 2 interceptors in the
     *                                  chain)
     */
-   public synchronized void removeInterceptor(int position) {
+   public void removeInterceptor(int position) {
       if (firstInChain == null) return;
       if (position == 0) {
          firstInChain = firstInChain.getNext();
@@ -162,7 +152,7 @@ public class InterceptorChain {
    /**
     * Removes all the occurences of supplied interceptor type from the chain.
     */
-   public synchronized void removeInterceptor(Class<? extends CommandInterceptor> clazz) {
+   public void removeInterceptor(Class<? extends CommandInterceptor> clazz) {
       if (firstInChain.getClass() == clazz) {
          firstInChain = firstInChain.getNext();
       }
@@ -182,7 +172,7 @@ public class InterceptorChain {
     *
     * @return true if the interceptor was added; i.e. the afterInterceptor exists
     */
-   public synchronized boolean addInterceptorAfter(CommandInterceptor toAdd, Class<? extends CommandInterceptor> afterInterceptor) {
+   public boolean addInterceptorAfter(CommandInterceptor toAdd, Class<? extends CommandInterceptor> afterInterceptor) {
       CommandInterceptor it = firstInChain;
       while (it != null) {
          if (it.getClass().equals(afterInterceptor)) {
@@ -200,7 +190,7 @@ public class InterceptorChain {
     *
     * @return true if the interceptor was added; i.e. the afterInterceptor exists
     */
-   public synchronized boolean addInterceptorBefore(CommandInterceptor toAdd, Class<? extends CommandInterceptor> beforeInterceptor) {
+   public boolean addInterceptorBefore(CommandInterceptor toAdd, Class<? extends CommandInterceptor> beforeInterceptor) {
       if (firstInChain.getClass().equals(beforeInterceptor)) {
          toAdd.setNext(firstInChain);
          firstInChain = toAdd;
@@ -221,7 +211,7 @@ public class InterceptorChain {
    /**
     * Appends at the end.
     */
-   public void appendIntereceptor(CommandInterceptor ci) {
+   public synchronized void appendIntereceptor(CommandInterceptor ci) {
       CommandInterceptor it = firstInChain;
       while (it.hasNext()) it = it.getNext();
       it.setNext(ci);
@@ -314,7 +304,7 @@ public class InterceptorChain {
       return false;
    }
 
-   public boolean containsInterceptorType(Class<? extends CommandInterceptor> interceptorType) {
+   public synchronized boolean containsInterceptorType(Class<? extends CommandInterceptor> interceptorType) {
       CommandInterceptor it = firstInChain;
       while (it != null) {
          if (it.getClass().equals(interceptorType)) return true;

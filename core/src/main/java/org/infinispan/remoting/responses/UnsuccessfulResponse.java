@@ -1,11 +1,11 @@
 package org.infinispan.remoting.responses;
 
+import org.infinispan.marshall.Ids;
+import org.infinispan.marshall.Marshallable;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-
-import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshallable;
 
 /**
  * An unsuccessful response
@@ -26,7 +26,8 @@ public class UnsuccessfulResponse extends ValidResponse {
 
    @Override
    public boolean equals(Object o) {
-      return o.getClass().equals(UnsuccessfulResponse.class);
+      if (o == null) return false;
+      return o.getClass().equals(this.getClass());
    }
 
    @Override
