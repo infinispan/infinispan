@@ -197,7 +197,7 @@ public class TxInterceptor extends CommandInterceptor {
    }
 
    private boolean shouldEnlist(InvocationContext ctx) {
-      return ctx.isInTxScope() & ctx.isOriginLocal();
+      return ctx.isInTxScope() && ctx.isOriginLocal();
    }
 
    private boolean isLocalModeForced(InvocationContext icx) {
