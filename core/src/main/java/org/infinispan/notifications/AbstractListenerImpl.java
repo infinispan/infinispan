@@ -109,10 +109,12 @@ public abstract class AbstractListenerImpl {
       // now try all methods on the listener for anything that we like.  Note that only PUBLIC methods are scanned.
       for (Method m : listener.getClass().getMethods()) {
          // loop through all valid method annotations
-         for (Class<? extends Annotation> annotation : allowedListeners.keySet()) {
-            if (m.isAnnotationPresent(annotation)) {
-               testListenerMethodValidity(m, allowedListeners.get(annotation), annotation.getName());
-               addListenerInvocation(annotation, new ListenerInvocation(listener, m, sync));
+         for (Map.Entry<Class<? extends Annotation>,Class> annotationEntry : allowedListeners.entrySet()) {
+            Class<? extends Annotation> key = annotationEntry.getKey();
+            Class value = annotationEntry.getValue();
+            if (m.isAnnotationPresent(key)) {
+               testListenerMethodValidity(m, value, key.getName());
+               addListenerInvocation(key, new ListenerInvocation(listener, m, sync));
                foundMethods = true;
             }
          }
