@@ -225,7 +225,6 @@ public class SimpleDataContainer implements DataContainer {
    private class MortalInmortalIterator {
       Iterator<Iterator<InternalCacheEntry>> metaIterator;
       Iterator<InternalCacheEntry> currentIterator;
-      InternalCacheEntry next;
 
       private MortalInmortalIterator(Iterator<InternalCacheEntry> immortalIterator, Iterator<InternalCacheEntry> mortalIterator) {
          metaIterator = Arrays.asList(immortalIterator, mortalIterator).iterator();
