@@ -181,11 +181,15 @@ public class ConstantObjectTable implements ObjectTable {
    public void start(RemoteCommandFactory cmdFactory, org.infinispan.marshall.Marshaller ispnMarshaller) {
       HashSet<Integer> ids = new HashSet<Integer>();
 
-      try {
          for (Map.Entry<String, String> entry : JDK_EXTERNALIZERS.entrySet()) {
             try {
                Class clazz = Util.loadClass(entry.getKey());
-               Externalizer ext = (Externalizer) Util.getInstance(entry.getValue());
+               Externalizer ext = null;
+               try {
+                  ext = (Externalizer) Util.getInstance(entry.getValue());
+               } catch (Exception e) {
+                  throw new CacheException("Could not instantiate entry: " + entry,e);
+               }
                Marshallable marshallable = ReflectionUtil.getAnnotation(ext.getClass(), Marshallable.class);
                int id = marshallable.id();
                ids.add(id);
@@ -204,7 +208,12 @@ public class ConstantObjectTable implements ObjectTable {
                Marshallable marshallable = ReflectionUtil.getAnnotation(clazz, Marshallable.class);
                if (marshallable != null && !marshallable.externalizer().equals(Externalizer.class)) {
                   int id = marshallable.id();
-                  Externalizer ext = Util.getInstance(marshallable.externalizer());
+                  Externalizer ext = null;
+                  try {
+                     ext = Util.getInstance(marshallable.externalizer());
+                  } catch (Exception e) {
+                     throw new CacheException("Could not instantiate the externalizer: " + marshallable.externalizer(), e);
+                  }
                   if (!ids.add(id))
                      throw new CacheException("Duplicate id found! id=" + id + " in " + ext.getClass().getName() + " is shared by another marshallable class.");
                   if (ext instanceof ReplicableCommandExternalizer) {
@@ -223,9 +232,6 @@ public class ConstantObjectTable implements ObjectTable {
                   log.debug("Unable to load class (ignore if class belonging to a module not in use): {0}", e.getMessage());
             }
          }
-      } catch (Exception e) {
-         throw new CacheException("Unable to instantiate Externalizer class", e);
-      }
    }
 
    public void stop() {
