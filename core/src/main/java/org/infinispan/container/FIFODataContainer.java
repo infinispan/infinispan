@@ -259,7 +259,7 @@ public class FIFODataContainer implements DataContainer {
          LinkedEntry l1 = tail.p;
          if (isMarkedForRemoval(l1) || entry.n != tail) break;
          if (tail.casPrev(l1, entry)) {
-            if (isMarkedForRemoval(entry.p)) entry = correctPrev(entry, tail);
+            if (isMarkedForRemoval(entry.p)) correctPrev(entry, tail);
             break;
          }
          backoffTime = backoff(backoffTime);
