@@ -73,7 +73,7 @@ public class DeadlockDetectingInterceptor extends CommandInterceptor {
                   log.trace("Marking the transaction for rollback! : " + transaction);
                if (transaction == null) {
                   throw new IllegalStateException("We're running in a local transaction, there MUST be one " +
-                        "associated witht the local thread but none found! " + transaction);
+                        "associated witht the local thread but none found! (null)");
                }
                transaction.setRollbackOnly();
                txTable.removeLocalTransaction(transaction);
