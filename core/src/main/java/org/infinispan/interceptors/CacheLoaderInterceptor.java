@@ -130,7 +130,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
 
          // Reuse the lock and create a new entry for loading
          MVCCEntry n = entryFactory.wrapEntryForWriting(ctx, key, true, false, keyLocked, false);
-         n = loadEntry(ctx, key, n);
+         loadEntry(ctx, key, n);
          return true;
       } else {
          return true;
