@@ -43,4 +43,9 @@ public class InvalidateL1Command extends InvalidateCommand {
       }
       return null;
    }
+
+   @Override
+   public boolean equals(Object o) {
+      return this == o || o instanceof InvalidateL1Command && super.equals(o);
+   }
 }
