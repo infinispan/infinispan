@@ -179,16 +179,16 @@ public class XmlConfigHelper {
     */
    public static String getElementContent(Element element, boolean trim) {
       NodeList nl = element.getChildNodes();
-      String attributeText = "";
+      StringBuilder attributeText = new StringBuilder();
       for (int i = 0; i < nl.getLength(); i++) {
          Node n = nl.item(i);
          if (n instanceof Text) {
-            attributeText += StringPropertyReplacer.replaceProperties(((Text) n).getData());
+            attributeText.append(StringPropertyReplacer.replaceProperties(((Text) n).getData()));
          }
       } // end of for ()
       if (trim)
-         attributeText = attributeText.trim();
-      return attributeText;
+         return attributeText.toString().trim();
+      return attributeText.toString();
    }
 
    /**
