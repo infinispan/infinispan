@@ -1,8 +1,9 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2000 - 2008, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * Copyright 2008, Red Hat, Inc. and/or its affiliates, and
+ * individual contributors as indicated by the @author tags. See the
+ * copyright.txt file in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -25,6 +26,7 @@ import org.infinispan.CacheException;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.remoting.InboundInvocationHandler;
+import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.ExtendedResponse;
 import org.infinispan.remoting.responses.RequestIgnoredResponse;
 import org.infinispan.remoting.responses.Response;
@@ -140,7 +142,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          }
          catch (Throwable x) {
             if (trace) log.trace("Problems invoking command.", x);
-            return x;
+            return new ExceptionResponse(new CacheException("Problems invoking command.", x));
          }
       } else {
          return null;
