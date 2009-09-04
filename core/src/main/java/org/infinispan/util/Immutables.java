@@ -78,7 +78,7 @@ public class Immutables {
     * @param list the list to copy
     * @return the immutable copy
     */
-   public static <T> List<T> immutableListCopy(List<? extends T> list) {
+   public static <T> List<? extends T> immutableListCopy(List<? extends T> list) {
       if (list == null) return null;
       if (list.isEmpty()) return Collections.emptyList();
       if (list.size() == 1) return Collections.singletonList(list.get(0));
@@ -133,7 +133,7 @@ public class Immutables {
     * @param set the set to copy from
     * @return an immutable set copy
     */
-   public static <T> Set<T> immutableSetCopy(Set<? extends T> set) {
+   public static <T> Set<? extends T> immutableSetCopy(Set<? extends T> set) {
       if (set == null) return null;
       if (set.isEmpty()) return Collections.emptySet();
       if (set.size() == 1) return Collections.singleton(set.iterator().next());
@@ -164,7 +164,7 @@ public class Immutables {
     * @param map the map to copy from
     * @return an immutable map copy
     */
-   public static <K, V> Map<K, V> immutableMapCopy(Map<? extends K, ? extends V> map) {
+   public static <K, V> Map<? extends K, ? extends V> immutableMapCopy(Map<? extends K, ? extends V> map) {
       if (map == null) return null;
       if (map.isEmpty()) return Collections.emptyMap();
       if (map.size() == 1) {
@@ -188,7 +188,7 @@ public class Immutables {
     * @param collection the collection to copy
     * @return an immutable copy
     */
-   public static <T> Collection<T> immutableCollectionCopy(Collection<? extends T> collection) {
+   public static <T> Collection<? extends T> immutableCollectionCopy(Collection<? extends T> collection) {
       if (collection == null) return null;
       if (collection.isEmpty()) return Collections.emptySet();
       if (collection.size() == 1) return Collections.singleton(collection.iterator().next());
