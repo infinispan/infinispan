@@ -1,8 +1,9 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * Copyright 2009, Red Hat, Inc. and/or its affiliates, and
+ * individual contributors as indicated by the @author tags. See the
+ * copyright.txt file in the distribution for a full listing of
+ * individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -55,6 +56,8 @@ import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.Marshallable;
 import org.infinispan.marshall.MarshalledValue;
 import org.infinispan.marshall.VersionAwareMarshaller;
+import org.infinispan.marshall.MarshalledValueTest.CustomReadObjectMethod;
+import org.infinispan.marshall.MarshalledValueTest.ObjectThatContainsACustomReadObjectMethod;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.ExtendedResponse;
 import org.infinispan.remoting.responses.RequestIgnoredResponse;
@@ -90,7 +93,6 @@ import java.util.*;
 @Test(groups = "functional", testName = "marshall.jboss.JBossMarshallerTest")
 public class JBossMarshallerTest {
 
-   //   private final JBossMarshaller marshaller = new JBossMarshaller();
    private final VersionAwareMarshaller marshaller = new VersionAwareMarshaller();
 
    private GlobalTransactionFactory gtf = new GlobalTransactionFactory();
@@ -420,6 +422,12 @@ public class JBossMarshallerTest {
          assert m.get(entry.getKey()).equals(entry.getValue());
       }
       assert merged.size() == 0;
+   }
+   
+   public void testMarshallObjectThatContainsACustomReadObjectMethod() throws Exception {
+      ObjectThatContainsACustomReadObjectMethod obj = new ObjectThatContainsACustomReadObjectMethod();
+      obj.anObjectWithCustomReadObjectMethod = new CustomReadObjectMethod();
+      marshallAndAssertEquality(obj);
    }
 
    protected void marshallAndAssertEquality(Object writeObj) throws Exception {

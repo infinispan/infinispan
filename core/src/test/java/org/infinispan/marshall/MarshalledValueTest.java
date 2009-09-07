@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source.
+ * Copyright 2009, Red Hat, Inc. and/or its affiliates, and
+ * individual contributors as indicated by the @author tags. See the
+ * copyright.txt file in the distribution for a full listing of
+ * individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.marshall;
 
 import org.infinispan.Cache;
@@ -317,6 +339,11 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       CustomReadObjectMethod obj = new CustomReadObjectMethod();
       cache1.put("ab-key", obj);
       assert cache2.get("ab-key").equals(obj);
+      
+      ObjectThatContainsACustomReadObjectMethod anotherObj = new ObjectThatContainsACustomReadObjectMethod();
+      anotherObj.anObjectWithCustomReadObjectMethod = obj;
+      cache1.put("cd-key", anotherObj);
+      assert cache2.get("cd-key").equals(anotherObj);
    }
 
    public void assertUseOfMagicNumbers() throws Exception {
@@ -479,6 +506,48 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
          i = in.readInt();
          b = in.readBoolean();
          deserializationCount++;
+      }
+   }
+
+   public static class ObjectThatContainsACustomReadObjectMethod implements Serializable {
+      private static final long serialVersionUID = 1L;
+//      Integer id;
+      public CustomReadObjectMethod anObjectWithCustomReadObjectMethod;
+      Integer balance;
+//      String branch;
+      
+      public boolean equals(Object obj) {
+         if (obj == this)
+            return true;
+         if (!(obj instanceof ObjectThatContainsACustomReadObjectMethod))
+            return false;
+         ObjectThatContainsACustomReadObjectMethod acct = (ObjectThatContainsACustomReadObjectMethod) obj;
+//         if (!safeEquals(id, acct.id))
+//            return false;
+//         if (!safeEquals(branch, acct.branch))
+//            return false;
+         if (!safeEquals(balance, acct.balance))
+            return false;
+         if (!safeEquals(anObjectWithCustomReadObjectMethod, acct.anObjectWithCustomReadObjectMethod))
+            return false;
+         return true;
+      }
+
+      public int hashCode() {
+         int result = 17;
+//         result = result * 31 + safeHashCode(id);
+//         result = result * 31 + safeHashCode(branch);
+         result = result * 31 + safeHashCode(balance);
+         result = result * 31 + safeHashCode(anObjectWithCustomReadObjectMethod);
+         return result;
+      }
+      
+      private static int safeHashCode(Object obj) {
+         return obj == null ? 0 : obj.hashCode();
+      }
+
+      private static boolean safeEquals(Object a, Object b) {
+         return (a == b || (a != null && a.equals(b)));
       }
    }
 
