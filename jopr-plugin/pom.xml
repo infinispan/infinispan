@@ -13,7 +13,6 @@
       <relativePath>../parent/pom.xml</relativePath>
    </parent>
 
-   <groupId>org.infinispan</groupId>
    <artifactId>infinispan-jopr-plugin</artifactId>
    <packaging>jar</packaging>
 

@@ -5,11 +5,10 @@
    <modelVersion>4.0.0</modelVersion>
    <parent>
       <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-parent</artifactId>
+      <artifactId>infinispan-cachestore-parent</artifactId>
       <version>4.0.0-SNAPSHOT</version>
-      <relativePath>../../parent/pom.xml</relativePath>
+      <relativePath>../pom.xml</relativePath>
    </parent>
-   <groupId>org.infinispan</groupId>
    <artifactId>infinispan-cachestore-s3</artifactId>
    <name>Infinispan Amazon S3 CacheStore</name>
    <description>Infinispan Amazon S3 CacheStore module</description>
@@ -22,20 +21,6 @@
    </properties>
 
    <dependencies>
-      <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-core</artifactId>
-         <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-core</artifactId>
-         <version>${project.version}</version>
-         <type>test-jar</type>
-         <scope>test</scope>
-      </dependency>
-
       <dependency>
          <groupId>org.jclouds</groupId>
          <artifactId>jclouds-s3</artifactId>

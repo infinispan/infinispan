@@ -9,10 +9,11 @@
       <version>4.0.0-SNAPSHOT</version>
       <relativePath>../parent/pom.xml</relativePath>
    </parent>
+   <artifactId>infinispan-cachestore-parent</artifactId>
+   <name>Parent pom for cachestore modules</name>
+   <packaging>pom</packaging>
 
-   <artifactId>infinispan-tree</artifactId>
-   <name>Infinispan Tree API</name>
-   <description>Infinispan tree API module</description>
+
    <dependencies>
       <dependency>
          <groupId>${project.groupId}</groupId>

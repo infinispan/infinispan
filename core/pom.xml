@@ -11,7 +11,6 @@
       <relativePath>../parent/pom.xml</relativePath>
    </parent>
 
-   <groupId>org.infinispan</groupId>
    <artifactId>infinispan-core</artifactId>
    <name>Infinispan Core</name>
    <description>Infinispan core module</description>
