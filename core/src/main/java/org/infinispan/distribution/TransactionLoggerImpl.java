@@ -5,6 +5,8 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collection;
 import java.util.LinkedList;
@@ -27,6 +29,8 @@ public class TransactionLoggerImpl implements TransactionLogger {
    final ReadWriteLock loggingLock = new ReentrantReadWriteLock();
    final BlockingQueue<WriteCommand> commandQueue = new LinkedBlockingQueue<WriteCommand>();
    final Map<GlobalTransaction, PrepareCommand> uncommittedPrepares = new ConcurrentHashMap<GlobalTransaction, PrepareCommand>();
+   private static final Log log = LogFactory.getLog(TransactionLoggerImpl.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    public void enable() {
       enabled = true;
@@ -35,6 +39,7 @@ public class TransactionLoggerImpl implements TransactionLogger {
    public List<WriteCommand> drain() {
       List<WriteCommand> list = new LinkedList<WriteCommand>();
       commandQueue.drainTo(list);
+      if (trace) log.trace("Drained transaction log to {0}", list);
       return list;
    }
 
@@ -72,6 +77,7 @@ public class TransactionLoggerImpl implements TransactionLogger {
          loggingLock.readLock().lock();
          try {
             if (enabled) {
+               if (trace) log.trace("Logging prepare for tx {0}", command.getGlobalTransaction());
                uncommittedPrepares.put(command.getGlobalTransaction(), command);
             }
          } finally {
@@ -85,6 +91,7 @@ public class TransactionLoggerImpl implements TransactionLogger {
          loggingLock.readLock().lock();
          try {
             if (enabled) {
+               if (trace) log.trace("Logging commit for tx {0}", command.getGlobalTransaction());
                PrepareCommand pc = uncommittedPrepares.remove(command.getGlobalTransaction());
                // TODO how can we handle this efficiently and safely?
 //               for (WriteCommand wc : pc.getModifications())
@@ -105,6 +112,7 @@ public class TransactionLoggerImpl implements TransactionLogger {
          loggingLock.readLock().lock();
          try {
             if (enabled) {
+               if (trace) log.trace("Logging rollback for tx {0}", command.getGlobalTransaction());
                uncommittedPrepares.remove(command.getGlobalTransaction());
             }
          } finally {
