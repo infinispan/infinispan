@@ -41,6 +41,10 @@ import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
+/**
+ * Test the behaivour of JBoss Marshalling library itself. This class has been created to 
+ * ease the creation of tests that check specific behaivour at this level.
+ */
 @Test(groups = "functional", testName = "marshall.jboss.JBossMarshallingTest")
 public class JBossMarshallingTest {
 
@@ -63,7 +67,7 @@ public class JBossMarshallingTest {
    public void tearDown() {
    }
    
-   public void test000() throws Exception {
+   public void testSerObjWithRefToSerObjectWithCustomReadObj() throws Exception {
       ByteArrayOutputStream baos = new ByteArrayOutputStream(10240);
       ByteOutput byteOutput = Marshalling.createByteOutput(baos);
       marshaller.start(byteOutput);
