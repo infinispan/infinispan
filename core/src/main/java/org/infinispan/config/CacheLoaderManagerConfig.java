@@ -42,7 +42,7 @@ import java.util.List;
  * provide meta data for configuration file XML schema generation. Please modify these annotations
  * and Java element types they annotate with utmost understanding and care.
  * 
- * @configRef loaders|Holds the configuration of the cache loader chain.
+ * @configRef name="loaders",desc="Holds the configuration of the cache loader chain."
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
  * @author Brian Stansberry
@@ -55,21 +55,21 @@ public class CacheLoaderManagerConfig extends AbstractNamedCacheConfigurationBea
    private static final long serialVersionUID = 2210349340378984424L;
 
    /** 
-    * @configRef |If true, activates entries that have been passivated to a store by loading them into memory 
-    * as well as writes evicted entries back to the store 
+    * @configRef desc="If true, activates entries that have been passivated to a store by loading them into memory 
+    * as well as writes evicted entries back to the store" 
     * */
    @XmlAttribute
    protected Boolean passivation = false;
    
    /** 
-    * @configRef | If true, performs a preload on the cache loader
+    * @configRef desc= "If true, performs a preload on the cache loader"
     * */
    @XmlAttribute
    protected Boolean preload = false;
    
    /** 
-    * @configRef |If true, the node that makes a modification is the only one who writes it to the 
-    * store using the relevant cache loader. 
+    * @configRef desc="If true, the node that makes a modification is the only one who writes it to the 
+    * store using the relevant cache loader." 
     * */
    @XmlAttribute
    protected Boolean shared = false;

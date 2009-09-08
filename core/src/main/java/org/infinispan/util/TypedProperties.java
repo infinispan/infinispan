@@ -14,7 +14,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
  * types, using default values if a conversion is not possible.
  * 
  *
- * @configRef properties
+ * @configRef name="properties"
  *
  * @author Manik Surtani
  * @since 4.0

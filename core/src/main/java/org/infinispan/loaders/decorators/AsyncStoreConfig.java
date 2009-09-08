@@ -16,7 +16,7 @@ import org.infinispan.config.Dynamic;
  * provide meta data for configuration file XML schema generation. Please modify these annotations
  * and Java element types they annotate with utmost understanding and care.
  *
- * @configRef async:loader:|Configuration for the async cache loader.
+ * @configRef name="async",parentName="loader",desc="Configuration for the async cache loader."
  *
  * @author Manik Surtani
  * @author Vladimir Blagojevic
@@ -26,19 +26,19 @@ import org.infinispan.config.Dynamic;
 public class AsyncStoreConfig extends AbstractNamedCacheConfigurationBean {
    
    /** 
-    * @configRef |If true, modifications are stored in the cache store asynchronously.  
+    * @configRef desc="If true, modifications are stored in the cache store asynchronously."  
     * */
    @XmlAttribute
    protected Boolean enabled = false;
   
    /** 
-    * @configRef |Size of the thread pool whose threads are responsible for applying the modifications.
+    * @configRef desc="Size of the thread pool whose threads are responsible for applying the modifications."
     *  */
    @XmlAttribute
    protected Integer threadPoolSize = 1;
    
    /** 
-    * @configRef |Lock timeout for access to map containing latest state.
+    * @configRef desc="Lock timeout for access to map containing latest state."
     * */
    @Dynamic
    @XmlAttribute

@@ -25,7 +25,7 @@ import javax.xml.bind.annotation.XmlType;
  * provide meta data for configuration file XML schema generation. Please modify these annotations
  * and Java element types they annotate with utmost understanding and care.
  * 
- * @configRef loader|Responsible for loading/storing cache data from/to an external source. 
+ * @configRef name="loader",desc="Responsible for loading/storing cache data from/to an external source." 
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.0
@@ -35,25 +35,25 @@ import javax.xml.bind.annotation.XmlType;
 public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implements CacheStoreConfig {
    
    /** 
-    * @configRef |If true, any operation that modifies the cache store (remove, clear, store...etc) won't be applied to it
+    * @configRef desc="If true, any operation that modifies the cache store (remove, clear, store...etc) won't be applied to it"
     * */
    @XmlAttribute
    protected Boolean ignoreModifications = false;
    
    /**
-    *  @configRef |If true, fetch persistent state on state transfer
+    *  @configRef desc="If true, fetch persistent state on state transfer"
     *  */
    @XmlAttribute
    protected Boolean fetchPersistentState = false;
    
    /**
-    *  @configRef |If true, purge node state on startup
+    *  @configRef desc="If true, purge node state on startup"
     *  */
    @XmlAttribute
    protected Boolean purgeOnStartup = false;
    
    /**
-    *  @configRef |If true, CacheStore#purgeExpired() call will be done synchronously
+    *  @configRef desc="If true, CacheStore#purgeExpired() call will be done synchronously"
     *  */
    @XmlAttribute
    protected Boolean purgeSynchronously = false;

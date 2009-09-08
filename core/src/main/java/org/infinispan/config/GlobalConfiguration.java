@@ -32,7 +32,7 @@ import java.util.Properties;
  * provide meta data for configuration file XML schema generation. Please modify these annotations
  * and Java element types they annotate with utmost understanding and care.
  * 
- * @configRef global|Defines global configuration shared among all cache instances.
+ * @configRef name="global",desc="Defines global configuration shared among all cache instances."
  *
  * @author Manik Surtani
  * @author Vladimir Blagojevic
@@ -429,21 +429,21 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    
    /**
     * 
-    * @configRef asyncListenerExecutor|Executor for listeners.
-    * @configRef asyncTransportExecutor|Transport executor.
-    * @configRef evictionScheduledExecutor|Eviction executor.
-    * @configRef replicationQueueScheduledExecutor|Executor for replication.
+    * @configRef name="asyncListenerExecutor",desc="Executor for listeners."
+    * @configRef name="asyncTransportExecutor",desc="Transport executor."
+    * @configRef name="evictionScheduledExecutor",desc="Eviction executor."
+    * @configRef name="replicationQueueScheduledExecutor",desc="Executor for replication."
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    private static class FactoryClassWithPropertiesType extends AbstractConfigurationBeanWithGCR {
       
-      /** @configRef |Executor fully qualified class name */
+      /** @configRef desc="Executor fully qualified class name" */
       @XmlAttribute
       protected String factory;
       
       /** 
-       * @configPropertyRef maxThreads|Number of threads for this executor
-       * @configPropertyRef threadNamePrefix|Name prefix for threads created in this executor
+       * @configPropertyRef name="maxThreads",desc="Number of threads for this executor"
+       * @configPropertyRef name="threadNamePrefix",desc="Name prefix for threads created in this executor"
        * */
       @XmlElement(name="properties")
       protected TypedProperties properties = EMPTY_PROPERTIES;
@@ -478,18 +478,18 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    
    /**
     * 
-    * @configRef transport|Determines Infinispan transport type and accompanying properties. 
+    * @configRef name="transport",desc="Determines Infinispan transport type and accompanying properties." 
     */   
    @XmlAccessorType(XmlAccessType.PROPERTY)
    private static class TransportType extends AbstractConfigurationBeanWithGCR {
      
-      /** @configRef |Cluster name where all cache instances defined are connected */
+      /** @configRef desc="Cluster name where all cache instances defined are connected" */
       protected String clusterName = "Infinispan-Cluster";
       
-      /** @configRef |todo */ 
+      /** @configRef desc="todo" */ 
       protected Long distributedSyncTimeout = 60000L; // default
      
-      /** @configRef | Fully qualified name of a class that implements network transport*/
+      /** @configRef desc="Fully qualified name of a class that implements network transport"*/
       protected String transportClass = null; // this defaults to a non-clustered cache.
       
       protected TypedProperties properties = EMPTY_PROPERTIES;
@@ -539,15 +539,15 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    
    /**
     * 
-    * @configRef serialization|Serialization and marshalling settings.
+    * @configRef name="serialization",desc="Serialization and marshalling settings."
     */   
    @XmlAccessorType(XmlAccessType.PROPERTY)
    private static class SerializationType extends AbstractConfigurationBeanWithGCR {
       
-      /** @configRef |Fully qualified name of a class that marshalls objects between cache nodes*/
+      /** @configRef desc="Fully qualified name of a class that marshalls objects between cache nodes"*/
       protected String marshallerClass = VersionAwareMarshaller.class.getName(); // the default
       
-      /** @configRef | Marshalling serialization version */
+      /** @configRef desc="Marshalling serialization version"*/
       protected String version = Version.getMajorVersion();
       
       public SerializationType() {        
@@ -569,21 +569,21 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    
    /**
     * 
-    * @configRef globalJmxStatistics|Determines global JMX settings for all cache instances. 
+    * @configRef name="globalJmxStatistics",desc="Determines global JMX settings for all cache instances." 
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    private static class GlobalJmxStatisticsType extends AbstractConfigurationBeanWithGCR {
       
-      /** @configRef |Toggle to enable/disable exposing Infinispan objects to JMX  */
+      /** @configRef desc="Toggle to enable/disable exposing Infinispan objects to JMX" */
       protected Boolean enabled = false;
       
-      /** @configRef |JMX domain name where all relevant JMX exposed objects will be bound */
+      /** @configRef desc="JMX domain name where all relevant JMX exposed objects will be bound" */
       protected String jmxDomain = "infinispan";
       
-      /** @configRef |Fully qualified name of class that will attempt to find JMX MBean server */
+      /** @configRef desc="Fully qualified name of class that will attempt to find JMX MBean server" */
       protected String mBeanServerLookup = PlatformMBeanServerLookup.class.getName();
       
-      /** @configRef |If true, multiple cache manager instances could be configured under the same JMX domain */
+      /** @configRef desc="If true, multiple cache manager instances could be configured under the same JMX domain" */
       protected Boolean allowDuplicateDomains = false;
 
       @XmlAttribute
@@ -613,13 +613,13 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    
    /**
     * 
-    * @configRef shutdown|Determines shutdown hook settings. 
-    * By default a shutdown hook is registered even if no MBean server (apart from the JDK default) is detected.
+    * @configRef name="shutdown",desc="Determines shutdown hook settings. 
+    * By default a shutdown hook is registered even if no MBean server (apart from the JDK default) is detected."
     */   
    @XmlAccessorType(XmlAccessType.PROPERTY)
    private static class ShutdownType extends AbstractConfigurationBeanWithGCR {
       
-      /** @configRef |Behavior of the JVM shutdown hook registered by the cache */
+      /** @configRef desc="Behavior of the JVM shutdown hook registered by the cache" */
       protected ShutdownHookBehavior hookBehavior = ShutdownHookBehavior.DEFAULT;
 
       @XmlAttribute

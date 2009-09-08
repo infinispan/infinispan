@@ -51,9 +51,9 @@ import java.util.Map;
  * file XML schema generation. Please modify these annotations and Java element types they annotate with utmost
  * understanding and care.
  * 
- * @configRef infinispan|Root of Infinispan configuration. Infinispan configuration element can optionally have multiple 
+ * @configRef name="infinispan",desc="Root of Infinispan configuration. Infinispan configuration element can optionally have multiple 
  * namedCache child elements. Each namedCache builds up on a template provided by default cache. namedCache has 
- * the exact same XML structure as default cache and is therefore omitted from this reference. 
+ * the exact same XML structure as default cache and is therefore omitted from this reference. "
  *
  * @author Vladimir Blagojevic
  * @since 4.0

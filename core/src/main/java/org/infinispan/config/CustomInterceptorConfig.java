@@ -42,7 +42,7 @@ import java.util.Properties;
  * provide meta data for configuration file XML schema generation. Please modify these annotations
  * and Java element types they annotate with utmost understanding and care.
  *
- * @configRef interceptor|Holds information about the custom interceptors defined in the configuration file.
+ * @configRef name="interceptor",desc="Holds information about the custom interceptors defined in the configuration file."
  *
  * @author Mircea.Markus@jboss.com
  * @author Vladimir Blagojevic
@@ -62,31 +62,31 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
    protected boolean isLast;
    
    /** 
-    * @configRef |Position this interceptor at the specified valid index of the interceptor chain
+    * @configRef desc="Position this interceptor at the specified valid index of the interceptor chain"
     * */
    @XmlAttribute
    protected Integer index = -1;
    
    /** 
-    * @configRef |Position this interceptor after the inteceptor specified by intereceptor's fully qualified class name
+    * @configRef desc="Position this interceptor after the inteceptor specified by intereceptor's fully qualified class name"
     * */
    @XmlAttribute
    protected String after;
    
    /** 
-    * @configRef |Position this interceptor before the inteceptor specified by intereceptor's fully qualified class name
+    * @configRef desc="Position this interceptor before the inteceptor specified by intereceptor's fully qualified class name"
     * */
    @XmlAttribute
    protected String before;
    
    /** 
-    * @configRef |Position this interceptor as either FIRST or LAST intereceptor 
+    * @configRef desc="Position this interceptor as either FIRST or LAST intereceptor" 
     * */
    @XmlAttribute
    protected Position position;   
    
    /** 
-    * @configRef class|Fully qualified intereceptor class name
+    * @configRef name="class",desc="Fully qualified intereceptor class name"
     * */
    @XmlAttribute(name="class")
    protected String className;
