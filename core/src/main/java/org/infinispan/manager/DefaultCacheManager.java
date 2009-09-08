@@ -435,7 +435,7 @@ public class DefaultCacheManager implements CacheManager {
 
    @ManagedAttribute(description = "The total number of defined caches, excluding the default cache.")
    public String getDefinedCacheCount() {
-      return String.valueOf(this.configurationOverrides.keySet().size() - 1);
+      return String.valueOf(this.configurationOverrides.keySet().size());
    }
 
    @ManagedAttribute(description = "The total number of running caches, including the default cache.")

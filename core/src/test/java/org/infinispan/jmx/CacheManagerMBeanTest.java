@@ -39,7 +39,7 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
 
    public void testJmxOperations() throws Exception {
       assert server.getAttribute(name, "CreatedCacheCount").equals("1");
-      assert server.getAttribute(name, "DefinedCacheCount").equals("0");
+      assert server.getAttribute(name, "DefinedCacheCount").equals("0") : "Was " + server.getAttribute(name, "DefinedCacheCount");
       assert server.getAttribute(name, "DefinedCacheNames").equals("[]");
 
       //now define some new caches
