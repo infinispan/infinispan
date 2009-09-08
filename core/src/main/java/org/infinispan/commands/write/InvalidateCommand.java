@@ -139,4 +139,11 @@ public class InvalidateCommand extends RemoveCommand {
       if (!Arrays.equals(keys, that.keys)) return false;
       return true;
    }
+
+   @Override
+   public int hashCode() {
+      int result = super.hashCode();
+      result = 31 * result + (keys != null ? Arrays.hashCode(keys) : 0);
+      return result;
+   }
 }
