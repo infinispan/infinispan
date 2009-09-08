@@ -24,10 +24,8 @@ package org.infinispan.config;
 import org.infinispan.CacheException;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.util.BeanUtils;
 import org.infinispan.util.ReflectionUtil;
 import org.infinispan.util.TypedProperties;
-import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -43,8 +41,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
-
-import javax.xml.bind.annotation.XmlElement;
 
 /**
  * Base superclass of Cache configuration classes that expose some properties that can be changed after the cache is
@@ -172,18 +168,18 @@ public abstract class AbstractConfigurationBean implements CloneableConfiguratio
       // now mark this as overridden
       overriddenConfigurationElements.add(fieldName);
    }
-   
+
    public void applyOverrides(AbstractConfigurationBean overrides) {
       //does this component have overridden fields?
       for (String overridenField : overrides.overriddenConfigurationElements) {
-         try {                     
-            ReflectionUtil.setValue(this, overridenField, ReflectionUtil.getValue(overrides,overridenField));                 
+         try {
+            ReflectionUtil.setValue(this, overridenField, ReflectionUtil.getValue(overrides,overridenField));
          } catch (Exception e1) {
             throw new CacheException("Could not apply value for field " + overridenField
                      + " from instance " + overrides + " on instance " + this, e1);
          }
       }
-      
+
       // then recurse into field of this component...
       List<Field> fields = ReflectionUtil.getFields(overrides.getClass(),AbstractConfigurationBean.class);
       for (Field field : fields) {
@@ -199,13 +195,15 @@ public abstract class AbstractConfigurationBean implements CloneableConfiguratio
                }
                else if(fieldValueOverrides != null && fieldValueThis!=null){
                   fieldValueThis.applyOverrides(fieldValueOverrides);
-               } 
-            } catch (Exception e) {
-               log.warn("Could not apply override for field " + field + " in class " +overrides,e);
+               }
+            } catch (IllegalAccessException e) {
+               String s = "Could not apply override for field " + field + " in class " + overrides;
+               log.error(s, e);
+               throw new CacheException(s, e);
             }
          }
       }
-      
+
       //and don't forget to recurse into collections of components...
       fields = ReflectionUtil.getFields(overrides.getClass(), Collection.class);
       for (Field field : fields) {
@@ -245,7 +243,7 @@ public abstract class AbstractConfigurationBean implements CloneableConfiguratio
          }
       }
    }
- 
+
 
 //   public void setCache(CacheSPI cache) {
 //      this.cache = cache;
