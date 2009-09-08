@@ -235,8 +235,10 @@ public abstract class AbstractConfigurationBean implements CloneableConfiguratio
                            c.add(i2.next());
                         }
                      }
-                  } catch (Exception e) {
-                     log.warn("Could not apply override for field " + field + " in class " +overrides.getClass(),e);
+                  } catch (IllegalAccessException e) {
+                     String s = "Could not apply override for field " + field + " in class " + overrides.getClass();
+                     log.error(s, e);
+                     throw new CacheException(s, e);
                   }
                }
             }
