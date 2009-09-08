@@ -36,12 +36,14 @@ import javax.transaction.TransactionManager;
  */
 public class BatchContainer {
    TransactionManager transactionManager;
-   private ThreadLocal<BatchDetails> batchDetailsTl = new ThreadLocal<BatchDetails>() {
+   private BatchDetailsTl batchDetailsTl = new BatchDetailsTl();
+
+   private static class BatchDetailsTl extends ThreadLocal<BatchDetails> {
       @Override
       protected BatchDetails initialValue() {
          return new BatchDetails();
       }
-   };
+   }
 
    @Inject
    void inject(TransactionManager transactionManager) {
@@ -52,7 +54,6 @@ public class BatchContainer {
     * Starts a batch
     *
     * @return true if a batch was started; false if one was already available.
-    * @throws CacheException
     */
    public boolean startBatch() throws CacheException {
       return startBatch(false);
