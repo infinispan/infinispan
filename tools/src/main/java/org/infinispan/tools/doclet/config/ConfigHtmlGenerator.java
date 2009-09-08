@@ -9,10 +9,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Scanner;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 import org.infinispan.Version;
 import org.infinispan.config.AbstractConfigurationBean;
@@ -107,16 +105,20 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
                  
 
          for (TreeNode n : root) {
+            
+            //do not generate element for properties element 
             if (n.getName().equals("properties"))
                continue;
 
             // Name, description, parent and child elements node
             generateHeaderForConfigurationElement(sb, tw, n);
+            
+            //now attributes
             if (!n.getAttributes().isEmpty()) {
                generateAttributeTableRows(sb, n);
             }
 
-            //has properties?                 
+            //and properties....                 
             if (n.hasChild("properties")) {
                generatePropertiesTableRows(sb, n);
             }
@@ -197,6 +199,8 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
       Set<XSAttributeDecl> attributes = n.getAttributes();
       for (XSAttributeDecl a : attributes) {
          sb.append("<tr class=\"b\">");
+         
+         //name, type...
          sb.append("<td>").append("<code>" + a.getName() + "</code>").append("</td>\n");
          sb.append("<td>").append("<code>" + a.getType().getName() + "</code>");
          
@@ -209,6 +213,7 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
                break;
             }            
          }
+         // restriction on type...
          if(isRestricted){
             sb.append("* (");
             for (XSFacet facet : declaredFacets) {
@@ -242,8 +247,8 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
             } 
          }
 
+         // and finally description
          FieldDoc fieldDoc = findFieldDocRecursively(bean, a.getName(), CONFIG_REF);
-         //System.out.println("FieldDoc for " + bean + "  " + a.getName() + " is " + fieldDoc);
          if (fieldDoc != null) {
             Tag[] tags = fieldDoc.tags(CONFIG_REF);
             Map<String,String> p = parseTag(tags[0].text().trim());            
@@ -255,6 +260,8 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
    }
 
    public Map<String, String> parseTag(String tag) {
+      
+      //javadoc parser for our tags
       Map<String, String> p = new HashMap<String, String>();
       Scanner sc = new Scanner(tag);
       Scanner sc2 = null;
@@ -279,11 +286,9 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
       return p;
    }
    
-   private void generateHeaderForConfigurationElement(StringBuilder sb, XMLTreeOutputWalker tw,
-            TreeNode n) {
+   private void generateHeaderForConfigurationElement(StringBuilder sb, XMLTreeOutputWalker tw, TreeNode n) {
       sb.append("\n<a name=\"").append("ce_" + n.getParent().getName() + "_" + n.getName() + "\">" + "</a>");
-      sb.append("<div class=\"section\"><h3><a name=\"" + n.getName() + "\"></a>" + n.getName()
-               + "</h3>");
+      sb.append("<div class=\"section\"><h3><a name=\"" + n.getName() + "\"></a>" + n.getName() + "</h3>");
       sb.append("\n<p>");
       Class<?> beanClass = n.getBeanClass();
       //System.out.println("Generating " + n + " bean is " + beanClass);
@@ -296,9 +301,8 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
       }
 
       if (n.getParent().getParent() != null) {
-         sb.append(" Parent element is " + "<a href=\"").append(
-                  "#ce_" + n.getParent().getParent().getName() + "_" + n.getParent().getName()
-                           + "\">" + "&lt;" + n.getParent().getName() + "&gt;" + "</a>.");
+         sb.append(" Parent element is " + "<a href=\"").append("#ce_" + n.getParent().getParent().getName() 
+                  + "_" + n.getParent().getName() + "\">" + "&lt;" + n.getParent().getName() + "&gt;" + "</a>.");
       }
 
       if (!n.getChildren().isEmpty()) {
@@ -306,9 +310,8 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
          int childCount = n.getChildren().size();
          int count = 1;
          for (TreeNode tn : n.getChildren()) {
-            sb.append("<a href=\"").append(
-                     "#ce_" + tn.getParent().getName() + "_" + tn.getName() + "\">" + "&lt;"
-                              + tn.getName() + "&gt;" + "</a>");
+            sb.append("<a href=\"").append( "#ce_" + tn.getParent().getName() + "_" 
+                     + tn.getName() + "\">" + "&lt;"+ tn.getName() + "&gt;" + "</a>");
             if (count < childCount) {
                sb.append(",");
             } else {
@@ -345,8 +348,7 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
       for (FieldDoc fd : classDoc.fields()) {
          if (fd.name().equalsIgnoreCase(fieldName)) {
             return fd;
-         }
-         
+         }         
          for (Tag t : fd.tags(tagName)) {
             Map <String,String> m = parseTag(t.text().trim());
             if (m.containsKey("name")) {
