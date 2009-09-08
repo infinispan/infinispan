@@ -270,6 +270,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
             RehashControlCommand rcc = (RehashControlCommand) c;
             rcc.init(distributionManager, configuration, dataContainer);
             break;
+         default:
+            throw new IllegalStateException("Unknown/supported command id! : " + c.getCommandId() + " command: " + c);
       }
    }
 
