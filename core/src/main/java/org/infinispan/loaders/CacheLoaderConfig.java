@@ -1,15 +1,15 @@
 package org.infinispan.loaders;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.util.Properties;
-
-import javax.xml.bind.annotation.adapters.XmlAdapter;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
-
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.config.parsing.XmlConfigHelper;
 import org.infinispan.util.Util;
+
+import javax.xml.bind.annotation.adapters.XmlAdapter;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import java.io.Serializable;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.util.Properties;
 
 /**
  * Configures individual cache loaders
@@ -25,7 +25,7 @@ import org.infinispan.util.Util;
  * @since 4.0
  */
 @XmlJavaTypeAdapter(CacheLoaderConfigAdapter.class)
-public interface CacheLoaderConfig extends Cloneable {
+public interface CacheLoaderConfig extends Cloneable, Serializable {
 
    CacheLoaderConfig clone();
 
