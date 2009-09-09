@@ -148,6 +148,14 @@ public class CacheLoaderManagerConfig extends AbstractNamedCacheConfigurationBea
       }
       return false;
    }
+   
+    @Override
+    public void accept(ConfigurationBeanVisitor v) {
+        super.accept(v);
+        for (CacheLoaderConfig clc : cacheLoaderConfigs) {
+            ((AbstractConfigurationBean) clc).accept(v);
+        }
+    }
 
    @Override
    public int hashCode() {

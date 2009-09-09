@@ -54,58 +54,16 @@ import java.util.Properties;
 public abstract class AbstractConfigurationBean implements CloneableConfigurationComponent {
    private static final long serialVersionUID = 4879873994727821938L;
    protected static final TypedProperties EMPTY_PROPERTIES = new TypedProperties();
-   protected transient Log log = LogFactory.getLog(getClass());
-   //   private transient CacheSPI cache; // back-reference to test whether the cache is running.
-   //   private transient ComponentRegistry cr;
-   // a workaround to get over immutability checks
+   protected transient Log log = LogFactory.getLog(getClass());  
    private boolean accessible;
    protected List<String> overriddenConfigurationElements = new LinkedList<String>();
 
    protected AbstractConfigurationBean() {
    }
-
-//   public void passCacheToChildConfig(AbstractConfigurationBean child) {
-//      if (child != null) {
-//         child.setCache(cache);
-//      }
-//   }
-
-//   protected void addChildConfig(AbstractConfigurationBean child) {
-//      if (child != null) children.add(child);
-//      if (child != null && children.add(child))
-//         child.setCache(cache);
-//   }
-
-//   protected void addChildConfigs(Collection<? extends AbstractConfigurationBean> toAdd) {
-//      if (toAdd != null) {
-//         for (AbstractConfigurationBean child : toAdd)
-//            addChildConfig(child);
-//      }
-//   }
-//
-//   protected void removeChildConfig(AbstractConfigurationBean child) {
-//      children.remove(child);
-//   }
-
-//   protected void removeChildConfigs(Collection<? extends AbstractConfigurationBean> toRemove) {
-//      if (toRemove != null) {
-//         for (AbstractConfigurationBean child : toRemove)
-//            removeChildConfig(child);
-//      }
-//   }
-//
-//   protected void replaceChildConfig(AbstractConfigurationBean oldConfig, AbstractConfigurationBean newConfig) {
-//      removeChildConfig(oldConfig);
-//      addChildConfig(newConfig);
-//   }
-
-//   protected void replaceChildConfigs(Collection<? extends AbstractConfigurationBean> oldConfigs,
-//                                      Collection<? extends AbstractConfigurationBean> newConfigs) {
-//      synchronized (children) {
-//         removeChildConfigs(oldConfigs);
-//         addChildConfigs(newConfigs);
-//      }
-//   }
+   
+   public void accept(ConfigurationBeanVisitor v){
+       v.visit(this);      
+   }
 
    /**
     * Safely converts a String to upper case.
@@ -245,21 +203,6 @@ public abstract class AbstractConfigurationBean implements CloneableConfiguratio
          }
       }
    }
-
-
-//   public void setCache(CacheSPI cache) {
-//      this.cache = cache;
-//      synchronized (children) {
-//         for (AbstractConfigurationBean child : children) {
-//            child.setCache(cache);
-//         }
-//      }
-//   }
-
-//   @Start
-//   private void start() {
-//      setCache(cr.getComponent(CacheSPI.class));
-//   }
 
    @Override
    public CloneableConfigurationComponent clone() throws CloneNotSupportedException {

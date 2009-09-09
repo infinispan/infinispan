@@ -25,6 +25,7 @@ import org.infinispan.Cache;
 import org.infinispan.Version;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
+import org.infinispan.config.ConfigurationValidatingVisitor;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.config.InfinispanConfiguration;
 import org.infinispan.config.parsing.XmlConfigurationParser;
@@ -207,12 +208,17 @@ public class DefaultCacheManager implements CacheManager {
     */
    public DefaultCacheManager(String configurationFile, boolean start) throws IOException {
       try {
-         initialize(InfinispanConfiguration.newInfinispanConfiguration(configurationFile, InfinispanConfiguration.resolveSchemaPath()));
-      }
-      catch (RuntimeException re) {
+         InfinispanConfiguration configuration = InfinispanConfiguration.newInfinispanConfiguration(
+                                                                                                               configurationFile, 
+                                                                                                               InfinispanConfiguration.resolveSchemaPath(),
+                                                                                                               new ConfigurationValidatingVisitor());
+         
+         initialize(configuration);
+      } catch (RuntimeException re) {
          throw new ConfigurationException(re);
       }
-      if (start) start();
+      if (start)
+         start();
    }
 
    /**
@@ -238,7 +244,10 @@ public class DefaultCacheManager implements CacheManager {
     */
    public DefaultCacheManager(InputStream configurationStream, boolean start) throws IOException {
       try {
-         initialize(InfinispanConfiguration.newInfinispanConfiguration(configurationStream, InfinispanConfiguration.findSchemaInputStream()));
+         InfinispanConfiguration configuration = InfinispanConfiguration.newInfinispanConfiguration(configurationStream, 
+                                                                                                            InfinispanConfiguration.findSchemaInputStream(),
+                                                                                                            new ConfigurationValidatingVisitor());
+         initialize(configuration);
       } catch (ConfigurationException ce) {
          throw ce;
       } catch (RuntimeException re) {

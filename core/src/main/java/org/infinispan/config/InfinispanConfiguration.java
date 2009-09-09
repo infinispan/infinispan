@@ -97,11 +97,32 @@ public class InfinispanConfiguration implements XmlConfigurationParser {
     * @throws IOException if there are any issues creating InfinispanConfiguration object
     */
    public static InfinispanConfiguration newInfinispanConfiguration(String configFileName,
-                                                                    String schemaFileName) throws IOException {
+            String schemaFileName) throws IOException {
+      return newInfinispanConfiguration(configFileName, schemaFileName, null);
+   }
+   
+   /**
+    * Factory method to create an instance of Infinispan configuration. If users want to verify configuration file
+    * correctness against Infinispan schema then appropriate schema file name should be provided as well.
+    * <p/>
+    * Both configuration file and schema file are looked up in following order:
+    * <p/>
+    * <ol> <li> using current thread's context ClassLoader</li> <li> if fails, the system ClassLoader</li> <li> if
+    * fails, attempt is made to load it as a file from the disk </li> </ol>
+    *
+    * @param configFileName configuration file name
+    * @param schemaFileName schema file name
+    * @param cbv configuration bean visitor passed to constructed InfinispanConfiguration
+    * 
+    * @return infinispan configuration
+    * @throws IOException if there are any issues creating InfinispanConfiguration object
+    */
+   public static InfinispanConfiguration newInfinispanConfiguration(String configFileName,
+            String schemaFileName, ConfigurationBeanVisitor cbv) throws IOException {
 
       InputStream inputStream = configFileName != null ? findInputStream(configFileName) : null;
       InputStream schemaIS = schemaFileName != null ? findInputStream(schemaFileName) : null;
-      return newInfinispanConfiguration(inputStream, schemaIS);
+      return newInfinispanConfiguration(inputStream, schemaIS, cbv);
    }
 
    /**
@@ -139,11 +160,28 @@ public class InfinispanConfiguration implements XmlConfigurationParser {
     *
     * @param config configuration input stream
     * @param schema schema inputstream
+    * 
     * @return infinispan configuration
     * @throws IOException if there are any issues creating InfinispanConfiguration object
     */
    public static InfinispanConfiguration newInfinispanConfiguration(InputStream config,
                                                                     InputStream schema) throws IOException {
+      return newInfinispanConfiguration(config,schema,null);
+   }
+   
+   /**
+    * Factory method to create an instance of Infinispan configuration. If users want to verify configuration file
+    * correctness against Infinispan schema then appropriate schema input stream should be provided as well.
+    *
+    * @param config configuration input stream
+    * @param schema schema inputstream
+    * @param cbv configuration bean visitor passed to constructed InfinispanConfiguration
+    * 
+    * @return infinispan configuration
+    * @throws IOException if there are any issues creating InfinispanConfiguration object
+    */
+   public static InfinispanConfiguration newInfinispanConfiguration(InputStream config,
+            InputStream schema, ConfigurationBeanVisitor cbv) throws IOException {
       try {
          JAXBContext jc = JAXBContext.newInstance(InfinispanConfiguration.class);
          Unmarshaller u = jc.createUnmarshaller();
@@ -152,10 +190,13 @@ public class InfinispanConfiguration implements XmlConfigurationParser {
             SchemaFactory factory = SchemaFactory.newInstance("http://www.w3.org/2001/XMLSchema");
             u.setSchema(factory.newSchema(new StreamSource(schema)));
          }
-         InfinispanConfiguration doc = (InfinispanConfiguration) u.unmarshal(config);
-         //legacy, don't ask
-         doc.parseGlobalConfiguration().setDefaultConfiguration(doc.parseDefaultConfiguration());
-         return doc;
+         InfinispanConfiguration ic = (InfinispanConfiguration) u.unmarshal(config);
+         // legacy, don't ask
+         ic.parseGlobalConfiguration().setDefaultConfiguration(ic.parseDefaultConfiguration());
+         if (cbv != null) {
+            ic.accept(cbv);
+         }
+         return ic;
       } catch (Exception e) {
          IOException ioe = new IOException(e.getLocalizedMessage());
          ioe.initCause(e);
@@ -207,6 +248,15 @@ public class InfinispanConfiguration implements XmlConfigurationParser {
     */
    public InfinispanConfiguration() {
       super();
+   }
+   
+   public void accept(ConfigurationBeanVisitor v){
+       global.accept(v);
+       defaultConfiguration.accept(v);
+       for (Configuration c : namedCaches) {
+           c.accept(v);           
+       }
+       v.traversalCompleted(this);
    }
 
    private static InputStream findInputStream(String fileName) throws FileNotFoundException {

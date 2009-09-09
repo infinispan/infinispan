@@ -1,11 +1,17 @@
 package org.infinispan.config.parsing;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Map;
+
 import org.infinispan.Version;
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
+import org.infinispan.config.ConfigurationValidatingVisitor;
 import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior;
 import org.infinispan.config.InfinispanConfiguration;
+import org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior;
 import org.infinispan.distribution.DefaultConsistentHash;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.loaders.file.FileCacheStoreConfig;
@@ -13,18 +19,13 @@ import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Map;
-
 @Test(groups = "unit", testName = "config.parsing.XmlFileParsingTest")
 public class XmlFileParsingTest {
 
    public void testNamedCacheFileJaxb() throws Exception {
       String schemaFileName = "infinispan-config-" + Version.getMajorVersion() + ".xsd";
       testNamedCacheFile(InfinispanConfiguration.newInfinispanConfiguration(
-            "configs/named-cache-test.xml", "schema/" + schemaFileName));
+            "configs/named-cache-test.xml", "schema/" + schemaFileName, new ConfigurationValidatingVisitor()));
    }
 
    public void testConfigurationMergingJaxb() throws Exception {

@@ -538,6 +538,22 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    //   OVERRIDDEN METHODS
    // ------------------------------------------------------------------------------------------------------------
 
+   @Override
+   public void accept(ConfigurationBeanVisitor v) {        
+       super.accept(v);
+       clustering.accept(v);
+       customInterceptors.accept(v);
+       deadlockDetection.accept(v);
+       eviction.accept(v);
+       expiration.accept(v);
+       invocationBatching.accept(v);
+       jmxStatistics.accept(v);
+       lazyDeserialization.accept(v);
+       loaders.accept(v);
+       locking.accept(v);
+       transaction.accept(v);
+       unsafe.accept(v);
+   }
 
    @Override
    public boolean equals(Object o) {
@@ -650,7 +666,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     * @configRef name="transaction",desc="Defines transactional (JTA) characteristics of the cache."
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
-   private static class TransactionType extends AbstractNamedCacheConfigurationBean{
+   public static class TransactionType extends AbstractNamedCacheConfigurationBean{
            
       /** The serialVersionUID */
       private static final long serialVersionUID = -3867090839830874603L;
@@ -749,7 +765,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     * @configRef name="locking",desc="Defines locking characteristics of the cache."
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
-   private static class LockingType  extends AbstractNamedCacheConfigurationBean{      
+   public static class LockingType  extends AbstractNamedCacheConfigurationBean{      
       
 
       /** The serialVersionUID */
@@ -844,7 +860,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    @XmlJavaTypeAdapter(ClusteringTypeAdapter.class)
    @XmlAccessorType(XmlAccessType.FIELD)
    @XmlType(propOrder={})
-   private static class ClusteringType extends AbstractNamedCacheConfigurationBean {
+   public static class ClusteringType extends AbstractNamedCacheConfigurationBean {
       
       /** The serialVersionUID */
       private static final long serialVersionUID = 4048135465543498430L;
@@ -893,6 +909,16 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          dolly.hash = (HashType) hash.clone();
          return dolly;
       }
+      
+      @Override
+      public void accept(ConfigurationBeanVisitor v) {        
+          super.accept(v);
+          async.accept(v);
+          hash.accept(v);
+          l1.accept(v);
+          stateRetrieval.accept(v);
+          sync.accept(v);
+      }
 
       @Override
       public boolean equals(Object o) {
@@ -925,7 +951,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       }
    }
    
-   private static class ClusteringTypeAdapter extends XmlAdapter<ClusteringType, ClusteringType> {
+   public static class ClusteringTypeAdapter extends XmlAdapter<ClusteringType, ClusteringType> {
 
       @Override
       public ClusteringType marshal(ClusteringType ct) throws Exception {
@@ -966,7 +992,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     * Characteristics of this can be tuned here.
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
-   private static class AsyncType extends AbstractNamedCacheConfigurationBean {
+   public static class AsyncType extends AbstractNamedCacheConfigurationBean {
 
       @XmlTransient
       private boolean readFromXml = false;
@@ -1056,7 +1082,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     * @configRef name="expiration",desc="Enables or disables expiration, and configures characteristics accordingly."
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
-   private static class ExpirationType extends AbstractNamedCacheConfigurationBean{
+   public static class ExpirationType extends AbstractNamedCacheConfigurationBean{
 
       /** The serialVersionUID */
       private static final long serialVersionUID = 5757161438110848530L;
@@ -1105,7 +1131,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     * @configRef name="eviction",desc="Enables or disables eviction, and configures characteristics accordingly."
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
-   private static class EvictionType extends AbstractNamedCacheConfigurationBean {
+   public static class EvictionType extends AbstractNamedCacheConfigurationBean {
 
       /** The serialVersionUID */
       private static final long serialVersionUID = -1248563712058858791L;
@@ -1167,7 +1193,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     *
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
-   private static class StateRetrievalType extends AbstractNamedCacheConfigurationBean {
+   public static class StateRetrievalType extends AbstractNamedCacheConfigurationBean {
 
       /** The serialVersionUID */
       private static final long serialVersionUID = 3709234918426217096L;
@@ -1221,7 +1247,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     * 
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
-   private static class SyncType  extends AbstractNamedCacheConfigurationBean {
+   public static class SyncType  extends AbstractNamedCacheConfigurationBean {
       /** The serialVersionUID */
       private static final long serialVersionUID = 8419216253674289524L;
       
@@ -1260,7 +1286,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     * Only used with the 'distributed' cache mode, and otherwise ignored."
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
-   private static class HashType extends AbstractNamedCacheConfigurationBean {
+   public static class HashType extends AbstractNamedCacheConfigurationBean {
 
       /** The serialVersionUID */
       private static final long serialVersionUID = 752218766840948822L;
@@ -1338,7 +1364,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     * Only used with the 'distributed' cache mode, and otherwise ignored."
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
-   private static class L1Type extends AbstractNamedCacheConfigurationBean {
+   public static class L1Type extends AbstractNamedCacheConfigurationBean {
       
       /** The serialVersionUID */
       private static final long serialVersionUID = -4703587764861110638L;
@@ -1401,7 +1427,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     * @configElementDoc any documentation here
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
-   private static class BooleanAttributeType  extends AbstractNamedCacheConfigurationBean {
+   public static class BooleanAttributeType  extends AbstractNamedCacheConfigurationBean {
      
       /** The serialVersionUID */
       private static final long serialVersionUID = 2296863404153834686L;
@@ -1438,7 +1464,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     * @configRef name="deadlockDetection",desc="Enables or disables, and tunes, deadlock detection."
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
-   private static class DeadlockDetectionType  extends AbstractNamedCacheConfigurationBean{
+   public static class DeadlockDetectionType  extends AbstractNamedCacheConfigurationBean{
       
       /** The serialVersionUID */
       private static final long serialVersionUID = -7178286048602531152L;
@@ -1492,7 +1518,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     * See details at http://www.jboss.org/community/wiki/infinispantechnicalfaqs"
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
-   private static class UnsafeType  extends AbstractNamedCacheConfigurationBean{
+   public static class UnsafeType  extends AbstractNamedCacheConfigurationBean{
       
       /** The serialVersionUID */
       private static final long serialVersionUID = -9200921443651234163L;
@@ -1530,7 +1556,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     * @configRef name="customInterceptors",desc="Configures custom interceptors to be added to the cache."
     */
    @XmlAccessorType(XmlAccessType.FIELD)
-   private static class CustomInterceptorsType extends AbstractNamedCacheConfigurationBean {
+   public static class CustomInterceptorsType extends AbstractNamedCacheConfigurationBean {
       
       /** The serialVersionUID */
       private static final long serialVersionUID = 7187545782011884661L;
@@ -1549,6 +1575,14 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
             }
          }
          return dolly;
+      }
+      
+      @Override
+      public void accept(ConfigurationBeanVisitor v) {        
+          super.accept(v);
+          for (CustomInterceptorConfig cic : customInterceptors) {
+            cic.accept(v);
+        }
       }
 
       @Override

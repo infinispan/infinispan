@@ -329,8 +329,21 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    public void setDistributedSyncTimeout(long distributedSyncTimeout) {
       transport.distributedSyncTimeout = distributedSyncTimeout;
    }
+   
+    @Override
+    public void accept(ConfigurationBeanVisitor v) {        
+        super.accept(v);
+        asyncListenerExecutor.accept(v);
+        asyncTransportExecutor.accept(v);
+        evictionScheduledExecutor.accept(v);
+        globalJmxStatistics.accept(v);
+        replicationQueueScheduledExecutor.accept(v);
+        serialization.accept(v);
+        shutdown.accept(v);
+        transport.accept(v);        
+    }
 
-   @Override
+@Override
    public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
@@ -435,7 +448,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
     * @configRef name="replicationQueueScheduledExecutor",desc="Executor for replication."
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
-   private static class FactoryClassWithPropertiesType extends AbstractConfigurationBeanWithGCR {
+   public static class FactoryClassWithPropertiesType extends AbstractConfigurationBeanWithGCR {
       
       /** @configRef desc="Executor fully qualified class name" */
       @XmlAttribute
@@ -481,7 +494,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
     * @configRef name="transport",desc="Determines Infinispan transport type and accompanying properties." 
     */   
    @XmlAccessorType(XmlAccessType.PROPERTY)
-   private static class TransportType extends AbstractConfigurationBeanWithGCR {
+   public static class TransportType extends AbstractConfigurationBeanWithGCR {
      
       /** @configRef desc="Cluster name where all cache instances defined are connected" */
       protected String clusterName = "Infinispan-Cluster";
@@ -542,7 +555,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
     * @configRef name="serialization",desc="Serialization and marshalling settings."
     */   
    @XmlAccessorType(XmlAccessType.PROPERTY)
-   private static class SerializationType extends AbstractConfigurationBeanWithGCR {
+   public static class SerializationType extends AbstractConfigurationBeanWithGCR {
       
       /** @configRef desc="Fully qualified name of a class that marshalls objects between cache nodes"*/
       protected String marshallerClass = VersionAwareMarshaller.class.getName(); // the default
@@ -572,7 +585,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
     * @configRef name="globalJmxStatistics",desc="Determines global JMX settings for all cache instances." 
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
-   private static class GlobalJmxStatisticsType extends AbstractConfigurationBeanWithGCR {
+   public static class GlobalJmxStatisticsType extends AbstractConfigurationBeanWithGCR {
       
       /** @configRef desc="Toggle to enable/disable exposing Infinispan objects to JMX" */
       protected Boolean enabled = false;
@@ -617,7 +630,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
     * By default a shutdown hook is registered even if no MBean server (apart from the JDK default) is detected."
     */   
    @XmlAccessorType(XmlAccessType.PROPERTY)
-   private static class ShutdownType extends AbstractConfigurationBeanWithGCR {
+   public static class ShutdownType extends AbstractConfigurationBeanWithGCR {
       
       /** @configRef desc="Behavior of the JVM shutdown hook registered by the cache" */
       protected ShutdownHookBehavior hookBehavior = ShutdownHookBehavior.DEFAULT;
