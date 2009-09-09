@@ -1,17 +1,18 @@
 package org.infinispan.config;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.Collection;
-import java.util.List;
-
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.util.ReflectionUtil;
+import org.infinispan.CacheException;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Adds named cache specific features to the {@link org.infinispan.config.AbstractConfigurationBean}.
@@ -40,8 +41,10 @@ public abstract class AbstractNamedCacheConfigurationBean extends AbstractConfig
                   fieldValueThis.inject(cr);
                }
             } catch (Exception e) {
-               log.warn("Could not inject for field " + field + " in class " +fieldValueThis,e);
-            }         
+               String s = "Could not inject for field " + field + " in class " + fieldValueThis;
+               log.error(s, e);
+               throw new CacheException(s, e);
+            }
       }
       
       //and don't forget to recurse into collections of components...
@@ -66,7 +69,9 @@ public abstract class AbstractNamedCacheConfigurationBean extends AbstractConfig
                         }
                      }
                   } catch (Exception e) {
-                     log.warn("Could not inject for field " + field + " in class " +field,e);
+                     String errorMsg = "Could not inject for field " + field + " in class " + field;
+                     log.error(errorMsg,e);
+                     throw new CacheException(errorMsg, e);
                   }
                }
             }
