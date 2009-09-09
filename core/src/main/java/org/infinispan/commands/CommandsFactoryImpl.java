@@ -58,6 +58,8 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.TransactionTable;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collection;
 import java.util.List;
@@ -69,6 +71,11 @@ import java.util.Map;
  * @since 4.0
  */
 public class CommandsFactoryImpl implements CommandsFactory {
+
+   private static final Log log = LogFactory.getLog(CommandsFactoryImpl.class);
+   private static final boolean trace = log.isTraceEnabled();
+
+
    private DataContainer dataContainer;
    private CacheNotifier notifier;
    private Cache cache;
@@ -271,7 +278,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
             rcc.init(distributionManager, configuration, dataContainer);
             break;
          default:
-            throw new IllegalStateException("Unknown/supported command id! : " + c.getCommandId() + " command: " + c);
+            if (trace)
+               log.trace("Nothing to initialize for command: " + c);
       }
    }
 
