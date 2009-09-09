@@ -53,8 +53,8 @@ public class TxInterceptor extends CommandInterceptor {
    private final AtomicLong prepares = new AtomicLong(0);
    private final AtomicLong commits = new AtomicLong(0);
    private final AtomicLong rollbacks = new AtomicLong(0);
-   @ManagedAttribute(name = "StatisticsEnabled", description = "Enables or disables the gathering of statistics by this component", writable = true)
-   private boolean statsEnabled;
+   @ManagedAttribute(description = "Enables or disables the gathering of statistics by this component", writable = true)
+   private boolean statisticsEnabled;
 
 
    @Inject
@@ -81,7 +81,7 @@ public class TxInterceptor extends CommandInterceptor {
       if (!command.isOnePhaseCommit()) {
          transactionLog.logPrepare(command);
       }
-      if (this.statsEnabled) prepares.incrementAndGet();
+      if (this.statisticsEnabled) prepares.incrementAndGet();
       Object result = invokeNextInterceptor(ctx, command);
       if (command.isOnePhaseCommit()) {
          transactionLog.logOnePhaseCommit(ctx.getGlobalTransaction(), command.getModifications());
@@ -91,7 +91,7 @@ public class TxInterceptor extends CommandInterceptor {
 
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      if (this.statsEnabled) commits.incrementAndGet();
+      if (this.statisticsEnabled) commits.incrementAndGet();
       Object result = invokeNextInterceptor(ctx, command);
       transactionLog.logCommit(command.getGlobalTransaction());
       return result;
@@ -99,7 +99,7 @@ public class TxInterceptor extends CommandInterceptor {
 
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
-      if (this.statsEnabled) rollbacks.incrementAndGet();
+      if (this.statisticsEnabled) rollbacks.incrementAndGet();
       transactionLog.rollback(command.getGlobalTransaction());
       return invokeNextInterceptor(ctx, command);
    }
@@ -216,11 +216,11 @@ public class TxInterceptor extends CommandInterceptor {
    }
 
    public void setStatisticsEnabled(boolean enabled) {
-      this.statsEnabled = enabled;
+      this.statisticsEnabled = enabled;
    }
 
    public boolean isStatisticsEnabled() {
-      return this.statsEnabled;
+      return this.statisticsEnabled;
    }
 
    @ManagedAttribute(description = "number of transaction prepares")

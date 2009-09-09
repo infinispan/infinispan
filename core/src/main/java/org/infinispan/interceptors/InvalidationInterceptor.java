@@ -72,8 +72,8 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
    private final AtomicLong invalidations = new AtomicLong(0);
    protected Map<GlobalTransaction, List<VisitableCommand>> txMods;
    private CommandsFactory commandsFactory;
-   @ManagedAttribute(name = "StatisticsEnabled", description = "Enables or disables the gathering of statistics by this component", writable = true)
-   private boolean statsEnabled;
+   @ManagedAttribute(description = "Enables or disables the gathering of statistics by this component", writable = true)
+   private boolean statisticsEnabled;
 
    @Inject
    public void injectDependencies(CommandsFactory commandsFactory) {
@@ -218,7 +218,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
    }
 
    private void incrementInvalidations() {
-      if (statsEnabled) invalidations.incrementAndGet();
+      if (statisticsEnabled) invalidations.incrementAndGet();
    }
    
    private boolean isPutForExternalRead(InvocationContext ctx) {
@@ -235,11 +235,11 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
    }
 
    public boolean getStatisticsEnabled() {
-      return this.statsEnabled;
+      return this.statisticsEnabled;
    }
 
    public void setStatisticsEnabled(boolean enabled) {
-      this.statsEnabled = enabled;
+      this.statisticsEnabled = enabled;
    }
 
    @ManagedAttribute(description = "number of invalidations")

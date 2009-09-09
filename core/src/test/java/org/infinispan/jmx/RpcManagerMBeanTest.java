@@ -16,6 +16,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import static org.testng.Assert.assertEquals;
 import org.testng.annotations.Test;
 
+import javax.management.Attribute;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import java.util.ArrayList;
@@ -78,7 +79,7 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
       assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals("N/A");
       assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals("N/A");
 
-      mBeanServer.invoke(rpcManager1, "setStatisticsEnabled", new Object[]{Boolean.TRUE}, new String[]{"boolean"});
+      mBeanServer.setAttribute(rpcManager1, new Attribute("StatisticsEnabled", Boolean.TRUE));
       assert mBeanServer.getAttribute(rpcManager1, "StatisticsEnabled").equals(Boolean.TRUE);
       assert mBeanServer.getAttribute(rpcManager2, "StatisticsEnabled").equals(Boolean.FALSE);
 
@@ -87,7 +88,6 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
       assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals("1") : "Expected 1, was " + mBeanServer.getAttribute(rpcManager1, "ReplicationCount");
       assert mBeanServer.getAttribute(rpcManager1, "ReplicationFailures").equals("0");
       mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals("N/A");
-
 
       //now resume statistics
       mBeanServer.invoke(rpcManager1, "resetStatistics", new Object[0], new String[0]);

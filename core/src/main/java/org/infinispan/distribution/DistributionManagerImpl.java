@@ -93,7 +93,7 @@ public class DistributionManagerImpl implements DistributionManager {
    private InterceptorChain interceptorChain;
    private InvocationContextContainer icc;
    private volatile boolean joinTaskSubmitted = false;
-   @ManagedAttribute(name = "Joined", description = "If true, the node has successfully joined the grid and is considered to hold state.  If false, the join process is still in progress.")
+   @ManagedAttribute(description = "If true, the node has successfully joined the grid and is considered to hold state.  If false, the join process is still in progress.")
    volatile boolean joinComplete = false;
    final List<Address> leavers = new CopyOnWriteArrayList<Address>();
    volatile Future<Void> leaveTaskFuture;
@@ -363,7 +363,7 @@ public class DistributionManagerImpl implements DistributionManager {
       }
    }
 
-   @ManagedAttribute(name = "ClusterSize", description = "Size of the cluster in number of nodes")
+   @ManagedAttribute(description = "Size of the cluster in number of nodes")
    public String getClusterSize() {
       return rpcManager.getTransport().getMembers().size() + "";
    }

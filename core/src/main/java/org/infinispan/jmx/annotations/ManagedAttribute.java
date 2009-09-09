@@ -32,14 +32,13 @@ import java.lang.annotation.Target;
  * is optionally annotated with an @MBean annotation, or inherits such an annotation from a superclass.
  *
  * @author (various)
+ * @author Galder Zamarreño
  * @since 4.0
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.FIELD})
 public @interface ManagedAttribute {
    String description() default "";
-
-   String name() default "";
 
    boolean writable() default false;
 }

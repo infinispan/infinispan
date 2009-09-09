@@ -15,6 +15,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
+import javax.management.Attribute;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import java.util.HashMap;
@@ -64,9 +65,9 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
    }
 
    public void testDisbaleStatistics() throws Exception {
-      threadMBeanServer.invoke(activationInterceptorObjName, "setStatisticsEnabled", new Object[]{Boolean.FALSE}, new String[]{"boolean"});
+      threadMBeanServer.setAttribute(activationInterceptorObjName, new Attribute("StatisticsEnabled", Boolean.FALSE));
       assert threadMBeanServer.getAttribute(activationInterceptorObjName, "Activations").toString().equals("N/A");
-      threadMBeanServer.invoke(activationInterceptorObjName, "setStatisticsEnabled", new Object[]{Boolean.TRUE}, new String[]{"boolean"});
+      threadMBeanServer.setAttribute(activationInterceptorObjName, new Attribute("StatisticsEnabled", Boolean.TRUE));
    }
 
    public void testActivationOnGet() throws Exception {

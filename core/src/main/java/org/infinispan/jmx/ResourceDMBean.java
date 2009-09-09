@@ -258,11 +258,10 @@ public class ResourceDMBean implements DynamicMBean {
                            + ", but is annotated with @ManagedAttribute: will be ignored");
             } else {
                MBeanAttributeInfo info = null;
-               // Is name field of @ManagedAttributed used?
-               String attributeName = attr.name().length() > 0 ? attr.name().trim() : null;
+               String attributeName = null;
                boolean writeAttribute = false;
                if (isSetMethod(method)) { // setter
-                  attributeName = (attributeName == null) ? methodName.substring(3) : attributeName;
+                  attributeName = methodName.substring(3);
                   info = new MBeanAttributeInfo(attributeName, method.getParameterTypes()[0]
                            .getCanonicalName(), attr.description(), true, true, false);
                   writeAttribute = true;
@@ -272,14 +271,12 @@ public class ResourceDMBean implements DynamicMBean {
                      boolean hasSetter = atts.containsKey(attributeName);
                      // we found is method
                      if (methodName.startsWith("is")) {
-                        attributeName = (attributeName == null) ? methodName.substring(2)
-                                 : attributeName;
+                        attributeName = methodName.substring(2);
                         info = new MBeanAttributeInfo(attributeName, method.getReturnType()
                                  .getCanonicalName(), attr.description(), true, hasSetter, true);
                      } else {
                         // this has to be get
-                        attributeName = (attributeName == null) ? methodName.substring(3)
-                                 : attributeName;
+                        attributeName = methodName.substring(3);
                         info = new MBeanAttributeInfo(attributeName, method.getReturnType()
                                  .getCanonicalName(), attr.description(), true, hasSetter, false);
                      }

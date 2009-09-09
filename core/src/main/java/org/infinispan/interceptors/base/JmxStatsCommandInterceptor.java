@@ -33,8 +33,8 @@ import org.infinispan.jmx.annotations.ManagedOperation;
  * @since 4.0
  */
 public abstract class JmxStatsCommandInterceptor extends CommandInterceptor implements JmxStatisticsExposer {
-   @ManagedAttribute(name = "StatisticsEnabled", description = "Enables or disables the gathering of statistics by this component", writable = true)
-   private boolean statsEnabled = false;
+   @ManagedAttribute(description = "Enables or disables the gathering of statistics by this component", writable = true)
+   private boolean statisticsEnabled = false;
 
    @Start
    public void checkStatisticsUsed() {
@@ -47,14 +47,14 @@ public abstract class JmxStatsCommandInterceptor extends CommandInterceptor impl
     * @return true if statistics are captured
     */
    public boolean getStatisticsEnabled() {
-      return statsEnabled;
+      return statisticsEnabled;
    }
 
    /**
     * @param enabled whether gathering statistics for JMX are enabled.
     */
    public void setStatisticsEnabled(boolean enabled) {
-      statsEnabled = enabled;
+      statisticsEnabled = enabled;
    }
 
    /**
