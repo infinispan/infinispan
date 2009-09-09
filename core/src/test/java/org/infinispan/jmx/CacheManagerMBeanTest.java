@@ -7,8 +7,10 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
+import javax.management.MBeanException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
+import javax.management.ServiceNotFoundException;
 
 /**
  * Tests whether the attributes defined by DefaultCacheManager work correct.
@@ -62,5 +64,15 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
       assert attribute.contains("a(");
       assert attribute.contains("b(");
       assert attribute.contains("c(");
+   }
+   
+   public void testInvokeJmxOperationNotExposed() throws Exception {
+      try {
+         server.invoke(name, "stop", new Object[]{}, new String[]{});
+         assert false : "Method not exposed, invocation should have failed";
+      } catch (MBeanException mbe) {
+         assert mbe.getCause() instanceof ServiceNotFoundException;
+      }
+      
    }
 }
