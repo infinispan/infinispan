@@ -33,7 +33,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "eviction.MarshalledValuesEvictionFunctionalTest")
+@Test(groups = "functional", testName = "eviction.MarshalledValuesManualEvictionTest")
 public class MarshalledValuesManualEvictionTest extends SingleCacheManagerTest {
 
    @Override
