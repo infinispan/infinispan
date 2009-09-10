@@ -250,13 +250,15 @@ public class InfinispanConfiguration implements XmlConfigurationParser {
       super();
    }
    
-   public void accept(ConfigurationBeanVisitor v){
-       global.accept(v);
-       defaultConfiguration.accept(v);
-       for (Configuration c : namedCaches) {
-           c.accept(v);           
-       }
-       v.traversalCompleted(this);
+   public void accept(ConfigurationBeanVisitor v) {
+      global.accept(v);
+      defaultConfiguration.accept(v);
+      if (namedCaches != null) {
+         for (Configuration c : namedCaches) {
+            c.accept(v);
+         }
+      }
+      v.traversalCompleted(this);
    }
 
    private static InputStream findInputStream(String fileName) throws FileNotFoundException {
