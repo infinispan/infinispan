@@ -484,7 +484,7 @@ public class TestingUtil {
     * @param cache       cache that needs to be altered
     * @param interceptor the first interceptor in the new chain.
     */
-   public static void replaceInterceptorChain(Cache<?, ?> cache, CommandInterceptor interceptor) {
+   public static void replaceInterceptorChain(Cache cache, CommandInterceptor interceptor) {
       ComponentRegistry cr = extractComponentRegistry(cache);
       // make sure all interceptors here are wired.
       CommandInterceptor i = interceptor;
@@ -495,6 +495,25 @@ public class TestingUtil {
 
       InterceptorChain inch = cr.getComponent(InterceptorChain.class);
       inch.setFirstInChain(interceptor);
+   }
+
+   /**
+    * Replaces an existing interceptor of the given type in the interceptor chain with a new interceptor instance passed as parameter.
+    * 
+    * @param replacingInterceptor the interceptor to add to the interceptor chain
+    * @param toBeReplacedInterceptorType the type of interceptor that should be swapped with the new one
+    * @return true if the interceptor was replaced
+    */
+   public static boolean replaceInterceptor(Cache cache, CommandInterceptor replacingInterceptor, Class<? extends CommandInterceptor> toBeReplacedInterceptorType) {
+      ComponentRegistry cr = extractComponentRegistry(cache);
+      // make sure all interceptors here are wired.
+      CommandInterceptor i = replacingInterceptor;
+      do {
+         cr.wireDependencies(i);
+      }
+      while ((i = i.getNext()) != null);
+      InterceptorChain inch = cr.getComponent(InterceptorChain.class);
+      return inch.replaceInterceptor(replacingInterceptor, toBeReplacedInterceptorType);
    }
 
    /**

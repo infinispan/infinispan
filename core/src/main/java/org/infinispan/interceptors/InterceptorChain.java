@@ -40,6 +40,7 @@ import java.util.List;
  * Knows how to build and manage an chain of interceptors. Also in charge with invoking methods on the chain.
  *
  * @author Mircea.Markus@jboss.com
+ * @author Galder Zamarreño
  * @since 4.0 todo - if you add the same interceptor instance twice, things get really dirty. -- this should be treated
  *        as an missuse and an exception should be thrown
  */
@@ -204,6 +205,34 @@ public class InterceptorChain {
             return true;
          }
          it = it.getNext();
+      }
+      return false;
+   }
+   
+   /**
+    * Replaces an existing interceptor of the given type in the interceptor chain with a new interceptor instance passed as parameter.
+    * 
+    * @param replacingInterceptor the interceptor to add to the interceptor chain
+    * @param toBeReplacedInterceptorType the type of interceptor that should be swapped with the new one
+    * @return true if the interceptor was replaced
+    */
+   public boolean replaceInterceptor(CommandInterceptor replacingInterceptor, Class<? extends CommandInterceptor> toBeReplacedInterceptorType) {
+      if (firstInChain.getClass().equals(toBeReplacedInterceptorType)) {
+         replacingInterceptor.setNext(firstInChain.getNext());
+         firstInChain = replacingInterceptor;
+         return true;
+      }
+      CommandInterceptor it = firstInChain;
+      CommandInterceptor previous = firstInChain;
+      while (it.getNext() != null) {
+         CommandInterceptor current = it.getNext();
+         if (current.getClass().equals(toBeReplacedInterceptorType)) {
+            replacingInterceptor.setNext(current.getNext());
+            previous.setNext(replacingInterceptor);
+            return true;
+         }
+         previous = current;
+         it = current;
       }
       return false;
    }

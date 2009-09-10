@@ -471,7 +471,7 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
    }
 
    public static class Pojo implements Externalizable {
-      int i;
+      public int i;
       boolean b;
       static int serializationCount, deserializationCount;
       final Log log = LogFactory.getLog(Pojo.class);
