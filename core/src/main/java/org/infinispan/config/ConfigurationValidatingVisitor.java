@@ -32,21 +32,15 @@ import org.infinispan.loaders.decorators.SingletonStoreConfig;
  * @since 4.0
  */
 public class ConfigurationValidatingVisitor extends AbstractConfigurationBeanVisitor {
-   private SingletonStoreConfig ssc = null;
    private TransportType tt = null;
 
-   public void visit(SingletonStoreConfig ssc) {
-      this.ssc = ssc;
-   }
-
-   public void visit(TransportType tt) {
-      this.tt = tt;
-   }
-
-   public void traversalCompleted(InfinispanConfiguration infinispanConfiguration) {
-      if (ssc != null && tt == null) {
-         throw new ConfigurationException("Singleton store configured without transport being configured for "
-                           + infinispanConfiguration);
+   public void visitSingletonStoreConfig(SingletonStoreConfig ssc) {
+      if (tt == null) {
+         throw new ConfigurationException("Singleton store configured without transport being configured");
       }
+   }
+   
+   public void visitTransportType(TransportType tt) {
+      this.tt = tt;
    }
 }

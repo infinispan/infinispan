@@ -21,8 +21,28 @@
  */
 package org.infinispan.config;
 
-import java.lang.reflect.Method;
-
+import org.infinispan.config.Configuration.AsyncType;
+import org.infinispan.config.Configuration.BooleanAttributeType;
+import org.infinispan.config.Configuration.ClusteringType;
+import org.infinispan.config.Configuration.CustomInterceptorsType;
+import org.infinispan.config.Configuration.DeadlockDetectionType;
+import org.infinispan.config.Configuration.EvictionType;
+import org.infinispan.config.Configuration.ExpirationType;
+import org.infinispan.config.Configuration.HashType;
+import org.infinispan.config.Configuration.L1Type;
+import org.infinispan.config.Configuration.LockingType;
+import org.infinispan.config.Configuration.StateRetrievalType;
+import org.infinispan.config.Configuration.SyncType;
+import org.infinispan.config.Configuration.TransactionType;
+import org.infinispan.config.Configuration.UnsafeType;
+import org.infinispan.config.GlobalConfiguration.FactoryClassWithPropertiesType;
+import org.infinispan.config.GlobalConfiguration.GlobalJmxStatisticsType;
+import org.infinispan.config.GlobalConfiguration.SerializationType;
+import org.infinispan.config.GlobalConfiguration.ShutdownType;
+import org.infinispan.config.GlobalConfiguration.TransportType;
+import org.infinispan.loaders.CacheLoaderConfig;
+import org.infinispan.loaders.decorators.AsyncStoreConfig;
+import org.infinispan.loaders.decorators.SingletonStoreConfig;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -48,47 +68,117 @@ import org.infinispan.util.logging.LogFactory;
  */
 public abstract class AbstractConfigurationBeanVisitor implements ConfigurationBeanVisitor {
 
-    protected transient Log log = LogFactory.getLog(getClass());
+   protected transient Log log = LogFactory.getLog(getClass());
 
-    private Method findVisitMethod(AbstractConfigurationBean bean) throws Exception {
-        Class<?> cl = bean.getClass();
-        while (!cl.equals(AbstractConfigurationBean.class)) {
-            try {
-                return this.getClass().getDeclaredMethod("visit", new Class[] { cl });
-            } catch (NoSuchMethodException ex) {
-                cl = cl.getSuperclass();
-            }
-        }
-        // Check through interfaces for matching method
-        Class<?>[] interfaces = bean.getClass().getInterfaces();
-        for (int i = 0; i < interfaces.length; i++) {
-            try {
-                return this.getClass().getDeclaredMethod("visit", new Class[] { interfaces[i] });
-            } catch (NoSuchMethodException ex) {
-            }
-        }
-        return null;
-    }
+   public void visitInfinispanConfiguration(InfinispanConfiguration bean) {
+   }
+   
+   public void visitAsyncStoreConfig(AsyncStoreConfig bean) {
+      defaultVisit(bean);
+   }
 
-    public void visit(AbstractConfigurationBean bean) {
-        Method m = null;
-        try {
-            m = findVisitMethod(bean);
-        } catch (Exception e) {
-            log.warn("Could not reflect visit method for bean " + bean, e);
-        }
-        if (m == null) {
-            defaultVisit(bean);
-        } else {
-            try {
-                m.invoke(this, new Object[] { bean });
-            } catch (Exception e) {
-                log.warn("Invocation for visitor method " + m + " on bean " + bean
-                                + " has thrown exception", e);               
-            }
-        }
-    }
+   public void visitAsyncType(AsyncType bean) {
+      defaultVisit(bean);
+   }
 
-    public void defaultVisit(AbstractConfigurationBean c) {}
+   public void visitBooleanAttributeType(BooleanAttributeType bean) {
+      defaultVisit(bean);
+
+   }
+
+   public void visitCacheLoaderConfig(CacheLoaderConfig bean) {
+
+   }
+
+   public void visitCacheLoaderManagerConfig(CacheLoaderManagerConfig bean) {
+      defaultVisit(bean);
+   }
+
+   public void visitClusteringType(ClusteringType bean) {
+      defaultVisit(bean);
+   }
+
+   public void visitConfiguration(Configuration bean) {
+      defaultVisit(bean);
+   }
+
+   public void visitCustomInterceptorsType(CustomInterceptorsType bean) {
+      defaultVisit(bean);
+   }
+
+   public void visitDeadlockDetectionType(DeadlockDetectionType bean) {
+      defaultVisit(bean);
+   }
+
+   public void visitEvictionType(EvictionType bean) {
+      defaultVisit(bean);
+   }
+
+   public void visitExpirationType(ExpirationType bean) {
+      defaultVisit(bean);
+   }
+
+   public void visitFactoryClassWithPropertiesType(FactoryClassWithPropertiesType bean) {
+      defaultVisit(bean);
+   }
+
+   public void visitGlobalConfiguration(GlobalConfiguration bean) {
+      defaultVisit(bean);
+   }
+
+   public void visitGlobalJmxStatisticsType(GlobalJmxStatisticsType bean) {
+      defaultVisit(bean);
+   }
+
+   public void visitHashType(HashType bean) {
+      defaultVisit(bean);
+   }
+
+   public void visitL1Type(L1Type bean) {
+      defaultVisit(bean);
+   }
+
+   public void visitLockingType(LockingType bean) {
+      defaultVisit(bean);
+   }
+
+   public void visitSerializationType(SerializationType bean) {
+      defaultVisit(bean);
+   }
+
+   public void visitShutdownType(ShutdownType bean) {
+      defaultVisit(bean);
+   }
+
+   public void visitSingletonStoreConfig(SingletonStoreConfig bean) {
+      defaultVisit(bean);
+   }
+
+   public void visitStateRetrievalType(StateRetrievalType bean) {
+      defaultVisit(bean);
+   }
+
+   public void visitSyncType(SyncType bean) {
+      defaultVisit(bean);
+   }
+
+   public void visitTransactionType(TransactionType bean) {
+      defaultVisit(bean);
+   }
+
+   public void visitTransportType(TransportType bean) {
+      defaultVisit(bean);
+   }
+
+   public void visitUnsafeType(UnsafeType bean) {
+      defaultVisit(bean);
+   }
+   
+   public void visitCustomInterceptorConfig(CustomInterceptorConfig bean) {
+      defaultVisit(bean);
+   }
+
+   public void defaultVisit(AbstractConfigurationBean c) {
+   }
 
 }

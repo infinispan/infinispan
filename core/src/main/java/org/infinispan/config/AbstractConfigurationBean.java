@@ -61,9 +61,6 @@ public abstract class AbstractConfigurationBean implements CloneableConfiguratio
    protected AbstractConfigurationBean() {
    }
    
-   public void accept(ConfigurationBeanVisitor v){
-       v.visit(this);      
-   }
 
    /**
     * Safely converts a String to upper case.

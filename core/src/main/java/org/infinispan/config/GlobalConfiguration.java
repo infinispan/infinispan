@@ -330,9 +330,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       transport.distributedSyncTimeout = distributedSyncTimeout;
    }
    
-    @Override
     public void accept(ConfigurationBeanVisitor v) {        
-        super.accept(v);
         asyncListenerExecutor.accept(v);
         asyncTransportExecutor.accept(v);
         evictionScheduledExecutor.accept(v);
@@ -340,7 +338,8 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
         replicationQueueScheduledExecutor.accept(v);
         serialization.accept(v);
         shutdown.accept(v);
-        transport.accept(v);        
+        transport.accept(v);   
+        v.visitGlobalConfiguration(this);
     }
 
 @Override
@@ -466,6 +465,10 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
          this.factory = factory;
       }   
       
+      public void accept(ConfigurationBeanVisitor v) {
+         v.visitFactoryClassWithPropertiesType(this);
+      }
+
       public FactoryClassWithPropertiesType() {
          super();
          this.factory = "";
@@ -512,6 +515,10 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
          transportClass = JGroupsTransport.class.getName();
       }
       
+      public void accept(ConfigurationBeanVisitor v) {
+         v.visitTransportType(this);
+      }
+
       public TransportType(String transportClass) {
          super();
          this.transportClass = transportClass;
@@ -567,6 +574,10 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
          super();
       }
 
+      public void accept(ConfigurationBeanVisitor v) {
+         v.visitSerializationType(this);
+      }
+
       @XmlAttribute
       public void setMarshallerClass(String marshallerClass) {
          testImmutability("marshallerClass");
@@ -605,6 +616,10 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
          this.enabled = enabled;
       }
 
+      public void accept(ConfigurationBeanVisitor v) {
+         v.visitGlobalJmxStatisticsType(this);
+      }
+
       @XmlAttribute
       public void setJmxDomain(String jmxDomain) {
          testImmutability("jmxDomain");
@@ -639,11 +654,15 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       public void setHookBehavior(ShutdownHookBehavior hookBehavior) {
          testImmutability("hookBehavior");
          this.hookBehavior = hookBehavior;
+      }
+
+      public void accept(ConfigurationBeanVisitor v) {
+         v.visitShutdownType(this);
       }               
    }
 }
 
-class AbstractConfigurationBeanWithGCR extends AbstractConfigurationBean{
+abstract class AbstractConfigurationBeanWithGCR extends AbstractConfigurationBean{
 
    GlobalComponentRegistry gcr = null;
    

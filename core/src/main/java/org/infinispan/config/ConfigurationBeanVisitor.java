@@ -21,6 +21,29 @@
  */
 package org.infinispan.config;
 
+import org.infinispan.config.Configuration.AsyncType;
+import org.infinispan.config.Configuration.BooleanAttributeType;
+import org.infinispan.config.Configuration.ClusteringType;
+import org.infinispan.config.Configuration.CustomInterceptorsType;
+import org.infinispan.config.Configuration.DeadlockDetectionType;
+import org.infinispan.config.Configuration.EvictionType;
+import org.infinispan.config.Configuration.ExpirationType;
+import org.infinispan.config.Configuration.HashType;
+import org.infinispan.config.Configuration.L1Type;
+import org.infinispan.config.Configuration.LockingType;
+import org.infinispan.config.Configuration.StateRetrievalType;
+import org.infinispan.config.Configuration.SyncType;
+import org.infinispan.config.Configuration.TransactionType;
+import org.infinispan.config.Configuration.UnsafeType;
+import org.infinispan.config.GlobalConfiguration.FactoryClassWithPropertiesType;
+import org.infinispan.config.GlobalConfiguration.GlobalJmxStatisticsType;
+import org.infinispan.config.GlobalConfiguration.SerializationType;
+import org.infinispan.config.GlobalConfiguration.ShutdownType;
+import org.infinispan.config.GlobalConfiguration.TransportType;
+import org.infinispan.loaders.CacheLoaderConfig;
+import org.infinispan.loaders.decorators.AsyncStoreConfig;
+import org.infinispan.loaders.decorators.SingletonStoreConfig;
+
 /**
  * ConfigurationBeanVisitor implementations are passed through InfinispanConfiguration object tree
  * visiting each configuration element of InfinispanConfiguration instance.
@@ -36,15 +59,60 @@ package org.infinispan.config;
  * @see AbstractConfigurationBeanVisitor
  * @since 4.0
  */
-public interface ConfigurationBeanVisitor {
+public interface ConfigurationBeanVisitor { 
+   
+   void visitInfinispanConfiguration(InfinispanConfiguration bean);
+   
+   void visitGlobalConfiguration(GlobalConfiguration bean);
+   
+   void visitFactoryClassWithPropertiesType(FactoryClassWithPropertiesType bean);
+   
+   void visitGlobalJmxStatisticsType(GlobalJmxStatisticsType bean);
+   
+   void visitSerializationType(SerializationType bean);
+   
+   void visitShutdownType(ShutdownType bean);
+   
+   void visitTransportType(TransportType bean);
+   
+   void visitConfiguration(Configuration bean);
+   
+   void visitAsyncType(AsyncType bean);
+   
+   void visitBooleanAttributeType(BooleanAttributeType bean);
+   
+   void visitClusteringType(ClusteringType bean);
+   
+   void visitCustomInterceptorsType(CustomInterceptorsType bean);
+   
+   void visitDeadlockDetectionType(DeadlockDetectionType bean);
+   
+   void visitEvictionType(EvictionType bean);
+   
+   void visitExpirationType(ExpirationType bean);
+   
+   void visitHashType(HashType bean);
+   
+   void visitL1Type(L1Type bean);
+   
+   void visitLockingType(LockingType bean);
+   
+   void visitStateRetrievalType(StateRetrievalType bean);
+   
+   void visitSyncType(SyncType bean);
+   
+   void visitTransactionType(TransactionType bean);
+   
+   void visitUnsafeType(UnsafeType bean);
+   
+   void visitCacheLoaderManagerConfig(CacheLoaderManagerConfig bean);
+   
+   void visitCacheLoaderConfig(CacheLoaderConfig bean);
+   
+   void visitSingletonStoreConfig(SingletonStoreConfig bean);
+   
+   void visitAsyncStoreConfig(AsyncStoreConfig bean);
 
-   void visit(AbstractConfigurationBean bean);
-
-   /**
-    * Signals end of traversal over InfinispanConfiguration instance 
-    * 
-    * @param infinispanConfiguration
-    */
-   void traversalCompleted(InfinispanConfiguration infinispanConfiguration);
+   void visitCustomInterceptorConfig(CustomInterceptorConfig customInterceptorConfig);   
 
 }

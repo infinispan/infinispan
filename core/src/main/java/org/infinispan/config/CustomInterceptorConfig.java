@@ -336,4 +336,8 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
    enum Position {
       FIRST,LAST;
    }
+
+   public void accept(ConfigurationBeanVisitor v) {
+      v.visitCustomInterceptorConfig(this);
+   }
 }

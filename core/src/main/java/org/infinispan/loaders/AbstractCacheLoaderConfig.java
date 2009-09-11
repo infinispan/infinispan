@@ -5,6 +5,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 
 import org.infinispan.CacheException;
+import org.infinispan.config.ConfigurationBeanVisitor;
 import org.infinispan.config.PluggableConfigurationComponent;
 
 /**
@@ -48,4 +49,6 @@ public class AbstractCacheLoaderConfig extends PluggableConfigurationComponent i
          throw new CacheException(e);
       }
    }
+   
+   public void accept(ConfigurationBeanVisitor v) {}
 }

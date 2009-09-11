@@ -1,5 +1,6 @@
 package org.infinispan.loaders;
 
+import org.infinispan.config.ConfigurationBeanVisitor;
 import org.infinispan.loaders.decorators.AsyncStoreConfig;
 import org.infinispan.loaders.decorators.SingletonStoreConfig;
 import org.infinispan.util.Util;
@@ -118,6 +119,12 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
    public void setAsyncStoreConfig(AsyncStoreConfig asyncStoreConfig) {
       testImmutability("async");
       this.async = asyncStoreConfig;
+   }
+   
+   public void accept(ConfigurationBeanVisitor v) {
+      singletonStore.accept(v);
+      async.accept(v);
+      v.visitCacheLoaderConfig(this);
    }
 
    @Override

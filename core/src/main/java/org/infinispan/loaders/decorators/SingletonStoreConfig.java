@@ -5,6 +5,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 
 import org.infinispan.config.AbstractNamedCacheConfigurationBean;
+import org.infinispan.config.ConfigurationBeanVisitor;
 
 /**
  * Configuration for a singleton store
@@ -83,5 +84,9 @@ public class SingletonStoreConfig extends AbstractNamedCacheConfigurationBean {
       } catch (CloneNotSupportedException e) {
          throw new RuntimeException("Should not happen", e);
       }
+   }
+
+   public void accept(ConfigurationBeanVisitor v) {
+      v.visitSingletonStoreConfig(this);
    }
 }

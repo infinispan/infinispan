@@ -257,8 +257,8 @@ public class InfinispanConfiguration implements XmlConfigurationParser {
          for (Configuration c : namedCaches) {
             c.accept(v);
          }
-      }
-      v.traversalCompleted(this);
+      }      
+      v.visitInfinispanConfiguration(this);
    }
 
    private static InputStream findInputStream(String fileName) throws FileNotFoundException {

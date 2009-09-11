@@ -5,6 +5,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 
 import org.infinispan.config.AbstractNamedCacheConfigurationBean;
+import org.infinispan.config.ConfigurationBeanVisitor;
 import org.infinispan.config.Dynamic;
 
 /**
@@ -78,5 +79,9 @@ public class AsyncStoreConfig extends AbstractNamedCacheConfigurationBean {
       } catch (CloneNotSupportedException e) {
          throw new RuntimeException("Should not happen!", e);
       }
+   }
+
+   public void accept(ConfigurationBeanVisitor v) {
+      v.visitAsyncStoreConfig(this);
    }
 }

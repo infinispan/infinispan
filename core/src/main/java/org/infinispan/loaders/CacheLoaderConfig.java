@@ -1,5 +1,6 @@
 package org.infinispan.loaders;
 
+import org.infinispan.config.ConfigurationBeanVisitor;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.config.parsing.XmlConfigHelper;
 import org.infinispan.util.Util;
@@ -26,6 +27,8 @@ import java.util.Properties;
  */
 @XmlJavaTypeAdapter(CacheLoaderConfigAdapter.class)
 public interface CacheLoaderConfig extends Cloneable, Serializable {
+   
+   void accept(ConfigurationBeanVisitor visitor);
 
    CacheLoaderConfig clone();
 

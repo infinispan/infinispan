@@ -538,21 +538,20 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    //   OVERRIDDEN METHODS
    // ------------------------------------------------------------------------------------------------------------
 
-   @Override
-   public void accept(ConfigurationBeanVisitor v) {        
-       super.accept(v);
-       clustering.accept(v);
-       customInterceptors.accept(v);
-       deadlockDetection.accept(v);
-       eviction.accept(v);
-       expiration.accept(v);
-       invocationBatching.accept(v);
-       jmxStatistics.accept(v);
-       lazyDeserialization.accept(v);
-       loaders.accept(v);
-       locking.accept(v);
-       transaction.accept(v);
-       unsafe.accept(v);
+   public void accept(ConfigurationBeanVisitor v) {      
+      clustering.accept(v);
+      customInterceptors.accept(v);
+      deadlockDetection.accept(v);
+      eviction.accept(v);
+      expiration.accept(v);
+      invocationBatching.accept(v);
+      jmxStatistics.accept(v);
+      lazyDeserialization.accept(v);
+      loaders.accept(v);
+      locking.accept(v);
+      transaction.accept(v);
+      unsafe.accept(v);
+      v.visitConfiguration(this);
    }
 
    @Override
@@ -701,6 +700,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          this.transactionManagerLookupClass = transactionManagerLookupClass;
       }
       
+      public void accept(ConfigurationBeanVisitor v) {
+         v.visitTransactionType(this);
+      }
+
       public TransactionType() {
          this.transactionManagerLookupClass = GenericTransactionManagerLookup.class.getName();
       }
@@ -797,6 +800,11 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       }
 
     
+      public void accept(ConfigurationBeanVisitor v) {
+         v.visitLockingType(this);
+      }
+
+
       @XmlAttribute
       public void setIsolationLevel(IsolationLevel isolationLevel) {
          testImmutability("isolationLevel");
@@ -910,14 +918,13 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          return dolly;
       }
       
-      @Override
-      public void accept(ConfigurationBeanVisitor v) {        
-          super.accept(v);
+      public void accept(ConfigurationBeanVisitor v) {                  
           async.accept(v);
           hash.accept(v);
           l1.accept(v);
           stateRetrieval.accept(v);
           sync.accept(v);
+          v.visitClusteringType(this);
       }
 
       @Override
@@ -1018,6 +1025,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          this.readFromXml = readFromXml;
       }
 
+      public void accept(ConfigurationBeanVisitor v) {
+         v.visitAsyncType(this);
+      }
+
       @Override
       public boolean equals(Object o) {
          if (this == o) return true;
@@ -1099,6 +1110,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          this.lifespan = lifespan;
       }
 
+      public void accept(ConfigurationBeanVisitor v) {
+         v.visitExpirationType(this);         
+      }
+
       @XmlAttribute
       public void setMaxIdle(Long maxIdle) {
          testImmutability("maxIdle");
@@ -1149,6 +1164,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       public void setWakeUpInterval(Long wakeUpInterval) {
          testImmutability("wakeUpInterval");
          this.wakeUpInterval = wakeUpInterval;
+      }
+
+      public void accept(ConfigurationBeanVisitor v) {
+         v.visitEvictionType(this);
       }
 
       @XmlAttribute
@@ -1212,6 +1231,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          this.fetchInMemoryState = fetchInMemoryState;
       }
 
+      public void accept(ConfigurationBeanVisitor v) {
+         v.visitStateRetrievalType(this);
+      }
+
       @XmlAttribute
       public void setTimeout(Long timeout) {
          testImmutability("timeout");
@@ -1259,6 +1282,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       public void setReplTimeout(Long replTimeout) {
          testImmutability("replTimeout");
          this.replTimeout = replTimeout;
+      }
+
+      public void accept(ConfigurationBeanVisitor v) {
+         v.visitSyncType(this);
       }
 
       @Override
@@ -1311,6 +1338,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       public void setConsistentHashClass(String consistentHashClass) {
          testImmutability("class");
          this.consistentHashClass = consistentHashClass;
+      }
+
+      public void accept(ConfigurationBeanVisitor v) {
+         v.visitHashType(this);
       }
 
       @XmlAttribute
@@ -1384,6 +1415,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          this.enabled = enabled;
       }
       
+      public void accept(ConfigurationBeanVisitor v) {
+         v.visitL1Type(this);
+      }
+
       @XmlAttribute
       public void setLifespan(Long lifespan) {
          testImmutability("lifespan");
@@ -1441,6 +1476,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          this.enabled = enabled;
       }
 
+      public void accept(ConfigurationBeanVisitor v) {
+         v.visitBooleanAttributeType(this);
+      }
+
       @Override
       public boolean equals(Object o) {
          if (this == o) return true;
@@ -1481,6 +1520,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       public void setEnabled(Boolean enabled) {
          testImmutability("enabled");
          this.enabled = enabled;
+      }
+
+      public void accept(ConfigurationBeanVisitor v) {
+         v.visitDeadlockDetectionType(this);
       }
 
       @XmlAttribute
@@ -1532,6 +1575,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          this.unreliableReturnValues = unreliableReturnValues;
       }
 
+      public void accept(ConfigurationBeanVisitor v) {
+         v.visitUnsafeType(this);
+      }
+
       @Override
       public boolean equals(Object o) {
          if (this == o) return true;
@@ -1576,13 +1623,16 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          }
          return dolly;
       }
+            
+      public void accept(ConfigurationBeanVisitor v) {
+         for (CustomInterceptorConfig i : customInterceptors) {            
+            i.accept(v);
+         }
+         v.visitCustomInterceptorsType(this);
+      }
       
-      @Override
-      public void accept(ConfigurationBeanVisitor v) {        
-          super.accept(v);
-          for (CustomInterceptorConfig cic : customInterceptors) {
-            cic.accept(v);
-        }
+      public List<CustomInterceptorConfig> getCustomInterceptors(){
+         return customInterceptors;
       }
 
       @Override
