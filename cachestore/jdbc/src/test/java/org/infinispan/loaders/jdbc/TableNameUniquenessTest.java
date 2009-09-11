@@ -11,8 +11,6 @@ import org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore;
 import org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStoreConfig;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.manager.DefaultCacheManager;
-import org.infinispan.marshall.Marshaller;
-import org.infinispan.marshall.VersionAwareMarshaller;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
@@ -39,12 +37,6 @@ public class TableNameUniquenessTest {
       assert firstCacheLoaderConfig instanceof JdbcStringBasedCacheStoreConfig;
       assert secondCacheLoaderConfig instanceof JdbcStringBasedCacheStoreConfig;
 
-      //TODO - this is a hack as VAM.start does not get called, for some reason. This should be removed.
-      VersionAwareMarshaller firstVam = (VersionAwareMarshaller) TestingUtil.extractComponent(first, Marshaller.class);
-      firstVam.start();
-      VersionAwareMarshaller secondVam = (VersionAwareMarshaller) TestingUtil.extractComponent(first, Marshaller.class);
-      secondVam.start();
-
       JdbcStringBasedCacheStore firstCs = (JdbcStringBasedCacheStore) TestingUtil.extractComponent(first, CacheLoaderManager.class).getCacheLoader();
       JdbcStringBasedCacheStore secondCs = (JdbcStringBasedCacheStore) TestingUtil.extractComponent(second, CacheLoaderManager.class).getCacheLoader();
 
@@ -57,12 +49,6 @@ public class TableNameUniquenessTest {
       CacheManager cm = new DefaultCacheManager("configs/binary.xml");
       Cache<String, String> first = cm.getCache("first");
       Cache<String, String> second = cm.getCache("second");
-
-      //TODO - this is a hack as VAM.start does not get called, for some reason. This should be removed.
-      VersionAwareMarshaller firstVam = (VersionAwareMarshaller) TestingUtil.extractComponent(first, Marshaller.class);
-      firstVam.start();
-      VersionAwareMarshaller secondVam = (VersionAwareMarshaller) TestingUtil.extractComponent(first, Marshaller.class);
-      secondVam.start();
 
       JdbcBinaryCacheStore firstCs = (JdbcBinaryCacheStore) TestingUtil.extractComponent(first, CacheLoaderManager.class).getCacheLoader();
       JdbcBinaryCacheStore secondCs = (JdbcBinaryCacheStore) TestingUtil.extractComponent(second, CacheLoaderManager.class).getCacheLoader();
@@ -77,12 +63,6 @@ public class TableNameUniquenessTest {
       CacheManager cm = new DefaultCacheManager("configs/mixed.xml");
       Cache first = cm.getCache("first");
       Cache second = cm.getCache("second");
-
-      //TODO - this is a hack as VAM.start does not get called, for some reason. This should be removed.
-      VersionAwareMarshaller firstVam = (VersionAwareMarshaller) TestingUtil.extractComponent(first, Marshaller.class);
-      firstVam.start();
-      VersionAwareMarshaller secondVam = (VersionAwareMarshaller) TestingUtil.extractComponent(first, Marshaller.class);
-      secondVam.start();
 
       JdbcMixedCacheStore firstCs = (JdbcMixedCacheStore) TestingUtil.extractComponent(first, CacheLoaderManager.class).getCacheLoader();
       JdbcMixedCacheStore secondCs = (JdbcMixedCacheStore) TestingUtil.extractComponent(second, CacheLoaderManager.class).getCacheLoader();
