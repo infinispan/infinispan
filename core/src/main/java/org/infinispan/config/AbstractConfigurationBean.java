@@ -24,10 +24,10 @@ package org.infinispan.config;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Properties;
+import java.util.Set;
 
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -49,7 +49,7 @@ public abstract class AbstractConfigurationBean implements CloneableConfiguratio
    protected static final TypedProperties EMPTY_PROPERTIES = new TypedProperties();
    protected transient Log log = LogFactory.getLog(getClass());  
    private boolean accessible;
-   protected List<String> overriddenConfigurationElements = new LinkedList<String>();
+   protected Set<String> overriddenConfigurationElements = new HashSet<String>();
 
    protected AbstractConfigurationBean() {}
    

@@ -112,6 +112,7 @@ public class CacheLoaderManagerConfig extends AbstractNamedCacheConfigurationBea
 
    @XmlElement(name = "loader")
    public List<CacheLoaderConfig> getCacheLoaderConfigs() {
+      testImmutability("cacheLoaderConfigs");
       return cacheLoaderConfigs;
    }
 
