@@ -85,17 +85,16 @@ public class EntryFactoryImpl implements EntryFactory {
          cacheEntry = container.get(key);
 
          // do not bother wrapping though if this is not in a tx.  repeatable read etc are all meaningless unless there is a tx.
-         // TODO: Do we need to wrap for reading even IN a TX if we are using read-committed?
-         if (!ctx.isInTxScope()) {
-            if (cacheEntry != null) ctx.putLookedUpEntry(key, cacheEntry);
-            return cacheEntry;
-         } else {
+         if (useRepeatableRead && ctx.isInTxScope()) {
             MVCCEntry mvccEntry = cacheEntry == null ?
-                  createWrappedEntry(key, null, false, false, -1) :
-                  createWrappedEntry(key, cacheEntry.getValue(), false, false, cacheEntry.getLifespan());
-            if (mvccEntry != null) ctx.putLookedUpEntry(key, mvccEntry);
-            return mvccEntry;
+                     createWrappedEntry(key, null, false, false, -1) :
+                     createWrappedEntry(key, cacheEntry.getValue(), false, false, cacheEntry.getLifespan());
+               if (mvccEntry != null) ctx.putLookedUpEntry(key, mvccEntry);
+               return mvccEntry;
          }
+         // if not in transaction and repeatable read, or simply read committed (regardless of whether in TX or not), do not wrap
+         if (cacheEntry != null) ctx.putLookedUpEntry(key, cacheEntry);
+            return cacheEntry;
       } else {
          if (trace) log.trace("Key is already in context");
          return cacheEntry;
