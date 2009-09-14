@@ -63,6 +63,10 @@
    <category name="org.infinispan.factories">
       <priority value="WARN"/>
    </category>
+   
+   <category name="com.mchange.v2">
+      <priority value="INFO"/>
+   </category>
 
    <!-- ======================= -->
    <!-- Setup the Root category -->
