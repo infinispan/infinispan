@@ -67,12 +67,12 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       if (cleanup == CleanupPhase.AFTER_METHOD) callCreateCacheManagers();
    }
 
-   @AfterClass
+   @AfterClass(alwaysRun=true)
    protected void destroy() {
       if (cleanup == CleanupPhase.AFTER_TEST) TestingUtil.killCacheManagers(cacheManagers);
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun=true)
    protected void clearContent() throws Throwable {
       if (cleanup == CleanupPhase.AFTER_TEST) {
          assertSupportedConfig();

@@ -46,17 +46,17 @@ public abstract class SingleCacheManagerTest extends AbstractCacheTest {
       if (cleanup == CleanupPhase.AFTER_METHOD) cacheManager = createCacheManager();
    }
 
-   @AfterClass
+   @AfterClass(alwaysRun=true)
    protected void destroyAfterClass() {
       if (cleanup == CleanupPhase.AFTER_TEST) TestingUtil.killCacheManagers(cacheManager);
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun=true)
    protected void destroyAfterMethod() {
       if (cleanup == CleanupPhase.AFTER_METHOD) TestingUtil.killCacheManagers(cacheManager);
    }
 
-   @AfterMethod
+   @AfterMethod(alwaysRun=true)
    protected void clearContent() {
       if (cleanup == CleanupPhase.AFTER_TEST) super.clearContent(cacheManager);
    }
