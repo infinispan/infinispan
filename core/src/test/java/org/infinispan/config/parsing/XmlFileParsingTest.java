@@ -33,6 +33,11 @@ public class XmlFileParsingTest {
             .newInfinispanConfiguration("configs/named-cache-test.xml"));
    }
 
+   public void testConfigSampleAllValidation() throws Exception {
+      String schemaFileName = "infinispan-config-" + Version.getMajorVersion() + ".xsd";
+      InfinispanConfiguration.newInfinispanConfiguration("config-samples/all.xml", "schema/" + schemaFileName, new ConfigurationValidatingVisitor());
+   }
+
    public void testNoNamedCaches() throws Exception {
       String config = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
             "\n" +
