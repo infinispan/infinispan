@@ -40,8 +40,8 @@ public class ConfigurationCloneTest extends SingleCacheManagerTest {
       Configuration clone = defaultConfig.clone();
       assert clone.equals(defaultConfig);
       clone.setEvictionMaxEntries(Integer.MAX_VALUE);
-      cacheManager.defineConfiguration("new-default", clone);
-      cacheManager.getCache("new-default");
+      cacheManager.defineConfiguration("testCloningBeforeStart-default", clone);
+      cacheManager.getCache("testCloningBeforeStart-default");
    }
 
    public void testCloningAfterStart() {
@@ -49,7 +49,29 @@ public class ConfigurationCloneTest extends SingleCacheManagerTest {
       Configuration clone = defaultConfig.clone();
       assert clone.equals(defaultConfig);
       clone.setEvictionMaxEntries(Integer.MAX_VALUE);
-      cacheManager.defineConfiguration("new-default", clone);
-      cacheManager.getCache("new-default");
+      cacheManager.defineConfiguration("testCloningAfterStart-default", clone);
+      cacheManager.getCache("testCloningAfterStart-default");
+   }
+   
+   public void testDoubleCloning() {
+      Configuration defaultConfig = cacheManager.defineConfiguration("testDoubleCloning-default", new Configuration());
+      Configuration clone = defaultConfig.clone();
+      assert clone.equals(defaultConfig);
+      clone.setEvictionMaxEntries(Integer.MAX_VALUE);
+      cacheManager.defineConfiguration("testDoubleCloning-new-default", clone);
+      cacheManager.getCache("testDoubleCloning-new-default");
+
+      Configuration otherDefaultConfig = cacheManager.getCache("testDoubleCloning-default").getConfiguration();
+      Configuration otherClone = otherDefaultConfig.clone();
+      assert otherClone.equals(otherDefaultConfig);
+      otherClone.setEvictionMaxEntries(Integer.MAX_VALUE - 1);
+      
+      try {
+         cacheManager.defineConfiguration("testDoubleCloning-new-default", otherClone);
+      } catch (ConfigurationException e) {
+         String message = e.getMessage();
+         assert message.contains("[maxEntries]") : "Exception should indicate that it's Eviction maxEntries that we're trying to override but it says: " + message;
+      }
+      
    }
 }
