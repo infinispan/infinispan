@@ -42,7 +42,7 @@ public abstract class AbstractNamedCacheConfigurationBean extends AbstractConfig
 
       public void defaultVisit(AbstractConfigurationBean c) {
          if (c instanceof AbstractNamedCacheConfigurationBean) {
-            ((AbstractNamedCacheConfigurationBean) c).cr = cr;
+            ((AbstractNamedCacheConfigurationBean) c).cr = AbstractNamedCacheConfigurationBean.this.cr;
          }
       }
    }

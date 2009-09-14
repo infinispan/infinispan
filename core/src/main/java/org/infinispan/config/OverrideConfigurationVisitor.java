@@ -22,8 +22,6 @@
 package org.infinispan.config;
 
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
@@ -43,8 +41,6 @@ import org.infinispan.config.Configuration.StateRetrievalType;
 import org.infinispan.config.Configuration.SyncType;
 import org.infinispan.config.Configuration.TransactionType;
 import org.infinispan.config.Configuration.UnsafeType;
-import org.infinispan.loaders.AbstractCacheStoreConfig;
-import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.util.ReflectionUtil;
 
 /**
@@ -57,7 +53,6 @@ import org.infinispan.util.ReflectionUtil;
 public class OverrideConfigurationVisitor extends AbstractConfigurationBeanVisitor {
 
    AsyncType asyncType = null;
-   CacheLoaderConfig cacheLoaderConfig = null;
    CacheLoaderManagerConfig cacheLoaderManagerConfig = null;
    ClusteringType clusteringType = null;
    Map <String,BooleanAttributeType> bats = new HashMap<String,BooleanAttributeType>();
@@ -81,38 +76,12 @@ public class OverrideConfigurationVisitor extends AbstractConfigurationBeanVisit
       for (Entry<String, BooleanAttributeType> entry : entrySet) {
          BooleanAttributeType attributeType = bats.get(entry.getKey());
          if(attributeType != null) {
-            attributeType.setEnabled(entry.getValue().enabled);
+            attributeType.enabled = entry.getValue().enabled;
          }
       }
       
-      //special handling for cache loader manager
-      overrideFields(cacheLoaderManagerConfig, override.cacheLoaderManagerConfig);
-      CacheLoaderManagerConfig config = override.cacheLoaderManagerConfig;
-      List<CacheLoaderConfig> cll2 = config.getCacheLoaderConfigs();
-      List<CacheLoaderConfig> cll1 = cacheLoaderManagerConfig.getCacheLoaderConfigs();
-
-      if (cll1.isEmpty() && !cll2.isEmpty()) {
-         cll1.addAll(cll2);
-      } else if (!cll1.isEmpty() && !cll2.isEmpty()) {
-         Iterator<CacheLoaderConfig> i1 = cll1.iterator();
-         Iterator<CacheLoaderConfig> i2 = cll2.iterator();
-         for (; i1.hasNext() && i2.hasNext();) {
-            CacheLoaderConfig l1 = i1.next();
-            CacheLoaderConfig l2 = i2.next();
-            if (l1.getCacheLoaderClassName().equals(l2.getCacheLoaderClassName())) {
-               overrideFields((AbstractConfigurationBean) l1, (AbstractConfigurationBean) l2);
-               if(l1 instanceof AbstractCacheStoreConfig && l2 instanceof AbstractCacheStoreConfig) {
-                  overrideFields(((AbstractCacheStoreConfig) l1).getSingletonStoreConfig(),
-                           ((AbstractCacheStoreConfig) l2).getSingletonStoreConfig());
-                  overrideFields(((AbstractCacheStoreConfig) l1).getAsyncStoreConfig(),
-                           ((AbstractCacheStoreConfig) l2).getAsyncStoreConfig());
-               }
-            }
-         }
-         while (i2.hasNext()) {
-            cll1.add(i2.next());
-         }
-      }
+      //do we need to make clones of complex objects like list of cache loaders?
+      overrideFields(cacheLoaderManagerConfig, override.cacheLoaderManagerConfig);      
       
       //everything else...
       overrideFields(asyncType, override.asyncType);
