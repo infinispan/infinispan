@@ -23,51 +23,51 @@ import org.infinispan.config.Dynamic;
  * @author Vladimir Blagojevic
  * @since 4.0
  */
-@XmlAccessorType(XmlAccessType.FIELD)
+@XmlAccessorType(XmlAccessType.PUBLIC_MEMBER)
 public class AsyncStoreConfig extends AbstractNamedCacheConfigurationBean {
    
    /** 
     * @configRef desc="If true, modifications are stored in the cache store asynchronously."  
     * */
-   @XmlAttribute
    protected Boolean enabled = false;
   
    /** 
     * @configRef desc="Size of the thread pool whose threads are responsible for applying the modifications."
     *  */
-   @XmlAttribute
    protected Integer threadPoolSize = 1;
    
    /** 
     * @configRef desc="Lock timeout for access to map containing latest state."
     * */
    @Dynamic
-   @XmlAttribute
    protected Long mapLockTimeout = 5000L;
 
-   public boolean isEnabled() {
+   @XmlAttribute
+   public Boolean isEnabled() {
       return enabled;
    }
    
-   public void setEnabled(boolean enabled) {
+   public void setEnabled(Boolean enabled) {
       testImmutability("enabled");
       this.enabled = enabled;
    }
 
-   public int getThreadPoolSize() {
+   @XmlAttribute
+   public Integer getThreadPoolSize() {
       return threadPoolSize;
    }
 
-   public void setThreadPoolSize(int threadPoolSize) {
+   public void setThreadPoolSize(Integer threadPoolSize) {
       testImmutability("threadPoolSize");
       this.threadPoolSize = threadPoolSize;
    }
 
-   public long getMapLockTimeout() {
+   @XmlAttribute
+   public Long getMapLockTimeout() {
       return mapLockTimeout;
    }
 
-   public void setMapLockTimeout(long stateLockTimeout) {
+   public void setMapLockTimeout(Long stateLockTimeout) {
       testImmutability("mapLockTimeout");
       this.mapLockTimeout = stateLockTimeout;
    }   

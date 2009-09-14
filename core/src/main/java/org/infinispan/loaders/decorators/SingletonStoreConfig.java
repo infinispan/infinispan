@@ -25,7 +25,7 @@ import org.infinispan.config.ConfigurationBeanVisitor;
  * @author Vladimir Blagojevic
  * @since 4.0
  */
-@XmlAccessorType(XmlAccessType.FIELD)
+@XmlAccessorType(XmlAccessType.PUBLIC_MEMBER)
 public class SingletonStoreConfig extends AbstractNamedCacheConfigurationBean {
 
    private static final long serialVersionUID = 824251894176131850L;
@@ -33,46 +33,46 @@ public class SingletonStoreConfig extends AbstractNamedCacheConfigurationBean {
    /**
     *  @configRef desc="If true, the relevant cache store is turned into singleton store"
     *  */
-   @XmlAttribute
    protected Boolean enabled = false;
    
    /**
     *  @configRef desc="If true and the node becomes the coordinator, the in-memory state transfer 
     *  to the underlying cache store is initiated"
     *  */
-   @XmlAttribute
    protected Boolean pushStateWhenCoordinator = true;
    
    /**
     *  @configRef desc="If pushStateWhenCoordinator is true, the in-memory state transfer to cache store timeout"
     *  */
-   @XmlAttribute
    protected Long pushStateTimeout = 10000L;
 
-   public boolean isSingletonStoreEnabled() {
+   @XmlAttribute(name="enabled")
+   public Boolean isSingletonStoreEnabled() {
       return enabled;
    }
    
-   public void setSingletonStoreEnabled(boolean singletonStoreEnabled) {
+   public void setSingletonStoreEnabled(Boolean singletonStoreEnabled) {
       testImmutability("enabled");
       this.enabled = singletonStoreEnabled;
    }
 
 
-   public boolean isPushStateWhenCoordinator() {
+   @XmlAttribute
+   public Boolean isPushStateWhenCoordinator() {
       return pushStateWhenCoordinator;
    }
 
-   public void setPushStateWhenCoordinator(boolean pushStateWhenCoordinator) {
+   public void setPushStateWhenCoordinator(Boolean pushStateWhenCoordinator) {
       testImmutability("pushStateWhenCoordinator");
       this.pushStateWhenCoordinator = pushStateWhenCoordinator;
    }
 
-   public long getPushStateTimeout() {
+   @XmlAttribute
+   public Long getPushStateTimeout() {
       return pushStateTimeout;
    }
 
-   public void setPushStateTimeout(long pushStateTimeout) {
+   public void setPushStateTimeout(Long pushStateTimeout) {
       testImmutability("pushStateTimeout");
       this.pushStateTimeout = pushStateTimeout;
    }

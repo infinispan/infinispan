@@ -259,5 +259,30 @@ public class XmlFileParsingTest {
       assert c.getLockAcquisitionTimeout() == 20000;
       assert c.getConcurrencyLevel() == 1000;
       assert c.getIsolationLevel() == IsolationLevel.REPEATABLE_READ;
+      
+      c = defaultCfg.clone();
+      Configuration configurationWL = namedCaches.get("withLoader");
+      configurationWL.getCacheLoaderManagerConfig().setShared(true);
+      FileCacheStoreConfig clc = (FileCacheStoreConfig)configurationWL.getCacheLoaderManagerConfig().getFirstCacheLoaderConfig();
+      clc.getSingletonStoreConfig().setPushStateTimeout(254L);
+      clc.getAsyncStoreConfig().setThreadPoolSize(7);
+      
+      c.applyOverrides(configurationWL);     
+      CacheLoaderManagerConfig loaderManagerConfig = c.getCacheLoaderManagerConfig();
+      assert loaderManagerConfig.isPreload();
+      assert !loaderManagerConfig.isPassivation();
+      assert loaderManagerConfig.isShared();
+      assert loaderManagerConfig.getCacheLoaderConfigs().size() == 1;
+      FileCacheStoreConfig csConf = (FileCacheStoreConfig) loaderManagerConfig.getFirstCacheLoaderConfig();
+      assert csConf.getCacheLoaderClassName().equals("org.infinispan.loaders.file.FileCacheStore");
+      assert csConf.isFetchPersistentState();
+      assert csConf.isIgnoreModifications();
+      assert csConf.isPurgeOnStartup();
+      assert csConf.getLocation().equals("/tmp/FileCacheStore-Location");
+      assert csConf.getSingletonStoreConfig().getPushStateTimeout() == 254L;
+      assert csConf.getSingletonStoreConfig().isPushStateWhenCoordinator() == true;
+      assert csConf.getAsyncStoreConfig().getThreadPoolSize() == 7;
+      assert csConf.getAsyncStoreConfig().getMapLockTimeout() == 15000;
+      assert csConf.getAsyncStoreConfig().isEnabled();
    }
 }

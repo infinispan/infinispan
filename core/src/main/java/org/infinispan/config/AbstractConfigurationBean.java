@@ -21,33 +21,26 @@
  */
 package org.infinispan.config;
 
-import org.infinispan.CacheException;
-import org.infinispan.factories.scopes.Scope;
-import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.util.ReflectionUtil;
-import org.infinispan.util.TypedProperties;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Field;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
+
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.util.TypedProperties;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Base superclass of Cache configuration classes that expose some properties that can be changed after the cache is
  * started.
  *
  * @author <a href="brian.stansberry@jboss.com">Brian Stansberry</a>
- * @see #testImmutability(String)
+ * @author Vladimir Blagojevic
  * @since 4.0
  */
 @Scope(Scopes.NAMED_CACHE)
@@ -58,8 +51,7 @@ public abstract class AbstractConfigurationBean implements CloneableConfiguratio
    private boolean accessible;
    protected List<String> overriddenConfigurationElements = new LinkedList<String>();
 
-   protected AbstractConfigurationBean() {
-   }
+   protected AbstractConfigurationBean() {}
    
 
    /**
@@ -124,87 +116,9 @@ public abstract class AbstractConfigurationBean implements CloneableConfiguratio
       overriddenConfigurationElements.add(fieldName);
    }
 
-   public void applyOverrides(AbstractConfigurationBean overrides) {
-      //does this component have overridden fields?
-      for (String overridenField : overrides.overriddenConfigurationElements) {
-         try {
-            ReflectionUtil.setValue(this, overridenField, ReflectionUtil.getValue(overrides,overridenField));
-         } catch (Exception e1) {
-            throw new CacheException("Could not apply value for field " + overridenField
-                     + " from instance " + overrides + " on instance " + this, e1);
-         }
-      }
-
-      // then recurse into field of this component...
-      List<Field> fields = ReflectionUtil.getFields(overrides.getClass(),AbstractConfigurationBean.class);
-      for (Field field : fields) {
-         if (AbstractConfigurationBean.class.isAssignableFrom(field.getType())) {
-            AbstractConfigurationBean fieldValueOverrides = null;
-            AbstractConfigurationBean fieldValueThis = null;
-            try {
-               field.setAccessible(true);
-               fieldValueOverrides = (AbstractConfigurationBean) field.get(overrides);
-               fieldValueThis = (AbstractConfigurationBean) field.get(this);
-               if (fieldValueThis == null && fieldValueOverrides != null){
-                  field.set(this, fieldValueOverrides);
-               }
-               else if(fieldValueOverrides != null && fieldValueThis!=null){
-                  fieldValueThis.applyOverrides(fieldValueOverrides);
-               }
-            } catch (IllegalAccessException e) {
-               String s = "Could not apply override for field " + field + " in class " + overrides;
-               log.error(s, e);
-               throw new CacheException(s, e);
-            }
-         }
-      }
-
-      //and don't forget to recurse into collections of components...
-      fields = ReflectionUtil.getFields(overrides.getClass(), Collection.class);
-      for (Field field : fields) {
-         Type genericType = field.getGenericType();
-         if (genericType instanceof ParameterizedType) {
-            ParameterizedType aType = (ParameterizedType) genericType;
-            Type[] fieldArgTypes = aType.getActualTypeArguments();
-            for (Type fieldArgType : fieldArgTypes) {
-               Class<?> fieldArgClass = (Class<?>) fieldArgType;
-               if (!(fieldArgClass.isPrimitive() || fieldArgClass.equals(String.class))) {
-                  try {
-                     field.setAccessible(true);
-                     Collection<Object> c = (Collection<Object>) field.get(this);
-                     Collection<Object> c2 = (Collection<Object>) field.get(overrides);
-                     if (c.isEmpty() && !c2.isEmpty()) {
-                        c.addAll(c2);
-                     } else if (!c.isEmpty() && !c2.isEmpty()) {
-                        Iterator<?> i = c.iterator();
-                        Iterator<?> i2 = c2.iterator();
-                        for (; i.hasNext() && i2.hasNext();) {
-                           Object nextThis = i.next();
-                           Object nextOverrides = i2.next();
-                           if (AbstractConfigurationBean.class.isAssignableFrom(nextThis.getClass())
-                                    && AbstractConfigurationBean.class.isAssignableFrom(nextOverrides.getClass())) {
-                              ((AbstractConfigurationBean) nextThis).applyOverrides((AbstractConfigurationBean) nextOverrides);
-                           }
-                        }
-                        while (i2.hasNext()) {
-                           c.add(i2.next());
-                        }
-                     }
-                  } catch (IllegalAccessException e) {
-                     String s = "Could not apply override for field " + field + " in class " + overrides.getClass();
-                     log.error(s, e);
-                     throw new CacheException(s, e);
-                  }
-               }
-            }
-         }
-      }
-   }
-
    @Override
    public CloneableConfigurationComponent clone() throws CloneNotSupportedException {
       AbstractConfigurationBean c = (AbstractConfigurationBean) super.clone();
-//      c.setCache(null);
       return c;
    }
 }

@@ -23,6 +23,7 @@ package org.infinispan.config;
 
 import org.infinispan.distribution.DefaultConsistentHash;
 import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.NonVolatile;
 import org.infinispan.factories.annotations.Start;
@@ -112,13 +113,13 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    private ClusteringType clustering = new ClusteringType();
    
    @XmlElement
-   private BooleanAttributeType jmxStatistics = new BooleanAttributeType();
+   private BooleanAttributeType jmxStatistics = new BooleanAttributeType("jmxStatistics");
    
    @XmlElement
-   private BooleanAttributeType lazyDeserialization = new BooleanAttributeType();
+   private BooleanAttributeType lazyDeserialization = new BooleanAttributeType("lazyDeserialization");
    
    @XmlElement
-   private BooleanAttributeType invocationBatching = new BooleanAttributeType();
+   private BooleanAttributeType invocationBatching = new BooleanAttributeType("invocationBatching");
    
    @XmlElement
    private DeadlockDetectionType deadlockDetection = new DeadlockDetectionType();
@@ -137,6 +138,19 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
             locking.isolationLevel = IsolationLevel.REPEATABLE_READ;
             break;
       }
+   }
+   
+   public void applyOverrides(Configuration overrides) {
+      OverrideConfigurationVisitor v1 =new OverrideConfigurationVisitor();
+      this.accept(v1);
+      OverrideConfigurationVisitor v2 =new OverrideConfigurationVisitor();
+      overrides.accept(v2);
+      v1.override(v2);      
+   }
+   
+   public void inject(ComponentRegistry cr) {
+      super.inject(cr);
+      this.accept(new InjectComponentRegistryVisitor());
    }
 
    // ------------------------------------------------------------------------------------------------------------
@@ -866,7 +880,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     * @configRef name="clustering",desc="Defines clustering characteristics of the cache."
     */
    @XmlJavaTypeAdapter(ClusteringTypeAdapter.class)
-   @XmlAccessorType(XmlAccessType.FIELD)
+   @XmlAccessorType(XmlAccessType.PROPERTY)
    @XmlType(propOrder={})
    public static class ClusteringType extends AbstractNamedCacheConfigurationBean {
       
@@ -1463,6 +1477,9 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    public static class BooleanAttributeType  extends AbstractNamedCacheConfigurationBean {
+      
+      @XmlTransient
+      protected final String fieldName;
      
       /** The serialVersionUID */
       private static final long serialVersionUID = 2296863404153834686L;
@@ -1470,6 +1487,19 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       /** @configRef desc="Toggle switch" */
       protected Boolean enabled = false;
       
+      
+      public BooleanAttributeType() {
+         fieldName= "undefined";
+      }
+
+      public BooleanAttributeType(String fieldName) {
+         this.fieldName = fieldName;
+      }
+            
+      public String getFieldName() {
+         return fieldName;
+      }
+
       @XmlAttribute
       public void setEnabled(Boolean enabled) {
          testImmutability("enabled");

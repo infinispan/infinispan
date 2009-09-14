@@ -7,8 +7,8 @@ import org.infinispan.util.Util;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.*;
 import javax.xml.bind.annotation.XmlType;
 
 /**
@@ -29,80 +29,81 @@ import javax.xml.bind.annotation.XmlType;
  * @configRef name="loader",desc="Responsible for loading/storing cache data from/to an external source." 
  *
  * @author Mircea.Markus@jboss.com
+ * @author Vladimir Blagojevic
  * @since 4.0
  */
-@XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(propOrder={"singletonStore","async"})
+@XmlAccessorType(XmlAccessType.PUBLIC_MEMBER)
+@XmlType(propOrder= {"singletonStoreConfig", "asyncStoreConfig"})
 public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implements CacheStoreConfig {
    
    /** 
     * @configRef desc="If true, any operation that modifies the cache store (remove, clear, store...etc) won't be applied to it"
     * */
-   @XmlAttribute
+   
    protected Boolean ignoreModifications = false;
    
    /**
     *  @configRef desc="If true, fetch persistent state on state transfer"
     *  */
-   @XmlAttribute
    protected Boolean fetchPersistentState = false;
    
    /**
     *  @configRef desc="If true, purge node state on startup"
     *  */
-   @XmlAttribute
+   
    protected Boolean purgeOnStartup = false;
    
    /**
     *  @configRef desc="If true, CacheStore#purgeExpired() call will be done synchronously"
     *  */
-   @XmlAttribute
+   
    protected Boolean purgeSynchronously = false;
    
-   @XmlElement
    protected SingletonStoreConfig singletonStore = new SingletonStoreConfig();
    
-   @XmlElement
    protected AsyncStoreConfig async = new AsyncStoreConfig();
 
-   
-
-   public boolean isPurgeSynchronously() {
+   @XmlAttribute
+   public Boolean isPurgeSynchronously() {
       return purgeSynchronously;
    }
 
-   public void setPurgeSynchronously(boolean purgeSynchronously) {
+   public void setPurgeSynchronously(Boolean purgeSynchronously) {
       testImmutability("purgeSynchronously");
       this.purgeSynchronously = purgeSynchronously;
    }
 
-   public boolean isPurgeOnStartup() {
-      return purgeOnStartup;
-   }
-
-   public boolean isFetchPersistentState() {
+   @XmlAttribute
+   public Boolean isFetchPersistentState() {
       return fetchPersistentState;
    }
 
-   public void setFetchPersistentState(boolean fetchPersistentState) {
+   public void setFetchPersistentState(Boolean fetchPersistentState) {
       testImmutability("fetchPersistentState");
       this.fetchPersistentState = fetchPersistentState;
    }
 
-   public void setIgnoreModifications(boolean ignoreModifications) {
+   public void setIgnoreModifications(Boolean ignoreModifications) {
       testImmutability("ignoreModifications");
       this.ignoreModifications = ignoreModifications;
    }
 
-   public boolean isIgnoreModifications() {
+   @XmlAttribute
+   public Boolean isIgnoreModifications() {
       return ignoreModifications;
    }
+   
+   @XmlAttribute
+   public Boolean isPurgeOnStartup() {
+      return purgeOnStartup;
+   }
 
-   public void setPurgeOnStartup(boolean purgeOnStartup) {
+   public void setPurgeOnStartup(Boolean purgeOnStartup) {
       testImmutability("purgeOnStartup");
       this.purgeOnStartup = purgeOnStartup;
    }
 
+   @XmlElement(name="singletonStore")
    public SingletonStoreConfig getSingletonStoreConfig() {
       return singletonStore;
    }
@@ -112,6 +113,7 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
       this.singletonStore = singletonStoreConfig;
    }
 
+   @XmlElement(name="async")
    public AsyncStoreConfig getAsyncStoreConfig() {
       return async;
    }

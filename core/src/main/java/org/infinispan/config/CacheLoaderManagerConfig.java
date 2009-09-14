@@ -33,65 +33,76 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * Holds the configuration of the cache loader chain.  ALL cache loaders should be defined using this class, adding
- * individual cache loaders to the chain by calling {@link CacheLoaderManagerConfig#addCacheLoaderConfig}
+ * Holds the configuration of the cache loader chain. ALL cache loaders should be defined using this
+ * class, adding individual cache loaders to the chain by calling
+ * {@link CacheLoaderManagerConfig#addCacheLoaderConfig}
  * 
  * <p>
- * Note that class CacheLoaderManagerConfig contains JAXB annotations. These annotations determine how XML
- * configuration files are read into instances of configuration class hierarchy as well as they
- * provide meta data for configuration file XML schema generation. Please modify these annotations
- * and Java element types they annotate with utmost understanding and care.
+ * Note that class CacheLoaderManagerConfig contains JAXB annotations. These annotations determine
+ * how XML configuration files are read into instances of configuration class hierarchy as well as
+ * they provide meta data for configuration file XML schema generation. Please modify these
+ * annotations and Java element types they annotate with utmost understanding and care.
  * 
  * @configRef name="loaders",desc="Holds the configuration of the cache loader chain."
- *
+ * 
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
  * @author Brian Stansberry
- * @author Vladimir Blagojevic 
+ * @author Vladimir Blagojevic
  * @author <a href="mailto:galder.zamarreno@jboss.com">Galder Zamarreno</a>
  * @since 4.0
  */
-@XmlAccessorType(XmlAccessType.FIELD)
+@XmlAccessorType(XmlAccessType.PUBLIC_MEMBER)
 public class CacheLoaderManagerConfig extends AbstractNamedCacheConfigurationBean {
+   
    private static final long serialVersionUID = 2210349340378984424L;
 
-   /** 
-    * @configRef desc="If true, activates entries that have been passivated to a store by loading them into memory 
-    * as well as writes evicted entries back to the store" 
+   /**
+    * @configRef desc="If true, activates entries that have been passivated to a store by loading
+    *            them into memory as well as writes evicted entries back to the store"
     * */
-   @XmlAttribute
    protected Boolean passivation = false;
-   
-   /** 
+
+   /**
     * @configRef desc= "If true, performs a preload on the cache loader"
     * */
-   @XmlAttribute
    protected Boolean preload = false;
-   
-   /** 
-    * @configRef desc="If true, the node that makes a modification is the only one who writes it to the 
-    * store using the relevant cache loader." 
+
+   /**
+    * @configRef desc="If true, the node that makes a modification is the only one who writes it to
+    *            the store using the relevant cache loader."
     * */
-   @XmlAttribute
    protected Boolean shared = false;
-  
-   @XmlElement(name="loader")
+
    protected List<CacheLoaderConfig> cacheLoaderConfigs = new LinkedList<CacheLoaderConfig>();
 
+   public Boolean isPreload() {
+      return preload;
+   }
 
-
-   
-   public void setPreload(boolean preload) {
+   @XmlAttribute
+   public void setPreload(Boolean preload) {
       testImmutability("preload");
       this.preload = preload;
    }
 
-   public void setPassivation(boolean passivation) {
+   @XmlAttribute
+   public void setPassivation(Boolean passivation) {
       testImmutability("passivation");
       this.passivation = passivation;
    }
 
-   public boolean isPassivation() {
+   public Boolean isPassivation() {
       return passivation;
+   }
+
+   @XmlAttribute
+   public void setShared(Boolean shared) {
+      testImmutability("shared");
+      this.shared = shared;
+   }
+
+   public Boolean isShared() {
+      return shared;
    }
 
    public void addCacheLoaderConfig(CacheLoaderConfig clc) {
@@ -99,6 +110,7 @@ public class CacheLoaderManagerConfig extends AbstractNamedCacheConfigurationBea
       cacheLoaderConfigs.add(clc);
    }
 
+   @XmlElement(name = "loader")
    public List<CacheLoaderConfig> getCacheLoaderConfigs() {
       return cacheLoaderConfigs;
    }
@@ -109,8 +121,22 @@ public class CacheLoaderManagerConfig extends AbstractNamedCacheConfigurationBea
    }
 
    public CacheLoaderConfig getFirstCacheLoaderConfig() {
-      if (cacheLoaderConfigs.size() == 0) return null;
+      if (cacheLoaderConfigs.size() == 0)
+         return null;
       return cacheLoaderConfigs.get(0);
+   }
+
+   /**
+    * Loops through all individual cache loader configs and checks if fetchPersistentState is set on
+    * any of them
+    */
+   public Boolean isFetchPersistentState() {
+      for (CacheLoaderConfig iclc : cacheLoaderConfigs) {
+         if (iclc instanceof CacheStoreConfig)
+            if (((CacheStoreConfig) iclc).isFetchPersistentState())
+               return true;
+      }
+      return false;
    }
 
    public boolean useChainingCacheLoader() {
@@ -125,15 +151,6 @@ public class CacheLoaderManagerConfig extends AbstractNamedCacheConfigurationBea
                cacheLoaderConfigs.size()).append('}').toString();
    }
 
-   public void setShared(boolean shared) {
-      testImmutability("shared");
-      this.shared = shared;
-   }
-
-   public boolean isShared() {
-      return shared;
-   }
-
    @Override
    public boolean equals(Object obj) {
       if (this == obj)
@@ -141,14 +158,13 @@ public class CacheLoaderManagerConfig extends AbstractNamedCacheConfigurationBea
 
       if (obj instanceof CacheLoaderManagerConfig) {
          CacheLoaderManagerConfig other = (CacheLoaderManagerConfig) obj;
-         return (this.passivation.equals(other.passivation))
-               && (this.shared.equals(other.shared))
-               && Util.safeEquals(this.preload, other.preload)
-               && Util.safeEquals(this.cacheLoaderConfigs, other.cacheLoaderConfigs);
+         return (this.passivation.equals(other.passivation)) && (this.shared.equals(other.shared))
+                  && Util.safeEquals(this.preload, other.preload)
+                  && Util.safeEquals(this.cacheLoaderConfigs, other.cacheLoaderConfigs);
       }
       return false;
    }
-       
+
    public void accept(ConfigurationBeanVisitor v) {
       for (CacheLoaderConfig clc : cacheLoaderConfigs) {
          clc.accept(v);
@@ -166,7 +182,6 @@ public class CacheLoaderManagerConfig extends AbstractNamedCacheConfigurationBea
       return result;
    }
 
-
    @Override
    public CacheLoaderManagerConfig clone() throws CloneNotSupportedException {
       CacheLoaderManagerConfig clone = (CacheLoaderManagerConfig) super.clone();
@@ -178,20 +193,5 @@ public class CacheLoaderManagerConfig extends AbstractNamedCacheConfigurationBea
          clone.cacheLoaderConfigs = clcs;
       }
       return clone;
-   }
-
-   /**
-    * Loops through all individual cache loader configs and checks if fetchPersistentState is set on any of them
-    */
-   public boolean isFetchPersistentState() {
-      for (CacheLoaderConfig iclc : cacheLoaderConfigs) {
-         if (iclc instanceof CacheStoreConfig)
-            if (((CacheStoreConfig) iclc).isFetchPersistentState()) return true;
-      }
-      return false;
-   }
-
-   public boolean isPreload() {
-      return preload;
    }
 }

@@ -7,20 +7,21 @@ import org.infinispan.loaders.decorators.SingletonStoreConfig;
  * Defines config elements for all CacheStoreConfigs.
  *
  * @author Mircea.Markus@jboss.com
+ * @author Vladimir Blagojevic
  */
 public interface CacheStoreConfig extends CacheLoaderConfig, Cloneable {
 
-   boolean isPurgeOnStartup();
+   Boolean isPurgeOnStartup();
 
-   boolean isFetchPersistentState();
+   Boolean isFetchPersistentState();
 
-   void setFetchPersistentState(boolean fetchPersistentState);
+   void setFetchPersistentState(Boolean fetchPersistentState);
 
-   void setIgnoreModifications(boolean ignoreModifications);
+   void setIgnoreModifications(Boolean ignoreModifications);
 
-   boolean isIgnoreModifications();
+   Boolean isIgnoreModifications();
 
-   void setPurgeOnStartup(boolean purgeOnStartup);
+   void setPurgeOnStartup(Boolean purgeOnStartup);
 
    SingletonStoreConfig getSingletonStoreConfig();
 
@@ -30,7 +31,7 @@ public interface CacheStoreConfig extends CacheLoaderConfig, Cloneable {
 
    void setAsyncStoreConfig(AsyncStoreConfig asyncStoreConfig);
 
-   public boolean isPurgeSynchronously();
+   public Boolean isPurgeSynchronously();
 
-   public void setPurgeSynchronously(boolean purgeSynchronously);
+   public void setPurgeSynchronously(Boolean purgeSynchronously);
 }

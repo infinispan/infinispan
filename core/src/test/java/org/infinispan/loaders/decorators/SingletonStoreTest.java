@@ -232,7 +232,7 @@ public class SingletonStoreTest extends MultipleCacheManagersTest {
    public void testPushStateTimedOut() throws Throwable {
       final CountDownLatch pushStateCanFinish = new CountDownLatch(1);
       SingletonStoreConfig ssdc = new SingletonStoreConfig();
-      ssdc.setPushStateTimeout(100);
+      ssdc.setPushStateTimeout(100L);
       final TestingSingletonStore mscl = new TestingSingletonStore(pushStateCanFinish, null, ssdc);
 
       Future f = Executors.newSingleThreadExecutor().submit(createActiveStatusChanger(mscl));
