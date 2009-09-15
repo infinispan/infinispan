@@ -30,7 +30,7 @@ import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
 /**
- * // TODO: MANIK: Document this
+ * Command corresponding to the 2nd phase of 2PC.
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @since 4.0

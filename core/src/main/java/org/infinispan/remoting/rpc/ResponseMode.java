@@ -1,7 +1,11 @@
 package org.infinispan.remoting.rpc;
 
 /**
- * // TODO: Manik: Document this!
+ * Represents different handling mechanisms when dealing with remote command responses. 
+ * These include waiting for responses from all nodes in the cluster ({@link ResponseMode#SYNCHRONOUS}}),
+ * not waiting for any responses at all ({@link ResponseMode#ASYNCHRONOUS}} or 
+ * {@link ResponseMode#ASYNCHRONOUS_WITH_SYNC_MARSHALLING}}), or waiting for first valid response 
+ * ({@link ResponseMode#WAIT_FOR_VALID_RESPONSE}})
  *
  * @author Manik Surtani
  * @since 4.0

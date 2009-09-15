@@ -1,7 +1,7 @@
 package org.infinispan.container.entries;
 
 /**
- * // TODO: Manik: Document this
+ * Provide utility methods for dealing with expiration of cache entries.
  *
  * @author Manik Surtani
  * @since 4.0

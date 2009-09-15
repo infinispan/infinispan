@@ -1,7 +1,7 @@
 package org.infinispan.remoting.transport;
 
 /**
- * // TODO: Manik: Document this!
+ * A destination for an Infinispan command or operation.
  *
  * @author Manik Surtani
  * @since 4.0

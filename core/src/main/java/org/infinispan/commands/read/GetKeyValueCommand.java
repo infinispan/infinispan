@@ -32,7 +32,8 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * // TODO: MANIK: Document this
+ * Implements functionality defined by {@link org.infinispan.Cache#get(Object)} and 
+ * {@link org.infinispan.Cache#containsKey(Object)} operations
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @since 4.0

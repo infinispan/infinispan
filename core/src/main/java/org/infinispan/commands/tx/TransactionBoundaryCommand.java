@@ -26,7 +26,8 @@ import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.VisitableCommand;
 
 /**
- * // TODO: MANIK: Document this
+ * An transaction boundary command that allows the retrieval of an attached 
+ * {@link org.infinispan.transaction.xa.GlobalTransaction}
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @since 4.0
