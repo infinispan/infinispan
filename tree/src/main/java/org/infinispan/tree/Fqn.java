@@ -101,13 +101,6 @@ public class Fqn implements Comparable<Fqn> {
 
    // ----------------- START: Private constructors for use by factory methods only. ----------------------
 
-   /**
-    * Public to satisfy Externalization.  // TODO: Remove this ctor as well as Externalization!!
-    */
-   public Fqn() {
-      elements = new Object[]{};
-   }
-
    private Fqn(Object... elements) {
       this.elements = elements;
    }
