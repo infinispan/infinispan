@@ -4,11 +4,11 @@ package org.infinispan.rest
 import apache.commons.httpclient.methods._
 import apache.commons.httpclient.{Header, HttpClient}
 import container.entries.CacheEntry
+import javax.servlet.http.{HttpServletResponse}
 import remoting.MIMECacheEntry
 import java.io._
-import javax.servlet.http.HttpServletResponse
-import junit.framework.TestCase
-import junit.framework.Assert._
+import testng.annotations.Test
+import testng.Assert._
 
 
 /**
@@ -17,7 +17,8 @@ import junit.framework.Assert._
  * (Given that RESTEasy does most of the heavy lifting !).
  * @author Michael Neale
  */
-class IntegrationTest extends TestCase {
+@Test
+class IntegrationTest {
 
   val HOST = "http://localhost:8888/"
   //val HOST = "http://localhost:8080/infinispan-rest/"
