@@ -25,6 +25,8 @@ import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.util.concurrent.locks.LockManager;
+
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 import org.testng.annotations.Test;
@@ -194,11 +196,8 @@ public class SyncReplImplicitLockingTest extends MultipleCacheManagersTest {
 
    @SuppressWarnings("unchecked")
    protected void assertNoLocks(Cache cache) {
-      /*
-       * TODO cache.keySet() is not implemented yet LockManager lm =
-       * TestingUtil.extractLockManager(cache); for (Object key : cache.keySet()) assert
-       * !lm.isLocked(key);
-       */
+      LockManager lm = TestingUtil.extractLockManager(cache);
+      for (Object key : cache.keySet()) assert !lm.isLocked(key);
    }
 
    protected void cleanup() {
