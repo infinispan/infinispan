@@ -45,10 +45,6 @@
             <attribute name="method" value="1" />
             <attribute name="URI" value="/WEB-INF/lib/" />
           </containerElement>
-          <containerElement type="library" name="Maven: org.testng:testng:jdk15:5.9" level="project">
-            <attribute name="method" value="1" />
-            <attribute name="URI" value="/WEB-INF/lib/" />
-          </containerElement>
           <containerElement type="library" name="Maven: org.jboss.javaee:jboss-transaction-api:1.0.1.GA" level="project">
             <attribute name="method" value="1" />
             <attribute name="URI" value="/WEB-INF/lib/" />
@@ -127,7 +123,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../apps/scala-2.7.5.final/lib/scala-compiler.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../../../apps/scala-2.7.5.final/lib/scala-compiler.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -139,7 +135,7 @@
     <orderEntry type="library" exported="" name="Maven: javax.xml.stream:stax-api:1.0-2" level="project" />
     <orderEntry type="library" exported="" name="Maven: javax.activation:activation:1.1" level="project" />
     <orderEntry type="library" exported="" name="Maven: jgroups:jgroups:2.8.0.CR1" level="project" />
-    <orderEntry type="library" exported="" name="Maven: org.testng:testng:jdk15:5.9" level="project" />
+    <orderEntry type="library" name="Maven: org.testng:testng:jdk15:5.9" level="project" />
     <orderEntry type="library" name="Maven: junit:junit:3.8.1" level="project" />
     <orderEntry type="library" exported="" name="Maven: org.jboss.javaee:jboss-transaction-api:1.0.1.GA" level="project" />
     <orderEntry type="library" exported="" name="Maven: org.jboss.marshalling:river:1.2.0.CR3" level="project" />
