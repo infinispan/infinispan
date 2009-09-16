@@ -34,7 +34,6 @@ import java.util.concurrent.ExecutorService;
 @NonVolatile
 public interface Transport extends Lifecycle {
    // TODO discovery should be abstracted away into a separate set of interfaces such that it is not tightly coupled to the transport
-   // Galder 15/09/09: what discovery??
 
    /**
     * Initializes the transport with global cache configuration and transport-specific properties.

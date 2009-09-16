@@ -404,7 +404,16 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    @Override
    public GlobalConfiguration clone() {
       try {
-         return (GlobalConfiguration) super.clone();
+         GlobalConfiguration dolly = (GlobalConfiguration) super.clone();
+         if (asyncListenerExecutor != null) dolly.asyncListenerExecutor = asyncListenerExecutor.clone();
+         if (asyncTransportExecutor != null) dolly.asyncTransportExecutor = asyncTransportExecutor.clone();
+         if (evictionScheduledExecutor != null) dolly.evictionScheduledExecutor = evictionScheduledExecutor.clone();
+         if (replicationQueueScheduledExecutor != null) dolly.replicationQueueScheduledExecutor = replicationQueueScheduledExecutor.clone();
+         if (globalJmxStatistics != null) dolly.globalJmxStatistics = (GlobalJmxStatisticsType) globalJmxStatistics.clone();
+         if (transport != null) dolly.transport = transport.clone();
+         if (serialization != null) dolly.serialization = (SerializationType) serialization.clone();
+         if (shutdown != null) dolly.shutdown = (ShutdownType) shutdown.clone();
+         return dolly;
       }
       catch (CloneNotSupportedException e) {
          throw new CacheException("Problems cloning configuration component!", e);
@@ -544,8 +553,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
 
       @XmlElement
       public void setProperties(TypedProperties properties) {
-         //testImmutability("properties");
-         //TODO fails JmxStatsFunctionalTest#testMultipleManagersOnSameServerFails
+         testImmutability("properties");
          this.properties = properties;
       }
 
