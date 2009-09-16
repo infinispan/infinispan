@@ -149,8 +149,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    }
    
    public void inject(ComponentRegistry cr) {
-      super.inject(cr);
-      this.accept(new InjectComponentRegistryVisitor());
+      this.accept(new InjectComponentRegistryVisitor(cr));
    }
 
    // ------------------------------------------------------------------------------------------------------------

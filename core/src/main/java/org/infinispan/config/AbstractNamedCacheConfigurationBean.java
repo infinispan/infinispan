@@ -31,8 +31,7 @@ public abstract class AbstractNamedCacheConfigurationBean extends AbstractConfig
 
    @Override
    public AbstractNamedCacheConfigurationBean clone() throws CloneNotSupportedException {
-      AbstractNamedCacheConfigurationBean dolly = (AbstractNamedCacheConfigurationBean) super
-               .clone();
+      AbstractNamedCacheConfigurationBean dolly = (AbstractNamedCacheConfigurationBean) super.clone();
       if (cr != null)
          dolly.cr = (ComponentRegistry) cr.clone();
       return dolly;
@@ -40,9 +39,15 @@ public abstract class AbstractNamedCacheConfigurationBean extends AbstractConfig
 
    class InjectComponentRegistryVisitor extends AbstractConfigurationBeanVisitor {
 
+      private final ComponentRegistry registry;
+      
+      public InjectComponentRegistryVisitor(ComponentRegistry registry) {
+         super();
+         this.registry = registry;
+      }
       public void defaultVisit(AbstractConfigurationBean c) {
          if (c instanceof AbstractNamedCacheConfigurationBean) {
-            ((AbstractNamedCacheConfigurationBean) c).cr = AbstractNamedCacheConfigurationBean.this.cr;
+            ((AbstractNamedCacheConfigurationBean) c).cr = registry;
          }
       }
    }
