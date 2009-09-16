@@ -358,7 +358,8 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
          return false;
       if (asyncTransportExecutor.properties != null ? !asyncTransportExecutor.properties.equals(that.asyncTransportExecutor.properties) : that.asyncTransportExecutor.properties != null)
          return false;
-      if (transport.clusterName != null ? !transport.clusterName.equals(that.transport.clusterName) : that.transport.clusterName != null) return false;
+      if (transport.clusterName != null ? !transport.clusterName.equals(that.transport.clusterName) : that.transport.clusterName != null) 
+         return false;
       if (defaultConfiguration != null ? !defaultConfiguration.equals(that.defaultConfiguration) : that.defaultConfiguration != null)
          return false;
       if (evictionScheduledExecutor.factory != null ? !evictionScheduledExecutor.factory.equals(that.evictionScheduledExecutor.factory) : that.evictionScheduledExecutor.factory != null)
@@ -371,7 +372,8 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
          return false;
       if (replicationQueueScheduledExecutor.properties != null ? !replicationQueueScheduledExecutor.properties.equals(that.replicationQueueScheduledExecutor.properties) : that.replicationQueueScheduledExecutor.properties != null)
          return false;
-      if (shutdown != that.shutdown) return false;
+      if (shutdown.hookBehavior != null ? !shutdown.hookBehavior.equals(that.shutdown.hookBehavior) : that.shutdown.hookBehavior != null) 
+         return false;
       if (transport.transportClass != null ? !transport.transportClass.equals(that.transport.transportClass) : that.transport.transportClass != null)
          return false;
       if (transport.properties != null ? !transport.properties.equals(that.transport.properties) : that.transport.properties != null)
@@ -666,7 +668,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
 
       public void accept(ConfigurationBeanVisitor v) {
          v.visitShutdownType(this);
-      }               
+      }
    }
 }
 
