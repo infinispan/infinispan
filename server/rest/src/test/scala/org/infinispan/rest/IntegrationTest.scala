@@ -21,7 +21,7 @@ import testng.Assert._
 class IntegrationTest {
 
   val HOST = "http://localhost:8888/"
-  //val HOST = "http://localhost:8080/infinispan-rest/"
+  //val HOST = "http://localhost:8080/infinispan/"
   
   def testBasicOperation = {
 
@@ -207,6 +207,34 @@ class IntegrationTest {
     assertEquals(HttpServletResponse.SC_NOT_FOUND, Client.call(new HeadMethod(HOST + "rest/posteee/async")).getStatusCode)
   }
 
+  @Test def shouldCopeWithSerializable = {
+    Client.call(new GetMethod(HOST + "rest/wang/wangKey"))
+
+    val obj = new MySer
+    obj.name = "mic"
+    ManagerInstance getCache("wang") put("wangKey", obj)
+    ManagerInstance getCache("wang") put("wangKey2", "hola")
+
+    val get = Client.call(new GetMethod(HOST + "rest/wang/wangKey"))
+    assertEquals(HttpServletResponse.SC_OK, get.getStatusCode)
+    val in = new ObjectInputStream(get.getResponseBodyAsStream)
+    val res = in.readObject.asInstanceOf[MySer]
+    assertNotNull(res)
+    assertEquals("mic", res.name)
+    assertEquals("application/x-java-serialized-object", get.getResponseHeader("Content-Type").getValue)
+//    assertEquals("application/text", get.getResponseHeader("Content-Type").getValue)
+    //assertEquals("this is a thing with a thing", get.getResponseBodyAsString)
+
+
+    val getStr = Client.call(new GetMethod(HOST + "rest/wang/wangKey2"))
+    assertEquals("hola", getStr.getResponseBodyAsString)
+    assertEquals("text/plain", getStr.getResponseHeader("Content-Type").getValue)
+    
+  }
+
+
+
+
 
 
 
@@ -218,3 +246,9 @@ class IntegrationTest {
 
 
 }
+
+
+
+   class MySer extends Serializable {
+      var name: String = "mic"
+   }

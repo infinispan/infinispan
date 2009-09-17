@@ -20,7 +20,7 @@ object ServerInstance {
     ctx.setInitParams(params)
     ctx.addEventListener(new ResteasyBootstrap)
     ctx.addEventListener(new StartupListener)
-    ctx.addServlet(classOf[HttpServletDispatcher], "/*")
+    ctx.addServlet(classOf[HttpServletDispatcher], "/rest/*")
     server.setStopAtShutdown(true)
     server.start
     server

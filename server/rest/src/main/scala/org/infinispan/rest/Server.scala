@@ -1,5 +1,6 @@
 package org.infinispan.rest
 
+import java.io.{OutputStream, ObjectOutputStream, Serializable}
 import remoting.MIMECacheEntry
 import java.util.concurrent.TimeUnit
 import javax.ws.rs._
@@ -20,6 +21,14 @@ class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: B
             case null => Response.ok(b.data, b.contentType).lastModified(b.lastModified).tag(calcETAG(b)).build
           }
         }
+        case s: String => Response.ok(s, "text/plain").build
+        case ser: Serializable => {
+           Response.ok.`type`("application/x-java-serialized-object").entity(new StreamingOutput {
+             def write(out: OutputStream) = {
+               new ObjectOutputStream(out).writeObject(ser)
+             }
+           }).build
+        }
         case null => Response status(Status.NOT_FOUND) build
       }
   }
@@ -34,6 +43,7 @@ class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: B
             case null => Response.ok.`type`(b.contentType).lastModified(b.lastModified).tag(calcETAG(b)).build
           }
         }
+        case x: Any => Response.ok.build
         case null => Response status(Status.NOT_FOUND) build
       }
   }
@@ -51,6 +61,7 @@ class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: B
                 Response.status(Status.CONFLICT).build()
             } else {
               (ttl, idleTime, useAsync) match {
+                //todo, check if it is serialized object, and put it as such...
                 case (0, 0, false) => cache.put(key, new MIMECacheEntry(mediaType, data))
                 case (x, 0, false) => cache.put(key, new MIMECacheEntry(mediaType, data), ttl, TimeUnit.SECONDS)
                 case (x, y, false) => cache.put(key, new MIMECacheEntry(mediaType, data), ttl, TimeUnit.SECONDS, idleTime, TimeUnit.SECONDS)
@@ -92,9 +103,9 @@ class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: B
 object ManagerInstance {
    var instance: CacheManager = null
    def getCache(name: String) = {
-      instance.getCache(name).asInstanceOf[Cache[String, MIMECacheEntry]]
+      instance.getCache(name).asInstanceOf[Cache[String, Any]]
    }
-   def getEntry(cacheName: String, key: String) : MIMECacheEntry = {
+   def getEntry(cacheName: String, key: String) : Any = {
      getCache(cacheName).get(key)
    }
 }
