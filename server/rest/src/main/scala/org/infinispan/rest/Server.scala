@@ -1,6 +1,8 @@
 package org.infinispan.rest
 
-import java.io.{OutputStream, ObjectOutputStream, Serializable}
+import codehaus.jackson.map.ObjectMapper
+import com.thoughtworks.xstream.XStream
+import java.io._
 import remoting.MIMECacheEntry
 import java.util.concurrent.TimeUnit
 import javax.ws.rs._
@@ -22,16 +24,29 @@ class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: B
           }
         }
         case s: String => Response.ok(s, "text/plain").build
-        case ser: Serializable => {
-           Response.ok.`type`("application/x-java-serialized-object").entity(new StreamingOutput {
-             def write(out: OutputStream) = {
-               new ObjectOutputStream(out).writeObject(ser)
-             }
-           }).build
+        case obj: Any => {
+           val variant = request.selectVariant(variantList)
+           val selectedMediaType =  if (variant != null) variant.getMediaType.toString else "application/x-java-serialized-object"
+           selectedMediaType match {
+             case MediaType.APPLICATION_JSON =>  Response.ok.`type`(selectedMediaType).entity(streamIt(jsonMapper.writeValue(_, obj))).build
+             case MediaType.APPLICATION_XML => Response.ok.`type`(selectedMediaType).entity(streamIt(xstream.toXML(obj, _))).build
+             case _ =>
+               obj match {
+                 case ser: Serializable =>
+                  Response.ok.`type`("application/x-java-serialized-object").entity(streamIt(new ObjectOutputStream(_).writeObject(ser))).build
+                 case _ => Response.notAcceptable(variantList).build
+               }
+
+           }
         }
         case null => Response status(Status.NOT_FOUND) build
       }
   }
+
+  /** create a JAX-RS streaming output */
+  def streamIt(action: (OutputStream) => Unit) = new StreamingOutput { def write(o: OutputStream) = {action(o)}}
+
+
 
   @HEAD
   @Path("/{cacheName}/{cacheKey}")
@@ -60,19 +75,21 @@ class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: B
             if (request.getMethod == "POST" && cache.containsKey(key)) {
                 Response.status(Status.CONFLICT).build()
             } else {
+              val obj = if (mediaType == "application/x-java-serialized-object")
+                new ObjectInputStream(new ByteArrayInputStream(data)).readObject
+                else new MIMECacheEntry(mediaType, data)
               (ttl, idleTime, useAsync) match {
-                //todo, check if it is serialized object, and put it as such...
-                case (0, 0, false) => cache.put(key, new MIMECacheEntry(mediaType, data))
-                case (x, 0, false) => cache.put(key, new MIMECacheEntry(mediaType, data), ttl, TimeUnit.SECONDS)
-                case (x, y, false) => cache.put(key, new MIMECacheEntry(mediaType, data), ttl, TimeUnit.SECONDS, idleTime, TimeUnit.SECONDS)
-                case (0, 0, true) => cache.putAsync(key, new MIMECacheEntry(mediaType, data))
-                case (x, 0, true) => cache.putAsync(key, new MIMECacheEntry(mediaType, data), ttl, TimeUnit.SECONDS)
-                case (x, y, true) => cache.putAsync(key, new MIMECacheEntry(mediaType, data), ttl, TimeUnit.SECONDS, idleTime, TimeUnit.SECONDS)
+                case (0, 0, false) => cache.put(key, obj)
+                case (x, 0, false) => cache.put(key, obj, ttl, TimeUnit.SECONDS)
+                case (x, y, false) => cache.put(key, obj, ttl, TimeUnit.SECONDS, idleTime, TimeUnit.SECONDS)
+                case (0, 0, true) => cache.putAsync(key, obj)
+                case (x, 0, true) => cache.putAsync(key, obj, ttl, TimeUnit.SECONDS)
+                case (x, y, true) => cache.putAsync(key, obj, ttl, TimeUnit.SECONDS, idleTime, TimeUnit.SECONDS)
               }
               Response.ok.build
             }
-
   }
+
 
   @DELETE
   @Path("/{cacheName}/{cacheKey}")
@@ -94,6 +111,12 @@ class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: B
     new EntityTag(entry.contentType + entry.lastModified.getTime  + entry.data.length)
 
   }
+
+
+  /** For dealing with binary entries in the cache */
+  lazy val variantList = Variant.VariantListBuilder.newInstance.mediaTypes(MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE).build
+  lazy val jsonMapper = new ObjectMapper
+  lazy val xstream = new XStream
 
 }
 
