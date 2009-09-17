@@ -44,4 +44,37 @@ public class SpinLockBasedLRUDataContainerTest extends SpinLockBasedFIFODataCont
          i++;
       }
    }
+   
+   public void testOrderingUpdateExisting() {
+      for (int i = 0; i < 10; i++) dc.put(i, "value", -1, -1);
+      
+      // update 1st key
+      dc.put(0, "new-value", -1, -1);
+      int i = 0;
+      for (InternalCacheEntry ice : dc) {
+         Integer key = (Integer) ice.getKey();
+         assert key.equals((i + 1) % 10) : "Not equals, key=" + key + " and index=" + (i + 1) % 10;
+         i++;
+      }
+      
+
+      // update key in the middle
+      dc.put(5, "new-value", -1, -1);
+      Integer[] expected = new Integer[]{1, 2, 3, 4, 6, 7, 8, 9, 0, 5};
+      i = 0;
+      for (InternalCacheEntry ice : dc) {
+         Integer key = (Integer) ice.getKey();
+         assert key.equals(expected[i]) : "Not equals, key=" + key + " and expected=" + expected[i];
+         i++;
+      }
+      
+      // update last key
+      dc.put(5, "yet-another-new-value", -1, -1);
+      i = 0;
+      for (InternalCacheEntry ice : dc) {
+         Integer key = (Integer) ice.getKey();
+         assert key.equals(expected[i]) : "Not equals, key=" + key + " and expected=" + expected[i];
+         i++;
+      }
+   }
 }
