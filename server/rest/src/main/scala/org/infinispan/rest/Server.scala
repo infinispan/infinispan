@@ -3,6 +3,7 @@ package org.infinispan.rest
 import codehaus.jackson.map.ObjectMapper
 import com.thoughtworks.xstream.XStream
 import java.io._
+import java.util.Date
 import remoting.MIMECacheEntry
 import java.util.concurrent.TimeUnit
 import javax.ws.rs._
@@ -18,9 +19,10 @@ class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: B
   def getEntry(@PathParam("cacheName") cacheName: String, @PathParam("cacheKey") key: String) = {
       ManagerInstance.getEntry(cacheName, key) match {
         case b: MIMECacheEntry => {
-          request.evaluatePreconditions(b.lastModified, calcETAG(b)) match {
+          val lastMod = new Date(b.lastModified)
+          request.evaluatePreconditions(lastMod, calcETAG(b)) match {
             case bldr: ResponseBuilder => bldr.build
-            case null => Response.ok(b.data, b.contentType).lastModified(b.lastModified).tag(calcETAG(b)).build
+            case null => Response.ok(b.data, b.contentType).lastModified(lastMod).tag(calcETAG(b)).build
           }
         }
         case s: String => Response.ok(s, "text/plain").build
@@ -53,9 +55,10 @@ class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: B
   def headEntry(@PathParam("cacheName") cacheName: String, @PathParam("cacheKey") key: String) = {
       ManagerInstance.getEntry(cacheName, key) match {
         case b: MIMECacheEntry => {
-          request.evaluatePreconditions(b.lastModified, calcETAG(b)) match {
+          val lastMod = new Date(b.lastModified)
+          request.evaluatePreconditions(lastMod, calcETAG(b)) match {
             case bldr: ResponseBuilder => bldr.build
-            case null => Response.ok.`type`(b.contentType).lastModified(b.lastModified).tag(calcETAG(b)).build
+            case null => Response.ok.`type`(b.contentType).lastModified(lastMod).tag(calcETAG(b)).build
           }
         }
         case x: Any => Response.ok.build
@@ -108,7 +111,7 @@ class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: B
   }
 
   def calcETAG(entry: MIMECacheEntry) = {
-    new EntityTag(entry.contentType + entry.lastModified.getTime  + entry.data.length)
+    new EntityTag(entry.contentType + entry.lastModified  + entry.data.length)
 
   }
 
