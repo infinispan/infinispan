@@ -55,6 +55,7 @@ import org.infinispan.marshall.MarshalledValue;
 import org.infinispan.marshall.VersionAwareMarshaller;
 import org.infinispan.marshall.jboss.JBossMarshallingTest.CustomReadObjectMethod;
 import org.infinispan.marshall.jboss.JBossMarshallingTest.ObjectThatContainsACustomReadObjectMethod;
+import org.infinispan.remoting.MIMECacheEntry;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.ExtendedResponse;
 import org.infinispan.remoting.responses.RequestIgnoredResponse;
@@ -69,6 +70,8 @@ import org.infinispan.transaction.xa.GlobalTransactionFactory;
 import org.infinispan.util.FastCopyHashMap;
 import org.infinispan.util.Immutables;
 import org.infinispan.util.concurrent.TimeoutException;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.jgroups.stack.IpAddress;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
@@ -83,6 +86,7 @@ import java.util.*;
 @Test(groups = "functional", testName = "marshall.VersionAwareMarshallerTest")
 public class VersionAwareMarshallerTest {
 
+   private static final Log log = LogFactory.getLog(VersionAwareMarshallerTest.class);
    private final VersionAwareMarshaller marshaller = new VersionAwareMarshaller();
 
    private GlobalTransactionFactory gtf = new GlobalTransactionFactory();
@@ -407,6 +411,15 @@ public class VersionAwareMarshallerTest {
       marshallAndAssertEquality(obj);
    }
 
+   public void testMIMECacheEntryMarshalling() throws Exception {
+      MIMECacheEntry entry = new MIMECacheEntry("rm", new byte[] {1, 2, 3});
+      byte[] bytes = marshaller.objectToByteBuffer(entry);
+      MIMECacheEntry rEntry = (MIMECacheEntry) marshaller.objectFromByteBuffer(bytes);
+      assert Arrays.equals(rEntry.data, entry.data);
+      assert rEntry.contentType.equals(entry.contentType);
+      assert rEntry.lastModified == entry.lastModified;
+   }
+   
    protected void marshallAndAssertEquality(Object writeObj) throws Exception {
       byte[] bytes = marshaller.objectToByteBuffer(writeObj);
       Object readObj = marshaller.objectFromByteBuffer(bytes);
