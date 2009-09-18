@@ -228,7 +228,8 @@ public class JdbmCacheStore extends AbstractCacheStore {
          log.trace("remove() " + key);
       try {
          tree.remove(key);
-         return true; // TODO the return value is not really important, right?
+         // If the key does not exist, HTree ignores the operation, so always return true
+         return true;
       } catch (IOException e) {
          // can happen during normal operation
          return false;
