@@ -26,7 +26,6 @@ import java.text.NumberFormat;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
@@ -113,11 +112,9 @@ public class RpcManagerImpl implements RpcManager {
 
    public void retrieveState(String cacheName, long timeout) throws StateTransferException {
       if (t.isSupportStateTransfer()) {
-         // TODO make these configurable
-         Random r = new Random();
-         int initialWaitTime = (r.nextInt(10) + 1) * 100; // millis
-         int waitTimeIncreaseFactor = 2;
-         int numRetries = 5;
+         long initialWaitTime = configuration.getStateRetrievalInitialRetryWaitTime();
+         int waitTimeIncreaseFactor = configuration.getStateRetrievalRetryWaitTimeIncreaseFactor();
+         int numRetries = configuration.getStateRetrievalNumRetries();
          List<Address> members = t.getMembers();
          if (members.size() < 2) {
             if (log.isDebugEnabled())
@@ -128,9 +125,9 @@ public class RpcManagerImpl implements RpcManager {
          boolean success = false;
 
          try {
-
+            long wait = initialWaitTime;
             outer:
-            for (int i = 0, wait = initialWaitTime; i < numRetries; i++) {
+            for (int i = 0; i < numRetries; i++) {
                for (Address member : members) {
                   if (!member.equals(t.getAddress())) {
                      try {

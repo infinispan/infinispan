@@ -27,7 +27,7 @@ import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.concurrent.locks.LockManagerImpl;
 
 /**
- * // TODO: MANIK: Document this
+ * Factory class that creates instances of {@link LockManager}.
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @since 4.0

@@ -44,6 +44,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -393,7 +394,23 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    public void setStateRetrievalTimeout(long stateRetrievalTimeout, TimeUnit timeUnit) {
       setStateRetrievalTimeout(timeUnit.toMillis(stateRetrievalTimeout));
    }
- 
+   
+   public void setStateRetrievalInitialRetryWaitTime(long initialRetryWaitTime) {
+      clustering.stateRetrieval.setInitialRetryWaitTime(initialRetryWaitTime);
+   }
+
+   public void setStateRetrievalInitialRetryWaitTime(long initialRetryWaitTime, TimeUnit timeUnit) {
+      setStateRetrievalInitialRetryWaitTime(timeUnit.toMillis(initialRetryWaitTime));
+   }
+
+   public void setStateRetrievalRetryWaitTimeIncreaseFactor(int retryWaitTimeIncreaseFactor) {
+      clustering.stateRetrieval.setRetryWaitTimeIncreaseFactor(retryWaitTimeIncreaseFactor);
+   }
+
+   public void setStateRetrievalNumRetries(int numRetries) {
+      clustering.stateRetrieval.setNumRetries(numRetries);
+   }
+
    public void setIsolationLevel(String isolationLevel) {
       if (isolationLevel == null) throw new ConfigurationException("Isolation level cannot be null", "IsolationLevel");
       locking.setIsolationLevel(IsolationLevel.valueOf(uc(isolationLevel)));
@@ -513,6 +530,18 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
    public long getStateRetrievalTimeout() {
       return clustering.stateRetrieval.timeout;
+   }
+
+   public long getStateRetrievalInitialRetryWaitTime() {
+      return clustering.stateRetrieval.initialRetryWaitTime;
+   }
+
+   public int getStateRetrievalRetryWaitTimeIncreaseFactor() {
+      return clustering.stateRetrieval.retryWaitTimeIncreaseFactor;
+   }
+
+   public int getStateRetrievalNumRetries() {
+      return clustering.stateRetrieval.numRetries;
    }
 
    public boolean isUseLazyDeserialization() {
@@ -1236,7 +1265,16 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       
       /** @configRef desc="Timeout for state transfer"*/
       @Dynamic      
-      protected Long timeout=10000L;     
+      protected Long timeout = 10000L;
+      
+      /** @configRef desc="Initial wait time when backing off before retrying state transfer retrieval"*/
+      protected Long initialRetryWaitTime = 500L;
+      
+      /** @configRef desc="Wait time increase factor over successive state retrieval backoffs"*/
+      protected Integer retryWaitTimeIncreaseFactor = 2;
+      
+      /** @configRef desc="Number of state retrieval retries"*/
+      protected Integer numRetries = 5;
       
       @XmlAttribute
       public void setFetchInMemoryState(Boolean fetchInMemoryState) {
@@ -1244,14 +1282,32 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          this.fetchInMemoryState = fetchInMemoryState;
       }
 
-      public void accept(ConfigurationBeanVisitor v) {
-         v.visitStateRetrievalType(this);
+      @XmlAttribute
+      public void setInitialRetryWaitTime(Long initialRetryWaitTime) {
+         testImmutability("initialWaitTime");
+         this.initialRetryWaitTime = initialRetryWaitTime;
+      }
+
+      @XmlAttribute
+      public void setRetryWaitTimeIncreaseFactor(Integer retryWaitTimeIncreaseFactor) {
+         testImmutability("retryWaitTimeIncreaseFactor");
+         this.retryWaitTimeIncreaseFactor = retryWaitTimeIncreaseFactor;
+      }
+
+      @XmlAttribute
+      public void setNumRetries(Integer numRetries) {
+         testImmutability("numRetries");
+         this.numRetries = numRetries;
       }
 
       @XmlAttribute
       public void setTimeout(Long timeout) {
          testImmutability("timeout");
          this.timeout = timeout;
+      }
+
+      public void accept(ConfigurationBeanVisitor v) {
+         v.visitStateRetrievalType(this);
       }
 
       @Override
@@ -1261,9 +1317,11 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
          StateRetrievalType that = (StateRetrievalType) o;
 
-         if (fetchInMemoryState != null ? !fetchInMemoryState.equals(that.fetchInMemoryState) : that.fetchInMemoryState != null)
-            return false;
+         if (fetchInMemoryState != null ? !fetchInMemoryState.equals(that.fetchInMemoryState) : that.fetchInMemoryState != null) return false;
          if (timeout != null ? !timeout.equals(that.timeout) : that.timeout != null) return false;
+         if (initialRetryWaitTime != null ? !initialRetryWaitTime.equals(that.initialRetryWaitTime) : that.initialRetryWaitTime != null) return false;
+         if (retryWaitTimeIncreaseFactor != null ? !retryWaitTimeIncreaseFactor.equals(that.retryWaitTimeIncreaseFactor) : that.retryWaitTimeIncreaseFactor != null) return false;
+         if (numRetries != null ? !numRetries.equals(that.numRetries) : that.numRetries != null) return false;
 
          return true;
       }
@@ -1272,6 +1330,9 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       public int hashCode() {
          int result = fetchInMemoryState != null ? fetchInMemoryState.hashCode() : 0;
          result = 31 * result + (timeout != null ? timeout.hashCode() : 0);
+         result = 31 * result + (initialRetryWaitTime != null ? initialRetryWaitTime.hashCode() : 0);
+         result = 31 * result + (retryWaitTimeIncreaseFactor != null ? retryWaitTimeIncreaseFactor.hashCode() : 0);
+         result = 31 * result + (numRetries != null ? numRetries.hashCode() : 0);
          return result;
       }
    }
