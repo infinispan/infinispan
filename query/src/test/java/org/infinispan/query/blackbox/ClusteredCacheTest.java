@@ -86,7 +86,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
    }
 
-   @AfterMethod
+   @AfterMethod (alwaysRun = true)
    public void tearDown() {
       IndexCleanUp.cleanUpIndexes();
    }
