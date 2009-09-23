@@ -38,7 +38,6 @@ import java.util.NoSuchElementException;
  * <p/>
  * <p/>
  *
- *
  * @author Navin Surtani
  */
 
@@ -50,10 +49,8 @@ public class EagerIterator extends AbstractIterator {
    private static final Log log = LogFactory.getLog(EagerIterator.class);
 
 
-   public EagerIterator(List<Object> idList, Cache cache, int fetchSize)
-   {
-      if (fetchSize < 1)
-      {
+   public EagerIterator(List<Object> idList, Cache cache, int fetchSize) {
+      if (fetchSize < 1) {
          throw new IllegalArgumentException("Incorrect value for fetchsize passed. Your fetchSize is less than 1");
       }
 
@@ -81,17 +78,14 @@ public class EagerIterator extends AbstractIterator {
     * @throws IndexOutOfBoundsException
     */
 
-   public void jumpToResult(int index) throws IndexOutOfBoundsException
-   {
-      if (index > idList.size() || index < 0)
-      {
+   public void jumpToResult(int index) throws IndexOutOfBoundsException {
+      if (index > idList.size() || index < 0) {
          throw new IndexOutOfBoundsException("The index you entered is either greater than the size of the list or negative");
       }
       this.index = index;
    }
 
-   public void close()
-   {
+   public void close() {
       // This method does not need to do anything for this type of iterator as when an instace of it is
       // created, the iterator() method in CacheQueryImpl closes everything that needs to be closed.
    }
@@ -101,8 +95,7 @@ public class EagerIterator extends AbstractIterator {
     *
     * @return The next element in the list.
     */
-   public Object next()
-   {
+   public Object next() {
       if (!hasNext()) throw new IndexOutOfBoundsException("Out of boundaries. There is no next");
 
       Object toReturn;
@@ -110,16 +103,13 @@ public class EagerIterator extends AbstractIterator {
 
       // make sure the index we are after is in the buffer.  If it is, then index >= bufferIndex and index <= (bufferIndex + bufferSize).
       if (bufferIndex >= 0                                       // buffer init check
-              && index >= bufferIndex                           // lower boundary
-              && index < (bufferIndex + bufferSize))          // upper boundary
+            && index >= bufferIndex                           // lower boundary
+            && index < (bufferIndex + bufferSize))          // upper boundary
       {
          // now we can get this from the buffer.  Sweet!
          int indexToReturn = index - bufferIndex;
          toReturn = buffer[indexToReturn];
-      }
-
-      else
-      {
+      } else {
          // We need to populate the buffer.
 
          toReturn = cache.get(idList.get(index));
@@ -132,12 +122,9 @@ public class EagerIterator extends AbstractIterator {
          // we now need to buffer item at index "index", as well as the next "fetchsize - 1" elements.  I.e., a total of fetchsize elements will be buffered.
          //now loop through bufferSize times to add the rest of the objects into the list.
 
-         for (int i = 1; i < bufferSize; i++)
-         {
-            if (index + i > max)
-            {
-               if (log.isDebugEnabled())
-               {
+         for (int i = 1; i < bufferSize; i++) {
+            if (index + i > max) {
+               if (log.isDebugEnabled()) {
                   log.debug("Your current index + bufferSize exceeds the size of your number of hits");
                }
                break;
@@ -161,8 +148,7 @@ public class EagerIterator extends AbstractIterator {
     * @return The previous element in the list.
     */
 
-   public Object previous()
-   {
+   public Object previous() {
       if (!hasPrevious()) throw new IndexOutOfBoundsException("Index is out of bounds. There is no previous");
 
       Object toReturn;
@@ -171,15 +157,13 @@ public class EagerIterator extends AbstractIterator {
       // make sure the index we are after is in the buffer.  If it is, then index >= bufferIndex and index <= (bufferIndex + bufferSize).
 
       if (bufferIndex >= 0 // buffer init check
-              && index <= bufferIndex // lower boundary
-              && index >= (bufferIndex + bufferSize)) // upper boundary
+            && index <= bufferIndex // lower boundary
+            && index >= (bufferIndex + bufferSize)) // upper boundary
       {
          // now we can get this from the buffer.  Sweet!
          int indexToReturn = bufferIndex - index;        // Unlike next() we have to make sure that we are subtracting index from bufferIndex
          toReturn = buffer[indexToReturn];
-      }
-      else
-      {
+      } else {
          toReturn = cache.get(idList.get(index));
          // Wiping bufferObjects and the bufferIndex so that there is no stale data.
 
@@ -190,12 +174,9 @@ public class EagerIterator extends AbstractIterator {
          // I.e., a total of fetchsize elements will be buffered.
          // now loop through bufferSize times to add the rest of the objects into the list.
 
-         for (int i = 1; i < bufferSize; i++)
-         {
-            if (index - i < first)
-            {
-               if (log.isDebugEnabled())
-               {
+         for (int i = 1; i < bufferSize; i++) {
+            if (index - i < first) {
+               if (log.isDebugEnabled()) {
                   log.debug("Your current index - bufferSize exceeds the size of your number of hits");
                }
                break;
@@ -215,8 +196,7 @@ public class EagerIterator extends AbstractIterator {
     * @return Index of next element.
     */
 
-   public int nextIndex()
-   {
+   public int nextIndex() {
       if (!hasNext()) throw new NoSuchElementException("Out of boundaries");
       return index + 1;
 
@@ -228,8 +208,7 @@ public class EagerIterator extends AbstractIterator {
     * @return Index of previous element.
     */
 
-   public int previousIndex()
-   {
+   public int previousIndex() {
       if (!hasPrevious()) throw new NoSuchElementException("Out of boundaries");
       return index - 1;
    }
@@ -237,8 +216,7 @@ public class EagerIterator extends AbstractIterator {
    /**
     * This method is not supported and should not be used. Use cache.remove() instead.
     */
-   public void remove()
-   {
+   public void remove() {
       throw new UnsupportedOperationException("Not supported as you are trying to change something in the cache.  Please use searchableCache.put()");
    }
 
@@ -248,8 +226,7 @@ public class EagerIterator extends AbstractIterator {
     * @param o
     * @throws UnsupportedOperationException
     */
-   public void set(Object o) throws UnsupportedOperationException
-   {
+   public void set(Object o) throws UnsupportedOperationException {
       throw new UnsupportedOperationException("Not supported as you are trying to change something in the cache.  Please use searchableCache.put()");
    }
 
@@ -260,8 +237,7 @@ public class EagerIterator extends AbstractIterator {
     * @throws UnsupportedOperationException
     */
 
-   public void add(Object o)
-   {
+   public void add(Object o) {
       throw new UnsupportedOperationException("Not supported as you are trying to change something in the cache. Please use searchableCache.put()");
    }
 

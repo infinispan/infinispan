@@ -30,20 +30,19 @@ import static org.hibernate.search.reader.ReaderProviderHelper.getIndexReaders;
 import java.util.Set;
 
 /**
- * Class with static method that is called by {@link org.infinispan.query.impl.CacheQueryImpl} and {@link org.infinispan.query.impl.EagerIterator}
- * <p />
- *
+ * Class with static method that is called by {@link org.infinispan.query.impl.CacheQueryImpl} and {@link
+ * org.infinispan.query.impl.EagerIterator}
+ * <p/>
+ * <p/>
  * Simply an abstraction for one method to reduce unneccesary code replication.
+ *
  * @author Navin Surtani
  */
- public class IndexSearcherCloser
-{
-   public static void closeSearcher(Searcher searcher, ReaderProvider readerProvider)
-   {
+public class IndexSearcherCloser {
+   public static void closeSearcher(Searcher searcher, ReaderProvider readerProvider) {
       Set<IndexReader> indexReaders = getIndexReaders(searcher);
 
-      for (IndexReader indexReader : indexReaders)
-      {
+      for (IndexReader indexReader : indexReaders) {
          readerProvider.closeReader(indexReader);
       }
    }

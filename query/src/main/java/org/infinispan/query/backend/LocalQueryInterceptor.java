@@ -1,12 +1,12 @@
 package org.infinispan.query.backend;
 
 import org.hibernate.search.engine.SearchFactoryImplementor;
-import org.infinispan.factories.annotations.Inject;
-import org.infinispan.context.InvocationContext;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.factories.annotations.Inject;
 
 import javax.transaction.TransactionManager;
 import java.util.Map;
@@ -15,7 +15,8 @@ import java.util.Map;
  * <p/>
  * This class is an interceptor that will index data only if it has come from a local source.
  * <p/>
- * Currently, this is a property that is determined by setting "infinispan.query.indexLocalOnly" as a System property to "true".
+ * Currently, this is a property that is determined by setting "infinispan.query.indexLocalOnly" as a System property to
+ * "true".
  *
  * @author Navin Surtani
  * @since 4.0

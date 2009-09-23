@@ -12,10 +12,10 @@ import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.query.CacheQuery;
-import org.infinispan.query.QueryIterator;
 import org.infinispan.query.QueryFactory;
+import org.infinispan.query.QueryIterator;
+import org.infinispan.query.helper.TestQueryHelperFactory;
 import org.infinispan.query.backend.QueryHelper;
-import org.infinispan.query.helper.IndexCleanUp;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -48,11 +48,10 @@ public class LocalCacheTest extends SingleCacheManagerTest {
 
    Cache<String, Person> cache;
    QueryHelper qh;
-   
+
    protected CacheManager createCacheManager() throws Exception {
       Configuration c = new Configuration();
       c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
-
       return TestCacheManagerFactory.createCacheManager(c);
    }
 
@@ -65,8 +64,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
 
       cache = createCacheManager().getCache();
 
-      qh = new QueryHelper(cache, null, Person.class);
-      qh.applyProperties();
+      qh = TestQueryHelperFactory.createTestQueryHelperInstance(cache, Person.class);
 
       person1 = new Person();
       person1.setName("Navin Surtani");
@@ -91,10 +89,9 @@ public class LocalCacheTest extends SingleCacheManagerTest {
 
    }
 
-   @AfterMethod
+   @AfterMethod (alwaysRun = true)
    public void tearDown() {
       if (cache != null) cache.stop();
-      IndexCleanUp.cleanUpIndexes();
    }
 
    public void testSimple() throws ParseException {

@@ -36,7 +36,7 @@ public class EagerIteratorTest {
       // create some dummy data
       dummyResults = new HashMap<String, String>();
 
-      for (int i=1; i<=10; i++) {
+      for (int i = 1; i <= 10; i++) {
          String key = "key" + i;
          keys.add(key);
          dummyResults.put(key, "Result number " + i);
@@ -45,7 +45,7 @@ public class EagerIteratorTest {
       // create the instance of the iterator.
       cache = createMock(Cache.class);
 
-      expect(cache.get(anyObject())).andAnswer(new IAnswer<String>(){
+      expect(cache.get(anyObject())).andAnswer(new IAnswer<String>() {
          public String answer() throws Throwable {
             String k = getCurrentArguments()[0].toString();
             return dummyResults.get(k);
@@ -56,7 +56,7 @@ public class EagerIteratorTest {
       EasyMock.replay(cache);
    }
 
-   @AfterMethod
+   @AfterMethod (alwaysRun = true)
    public void tearDown() {
       keys = null;
       dummyResults = null;

@@ -4,10 +4,11 @@ import org.hibernate.search.cfg.SearchConfiguration;
 import org.hibernate.search.engine.SearchFactoryImplementor;
 import org.hibernate.search.impl.SearchFactoryImpl;
 import org.infinispan.Cache;
+import org.infinispan.CacheException;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.InterceptorChainFactory;
-import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.LockingInterceptor;
+import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -18,9 +19,9 @@ import java.util.Properties;
  * <p/>
  * This is a TEMPORARY helper class that will be used to add the QueryInterceptor to the chain and provide Classes to
  * Hibernate Search.
- *
- * This class needs to be instantiated and then have applyProperties() called on it. This class WILL be removed once other hooks come into Infinispan
- * for versions 4.1 etc.
+ * <p/>
+ * This class needs to be instantiated and then have applyProperties() called on it. This class WILL be removed once
+ * other hooks come into Infinispan for versions 4.1 etc.
  *
  * @author Navin Surtani
  * @since 4.0
@@ -30,7 +31,7 @@ import java.util.Properties;
 public class QueryHelper {
 
    public static final String QUERY_ENABLED_PROPERTY = "infinispan.query.enabled";
-   public static final String QUERY_INDEX_LOCAL_ONLY_PROPERTY = "infinispan.query.indexLocalOnly";   
+   public static final String QUERY_INDEX_LOCAL_ONLY_PROPERTY = "infinispan.query.indexLocalOnly";
 
    private Cache cache;
    private Properties properties;
@@ -77,7 +78,7 @@ public class QueryHelper {
       SearchConfiguration cfg = new SearchableCacheConfiguration(classes, properties);
       searchFactory = new SearchFactoryImpl(cfg);
 
-
+      applyProperties();
    }
 
    /**
@@ -93,14 +94,9 @@ public class QueryHelper {
     * <p/>
     * Anything put before calling this method will NOT not be picked up by the {@link QueryInterceptor} and hence not be
     * indexed.
-    *
-    * @throws Exception
     */
 
-   public void applyProperties()
-         throws Exception {
-
-
+   private void applyProperties() {
       if (log.isDebugEnabled()) log.debug("Entered QueryHelper.applyProperties()");
 
       // If the query property is set to true, i.e. we want to query objects in the cache, then we need to add the QueryInterceptor.
@@ -110,15 +106,19 @@ public class QueryHelper {
 
          boolean indexLocal = Boolean.getBoolean(QUERY_INDEX_LOCAL_ONLY_PROPERTY);
 
-         if (indexLocal) {
-            // Add a LocalQueryInterceptor to the chain
-            addInterceptor(LocalQueryInterceptor.class);
-         }
-         // We're indexing data even if it comes from other sources
+         try {
+            if (indexLocal) {
+               // Add a LocalQueryInterceptor to the chain
+               addInterceptor(LocalQueryInterceptor.class);
+            }
+            // We're indexing data even if it comes from other sources
 
-         else {
-            // Add in a QueryInterceptor to the chain
-            addInterceptor(QueryInterceptor.class);
+            else {
+               // Add in a QueryInterceptor to the chain
+               addInterceptor(QueryInterceptor.class);
+            }
+         } catch (Exception e) {
+            throw new CacheException("Unable to add interceptor", e);
          }
       }
    }
@@ -164,7 +164,7 @@ public class QueryHelper {
       // get the component registry and then register the searchFactory.
       ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
       cr.registerComponent(searchFactory, SearchFactoryImplementor.class);
-      
+
       // Get the interceptor chain factory so I can create my interceptor.
       InterceptorChainFactory icf = cr.getComponent(InterceptorChainFactory.class);
 

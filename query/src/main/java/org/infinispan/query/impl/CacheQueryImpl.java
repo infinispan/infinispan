@@ -65,8 +65,7 @@ import java.util.Set;
  *
  * @author Navin Surtani
  */
-public class CacheQueryImpl implements CacheQuery
-{
+public class CacheQueryImpl implements CacheQuery {
    private Sort sort;
    private Filter filter;
    private Map<String, FullTextFilterImpl> filterDefinitions;
@@ -87,15 +86,12 @@ public class CacheQueryImpl implements CacheQuery
    public org.infinispan.util.logging.Log log;
 
 
-
-
-   public CacheQueryImpl(Query luceneQuery, SearchFactoryImplementor searchFactory, Cache cache, Class... classes)
-   {
+   public CacheQueryImpl(Query luceneQuery, SearchFactoryImplementor searchFactory, Cache cache, Class... classes) {
       this.luceneQuery = luceneQuery;
       this.cache = cache;
       this.searchFactory = searchFactory;
       this.targetedEntities = this.searchFactory.getIndexedTypesPolymorphic(classes);
-                 
+
    }
 
 
@@ -105,8 +101,7 @@ public class CacheQueryImpl implements CacheQuery
     * @param f - lucene filter
     */
 
-   public void setFilter(Filter f)
-   {
+   public void setFilter(Filter f) {
       filter = f;
    }
 
@@ -114,38 +109,28 @@ public class CacheQueryImpl implements CacheQuery
    /**
     * @return The result size of the query.
     */
-   public int getResultSize()
-   {
-      if (resultSize == null)
-      {
+   public int getResultSize() {
+      if (resultSize == null) {
          //get result size without object initialization
          IndexSearcher searcher = buildSearcher(searchFactory);
-         if (searcher == null)
-         {
+         if (searcher == null) {
             resultSize = 0;
-         }
-         else
-         {
+         } else {
             TopDocs hits;
-            try
-            {
+            try {
                hits = getQueryHits(searcher, 1).topDocs; // Lucene enforces that at least one top doc will be retrieved.
                resultSize = hits.totalHits;
             }
-            catch (IOException e)
-            {
+            catch (IOException e) {
                throw new HibernateException("Unable to query Lucene index", e);
             }
-            finally
-            {
+            finally {
                //searcher cannot be null
-               try
-               {
+               try {
                   closeSearcher(searcher, searchFactory.getReaderProvider());
                   //searchFactoryImplementor.getReaderProvider().closeReader( searcher.getIndexReader() );
                }
-               catch (SearchException e)
-               {
+               catch (SearchException e) {
                   log.warn("Unable to properly close searcher during lucene query: " + e);
                }
             }
@@ -154,19 +139,16 @@ public class CacheQueryImpl implements CacheQuery
       return this.resultSize;
    }
 
-   private void closeSearcher(Searcher searcher, ReaderProvider readerProvider)
-   {
+   private void closeSearcher(Searcher searcher, ReaderProvider readerProvider) {
       Set<IndexReader> indexReaders = getIndexReaders(searcher);
 
-      for (IndexReader indexReader : indexReaders)
-      {
+      for (IndexReader indexReader : indexReaders) {
          readerProvider.closeReader(indexReader);
       }
    }
 
 
-   public void setSort(Sort s)
-   {
+   public void setSort(Sort s) {
       sort = s;
    }
 
@@ -177,10 +159,8 @@ public class CacheQueryImpl implements CacheQuery
     * @param name of filter.
     * @return a FullTextFilter object.
     */
-   public FullTextFilter enableFullTextFilter(String name)
-   {
-      if (filterDefinitions == null)
-      {
+   public FullTextFilter enableFullTextFilter(String name) {
+      if (filterDefinitions == null) {
          filterDefinitions = new HashMap<String, FullTextFilterImpl>();
       }
       FullTextFilterImpl filterDefinition = filterDefinitions.get(name);
@@ -189,8 +169,7 @@ public class CacheQueryImpl implements CacheQuery
       filterDefinition = new FullTextFilterImpl();
       filterDefinition.setName(name);
       FilterDef filterDef = searchFactory.getFilterDefinition(name);
-      if (filterDef == null)
-      {
+      if (filterDef == null) {
          throw new SearchException("Unkown @FullTextFilter: " + name);
       }
       filterDefinitions.put(name, filterDefinition);
@@ -202,8 +181,7 @@ public class CacheQueryImpl implements CacheQuery
     *
     * @param name of filter.
     */
-   public void disableFullTextFilter(String name)
-   {
+   public void disableFullTextFilter(String name) {
       filterDefinitions.remove(name);
    }
 
@@ -213,32 +191,26 @@ public class CacheQueryImpl implements CacheQuery
     * @param firstResult index to be set.
     * @throws IllegalArgumentException if the index given is less than zero.
     */
-   public void setFirstResult(int firstResult)
-   {
-      if (firstResult < 0)
-      {
+   public void setFirstResult(int firstResult) {
+      if (firstResult < 0) {
          throw new IllegalArgumentException("'first' pagination parameter less than 0");
       }
       this.firstResult = firstResult;
 
    }
 
-   public QueryIterator iterator() throws HibernateException
-   {
+   public QueryIterator iterator() throws HibernateException {
       return iterator(1);
    }
 
-   public QueryIterator iterator(int fetchSize) throws HibernateException
-   {
+   public QueryIterator iterator(int fetchSize) throws HibernateException {
       List<Object> keyList = null;
       IndexSearcher searcher = buildSearcher(searchFactory);
-      if (searcher == null)
-      {
+      if (searcher == null) {
          throw new NullPointerException("IndexSearcher instance is null.");
       }
 
-      try
-      {
+      try {
          QueryHits queryHits = getQueryHits(searcher, calculateTopDocsRetrievalSize());
          int first = first();
          int max = max(first, queryHits.totalHits);
@@ -246,8 +218,7 @@ public class CacheQueryImpl implements CacheQuery
          keyList = new ArrayList<Object>(size);
 
          DocumentExtractor extractor = new DocumentExtractor(queryHits, searchFactory, indexProjection, idFieldNames, allowFieldSelectionInProjection);
-         for (int index = first; index <= max; index++)
-         {
+         for (int index = first; index <= max; index++) {
             // Since the documentId is same thing as the key in each key, value pairing. We can just get the documentId
             // from Lucene and then get it from the cache.
 
@@ -259,14 +230,12 @@ public class CacheQueryImpl implements CacheQuery
          }
 
       }
-      catch (IOException e)
-      {
+      catch (IOException e) {
          throw new HibernateException("Unable to query Lucene index", e);
 
       }
 
-      finally
-      {
+      finally {
 
          IndexSearcherCloser.closeSearcher(searcher, searchFactory.getReaderProvider());
 
@@ -275,17 +244,14 @@ public class CacheQueryImpl implements CacheQuery
       return new EagerIterator(keyList, cache, fetchSize);
    }
 
-   public QueryIterator lazyIterator()
-   {
+   public QueryIterator lazyIterator() {
       return lazyIterator(1);
    }
 
-   public QueryIterator lazyIterator(int fetchSize)
-   {
+   public QueryIterator lazyIterator(int fetchSize) {
       IndexSearcher searcher = buildSearcher(searchFactory);
 
-      try
-      {
+      try {
          QueryHits queryHits = getQueryHits(searcher, calculateTopDocsRetrievalSize());
          int first = first();
          int max = max(first, queryHits.totalHits);
@@ -294,14 +260,11 @@ public class CacheQueryImpl implements CacheQuery
 
          return new LazyIterator(extractor, cache, searcher, searchFactory, first, max, fetchSize);
       }
-      catch (IOException e)
-      {
-         try
-         {
+      catch (IOException e) {
+         try {
             IndexSearcherCloser.closeSearcher(searcher, searchFactory.getReaderProvider());
          }
-         catch (SearchException ee)
-         {
+         catch (SearchException ee) {
             //we have the initial issue already
          }
          throw new HibernateException("Unable to query Lucene index", e);
@@ -310,15 +273,13 @@ public class CacheQueryImpl implements CacheQuery
 
    }
 
-   public List<Object> list() throws HibernateException
-   {
+   public List<Object> list() throws HibernateException {
       IndexSearcher searcher = buildSearcher(searchFactory);
 
       if (searcher == null) return Collections.EMPTY_LIST;
 
 
-      try
-      {
+      try {
 
          QueryHits queryHits = getQueryHits(searcher, calculateTopDocsRetrievalSize());
 
@@ -330,8 +291,7 @@ public class CacheQueryImpl implements CacheQuery
          DocumentExtractor extractor = new DocumentExtractor(queryHits, searchFactory, indexProjection, idFieldNames, allowFieldSelectionInProjection);
 
          List<Object> keysForCache = new ArrayList<Object>(size);
-         for (int index = first; index <= max; index++)
-         {
+         for (int index = first; index <= max; index++) {
             // Since the documentId is same thing as the key in each key, value pairing. We can just get the documentId
             // from Lucene and then get it from the cache.
 
@@ -343,155 +303,123 @@ public class CacheQueryImpl implements CacheQuery
 
          // Loop through my list of keys and get it from the cache. Put each object that I get into a separate list.
          List<Object> listToReturn = new ArrayList<Object>(size);
-         for (Object key : keysForCache){
+         for (Object key : keysForCache) {
             listToReturn.add(cache.get(key));
          }
 
 
          // TODO: navssurtani --> Speak with EB or HF about what a resultTransformer is and what it does etc etc.
 
-         if (resultTransformer == null)
-         {
+         if (resultTransformer == null) {
             return listToReturn;
-         }
-         else
-         {
+         } else {
             return resultTransformer.transformList(listToReturn);
 
          }
 
       }
-      catch (IOException e)
-      {
+      catch (IOException e) {
          throw new HibernateException("Unable to query Lucene index", e);
 
       }
-      finally
-      {
+      finally {
          IndexSearcherCloser.closeSearcher(searcher, searchFactory.getReaderProvider());
 
       }
 
    }
 
-   private int max(int first, int totalHits)
-   {
-      if (maxResults == null)
-      {
+   private int max(int first, int totalHits) {
+      if (maxResults == null) {
          return totalHits - 1;
-      }
-      else
-      {
+      } else {
          return maxResults + first < totalHits ?
-                 first + maxResults - 1 :
-                 totalHits - 1;
+               first + maxResults - 1 :
+               totalHits - 1;
       }
    }
 
-   private int first()
-   {
+   private int first() {
       return firstResult != null ?
-              firstResult :
-              0;
+            firstResult :
+            0;
    }
 
-   private QueryHits getQueryHits(Searcher searcher, Integer n) throws IOException
-   {
+   private QueryHits getQueryHits(Searcher searcher, Integer n) throws IOException {
       org.apache.lucene.search.Query query = filterQueryByClasses(luceneQuery);
       buildFilters();
       QueryHits queryHits;
-      if (n == null)
-      { // try to make sure that we get the right amount of top docs
+      if (n == null) { // try to make sure that we get the right amount of top docs
          queryHits = new QueryHits(searcher, query, filter, sort);
-      }
-      else
-      {
+      } else {
          queryHits = new QueryHits(searcher, query, filter, sort, n);
       }
       resultSize = queryHits.totalHits;
       return queryHits;
    }
 
-   private Integer calculateTopDocsRetrievalSize()
-   {
-      if (maxResults == null)
-      {
+   private Integer calculateTopDocsRetrievalSize() {
+      if (maxResults == null) {
          return null;
-      }
-      else
-      {
+      } else {
          return first() + maxResults;
       }
    }
 
 
-   public void setMaxResults(int maxResults)
-   {
-      if (maxResults < 0)
-      {
+   public void setMaxResults(int maxResults) {
+      if (maxResults < 0) {
          throw new IllegalArgumentException("'max' pagination parameter less than 0");
       }
       this.maxResults = maxResults;
    }
 
-   private IndexSearcher buildSearcher(SearchFactoryImplementor searchFactoryImplementor)
-   {
+   private IndexSearcher buildSearcher(SearchFactoryImplementor searchFactoryImplementor) {
       Map<Class<?>, DocumentBuilderIndexedEntity<?>> builders = searchFactoryImplementor.getDocumentBuildersIndexedEntities();
       List<DirectoryProvider> directories = new ArrayList<DirectoryProvider>();
       Set<String> idFieldNames = new HashSet<String>();
       Similarity searcherSimilarity = null;
-      if (targetedEntities.size() == 0)
-      {
+      if (targetedEntities.size() == 0) {
          // empty targetedEntities array means search over all indexed enities,
          // but we have to make sure there is at least one
-         if (builders.isEmpty())
-         {
+         if (builders.isEmpty()) {
             throw new HibernateException(
-                    "There are no mapped entities. Don't forget to add @Indexed to at least one class."
+                  "There are no mapped entities. Don't forget to add @Indexed to at least one class."
             );
          }
 
-         for (DocumentBuilderIndexedEntity builder : builders.values())
-         {
+         for (DocumentBuilderIndexedEntity builder : builders.values()) {
             searcherSimilarity = checkSimilarity(searcherSimilarity, builder);
-            if (builder.getIdKeywordName() != null)
-            {
+            if (builder.getIdKeywordName() != null) {
                idFieldNames.add(builder.getIdKeywordName());
                allowFieldSelectionInProjection = allowFieldSelectionInProjection && builder.allowFieldSelectionInProjection();
             }
             final DirectoryProvider[] directoryProviders = builder.getDirectoryProviderSelectionStrategy()
-                    .getDirectoryProvidersForAllShards();
+                  .getDirectoryProvidersForAllShards();
             populateDirectories(directories, directoryProviders);
          }
          classesAndSubclasses = null;
-      }
-      else
-      {
+      } else {
          Set<Class<?>> involvedClasses = new HashSet<Class<?>>(targetedEntities.size());
          involvedClasses.addAll(targetedEntities);
-         for (Class<?> clazz : targetedEntities)
-         {
+         for (Class<?> clazz : targetedEntities) {
             DocumentBuilderIndexedEntity<?> builder = builders.get(clazz);
-            if (builder != null)
-            {
+            if (builder != null) {
                involvedClasses.addAll(builder.getMappedSubclasses());
             }
          }
 
-         for (Class clazz : involvedClasses)
-         {
+         for (Class clazz : involvedClasses) {
             DocumentBuilderIndexedEntity builder = builders.get(clazz);
-            if (builder == null)
-            {
+            if (builder == null) {
                throw new HibernateException("Not a mapped entity (don't forget to add @Indexed): " + clazz);
             }
-            if (builder.getIdKeywordName() != null)
-            {
+            if (builder.getIdKeywordName() != null) {
                idFieldNames.add(builder.getIdKeywordName());
                allowFieldSelectionInProjection = allowFieldSelectionInProjection && builder.allowFieldSelectionInProjection();
             }
             final DirectoryProvider[] directoryProviders = builder.getDirectoryProviderSelectionStrategy()
-                    .getDirectoryProvidersForAllShards();
+                  .getDirectoryProvidersForAllShards();
             searcherSimilarity = checkSimilarity(searcherSimilarity, builder);
             populateDirectories(directories, directoryProviders);
          }
@@ -501,28 +429,22 @@ public class CacheQueryImpl implements CacheQuery
 
       //compute optimization needClassFilterClause
       //if at least one DP contains one class that is not part of the targeted classesAndSubclasses we can't optimize
-      if (classesAndSubclasses != null)
-      {
-         for (DirectoryProvider dp : directories)
-         {
+      if (classesAndSubclasses != null) {
+         for (DirectoryProvider dp : directories) {
             final Set<Class<?>> classesInDirectoryProvider = searchFactoryImplementor.getClassesInDirectoryProvider(
-                    dp
+                  dp
             );
             // if a DP contains only one class, we know for sure it's part of classesAndSubclasses
-            if (classesInDirectoryProvider.size() > 1)
-            {
+            if (classesInDirectoryProvider.size() > 1) {
                //risk of needClassFilterClause
-               for (Class clazz : classesInDirectoryProvider)
-               {
-                  if (!classesAndSubclasses.contains(clazz))
-                  {
+               for (Class clazz : classesInDirectoryProvider) {
+                  if (!classesAndSubclasses.contains(clazz)) {
                      this.needClassFilterClause = true;
                      break;
                   }
                }
             }
-            if (this.needClassFilterClause)
-            {
+            if (this.needClassFilterClause) {
                break;
             }
          }
@@ -531,23 +453,19 @@ public class CacheQueryImpl implements CacheQuery
       //set up the searcher
       final DirectoryProvider[] directoryProviders = directories.toArray(new DirectoryProvider[directories.size()]);
       IndexSearcher is = new IndexSearcher(
-              searchFactoryImplementor.getReaderProvider().openReader(
-                      directoryProviders
-              )
+            searchFactoryImplementor.getReaderProvider().openReader(
+                  directoryProviders
+            )
       );
       is.setSimilarity(searcherSimilarity);
       return is;
    }
 
 
-   private Similarity checkSimilarity(Similarity similarity, DocumentBuilderIndexedEntity builder)
-   {
-      if (similarity == null)
-      {
+   private Similarity checkSimilarity(Similarity similarity, DocumentBuilderIndexedEntity builder) {
+      if (similarity == null) {
          similarity = builder.getSimilarity();
-      }
-      else if (!similarity.getClass().equals(builder.getSimilarity().getClass()))
-      {
+      } else if (!similarity.getClass().equals(builder.getSimilarity().getClass())) {
          throw new HibernateException("Cannot perform search on two entities with differing Similarity implementations (" + similarity.getClass().getName() + " & " + builder.getSimilarity().getClass().getName() + ")");
       }
 
@@ -557,31 +475,24 @@ public class CacheQueryImpl implements CacheQuery
    private void populateDirectories(List<DirectoryProvider> directories, DirectoryProvider[] directoryProviders)
 
    {
-      for (DirectoryProvider provider : directoryProviders)
-      {
-         if (!directories.contains(provider))
-         {
+      for (DirectoryProvider provider : directoryProviders) {
+         if (!directories.contains(provider)) {
             directories.add(provider);
          }
       }
    }
 
 
-   private org.apache.lucene.search.Query filterQueryByClasses(org.apache.lucene.search.Query luceneQuery)
-   {
-      if (!needClassFilterClause)
-      {
+   private org.apache.lucene.search.Query filterQueryByClasses(org.apache.lucene.search.Query luceneQuery) {
+      if (!needClassFilterClause) {
          return luceneQuery;
-      }
-      else
-      {
+      } else {
          //A query filter is more practical than a manual class filtering post query (esp on scrollable resultsets)
          //it also probably minimise the memory footprint
          BooleanQuery classFilter = new BooleanQuery();
          //annihilate the scoring impact of DocumentBuilder.CLASS_FIELDNAME
          classFilter.setBoost(0);
-         for (Class clazz : classesAndSubclasses)
-         {
+         for (Class clazz : classesAndSubclasses) {
             Term t = new Term(DocumentBuilder.CLASS_FIELDNAME, clazz.getName());
             TermQuery termQuery = new TermQuery(t);
             classFilter.add(termQuery, BooleanClause.Occur.SHOULD);
@@ -597,29 +508,24 @@ public class CacheQueryImpl implements CacheQuery
    // Method changed by Navin Surtani on Dec 16th 2008. Copied out from FullTextQueryImpl from Hibernate Search code like
    // previously done. Also copied in methods like buildLuceneFilter(), createFilter() and those methods that follow down
    // until the end of the class.
-   private void buildFilters()
-   {
-      if (filterDefinitions == null || filterDefinitions.size() == 0)
-      {
+   private void buildFilters() {
+      if (filterDefinitions == null || filterDefinitions.size() == 0) {
          return; // there is nothing to do if we don't have any filter definitions
       }
 
       ChainedFilter chainedFilter = new ChainedFilter();
-      for (FullTextFilterImpl fullTextFilter : filterDefinitions.values())
-      {
+      for (FullTextFilterImpl fullTextFilter : filterDefinitions.values()) {
          Filter filter = buildLuceneFilter(fullTextFilter);
          chainedFilter.addFilter(filter);
       }
 
-      if (filter != null)
-      {
+      if (filter != null) {
          chainedFilter.addFilter(filter);
       }
       filter = chainedFilter;
    }
 
-   private Filter buildLuceneFilter(FullTextFilterImpl fullTextFilter)
-   {
+   private Filter buildLuceneFilter(FullTextFilterImpl fullTextFilter) {
 
       /*
       * FilterKey implementations and Filter(Factory) do not have to be threadsafe wrt their parameter injection
@@ -631,65 +537,53 @@ public class CacheQueryImpl implements CacheQuery
 
       // try to get the filter out of the cache
       Filter filter = cacheInstance(def.getCacheMode()) ?
-              searchFactory.getFilterCachingStrategy().getCachedFilter(key) :
-              null;
+            searchFactory.getFilterCachingStrategy().getCachedFilter(key) :
+            null;
 
-      if (filter == null)
-      {
+      if (filter == null) {
          filter = createFilter(def, instance);
 
          // add filter to cache if we have to
-         if (cacheInstance(def.getCacheMode()))
-         {
+         if (cacheInstance(def.getCacheMode())) {
             searchFactory.getFilterCachingStrategy().addCachedFilter(key, filter);
          }
       }
       return filter;
    }
 
-   private Filter createFilter(FilterDef def, Object instance)
-   {
+   private Filter createFilter(FilterDef def, Object instance) {
       Filter filter;
-      if (def.getFactoryMethod() != null)
-      {
-         try
-         {
+      if (def.getFactoryMethod() != null) {
+         try {
             filter = (Filter) def.getFactoryMethod().invoke(instance);
          }
-         catch (IllegalAccessException e)
-         {
+         catch (IllegalAccessException e) {
             throw new SearchException(
-                    "Unable to access @Factory method: "
-                            + def.getImpl().getName() + "." + def.getFactoryMethod().getName()
+                  "Unable to access @Factory method: "
+                        + def.getImpl().getName() + "." + def.getFactoryMethod().getName()
             );
          }
-         catch (InvocationTargetException e)
-         {
+         catch (InvocationTargetException e) {
             throw new SearchException(
-                    "Unable to access @Factory method: "
-                            + def.getImpl().getName() + "." + def.getFactoryMethod().getName()
+                  "Unable to access @Factory method: "
+                        + def.getImpl().getName() + "." + def.getFactoryMethod().getName()
             );
          }
-         catch (ClassCastException e)
-         {
+         catch (ClassCastException e) {
             throw new SearchException(
-                    "@Key method does not return a org.apache.lucene.search.Filter class: "
-                            + def.getImpl().getName() + "." + def.getFactoryMethod().getName()
+                  "@Key method does not return a org.apache.lucene.search.Filter class: "
+                        + def.getImpl().getName() + "." + def.getFactoryMethod().getName()
             );
          }
-      }
-      else
-      {
-         try
-         {
+      } else {
+         try {
             filter = (Filter) instance;
          }
-         catch (ClassCastException e)
-         {
+         catch (ClassCastException e) {
             throw new SearchException(
-                    "Filter implementation does not implement the Filter interface: "
-                            + def.getImpl().getName() + ". "
-                            + (def.getFactoryMethod() != null ? def.getFactoryMethod().getName() : ""), e
+                  "Filter implementation does not implement the Filter interface: "
+                        + def.getImpl().getName() + ". "
+                        + (def.getFactoryMethod() != null ? def.getFactoryMethod().getName() : ""), e
             );
          }
       }
@@ -699,87 +593,68 @@ public class CacheQueryImpl implements CacheQuery
    }
 
    private Object createFilterInstance(FullTextFilterImpl fullTextFilter,
-                                       FilterDef def)
-   {
+                                       FilterDef def) {
       Object instance;
-      try
-      {
+      try {
          instance = def.getImpl().newInstance();
       }
-      catch (InstantiationException e)
-      {
+      catch (InstantiationException e) {
          throw new SearchException("Unable to create @FullTextFilterDef: " + def.getImpl(), e);
       }
-      catch (IllegalAccessException e)
-      {
+      catch (IllegalAccessException e) {
          throw new SearchException("Unable to create @FullTextFilterDef: " + def.getImpl(), e);
       }
-      for (Map.Entry<String, Object> entry : fullTextFilter.getParameters().entrySet())
-      {
+      for (Map.Entry<String, Object> entry : fullTextFilter.getParameters().entrySet()) {
          def.invoke(entry.getKey(), instance, entry.getValue());
       }
       if (cacheInstance(def.getCacheMode()) && def.getKeyMethod() == null && fullTextFilter.getParameters()
-              .size() > 0)
-      {
+            .size() > 0) {
          throw new SearchException("Filter with parameters and no @Key method: " + fullTextFilter.getName());
       }
       return instance;
    }
 
 
-   private FilterKey createFilterKey(FilterDef def, Object instance)
-   {
+   private FilterKey createFilterKey(FilterDef def, Object instance) {
       FilterKey key = null;
-      if (!cacheInstance(def.getCacheMode()))
-      {
+      if (!cacheInstance(def.getCacheMode())) {
          return key; // if the filter is not cached there is no key!
       }
 
-      if (def.getKeyMethod() == null)
-      {
-         key = new FilterKey()
-         {
-            public int hashCode()
-            {
+      if (def.getKeyMethod() == null) {
+         key = new FilterKey() {
+            public int hashCode() {
                return getImpl().hashCode();
             }
 
-            public boolean equals(Object obj)
-            {
-               if (!(obj instanceof FilterKey))
-               {
+            public boolean equals(Object obj) {
+               if (!(obj instanceof FilterKey)) {
                   return false;
                }
                FilterKey that = (FilterKey) obj;
                return this.getImpl().equals(that.getImpl());
             }
          };
-      }
-      else
-      {
-         try
-         {
+      } else {
+         try {
             key = (FilterKey) def.getKeyMethod().invoke(instance);
          }
-         catch (IllegalAccessException e)
-         {
+         catch (IllegalAccessException e) {
             throw new SearchException(
-                    "Unable to access @Key method: "
-                            + def.getImpl().getName() + "." + def.getKeyMethod().getName()
+                  "Unable to access @Key method: "
+                        + def.getImpl().getName() + "." + def.getKeyMethod().getName()
             );
          }
-         catch (InvocationTargetException e)
-         {
+         catch (InvocationTargetException e) {
             throw new SearchException(
-                    "Unable to access @Key method: "
-                            + def.getImpl().getName() + "." + def.getKeyMethod().getName()
+                  "Unable to access @Key method: "
+                        + def.getImpl().getName() + "." + def.getKeyMethod().getName()
             );
          }
-         catch (ClassCastException e)
-         {
+         catch (ClassCastException e) {
             throw new SearchException(
-                    "@Key method does not return FilterKey: "
-                            + def.getImpl().getName() + "." + def.getKeyMethod().getName()
+                  "@Key method does not return FilterKey: "
+                        + def.getImpl().getName() + "." + def.getKeyMethod().getName()
             );
          }
       }
@@ -792,16 +667,14 @@ public class CacheQueryImpl implements CacheQuery
       return wrapperKey;
    }
 
-   private Filter addCachingWrapperFilter(Filter filter, FilterDef def)
-   {
-      if (cacheResults(def.getCacheMode()))
-      {
+   private Filter addCachingWrapperFilter(Filter filter, FilterDef def) {
+      if (cacheResults(def.getCacheMode())) {
          int cachingWrapperFilterSize = searchFactory.getFilterCacheBitResultsSize();
          filter = new org.hibernate.search.filter.CachingWrapperFilter(filter, cachingWrapperFilterSize);
       }
 
       return filter;
    }
-  
+
 }
 

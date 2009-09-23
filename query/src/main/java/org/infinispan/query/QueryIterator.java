@@ -18,7 +18,7 @@
  * License along with this software; if not, write to the Free
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
- */ 
+ */
 
 package org.infinispan.query;
 
@@ -27,11 +27,11 @@ import java.util.ListIterator;
 /**
  * Iterates over query results
  * <p/>
+ *
  * @author Manik Surtani
- * @author Navin Surtani 
+ * @author Navin Surtani
  */
-public interface QueryIterator extends ListIterator
-{
+public interface QueryIterator extends ListIterator {
    /**
     * Jumps to a specific index in the iterator.
     *
@@ -81,7 +81,7 @@ public interface QueryIterator extends ListIterator
    boolean isBeforeLast();
 
    /**
-    * This method must be called on your iterator once you have finished so that Lucene resources can be freed up. 
+    * This method must be called on your iterator once you have finished so that Lucene resources can be freed up.
     */
 
    void close();

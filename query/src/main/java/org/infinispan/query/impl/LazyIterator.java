@@ -28,7 +28,6 @@ import org.hibernate.search.engine.DocumentExtractor;
 import org.hibernate.search.engine.SearchFactoryImplementor;
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
-import org.infinispan.query.impl.AbstractIterator;
 import org.infinispan.query.backend.IndexSearcherCloser;
 
 import java.io.IOException;
@@ -36,9 +35,9 @@ import java.util.Arrays;
 import java.util.NoSuchElementException;
 
 /**
- * Implementation for {@link org.infinispan.query.QueryIterator}. This is what is returned when the {@link org.infinispan.query.CacheQuery#lazyIterator()} method
- * is called. This loads the results only when required and hence differs from {@link EagerIterator} which is the
- * other implementation of QueryResultIterator.
+ * Implementation for {@link org.infinispan.query.QueryIterator}. This is what is returned when the {@link
+ * org.infinispan.query.CacheQuery#lazyIterator()} method is called. This loads the results only when required and hence
+ * differs from {@link EagerIterator} which is the other implementation of QueryResultIterator.
  *
  * @author Navin Surtani
  */
@@ -51,9 +50,8 @@ public class LazyIterator extends AbstractIterator {
    private SearchFactoryImplementor searchFactory;
 
 
-
    public LazyIterator(DocumentExtractor extractor, Cache cache,
-                            IndexSearcher searcher, SearchFactoryImplementor searchFactory, int first, int max, int fetchSize) {
+                       IndexSearcher searcher, SearchFactoryImplementor searchFactory, int first, int max, int fetchSize) {
       if (fetchSize < 1) {
          throw new IllegalArgumentException("Incorrect value for fetchsize passed. Your fetchSize is less than 1");
       }

@@ -8,14 +8,13 @@ import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.QueryFactory;
+import org.infinispan.query.helper.TestQueryHelperFactory;
 import org.infinispan.query.backend.QueryHelper;
-import org.infinispan.query.helper.IndexCleanUp;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import java.util.List;
@@ -46,49 +45,43 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
    protected void createCacheManagers() throws Throwable {
 
-         Configuration cacheCfg = new Configuration();
-         cacheCfg.setCacheMode(Configuration.CacheMode.REPL_SYNC);
-         cacheCfg.setFetchInMemoryState(false);
+      Configuration cacheCfg = new Configuration();
+      cacheCfg.setCacheMode(Configuration.CacheMode.REPL_SYNC);
+      cacheCfg.setFetchInMemoryState(false);
 
-         List<Cache<String, Person>> caches = createClusteredCaches(2, "infinispan-query", cacheCfg);
+      List<Cache<String, Person>> caches = createClusteredCaches(2, "infinispan-query", cacheCfg);
 
-         cache1 = caches.get(0);
-         cache2 = caches.get(1);
+      cache1 = caches.get(0);
+      cache2 = caches.get(1);
 
-         // We will put objects into cache1 and then try and run the queries on cache2. This would mean that indexLocal
-         // must be set to false.
+      // We will put objects into cache1 and then try and run the queries on cache2. This would mean that indexLocal
+      // must be set to false.
 
-         System.setProperty(QueryHelper.QUERY_ENABLED_PROPERTY, "true");
-         System.setProperty(QueryHelper.QUERY_INDEX_LOCAL_ONLY_PROPERTY, "false");
+      System.setProperty(QueryHelper.QUERY_ENABLED_PROPERTY, "true");
+      System.setProperty(QueryHelper.QUERY_INDEX_LOCAL_ONLY_PROPERTY, "false");
 
-         qh = new QueryHelper(cache2, null, Person.class);
-         qh.applyProperties();
+      qh = TestQueryHelperFactory.createTestQueryHelperInstance(cache2, Person.class);
 
-         TestingUtil.blockUntilViewsReceived(60000, cache1, cache2);
+      TestingUtil.blockUntilViewsReceived(60000, cache1, cache2);
 
-         person1 = new Person();
-         person1.setName("Navin Surtani");
-         person1.setBlurb("Likes playing WoW");
+      person1 = new Person();
+      person1.setName("Navin Surtani");
+      person1.setBlurb("Likes playing WoW");
 
-         person2 = new Person();
-         person2.setName("BigGoat");
-         person2.setBlurb("Eats grass");
+      person2 = new Person();
+      person2.setName("BigGoat");
+      person2.setBlurb("Eats grass");
 
-         person3 = new Person();
-         person3.setName("MiniGoat");
-         person3.setBlurb("Eats cheese");
+      person3 = new Person();
+      person3.setName("MiniGoat");
+      person3.setBlurb("Eats cheese");
 
-         //Put the 3 created objects in the cache1.
+      //Put the 3 created objects in the cache1.
 
-         cache1.put(key1, person1);
-         cache1.put(key2, person2);
-         cache1.put(key3, person3);
+      cache1.put(key1, person1);
+      cache1.put(key2, person2);
+      cache1.put(key3, person3);
 
-   }
-
-   @AfterMethod (alwaysRun = true)
-   public void tearDown() {
-      IndexCleanUp.cleanUpIndexes();
    }
 
    public void testSimple() throws ParseException {

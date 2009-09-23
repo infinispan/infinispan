@@ -22,13 +22,13 @@
 
 package org.infinispan.query.backend;
 
-import org.hibernate.search.cfg.SearchConfiguration;
 import org.hibernate.annotations.common.reflection.ReflectionManager;
+import org.hibernate.search.cfg.SearchConfiguration;
 
-import java.util.Iterator;
-import java.util.Properties;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Properties;
 
 /**
  * Class that implements {@link org.hibernate.search.cfg.SearchConfiguration} so that within Infinispan-Query, there is

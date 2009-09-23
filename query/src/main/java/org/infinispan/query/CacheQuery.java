@@ -29,17 +29,17 @@ import org.hibernate.search.FullTextFilter;
 import java.util.List;
 
 /**
- * A cache-query is what will be returned when the getQuery() method is run on {@link QueryFactory}. This object can have methods such
- * as list, setFirstResult,setMaxResults, setFetchSize, getResultSize and setSort.
- *
+ * A cache-query is what will be returned when the getQuery() method is run on {@link QueryFactory}. This object can
+ * have methods such as list, setFirstResult,setMaxResults, setFetchSize, getResultSize and setSort.
  * <p/>
+ * <p/>
+ *
  * @author Manik Surtani
  * @author Navin Surtani
  * @see QueryFactory#getQuery(org.apache.lucene.search.Query)
- * @see QueryFactory#getBasicQuery(String, String) 
+ * @see QueryFactory#getBasicQuery(String, String)
  */
-public interface CacheQuery extends Iterable
-{
+public interface CacheQuery extends Iterable {
    /**
     * Returns the results of a search as a list.
     *
@@ -49,8 +49,7 @@ public interface CacheQuery extends Iterable
    List<Object> list();
 
    /**
-    * Returns the results of a search as a {@link QueryIterator} with a given
-    * integer parameter - the fetchSize.
+    * Returns the results of a search as a {@link QueryIterator} with a given integer parameter - the fetchSize.
     *
     * @param fetchSize integer to be given to the implementation constructor.
     * @return a QueryResultIterator which can be used to iterate through the results that were found.
@@ -60,7 +59,7 @@ public interface CacheQuery extends Iterable
 
    /**
     * Returns the results of a search as a {@link QueryIterator}. This calls {@link CacheQuery#iterator(int fetchSize)}
-    * but uses a default fetchSize of 1. 
+    * but uses a default fetchSize of 1.
     *
     * @return a QueryResultIterator which can be used to iterate through the results that were found.
     */
@@ -68,8 +67,8 @@ public interface CacheQuery extends Iterable
    QueryIterator iterator();
 
    /**
-    * Lazily loads the results from the Query as a {@link QueryIterator} with a given
-    * integer parameter - the fetchSize.
+    * Lazily loads the results from the Query as a {@link QueryIterator} with a given integer parameter - the
+    * fetchSize.
     *
     * @param fetchSize integer to be passed into the lazy implementation of {@link QueryIterator}
     * @return a QueryResultIterator which can be used to <B>lazily</B> iterate through results.
@@ -142,8 +141,6 @@ public interface CacheQuery extends Iterable
     */
 
    public void setFilter(Filter f);
-
-
 
 
 }

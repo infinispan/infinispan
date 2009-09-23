@@ -9,15 +9,11 @@ import org.hibernate.search.engine.DocumentExtractor;
 import org.hibernate.search.engine.EntityInfo;
 import org.hibernate.search.engine.SearchFactoryImplementor;
 import org.infinispan.Cache;
-import org.infinispan.query.helper.IndexCleanUp;
 import org.infinispan.query.test.Person;
-import org.infinispan.query.impl.LazyIterator;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
-import org.testng.annotations.ExpectedExceptions;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -96,11 +92,6 @@ public class LazyIteratorTest {
 
    }
 
-   @AfterTest
-   public void tearDownAfterTest() {
-      IndexCleanUp.cleanUpIndexes();
-   }
-
    @BeforeMethod
    public void setUp() throws ParseException {
 
@@ -150,7 +141,7 @@ public class LazyIteratorTest {
    }
 
 
-   @AfterMethod
+   @AfterMethod (alwaysRun = true)
    public void tearDown() {
       iterator = null;
    }
@@ -170,17 +161,15 @@ public class LazyIteratorTest {
    }
 
 
-   //TODO: This is deprecated. What should I be using instead?
-   @ExpectedExceptions(IndexOutOfBoundsException.class)
-   public void testOutOfBoundsBelow(){     
+   @Test(expectedExceptions = IndexOutOfBoundsException.class)
+   public void testOutOfBoundsBelow() {
       iterator.jumpToResult(-1);
    }
 
-   @ExpectedExceptions(IndexOutOfBoundsException.class)
-   public void testOutOfBoundsAbove(){
+   @Test(expectedExceptions = IndexOutOfBoundsException.class)
+   public void testOutOfBoundsAbove() {
       iterator.jumpToResult(keyList.size() + 1);
    }
-
 
 
    public void testFirst() {

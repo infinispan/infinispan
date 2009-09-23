@@ -35,8 +35,8 @@ import javax.transaction.TransactionManager;
  * transaction context information from the {@link javax.transaction.TransactionManager} that gets passed in as a
  * parameter upon instantiation.
  * <p/>
- * It is used by the {@link QueryInterceptor} to pass transaction information to a
- * Hibernate Search {@link org.hibernate.search.backend.Work} object.
+ * It is used by the {@link QueryInterceptor} to pass transaction information to a Hibernate Search {@link
+ * org.hibernate.search.backend.Work} object.
  * <p/>
  * <p/>
  *

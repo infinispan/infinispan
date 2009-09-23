@@ -12,10 +12,9 @@ import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.query.CacheQuery;
-import org.infinispan.query.QueryIterator;
 import org.infinispan.query.QueryFactory;
+import org.infinispan.query.QueryIterator;
 import org.infinispan.query.backend.QueryHelper;
-import org.infinispan.query.helper.IndexCleanUp;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -30,7 +29,7 @@ import java.util.List;
  * @author Navin Surtani (<a href="mailto:nsurtani@redhat.com">nsurtani@redhat.com</a>)
  */
 
-@Test(groups = "functional", enabled = false)
+@Test(groups = "profiler", enabled = false)
 public class LocalCacheProfilerTest extends SingleCacheManagerTest {
    Person person1;
    Person person2;
@@ -66,9 +65,6 @@ public class LocalCacheProfilerTest extends SingleCacheManagerTest {
       cache = createCacheManager().getCache();
 
       qh = new QueryHelper(cache, null, Person.class);
-      qh.applyProperties();
-
-
 
       person1 = new Person();
       person1.setName("Navin Surtani");
@@ -93,14 +89,13 @@ public class LocalCacheProfilerTest extends SingleCacheManagerTest {
 
    }
 
-   @AfterMethod
+   @AfterMethod (alwaysRun = true)
    public void tearDown() {
       if (cache != null) cache.stop();
-      IndexCleanUp.cleanUpIndexes();
    }
 
 
-   @Test (invocationCount = 2000, enabled = false)
+   @Test(invocationCount = 2000, enabled = false)
    public void testSimple() throws ParseException {
       cacheQuery = new QueryFactory(cache, qh).getBasicQuery("blurb", "playing");
 
@@ -110,7 +105,7 @@ public class LocalCacheProfilerTest extends SingleCacheManagerTest {
       assert found.get(0).equals(person1);
    }
 
-   @Test (invocationCount = 2000, enabled = false)
+   @Test(invocationCount = 2000, enabled = false)
    public void testEagerIterator() throws ParseException {
 
       cacheQuery = new QueryFactory(cache, qh).
@@ -122,7 +117,7 @@ public class LocalCacheProfilerTest extends SingleCacheManagerTest {
       assert found.isLast();
    }
 
-   @Test (invocationCount = 2000, enabled = false)
+   @Test(invocationCount = 2000, enabled = false)
    public void testMultipleResults() throws ParseException {
 
       queryParser = new QueryParser("name", new StandardAnalyzer());
@@ -137,7 +132,7 @@ public class LocalCacheProfilerTest extends SingleCacheManagerTest {
 
    }
 
-   @Test (invocationCount = 2000, enabled = false)
+   @Test(invocationCount = 2000, enabled = false)
    public void testModified() throws ParseException {
       queryParser = new QueryParser("blurb", new StandardAnalyzer());
       luceneQuery = queryParser.parse("playing");
@@ -161,7 +156,7 @@ public class LocalCacheProfilerTest extends SingleCacheManagerTest {
       assert found.get(0).equals(person1);
    }
 
-   @Test (invocationCount = 2000, enabled = false)
+   @Test(invocationCount = 2000, enabled = false)
    public void testAdded() throws ParseException {
       queryParser = new QueryParser("name", new StandardAnalyzer());
 
@@ -190,7 +185,7 @@ public class LocalCacheProfilerTest extends SingleCacheManagerTest {
       assert found.contains(person4) : "This should now contain object person4";
    }
 
-   @Test (invocationCount = 2000, enabled = false)
+   @Test(invocationCount = 2000, enabled = false)
    public void testRemoved() throws ParseException {
       queryParser = new QueryParser("name", new StandardAnalyzer());
 
@@ -215,7 +210,7 @@ public class LocalCacheProfilerTest extends SingleCacheManagerTest {
 
    }
 
-   @Test (invocationCount = 2000, enabled = false)
+   @Test(invocationCount = 2000, enabled = false)
    public void testSetSort() throws ParseException {
       person2.setAge(35);
       person3.setAge(12);
@@ -239,7 +234,7 @@ public class LocalCacheProfilerTest extends SingleCacheManagerTest {
       assert found.get(1).equals(person3);
    }
 
-   @Test (invocationCount = 2000, enabled = false)
+   @Test(invocationCount = 2000, enabled = false)
    public void testSetFilter() throws ParseException {
       queryParser = new QueryParser("name", new StandardAnalyzer());
 
@@ -259,7 +254,7 @@ public class LocalCacheProfilerTest extends SingleCacheManagerTest {
 
    }
 
-   @Test (invocationCount = 2000, enabled = false)
+   @Test(invocationCount = 2000, enabled = false)
    public void testLazyIterator() throws ParseException {
       queryParser = new QueryParser("blurb", new StandardAnalyzer());
       luceneQuery = queryParser.parse("playing");
@@ -272,7 +267,7 @@ public class LocalCacheProfilerTest extends SingleCacheManagerTest {
 
    }
 
-   @Test (invocationCount = 2000, enabled = false)
+   @Test(invocationCount = 2000, enabled = false)
    public void testGetResultSize() throws ParseException {
 
       queryParser = new QueryParser("blurb", new StandardAnalyzer());

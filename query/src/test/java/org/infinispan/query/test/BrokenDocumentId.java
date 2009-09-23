@@ -1,17 +1,16 @@
 package org.infinispan.query.test;
 
-import org.hibernate.search.annotations.ProvidedId;
-import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.DocumentId;
 import org.hibernate.search.annotations.Field;
+import org.hibernate.search.annotations.Indexed;
+import org.hibernate.search.annotations.ProvidedId;
 
 /**
  * @author Navin Surtani
  */
 @ProvidedId
 @Indexed
-public class BrokenDocumentId
-{
+public class BrokenDocumentId {
    @DocumentId
    @Field
    String name;
@@ -19,8 +18,7 @@ public class BrokenDocumentId
    @Field
    int age;
 
-   public void setBoth(String name, int age)
-   {
+   public void setBoth(String name, int age) {
       this.name = name;
       this.age = age;
    }

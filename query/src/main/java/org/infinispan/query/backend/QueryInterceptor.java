@@ -17,9 +17,9 @@ import java.util.Map;
 
 /**
  * This interceptor will be created when the System Property "infinispan.query.indexLocalOnly" is "false"
- *
+ * <p/>
  * This type of interceptor will allow the indexing of data even when it comes from other caches within a cluster.
- *
+ * <p/>
  * However, if the a cache would not be putting the data locally, the interceptor will not index it.
  *
  * @author Navin Surtani
@@ -46,7 +46,7 @@ public class QueryInterceptor extends CommandInterceptor {
 
       // This method will get the put() calls on the cache and then send them into Lucene once it's successful.
 
-      if (log.isDebugEnabled())log.debug("Entered the searchable core interceptor visitPutKeyValueCommand()");
+      if (log.isDebugEnabled()) log.debug("Entered the searchable core interceptor visitPutKeyValueCommand()");
 
       // do the actual put first.
       Object toReturn = invokeNextInterceptor(ctx, command);

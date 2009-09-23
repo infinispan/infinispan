@@ -66,5 +66,5 @@ public abstract class AbstractIterator implements QueryIterator {
    public boolean hasNext() {
       return index <= max;
    }
-   
+
 }
