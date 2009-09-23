@@ -189,9 +189,12 @@ public class QueryHelper {
                throw new IllegalArgumentException("Please remove the documentId annotation in " + c.getName());
             }
          }
+
+         for (Field field : c.getDeclaredFields()) {
+            if (field.getAnnotation(org.hibernate.search.annotations.DocumentId.class) != null) {
+               throw new IllegalArgumentException("Please remove the documentId annotation in " + c.getName());
+            }
+         }
       }
-
    }
-
-
 }
