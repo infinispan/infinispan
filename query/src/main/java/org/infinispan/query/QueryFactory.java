@@ -6,9 +6,12 @@ import org.apache.lucene.search.Query;
 import org.hibernate.search.engine.SearchFactoryImplementor;
 import org.infinispan.Cache;
 import org.infinispan.query.impl.CacheQueryImpl;
+import org.infinispan.query.backend.QueryHelper;
 
 /**
- * // TODO: navssurtani --> Document this
+ * Class that is used to build {@link org.infinispan.query.CacheQuery}
+ *
+ *
  *
  * @author Navin Surtani
  * @since 4.0
@@ -20,9 +23,9 @@ public class QueryFactory {
    private Cache cache;
    private SearchFactoryImplementor searchFactory;
 
-   public QueryFactory(Cache cache, SearchFactoryImplementor searchFactory){
+   public QueryFactory(Cache cache, QueryHelper qh){
       this.cache = cache;
-      this.searchFactory = searchFactory;
+      searchFactory = qh.getSearchFactory();
    }
 
    /**

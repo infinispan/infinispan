@@ -32,6 +32,8 @@ import java.util.Set;
 /**
  * Class with static method that is called by {@link org.infinispan.query.impl.CacheQueryImpl} and {@link org.infinispan.query.impl.EagerIterator}
  * <p />
+ *
+ * Simply an abstraction for one method to reduce unneccesary code replication.
  * @author Navin Surtani
  */
  public class IndexSearcherCloser

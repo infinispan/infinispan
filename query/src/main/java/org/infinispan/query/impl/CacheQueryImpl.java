@@ -63,8 +63,6 @@ import java.util.Set;
  * Implementation class of the CacheQuery interface.
  * <p/>
  *
- * //TODO: navssurtani --> Document this up.
- *
  * @author Navin Surtani
  */
 public class CacheQueryImpl implements CacheQuery

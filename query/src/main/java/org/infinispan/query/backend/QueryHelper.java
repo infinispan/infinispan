@@ -15,9 +15,12 @@ import java.lang.reflect.Field;
 import java.util.Properties;
 
 /**
- * // TODO: Document this
  * <p/>
- * This is a TEMPORARY helper class that will be used to add the QueryInterceptor to the chain.
+ * This is a TEMPORARY helper class that will be used to add the QueryInterceptor to the chain and provide Classes to
+ * Hibernate Search.
+ *
+ * This class needs to be instantiated and then have applyProperties() called on it. This class WILL be removed once other hooks come into Infinispan
+ * for versions 4.1 etc.
  *
  * @author Navin Surtani
  * @since 4.0
@@ -26,13 +29,15 @@ import java.util.Properties;
 
 public class QueryHelper {
 
+   public static final String QUERY_ENABLED_PROPERTY = "infinispan.query.enabled";
+   public static final String QUERY_INDEX_LOCAL_ONLY_PROPERTY = "infinispan.query.indexLocalOnly";   
+
    private Cache cache;
    private Properties properties;
    private Class[] classes;
    private SearchFactoryImplementor searchFactory;
 
    Log log = LogFactory.getLog(getClass());
-
 
    /**
     * Constructor that will take in 3 params and build the searchFactory for Hibernate Search.
@@ -47,8 +52,6 @@ public class QueryHelper {
     */
 
    public QueryHelper(Cache cache, Properties properties, Class... classes) {
-
-
       // assume cache is already created and running.
       // otherwise, start the cache!!
       if (cache.getStatus().needToInitializeBeforeStart()) {
@@ -98,25 +101,18 @@ public class QueryHelper {
          throws Exception {
 
 
-      log.debug("Entered QueryHelper.applyProperties()");
+      if (log.isDebugEnabled()) log.debug("Entered QueryHelper.applyProperties()");
 
       // If the query property is set to true, i.e. we want to query objects in the cache, then we need to add the QueryInterceptor.
+      boolean query = Boolean.getBoolean(QUERY_ENABLED_PROPERTY);
 
-      if (System.getProperty("query").equals("true")) {
+      if (query) {
 
-         String indexLocal = System.getProperty("indexLocal");
+         boolean indexLocal = Boolean.getBoolean(QUERY_INDEX_LOCAL_ONLY_PROPERTY);
 
-         // Validation check first to make sure there isn't some gibberish passed in.
-         if (!indexLocal.equals("true") && !indexLocal.equals("false")) {
-            throw new IllegalArgumentException("Incorrect system property passed into QueryHelper. indexLocal must be set" +
-                  " to either true or false. Cannot be " + indexLocal);
-         }
-
-
-         if (indexLocal.equals("true")) {
+         if (indexLocal) {
             // Add a LocalQueryInterceptor to the chain
             addInterceptor(LocalQueryInterceptor.class);
-
          }
          // We're indexing data even if it comes from other sources
 

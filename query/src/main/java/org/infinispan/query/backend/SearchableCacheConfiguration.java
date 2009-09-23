@@ -77,6 +77,9 @@ public class SearchableCacheConfiguration implements SearchConfiguration {
       return null;
    }
 
+
+   //TODO: Will have to be uncommented when dependency is changed to HS 3.2
+
 //   public SearchMapping getProgrammaticMapping() {
 //
 //      // Documentation on interface says "returns the programmatic configuration or null".

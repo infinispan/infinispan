@@ -16,7 +16,11 @@ import javax.transaction.TransactionManager;
 import java.util.Map;
 
 /**
- * // TODO: navssurtani --> Document this
+ * This interceptor will be created when the System Property "infinispan.query.indexLocalOnly" is "false"
+ *
+ * This type of interceptor will allow the indexing of data even when it comes from other caches within a cluster.
+ *
+ * However, if the a cache would not be putting the data locally, the interceptor will not index it.
  *
  * @author Navin Surtani
  * @since 4.0
@@ -42,7 +46,7 @@ public class QueryInterceptor extends CommandInterceptor {
 
       // This method will get the put() calls on the cache and then send them into Lucene once it's successful.
 
-      log.debug("Entered the searchable core interceptor visitPutKeyValueCommand()");
+      if (log.isDebugEnabled())log.debug("Entered the searchable core interceptor visitPutKeyValueCommand()");
 
       // do the actual put first.
       Object toReturn = invokeNextInterceptor(ctx, command);
@@ -60,7 +64,7 @@ public class QueryInterceptor extends CommandInterceptor {
       // remove the object out of the cache first.
       Object valueRemoved = invokeNextInterceptor(ctx, command);
 
-      System.out.println("Transaction Manager is " + transactionManager);
+      if (log.isDebugEnabled()) log.debug("Transaction Manager is " + transactionManager);
 
       if (command.isSuccessful()) {
          removeFromIndexes(valueRemoved, command.getKey().toString());

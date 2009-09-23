@@ -24,10 +24,9 @@ package org.infinispan.query.impl;
 
 
 import net.jcip.annotations.NotThreadSafe;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.infinispan.Cache;
-import org.infinispan.query.impl.AbstractIterator;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.Arrays;
 import java.util.List;
@@ -39,7 +38,6 @@ import java.util.NoSuchElementException;
  * <p/>
  * <p/>
  *
- * //TODO: navssurtani --> Document this.
  *
  * @author Navin Surtani
  */
@@ -49,8 +47,6 @@ public class EagerIterator extends AbstractIterator {
    //private final int size;
    private List<Object> idList;
 
-   private int lowerLimit = 0;
-   private int upperLimit = 0;
    private static final Log log = LogFactory.getLog(EagerIterator.class);
 
 
@@ -98,8 +94,6 @@ public class EagerIterator extends AbstractIterator {
    {
       // This method does not need to do anything for this type of iterator as when an instace of it is
       // created, the iterator() method in CacheQueryImpl closes everything that needs to be closed.
-
-      // TODO: Should I be throwing an exception here?
    }
 
    /**

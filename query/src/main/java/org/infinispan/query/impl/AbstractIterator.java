@@ -10,6 +10,8 @@ import org.infinispan.query.QueryIterator;
  * been put onto a separate class.
  *
  * @author Navin Surtani
+ * @see org.infinispan.query.impl.EagerIterator
+ * @see org.infinispan.query.impl.LazyIterator
  * @since 4.0
  */
 

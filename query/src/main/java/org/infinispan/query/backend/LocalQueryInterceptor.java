@@ -12,11 +12,10 @@ import javax.transaction.TransactionManager;
 import java.util.Map;
 
 /**
- * // TODO: Document this
  * <p/>
  * This class is an interceptor that will index data only if it has come from a local source.
  * <p/>
- * Currently, this is a property that is determined by setting "indexLocal" as a System property to "true".
+ * Currently, this is a property that is determined by setting "infinispan.query.indexLocalOnly" as a System property to "true".
  *
  * @author Navin Surtani
  * @since 4.0
@@ -24,11 +23,6 @@ import java.util.Map;
 
 
 public class LocalQueryInterceptor extends QueryInterceptor {
-
-
-   // TODO:  navssurtani --> check to make sure that these fields will be assigned properly on superclass method so that they can be used correctly when needed.
-
-   
 
    @Inject
    public void init(SearchFactoryImplementor searchFactory, TransactionManager transactionManager) {

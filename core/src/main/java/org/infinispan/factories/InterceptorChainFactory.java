@@ -40,7 +40,7 @@ import java.util.List;
  */
 @DefaultFactoryFor(classes = InterceptorChain.class)
 public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
-   private CommandInterceptor createInterceptor(Class<? extends CommandInterceptor> clazz) throws IllegalAccessException, InstantiationException {
+   public CommandInterceptor createInterceptor(Class<? extends CommandInterceptor> clazz) throws IllegalAccessException, InstantiationException {
       CommandInterceptor chainedInterceptor = componentRegistry.getComponent(clazz);
       if (chainedInterceptor == null) {
          chainedInterceptor = clazz.newInstance();

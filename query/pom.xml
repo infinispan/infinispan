@@ -10,15 +10,14 @@
       <relativePath>../parent/pom.xml</relativePath>
    </parent>
 
-   <groupId>org.infinispan</groupId>
    <artifactId>infinispan-query</artifactId>
    <name>Infinispan Query API</name>
    <description>Infinispan Query API module</description>
    <dependencies>
       <dependency>
-         <groupId>${project-package}</groupId>
+         <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-core</artifactId>
-         <version>${project-version}</version>
+         <version>${project.version}</version>
       </dependency>
 
       <dependency>
@@ -28,23 +27,9 @@
       </dependency>
 
       <dependency>
-         <groupId>${project-package}</groupId>
-         <artifactId>infinispan-tree</artifactId>
-         <version>${project-version}</version>
-      </dependency>
-
-      <dependency>
-         <groupId>${project-package}</groupId>
+         <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-core</artifactId>
-         <version>${project-version}</version>
-         <type>test-jar</type>
-         <scope>test</scope>
-      </dependency>
-
-      <dependency>
-         <groupId>${project-package}</groupId>
-         <artifactId>infinispan-tree</artifactId>
-         <version>${project-version}</version>
+         <version>${project.version}</version>
          <type>test-jar</type>
          <scope>test</scope>
       </dependency>

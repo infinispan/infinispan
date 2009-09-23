@@ -59,8 +59,8 @@ public class LocalCacheProfilerTest extends SingleCacheManagerTest {
 
    @BeforeMethod
    public void setUp() throws Exception {
-      System.setProperty("query", "true");
-      System.setProperty("indexLocal", "true");
+      System.setProperty(QueryHelper.QUERY_ENABLED_PROPERTY, "true");
+      System.setProperty(QueryHelper.QUERY_INDEX_LOCAL_ONLY_PROPERTY, "false");
 
 
       cache = createCacheManager().getCache();
@@ -102,7 +102,7 @@ public class LocalCacheProfilerTest extends SingleCacheManagerTest {
 
    @Test (invocationCount = 2000, enabled = false)
    public void testSimple() throws ParseException {
-      cacheQuery = new QueryFactory(cache, qh.getSearchFactory()).getBasicQuery("blurb", "playing");
+      cacheQuery = new QueryFactory(cache, qh).getBasicQuery("blurb", "playing");
 
       found = cacheQuery.list();
 
@@ -113,7 +113,7 @@ public class LocalCacheProfilerTest extends SingleCacheManagerTest {
    @Test (invocationCount = 2000, enabled = false)
    public void testEagerIterator() throws ParseException {
 
-      cacheQuery = new QueryFactory(cache, qh.getSearchFactory()).
+      cacheQuery = new QueryFactory(cache, qh).
             getBasicQuery("blurb", "playing");
 
       QueryIterator found = cacheQuery.iterator();
@@ -128,7 +128,7 @@ public class LocalCacheProfilerTest extends SingleCacheManagerTest {
       queryParser = new QueryParser("name", new StandardAnalyzer());
 
       luceneQuery = queryParser.parse("goat");
-      cacheQuery = new QueryFactory(cache, qh.getSearchFactory()).getQuery(luceneQuery);
+      cacheQuery = new QueryFactory(cache, qh).getQuery(luceneQuery);
       found = cacheQuery.list();
 
       assert found.size() == 2;
@@ -141,7 +141,7 @@ public class LocalCacheProfilerTest extends SingleCacheManagerTest {
    public void testModified() throws ParseException {
       queryParser = new QueryParser("blurb", new StandardAnalyzer());
       luceneQuery = queryParser.parse("playing");
-      cacheQuery = new QueryFactory(cache, qh.getSearchFactory()).getQuery(luceneQuery);
+      cacheQuery = new QueryFactory(cache, qh).getQuery(luceneQuery);
 
       found = cacheQuery.list();
 
@@ -153,7 +153,7 @@ public class LocalCacheProfilerTest extends SingleCacheManagerTest {
 
       queryParser = new QueryParser("blurb", new StandardAnalyzer());
       luceneQuery = queryParser.parse("pizza");
-      cacheQuery = new QueryFactory(cache, qh.getSearchFactory()).getQuery(luceneQuery);
+      cacheQuery = new QueryFactory(cache, qh).getQuery(luceneQuery);
 
       found = cacheQuery.list();
 
@@ -166,7 +166,7 @@ public class LocalCacheProfilerTest extends SingleCacheManagerTest {
       queryParser = new QueryParser("name", new StandardAnalyzer());
 
       luceneQuery = queryParser.parse("Goat");
-      cacheQuery = new QueryFactory(cache, qh.getSearchFactory()).getQuery(luceneQuery);
+      cacheQuery = new QueryFactory(cache, qh).getQuery(luceneQuery);
       found = cacheQuery.list();
 
       assert found.size() == 2 : "Size of list should be 2";
@@ -181,7 +181,7 @@ public class LocalCacheProfilerTest extends SingleCacheManagerTest {
       cache.put("mighty", person4);
 
       luceneQuery = queryParser.parse("Goat");
-      cacheQuery = new QueryFactory(cache, qh.getSearchFactory()).getQuery(luceneQuery);
+      cacheQuery = new QueryFactory(cache, qh).getQuery(luceneQuery);
       found = cacheQuery.list();
 
       assert found.size() == 3 : "Size of list should be 3";
@@ -195,7 +195,7 @@ public class LocalCacheProfilerTest extends SingleCacheManagerTest {
       queryParser = new QueryParser("name", new StandardAnalyzer());
 
       luceneQuery = queryParser.parse("Goat");
-      cacheQuery = new QueryFactory(cache, qh.getSearchFactory()).getQuery(luceneQuery);
+      cacheQuery = new QueryFactory(cache, qh).getQuery(luceneQuery);
       found = cacheQuery.list();
 
       assert found.size() == 2;
@@ -205,7 +205,7 @@ public class LocalCacheProfilerTest extends SingleCacheManagerTest {
       cache.remove(key3);
 
       luceneQuery = queryParser.parse("Goat");
-      cacheQuery = new QueryFactory(cache, qh.getSearchFactory()).getQuery(luceneQuery);
+      cacheQuery = new QueryFactory(cache, qh).getQuery(luceneQuery);
       found = cacheQuery.list();
 
       assert found.size() == 1;
@@ -225,7 +225,7 @@ public class LocalCacheProfilerTest extends SingleCacheManagerTest {
       queryParser = new QueryParser("name", new StandardAnalyzer());
 
       luceneQuery = queryParser.parse("Goat");
-      cacheQuery = new QueryFactory(cache, qh.getSearchFactory()).getQuery(luceneQuery);
+      cacheQuery = new QueryFactory(cache, qh).getQuery(luceneQuery);
       found = cacheQuery.list();
 
       assert found.size() == 2;
@@ -244,7 +244,7 @@ public class LocalCacheProfilerTest extends SingleCacheManagerTest {
       queryParser = new QueryParser("name", new StandardAnalyzer());
 
       luceneQuery = queryParser.parse("goat");
-      cacheQuery = new QueryFactory(cache, qh.getSearchFactory()).getQuery(luceneQuery);
+      cacheQuery = new QueryFactory(cache, qh).getQuery(luceneQuery);
       found = cacheQuery.list();
 
       assert found.size() == 2;
@@ -263,7 +263,7 @@ public class LocalCacheProfilerTest extends SingleCacheManagerTest {
    public void testLazyIterator() throws ParseException {
       queryParser = new QueryParser("blurb", new StandardAnalyzer());
       luceneQuery = queryParser.parse("playing");
-      cacheQuery = new QueryFactory(cache, qh.getSearchFactory()).getQuery(luceneQuery);
+      cacheQuery = new QueryFactory(cache, qh).getQuery(luceneQuery);
 
       QueryIterator found = cacheQuery.lazyIterator();
 
@@ -277,7 +277,7 @@ public class LocalCacheProfilerTest extends SingleCacheManagerTest {
 
       queryParser = new QueryParser("blurb", new StandardAnalyzer());
       luceneQuery = queryParser.parse("playing");
-      cacheQuery = new QueryFactory(cache, qh.getSearchFactory()).getQuery(luceneQuery);
+      cacheQuery = new QueryFactory(cache, qh).getQuery(luceneQuery);
 
       assert cacheQuery.getResultSize() == 1;
    }

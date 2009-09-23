@@ -29,13 +29,14 @@ import org.hibernate.search.FullTextFilter;
 import java.util.List;
 
 /**
- * A cache-query is what will be returned when the createQuery() method is run. This object can have methods such
+ * A cache-query is what will be returned when the getQuery() method is run on {@link QueryFactory}. This object can have methods such
  * as list, setFirstResult,setMaxResults, setFetchSize, getResultSize and setSort.
  *
  * <p/>
- * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
- * @author Navin Surtani (<a href="mailto:nsurtani@redhat.com">nsurtani@redhat.com</a>)
- * @see org.infinispan.query.SearchableCache#createQuery(org.apache.lucene.search.Query, Class[])
+ * @author Manik Surtani
+ * @author Navin Surtani
+ * @see QueryFactory#getQuery(org.apache.lucene.search.Query)
+ * @see QueryFactory#getBasicQuery(String, String) 
  */
 public interface CacheQuery extends Iterable
 {

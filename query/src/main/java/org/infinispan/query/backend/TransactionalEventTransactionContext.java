@@ -39,7 +39,6 @@ import javax.transaction.TransactionManager;
  * Hibernate Search {@link org.hibernate.search.backend.Work} object.
  * <p/>
  * <p/>
- * // TODO: navssurtani--> Document up this class. Clean up old JBCS stuff etc etc.
  *
  * @author Navin Surtani
  * @see QueryInterceptor
@@ -57,7 +56,6 @@ public class TransactionalEventTransactionContext implements TransactionContext 
     * @throws NullPointerException if event is null.
     */
    public TransactionalEventTransactionContext(TransactionManager transactionManager) {
-//      if (transactionManager == null) throw new NullPointerException("transaction manager cannot be null");
       this.transactionManager = transactionManager;
    }
 
