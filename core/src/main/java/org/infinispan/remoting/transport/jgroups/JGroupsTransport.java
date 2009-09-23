@@ -166,6 +166,13 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
       buildChannel();
       // Channel.LOCAL *must* be set to false so we don't see our own messages - otherwise invalidations targeted at
       // remote instances will be received by self.
+      String transportNodeName = c.getTransportNodeName();
+      if(transportNodeName != null && transportNodeName.length()>0) {
+         long range = Short.MAX_VALUE *2;
+         long randomInRange = (long)((Math.random() * range) % range) + 1;         
+         transportNodeName = transportNodeName + "-" + randomInRange;
+         channel.setName(transportNodeName);
+      }     
       channel.setOpt(Channel.LOCAL, false);
       channel.setOpt(Channel.BLOCK, true);
       dispatcher = new CommandAwareRpcDispatcher(channel, this,

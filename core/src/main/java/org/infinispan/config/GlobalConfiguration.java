@@ -199,6 +199,14 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    public void setMarshallerClass(String marshallerClass) {
       serialization.setMarshallerClass(marshallerClass);
    }
+   
+   public String getTransportNodeName() {
+      return transport.nodeName;
+   }
+   
+   public void setTransportNodeName(String nodeName) {
+      transport.setNodeName(nodeName);
+   }
 
    public String getTransportClass() {
       return transport.transportClass;
@@ -519,6 +527,11 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       /** @configRef desc="Fully qualified name of a class that implements network transport"*/
       protected String transportClass = null; // this defaults to a non-clustered cache.
       
+      /**
+       * @confgRef desc="Node name for the underlying transport channel"
+       */
+      protected String nodeName = null;
+      
       protected TypedProperties properties = EMPTY_PROPERTIES;
 
       public TransportType() {
@@ -553,7 +566,13 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
          this.transportClass = transportClass;
       }
 
-      @XmlElement
+      @XmlAttribute
+      public void setNodeName(String nodeName) {
+         testImmutability("nodeName");
+         this.nodeName = nodeName;
+      }
+
+    @XmlElement
       public void setProperties(TypedProperties properties) {
          testImmutability("properties");
          this.properties = properties;

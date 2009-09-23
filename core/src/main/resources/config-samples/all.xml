@@ -42,7 +42,7 @@
          There is no added cost to defining a transport but not creating a cache that uses one, since the transport
          is created and initialized lazily.
       -->
-      <transport clusterName="infinispan-cluster" distributedSyncTimeout="50000">
+      <transport clusterName="infinispan-cluster" distributedSyncTimeout="50000" nodeName="Jalapeno">
          <!-- Note that the JGroups transport uses sensible defaults if no configuration property is defined. -->
          <properties>
          	<property name="configurationFile" value="udp.xml"/>

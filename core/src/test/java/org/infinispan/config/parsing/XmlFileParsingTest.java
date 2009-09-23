@@ -87,6 +87,7 @@ public class XmlFileParsingTest {
 
       assert gc.getTransportClass().equals("org.infinispan.remoting.transport.jgroups.JGroupsTransport");
       assert gc.getClusterName().equals("infinispan-cluster");
+      assert gc.getTransportNodeName().equals("Jalapeno");
       assert gc.getDistributedSyncTimeout() == 50000;
 
       assert gc.getShutdownHookBehavior().equals(ShutdownHookBehavior.REGISTER);
