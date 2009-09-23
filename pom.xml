@@ -28,7 +28,7 @@
       <module>cachestore/s3</module>
       <module>cachestore/jdbc</module>
       <module>cachestore/jdbm</module>
-      <!--<module>server/rest</module>-->
+      <module>server/rest</module>
       <module>jopr-plugin</module>
       <module>gui-demo</module>
       <module>tools</module>
