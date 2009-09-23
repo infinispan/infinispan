@@ -37,7 +37,7 @@ import java.util.HashMap;
  * @author Navin Surtani
  */
 public class SearchableCacheConfiguration implements SearchConfiguration {
-   protected Map<String, Class> classes;
+   protected Map<String, Class<?>> classes;
    private Properties properties;
 
    public SearchableCacheConfiguration(Class[] classArray, Properties properties) {
@@ -46,7 +46,7 @@ public class SearchableCacheConfiguration implements SearchConfiguration {
       this.properties = properties;
       if (this.properties == null) this.properties = new Properties();
 
-      classes = new HashMap<String, Class>();
+      classes = new HashMap<String, Class<?>>();
 
       // loop thru your classArray
       // populate your Map
@@ -57,11 +57,11 @@ public class SearchableCacheConfiguration implements SearchConfiguration {
       }
    }
 
-   public Iterator getClassMappings() {
+   public Iterator<Class<?>> getClassMappings() {
       return classes.values().iterator();
    }
 
-   public Class getClassMapping(String name) {
+   public Class<?> getClassMapping(String name) {
       return classes.get(name);
    }
 
