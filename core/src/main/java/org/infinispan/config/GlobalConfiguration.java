@@ -528,7 +528,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       protected String transportClass = null; // this defaults to a non-clustered cache.
       
       /**
-       * @confgRef desc="Node name for the underlying transport channel"
+       * @configRef desc="Node name for the underlying transport channel"
        */
       protected String nodeName = null;
       
