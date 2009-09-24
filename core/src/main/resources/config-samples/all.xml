@@ -197,6 +197,10 @@
       </clustering>
    </namedCache>
 
+   <namedCache name="lockPerEntry">
+      <locking useLockStriping="false" />
+   </namedCache>
+
    <namedCache name="cacheWithCustomInterceptors">
       <!--
       Define custom interceptors.  All custom interceptors need to extend org.jboss.cache.interceptors.base.CommandInterceptor
