@@ -46,7 +46,7 @@
          <!-- Note that the JGroups transport uses sensible defaults if no configuration property is defined. -->
          <properties>
          	<property name="configurationFile" value="udp.xml"/>
-         </properties>	
+         </properties>
          <!-- See the JGroupsTransport javadocs for more flags -->
       </transport>
 
@@ -72,7 +72,9 @@
             isolationLevel="REPEATABLE_READ"
             lockAcquisitionTimeout="20000"
             writeSkewCheck="false"
-            concurrencyLevel="500"/>
+            concurrencyLevel="500"
+            useLockStriping="true"
+            />
 
       <!--
       Used to register a transaction manager and participate in ongoing transactions.
@@ -170,7 +172,7 @@
             <async enabled="true" mapLockTimeout="15000" threadPoolSize="5"/>
          </loader>
       </loaders>
-      
+
       <deadlockDetection enabled="true" spinDuration="1000"/>
 
    </namedCache>
