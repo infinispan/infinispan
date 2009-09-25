@@ -38,20 +38,6 @@
          <artifactId>jclouds-log4j</artifactId>
          <version>${version.jclouds}</version>
       </dependency>
-
-      <!-- used to serialize non-serializable objects for a dummy marshaller -->
-      <dependency>
-         <groupId>xstream</groupId>
-         <artifactId>xstream</artifactId>
-         <scope>test</scope>
-      </dependency>
-
-      <dependency>
-         <groupId>log4j</groupId>
-         <artifactId>log4j</artifactId>
-         <scope>test</scope>
-      </dependency>
-
    </dependencies>
    <repositories>
       <repository>

@@ -16,7 +16,6 @@
    </properties>
 
    <dependencies>
-
       <dependency>
          <!-- Contains fixes not officially released by JDBM group -->
          <groupId>org.apache.directory.server</groupId>
@@ -33,14 +32,6 @@
             </exclusion>
          </exclusions>
       </dependency>
-
-      <!-- used to serialize non-serializable objects for a dummy marshaller -->
-      <dependency>
-         <groupId>xstream</groupId>
-         <artifactId>xstream</artifactId>
-         <scope>test</scope>
-      </dependency>
-
    </dependencies>
 
 </project>

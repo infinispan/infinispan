@@ -94,41 +94,38 @@
          <version>2.4</version>
          <scope>test</scope>
       </dependency>
-   </dependencies>
+      <dependency>
+         <groupId>jboss.jbossts</groupId>
+         <artifactId>jbossjta</artifactId>
+         <version>4.4.0.GA</version>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>jboss.jbossts</groupId>
+         <artifactId>jbossjts</artifactId>
+         <version>4.6.1.GA</version>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>jboss.jbossts</groupId>
+         <artifactId>jbossts-common</artifactId>
+         <version>4.6.1.GA</version>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>log4j</groupId>
+         <artifactId>log4j</artifactId>
+         <version>1.2.14</version>
+      </dependency>
 
-   <dependencyManagement>
-      <dependencies>
-         <dependency>
-            <groupId>jboss.jbossts</groupId>
-            <artifactId>jbossjta</artifactId>
-            <version>4.4.0.GA</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>jboss.jbossts</groupId>
-            <artifactId>jbossjts</artifactId>
-            <version>4.6.1.GA</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>jboss.jbossts</groupId>
-            <artifactId>jbossts-common</artifactId>
-            <version>4.6.1.GA</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-            <version>1.2.14</version>
-         </dependency>
-         <dependency>
-            <groupId>xstream</groupId>
-            <artifactId>xstream</artifactId>
-            <version>1.2</version>
-            <scope>test</scope>
-         </dependency>
-      </dependencies>
-   </dependencyManagement>
+      <!-- used to serialize non-serializable objects for a dummy marshaller -->
+      <dependency>
+         <groupId>com.thoughtworks.xstream</groupId>
+         <artifactId>xstream</artifactId>
+         <version>1.3.1</version>
+         <scope>test</scope>
+      </dependency>
+   </dependencies>
 
    <build>
       <plugins>

@@ -14,19 +14,11 @@
    <name>Infinispan BDBJE CacheStore</name>
    <description>Infinispan BerkeleyDB JavaEdition CacheStore module</description>
    <dependencies>
-
       <dependency>
          <groupId>com.sleepycat</groupId>
          <artifactId>je</artifactId>
          <version>3.3.75</version>
       </dependency>
-
-      <dependency>
-         <groupId>xstream</groupId>
-         <artifactId>xstream</artifactId>
-         <scope>test</scope>
-      </dependency>
-
    </dependencies>
 
    <repositories>
