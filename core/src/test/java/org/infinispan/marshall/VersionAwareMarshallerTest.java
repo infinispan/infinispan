@@ -72,6 +72,7 @@ import org.infinispan.util.Immutables;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.jboss.marshalling.TraceInformation;
 import org.jgroups.stack.IpAddress;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
@@ -79,6 +80,7 @@ import org.testng.annotations.Test;
 
 import java.io.Externalizable;
 import java.io.IOException;
+import java.io.NotSerializableException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.*;
@@ -418,6 +420,48 @@ public class VersionAwareMarshallerTest {
       assert Arrays.equals(rEntry.data, entry.data);
       assert rEntry.contentType.equals(entry.contentType);
       assert rEntry.lastModified == entry.lastModified;
+   }
+
+   public void testNestedNonSerializable() throws Exception {
+      PutKeyValueCommand cmd = new PutKeyValueCommand("k", new Object(), false, null, 0, 0);
+      try {
+         marshaller.objectToByteBuffer(cmd);
+      } catch (NotSerializableException e) {
+         log.info("Log exception for output format verification", e);
+         TraceInformation inf = (TraceInformation) e.getCause();
+         assert inf.toString().contains("in object java.lang.Object@");
+         assert inf.toString().contains("in object org.infinispan.commands.write.PutKeyValueCommand@");
+      }
+   }
+
+   public void testNonSerializable() throws Exception {
+      try {
+         marshaller.objectToByteBuffer(new Object());
+      } catch (NotSerializableException e) {
+         log.info("Log exception for output format verification", e);
+         TraceInformation inf = (TraceInformation) e.getCause();
+         assert inf.toString().contains("in object java.lang.Object@");
+      }
+      
+   }
+   
+   public void testErrorUnmarshalling() throws Exception {
+      Pojo pojo = new Pojo() {
+         @Override
+         public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+            throw new IOException("Injected failue!");
+         }
+         
+      };
+      byte[] bytes = marshaller.objectToByteBuffer(pojo);
+      try {
+         marshaller.objectFromByteBuffer(bytes);
+      } catch (IOException e) {
+         log.info("Log exception for output format verification", e);
+         TraceInformation inf = (TraceInformation) e.getCause();
+         assert inf.toString().contains("in object of type org.infinispan.marshall.VersionAwareMarshallerTest$1");
+      }
+      
    }
    
    protected void marshallAndAssertEquality(Object writeObj) throws Exception {

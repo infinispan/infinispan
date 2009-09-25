@@ -30,9 +30,11 @@ import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jboss.marshalling.ContextClassResolver;
+import org.jboss.marshalling.ExceptionListener;
 import org.jboss.marshalling.MarshallerFactory;
 import org.jboss.marshalling.Marshalling;
 import org.jboss.marshalling.MarshallingConfiguration;
+import org.jboss.marshalling.TraceInformation;
 import org.jboss.marshalling.Unmarshaller;
 import org.jboss.marshalling.reflect.SunReflectiveCreator;
 
@@ -42,6 +44,8 @@ import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.OutputStream;
+import java.lang.reflect.Method;
+import java.net.URL;
 
 /**
  * JBossMarshaller.
@@ -95,7 +99,6 @@ public class JBossMarshaller extends AbstractMarshaller {
       log.debug("Using JBoss Marshalling based marshaller.");
       this.defaultCl = defaultCl;
       try {
-         // TODO: Enable different marshaller factories via configuration
          factory = (MarshallerFactory) Util.getInstance(DEFAULT_MARSHALLER_FACTORY);
       } catch (Exception e) {
          throw new CacheException("Unable to load JBoss Marshalling marshaller factory " + DEFAULT_MARSHALLER_FACTORY, e);
@@ -105,7 +108,7 @@ public class JBossMarshaller extends AbstractMarshaller {
       configuration = new MarshallingConfiguration();
       configuration.setCreator(new SunReflectiveCreator());
       configuration.setObjectTable(objectTable);
-      
+      configuration.setExceptionListener(new DebuggingExceptionListener());
       // ContextClassResolver provides same functionality as MarshalledValueInputStream
       configuration.setClassResolver(new ContextClassResolver());
    }
@@ -210,5 +213,56 @@ public class JBossMarshaller extends AbstractMarshaller {
       ConstantObjectTable objectTable = new ConstantObjectTable();
       objectTable.start(cmdFactory, ispnMarshaller);
       return objectTable;
+   }
+
+   private static class DebuggingExceptionListener implements ExceptionListener {
+
+      public void handleMarshallingException(Throwable problem, Object subject) {
+         if (log.isDebugEnabled()) {
+            TraceInformation.addUserInformation(problem, "toString = " + subject.toString());
+         }
+      }
+
+      public void handleUnmarshallingException(Throwable problem, Class<?> subjectClass) {
+         if (log.isDebugEnabled()) {
+            StringBuilder builder = new StringBuilder();
+            ClassLoader cl = subjectClass.getClassLoader();
+            builder.append("classloader hierarchy:");
+            ClassLoader parent = cl;
+            while( parent != null ) {
+               if (parent.equals(cl)) {
+                  builder.append("\n\t\t-> type classloader = " + parent);
+               } else {
+                  builder.append("\n\t\t-> parent classloader = " + parent);
+               }
+               URL[] urls = getClassLoaderURLs(parent);
+               int length = urls != null ? urls.length : 0;
+               for(int u = 0; u < length; u ++) {
+                  builder.append("\n\t\t->..."+urls[u]);
+               }
+               if( parent != null ) parent = parent.getParent();
+            }
+            TraceInformation.addUserInformation(problem, builder.toString());
+         }
+      }
+
+      public void handleUnmarshallingException(Throwable problem) {
+         // no-op
+      }
+      
+      private static URL[] getClassLoaderURLs(ClassLoader cl) {
+         URL[] urls = {};
+         try {
+            Class returnType = urls.getClass();
+            Class[] parameterTypes = {};
+            Method getURLs = cl.getClass().getMethod("getURLs", parameterTypes);
+            if( returnType.isAssignableFrom(getURLs.getReturnType()) ) {
+               Object[] args = {};
+               urls = (URL[]) getURLs.invoke(cl, args);
+            }
+         } catch(Exception ignore) {}
+         return urls;
+      }
+
    }
 }
