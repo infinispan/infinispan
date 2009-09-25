@@ -269,7 +269,8 @@ public class JdbmCacheStore extends AbstractCacheStore {
    private void addNewExpiry(InternalCacheEntry entry) throws IOException {
       long expiry = entry.getExpiryTime();
       if (entry.getMaxIdle() > 0) {
-         // TODO do we need both?
+         // Coding getExpiryTime() for transient entries has the risk of being a moving target
+         // which could lead to unexpected results, hence, InternalCacheEntry calls are required
          expiry = entry.getMaxIdle() + System.currentTimeMillis();
       }
       Long at = new Long(expiry);
