@@ -14,6 +14,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -53,6 +54,16 @@ public class NodeAPITest {
       nodeA.put("key", "value");
 
       assertEquals("value", nodeA.get("key"));
+   }
+
+   public void testAddingDataPutMap() {
+      cache.put(A_B, Collections.singletonMap("key", "value"));
+      assertEquals("value", cache.get(A_B, "key"));
+   }
+
+   public void testAddingDataPutKey() {
+      cache.put(A_B, "key", "value");
+      assertEquals("value", cache.get(A_B, "key"));
    }
 
    public void testAddingDataTx() throws Exception {

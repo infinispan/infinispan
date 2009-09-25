@@ -68,7 +68,10 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
    public void put(Fqn fqn, Map<? extends K, ? extends V> data) {
       startAtomic();
       try {
-         getNode(fqn).putAll(data);
+         Node n = getNode(fqn);
+         if (n == null) createNodeInCache(fqn);
+         n = getNode(fqn);
+         n.putAll(data);
       }
       finally {
          endAtomic();
