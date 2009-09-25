@@ -35,11 +35,11 @@ import org.infinispan.util.logging.LogFactory;
 public class TreeStructureSupport extends AutoBatchSupport {
    private static Log log = LogFactory.getLog(TreeStructureSupport.class);
 
-   AtomicMapCache<NodeKey, Object> cache;
+   AtomicMapCache<NodeKey> cache;
    InvocationContextContainer icc;
 
-   public TreeStructureSupport(Cache cache, BatchContainer batchContainer, InvocationContextContainer icc) {
-      this.cache = (AtomicMapCache) cache;
+   public TreeStructureSupport(Cache<?, ?> cache, BatchContainer batchContainer, InvocationContextContainer icc) {
+      this.cache = (AtomicMapCache<NodeKey>) cache;
       this.batchContainer = batchContainer;
       this.icc = icc;
    }

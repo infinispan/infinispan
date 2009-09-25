@@ -345,7 +345,7 @@ public interface TreeCache<K, V> extends Lifecycle {
    /**
     * @return a reference to the underlying cache instance
     */
-   Cache<K, V> getCache();
+   Cache<?, ?> getCache();
 
    /**
     * Tests if an Fqn exists.  Convenience method for {@link #exists(Fqn)}

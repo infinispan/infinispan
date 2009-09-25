@@ -40,7 +40,7 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
    private static final Log log = LogFactory.getLog(TreeCacheImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   public TreeCacheImpl(Cache<K, V> cache) {
+   public TreeCacheImpl(Cache<?, ?> cache) {
       super(cache, ((AdvancedCache) cache).getBatchContainer(),
             ((AdvancedCache) cache).getInvocationContextContainer());
       assertBatchingSupported(cache.getConfiguration());
@@ -68,7 +68,7 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
    public void put(Fqn fqn, Map<? extends K, ? extends V> data) {
       startAtomic();
       try {
-         Node n = getNode(fqn);
+         Node<K, V> n = getNode(fqn);
          if (n == null) createNodeInCache(fqn);
          n = getNode(fqn);
          n.putAll(data);
@@ -92,12 +92,11 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
       put(fqn, data);
    }
 
-   @SuppressWarnings("unchecked")
    public V remove(Fqn fqn, K key) {
       startAtomic();
       try {
-         AtomicMap map = cache.getAtomicMap(new NodeKey(fqn, NodeKey.Type.DATA));
-         return map == null ? null : (V) map.remove(key);
+         AtomicMap<K, V> map = cache.getAtomicMap(new NodeKey(fqn, NodeKey.Type.DATA));
+         return map == null ? null : map.remove(key);
       }
       finally {
          endAtomic();
@@ -174,11 +173,10 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
       return getNode(fqn);
    }
 
-   @SuppressWarnings("unchecked")
    public V get(Fqn fqn, K key) {
-      Map m = cache.getAtomicMap(new NodeKey(fqn, NodeKey.Type.DATA));
+      Map<K, V> m = cache.getAtomicMap(new NodeKey(fqn, NodeKey.Type.DATA));
       if (m == null) return null;
-      return (V) m.get(key);
+      return m.get(key);
    }
 
    public V get(Fqn fqn, K key, Flag... flags) {
@@ -223,7 +221,7 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
       // Depth first.  Lets start with getting the node we want.
       startAtomic();
       try {
-         Node nodeToMove = getNode(nodeToMoveFqn, Flag.FORCE_WRITE_LOCK);
+         Node<K, V> nodeToMove = getNode(nodeToMoveFqn, Flag.FORCE_WRITE_LOCK);
          if (nodeToMove == null) {
             if (trace) log.trace("Did not find the node that needs to be moved. Returning...");
             return; // nothing to do here!
@@ -237,8 +235,8 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
          // create an empty node for this new parent
          Fqn newFqn = Fqn.fromRelativeElements(newParentFqn, nodeToMoveFqn.getLastElement());
          createNodeInCache(newFqn);
-         Node newNode = getNode(newFqn);
-         Map oldData = nodeToMove.getData();
+         Node<K, V> newNode = getNode(newFqn);
+         Map<K, V> oldData = nodeToMove.getData();
          if (oldData != null && !oldData.isEmpty()) newNode.putAll(oldData);
          for (Object child : nodeToMove.getChildrenNames()) {
             // move kids
@@ -329,13 +327,13 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
       icc.createInvocationContext().setFlags(flags);
    }
 
-   @SuppressWarnings("unchecked")
    public V put(Fqn fqn, K key, V value) {
       if (trace) log.trace("Start: Putting value under key [" + key + "] for node [" + fqn + "]");
       startAtomic();
       try {
          createNodeInCache(fqn);
-         return (V) cache.getAtomicMap(new NodeKey(fqn, NodeKey.Type.DATA)).put(key, value);
+         Map<K, V> m = cache.getAtomicMap(new NodeKey(fqn, NodeKey.Type.DATA));
+         return m.put(key, value);
       }
       finally {
          endAtomic();
@@ -348,11 +346,11 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
       return put(fqn, key, value);
    }
 
-   // ------------------ nothing different; just delegate to the cache
-   public Cache getCache() {
+   public Cache<?, ?> getCache() {
       return cache;
    }
 
+   // ------------------ nothing different; just delegate to the cache
    public void start() throws CacheException {
       cache.start();
       createRoot();

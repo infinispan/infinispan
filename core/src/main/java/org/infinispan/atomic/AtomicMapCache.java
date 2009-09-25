@@ -31,13 +31,11 @@ import org.infinispan.Cache;
  * @see AtomicMap
  * @since 4.0
  */
-public interface AtomicMapCache<K, V> extends Cache<K, V> {
+public interface AtomicMapCache<K> extends Cache<K, AtomicMap<?, ?>> {
    /**
     * Returns an atomic map.  The classes passed in are used to parameterize the Map returned.
     *
     * @param key          key under which to obtain and store this map in the cache
-    * @param <AMK>          map keys
-    * @param <AMV>          map values
     * @return a new or existing atomic map.  Never null.
     * @throws ClassCastException if there already is a value stored under the given key and the type of value cannot be
     *                            used as an AtomicMap.
