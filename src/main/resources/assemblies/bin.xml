@@ -115,7 +115,6 @@
             <include>org.infinispan:infinispan-jopr-plugin</include>
             <include>org.infinispan:infinispan-tree</include>
             <include>org.infinispan:infinispan-query</include>
-            <include>org.infinispan:infinispan-server-rest</include>
          </includes>
          <sources>
             <includeModuleDirectory>false</includeModuleDirectory>
@@ -188,6 +187,33 @@
                   <useTransitiveDependencies>true</useTransitiveDependencies>
                   <useTransitiveFiltering>true</useTransitiveFiltering>
                   <outputDirectory>modules/${module.basedir.name}/lib</outputDirectory>
+               </dependencySet>
+            </dependencySets>
+
+         </binaries>
+      </moduleSet>
+
+      <moduleSet>
+         <includeSubModules>false</includeSubModules>
+         <includes>
+            <include>org.infinispan:infinispan-server-rest</include>
+         </includes>
+         <sources>
+            <includeModuleDirectory>false</includeModuleDirectory>
+         </sources>
+
+         <binaries>
+            <outputDirectory>modules/${module.basedir.name}</outputDirectory>
+            <unpack>false</unpack>
+            <outputFileNameMapping>
+               ${module.artifactId}.${module.extension}
+            </outputFileNameMapping>
+            <dependencySets>
+               <dependencySet>
+                  <includes>
+                     <include>NONEXISTENT_DEPENDENCY*</include>
+                  </includes>
+                  <outputDirectory>modules/${module.basedir.name}</outputDirectory>
                </dependencySet>
             </dependencySets>
 

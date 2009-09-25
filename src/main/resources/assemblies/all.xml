@@ -118,6 +118,7 @@
             <include>org.infinispan:infinispan-gui-demo</include>
             <include>org.infinispan:infinispan-jopr-plugin</include>
             <include>org.infinispan:infinispan-tree</include>
+            <include>org.infinispan:infinispan-query</include>
          </includes>
          <sources>
             <includeModuleDirectory>false</includeModuleDirectory>
@@ -180,6 +181,7 @@
 
          </sources>
 
+         <!-- All modules except core and REST server -->
          <binaries>
 
             <outputDirectory>modules/${module.basedir.name}</outputDirectory>
@@ -191,7 +193,8 @@
             <dependencySets>
                <dependencySet>
                   <excludes>
-                     <exclude>infinispan-core*</exclude>
+                     <exclude>org.infinispan:infinispan-core</exclude>
+                     <exclude>org.infinispan:infinispan-server-rest</exclude>
                   </excludes>
                   <useTransitiveDependencies>true</useTransitiveDependencies>
                   <useTransitiveFiltering>true</useTransitiveFiltering>
@@ -202,11 +205,19 @@
          </binaries>
       </moduleSet>
 
+      <!-- Tests for all modules except REST server -->
       <moduleSet>
          <includeSubModules>false</includeSubModules>
-         <excludes>
-            <exclude>org.infinispan:infinispan-tools</exclude>
-         </excludes>
+         <includes>
+            <include>org.infinispan:infinispan-cachestore-bdbje</include>
+            <include>org.infinispan:infinispan-cachestore-jdbc</include>
+            <include>org.infinispan:infinispan-cachestore-jdbm</include>
+            <include>org.infinispan:infinispan-cachestore-s3</include>
+            <include>org.infinispan:infinispan-gui-demo</include>
+            <include>org.infinispan:infinispan-jopr-plugin</include>
+            <include>org.infinispan:infinispan-tree</include>
+            <include>org.infinispan:infinispan-query</include>
+         </includes>         
          <binaries>
             <attachmentClassifier>tests</attachmentClassifier>
             <outputDirectory>test/modules/${module.basedir.name}</outputDirectory>
@@ -229,6 +240,33 @@
          </binaries>
       </moduleSet>
 
+      <!-- REST server module -->
+      <moduleSet>
+         <includeSubModules>false</includeSubModules>
+         <includes>
+            <include>org.infinispan:infinispan-server-rest</include>
+         </includes>
+         <sources>
+            <includeModuleDirectory>false</includeModuleDirectory>
+         </sources>
+
+         <binaries>
+            <outputDirectory>modules/${module.basedir.name}</outputDirectory>
+            <outputFileNameMapping>
+               ${module.artifactId}.${module.extension}
+            </outputFileNameMapping>
+            <unpack>false</unpack>
+            <dependencySets>
+               <dependencySet>
+                  <includes>
+                     <include>NONEXISTENT_DEPENDENCY*</include>
+                  </includes>
+                  <outputDirectory>modules/${module.basedir.name}</outputDirectory>
+               </dependencySet>
+            </dependencySets>
+
+         </binaries>
+      </moduleSet>
    </moduleSets>
 
    <fileSets>
