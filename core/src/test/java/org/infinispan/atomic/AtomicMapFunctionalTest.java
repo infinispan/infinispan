@@ -20,7 +20,7 @@ import javax.transaction.TransactionManager;
 @Test(groups = "functional", testName = "atomic.AtomicMapFunctionalTest")
 public class AtomicMapFunctionalTest {
    private static final Log log = LogFactory.getLog(AtomicMapFunctionalTest.class);
-   AtomicMapCache<String, String> cache;
+   Cache<String, Object> cache;
    TransactionManager tm;
 
    @BeforeMethod
@@ -30,8 +30,7 @@ public class AtomicMapFunctionalTest {
       // these 2 need to be set to use the AtomicMapCache
       c.setInvocationBatchingEnabled(true);
       CacheManager cm = TestCacheManagerFactory.createCacheManager(c, true);
-      Cache basicCache = cm.getCache();
-      cache = (AtomicMapCache<String, String>) basicCache;
+      cache = cm.getCache();
       tm = TestingUtil.getTransactionManager(cache);
    }
 
@@ -41,34 +40,34 @@ public class AtomicMapFunctionalTest {
    }
 
    public void testChangesOnAtomicMap() {
-      AtomicMap<String, String> map = cache.getAtomicMap("key");
+      AtomicMap<String, String> map = AtomicMapLookup.getAtomicMap(cache, "key");
       assert map.isEmpty();
       map.put("a", "b");
       assert map.get("a").equals("b");
 
       // now re-retrieve the map and make sure we see the diffs
-      assert cache.getAtomicMap("key").get("a").equals("b");
+      assert AtomicMapLookup.getAtomicMap(cache, "key").get("a").equals("b");
    }
 
    public void testTxChangesOnAtomicMap() throws Exception {
-      AtomicMap<String, String> map = cache.getAtomicMap("key");
+      AtomicMap<String, String> map = AtomicMapLookup.getAtomicMap(cache, "key");
       tm.begin();
       assert map.isEmpty();
       map.put("a", "b");
       assert map.get("a").equals("b");
       Transaction t = tm.suspend();
 
-      assert cache.getAtomicMap("key").get("a") == null;
+      assert AtomicMapLookup.getAtomicMap(cache, "key").get("a") == null;
 
       tm.resume(t);
       tm.commit();
 
       // now re-retrieve the map and make sure we see the diffs
-      assert cache.getAtomicMap("key").get("a").equals("b");
+      assert AtomicMapLookup.getAtomicMap(cache, "key").get("a").equals("b");
    }
 
    public void testChangesOnAtomicMapNoLocks() {
-      AtomicMap<String, String> map = cache.getAtomicMap("key");
+      AtomicMap<String, String> map = AtomicMapLookup.getAtomicMap(cache, "key");
       assert map.isEmpty();
       InvocationContextContainer icc = TestingUtil.extractComponent(cache, InvocationContextContainer.class);
       InvocationContext ic = icc.createInvocationContext();
@@ -80,11 +79,11 @@ public class AtomicMapFunctionalTest {
       assert map.get("a").equals("b");
 
       // now re-retrieve the map and make sure we see the diffs
-      assert cache.getAtomicMap("key").get("a").equals("b");
+      assert AtomicMapLookup.getAtomicMap(cache, "key").get("a").equals("b");
    }
 
    public void testTxChangesOnAtomicMapNoLocks() throws Exception {
-      AtomicMap<String, String> map = cache.getAtomicMap("key");
+      AtomicMap<String, String> map = AtomicMapLookup.getAtomicMap(cache, "key");
       tm.begin();
       assert map.isEmpty();
       TestingUtil.extractComponent(cache, InvocationContextContainer.class).createInvocationContext().setFlags(SKIP_LOCKING);
@@ -92,17 +91,17 @@ public class AtomicMapFunctionalTest {
       assert map.get("a").equals("b");
       Transaction t = tm.suspend();
 
-      assert cache.getAtomicMap("key").get("a") == null;
+      assert AtomicMapLookup.getAtomicMap(cache, "key").get("a") == null;
 
       tm.resume(t);
       tm.commit();
 
       // now re-retrieve the map and make sure we see the diffs
-      assert cache.getAtomicMap("key").get("a").equals("b");
+      assert AtomicMapLookup.getAtomicMap(cache, "key").get("a").equals("b");
    }
 
    public void testChangesOnAtomicMapNoLocksExistingData() {
-      AtomicMap<String, String> map = cache.getAtomicMap("key");
+      AtomicMap<String, String> map = AtomicMapLookup.getAtomicMap(cache, "key");
       assert map.isEmpty();
       map.put("x", "y");
       assert map.get("x").equals("y");
@@ -114,7 +113,7 @@ public class AtomicMapFunctionalTest {
       assert map.get("x").equals("y");
 
       // now re-retrieve the map and make sure we see the diffs
-      assert cache.getAtomicMap("key").get("x").equals("y");
-      assert cache.getAtomicMap("key").get("a").equals("b");
+      assert AtomicMapLookup.getAtomicMap(cache, "key").get("x").equals("y");
+      assert AtomicMapLookup.getAtomicMap(cache, "key").get("a").equals("b");
    }
 }

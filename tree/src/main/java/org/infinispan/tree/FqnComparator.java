@@ -93,6 +93,7 @@ public class FqnComparator implements Comparator<Fqn>, Serializable {
     * Compares two Fqn elements. If e1 and e2 are the same class and e1 implements Comparable, returns e1.compareTo(e2).
     * Otherwise, returns e1.toString().compareTo(e2.toString()).
     */
+   @SuppressWarnings("unchecked")
    private int compareElements(Object e1, Object e2) {
       if (e1.getClass() == e2.getClass() && e1 instanceof Comparable) {
          return ((Comparable<Object>) e1).compareTo(e2);

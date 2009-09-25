@@ -1,5 +1,7 @@
 package org.infinispan.atomic;
 
+import org.infinispan.Cache;
+
 import java.util.Map;
 
 public class AtomicHashMapTestAssertions {
@@ -10,7 +12,7 @@ public class AtomicHashMapTestAssertions {
       assert !map.containsKey("blah");
    }
 
-   public static void assertIsEmptyMap(AtomicMapCache cache, Object key) {
-      assertIsEmpty(cache.getAtomicMap(key));
+   public static void assertIsEmptyMap(Cache<?, ?> cache, Object key) {
+      assertIsEmpty(AtomicMapLookup.getAtomicMap(cache, key));
    }
 }

@@ -13,19 +13,19 @@ import java.util.List;
 
 @Test(groups = "functional", testName = "atomic.ClusteredAPITest")
 public class ClusteredAPITest extends MultipleCacheManagersTest {
-   AtomicMapCache cache1, cache2;
+   Cache<String, Object> cache1, cache2;
 
    protected void createCacheManagers() throws Throwable {
       Configuration c = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
       c.setInvocationBatchingEnabled(true);
 
-      List<Cache<Object, Object>> caches = createClusteredCaches(2, "atomic", c);
-      cache1 = (AtomicMapCache) caches.get(0);
-      cache2 = (AtomicMapCache) caches.get(1);
+      List<Cache<String, Object>> caches = createClusteredCaches(2, "atomic", c);
+      cache1 = caches.get(0);
+      cache2 = caches.get(1);
    }
 
    public void testReplicationCommit() throws Exception {
-      AtomicMap map = cache1.getAtomicMap("map");
+      AtomicMap<String, String> map = AtomicMapLookup.getAtomicMap(cache1, "map");
 
       TestingUtil.getTransactionManager(cache1).begin();
       map.put("existing", "existing");
@@ -36,14 +36,14 @@ public class ClusteredAPITest extends MultipleCacheManagersTest {
       assert map.get("blah").equals("blah");
       assert map.containsKey("blah");
 
-      assert cache2.getAtomicMap("map").size() == 2;
-      assert cache2.getAtomicMap("map").get("blah").equals("blah");
-      assert cache2.getAtomicMap("map").containsKey("blah");
+      assert AtomicMapLookup.getAtomicMap(cache2, "map").size() == 2;
+      assert AtomicMapLookup.getAtomicMap(cache2, "map").get("blah").equals("blah");
+      assert AtomicMapLookup.getAtomicMap(cache2, "map").containsKey("blah");
    }
 
    public void testReplicationRollback() throws Exception {
       assertIsEmptyMap(cache2, "map");
-      AtomicMap map = cache1.getAtomicMap("map");
+      AtomicMap<String, String> map = AtomicMapLookup.getAtomicMap(cache1, "map");
 
       TestingUtil.getTransactionManager(cache1).begin();
       map.put("existing", "existing");

@@ -95,7 +95,7 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
    public V remove(Fqn fqn, K key) {
       startAtomic();
       try {
-         AtomicMap<K, V> map = cache.getAtomicMap(new NodeKey(fqn, NodeKey.Type.DATA));
+         AtomicMap<K, V> map = getAtomicMap(new NodeKey(fqn, NodeKey.Type.DATA));
          return map == null ? null : map.remove(key);
       }
       finally {
@@ -174,7 +174,7 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
    }
 
    public V get(Fqn fqn, K key) {
-      Map<K, V> m = cache.getAtomicMap(new NodeKey(fqn, NodeKey.Type.DATA));
+      Map<K, V> m = getAtomicMap(new NodeKey(fqn, NodeKey.Type.DATA));
       if (m == null) return null;
       return m.get(key);
    }
@@ -332,7 +332,7 @@ public class TreeCacheImpl<K, V> extends TreeStructureSupport implements TreeCac
       startAtomic();
       try {
          createNodeInCache(fqn);
-         Map<K, V> m = cache.getAtomicMap(new NodeKey(fqn, NodeKey.Type.DATA));
+         Map<K, V> m = getAtomicMap(new NodeKey(fqn, NodeKey.Type.DATA));
          return m.put(key, value);
       }
       finally {

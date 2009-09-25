@@ -21,6 +21,7 @@
  */
 package org.infinispan.atomic;
 
+import org.infinispan.Cache;
 import static org.infinispan.atomic.AtomicHashMapTestAssertions.assertIsEmpty;
 import static org.infinispan.atomic.AtomicHashMapTestAssertions.assertIsEmptyMap;
 import org.infinispan.config.Configuration;
@@ -38,20 +39,20 @@ import javax.transaction.TransactionManager;
 @Test(groups = "functional", testName = "atomic.APITest")
 public class APITest {
 
-   AtomicMapCache cache;
+   Cache<String, Object> cache;
    TransactionManager tm;
 
    @BeforeTest
    private void setUp() {
       Configuration c = new Configuration();
       c.setInvocationBatchingEnabled(true);
-      cache = (AtomicMapCache) TestCacheManagerFactory.createCacheManager(c, true).getCache();
+      cache = TestCacheManagerFactory.createCacheManager(c, true).getCache();
       tm = TestingUtil.getTransactionManager(cache);
    }
 
    @AfterTest
    private void tearDown() {
-      cache.getCacheManager().stop();
+      TestingUtil.killCaches(cache);
    }
 
    @AfterMethod
@@ -68,7 +69,7 @@ public class APITest {
    }
 
    public void testAtomicMap() {
-      AtomicMap map = cache.getAtomicMap("map");
+      AtomicMap<String, String> map = AtomicMapLookup.getAtomicMap(cache, "map");
 
       assertIsEmpty(map);
       assertIsEmptyMap(cache, "map");
@@ -86,7 +87,7 @@ public class APITest {
 
 
    public void testReadSafetyEmptyCache() throws Exception {
-      AtomicMap map = cache.getAtomicMap("map");
+      AtomicMap<String, String> map = AtomicMapLookup.getAtomicMap(cache, "map");
 
       assertIsEmpty(map);
       assertIsEmptyMap(cache, "map");
@@ -115,7 +116,7 @@ public class APITest {
    }
 
    public void testReadSafetyNotEmptyCache() throws Exception {
-      AtomicMap map = cache.getAtomicMap("map");
+      AtomicMap<String, String> map = AtomicMapLookup.getAtomicMap(cache, "map");
 
       tm.begin();
       map.put("blah", "blah");
@@ -140,7 +141,7 @@ public class APITest {
    }
 
    public void testReadSafetyRollback() throws Exception {
-      AtomicMap map = cache.getAtomicMap("map");
+      AtomicMap<String, String> map = AtomicMapLookup.getAtomicMap(cache, "map");
 
       tm.begin();
       map.put("blah", "blah");

@@ -21,9 +21,6 @@
  */
 package org.infinispan;
 
-import org.infinispan.atomic.AtomicHashMap;
-import org.infinispan.atomic.AtomicMap;
-import org.infinispan.atomic.AtomicMapCache;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.control.LockControlCommand;
@@ -82,7 +79,7 @@ import java.util.concurrent.TimeoutException;
  * @since 4.0
  */
 @NonVolatile
-public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<K, V> {
+public class CacheDelegate<K, V> implements AdvancedCache<K, V> {
    protected InvocationContextContainer icc;
    protected CommandsFactory commandsFactory;
    protected InterceptorChain invoker;
@@ -515,13 +512,6 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V>, AtomicMapCache<
    @Override
    public String toString() {
       return "Cache '" + name + "'@" + (config.getCacheMode().isClustered() ? getCacheManager().getAddress() : System.identityHashCode(this));
-   }
-
-   @SuppressWarnings("unchecked")
-   public <AMK, AMV> AtomicMap<AMK, AMV> getAtomicMap(K key) throws ClassCastException {
-      Object value = get(key);
-      if (value == null) value = AtomicHashMap.newInstance(this, key);
-      return ((AtomicHashMap) value).getProxy(this, key, batchContainer, icc);
    }
 
    public BatchContainer getBatchContainer() {

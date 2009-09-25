@@ -46,7 +46,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    Fqn fqn;
    NodeKey dataKey, structureKey;
 
-   public NodeImpl(Fqn fqn, Cache cache, BatchContainer batchContainer, InvocationContextContainer icc) {
+   public NodeImpl(Fqn fqn, Cache<?, ?> cache, BatchContainer batchContainer, InvocationContextContainer icc) {
       super(cache, batchContainer, icc);
       this.fqn = fqn;
       dataKey = new NodeKey(fqn, NodeKey.Type.DATA);
@@ -253,7 +253,7 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
    public V replace(K key, V value) {
       startAtomic();
       try {
-         AtomicMap<K, V> map = cache.getAtomicMap(dataKey);
+         AtomicMap<K, V> map = getAtomicMap(dataKey);
          if (map.containsKey(key))
             return map.put(key, value);
          else
@@ -410,12 +410,12 @@ public class NodeImpl<K, V> extends TreeStructureSupport implements Node<K, V> {
 
    @SuppressWarnings("unchecked")
    AtomicMap<K, V> getDataInternal() {
-      return cache.getAtomicMap(dataKey);
+      return getAtomicMap(dataKey);
    }
 
    @SuppressWarnings("unchecked")
    AtomicMap<Object, Fqn> getStructure() {
-      return cache.getAtomicMap(structureKey);
+      return getAtomicMap(structureKey);
    }
 
    public boolean equals(Object o) {

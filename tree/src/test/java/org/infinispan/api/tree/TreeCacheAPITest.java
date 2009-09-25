@@ -2,7 +2,7 @@ package org.infinispan.api.tree;
 
 import org.infinispan.Cache;
 import org.infinispan.atomic.AtomicMap;
-import org.infinispan.atomic.AtomicMapCache;
+import org.infinispan.atomic.AtomicMapLookup;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.test.TestingUtil;
@@ -112,7 +112,7 @@ public class TreeCacheAPITest {
 
    private void assertStructure(TreeCache tc, String fqnStr) {
       // make sure structure nodes are properly built and maintained
-      AtomicMapCache c = (AtomicMapCache) tc.getCache();
+      Cache c = tc.getCache();
       Fqn fqn = Fqn.fromString(fqnStr);
       // loop thru the Fqn, starting at its root, and make sure all of its children exist in proper NodeKeys
       for (int i = 0; i < fqn.size(); i++) {
@@ -121,7 +121,7 @@ public class TreeCacheAPITest {
          // make sure a data key exists in the cache
          assert c.containsKey(new NodeKey(parent, NodeKey.Type.DATA)) : "Node [" + parent + "] does not have a Data atomic map!";
          assert c.containsKey(new NodeKey(parent, NodeKey.Type.STRUCTURE)) : "Node [" + parent + "] does not have a Structure atomic map!";
-         AtomicMap am = c.getAtomicMap(new NodeKey(parent, NodeKey.Type.STRUCTURE));
+         AtomicMap<Object, Fqn> am = AtomicMapLookup.getAtomicMap(c, new NodeKey(parent, NodeKey.Type.STRUCTURE));
          boolean hasChild = am.containsKey(childName);
          assert hasChild : "Node [" + parent + "] does not have a child [" + childName + "] in its Structure atomic map!";
       }

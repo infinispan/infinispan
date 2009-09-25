@@ -51,7 +51,7 @@ import java.util.Set;
 public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneable {
    FastCopyHashMap<K, V> delegate;
    private AtomicHashMapDelta delta = null;
-   private volatile AtomicHashMapProxy proxy;
+   private volatile AtomicHashMapProxy<K, V> proxy;
    volatile boolean copied = false;
 
    /**
@@ -137,14 +137,14 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
       delegate.clear();
    }
 
-   public AtomicMap getProxy(Cache cache, Object mapKey,
+   public AtomicMap<K, V> getProxy(Cache cache, Object mapKey,
                              BatchContainer batchContainer, InvocationContextContainer icc) {
       // construct the proxy lazily
       if (proxy == null)  // DCL is OK here since proxy is volatile (and we live in a post-JDK 5 world)
       {
          synchronized (this) {
             if (proxy == null)
-               proxy = new AtomicHashMapProxy(cache, mapKey, batchContainer, icc);
+               proxy = new AtomicHashMapProxy<K, V>(cache, mapKey, batchContainer, icc);
          }
       }
       return proxy;

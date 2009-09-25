@@ -23,7 +23,7 @@ import java.util.concurrent.BlockingQueue;
 public class AtomicHashMapConcurrencyTest {
 
    public static final String KEY = "key";
-   AtomicMapCache<String, String> cache;
+   Cache<String, Object> cache;
    TransactionManager tm;
 
    enum Operation {
@@ -40,8 +40,7 @@ public class AtomicHashMapConcurrencyTest {
       // these 2 need to be set to use the AtomicMapCache
       c.setInvocationBatchingEnabled(true);
       CacheManager cm = TestCacheManagerFactory.createCacheManager(c, true);
-      Cache basicCache = cm.getCache();
-      cache = (AtomicMapCache<String, String>) basicCache;
+      cache = cm.getCache();
       tm = TestingUtil.getTransactionManager(cache);
    }
 
@@ -55,7 +54,7 @@ public class AtomicHashMapConcurrencyTest {
 
    public void testConcurrentCreate() throws Exception {
       tm.begin();
-      cache.getAtomicMap(KEY);
+      AtomicMapLookup.getAtomicMap(cache, KEY);
       OtherThread ot = new OtherThread();
       ot.start();
       Object response = ot.response.take();
@@ -63,7 +62,7 @@ public class AtomicHashMapConcurrencyTest {
    }
 
    public void testConcurrentModifications() throws Exception {
-      AtomicMap<Integer, String> atomicMap = cache.getAtomicMap(KEY);
+      AtomicMap<Integer, String> atomicMap = AtomicMapLookup.getAtomicMap(cache, KEY);
       tm.begin();
       atomicMap.put(1, "");
       OtherThread ot = new OtherThread();
@@ -74,7 +73,7 @@ public class AtomicHashMapConcurrencyTest {
    }
 
    public void testReadAfterTxStarted() throws Exception {
-      AtomicMap<Integer, String> atomicMap = cache.getAtomicMap(KEY);
+      AtomicMap<Integer, String> atomicMap = AtomicMapLookup.getAtomicMap(cache, KEY);
       atomicMap.put(1, "existing");
       tm.begin();
       atomicMap.put(1, "newVal");
@@ -96,7 +95,7 @@ public class AtomicHashMapConcurrencyTest {
          super("OtherThread");
       }
 
-      BlockingQueue response = new ArrayBlockingQueue(1);
+      BlockingQueue<Object> response = new ArrayBlockingQueue<Object>(1);
 
       BlockingQueue<Operation> toExecute = new ArrayBlockingQueue<Operation>(1);
 
@@ -104,7 +103,7 @@ public class AtomicHashMapConcurrencyTest {
       public void run() {
          try {
             tm.begin();
-            AtomicMap<Integer, String> atomicMap = cache.getAtomicMap(KEY);
+            AtomicMap<Integer, String> atomicMap = AtomicMapLookup.getAtomicMap(cache, KEY);
             boolean notCommited = true;
             while (notCommited) {
                Operation op = toExecute.take();

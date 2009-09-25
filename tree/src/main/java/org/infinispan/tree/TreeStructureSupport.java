@@ -23,7 +23,7 @@ package org.infinispan.tree;
 
 import org.infinispan.Cache;
 import org.infinispan.atomic.AtomicMap;
-import org.infinispan.atomic.AtomicMapCache;
+import org.infinispan.atomic.AtomicMapLookup;
 import org.infinispan.batch.AutoBatchSupport;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.context.Flag;
@@ -35,11 +35,12 @@ import org.infinispan.util.logging.LogFactory;
 public class TreeStructureSupport extends AutoBatchSupport {
    private static Log log = LogFactory.getLog(TreeStructureSupport.class);
 
-   AtomicMapCache<NodeKey> cache;
-   InvocationContextContainer icc;
+   protected final Cache<NodeKey, AtomicMap<?, ?>> cache;
+   protected final InvocationContextContainer icc;
 
+   @SuppressWarnings("unchecked")
    public TreeStructureSupport(Cache<?, ?> cache, BatchContainer batchContainer, InvocationContextContainer icc) {
-      this.cache = (AtomicMapCache<NodeKey>) cache;
+      this.cache = (Cache<NodeKey, AtomicMap<?, ?>>) cache;
       this.batchContainer = batchContainer;
       this.icc = icc;
    }
@@ -72,8 +73,8 @@ public class TreeStructureSupport extends AutoBatchSupport {
             icc.getInvocationContext().setFlags(Flag.SKIP_LOCKING);
             parentStructure.put(fqn.getLastElement(), fqn);
          }
-         cache.getAtomicMap(structureKey);
-         cache.getAtomicMap(dataKey);
+         getAtomicMap(structureKey);
+         getAtomicMap(dataKey);
          if (log.isTraceEnabled()) log.trace("Created node " + fqn);
          return true;
       }
@@ -83,7 +84,7 @@ public class TreeStructureSupport extends AutoBatchSupport {
    }
 
    AtomicMap<Object, Fqn> getStructure(Fqn fqn) {
-      return cache.getAtomicMap(new NodeKey(fqn, NodeKey.Type.STRUCTURE));
+      return getAtomicMap(new NodeKey(fqn, NodeKey.Type.STRUCTURE));
    }
 
    public static boolean isLocked(LockManager lockManager, Fqn fqn) {
@@ -118,5 +119,9 @@ public class TreeStructureSupport extends AutoBatchSupport {
          sb.append("\n");
          addChildren(child, depth + 1, sb, details);
       }
+   }
+
+   protected final <K, V> AtomicMap<K, V> getAtomicMap(NodeKey key) {
+      return AtomicMapLookup.getAtomicMap(cache, key);
    }
 }
