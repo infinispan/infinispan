@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<assembly>
+  <id>infinispan-server-rest</id>
+  <formats>
+    <format>zip</format>
+  </formats>
+
+  <includeBaseDirectory>false</includeBaseDirectory>
+
+  <!-- We include the BRMS specifically, as its a single atomic war -->
+  <files>
+	<file>
+		<source>server/rest/target/infinispan.war</source>
+	</file>
+  </files>
+
+</assembly>
