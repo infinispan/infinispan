@@ -24,7 +24,7 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-@Test(groups = "functional", testName = "distribution.BaseDistFunctionalTest")
+@Test(groups = "functional", testName = "distribution.BaseDistFunctionalTest", enabled = false)
 public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
    protected String cacheName;
    protected Cache<Object, String> c1, c2, c3, c4;

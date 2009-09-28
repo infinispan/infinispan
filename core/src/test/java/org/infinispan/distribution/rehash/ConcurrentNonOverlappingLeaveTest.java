@@ -7,7 +7,7 @@ import org.testng.annotations.Test;
 
 import java.util.Arrays;
 
-@Test(groups = "functional", testName = "distribution.rehash.ConcurrentNonOverlappingLeaveTest")
+@Test(groups = "functional", testName = "distribution.rehash.ConcurrentNonOverlappingLeaveTest", enabled = false)
 public class ConcurrentNonOverlappingLeaveTest extends RehashLeaveTestBase {
    Address l1, l2;
 

@@ -12,7 +12,7 @@ import java.util.Arrays;
  * @author Manik Surtani
  * @since 4.0
  */
-@Test(groups = "unit", testName = "distribution.DistributionManagerUnitTest")
+@Test(groups = "unit", testName = "distribution.DistributionManagerUnitTest", enabled = false)
 public class DistributionManagerUnitTest {
    DistributionManagerImpl dmi = new DistributionManagerImpl();
 

@@ -13,7 +13,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-@Test(groups = "functional", testName = "distribution.DistSyncFuncTest")
+@Test(groups = "functional", testName = "distribution.DistSyncFuncTest", enabled = false)
 public class DistSyncFuncTest extends BaseDistFunctionalTest {
 
    public DistSyncFuncTest() {

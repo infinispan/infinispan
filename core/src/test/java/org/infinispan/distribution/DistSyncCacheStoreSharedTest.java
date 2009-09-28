@@ -40,7 +40,7 @@ import java.util.Map;
  * @author Galder Zamarreño
  * @since 4.0
  */
-@Test(groups = "functional", testName = "distribution.DistSyncCacheStoreSharedTest", enabled = true)
+@Test(groups = "functional", testName = "distribution.DistSyncCacheStoreSharedTest", enabled = false)
 public class DistSyncCacheStoreSharedTest extends BaseDistCacheStoreTest {
 
    public DistSyncCacheStoreSharedTest() {

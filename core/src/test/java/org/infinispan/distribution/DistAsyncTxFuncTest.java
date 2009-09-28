@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-@Test(groups = "functional", testName = "distribution.DistAsyncTxFuncTest")
+@Test(groups = "functional", testName = "distribution.DistAsyncTxFuncTest", enabled = false)
 public class DistAsyncTxFuncTest extends DistSyncTxFuncTest {
 
    ReplListener r1, r2, r3, r4;
