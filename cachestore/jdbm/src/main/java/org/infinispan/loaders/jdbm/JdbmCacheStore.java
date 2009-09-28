@@ -37,6 +37,8 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * A persistent <code>CacheLoader</code> based on the JDBM project. See http://jdbm.sourceforge.net/ . Does not support
@@ -48,6 +50,7 @@ import java.util.Set;
  * (key,"m") == meta and (key,"v") == value.
  *
  * @author Elias Ross
+ * @author Galder Zamarreño
  */
 @ThreadSafe
 public class JdbmCacheStore extends AbstractCacheStore {
@@ -59,7 +62,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
    private static final String EXPIRY = "Expiry";
    private final String DATE = "HH:mm:ss.SSS";
 
-   private final Object expiryLock = new Object();
+   private BlockingQueue<ExpiryEntry> expiryEntryQueue;
 
    private JdbmCacheStoreConfig config;
    private RecordManager recman;
@@ -85,6 +88,8 @@ public class JdbmCacheStore extends AbstractCacheStore {
          locationStr = System.getProperty("java.io.tmpdir");
          config.setLocation(locationStr);
       }
+      
+      expiryEntryQueue = new LinkedBlockingQueue<ExpiryEntry>(config.getExpiryQueueSize());
 
       // JBCACHE-1448 db name parsing fix courtesy of Ciro Cavani
       /* Parse config string. */
@@ -275,24 +280,12 @@ public class JdbmCacheStore extends AbstractCacheStore {
       }
       Long at = new Long(expiry);
       Object key = entry.getKey();
-      if (trace)
-         log.trace("at " + new SimpleDateFormat(DATE).format(new Date(at)) + " expire " + key);
-      // TODO could store expiry entries in a separate thread; would remove this
-      // lock as well
-      synchronized (expiryLock) {
-         Object existing = expiryTree.insert(at, key, false);
-         if (existing != null) {
-            // in the case of collision make the key a List ...
-            if (existing instanceof List) {
-               ((List) existing).add(key);
-               expiryTree.insert(at, existing, true);
-            } else {
-               List<Object> al = new ArrayList<Object>(2);
-               al.add(existing);
-               al.add(key);
-               expiryTree.insert(at, al, true);
-            }
-         }
+      if (trace) log.trace("at " + new SimpleDateFormat(DATE).format(new Date(at)) + " expire " + key);
+      
+      try {
+         expiryEntryQueue.put(new ExpiryEntry(at, key));
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt(); // Restore interruption status
       }
    }
 
@@ -356,25 +349,43 @@ public class JdbmCacheStore extends AbstractCacheStore {
     * @throws ClassNotFoundException 
     */
    private void purgeInternal0() throws Exception {
+      // Drain queue and update expiry tree
+      List<ExpiryEntry> entries = new ArrayList<ExpiryEntry>();
+      expiryEntryQueue.drainTo(entries);
+      for (ExpiryEntry entry : entries) {
+         Object existing = expiryTree.insert(entry.expiry, entry.key, false);
+         if (existing != null) {
+            // in the case of collision make the key a List ...
+            if (existing instanceof List) {
+               ((List) existing).add(entry.key);
+               expiryTree.insert(entry.expiry, existing, true);
+            } else {
+               List<Object> al = new ArrayList<Object>(2);
+               al.add(existing);
+               al.add(entry.key);
+               expiryTree.insert(entry.expiry, al, true);
+            }
+         }
+      }
+
+      // Browse the expiry and remove accordingly
       TupleBrowser browse = expiryTree.browse();
       Tuple tuple = new Tuple();
       List<Long> times = new ArrayList<Long>();
       List<Object> keys = new ArrayList<Object>();
-      synchronized (expiryLock) {
-         while (browse.getNext(tuple)) {
-            Long time = (Long) tuple.getKey();
-            if (time > System.currentTimeMillis())
-               break;
-            times.add(time);
-            Object key = tuple.getValue();
-            if (key instanceof List)
-               keys.addAll((List) key);
-            else
-               keys.add(key);
-         }
-         for (Long time : times) {
-            expiryTree.remove(time);
-         }
+      while (browse.getNext(tuple)) {
+         Long time = (Long) tuple.getKey();
+         if (time > System.currentTimeMillis())
+            break;
+         times.add(time);
+         Object key = tuple.getValue();
+         if (key instanceof List)
+            keys.addAll((List) key);
+         else
+            keys.add(key);
+      }
+      for (Long time : times) {
+         expiryTree.remove(time);
       }
 
       if (!keys.isEmpty())
@@ -482,6 +493,16 @@ public class JdbmCacheStore extends AbstractCacheStore {
          for (Object dummy : this)
             size++;
          return size;
+      }
+   }
+   
+   private final class ExpiryEntry {
+      private final Long expiry;
+      private final Object key;
+      
+      private ExpiryEntry(long expiry, Object key) {
+         this.expiry = new Long(expiry);
+         this.key = key;
       }
    }
 }

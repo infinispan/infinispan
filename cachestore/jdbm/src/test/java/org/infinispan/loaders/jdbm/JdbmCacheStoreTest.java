@@ -70,6 +70,40 @@ public class JdbmCacheStoreTest extends BaseCacheStoreTest {
       assert fcs.load("k2") == null;
       assert fcs.load("k3") == null;
    }
+   
+   public void testStopStartDoesntNukeValues() throws InterruptedException, CacheLoaderException {
+      assert !cs.containsKey("k1");
+      assert !cs.containsKey("k2");
+
+      long lifespan = 1;
+      long idle = 1;
+      InternalCacheEntry se1 = InternalEntryFactory.create("k1", "v1", lifespan);
+      InternalCacheEntry se2 = InternalEntryFactory.create("k2", "v2");
+      InternalCacheEntry se3 = InternalEntryFactory.create("k3", "v3", -1, idle);
+      InternalCacheEntry se4 = InternalEntryFactory.create("k4", "v4", lifespan, idle);
+
+      cs.store(se1);
+      cs.store(se2);
+      cs.store(se3);
+      cs.store(se4);
+      Thread.sleep(100);
+      // Force a purge expired so that expiry tree is updated
+      cs.purgeExpired();
+      cs.stop();
+      cs.start();
+      assert se1.isExpired();
+      assert cs.load("k1") == null;
+      assert !cs.containsKey("k1");
+      assert cs.load("k2") != null;
+      assert cs.containsKey("k2");
+      assert cs.load("k2").getValue().equals("v2");
+      assert se3.isExpired();
+      assert cs.load("k3") == null;
+      assert !cs.containsKey("k3");
+      assert se3.isExpired();
+      assert cs.load("k3") == null;
+      assert !cs.containsKey("k3");
+   }
 
    public void testIterator() throws Exception {
       InternalCacheEntry k1 = InternalEntryFactory.create("k1", "v1");
