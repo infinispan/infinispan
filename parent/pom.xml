@@ -129,7 +129,7 @@
 
    <build>
       <plugins>
-         <!-- enforce java 1.5 and maven 2.1.0 -->
+         <!-- enforce java 1.6 and maven 2.1.0 -->
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-enforcer-plugin</artifactId>
@@ -142,7 +142,7 @@
                   <configuration>
                      <rules>
                         <requireJavaVersion>
-                           <version>[1.5,)</version>
+                           <version>[1.6,)</version>
                         </requireJavaVersion>
                         <requireMavenVersion>
                            <version>[2.1.0,)</version>
@@ -152,13 +152,13 @@
                </execution>
             </executions>
          </plugin>
-         <!-- by default, compile to JDK 1.5 compatibility (individual modules and/or user can override) -->
+         <!-- by default, compile to JDK 1.6 compatibility (individual modules and/or user can override) -->
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-compiler-plugin</artifactId>
             <configuration>
-               <source>1.5</source>
-               <target>1.5</target>
+               <source>1.6</source>
+               <target>1.6</target>
             </configuration>
          </plugin>
          <!-- ensure parallel test execution -->
@@ -228,75 +228,6 @@
                </execution>
             </executions>
          </plugin>
-
-         <!--<plugin>-->
-         <!--<groupId>org.apache.maven.plugins</groupId>-->
-         <!--<artifactId>maven-javadoc-plugin</artifactId>-->
-         <!--<executions>-->
-         <!--<execution>-->
-         <!--<id>javadoc</id>-->
-         <!--<phase>package</phase>-->
-         <!--<goals>-->
-         <!--<goal>jar</goal>-->
-         <!--</goals>-->
-         <!--<configuration>-->
-         <!--<quiet>true</quiet>-->
-         <!--<links>-->
-         <!--<link>http://java.sun.com/j2se/1.5.0/docs/api/</link>-->
-         <!--<link>http://java.sun.com/javaee/5/docs/api/</link>-->
-         <!--</links>-->
-         <!--<footer><![CDATA[-->
-         <!--Google Analytics -->
-         <!--<script type='text/javascript'>-->
-         <!--var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");-->
-         <!--document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));-->
-         <!--</script>-->
-         <!--<script type='text/javascript'>-->
-         <!--try {-->
-         <!--var pageTracker = _gat._getTracker("UA-8601422-4");-->
-         <!--pageTracker._trackPageview();-->
-         <!--} catch(err) {}</script>-->
-         <!--]]></footer>-->
-         <!--</configuration>-->
-         <!--</execution>-->
-         <!--</executions>-->
-         <!--</plugin>-->
-
-         <!--<plugin>-->
-         <!--<groupId>org.apache.maven.plugins</groupId>-->
-         <!--<artifactId>maven-javadoc-plugin</artifactId>-->
-         <!--<configuration>-->
-         <!--<doclet>org.infinispan.tools.doclet.jmx.JmxDoclet</doclet>-->
-         <!--<docletArtifact>-->
-         <!--<groupId>org.infinispan</groupId>-->
-         <!--<artifactId>infinispan-tools</artifactId>-->
-         <!--<version>4.0.0-SNAPSHOT</version>-->
-         <!--</docletArtifact>-->
-         <!--<footer><![CDATA[-->
-         <!--Google Analytics -->
-         <!--<script type='text/javascript'>-->
-         <!--var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");-->
-         <!--document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));-->
-         <!--</script>-->
-         <!--<script type='text/javascript'>-->
-         <!--try {-->
-         <!--var pageTracker = _gat._getTracker("UA-8601422-4");-->
-         <!--pageTracker._trackPageview();-->
-         <!--} catch(err) {}</script>-->
-         <!--]]></footer>-->
-         <!--</configuration>-->
-         <!--<executions>-->
-         <!--<execution>-->
-         <!--<id>javadoc</id>-->
-         <!--<phase>package</phase>-->
-         <!--<goals>-->
-         <!--<goal>jar</goal>-->
-         <!--</goals>-->
-         <!--</execution>-->
-         <!--</executions>-->
-         <!--</plugin>-->
-
-
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-jar-plugin</artifactId>
