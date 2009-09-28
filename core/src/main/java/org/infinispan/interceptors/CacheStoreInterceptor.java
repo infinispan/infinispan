@@ -101,8 +101,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    public final boolean skip(InvocationContext ctx, VisitableCommand command) {
       if (store == null) return true;  // could be because the cache loader oes not implement cache store
       if ((!ctx.isOriginLocal() && loaderConfig.isShared()) || ctx.hasFlag(Flag.SKIP_CACHE_STORE)) {
-         if (trace)
-            log.trace("Passing up method call and bypassing this interceptor since the cache loader is shared and this call originated remotely.");
+         if (trace) log.trace("Passing up method call and bypassing this interceptor since the cache loader is shared and this call originated remotely.");
          return true;
       }
       return false;
@@ -114,7 +113,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
          if (ctx.hasModifications()) {
             // this is a commit call.
             GlobalTransaction tx = ctx.getGlobalTransaction();
-            log.trace("Calling loader.commit() for transaction {0}", tx);
+            if (trace) log.trace("Calling loader.commit() for transaction {0}", tx);
             try {
                store.commit(tx);
             }
@@ -171,7 +170,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       if (!skip(ctx, command) && !ctx.isInTxScope() && command.isSuccessful()) {
          Object key = command.getKey();
          boolean resp = store.remove(key);
-         log.trace("Removed entry under key {0} and got response {1} from CacheStore", key, resp);
+         if (trace) log.trace("Removed entry under key {0} and got response {1} from CacheStore", key, resp);
       }
       return retval;
    }
@@ -180,7 +179,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
       if (!skip(ctx, command) && !ctx.isInTxScope()) {
          store.clear();
-         log.trace("Cleared cache store");
+         if (trace) log.trace("Cleared cache store");
       }
       return invokeNextInterceptor(ctx, command);
    }
@@ -193,7 +192,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       Object key = command.getKey();
       InternalCacheEntry se = getStoredEntry(key, ctx);
       store.store(se);
-      log.trace("Stored entry {0} under key {1}", se, key);
+      if (trace) log.trace("Stored entry {0} under key {1}", se, key);
       if (getStatisticsEnabled()) cacheStores.incrementAndGet();
 
       return returnValue;
@@ -207,7 +206,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       Object key = command.getKey();
       InternalCacheEntry se = getStoredEntry(key, ctx);
       store.store(se);
-      log.trace("Stored entry {0} under key {1}", se, key);
+      if (trace) log.trace("Stored entry {0} under key {1}", se, key);
       if (getStatisticsEnabled()) cacheStores.incrementAndGet();
 
       return returnValue;
@@ -222,7 +221,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       for (Object key : map.keySet()) {
          InternalCacheEntry se = getStoredEntry(key, ctx);
          store.store(se);
-         log.trace("Stored entry {0} under key {1}", se, key);
+         if (trace) log.trace("Stored entry {0} under key {1}", se, key);
       }
       if (getStatisticsEnabled()) cacheStores.getAndAdd(map.size());
       return returnValue;
@@ -234,14 +233,14 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       }
       List<WriteCommand> modifications = transactionContext.getModifications();
       if (modifications.size() == 0) {
-         log.trace("Transaction has not logged any modifications!");
+         if (trace) log.trace("Transaction has not logged any modifications!");
          return;
       }
-      log.trace("Cache loader modification list: {0}", modifications);
+      if (trace) log.trace("Cache loader modification list: {0}", modifications);
       StoreModificationsBuilder modsBuilder = new StoreModificationsBuilder(getStatisticsEnabled());
       for (WriteCommand cacheCommand : modifications) cacheCommand.acceptVisitor(ctx, modsBuilder);
       int numMods = modsBuilder.modifications.size();
-      log.trace("Converted method calls to cache loader modifications.  List size: {0}", numMods);
+      if (trace) log.trace("Converted method calls to cache loader modifications.  List size: {0}", numMods);
 
       if (numMods > 0) {
          GlobalTransaction tx = transactionContext.getGlobalTransaction();
