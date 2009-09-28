@@ -155,6 +155,7 @@ pageTracker._trackPageview();
                         <descriptor>src/main/resources/assemblies/bin.xml</descriptor>
                         <descriptor>src/main/resources/assemblies/all.xml</descriptor>
                         <descriptor>src/main/resources/assemblies/src.xml</descriptor>
+                         <descriptor>src/main/resources/assemblies/rest-server.xml</descriptor>
                      </descriptors>
                      <finalName>${artifactId}-${project.version}</finalName>
                      <outputDirectory>target/distribution</outputDirectory>
