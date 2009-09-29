@@ -230,7 +230,7 @@ public class TreeProfileTest {
       double nOps = (double) (NUM_OPERATIONS / 3);
       double avg = ((double) totalNanos) / nOps;
       double avgMicros = avg / 1000;
-      return avgMicros + " µs";
+      return avgMicros + " Âµs";
    }
 
    private double toMillis(long nanos) {
