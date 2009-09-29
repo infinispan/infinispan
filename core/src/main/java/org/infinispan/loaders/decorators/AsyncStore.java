@@ -88,21 +88,25 @@ public class AsyncStore extends AbstractDelegatingStore {
       super.init(config, cache, m);
       concurrencyLevel = cache == null || cache.getConfiguration() == null ? 16 : cache.getConfiguration().getConcurrencyLevel();
    }
-   
+
+   @Override
    public void store(InternalCacheEntry ed) {
       enqueue(ed.getKey(), new Store(ed));
    }
-   
+
+   @Override
    public boolean remove(Object key) {
       enqueue(key, new Remove(key));
       return true;
    }
-   
+
+   @Override
    public void clear() {
       Clear clear = new Clear();
       enqueue(clear, clear);
    }
-   
+
+   @Override
    public void purgeExpired() {
       PurgeExpired purge = new PurgeExpired();
       enqueue(purge, purge);
