@@ -48,7 +48,9 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
    }
 
    public List<Address> locate(Object key, int replCount) {
-      int hash = Math.abs(key.hashCode());
+      int keyHashCode = key.hashCode();
+      if (keyHashCode == Integer.MIN_VALUE) keyHashCode += 1;
+      int hash = Math.abs(keyHashCode);
       int clusterSize = addresses.size();
       int numCopiesToFind = min(replCount, clusterSize);
 
