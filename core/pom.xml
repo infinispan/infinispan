@@ -46,6 +46,12 @@
       </dependency>
 
       <dependency>
+         <groupId>org.jboss</groupId>
+         <artifactId>jboss-common-core</artifactId>
+         <version>${version.jboss.common.core}</version>
+      </dependency>
+
+      <dependency>
          <groupId>org.jboss.marshalling</groupId>
          <artifactId>marshalling-api</artifactId>
          <version>${version.jboss.marshalling}</version>
