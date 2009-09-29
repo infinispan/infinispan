@@ -36,9 +36,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
    private static final Log log = LogFactory.getLog(FileCacheStore.class);
    private int streamBufferSize;
 
-
    FileCacheStoreConfig config;
-   Cache cache;
    File root;
 
    /**
@@ -48,10 +46,10 @@ public class FileCacheStore extends BucketBasedCacheStore {
       return root;
    }
 
+   @Override
    public void init(CacheLoaderConfig config, Cache cache, Marshaller m) throws CacheLoaderException {
       super.init(config, cache, m);
       this.config = (FileCacheStoreConfig) config;
-      this.cache = cache;
    }
 
    protected Set<InternalCacheEntry> loadAllLockSafe() throws CacheLoaderException {

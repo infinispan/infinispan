@@ -33,9 +33,6 @@ public class S3CacheStore extends BucketBasedCacheStore {
 
    private S3CacheStoreConfig config;
 
-   Cache cache;
-   Marshaller marshaller;
-
    private S3Connection connection;
    private S3Bucket s3Bucket;
 
@@ -48,8 +45,8 @@ public class S3CacheStore extends BucketBasedCacheStore {
     */
    public void init(CacheLoaderConfig cfg, Cache cache, Marshaller m) throws CacheLoaderException {
       this.config = (S3CacheStoreConfig) cfg;
-      S3Bucket cloudsBucket = null;
-      S3Connection cloudsConnection = null;
+      S3Bucket cloudsBucket;
+      S3Connection cloudsConnection;
       try {
          cloudsConnection = config.getConnectionClass() != null ? (S3Connection) Util.getInstance(config.getConnectionClass()) : new JCloudsConnection();
          cloudsBucket = config.getBucketClass()!=null ? (S3Bucket) Util.getInstance(config.getBucketClass()) : new JCloudsBucket();

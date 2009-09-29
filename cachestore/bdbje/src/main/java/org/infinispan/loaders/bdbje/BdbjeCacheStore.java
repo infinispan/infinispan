@@ -57,7 +57,6 @@ public class BdbjeCacheStore extends AbstractCacheStore {
     private static final boolean trace = log.isTraceEnabled();
 
     private BdbjeCacheStoreConfig cfg;
-    private Cache cache;
 
     private Environment env;
     private StoredClassCatalog catalog;
@@ -78,6 +77,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
      *
      * @see BdbjeCacheStoreConfig
      */
+    @Override
     public void init(CacheLoaderConfig config, Cache cache, Marshaller m) throws CacheLoaderException {
         BdbjeCacheStoreConfig cfg = (BdbjeCacheStoreConfig) config;
         init(cfg, new BdbjeResourceFactory(cfg), cache, m);
@@ -89,7 +89,6 @@ public class BdbjeCacheStore extends AbstractCacheStore {
         super.init(cfg, cache, m);
         this.cfg = cfg;
         this.factory = factory;
-        this.cache = cache;
     }
 
     /**

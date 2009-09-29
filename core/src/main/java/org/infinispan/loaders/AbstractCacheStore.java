@@ -32,13 +32,17 @@ public abstract class AbstractCacheStore extends AbstractCacheLoader implements 
    private AbstractCacheStoreConfig config;
    private ExecutorService purgerService;
    protected Marshaller marshaller;
+   protected Cache cache;
 
    public void init(CacheLoaderConfig config, Cache cache, Marshaller m) throws CacheLoaderException{
       this.config = (AbstractCacheStoreConfig) config;
       this.marshaller = m;
       if (config == null) throw new IllegalStateException("Null config!!!");
-      int concurrencyLevel = cache == null ? 16 : cache.getConfiguration().getConcurrencyLevel();
-      transactions = new ConcurrentHashMap<GlobalTransaction, List<? extends Modification>>(64, 0.75f, concurrencyLevel);
+      this.cache = cache;
+   }
+
+   protected final int getConcurrencyLevel() {
+      return cache == null || cache.getConfiguration() == null? 16 : cache.getConfiguration().getConcurrencyLevel();
    }
 
    public void start() throws CacheLoaderException {
@@ -48,6 +52,7 @@ public abstract class AbstractCacheStore extends AbstractCacheLoader implements 
       } else {
          purgerService = Executors.newSingleThreadExecutor();
       }
+      transactions = new ConcurrentHashMap<GlobalTransaction, List<? extends Modification>>(64, 0.75f, getConcurrencyLevel());
    }
 
    public void stop() throws CacheLoaderException {

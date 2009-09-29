@@ -27,8 +27,6 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
    String storeName = "__DEFAULT_STORES__";
    Map<Object, InternalCacheEntry> store;
    Cfg config;
-   private Marshaller marshaller;
-   private Cache cache;
 
    public void store(InternalCacheEntry ed) {
       if (ed != null) {
@@ -81,8 +79,6 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
    public void init(CacheLoaderConfig config, Cache cache, Marshaller m) throws CacheLoaderException {
       super.init(config, cache, m);
       this.config = (Cfg) config;
-      this.cache = cache;
-      this.marshaller = m;
       if (marshaller == null) marshaller = new TestObjectStreamMarshaller();
    }
 

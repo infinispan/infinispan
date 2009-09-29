@@ -86,7 +86,7 @@ public class AsyncStore extends AbstractDelegatingStore {
    @Override
    public void init(CacheLoaderConfig config, Cache cache, Marshaller m) throws CacheLoaderException {
       super.init(config, cache, m);
-      concurrencyLevel = cache == null ? 16 : cache.getConfiguration().getConcurrencyLevel();
+      concurrencyLevel = cache == null || cache.getConfiguration() == null ? 16 : cache.getConfiguration().getConcurrencyLevel();
    }
    
    public void store(InternalCacheEntry ed) {

@@ -68,7 +68,6 @@ public class JdbmCacheStore extends AbstractCacheStore {
    private RecordManager recman;
    private HTree tree;
    private BTree expiryTree;
-   private Cache cache;
 
    public Class<? extends CacheLoaderConfig> getConfigurationClass() {
       return JdbmCacheStoreConfig.class;
@@ -78,7 +77,6 @@ public class JdbmCacheStore extends AbstractCacheStore {
    public void init(CacheLoaderConfig clc, Cache cache, Marshaller m) throws CacheLoaderException {
       super.init(clc, cache, m);
       this.config = (JdbmCacheStoreConfig) clc;
-      this.cache = cache;
    }
 
    @Override
