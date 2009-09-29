@@ -10,7 +10,7 @@ import org.testng.annotations.Test;
 
 import java.util.List;
 
-@Test(groups = "functional", testName = "distribution.AsyncAPISyncDistTest", enabled = false)
+@Test(groups = "functional", testName = "distribution.AsyncAPISyncDistTest")
 public class AsyncAPISyncDistTest extends AsyncAPISyncReplTest {
 
    @SuppressWarnings("unchecked")

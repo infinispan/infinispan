@@ -7,7 +7,7 @@ import org.testng.annotations.Test;
 
 import java.util.concurrent.TimeUnit;
 
-@Test(groups = "functional", testName = "distribution.AsyncAPIAsyncDistTest", enabled = false)
+@Test(groups = "functional", testName = "distribution.AsyncAPIAsyncDistTest")
 public class AsyncAPIAsyncDistTest extends AsyncAPISyncDistTest {
 
    ReplListener rl;
