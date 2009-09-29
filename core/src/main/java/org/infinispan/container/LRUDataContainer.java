@@ -16,6 +16,10 @@ import org.infinispan.container.entries.InternalEntryFactory;
  */
 public class LRUDataContainer extends FIFODataContainer {
 
+   public LRUDataContainer(int concurrencyLevel) {
+      super(concurrencyLevel);
+   }
+
    @Override
    public InternalCacheEntry get(Object k) {
       int h = hash(k.hashCode());

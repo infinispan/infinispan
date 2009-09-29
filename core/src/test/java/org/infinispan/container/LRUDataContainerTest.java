@@ -11,7 +11,7 @@ import org.testng.annotations.Test;
 public class LRUDataContainerTest extends FIFODataContainerTest {
    @Override
    protected DataContainer createContainer() {
-      return new LRUDataContainer();
+      return new LRUDataContainer(16);
    }
 
    @Override

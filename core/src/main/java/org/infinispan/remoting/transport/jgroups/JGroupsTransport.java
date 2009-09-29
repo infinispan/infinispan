@@ -83,6 +83,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
    private static final String DEFAULT_JGROUPS_CONFIGURATION_FILE = "flush-udp.xml";
 
    Channel channel;
+   boolean createdChannel = false;
    Address address;
    volatile List<Address> members = Collections.emptyList();
    volatile boolean coordinator = false;
@@ -99,6 +100,20 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
    final ConcurrentMap<String, StateTransferMonitor> stateTransfersInProgress = new ConcurrentHashMap<String, StateTransferMonitor>();
    private final JGroupsDistSync flushTracker = new JGroupsDistSync();
    long distributedSyncTimeout;
+
+   /**
+    * This form is used when the transport is created by an external source and passed in to the GlobalConfiguration.
+    *
+    * @param channel created and running channel to use
+    */
+   public JGroupsTransport(Channel channel) {
+      this.channel = channel;
+      if (channel == null) throw new IllegalArgumentException("Cannot deal with a null channel!");
+      if (channel.isConnected()) throw new IllegalArgumentException("Channel passed in cannot already be connected!");
+   }
+
+   public JGroupsTransport() {
+   }
 
    // ------------------------------------------------------------------------------------------------------------------
    // Lifecycle and setup stuff
@@ -163,18 +178,23 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
    }
 
    private void initChannelAndRPCDispatcher() throws CacheException {
-      buildChannel();
-      // Channel.LOCAL *must* be set to false so we don't see our own messages - otherwise invalidations targeted at
-      // remote instances will be received by self.
-      String transportNodeName = c.getTransportNodeName();
-      if(transportNodeName != null && transportNodeName.length()>0) {
-         long range = Short.MAX_VALUE *2;
-         long randomInRange = (long)((Math.random() * range) % range) + 1;         
-         transportNodeName = transportNodeName + "-" + randomInRange;
-         channel.setName(transportNodeName);
-      }     
+      if (channel == null) {
+         createdChannel = true;
+         buildChannel();
+         // Channel.LOCAL *must* be set to false so we don't see our own messages - otherwise invalidations targeted at
+         // remote instances will be received by self.
+         String transportNodeName = c.getTransportNodeName();
+         if (transportNodeName != null && transportNodeName.length() > 0) {
+            long range = Short.MAX_VALUE * 2;
+            long randomInRange = (long) ((Math.random() * range) % range) + 1;
+            transportNodeName = transportNodeName + "-" + randomInRange;
+            channel.setName(transportNodeName);
+         }
+      }
+
       channel.setOpt(Channel.LOCAL, false);
       channel.setOpt(Channel.BLOCK, true);
+
       dispatcher = new CommandAwareRpcDispatcher(channel, this,
                                                  asyncExecutor, inboundInvocationHandler, flushTracker, distributedSyncTimeout);
       MarshallerAdapter adapter = new MarshallerAdapter(marshaller);
@@ -183,7 +203,6 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
    }
 
    private void buildChannel() {
-      // TODO: Check for injected channels and for channel factories.
       // in order of preference - we first look for an external JGroups file, then a set of XML properties, and
       // finally the legacy JGroups String properties.
       String cfg;

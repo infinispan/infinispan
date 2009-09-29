@@ -41,11 +41,11 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
    public <T> T construct(Class<T> componentType) {
       switch (configuration.getEvictionStrategy()) {
          case NONE:
-            return (T) new SimpleDataContainer();
+            return (T) new SimpleDataContainer(configuration.getConcurrencyLevel());
          case FIFO:
-            return (T) new FIFODataContainer();
+            return (T) new FIFODataContainer(configuration.getConcurrencyLevel());
          case LRU:
-            return (T) new LRUDataContainer();
+            return (T) new LRUDataContainer(configuration.getConcurrencyLevel());
          default:
             throw new ConfigurationException("Unknown eviction strategy " + configuration.getEvictionStrategy());
       }

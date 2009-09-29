@@ -3,9 +3,12 @@ package org.infinispan.loaders.decorators;
 import net.jcip.annotations.GuardedBy;
 
 import org.infinispan.CacheException;
+import org.infinispan.Cache;
+import org.infinispan.marshall.Marshaller;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
+import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.modifications.Clear;
 import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.loaders.modifications.PurgeExpired;
@@ -72,11 +75,18 @@ public class AsyncStore extends AbstractDelegatingStore {
    private final ReadWriteLock mapLock = new ReentrantReadWriteLock();
    private final Lock read = mapLock.readLock();
    private final Lock write = mapLock.writeLock();
+   private int concurrencyLevel;
    @GuardedBy("mapLock") private ConcurrentMap<Object, Modification> state;
    
    public AsyncStore(CacheStore delegate, AsyncStoreConfig asyncStoreConfig) {
       super(delegate);
       this.asyncStoreConfig = asyncStoreConfig;
+   }
+
+   @Override
+   public void init(CacheLoaderConfig config, Cache cache, Marshaller m) throws CacheLoaderException {
+      super.init(config, cache, m);
+      concurrencyLevel = cache.getConfiguration().getConcurrencyLevel();
    }
    
    public void store(InternalCacheEntry ed) {
@@ -100,7 +110,7 @@ public class AsyncStore extends AbstractDelegatingStore {
    
    @Override
    public void start() throws CacheLoaderException {
-      state = new ConcurrentHashMap<Object, Modification>();
+      state = newStateMap();
       log.info("Async cache loader starting {0}", this);
       stopped.set(false);
       super.start();
@@ -233,7 +243,7 @@ public class AsyncStore extends AbstractDelegatingStore {
     * Processes modifications taking the latest updates from a state map.
     */
    class AsyncProcessor implements Runnable {
-      private ConcurrentMap<Object, Modification> swap = new ConcurrentHashMap<Object, Modification>();
+      private ConcurrentMap<Object, Modification> swap = newStateMap();
       
       public void run() {
          while (!Thread.interrupted()) {
@@ -262,7 +272,7 @@ public class AsyncStore extends AbstractDelegatingStore {
             acquireLock(write);
             unlock = true;
             swap = state;
-            state = new ConcurrentHashMap<Object, Modification>();
+            state = newStateMap();
          } finally {
             if (unlock) write.unlock();
          }
@@ -285,5 +295,9 @@ public class AsyncStore extends AbstractDelegatingStore {
             if (log.isDebugEnabled()) log.debug("Exception: ", e);
          }
       }
+   }
+
+   private ConcurrentMap<Object, Modification> newStateMap() {
+      return new ConcurrentHashMap<Object, Modification>(64, 0.75f, concurrencyLevel);
    }
 }

@@ -61,10 +61,9 @@ public class FIFODataContainer implements DataContainer {
 
    final LinkedEntry head = new LinkedEntry(null), tail = new LinkedEntry(null);
 
-   public FIFODataContainer() {
+   public FIFODataContainer(int concurrencyLevel) {
       float loadFactor = 0.75f;
-      int initialCapacity = 16;
-      int concurrencyLevel = 16;
+      int initialCapacity = 256;
 
       // Find power-of-two sizes best matching arguments
       int sshift = 0;

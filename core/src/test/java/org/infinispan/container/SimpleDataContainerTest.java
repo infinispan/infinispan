@@ -29,7 +29,7 @@ public class SimpleDataContainerTest {
    }
 
    protected DataContainer createContainer() {
-      return new SimpleDataContainer();
+      return new SimpleDataContainer(16);
    }
 
    public void testExpiredData() throws InterruptedException {

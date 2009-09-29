@@ -15,7 +15,7 @@ public class FIFODataContainerTest extends SimpleDataContainerTest {
 
    @Override
    protected DataContainer createContainer() {
-      return new FIFODataContainer();
+      return new FIFODataContainer(16);
    }
 
    public void testOrdering() {

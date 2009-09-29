@@ -72,8 +72,8 @@ import java.util.concurrent.atomic.AtomicLong;
 @MBean(objectName = "CacheStore", description = "Component that handles storing of entries to a CacheStore from memory.")
 public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    CacheLoaderManagerConfig loaderConfig = null;
-   private Map<GlobalTransaction, Integer> txStores = new ConcurrentHashMap<GlobalTransaction, Integer>();
-   private Map<GlobalTransaction, Set<Object>> preparingTxs = new ConcurrentHashMap<GlobalTransaction, Set<Object>>();
+   private Map<GlobalTransaction, Integer> txStores;
+   private Map<GlobalTransaction, Set<Object>> preparingTxs;
    final AtomicLong cacheStores = new AtomicLong(0);
    CacheStore store;
    private CacheLoaderManager loaderManager;
@@ -93,6 +93,8 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       store = loaderManager.getCacheStore();
       this.setStatisticsEnabled(configuration.isExposeJmxStatistics());
       loaderConfig = configuration.getCacheLoaderManagerConfig();
+      txStores = new ConcurrentHashMap<GlobalTransaction, Integer>(64, 0.75f, configuration.getConcurrencyLevel());
+      preparingTxs = new ConcurrentHashMap<GlobalTransaction, Set<Object>>(64, 0.75f, configuration.getConcurrencyLevel());
    }
 
    /**

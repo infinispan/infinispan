@@ -1,11 +1,11 @@
 package org.infinispan.loaders;
 
 import org.infinispan.Cache;
-import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
 import org.infinispan.marshall.Marshaller;
+import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -15,9 +15,9 @@ import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * An abstract {@link org.infinispan.loaders.CacheStore} that holds common implementations for some methods
@@ -27,20 +27,17 @@ import java.util.concurrent.Executors;
  */
 public abstract class AbstractCacheStore extends AbstractCacheLoader implements CacheStore {
 
-   private final Map<GlobalTransaction, List<? extends Modification>> transactions = new ConcurrentHashMap<GlobalTransaction, List<? extends Modification>>();
-
+   private Map<GlobalTransaction, List<? extends Modification>> transactions;
    private static Log log = LogFactory.getLog(AbstractCacheStore.class);
-
    private AbstractCacheStoreConfig config;
-
    private ExecutorService purgerService;
-
    protected Marshaller marshaller;
 
    public void init(CacheLoaderConfig config, Cache cache, Marshaller m) throws CacheLoaderException{
       this.config = (AbstractCacheStoreConfig) config;
       this.marshaller = m;
       if (config == null) throw new IllegalStateException("Null config!!!");
+      transactions = new ConcurrentHashMap<GlobalTransaction, List<? extends Modification>>(64, 0.75f, cache.getConfiguration().getConcurrencyLevel());
    }
 
    public void start() throws CacheLoaderException {

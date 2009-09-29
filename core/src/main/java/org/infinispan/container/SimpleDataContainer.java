@@ -30,9 +30,14 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @ThreadSafe
 public class SimpleDataContainer implements DataContainer {
-   final ConcurrentMap<Object, InternalCacheEntry> immortalEntries = new ConcurrentHashMap<Object, InternalCacheEntry>();
-   final ConcurrentMap<Object, InternalCacheEntry> mortalEntries = new ConcurrentHashMap<Object, InternalCacheEntry>();
+   final ConcurrentMap<Object, InternalCacheEntry> immortalEntries;
+   final ConcurrentMap<Object, InternalCacheEntry> mortalEntries;
    final AtomicInteger numEntries = new AtomicInteger(0);
+
+   public SimpleDataContainer(int concurrencyLevel) {      
+      immortalEntries = new ConcurrentHashMap<Object, InternalCacheEntry>(128, 0.75f, concurrencyLevel);
+      mortalEntries = new ConcurrentHashMap<Object, InternalCacheEntry>(64, 0.75f, concurrencyLevel);
+   }
 
    /**
     * Like a get, but doesn't check for expired entries

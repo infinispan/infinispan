@@ -39,7 +39,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p/>
  * All data access is transactional.  Any attempted reads to locked records will block.  The maximum duration of this is
  * set in nanoseconds via the parameter {@link org.infinispan.loaders.bdbje.BdbjeCacheStoreConfig#getLockAcquistionTimeout()}.
- * Calls to {@link org.infinispan.loaders.CacheStore#prepare(java.util.List prepare} will attempt
+ * Calls to {@link org.infinispan.loaders.CacheStore#prepare(java.util.List, org.infinispan.transaction.xa.GlobalTransaction, boolean)}  will attempt
  * to resolve deadlocks, retrying up to {@link org.infinispan.loaders.bdbje.BdbjeCacheStoreConfig#getMaxTxRetries()}
  * attempts.
  * <p/>
@@ -117,7 +117,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
     }
 
     private void openTransactionServices() {
-        txnMap = new ConcurrentHashMap<GlobalTransaction, Transaction>();
+        txnMap = new ConcurrentHashMap<GlobalTransaction, Transaction>(64, 0.75f, cache.getConfiguration().getConcurrencyLevel());
         currentTransaction = factory.createCurrentTransaction(env);
         transactionRunner = factory.createPreparableTransactionRunner(env);
     }
@@ -225,7 +225,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
 
     /**
      * {@inheritDoc} delegates to {@link BdbjeCacheStore#applyModifications(java.util.List)}, if <code>isOnePhase</code>.
-     * Otherwise, delegates to {@link BdbjeCacheStore#prepare(java.util.List, javax.transaction.Transaction) prepare}.
+     * Otherwise, delegates to {@link BdbjeCacheStore#prepare(java.util.List, org.infinispan.transaction.xa.GlobalTransaction)} 
      */
     public void prepare(List<? extends Modification> mods, GlobalTransaction tx, boolean isOnePhase) throws CacheLoaderException {
         if (isOnePhase) {
@@ -280,7 +280,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
     /**
      * {@inheritDoc}
      * <p/>
-     * This implementation calls {@link BdbjeCacheStore#completeTransaction(javax.transaction.Transaction, boolean)
+     * This implementation calls {@link BdbjeCacheStore#completeTransaction(org.infinispan.transaction.xa.GlobalTransaction, boolean)}
      * completeTransaction} with an argument of false.
      */
     public void rollback(GlobalTransaction tx) {
@@ -294,7 +294,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
     /**
      * {@inheritDoc}
      * <p/>
-     * This implementation calls {@link BdbjeCacheStore#completeTransaction(javax.transaction.Transaction, boolean)
+     * This implementation calls {@link BdbjeCacheStore#completeTransaction(org.infinispan.transaction.xa.GlobalTransaction, boolean)}
      * completeTransaction} with an argument of true.
      */
     public void commit(GlobalTransaction tx) throws CacheLoaderException {
