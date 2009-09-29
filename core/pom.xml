@@ -23,13 +23,6 @@
    </properties>
 
    <dependencies>
-
-      <dependency>
-         <groupId>javax.xml.bind</groupId>
-         <artifactId>jaxb-api</artifactId>
-         <version>2.1</version>
-      </dependency>
-
       <dependency>
          <groupId>jgroups</groupId>
          <artifactId>jgroups</artifactId>
@@ -53,23 +46,10 @@
       </dependency>
 
       <dependency>
-         <groupId>org.jboss</groupId>
-         <artifactId>jboss-common-core</artifactId>
-         <version>${version.jboss.common.core}</version>
-      </dependency>
-
-      <dependency>
          <groupId>org.jboss.marshalling</groupId>
          <artifactId>marshalling-api</artifactId>
          <version>${version.jboss.marshalling}</version>
       </dependency>
-
-      <dependency>
-         <groupId>com.sun.xml.bind</groupId>
-         <artifactId>jaxb-impl</artifactId>
-         <version>2.1.3</version>
-      </dependency>
-
    </dependencies>
    <build>
       <plugins>
