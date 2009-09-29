@@ -18,7 +18,7 @@ import java.util.Map;
  */
 public class LocalTxInvocationContext extends AbstractTxInvocationContext {
 
-   private TransactionXaAdapter xaAdapter;
+   private volatile TransactionXaAdapter xaAdapter;
 
    public Transaction getRunningTransaction() {
       return xaAdapter.getTransaction();

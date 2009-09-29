@@ -50,12 +50,15 @@ public class GlobalTransactionFactory {
    }
 
    public GlobalTransaction newGlobalTransaction(Address addr, boolean remote) {
+      GlobalTransaction gtx;
       if (isEddEnabled) {
          DeadlockDetectingGlobalTransaction globalTransaction = new DeadlockDetectingGlobalTransaction(addr, remote);
          globalTransaction.setCoinToss(generateRandomdId());
-         return globalTransaction;
+         gtx = globalTransaction;
       } else {
-         return new GlobalTransaction(addr, remote);
+         gtx = new GlobalTransaction(addr, remote);
       }
+
+      return gtx;
    }
 }

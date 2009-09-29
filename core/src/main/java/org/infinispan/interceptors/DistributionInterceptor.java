@@ -184,7 +184,9 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       if (ctx.isOriginLocal()) {
          List<Address> recipients = new ArrayList<Address>(ctx.getTransactionParticipants());
          rpcManager.invokeRemotely(recipients, command, configuration.isSyncCommitPhase(), true);
-         flushL1Cache(recipients.size(), getKeys(ctx.getModifications()), false, null, configuration.isSyncCommitPhase());
+         List<WriteCommand> mods = ctx.getModifications();
+         if (trace) log.trace("CommitCommand is associated with a tx with modifications {0}", mods);
+         flushL1Cache(recipients.size(), getKeys(mods), false, null, configuration.isSyncCommitPhase());
       }
       return invokeNextInterceptor(ctx, command);
    }

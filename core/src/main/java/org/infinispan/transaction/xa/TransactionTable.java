@@ -94,6 +94,7 @@ public class TransactionTable {
       if (current == null) {
          Address localAddress = rpcManager != null ? rpcManager.getTransport().getAddress() : null;
          GlobalTransaction tx = gtf.newGlobalTransaction(localAddress, false);
+         if (trace) log.trace("Created a new GlobalTransaction {0}", tx);
          current = new TransactionXaAdapter(tx, icc, invoker, commandsFactory, configuration, this, transaction);
          localTransactions.put(transaction, current);
          try {

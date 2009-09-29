@@ -38,7 +38,7 @@ public class TransactionXaAdapter implements CacheTransaction, XAResource {
 
    private int txTimeout;
 
-   private List<WriteCommand> modifications;
+   private volatile List<WriteCommand> modifications;
    private BidirectionalMap<Object, CacheEntry> lookedUpEntries;
 
    private GlobalTransaction globalTx;
@@ -64,6 +64,7 @@ public class TransactionXaAdapter implements CacheTransaction, XAResource {
    }
 
    public void addModification(WriteCommand mod) {
+      if (trace) log.trace("Adding modification {0}. Mod list is {1}", mod, modifications);
       if (modifications == null) {
          modifications = new ArrayList<WriteCommand>(8);
       }
@@ -201,6 +202,7 @@ public class TransactionXaAdapter implements CacheTransaction, XAResource {
    }
 
    public List<WriteCommand> getModifications() {
+      if (trace) log.trace("Retrieving modification list {0}.", modifications);
       return modifications;
    }
 
