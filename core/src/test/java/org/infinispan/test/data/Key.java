@@ -43,7 +43,7 @@ public class Key implements Externalizable {
       out.writeObject(value);
       if (lockable) {
          try {
-            if (!latch.await(60, TimeUnit.SECONDS)) throw new RuntimeException("Cannot serialize!!");
+            if (!latch.await(5, TimeUnit.MINUTES)) throw new RuntimeException("Cannot serialize!!");
          } catch (InterruptedException e) {
             e.printStackTrace();
          }
