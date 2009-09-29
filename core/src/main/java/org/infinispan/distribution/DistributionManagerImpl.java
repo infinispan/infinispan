@@ -44,6 +44,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -51,7 +52,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
-import java.util.concurrent.locks.LockSupport;
 
 /**
  * The default distribution manager implementation
@@ -92,11 +92,11 @@ public class DistributionManagerImpl implements DistributionManager {
    private DataContainer dataContainer;
    private InterceptorChain interceptorChain;
    private InvocationContextContainer icc;
-   private volatile boolean joinTaskSubmitted = false;
    @ManagedAttribute(description = "If true, the node has successfully joined the grid and is considered to hold state.  If false, the join process is still in progress.")
    volatile boolean joinComplete = false;
    final List<Address> leavers = new CopyOnWriteArrayList<Address>();
    volatile Future<Void> leaveTaskFuture;
+   final CountDownLatch startLatch = new CountDownLatch(1);
 
    @Inject
    public void init(Configuration configuration, RpcManager rpcManager, CacheManagerNotifier notifier, CommandsFactory cf,
@@ -126,7 +126,7 @@ public class DistributionManagerImpl implements DistributionManager {
       } else {
          joinComplete = true;
       }
-      joinTaskSubmitted = true;
+      startLatch.countDown();
    }
 
    @Stop(priority = 20)
@@ -315,8 +315,15 @@ public class DistributionManagerImpl implements DistributionManager {
    public class ViewChangeListener {
       @ViewChanged
       public void handleViewChange(ViewChangedEvent e) {
-         while (!joinTaskSubmitted) LockSupport.parkNanos(100 * 1000000);
-         rehash(e.getNewMembers(), e.getOldMembers());
+         boolean started = false;
+         // how long do we wait for a startup?
+         try {
+            started = startLatch.await(2, TimeUnit.MINUTES);
+            if (started) rehash(e.getNewMembers(), e.getOldMembers());
+            else log.warn("DistributionManager not started after waiting up to 2 minutes!  Not rehashing!");
+         } catch (InterruptedException ie) {
+            log.warn("View change interrupted; not rehashing!");
+         }
       }
    }
 
