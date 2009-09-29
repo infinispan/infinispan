@@ -116,7 +116,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
     }
 
     private void openTransactionServices() {
-        txnMap = new ConcurrentHashMap<GlobalTransaction, Transaction>(64, 0.75f, cache.getConfiguration().getConcurrencyLevel());
+        txnMap = new ConcurrentHashMap<GlobalTransaction, Transaction>(64, 0.75f, getConcurrencyLevel());
         currentTransaction = factory.createCurrentTransaction(env);
         transactionRunner = factory.createPreparableTransactionRunner(env);
     }
