@@ -113,8 +113,17 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
     *
     * @return the new CacheManager
     */
+   ThreadLocal<Integer> cacheCount = new ThreadLocal<Integer>() {
+      @Override
+      protected Integer initialValue() {
+         return 0;
+      }
+   };
    protected CacheManager addClusterEnabledCacheManager() {
-      CacheManager cm = TestCacheManagerFactory.createClusteredCacheManager();
+      int cmNumber = cacheCount.get();
+      cacheCount.set(cmNumber + 1);
+      String cacheName = "Cache-" + Character.toUpperCase((char) ('A' + cmNumber));
+      CacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(cacheName);
       cacheManagers.add(cm);
       return cm;
    }

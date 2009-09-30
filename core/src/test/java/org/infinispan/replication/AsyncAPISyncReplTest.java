@@ -13,6 +13,7 @@ import org.infinispan.test.data.Key;
 import org.infinispan.util.Util;
 import org.testng.annotations.Test;
 
+import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import java.util.Collections;
 import java.util.List;
@@ -49,6 +50,8 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       assert Util.safeEquals((real = c2.get(k)), v) : "Error on cache 2.  Expected " + v + " and got " + real;
    }
 
+
+   @Test(invocationCount = 100)
    public void testAsyncMethods() throws ExecutionException, InterruptedException {
 
       String v = "v";
@@ -62,7 +65,6 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
 
       // put
       Future<String> f = c1.putAsync(key, v);
-      System.out.println("Future is of type " + f.getClass().getName());
       assert f != null;
       assert !f.isDone();
       assert c2.get(key) == null;
@@ -201,7 +203,9 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       Future<String> f = c1.putAsync(key, v);
       assert f != null;
       assert f.isDone();
+      Transaction t = tm.suspend();
       assert c2.get(key) == null;
+      tm.resume(t);
       assert f.get() == null;
       tm.commit();
       asyncWait(true, PutKeyValueCommand.class);
@@ -211,7 +215,9 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       f = c1.putAsync(key, v2);
       assert f != null;
       assert f.isDone();
+      t = tm.suspend();
       assert c2.get(key).equals(v);
+      tm.resume(t);
       assert !f.isCancelled();
       assert f.get().equals(v);
       tm.commit();
@@ -223,7 +229,9 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       Future<Void> f2 = c1.putAllAsync(Collections.singletonMap(key, v3));
       assert f2 != null;
       assert f2.isDone();
+      t = tm.suspend();
       assert c2.get(key).equals(v2);
+      tm.resume(t);
       assert !f2.isCancelled();
       assert f2.get() == null;
       tm.commit();
@@ -235,7 +243,9 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       f = c1.putIfAbsentAsync(key, v4);
       assert f != null;
       assert f.isDone();
+      t = tm.suspend();
       assert c2.get(key).equals(v3);
+      tm.resume(t);
       assert !f.isCancelled();
       assert f.get().equals(v3);
       tm.commit();
@@ -246,7 +256,9 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       f = c1.removeAsync(key);
       assert f != null;
       assert f.isDone();
+      t = tm.suspend();
       assert c2.get(key).equals(v3);
+      tm.resume(t);
       assert !f.isCancelled();
       assert f.get().equals(v3);
       tm.commit();
@@ -258,7 +270,9 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       f = c1.putIfAbsentAsync(key, v4);
       assert f != null;
       assert f.isDone();
+      t = tm.suspend();
       assert c2.get(key) == null;
+      tm.resume(t);
       assert !f.isCancelled();
       assert f.get() == null;
       tm.commit();
@@ -279,7 +293,9 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       f3 = c1.removeAsync(key, v4);
       assert f3 != null;
       assert f3.isDone();
+      t = tm.suspend();
       assert c2.get(key).equals(v4);
+      tm.resume(t);
       assert !f3.isCancelled();
       assert f3.get().equals(true);
       tm.commit();
@@ -303,7 +319,9 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       f = c1.replaceAsync(key, v5);
       assert f != null;
       assert f.isDone();
+      t = tm.suspend();
       assert c2.get(key).equals(v);
+      tm.resume(t);
       assert !f.isCancelled();
       assert f.get().equals(v);
       tm.commit();
@@ -324,7 +342,9 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       f3 = c1.replaceAsync(key, v5, v6);
       assert f3 != null;
       assert f3.isDone();
+      t = tm.suspend();
       assert c2.get(key).equals(v5);
+      tm.resume(t);
       assert !f3.isCancelled();
       assert f3.get().equals(true);
       tm.commit();

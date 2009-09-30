@@ -107,6 +107,12 @@
          <scope>test</scope>
       </dependency>
       <dependency>
+         <groupId>commons-logging</groupId>
+         <artifactId>commons-logging</artifactId>
+         <version>1.1</version>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
          <groupId>jboss.jbossts</groupId>
          <artifactId>jbossts-common</artifactId>
          <version>4.6.1.GA</version>

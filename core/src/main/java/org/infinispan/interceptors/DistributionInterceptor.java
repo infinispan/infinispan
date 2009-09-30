@@ -181,11 +181,10 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    // ---- TX boundary commands
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      if (ctx.isOriginLocal()) {
+      if (ctx.isOriginLocal() && ctx.hasModifications()) {
          List<Address> recipients = new ArrayList<Address>(ctx.getTransactionParticipants());
          rpcManager.invokeRemotely(recipients, command, configuration.isSyncCommitPhase(), true);
          List<WriteCommand> mods = ctx.getModifications();
-         if (trace) log.trace("CommitCommand is associated with a tx with modifications {0}", mods);
          flushL1Cache(recipients.size(), getKeys(mods), false, null, configuration.isSyncCommitPhase());
       }
       return invokeNextInterceptor(ctx, command);
@@ -197,7 +196,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
 
       boolean sync = isSynchronous(ctx);
 
-      if (ctx.isOriginLocal()) {
+      if (ctx.isOriginLocal() && ctx.hasModifications()) {
          List<Address> recipients = new ArrayList<Address>(ctx.getTransactionParticipants());
          if (trace) log.trace("Multicasting PrepareCommand to recipients : " + recipients);
          // this method will return immediately if we're the only member (because exclude_self=true)
