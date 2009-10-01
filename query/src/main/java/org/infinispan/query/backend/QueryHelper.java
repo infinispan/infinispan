@@ -3,6 +3,7 @@ package org.infinispan.query.backend;
 import org.hibernate.search.cfg.SearchConfiguration;
 import org.hibernate.search.engine.SearchFactoryImplementor;
 import org.hibernate.search.impl.SearchFactoryImpl;
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.factories.ComponentRegistry;
@@ -13,6 +14,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.lang.reflect.Field;
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -20,8 +22,12 @@ import java.util.Properties;
  * This is a TEMPORARY helper class that will be used to add the QueryInterceptor to the chain and provide Classes to
  * Hibernate Search.
  * <p/>
- * This class needs to be instantiated and then have applyProperties() called on it. This class WILL be removed once
- * other hooks come into Infinispan for versions 4.1 etc.
+ * This class needs to be instantiated before adding any objects into the Cache. Any objects added before this
+ * instantiation will not be indexed.
+ * <p/>
+ * This class must be instantiated only once however.
+ * <p/>
+ * However, only one instan This class WILL be removed once other hooks come into Infinispan for versions 4.1 etc.
  *
  * @author Navin Surtani
  * @since 4.0
@@ -56,9 +62,11 @@ public class QueryHelper {
       // assume cache is already created and running.
       // otherwise, start the cache!!
       if (cache.getStatus().needToInitializeBeforeStart()) {
-         log.debug("Cache not started.  Starting cache first.");
+         if(log.isDebugEnabled()) log.debug("Cache not started.  Starting cache first.");
          cache.start();
       }
+
+      checkInterceptorChain(cache);
 
       if (classes.length == 0) {
          throw new IllegalArgumentException("You haven't passed in any classes to index.");
@@ -195,6 +203,24 @@ public class QueryHelper {
                throw new IllegalArgumentException("Please remove the documentId annotation in " + c.getName());
             }
          }
+      }
+   }
+
+
+   private void checkInterceptorChain(Cache cache) {
+      // Check if there are any QueryInterceptors already added onto the chain.
+      // If there already is one then throw a CacheException
+
+      AdvancedCache advanced = cache.getAdvancedCache();
+
+      List<CommandInterceptor> interceptorList = advanced.getInterceptorChain();
+
+      for (CommandInterceptor inter : interceptorList) {
+
+         if (inter.getClass().equals(QueryInterceptor.class) || inter.getClass().equals(LocalQueryInterceptor.class)) {
+            throw new CacheException("There is already an instance of the QueryInterceptor running");
+         }
+
       }
    }
 }
