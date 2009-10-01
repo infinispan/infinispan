@@ -50,8 +50,6 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       assert Util.safeEquals((real = c2.get(k)), v) : "Error on cache 2.  Expected " + v + " and got " + real;
    }
 
-
-   @Test(invocationCount = 100)
    public void testAsyncMethods() throws ExecutionException, InterruptedException {
 
       String v = "v";
