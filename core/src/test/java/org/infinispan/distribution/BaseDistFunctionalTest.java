@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 @Test(groups = "functional", testName = "distribution.BaseDistFunctionalTest", enabled = false)
@@ -57,8 +58,22 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
 
       cacheAddresses = new ArrayList<Address>(4);
       for (Cache cache : caches) cacheAddresses.add(cache.getCacheManager().getAddress());
+
+      waitForInitRehashToComplete(c1, c2, c3, c4);
+
    }
 
+   public static void waitForInitRehashToComplete(Cache... caches) {
+      int gracetime = 60000; // 60 seconds?
+      long giveup = System.currentTimeMillis() + gracetime;
+      for (Cache c: caches) {
+         DistributionManagerImpl dmi = (DistributionManagerImpl) TestingUtil.extractComponent(c, DistributionManager.class);
+         while (!dmi.joinComplete) {
+            if (System.currentTimeMillis() > giveup) throw new RuntimeException("Timed out waiting for initial join sequence to complete!");
+            LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
+         }
+      }
+   }
 
    // only used if the CH impl does not order the hash ring based on the order of the view.
    // in the case of the DefaultConsistentHash, the order is based on a has code of the addres modded by
