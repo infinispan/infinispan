@@ -9,7 +9,7 @@ import org.testng.annotations.Test;
 import java.util.Arrays;
 import java.util.List;
 
-@Test(groups = "unit", testName = "distribution.JoinTaskTest", enabled = false)
+@Test(groups = "unit", testName = "distribution.JoinTaskTest")
 public class JoinTaskTest {
    public void testCalculatingWhosensStateRC2() {
       doTest(2);

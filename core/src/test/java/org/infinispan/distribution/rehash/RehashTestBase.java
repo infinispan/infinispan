@@ -21,7 +21,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 /**
  * A base test for all rehashing tests
  */
-@Test(groups = "functional", testName = "distribution.rehash.RehashTestBase", enabled = false)
+@Test(groups = "functional", testName = "distribution.rehash.RehashTestBase")
 public abstract class RehashTestBase extends BaseDistFunctionalTest {
 
    protected RehashTestBase() {

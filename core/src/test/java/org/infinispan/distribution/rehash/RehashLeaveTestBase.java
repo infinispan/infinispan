@@ -7,7 +7,7 @@ import org.testng.annotations.Test;
 
 import java.util.concurrent.TimeUnit;
 
-@Test(groups = "functional", testName = "distribution.rehash.RehashLeaveTestBase", enabled = false)
+@Test(groups = "functional", testName = "distribution.rehash.RehashLeaveTestBase")
 public abstract class RehashLeaveTestBase extends RehashTestBase {
    void waitForRehashCompletion() {
       long giveupTime = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(60 * 2);

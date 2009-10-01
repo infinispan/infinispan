@@ -2,7 +2,7 @@ package org.infinispan.distribution;
 
 import org.testng.annotations.Test;
 
-@Test(groups = "unit", testName = "distribution.MagicKeyTest", enabled = false)
+@Test(groups = "unit", testName = "distribution.MagicKeyTest")
 public class MagicKeyTest extends BaseDistFunctionalTest {
    public void testMagicKeys() {
       BaseDistFunctionalTest.MagicKey k1 = new BaseDistFunctionalTest.MagicKey(c1);

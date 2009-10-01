@@ -6,7 +6,7 @@ import org.testng.annotations.Test;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-@Test(groups = "functional", testName = "distribution.rehash.SingleJoinTest", enabled = false)
+@Test(groups = "functional", testName = "distribution.rehash.SingleJoinTest")
 public class SingleJoinTest extends RehashTestBase {
    CacheManager joinerManager;
    Cache<Object, String> joiner;

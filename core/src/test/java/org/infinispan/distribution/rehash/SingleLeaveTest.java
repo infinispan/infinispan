@@ -5,7 +5,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "distribution.rehash.SingleLeaveTest", enabled = false)
+@Test(groups = "functional", testName = "distribution.rehash.SingleLeaveTest")
 public class SingleLeaveTest extends RehashLeaveTestBase {
    Address leaverAddress;
 

@@ -22,10 +22,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.LockSupport;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import java.util.concurrent.locks.LockSupport;
 
-@Test(groups = "functional", testName = "distribution.BaseDistFunctionalTest", enabled = false)
+@Test(groups = "functional", testName = "distribution.BaseDistFunctionalTest")
 public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
    protected String cacheName;
    protected Cache<Object, String> c1, c2, c3, c4;
@@ -59,18 +59,24 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       cacheAddresses = new ArrayList<Address>(4);
       for (Cache cache : caches) cacheAddresses.add(cache.getCacheManager().getAddress());
 
-      waitForInitRehashToComplete(c1, c2, c3, c4);
+      RehashWaiter.waitForInitRehashToComplete(c1, c2, c3, c4);
 
    }
 
-   public static void waitForInitRehashToComplete(Cache... caches) {
-      int gracetime = 60000; // 60 seconds?
-      long giveup = System.currentTimeMillis() + gracetime;
-      for (Cache c: caches) {
-         DistributionManagerImpl dmi = (DistributionManagerImpl) TestingUtil.extractComponent(c, DistributionManager.class);
-         while (!dmi.joinComplete) {
-            if (System.currentTimeMillis() > giveup) throw new RuntimeException("Timed out waiting for initial join sequence to complete!");
-            LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
+   /**
+    * This is a separate class because some tools try and run this method as a test 
+    */
+   public static class RehashWaiter {
+      public static void waitForInitRehashToComplete(Cache... caches) {
+         int gracetime = 60000; // 60 seconds?
+         long giveup = System.currentTimeMillis() + gracetime;
+         for (Cache c : caches) {
+            DistributionManagerImpl dmi = (DistributionManagerImpl) TestingUtil.extractComponent(c, DistributionManager.class);
+            while (!dmi.joinComplete) {
+               if (System.currentTimeMillis() > giveup)
+                  throw new RuntimeException("Timed out waiting for initial join sequence to complete!");
+               LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
+            }
          }
       }
    }

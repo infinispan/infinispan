@@ -10,7 +10,7 @@ import java.util.Arrays;
 import java.util.List;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-@Test(groups = "functional", testName = "distribution.rehash.ConcurrentJoinTest", enabled = false)
+@Test(groups = "functional", testName = "distribution.rehash.ConcurrentJoinTest")
 public class ConcurrentJoinTest extends RehashTestBase {
 
    List<CacheManager> joinerManagers;

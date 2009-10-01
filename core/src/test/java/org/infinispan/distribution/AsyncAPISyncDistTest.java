@@ -25,7 +25,7 @@ public class AsyncAPISyncDistTest extends AsyncAPISyncReplTest {
       c2 = l.get(1);
 
       // wait for any rehashing to complete
-      BaseDistFunctionalTest.waitForInitRehashToComplete(c1, c2);
+      BaseDistFunctionalTest.RehashWaiter.waitForInitRehashToComplete(c1, c2);
    }
 
    @Override

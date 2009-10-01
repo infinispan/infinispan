@@ -3,7 +3,7 @@ package org.infinispan.distribution;
 import static org.infinispan.context.Flag.SKIP_REMOTE_LOOKUP;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "distribution.DistSkipRemoteLookupTest", enabled = false)
+@Test(groups = "functional", testName = "distribution.DistSkipRemoteLookupTest")
 public class DistSkipRemoteLookupTest extends BaseDistFunctionalTest {
    public void testSkipLookupOnGet() {
       MagicKey k1 = new MagicKey(c1);
