@@ -66,8 +66,11 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
       assert f != null;
       assert !f.isDone();
       assert c2.get(key) == null;
+      log.info("*** Allowing serialization on key");
       key.allowSerialization();
+      log.info("*** Finished allowing serialization on key, checking future if cancelled");
       assert !f.isCancelled();
+      log.info("*** Future not cancelled, checking future.get()");
       assert f.get() == null;
       assert f.isDone();
       assertOnAllCaches(key, v);

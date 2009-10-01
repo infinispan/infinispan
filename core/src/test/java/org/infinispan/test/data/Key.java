@@ -11,10 +11,11 @@ import java.util.concurrent.TimeUnit;
 public class Key implements Externalizable {
 
    String value;
-   ReclosableLatch latch = new ReclosableLatch(false);
-   boolean lockable;
+   final ReclosableLatch latch = new ReclosableLatch(false);
+   final boolean lockable;
 
    public Key() {
+      this.lockable = false;
    }
 
    public Key(String value, boolean lockable) {
