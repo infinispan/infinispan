@@ -24,12 +24,11 @@ public class EHCache2InfinispanTransformerTest {
    private static final String BASE_DIR = "configs/ehcache";
    ConfigFilesConvertor convertor = new ConfigFilesConvertor();
 
-   @Test(enabled=false)
    public void testEhCache16File() throws Exception {
       testAllFile("/ehcache-1.6RC1.xml");
    }
 
-   @Test(enabled=false)
+//   @Test(enabled=false)
    public void testEhCache15File() throws Exception {
       testAllFile("/ehcache-1.5.xml");
    }

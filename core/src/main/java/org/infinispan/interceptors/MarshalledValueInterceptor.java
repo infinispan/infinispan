@@ -118,7 +118,7 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
       Object retVal = invokeNextInterceptor(ctx, command);
       compact(value);
       return processRetVal(retVal);
-   };
+   }
 
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {

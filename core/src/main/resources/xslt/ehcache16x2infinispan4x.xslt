@@ -13,19 +13,27 @@
          <xsl:element name="global">
 
             <asyncListenerExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
-               <property name="threadNamePrefix" value="AsyncTransportThread"/>
+               <properties>
+                  <property name="threadNamePrefix" value="AsyncTransportThread"/>
+               </properties>
             </asyncListenerExecutor>
 
             <asyncTransportExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
-               <property name="threadNamePrefix" value="AsyncListenerThread"/>
+               <properties>
+                 <property name="threadNamePrefix" value="AsyncListenerThread"/>
+               </properties>
             </asyncTransportExecutor>
 
             <evictionScheduledExecutor factory="org.infinispan.executors.DefaultScheduledExecutorFactory">
-               <property name="threadNamePrefix" value="EvictionThread"/>
+               <properties>
+                  <property name="threadNamePrefix" value="EvictionThread"/>
+               </properties>
             </evictionScheduledExecutor>
 
             <replicationQueueScheduledExecutor factory="org.infinispan.executors.DefaultScheduledExecutorFactory">
-               <property name="threadNamePrefix" value="ReplicationQueueThread"/>
+               <properties>
+                  <property name="threadNamePrefix" value="ReplicationQueueThread"/>
+               </properties>
             </replicationQueueScheduledExecutor>
 
             <globalJmxStatistics jmxDomain="infinispan" enabled="true"/>
