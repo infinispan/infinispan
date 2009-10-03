@@ -31,7 +31,6 @@ public class Jbc2InfinispanTransformerTest {
    /**
     * Transforms and tests the transformation of a complex file.
     */
-   @Test(enabled=false)
    public void testAllFile() throws Exception {
       ClassLoader existingCl = Thread.currentThread().getContextClassLoader();
       try {

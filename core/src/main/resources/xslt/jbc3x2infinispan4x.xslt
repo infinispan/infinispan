@@ -9,52 +9,60 @@
          <xsl:element name="global">
             <xsl:element name="asyncListenerExecutor">
                <xsl:attribute name="factory">org.infinispan.executors.DefaultExecutorFactory</xsl:attribute>
-               <xsl:if test="listeners[@asyncPoolSize]">
-                  <xsl:element name="property">
-                     <xsl:attribute name="name">maxThreads</xsl:attribute>
-                     <xsl:attribute name="value">
-                        <xsl:value-of select="normalize-space(listeners/@asyncPoolSize)"/>
-                     </xsl:attribute>
-                  </xsl:element>
-               </xsl:if>
-               <xsl:if test="listeners[@asyncQueueSize]">
-                  <xsl:element name="property">
-                     <xsl:attribute name="name">queueSize</xsl:attribute>
-                     <xsl:attribute name="value">
-                        <xsl:value-of select="listeners/@asyncQueueSize"/>
-                     </xsl:attribute>
-                  </xsl:element>
-               </xsl:if>
-               <property name="threadNamePrefix" value="AsyncListenerThread"/>
+               <properties>
+                  <xsl:if test="listeners[@asyncPoolSize]">
+                     <xsl:element name="property">
+                        <xsl:attribute name="name">maxThreads</xsl:attribute>
+                        <xsl:attribute name="value">
+                           <xsl:value-of select="normalize-space(listeners/@asyncPoolSize)"/>
+                        </xsl:attribute>
+                     </xsl:element>
+                  </xsl:if>
+                  <xsl:if test="listeners[@asyncQueueSize]">
+                     <xsl:element name="property">
+                        <xsl:attribute name="name">queueSize</xsl:attribute>
+                        <xsl:attribute name="value">
+                           <xsl:value-of select="listeners/@asyncQueueSize"/>
+                        </xsl:attribute>
+                     </xsl:element>
+                  </xsl:if>
+                  <property name="threadNamePrefix" value="AsyncListenerThread"/>
+               </properties>
             </xsl:element>
 
             <xsl:element name="asyncTransportExecutor">
                <xsl:attribute name="factory">org.infinispan.executors.DefaultExecutorFactory</xsl:attribute>
-               <xsl:if test="clustering/async[@serializationExecutorPoolSize]">
-                  <xsl:element name="property">
-                     <xsl:attribute name="name">maxThreads</xsl:attribute>
-                     <xsl:attribute name="value">
-                        <xsl:value-of select="clustering/async/@serializationExecutorPoolSize"/>
-                     </xsl:attribute>
-                  </xsl:element>
-               </xsl:if>
-               <xsl:if test="clustering/async[@serializationExecutorQueueSize]">
-                  <xsl:element name="property">
-                     <xsl:attribute name="name">queueSize</xsl:attribute>
-                     <xsl:attribute name="value">
-                        <xsl:value-of select="clustering/async/@serializationExecutorQueueSize"/>
-                     </xsl:attribute>
-                  </xsl:element>
-               </xsl:if>
-               <property name="threadNamePrefix" value="AsyncSerializationThread"/>
+               <properties>
+                  <xsl:if test="clustering/async[@serializationExecutorPoolSize]">
+                     <xsl:element name="property">
+                        <xsl:attribute name="name">maxThreads</xsl:attribute>
+                        <xsl:attribute name="value">
+                           <xsl:value-of select="clustering/async/@serializationExecutorPoolSize"/>
+                        </xsl:attribute>
+                     </xsl:element>
+                  </xsl:if>
+                  <xsl:if test="clustering/async[@serializationExecutorQueueSize]">
+                     <xsl:element name="property">
+                        <xsl:attribute name="name">queueSize</xsl:attribute>
+                        <xsl:attribute name="value">
+                           <xsl:value-of select="clustering/async/@serializationExecutorQueueSize"/>
+                        </xsl:attribute>
+                     </xsl:element>
+                  </xsl:if>
+                  <property name="threadNamePrefix" value="AsyncSerializationThread"/>
+               </properties>
             </xsl:element>
 
             <evictionScheduledExecutor factory="org.infinispan.executors.DefaultScheduledExecutorFactory">
-               <property name="threadNamePrefix" value="EvictionThread"/>
+               <properties>
+                  <property name="threadNamePrefix" value="EvictionThread"/>
+               </properties>
             </evictionScheduledExecutor>
 
             <replicationQueueScheduledExecutor factory="org.infinispan.executors.DefaultScheduledExecutorFactory">
-               <property name="threadNamePrefix" value="ReplicationQueueThread"/>
+               <properties>
+                  <property name="threadNamePrefix" value="ReplicationQueueThread"/>
+               </properties>
             </replicationQueueScheduledExecutor>
 
             <xsl:element name="globalJmxStatistics">
