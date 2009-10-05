@@ -15,9 +15,9 @@
    <description>Infinispan - GUI Demo</description>
    <dependencies>
       <dependency>
-         <groupId>org.infinispan</groupId>
+         <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-core</artifactId>
-         <version>4.0.0-SNAPSHOT</version>
+         <version>${project.version}</version>
       </dependency>
       <dependency>
          <groupId>jgoodies</groupId>
