@@ -1,22 +1,20 @@
-<?xml version="1.0"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version='1.0' encoding='UTF-8'?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
    <modelVersion>4.0.0</modelVersion>
 
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-parent</artifactId>
-      <version>4.0.0-SNAPSHOT</version>
+      <version>4.0.0.BETA2</version>
       <relativePath>../parent/pom.xml</relativePath>
    </parent>
 
    <artifactId>infinispan-tools</artifactId>
-   <version>4.0.0-SNAPSHOT</version>
+   <version>4.0.0.BETA2</version>
    <name>Infinispan Tools</name>
    <description>Infinispan - Tools for project</description>
 
-	<!-- needed for XSOM -->
+	
 	<repositories>
       <repository>
          <id>download.java.net</id>
@@ -39,7 +37,7 @@
          <scope>test</scope>
       </dependency>
 
-      <!-- needs to depend on all other modules it is trying to document! -->
+      
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-cachestore-bdbje</artifactId>
