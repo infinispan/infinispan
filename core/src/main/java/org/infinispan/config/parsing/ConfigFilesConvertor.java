@@ -57,7 +57,8 @@ public class ConfigFilesConvertor {
    static final String JBOSS_CACHE3X = "JBossCache3x";
    static final String EHCACHE_CACHE16X = "Ehcache16x";
    static final String EHCACHE_CACHE15X = "Ehcache15x";
-   static final String[] SUPPORTED_FORMATS = {JBOSS_CACHE3X, EHCACHE_CACHE15X, EHCACHE_CACHE16X};
+   static final String COHERENCE_35X = "Coherence35x";
+   static final String[] SUPPORTED_FORMATS = {JBOSS_CACHE3X, EHCACHE_CACHE15X, EHCACHE_CACHE16X, COHERENCE_35X};
 
    public void parse(InputStream is, OutputStream os, String xsltFile) throws Exception {
       InputStream xsltInStream = new FileLookup().lookupFile(xsltFile);
@@ -140,11 +141,41 @@ public class ConfigFilesConvertor {
          transformFromJbossCache3x(sourceName, destinationName);
       } else if (type.equals(EHCACHE_CACHE15X) || type.equals(EHCACHE_CACHE16X)) {
          transformFromEhcache15X_16x(sourceName, destinationName);
+      } else if (type.equals(COHERENCE_35X)) {
+         transformFromCoherence35x(sourceName, destinationName);
       }
 
       System.out.println("---");
       System.out.println("New configuration file [" + destinationName + "] successfully created.");
       System.out.println("---");
+   }
+
+   private static void transformFromCoherence35x(String sourceName, String destinationName) throws Exception {
+      File oldConfig = new File(sourceName);
+      if (!oldConfig.exists()) {
+         System.err.println("File specified as input ('" + sourceName + ") does not exist.");
+         System.exit(1);
+      }
+      ConfigFilesConvertor convertor = new ConfigFilesConvertor();
+      FileInputStream is = null;
+      FileOutputStream fos = null;
+
+      try {
+
+         is = new FileInputStream(oldConfig);
+         File destination = new File(destinationName);
+         if (!destination.exists()) {
+            if (!destination.createNewFile()) {
+               System.err.println("Warn! Could not create file " + destination);
+            }
+         }
+
+         fos = new FileOutputStream(destinationName);
+         convertor.parse(is, fos, "xslt/ehcache16x2infinispan4x.xslt");
+      } finally {
+         Util.flushAndCloseStream(fos);
+         Util.closeStream(is);
+      }
    }
 
 
