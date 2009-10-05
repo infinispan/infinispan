@@ -179,7 +179,7 @@ pageTracker._trackPageview();
                      <docletArtifact>
                         <groupId>org.infinispan</groupId>
                         <artifactId>infinispan-tools</artifactId>
-                        <version>4.0.0-SNAPSHOT</version>
+                        <version>${project.version}</version>
                      </docletArtifact>
                      <footer>
                 &lt;!-- Google Analytics --&gt;
@@ -224,7 +224,7 @@ pageTracker._trackPageview();
                      <docletArtifact>
                         <groupId>org.infinispan</groupId>
                         <artifactId>infinispan-tools</artifactId>
-                        <version>4.0.0-SNAPSHOT</version>
+                        <version>${project.version}</version>
                      </docletArtifact>
                      <footer>
                 &lt;!-- Google Analytics --&gt;
