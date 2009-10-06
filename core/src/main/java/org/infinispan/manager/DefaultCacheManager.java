@@ -34,8 +34,11 @@ import org.infinispan.factories.InternalCacheFactory;
 import org.infinispan.factories.annotations.NonVolatile;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.jmx.CacheJmxRegistration;
+import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
+import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.Lifecycle;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
@@ -93,9 +96,10 @@ import java.util.concurrent.ConcurrentMap;
  */
 @Scope(Scopes.GLOBAL)
 @NonVolatile
-@MBean(objectName = "CacheManager", description = "Component that acts as a manager, factory and container for caches in the system.")
+@MBean(objectName = DefaultCacheManager.OBJECT_NAME, description = "Component that acts as a manager, factory and container for caches in the system.")
 public class DefaultCacheManager implements CacheManager {
    public static final String DEFAULT_CACHE_NAME = "org.infinispan.manager.DefaultCacheManager.DEFAULT_CACHE_NAME";
+   public static final String OBJECT_NAME = "CacheManager";
    protected GlobalConfiguration globalConfiguration;
    private final ConcurrentMap<String, Cache> caches = new ConcurrentHashMap<String, Cache>();
    private final ConcurrentMap<String, Configuration> configurationOverrides = new ConcurrentHashMap<String, Configuration>();
@@ -313,6 +317,7 @@ public class DefaultCacheManager implements CacheManager {
     *
     * @return the default cache.
     */
+   @ManagedOperation(description = "Starts the default cache.")
    public <K, V> Cache<K, V> getCache() {
       return getCache(DEFAULT_CACHE_NAME);
    }
@@ -330,6 +335,7 @@ public class DefaultCacheManager implements CacheManager {
     * @return a cache instance identified by cacheName
     */
    @SuppressWarnings("unchecked")
+   @ManagedOperation(description = "Starts a cache with the given name.")
    public <K, V> Cache<K, V> getCache(String cacheName) {
       if (cacheName == null)
          throw new NullPointerException("Null arguments not allowed");
@@ -381,7 +387,7 @@ public class DefaultCacheManager implements CacheManager {
    }
 
    public void start() {
-      // nothing to do
+      globalComponentRegistry.getComponent(CacheManagerJmxRegistration.class).start();
    }
 
    public void stop() {
@@ -391,14 +397,25 @@ public class DefaultCacheManager implements CacheManager {
          if (entry.getKey().equals(DEFAULT_CACHE_NAME)) {
             defaultCache = entry.getValue();
          } else {
+            unregisterCacheMBean(entry.getValue());
             entry.getValue().stop();
          }
       }
 
-      if (defaultCache != null) defaultCache.stop();
+      if (defaultCache != null) {
+         unregisterCacheMBean(defaultCache);
+         defaultCache.stop();
+      }
+      globalComponentRegistry.getComponent(CacheManagerJmxRegistration.class).stop();
       globalComponentRegistry.stop();
    }
 
+   private void unregisterCacheMBean(Cache cache) {
+      if (cache.getConfiguration().isExposeJmxStatistics()) {
+         cache.getAdvancedCache().getComponentRegistry().getComponent(CacheJmxRegistration.class).unregisterCacheMBean();
+      }
+   }
+   
    public void addListener(Object listener) {
       CacheManagerNotifier notifier = globalComponentRegistry.getComponent(CacheManagerNotifier.class);
       notifier.addListener(listener);
@@ -447,9 +464,18 @@ public class DefaultCacheManager implements CacheManager {
       return String.valueOf(this.configurationOverrides.keySet().size());
    }
 
-   @ManagedAttribute(description = "The total number of running caches, including the default cache.")
+   @ManagedAttribute(description = "The total number of created caches, including the default cache.")
    public String getCreatedCacheCount() {
       return String.valueOf(this.caches.keySet().size());
+   }
+
+   @ManagedAttribute(description = "The total number of running caches, including the default cache.")
+   public String getRunningCacheCount() {
+      int running = 0;
+      for (Cache cache : caches.values()) {
+         if (cache.getStatus() == ComponentStatus.RUNNING) running++;
+      }
+      return String.valueOf(running);
    }
 
    @ManagedAttribute(description = "Infinispan version")

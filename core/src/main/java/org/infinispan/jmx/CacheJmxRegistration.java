@@ -22,20 +22,28 @@
 package org.infinispan.jmx;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
+import org.infinispan.CacheDelegate;
 import org.infinispan.CacheException;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.factories.AbstractComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.AbstractComponentRegistry.Component;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.NonVolatile;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
-import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import javax.management.InstanceNotFoundException;
+import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
+
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -43,31 +51,35 @@ import java.util.Set;
  * ConfigurationRegistry to the MBean server.
  *
  * @author Mircea.Markus@jboss.com
+ * @author Galder Zamarreño
  * @see java.lang.management.ManagementFactory#getPlatformMBeanServer()
  * @since 4.0
  */
 @NonVolatile
-public class CacheJmxRegistration {
+public class CacheJmxRegistration extends AbstractJmxRegistration {
    private static final Log log = LogFactory.getLog(CacheJmxRegistration.class);
 
    private AdvancedCache cache;
+   private Set<Component> nonCacheComponents;
 
    @Inject
-   public void initialize(AdvancedCache cache) {
+   public void initialize(AdvancedCache cache, GlobalConfiguration globalConfig) {
       this.cache = cache;
+      this.globalConfig = globalConfig;
    }
 
    /**
     * Here is where the registration is being performed.
     */
    @Start(priority = 14)
-   public void registerToMBeanServer() {
+   public void start() {
       if (cache == null)
          throw new IllegalStateException("The cache should had been injected before a call to this method");
       Configuration config = cache.getConfiguration();
       if (config.isExposeJmxStatistics()) {
-         ComponentsJmxRegistration registrator = buildRegistrator();
-         registrator.registerMBeans();
+         Set<Component> components = cache.getComponentRegistry().getRegisteredComponents();
+         nonCacheComponents = getNonCacheComponents(components);
+         registerMBeans(components, cache.getConfiguration().getGlobalConfiguration());
          log.info("MBeans were successfully registered to the platform mbean server.");
       }
    }
@@ -76,76 +88,89 @@ public class CacheJmxRegistration {
     * Unregister when the cache is being stoped.
     */
    @Stop
-   public void unregisterMBeans() {
-      //this method might get called several times.
+   public void stop() {
+      // This method might get called several times.
       // After the first call the cache will become null, so we guard this
       if (cache == null) return;
       Configuration config = cache.getConfiguration();
       if (config.isExposeJmxStatistics()) {
-         ComponentsJmxRegistration componentsJmxRegistration = buildRegistrator();
-         componentsJmxRegistration.unregisterMBeans();
+         // Only unregister the non cache MBean so that it can be restarted
+         unregisterMBeans(nonCacheComponents);
          log.trace("MBeans were successfully unregistered from the mbean server.");
       }
       cache = null;
    }
-
-   private ComponentsJmxRegistration buildRegistrator() {
-      Set<AbstractComponentRegistry.Component> components = cache.getComponentRegistry().getRegisteredComponents();
-      GlobalConfiguration configuration = cache.getConfiguration().getGlobalConfiguration();
-      MBeanServer beanServer = getMBeanServer(configuration);
-      ComponentsJmxRegistration registrator = new ComponentsJmxRegistration(beanServer, components, getGroupName());
-      updateDomain(registrator, cache.getAdvancedCache().getComponentRegistry().getGlobalComponentRegistry(), beanServer);
-      return registrator;
+   
+   public void unregisterCacheMBean() {
+      String pattern = jmxDomain + ":" + ComponentsJmxRegistration.JMX_RESOURCE_KEY + "=" + CacheDelegate.OBJECT_NAME + ",*";
+      try {
+         Set<ObjectName> names = mBeanServer.queryNames(new ObjectName(pattern), null);
+         for (ObjectName name : names) {
+            mBeanServer.unregisterMBean(name);
+         }
+      } catch (MBeanRegistrationException e) {
+         String message = "Unable to unregister Cache MBeans with pattern " + pattern;
+         log.warn(message, e);
+      } catch (InstanceNotFoundException e) {
+         // Ignore if Cache MBeans not present
+      } catch (MalformedObjectNameException e) {
+         String message = "Malformed pattern " + pattern;
+         log.error(message, e);
+         throw new CacheException(message, e);
+      }
    }
 
-   static void updateDomain(ComponentsJmxRegistration registrator, GlobalComponentRegistry componentRegistry, MBeanServer mBeanServer) {
+
+   @Override
+   protected ComponentsJmxRegistration buildRegistrator(Set<AbstractComponentRegistry.Component> components) {
+      ComponentsJmxRegistration registrator = new ComponentsJmxRegistration(mBeanServer, components, getGroupName());
+      updateDomain(registrator, cache.getComponentRegistry().getGlobalComponentRegistry(), mBeanServer);
+      return registrator;
+   }
+   
+   protected void updateDomain(ComponentsJmxRegistration registrator, GlobalComponentRegistry componentRegistry, MBeanServer mBeanServer) {
       GlobalConfiguration gc = componentRegistry.getComponent(GlobalConfiguration.class);
-      String componentName = CacheJmxRegistration.class.getName() + "_jmxDomain";
-      String jmxDomain = componentRegistry.getComponent(String.class, componentName);
-      if (jmxDomain == null) {
-         jmxDomain = getJmxDomain(gc.getJmxDomain(), mBeanServer);
-         if (!jmxDomain.equals(gc.getJmxDomain()) && !gc.isAllowDuplicateDomains()) {
-            String message = "There's already an cache manager instance registered under '" + gc.getJmxDomain() +
-                  "' JMX domain. If you want to allow multiple instances configured with same JMX domain enable " +
-                  "'allowDuplicateDomains' attribute in 'globalJmxStatistics' config element";
-            if (log.isErrorEnabled()) log.error(message);
-            throw new JmxDomainConflictException(message);
+      CacheManagerJmxRegistration managerJmxReg = componentRegistry.getComponent(CacheManagerJmxRegistration.class);
+      if (!gc.isExposeGlobalJmxStatistics() && jmxDomain == null) {
+         String tmpJmxDomain = getJmxDomain(gc.getJmxDomain(), mBeanServer);
+         synchronized (managerJmxReg) {
+            if (managerJmxReg.jmxDomain == null) {
+               if (!tmpJmxDomain.equals(gc.getJmxDomain()) && !gc.isAllowDuplicateDomains()) {
+                  String message = "There's already an cache manager instance registered under '" + gc.getJmxDomain() +
+                        "' JMX domain. If you want to allow multiple instances configured with same JMX domain enable " +
+                        "'allowDuplicateDomains' attribute in 'globalJmxStatistics' config element";
+                  if (log.isErrorEnabled()) log.error(message);
+                  throw new JmxDomainConflictException(message);
+               }
+               // Set manager component's jmx domain so that other caches under same manager 
+               // can see it, particularly important when jmx is only enabled at the cache level
+               managerJmxReg.jmxDomain = tmpJmxDomain;
+            }
+            // So that all caches share the same domain, regardless of whether dups are 
+            // allowed or not, simply assign the manager's calculated jmxDomain
+            jmxDomain = managerJmxReg.jmxDomain;
          }
-         componentRegistry.registerComponent(jmxDomain, componentName);
+      } else {
+         // If global stats were enabled, manager's jmxDomain would have been populated 
+         // when cache manager was started, so no need for synchronization here.
+         jmxDomain = managerJmxReg.jmxDomain == null ? gc.getJmxDomain() : managerJmxReg.jmxDomain;
       }
       registrator.setJmxDomain(jmxDomain);
    }
 
-   private static String getJmxDomain(String jmxDomain, MBeanServer mBeanServer) {
-      String[] registeredDomains = mBeanServer.getDomains();
-      int index = 2;
-      String finalName = jmxDomain;
-      boolean done = false;
-      while (!done) {
-         done = true;
-         for (String domain : registeredDomains) {
-            if (domain.equals(finalName)) {
-               finalName = jmxDomain + index++;
-               done = false;
-               break;
-            }
+   protected Set<Component> getNonCacheComponents(Set<Component> components) {
+      Set<Component> componentsExceptCache = new HashSet<AbstractComponentRegistry.Component>();
+      for (AbstractComponentRegistry.Component component : components) {
+         String name = component.getName();
+         if (!name.equals(Cache.class.getName()) && !name.equals(AdvancedCache.class.getName())) {
+            componentsExceptCache.add(component);
          }
       }
-      return finalName;
-   }
-
-   static MBeanServer getMBeanServer(GlobalConfiguration configuration) {
-      String serverLookup = configuration.getMBeanServerLookup();
-      try {
-         MBeanServerLookup lookup = (MBeanServerLookup) Util.getInstance(serverLookup);
-         return lookup.getMBeanServer();
-      } catch (Exception e) {
-         log.error("Could not instantiate MBeanServerLookup('" + serverLookup + "')", e);
-         throw new CacheException(e);
-      }
+      return componentsExceptCache;
    }
 
    private String getGroupName() {
       return cache.getName() + "(" + cache.getConfiguration().getCacheModeString().toLowerCase() + ")";
    }
+
 }

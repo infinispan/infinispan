@@ -5,67 +5,74 @@ import org.infinispan.factories.AbstractComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.NonVolatile;
-import org.infinispan.factories.annotations.Start;
-import org.infinispan.factories.annotations.Stop;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import javax.management.MBeanServer;
+
 import java.util.Set;
 
 /**
  * Registers all the components from global component registry to the mbean server.
  *
  * @author Mircea.Markus@jboss.com
+ * @author Galder Zamarreño
  * @since 4.0
  */
 @NonVolatile
-public class CacheManagerJmxRegistration {
-
+public class CacheManagerJmxRegistration extends AbstractJmxRegistration {
+   private static final Log log = LogFactory.getLog(CacheManagerJmxRegistration.class);
    public static final String GLOBAL_JMX_GROUP = "[global]";
-   private GlobalComponentRegistry registry;
-   private GlobalConfiguration globalConfiguration;
-   private MBeanServer mBeanServer;
+   private GlobalComponentRegistry globalReg;
 
    @Inject
    public void init(GlobalComponentRegistry registry, GlobalConfiguration configuration) {
-      this.registry = registry;
-      this.globalConfiguration = configuration;
+      this.globalReg = registry;
+      this.globalConfig = configuration;
    }
 
    /**
     * On start, the mbeans are registered.
     */
-   @Start(priority = 20)
    public void start() {
-      if (globalConfiguration.isExposeGlobalJmxStatistics()) {
-         ComponentsJmxRegistration registrator = buildRegistrator();
-         registrator.registerMBeans();
+      if (globalConfig.isExposeGlobalJmxStatistics()) {
+         registerMBeans(globalReg.getRegisteredComponents(), globalConfig);
       }
-   }
-
-   public void setMBeanServer(MBeanServer mBeanServer) {
-      this.mBeanServer = mBeanServer;
    }
 
    /**
     * On stop, the mbeans are unregistered.
     */
-   @Stop
    public void stop() {
-      //this method might get called several times.
+      // This method might get called several times.
       // After the first call the cache will become null, so we guard this
-      if (registry == null) return;
-      if (globalConfiguration.isExposeGlobalJmxStatistics()) {
-         ComponentsJmxRegistration componentsJmxRegistration = buildRegistrator();
-         componentsJmxRegistration.unregisterMBeans();
+      if (globalReg == null) return;
+      if (globalConfig.isExposeGlobalJmxStatistics()) {
+         unregisterMBeans(globalReg.getRegisteredComponents());
       }
-      registry = null;
+      globalReg = null;
    }
 
-   private ComponentsJmxRegistration buildRegistrator() {
-      Set<AbstractComponentRegistry.Component> components = registry.getRegisteredComponents();
-      mBeanServer = CacheJmxRegistration.getMBeanServer(globalConfiguration);
+   @Override
+   protected ComponentsJmxRegistration buildRegistrator(Set<AbstractComponentRegistry.Component> components) {
       ComponentsJmxRegistration registrator = new ComponentsJmxRegistration(mBeanServer, components, GLOBAL_JMX_GROUP);
-      CacheJmxRegistration.updateDomain(registrator, registry, mBeanServer);
+      updateDomain(registrator, globalReg, mBeanServer);
       return registrator;
    }
+
+   protected void updateDomain(ComponentsJmxRegistration registrator, GlobalComponentRegistry componentRegistry, MBeanServer mBeanServer) {
+      if (jmxDomain == null) {
+         jmxDomain = getJmxDomain(globalConfig.getJmxDomain(), mBeanServer);
+         String configJmxDomain = globalConfig.getJmxDomain();
+         if (!jmxDomain.equals(configJmxDomain) && !globalConfig.isAllowDuplicateDomains()) {
+            String message = "There's already an cache manager instance registered under '" + configJmxDomain +
+                  "' JMX domain. If you want to allow multiple instances configured with same JMX domain enable " +
+                  "'allowDuplicateDomains' attribute in 'globalJmxStatistics' config element";
+            if (log.isErrorEnabled()) log.error(message);
+            throw new JmxDomainConflictException(message);
+         }
+      }
+      registrator.setJmxDomain(jmxDomain);
+   }
+
 }

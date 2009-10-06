@@ -1,5 +1,7 @@
 package org.infinispan.jmx;
 
+import java.lang.reflect.Method;
+
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.manager.CacheManager;
@@ -7,6 +9,7 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
+import javax.management.InstanceNotFoundException;
 import javax.management.MBeanException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
@@ -32,10 +35,9 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
       globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
       globalConfiguration.setExposeGlobalJmxStatistics(true);
       cacheManager = TestCacheManagerFactory.createCacheManager(globalConfiguration);
-      cacheManager.start();
-      cacheManager.getCache();
-      name = new ObjectName("CacheManagerMBeanTest:cache-name=[global],jmx-resource=CacheManager");
+      name = new ObjectName(JMX_DOMAIN + ":cache-name=[global],jmx-resource=CacheManager");
       server = PerThreadMBeanServerLookup.getThreadMBeanServer();
+      server.invoke(name, "getCache", new Object[]{}, new String[]{});
       return cacheManager;
    }
 
@@ -43,6 +45,7 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
       assert server.getAttribute(name, "CreatedCacheCount").equals("1");
       assert server.getAttribute(name, "DefinedCacheCount").equals("0") : "Was " + server.getAttribute(name, "DefinedCacheCount");
       assert server.getAttribute(name, "DefinedCacheNames").equals("[]");
+      assert server.getAttribute(name, "RunningCacheCount").equals("1");
 
       //now define some new caches
       cacheManager.defineConfiguration("a", new Configuration());
@@ -50,16 +53,18 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
       cacheManager.defineConfiguration("c", new Configuration());
       assert server.getAttribute(name, "CreatedCacheCount").equals("1");
       assert server.getAttribute(name, "DefinedCacheCount").equals("3");
+      assert server.getAttribute(name, "RunningCacheCount").equals("1");
       String attribute = (String) server.getAttribute(name, "DefinedCacheNames");
       assert attribute.contains("a(");
       assert attribute.contains("b(");
       assert attribute.contains("c(");
 
       //now start some caches
-      cacheManager.getCache("a");
-      cacheManager.getCache("b");
+      server.invoke(name, "getCache", new Object[]{"a"}, new String[]{String.class.getName()});
+      server.invoke(name, "getCache", new Object[]{"b"}, new String[]{String.class.getName()});
       assert server.getAttribute(name, "CreatedCacheCount").equals("3");
       assert server.getAttribute(name, "DefinedCacheCount").equals("3");
+      assert server.getAttribute(name, "RunningCacheCount").equals("3");
       attribute = (String) server.getAttribute(name, "DefinedCacheNames");
       assert attribute.contains("a(");
       assert attribute.contains("b(");
@@ -74,5 +79,26 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
          assert mbe.getCause() instanceof ServiceNotFoundException;
       }
       
+   }
+   
+   public void testJmxRegistrationAtStartupAndStop(Method method) throws Exception {
+      GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
+      final String otherJmxDomain = JMX_DOMAIN + '.' + method.getName();
+      globalConfiguration.setJmxDomain(otherJmxDomain);
+      globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
+      globalConfiguration.setExposeGlobalJmxStatistics(true);
+      CacheManager otherManager = TestCacheManagerFactory.createCacheManager(globalConfiguration);
+      ObjectName otherName = new ObjectName(otherJmxDomain + ":cache-name=[global],jmx-resource=CacheManager");
+      try {
+         assert server.getAttribute(otherName, "CreatedCacheCount").equals("0");
+      } finally {
+         otherManager.stop();
+      }
+      
+      try {
+         server.getAttribute(otherName, "CreatedCacheCount").equals("0");
+         assert false : "Failure expected, " + otherName + " shouldn't be registered in mbean server";
+      } catch (InstanceNotFoundException e) {
+      }
    }
 }

@@ -48,6 +48,9 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.NonVolatile;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.jmx.annotations.MBean;
+import org.infinispan.jmx.annotations.ManagedAttribute;
+import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.marshall.MarshalledValue;
@@ -79,7 +82,9 @@ import java.util.concurrent.TimeoutException;
  * @since 4.0
  */
 @NonVolatile
+@MBean(objectName = CacheDelegate.OBJECT_NAME, description = "Component that acts as a manager, factory and container for caches in the system.")
 public class CacheDelegate<K, V> implements AdvancedCache<K, V> {
+   public static final String OBJECT_NAME = "Cache";
    protected InvocationContextContainer icc;
    protected CommandsFactory commandsFactory;
    protected InterceptorChain invoker;
@@ -245,12 +250,14 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V> {
       invoker.invoke(getInvocationContext(), command);
    }
 
+   @ManagedOperation(description = "Starts the cache.")
    public void start() {
       componentRegistry.start();
       defaultLifespan = config.getExpirationLifespan();
       defaultMaxIdleTime = config.getExpirationMaxIdle();
    }
 
+   @ManagedOperation(description = "Stops the cache.")
    public void stop() {
       componentRegistry.stop();
    }
@@ -485,6 +492,7 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V> {
       return (V) invoker.invoke(ctx, command);
    }
 
+   @ManagedAttribute(description = "Returns the cache status")
    public ComponentStatus getStatus() {
       return componentRegistry.getStatus();
    }
