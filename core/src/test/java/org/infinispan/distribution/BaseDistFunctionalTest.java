@@ -14,6 +14,7 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.IsolationLevel;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
@@ -61,6 +62,13 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
 
       RehashWaiter.waitForInitRehashToComplete(c1, c2, c3, c4);
 
+   }
+   
+   @AfterClass(alwaysRun=true)
+   protected void destroy() {
+      super.destroy();     
+      caches.clear();
+      c1 = null;c2=null;c3=null;c4=null;
    }
 
    /**
