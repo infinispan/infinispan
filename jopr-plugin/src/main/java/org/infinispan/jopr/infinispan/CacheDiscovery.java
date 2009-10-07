@@ -40,29 +40,28 @@ import java.util.Set;
  * @author Heiko W. Rupp
  */
 public class CacheDiscovery implements ResourceDiscoveryComponent<InfinispanComponent> {
-
-
-   private final Log log = LogFactory.getLog(this.getClass());
+   private static final Log log = LogFactory.getLog(CacheDiscovery.class);
 
    /**
     * Naming pattern of the cache MgmtInterceptor
     */
-   private static final String CACHE_QUERY = "*:cache-name=%name%,jmx-resource=CacheMgmtInterceptor";
-
+   private static final String CACHE_QUERY = "*:cache-name=%name%,jmx-resource=Cache";
 
    /**
     * Run the discovery
     */
    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<InfinispanComponent> discoveryContext) throws Exception {
-
+      if (log.isTraceEnabled()) log.trace("Discover resources with context: " + discoveryContext);
       Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
 
       EmsConnection conn = discoveryContext.getParentResourceComponent().getConnection();
+      if (log.isTraceEnabled()) log.trace("Connection to ems server stablished: " + conn);
+      
       ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(CACHE_QUERY);
       List<EmsBean> beans = conn.queryBeans(queryUtility.getTranslatedQuery());
+      if (log.isTraceEnabled()) log.trace("Querying [" + queryUtility.getTranslatedQuery() + "] returned beans: " + beans);
 
       for (EmsBean bean : beans) {
-
          /**
           * A discovered resource must have a unique key, that must
           * stay the same when the resource is discovered the next
@@ -79,7 +78,6 @@ public class CacheDiscovery implements ResourceDiscoveryComponent<InfinispanComp
                discoveryContext.getDefaultPluginConfiguration(), // Plugin Config
                null // ProcessInfo
          );
-
 
          // Add to return values
          discoveredResources.add(detail);

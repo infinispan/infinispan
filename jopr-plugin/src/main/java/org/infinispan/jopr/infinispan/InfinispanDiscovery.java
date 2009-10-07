@@ -21,6 +21,9 @@
  */
 package org.infinispan.jopr.infinispan;
 
+import static org.infinispan.jmx.CacheManagerJmxRegistration.*;
+import static org.infinispan.jmx.ComponentsJmxRegistration.*;
+import static org.infinispan.manager.DefaultCacheManager.*;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.mc4j.ems.connection.EmsConnection;
@@ -41,43 +44,47 @@ import java.util.Set;
  * Discovery class for Infinispan engines
  *
  * @author Heiko W. Rupp
+ * @author Galder Zamarreño
  */
 public class InfinispanDiscovery implements ResourceDiscoveryComponent<InfinispanComponent> {
+   private static final Log log = LogFactory.getLog(InfinispanDiscovery.class);
 
+//   // Assume a java5+ jmx-remote connector on port 6996
+//   public static String REMOTE = "service:jmx:rmi://127.0.0.1/jndi/rmi://127.0.0.1:6996/jmxrmi";
 
-   // Assume a java5 jmx-remote connector on port 6996
-   public static String REMOTE = "service:jmx:rmi://127.0.0.1/jndi/rmi://127.0.0.1:6996/jmxrmi";
-
-   public static String MANAGER_OBJECT = "*:cache-name=[global],jmx-resource=CacheManager";
-
-   String connector = "org.mc4j.ems.connection.support.metadata.J2SE5ConnectionTypeDescriptor";
-   private final Log log = LogFactory.getLog(this.getClass());
-
+//   public static String MANAGER_OBJECT = "*:cache-name=[global],jmx-resource=CacheManager";
+   
+   private static final String MANAGER_OBJECT = "*:" + CACHE_NAME_KEY + '=' + GLOBAL_JMX_GROUP + "," + JMX_RESOURCE_KEY + "=" + OBJECT_NAME;
+   private static final String CONNECTOR = "org.mc4j.ems.connection.support.metadata.J2SE5ConnectionTypeDescriptor";
 
    /**
     * Run the discovery
     */
    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<InfinispanComponent> discoveryContext) throws Exception {
+      boolean trace = log.isTraceEnabled();
+      if (trace) log.trace("Discover resources with context: " + discoveryContext);
 
       Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
-
-      /*
-      * Currently this uses a hardcoded remote address for access to the MBean server
-      * This needs to be switched to check if we e.g. run inside a JBossAS to which we
-      * have a connection already that we can reuse.
-      */
-      Configuration c = new Configuration(); // TODO get from defaultPluginConfig
-      c.put(new PropertySimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY, REMOTE));
-      c.put(new PropertySimple(JMXDiscoveryComponent.CONNECTION_TYPE, connector));
+      // TODO check if we e.g. run inside a JBossAS to which we have a connection already that we can reuse.
+      Configuration c = discoveryContext.getDefaultPluginConfiguration();
+      c.put(c.getSimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY));
+      c.put(new PropertySimple(JMXDiscoveryComponent.CONNECTION_TYPE, CONNECTOR));
       c.put(new PropertySimple("objectName", MANAGER_OBJECT));
+
+//      c.put(new PropertySimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY, c.getSimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY)));
+//      c.put(new PropertySimple(JMXDiscoveryComponent.CONNECTION_TYPE, connector));
+//      c.put(new PropertySimple("objectName", MANAGER_OBJECT));
 
       ConnectionHelper helper = new ConnectionHelper();
       EmsConnection conn = helper.getEmsConnection(c);
 
+      if (trace) log.trace("Connection to ems server stablished: " + conn);
+      
       // Run query for manager_object
       ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(MANAGER_OBJECT);
       List<EmsBean> beans = conn.queryBeans(queryUtility.getTranslatedQuery());
-
+      if (trace) log.trace("Querying [" + queryUtility.getTranslatedQuery() + "] returned beans: " + beans);
+      
       for (EmsBean bean : beans) {
 
          String managerName = bean.getBeanName().getCanonicalName();
@@ -97,7 +104,6 @@ public class InfinispanDiscovery implements ResourceDiscoveryComponent<Infinispa
                c, // Plugin Config
                null // Process info from a process scan
          );
-
 
          // Add to return values
          discoveredResources.add(detail);
