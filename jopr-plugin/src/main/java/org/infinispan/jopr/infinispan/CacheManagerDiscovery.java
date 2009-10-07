@@ -46,8 +46,8 @@ import java.util.Set;
  * @author Heiko W. Rupp
  * @author Galder Zamarreño
  */
-public class InfinispanDiscovery implements ResourceDiscoveryComponent<InfinispanComponent> {
-   private static final Log log = LogFactory.getLog(InfinispanDiscovery.class);
+public class CacheManagerDiscovery implements ResourceDiscoveryComponent<CacheManagerComponent> {
+   private static final Log log = LogFactory.getLog(CacheManagerDiscovery.class);
 
 //   // Assume a java5+ jmx-remote connector on port 6996
 //   public static String REMOTE = "service:jmx:rmi://127.0.0.1/jndi/rmi://127.0.0.1:6996/jmxrmi";
@@ -60,7 +60,7 @@ public class InfinispanDiscovery implements ResourceDiscoveryComponent<Infinispa
    /**
     * Run the discovery
     */
-   public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<InfinispanComponent> discoveryContext) throws Exception {
+   public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<CacheManagerComponent> discoveryContext) throws Exception {
       boolean trace = log.isTraceEnabled();
       if (trace) log.trace("Discover resources with context: " + discoveryContext);
 

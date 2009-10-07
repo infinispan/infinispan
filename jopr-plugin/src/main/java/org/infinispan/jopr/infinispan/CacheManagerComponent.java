@@ -38,8 +38,9 @@ import java.util.Set;
  * The component class for the Infinispan manager
  *
  * @author Heiko W. Rupp
+ * @author Galder Zamarreño
  */
-public class InfinispanComponent implements ResourceComponent, MeasurementFacet {
+public class CacheManagerComponent implements ResourceComponent, MeasurementFacet {
    private ResourceContext context;
    private ConnectionHelper helper;
 

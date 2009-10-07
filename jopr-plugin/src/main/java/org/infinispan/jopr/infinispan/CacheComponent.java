@@ -46,8 +46,9 @@ import java.util.Set;
  * Component class for Caches within Infinispan
  *
  * @author Heiko W. Rupp
+ * @author Galder Zamarreño
  */
-public class CacheComponent implements ResourceComponent<InfinispanComponent>, MeasurementFacet, OperationFacet {
+public class CacheComponent implements ResourceComponent<CacheManagerComponent>, MeasurementFacet, OperationFacet {
    private final Log log = LogFactory.getLog(this.getClass());
 
    /**
@@ -62,7 +63,7 @@ public class CacheComponent implements ResourceComponent<InfinispanComponent>, M
    }
 
 
-   private ResourceContext<InfinispanComponent> context;
+   private ResourceContext<CacheManagerComponent> context;
    /**
     * The naming pattern of the current bean without the actual bean name
     */
@@ -84,7 +85,7 @@ public class CacheComponent implements ResourceComponent<InfinispanComponent>, M
     *
     * @see org.rhq.core.pluginapi.inventory.ResourceComponent#start(org.rhq.core.pluginapi.inventory.ResourceContext)
     */
-   public void start(ResourceContext<InfinispanComponent> context) throws Exception {
+   public void start(ResourceContext<CacheManagerComponent> context) throws Exception {
 
       this.context = context;
       //

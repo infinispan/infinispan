@@ -38,8 +38,9 @@ import java.util.Set;
  * Discovery class for individual cache instances
  *
  * @author Heiko W. Rupp
+ * @author Galder Zamarreño
  */
-public class CacheDiscovery implements ResourceDiscoveryComponent<InfinispanComponent> {
+public class CacheDiscovery implements ResourceDiscoveryComponent<CacheManagerComponent> {
    private static final Log log = LogFactory.getLog(CacheDiscovery.class);
 
    /**
@@ -50,7 +51,7 @@ public class CacheDiscovery implements ResourceDiscoveryComponent<InfinispanComp
    /**
     * Run the discovery
     */
-   public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<InfinispanComponent> discoveryContext) throws Exception {
+   public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<CacheManagerComponent> discoveryContext) throws Exception {
       if (log.isTraceEnabled()) log.trace("Discover resources with context: " + discoveryContext);
       Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
 
