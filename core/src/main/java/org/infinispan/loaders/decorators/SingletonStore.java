@@ -151,6 +151,14 @@ public class SingletonStore extends AbstractDelegatingStore {
       cacheManager.addListener(new SingletonStoreListener());
       super.start();
    }
+   
+   public void stop() throws CacheLoaderException {
+      try {
+         super.stop();
+      } finally {
+         executor.shutdownNow();
+      }
+   }
 
    /**
     * Factory method for the creation of a Callable task in charge of pushing in-memory state to cache loader.
