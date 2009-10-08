@@ -21,7 +21,6 @@
  */
 package org.infinispan.tx;
 
-import org.infinispan.Cache;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
@@ -34,51 +33,49 @@ import javax.transaction.TransactionManager;
 @Test(groups = "functional", testName = "tx.LocalModeTxTest")
 public class LocalModeTxTest extends SingleCacheManagerTest {
 
-   Cache c;
-
    protected CacheManager createCacheManager() {
       CacheManager cm = TestCacheManagerFactory.createLocalCacheManager(true);
-      c = cm.getCache();
+      cache = cm.getCache();
       return cm;
    }
 
    public void testTxCommit1() throws Exception {
-      TransactionManager tm = TestingUtil.getTransactionManager(c);
+      TransactionManager tm = TestingUtil.getTransactionManager(cache);
       tm.begin();
-      c.put("key", "value");
+      cache.put("key", "value");
       Transaction t = tm.suspend();
-      assert c.isEmpty();
+      assert cache.isEmpty();
       tm.resume(t);
       tm.commit();
-      assert !c.isEmpty();
+      assert !cache.isEmpty();
    }
 
    public void testTxCommit3() throws Exception {
-      TransactionManager tm = TestingUtil.getTransactionManager(c);
+      TransactionManager tm = TestingUtil.getTransactionManager(cache);
       tm.begin();
-      c.put("key", "value");
+      cache.put("key", "value");
       tm.commit();
-      assert !c.isEmpty();
+      assert !cache.isEmpty();
    }
 
    public void testNonTx() throws Exception {
-      c.put("key", "value");
-      assert !c.isEmpty();
+      cache.put("key", "value");
+      assert !cache.isEmpty();
    }
 
    public void testTxCommit2() throws Exception {
-      TransactionManager tm = TestingUtil.getTransactionManager(c);
-      c.put("key", "old");
+      TransactionManager tm = TestingUtil.getTransactionManager(cache);
+      cache.put("key", "old");
       tm.begin();
-      assert c.get("key").equals("old");
-      c.put("key", "value");
-      assert c.get("key").equals("value");
+      assert cache.get("key").equals("old");
+      cache.put("key", "value");
+      assert cache.get("key").equals("value");
       Transaction t = tm.suspend();
-      assert c.get("key").equals("old");
+      assert cache.get("key").equals("old");
       tm.resume(t);
       tm.commit();
-      assert c.get("key").equals("value");
-      assert !c.isEmpty();
+      assert cache.get("key").equals("value");
+      assert !cache.isEmpty();
    }
 
 }

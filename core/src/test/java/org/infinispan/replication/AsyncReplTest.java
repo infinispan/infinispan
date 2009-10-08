@@ -17,22 +17,20 @@ import static org.testng.AssertJUnit.assertEquals;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
-import java.util.List;
 
 @Test(groups = "functional", testName = "replication.AsyncReplTest")
 public class AsyncReplTest extends MultipleCacheManagersTest {
 
-   Cache cache1, cache2;
 
    protected void createCacheManagers() throws Throwable {
       Configuration asyncConfiguration = getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC, true);
-      List<Cache<Object, Object>> caches = createClusteredCaches(2, "asyncRepl", asyncConfiguration);
-      cache1 = caches.get(0);
-      cache2 = caches.get(1);
+      createClusteredCaches(2, "asyncRepl", asyncConfiguration);   
    }
 
    public void testWithNoTx() throws Exception {
 
+      Cache cache1 = cache(0,"asyncRepl");
+      Cache cache2 = cache(1,"asyncRepl");
       String key = "key";
 
       replListener(cache2).expect(PutKeyValueCommand.class);
@@ -53,6 +51,9 @@ public class AsyncReplTest extends MultipleCacheManagersTest {
    }
 
    public void testWithTx() throws Exception {
+      Cache cache1 = cache(0,"asyncRepl");
+      Cache cache2 = cache(1,"asyncRepl");
+      
       String key = "key";
       replListener(cache2).expect(PutKeyValueCommand.class);
       cache1.put(key, "value1");
@@ -91,6 +92,9 @@ public class AsyncReplTest extends MultipleCacheManagersTest {
    }
 
    public void simpleTest() throws Exception {
+      Cache cache1 = cache(0,"asyncRepl");
+      Cache cache2 = cache(1,"asyncRepl");
+      
       String key = "key";
       TransactionManager mgr = TestingUtil.getTransactionManager(cache1);
 

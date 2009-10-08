@@ -20,6 +20,8 @@ public class CacheManagerNotifierTest {
    @AfterMethod
    public void tearDown() {
       TestingUtil.killCacheManagers(cm1, cm2);
+      cm1 = null;
+      cm2 = null;
    }
 
    public void testViewChange() {

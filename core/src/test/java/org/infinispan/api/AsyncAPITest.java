@@ -1,14 +1,15 @@
 package org.infinispan.api;
 
+import java.util.Collections;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+
 import org.infinispan.Cache;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
-
-import java.util.Collections;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 @Test(groups = "functional", testName = "api.AsyncAPITest")
 public class AsyncAPITest extends SingleCacheManagerTest {
@@ -19,7 +20,13 @@ public class AsyncAPITest extends SingleCacheManagerTest {
       c = cm.getCache();
       return cm;
    }
-
+   
+   @AfterClass(alwaysRun=true)
+   protected void destroyAfterClass() { 
+      super.destroyAfterClass();
+      c = null;
+   }
+  
    public void testAsyncMethods() throws ExecutionException, InterruptedException {
       // put
       Future<String> f = c.putAsync("k", "v");

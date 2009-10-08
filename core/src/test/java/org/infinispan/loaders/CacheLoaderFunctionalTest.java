@@ -51,6 +51,11 @@ public class CacheLoaderFunctionalTest {
    @AfterTest
    public void tearDown() {
       TestingUtil.killCacheManagers(cm);
+      cache = null;
+      cm = null;
+      cfg = null;
+      tm = null;
+      store = null;
    }
 
    @AfterMethod

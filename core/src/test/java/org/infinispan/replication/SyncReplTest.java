@@ -32,18 +32,18 @@ import java.util.List;
  */
 @Test(groups = "functional", testName = "replication.SyncReplTest")
 public class SyncReplTest extends MultipleCacheManagersTest {
-   Cache cache1, cache2;
+
    String k = "key", v = "value";
 
    protected void createCacheManagers() throws Throwable {
       Configuration replSync = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
       createClusteredCaches(2, "replSync", replSync);
-
-      cache1 = manager(0).getCache("replSync");
-      cache2 = manager(1).getCache("replSync");
    }
 
    public void testBasicOperation() {
+      Cache cache1 = cache(0, "replSync");
+      Cache cache2 = cache(1, "replSync");
+
       assertClusterSize("Should only be 2  caches in the cluster!!!", 2);
 
       assertNull("Should be null", cache1.get(k));
@@ -60,6 +60,9 @@ public class SyncReplTest extends MultipleCacheManagersTest {
    }
 
    public void testMultpleCachesOnSharedTransport() {
+      Cache cache1 = cache(0, "replSync");
+      Cache cache2 = cache(1, "replSync");
+
       assertClusterSize("Should only be 2  caches in the cluster!!!", 2);
       assert cache1.isEmpty();
       assert cache2.isEmpty();
@@ -90,6 +93,8 @@ public class SyncReplTest extends MultipleCacheManagersTest {
    }
 
    public void testReplicateToNonExistentCache() {
+      Cache cache1 = cache(0, "replSync");
+      Cache cache2 = cache(1, "replSync");
       assertClusterSize("Should only be 2  caches in the cluster!!!", 2);
       assert cache1.isEmpty();
       assert cache2.isEmpty();
@@ -118,6 +123,7 @@ public class SyncReplTest extends MultipleCacheManagersTest {
    }
 
    public void testMixingSyncAndAsyncOnSameTransport() throws Exception {
+      Cache cache1 = cache(0, "replSync");
       Transport originalTransport = null;
       RpcManagerImpl rpcManager = null;
       List<Response> emptyResponses = Collections.emptyList();
@@ -142,9 +148,11 @@ public class SyncReplTest extends MultipleCacheManagersTest {
          rpcManager = (RpcManagerImpl) TestingUtil.extractComponent(asyncCache1, RpcManager.class);
          rpcManager.setTransport(mockTransport);
 
-         expect(mockTransport.invokeRemotely((List<Address>) anyObject(), (CacheRpcCommand) anyObject(), eq(ResponseMode.SYNCHRONOUS),
-                                             anyLong(), anyBoolean(), (ResponseFilter) anyObject(), anyBoolean()))
-               .andReturn(emptyResponses).once();
+         expect(
+                  mockTransport.invokeRemotely((List<Address>) anyObject(),
+                           (CacheRpcCommand) anyObject(), eq(ResponseMode.SYNCHRONOUS), anyLong(),
+                           anyBoolean(), (ResponseFilter) anyObject(), anyBoolean())).andReturn(
+                  emptyResponses).once();
 
          replay(mockTransport);
          // check that the replication call was sync
@@ -154,9 +162,11 @@ public class SyncReplTest extends MultipleCacheManagersTest {
          reset(mockTransport);
          expect(mockTransport.getAddress()).andReturn(mockAddressOne).anyTimes();
          expect(mockTransport.getMembers()).andReturn(addresses).anyTimes();
-         expect(mockTransport.invokeRemotely((List<Address>) anyObject(), (CacheRpcCommand) anyObject(), eq(ResponseMode.ASYNCHRONOUS),
-                                             anyLong(), anyBoolean(), (ResponseFilter) anyObject(), anyBoolean()))
-               .andReturn(emptyResponses).once();
+         expect(
+                  mockTransport.invokeRemotely((List<Address>) anyObject(),
+                           (CacheRpcCommand) anyObject(), eq(ResponseMode.ASYNCHRONOUS), anyLong(),
+                           anyBoolean(), (ResponseFilter) anyObject(), anyBoolean())).andReturn(
+                  emptyResponses).once();
 
          replay(mockTransport);
          asyncCache1.put("k", "v");
@@ -164,7 +174,8 @@ public class SyncReplTest extends MultipleCacheManagersTest {
          verify(mockTransport);
       } finally {
          // replace original transport
-         if (rpcManager != null) rpcManager.setTransport(originalTransport);
+         if (rpcManager != null)
+            rpcManager.setTransport(originalTransport);
       }
    }
 }

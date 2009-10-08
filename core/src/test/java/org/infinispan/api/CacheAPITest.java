@@ -25,8 +25,7 @@ import java.util.Set;
  * @author <a href="mailto:manik@jboss.org">Manik Surtani</a>
  */
 @Test(groups = "functional")
-public abstract class CacheAPITest extends SingleCacheManagerTest {
-   protected Cache cache;
+public abstract class CacheAPITest extends SingleCacheManagerTest {  
 
    protected CacheManager createCacheManager() throws Exception {
       // start a single cache instance

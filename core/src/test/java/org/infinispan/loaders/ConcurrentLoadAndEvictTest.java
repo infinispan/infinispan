@@ -16,6 +16,7 @@ import org.infinispan.manager.CacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 import java.util.Collections;
@@ -53,6 +54,12 @@ public class ConcurrentLoadAndEvictTest extends SingleCacheManagerTest {
       cic.setAfterInterceptor(CacheLoaderInterceptor.class);
       config.setCustomInterceptors(Collections.singletonList(cic));
       return TestCacheManagerFactory.createCacheManager(config);
+   }
+   
+   @AfterClass(alwaysRun=true)
+   protected void destroyAfterClass() {
+      super.destroyAfterClass();
+      sdi = null;
    }
 
    public void testEvictBeforeRead() throws CacheLoaderException, ExecutionException, InterruptedException {

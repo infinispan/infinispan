@@ -10,22 +10,18 @@ import org.infinispan.util.Util;
 import org.testng.annotations.Test;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 @Test(groups = "functional", testName = "invalidation.AsyncAPISyncInvalTest")
-public class AsyncAPISyncInvalTest extends MultipleCacheManagersTest {
-
-   Cache<Key, String> c1, c2;
+public class AsyncAPISyncInvalTest extends MultipleCacheManagersTest {   
 
    @SuppressWarnings("unchecked")
    protected void createCacheManagers() throws Throwable {
-      Configuration c =
-            getDefaultClusteredConfig(sync() ? Configuration.CacheMode.INVALIDATION_SYNC : Configuration.CacheMode.INVALIDATION_ASYNC, true);
-      List<Cache<Key, String>> l = createClusteredCaches(2, getClass().getSimpleName(), c);
-      c1 = l.get(0);
-      c2 = l.get(1);
+      Configuration c = getDefaultClusteredConfig(
+               sync() ? Configuration.CacheMode.INVALIDATION_SYNC
+                        : Configuration.CacheMode.INVALIDATION_ASYNC, true);
+      createClusteredCaches(2, getClass().getSimpleName(), c);
    }
 
    protected boolean sync() {
@@ -39,16 +35,22 @@ public class AsyncAPISyncInvalTest extends MultipleCacheManagersTest {
    }
 
    private void assertInvalidated(Key k, String value) {
+      Cache c1 = cache(0,getClass().getSimpleName());
+      Cache c2 = cache(1,getClass().getSimpleName());
       assert Util.safeEquals(c1.get(k), value);
       assert !c2.containsKey(k);
    }
 
    private void initC2(Key k) {
+      Cache c1 = cache(0,getClass().getSimpleName());
+      Cache c2 = cache(1,getClass().getSimpleName());
       c2.getAdvancedCache().put(k, "v", Flag.CACHE_MODE_LOCAL);
    }
 
    public void testAsyncMethods() throws ExecutionException, InterruptedException {
 
+      Cache c1 = cache(0,getClass().getSimpleName());
+      Cache c2 = cache(1,getClass().getSimpleName());
       String v = "v";
       String v2 = "v2";
       String v3 = "v3";

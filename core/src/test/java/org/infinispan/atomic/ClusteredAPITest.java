@@ -1,30 +1,29 @@
 package org.infinispan.atomic;
 
-import org.infinispan.Cache;
 import static org.infinispan.atomic.AtomicHashMapTestAssertions.assertIsEmpty;
 import static org.infinispan.atomic.AtomicHashMapTestAssertions.assertIsEmptyMap;
+
+import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
-import java.util.List;
-
-
 @Test(groups = "functional", testName = "atomic.ClusteredAPITest")
 public class ClusteredAPITest extends MultipleCacheManagersTest {
-   Cache<String, Object> cache1, cache2;
 
    protected void createCacheManagers() throws Throwable {
       Configuration c = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
       c.setInvocationBatchingEnabled(true);
 
-      List<Cache<String, Object>> caches = createClusteredCaches(2, "atomic", c);
-      cache1 = caches.get(0);
-      cache2 = caches.get(1);
+      createClusteredCaches(2, "atomic", c);
+
    }
 
    public void testReplicationCommit() throws Exception {
+      Cache<String, Object> cache1 = cache(0, "atomic");
+      Cache<String, Object> cache2 = cache(1, "atomic");
+
       AtomicMap<String, String> map = AtomicMapLookup.getAtomicMap(cache1, "map");
 
       TestingUtil.getTransactionManager(cache1).begin();
@@ -42,6 +41,8 @@ public class ClusteredAPITest extends MultipleCacheManagersTest {
    }
 
    public void testReplicationRollback() throws Exception {
+      Cache<String, Object> cache1 = cache(0, "atomic");
+      Cache<String, Object> cache2 = cache(1, "atomic");
       assertIsEmptyMap(cache2, "map");
       AtomicMap<String, String> map = AtomicMapLookup.getAtomicMap(cache1, "map");
 

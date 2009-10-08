@@ -12,9 +12,7 @@ import java.util.concurrent.CountDownLatch;
 
 @Test(groups = "functional", testName = "eviction.BaseEvictionFunctionalTest")
 public abstract class BaseEvictionFunctionalTest extends SingleCacheManagerTest {
-
-   Cache cache;
-
+   
    protected BaseEvictionFunctionalTest() {
       cleanup = CleanupPhase.AFTER_METHOD;
    }

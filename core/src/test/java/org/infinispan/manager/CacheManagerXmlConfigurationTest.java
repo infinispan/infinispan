@@ -22,6 +22,7 @@ public class CacheManagerXmlConfigurationTest {
    @AfterMethod
    public void tearDown() {
       if (cm != null) cm.stop();
+      cm =null;
    }
 
    public void testNamedCacheXML() throws IOException {

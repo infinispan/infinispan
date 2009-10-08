@@ -38,6 +38,9 @@ public class ConcurrentNotificationTest {
    @AfterMethod
    public void tearDown() {
       TestingUtil.killCacheManagers(cm);
+      cm = null;
+      cache = null;
+      listener = null;
    }
 
    public void testThreads() throws Exception {

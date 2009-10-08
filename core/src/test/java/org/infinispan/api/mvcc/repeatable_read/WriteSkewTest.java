@@ -39,6 +39,11 @@ public class WriteSkewTest {
    @AfterTest
    public void tearDown() {
       TestingUtil.killCacheManagers(cacheManager);
+      cacheManager = null;
+      cache =null;
+      lockManager = null;
+      tm = null;
+      icc = null;
    }
 
    private void postStart() {

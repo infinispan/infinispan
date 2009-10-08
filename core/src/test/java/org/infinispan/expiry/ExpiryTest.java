@@ -28,6 +28,7 @@ public class ExpiryTest {
    @AfterMethod
    public void tearDown() {
       TestingUtil.killCacheManagers(cm);
+      cm = null;
    }
 
    public void testLifespanExpiryInPut() throws InterruptedException {

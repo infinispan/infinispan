@@ -5,8 +5,10 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.test.ReplListener;
 import org.infinispan.test.TestingUtil;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,6 +35,14 @@ public class DistAsyncFuncTest extends DistSyncFuncTest {
       r = new ReplListener[]{r1, r2, r3, r4};
       listenerLookup = new HashMap<Cache<?, ?>, ReplListener>();
       for (ReplListener rl : r) listenerLookup.put(rl.getCache(), rl);
+   }
+   
+   @AfterClass(alwaysRun=true)
+   public void destroy() {
+      super.destroy();           
+      r1=null;r2=null;r3=null;r4=null;
+      Arrays.fill(r, null);
+      listenerLookup.clear();
    }
 
 

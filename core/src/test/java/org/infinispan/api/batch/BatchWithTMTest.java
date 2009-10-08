@@ -26,6 +26,7 @@ public class BatchWithTMTest extends AbstractBatchTest {
    @AfterClass
    public void destroyCacheManager() {
       TestingUtil.killCacheManagers(cm);
+      cm = null;
    }
 
    public void testBatchWithOngoingTM() throws Exception {

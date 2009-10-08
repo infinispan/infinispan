@@ -43,7 +43,7 @@ public class APITest {
    TransactionManager tm;
 
    @BeforeTest
-   private void setUp() {
+   public void setUp() {
       Configuration c = new Configuration();
       c.setInvocationBatchingEnabled(true);
       cache = TestCacheManagerFactory.createCacheManager(c, true).getCache();
@@ -51,12 +51,14 @@ public class APITest {
    }
 
    @AfterTest
-   private void tearDown() {
+   public void tearDown() {
       TestingUtil.killCaches(cache);
+      cache =null;
+      tm = null;
    }
 
    @AfterMethod
-   private void clearUp() throws SystemException {
+   public void clearUp() throws SystemException {
       if (tm.getTransaction() != null) {
          try {
             tm.rollback();

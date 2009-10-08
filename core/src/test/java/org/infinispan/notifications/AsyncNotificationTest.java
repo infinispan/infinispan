@@ -26,6 +26,8 @@ public class AsyncNotificationTest {
    @AfterMethod
    public void tearDown() {
       TestingUtil.killCacheManagers(cm);
+      cm = null;
+      c = null;
    }
 
    public void testAsyncNotification() throws InterruptedException {

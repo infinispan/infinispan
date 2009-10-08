@@ -40,9 +40,11 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.AbstractCacheTest.CleanupPhase;
 import org.infinispan.util.ObjectDuplicator;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -71,13 +73,13 @@ import java.util.Set;
  * @since 4.0
  */
 @Test(groups = "functional", testName = "marshall.MarshalledValueTest")
-public class MarshalledValueTest extends MultipleCacheManagersTest {
-   private Cache cache1, cache2;
+public class MarshalledValueTest extends MultipleCacheManagersTest {   
    private MarshalledValueListenerInterceptor mvli;
    String k = "key", v = "value";
    private VersionAwareMarshaller marshaller;
 
    protected void createCacheManagers() throws Throwable {
+      Cache cache1, cache2;
       Configuration replSync = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
       replSync.setUseLazyDeserialization(true);
 
@@ -97,6 +99,9 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
 
    @BeforeMethod
    public void addMarshalledValueInterceptor() {
+      Cache cache1, cache2;
+      cache1 = cache(0, "replSync");
+      cache2 = cache(1, "replSync");
       InterceptorChain chain = TestingUtil.extractComponent(cache1, InterceptorChain.class);
       chain.removeInterceptor(MarshalledValueListenerInterceptor.class);
       mvli = new MarshalledValueListenerInterceptor();
@@ -105,6 +110,16 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       marshaller = new VersionAwareMarshaller();
       marshaller.inject(Thread.currentThread().getContextClassLoader(), null);
       marshaller.start();
+   }
+   
+   @AfterClass(alwaysRun=true)
+   protected void destroy() {     
+      super.destroy();
+      if(marshaller != null) {
+         marshaller.stop();
+         marshaller = null;
+      }
+      mvli = null;
    }
 
    @AfterMethod
@@ -130,7 +145,9 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       assert Pojo.deserializationCount == deserializationCount : "Deserialization count: expected " + deserializationCount + " but was " + Pojo.deserializationCount;
    }
 
-   public void testNonSerializable() {
+   public void testNonSerializable() {      
+      Cache cache1 = cache(0, "replSync");
+      Cache cache2 = cache(1, "replSync");
       try {
          cache1.put("Hello", new Object());
          assert false : "Should have failed";
@@ -153,6 +170,9 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
    }
 
    public void testReleaseObjectValueReferences() {
+      Cache cache1 = cache(0, "replSync");
+      Cache cache2 = cache(1, "replSync");
+      
       assert cache1.isEmpty();
       Pojo value = new Pojo();
       System.out.println(TestingUtil.extractComponent(cache1, InterceptorChain.class).toString());
@@ -193,6 +213,8 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
    }
 
    public void testReleaseObjectKeyReferences() throws IOException, ClassNotFoundException {
+      Cache cache1 = cache(0, "replSync");
+      Cache cache2 = cache(1, "replSync");
       Pojo key = new Pojo();
       cache1.put(key, "value");
 
@@ -232,6 +254,9 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
    }
    
    public void testKeySetValuesEntrySetCollectionReferences() {
+      Cache cache1 = cache(0, "replSync");
+      Cache cache2 = cache(1, "replSync");
+      
       Pojo key1 = new Pojo(), value1 = new Pojo(), key2 = new Pojo(), value2 = new Pojo();
       String key3 = "3", value3 = "three"; 
       cache1.put(key1, value1);
@@ -336,6 +361,8 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
    }
 
    public void testMarshallValueWithCustomReadObjectMethod() {
+      Cache cache1 = cache(0, "replSync");
+      Cache cache2 = cache(1, "replSync");
       CustomReadObjectMethod obj = new CustomReadObjectMethod();
       cache1.put("ab-key", obj);
       assert cache2.get("ab-key").equals(obj);
@@ -385,6 +412,8 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
     */
    @Test(dependsOnMethods = "org.infinispan.marshall.MarshalledValueTest.test(?!CacheLoaders)[a-zA-Z]*")
    public void testCacheLoaders() throws CloneNotSupportedException {
+      Cache cache1 = cache(0, "replSync");
+      Cache cache2 = cache(1, "replSync");
       tearDown();
 
       Configuration cacheCofig = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
@@ -412,6 +441,8 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
    }
 
    public void testCallbackValues() {
+      Cache cache1 = cache(0, "replSync");
+      Cache cache2 = cache(1, "replSync");
       MockListener l = new MockListener();
       cache1.addListener(l);
       Pojo pojo = new Pojo();
@@ -425,6 +456,8 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
    }
 
    public void testRemoteCallbackValues() throws Exception {
+      Cache cache1 = cache(0, "replSync");
+      Cache cache2 = cache(1, "replSync");
       MockListener l = new MockListener();
       cache2.addListener(l);
       Pojo pojo = new Pojo();
@@ -438,6 +471,8 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
    }
    
    public void testEvictWithMarshalledValueKey() {
+      Cache cache1 = cache(0, "replSync");
+      Cache cache2 = cache(1, "replSync");
       Pojo pojo = new Pojo();
       cache1.put(pojo, pojo);
       cache1.evict(pojo);

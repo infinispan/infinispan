@@ -9,22 +9,19 @@ import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
-import java.util.List;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 @Test(groups = "functional", testName = "expiry.ReplicatedExpiryTest")
 public class ReplicatedExpiryTest extends MultipleCacheManagersTest {
 
-   Cache c1, c2;
-
    protected void createCacheManagers() throws Throwable {
       Configuration cfg = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
-      List<Cache<Object, Object>> caches = createClusteredCaches(2, "cache", cfg);
-      c1 = caches.get(0);
-      c2 = caches.get(1);
+      createClusteredCaches(2, "cache", cfg);      
    }
 
    public void testLifespanExpiryReplicates() throws InterruptedException {
+      Cache c1 = cache(0,"cache");
+      Cache c2 = cache(1,"cache");
       long lifespan = 3000;
       c1.put("k", "v", lifespan, MILLISECONDS);
       InternalCacheEntry ice = c2.getAdvancedCache().getDataContainer().get("k");
@@ -35,6 +32,8 @@ public class ReplicatedExpiryTest extends MultipleCacheManagersTest {
    }
 
    public void testIdleExpiryReplicates() throws InterruptedException {
+      Cache c1 = cache(0,"cache");
+      Cache c2 = cache(1,"cache");
       long idle = 3000;
       c1.put("k", "v", -1, MILLISECONDS, idle, MILLISECONDS);
       InternalCacheEntry ice = c2.getAdvancedCache().getDataContainer().get("k");
@@ -45,6 +44,8 @@ public class ReplicatedExpiryTest extends MultipleCacheManagersTest {
    }
 
    public void testBothExpiryReplicates() throws InterruptedException {
+      Cache c1 = cache(0,"cache");
+      Cache c2 = cache(1,"cache");
       long lifespan = 10000;
       long idle = 3000;
       c1.put("k", "v", lifespan, MILLISECONDS, idle, MILLISECONDS);

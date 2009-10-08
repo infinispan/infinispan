@@ -65,9 +65,11 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
    }
    
    @AfterClass(alwaysRun=true)
-   protected void destroy() {
+   public void destroy() {
       super.destroy();     
       caches.clear();
+      caches = null;
+      configuration=null;
       c1 = null;c2=null;c3=null;c4=null;
    }
 

@@ -49,6 +49,11 @@ public class PassivationFunctionalTest {
    @AfterTest
    public void tearDown() {
       TestingUtil.killCacheManagers(cm);
+      cm = null;
+      cfg = null;
+      store = null;
+      cache = null;
+      tm = null;
    }
 
    @AfterMethod

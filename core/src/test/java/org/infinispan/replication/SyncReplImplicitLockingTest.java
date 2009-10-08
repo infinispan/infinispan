@@ -46,7 +46,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Test(groups = "functional", testName = "replication.SyncReplImplicitLockingTest")
 public class SyncReplImplicitLockingTest extends MultipleCacheManagersTest {
-   Cache<String, String> cache1, cache2;
+   //Cache<String, String> cache1, cache2;
    String k = "key", v = "value";
 
    protected void createCacheManagers() throws Throwable {
@@ -54,9 +54,6 @@ public class SyncReplImplicitLockingTest extends MultipleCacheManagersTest {
       replSync.setLockAcquisitionTimeout(500);
       replSync.setUseEagerLocking(true);
       createClusteredCaches(2, "replication.SyncReplImplicitLockingTest", replSync);
-
-      cache1 = manager(0).getCache("replication.SyncReplImplicitLockingTest");
-      cache2 = manager(1).getCache("replication.SyncReplImplicitLockingTest");
    }
 
    public void testBasicOperation() throws Exception {
@@ -71,7 +68,8 @@ public class SyncReplImplicitLockingTest extends MultipleCacheManagersTest {
 
    public void testLocksReleasedWithNoMods() throws Exception {
       assertClusterSize("Should only be 2  caches in the cluster!!!", 2);
-
+      Cache cache1 = cache(0,"replication.SyncReplImplicitLockingTest");
+      Cache cache2 = cache(1,"replication.SyncReplImplicitLockingTest");
       assertNull("Should be null", cache1.get(k));
       assertNull("Should be null", cache2.get(k));
 
@@ -84,12 +82,15 @@ public class SyncReplImplicitLockingTest extends MultipleCacheManagersTest {
 
       assertNoLocks(cache1);
       assertNoLocks(cache2);
-
-      cleanup();
+      cache1.clear();cache2.clear();
    }
 
    private void concurrentLockingHelper(final boolean sameNode, final boolean useTx)
          throws Exception {
+      
+      final Cache cache1 = cache(0,"replication.SyncReplImplicitLockingTest");
+      final Cache cache2 = cache(1,"replication.SyncReplImplicitLockingTest");
+      
       assertClusterSize("Should only be 2  caches in the cluster!!!", 2);
 
       assertNull("Should be null", cache1.get(k));
@@ -140,10 +141,13 @@ public class SyncReplImplicitLockingTest extends MultipleCacheManagersTest {
       t.join();
 
       cache2.remove(k);
-      cleanup();
+      cache1.clear();cache2.clear();
    }
 
    private void testBasicOperationHelper(boolean useCommit) throws Exception {
+      Cache cache1 = cache(0,"replication.SyncReplImplicitLockingTest");
+      Cache cache2 = cache(1,"replication.SyncReplImplicitLockingTest");
+      
       assertClusterSize("Should only be 2  caches in the cluster!!!", 2);
 
       assertNull("Should be null", cache1.get(k));
@@ -190,20 +194,12 @@ public class SyncReplImplicitLockingTest extends MultipleCacheManagersTest {
       cache2.remove(k);
       cache2.remove(key2);
       cache2.remove(key3);
-      cache2.remove(key4);
-      cleanup();
+      cache2.remove(key4);     
    }
 
    @SuppressWarnings("unchecked")
    protected void assertNoLocks(Cache cache) {
       LockManager lm = TestingUtil.extractLockManager(cache);
       for (Object key : cache.keySet()) assert !lm.isLocked(key);
-   }
-
-   protected void cleanup() {
-      assert cache1.isEmpty();
-      assert cache2.isEmpty();
-      cache1.clear();
-      cache2.clear();
    }
 }

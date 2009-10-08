@@ -24,6 +24,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -59,8 +60,16 @@ public class ChainingCacheLoaderTest extends BaseCacheStoreTest {
 
    @AfterMethod
    public void afterMethod() {
-      if (store1 != null) store1.clear();
-      if (store2 != null) store2.clear();
+      try {
+         if (store1 != null)
+            store1.clear();
+         if (store2 != null)
+            store2.clear();
+      } finally {
+         store1 = null;
+         store2 = null;
+         Arrays.fill(stores, null);
+      }
    }
 
    public void testPropagatingWrites() throws Exception {

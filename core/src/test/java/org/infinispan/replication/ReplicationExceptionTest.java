@@ -8,7 +8,6 @@
 package org.infinispan.replication;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContext;
@@ -27,40 +26,38 @@ import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
 import java.io.NotSerializableException;
 import java.io.Serializable;
-import java.util.List;
 
 @Test(groups = "functional", testName = "replication.ReplicationExceptionTest")
 public class ReplicationExceptionTest extends MultipleCacheManagersTest {
-   private AdvancedCache cache1, cache2;
 
    protected void createCacheManagers() throws Throwable {
-      Configuration configuration = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
+      Configuration configuration = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC,true);
       configuration.setIsolationLevel(IsolationLevel.REPEATABLE_READ);
-
       configuration.setLockAcquisitionTimeout(5000);
 
-      List<Cache<Object, Object>> caches = createClusteredCaches(2, "replicatinExceptionTest", configuration);
-
-      cache1 = caches.get(0).getAdvancedCache();
-      cache2 = caches.get(1).getAdvancedCache();
+      createClusteredCaches(2, "replicatinExceptionTest", configuration);
    }
 
    private TransactionManager beginTransaction() throws SystemException, NotSupportedException {
+      AdvancedCache cache1 = cache(0, "replicatinExceptionTest").getAdvancedCache();
+
       TransactionManager mgr = TestingUtil.getTransactionManager(cache1);
       mgr.begin();
       return mgr;
    }
 
    public void testNonSerializableRepl() throws Exception {
+      AdvancedCache cache1 = cache(0, "replicatinExceptionTest").getAdvancedCache();
+      AdvancedCache cache2 = cache(1, "replicatinExceptionTest").getAdvancedCache();
       try {
          cache1.put("test", new ContainerData());
 
          // We should not come here.
          assertNotNull("NonSerializableData should not be null on cache2", cache2.get("test"));
-      }
-      catch (RuntimeException runtime) {
+      } catch (RuntimeException runtime) {
          Throwable t = runtime.getCause();
-         if (t instanceof NotSerializableException || t.getCause() instanceof NotSerializableException) {
+         if (t instanceof NotSerializableException
+                  || t.getCause() instanceof NotSerializableException) {
             System.out.println("received NotSerializableException - as expected");
          } else {
             throw runtime;
@@ -69,6 +66,8 @@ public class ReplicationExceptionTest extends MultipleCacheManagersTest {
    }
 
    public void testNonSerializableReplWithTx() throws Exception {
+      AdvancedCache cache1 = cache(0, "replicatinExceptionTest").getAdvancedCache();
+      AdvancedCache cache2 = cache(1, "replicatinExceptionTest").getAdvancedCache();
       TransactionManager tm;
 
       try {
@@ -78,21 +77,22 @@ public class ReplicationExceptionTest extends MultipleCacheManagersTest {
 
          // We should not come here.
          assertNotNull("NonSerializableData should not be null on cache2", cache2.get("test"));
-      }
-      catch (RollbackException rollback) {
+      } catch (RollbackException rollback) {
          System.out.println("received RollbackException - as expected");
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          // We should also examine that it is indeed throwing a NonSerilaizable exception.
          fail(e.toString());
       }
    }
 
-   @Test(groups = "functional", expectedExceptions = {TimeoutException.class})
+   @Test(groups = "functional", expectedExceptions = { TimeoutException.class })
    public void testSyncReplTimeout() {
+      AdvancedCache cache1 = cache(0, "replicatinExceptionTest").getAdvancedCache();
+      AdvancedCache cache2 = cache(1, "replicatinExceptionTest").getAdvancedCache();
       cache2.addInterceptor(new CommandInterceptor() {
          @Override
-         protected Object handleDefault(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
+         protected Object handleDefault(InvocationContext ctx, VisitableCommand cmd)
+                  throws Throwable {
             // Add a delay
             Thread.sleep(100);
             return super.handleDefault(ctx, cmd);
@@ -106,8 +106,10 @@ public class ReplicationExceptionTest extends MultipleCacheManagersTest {
       cache1.put("k", "v");
    }
 
-   @Test(groups = "functional", expectedExceptions = {TimeoutException.class})
+   @Test(groups = "functional", expectedExceptions = { TimeoutException.class })
    public void testLockAcquisitionTimeout() throws Exception {
+      AdvancedCache cache1 = cache(0, "replicatinExceptionTest").getAdvancedCache();
+      AdvancedCache cache2 = cache(1, "replicatinExceptionTest").getAdvancedCache();
       cache2.getConfiguration().setLockAcquisitionTimeout(1);
       TestingUtil.blockUntilViewsReceived(10000, cache1, cache2);
 

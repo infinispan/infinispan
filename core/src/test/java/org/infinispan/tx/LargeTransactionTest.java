@@ -19,11 +19,7 @@ import javax.transaction.TransactionManager;
  */
 @Test(testName = "tx.LargeTransactionTest", groups = "functional")
 public class LargeTransactionTest extends MultipleCacheManagersTest {
-
    private static Log log = LogFactory.getLog(LargeTransactionTest.class);
-
-   private Cache cache1;
-   private Cache cache2;
 
    protected void createCacheManagers() throws Throwable {
 
@@ -40,18 +36,20 @@ public class LargeTransactionTest extends MultipleCacheManagersTest {
       manager.start();
       manager.getCache();
       registerCacheManager(manager);
-      cache1 = manager.getCache("TestCache");
+      Cache cache1 = manager.getCache("TestCache");
       assert cache1.getConfiguration().getCacheMode().equals(Configuration.CacheMode.REPL_SYNC);
       cache1.start();
 
       manager = TestCacheManagerFactory.createClusteredCacheManager(c);
       manager.start();
       registerCacheManager(manager);
-      cache2 = manager.getCache("TestCache");
+      Cache cache2 = manager.getCache("TestCache");
       assert cache1.getConfiguration().getCacheMode().equals(Configuration.CacheMode.REPL_SYNC);
    }
 
    public void testLargeTx() throws Exception {
+      Cache cache1 = cache(0, "TestCache");
+      Cache cache2 = cache(1, "TestCache");
       TransactionManager tm = TestingUtil.getTransactionManager(cache1);
       tm.begin();
       for (int i = 0; i < 200; i++)
@@ -65,6 +63,8 @@ public class LargeTransactionTest extends MultipleCacheManagersTest {
    }
 
    public void testSinglePutInTx() throws Exception {
+      Cache cache1 = cache(0, "TestCache");
+      Cache cache2 = cache(1, "TestCache");
       TransactionManager tm = TestingUtil.getTransactionManager(cache1);
 
       tm.begin();
@@ -76,6 +76,8 @@ public class LargeTransactionTest extends MultipleCacheManagersTest {
    }
 
    public void testSimplePutNoTx() {
+      Cache cache1 = cache(0, "TestCache");
+      Cache cache2 = cache(1, "TestCache");
       cache1.put("key", "val");
       assert cache2.get("key").equals("val");
    }

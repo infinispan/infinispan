@@ -6,6 +6,7 @@ import org.infinispan.config.Configuration.CacheMode;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 import java.util.List;
@@ -49,6 +50,16 @@ public class CacheClusterJoinTest extends MultipleCacheManagersTest {
       memb2 = cm2.getMembers();
       assert 1 == memb2.size();
       assert !coord.equals(memb2.get(0));
+   }
+   
+   @AfterClass(alwaysRun=true)
+   public void destroy() {
+      super.destroy();
+      cache1=null;
+      cache2=null;
+      cm1 = null;
+      cm2 = null;
+      cfg = null;
    }
 
    public void testIsCoordinator() throws Exception {

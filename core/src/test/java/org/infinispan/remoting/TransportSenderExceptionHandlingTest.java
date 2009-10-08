@@ -43,19 +43,18 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "remoting.TransportSenderExceptionHandlingTest")
 public class TransportSenderExceptionHandlingTest extends MultipleCacheManagersTest {
    final String key = "k-illyria", value = "v-illyria", value2 = "v2-illyria";
-   Cache cache1;
-   Cache cache2;
+
 
    @Override
    protected void createCacheManagers() throws Throwable {
       Configuration c = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
       c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
-      createClusteredCaches(2, "replSync", c);
-      cache1 = cache(0, "replSync");
-      cache2 = cache(1, "replSync");
+      createClusteredCaches(2, "replSync", c);   
    }
    
    public void testInvokeAndExceptionWhileUnmarshalling() throws Exception {
+      Cache cache1 = cache(0, "replSync");
+      Cache cache2 = cache(1, "replSync");
       JGroupsTransport transport1 = (JGroupsTransport) TestingUtil.extractComponent(cache1, Transport.class);
       CommandAwareRpcDispatcher dispatcher1 = transport1.getCommandAwareRpcDispatcher();
       Marshaller2 originalMarshaller1 = (Marshaller2) dispatcher1.getMarshaller();

@@ -71,6 +71,9 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    protected void destroy() {     
       if (cleanup == CleanupPhase.AFTER_TEST) TestingUtil.killCacheManagers(cacheManagers);
       cacheManagers.clear();  
+      cacheManagers=null;     
+      listeners.clear();
+      listeners=null;
    }
 
    @AfterMethod(alwaysRun=true)

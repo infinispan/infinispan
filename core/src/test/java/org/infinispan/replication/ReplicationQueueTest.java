@@ -27,8 +27,6 @@ import java.util.concurrent.TimeUnit;
 @Test(groups = "functional", testName = "replication.ReplicationQueueTest")
 public class ReplicationQueueTest extends MultipleCacheManagersTest {
 
-   Cache cache1;
-   Cache cache2;
    private static final int REPL_QUEUE_INTERVAL = 5000;
    private static final int REPL_QUEUE_MAX_ELEMENTS = 10;
    long creationTime;
@@ -51,9 +49,6 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
       Configuration conf2 = config.clone();
       conf2.setUseReplQueue(false);
       manager(1).defineConfiguration("replQueue", conf2);
-
-      cache1 = cache(0, "replQueue");
-      cache2 = cache(1, "replQueue");
    }
 
    /**
@@ -73,6 +68,10 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
     * <tt>replQueueInterval</tt> is reached.
     */
    public void testReplicationBasedOnTime() throws InterruptedException {
+      
+      Cache cache1 = cache(0, "replQueue");
+      Cache cache2 = cache(1, "replQueue");
+      
       //only place one element, queue size is 10. 
       cache1.put("key", "value");
       ReplicationQueue replicationQueue = TestingUtil.extractComponent(cache1, ReplicationQueue.class);
@@ -98,6 +97,9 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
     * <tt>replQueueInterval</tt> is reached.
     */
    public void testReplicationBasedOnTimeWithTx() throws Exception {
+      Cache cache1 = cache(0, "replQueue");
+      Cache cache2 = cache(1, "replQueue");
+      
       //only place one element, queue size is 10.
       TransactionManager transactionManager = TestingUtil.getTransactionManager(cache1);
       transactionManager.begin();
@@ -128,6 +130,10 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
     * <tt>replQueueInterval</tt> is not reached.
     */
    public void testReplicationBasedOnSize() throws Exception {
+      
+      Cache cache1 = cache(0, "replQueue");
+      Cache cache2 = cache(1, "replQueue");
+      
       //only place one element, queue size is 10.
       for (int i = 0; i < REPL_QUEUE_MAX_ELEMENTS; i++) {
          cache1.put("key" + i, "value" + i);
@@ -148,6 +154,10 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
     * <tt>replQueueInterval</tt> is not reached.
     */
    public void testReplicationBasedOnSizeWithTx() throws Exception {
+      
+      Cache cache1 = cache(0, "replQueue");
+      Cache cache2 = cache(1, "replQueue");
+      
       //only place one element, queue size is 10.
       TransactionManager transactionManager = TestingUtil.getTransactionManager(cache1);
       for (int i = 0; i < REPL_QUEUE_MAX_ELEMENTS; i++) {
@@ -170,6 +180,8 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
     * Test that replication queue works fine when multiple threads are putting into the queue.
     */
    public void testReplicationQueueMultipleThreads() throws Exception {
+      final Cache cache1 = cache(0, "replQueue");
+      Cache cache2 = cache(1, "replQueue");
       int numThreads = 4;
       final int numLoopsPerThread = 3;
       Thread[] threads = new Thread[numThreads];

@@ -8,11 +8,6 @@ import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "api.MixedModeTest")
 public class MixedModeTest extends MultipleCacheManagersTest {
-   AdvancedCache replSyncCache1, replSyncCache2;
-   AdvancedCache replAsyncCache1, replAsyncCache2;
-   AdvancedCache invalAsyncCache1, invalAsyncCache2;
-   AdvancedCache invalSyncCache1, invalSyncCache2;
-   AdvancedCache localCache1, localCache2;
 
    protected void createCacheManagers() throws Throwable {
       Configuration replSync = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
@@ -27,6 +22,16 @@ public class MixedModeTest extends MultipleCacheManagersTest {
       defineConfigurationOnAllManagers("invalAsync", invalAsync);
       defineConfigurationOnAllManagers("local", local);
 
+   }
+
+   public void testMixedMode() {
+
+      AdvancedCache replSyncCache1, replSyncCache2;
+      AdvancedCache replAsyncCache1, replAsyncCache2;
+      AdvancedCache invalAsyncCache1, invalAsyncCache2;
+      AdvancedCache invalSyncCache1, invalSyncCache2;
+      AdvancedCache localCache1, localCache2;
+
       replSyncCache1 = cache(0, "replSync").getAdvancedCache();
       replSyncCache2 = cache(1, "replSync").getAdvancedCache();
       replAsyncCache1 = cache(0, "replAsync").getAdvancedCache();
@@ -37,10 +42,6 @@ public class MixedModeTest extends MultipleCacheManagersTest {
       invalAsyncCache2 = cache(1, "invalAsync").getAdvancedCache();
       localCache1 = cache(0, "local").getAdvancedCache();
       localCache2 = cache(1, "local").getAdvancedCache();
-   }
-
-
-   public void testMixedMode() {
 
       invalSyncCache2.put("k", "v", Flag.CACHE_MODE_LOCAL);
       assert invalSyncCache2.get("k").equals("v");

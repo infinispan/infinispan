@@ -37,6 +37,8 @@ public class AtomicMapFunctionalTest {
    @AfterMethod
    public void tearDown() {
       TestingUtil.killCaches(cache);
+      cache = null;
+      tm = null;
    }
 
    public void testChangesOnAtomicMap() {

@@ -31,9 +31,11 @@ public class JmxStatsFunctionalTest {
    private CacheManager cm, cm2, cm3;
 
 
-   @AfterMethod
+   @AfterMethod(alwaysRun=true)
    public void destroyCacheManager() {
       TestingUtil.killCacheManagers(cm, cm2, cm3);
+      cm=null;cm2=null;cm3=null;
+      server=null;
       assert !existsDomains("infinispan");
    }
 

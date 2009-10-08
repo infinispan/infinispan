@@ -23,6 +23,7 @@ public class BatchWithoutTMTest extends AbstractBatchTest {
    @AfterClass
    public void destroyCacheManager() {
       TestingUtil.killCacheManagers(cm);
+      cm = null;
    }
 
    public void testBatchWithoutCfg() {

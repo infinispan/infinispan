@@ -48,6 +48,8 @@ public class CacheNotifierTest {
    @AfterTest
    public void destroyManager() {
       TestingUtil.killCacheManagers(cache.getCacheManager());
+      cache = null; tm = null; mockNotifier = null;
+      origNotifier = null;
    }
 
    private void initCacheData(Object key, Object value) {

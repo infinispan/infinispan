@@ -19,9 +19,6 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "loaders.ClusterCacheLoaderTest")
 public class ClusterCacheLoaderTest extends MultipleCacheManagersTest {
-   private Cache cache1;
-   private Cache cache2;
-   private CacheStore cs2;
 
    protected void createCacheManagers() throws Throwable {
       CacheManager cacheManager1 = TestCacheManagerFactory.createClusteredCacheManager();
@@ -43,14 +40,14 @@ public class ClusterCacheLoaderTest extends MultipleCacheManagersTest {
 
       cacheManager1.defineConfiguration("clusteredCl", config1);
       cacheManager2.defineConfiguration("clusteredCl", config2);
-      cache1 = cache(0, "clusteredCl");
-      cache2 = cache(1, "clusteredCl");
-      CacheLoaderManager manager2 = cache2.getAdvancedCache().getComponentRegistry().getComponent(CacheLoaderManager.class);
-      ChainingCacheStore chainingCacheStore = (ChainingCacheStore) manager2.getCacheStore();
-      cs2 = chainingCacheStore.getStores().keySet().iterator().next();
+      Cache cache1 = cache(0, "clusteredCl");
+      Cache cache2 = cache(1, "clusteredCl");
+      
    }
 
    public void testRemoteLoad() {
+      Cache cache1 = cache(0, "clusteredCl");
+      Cache cache2 = cache(1, "clusteredCl");
       assert cache1.get("key") == null;
       assert cache1.get("key") == null;
       cache2.put("key", "value");
@@ -58,6 +55,12 @@ public class ClusterCacheLoaderTest extends MultipleCacheManagersTest {
    }
 
    public void testRemoteLoadFromCacheLoader() throws Exception {
+      Cache cache1 = cache(0, "clusteredCl");
+      Cache cache2 = cache(1, "clusteredCl");
+      CacheLoaderManager manager2 = cache2.getAdvancedCache().getComponentRegistry().getComponent(CacheLoaderManager.class);
+      ChainingCacheStore chainingCacheStore = (ChainingCacheStore) manager2.getCacheStore();
+      CacheStore cs2 = chainingCacheStore.getStores().keySet().iterator().next();
+      
       assert cache1.get("key") == null;
       assert cache2.get("key") == null;
       cs2.store(InternalEntryFactory.create("key", "value"));

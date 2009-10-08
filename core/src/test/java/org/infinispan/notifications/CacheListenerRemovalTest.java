@@ -29,6 +29,8 @@ public class CacheListenerRemovalTest {
    @AfterMethod
    public void tearDown() {
       TestingUtil.killCacheManagers(cm);
+      cm = null;
+      cache = null;
    }
 
    public void testListenerRemoval() {

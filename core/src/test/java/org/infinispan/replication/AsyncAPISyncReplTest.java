@@ -11,6 +11,7 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.data.Key;
 import org.infinispan.util.Util;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 import javax.transaction.Transaction;
@@ -42,6 +43,12 @@ public class AsyncAPISyncReplTest extends MultipleCacheManagersTest {
    }
 
    protected void resetListeners() {
+   }
+   
+   @AfterClass(alwaysRun=true)
+   protected void destroy() {     
+      super.destroy();
+      c1 = null; c2 = null;
    }
 
    protected void assertOnAllCaches(Key k, String v) {

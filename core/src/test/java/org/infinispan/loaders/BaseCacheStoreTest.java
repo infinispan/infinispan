@@ -60,11 +60,14 @@ public abstract class BaseCacheStoreTest {
 
    @AfterMethod
    public void tearDown() throws CacheLoaderException {
-      if (cs != null) {
-         cs.clear();
-         cs.stop();
+      try {
+         if (cs != null) {
+            cs.clear();
+            cs.stop();
+         }
+      } finally {
+         cs = null;
       }
-      cs = null;
    }
 
    @AfterMethod
