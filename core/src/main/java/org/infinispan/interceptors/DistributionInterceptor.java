@@ -142,31 +142,32 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      return handleWriteCommand(ctx, command, new SingleKeyRecipientGenerator(command.getKey()));
+      return handleWriteCommand(ctx, command, new SingleKeyRecipientGenerator(command.getKey()), false);
    }
 
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+      // don't bother with a remote get for the PutMapCommand!
       return handleWriteCommand(ctx, command,
-                                new MultipleKeysRecipientGenerator(command.getMap().keySet()));
+                                new MultipleKeysRecipientGenerator(command.getMap().keySet()), true);
    }
 
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
 
       return handleWriteCommand(ctx, command,
-                                new SingleKeyRecipientGenerator(command.getKey()));
+                                new SingleKeyRecipientGenerator(command.getKey()), false);
    }
 
    @Override
    public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      return handleWriteCommand(ctx, command, CLEAR_COMMAND_GENERATOR);
+      return handleWriteCommand(ctx, command, CLEAR_COMMAND_GENERATOR, false);
    }
 
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       return handleWriteCommand(ctx, command,
-                                new SingleKeyRecipientGenerator(command.getKey()));
+                                new SingleKeyRecipientGenerator(command.getKey()), false);
    }
 
    @Override
@@ -216,13 +217,13 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       return invokeNextInterceptor(ctx, command);
    }
 
-   private void remoteGetBeforeWrite(InvocationContext ctx, boolean isConditionalCommand, Object... keys) throws Throwable {
+   private void remoteGetBeforeWrite(InvocationContext ctx, boolean isConditionalCommand, KeyGenerator keygen) throws Throwable {
       // this should only happen if:
       //   a) unsafeUnreliableReturnValues is false
       //   b) unsafeUnreliableReturnValues is true, we are in a TX and the command is conditional
 
       if (isNeedReliableReturnValues(ctx) || (isConditionalCommand && ctx.isInTxScope())) {
-         for (Object k : keys) remoteGetAndStoreInL1(ctx, k);
+         for (Object k : keygen.getKeys()) remoteGetAndStoreInL1(ctx, k);
       }
    }
 
@@ -261,10 +262,10 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
     * If we are within one transaction we won't do any replication as replication would only be performed at commit
     * time. If the operation didn't originate locally we won't do any replication either.
     */
-   private Object handleWriteCommand(InvocationContext ctx, WriteCommand command, RecipientGenerator recipientGenerator) throws Throwable {
+   private Object handleWriteCommand(InvocationContext ctx, WriteCommand command, RecipientGenerator recipientGenerator, boolean skipRemoteGet) throws Throwable {
       boolean localModeForced = isLocalModeForced(ctx);
       // see if we need to load values from remote srcs first
-      remoteGetBeforeWrite(ctx, command.isConditional(), recipientGenerator.getKeys());
+      if (!skipRemoteGet) remoteGetBeforeWrite(ctx, command.isConditional(), recipientGenerator);
 
       // if this is local mode then skip distributing
       if (localModeForced) {
@@ -301,45 +302,57 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       return returnValue;
    }
 
-   interface RecipientGenerator {
-      List<Address> generateRecipients();
-
+   interface KeyGenerator {
       Object[] getKeys();
    }
 
+   interface RecipientGenerator extends KeyGenerator {
+      List<Address> generateRecipients();
+   }
+
    class SingleKeyRecipientGenerator implements RecipientGenerator {
-      Object key;
+      final Object key;
+      final Object[] keysArray;
+      List<Address> recipients = null;
 
       SingleKeyRecipientGenerator(Object key) {
          this.key = key;
+         keysArray = new Object[]{key};
       }
 
       public List<Address> generateRecipients() {
-         return dm.locate(key);
+         if (recipients == null) recipients = dm.locate(key);
+         return recipients;
       }
 
       public Object[] getKeys() {
-         return new Object[]{key};
+         return keysArray;
       }
    }
 
    class MultipleKeysRecipientGenerator implements RecipientGenerator {
 
-      Collection<Object> keys;
+      final Collection<Object> keys;
+      final Object[] keysArray;
+      List<Address> recipients = null;
 
       MultipleKeysRecipientGenerator(Collection<Object> keys) {
          this.keys = keys;
+         keysArray = keys.toArray();
       }
 
       public List<Address> generateRecipients() {
-         Set<Address> addresses = new HashSet<Address>();
-         Map<Object, List<Address>> recipients = dm.locateAll(keys);
-         for (List<Address> a : recipients.values()) addresses.addAll(a);
-         return Immutables.immutableListConvert(addresses);
+         if (recipients == null) {
+            Set<Address> addresses = new HashSet<Address>();
+            Map<Object, List<Address>> recipientsMap = dm.locateAll(keys);
+            for (List<Address> a : recipientsMap.values()) addresses.addAll(a);
+            recipients = Immutables.immutableListConvert(addresses);
+         }
+         return recipients;
       }
 
       public Object[] getKeys() {
-         return keys.toArray();
+         return keysArray;
       }
    }
 }
