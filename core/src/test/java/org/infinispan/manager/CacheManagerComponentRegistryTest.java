@@ -28,6 +28,7 @@ public class CacheManagerComponentRegistryTest {
    @AfterMethod(alwaysRun = true)
    public void tearDown() {
       TestingUtil.killCacheManagers(cm);
+      cm = null;
    }
 
    public void testForceSharedComponents() throws NamedCacheNotFoundException {

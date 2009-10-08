@@ -28,26 +28,18 @@ import java.util.List;
 
 @Test(groups = "functional", testName = "api.mvcc.PutForExternalReadTest")
 public class PutForExternalReadTest extends MultipleCacheManagersTest {
-   final String key = "k", value = "v", value2 = "v2";
-   Cache cache1, cache2;
-   TransactionManager tm1, tm2;
-   ReplListener replListener1, replListener2;
+   final String key = "k", value = "v", value2 = "v2";   
 
    protected void createCacheManagers() throws Throwable {
       Configuration c = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
       createClusteredCaches(2, "replSync", c);
-
-      cache1 = cache(0, "replSync");
-      cache2 = cache(1, "replSync");
-
-      tm1 = TestingUtil.getTransactionManager(cache1);
-      tm2 = TestingUtil.getTransactionManager(cache2);
-
-      replListener1 = replListener(cache1);
-      replListener2 = replListener(cache2);
    }
 
    public void testNoOpWhenKeyPresent() {
+      Cache cache1 = cache(0, "replSync");
+      Cache cache2 = cache(1, "replSync");
+      ReplListener replListener1 = replListener(cache1);
+      ReplListener replListener2 = replListener(cache2);
       replListener2.expect(PutKeyValueCommand.class);
       cache1.putForExternalRead(key, value);
       replListener2.waitForRpc();
@@ -86,6 +78,9 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
    }
 
    public void testAsyncForce() throws Exception {
+      Cache cache1 = cache(0, "replSync");
+      Cache cache2 = cache(1, "replSync");
+
       Transport mockTransport = createNiceMock(Transport.class);
       RpcManagerImpl rpcManager = (RpcManagerImpl) TestingUtil.extractComponent(cache1, RpcManager.class);
       Transport originalTransport = TestingUtil.extractComponent(cache1, Transport.class);
@@ -117,6 +112,12 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
    }
 
    public void testTxSuspension() throws Exception {
+      Cache cache1 = cache(0, "replSync");
+      Cache cache2 = cache(1, "replSync");
+      TransactionManager tm1 = TestingUtil.getTransactionManager(cache1);
+      TransactionManager tm2 = TestingUtil.getTransactionManager(cache2);
+      ReplListener replListener1 = replListener(cache1);
+      ReplListener replListener2 = replListener(cache2);
       replListener2.expect(PutKeyValueCommand.class);
       cache1.put(key + "0", value);
       replListener2.waitForRpc();
@@ -140,6 +141,8 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
    }
 
    public void testExceptionSuppression() throws Exception {
+      Cache cache1 = cache(0, "replSync");
+      Cache cache2 = cache(1, "replSync");
       Transport mockTransport = createNiceMock(Transport.class);
       RpcManagerImpl rpcManager = (RpcManagerImpl) TestingUtil.extractComponent(cache1, RpcManager.class);
       Transport originalTransport = TestingUtil.extractComponent(cache1, Transport.class);
@@ -188,8 +191,12 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
    }
 
    public void testBasicPropagation() throws Exception {
+      Cache cache1 = cache(0, "replSync");
+      Cache cache2 = cache(1, "replSync");
+      
       assert !cache1.containsKey(key);
       assert !cache2.containsKey(key);
+      ReplListener replListener2 = replListener(cache2);
 
       replListener2.expect(PutKeyValueCommand.class);
       cache1.putForExternalRead(key, value);
@@ -229,6 +236,12 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
     * Tests that suspended transactions do not leak.  See JBCACHE-1246.
     */
    public void testMemLeakOnSuspendedTransactions() throws Exception {
+      Cache cache1 = cache(0, "replSync");
+      Cache cache2 = cache(1, "replSync");
+      TransactionManager tm1 = TestingUtil.getTransactionManager(cache1);
+      TransactionManager tm2 = TestingUtil.getTransactionManager(cache2);
+      ReplListener replListener2 = replListener(cache2);
+      
       replListener2.expect(PutKeyValueCommand.class);
       tm1.begin();
       cache1.putForExternalRead(key, value);
@@ -288,6 +301,10 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
     * @throws Exception
     */
    private void cacheModeLocalTest(boolean transactional) throws Exception {
+      Cache cache1 = cache(0, "replSync");
+      Cache cache2 = cache(1, "replSync");
+      TransactionManager tm1 = TestingUtil.getTransactionManager(cache1);
+      TransactionManager tm2 = TestingUtil.getTransactionManager(cache2);
       RpcManager rpcManager = EasyMock.createMock(RpcManager.class);
       RpcManager originalRpcManager = TestingUtil.replaceComponent(cache1.getCacheManager(), RpcManager.class, rpcManager, true);
       try {
@@ -310,6 +327,7 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
             // cleanup
             TestingUtil.replaceComponent(cache1.getCacheManager(), RpcManager.class, originalRpcManager, true);
             cache1.remove(key);
+            cache2.remove(key);
          }
       }
    }

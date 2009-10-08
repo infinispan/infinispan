@@ -43,6 +43,7 @@ public class CacheListenerCacheLoaderTest {
    @AfterMethod
    public void tearDown() {
       TestingUtil.killCacheManagers(cm);
+      cm = null;
    }
 
    public void testLoadingAndStoring() {

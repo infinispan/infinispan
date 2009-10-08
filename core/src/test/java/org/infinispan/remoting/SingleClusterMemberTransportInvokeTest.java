@@ -40,17 +40,17 @@ import java.util.List;
 @Test(groups = "functional", testName = "remoting.SingleClusterMemberTransportInvokeTest")
 public class SingleClusterMemberTransportInvokeTest extends MultipleCacheManagersTest {
    final String key = "k", value = "v", value2 = "v2";
-   Cache cache1;
-
+   
    @Override
    protected void createCacheManagers() throws Throwable {
       Configuration c = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
       c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
       createClusteredCaches(1, "replSync", c);
-      cache1 = cache(0, "replSync");
+      
    }
 
    public void testInvokeRemotelyWhenSingleMember() throws Exception {
+      Cache cache1 = cache(0, "replSync");
       Transport mockTransport = createMock(Transport.class);
       RpcManagerImpl rpcManager = (RpcManagerImpl) TestingUtil.extractComponent(cache1, RpcManager.class);
       Transport originalTransport = TestingUtil.extractComponent(cache1, Transport.class);

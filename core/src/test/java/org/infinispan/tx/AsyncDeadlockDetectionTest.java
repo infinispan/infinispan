@@ -25,11 +25,7 @@ import org.testng.annotations.Test;
  * @author Mircea.Markus@jboss.com
  */
 @Test(groups = "functional", testName = "tx.AsyncDeadlockDetectionTest")
-public class AsyncDeadlockDetectionTest extends MultipleCacheManagersTest {
-   private Cache cache0;
-   private Cache cache1;
-   private DeadlockDetectingLockManager ddLm0;
-   private DeadlockDetectingLockManager ddLm1;
+public class AsyncDeadlockDetectionTest extends MultipleCacheManagersTest {   
    private PerCacheExecutorThread t0;
    private PerCacheExecutorThread t1;
    private RemoteReplicationInterceptor remoteReplicationInterceptor;
@@ -45,9 +41,10 @@ public class AsyncDeadlockDetectionTest extends MultipleCacheManagersTest {
       createClusteredCaches(2, "test", config);
       assert config.isEnableDeadlockDetection();
 
-      cache0 = cache(0, "test");
-      cache1 = cache(1, "test");
+      
       remoteReplicationInterceptor = new RemoteReplicationInterceptor();
+      Cache cache0 = cache(0, "test");
+      Cache cache1 = cache(1, "test");
       cache1.getAdvancedCache().addInterceptor(remoteReplicationInterceptor, 0);
       assert cache0.getConfiguration().isEnableDeadlockDetection();
       assert cache1.getConfiguration().isEnableDeadlockDetection();
@@ -56,27 +53,33 @@ public class AsyncDeadlockDetectionTest extends MultipleCacheManagersTest {
 
       ((DeadlockDetectingLockManager) TestingUtil.extractLockManager(cache0)).setExposeJmxStats(true);
       ((DeadlockDetectingLockManager) TestingUtil.extractLockManager(cache1)).setExposeJmxStats(true);
-
-      ddLm0 = (DeadlockDetectingLockManager) TestingUtil.extractLockManager(cache0);
-      ddLm1 = (DeadlockDetectingLockManager) TestingUtil.extractLockManager(cache1);
    }
 
    @BeforeMethod
    public void beforeMethod() {
+      Cache cache0 = cache(0, "test");
+      Cache cache1 = cache(1, "test");
       t0 = new PerCacheExecutorThread(cache0, 0);
       t1 = new PerCacheExecutorThread(cache1, 1);
    }
 
    @AfterMethod
    public void afterMethod() {
+      Cache cache0 = cache(0, "test");
+      Cache cache1 = cache(1, "test");
       t0.stopThread();
       t1.stopThread();
       ((DeadlockDetectingLockManager) TestingUtil.extractLockManager(cache0)).resetStatistics();
       ((DeadlockDetectingLockManager) TestingUtil.extractLockManager(cache1)).resetStatistics();
       remoteReplicationInterceptor.executionResponse = null;
+      remoteReplicationInterceptor = null;
+      t0 = null;
+      t1 = null;
    }
 
    public void testRemoteTxVsLocal() throws Exception {
+      Cache cache0 = cache(0, "test");
+      Cache cache1 = cache(1, "test");
       assertEquals(PerCacheExecutorThread.OperationsResult.BEGGIN_TX_OK, t0.execute(PerCacheExecutorThread.Operations.BEGGIN_TX));
       t0.setKeyValue("k1", "v1_t0");
       assertEquals(PerCacheExecutorThread.OperationsResult.PUT_KEY_VALUE_OK, t0.execute(PerCacheExecutorThread.Operations.PUT_KEY_VALUE));
@@ -114,6 +117,9 @@ public class AsyncDeadlockDetectionTest extends MultipleCacheManagersTest {
          replListener(cache0).waitForRpc();
       }
 
+      DeadlockDetectingLockManager ddLm0 = (DeadlockDetectingLockManager) TestingUtil.extractLockManager(cache0);
+      DeadlockDetectingLockManager ddLm1 = (DeadlockDetectingLockManager) TestingUtil.extractLockManager(cache1);
+      
       assertFalse(ddLm0.isLocked("k1"));
       assertFalse(ddLm1.isLocked("k1"));
       assertFalse(ddLm0.isLocked("k2"));

@@ -27,14 +27,8 @@ import java.util.List;
  */
 @Test(groups = "functional", testName = "jmx.RpcManagerMBeanTest")
 public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
-
-   private MBeanServer mBeanServer;
-   public static final String JMX_DOMAIN = RpcManagerMBeanTest.class.getSimpleName();
-   private Cache cache1;
-   private Cache cache2;
-   private ObjectName rpcManager1;
-   private ObjectName rpcManager2;
-
+   private final String cachename = "repl_sync_cache";
+   public static final String JMX_DOMAIN = RpcManagerMBeanTest.class.getSimpleName();  
 
    protected void createCacheManagers() throws Throwable {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
@@ -56,17 +50,16 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
       registerCacheManager(cacheManager1, cacheManager2);
 
       Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
-      config.setExposeJmxStatistics(true);
-      String cachename = "repl_sync_cache";
-      defineConfigurationOnAllManagers(cachename, config);
-      cache1 = manager(0).getCache(cachename);
-      cache2 = manager(1).getCache(cachename);
-      mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
-      rpcManager1 = new ObjectName("RpcManagerMBeanTest:cache-name=" + cachename + "(repl_sync),jmx-resource=RpcManager");
-      rpcManager2 = new ObjectName("RpcManagerMBeanTest2:cache-name=" + cachename + "(repl_sync),jmx-resource=RpcManager");
+      config.setExposeJmxStatistics(true);      
+      defineConfigurationOnAllManagers(cachename, config);           
    }
 
    public void testEnableJmxStats() throws Exception {
+      Cache cache1 = manager(0).getCache(cachename);
+      Cache cache2 = manager(1).getCache(cachename);
+      MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
+      ObjectName rpcManager1 = new ObjectName("RpcManagerMBeanTest:cache-name=" + cachename + "(repl_sync),jmx-resource=RpcManager");
+      ObjectName rpcManager2 = new ObjectName("RpcManagerMBeanTest2:cache-name=" + cachename + "(repl_sync),jmx-resource=RpcManager");
       assert mBeanServer.isRegistered(rpcManager1);
       assert mBeanServer.isRegistered(rpcManager2);
 
@@ -98,6 +91,12 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
 
    @Test(dependsOnMethods = "testEnableJmxStats")
    public void testSuccessRatio() throws Exception {
+      Cache cache1 = manager(0).getCache(cachename);
+      Cache cache2 = manager(1).getCache(cachename);
+      MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
+      ObjectName rpcManager1 = new ObjectName("RpcManagerMBeanTest:cache-name=" + cachename + "(repl_sync),jmx-resource=RpcManager");
+      ObjectName rpcManager2 = new ObjectName("RpcManagerMBeanTest2:cache-name=" + cachename + "(repl_sync),jmx-resource=RpcManager");
+      
       assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals("0");
       assert mBeanServer.getAttribute(rpcManager1, "ReplicationFailures").equals("0");
       assert mBeanServer.getAttribute(rpcManager1, "SuccessRatio").equals("N/A");
@@ -135,6 +134,9 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
 
    @Test(dependsOnMethods = "testSuccessRatio")
    public void testAddressInformation() throws Exception {
+      MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
+      ObjectName rpcManager1 = new ObjectName("RpcManagerMBeanTest:cache-name=" + cachename + "(repl_sync),jmx-resource=RpcManager");
+      ObjectName rpcManager2 = new ObjectName("RpcManagerMBeanTest2:cache-name=" + cachename + "(repl_sync),jmx-resource=RpcManager");
       String cm1Address = manager(0).getAddress().toString();
       String cm2Address = "N/A";
       assert mBeanServer.getAttribute(rpcManager1, "Address").equals(cm1Address);

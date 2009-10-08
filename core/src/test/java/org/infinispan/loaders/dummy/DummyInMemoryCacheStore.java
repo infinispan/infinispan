@@ -123,6 +123,7 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
    }
 
    public void stop() {
+      stores.remove(config.getStore());
    }
 
    public static class Cfg extends AbstractCacheStoreConfig {
