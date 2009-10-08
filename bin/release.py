@@ -3,6 +3,7 @@ import re
 import sys
 import os
 import subprocess
+
 try:
     from xml.etree.ElementTree import ElementTree
 except:
@@ -81,7 +82,13 @@ class SvnConn():
         return self.client
 
 
-svnConn = SvnConn()
+svnConn = None
+
+def get_svn_conn():
+    if not svnConn:
+        svnConn = SvnConn()
+    return svnConn
+
 modules = []
 def getModules(directory):
     # look at the pom.xml file
@@ -120,7 +127,8 @@ def validateVersion(version):
         helpAndExit()
 
 def tagInSubversion(version, newVersion):
-    svnConn.tag("%s/trunk" % svnBase, newVersion, version)
+    sc = get_svn_conn()
+    sc.tag("%s/trunk" % svnBase, newVersion, version)
 
 def getProjectVersionTag(tree):
     return tree.find("./{%s}version" % (maven_pom_xml_namespace))
@@ -166,18 +174,25 @@ def patch(pomFile, version):
     if need_to_write:
         # write to file again!
         writePom(tree, pomFile)
-    
-def updateVersions(version, workingDir):
-    client = svnConn.getClient()
-    client.checkout(svnBase + "/tags/" + version, localTagsDir + '/' + version)
-
-    # Find the root pom first
+   
+def get_poms_to_patch(workingDir):
     getModules(workingDir)
     print 'Available modules are ' + str(modules)
     pomsToPatch = [workingDir + "/pom.xml"]
     for m in modules:
         pomsToPatch.append(workingDir + "/" + m + "/pom.xml")
 
+    # Look for additional POMs that are not directly referenced!
+    for additionalPom in GlobDirectoryWalker(workingDir, 'pom.xml'):
+        if additionalPom not in pomsToPatch:
+            pomsToPatch.append(additionalPom)
+    return pomsToPatch
+ 
+def updateVersions(version, workingDir):
+    client = get_svn_conn().getClient()
+    client.checkout(svnBase + "/tags/" + version, localTagsDir + '/' + version)
+    pomsToPatch = get_poms_to_patch()
+    
     for pom in pomsToPatch:
         patch(pom, version)
 
@@ -222,7 +237,7 @@ def getModuleName(pomFile):
 
 def checkInMaven2Repo(version, workingDir):
     os.chdir(localMvnRepoDir)
-    client = svnConn.getClient()
+    client = get_svn_conn().getClient()
     poms = [workingDir + "/pom.xml"]
     for m in modules:
         poms.append(workingDir + "/" + m + "/pom.xml")
