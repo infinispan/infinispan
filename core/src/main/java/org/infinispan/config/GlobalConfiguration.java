@@ -441,7 +441,6 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       gc.setTransportClass(JGroupsTransport.class.getName());
       gc.setTransportProperties((Properties) null);
       Properties p = new Properties();
-      p.setProperty("threadNamePrefix", "asyncTransportThread");
       gc.setAsyncTransportExecutorProperties(p);
       return gc;
    }
