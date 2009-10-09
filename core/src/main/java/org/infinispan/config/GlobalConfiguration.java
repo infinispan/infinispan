@@ -357,7 +357,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
 
       GlobalConfiguration that = (GlobalConfiguration) o;
 
-      if (serialization.version != that.serialization.version) return false;
+      if (!serialization.version.equals(that.serialization.version)) return false;
       if (asyncListenerExecutor.factory != null ? !asyncListenerExecutor.factory.equals(that.asyncListenerExecutor.factory) : that.asyncListenerExecutor.factory != null)
          return false;
       if (asyncListenerExecutor.properties != null ? !asyncListenerExecutor.properties.equals(that.asyncListenerExecutor.properties) : that.asyncListenerExecutor.properties != null)
