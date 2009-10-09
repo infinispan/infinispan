@@ -23,8 +23,7 @@ public class DefaultExecutorFactory implements ExecutorFactory {
       TypedProperties tp = TypedProperties.toTypedProperties(p);
       int maxThreads = tp.getIntProperty("maxThreads", 1);
       int queueSize = tp.getIntProperty("queueSize", 100000);
-      final String threadNamePrefix = tp.getProperty("threadNamePrefix", "Thread");
-
+      final String threadNamePrefix = tp.getProperty("threadNamePrefix", tp.getProperty("componentName", "Thread"));
       ThreadFactory tf = new ThreadFactory() {
          public Thread newThread(Runnable r) {
             Thread th = new Thread(r, threadNamePrefix + "-" + counter.getAndIncrement());

@@ -16,7 +16,7 @@ public class DefaultScheduledExecutorFactory implements ScheduledExecutorFactory
    final static AtomicInteger counter = new AtomicInteger(0);
 
    public ScheduledExecutorService getScheduledExecutor(Properties p) {
-      final String threadNamePrefix = p.getProperty("threadNamePrefix", "ScheduledThread");
+      final String threadNamePrefix = p.getProperty("threadNamePrefix", p.getProperty("componentName", "Thread"));
       return Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
          public Thread newThread(Runnable r) {
             Thread th = new Thread(r, "Scheduled-" + threadNamePrefix + "-" + counter.getAndIncrement());
