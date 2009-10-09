@@ -12,6 +12,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledExecutorService;
@@ -239,7 +240,11 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
       }
 
       public ScheduledExecutorService getScheduledExecutor(Properties p) {
-         assert p.equals(myProps);
+         Properties toCompareWith = new Properties();
+         for (Map.Entry<Object, Object> entry: myProps.entrySet())
+            toCompareWith.setProperty((String) entry.getKey(), (String) entry.getValue()); 
+         toCompareWith.setProperty("componentName", "replicationQueue-thread");
+         assert p.equals(toCompareWith);
          methodCalled = true;
          return new ScheduledThreadPoolExecutor(1) {
             @Override
