@@ -1,7 +1,6 @@
 package org.infinispan.eviction;
 
 import net.jcip.annotations.ThreadSafe;
-import org.infinispan.factories.annotations.NonVolatile;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 
@@ -20,7 +19,6 @@ import org.infinispan.factories.scopes.Scopes;
  * @since 4.0
  */
 @ThreadSafe
-@NonVolatile
 @Scope(Scopes.NAMED_CACHE)
 public interface EvictionManager {
 

@@ -31,7 +31,7 @@ import org.infinispan.config.InfinispanConfiguration;
 import org.infinispan.config.parsing.XmlConfigurationParser;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.InternalCacheFactory;
-import org.infinispan.factories.annotations.NonVolatile;
+import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.CacheJmxRegistration;
@@ -95,7 +95,7 @@ import java.util.concurrent.ConcurrentMap;
  * @since 4.0
  */
 @Scope(Scopes.GLOBAL)
-@NonVolatile
+@SurvivesRestarts
 @MBean(objectName = DefaultCacheManager.OBJECT_NAME, description = "Component that acts as a manager, factory and container for caches in the system.")
 public class DefaultCacheManager implements CacheManager {
    public static final String DEFAULT_CACHE_NAME = "org.infinispan.manager.DefaultCacheManager.DEFAULT_CACHE_NAME";

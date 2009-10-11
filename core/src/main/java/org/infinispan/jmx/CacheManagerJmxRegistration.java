@@ -4,7 +4,7 @@ import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.factories.AbstractComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.NonVolatile;
+import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -19,7 +19,7 @@ import java.util.Set;
  * @author Galder Zamarreño
  * @since 4.0
  */
-@NonVolatile
+@SurvivesRestarts
 public class CacheManagerJmxRegistration extends AbstractJmxRegistration {
    private static final Log log = LogFactory.getLog(CacheManagerJmxRegistration.class);
    public static final String GLOBAL_JMX_GROUP = "[global]";

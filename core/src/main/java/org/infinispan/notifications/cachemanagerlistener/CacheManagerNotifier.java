@@ -1,6 +1,5 @@
 package org.infinispan.notifications.cachemanagerlistener;
 
-import org.infinispan.factories.annotations.NonVolatile;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.notifications.Listenable;
@@ -14,7 +13,6 @@ import java.util.List;
  * @author Manik Surtani
  * @since 4.0
  */
-@NonVolatile
 @Scope(Scopes.GLOBAL)
 public interface CacheManagerNotifier extends Listenable {
    /**

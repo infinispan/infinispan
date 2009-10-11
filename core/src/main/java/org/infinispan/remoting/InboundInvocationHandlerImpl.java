@@ -6,7 +6,6 @@ import org.infinispan.config.Configuration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.NonVolatile;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.responses.ExceptionResponse;
@@ -27,7 +26,6 @@ import java.io.OutputStream;
  * @author Manik Surtani
  * @since 4.0
  */
-@NonVolatile
 @Scope(Scopes.GLOBAL)
 public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
    GlobalComponentRegistry gcr;

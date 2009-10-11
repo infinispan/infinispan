@@ -3,7 +3,7 @@ package org.infinispan.manager;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.factories.annotations.NonVolatile;
+import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -54,7 +54,7 @@ import java.util.Set;
  * @since 4.0
  */
 @Scope(Scopes.GLOBAL)
-@NonVolatile
+@SurvivesRestarts
 public interface CacheManager extends Lifecycle, Listenable {
    /**
     * Defines a named cache's configuration using the following algorithm:

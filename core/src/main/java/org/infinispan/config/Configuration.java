@@ -25,7 +25,7 @@ import org.infinispan.distribution.DefaultConsistentHash;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.NonVolatile;
+import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
@@ -44,7 +44,6 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -67,7 +66,7 @@ import java.util.concurrent.TimeUnit;
  * @author Galder Zamarreño
  * @since 4.0
  */
-@NonVolatile
+@SurvivesRestarts
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(propOrder={})
 public class Configuration extends AbstractNamedCacheConfigurationBean {  

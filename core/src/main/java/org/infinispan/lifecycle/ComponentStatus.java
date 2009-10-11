@@ -66,7 +66,6 @@ public enum ComponentStatus {
    public boolean startAllowed() {
       switch (this) {
          case INSTANTIATED:
-         case TERMINATED:
             return true;
          default:
             return false;
@@ -75,7 +74,7 @@ public enum ComponentStatus {
 
    public boolean needToInitializeBeforeStart() {
       switch (this) {
-         case INSTANTIATED:
+         case TERMINATED:
             return true;
          default:
             return false;

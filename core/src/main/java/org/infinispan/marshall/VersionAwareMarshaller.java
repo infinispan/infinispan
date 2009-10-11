@@ -23,7 +23,6 @@ package org.infinispan.marshall;
 
 import org.infinispan.commands.RemoteCommandFactory;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.NonVolatile;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.io.ByteBuffer;
@@ -48,7 +47,6 @@ import java.io.OutputStream;
  * @author Galder Zamarreño
  * @since 4.0
  */
-@NonVolatile
 public class VersionAwareMarshaller extends AbstractMarshaller {
    private static final Log log = LogFactory.getLog(VersionAwareMarshaller.class);
    private boolean trace = log.isTraceEnabled();

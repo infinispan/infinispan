@@ -28,7 +28,7 @@ import org.infinispan.config.ConfigurationException;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.NonVolatile;
+import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
@@ -76,7 +76,7 @@ import java.util.Stack;
  * @author Galder Zamarreño
  * @since 4.0
  */
-@NonVolatile
+@SurvivesRestarts
 @Scope(Scopes.NAMED_CACHE)
 public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable {
 
@@ -197,7 +197,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
          c.instance = component;
          componentLookup.put(name, c);
       }
-      c.nonVolatile = ReflectionUtil.isAnnotationPresent(component.getClass(), NonVolatile.class);
+      c.nonVolatile = ReflectionUtil.isAnnotationPresent(component.getClass(), SurvivesRestarts.class);
       addComponentDependencies(c);
       // inject dependencies for this component
       c.injectDependencies();
@@ -222,7 +222,8 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       Class[] dependencies = m.getParameterTypes();
       Annotation[][] parameterAnnotations = m.getParameterAnnotations();
       Object[] params = new Object[dependencies.length];
-      if (getLog().isTraceEnabled()) getLog().trace("Injecting dependencies for method {0}.", m);
+      if (getLog().isTraceEnabled())
+         getLog().trace("Injecting dependencies for method [{0}] on an instance of [{1}].", m, o.getClass().getName());
       for (int i = 0; i < dependencies.length; i++) {
          params[i] = getOrCreateComponent(dependencies[i], getComponentName(dependencies[i], parameterAnnotations, i));
       }
@@ -407,7 +408,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
    }
 
    /**
-    * Retrieves a component from the {@link Configuration} or {@link RuntimeConfig}.
+    * Retrieves a component from the {@link Configuration}
     *
     * @param componentClass component type
     * @return component, or null if it cannot be found
@@ -426,19 +427,6 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
             getLog().warn("Unable to invoke getter {0} on Configuration.class!", e, getter);
          }
       }
-
-      // now try the RuntimeConfig - a legacy "registry" of sorts.
-//      if (returnValue == null) {
-//         getter = BeanUtils.getterMethod(RuntimeConfig.class, componentClass);
-//         if (getter != null) {
-//            try {
-//               returnValue = (T) getter.invoke(getConfiguration().getRuntimeConfig());
-//            }
-//            catch (Exception e) {
-//               getLog().warn("Unable to invoke getter {0} on RuntimeConfig.class!", e, getter);
-//            }
-//         }
-//      }
       return returnValue;
    }
 
@@ -485,17 +473,10 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
    }
 
    /**
-    * Rewires components.  Can only be called if the current state is WIRED or STARTED.
-    * 
-    * Here's an example where rewiring is needed:
-    * 
-    * The reason why rewiring needs to happen is to capture any such config changes.  For example (this is a JBC example):
-    *   1.  Config uses a FileCacheLoader.
-    *   2.  Cache.create() - this will create a CacheLoaderInterceptor with a reference to the FileCacheLoader.
-    *   3.  Add a JDBC CacheLoader to the config
-    *   4.  Call cache.start().  The cache loader manager should recognise this change, create a chaining cache loader.  
-    *       This is a volatile component.  Now the CLI is non-volatile since it doesn't need to be rebuilt.  But it does 
-    *       need to be rewired, since the cache loader now is a ChainingCacheLoader, not a FileCacheLoader.  
+    * Rewires components.  Used to rewire components in the CR if a cache has been stopped (moved to state TERMINATED),
+    * which would (almost) empty the registry of components.  Rewiring will re-inject all dependencies so that the cache
+    * can be started again.
+    * <p/>
     */
    public void rewire() {
       // need to re-inject everything again.
@@ -557,41 +538,24 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
    //   These methods perform a check for appropriate transition and then delegate to similarly named internal methods.
 
    /**
-    * Creates the components needed by a cache instance and sets the cache status to {@link
-    * org.infinispan.lifecycle.ComponentStatus#INITIALIZING} when it is done.
-    */
-   private void init() {
-      if (state.needToDestroyFailedCache())
-         destroy();
-
-      try {
-         internalCreate();
-      }
-      catch (Throwable t) {
-         handleLifecycleTransitionFailure(t);
-      }
-   }
-
-   /**
     * This starts the components in the cache, connecting to channels, starting service threads, etc.  If the cache is
-    * not in the {@link org.infinispan.lifecycle.ComponentStatus#INITIALIZING} state, {@link #init()} will be invoked
-    * first.
+    * not in the {@link org.infinispan.lifecycle.ComponentStatus#INITIALIZING} state, it will be initialized first.
     */
    public void start() {
-      boolean createdInStart = false;
+
       if (!state.startAllowed()) {
          if (state.needToDestroyFailedCache())
             destroy(); // this will take us back to TERMINATED
 
          if (state.needToInitializeBeforeStart()) {
-            init();
-            createdInStart = true;
+            state = ComponentStatus.INITIALIZING;
+            rewire();
          } else
             return;
       }
 
       try {
-         internalStart(createdInStart);
+         internalStart();
       }
       catch (Throwable t) {
          handleLifecycleTransitionFailure(t);
@@ -671,23 +635,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
          throw new CacheException(t);
    }
 
-   /**
-    * The actual create implementation.
-    */
-   private void internalCreate() {
-      state = ComponentStatus.INITIALIZING;
-      resetNonVolatile();
-      rewire();
-   }
-
-   private void internalStart(boolean createdInStart) throws CacheException, IllegalArgumentException {
-      if (!createdInStart) {
-         // re-wire all dependencies in case stuff has changed since the cache was created
-         // remove any components whose construction may have depended upon a configuration that may have changed.
-         resetNonVolatile();
-         rewire();
-      }
-
+   private void internalStart() throws CacheException, IllegalArgumentException {
       // start all internal components
       // first cache all start, stop and destroy methods.
       populateLifecycleMethods();
@@ -902,7 +850,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       HashSet<Component> defensiveCopy = new HashSet<Component>(componentLookup.values());
       return Collections.unmodifiableSet(defensiveCopy);
    }
-   
+
    @Override
    public AbstractComponentRegistry clone() throws CloneNotSupportedException {
       AbstractComponentRegistry dolly = (AbstractComponentRegistry) super.clone();

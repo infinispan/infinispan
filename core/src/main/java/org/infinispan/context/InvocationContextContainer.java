@@ -3,7 +3,7 @@ package org.infinispan.context;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
-import org.infinispan.factories.annotations.NonVolatile;
+import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 
@@ -15,7 +15,7 @@ import org.infinispan.factories.scopes.Scopes;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-@NonVolatile
+@SurvivesRestarts
 @Scope(Scopes.NAMED_CACHE)
 public interface InvocationContextContainer {
 

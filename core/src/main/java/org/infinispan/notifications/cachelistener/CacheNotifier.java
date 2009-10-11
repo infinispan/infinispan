@@ -22,7 +22,6 @@
 package org.infinispan.notifications.cachelistener;
 
 import org.infinispan.context.InvocationContext;
-import org.infinispan.factories.annotations.NonVolatile;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.notifications.Listenable;
@@ -34,7 +33,6 @@ import org.infinispan.transaction.xa.GlobalTransaction;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-@NonVolatile
 @Scope(Scopes.NAMED_CACHE)
 public interface CacheNotifier extends Listenable {
    /**

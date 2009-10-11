@@ -6,7 +6,7 @@ import org.infinispan.executors.DefaultExecutorFactory;
 import org.infinispan.executors.DefaultScheduledExecutorFactory;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.NonVolatile;
+import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.PlatformMBeanServerLookup;
@@ -38,7 +38,7 @@ import java.util.Properties;
  * @author Vladimir Blagojevic
  * @since 4.0
  */
-@NonVolatile
+@SurvivesRestarts
 @Scope(Scopes.GLOBAL)
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(propOrder={})

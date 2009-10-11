@@ -4,7 +4,7 @@ import org.infinispan.CacheException;
 import org.infinispan.config.GlobalConfiguration;
 import static org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior.DEFAULT;
 import static org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior.REGISTER;
-import org.infinispan.factories.annotations.NonVolatile;
+import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.CacheManagerJmxRegistration;
@@ -24,7 +24,7 @@ import java.util.Map;
  * @since 4.0
  */
 @Scope(Scopes.GLOBAL)
-@NonVolatile
+@SurvivesRestarts
 public class GlobalComponentRegistry extends AbstractComponentRegistry {
 
    private Log log = LogFactory.getLog(GlobalComponentRegistry.class);

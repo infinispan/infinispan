@@ -26,7 +26,7 @@ import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.config.Configuration;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
-import org.infinispan.factories.annotations.NonVolatile;
+import org.infinispan.factories.annotations.SurvivesRestarts;
 
 /**
  * Factory for setting up bootstrap components
@@ -35,7 +35,7 @@ import org.infinispan.factories.annotations.NonVolatile;
  * @since 4.0
  */
 @DefaultFactoryFor(classes = {Cache.class, AdvancedCache.class, Configuration.class, ComponentRegistry.class})
-@NonVolatile
+@SurvivesRestarts
 public class BootstrapFactory extends AbstractNamedCacheComponentFactory {
    AdvancedCache advancedCache;
 

@@ -31,7 +31,7 @@ import org.infinispan.factories.AbstractComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.AbstractComponentRegistry.Component;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.NonVolatile;
+import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.util.logging.Log;
@@ -55,7 +55,7 @@ import java.util.Set;
  * @see java.lang.management.ManagementFactory#getPlatformMBeanServer()
  * @since 4.0
  */
-@NonVolatile
+@SurvivesRestarts
 public class CacheJmxRegistration extends AbstractJmxRegistration {
    private static final Log log = LogFactory.getLog(CacheJmxRegistration.class);
 
@@ -98,7 +98,8 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
          unregisterMBeans(nonCacheComponents);
          log.trace("MBeans were successfully unregistered from the mbean server.");
       }
-      cache = null;
+
+      // make sure we don't set cache to null, in case it needs to be restarted via JMX.
    }
    
    public void unregisterCacheMBean() {

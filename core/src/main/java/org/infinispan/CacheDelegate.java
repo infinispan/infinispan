@@ -45,7 +45,7 @@ import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.NonVolatile;
+import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.jmx.annotations.MBean;
@@ -81,7 +81,7 @@ import java.util.concurrent.TimeoutException;
  * @author Galder Zamarreño
  * @since 4.0
  */
-@NonVolatile
+@SurvivesRestarts
 @MBean(objectName = CacheDelegate.OBJECT_NAME, description = "Component that acts as a manager, factory and container for caches in the system.")
 public class CacheDelegate<K, V> implements AdvancedCache<K, V> {
    public static final String OBJECT_NAME = "Cache";
