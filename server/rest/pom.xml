@@ -15,33 +15,6 @@
    <description>REST interface for Infinispan, packaged as a WAR file for deployment in a servlet container
    </description>
 
-   <repositories>
-      <repository>
-         <id>scala-tools.org</id>
-         <name>Scala-tools Maven2 Repository</name>
-         <url>http://scala-tools.org/repo-releases</url>
-      </repository>
-      <repository>
-         <id>jboss</id>
-         <url>http://repository.jboss.org/maven2/</url>
-         <releases>
-            <enabled>true</enabled>
-         </releases>
-         <snapshots>
-            <enabled>false</enabled>
-         </snapshots>
-      </repository>
-
-   </repositories>
-   <pluginRepositories>
-      <pluginRepository>
-         <id>scala-tools.org</id>
-         <name>Scala-tools Maven2 Repository</name>
-         <url>http://scala-tools.org/repo-releases</url>
-      </pluginRepository>
-   </pluginRepositories>
-
-
    <build>
       <finalName>infinispan</finalName>
       <sourceDirectory>src/main/scala</sourceDirectory>
