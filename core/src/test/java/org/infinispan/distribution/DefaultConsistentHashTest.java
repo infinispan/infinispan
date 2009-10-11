@@ -1,6 +1,7 @@
 package org.infinispan.distribution;
 
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
@@ -12,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 @Test(groups = "unit", testName = "distribution.DefaultConsistentHashTest", enabled = false)
-public class DefaultConsistentHashTest {
+public class DefaultConsistentHashTest extends AbstractInfinispanTest {
 
    List<Address> servers;
    ConsistentHash ch;

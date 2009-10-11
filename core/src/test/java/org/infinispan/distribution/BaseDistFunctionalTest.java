@@ -14,7 +14,6 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.IsolationLevel;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
@@ -64,15 +63,6 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
 
    }
    
-   @AfterClass(alwaysRun=true)
-   public void destroy() {
-      super.destroy();     
-      caches.clear();
-      caches = null;
-      configuration=null;
-      c1 = null;c2=null;c3=null;c4=null;
-   }
-
    /**
     * This is a separate class because some tools try and run this method as a test 
     */

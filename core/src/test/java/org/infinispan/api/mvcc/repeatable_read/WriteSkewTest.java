@@ -5,6 +5,7 @@ import org.infinispan.api.mvcc.LockAssert;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -21,7 +22,7 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 
 @Test(groups = {"functional", "mvcc"}, testName = "api.mvcc.repeatable_read.WriteSkewTest")
-public class WriteSkewTest {
+public class WriteSkewTest extends AbstractInfinispanTest {
    protected TransactionManager tm;
    protected LockManager lockManager;
    protected InvocationContextContainer icc;

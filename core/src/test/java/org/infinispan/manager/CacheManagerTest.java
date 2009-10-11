@@ -2,6 +2,7 @@ package org.infinispan.manager;
 
 import org.infinispan.Cache;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.config.Configuration;
@@ -13,7 +14,7 @@ import org.testng.annotations.Test;
  * @since 4.0
  */
 @Test(groups = "functional", testName = "manager.CacheManagerTest")
-public class CacheManagerTest {
+public class CacheManagerTest extends AbstractInfinispanTest {
    public void testDefaultCache() {
       CacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
 

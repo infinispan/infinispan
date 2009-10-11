@@ -23,7 +23,6 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import static org.testng.AssertJUnit.*;
 
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 import javax.transaction.Transaction;
@@ -49,14 +48,7 @@ public class SyncCacheListenerTest extends MultipleCacheManagersTest {
       cache1 = caches.get(0);
       cache2 = caches.get(1);
    }
-   
-   @AfterClass(alwaysRun=true)
-   protected void destroy() {     
-      super.destroy();
-      cache1 = null;
-      cache2 = null;
-   }
-
+  
    public void testSyncTxRepl() throws Exception {
       Integer age;
       TransactionManager tm = TestingUtil.getTransactionManager(cache1);

@@ -9,6 +9,7 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryActivated
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryLoaded;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryPassivated;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
@@ -20,7 +21,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 @Test(groups = "functional", testName = "notifications.CacheListenerCacheLoaderTest")
-public class CacheListenerCacheLoaderTest {
+public class CacheListenerCacheLoaderTest extends AbstractInfinispanTest {
 
    CacheManager cm;
 

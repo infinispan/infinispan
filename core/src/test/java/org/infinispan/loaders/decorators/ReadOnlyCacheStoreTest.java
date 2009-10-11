@@ -4,10 +4,11 @@ import static org.easymock.EasyMock.*;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "loaders.decorators.ReadOnlyCacheStoreTest")
-public class ReadOnlyCacheStoreTest {
+public class ReadOnlyCacheStoreTest extends AbstractInfinispanTest {
    public void testWriteMethods() throws CacheLoaderException {
       CacheStore mock = createMock(CacheStore.class);
       ReadOnlyStore store = new ReadOnlyStore(mock);

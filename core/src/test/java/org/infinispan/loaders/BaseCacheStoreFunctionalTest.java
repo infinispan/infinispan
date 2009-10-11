@@ -29,6 +29,7 @@ import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.BeforeMethod;
@@ -40,7 +41,7 @@ import org.testng.annotations.Test;
  * any access to the underlying cache store/loader should be done to verify contents. 
  */
 @Test(groups = "unit", testName = "loaders.BaseCacheStoreFunctionalTest")
-public abstract class BaseCacheStoreFunctionalTest {
+public abstract class BaseCacheStoreFunctionalTest extends AbstractInfinispanTest {
    
    protected abstract CacheStoreConfig createCacheStoreConfig() throws Exception;
    

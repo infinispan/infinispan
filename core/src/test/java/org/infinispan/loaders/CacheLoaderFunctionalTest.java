@@ -10,6 +10,7 @@ import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
@@ -28,7 +29,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * @author Manik Surtani
  */
 @Test(groups = "functional", testName = "loaders.CacheLoaderFunctionalTest")
-public class CacheLoaderFunctionalTest {
+public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
    Cache cache;
    CacheStore store;
    TransactionManager tm;

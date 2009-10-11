@@ -63,6 +63,7 @@ import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.responses.UnsuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.data.Person;
 import org.infinispan.transaction.TransactionLog;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -86,7 +87,7 @@ import java.io.ObjectOutput;
 import java.util.*;
 
 @Test(groups = "functional", testName = "marshall.VersionAwareMarshallerTest")
-public class VersionAwareMarshallerTest {
+public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
 
    private static final Log log = LogFactory.getLog(VersionAwareMarshallerTest.class);
    private final VersionAwareMarshaller marshaller = new VersionAwareMarshaller();

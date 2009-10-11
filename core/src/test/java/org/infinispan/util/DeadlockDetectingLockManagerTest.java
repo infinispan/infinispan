@@ -8,6 +8,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.context.impl.LocalTxInvocationContext;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.transaction.xa.GlobalTransactionFactory;
 import org.infinispan.transaction.xa.DeadlockDetectingGlobalTransaction;
 import org.infinispan.util.concurrent.locks.DeadlockDetectingLockManager;
@@ -23,7 +24,7 @@ import java.util.concurrent.TimeUnit;
  * @author Mircea.Markus@jboss.com
  */
 @Test(groups = "unit", testName = "util.DeadlockDetectingLockManagerTest")
-public class DeadlockDetectingLockManagerTest {
+public class DeadlockDetectingLockManagerTest extends AbstractInfinispanTest {
 
    DeadlockDetectingLockManagerMock lockManager;
    GlobalTransactionFactory gtf = new GlobalTransactionFactory(true);

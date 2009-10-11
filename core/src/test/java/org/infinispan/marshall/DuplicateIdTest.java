@@ -1,5 +1,6 @@
 package org.infinispan.marshall;
 
+import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
 
 import java.lang.reflect.Field;
@@ -10,7 +11,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Test(groups = "unit", testName = "marshall.DuplicateIdTest")
-public class DuplicateIdTest {
+public class DuplicateIdTest extends AbstractInfinispanTest {
    public void testDuplicateMarshallerIds() throws Exception {
       Class idHolder = Ids.class;
       Map<Byte, Set<String>> dupes = new HashMap<Byte, Set<String>>();

@@ -49,8 +49,6 @@ public abstract class SingleCacheManagerTest extends AbstractCacheTest {
    @AfterClass(alwaysRun=true)
    protected void destroyAfterClass() {      
       if (cleanup == CleanupPhase.AFTER_TEST) TestingUtil.killCacheManagers(cacheManager);
-      cacheManager = null;
-      cache = null;
    }
 
    @AfterMethod(alwaysRun=true)

@@ -1,6 +1,7 @@
 package org.infinispan.jmx;
 
 import org.infinispan.jmx.annotations.ManagedOperation;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
 
 /**
@@ -10,7 +11,7 @@ import org.testng.annotations.Test;
  * @since 4.0
  */
 @Test(groups = "unit", testName = "jmx.ResourceDMBeanTest")
-public class ResourceDMBeanTest {
+public class ResourceDMBeanTest extends AbstractInfinispanTest {
 
    /**
     * If we have a method in the base class that is annotated as @ManagedOperation, will this be seen the same way in

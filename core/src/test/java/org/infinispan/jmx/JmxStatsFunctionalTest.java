@@ -3,6 +3,7 @@ package org.infinispan.jmx;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
@@ -24,7 +25,7 @@ import java.util.Set;
  * @since 4.0
  */
 @Test(groups = "functional", testName = "jmx.JmxStatsFunctionalTest")
-public class JmxStatsFunctionalTest {
+public class JmxStatsFunctionalTest extends AbstractInfinispanTest {
 
    public static final String JMX_DOMAIN = JmxStatsFunctionalTest.class.getSimpleName();
    private MBeanServer server;

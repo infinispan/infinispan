@@ -6,6 +6,7 @@ import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
 
 import java.util.Iterator;
@@ -14,7 +15,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 @Test(groups = "unit", testName = "eviction.EvictionManagerTest")
-public class EvictionManagerTest {
+public class EvictionManagerTest extends AbstractInfinispanTest {
 
    private Configuration getCfg() {
       Configuration cfg = new Configuration();

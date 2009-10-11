@@ -1,6 +1,7 @@
 package org.infinispan.manager;
 
 import org.infinispan.Cache;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.config.Configuration;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -16,7 +17,7 @@ import java.io.IOException;
  * @since 4.0
  */
 @Test(groups = "functional", testName = "manager.CacheManagerXmlConfigurationTest")
-public class CacheManagerXmlConfigurationTest {
+public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
    DefaultCacheManager cm;
 
    @AfterMethod

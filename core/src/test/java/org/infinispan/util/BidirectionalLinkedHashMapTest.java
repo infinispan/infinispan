@@ -1,12 +1,13 @@
 package org.infinispan.util;
 
+import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
 
 import java.util.Iterator;
 import java.util.Map;
 
 @Test(groups = "unit", testName = "util.BidirectionalLinkedHashMapTest")
-public class BidirectionalLinkedHashMapTest {
+public class BidirectionalLinkedHashMapTest extends AbstractInfinispanTest {
    public void testIterators() {
       BidirectionalLinkedHashMap<Integer, Object> map = new BidirectionalLinkedHashMap<Integer, Object>();
       initMap(map);

@@ -21,6 +21,7 @@
  */
 package org.infinispan.lock;
 
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.concurrent.locks.containers.AbstractStripedLockContainer;
 import org.infinispan.util.concurrent.locks.containers.ReentrantStripedLockContainer;
 import org.testng.annotations.BeforeMethod;
@@ -34,7 +35,7 @@ import java.util.Random;
 import java.util.concurrent.locks.Lock;
 
 @Test(groups = "unit", testName = "lock.LockContainerHashingTest")
-public class LockContainerHashingTest {
+public class LockContainerHashingTest extends AbstractInfinispanTest {
    private AbstractStripedLockContainer stripedLock;
 
    @BeforeMethod(alwaysRun = true)

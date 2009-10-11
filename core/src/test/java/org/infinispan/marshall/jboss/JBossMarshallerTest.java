@@ -32,6 +32,7 @@ import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.Marshallable;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.VersionAwareMarshaller;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.transaction.xa.GlobalTransactionFactory;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
@@ -41,7 +42,7 @@ import org.testng.annotations.BeforeTest;
  * which is {@link JBossMarshaller}}. This class should contain methods that exercise
  * logic in this particular implementation.
  */
-public class JBossMarshallerTest {
+public class JBossMarshallerTest extends AbstractInfinispanTest {
 
    private final VersionAwareMarshaller marshaller = new VersionAwareMarshaller();
 

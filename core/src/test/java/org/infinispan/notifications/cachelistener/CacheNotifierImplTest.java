@@ -13,12 +13,13 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.notifications.cachelistener.event.TransactionCompletedEvent;
 import org.infinispan.notifications.cachelistener.event.TransactionRegisteredEvent;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "notifications.cachelistener.CacheNotifierImplTest")
-public class CacheNotifierImplTest {
+public class CacheNotifierImplTest extends AbstractInfinispanTest {
    CacheNotifierImpl n;
    Cache mockCache;
    CacheListener cl;

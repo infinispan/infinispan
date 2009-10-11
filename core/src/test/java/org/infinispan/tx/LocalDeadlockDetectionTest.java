@@ -10,7 +10,6 @@ import org.infinispan.util.concurrent.locks.DeadlockDetectedException;
 import org.infinispan.util.concurrent.locks.DeadlockDetectingLockManager;
 import static org.testng.Assert.assertEquals;
 
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -56,17 +55,7 @@ public class LocalDeadlockDetectionTest extends SingleCacheManagerTest {
       t1.stopThread();
       t2.stopThread();
    }
-   
-   @AfterClass(alwaysRun=true)
-   protected void destroyAfterClass() {      
-      super.destroyAfterClass();
-      lockManager = null;
-      t1 = null; t2 = null;
-      response1 = null;
-      response2 = null;
-   }
-
-
+ 
    public void testDldPutAndPut() {
       testLocalVsLocalTxDeadlock(PerCacheExecutorThread.Operations.PUT_KEY_VALUE,
                                  PerCacheExecutorThread.Operations.PUT_KEY_VALUE);

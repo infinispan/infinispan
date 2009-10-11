@@ -3,7 +3,6 @@ package org.infinispan.distribution;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.ReplListener;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.TimeUnit;
@@ -31,12 +30,6 @@ public class AsyncAPIAsyncDistTest extends AsyncAPISyncDistTest {
    @Override
    protected void resetListeners() {
       rl.resetEager();
-   }
-   
-   @AfterClass(alwaysRun=true)
-   protected void destroy() {     
-      super.destroy();
-      rl = null;
    }
 
    @Override

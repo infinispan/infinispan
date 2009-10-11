@@ -5,6 +5,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryVisited;
 import org.infinispan.notifications.cachelistener.event.Event;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -16,7 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Manik Surtani
  */
 @Test(groups = "functional", testName = "notifications.CacheListenerRemovalTest")
-public class CacheListenerRemovalTest {
+public class CacheListenerRemovalTest extends AbstractInfinispanTest {
    Cache<String, String> cache;
    CacheManager cm;
 

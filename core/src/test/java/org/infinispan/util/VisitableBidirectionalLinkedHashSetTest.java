@@ -1,12 +1,13 @@
 package org.infinispan.util;
 
+import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
 
 import java.util.Iterator;
 import java.util.Set;
 
 @Test(groups = "unit", testName = "util.VisitableBidirectionalLinkedHashSetTest")
-public class VisitableBidirectionalLinkedHashSetTest {
+public class VisitableBidirectionalLinkedHashSetTest extends AbstractInfinispanTest {
 
    public void testVisitableSet() {
       VisitableBidirectionalLinkedHashSet<Integer> set = new VisitableBidirectionalLinkedHashSet<Integer>(true);

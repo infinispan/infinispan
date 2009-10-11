@@ -7,7 +7,6 @@ import org.infinispan.manager.CacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -51,17 +50,6 @@ public class TxInterceptorMBeanTest extends MultipleCacheManagersTest {
    public void resetStats() throws Exception {
       threadMBeanServer.invoke(txInterceptor, "resetStatistics", new Object[0], new String[0]);
    }
-   
-   @AfterClass(alwaysRun=true)
-   public void destroy() {
-      super.destroy();
-      cache1 = null;
-      cache2 = null;
-      tm = null;
-      threadMBeanServer = null;
-      txInterceptor = null;
-   }
-
 
    public void testCommit() throws Exception {
       

@@ -2,6 +2,7 @@ package org.infinispan.distribution;
 
 import org.easymock.EasyMock;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
@@ -13,7 +14,7 @@ import java.util.Arrays;
  * @since 4.0
  */
 @Test(groups = "unit", testName = "distribution.DistributionManagerUnitTest")
-public class DistributionManagerUnitTest {
+public class DistributionManagerUnitTest extends AbstractInfinispanTest {
    DistributionManagerImpl dmi = new DistributionManagerImpl();
 
    public void testDeterminingLeaversAndJoiners() {

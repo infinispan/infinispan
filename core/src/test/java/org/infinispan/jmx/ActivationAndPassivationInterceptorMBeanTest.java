@@ -11,9 +11,7 @@ import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.AbstractCacheTest.CleanupPhase;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -64,16 +62,6 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
    @AfterMethod
    public void resetStats() throws Exception {
       threadMBeanServer.invoke(activationInterceptorObjName, "resetStatistics", new Object[0], new String[0]);
-   }
-   
-   @AfterClass(alwaysRun = true)
-   protected void destroyAfterClass() {
-      super.destroyAfterClass();
-      cache = null;
-      threadMBeanServer = null;
-      activationInterceptorObjName = null;
-      passivationInterceptorObjName = null;
-      cacheStore = null;
    }
 
    public void testDisbaleStatistics() throws Exception {

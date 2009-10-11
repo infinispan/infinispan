@@ -5,6 +5,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -13,7 +14,7 @@ import org.testng.annotations.Test;
 import java.util.concurrent.CountDownLatch;
 
 @Test(groups = "functional", testName = "notifications.AsyncNotificationTest")
-public class AsyncNotificationTest {
+public class AsyncNotificationTest extends AbstractInfinispanTest {
    Cache<String, String> c;
    CacheManager cm;
 

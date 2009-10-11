@@ -5,6 +5,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -15,7 +16,7 @@ import org.testng.annotations.Test;
 import java.util.concurrent.ExecutorService;
 
 @Test(groups = "unit", testName = "loaders.decorators.AsyncTest")
-public class AsyncTest {
+public class AsyncTest extends AbstractInfinispanTest {
    private static final Log log = LogFactory.getLog(AsyncTest.class);
    AsyncStore store;
    ExecutorService asyncExecutor;

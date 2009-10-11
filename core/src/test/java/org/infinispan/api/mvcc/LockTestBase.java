@@ -4,6 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -23,7 +24,7 @@ import java.util.Collections;
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  */
 @Test(groups = {"functional", "mvcc"})
-public abstract class LockTestBase {
+public abstract class LockTestBase extends AbstractInfinispanTest {
    private Log log = LogFactory.getLog(LockTestBase.class);
    protected boolean repeatableRead = true;
    protected boolean lockParentForChildInsertRemove = false;

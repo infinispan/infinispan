@@ -6,6 +6,7 @@ import static org.infinispan.context.Flag.SKIP_LOCKING;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.Log;
@@ -18,7 +19,7 @@ import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
 @Test(groups = "functional", testName = "atomic.AtomicMapFunctionalTest")
-public class AtomicMapFunctionalTest {
+public class AtomicMapFunctionalTest extends AbstractInfinispanTest {
    private static final Log log = LogFactory.getLog(AtomicMapFunctionalTest.class);
    Cache<String, Object> cache;
    TransactionManager tm;

@@ -1,6 +1,8 @@
 package org.infinispan.loaders;
 
 import static org.easymock.classextension.EasyMock.createMock;
+
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.ReflectionUtil;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.testng.annotations.AfterMethod;
@@ -16,7 +18,7 @@ import java.util.concurrent.ExecutorService;
  * @since 4.0
  */
 @Test(groups = "unit", testName = "loaders.AbstractCacheStoreTest")
-public class AbstractCacheStoreTest {
+public class AbstractCacheStoreTest extends AbstractInfinispanTest {
    private AbstractCacheStore cs;
    private AbstractCacheStoreConfig cfg;
 

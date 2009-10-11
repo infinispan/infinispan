@@ -6,6 +6,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import static org.testng.Assert.assertEquals;
 import org.testng.annotations.Test;
@@ -18,7 +19,7 @@ import java.io.File;
  * @author Mircea.Markus@jboss.com
  */
 @Test(groups = "functional", testName = "config.parsing.EHCache2InfinispanTransformerTest")
-public class EHCache2InfinispanTransformerTest {
+public class EHCache2InfinispanTransformerTest extends AbstractInfinispanTest {
 
    public static final String XSLT_FILE = "xslt/ehcache16x2infinispan4x.xslt";
    private static final String BASE_DIR = "configs/ehcache";

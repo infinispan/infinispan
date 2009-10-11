@@ -1,5 +1,6 @@
 package org.infinispan.loaders;
 
+import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -11,7 +12,7 @@ import org.testng.annotations.Test;
  * @since 4.0
  */
 @Test(groups = "unit", testName = "loaders.AbstractCacheStoreConfigTest")
-public class AbstractCacheStoreConfigTest {
+public class AbstractCacheStoreConfigTest extends AbstractInfinispanTest {
    private AbstractCacheStoreConfig config;
 
    @BeforeMethod

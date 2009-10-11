@@ -1,5 +1,6 @@
 package org.infinispan.factories.scopes;
 
+import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
 
 /**
@@ -7,7 +8,7 @@ import org.testng.annotations.Test;
  * @since 4.0
  */
 @Test(groups = "unit", testName = "factories.scopes.ScopeDetectorTest")
-public class ScopeDetectorTest {
+public class ScopeDetectorTest extends AbstractInfinispanTest {
    public void testScopeOnClass() {
       testScopes(Test1.class, Scopes.GLOBAL);
 

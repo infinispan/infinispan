@@ -5,6 +5,7 @@ import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -20,7 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Test(groups = "functional", testName = "notifications.cachelistener.CacheNotifierTest")
-public class CacheNotifierTest {
+public class CacheNotifierTest extends AbstractInfinispanTest {
    private Cache<Object, Object> cache;
    private TransactionManager tm;
    private CacheNotifier mockNotifier;
@@ -48,8 +49,6 @@ public class CacheNotifierTest {
    @AfterTest
    public void destroyManager() {
       TestingUtil.killCacheManagers(cache.getCacheManager());
-      cache = null; tm = null; mockNotifier = null;
-      origNotifier = null;
    }
 
    private void initCacheData(Object key, Object value) {

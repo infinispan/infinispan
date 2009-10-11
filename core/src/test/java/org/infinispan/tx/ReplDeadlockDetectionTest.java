@@ -17,11 +17,9 @@ import org.infinispan.statetransfer.StateTransferException;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.PerCacheExecutorThread;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.AbstractCacheTest.CleanupPhase;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.concurrent.locks.DeadlockDetectingLockManager;
 import org.infinispan.util.concurrent.locks.LockManager;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -100,19 +98,6 @@ public class ReplDeadlockDetectionTest extends MultipleCacheManagersTest {
       ((DeadlockDetectingLockManager) TestingUtil.extractLockManager(cache(1, "test"))).resetStatistics();
    }
    
-   @AfterClass(alwaysRun = true)
-   protected void destroy() {
-      super.destroy();
-      controlledRpcManager1 = null;
-      controlledRpcManager2 = null;
-      replicationLatch = null;
-      t1 = null;
-      t2 = null;
-      ddLm1 = null;
-      ddLm2 = null;
-      ;
-   }
-
    public void testExpectedInnerStructure() {
       LockManager lockManager = TestingUtil.extractComponent(cache(0, "test"), LockManager.class);
       assert lockManager instanceof DeadlockDetectingLockManager;

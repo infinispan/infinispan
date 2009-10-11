@@ -40,7 +40,6 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.AbstractCacheTest.CleanupPhase;
 import org.infinispan.util.ObjectDuplicator;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -113,13 +112,12 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
    }
    
    @AfterClass(alwaysRun=true)
-   protected void destroy() {     
-      super.destroy();
+   protected void destroy() {           
       if(marshaller != null) {
          marshaller.stop();
          marshaller = null;
-      }
-      mvli = null;
+      }      
+      super.destroy();
    }
 
    @AfterMethod

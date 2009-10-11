@@ -3,6 +3,7 @@ package org.infinispan.atomic;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.TimeoutException;
@@ -20,7 +21,7 @@ import java.util.concurrent.BlockingQueue;
  * @author Mircea.Markus@jboss.com
  */
 @Test(groups = "functional", testName = "atomic.AtomicHashMapConcurrencyTest")
-public class AtomicHashMapConcurrencyTest {
+public class AtomicHashMapConcurrencyTest extends AbstractInfinispanTest {
 
    public static final String KEY = "key";
    Cache<String, Object> cache;

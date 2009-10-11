@@ -8,6 +8,7 @@ import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.interceptors.BatchingInterceptor;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
@@ -22,7 +23,7 @@ import javax.transaction.TransactionManager;
  * @since 4.0
  */
 @Test(groups = "functional", testName = "manager.CacheManagerComponentRegistryTest")
-public class CacheManagerComponentRegistryTest {
+public class CacheManagerComponentRegistryTest extends AbstractInfinispanTest {
    DefaultCacheManager cm;
 
    @AfterMethod(alwaysRun = true)

@@ -2,6 +2,7 @@ package org.infinispan.config.parsing;
 
 import org.infinispan.Cache;
 import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
@@ -14,7 +15,7 @@ import java.io.FileOutputStream;
  * @author Mircea.Markus@jboss.com
  */
 @Test(groups = "functional", testName = "config.parsing.Coherence2InfinispanTransformerTest")
-public class Coherence2InfinispanTransformerTest {
+public class Coherence2InfinispanTransformerTest extends AbstractInfinispanTest {
 
    public static final String XSLT_FILE = "xslt/coherence35x2infinispan4x.xslt";
    private static final String BASE_DIR = "configs/coherence";

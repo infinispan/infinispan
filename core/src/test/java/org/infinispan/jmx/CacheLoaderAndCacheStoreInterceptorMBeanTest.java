@@ -11,7 +11,6 @@ import org.infinispan.manager.CacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -61,14 +60,6 @@ public class CacheLoaderAndCacheStoreInterceptorMBeanTest extends SingleCacheMan
       threadMBeanServer.invoke(loaderInterceptorObjName, "resetStatistics", new Object[0], new String[0]);
       threadMBeanServer.invoke(storeInterceptorObjName, "resetStatistics", new Object[0], new String[0]);
    }
-   
-   @AfterClass(alwaysRun=true)
-   protected void destroyAfterClass() {      
-      super.destroyAfterClass();
-      cacheStore = null; threadMBeanServer =null;storeInterceptorObjName=null;
-      loaderInterceptorObjName =null;
-   }
-
 
    public void testPutKeyValue() throws Exception {
       assertStoreAccess(0, 0, 0);

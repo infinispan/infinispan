@@ -6,6 +6,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
@@ -25,7 +26,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * @author Manik Surtani
  */
 @Test(groups = "functional", testName = "loaders.PassivationFunctionalTest")
-public class PassivationFunctionalTest {
+public class PassivationFunctionalTest extends AbstractInfinispanTest {
    Cache cache;
    CacheStore store;
    TransactionManager tm;
@@ -49,11 +50,6 @@ public class PassivationFunctionalTest {
    @AfterTest
    public void tearDown() {
       TestingUtil.killCacheManagers(cm);
-      cm = null;
-      cfg = null;
-      store = null;
-      cache = null;
-      tm = null;
    }
 
    @AfterMethod

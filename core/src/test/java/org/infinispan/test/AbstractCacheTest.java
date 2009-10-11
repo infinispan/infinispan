@@ -13,8 +13,8 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
 import javax.transaction.TransactionManager;
+
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -25,7 +25,7 @@ import java.util.concurrent.ConcurrentMap;
  *
  * @author Mircea.Markus@jboss.com
  */
-public class AbstractCacheTest {
+public class AbstractCacheTest extends AbstractInfinispanTest{
 
    protected final Log log = LogFactory.getLog(getClass());
 
@@ -65,7 +65,7 @@ public class AbstractCacheTest {
          if (cache.getStatus() == ComponentStatus.RUNNING) result.add(cache);
       }
       return result;
-   }
+   } 
 
    private void clearCacheLoader(Cache cache) {
       CacheLoaderManager cacheLoaderManager = TestingUtil.extractComponent(cache, CacheLoaderManager.class);

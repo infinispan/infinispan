@@ -4,13 +4,14 @@ import org.easymock.EasyMock;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
 import java.util.List;
 
 @Test(groups = "unit", testName = "distribution.JoinTaskTest")
-public class JoinTaskTest {
+public class JoinTaskTest extends AbstractInfinispanTest {
    public void testCalculatingWhosensStateRC2() {
       doTest(2);
    }

@@ -60,16 +60,10 @@ public class ChainingCacheLoaderTest extends BaseCacheStoreTest {
 
    @AfterMethod
    public void afterMethod() {
-      try {
-         if (store1 != null)
-            store1.clear();
-         if (store2 != null)
-            store2.clear();
-      } finally {
-         store1 = null;
-         store2 = null;
-         Arrays.fill(stores, null);
-      }
+      if (store1 != null)
+         store1.clear();
+      if (store2 != null)
+         store2.clear();
    }
 
    public void testPropagatingWrites() throws Exception {

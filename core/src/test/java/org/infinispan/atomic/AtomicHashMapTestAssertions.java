@@ -1,10 +1,11 @@
 package org.infinispan.atomic;
 
 import org.infinispan.Cache;
+import org.infinispan.test.AbstractInfinispanTest;
 
 import java.util.Map;
 
-public class AtomicHashMapTestAssertions {
+public class AtomicHashMapTestAssertions extends AbstractInfinispanTest {
 
    public static void assertIsEmpty(Map map) {
       assert map.size() == 0;

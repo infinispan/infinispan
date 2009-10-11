@@ -29,6 +29,7 @@ import org.infinispan.util.concurrent.locks.LockManager;
 
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
+
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
@@ -96,7 +97,7 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
       cache1.clear();
       cache2.clear();
    }
-
+   
    private void concurrentLockingHelper(final boolean sameNode, final boolean useTx)
          throws Exception {
       final Cache cache1 = cache(0, "replSync");

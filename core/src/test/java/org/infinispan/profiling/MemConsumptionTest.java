@@ -24,6 +24,7 @@ package org.infinispan.profiling;
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
@@ -33,7 +34,7 @@ import java.util.Arrays;
 import java.util.Random;
 
 @Test(groups = "profiling", enabled = false, testName = "profiling.MemConsumptionTest")
-public class MemConsumptionTest {
+public class MemConsumptionTest extends AbstractInfinispanTest {
    // adjust the next 4 values
    int numEntries = 1000000;
    int payloadSize = 60; // bytes

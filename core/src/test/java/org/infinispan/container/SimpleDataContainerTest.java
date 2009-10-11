@@ -5,6 +5,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MortalCacheEntry;
 import org.infinispan.container.entries.TransientCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.Immutables;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -15,7 +16,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Test(groups = "unit", testName = "container.SimpleDataContainerTest")
-public class SimpleDataContainerTest {
+public class SimpleDataContainerTest extends AbstractInfinispanTest {
    DataContainer dc;
 
    @BeforeMethod

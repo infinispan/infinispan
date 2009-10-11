@@ -1,11 +1,10 @@
 package org.infinispan.distribution.rehash;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+
 import org.infinispan.Cache;
 import org.infinispan.manager.CacheManager;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
-
-import static java.util.concurrent.TimeUnit.SECONDS;
 
 @Test(groups = "functional", testName = "distribution.rehash.SingleJoinTest")
 public class SingleJoinTest extends RehashTestBase {
@@ -16,13 +15,6 @@ public class SingleJoinTest extends RehashTestBase {
       joinerManager = addClusterEnabledCacheManager();
       joinerManager.defineConfiguration(cacheName, configuration);
       joiner = joinerManager.getCache(cacheName);
-   }
-   
-   @AfterClass(alwaysRun=true)
-   public void destroy() {
-      super.destroy();     
-      joiner = null;
-      joinerManager=null;
    }
 
    void waitForRehashCompletion() {

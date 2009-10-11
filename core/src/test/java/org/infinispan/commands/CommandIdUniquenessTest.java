@@ -1,5 +1,6 @@
 package org.infinispan.commands;
 
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.ClassFinder;
 import org.testng.annotations.Test;
 
@@ -10,7 +11,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 @Test(groups = "unit", testName = "commands.CommandIdUniquenessTest")
-public class CommandIdUniquenessTest {
+public class CommandIdUniquenessTest extends AbstractInfinispanTest {
    public void testCommandIdUniqueness() throws Exception {
       List<Class<?>> commands = ClassFinder.isAssignableFrom(ReplicableCommand.class);
       SortedMap<Byte, String> cmdIds = new TreeMap<Byte, String>();

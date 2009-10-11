@@ -12,6 +12,7 @@ import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.GlobalTransactionFactory;
 import org.infinispan.util.Util;
@@ -39,7 +40,7 @@ import java.util.Set;
 @SuppressWarnings("unchecked")
 // this needs to be here for the test to run in an IDE
 @Test(groups = "unit", testName = "loaders.BaseCacheStoreTest")
-public abstract class BaseCacheStoreTest {
+public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
 
    protected abstract CacheStore createCacheStore() throws Exception;
 

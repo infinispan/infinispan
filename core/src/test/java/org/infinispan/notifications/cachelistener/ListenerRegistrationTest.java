@@ -6,13 +6,15 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryVisited;
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
+import org.infinispan.test.AbstractInfinispanTest;
+
 import static org.testng.AssertJUnit.*;
 import org.testng.annotations.Test;
 
 import java.util.List;
 
 @Test(groups = "unit", testName = "notifications.cachelistener.ListenerRegistrationTest")
-public class ListenerRegistrationTest {
+public class ListenerRegistrationTest extends AbstractInfinispanTest {
    public void testControl() {
       Object l = new TestControlListener();
       CacheNotifierImpl n = new CacheNotifierImpl();

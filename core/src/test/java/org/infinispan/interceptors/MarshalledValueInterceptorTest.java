@@ -5,6 +5,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.marshall.MarshalledValue;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
@@ -21,7 +22,7 @@ import java.util.Map;
  * @since 4.0
  */
 @Test(groups = "functional", testName = "interceptors.MarshalledValueInterceptorTest")
-public class MarshalledValueInterceptorTest {
+public class MarshalledValueInterceptorTest extends AbstractInfinispanTest {
    CacheManager cm;
 
    @BeforeTest

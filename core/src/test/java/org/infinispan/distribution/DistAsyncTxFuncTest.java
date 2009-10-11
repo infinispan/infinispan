@@ -6,7 +6,6 @@ import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.ReplListener;
 import org.infinispan.test.TestingUtil;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
@@ -48,16 +47,7 @@ public class DistAsyncTxFuncTest extends DistSyncTxFuncTest {
          listenerLookup.put(rl.getCache(), rl);
       }
    }
-   
-   @AfterClass(alwaysRun=true)
-   public void destroy() {
-      super.destroy();           
-      r1=null;r2=null;r3=null;r4=null;
-      Arrays.fill(r, null);
-      listenerLookup.clear();
-      listenerCaches.clear();
-   }
-
+  
    @Override
    protected void asyncWait(Object key, Class<? extends VisitableCommand> command, Cache<?, ?>... cachesOnWhichKeyShouldInval) {
       if (cachesOnWhichKeyShouldInval == null) cachesOnWhichKeyShouldInval = new Cache[0];

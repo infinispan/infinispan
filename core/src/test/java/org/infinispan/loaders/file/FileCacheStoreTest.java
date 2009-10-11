@@ -11,8 +11,6 @@ import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -37,7 +35,7 @@ public class FileCacheStoreTest extends BaseCacheStoreTest {
       tmpDirectory = basedir + TestingUtil.TEST_PATH + File.separator + getClass().getSimpleName();
    }
 
-   @AfterTest
+   @AfterClass
    protected void clearTempDir() {
       TestingUtil.recursiveFileRemove(tmpDirectory);
       new File(tmpDirectory).mkdirs();
@@ -52,13 +50,6 @@ public class FileCacheStoreTest extends BaseCacheStoreTest {
       fcs.init(cfg, getCache(), getMarshaller());
       fcs.start();
       return fcs;
-   }
-   
-   @AfterClass(alwaysRun=true)
-   public void tearDown() throws CacheLoaderException {
-      super.tearDown();
-      fcs = null;
-      tmpDirectory = null;
    }
 
    @Override

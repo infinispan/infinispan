@@ -5,6 +5,7 @@ import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
@@ -13,15 +14,13 @@ import org.testng.annotations.Test;
 import java.util.List;
 
 @Test(groups = "unit", testName = "notifications.cachemanagerlistener.CacheManagerNotifierTest")
-public class CacheManagerNotifierTest {
+public class CacheManagerNotifierTest extends AbstractInfinispanTest {
    CacheManager cm1;
    CacheManager cm2;
 
    @AfterMethod
    public void tearDown() {
       TestingUtil.killCacheManagers(cm1, cm2);
-      cm1 = null;
-      cm2 = null;
    }
 
    public void testViewChange() {

@@ -3,6 +3,7 @@ package org.infinispan.profiling;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
@@ -41,7 +42,7 @@ import java.util.concurrent.CountDownLatch;
  * @author Mircea.Markus@jboss.com
  */
 @Test(groups = "profiling", enabled = true, testName = "profiling.DeadlockDetectionPerformanceTest")
-public class DeadlockDetectionPerformanceTest {
+public class DeadlockDetectionPerformanceTest extends AbstractInfinispanTest {
 
    private static Log log = LogFactory.getLog(DeadlockDetectionPerformanceTest.class);
 

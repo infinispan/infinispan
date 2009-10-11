@@ -1,5 +1,6 @@
 package org.infinispan.lock;
 
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.concurrent.locks.StripedLock;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -13,7 +14,7 @@ import java.util.concurrent.BlockingQueue;
  * @author Mircea.Markus@jboss.com
  */
 @Test(groups = "unit", testName = "lock.StripedLockTest")
-public class StripedLockTest {
+public class StripedLockTest extends AbstractInfinispanTest {
 
    StripedLock stripedLock;
 

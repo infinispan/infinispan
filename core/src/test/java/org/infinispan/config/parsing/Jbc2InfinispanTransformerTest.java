@@ -10,6 +10,7 @@ import org.infinispan.loaders.decorators.AsyncStoreConfig;
 import org.infinispan.loaders.decorators.SingletonStoreConfig;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
 import org.infinispan.marshall.VersionAwareMarshaller;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
@@ -23,7 +24,7 @@ import java.util.Map;
  * @since 4.0
  */
 @Test(groups = "unit", testName = "config.parsing.Jbc2InfinispanTransformerTest")
-public class Jbc2InfinispanTransformerTest {
+public class Jbc2InfinispanTransformerTest extends AbstractInfinispanTest {
    public static final String XSLT_FILE = "xslt/jbc3x2infinispan4x.xslt";
    private static final String BASE_DIR = "configs/jbosscache3x";
    ConfigFilesConvertor convertor = new ConfigFilesConvertor();

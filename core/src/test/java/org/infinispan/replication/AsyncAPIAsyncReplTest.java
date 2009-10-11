@@ -2,7 +2,6 @@ package org.infinispan.replication;
 
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.test.ReplListener;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "replication.AsyncAPIAsyncReplTest")
@@ -23,13 +22,7 @@ public class AsyncAPIAsyncReplTest extends AsyncAPISyncReplTest {
    @Override
    protected boolean sync() {
       return false;
-   }
-   
-   @AfterClass(alwaysRun=true)
-   protected void destroy() {     
-      super.destroy();
-      rl = null;
-   }
+   } 
 
    @Override
    protected void resetListeners() {

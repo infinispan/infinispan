@@ -16,11 +16,12 @@ import org.infinispan.distribution.DefaultConsistentHash;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.loaders.file.FileCacheStoreConfig;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "config.parsing.XmlFileParsingTest")
-public class XmlFileParsingTest {
+public class XmlFileParsingTest extends AbstractInfinispanTest {
 
    public void testNamedCacheFileJaxb() throws Exception {
       String schemaFileName = "infinispan-config-" + Version.getMajorVersion() + ".xsd";

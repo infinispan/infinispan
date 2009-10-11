@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 
+import org.infinispan.test.AbstractInfinispanTest;
 import org.jboss.marshalling.ByteInput;
 import org.jboss.marshalling.ByteOutput;
 import org.jboss.marshalling.ContextClassResolver;
@@ -46,7 +47,7 @@ import org.testng.annotations.Test;
  * ease the creation of tests that check specific behaivour at this level.
  */
 @Test(groups = "functional", testName = "marshall.jboss.JBossMarshallingTest")
-public class JBossMarshallingTest {
+public class JBossMarshallingTest extends AbstractInfinispanTest {
 
    private MarshallerFactory factory;
    private Marshaller marshaller;

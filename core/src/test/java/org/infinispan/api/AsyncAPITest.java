@@ -8,7 +8,6 @@ import org.infinispan.Cache;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "api.AsyncAPITest")
@@ -19,12 +18,6 @@ public class AsyncAPITest extends SingleCacheManagerTest {
       CacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
       c = cm.getCache();
       return cm;
-   }
-   
-   @AfterClass(alwaysRun=true)
-   protected void destroyAfterClass() { 
-      super.destroyAfterClass();
-      c = null;
    }
   
    public void testAsyncMethods() throws ExecutionException, InterruptedException {

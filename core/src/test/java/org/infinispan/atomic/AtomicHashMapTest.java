@@ -23,12 +23,13 @@
 
 package org.infinispan.atomic;
 
+import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
 
 @Test(groups = "unit", testName = "atomic.AtomicHashMapTest")
-public class AtomicHashMapTest {
+public class AtomicHashMapTest extends AbstractInfinispanTest {
    public void testDeltasWithEmptyMap() throws IOException {
       AtomicHashMap m = new AtomicHashMap();
       Delta d = m.delta();
