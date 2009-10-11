@@ -3,6 +3,7 @@ package org.infinispan.api;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
+import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
@@ -147,8 +148,9 @@ public abstract class CacheAPITest extends SingleCacheManagerTest {
       assert size == cache.size() && size == cache.keySet().size() && size == cache.values().size() && size == cache.entrySet().size();
       assert cache.keySet().contains(key);
       assert cache.values().contains(value);
-      cache.stop();
 
+      cache.stop();
+      assert cache.getStatus() == ComponentStatus.TERMINATED;
       cache.start();
 
       assert !cache.containsKey(key);
