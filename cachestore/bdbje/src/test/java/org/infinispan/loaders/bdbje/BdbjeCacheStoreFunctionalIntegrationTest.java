@@ -26,7 +26,7 @@ import java.io.File;
 import org.infinispan.loaders.BaseCacheStoreFunctionalTest;
 import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.test.TestingUtil;
-import org.testng.annotations.AfterTest;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -42,7 +42,7 @@ public class BdbjeCacheStoreFunctionalIntegrationTest extends BaseCacheStoreFunc
       tmpDirectory = basedir + TestingUtil.TEST_PATH + File.separator + getClass().getSimpleName();
    }
    
-   @AfterTest
+   @AfterClass
    protected void clearTempDir() {
       TestingUtil.recursiveFileRemove(tmpDirectory);
       new File(tmpDirectory).mkdirs();

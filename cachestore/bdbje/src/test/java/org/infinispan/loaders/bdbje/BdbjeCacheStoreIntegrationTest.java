@@ -11,7 +11,7 @@ import org.infinispan.loaders.modifications.Store;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.GlobalTransactionFactory;
-import org.testng.annotations.AfterTest;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -36,7 +36,7 @@ public class BdbjeCacheStoreIntegrationTest extends BaseCacheStoreTest {
       tmpDirectory = basedir + TestingUtil.TEST_PATH + File.separator + getClass().getSimpleName();
    }
 
-   @AfterTest
+   @AfterClass
    protected void clearTempDir() {
       TestingUtil.recursiveFileRemove(tmpDirectory);
       new File(tmpDirectory).mkdirs();
