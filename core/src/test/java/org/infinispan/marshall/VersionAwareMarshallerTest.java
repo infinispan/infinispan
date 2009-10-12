@@ -75,7 +75,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jboss.marshalling.TraceInformation;
 import org.jgroups.stack.IpAddress;
-import org.testng.annotations.AfterTest;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
@@ -100,7 +100,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       marshaller.start();
    }
 
-   @AfterTest
+   @AfterClass
    public void tearDown() {
       marshaller.stop();
    }
