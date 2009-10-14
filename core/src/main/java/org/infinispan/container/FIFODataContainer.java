@@ -357,7 +357,7 @@ public class FIFODataContainer implements DataContainer {
     * defends against poor quality hash functions.  This is critical because ConcurrentHashMap uses power-of-two length
     * hash tables, that otherwise encounter collisions for hashCodes that do not differ in lower or upper bits.
     */
-   final int hash(int h) {
+   final int hashOld(int h) {
       // Spread bits to regularize both segment and index locations,
       // using variant of single-word Wang/Jenkins hash.
       h += (h << 15) ^ 0xffffcd7d;
@@ -366,6 +366,25 @@ public class FIFODataContainer implements DataContainer {
       h ^= (h >>> 6);
       h += (h << 2) + (h << 14);
       return h ^ (h >>> 16);
+   }
+
+   /**
+    * Use the objects built in hash to obtain an initial value, then use a second four byte hash to obtain a more
+    * uniform distribution of hash values. This uses a <a href = "http://burtleburtle.net/bob/hash/integer.html">4-byte
+    * (integer) hash</a>, which produces well distributed values even when the original hash produces thghtly clustered
+    * values.
+    * <p />
+    * Contributed by akluge <a href-="http://www.vizitsolutions.com/ConsistentHashingCaching.html">http://www.vizitsolutions.com/ConsistentHashingCaching.html</a>
+    */
+   final int hash(int hash) {
+      hash = (hash + 0x7ED55D16) + (hash << 12);
+      hash = (hash ^ 0xc761c23c) ^ (hash >> 19);
+      hash = (hash + 0x165667b1) + (hash << 5);
+      hash = (hash + 0xd3a2646c) ^ (hash << 9);
+      hash = (hash + 0xfd7046c5) + (hash << 3);
+      hash = (hash ^ 0xb55a4f09) ^ (hash >> 16);
+
+      return hash;
    }
 
    /**
