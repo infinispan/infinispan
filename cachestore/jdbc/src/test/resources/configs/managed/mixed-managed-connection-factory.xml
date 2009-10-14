@@ -60,7 +60,7 @@
                <property name="timestampColumnTypeForBinary" value="BIGINT"/>
                <property name="connectionFactoryClass"
                          value="org.infinispan.loaders.jdbc.connectionfactory.ManagedConnectionFactory"/>
-               <property name="datasourceJndiLocation" value="java:/ManagedConnectionFactoryTest/DS"/>
+               <property name="datasourceJndiLocation" value="java:/MixedStoreWithManagedConnectionTest/DS"/>
                <property name="userName" value="sa"/>
                <property name="driverClass" value="org.h2.Driver"/>
                <property name="idColumnTypeForStrings" value="VARCHAR(255)"/>

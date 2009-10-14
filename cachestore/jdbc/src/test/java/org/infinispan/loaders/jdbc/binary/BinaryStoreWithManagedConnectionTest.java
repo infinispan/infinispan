@@ -23,7 +23,7 @@ public class BinaryStoreWithManagedConnectionTest extends ManagedConnectionFacto
    protected CacheStore createCacheStore() throws Exception {
       ConnectionFactoryConfig connectionFactoryConfig = new ConnectionFactoryConfig();
       connectionFactoryConfig.setConnectionFactoryClass(ManagedConnectionFactory.class.getName());
-      connectionFactoryConfig.setDatasourceJndiLocation(DATASOURCE_LOCATION);
+      connectionFactoryConfig.setDatasourceJndiLocation(getDatasourceLocation());
       TableManipulation tm = UnitTestDatabaseManager.buildDefaultTableManipulation();
       JdbcBinaryCacheStoreConfig config = new JdbcBinaryCacheStoreConfig(connectionFactoryConfig, tm);
       JdbcBinaryCacheStore jdbcBinaryCacheStore = new JdbcBinaryCacheStore();
@@ -37,7 +37,7 @@ public class BinaryStoreWithManagedConnectionTest extends ManagedConnectionFacto
    public void testLoadFromFile() throws Exception {
       CacheManager cm = null;
       try {
-         cm = new DefaultCacheManager("configs/binary-managed-connection-factory.xml");
+         cm = new DefaultCacheManager("configs/managed/binary-managed-connection-factory.xml");
          Cache<String, String> first = cm.getCache("first");
          Cache<String, String> second = cm.getCache("second");
 
@@ -51,8 +51,16 @@ public class BinaryStoreWithManagedConnectionTest extends ManagedConnectionFacto
          JdbcBinaryCacheStore loader = (JdbcBinaryCacheStore) cacheLoaderManager.getCacheLoader();
          assert loader.getConnectionFactory() instanceof ManagedConnectionFactory;
       } finally {
-         TestingUtil.killCacheManagers(cm);
+         try {
+            TestingUtil.killCacheManagers(cm);
+         } catch (Throwable e) {
+            e.printStackTrace();
+         }
       }
    }
 
+   @Override
+   public String getDatasourceLocation() {
+      return "java:/BinaryStoreWithManagedConnectionTest/DS";
+   }
 }

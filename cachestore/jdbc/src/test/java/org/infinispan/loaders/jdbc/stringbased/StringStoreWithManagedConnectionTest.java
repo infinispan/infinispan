@@ -24,7 +24,7 @@ public class StringStoreWithManagedConnectionTest extends ManagedConnectionFacto
    protected CacheStore createCacheStore() throws Exception {
       ConnectionFactoryConfig connectionFactoryConfig = new ConnectionFactoryConfig();
       connectionFactoryConfig.setConnectionFactoryClass(ManagedConnectionFactory.class.getName());
-      connectionFactoryConfig.setDatasourceJndiLocation(DATASOURCE_LOCATION);
+      connectionFactoryConfig.setDatasourceJndiLocation(getDatasourceLocation());
       TableManipulation tm = UnitTestDatabaseManager.buildDefaultTableManipulation();
       JdbcStringBasedCacheStoreConfig config = new JdbcStringBasedCacheStoreConfig(connectionFactoryConfig, tm);
       JdbcStringBasedCacheStore stringBasedCacheStore = new JdbcStringBasedCacheStore();
@@ -36,7 +36,7 @@ public class StringStoreWithManagedConnectionTest extends ManagedConnectionFacto
    public void testLoadFromFile() throws Exception {
       CacheManager cm = null;
       try {
-         cm = new DefaultCacheManager("configs/str-managed-connection-factory.xml");
+         cm = new DefaultCacheManager("configs/managed/str-managed-connection-factory.xml");
          Cache<String, String> first = cm.getCache("first");
          Cache<String, String> second = cm.getCache("second");
 
@@ -52,5 +52,10 @@ public class StringStoreWithManagedConnectionTest extends ManagedConnectionFacto
       } finally {
          TestingUtil.killCacheManagers(cm);
       }
+   }
+
+   @Override
+   public String getDatasourceLocation() {
+      return "java:/StringStoreWithManagedConnectionTest/DS";
    }
 }

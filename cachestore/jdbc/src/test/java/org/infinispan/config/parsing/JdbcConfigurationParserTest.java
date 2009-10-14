@@ -1,7 +1,5 @@
 package org.infinispan.config.parsing;
 
-import java.util.Map;
-
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.InfinispanConfiguration;
@@ -14,12 +12,14 @@ import org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore;
 import org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStoreConfig;
 import org.testng.annotations.Test;
 
+import java.util.Map;
+
 @Test(groups = "unit", testName = "config.parsing.JdbcConfigurationParserTest")
 public class JdbcConfigurationParserTest {
    
    public void testCacheLoaders() throws Exception {
    
-      InfinispanConfiguration configuration = InfinispanConfiguration.newInfinispanConfiguration("configs/named-cache-test.xml");
+      InfinispanConfiguration configuration = InfinispanConfiguration.newInfinispanConfiguration("configs/jdbc-parsing-test.xml");
       Map<String, Configuration> namedConfigurations = configuration.parseNamedConfigurations();
       Configuration c = namedConfigurations.get("withJDBCLoader");
       CacheLoaderManagerConfig clc = c.getCacheLoaderManagerConfig();

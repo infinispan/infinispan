@@ -55,7 +55,7 @@
                <property name="timestampColumnType" value="BIGINT"/>
                <property name="connectionFactoryClass"
                          value="org.infinispan.loaders.jdbc.connectionfactory.ManagedConnectionFactory"/>
-               <property name="datasourceJndiLocation" value="java:/ManagedConnectionFactoryTest/DS"/>
+               <property name="datasourceJndiLocation" value="java:/StringStoreWithManagedConnectionTest/DS"/>
                <property name="idColumnType" value="VARCHAR(255)"/>
                <property name="dataColumnType" value="BINARY"/>
                <property name="dropTableOnExit" value="true"/>

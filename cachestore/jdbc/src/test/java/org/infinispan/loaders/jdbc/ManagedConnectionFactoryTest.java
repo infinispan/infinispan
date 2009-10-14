@@ -24,24 +24,25 @@ import java.sql.SQLException;
 @Test(groups = "functional", testName = "loaders.jdbc.ManagedConnectionFactoryTest")
 public abstract class ManagedConnectionFactoryTest extends BaseCacheStoreTest {
 
-   public static final String DATASOURCE_LOCATION = "java:/ManagedConnectionFactoryTest/DS";
    private DummyDataSource ds;
 
-   @BeforeClass
+   @BeforeClass (alwaysRun = true)
    public void bindDatasourceInJndi() throws Exception {
       System.setProperty(Context.INITIAL_CONTEXT_FACTORY, DummyContextFactory.class.getName());
       ds = new DummyDataSource();
       ds.start();
       InitialContext ic = new InitialContext();
-      ic.bind(DATASOURCE_LOCATION, ds);
-      assert ic.lookup(DATASOURCE_LOCATION) instanceof DummyDataSource;
+      ic.bind(getDatasourceLocation(), ds);
+      assert ic.lookup(getDatasourceLocation()) instanceof DummyDataSource;
    }
 
-   @AfterClass
+   public abstract String getDatasourceLocation();
+
+   @AfterClass (alwaysRun = true)
    public void destroyDatasourceAndUnbind() throws NamingException {
       InitialContext ic = new InitialContext();
-      ic.unbind(DATASOURCE_LOCATION);
-      assert ic.lookup(DATASOURCE_LOCATION) == null;
+      ic.unbind(getDatasourceLocation());
+      assert ic.lookup(getDatasourceLocation()) == null;
       ds.stop();
    }
 

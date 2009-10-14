@@ -24,7 +24,7 @@ public class MixedStoreWithManagedConnectionTest extends ManagedConnectionFactor
    protected CacheStore createCacheStore() throws Exception {
       ConnectionFactoryConfig connectionFactoryConfig = new ConnectionFactoryConfig();
       connectionFactoryConfig.setConnectionFactoryClass(ManagedConnectionFactory.class.getName());
-      connectionFactoryConfig.setDatasourceJndiLocation(DATASOURCE_LOCATION);
+      connectionFactoryConfig.setDatasourceJndiLocation(getDatasourceLocation());
       TableManipulation stringsTm = UnitTestDatabaseManager.buildDefaultTableManipulation();
       stringsTm.setTableNamePrefix("STRINGS_TABLE");
       TableManipulation binaryTm = UnitTestDatabaseManager.buildDefaultTableManipulation();
@@ -41,7 +41,7 @@ public class MixedStoreWithManagedConnectionTest extends ManagedConnectionFactor
    public void testLoadFromFile() throws Exception {
       CacheManager cm = null;
       try {
-         cm = new DefaultCacheManager("configs/mixed-managed-connection-factory.xml");
+         cm = new DefaultCacheManager("configs/managed/mixed-managed-connection-factory.xml");
          Cache<String, String> first = cm.getCache("first");
          Cache<String, String> second = cm.getCache("second");
 
@@ -57,5 +57,10 @@ public class MixedStoreWithManagedConnectionTest extends ManagedConnectionFactor
       } finally {
          TestingUtil.killCacheManagers(cm);
       }
+   }
+
+   @Override
+   public String getDatasourceLocation() {
+      return "java:/MixedStoreWithManagedConnectionTest/DS";
    }
 }
