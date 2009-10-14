@@ -228,7 +228,14 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          // if there is a JOIN in progress, wait for this to complete.
          // See ISPN-83 for more details.  Once ISPN-83 is addressed, this may no longer be needed.
          distributedSync.blockUntilNoJoinsInProgress();
-
+         
+         //Use JGroups 2.8 feature Message.DONT_BUNDLE flag to override message bundling at the transport level
+         //for asynchronous calls
+         //See ISPN-192 for more details
+         if (mode == GroupRequest.GET_NONE) {
+            msg.setFlag(Message.DONT_BUNDLE);
+         }
+         
          RspList retval = castMessage(dests, msg, mode, timeout, anycasting, filter);
          if (trace) log.trace("responses: {0}", retval);
 
