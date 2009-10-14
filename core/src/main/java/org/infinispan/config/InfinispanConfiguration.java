@@ -190,18 +190,21 @@ public class InfinispanConfiguration implements XmlConfigurationParser {
             InputStream schema, ConfigurationBeanVisitor cbv) throws IOException {
       try {
          JAXBContext jc = JAXBContext.newInstance(InfinispanConfiguration.class);
-         Unmarshaller u = jc.createUnmarshaller();
-         ErrorValidationHandler handler = new ErrorValidationHandler();
-         u.setEventHandler(handler);
+         Unmarshaller u = jc.createUnmarshaller();         
 
          if (schema != null) {
             SchemaFactory factory = SchemaFactory.newInstance("http://www.w3.org/2001/XMLSchema");
             u.setSchema(factory.newSchema(new StreamSource(schema)));
+            u.setEventHandler(new ValidationEventHandler() {
+               @Override
+               public boolean handleEvent(ValidationEvent event) {               
+                  int severity = event.getSeverity();
+                  return (severity != ValidationEvent.FATAL_ERROR && severity != ValidationEvent.ERROR);
+               }
+            });
          }
-         InfinispanConfiguration ic = (InfinispanConfiguration) u.unmarshal(config);
-         if (handler.errorsReported()) {
-            throw new ConfigurationException("Exception were reported during parsing the config file: " + handler.getReportedErrors());
-         }
+         
+         InfinispanConfiguration ic = (InfinispanConfiguration) u.unmarshal(config);     
          // legacy, don't ask
          ic.parseGlobalConfiguration().setDefaultConfiguration(ic.parseDefaultConfiguration());
          if (cbv != null) {
@@ -209,41 +212,9 @@ public class InfinispanConfiguration implements XmlConfigurationParser {
          }
          return ic;
       } catch (Exception e) {
-         log.error("Cought unexpected ex: ", e);
          IOException ioe = new IOException(e.getLocalizedMessage());
          ioe.initCause(e);
          throw ioe;
-      }
-   }
-
-   public static class ErrorValidationHandler implements ValidationEventHandler {
-      private boolean errorsReported = false;
-      private StringBuilder errors;
-
-      public boolean handleEvent(ValidationEvent event) {
-         if (event != null && event.getLinkedException() != null) {
-            errorsReported = true;
-            getErrors().append(event.getMessage());
-            log.error("Exception while parsing the xml file: ", event.getLinkedException());
-         }
-         return true;
-      }
-
-      private StringBuilder getErrors() {
-         if (errors == null) {
-            errors = new StringBuilder();
-         } else {
-            errors.append('\n');
-         }
-         return errors;
-      }
-
-      public boolean errorsReported() {
-         return errorsReported;
-      }
-
-      public String getReportedErrors() {
-         return errors.toString();
       }
    }
 
