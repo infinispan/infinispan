@@ -114,6 +114,12 @@ public class JdbcBinaryCacheStoreConfig extends LockSupportCacheStoreConfig {
       this.connectionFactoryConfig.setPassword(password);
    }
 
+
+   public void setDatasourceJndiLocation(String location) {
+      testImmutability("datasourceJndiLocation");
+      this.connectionFactoryConfig.setDatasourceJndiLocation(location);
+   }
+
    /**
     * Driver class, will be loaded before initializing the {@link org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory}
     */

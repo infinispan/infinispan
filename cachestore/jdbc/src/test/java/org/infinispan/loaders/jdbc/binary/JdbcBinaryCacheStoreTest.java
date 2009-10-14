@@ -1,15 +1,14 @@
-package org.infinispan.loaders.jdbc;
+package org.infinispan.loaders.jdbc.binary;
 
 import static org.easymock.classextension.EasyMock.*;
+import org.infinispan.CacheDelegate;
 import org.infinispan.loaders.BaseCacheStoreTest;
 import org.infinispan.loaders.CacheStore;
-import org.infinispan.loaders.jdbc.binary.JdbcBinaryCacheStore;
-import org.infinispan.loaders.jdbc.binary.JdbcBinaryCacheStoreConfig;
+import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
-import org.infinispan.CacheDelegate;
 import org.testng.annotations.Test;
 
 /**
@@ -17,7 +16,7 @@ import org.testng.annotations.Test;
  *
  * @author Mircea.Markus@jboss.com
  */
-@Test(groups = "functional", testName = "loaders.jdbc.JdbcBinaryCacheStoreTest")
+@Test(groups = "functional", testName = "loaders.jdbc.binary.JdbcBinaryCacheStoreTest")
 public class JdbcBinaryCacheStoreTest extends BaseCacheStoreTest {
 
    protected CacheStore createCacheStore() throws Exception {

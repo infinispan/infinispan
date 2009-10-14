@@ -142,6 +142,11 @@ public class JdbcStringBasedCacheStoreConfig extends LockSupportCacheStoreConfig
       this.connectionFactoryConfig.setUserName(userName);
    }
 
+   public void setDatasourceJndiLocation(String location) {
+      testImmutability("datasourceJndiLocation");
+      this.connectionFactoryConfig.setDatasourceJndiLocation(location);
+   }
+
    /**
     * Database username's password.
     */

@@ -21,11 +21,11 @@
  */
 package org.infinispan.config;
 
-import java.util.Set;
-import java.util.Map.Entry;
+import org.infinispan.util.TypedProperties;
 
 import javax.xml.bind.annotation.adapters.XmlAdapter;
-import org.infinispan.util.TypedProperties;
+import java.util.Map.Entry;
+import java.util.Set;
 /**
  * TypedPropertiesAdapter is JAXB XmlAdapter for TypedProperties.
  *
@@ -53,8 +53,10 @@ public class TypedPropertiesAdapter extends XmlAdapter<PropertiesType, TypedProp
    @Override
    public TypedProperties unmarshal(PropertiesType props) throws Exception {
       TypedProperties tp = new TypedProperties();
-      for (Property p : props.properties) {
-         tp.put(p.name, p.value);
+      if (props != null && props.properties != null) {
+         for (Property p : props.properties) {
+            tp.put(p.name, p.value);
+         }
       }
       return tp;
    }

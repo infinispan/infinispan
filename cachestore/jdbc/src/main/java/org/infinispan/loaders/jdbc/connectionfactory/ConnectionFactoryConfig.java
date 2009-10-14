@@ -12,6 +12,7 @@ public class ConnectionFactoryConfig implements Cloneable {
    private String connectionUrl;
    private String userName;
    private String password;
+   private String datasourceJndiLocation;
 
    public ConnectionFactoryConfig(String connectionFactoryClass, String driverClass, String connectionUrl,
                                   String userName, String password) {
@@ -63,6 +64,14 @@ public class ConnectionFactoryConfig implements Cloneable {
 
    public String getConnectionFactoryClass() {
       return connectionFactoryClass;
+   }
+
+   public void setDatasourceJndiLocation(String location) {
+      datasourceJndiLocation = location;
+   }
+
+   public String getDatasourceJndiLocation() {
+      return datasourceJndiLocation;
    }
 
    @Override

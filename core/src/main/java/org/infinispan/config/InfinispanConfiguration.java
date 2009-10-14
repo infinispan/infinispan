@@ -24,9 +24,13 @@ package org.infinispan.config;
 import org.infinispan.Version;
 import org.infinispan.config.parsing.XmlConfigurationParser;
 import org.infinispan.util.FileLookup;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
+import javax.xml.bind.ValidationEvent;
+import javax.xml.bind.ValidationEventHandler;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -62,6 +66,8 @@ import java.util.Map;
 @XmlRootElement(name = "infinispan")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class InfinispanConfiguration implements XmlConfigurationParser {
+
+   private static Log log = LogFactory.getLog(InfinispanConfiguration.class);
 
    public static final String VALIDATING_SYSTEM_PROPERTY = "infinispan.config.validate";
 
@@ -185,12 +191,17 @@ public class InfinispanConfiguration implements XmlConfigurationParser {
       try {
          JAXBContext jc = JAXBContext.newInstance(InfinispanConfiguration.class);
          Unmarshaller u = jc.createUnmarshaller();
+         ErrorValidationHandler handler = new ErrorValidationHandler();
+         u.setEventHandler(handler);
 
          if (schema != null) {
             SchemaFactory factory = SchemaFactory.newInstance("http://www.w3.org/2001/XMLSchema");
             u.setSchema(factory.newSchema(new StreamSource(schema)));
          }
          InfinispanConfiguration ic = (InfinispanConfiguration) u.unmarshal(config);
+         if (handler.errorsReported()) {
+            throw new ConfigurationException("Exception were reported during parsing the config file: " + handler.getReportedErrors());
+         }
          // legacy, don't ask
          ic.parseGlobalConfiguration().setDefaultConfiguration(ic.parseDefaultConfiguration());
          if (cbv != null) {
@@ -198,9 +209,41 @@ public class InfinispanConfiguration implements XmlConfigurationParser {
          }
          return ic;
       } catch (Exception e) {
+         log.error("Cought unexpected ex: ", e);
          IOException ioe = new IOException(e.getLocalizedMessage());
          ioe.initCause(e);
          throw ioe;
+      }
+   }
+
+   public static class ErrorValidationHandler implements ValidationEventHandler {
+      private boolean errorsReported = false;
+      private StringBuilder errors;
+
+      public boolean handleEvent(ValidationEvent event) {
+         if (event != null && event.getLinkedException() != null) {
+            errorsReported = true;
+            getErrors().append(event.getMessage());
+            log.error("Exception while parsing the xml file: ", event.getLinkedException());
+         }
+         return true;
+      }
+
+      private StringBuilder getErrors() {
+         if (errors == null) {
+            errors = new StringBuilder();
+         } else {
+            errors.append('\n');
+         }
+         return errors;
+      }
+
+      public boolean errorsReported() {
+         return errorsReported;
+      }
+
+      public String getReportedErrors() {
+         return errors.toString();
       }
    }
 

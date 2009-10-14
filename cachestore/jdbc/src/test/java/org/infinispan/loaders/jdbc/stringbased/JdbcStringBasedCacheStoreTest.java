@@ -22,10 +22,10 @@ public class JdbcStringBasedCacheStoreTest extends BaseCacheStoreTest {
       ConnectionFactoryConfig connectionFactoryConfig = UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
       TableManipulation tm = UnitTestDatabaseManager.buildDefaultTableManipulation();
       JdbcStringBasedCacheStoreConfig config = new JdbcStringBasedCacheStoreConfig(connectionFactoryConfig, tm);
-      JdbcStringBasedCacheStore jdbcBucketCacheStore = new JdbcStringBasedCacheStore();
-      jdbcBucketCacheStore.init(config, new CacheDelegate("aName"), getMarshaller());
-      jdbcBucketCacheStore.start();
-      return jdbcBucketCacheStore;
+      JdbcStringBasedCacheStore stringBasedCacheStore = new JdbcStringBasedCacheStore();
+      stringBasedCacheStore.init(config, new CacheDelegate("aName"), getMarshaller());
+      stringBasedCacheStore.start();
+      return stringBasedCacheStore;
    }
 
    public void testNotCreateConnectionFactory() throws Exception {

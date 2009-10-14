@@ -19,7 +19,7 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.loaders.jdbc;
+package org.infinispan.loaders.jdbc.binary;
 
 import org.infinispan.commands.RemoteCommandFactory;
 import org.infinispan.marshall.Marshaller;
@@ -32,7 +32,7 @@ import org.testng.annotations.Test;
  * @author Galder Zamarreño
  * @since 4.0
  */
-@Test(groups = "functional", testName = "loaders.jdbc.JdbcBinaryCacheStoreVamTest")
+@Test(groups = "functional", testName = "loaders.jdbc.binary.JdbcBinaryCacheStoreVamTest")
 public class JdbcBinaryCacheStoreVamTest extends JdbcBinaryCacheStoreTest {   
    @Override
    protected Marshaller getMarshaller() {

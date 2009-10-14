@@ -193,6 +193,12 @@ public class JdbcMixedCacheStoreConfig extends AbstractCacheStoreConfig {
       this.connectionFactoryConfig.setConnectionFactoryClass(connectionFactoryClass);
    }
 
+   public void setDatasourceJndiLocation(String location) {
+      testImmutability("datasourceJndiLocation");
+      this.connectionFactoryConfig.setDatasourceJndiLocation(location);
+   }
+
+
    public ConnectionFactoryConfig getConnectionFactoryConfig() {
       return connectionFactoryConfig;
    }

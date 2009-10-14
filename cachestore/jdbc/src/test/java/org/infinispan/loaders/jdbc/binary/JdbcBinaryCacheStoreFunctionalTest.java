@@ -19,14 +19,11 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.loaders.jdbc;
+package org.infinispan.loaders.jdbc.binary;
 
-import org.infinispan.CacheDelegate;
 import org.infinispan.loaders.BaseCacheStoreFunctionalTest;
-import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.CacheStoreConfig;
-import org.infinispan.loaders.jdbc.binary.JdbcBinaryCacheStore;
-import org.infinispan.loaders.jdbc.binary.JdbcBinaryCacheStoreConfig;
+import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.Test;
@@ -37,7 +34,7 @@ import org.testng.annotations.Test;
  * @author Galder Zamarreño
  * @since 4.0
  */
-@Test(groups = "functional", testName = "loaders.jdbc.JdbcBinaryCacheStoreFunctionalTest")
+@Test(groups = "functional", testName = "loaders.jdbc.binary.JdbcBinaryCacheStoreFunctionalTest")
 public class JdbcBinaryCacheStoreFunctionalTest extends BaseCacheStoreFunctionalTest {
 
    @Override

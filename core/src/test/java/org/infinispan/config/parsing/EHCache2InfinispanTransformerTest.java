@@ -14,6 +14,7 @@ import org.testng.annotations.Test;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -49,13 +50,13 @@ public class EHCache2InfinispanTransformerTest extends AbstractInfinispanTest {
          convertor.parse(fileName, baos, XSLT_FILE);
 
 
-//         File out = new File("zzzz2.xml");
-//         if (out.exists()) out.delete();
-//         out.createNewFile();
-//         FileOutputStream fos = new FileOutputStream(out);
-//         fos.write(baos.toByteArray());
-//         baos.close();
-//         fos.close();
+         File out = new File("zzzz3.xml");
+         if (out.exists()) out.delete();
+         out.createNewFile();
+         FileOutputStream fos = new FileOutputStream(out);
+         fos.write(baos.toByteArray());
+         baos.close();
+         fos.close();
 
          dcm = new DefaultCacheManager(new ByteArrayInputStream(baos.toByteArray()));
          Cache<Object,Object> defaultCache = dcm.getCache();
