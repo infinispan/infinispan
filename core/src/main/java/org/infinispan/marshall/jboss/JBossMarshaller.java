@@ -96,7 +96,7 @@ public class JBossMarshaller extends AbstractMarshaller {
    };
 
    public void start(ClassLoader defaultCl, RemoteCommandFactory cmdFactory, org.infinispan.marshall.Marshaller ispnMarshaller) {
-      log.debug("Using JBoss Marshalling based marshaller.");
+      if (log.isDebugEnabled()) log.debug("Using JBoss Marshalling");
       this.defaultCl = defaultCl;
       try {
          factory = (MarshallerFactory) Util.getInstance(DEFAULT_MARSHALLER_FACTORY);
