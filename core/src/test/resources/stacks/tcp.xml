@@ -9,12 +9,12 @@
         discard_incompatible_packets="true"
         max_bundle_size="64000"
         max_bundle_timeout="30"
-        enable_bundling="true"
+        enable_bundling="false"
         use_send_queues="false"
         sock_conn_timeout="300"
         enable_diagnostics="false"
         skip_suspected_members="true"
-
+ 
         thread_pool.enabled="true"
         thread_pool.min_threads="1"
         thread_pool.max_threads="25"
