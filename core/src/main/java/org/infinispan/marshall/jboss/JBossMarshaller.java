@@ -60,12 +60,11 @@ public class JBossMarshaller extends AbstractMarshaller {
    private MarshallingConfiguration configuration;
    private MarshallerFactory factory;
    private ConstantObjectTable objectTable;
-   
+
    /**
-    *  Marshaller thread local. JBossMarshaller is a singleton shared by all caches (global component), 
-    *  so no urgent need for static here.
-    *  JBMAR clears pretty much any state during finish(), so no urgent need to clear the thread local 
-    *  since it shouldn't be leaking.
+    * Marshaller thread local. JBossMarshaller is a singleton shared by all caches (global component), so no urgent need
+    * for static here. JBMAR clears pretty much any state during finish(), so no urgent need to clear the thread local
+    * since it shouldn't be leaking.
     */
    private ThreadLocal<org.jboss.marshalling.Marshaller> marshallerTL = new ThreadLocal<org.jboss.marshalling.Marshaller>() {
       @Override
@@ -77,12 +76,11 @@ public class JBossMarshaller extends AbstractMarshaller {
          }
       }
    };
-   
+
    /**
-    *  Unmarshaller thread local. JBossMarshaller is a singleton shared by all caches (global component), 
-    *  so no urgent need for static here.
-    *  JBMAR clears pretty much any state during finish(), so no urgent need to clear the thread local 
-    *  since it shouldn't be leaking.
+    * Unmarshaller thread local. JBossMarshaller is a singleton shared by all caches (global component), so no urgent
+    * need for static here. JBMAR clears pretty much any state during finish(), so no urgent need to clear the thread
+    * local since it shouldn't be leaking.
     */
    private ThreadLocal<Unmarshaller> unmarshallerTL = new ThreadLocal<Unmarshaller>() {
       @Override
@@ -193,7 +191,7 @@ public class JBossMarshaller extends AbstractMarshaller {
          unmarshaller = factory.createUnmarshaller(configuration);
       } else {
          unmarshaller = unmarshallerTL.get();
-      }       
+      }
       unmarshaller.start(Marshalling.createByteInput(is));
       return unmarshaller;
    }
@@ -229,18 +227,19 @@ public class JBossMarshaller extends AbstractMarshaller {
             ClassLoader cl = subjectClass.getClassLoader();
             builder.append("classloader hierarchy:");
             ClassLoader parent = cl;
-            while( parent != null ) {
+            while (parent != null) {
                if (parent.equals(cl)) {
-                  builder.append("\n\t\t-> type classloader = " + parent);
+                  builder.append("\n\t\t-> type classloader = ").append(parent);
                } else {
-                  builder.append("\n\t\t-> parent classloader = " + parent);
+                  builder.append("\n\t\t-> parent classloader = ").append(parent);
                }
                URL[] urls = getClassLoaderURLs(parent);
-               int length = urls != null ? urls.length : 0;
-               for(int u = 0; u < length; u ++) {
-                  builder.append("\n\t\t->..."+urls[u]);
+
+               if (urls != null) {
+                  for (URL u : urls) builder.append("\n\t\t->...").append(u);
                }
-               if( parent != null ) parent = parent.getParent();
+
+               parent = parent.getParent();
             }
             TraceInformation.addUserInformation(problem, builder.toString());
          }
@@ -249,18 +248,18 @@ public class JBossMarshaller extends AbstractMarshaller {
       public void handleUnmarshallingException(Throwable problem) {
          // no-op
       }
-      
+
       private static URL[] getClassLoaderURLs(ClassLoader cl) {
          URL[] urls = {};
          try {
             Class returnType = urls.getClass();
             Class[] parameterTypes = {};
             Method getURLs = cl.getClass().getMethod("getURLs", parameterTypes);
-            if( returnType.isAssignableFrom(getURLs.getReturnType()) ) {
+            if (returnType.isAssignableFrom(getURLs.getReturnType())) {
                Object[] args = {};
                urls = (URL[]) getURLs.invoke(cl, args);
             }
-         } catch(Exception ignore) {}
+         } catch (Exception ignore) {}
          return urls;
       }
 
