@@ -42,13 +42,9 @@
          There is no added cost to defining a transport but not creating a cache that uses one, since the transport
          is created and initialized lazily.
       -->
-      <transport clusterName="infinispan-cluster" distributedSyncTimeout="50000" nodeName="Jalapeno">
+      <transport clusterName="infinispan-cluster" distributedSyncTimeout="50000" nodeName="Jalapeno"/>
          <!-- Note that the JGroups transport uses sensible defaults if no configuration property is defined. -->
-         <properties>
-         	<property name="configurationFile" value="udp.xml"/>
-         </properties>
          <!-- See the JGroupsTransport javadocs for more flags -->
-      </transport>
 
       <!-- Again, sensible defaults are used here if this is omitted.  -->
       <serialization marshallerClass="org.infinispan.marshall.VersionAwareMarshaller" version="1.0"/>
@@ -166,7 +162,7 @@
 
             <!-- See the documentation for more configuration examples and flags. -->
             <properties>
-               <property name="location" value="/tmp"/>
+               <property name="location" value="${java.io.tmpdir}"/>
             </properties>
             <singletonStore enabled="true" pushStateWhenCoordinator="true" pushStateTimeout="20000"/>
             <async enabled="true" mapLockTimeout="15000" threadPoolSize="5"/>
