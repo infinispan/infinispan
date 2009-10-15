@@ -123,12 +123,15 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
    }
 
    public void stop() {
-      stores.remove(config.getStore());
+      if (config.isCleanBetweenRestarts()) {
+         stores.remove(config.getStore());
+      }
    }
 
    public static class Cfg extends AbstractCacheStoreConfig {
       boolean debug;
       String store = "__DEFAULT_STORE__";
+      boolean cleanBetweenRestarts = true;
 
       public Cfg() {
          setCacheLoaderClassName(DummyInMemoryCacheStore.class.getName());
@@ -137,6 +140,11 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
       public Cfg(String name) {
          this();
          setStore(name);
+      }
+
+      public Cfg(String name, boolean cleanBetweenRestarts) {
+         this(name);
+         this.cleanBetweenRestarts = cleanBetweenRestarts;
       }
 
       public boolean isDebug() {
@@ -158,6 +166,10 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
       @Override
       public Cfg clone() {
          return (Cfg) super.clone();
+      }
+
+      public boolean isCleanBetweenRestarts() {
+         return cleanBetweenRestarts;
       }
    }
 }
