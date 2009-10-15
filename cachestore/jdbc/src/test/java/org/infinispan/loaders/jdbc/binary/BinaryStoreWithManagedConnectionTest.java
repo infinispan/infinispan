@@ -18,7 +18,7 @@ import org.testng.annotations.Test;
 /**
  * @author Mircea.Markus@jboss.com
  */
-@Test (groups = "functional", testName = "loaders.jdbc.stringbased.BinaryStoreWithManagedConnectionTest")
+@Test (groups = "functional", testName = "loaders.jdbc.binary.BinaryStoreWithManagedConnectionTest")
 public class BinaryStoreWithManagedConnectionTest extends ManagedConnectionFactoryTest {
    protected CacheStore createCacheStore() throws Exception {
       ConnectionFactoryConfig connectionFactoryConfig = new ConnectionFactoryConfig();
