@@ -65,7 +65,7 @@ public class ConsistentHashPerfTest {
 
       List<Object> keys = new ArrayList<Object>(numKeys);
       ConsistentHash ch = new DefaultConsistentHash();
-
+      addCaches(ch, numNodes);
       for (int i = 0; i < numKeys; i++) keys.add(UUID.randomUUID());
 
       Map<Address, Integer> distribution = new HashMap<Address, Integer>();
