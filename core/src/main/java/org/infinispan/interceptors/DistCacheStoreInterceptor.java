@@ -21,9 +21,6 @@
  */
 package org.infinispan.interceptors;
 
-import java.util.List;
-import java.util.Map;
-
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -33,40 +30,48 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 
+import java.util.List;
+import java.util.Map;
+
 /**
- * Cache store interceptor specific for the distribution cache mode. Put operations  
- * has been modified in such way that if they put operation is the result of an L1 put, storing
- * in the cache store is ignore. This is done so that inmortal entries that get converted into
- * mortal ones when putting into L1 don't get propagated to the cache store. 
- * 
- * Secondly, in a replicated environment where a shared cache store is used, the node in which
- * the cache operation is executed is the one responsible for interacting with the cache. This 
- * doesn't work with distributed mode and instead, in a shared cache store situation, the first 
- * owner of the key is the one responsible for storing it.
- * 
- * In the particular case of putAll(), individual keys are checked and if a shared cache store 
- * environment has been configured, only the first owner of that key will actually store it to 
- * the cache store. In a unshared environment though, only those nodes that are owners of the key
- * would store it to their local cache stores.
- * 
+ * Cache store interceptor specific for the distribution cache mode. Put operations has been modified in such way that
+ * if they put operation is the result of an L1 put, storing in the cache store is ignore. This is done so that inmortal
+ * entries that get converted into mortal ones when putting into L1 don't get propagated to the cache store.
+ * <p/>
+ * Secondly, in a replicated environment where a shared cache store is used, the node in which the cache operation is
+ * executed is the one responsible for interacting with the cache. This doesn't work with distributed mode and instead,
+ * in a shared cache store situation, the first owner of the key is the one responsible for storing it.
+ * <p/>
+ * In the particular case of putAll(), individual keys are checked and if a shared cache store environment has been
+ * configured, only the first owner of that key will actually store it to the cache store. In a unshared environment
+ * though, only those nodes that are owners of the key would store it to their local cache stores.
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */
 public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
    DistributionManager dm;
+   Transport transport;
    Address address;
 
    @Inject
    public void inject(DistributionManager dm, Transport transport) {
       this.dm = dm;
+      this.transport = transport;
+   }
+
+   @Start(priority = 25)
+   // after the distribution manager!
+   private void setAddress() {
       this.address = transport.getAddress();
    }
-      
+
    // ---- WRITE commands
-   
+
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       Object returnValue = invokeNextInterceptor(ctx, command);
@@ -78,7 +83,7 @@ public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
       if (getStatisticsEnabled()) cacheStores.incrementAndGet();
       return returnValue;
    }
-   
+
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       Object returnValue = invokeNextInterceptor(ctx, command);
@@ -89,13 +94,13 @@ public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
          if (!skip(key)) {
             InternalCacheEntry se = getStoredEntry(key, ctx);
             store.store(se);
-            log.trace("Stored entry {0} under key {1}", se, key);            
+            log.trace("Stored entry {0} under key {1}", se, key);
          }
       }
       if (getStatisticsEnabled()) cacheStores.getAndAdd(map.size());
       return returnValue;
    }
-   
+
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       Object retval = invokeNextInterceptor(ctx, command);
@@ -109,25 +114,22 @@ public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
 
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command)
-            throws Throwable {
+         throws Throwable {
       Object returnValue = invokeNextInterceptor(ctx, command);
       Object key = command.getKey();
       if (skip(ctx, key) || ctx.isInTxScope() || !command.isSuccessful()) return returnValue;
-      
+
       InternalCacheEntry se = getStoredEntry(key, ctx);
       store.store(se);
       log.trace("Stored entry {0} under key {1}", se, key);
       if (getStatisticsEnabled()) cacheStores.incrementAndGet();
 
       return returnValue;
-   }   
-   
+   }
+
    /**
-    * Method that skips invocation if:
-    *   - No store defined or,
-    *   - The context contains Flag.SKIP_CACHE_STORE or,
-    *   - The store is a shared one and node storing the key is not the 1st owner of the key or,
-    *   - This is an L1 put operation.
+    * Method that skips invocation if: - No store defined or, - The context contains Flag.SKIP_CACHE_STORE or, - The
+    * store is a shared one and node storing the key is not the 1st owner of the key or, - This is an L1 put operation.
     */
    private boolean skip(InvocationContext ctx, Object key) {
       if (store == null) return true;  // could be because the cache loader oes not implement cache store
@@ -135,16 +137,14 @@ public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
       if ((loaderConfig.isShared() && !isFirstOwner(addresses)) || ctx.hasFlag(Flag.SKIP_CACHE_STORE) || isL1Put(addresses)) {
          if (trace)
             log.trace("Passing up method call and bypassing this interceptor since the cache loader is either shared " +
-                        "and the caller is not the first owner of the key, or the put call is an L1 put, or the call contain a skip cache store flag");
+                  "and the caller is not the first owner of the key, or the put call is an L1 put, or the call contain a skip cache store flag");
          return true;
       }
       return false;
    }
-   
+
    /**
-    * Method that skips invocation if:
-    *   - No store defined or,
-    *   - The context contains Flag.SKIP_CACHE_STORE or,
+    * Method that skips invocation if: - No store defined or, - The context contains Flag.SKIP_CACHE_STORE or,
     */
    private final boolean skip(InvocationContext ctx) {
       if (store == null) return true;  // could be because the cache loader oes not implement cache store
@@ -157,26 +157,27 @@ public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
    }
 
    /**
-    * Method that skips invocation if:
-    *   - The store is a shared one and node storing the key is not the 1st owner of the key or,
-    *   - This is an L1 put operation.
+    * Method that skips invocation if: - The store is a shared one and node storing the key is not the 1st owner of the
+    * key or, - This is an L1 put operation.
     */
    private boolean skip(Object key) {
       List<Address> addresses = dm.locate(key);
       if ((loaderConfig.isShared() && !isFirstOwner(addresses)) || isL1Put(addresses)) {
          if (trace)
             log.trace("Passing up method call and bypassing this interceptor since the cache loader is either shared " +
-                        "and the caller is not the first owner of the key, or the put call is an L1 put");
+                  "and the caller is not the first owner of the key, or the put call is an L1 put");
          return true;
       }
       return false;
    }
 
    private boolean isL1Put(List<Address> addresses) {
+      if (address == null) throw new NullPointerException("Local address cannot be null!");
       return !addresses.contains(address);
    }
-   
+
    private boolean isFirstOwner(List<Address> addresses) {
+      if (address == null) throw new NullPointerException("Local address cannot be null!");
       return addresses.get(0).equals(address);
    }
 }
