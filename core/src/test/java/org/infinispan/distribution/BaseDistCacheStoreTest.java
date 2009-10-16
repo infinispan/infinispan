@@ -35,7 +35,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
  */
 public abstract class BaseDistCacheStoreTest extends BaseDistFunctionalTest {
    boolean shared;
-   int id;
+   static int id;
 
    @Override
    protected CacheManager addClusterEnabledCacheManager() {
