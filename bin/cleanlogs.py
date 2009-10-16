@@ -38,7 +38,9 @@ def help():
 def usage():
   print '''
     Usage: 
-    $ bin/cleanlogs.py <N> <input_file> <output_file>
+      $ bin/cleanlogs.py <N> <input_file> <output_file>
+    OR:
+      $ bin/cleanlogs.py <input_file> <output_file> to allow the script to guess which view is most appropriate.
 
     N: (number) the JGroups VIEW ID to use as the definite list of caches.  Choose a view which has the most complete cache list.
     input_file: path to log file to transform
@@ -47,17 +49,51 @@ def usage():
     ** All arguments are mandatory!
   '''
 
+def guess_view(fn):
+  all_views_re = re.compile('.*Received new cluster view.*\|([0-9]+). \[(.*)\].*')
+  views = {}
+  with open(fn) as f:
+    for l in f:
+      m = all_views_re.match(l)
+      if m:
+        view_num = m.group(1)
+        members = m.group(2)
+        views[view_num] = as_list(members)
+  return views
+
+def most_likely_view(views):
+  largest_view = -1
+  lvid = -1
+  for i in views.items():
+    if largest_view < len(i[1]):
+      largest_view = len(i[1])
+      lvid = i[0]
+  return lvid
+
+def as_list(string_members):
+  ml = []
+  for m in string_members.split(","):
+    ml.append(m.strip())
+  return ml
+    
 def main():
   help()
 
   ### Get args
-  if len(sys.argv) != 4:
+  if len(sys.argv) != 4 and len(sys.argv) != 3:
     usage()
     sys.exit(1)
 
-  VIEW_TO_USE = int(sys.argv[1])
-  INPUT_FILE = sys.argv[2]
-  OUTPUT_FILE = sys.argv[3]
+  if len(sys.argv) == 4:
+    VIEW_TO_USE = int(sys.argv[1])
+    INPUT_FILE = sys.argv[2]
+    OUTPUT_FILE = sys.argv[3]
+  else:
+    INPUT_FILE = sys.argv[1]
+    OUTPUT_FILE = sys.argv[2]
+    views = guess_view(INPUT_FILE)
+    VIEW_TO_USE = most_likely_view(views)
+    print "Guessing you want view id %s" % VIEW_TO_USE
 
   expr = re.compile('.*Received new cluster view.*\|%s. \[(.*)\].*' % VIEW_TO_USE)
   find(INPUT_FILE, expr)
