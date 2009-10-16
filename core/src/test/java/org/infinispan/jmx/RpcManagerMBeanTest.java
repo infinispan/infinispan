@@ -50,8 +50,8 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
       registerCacheManager(cacheManager1, cacheManager2);
 
       Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
-      config.setExposeJmxStatistics(true);      
-      defineConfigurationOnAllManagers(cachename, config);           
+      config.setExposeJmxStatistics(true);
+      defineConfigurationOnAllManagers(cachename, config);
    }
 
    public void testEnableJmxStats() throws Exception {
@@ -65,16 +65,10 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
 
       Object statsEnabled = mBeanServer.getAttribute(rpcManager1, "StatisticsEnabled");
       assert statsEnabled != null;
-      assert statsEnabled.equals(Boolean.FALSE);
+      assert statsEnabled.equals(Boolean.TRUE);
 
-      cache1.put("key", "value");
-      assert cache2.get("key").equals("value");
-      assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals("N/A");
-      assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals("N/A");
-
-      mBeanServer.setAttribute(rpcManager1, new Attribute("StatisticsEnabled", Boolean.TRUE));
       assert mBeanServer.getAttribute(rpcManager1, "StatisticsEnabled").equals(Boolean.TRUE);
-      assert mBeanServer.getAttribute(rpcManager2, "StatisticsEnabled").equals(Boolean.FALSE);
+      assert mBeanServer.getAttribute(rpcManager2, "StatisticsEnabled").equals(Boolean.TRUE);
 
       cache1.put("key", "value2");
       assert cache2.get("key").equals("value2");
@@ -82,10 +76,20 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
       assert mBeanServer.getAttribute(rpcManager1, "ReplicationFailures").equals("0");
       mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals("N/A");
 
-      //now resume statistics
+      // now resume statistics
       mBeanServer.invoke(rpcManager1, "resetStatistics", new Object[0], new String[0]);
       assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals("0");
       assert mBeanServer.getAttribute(rpcManager1, "ReplicationFailures").equals("0");
+
+      mBeanServer.setAttribute(rpcManager1, new Attribute("StatisticsEnabled", Boolean.FALSE));
+
+      cache1.put("key", "value");
+      assert cache2.get("key").equals("value");
+      assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals("N/A");
+      assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals("N/A");
+
+      // reset stats enabled parameter
+      mBeanServer.setAttribute(rpcManager1, new Attribute("StatisticsEnabled", Boolean.TRUE));
    }
 
 
@@ -123,7 +127,7 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
          cache1.put("a5", "b5");
          assert false : "rpc manager should had thrown an expception";
       } catch (Throwable e) {
-         e.printStackTrace();
+         log.debug("Expected exception", e);
          //expected
          assertEquals(mBeanServer.getAttribute(rpcManager1, "SuccessRatio"), ("80%"));
       }
@@ -138,13 +142,13 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
       ObjectName rpcManager1 = new ObjectName("RpcManagerMBeanTest:cache-name=" + cachename + "(repl_sync),jmx-resource=RpcManager");
       ObjectName rpcManager2 = new ObjectName("RpcManagerMBeanTest2:cache-name=" + cachename + "(repl_sync),jmx-resource=RpcManager");
       String cm1Address = manager(0).getAddress().toString();
-      String cm2Address = "N/A";
+      String cm2Address = manager(1).getAddress().toString();
       assert mBeanServer.getAttribute(rpcManager1, "Address").equals(cm1Address);
       assert mBeanServer.getAttribute(rpcManager2, "Address").equals(cm2Address);
 
       String cm1Members = mBeanServer.getAttribute(rpcManager1, "Members").toString();
       assert cm1Members.contains(cm1Address);
-      assert cm1Members.contains(manager(1).getAddress().toString());
-      assert mBeanServer.getAttribute(rpcManager2, "Members").equals("N/A");
+      assert cm1Members.contains(cm2Address);
+      assert !mBeanServer.getAttribute(rpcManager2, "Members").equals("N/A");
    }
 }

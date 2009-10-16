@@ -70,6 +70,7 @@ public class RpcManagerImpl implements RpcManager {
    @Start(priority = 9)
    private void start() {
       stateTransferEnabled = configuration.isStateTransferEnabled();
+      statisticsEnabled = configuration.isExposeJmxStatistics();
    }
 
    private boolean useReplicationQueue(boolean sync) {
