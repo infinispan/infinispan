@@ -483,6 +483,12 @@ public class DefaultCacheManager implements CacheManager {
       return Version.printVersion();
    }
 
+   @ManagedAttribute(description = "Cache manager name")
+   public String getName() {
+      String address = getAddress() == null ? "local" : getAddress().toString();
+      return globalConfiguration.getJmxDomain() + '@' + address;
+   }
+
    @Override
    public String toString() {
       return super.toString() + "@Address:" + getAddress();
