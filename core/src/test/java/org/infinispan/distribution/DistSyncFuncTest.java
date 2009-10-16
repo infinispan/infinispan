@@ -5,12 +5,16 @@ import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.ObjectDuplicator;
 import org.testng.annotations.Test;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 @Test(groups = "functional", testName = "distribution.DistSyncFuncTest")
@@ -20,6 +24,39 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest {
       sync = true;
       tx = false;
       testRetVals = true;
+   }
+
+   public void testLocationConsensus() {
+      String[] keys = new String[100];
+      Random r = new Random();
+      for (int i = 0; i < 100; i++) keys[i] = Integer.toHexString(r.nextInt());
+
+      // always expect key to be mapped to adjacent nodes!
+      for (String key : keys) {
+
+         List<Address> owners = new ArrayList<Address>();
+         for (Cache<Object, String> c : caches) {
+            boolean isOwner = isOwner(c, key);
+            if (isOwner) owners.add(addressOf(c));
+            boolean secondCheck = getDefaultConsistentHash(c).locate(key, 2).contains(addressOf(c));
+            assert isOwner == secondCheck : "Second check failed for key " + key + " on cache " + addressOf(c) + " isO = " + isOwner + " sC = " + secondCheck;
+         }
+         // check consensus
+         assertOwnershipConsensus(key);
+         assert owners.size() == 2 : "Expected 2 owners for key " + key + " but was " + owners;
+      }
+   }
+
+   private void assertOwnershipConsensus(String key) {
+      List l1 = getDefaultConsistentHash(c1).locate(key, 2);
+      List l2 = getDefaultConsistentHash(c2).locate(key, 2);
+      List l3 = getDefaultConsistentHash(c3).locate(key, 2);
+      List l4 = getDefaultConsistentHash(c4).locate(key, 2);
+
+      assert l1.equals(l2) : "L1 "+l1+" and L2 "+l2+" don't agree.";
+      assert l2.equals(l3): "L2 "+l2+" and L3 "+l3+" don't agree.";
+      assert l3.equals(l4): "L3 "+l3+" and L4 "+l4+" don't agree.";
+
    }
 
    public void testBasicDistribution() {

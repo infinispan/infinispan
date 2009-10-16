@@ -40,6 +40,7 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
       }
 
       addresses.clear();
+      // reorder addresses as per the positions.
       for (Address a : positions.values()) addresses.add(a);
    }
 

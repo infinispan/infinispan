@@ -97,7 +97,8 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       DefaultConsistentHash ch = getDefaultConsistentHash(seed, SECONDS.toMillis(480));
       List<Cache<Object, String>> reordered = new ArrayList<Cache<Object, String>>();
 
-      for (Address a : ch.positions.values()) {
+      
+      for (Address a : ch.getCaches()) {
          for (Cache<Object, String> c : caches) {
             if (a.equals(c.getCacheManager().getAddress())) {
                reordered.add(c);
@@ -322,7 +323,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
          Random r = new Random();
          for (; ;) {
             // create a dummy object with this hashcode
-            final int hc = r.nextInt(DefaultConsistentHash.HASH_SPACE);
+            final int hc = r.nextInt();
             Object dummy = new Object() {
                @Override
                public int hashCode() {

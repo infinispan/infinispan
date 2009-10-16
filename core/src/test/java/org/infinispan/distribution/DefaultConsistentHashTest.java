@@ -11,8 +11,9 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
-@Test(groups = "unit", testName = "distribution.DefaultConsistentHashTest", enabled = false)
+@Test(groups = "unit", testName = "distribution.DefaultConsistentHashTest", enabled = true)
 public class DefaultConsistentHashTest extends AbstractInfinispanTest {
 
    List<Address> servers;
@@ -77,13 +78,20 @@ public class DefaultConsistentHashTest extends AbstractInfinispanTest {
    }
 
    public void testDistances() {
-      Address a1 = new TestAddress(1);
-      Address a2 = new TestAddress(2);
-      Address a3 = new TestAddress(3);
-      Address a4 = new TestAddress(4);
+      Address a1 = new TestAddress(1000);
+      Address a2 = new TestAddress(2000);
+      Address a3 = new TestAddress(3000);
+      Address a4 = new TestAddress(4000);
 
       ConsistentHash ch = new DefaultConsistentHash();
       ch.setCaches(Arrays.asList(a1, a2, a3, a4));
+
+      // the CH may reorder the addresses.  Get the new order.
+      List<Address> adds = ch.getCaches();
+      a1 = adds.get(0);
+      a2 = adds.get(1);
+      a3 = adds.get(2);
+      a4 = adds.get(3);
 
       assert ch.getDistance(a1, a1) == 0;
       assert ch.getDistance(a1, a4) == 3;
@@ -95,6 +103,26 @@ public class DefaultConsistentHashTest extends AbstractInfinispanTest {
       assert ch.isAdjacent(a1, a2);
       assert !ch.isAdjacent(a1, a3);
       assert ch.isAdjacent(a1, a4);
+   }
+
+   public void testNumHashedNodes() {
+      Address a1 = new TestAddress(1000);
+      Address a2 = new TestAddress(2000);
+      Address a3 = new TestAddress(3000);
+      Address a4 = new TestAddress(4000);
+
+      ConsistentHash ch = new DefaultConsistentHash();
+      ch.setCaches(Arrays.asList(a1, a2, a3, a4));
+
+      String[] keys = new String[10000];
+      Random r = new Random();
+      for (int i=0; i<10000; i++) keys[i] = Integer.toHexString(r.nextInt());
+
+      for (String key: keys) {
+         List<Address> l = ch.locate(key, 2);
+         assert l.size() == 2: "Did NOT find 2 owners for key ["+key+"] as expected!  Found " + l;
+         assert ch.isAdjacent(l.get(0), l.get(1)) : "Nodes " + l + " should be adjacent!";
+      }
    }
 }
 
@@ -128,6 +156,11 @@ class TestAddress implements Address {
    @Override
    public int hashCode() {
       return addressNum;
+   }
+
+   @Override
+   public String toString() {
+      return "TestAddress#"+addressNum;
    }
 
    public int compareTo(Object o) {
