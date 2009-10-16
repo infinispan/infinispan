@@ -51,7 +51,7 @@ import java.lang.annotation.Target;
  * addition, any locks acquired for the operation being performed will still be held for the callback.  This needs to be
  * kept in mind as locks may be held longer than necessary or intended to and may cause deadlocking in certain
  * situations.  See above paragraph on long-running tasks that should be run in a separate thread. </p> <b>Note</b>:
- * Since 3.0, a new parameter, <tt>sync</tt>, has been introduced on this annotation.  This defaults to <tt>true</tt>
+ * The <tt>sync</tt> parameter on this annotation defaults to <tt>true</tt>
  * which provides the above semantics.  Alternatively, if you set <tt>sync</tt> to <tt>false</tt>, then invocations are
  * made in a <i>separate</i> thread, which will not cause any blocking on the caller or network thread.  The separate
  * thread is taken from a pool, which can be configured using {@link org.infinispan.config.GlobalConfiguration#setAsyncListenerExecutorProperties(java.util.Properties)}
