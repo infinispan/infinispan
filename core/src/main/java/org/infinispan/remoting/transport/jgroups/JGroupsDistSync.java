@@ -32,45 +32,25 @@ public class JGroupsDistSync implements DistributedSync {
    public static final boolean trace = log.isTraceEnabled();
 
 
-   public void blockUntilNoJoinsInProgress() {
-      while (Thread.currentThread().isInterrupted()) {
-         try {
-            joinInProgress.await();
-            return;
-         } catch (InterruptedException ie) {
-            if (trace)
-               log.trace("Interrupted while waiting for the joinInProgress gate");
-            Thread.currentThread().interrupt();
-         }
-      }
+   public void blockUntilNoJoinsInProgress() throws InterruptedException {
+      joinInProgress.await();
    }
 
-   public SyncResponse blockUntilAcquired(long timeout, TimeUnit timeUnit) throws TimeoutException {
+   public SyncResponse blockUntilAcquired(long timeout, TimeUnit timeUnit) throws TimeoutException, InterruptedException {
       int initState = flushWaitGateCount.get();
-      while (true) {
-         try {
-            if (!flushWaitGate.await(timeout, timeUnit))
-               throw new TimeoutException("Timed out waiting for a cluster-wide sync to be acquired. (timeout = " + Util.prettyPrintTime(timeout) + ")");
+      if (!flushWaitGate.await(timeout, timeUnit))
+         throw new TimeoutException("Timed out waiting for a cluster-wide sync to be acquired. (timeout = " + Util.prettyPrintTime(timeout) + ")");
 
-            return initState == flushWaitGateCount.get() ? SyncResponse.STATE_PREEXISTED : SyncResponse.STATE_ACHIEVED;
-         } catch (InterruptedException ie) {
-            Thread.currentThread().interrupt();
-         }
-      }
+      return initState == flushWaitGateCount.get() ? SyncResponse.STATE_PREEXISTED : SyncResponse.STATE_ACHIEVED;
+
    }
 
-   public SyncResponse blockUntilReleased(long timeout, TimeUnit timeUnit) throws TimeoutException {
+   public SyncResponse blockUntilReleased(long timeout, TimeUnit timeUnit) throws TimeoutException, InterruptedException {
       int initState = flushBlockGateCount.get();
-      while (true) {
-         try {
-            if (!flushBlockGate.await(timeout, timeUnit))
-               throw new TimeoutException("Timed out waiting for a cluster-wide sync to be released. (timeout = " + Util.prettyPrintTime(timeout) + ")");
+      if (!flushBlockGate.await(timeout, timeUnit))
+         throw new TimeoutException("Timed out waiting for a cluster-wide sync to be released. (timeout = " + Util.prettyPrintTime(timeout) + ")");
 
-            return initState == flushWaitGateCount.get() ? SyncResponse.STATE_PREEXISTED : SyncResponse.STATE_ACHIEVED;
-         } catch (InterruptedException ie) {
-            Thread.currentThread().interrupt();
-         }
-      }
+      return initState == flushWaitGateCount.get() ? SyncResponse.STATE_PREEXISTED : SyncResponse.STATE_ACHIEVED;
    }
 
    public void acquireSync() {
@@ -85,17 +65,10 @@ public class JGroupsDistSync implements DistributedSync {
       flushBlockGate.open();
    }
 
-   public void acquireProcessingLock(boolean exclusive, long timeout, TimeUnit timeUnit) throws TimeoutException {
-      while (true) {
-         try {
-            Lock lock = exclusive ? processingLock.writeLock() : processingLock.readLock();
-            if (!lock.tryLock(timeout, timeUnit))
-               throw new TimeoutException("Could not obtain " + (exclusive ? "exclusive" : "shared") + " processing lock");
-            break;
-         } catch (InterruptedException ie) {
-            Thread.currentThread().interrupt();
-         }
-      }
+   public void acquireProcessingLock(boolean exclusive, long timeout, TimeUnit timeUnit) throws InterruptedException, TimeoutException {
+      Lock lock = exclusive ? processingLock.writeLock() : processingLock.readLock();
+      if (!lock.tryLock(timeout, timeUnit))
+         throw new TimeoutException("Could not obtain " + (exclusive ? "exclusive" : "shared") + " processing lock");
    }
 
    public void releaseProcessingLock() {
