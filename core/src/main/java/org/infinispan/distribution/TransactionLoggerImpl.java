@@ -77,11 +77,26 @@ public class TransactionLoggerImpl implements TransactionLogger {
          loggingLock.readLock().lock();
          try {
             if (enabled) {
-               if (trace) log.trace("Logging prepare for tx {0}", command.getGlobalTransaction());
-               uncommittedPrepares.put(command.getGlobalTransaction(), command);
+               if (command.isOnePhaseCommit()) {
+                  if (trace) log.trace("Logging 1PC prepare for tx {0}", command.getGlobalTransaction());
+                  logModificationsInTransaction(command);
+               } else {
+                  if (trace) log.trace("Logging 2PC prepare for tx {0}", command.getGlobalTransaction());
+                  uncommittedPrepares.put(command.getGlobalTransaction(), command);
+               }
             }
          } finally {
             loggingLock.readLock().unlock();
+         }
+      }
+   }
+
+   private void logModificationsInTransaction(PrepareCommand command) {
+      for (WriteCommand wc : command.getModifications()) {
+         try {
+            commandQueue.put(wc);
+         } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
          }
       }
    }
@@ -93,13 +108,7 @@ public class TransactionLoggerImpl implements TransactionLogger {
             if (enabled) {
                if (trace) log.trace("Logging commit for tx {0}", command.getGlobalTransaction());
                PrepareCommand pc = uncommittedPrepares.remove(command.getGlobalTransaction());
-               // TODO how can we handle this efficiently and safely?
-//               for (WriteCommand wc : pc.getModifications())
-//                  try {
-//                     commandQueue.put(wc);
-//                  } catch (InterruptedException e) {
-//                     Thread.currentThread().interrupt();
-//                  }
+               logModificationsInTransaction(pc);
             }
          } finally {
             loggingLock.readLock().unlock();
