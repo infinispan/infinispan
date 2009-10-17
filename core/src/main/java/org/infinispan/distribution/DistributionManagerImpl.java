@@ -366,6 +366,7 @@ public class DistributionManagerImpl implements DistributionManager {
       for (WriteCommand cmd : c) {
          InvocationContext ctx = icc.createInvocationContext();
          ctx.setFlags(Flag.SKIP_REMOTE_LOOKUP);
+         ctx.setFlags(Flag.CACHE_MODE_LOCAL);
          interceptorChain.invoke(ctx, cmd);
       }
    }
