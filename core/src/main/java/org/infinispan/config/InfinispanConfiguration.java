@@ -211,6 +211,8 @@ public class InfinispanConfiguration implements XmlConfigurationParser {
             ic.accept(cbv);
          }
          return ic;
+      } catch (NullPointerException npe) {
+         throw npe;
       } catch (Exception e) {
          IOException ioe = new IOException(e.getLocalizedMessage());
          ioe.initCause(e);
