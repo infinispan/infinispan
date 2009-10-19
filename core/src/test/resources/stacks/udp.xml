@@ -14,7 +14,7 @@
          max_bundle_size="64000"
          max_bundle_timeout="30"
          ip_ttl="${jgroups.udp.ip_ttl:0}"
-         enable_bundling="false"
+         enable_bundling="true"
          enable_diagnostics="false"
  
          thread_naming_pattern="pl"
@@ -28,7 +28,7 @@
          thread_pool.rejection_policy="Run"
 
          oob_thread_pool.enabled="true"
-         oob_thread_pool.min_threads="1"
+         oob_thread_pool.min_threads="2"
          oob_thread_pool.max_threads="8"
          oob_thread_pool.keep_alive_time="5000"
          oob_thread_pool.queue_enabled="false"

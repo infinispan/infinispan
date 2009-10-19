@@ -215,8 +215,10 @@ public class FileCacheStore extends BucketBasedCacheStore {
          location = "Infinispan-FileCacheStore"; // use relative path!
       location += File.separator + cache.getName();
       root = new File(location);
-      if (!root.mkdirs()) {
-         log.warn("Problems creting the directory: " + root);  
+      if(!root.exists()) {
+         if (!root.mkdirs()) {
+            log.warn("Problems creating the directory: " + root);  
+         }
       }
       if (!root.exists()) {
          throw new ConfigurationException("Directory " + root.getAbsolutePath() + " does not exist and cannot be created!");

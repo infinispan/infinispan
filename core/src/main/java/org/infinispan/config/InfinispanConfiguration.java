@@ -24,8 +24,6 @@ package org.infinispan.config;
 import org.infinispan.Version;
 import org.infinispan.config.parsing.XmlConfigurationParser;
 import org.infinispan.util.FileLookup;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
@@ -41,7 +39,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -67,8 +65,6 @@ import java.util.Map;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class InfinispanConfiguration implements XmlConfigurationParser {
 
-   private static Log log = LogFactory.getLog(InfinispanConfiguration.class);
-
    public static final String VALIDATING_SYSTEM_PROPERTY = "infinispan.config.validate";
 
    public static final String SCHEMA_SYSTEM_PROPERTY = "infinispan.config.schema";
@@ -80,13 +76,13 @@ public class InfinispanConfiguration implements XmlConfigurationParser {
    private static final String DEFAULT_SCHEMA_URL = "http://www.jboss.org/infinispan/infinispan-config-" + Version.getMajorVersion() + ".xsd";
 
    @XmlElement
-   private GlobalConfiguration global;
+   private final GlobalConfiguration global = new GlobalConfiguration();
 
    @XmlElement(name = "default")
-   private Configuration defaultConfiguration;
+   private final Configuration defaultConfiguration = new Configuration();
 
    @XmlElement(name = "namedCache")
-   private List<Configuration> namedCaches;
+   private final List<Configuration> namedCaches = new ArrayList<Configuration>();
 
    /**
     * Factory method to create an instance of Infinispan configuration. If users want to verify configuration file
@@ -207,7 +203,6 @@ public class InfinispanConfiguration implements XmlConfigurationParser {
          InfinispanConfiguration ic = (InfinispanConfiguration) u.unmarshal(config);     
          // legacy, don't ask
          GlobalConfiguration gconf = ic.parseGlobalConfiguration();
-         if (gconf == null) throw new ConfigurationException("Unable to parse configuration file.  Possibly an old or invalid configuration file?");
          gconf.setDefaultConfiguration(ic.parseDefaultConfiguration());
          if (cbv != null) {
             ic.accept(cbv);
@@ -272,12 +267,10 @@ public class InfinispanConfiguration implements XmlConfigurationParser {
    
    public void accept(ConfigurationBeanVisitor v) {
       global.accept(v);
-      defaultConfiguration.accept(v);
-      if (namedCaches != null) {
-         for (Configuration c : namedCaches) {
-            c.accept(v);
-         }
-      }      
+      defaultConfiguration.accept(v);      
+      for (Configuration c : namedCaches) {
+         c.accept(v);
+      }            
       v.visitInfinispanConfiguration(this);
    }
 
@@ -300,8 +293,7 @@ public class InfinispanConfiguration implements XmlConfigurationParser {
       return global;
    }
 
-   public Map<String, Configuration> parseNamedConfigurations() throws ConfigurationException {
-      if (namedCaches == null) return Collections.emptyMap();
+   public Map<String, Configuration> parseNamedConfigurations() throws ConfigurationException {      
       Map<String, Configuration> map = new HashMap<String, Configuration>(7);
       for (Configuration conf : namedCaches) {
          map.put(conf.getName(), conf);
