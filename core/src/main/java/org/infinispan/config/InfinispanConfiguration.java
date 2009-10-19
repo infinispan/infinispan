@@ -203,14 +203,18 @@ public class InfinispanConfiguration implements XmlConfigurationParser {
                }
             });
          }
-         
+
          InfinispanConfiguration ic = (InfinispanConfiguration) u.unmarshal(config);     
          // legacy, don't ask
-         ic.parseGlobalConfiguration().setDefaultConfiguration(ic.parseDefaultConfiguration());
+         GlobalConfiguration gconf = ic.parseGlobalConfiguration();
+         if (gconf == null) throw new ConfigurationException("Unable to parse configuration file.  Possibly an old or invalid configuration file?");
+         gconf.setDefaultConfiguration(ic.parseDefaultConfiguration());
          if (cbv != null) {
             ic.accept(cbv);
          }
          return ic;
+      } catch (ConfigurationException cex) {
+         throw cex;
       } catch (NullPointerException npe) {
          throw npe;
       } catch (Exception e) {
