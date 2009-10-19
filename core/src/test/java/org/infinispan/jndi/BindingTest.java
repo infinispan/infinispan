@@ -52,9 +52,8 @@ public class BindingTest extends SingleCacheManagerTest {
    private SingletonNamingServer namingServer;
    private Properties props;
 
-   @Override
    @BeforeClass
-   public void preCreate() throws Exception {
+   public void startJndiServer() throws Exception {
       // Create an in-memory jndi
       namingServer = new SingletonNamingServer();
       namingMain = new Main();
@@ -67,7 +66,7 @@ public class BindingTest extends SingleCacheManagerTest {
    }
 
    @AfterClass
-   public void stopNaming() throws Exception {
+   public void stopJndiServer() throws Exception {
       namingServer.destroy();
       namingMain.stop();
    }

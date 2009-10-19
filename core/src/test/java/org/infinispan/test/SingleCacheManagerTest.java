@@ -22,21 +22,7 @@ public abstract class SingleCacheManagerTest extends AbstractCacheTest {
    protected CacheManager cacheManager;
    protected Cache cache;
 
-   /**
-    * This method will always be called before {@link #createBeforeClass()}.  If you override this, make sure you
-    * annotate the overridden method with {@link org.testng.annotations.BeforeClass}.
-    *
-    * @throws Exception Just in case
-    */
-   @BeforeClass
-   public void preCreate() throws Exception {
-      // no op, made for overriding.
-   }
-
-   // Due to some weirdness with TestNG, it always appends the package and class name to the method names
-   // provided on dependsOnMethods unless it thinks there already is a package.  This does accept regular expressions
-   // though so .*. works.  Otherwise it won't detect overridden methods in subclasses.
-   @BeforeClass(dependsOnMethods = "org.infinispan.*.preCreate")
+   @BeforeClass()
    protected void createBeforeClass() throws Exception {
       if (cleanup == CleanupPhase.AFTER_TEST) cacheManager = createCacheManager();
    }
