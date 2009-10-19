@@ -66,9 +66,8 @@ public class BindingTest extends SingleCacheManagerTest {
       props.put("java.naming.factory.url.pkgs", "org.jboss.naming:org.jnp.interfaces");
    }
 
-   @Override
    @AfterClass
-   public void preDestroy() throws Exception {
+   public void stopNaming() throws Exception {
       namingServer.destroy();
       namingMain.stop();
    }

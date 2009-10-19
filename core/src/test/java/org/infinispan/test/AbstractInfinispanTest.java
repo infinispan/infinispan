@@ -35,7 +35,7 @@ import org.testng.annotations.AfterClass;
 public class AbstractInfinispanTest {
    
    @AfterClass(alwaysRun=true)
-   protected void zzzNullifyInstanceFields() {
+   protected void nullifyInstanceFields() {
       for(Class<?> current = this.getClass();current.getSuperclass() != null; current = current.getSuperclass()) {
          Field[] fields = current.getDeclaredFields();
          for(Field f:fields) {
