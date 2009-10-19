@@ -20,6 +20,7 @@
       <version.jboss.marshalling>1.2.0.CR4</version.jboss.marshalling>
       <version.jgroups>2.8.0.CR2</version.jgroups>
       <version.jta>1.0.1.GA</version.jta>
+      <version.org.jboss.naming>5.0.3.GA</version.org.jboss.naming>
    </properties>
 
    <dependencies>
@@ -56,6 +57,21 @@
          <artifactId>marshalling-api</artifactId>
          <version>${version.jboss.marshalling}</version>
       </dependency>
+
+      <dependency>
+         <groupId>org.jboss.naming</groupId>
+         <artifactId>jnp-client</artifactId>
+         <scope>test</scope>
+         <version>${version.org.jboss.naming}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.jboss.naming</groupId>
+         <artifactId>jnpserver</artifactId>
+         <scope>test</scope>
+         <version>${version.org.jboss.naming}</version>
+      </dependency>
+
    </dependencies>
    <build>
       <plugins>

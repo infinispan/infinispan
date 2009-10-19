@@ -46,8 +46,19 @@ public abstract class SingleCacheManagerTest extends AbstractCacheTest {
       if (cleanup == CleanupPhase.AFTER_METHOD) cacheManager = createCacheManager();
    }
 
-   @AfterClass(alwaysRun=true)
-   protected void destroyAfterClass() {      
+   /**
+    * This method will always be called before {@link #destroyAfterClass()}.  If you override this, make sure you
+    * annotate the overridden method with {@link org.testng.annotations.AfterClass}.
+    *
+    * @throws Exception Just in case
+    */
+   @AfterClass
+   public void preDestroy() throws Exception {
+      // no op, made for overriding.
+   }
+   
+   @AfterClass(alwaysRun=true, dependsOnMethods = "org.infinispan.*.preDestroy")
+   protected void destroyAfterClass() {
       if (cleanup == CleanupPhase.AFTER_TEST) TestingUtil.killCacheManagers(cacheManager);
    }
 
