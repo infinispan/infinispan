@@ -24,6 +24,7 @@ package org.infinispan.config;
 import org.infinispan.Version;
 import org.infinispan.config.parsing.XmlConfigurationParser;
 import org.infinispan.util.FileLookup;
+import org.jboss.util.StringPropertyReplacer;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
@@ -35,9 +36,13 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.SchemaFactory;
+
+import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -66,6 +71,8 @@ import java.util.Map;
 public class InfinispanConfiguration implements XmlConfigurationParser {
 
    public static final String VALIDATING_SYSTEM_PROPERTY = "infinispan.config.validate";
+   
+   public static final String SKIP_TOKEN_REPLACEMENT = "infinispan.config.skipTokenReplacement";
 
    public static final String SCHEMA_SYSTEM_PROPERTY = "infinispan.config.schema";
 
@@ -199,8 +206,15 @@ public class InfinispanConfiguration implements XmlConfigurationParser {
                }
             });
          }
-
-         InfinispanConfiguration ic = (InfinispanConfiguration) u.unmarshal(config);     
+         
+         StreamSource source = null;
+         if (skipTokenReplacement()) {
+            source = new StreamSource(config);
+         } else {
+            source = replaceProperties(config);
+         }
+         InfinispanConfiguration ic = (InfinispanConfiguration) u.unmarshal(source);                    
+       
          // legacy, don't ask
          GlobalConfiguration gconf = ic.parseGlobalConfiguration();
          gconf.setDefaultConfiguration(ic.parseDefaultConfiguration());
@@ -219,9 +233,30 @@ public class InfinispanConfiguration implements XmlConfigurationParser {
       }
    }
 
+   private static StreamSource replaceProperties(InputStream config) throws Exception{
+      BufferedReader br = new BufferedReader ( new InputStreamReader(config));
+      StringBuilder w = new StringBuilder();
+      String line;
+      while ((line = br.readLine()) != null) {
+         int dollar = line.indexOf('$');
+         if(dollar >0 && line.indexOf('{',dollar) > 0 && line.indexOf('}',dollar)>0) {
+            String replacedLine = StringPropertyReplacer.replaceProperties(line);
+            w.append(replacedLine);
+         } else {
+            w.append(line);
+         }         
+      }
+      return new StreamSource(new StringReader(w.toString()));
+   }
+
    private static boolean skipSchemaValidation() {
       String s = System.getProperty(VALIDATING_SYSTEM_PROPERTY);
       return s != null && !Boolean.parseBoolean(s);
+   }
+   
+   private static boolean skipTokenReplacement() {
+      String s = System.getProperty(SKIP_TOKEN_REPLACEMENT, "false");
+      return s != null && Boolean.parseBoolean(s);
    }
 
    public static InputStream findSchemaInputStream() {

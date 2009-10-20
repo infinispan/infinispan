@@ -9,12 +9,16 @@
    <global>
 
       <asyncListenerExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
+      	<properties>
          <property name="maxThreads" value="${test.property.asyncListenerMaxThreads:5}"/>
          <property name="threadNamePrefix" value="AsyncListenerThread"/>
+         </properties>
       </asyncListenerExecutor>
 
       <transport transportClass="org.infinispan.remoting.transport.jgroups.JGroupsTransport">
+      <properties>
          <property name="configurationFile" value="${test.property.jgroupsConfigFile:udp.xml}"/>
+         </properties>
       </transport>
 
    </global>
@@ -24,7 +28,7 @@
    <!-- *************************** -->
    <default>
       <locking
-            isolationLevel="REPEATABLE_READ"
+            isolationLevel="${test.property.IsolationLevel:REPEATABLE_READ}"
             lockAcquisitionTimeout="${test.property.LockAcquisitionTimeout:15000}"
             writeSkewCheck="false"
             concurrencyLevel="500"/>

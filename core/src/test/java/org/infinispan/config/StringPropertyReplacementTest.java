@@ -38,8 +38,7 @@ public class StringPropertyReplacementTest extends SingleCacheManagerTest {
    public void testDefaultCache() {
       Configuration configuration = cacheManager.getCache().getConfiguration();
       assert configuration.getIsolationLevel().equals(IsolationLevel.READ_COMMITTED);
-      assert configuration.isWriteSkewCheck();
-      assert configuration.getConcurrencyLevel() == 499;
+      assert !configuration.isWriteSkewCheck();      
       assert configuration.isSyncCommitPhase();
    }
 }
