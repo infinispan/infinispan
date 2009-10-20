@@ -50,7 +50,7 @@ public class EHCache2InfinispanTransformerTest extends AbstractInfinispanTest {
          convertor.parse(fileName, baos, XSLT_FILE);
 
 
-         File out = new File("zzzz3.xml");
+         File out = new File("target/zzzz3.xml");
          if (out.exists()) out.delete();
          out.createNewFile();
          FileOutputStream fos = new FileOutputStream(out);

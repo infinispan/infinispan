@@ -42,7 +42,7 @@ public class Coherence2InfinispanTransformerTest extends AbstractInfinispanTest 
          convertor.parse(fileName, baos, XSLT_FILE);
 
 
-         File out = new File("zzzz2.xml");
+         File out = new File("target/zzzz2.xml");
          if (out.exists()) out.delete();
          out.createNewFile();
          FileOutputStream fos = new FileOutputStream(out);
