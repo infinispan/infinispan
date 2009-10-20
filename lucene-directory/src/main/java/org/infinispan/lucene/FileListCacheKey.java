@@ -21,15 +21,69 @@
  */
 package org.infinispan.lucene;
 
+import java.io.Serializable;
+
 /**
  * Cache key for a list with current files in cache
  * 
+ * @since 4.0
  * @author Lukasz Moren
+ * @author Sanne Grinovero
  */
-public class FileListCacheKey extends CacheKey {
+final class FileListCacheKey implements Serializable, CacheKey {
+
+   /** The serialVersionUID */
+   private static final long serialVersionUID = 8965108175527988255L;
+   
+   private final String indexName;
+   private final int hashCode;
 
    public FileListCacheKey(String indexName) {
-      super(indexName, "");
+      this.indexName = indexName;
+      this.hashCode = generatedHashCode();
    }
 
+   /**
+    * Get the indexName.
+    * 
+    * @return the indexName.
+    */
+   public String getIndexName() {
+      return indexName;
+   }
+   
+   @Override
+   public int hashCode() {
+      return hashCode;
+   }
+
+   private int generatedHashCode() {
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + ((indexName == null) ? 0 : indexName.hashCode());
+      return result;
+   }
+
+   @Override
+   public boolean equals(Object obj) {
+      if (this == obj)
+         return true;
+      if (obj == null)
+         return false;
+      if (FileListCacheKey.class != obj.getClass())
+         return false;
+      FileListCacheKey other = (FileListCacheKey) obj;
+      if (indexName == null) {
+         if (other.indexName != null)
+            return false;
+      } else if (!indexName.equals(other.indexName))
+         return false;
+      return true;
+   }
+   
+   @Override
+   public String toString() {
+      return "FileListCacheKey{indexName='" + indexName + '}';
+   }
+   
 }

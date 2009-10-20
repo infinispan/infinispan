@@ -25,13 +25,17 @@ import java.io.Serializable;
 
 /**
  * Header for Lucene files. Store only basic info about file. File data is divided into byte[]
- * chunks and stored under {@link org.hibernate.search.store.infinispan.ChunkCacheKey}
+ * chunks and stored under {@link org.infinispan.lucene.ChunkCacheKey}
  * 
+ * @since 4.0
  * @author Lukasz Moren
- * @see org.hibernate.search.store.infinispan.FileCacheKey
+ * @see org.infinispan.lucene.FileCacheKey
  */
 public class FileMetadata implements Serializable {
 
+   /** The serialVersionUID */
+   private static final long serialVersionUID = -2605615719808221213L;
+   
    private long lastModified;
    private long size = 0;
 
@@ -39,7 +43,7 @@ public class FileMetadata implements Serializable {
       touch();
    }
 
-   private void touch() {
+   public void touch() {
       setLastModified(System.currentTimeMillis());
    }
 
@@ -67,11 +71,8 @@ public class FileMetadata implements Serializable {
       if (o == null || getClass() != o.getClass()) {
          return false;
       }
-
       FileMetadata metadata = (FileMetadata) o;
-
       return lastModified == metadata.lastModified && size == metadata.size;
-
    }
 
    @Override

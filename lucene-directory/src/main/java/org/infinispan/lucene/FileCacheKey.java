@@ -26,61 +26,99 @@ import java.io.Serializable;
 /**
  * Used as a key for file headers in a cache
  * 
+ * @since 4.0
  * @author Lukasz Moren
+ * @author Sanne Grinovero
  */
-public class FileCacheKey extends CacheKey implements Serializable {
+final class FileCacheKey implements Serializable, CacheKey {
 
-   protected final boolean isLockKey;
+   /** The serialVersionUID */
+   private static final long serialVersionUID = -228474937509042691L;
+   
+   private final boolean isLockKey;
+   private final String indexName;
+   private final String fileName;
+   private final int hashCode;
 
    public FileCacheKey(String indexName, String fileName) {
       this(indexName, fileName, false);
    }
 
    public FileCacheKey(String indexName, String fileName, boolean isLockKey) {
-      super(indexName, fileName);
+      this.indexName = indexName;
+      this.fileName = fileName;
       this.isLockKey = isLockKey;
+      this.hashCode = generatedHashCode();
+   }
+   
+   /**
+    * Get the isLockKey.
+    * 
+    * @return the isLockKey.
+    */
+   public boolean isLockKey() {
+      return isLockKey;
    }
 
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) {
-         return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-         return false;
-      }
-      if (!super.equals(o)) {
-         return false;
-      }
+   /**
+    * Get the indexName.
+    * 
+    * @return the indexName.
+    */
+   public String getIndexName() {
+      return indexName;
+   }
 
-      FileCacheKey that = (FileCacheKey) o;
-
-      if (fileName != null ? !fileName.equals(that.fileName) : that.fileName != null) {
-         return false;
-      }
-      if (indexName != null ? !indexName.equals(that.indexName) : that.indexName != null) {
-         return false;
-      }
-
-      if (isLockKey != that.isLockKey) {
-         return false;
-      }
-
-      return true;
+   /**
+    * Get the fileName.
+    * 
+    * @return the fileName.
+    */
+   public String getFileName() {
+      return fileName;
    }
 
    @Override
    public int hashCode() {
-      if (hashCode == 0) {
-         hashCode = super.hashCode();
-         hashCode = 31 * hashCode + (isLockKey ? 1 : 0);
-      }
       return hashCode;
+   }
+   
+   private int generatedHashCode() {
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + ((fileName == null) ? 0 : fileName.hashCode());
+      result = prime * result + ((indexName == null) ? 0 : indexName.hashCode());
+      result = prime * result + (isLockKey ? 1231 : 1237);
+      return result;
    }
 
    @Override
-   public String toString() {
-      return "CacheKey{" + "fileName='" + getFileName() + '\'' + "indexName='" + getIndexName() + '\'' + "isLockKey='"
-               + isLockKey + '\'' + '}';
+   public boolean equals(Object obj) {
+      if (this == obj)
+         return true;
+      if (obj == null)
+         return false;
+      if (FileCacheKey.class != obj.getClass())
+         return false;
+      FileCacheKey other = (FileCacheKey) obj;
+      if (fileName == null) {
+         if (other.fileName != null)
+            return false;
+      } else if (!fileName.equals(other.fileName))
+         return false;
+      if (indexName == null) {
+         if (other.indexName != null)
+            return false;
+      } else if (!indexName.equals(other.indexName))
+         return false;
+      if (isLockKey != other.isLockKey)
+         return false;
+      return true;
    }
+   
+   @Override
+   public String toString() {
+      return "FileCacheKey{fileName='" + fileName + "', indexName='" + indexName + "', isLockKey=" + isLockKey + '}';
+   }
+
 }

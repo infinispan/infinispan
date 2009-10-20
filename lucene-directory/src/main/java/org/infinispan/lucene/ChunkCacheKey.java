@@ -26,60 +26,95 @@ import java.io.Serializable;
 /**
  * Used as a key to distinguish file chunk in cache.
  * 
+ * @since 4.0
  * @author Lukasz Moren
+ * @author Sanne Grinovero
  */
-public class ChunkCacheKey extends CacheKey implements Serializable {
+final class ChunkCacheKey implements Serializable, CacheKey {
 
-   protected final Integer chunkId;
+   /** The serialVersionUID */
+   private static final long serialVersionUID = 4429712073623290126L;
+   
+   private final int chunkId;
+   private final String indexName;
+   private final String fileName;
+   private final int hashCode;
 
-   public ChunkCacheKey(String indexName, String fileName, Integer chunkId) {
-      super(indexName, fileName);
+   public ChunkCacheKey(String indexName, String fileName, int chunkId) {
+      this.indexName = indexName;
+      this.fileName = fileName;
       this.chunkId = chunkId;
+      this.hashCode = generatedHashCode();
    }
 
-   public Integer getChunkId() {
-      return Integer.valueOf(chunkId);
+   /**
+    * Get the chunkId.
+    * 
+    * @return the chunkId.
+    */
+   public int getChunkId() {
+      return chunkId;
+   }
+
+   /**
+    * Get the indexName.
+    * 
+    * @return the indexName.
+    */
+   public String getIndexName() {
+      return indexName;
+   }
+
+   /**
+    * Get the fileName.
+    * 
+    * @return the fileName.
+    */
+   public String getFileName() {
+      return fileName;
+   }
+   
+   @Override
+   public int hashCode() {
+      return hashCode;
+   }
+
+   private int generatedHashCode() {
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + chunkId;
+      result = prime * result + ((fileName == null) ? 0 : fileName.hashCode());
+      result = prime * result + ((indexName == null) ? 0 : indexName.hashCode());
+      return result;
    }
 
    @Override
-   public boolean equals(Object o) {
-      if (this == o) {
+   public boolean equals(Object obj) {
+      if (this == obj)
          return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
+      if (obj == null)
          return false;
-      }
-      if (!super.equals(o)) {
+      if (ChunkCacheKey.class != obj.getClass())
          return false;
-      }
-
-      ChunkCacheKey that = (ChunkCacheKey) o;
-
-      if (fileName != null ? !fileName.equals(that.fileName) : that.fileName != null) {
+      ChunkCacheKey other = (ChunkCacheKey) obj;
+      if (chunkId != other.chunkId)
          return false;
-      }
-      if (indexName != null ? !indexName.equals(that.indexName) : that.indexName != null) {
+      if (fileName == null) {
+         if (other.fileName != null)
+            return false;
+      } else if (!fileName.equals(other.fileName))
          return false;
-      }
-
-      if (chunkId != null ? !chunkId.equals(that.chunkId) : that.chunkId != null) {
+      if (indexName == null) {
+         if (other.indexName != null)
+            return false;
+      } else if (!indexName.equals(other.indexName))
          return false;
-      }
-
       return true;
    }
 
    @Override
-   public int hashCode() {
-      if (hashCode == 0) {
-         hashCode = super.hashCode();
-         hashCode = 31 * hashCode + (chunkId != null ? chunkId.hashCode() : 0);
-      }
-      return hashCode;
-   }
-
-   @Override
    public String toString() {
-      return "ChunkCacheKey{" + "chunkId=" + chunkId + "} " + super.toString();
+      return "ChunkCacheKey{chunkId=" + chunkId + ", fileName=" + fileName + ", indexName=" + indexName + "} ";
    }
+   
 }

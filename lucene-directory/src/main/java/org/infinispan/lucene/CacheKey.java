@@ -21,70 +21,23 @@
  */
 package org.infinispan.lucene;
 
-import java.io.Serializable;
-
 /**
- * Abstract class used as a key for Infinispan cache to distinct its values. Connection of fields:
- * indexName and fileName is unique, even if we share one cache between all DirectoryProvider's
+ * Interface for objects used as a key for Infinispan cache.
+ * Anything we put in the index store has to be scoped to one index,
+ * we tell two indexes apart by giving them unique names, so the keys are
+ * scoped to these index names.
  * 
- * @author Lukasz Moren
+ * @author Sanne Grinovero
  * @since 4.0
- * @see org.hibernate.search.store.infinispan.InfinispanDirectory#cache
+ * @see org.infinispan.lucene.InfinispanDirectory#cache
  */
-public abstract class CacheKey implements Serializable {
+public interface CacheKey {
 
-   protected final String indexName;
-   protected final String fileName;
-
-   protected int hashCode;
-
-   protected CacheKey(String indexName, String fileName) {
-      this.indexName = indexName;
-      this.fileName = fileName;
-   }
-
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) {
-         return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-         return false;
-      }
-
-      CacheKey that = (CacheKey) o;
-
-      if (fileName != null ? !fileName.equals(that.fileName) : that.fileName != null) {
-         return false;
-      }
-      if (indexName != null ? !indexName.equals(that.indexName) : that.indexName != null) {
-         return false;
-      }
-
-      return true;
-   }
-
-   @Override
-   public int hashCode() {
-      if (hashCode == 0) {
-         hashCode = indexName != null ? indexName.hashCode() : 0;
-         hashCode = 31 * hashCode + (fileName != null ? fileName.hashCode() : 0);
-         hashCode = 31 * hashCode + (this.getClass().getName() != null ? this.getClass().getName().hashCode() : 0);
-      }
-      return hashCode;
-   }
-
-   @Override
-   public String toString() {
-      return "CacheKey{" + "fileName='" + fileName + '\'' + ", indexName='" + indexName + '\'' + '}';
-   }
-
-   public final String getIndexName() {
-      return indexName;
-   }
-
-   public final String getFileName() {
-      return fileName;
-   }
+   /**
+    * Get the name of the index to which this key is scoped to.
+    * 
+    * @return the indexName
+    */
+   public String getIndexName();
 
 }

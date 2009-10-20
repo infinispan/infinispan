@@ -33,6 +33,7 @@ import org.infinispan.notifications.cachelistener.event.Event;
 /**
  * Infinispan cache listener
  * 
+ * @since 4.0
  * @author Lukasz Moren
  */
 @Listener
@@ -58,7 +59,7 @@ public class InfinispanCacheEntryListener {
       if (ob instanceof FileCacheKey && event.isOriginLocal()) {
          FileCacheKey key = (FileCacheKey) ob;
 
-         if (key.getIndexName().equals(indexName) && !key.isLockKey) {
+         if (key.getIndexName().equals(indexName) && !key.isLockKey()) {
             FileListCacheKey fileListKey = new FileListCacheKey(key.getIndexName());
             Cache<CacheKey, Object> cache = event.getCache();
             Map<String, String> fileList = (Map<String, String>) cache.get(fileListKey);

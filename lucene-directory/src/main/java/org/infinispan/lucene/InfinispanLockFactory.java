@@ -36,9 +36,10 @@ import org.infinispan.util.logging.LogFactory;
 /**
  * Factory for locks obtained in <code>InfinispanDirectory</code>
  * 
+ * @since 4.0
  * @author Lukasz Moren
- * @see org.hibernate.search.store.infinispan.InfinispanDirectory
- * @see org.hibernate.search.store.infinispan.InfinispanLockFactory.InfinispanLock
+ * @see org.infinispan.lucene.InfinispanDirectory
+ * @see org.infinispan.lucene.InfinispanLockFactory.InfinispanLock
  */
 public class InfinispanLockFactory extends LockFactory {
 
@@ -60,7 +61,7 @@ public class InfinispanLockFactory extends LockFactory {
          return new InfinispanLock(cache, indexName, lockName);
       } finally {
          if (log.isTraceEnabled()) {
-            log.trace("Created new lock: {} for index {}", lockName, indexName);
+            log.trace("Created new lock: {0} for index {1}", lockName, indexName);
          }
       }
    }
@@ -73,7 +74,7 @@ public class InfinispanLockFactory extends LockFactory {
          cache.remove(new FileCacheKey(indexName, lockName, true));
       } finally {
          if (log.isTraceEnabled()) {
-            log.trace("Removed lock: {} for index {}", lockName, indexName);
+            log.trace("Removed lock: {0} for index {1}", lockName, indexName);
          }
       }
    }
@@ -129,7 +130,7 @@ public class InfinispanLockFactory extends LockFactory {
                      if (acquired) {
                         tm.commit();
                         if (log.isTraceEnabled()) {
-                           log.trace("Lock: {} acquired for index: {} ", new Object[] { lockName, indexName });
+                           log.trace("Lock: {0} acquired for index: {1} ", lockName, indexName);
                         }
                      } else {
                         tm.rollback();
@@ -148,7 +149,7 @@ public class InfinispanLockFactory extends LockFactory {
                   // begin new transaction to batch all changes, tx commited when lock is released.
                   tm.begin();
                   if (log.isTraceEnabled()) {
-                     log.trace("Batch transaction started for index: {}", indexName);
+                     log.trace("Batch transaction started for index: {0}", indexName);
                   }
                } catch (Exception e) {
                   log.error("Unable to start transaction", e);
@@ -169,7 +170,7 @@ public class InfinispanLockFactory extends LockFactory {
                // commit changes in batch, transaction was started when lock was acquired
                tm.commit();
                if (log.isTraceEnabled()) {
-                  log.trace("Batch transaction commited for index: {}", indexName);
+                  log.trace("Batch transaction commited for index: {0}", indexName);
                }
 
                tm.begin();
@@ -181,7 +182,7 @@ public class InfinispanLockFactory extends LockFactory {
                   if (removed) {
                      tm.commit();
                      if (log.isTraceEnabled()) {
-                        log.trace("Lock: {} removed for index: {} ", new Object[] { lockName, indexName });
+                        log.trace("Lock: {0} removed for index: {1} ", lockName, indexName);
                      }
                   } else {
                      tm.rollback();

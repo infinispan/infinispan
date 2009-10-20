@@ -37,14 +37,15 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * Implementation that uses Infinispan to store Lucene indices
- * <p/>
- * Directory locking is assured with
- * {@link org.hibernate.search.store.infinispan.InfinispanLockFactory.InfinispanLock}
+ * Implementation that uses Infinispan to store Lucene indices.
  * 
+ * Directory locking is assured with
+ * {@link org.infinispan.lucene.InfinispanLockFactory.InfinispanLock}
+ * 
+ * @since 4.0
  * @author Lukasz Moren
  * @author Sanne Grinovero
- * @see org.hibernate.search.store.infinispan.InfinispanLockFactory
+ * @see org.infinispan.lucene.InfinispanLockFactory
  */
 // todo add support for ConcurrentMergeSheduler
 public class InfinispanDirectory extends Directory {
@@ -132,7 +133,7 @@ public class InfinispanDirectory extends Directory {
       if (file == null) {
          throw new FileNotFoundException(name);
       }
-      file.setLastModified(System.currentTimeMillis());
+      file.touch();
    }
 
    /**
@@ -140,7 +141,7 @@ public class InfinispanDirectory extends Directory {
     */
    public void deleteFile(String name) throws IOException {
       checkIsOpen();
-      CacheKey key = new FileCacheKey(indexName, name);
+      FileCacheKey key = new FileCacheKey(indexName, name);
       // remove main file
       cache.remove(key);
       // and all of its chunks
@@ -152,7 +153,7 @@ public class InfinispanDirectory extends Directory {
          chunkKey = new ChunkCacheKey(indexName, name, ++i);
       } while (removed != null);
       if (log.isDebugEnabled()) {
-         log.debug("Removed file: {} from index: {}", new Object[] { key.getFileName(), indexName });
+         log.debug("Removed file: {0} from index: {1}", key.getFileName(), indexName);
       }
    }
 
@@ -178,7 +179,7 @@ public class InfinispanDirectory extends Directory {
          cache.put(chunkKey, ob);
       } while (true);
       if (log.isTraceEnabled()) {
-         log.trace("Renamed file from: {} to: {} in index {}", new Object[] { from, to, indexName });
+         log.trace("Renamed file from: {0} to: {1} in index {2}",from, to, indexName);
       }
    }
 
@@ -198,7 +199,7 @@ public class InfinispanDirectory extends Directory {
     * {@inheritDoc}
     */
    public synchronized IndexOutput createOutput(String name) throws IOException {
-      final CacheKey key = new FileCacheKey(indexName, name);
+      final FileCacheKey key = new FileCacheKey(indexName, name);
       if (!fileExists(name)) {
          cache.put(key, new FileMetadata());
       }

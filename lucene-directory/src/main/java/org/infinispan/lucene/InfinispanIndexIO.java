@@ -34,6 +34,7 @@ import org.infinispan.util.logging.LogFactory;
 /**
  * Deal with input-output operations on Infinispan based Directory
  * 
+ * @since 4.0
  * @author Lukasz Moren
  * @see org.apache.lucene.store.Directory
  * @see org.apache.lucene.store.IndexInput
@@ -45,7 +46,7 @@ public class InfinispanIndexIO {
    // each Lucene index is splitted into parts with default size defined here
    public final static int DEFAULT_BUFFER_SIZE = 16 * 1024;
 
-   private static byte[] getChunkFromPosition(Map<CacheKey, Object> cache, CacheKey fileKey, int pos, int bufferSize) {
+   private static byte[] getChunkFromPosition(Map<CacheKey, Object> cache, FileCacheKey fileKey, int pos, int bufferSize) {
       CacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), getChunkNumberFromPosition(pos,
                bufferSize));
       return (byte[]) cache.get(key);
@@ -71,16 +72,16 @@ public class InfinispanIndexIO {
       private Cache<CacheKey, Object> cache;
       private ConcurrentHashMap<CacheKey, Object> localCache = new ConcurrentHashMap<CacheKey, Object>();
       private FileMetadata file;
-      private CacheKey fileKey;
+      private FileCacheKey fileKey;
       private byte[] buffer;
       private int bufferPosition = 0;
       private int filePosition = 0;
 
-      public InfinispanIndexInput(Cache<CacheKey, Object> cache, CacheKey fileKey) throws IOException {
+      public InfinispanIndexInput(Cache<CacheKey, Object> cache, FileCacheKey fileKey) throws IOException {
          this(cache, fileKey, InfinispanIndexIO.DEFAULT_BUFFER_SIZE);
       }
 
-      public InfinispanIndexInput(Cache<CacheKey, Object> cache, CacheKey fileKey, int bufferSize) throws IOException {
+      public InfinispanIndexInput(Cache<CacheKey, Object> cache, FileCacheKey fileKey, int bufferSize) throws IOException {
          this.cache = cache;
          this.fileKey = fileKey;
          this.bufferSize = bufferSize;
@@ -104,11 +105,11 @@ public class InfinispanIndexIO {
          }
 
          if (log.isDebugEnabled()) {
-            log.debug("Opened new IndexInput for file:{} in index: {}", fileKey.getFileName(), fileKey.getIndexName());
+            log.debug("Opened new IndexInput for file:{0} in index: {1}", fileKey.getFileName(), fileKey.getIndexName());
          }
       }
 
-      private byte[] getChunkFromPosition(Cache<CacheKey, Object> cache, CacheKey fileKey, int pos, int bufferSize) {
+      private byte[] getChunkFromPosition(Cache<CacheKey, Object> cache, FileCacheKey fileKey, int pos, int bufferSize) {
          Object object = InfinispanIndexIO.getChunkFromPosition(cache, fileKey, pos, bufferSize);
          if (object == null) {
             object = InfinispanIndexIO.getChunkFromPosition(localCache, fileKey, pos, bufferSize);
@@ -175,7 +176,7 @@ public class InfinispanIndexIO {
          buffer = null;
          localCache = null;
          if (log.isDebugEnabled()) {
-            log.debug("Closed IndexInput for file:{} in index: {}", fileKey.getFileName(), fileKey.getIndexName());
+            log.debug("Closed IndexInput for file:{0} in index: {1}", fileKey.getFileName(), fileKey.getIndexName());
          }
       }
 
@@ -203,18 +204,18 @@ public class InfinispanIndexIO {
 
       private Cache<CacheKey, Object> cache;
       private FileMetadata file;
-      private CacheKey fileKey;
+      private FileCacheKey fileKey;
 
       private byte[] buffer;
       private int bufferPosition = 0;
       private int filePosition = 0;
       private int chunkNumber;
 
-      public InfinispanIndexOutput(Cache<CacheKey, Object> cache, CacheKey fileKey) throws IOException {
+      public InfinispanIndexOutput(Cache<CacheKey, Object> cache, FileCacheKey fileKey) throws IOException {
          this(cache, fileKey, InfinispanIndexIO.DEFAULT_BUFFER_SIZE);
       }
 
-      public InfinispanIndexOutput(Cache<CacheKey, Object> cache, CacheKey fileKey, int bufferSize) throws IOException {
+      public InfinispanIndexOutput(Cache<CacheKey, Object> cache, FileCacheKey fileKey, int bufferSize) throws IOException {
          this.cache = cache;
          this.fileKey = fileKey;
          this.bufferSize = bufferSize;
@@ -223,7 +224,7 @@ public class InfinispanIndexIO {
 
          this.file = (FileMetadata) cache.get(fileKey);
          if (log.isDebugEnabled()) {
-            log.debug("Opened new IndexOutput for file:{} in index: {}", fileKey.getFileName(), fileKey.getIndexName());
+            log.debug("Opened new IndexOutput for file:{0} in index: {1}", fileKey.getFileName(), fileKey.getIndexName());
          }
       }
 
@@ -283,7 +284,7 @@ public class InfinispanIndexIO {
          filePosition = 0;
          buffer = null;
          if (log.isDebugEnabled()) {
-            log.debug("Closed IndexOutput for file:{} in index: {}", fileKey.getFileName(), fileKey.getIndexName());
+            log.debug("Closed IndexOutput for file:{0} in index: {1}", fileKey.getFileName(), fileKey.getIndexName());
          }
       }
 
@@ -308,7 +309,7 @@ public class InfinispanIndexIO {
       }
 
       protected void setFileLength() {
-         file.setLastModified(System.currentTimeMillis());
+         file.touch();
          if (file.getSize() < filePosition) {
             file.setSize(filePosition);
          }
