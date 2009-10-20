@@ -21,15 +21,12 @@
  */
 package org.infinispan.config;
 
-import org.infinispan.loaders.file.FileCacheStore;
-import org.infinispan.util.TypedProperties;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-import org.jboss.util.StringPropertyReplacer;
+import java.util.Set;
+import java.util.Map.Entry;
 
 import javax.xml.bind.annotation.adapters.XmlAdapter;
-import java.util.Map.Entry;
-import java.util.Set;
+
+import org.infinispan.util.TypedProperties;
 /**
  * TypedPropertiesAdapter is JAXB XmlAdapter for TypedProperties.
  *
@@ -38,8 +35,6 @@ import java.util.Set;
  */
 public class TypedPropertiesAdapter extends XmlAdapter<PropertiesType, TypedProperties> {
    
-   private static final Log log = LogFactory.getLog(TypedPropertiesAdapter.class);
-
    @Override
    public PropertiesType marshal(TypedProperties tp) throws Exception {
       PropertiesType pxml = new PropertiesType();
@@ -61,19 +56,6 @@ public class TypedPropertiesAdapter extends XmlAdapter<PropertiesType, TypedProp
       TypedProperties tp = new TypedProperties();
       if (props != null && props.properties != null) {
          for (Property p : props.properties) {
-            if (p.value != null) {
-               String originalValue = p.value;
-               boolean needsTokenReplacement = originalValue.indexOf('$') >= 0
-                        && originalValue.indexOf('{') > 0 && originalValue.indexOf('}') > 0;
-
-               if (needsTokenReplacement) {
-                  p.value = StringPropertyReplacer.replaceProperties(originalValue);
-                  if (originalValue.equals(p.value)) {
-                     log.warn("Property " + p.name + " with value " + originalValue
-                              + " could not be replaced as intended!");
-                  }
-               }
-            }
             tp.put(p.name, p.value);
          }
       }

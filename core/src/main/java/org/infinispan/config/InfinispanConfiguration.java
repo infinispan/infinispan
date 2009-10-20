@@ -24,6 +24,8 @@ package org.infinispan.config;
 import org.infinispan.Version;
 import org.infinispan.config.parsing.XmlConfigurationParser;
 import org.infinispan.util.FileLookup;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.jboss.util.StringPropertyReplacer;
 
 import javax.xml.bind.JAXBContext;
@@ -69,6 +71,8 @@ import java.util.Map;
 @XmlRootElement(name = "infinispan")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class InfinispanConfiguration implements XmlConfigurationParser {
+   
+   private static final Log log = LogFactory.getLog(InfinispanConfiguration.class);
 
    public static final String VALIDATING_SYSTEM_PROPERTY = "infinispan.config.validate";
    
@@ -241,6 +245,9 @@ public class InfinispanConfiguration implements XmlConfigurationParser {
          int dollar = line.indexOf('$');
          if(dollar >0 && line.indexOf('{',dollar) > 0 && line.indexOf('}',dollar)>0) {
             String replacedLine = StringPropertyReplacer.replaceProperties(line);
+            if (line.equals(replacedLine)) {
+               log.warn("Property " +line.substring(line.indexOf('{')+1,line.indexOf('}')) + " could not be replaced as intended!");
+            }
             w.append(replacedLine);
          } else {
             w.append(line);
