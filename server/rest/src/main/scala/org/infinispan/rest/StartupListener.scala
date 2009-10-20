@@ -2,7 +2,7 @@ package org.infinispan.rest
 
 
 import javax.servlet.{ServletContextListener, ServletContextEvent}
-import manager.DefaultCacheManager
+import org.infinispan.manager.DefaultCacheManager
 
 
 /**

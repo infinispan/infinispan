@@ -1,15 +1,16 @@
 package org.infinispan.rest
 
-import codehaus.jackson.map.ObjectMapper
 import com.thoughtworks.xstream.XStream
 import java.io._
 import java.util.Date
-import remoting.MIMECacheEntry
 import java.util.concurrent.TimeUnit
 import javax.ws.rs._
 import core._
 import core.Response.{ResponseBuilder, Status}
-import manager.{CacheManager, DefaultCacheManager}
+import org.infinispan.remoting.MIMECacheEntry
+import org.infinispan.manager._
+import org.infinispan.Cache
+import org.codehaus.jackson.map.ObjectMapper
 
 @Path("/rest")
 class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: Boolean) {
