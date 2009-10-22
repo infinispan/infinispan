@@ -29,7 +29,7 @@
       <module>cachestore/jdbm</module>
       <module>server/rest</module>
       <module>jopr-plugin</module>
-      <module>gui-demo</module>
+      <module>demos/gui</module>
       <module>tools</module>
    </modules>
 
