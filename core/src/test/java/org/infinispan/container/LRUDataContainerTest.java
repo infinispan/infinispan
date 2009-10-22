@@ -44,4 +44,16 @@ public class LRUDataContainerTest extends FIFODataContainerTest {
          i++;
       }
    }
+
+   public void testGetDuringKeySetLoop() {
+      for (int i = 0; i < 10; i++) dc.put(i, "value", -1, -1);
+      
+      int i = 0;
+      for (Object key : dc.keySet()) {
+         dc.get(key);
+         i++;
+      }
+      
+      assert i == 10;
+   }
 }
