@@ -44,6 +44,21 @@ public interface DataContainer extends Iterable<InternalCacheEntry> {
     * @return entry, if it exists and has not expired, or null if not
     */
    InternalCacheEntry get(Object k);
+   
+   /**
+    * Retrieves a cache entry in the same way as {@link #get(Object)}}
+    * except that it does not update or reorder any of the internal constructs. 
+    * I.e., expiration does not happen, and in the case of the LRU container, 
+    * the entry is not moved to the end of the chain.
+    * 
+    * This method should be used instead of {@link #get(Object)}} when called
+    * while iterating through the data container using methods like {@link #keySet()} 
+    * to avoid changing the underlying collection's order.
+    * 
+    * @param k key under which entry is stored
+    * @return entry, if it exists, or null if not
+    */
+   InternalCacheEntry peek(Object k);
 
    /**
     * Puts an entry in the cache along with a lifespan and a maxIdle time
@@ -80,7 +95,11 @@ public interface DataContainer extends Iterable<InternalCacheEntry> {
    void clear();
 
    /**
-    * @return a set of keys contained in the container
+    * Returns a set of keys in the container. When iterating through the container using this method,
+    * clients should never call {@link #get()} method but instead {@link #peek()}, in order to avoid
+    * changing the order of the underlying collection as a side of effect of iterating through it.
+    * 
+    * @return a set of keys
     */
    Set<Object> keySet();
 

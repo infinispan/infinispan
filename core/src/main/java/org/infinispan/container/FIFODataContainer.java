@@ -727,6 +727,18 @@ public class FIFODataContainer implements DataContainer {
       return ice;
    }
 
+   public InternalCacheEntry peek(Object k) {
+      int h = hash(k.hashCode());
+      Segment s = segmentFor(h);
+      LinkedEntry le = s.get(k, h);
+      InternalCacheEntry ice = null;
+      if (le != null) {
+         ice = le.e;
+         if (isMarkedForRemoval(le)) unlink(le);
+      }
+      return ice;
+   }
+
    public void put(Object k, Object v, long lifespan, long maxIdle) {
       // do a normal put first.
       int h = hash(k.hashCode());

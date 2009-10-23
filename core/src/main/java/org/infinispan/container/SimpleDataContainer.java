@@ -39,13 +39,7 @@ public class SimpleDataContainer implements DataContainer {
       mortalEntries = new ConcurrentHashMap<Object, InternalCacheEntry>(64, 0.75f, concurrencyLevel);
    }
 
-   /**
-    * Like a get, but doesn't check for expired entries
-    *
-    * @param key key to retrieve
-    * @return an entry or null
-    */
-   private InternalCacheEntry peek(Object key) {
+   public InternalCacheEntry peek(Object key) {
       InternalCacheEntry e = immortalEntries.get(key);
       if (e == null) e = mortalEntries.get(key);
       return e;

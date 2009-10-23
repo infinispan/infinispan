@@ -32,6 +32,7 @@ public abstract class CacheAPITest extends SingleCacheManagerTest {
       // start a single cache instance
       Configuration c = getDefaultStandaloneConfig(true);
       c.setIsolationLevel(getIsolationLevel());
+      c = addEviction(c);
       CacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
       cm.defineConfiguration("test", c);
       cache = cm.getCache("test");
@@ -39,6 +40,10 @@ public abstract class CacheAPITest extends SingleCacheManagerTest {
    }
 
    protected abstract IsolationLevel getIsolationLevel();
+   
+   protected Configuration addEviction(Configuration cfg) {
+      return cfg; // No eviction by default
+   }
 
    /**
     * Tests that the configuration contains the values expected, as well as immutability of certain elements
@@ -439,4 +444,13 @@ public abstract class CacheAPITest extends SingleCacheManagerTest {
       }
    }
 
+   public void testSizeAfterClear() {
+      for (int i = 0; i < 10; i++) {
+         cache.put(i, "value" + i);
+      }
+      
+      cache.clear();
+      
+      assert 0 == cache.size();
+   }
 }

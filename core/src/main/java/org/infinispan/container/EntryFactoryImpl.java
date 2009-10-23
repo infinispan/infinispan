@@ -23,6 +23,7 @@ package org.infinispan.container;
 
 import org.infinispan.config.Configuration;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.entries.NullMarkerEntry;
 import org.infinispan.container.entries.NullMarkerEntryForRemoval;
@@ -99,8 +100,16 @@ public class EntryFactoryImpl implements EntryFactory {
          return cacheEntry;
       }
    }
-
+   
    public final MVCCEntry wrapEntryForWriting(InvocationContext ctx, Object key, boolean createIfAbsent, boolean forceLockIfAbsent, boolean alreadyLocked, boolean forRemoval) throws InterruptedException {
+      return wrapEntryForWriting(ctx, key, null, createIfAbsent, forceLockIfAbsent, alreadyLocked, forRemoval);
+   }
+
+   public MVCCEntry wrapEntryForWriting(InvocationContext ctx, InternalCacheEntry entry, boolean createIfAbsent, boolean forceLockIfAbsent, boolean alreadyLocked, boolean forRemoval) throws InterruptedException {
+      return wrapEntryForWriting(ctx, entry.getKey(), entry, createIfAbsent, forceLockIfAbsent, alreadyLocked, forRemoval);
+   }
+
+   private final MVCCEntry wrapEntryForWriting(InvocationContext ctx, Object key, InternalCacheEntry entry, boolean createIfAbsent, boolean forceLockIfAbsent, boolean alreadyLocked, boolean forRemoval) throws InterruptedException {
       CacheEntry cacheEntry = ctx.lookupEntry(key);
       MVCCEntry mvccEntry = null;
       if (createIfAbsent && cacheEntry != null && cacheEntry.isNull()) cacheEntry = null;
@@ -137,8 +146,8 @@ public class EntryFactoryImpl implements EntryFactory {
          if (!alreadyLocked) {
             lockAcquired = acquireLock(ctx, key);
          }
-         // else, fetch from dataContainer.
-         cacheEntry = container.get(key);
+         // else, fetch from dataContainer or used passed entry.
+         cacheEntry = entry != null ? entry : container.get(key);
          if (cacheEntry != null) {
             if (trace) log.trace("Retrieved from container.");
             // exists in cache!  Just acquire lock if needed, and wrap.

@@ -22,6 +22,7 @@
 package org.infinispan.container;
 
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.util.concurrent.TimeoutException;
@@ -30,6 +31,7 @@ import org.infinispan.util.concurrent.TimeoutException;
  * // TODO: MANIK: Document this
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
+ * @author Galder Zamarreño
  * @since 4.0
  */
 public interface EntryFactory {
@@ -50,6 +52,8 @@ public interface EntryFactory {
    boolean acquireLock(InvocationContext ctx, Object key) throws InterruptedException, TimeoutException;
 
    MVCCEntry wrapEntryForWriting(InvocationContext ctx, Object key, boolean createIfAbsent, boolean forceLockIfAbsent, boolean alreadyLocked, boolean forRemoval) throws InterruptedException;
+   
+   MVCCEntry wrapEntryForWriting(InvocationContext ctx, InternalCacheEntry entry, boolean createIfAbsent, boolean forceLockIfAbsent, boolean alreadyLocked, boolean forRemoval) throws InterruptedException;
 
    CacheEntry wrapEntryForReading(InvocationContext ctx, Object key) throws InterruptedException;
 }

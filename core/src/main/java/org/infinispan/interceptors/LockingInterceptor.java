@@ -36,6 +36,7 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -163,8 +164,8 @@ public class LockingInterceptor extends CommandInterceptor {
    public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
       try {
          // get a snapshot of all keys in the data container
-         for (Object key : dataContainer.keySet())
-            entryFactory.wrapEntryForWriting(ctx, key, false, false, false, false);
+         for (InternalCacheEntry entry : dataContainer.entrySet())
+            entryFactory.wrapEntryForWriting(ctx, entry, false, false, false, false);
          return invokeNextInterceptor(ctx, command);
       } finally {
          doAfterCall(ctx);
