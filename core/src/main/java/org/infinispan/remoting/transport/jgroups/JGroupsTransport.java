@@ -349,6 +349,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
       // if there is a FLUSH in progress, block till it completes
       flushTracker.blockUntilReleased(distributedSyncTimeout, MILLISECONDS);
       boolean asyncMarshalling = mode == ResponseMode.ASYNCHRONOUS;
+      if (!usePriorityQueue && ResponseMode.SYNCHRONOUS == mode) usePriorityQueue = true;
       try {
          RspList rsps = dispatcher.invokeRemoteCommands(toJGroupsAddressVector(recipients), rpcCommand, toJGroupsMode(mode),
                                                         timeout, false, usePriorityQueue,
