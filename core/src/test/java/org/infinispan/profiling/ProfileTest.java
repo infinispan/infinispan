@@ -32,15 +32,38 @@ public class ProfileTest extends AbstractProfileTest {
    protected static final int MAX_OVERALL_KEYS = 2000;
    protected static final int WARMUP_LOOPS = 20000;
    protected static final boolean USE_SLEEP = false; // throttle generation a bit
+   protected static final boolean SKIP_WARMUP = true;
 
    private List<Object> keys = new ArrayList<Object>(MAX_OVERALL_KEYS);
+
+   public static void main(String[] args) throws Exception {
+      ProfileTest pst = new ProfileTest();
+      pst.startedInCmdLine = true;
+
+      String mode = args[0];
+      try {
+         if (args.length > 1) pst.clusterNameOverride = args[1];
+         pst.testWith(mode);
+      } finally {
+         pst.destroyAfterMethod();
+         pst.destroyAfterClass();
+      }
+   }
+
+   protected void testWith(String cachename) throws Exception {
+      log.warn("Starting profile test, cache name = {0}", cachename);
+      initTest();
+      cache = cacheManager.getCache(cachename);
+      runCompleteTest(cachename);
+   }
+
 
    @Test(enabled = false)
    public void testLocalMode() throws Exception {
       runCompleteTest(LOCAL_CACHE_NAME);
    }
 
-   @Test(enabled = false)
+   @Test(enabled = true)
    public void testReplMode() throws Exception {
       runCompleteTest(REPL_SYNC_CACHE_NAME);
    }
@@ -72,7 +95,7 @@ public class ProfileTest extends AbstractProfileTest {
          while (keys.contains(key));
 
          if (i % 10 == 0) {
-            log.warn("Generated " + i + " keys");
+            log.trace("Generated " + i + " keys");
          }
          keys.add(key);
       }
@@ -91,8 +114,12 @@ public class ProfileTest extends AbstractProfileTest {
    }
 
    private void warmup() throws InterruptedException {
+      if (SKIP_WARMUP) {
+         log.info("Skipping warmup");
+         return;
+      }
       long startTime = System.currentTimeMillis();
-      TaskRunner exec = new TaskRunner(NUM_THREADS);
+      TaskRunner exec = new TaskRunner(NUM_THREADS, true);
       log.warn("Starting warmup");
       for (final Object key : keys) {
          exec.execute(new Runnable() {
@@ -189,27 +216,31 @@ public class ProfileTest extends AbstractProfileTest {
       AtomicLong duration;
 
       public void run() {
-         Object key = Generator.getRandomElement(keys);
-         long d = 0, st = 0;
-         switch (mode) {
-            case PUT:
-               Object value = Generator.getRandomString();
-               st = System.nanoTime();
-               cache.put(key, value);
-               d = System.nanoTime() - st;
-               break;
-            case GET:
-               st = System.nanoTime();
-               cache.get(key);
-               d = System.nanoTime() - st;
-               break;
-            case REMOVE:
-               st = System.nanoTime();
-               cache.remove(key);
-               d = System.nanoTime() - st;
-               break;
+         try {
+            Object key = Generator.getRandomElement(keys);
+            long d = 0, st = 0;
+            switch (mode) {
+               case PUT:
+                  Object value = Generator.getRandomString();
+                  st = System.nanoTime();
+                  cache.put(key, value);
+                  d = System.nanoTime() - st;
+                  break;
+               case GET:
+                  st = System.nanoTime();
+                  cache.get(key);
+                  d = System.nanoTime() - st;
+                  break;
+               case REMOVE:
+                  st = System.nanoTime();
+                  cache.remove(key);
+                  d = System.nanoTime() - st;
+                  break;
+            }
+            duration.getAndAdd(d);
+         } catch (Exception e) {
+            log.error("Caught ", e);
          }
-         duration.getAndAdd(d);
       }
    }
 
