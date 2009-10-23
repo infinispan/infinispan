@@ -133,34 +133,32 @@ public class EntryFactoryImpl implements EntryFactory {
          return mvccEntry;
 
       } else {
+         boolean lockAcquired = false;
+         if (!alreadyLocked) {
+            lockAcquired = acquireLock(ctx, key);
+         }
          // else, fetch from dataContainer.
          cacheEntry = container.get(key);
          if (cacheEntry != null) {
             if (trace) log.trace("Retrieved from container.");
             // exists in cache!  Just acquire lock if needed, and wrap.
             // do we need a lock?
-            boolean lockAcquired = acquireLock(ctx, key);
-            mvccEntry = wrapExistingEntryForWriting(ctx, key, alreadyLocked, cacheEntry, lockAcquired);
+            boolean needToCopy = alreadyLocked || lockAcquired || ctx.hasFlag(Flag.SKIP_LOCKING); // even if we do not acquire a lock, if skip-locking is enabled we should copy
+            mvccEntry = createWrappedEntry(key, cacheEntry.getValue(), false, false, cacheEntry.getLifespan());
+            ctx.putLookedUpEntry(key, mvccEntry);
+            if (needToCopy) mvccEntry.copyForUpdate(container, writeSkewCheck);
          } else if (createIfAbsent) {
             // this is the *only* point where new entries can be created!!
             if (trace) log.trace("Creating new entry.");
-
-            boolean lockAcquired = false;
             // now to lock and create the entry.  Lock first to prevent concurrent creation!
-            if (!alreadyLocked)  {
-               lockAcquired = acquireLock(ctx, key);
-            }
-            if (lockAcquired) {
-               //double check existance, as the prev lock owner might have created a cache entry for the same key
-               cacheEntry = container.get(key);
-               if (cacheEntry != null) {
-                 mvccEntry = wrapExistingEntryForWriting(ctx, key, true, cacheEntry, lockAcquired);
-               } else {
-                  mvccEntry = createAndWrapEntryForWriting(ctx, key);
-               }
-            } else {
-               mvccEntry = createAndWrapEntryForWriting(ctx, key);
-            }
+            notifier.notifyCacheEntryCreated(key, true, ctx);
+            mvccEntry = createWrappedEntry(key, null, true, false, -1);
+            mvccEntry.setCreated(true);
+            ctx.putLookedUpEntry(key, mvccEntry);
+            mvccEntry.copyForUpdate(container, writeSkewCheck);
+            notifier.notifyCacheEntryCreated(key, false, ctx);
+         } else {
+            releaseLock(key);
          }
       }
 
@@ -170,26 +168,6 @@ public class EntryFactoryImpl implements EntryFactory {
          if (acquireLock(ctx, key)) ctx.putLookedUpEntry(key, null);
       }
 
-      return mvccEntry;
-   }
-
-   private MVCCEntry createAndWrapEntryForWriting(InvocationContext ctx, Object key) {
-      MVCCEntry mvccEntry;
-      notifier.notifyCacheEntryCreated(key, true, ctx);
-      mvccEntry = createWrappedEntry(key, null, true, false, -1);
-      mvccEntry.setCreated(true);
-      ctx.putLookedUpEntry(key, mvccEntry);
-      mvccEntry.copyForUpdate(container, writeSkewCheck);
-      notifier.notifyCacheEntryCreated(key, false, ctx);
-      return mvccEntry;
-   }
-
-   private MVCCEntry wrapExistingEntryForWriting(InvocationContext ctx, Object key, boolean alreadyLocked, CacheEntry cacheEntry, boolean lockAquired) {
-      MVCCEntry mvccEntry;
-      mvccEntry = createWrappedEntry(key, cacheEntry.getValue(), false, false, cacheEntry.getLifespan());
-      ctx.putLookedUpEntry(key, mvccEntry);
-      boolean needToCopy = alreadyLocked || lockAquired || ctx.hasFlag(Flag.SKIP_LOCKING); // even if we do not acquire a lock, if skip-locking is enabled we should copy
-      if (needToCopy) mvccEntry.copyForUpdate(container, writeSkewCheck);
       return mvccEntry;
    }
 
