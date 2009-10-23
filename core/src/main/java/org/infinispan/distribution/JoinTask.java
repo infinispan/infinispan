@@ -102,40 +102,47 @@ public class JoinTask extends RehashTask {
          chNew = createConsistentHash(configuration, chOld.getCaches(), self);
          dmi.setConsistentHash(chNew);
 
-         // 3.  Enable TX logging
-         transactionLogger.enable();
+         if (configuration.isFetchInMemoryState()) {
+            // 3.  Enable TX logging
+            transactionLogger.enable();
 
-         // 4.  Broadcast new temp CH
-         rpcManager.broadcastRpcCommand(cf.buildRehashControlCommand(JOIN_REHASH_START, self), true, true);
+            // 4.  Broadcast new temp CH
+            rpcManager.broadcastRpcCommand(cf.buildRehashControlCommand(JOIN_REHASH_START, self), true, true);
 
-         // 5.  txLogger being enabled will cause CLusteredGetCommands to return uncertain responses.
+            // 5.  txLogger being enabled will cause CLusteredGetCommands to return uncertain responses.
 
-         // 6.  pull state from everyone.
-         Address myAddress = rpcManager.getTransport().getAddress();
-         RehashControlCommand cmd = cf.buildRehashControlCommand(PULL_STATE, myAddress, null, chNew);
-         // TODO I should be able to process state chunks from different nodes simultaneously!!
-         List<Address> addressesWhoMaySendStuff = getAddressesWhoMaySendStuff(configuration.getNumOwners());
-         List<Response> resps = rpcManager.invokeRemotely(addressesWhoMaySendStuff, cmd, SYNCHRONOUS, configuration.getRehashRpcTimeout(), true);
+            // 6.  pull state from everyone.
+            Address myAddress = rpcManager.getTransport().getAddress();
+            RehashControlCommand cmd = cf.buildRehashControlCommand(PULL_STATE, myAddress, null, chNew);
+            // TODO I should be able to process state chunks from different nodes simultaneously!!
+            List<Address> addressesWhoMaySendStuff = getAddressesWhoMaySendStuff(configuration.getNumOwners());
+            List<Response> resps = rpcManager.invokeRemotely(addressesWhoMaySendStuff, cmd, SYNCHRONOUS, configuration.getRehashRpcTimeout(), true);
 
-         // 7.  Apply state
-         for (Response r : resps) {
-            if (r instanceof SuccessfulResponse) {
-               Map<Object, InternalCacheValue> state = getStateFromResponse((SuccessfulResponse) r);
-               dmi.applyState(chNew, state);
+            // 7.  Apply state
+            for (Response r : resps) {
+               if (r instanceof SuccessfulResponse) {
+                  Map<Object, InternalCacheValue> state = getStateFromResponse((SuccessfulResponse) r);
+                  dmi.applyState(chNew, state);
+               }
             }
-         }
 
-         // 8.  Drain logs
-         dmi.drainTransactionLog();
+            // 8.  Drain logs
+            dmi.drainTransactionLog();
+         }
          unlocked = true;
 
+         if (!configuration.isFetchInMemoryState()) {
+            rpcManager.broadcastRpcCommand(cf.buildRehashControlCommand(JOIN_REHASH_START, self), true, true);            
+         }
          // 10.
          rpcManager.broadcastRpcCommand(cf.buildRehashControlCommand(JOIN_REHASH_END, self), true, true);
          rpcManager.invokeRemotely(coordinator(), cf.buildRehashControlCommand(JOIN_COMPLETE, self), SYNCHRONOUS,
                                    configuration.getRehashRpcTimeout(), true);
 
-         // 11.
-         invalidateInvalidHolders(chOld, chNew);
+         if (configuration.isFetchInMemoryState()) {
+            // 11.
+            invalidateInvalidHolders(chOld, chNew);
+         }
 
          if (log.isInfoEnabled())
             log.info("Completed in {0}!", Util.prettyPrintTime(System.currentTimeMillis() - start));
