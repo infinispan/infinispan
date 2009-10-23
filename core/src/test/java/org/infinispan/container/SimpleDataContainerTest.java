@@ -209,4 +209,16 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
 
       assert expected.isEmpty() : "Did not see keys " + expected + " in iterator!";
    }
+
+   public void testGetDuringKeySetLoop() {
+      for (int i = 0; i < 10; i++) dc.put(i, "value", -1, -1);
+
+      int i = 0;
+      for (Object key : dc.keySet()) {
+         dc.get(key);
+         i++;
+      }
+
+      assert i == 10 : "Expected the loop to run 10 times, only ran " + i;
+   }   
 }
