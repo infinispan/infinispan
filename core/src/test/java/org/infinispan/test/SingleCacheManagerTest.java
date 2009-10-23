@@ -44,7 +44,7 @@ public abstract class SingleCacheManagerTest extends AbstractCacheTest {
 
    @AfterMethod(alwaysRun=true)
    protected void clearContent() {
-      if (cleanup == CleanupPhase.AFTER_TEST) super.clearContent(cacheManager);
+      if (cleanup == CleanupPhase.AFTER_TEST) TestingUtil.clearContent(cacheManager);
    }
 
    protected Configuration getDefaultStandaloneConfig(boolean transactional) {

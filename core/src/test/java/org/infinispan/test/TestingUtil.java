@@ -24,8 +24,12 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.loaders.CacheLoader;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.concurrent.locks.LockManager;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.TransactionManager;
 import java.io.File;
@@ -33,14 +37,18 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 
 public class TestingUtil {
-   private static Random random = new Random();
+   
+   private static final Log log = LogFactory.getLog(TestingUtil.class);
+   private static final Random random = new Random();
    public static final String TEST_PATH = "target" + File.separator + "tempFiles";
 
    /**
@@ -63,7 +71,7 @@ public class TestingUtil {
          field.set(owner, newValue);
       }
       catch (Exception e) {
-         throw new RuntimeException(e);//just to simplify exception handeling
+         throw new RuntimeException(e);//just to simplify exception handling
       }
    }
 
@@ -385,6 +393,76 @@ public class TestingUtil {
 
    public static void killCacheManagers(Collection<CacheManager> cacheManagers) {
       killCacheManagers(cacheManagers.toArray(new CacheManager[cacheManagers.size()]));
+   }
+   
+   public static void clearContent(CacheManager cacheManager) {
+      if (cacheManager != null) {
+         Set<Cache> runningCaches = getRunningCaches(cacheManager);
+         for (Cache cache : runningCaches) {
+            clearRunningTx(cache);
+         }
+         if (!cacheManager.getStatus().allowInvocations()) return;
+         for (Cache cache : runningCaches) {
+            removeInMemoryData(cache);
+            clearCacheLoader(cache);
+            clearReplicationQueues(cache);
+            ((AdvancedCache) cache).getInvocationContextContainer().createInvocationContext();
+         }
+      }
+   }
+   
+   protected static Set<Cache> getRunningCaches(CacheManager cacheManager) {
+      ConcurrentMap<String, Cache> caches = (ConcurrentMap<String, Cache>) TestingUtil.extractField(DefaultCacheManager.class, cacheManager, "caches");
+      if (caches == null) return Collections.emptySet();
+      Set<Cache> result = new HashSet<Cache>();
+      for (Cache cache : caches.values()) {
+         if (cache.getStatus() == ComponentStatus.RUNNING) result.add(cache);
+      }
+      return result;
+   }
+   
+   private static void clearRunningTx(Cache cache) {
+      if (cache != null) {
+         TransactionManager txm = TestingUtil.getTransactionManager(cache);
+         if (txm == null) return;
+         try {
+            txm.rollback();
+         }
+         catch (Exception e) {
+            // don't care
+         }
+      }
+   }
+   
+   private static void clearReplicationQueues(Cache cache) {
+      ReplicationQueue queue = TestingUtil.extractComponent(cache, ReplicationQueue.class);
+      if (queue != null) queue.reset();
+   }
+   
+   private static void clearCacheLoader(Cache cache) {
+      CacheLoaderManager cacheLoaderManager = TestingUtil.extractComponent(cache, CacheLoaderManager.class);
+      if (cacheLoaderManager != null && cacheLoaderManager.getCacheStore() != null) {
+         try {
+            cacheLoaderManager.getCacheStore().clear();
+         } catch (Exception e) {
+            throw new RuntimeException(e);
+         }
+      }
+   }
+   
+   private static void removeInMemoryData(Cache cache) {
+      CacheManager mgr = cache.getCacheManager();
+      Address a = mgr.getAddress();
+      String str;
+      if (a == null)
+         str = "a non-clustered cache manager";
+      else
+         str = "a cache manager at address " + a;
+      log.debug("Cleaning data for cache '{0}' on {1}", cache.getName(), str);
+      DataContainer dataContainer = TestingUtil.extractComponent(cache, DataContainer.class);
+      log.debug("removeInMemoryData(): dataContainerBefore == {0}", dataContainer);
+      dataContainer.clear();
+      log.debug("removeInMemoryData(): dataContainerAfter == {0}", dataContainer);
    }
 
    /**

@@ -82,7 +82,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
          if (cacheManagers.isEmpty())
             throw new IllegalStateException("No caches registered! Use registerCacheManager(Cache... caches) do that!");
          for (CacheManager cacheManager : cacheManagers) {
-            super.clearContent(cacheManager);
+            TestingUtil.clearContent(cacheManager);
          }
       } else {
          TestingUtil.killCacheManagers(cacheManagers);
@@ -92,7 +92,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
    protected void assertSupportedConfig() {
       for (CacheManager cm : cacheManagers) {
-         for (Cache cache : getRunningCaches(cm)) {
+         for (Cache cache : TestingUtil.getRunningCaches(cm)) {
             Configuration config = cache.getConfiguration();
             try {
                assert config.isSyncCommitPhase();
