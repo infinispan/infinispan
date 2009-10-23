@@ -35,6 +35,7 @@ import org.infinispan.marshall.VersionAwareMarshaller;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.transaction.TransactionLog;
 import org.infinispan.util.Util;
+import org.infinispan.container.EntryFactory;
 
 /**
  * Simple factory that just uses reflection and an empty constructor of the component type.
