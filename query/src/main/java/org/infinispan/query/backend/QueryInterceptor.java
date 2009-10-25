@@ -11,6 +11,7 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.marshall.MarshalledValue;
 
 import javax.transaction.TransactionManager;
 import java.util.Map;
@@ -34,7 +35,7 @@ public class QueryInterceptor extends CommandInterceptor {
    @Inject
    public void init(SearchFactoryImplementor searchFactory, TransactionManager transactionManager) {
 
-      log.debug("Entered QueryInterceptor.init()");
+      if (log.isDebugEnabled()) log.debug("Entered QueryInterceptor.init()");
 
       this.searchFactory = searchFactory;
       this.transactionManager = transactionManager;
@@ -51,7 +52,7 @@ public class QueryInterceptor extends CommandInterceptor {
       // do the actual put first.
       Object toReturn = invokeNextInterceptor(ctx, command);
 
-      addToIndexes(command.getValue(), command.getKey().toString());
+      addToIndexes(checkForMarshalledValue(command.getValue()), checkForMarshalledValue(command.getKey()).toString());
 
       return toReturn;
    }
@@ -59,7 +60,7 @@ public class QueryInterceptor extends CommandInterceptor {
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
 
-      log.debug("Entered the searchable core interceptor visitRemoveCommand()");
+      if (log.isDebugEnabled()) log.debug("Entered the searchable core interceptor visitRemoveCommand()");
 
       // remove the object out of the cache first.
       Object valueRemoved = invokeNextInterceptor(ctx, command);
@@ -67,7 +68,7 @@ public class QueryInterceptor extends CommandInterceptor {
       if (log.isDebugEnabled()) log.debug("Transaction Manager is " + transactionManager);
 
       if (command.isSuccessful()) {
-         removeFromIndexes(valueRemoved, command.getKey().toString());
+         removeFromIndexes(checkForMarshalledValue(valueRemoved), checkForMarshalledValue(command.getKey()).toString());
       }
 
       return valueRemoved;
@@ -77,16 +78,17 @@ public class QueryInterceptor extends CommandInterceptor {
 
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-      log.debug("Entered the searchable core interceptor visitReplaceCommand()");
+
+      if (log.isDebugEnabled()) log.debug("Entered the searchable core interceptor visitReplaceCommand()");
 
       Object valueReplaced = invokeNextInterceptor(ctx, command);
       if (valueReplaced != null) {
 
          Object[] parameters = command.getParameters();
-         String keyString = command.getKey().toString();
+         String keyString = checkForMarshalledValue(command.getKey()).toString();
 
-         removeFromIndexes(parameters[1], keyString);
-         addToIndexes(parameters[2], keyString);
+         removeFromIndexes(checkForMarshalledValue(parameters[1]), keyString);
+         addToIndexes(checkForMarshalledValue(parameters[2]), keyString);
       }
 
       return valueReplaced;
@@ -95,7 +97,7 @@ public class QueryInterceptor extends CommandInterceptor {
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
 
-      log.debug("Entered searchable core interceptor visitPutMapCommand()");
+      if (log.isDebugEnabled()) log.debug("Entered searchable core interceptor visitPutMapCommand()");
 
       Object mapPut = invokeNextInterceptor(ctx, command);
 
@@ -105,7 +107,7 @@ public class QueryInterceptor extends CommandInterceptor {
       // Loop through all the keys and put those key, value pairings into lucene.
 
       for (Map.Entry entry : dataMap.entrySet()) {
-         addToIndexes(entry.getValue(), entry.getKey().toString());
+         addToIndexes(checkForMarshalledValue(entry.getValue()), checkForMarshalledValue(entry.getKey()).toString());
       }
       return mapPut;
    }
@@ -132,6 +134,15 @@ public class QueryInterceptor extends CommandInterceptor {
 
       TransactionContext transactionContext = new TransactionalEventTransactionContext(transactionManager);
       searchFactory.getWorker().performWork(new Work(value, key, WorkType.DELETE), transactionContext);
+   }
+
+   // Check to see if a given object is a marshalled value or not.
+   protected Object checkForMarshalledValue(Object o) {
+      if (o instanceof MarshalledValue) {
+         return ((MarshalledValue) o).get();
+      } else {
+         return o;
+      }
    }
 
 }

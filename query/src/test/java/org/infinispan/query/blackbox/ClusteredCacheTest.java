@@ -15,6 +15,7 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.List;
@@ -53,6 +54,10 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
       cache1 = caches.get(0);
       cache2 = caches.get(1);
+   }
+
+   @BeforeMethod
+   public void setUp(){
 
       // We will put objects into cache1 and then try and run the queries on cache2. This would mean that indexLocal
       // must be set to false.
@@ -81,6 +86,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       cache1.put(key1, person1);
       cache1.put(key2, person2);
       cache1.put(key3, person3);
+
 
    }
 

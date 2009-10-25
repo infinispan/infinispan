@@ -27,7 +27,7 @@ import org.testng.annotations.Test;
 import java.util.List;
 
 /**
- * @author Navin Surtani (<a href="mailto:nsurtani@redhat.com">nsurtani@redhat.com</a>)
+ * @author Navin Surtani
  */
 
 @Test(groups = "functional")
@@ -52,7 +52,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
    protected CacheManager createCacheManager() throws Exception {
       Configuration c = new Configuration();
       c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
-      return TestCacheManagerFactory.createCacheManager(c);
+      return TestCacheManagerFactory.createCacheManager(c, true);
    }
 
 
@@ -86,6 +86,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       cache.put(key1, person1);
       cache.put(key2, person2);
       cache.put(key3, person3);
+                  
 
    }
 
@@ -196,6 +197,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       cacheQuery = new QueryFactory(cache, qh).getQuery(luceneQuery);
       found = cacheQuery.list();
 
+      System.out.println("found is: - " + found);
       assert found.size() == 1;
       assert found.contains(person2);
       assert !found.contains(person3) : "The search should not return person3";

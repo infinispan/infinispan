@@ -28,7 +28,7 @@ public class LocalQueryInterceptor extends QueryInterceptor {
    @Inject
    public void init(SearchFactoryImplementor searchFactory, TransactionManager transactionManager) {
 
-      log.debug("Entered LocalQueryInterceptor.init()");
+      if (log.isDebugEnabled()) log.debug("Entered LocalQueryInterceptor.init()");
 
       // Fields on superclass.
 
@@ -42,7 +42,7 @@ public class LocalQueryInterceptor extends QueryInterceptor {
 
       // This method will get the put() calls on the cache and then send them into Lucene once it's successful.
 
-      log.debug("Entered the LocalQueryInterceptor visitPutKeyValueCommand()");
+      if (log.isDebugEnabled()) log.debug("Entered the LocalQueryInterceptor visitPutKeyValueCommand()");
 
       // do the actual put first.
       Object toReturn = invokeNextInterceptor(ctx, command);
@@ -50,9 +50,11 @@ public class LocalQueryInterceptor extends QueryInterceptor {
       // Since this is going to index if local only, then we must first check to see if the
       // context is local.
 
+      Object value = checkForMarshalledValue(command.getValue());
+
       if (ctx.isOriginLocal()) {
-         log.debug("Origin is local");
-         addToIndexes(command.getValue(), command.getKey().toString());
+         if (log.isDebugEnabled()) log.debug("Origin is local");
+         addToIndexes(value, checkForMarshalledValue(command.getKey()).toString());
       }
 
       return toReturn;
@@ -61,16 +63,16 @@ public class LocalQueryInterceptor extends QueryInterceptor {
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
 
-      log.debug("Entered the LocalQueryInterceptor visitRemoveCommand()");
+      if (log.isDebugEnabled()) log.debug("Entered the LocalQueryInterceptor visitRemoveCommand()");
 
       // remove the object out of the cache first.
       Object valueRemoved = invokeNextInterceptor(ctx, command);
 
-      // Check to make sure that the context is local as well as successful.
 
+      // Check to make sure that the context is local as well as successful.
       if (command.isSuccessful() && ctx.isOriginLocal()) {
          log.debug("Origin is local");
-         removeFromIndexes(valueRemoved, command.getKey().toString());
+         removeFromIndexes(checkForMarshalledValue(valueRemoved), checkForMarshalledValue(command.getKey()).toString());
       }
 
       return valueRemoved;
@@ -80,7 +82,7 @@ public class LocalQueryInterceptor extends QueryInterceptor {
 
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-      log.debug("Entered the LocalQueryInterceptor visitReplaceCommand()");
+      if (log.isDebugEnabled()) log.debug("Entered the LocalQueryInterceptor visitReplaceCommand()");
 
       Object valueReplaced = invokeNextInterceptor(ctx, command);
 
@@ -88,12 +90,12 @@ public class LocalQueryInterceptor extends QueryInterceptor {
 
       if (valueReplaced != null && ctx.isOriginLocal()) {
 
-         log.debug("Origin is local");
+         if (log.isDebugEnabled()) log.debug("Origin is local");
          Object[] parameters = command.getParameters();
-         String keyString = command.getKey().toString();
+         String keyString = checkForMarshalledValue(command.getKey()).toString();
 
-         removeFromIndexes(parameters[1], keyString);
-         addToIndexes(parameters[2], keyString);
+         removeFromIndexes(checkForMarshalledValue(parameters[1]), keyString);
+         addToIndexes(checkForMarshalledValue(parameters[2]), keyString);
       }
 
       return valueReplaced;
@@ -102,7 +104,7 @@ public class LocalQueryInterceptor extends QueryInterceptor {
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
 
-      log.debug("Entered LocalQueryInterceptor visitPutMapCommand()");
+      if (log.isDebugEnabled()) log.debug("Entered LocalQueryInterceptor visitPutMapCommand()");
 
       Object mapPut = invokeNextInterceptor(ctx, command);
 
@@ -110,7 +112,7 @@ public class LocalQueryInterceptor extends QueryInterceptor {
 
       if (ctx.isOriginLocal()) {
 
-         log.debug("Origin is local");
+         if (log.isDebugEnabled()) log.debug("Origin is local");
          Map<Object, Object> dataMap = command.getMap();
 
          // Loop through all the keys and put those key, value pairings into lucene.
@@ -122,6 +124,5 @@ public class LocalQueryInterceptor extends QueryInterceptor {
 
       return mapPut;
    }
-
 
 }

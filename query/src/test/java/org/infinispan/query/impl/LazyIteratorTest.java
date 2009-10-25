@@ -120,9 +120,6 @@ public class LazyIteratorTest {
             public EntityInfo answer() throws Throwable {
                int index = (Integer) getCurrentArguments()[0];
                String keyString = keyList.get(index);
-
-               System.out.println("The key for index parameter " + index + " is " + keyString);
-
                return new EntityInfo(Person.class, keyString, null);
             }
          }).anyTimes();
