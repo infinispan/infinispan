@@ -300,28 +300,4 @@
 
       </profile>
    </profiles>
-
-
-   <repositories>
-      <repository>
-         <snapshots>
-            <enabled>false</enabled>
-         </snapshots>
-         <id>jboss</id>
-         <name>JBoss Repository</name>
-         <url>http://repository.jboss.org/maven2/</url>
-      </repository>
-   </repositories>
-
-   <pluginRepositories>
-      <pluginRepository>
-         <snapshots>
-            <enabled>false</enabled>
-         </snapshots>
-         <id>jboss</id>
-         <name>JBoss Plugin Repository</name>
-         <url>http://repository.jboss.org/maven2/</url>
-      </pluginRepository>
-   </pluginRepositories>
-
 </project>
