@@ -47,11 +47,22 @@ public class ProfileTestSlave extends AbstractProfileTest {
    }
 
    private void waitForTest() throws Exception {
+      Thread t = new Thread() {
+         @Override
+         public void run() {
+            try {
+               System.in.read();
+            } catch (Exception e) {
+            }
+         }
+      };
+
       // attach a view change listener
-      cacheManager.addListener(new ShutdownHook());
+      cacheManager.addListener(new ShutdownHook(t));
       System.out.println("Slave listening for remote connections.  Hit Enter when done.");
-      System.in.read();
-      System.in.read();
+
+      t.start();
+      t.join();      
    }
 
    private void doTest() {
@@ -69,11 +80,18 @@ public class ProfileTestSlave extends AbstractProfileTest {
 
    @Listener
    public static final class ShutdownHook {
+      final Thread completionThread;
+
+      public ShutdownHook(Thread completionThread) {
+         this.completionThread = completionThread;
+      }
+
       @ViewChanged
       public void viewChanged(ViewChangedEvent vce) {
+         System.out.println("Saw view change event " + vce);
          // if the new view ONLY contains me, die!
          if (vce.getOldMembers().size() > vce.getNewMembers().size() && vce.getNewMembers().size() == 1 && vce.getNewMembers().contains(vce.getLocalAddress())) {
-            System.exit(0);
+            completionThread.interrupt();
          }
       }
    }
