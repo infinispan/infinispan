@@ -58,19 +58,25 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
 
       SortedMap<Integer, Address> candidates = positions.tailMap(hash % HASH_SPACE);
 
+      int numOwnersFound = 0;
+
       for (Address a : candidates.values()) {
-         if (owners.size() < numCopiesToFind)
+         if (numOwnersFound < numCopiesToFind) {
             owners.add(a);
-         else
+            numOwnersFound++;
+         } else {
             break;
+         }
       }
 
-      if (owners.size() < numCopiesToFind) {
+      if (numOwnersFound < numCopiesToFind) {
          for (Address a : positions.values()) {
-            if (owners.size() < numCopiesToFind)
+            if (numOwnersFound < numCopiesToFind) {
                owners.add(a);
-            else
+               numOwnersFound++;
+            } else {
                break;
+            }
          }
       }
 
@@ -88,8 +94,9 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
       SortedMap<Integer, Address> candidates = positions.tailMap(hash % HASH_SPACE);
       int nodesTested = 0;
       for (Address a : candidates.values()) {
-         if (nodesTested++ < numCopiesToFind) {
+         if (nodesTested < numCopiesToFind) {
             if (a.equals(target)) return true;
+            nodesTested++;
          } else {
             break;
          }
@@ -98,8 +105,9 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
       // start from the beginning
       if (nodesTested < numCopiesToFind) {
          for (Address a : positions.values()) {
-            if (nodesTested++ < numCopiesToFind) {
+            if (nodesTested < numCopiesToFind) {
                if (a.equals(target)) return true;
+               nodesTested++;
             } else {
                break;
             }

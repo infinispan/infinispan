@@ -294,9 +294,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
                }
             }
          } else {
-            if (!localModeForced) {
-               ((TxInvocationContext) ctx).addTransactionParticipants(recipientGenerator.generateRecipients());
-            }
+            ((TxInvocationContext) ctx).addTransactionParticipants(recipientGenerator.generateRecipients());
          }
       }
       return returnValue;
