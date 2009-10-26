@@ -9,6 +9,9 @@ JVM_OPTS="$JVM_OPTS -Xms512M -Xmx512M -Dbind.address=127.0.0.1 -Djava.net.prefer
 PROFILED=false
 if [ $1 = "-p" ] ; then
   PROFILED=true
+  SESSION_ID=$2
+  shift
+  shift
 fi
 
 ## Set up a classpath.
@@ -34,7 +37,7 @@ done
 
 if [ $PROFILED = "true" ] ; then
   JVM_OPTS="$JVM_OPTS 
--agentlib:jprofilerti=offline,id=177,config=/opt/jprofiler_cfg/config.xml  -Xbootclasspath/a:/opt/jprofiler/bin/agent.jar"
+-agentlib:jprofilerti=offline,id=${SESSION_ID},config=/opt/jprofiler_cfg/config.xml  -Xbootclasspath/a:/opt/jprofiler/bin/agent.jar"
 fi
 
 export LD_LIBRARY_PATH=/opt/jprofiler/bin/linux-x86:$LD_LIBRARY_PATH
