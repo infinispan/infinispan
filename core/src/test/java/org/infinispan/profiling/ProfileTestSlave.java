@@ -47,7 +47,7 @@ public class ProfileTestSlave extends AbstractProfileTest {
    }
 
    private void waitForTest() throws Exception {
-      Thread t = new Thread() {
+      Thread t = new Thread("CompletionThread") {
          @Override
          public void run() {
             try {
@@ -60,9 +60,13 @@ public class ProfileTestSlave extends AbstractProfileTest {
       // attach a view change listener
       cacheManager.addListener(new ShutdownHook(t));
       System.out.println("Slave listening for remote connections.  Hit Enter when done.");
-
+      t.setDaemon(true);
       t.start();
-      t.join();      
+      try {
+         t.join();
+      } catch (InterruptedException ie) {
+         // move on...
+      }
    }
 
    private void doTest() {
