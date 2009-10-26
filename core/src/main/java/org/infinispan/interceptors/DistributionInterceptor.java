@@ -263,7 +263,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
     * time. If the operation didn't originate locally we won't do any replication either.
     */
    private Object handleWriteCommand(InvocationContext ctx, WriteCommand command, RecipientGenerator recipientGenerator, boolean skipRemoteGet) throws Throwable {
-      boolean localModeForced = isLocalModeForced(ctx);
+      boolean localModeForced = isLocalModeForced(ctx) || isSingleOwnerAndLocal(recipientGenerator);
       // see if we need to load values from remote srcs first
       if (!skipRemoteGet) remoteGetBeforeWrite(ctx, command.isConditional(), recipientGenerator);
 
@@ -302,6 +302,13 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       return returnValue;
    }
 
+   /**
+    * If a single owner has been configured and the target for the key is the local address, it returns true.
+    */
+   private boolean isSingleOwnerAndLocal(RecipientGenerator recipientGenerator) {
+      return configuration.getNumOwners() == 1 && recipientGenerator.generateRecipients().get(0).equals(rpcManager.getTransport().getAddress());
+   }
+   
    interface KeyGenerator {
       Object[] getKeys();
    }
