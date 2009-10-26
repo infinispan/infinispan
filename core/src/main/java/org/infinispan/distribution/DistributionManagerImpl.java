@@ -204,7 +204,7 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    public boolean isLocal(Object key) {
-      return consistentHash.locate(key, replCount).contains(self);
+      return consistentHash.isKeyLocalToAddress(self, key, replCount);
    }
 
    public List<Address> locate(Object key) {

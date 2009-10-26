@@ -72,4 +72,13 @@ public interface ConsistentHash {
     * @return true if adjacent, false if not
     */
    boolean isAdjacent(Address a1, Address a2);
+
+   /**
+    * Test to see whether a key is mapped to a given address.
+    * @param a address to test
+    * @param key key to test
+    * @param replCount repl count
+    * @return true if the key is mapped to the address; false otherwise
+    */
+   boolean isKeyLocalToAddress(Address a, Object key, int replCount);
 }

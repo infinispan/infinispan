@@ -52,8 +52,7 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
       int keyHashCode = key.hashCode();
       if (keyHashCode == Integer.MIN_VALUE) keyHashCode += 1;
       int hash = Math.abs(keyHashCode);
-      int clusterSize = addresses.size();
-      int numCopiesToFind = min(replCount, clusterSize);
+      int numCopiesToFind = min(replCount, addresses.size());
 
       List<Address> owners = new ArrayList<Address>(numCopiesToFind);
 
@@ -77,6 +76,39 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
 
       return owners;
    }
+
+   @Override
+   public boolean isKeyLocalToAddress(Address target, Object key, int replCount) {
+      // more efficient impl
+      int keyHashCode = key.hashCode();
+      if (keyHashCode == Integer.MIN_VALUE) keyHashCode += 1;
+      int hash = Math.abs(keyHashCode);
+      int numCopiesToFind = min(replCount, addresses.size());
+
+      SortedMap<Integer, Address> candidates = positions.tailMap(hash % HASH_SPACE);
+      int nodesTested = 0;
+      for (Address a : candidates.values()) {
+         if (nodesTested++ < numCopiesToFind) {
+            if (a.equals(target)) return true;
+         } else {
+            break;
+         }
+      }
+
+      // start from the beginning
+      if (nodesTested < numCopiesToFind) {
+         for (Address a : positions.values()) {
+            if (nodesTested++ < numCopiesToFind) {
+               if (a.equals(target)) return true;
+            } else {
+               break;
+            }
+         }
+      }
+      
+      return false;
+   }
+
 
    public int getDistance(Address a1, Address a2) {
       if (a1 == null || a2 == null) throw new NullPointerException("Cannot deal with nulls as parameters!");

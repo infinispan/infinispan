@@ -19,4 +19,9 @@ public abstract class AbstractConsistentHash implements ConsistentHash {
       for (Object k : keys) locations.put(k, locate(k, replCount));
       return locations;
    }
+
+   public boolean isKeyLocalToAddress(Address a, Object key, int replCount) {
+      // simple, brute-force impl
+      return locate(key, replCount).contains(a);
+   }
 }
