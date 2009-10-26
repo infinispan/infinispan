@@ -74,11 +74,13 @@ public class ProfileTest extends AbstractProfileTest {
       cache = cacheManager.getCache(cacheName);
       init();
       startup();
+      if (!cacheName.equals(LOCAL_CACHE_NAME)) {
+         System.out.println("Waiting for members to join.");
+         TestingUtil.blockUntilViewReceived(cache, 2, 120000, true);
+         System.out.println("Cluster ready, cache mode is " + cache.getConfiguration().getCacheMode());
+      }
       warmup();
       doTest();
-
-      // wait for user exit
-//      System.in.read();
    }
 
    /**

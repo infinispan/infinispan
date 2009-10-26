@@ -1,8 +1,9 @@
 package org.infinispan.profiling;
 
 import org.infinispan.notifications.Listener;
-import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
+import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
+import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
 @Test(groups = "profiling", enabled = false, testName = "profiling.ProfileTestSlave")
@@ -77,6 +78,9 @@ public class ProfileTestSlave extends AbstractProfileTest {
       log.warn("Starting slave, cache name = {0}", cachename);
       initTest();
       cache = cacheManager.getCache(cachename);
+      System.out.println("Waiting for members to join.");
+      TestingUtil.blockUntilViewReceived(cache, 2, 120000, true);
+      System.out.println("Cluster ready, cache mode is " + cache.getConfiguration().getCacheMode());
       System.out.println("Waiting for test completion.  Hit CTRL-C when done.");
       doTest();
       waitForTest();
