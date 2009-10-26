@@ -113,13 +113,13 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    private ClusteringType clustering = new ClusteringType();
    
    @XmlElement
-   private BooleanAttributeType jmxStatistics = new BooleanAttributeType("jmxStatistics");
+   private JmxStatistics jmxStatistics = new JmxStatistics();
    
    @XmlElement
-   private BooleanAttributeType lazyDeserialization = new BooleanAttributeType("lazyDeserialization");
+   private LazyDeserialization lazyDeserialization = new LazyDeserialization();
    
    @XmlElement
-   private BooleanAttributeType invocationBatching = new BooleanAttributeType("invocationBatching");
+   private InvocationBatching invocationBatching = new InvocationBatching();
    
    @XmlElement
    private DeadlockDetectionType deadlockDetection = new DeadlockDetectionType();
@@ -658,9 +658,9 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          if (expiration != null) dolly.expiration = (ExpirationType) expiration.clone();
          if (unsafe != null) dolly.unsafe = (UnsafeType) unsafe.clone();
          if (clustering != null) dolly.clustering = clustering.clone();
-         if (jmxStatistics != null) dolly.jmxStatistics = (BooleanAttributeType) jmxStatistics.clone();
-         if (lazyDeserialization != null) dolly.lazyDeserialization = (BooleanAttributeType) lazyDeserialization.clone();
-         if (invocationBatching != null) dolly.invocationBatching = (BooleanAttributeType) invocationBatching.clone();
+         if (jmxStatistics != null) dolly.jmxStatistics = (JmxStatistics) jmxStatistics.clone();
+         if (lazyDeserialization != null) dolly.lazyDeserialization = (LazyDeserialization) lazyDeserialization.clone();
+         if (invocationBatching != null) dolly.invocationBatching = (InvocationBatching) invocationBatching.clone();
          if (deadlockDetection != null) dolly.deadlockDetection = (DeadlockDetectionType) deadlockDetection.clone();
          return dolly;
       } catch (CloneNotSupportedException e) {
@@ -1532,7 +1532,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     * @configRef name="lazyDeserialization",desc="Defines lazy deserialization characteristics of the cache."
     * @configRef name="invocationBatching",desc="Defines whether invocation batching is allowed in this cache instance."
     * 
-    * @configElementDoc any documentation here
+    *
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    public static class BooleanAttributeType  extends AbstractNamedCacheConfigurationBean {
@@ -1587,6 +1587,33 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       }
    }
    
+   public static class LazyDeserialization extends BooleanAttributeType {
+      /** The serialVersionUID */
+      private static final long serialVersionUID = 7404820498857564962L;
+
+      public LazyDeserialization() {
+         super("lazyDeserialization");
+      }
+   }
+   
+   public static class JmxStatistics extends BooleanAttributeType {
+      /** The serialVersionUID */
+      private static final long serialVersionUID = 8716456707015486673L;
+
+      public JmxStatistics() {
+         super("jmxStatistics");
+      }
+   }
+  
+   public static class InvocationBatching extends BooleanAttributeType {
+      /** The serialVersionUID */
+      private static final long serialVersionUID = 5854115656815587815L;
+
+      public InvocationBatching() {
+         super("invocationBatching");
+      }
+   }
+
    /**
     * 
     * @configRef name="deadlockDetection",desc="Enables or disables, and tunes, deadlock detection."
