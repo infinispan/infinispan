@@ -15,7 +15,6 @@ public class ProfileTestSlave extends AbstractProfileTest {
 
       String mode = args[0];
       try {
-         if (args.length > 1) pst.clusterNameOverride = args[1];
          pst.testWith(mode);
       } finally {
          pst.destroyAfterMethod();
