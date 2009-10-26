@@ -117,7 +117,8 @@ public class ProfileTest extends AbstractProfileTest {
 
    private void warmup() throws InterruptedException {
       if (SKIP_WARMUP) {
-         log.info("Skipping warmup");
+         log.info("Skipping warmup; sleeping 3 secs");
+         TestingUtil.sleepThread(3000);
          return;
       }
       long startTime = System.currentTimeMillis();
