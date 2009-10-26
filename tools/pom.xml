@@ -22,7 +22,13 @@
          <url>http://download.java.net/maven/2</url>
       </repository>
    </repositories>
-   
+
+   <properties>
+      <version.rhq.plugingen>1.4.0-SNAPSHOT</version.rhq.plugingen>
+      <version.xsom>20081112</version.xsom>
+      <version.commons.logging>1.1</version.commons.logging>
+   </properties>
+
    <dependencies>
       <dependency>
          <groupId>${project.groupId}</groupId>
@@ -38,59 +44,25 @@
          <scope>test</scope>
       </dependency>
 
-      <!-- needs to depend on all other modules it is trying to document! -->
       <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-cachestore-bdbje</artifactId>
-         <version>${project.version}</version>
-      </dependency>
-
-
-      <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-cachestore-jdbc</artifactId>
-         <version>${project.version}</version>
-      </dependency>
-
-
-      <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-cachestore-jdbm</artifactId>
-         <version>${project.version}</version>
-      </dependency>
-
-
-      <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-cachestore-s3</artifactId>
-         <version>${project.version}</version>
-      </dependency>
-
-
-      <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-gui-demo</artifactId>
-         <version>${project.version}</version>
-      </dependency>
-
-
-      <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-jopr-plugin</artifactId>
-         <version>${project.version}</version>
+         <groupId>org.rhq.helpers</groupId>
+         <artifactId>rhq-pluginGen</artifactId>
+         <version>${version.rhq.plugingen}</version>
+         <scope>provided</scope>
       </dependency>
 
       <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-tree</artifactId>
-         <version>${project.version}</version>
+         <groupId>com.sun.xsom</groupId>
+         <artifactId>xsom</artifactId>
+         <version>${version.xsom}</version>
       </dependency>
-      
+
       <dependency>
-		<groupId>com.sun.xsom</groupId>
-		<artifactId>xsom</artifactId>
-		<version>20081112</version>
-	  </dependency>
+         <groupId>commons-logging</groupId>
+         <artifactId>commons-logging</artifactId>
+         <version>${version.commons.logging}</version>
+         <scope>test</scope>
+      </dependency>
    </dependencies>
 
    <profiles>

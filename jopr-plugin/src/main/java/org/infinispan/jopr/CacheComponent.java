@@ -21,6 +21,7 @@
  */
 package org.infinispan.jopr;
 
+import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.mc4j.ems.connection.EmsConnection;
@@ -29,7 +30,9 @@ import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 import org.mc4j.ems.connection.bean.operation.EmsOperation;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
@@ -38,8 +41,6 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -49,24 +50,11 @@ import java.util.Set;
  * @author Galder Zamarreño
  */
 public class CacheComponent implements ResourceComponent<CacheManagerComponent>, MeasurementFacet, OperationFacet {
-   private final Log log = LogFactory.getLog(this.getClass());
-
-   /**
-    * Map to match an abbreviation for the MBean to the full MBean name
-    */
-   private static final Map<String, String> abbrevToMBean = new HashMap<String, String>();
-
-   static {
-      abbrevToMBean.put("Statistics", "Statistics");
-      abbrevToMBean.put("LockManager", "LockManager");
-      abbrevToMBean.put("Transactions", "Transactions");
-   }
-
+   private static final Log log = LogFactory.getLog(CacheComponent.class);
 
    private ResourceContext<CacheManagerComponent> context;
-   /**
-    * The naming pattern of the current bean without the actual bean name
-    */
+   
+   /** The naming pattern of the current bean without the actual bean name */
    private String myNamePattern;
 
    /**
@@ -75,8 +63,23 @@ public class CacheComponent implements ResourceComponent<CacheManagerComponent>,
     * @see org.rhq.core.pluginapi.inventory.ResourceComponent#getAvailability()
     */
    public AvailabilityType getAvailability() {
-      // TODO does a cache have a lifecycle of its own?
-      return context.getParentResourceComponent().getAvailability();
+      boolean trace = log.isTraceEnabled();
+      EmsConnection conn = getConnection();
+      try {
+         conn.refresh();
+         EmsBean bean = conn.getBean(context.getResourceKey());
+         EmsAttribute attribute = bean.getAttribute("CacheStatus");
+         if (attribute.getValue().equals(ComponentStatus.RUNNING.toString())) {
+            if (trace) log.trace("Cache status is running, so it's up."); 
+            bean.refreshAttributes();
+            return AvailabilityType.UP;
+         }
+         if (trace) log.trace("Cache status is anything other than running, so it's down.");
+         return AvailabilityType.DOWN;
+      } catch (Exception e) {
+         if (trace) log.trace("There was an exception checking availability, so cache status is down.");
+         return AvailabilityType.DOWN;
+      }
    }
 
 
@@ -86,14 +89,10 @@ public class CacheComponent implements ResourceComponent<CacheManagerComponent>,
     * @see org.rhq.core.pluginapi.inventory.ResourceComponent#start(org.rhq.core.pluginapi.inventory.ResourceContext)
     */
    public void start(ResourceContext<CacheManagerComponent> context) throws Exception {
-
       this.context = context;
-      //
       myNamePattern = context.getResourceKey();
       myNamePattern = myNamePattern.substring(0, myNamePattern.indexOf("jmx-resource=") + 13);
-
    }
-
 
    /**
     * Tear down the rescource connection
@@ -101,8 +100,6 @@ public class CacheComponent implements ResourceComponent<CacheManagerComponent>,
     * @see org.rhq.core.pluginapi.inventory.ResourceComponent#stop()
     */
    public void stop() {
-
-
    }
 
 
@@ -113,34 +110,48 @@ public class CacheComponent implements ResourceComponent<CacheManagerComponent>,
     *      java.util.Set)
     */
    public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
-
+      boolean trace = log.isTraceEnabled();
+      if (trace) log.trace("Get values metrics");
       EmsConnection conn = getConnection();
       for (MeasurementScheduleRequest req : metrics) {
+         if (trace) log.trace("Inspect metric {0}", req);
          String metric = req.getName();
          try {
             String abbrev = metric.substring(0, metric.indexOf("."));
-            String mbean = abbrevToMBean.get(abbrev);
-            mbean = myNamePattern + mbean;
+            String mbean = myNamePattern + abbrev;
             EmsBean bean = conn.getBean(mbean);
-            bean.refreshAttributes();
-            String attName = metric.substring(metric.indexOf(".") + 1);
-            EmsAttribute att = bean.getAttribute(attName);
-
-            // Attribute values are of various data types ...
-            Object o = att.getValue();
-            Class type = att.getTypeClass();
-            if (type.equals(Long.class) || type.equals(long.class)) {
-               Long tmp = (Long) o;
-               MeasurementDataNumeric res = new MeasurementDataNumeric(req, Double.valueOf(tmp));
-               report.addData(res);
-            } else if (type.equals(Double.class) || type.equals(double.class)) {
-               Double tmp = (Double) o;
-               MeasurementDataNumeric res = new MeasurementDataNumeric(req, tmp);
-               report.addData(res);
-            } else if (type.equals(Integer.class) || type.equals(int.class)) {
-               Integer tmp = (Integer) o;
-               MeasurementDataNumeric res = new MeasurementDataNumeric(req, Double.valueOf(tmp));
-               report.addData(res);
+            if (bean != null) {
+               if (trace) log.trace("Retrieved mbean with name {0}", mbean);
+               bean.refreshAttributes();
+               String attName = metric.substring(metric.indexOf(".") + 1);
+               EmsAttribute att = bean.getAttribute(attName);
+               // Attribute values are of various data types
+               Object o = att.getValue();
+               Class attrType = att.getTypeClass();
+               DataType type = req.getDataType();
+               if (type == DataType.MEASUREMENT) {
+                  if (trace) log.trace("Metric ({0}) is measurement with value {1}", req.getName(), o);
+                  if (attrType.equals(Long.class) || attrType.equals(long.class)) {
+                     Long tmp = (Long) o;
+                     MeasurementDataNumeric res = new MeasurementDataNumeric(req, Double.valueOf(tmp));
+                     report.addData(res);
+                  } else if (attrType.equals(Double.class) || attrType.equals(double.class)) {
+                     Double tmp = (Double) o;
+                     MeasurementDataNumeric res = new MeasurementDataNumeric(req, tmp);
+                     report.addData(res);
+                  } else if (attrType.equals(Integer.class) || attrType.equals(int.class)) {
+                     Integer tmp = (Integer) o;
+                     MeasurementDataNumeric res = new MeasurementDataNumeric(req, Double.valueOf(tmp));
+                     report.addData(res);
+                  }
+               } else if (type == DataType.TRAIT) {
+                  String value = (String) o;
+                  if (trace) log.trace("Metric ({0}) is trait with value {1}", req.getName(), value);
+                  MeasurementDataTrait res = new MeasurementDataTrait(req, value);
+                  report.addData(res);
+               }
+            } else {
+               if (trace) log.trace("No mbean found with name {0}", mbean);
             }
          }
          catch (Exception e) {
@@ -161,8 +172,9 @@ public class CacheComponent implements ResourceComponent<CacheManagerComponent>,
                                           Configuration parameters) throws Exception {
       EmsConnection conn = getConnection();
       String abbrev = name.substring(0, name.indexOf("."));
-      String mbean = abbrevToMBean.get(abbrev);
-      mbean = myNamePattern + mbean;
+//      String mbean = abbrevToMBean.get(abbrev);
+//      mbean = myNamePattern + mbean;
+      String mbean = myNamePattern + abbrev;
       EmsBean bean = conn.getBean(mbean);
       String opName = name.substring(name.indexOf(".") + 1);
       EmsOperation ops = bean.getOperation(opName);

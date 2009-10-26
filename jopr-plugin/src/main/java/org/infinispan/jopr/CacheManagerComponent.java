@@ -21,10 +21,14 @@
  */
 package org.infinispan.jopr;
 
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
@@ -41,9 +45,9 @@ import java.util.Set;
  * @author Galder Zamarreño
  */
 public class CacheManagerComponent implements ResourceComponent, MeasurementFacet {
+   private static final Log log = LogFactory.getLog(CacheManagerComponent.class);
    private ResourceContext context;
    private ConnectionHelper helper;
-
 
    /**
     * Return availability of this resource. We do this by checking the connection to it. If the Manager would expose
@@ -70,7 +74,6 @@ public class CacheManagerComponent implements ResourceComponent, MeasurementFace
     * @see org.rhq.core.pluginapi.inventory.ResourceComponent#start(org.rhq.core.pluginapi.inventory.ResourceContext)
     */
    public void start(ResourceContext context) throws InvalidPluginConfigurationException, Exception {
-
       this.context = context;
       helper = new ConnectionHelper();
       getConnection();
@@ -93,17 +96,25 @@ public class CacheManagerComponent implements ResourceComponent, MeasurementFace
     *      java.util.Set)
     */
    public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
-
+      boolean trace = log.isTraceEnabled();
+      if (trace) log.trace("Get values for these metrics: {0}", metrics);
       EmsConnection conn = getConnection();
       EmsBean bean = conn.getBean(context.getPluginConfiguration().getSimpleValue("objectName", null));
       bean.refreshAttributes();
-
       for (MeasurementScheduleRequest req : metrics) {
-         // TODO check with Traits in the future - also why are the values Strings?
-         String tmp = (String) bean.getAttribute(req.getName()).getValue();
-         Double val = Double.valueOf(tmp);
-         MeasurementDataNumeric res = new MeasurementDataNumeric(req, val);
-         report.addData(res);
+         DataType type = req.getDataType();
+         if (type == DataType.MEASUREMENT) {
+            String tmp = (String) bean.getAttribute(req.getName()).getValue();
+            Double val = Double.valueOf(tmp);
+            if (trace) log.trace("Metric ({0}) is measurement with value {1}", req.getName(), val);
+            MeasurementDataNumeric res = new MeasurementDataNumeric(req, val);
+            report.addData(res);
+         } else if (type == DataType.TRAIT) {
+            String value = (String) bean.getAttribute(req.getName()).getValue();
+            if (trace) log.trace("Metric ({0}) is trait with value {1}", req.getName(), value);
+            MeasurementDataTrait res = new MeasurementDataTrait(req, value);
+            report.addData(res);
+         }
       }
    }
 

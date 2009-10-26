@@ -49,11 +49,9 @@ import java.util.Set;
 public class CacheManagerDiscovery implements ResourceDiscoveryComponent<CacheManagerComponent> {
    private static final Log log = LogFactory.getLog(CacheManagerDiscovery.class);
 
-//   // Assume a java5+ jmx-remote connector on port 6996
-//   public static String REMOTE = "service:jmx:rmi://127.0.0.1/jndi/rmi://127.0.0.1:6996/jmxrmi";
+   // Assume a java5+ jmx-remote connector on port 6996
+   public static String REMOTE = "service:jmx:rmi://127.0.0.1/jndi/rmi://127.0.0.1:6996/jmxrmi";
 
-//   public static String MANAGER_OBJECT = "*:cache-name=[global],jmx-resource=CacheManager";
-   
    private static final String MANAGER_OBJECT = "*:" + CACHE_NAME_KEY + '=' + GLOBAL_JMX_GROUP + "," + JMX_RESOURCE_KEY + "=" + OBJECT_NAME;
    private static final String CONNECTOR = "org.mc4j.ems.connection.support.metadata.J2SE5ConnectionTypeDescriptor";
 
@@ -62,52 +60,50 @@ public class CacheManagerDiscovery implements ResourceDiscoveryComponent<CacheMa
     */
    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<CacheManagerComponent> discoveryContext) throws Exception {
       boolean trace = log.isTraceEnabled();
-      if (trace) log.trace("Discover resources with context: " + discoveryContext);
+      if (trace) log.trace("Discover resources with context: {0}", discoveryContext);
 
       Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
       // TODO check if we e.g. run inside a JBossAS to which we have a connection already that we can reuse.
-      Configuration c = discoveryContext.getDefaultPluginConfiguration();
-      c.put(c.getSimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY));
+      Configuration c = new Configuration();
+      c.put(new PropertySimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY, REMOTE));
       c.put(new PropertySimple(JMXDiscoveryComponent.CONNECTION_TYPE, CONNECTOR));
       c.put(new PropertySimple("objectName", MANAGER_OBJECT));
-
-//      c.put(new PropertySimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY, c.getSimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY)));
-//      c.put(new PropertySimple(JMXDiscoveryComponent.CONNECTION_TYPE, connector));
-//      c.put(new PropertySimple("objectName", MANAGER_OBJECT));
+      if (trace) log.trace("To be used configuration is {0}", c.toString(true));
 
       ConnectionHelper helper = new ConnectionHelper();
       EmsConnection conn = helper.getEmsConnection(c);
 
-      if (trace) log.trace("Connection to ems server stablished: " + conn);
+      if (trace) log.trace("Connection to ems server stablished: {0}", conn);
       
       // Run query for manager_object
       ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(MANAGER_OBJECT);
       List<EmsBean> beans = conn.queryBeans(queryUtility.getTranslatedQuery());
-      if (trace) log.trace("Querying [" + queryUtility.getTranslatedQuery() + "] returned beans: " + beans);
+      if (trace) log.trace("Querying [{0}] returned beans: {1}", queryUtility.getTranslatedQuery(), beans);
       
       for (EmsBean bean : beans) {
 
          String managerName = bean.getBeanName().getCanonicalName();
          c.put(new PropertySimple("objectName", managerName));
-         /**
-          *
-          * A discovered resource must have a unique key, that must
+         String resourceName = bean.getAttribute("Name").getValue().toString();
+         String version = bean.getAttribute("Version").getValue().toString();
+         /* A discovered resource must have a unique key, that must
           * stay the same when the resource is discovered the next
-          * time
-          */
+          * time */
+         if (trace) log.trace("Add resource with name '{0}', version '{1}' and type {2}", 
+                  resourceName, version, discoveryContext.getResourceType());
          DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
-               discoveryContext.getResourceType(), // ResourceType
-               managerName, // Resource Key
-               "Infinispan Cache Manager", // Resource Name
-               null, // Version TODO can we get that from discovery ?
-               "The Infinispan Manager", // Description
-               c, // Plugin Config
+               discoveryContext.getResourceType(), // Resource type
+               managerName, // Resource key
+               resourceName, // Resource name
+               version, // Resource version
+               "A cache manager within Infinispan", // Description
+               c, // Plugin config
                null // Process info from a process scan
          );
 
          // Add to return values
          discoveredResources.add(detail);
-         log.info("Discovered Infinispan instance: " + managerName);
+         log.info("Discovered Infinispan instance: {0}", managerName);
       }
       return discoveredResources;
 

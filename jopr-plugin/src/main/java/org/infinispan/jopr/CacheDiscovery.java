@@ -43,33 +43,28 @@ import java.util.Set;
 public class CacheDiscovery implements ResourceDiscoveryComponent<CacheManagerComponent> {
    private static final Log log = LogFactory.getLog(CacheDiscovery.class);
 
-   /**
-    * Naming pattern of the cache MgmtInterceptor
-    */
-   private static final String CACHE_QUERY = "*:cache-name=%name%,jmx-resource=Cache";
+   /** Naming pattern of the cache mbean */
+   static final String CACHE_QUERY = "*:cache-name=%name%,jmx-resource=Cache";
 
-   /**
-    * Run the discovery
-    */
+   /** Run the discovery */
    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<CacheManagerComponent> discoveryContext) throws Exception {
-      if (log.isTraceEnabled()) log.trace("Discover resources with context: " + discoveryContext);
+      boolean trace = log.isTraceEnabled();
+      if (trace) log.trace("Discover resources with context: " + discoveryContext);
       Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
 
       EmsConnection conn = discoveryContext.getParentResourceComponent().getConnection();
-      if (log.isTraceEnabled()) log.trace("Connection to ems server stablished: " + conn);
+      if (trace) log.trace("Connection to ems server stablished: " + conn);
       
       ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(CACHE_QUERY);
       List<EmsBean> beans = conn.queryBeans(queryUtility.getTranslatedQuery());
-      if (log.isTraceEnabled()) log.trace("Querying [" + queryUtility.getTranslatedQuery() + "] returned beans: " + beans);
+      if (trace) log.trace("Querying [" + queryUtility.getTranslatedQuery() + "] returned beans: " + beans);
 
       for (EmsBean bean : beans) {
-         /**
-          * A discovered resource must have a unique key, that must
+         /* A discovered resource must have a unique key, that must
           * stay the same when the resource is discovered the next
-          * time
-          */
-         String name = bean.getBeanName().getCanonicalName();
-         name = name.substring(name.indexOf("jmx-resource=") + 13);
+          * time */
+         String name = bean.getAttribute("CacheName").getValue().toString();
+         if (trace) log.trace("Resource name is {0}", name);
          DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
                discoveryContext.getResourceType(), // Resource Type
                bean.getBeanName().getCanonicalName(), // Resource Key
