@@ -1526,14 +1526,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          return result;
       }
    }
-   /**
-    * 
-    * @configRef name="jmxStatistics",desc="Defines how JMX components are bound to an MBean server."
-    * @configRef name="lazyDeserialization",desc="Defines lazy deserialization characteristics of the cache."
-    * @configRef name="invocationBatching",desc="Defines whether invocation batching is allowed in this cache instance."
-    * 
-    *
-    */
+   
    @XmlAccessorType(XmlAccessType.PROPERTY)
    public static class BooleanAttributeType  extends AbstractNamedCacheConfigurationBean {
       
@@ -1587,6 +1580,11 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       }
    }
    
+   /**
+    * 
+    * @configRef name="lazyDeserialization",desc="Defines lazy deserialization characteristics of the cache."     
+    *
+    */
    public static class LazyDeserialization extends BooleanAttributeType {
       /** The serialVersionUID */
       private static final long serialVersionUID = 7404820498857564962L;
@@ -1595,7 +1593,11 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          super("lazyDeserialization");
       }
    }
-   
+   /**
+    * 
+    * @configRef name="jmxStatistics",desc="Defines how JMX components are bound to an MBean server."    
+    *
+    */
    public static class JmxStatistics extends BooleanAttributeType {
       /** The serialVersionUID */
       private static final long serialVersionUID = 8716456707015486673L;
@@ -1605,6 +1607,11 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       }
    }
   
+   /**
+    * 
+    * @configRef name="invocationBatching",desc="Defines whether invocation batching is allowed in this cache instance."
+    * 
+    */
    public static class InvocationBatching extends BooleanAttributeType {
       /** The serialVersionUID */
       private static final long serialVersionUID = 5854115656815587815L;
