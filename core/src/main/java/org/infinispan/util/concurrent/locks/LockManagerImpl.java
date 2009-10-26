@@ -38,6 +38,8 @@ import org.infinispan.util.concurrent.locks.containers.ReentrantPerEntryLockCont
 import org.infinispan.util.concurrent.locks.containers.ReentrantStripedLockContainer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.rhq.helpers.pluginAnnotations.agent.DataType;
+import org.rhq.helpers.pluginAnnotations.agent.Metric;
 
 import javax.transaction.TransactionManager;
 import java.util.Iterator;
@@ -70,8 +72,8 @@ public class LockManagerImpl implements LockManager {
    @Start
    public void startLockManager() {
       lockContainer = configuration.isUseLockStriping() ?
-            transactionManager == null ? new ReentrantStripedLockContainer(configuration.getConcurrencyLevel()) : new OwnableReentrantStripedLockContainer(configuration.getConcurrencyLevel(), invocationContextContainer) :
-            transactionManager == null ? new ReentrantPerEntryLockContainer(configuration.getConcurrencyLevel()) : new OwnableReentrantPerEntryLockContainer(configuration.getConcurrencyLevel(), invocationContextContainer);
+      transactionManager == null ? new ReentrantStripedLockContainer(configuration.getConcurrencyLevel()) : new OwnableReentrantStripedLockContainer(configuration.getConcurrencyLevel(), invocationContextContainer) :
+      transactionManager == null ? new ReentrantPerEntryLockContainer(configuration.getConcurrencyLevel()) : new OwnableReentrantPerEntryLockContainer(configuration.getConcurrencyLevel(), invocationContextContainer);
    }
 
    public boolean lockAndRecord(Object key, InvocationContext ctx) throws InterruptedException {
@@ -169,17 +171,20 @@ public class LockManagerImpl implements LockManager {
       }
    }
 
-   @ManagedAttribute(writable = false, description = "The concurrency level that the MVCC Lock Manager has been configured with.")
+   @ManagedAttribute(description = "The concurrency level that the MVCC Lock Manager has been configured with.")
+   @Metric(displayName = "Concurrency level", dataType = DataType.TRAIT)
    public int getConcurrencyLevel() {
       return configuration.getConcurrencyLevel();
    }
 
-   @ManagedAttribute(writable = false, description = "The number of exclusive locks that are held.")
+   @ManagedAttribute(description = "The number of exclusive locks that are held.")
+   @Metric(displayName = "Number of locks held")
    public int getNumberOfLocksHeld() {
       return lockContainer.getNumLocksHeld();
    }
 
-   @ManagedAttribute(writable = false, description = "The number of exclusive locks that are available.")
+   @ManagedAttribute(description = "The number of exclusive locks that are available.")
+   @Metric(displayName = "Number of locks available")
    public int getNumberOfLocksAvailable() {
       return lockContainer.size() - lockContainer.getNumLocksHeld();
    }

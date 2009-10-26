@@ -10,6 +10,9 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.DeadlockDetectingGlobalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
+import org.rhq.helpers.pluginAnnotations.agent.Metric;
+import org.rhq.helpers.pluginAnnotations.agent.Operation;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import java.util.concurrent.atomic.AtomicLong;
@@ -19,7 +22,7 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * @author Mircea.Markus@jboss.com
  */
-@MBean(description = "Information about the number of deadlocks that were detected")
+@MBean(objectName = "DeadlockDetectingLockManager", description = "Information about the number of deadlocks that were detected")
 public class DeadlockDetectingLockManager extends LockManagerImpl {
 
    private static final Log log = LogFactory.getLog(DeadlockDetectingLockManager.class);
@@ -143,32 +146,37 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
    }
 
    @ManagedAttribute(description = "Number of situtations when we try to determine a deadlock and the other lock owner is e.g. a local tx. In this scenario we cannot run the deadlock detection mechanism")
+   @Metric(displayName = "Number of unsolvable deadlock situations", measurementType = MeasurementType.TRENDSUP)
    public long getOverlapWithNotDeadlockAwareLockOwners() {
       return overlapWithNotDeadlockAwareLockOwners.get();
    }
 
-
    @ManagedAttribute(description = "Number of locally originated transactions that were interrupted as a deadlock situation was detected")
+   @Metric(displayName = "Number of interrupted local transactions", measurementType = MeasurementType.TRENDSUP)
    public long getLocallyInterruptedTransactions() {
       return locallyInterruptedTransactions.get();
    }
 
    @ManagedAttribute(description = "Number of remote deadlocks detected")
+   @Metric(displayName = "Number of detected remote deadlocks", measurementType = MeasurementType.TRENDSUP)
    public long getDetectedRemoteDeadlocks() {
       return detectedRemoteDeadlocks.get();
    }
 
    @ManagedAttribute (description = "Number of local detected deadlocks")
+   @Metric(displayName = "Number of detected local deadlocks", measurementType = MeasurementType.TRENDSUP)
    public long getDetectedLocalDeadlocks() {
       return detectedLocalDeadlocks.get();
    }
 
    @ManagedAttribute (description = "Total number of local detected deadlocks")
+   @Metric(displayName = "Number of total detected deadlocks", measurementType = MeasurementType.TRENDSUP)
    public long getTotalNumberOfDetectedDeadlocks() {
       return detectedRemoteDeadlocks.get() + detectedLocalDeadlocks.get();
    }
 
    @ManagedOperation(description = "Resets statistics gathered by this component")
+   @Operation(displayName = "Reset statistics")
    public void resetStatistics() {
       overlapWithNotDeadlockAwareLockOwners.set(0);
       locallyInterruptedTransactions.set(0);

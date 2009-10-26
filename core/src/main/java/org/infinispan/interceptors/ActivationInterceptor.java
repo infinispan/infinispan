@@ -13,6 +13,9 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
+import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
+import org.rhq.helpers.pluginAnnotations.agent.Metric;
+import org.rhq.helpers.pluginAnnotations.agent.Operation;
 
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -82,12 +85,14 @@ public class ActivationInterceptor extends CacheLoaderInterceptor {
    }
 
    @ManagedAttribute(description = "Number of activation events")
+   @Metric(displayName = "Number of cache entries activated", measurementType = MeasurementType.TRENDSUP)
    public String getActivations() {
       if (!getStatisticsEnabled()) return "N/A";
       return String.valueOf(activations.get());
    }
 
    @ManagedOperation(description = "Resets statistics gathered by this component")
+   @Operation(displayName = "Reset statistics")
    public void resetStatistics() {
       super.resetStatistics();
       activations.set(0);

@@ -53,6 +53,7 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.marshall.MarshalledValue;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -63,6 +64,10 @@ import org.infinispan.util.concurrent.FutureListener;
 import org.infinispan.util.concurrent.NotifyingFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.rhq.helpers.pluginAnnotations.agent.DataType;
+import org.rhq.helpers.pluginAnnotations.agent.DisplayType;
+import org.rhq.helpers.pluginAnnotations.agent.Metric;
+import org.rhq.helpers.pluginAnnotations.agent.Operation;
 
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
@@ -251,6 +256,7 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V> {
    }
 
    @ManagedOperation(description = "Starts the cache.")
+   @Operation(displayName = "Starts cache.")
    public void start() {
       componentRegistry.start();
       defaultLifespan = config.getExpirationLifespan();
@@ -258,6 +264,7 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V> {
    }
 
    @ManagedOperation(description = "Stops the cache.")
+   @Operation(displayName = "Stops cache.")
    public void stop() {
       componentRegistry.stop();
    }
@@ -492,9 +499,18 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V> {
       return (V) invoker.invoke(ctx, command);
    }
 
-   @ManagedAttribute(description = "Returns the cache status")
    public ComponentStatus getStatus() {
       return componentRegistry.getStatus();
+   }
+
+   /** 
+    * Returns String representation of ComponentStatus enumeration in order to avoid 
+    * class not found exceptions in JMX tools that don't have access to infinispan classes.
+    */
+   @ManagedAttribute(description = "Returns the cache status")
+   @Metric(displayName = "Cache status", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
+   public String getCacheStatus() {
+      return getStatus().toString();
    }
 
    public boolean startBatch() {
@@ -511,6 +527,15 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V> {
 
    public String getName() {
       return name;
+   }
+
+   /** 
+    * Returns the cache name. If this is the default cache, it returns a more friendly name. 
+    */
+   @ManagedAttribute(description = "Returns the cache name")
+   @Metric(displayName = "Cache name", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
+   public String getCacheName() {
+      return getName().equals(DefaultCacheManager.DEFAULT_CACHE_NAME) ? "Default Cache" : getName();
    }
 
    public String getVersion() {

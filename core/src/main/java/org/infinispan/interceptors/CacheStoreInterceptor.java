@@ -53,6 +53,9 @@ import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.LogFactory;
+import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
+import org.rhq.helpers.pluginAnnotations.agent.Metric;
+import org.rhq.helpers.pluginAnnotations.agent.Operation;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -305,11 +308,13 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @ManagedOperation(description = "Resets statistics gathered by this component")
+   @Operation(displayName = "Reset statistics")
    public void resetStatistics() {
       cacheStores.set(0);
    }
 
    @ManagedAttribute(description = "number of cache loader stores")
+   @Metric(displayName = "Number of cache stores", measurementType = MeasurementType.TRENDSUP)
    public long getCacheLoaderStores() {
       return cacheStores.get();
    }

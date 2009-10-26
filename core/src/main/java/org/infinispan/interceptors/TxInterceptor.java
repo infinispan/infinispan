@@ -26,6 +26,12 @@ import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.transaction.TransactionLog;
 import org.infinispan.transaction.xa.TransactionTable;
 import org.infinispan.transaction.xa.TransactionXaAdapter;
+import org.rhq.helpers.pluginAnnotations.agent.DataType;
+import org.rhq.helpers.pluginAnnotations.agent.DisplayType;
+import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
+import org.rhq.helpers.pluginAnnotations.agent.Metric;
+import org.rhq.helpers.pluginAnnotations.agent.Operation;
+import org.rhq.helpers.pluginAnnotations.agent.Parameter;
 
 import javax.transaction.RollbackException;
 import javax.transaction.Status;
@@ -209,31 +215,37 @@ public class TxInterceptor extends CommandInterceptor {
    }
 
    @ManagedOperation(description = "Resets statistics gathered by this component")
+   @Operation(displayName = "Reset Statistics")
    public void resetStatistics() {
       prepares.set(0);
       commits.set(0);
       rollbacks.set(0);
    }
 
-   public void setStatisticsEnabled(boolean enabled) {
+   @Operation(displayName = "Enable/disable statistics")
+   public void setStatisticsEnabled(@Parameter(name = "enabled", description = "Whether statistics should be enabled or disabled (true/false)") boolean enabled) {
       this.statisticsEnabled = enabled;
    }
 
+   @Metric(displayName = "Statistics enabled", dataType = DataType.TRAIT)
    public boolean isStatisticsEnabled() {
       return this.statisticsEnabled;
    }
 
-   @ManagedAttribute(description = "number of transaction prepares")
+   @ManagedAttribute(description = "Number of transaction prepares performed since last reset")
+   @Metric(displayName = "Prepares", measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
    public long getPrepares() {
       return prepares.get();
    }
 
-   @ManagedAttribute(description = "number of transaction commits")
+   @ManagedAttribute(description = "Number of transaction commits performed since last reset")
+   @Metric(displayName = "Commits", measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
    public long getCommits() {
       return commits.get();
    }
 
-   @ManagedAttribute(description = "number of transaction rollbacks")
+   @ManagedAttribute(description = "Number of transaction rollbacks performed since last reset")
+   @Metric(displayName = "Rollbacks", measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
    public long getRollbacks() {
       return rollbacks.get();
    }

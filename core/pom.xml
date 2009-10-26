@@ -21,6 +21,7 @@
       <version.jgroups>2.8.0.CR2</version.jgroups>
       <version.jta>1.0.1.GA</version.jta>
       <version.org.jboss.naming>5.0.3.GA</version.org.jboss.naming>
+      <version.rhq.pluginAnnotations>1.4.0-SNAPSHOT</version.rhq.pluginAnnotations>
    </properties>
 
    <dependencies>
@@ -56,6 +57,12 @@
          <groupId>org.jboss.marshalling</groupId>
          <artifactId>marshalling-api</artifactId>
          <version>${version.jboss.marshalling}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.rhq.helpers</groupId>
+         <artifactId>rhq-pluginAnnotations</artifactId>
+         <version>${version.rhq.pluginAnnotations}</version>
       </dependency>
 
       <dependency>

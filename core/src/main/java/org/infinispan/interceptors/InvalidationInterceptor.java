@@ -44,6 +44,11 @@ import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.NotifyingFutureImpl;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
+import org.rhq.helpers.pluginAnnotations.agent.DataType;
+import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
+import org.rhq.helpers.pluginAnnotations.agent.Metric;
+import org.rhq.helpers.pluginAnnotations.agent.Operation;
+import org.rhq.helpers.pluginAnnotations.agent.Parameter;
 
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
@@ -230,19 +235,23 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
    }
 
    @ManagedOperation(description = "Resets statistics gathered by this component")
+   @Operation(displayName = "Reset statistics")
    public void resetStatistics() {
       invalidations.set(0);
    }
 
+   @Metric(displayName = "Statistics enabled", dataType = DataType.TRAIT)
    public boolean getStatisticsEnabled() {
       return this.statisticsEnabled;
    }
 
-   public void setStatisticsEnabled(boolean enabled) {
+   @Operation(displayName = "Enable/disable statistics")
+   public void setStatisticsEnabled(@Parameter(name = "enabled", description = "Whether statistics should be enabled or disabled (true/false)") boolean enabled) {
       this.statisticsEnabled = enabled;
    }
 
-   @ManagedAttribute(description = "number of invalidations")
+   @ManagedAttribute(description = "Number of invalidations")
+   @Metric(displayName = "Number of invalidations", measurementType = MeasurementType.TRENDSUP)
    public long getInvalidations() {
       return invalidations.get();
    }

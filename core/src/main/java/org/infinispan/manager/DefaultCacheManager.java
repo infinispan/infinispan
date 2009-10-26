@@ -45,6 +45,11 @@ import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.Immutables;
+import org.rhq.helpers.pluginAnnotations.agent.DataType;
+import org.rhq.helpers.pluginAnnotations.agent.DisplayType;
+import org.rhq.helpers.pluginAnnotations.agent.Metric;
+import org.rhq.helpers.pluginAnnotations.agent.Operation;
+import org.rhq.helpers.pluginAnnotations.agent.Parameter;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -317,7 +322,8 @@ public class DefaultCacheManager implements CacheManager {
     *
     * @return the default cache.
     */
-   @ManagedOperation(description = "Starts the default cache.")
+   @ManagedOperation(description = "Retrieves the default cache associated with this cache manager and starts it up.")
+   @Operation(displayName = "Starts the default cache.")
    public <K, V> Cache<K, V> getCache() {
       return getCache(DEFAULT_CACHE_NAME);
    }
@@ -335,8 +341,9 @@ public class DefaultCacheManager implements CacheManager {
     * @return a cache instance identified by cacheName
     */
    @SuppressWarnings("unchecked")
-   @ManagedOperation(description = "Starts a cache with the given name.")
-   public <K, V> Cache<K, V> getCache(String cacheName) {
+   @ManagedOperation(description = "Retrieves a named cache from the system and starts it up.")
+   @Operation(name = "getCacheWithCacheName", displayName = "Starts a cache with the given name.")
+   public <K, V> Cache<K, V> getCache(@Parameter(name = "cacheName", description = "Name of cache to start") String cacheName) {
       if (cacheName == null)
          throw new NullPointerException("Null arguments not allowed");
 
@@ -434,6 +441,12 @@ public class DefaultCacheManager implements CacheManager {
    public ComponentStatus getStatus() {
       return globalComponentRegistry.getStatus();
    }
+   
+   @ManagedAttribute(description = "The status of the cache manager instance.")
+   @Metric(displayName = "Cache manager status", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
+   public String getCacheManagerStatus() {
+      return getStatus().toString();
+   }
 
    public GlobalConfiguration getGlobalConfiguration() {
       return globalConfiguration;
@@ -449,6 +462,7 @@ public class DefaultCacheManager implements CacheManager {
    }
 
    @ManagedAttribute(description = "The defined cache names and their statuses.  The default cache is not included in this representation.")
+   @Metric(displayName = "List of defined caches", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
    public String getDefinedCacheNames() {
       StringBuilder result = new StringBuilder("[");
       for (String cacheName : getCacheNames()) {
@@ -460,16 +474,19 @@ public class DefaultCacheManager implements CacheManager {
    }
 
    @ManagedAttribute(description = "The total number of defined caches, excluding the default cache.")
+   @Metric(displayName = "Number of caches defined", displayType = DisplayType.SUMMARY)
    public String getDefinedCacheCount() {
       return String.valueOf(this.configurationOverrides.keySet().size());
    }
 
    @ManagedAttribute(description = "The total number of created caches, including the default cache.")
+   @Metric(displayName = "Number of caches created", displayType = DisplayType.SUMMARY)
    public String getCreatedCacheCount() {
       return String.valueOf(this.caches.keySet().size());
    }
 
    @ManagedAttribute(description = "The total number of running caches, including the default cache.")
+   @Metric(displayName = "Number of running caches", displayType = DisplayType.SUMMARY)
    public String getRunningCacheCount() {
       int running = 0;
       for (Cache cache : caches.values()) {
@@ -478,12 +495,14 @@ public class DefaultCacheManager implements CacheManager {
       return String.valueOf(running);
    }
 
-   @ManagedAttribute(description = "Infinispan version")
+   @ManagedAttribute(description = "Infinispan version.")
+   @Metric(displayName = "Infinispan version", displayType = DisplayType.SUMMARY, dataType = DataType.TRAIT)
    public String getVersion() {
       return Version.printVersion();
    }
 
-   @ManagedAttribute(description = "Cache manager name")
+   @ManagedAttribute(description = "The name of this cache manager")
+   @Metric(displayName = "Cache manager name", displayType = DisplayType.SUMMARY, dataType = DataType.TRAIT)
    public String getName() {
       String address = getAddress() == null ? "local" : getAddress().toString();
       return globalConfiguration.getJmxDomain() + '@' + address;

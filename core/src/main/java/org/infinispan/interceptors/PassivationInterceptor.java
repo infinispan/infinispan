@@ -14,6 +14,9 @@ import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
+import org.rhq.helpers.pluginAnnotations.agent.Metric;
+import org.rhq.helpers.pluginAnnotations.agent.Operation;
 
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -59,11 +62,13 @@ public class PassivationInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @ManagedOperation(description = "Resets statistics gathered by this component")
+   @Operation(displayName = "Reset statistics")
    public void resetStatistics() {
       passivations.set(0);
    }
 
    @ManagedAttribute(description = "Number of passivation events")
+   @Metric(displayName = "Number of cache passivations", measurementType = MeasurementType.TRENDSUP)   
    public String getPassivations() {
       if (!getStatisticsEnabled()) return "N/A";
       return String.valueOf(passivations.get());

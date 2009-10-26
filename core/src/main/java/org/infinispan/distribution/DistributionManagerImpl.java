@@ -37,6 +37,10 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.rhq.helpers.pluginAnnotations.agent.DataType;
+import org.rhq.helpers.pluginAnnotations.agent.Metric;
+import org.rhq.helpers.pluginAnnotations.agent.Operation;
+import org.rhq.helpers.pluginAnnotations.agent.Parameter;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -93,6 +97,7 @@ public class DistributionManagerImpl implements DistributionManager {
    private InterceptorChain interceptorChain;
    private InvocationContextContainer icc;
    @ManagedAttribute(description = "If true, the node has successfully joined the grid and is considered to hold state.  If false, the join process is still in progress.")
+   @Metric(displayName = "Is join completed?", dataType = DataType.TRAIT)
    volatile boolean joinComplete = false;
    final List<Address> leavers = new CopyOnWriteArrayList<Address>();
    volatile Future<Void> leaveTaskFuture;
@@ -249,7 +254,8 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    @ManagedOperation(description = "Determines whether a given key is affected by an ongoing rehash, if any.")
-   public boolean isAffectedByRehash(Object key) {
+   @Operation(displayName = "Could key be affected by reshah?")
+   public boolean isAffectedByRehash(@Parameter(name = "key", description = "Key to check") Object key) {
       return transactionLogger.isEnabled() && oldConsistentHash != null && !oldConsistentHash.locate(key, replCount).contains(self);
    }
 
@@ -334,6 +340,7 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    @ManagedAttribute(description = "Checks whether the node is involved in a rehash.")
+   @Metric(displayName = "Is rehash in progress?", dataType = DataType.TRAIT)
    public boolean isRehashInProgress() {
       return !leavers.isEmpty() || rehashInProgress;
    }
@@ -371,18 +378,15 @@ public class DistributionManagerImpl implements DistributionManager {
       }
    }
 
-   @ManagedAttribute(description = "Size of the cluster in number of nodes")
-   public String getClusterSize() {
-      return rpcManager.getTransport().getMembers().size() + "";
-   }
-
    @ManagedOperation(description = "Tells you whether a given key is local to this instance of the cache.  Only works with String keys.")
-   public boolean isLocatedLocally(String key) {
+   @Operation(displayName = "Is key local?")
+   public boolean isLocatedLocally(@Parameter(name = "key", description = "Key to query") String key) {
       return isLocal(key);
    }
 
    @ManagedOperation(description = "Locates an object in a cluster.  Only works with String keys.")
-   public List<String> locateKey(String key) {
+   @Operation(displayName = "Locate key")
+   public List<String> locateKey(@Parameter(name = "key", description = "Key to locate") String key) {
       List<String> l = new LinkedList<String>();
       for (Address a : locate(key)) l.add(a.toString());
       return l;

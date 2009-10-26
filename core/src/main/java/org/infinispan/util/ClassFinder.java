@@ -54,6 +54,21 @@ public class ClassFinder {
       }
       return clazzes;
    }
+   
+   public static List<Class<?>> withAnnotationDeclared(List<Class<?>> classes, Class<? extends Annotation> c) {
+      List<Class<?>> clazzes = new ArrayList<Class<?>>();
+      for (Class<?> clazz : classes) {
+         if (clazz.isAnnotationPresent(c)) {
+            Annotation[] declaredAnnots = clazz.getDeclaredAnnotations();
+            for (Annotation declaredAnnot : declaredAnnots) {
+               if (declaredAnnot.annotationType().isAssignableFrom(c)) {
+                  clazzes.add(clazz);
+               }
+            }
+         }
+      }
+      return clazzes;
+   }
 
    public static List<Class<?>> isAssignableFrom(List<Class<?>> classes, Class<?> clazz) {
       List<Class<?>> clazzes = new ArrayList<Class<?>>();

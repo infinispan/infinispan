@@ -63,29 +63,29 @@ public class CacheMBeanTest extends SingleCacheManagerTest {
       ObjectName defaultOn = new ObjectName(JMX_DOMAIN + ":cache-name=" + DefaultCacheManager.DEFAULT_CACHE_NAME + "(local),jmx-resource=Cache");
       ObjectName managerON = new ObjectName(JMX_DOMAIN + ":cache-name=[global],jmx-resource=CacheManager");
       server.invoke(managerON, "getCache", new Object[]{}, new String[]{});
-      assert ComponentStatus.RUNNING == server.getAttribute(defaultOn, "Status");
+      assert ComponentStatus.RUNNING.toString().equals(server.getAttribute(defaultOn, "CacheStatus"));
       assert server.getAttribute(managerON, "CreatedCacheCount").equals("1");
       assert server.getAttribute(managerON, "RunningCacheCount").equals("1");
       server.invoke(defaultOn, "stop", new Object[]{}, new String[]{});
-      assert ComponentStatus.TERMINATED == server.getAttribute(defaultOn, "Status");
+      assert ComponentStatus.TERMINATED.toString().equals(server.getAttribute(defaultOn, "CacheStatus"));
       assert server.getAttribute(managerON, "CreatedCacheCount").equals("1");
       assert server.getAttribute(managerON, "RunningCacheCount").equals("0");
       server.invoke(defaultOn, "start", new Object[]{}, new String[]{});
-      assert ComponentStatus.RUNNING == server.getAttribute(defaultOn, "Status");
+      assert ComponentStatus.RUNNING.toString().equals(server.getAttribute(defaultOn, "CacheStatus"));
       assert server.getAttribute(managerON, "CreatedCacheCount").equals("1");
       assert server.getAttribute(managerON, "RunningCacheCount").equals("1");
       server.invoke(defaultOn, "stop", new Object[]{}, new String[]{});
       assert server.getAttribute(managerON, "CreatedCacheCount").equals("1");
       assert server.getAttribute(managerON, "RunningCacheCount").equals("0");
-      assert ComponentStatus.TERMINATED == server.getAttribute(defaultOn, "Status");
+      assert ComponentStatus.TERMINATED.toString().equals(server.getAttribute(defaultOn, "CacheStatus"));
       server.invoke(defaultOn, "start", new Object[]{}, new String[]{});
       assert server.getAttribute(managerON, "CreatedCacheCount").equals("1");
       assert server.getAttribute(managerON, "RunningCacheCount").equals("1");
-      assert ComponentStatus.RUNNING == server.getAttribute(defaultOn, "Status");
+      assert ComponentStatus.RUNNING.toString().equals(server.getAttribute(defaultOn, "CacheStatus"));
       server.invoke(defaultOn, "stop", new Object[]{}, new String[]{});
       assert server.getAttribute(managerON, "CreatedCacheCount").equals("1");
       assert server.getAttribute(managerON, "RunningCacheCount").equals("0");
-      assert ComponentStatus.TERMINATED == server.getAttribute(defaultOn, "Status");
+      assert ComponentStatus.TERMINATED.toString().equals(server.getAttribute(defaultOn, "CacheStatus"));
    }
    
    public void testManagerStopRemovesCacheMBean(Method method) throws Exception {
@@ -102,8 +102,8 @@ public class CacheMBeanTest extends SingleCacheManagerTest {
       CacheManager otherManager = TestCacheManagerFactory.createCacheManager(globalConfiguration, configuration);
       server.invoke(managerON, "getCache", new Object[]{}, new String[]{});
       server.invoke(managerON, "getCache", new Object[]{"galder"}, new String[]{String.class.getName()});
-      assert ComponentStatus.RUNNING == server.getAttribute(defaultOn, "Status");
-      assert ComponentStatus.RUNNING == server.getAttribute(galderOn, "Status");
+      assert ComponentStatus.RUNNING.toString().equals(server.getAttribute(defaultOn, "CacheStatus"));
+      assert ComponentStatus.RUNNING.toString().equals(server.getAttribute(galderOn, "CacheStatus"));
       otherManager.stop();
       try {
          log.info(server.getMBeanInfo(managerON));

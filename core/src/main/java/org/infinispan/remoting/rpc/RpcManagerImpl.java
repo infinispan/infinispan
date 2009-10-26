@@ -21,6 +21,13 @@ import org.infinispan.statetransfer.StateTransferException;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.rhq.helpers.pluginAnnotations.agent.DataType;
+import org.rhq.helpers.pluginAnnotations.agent.DisplayType;
+import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
+import org.rhq.helpers.pluginAnnotations.agent.Metric;
+import org.rhq.helpers.pluginAnnotations.agent.Operation;
+import org.rhq.helpers.pluginAnnotations.agent.Parameter;
+import org.rhq.helpers.pluginAnnotations.agent.Units;
 
 import java.text.NumberFormat;
 import java.util.Collection;
@@ -267,12 +274,14 @@ public class RpcManagerImpl implements RpcManager {
    // -------------------------------------------- JMX information -----------------------------------------------
 
    @ManagedOperation(description = "Resets statistics gathered by this component")
+   @Operation(displayName = "Reset statistics")
    public void resetStatistics() {
       replicationCount.set(0);
       replicationFailures.set(0);
    }
 
-   @ManagedAttribute(description = "number of successful replications")
+   @ManagedAttribute(description = "Number of successful replications")
+   @Metric(displayName = "Number of successfull replications", measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
    public String getReplicationCount() {
       if (!isStatisticsEnabled()) {
          return "N/A";
@@ -280,7 +289,8 @@ public class RpcManagerImpl implements RpcManager {
       return String.valueOf(replicationCount.get());
    }
 
-   @ManagedAttribute(description = "number of failed replications")
+   @ManagedAttribute(description = "Number of failed replications")
+   @Metric(displayName = "Number of failed replications", measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
    public String getReplicationFailures() {
       if (!isStatisticsEnabled()) {
          return "N/A";
@@ -288,15 +298,18 @@ public class RpcManagerImpl implements RpcManager {
       return String.valueOf(replicationFailures.get());
    }
 
+   @Metric(displayName = "Statistics enabled", dataType = DataType.TRAIT)
    public boolean isStatisticsEnabled() {
       return statisticsEnabled;
    }
 
-   public void setStatisticsEnabled(boolean statisticsEnabled) {
+   @Operation(displayName = "Enable/disable statistics")
+   public void setStatisticsEnabled(@Parameter(name = "enabled", description = "Whether statistics should be enabled or disabled (true/false)") boolean statisticsEnabled) {
       this.statisticsEnabled = statisticsEnabled;
    }
 
    @ManagedAttribute(description = "The network address associated with this instance")
+   @Metric(displayName = "Network address", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
    public String getAddress() {
       if (t == null || !isStatisticsEnabled()) return "N/A";
       Address address = t.getAddress();
@@ -304,13 +317,21 @@ public class RpcManagerImpl implements RpcManager {
    }
 
    @ManagedAttribute(description = "List of members in the cluster")
+   @Metric(displayName = "Cluster members", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
    public String getMembers() {
       if (t == null || !isStatisticsEnabled()) return "N/A";
       List<Address> addressList = t.getMembers();
       return addressList.toString();
    }
+   
+   @ManagedAttribute(description = "Size of the cluster in number of nodes")
+   @Metric(displayName = "Cluster size", displayType = DisplayType.SUMMARY)
+   public String getClusterSize() {
+      return t.getMembers().size() + "";
+   }
 
    @ManagedAttribute(description = "Successful replications as a ratio of total replications")
+   @Metric(displayName = "Successful replication ratio", units = Units.PERCENTAGE, displayType = DisplayType.SUMMARY)
    public String getSuccessRatio() {
       if (replicationCount.get() == 0 || !statisticsEnabled) {
          return "N/A";

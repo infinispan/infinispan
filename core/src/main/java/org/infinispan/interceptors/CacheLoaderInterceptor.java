@@ -41,6 +41,9 @@ import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.loaders.CacheLoader;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
+import org.rhq.helpers.pluginAnnotations.agent.Metric;
+import org.rhq.helpers.pluginAnnotations.agent.Operation;
 
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -179,17 +182,20 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
       }
    }
 
-   @ManagedAttribute(description = "Number of CacheLoader loads")
+   @ManagedAttribute(description = "Number of entries loaded from cache store")
+   @Metric(displayName = "Number of cache store loads", measurementType = MeasurementType.TRENDSUP)
    public long getCacheLoaderLoads() {
       return cacheLoads.get();
    }
 
-   @ManagedAttribute(description = "Number of CacheLoader misses")
+   @ManagedAttribute(description = "Number of entries that did not exist in cache store")
+   @Metric(displayName = "Number of cache store load misses", measurementType = MeasurementType.TRENDSUP)
    public long getCacheLoaderMisses() {
       return cacheMisses.get();
    }
 
    @ManagedOperation(description = "Resets statistics gathered by this component")
+   @Operation(displayName = "Reset Statistics")
    public void resetStatistics() {
       cacheLoads.set(0);
       cacheMisses.set(0);
