@@ -266,7 +266,12 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert c.getLockAcquisitionTimeout() == 20000;
       assert c.getConcurrencyLevel() == 1000;
       assert c.getIsolationLevel() == IsolationLevel.REPEATABLE_READ;
-      
+
+      c = defaultCfg.clone();
+      c.applyOverrides(namedCaches.get("lazyDeserialization"));
+      assert c.isUseLazyDeserialization();
+      assert !c.isExposeJmxStatistics();
+
       c = defaultCfg.clone();
       Configuration configurationWL = namedCaches.get("withLoader");
       configurationWL.getCacheLoaderManagerConfig().setShared(true);
