@@ -51,7 +51,7 @@ public class ProfileTestSlave extends AbstractProfileTest {
          @Override
          public void run() {
             try {
-               System.in.read();
+                while (true) Thread.sleep(10000);
             } catch (Exception e) {
             }
          }
@@ -77,7 +77,7 @@ public class ProfileTestSlave extends AbstractProfileTest {
       log.warn("Starting slave, cache name = {0}", cachename);
       initTest();
       cache = cacheManager.getCache(cachename);
-      System.out.println("Waiting for test completion.  Hit any key when done.");
+      System.out.println("Waiting for test completion.  Hit CTRL-C when done.");
       doTest();
       waitForTest();
    }
