@@ -8,6 +8,7 @@ import org.infinispan.manager.CacheManager;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
+import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
 import org.testng.annotations.Test;
 
 import java.util.Properties;
@@ -35,6 +36,7 @@ public abstract class AbstractProfileTest extends SingleCacheManagerTest {
    private Configuration getBaseCfg() {
       Configuration cfg = new Configuration();
       cfg.setConcurrencyLevel(5000);
+      cfg.setTransactionManagerLookupClass(JBossStandaloneJTAManagerLookup.class.getName());
       return cfg;
    }
 

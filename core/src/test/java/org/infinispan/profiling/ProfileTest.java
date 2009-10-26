@@ -35,13 +35,14 @@ public class ProfileTest extends AbstractProfileTest {
    protected static final boolean SKIP_WARMUP = true;
 
    private List<Object> keys = new ArrayList<Object>(MAX_OVERALL_KEYS);
+   protected static boolean USE_TRANSACTIONS = false;
 
    public static void main(String[] args) throws Exception {
       ProfileTest pst = new ProfileTest();
       pst.startedInCmdLine = true;
 
       String mode = args[0];
-      if (args.length > 1) NUM_OPERATIONS = Integer.parseInt(args[1]);
+      if (args.length > 1) USE_TRANSACTIONS = Boolean.parseBoolean(args[1]);
       
       try {
          if (args.length > 1) pst.clusterNameOverride = args[1];
@@ -228,17 +229,23 @@ public class ProfileTest extends AbstractProfileTest {
                case PUT:
                   Object value = Generator.getRandomString();
                   st = System.nanoTime();
+                  if (USE_TRANSACTIONS) TestingUtil.getTransactionManager(cache).begin();
                   cache.put(key, value);
+                  if (USE_TRANSACTIONS) TestingUtil.getTransactionManager(cache).commit();
                   d = System.nanoTime() - st;
                   break;
                case GET:
                   st = System.nanoTime();
+                  if (USE_TRANSACTIONS) TestingUtil.getTransactionManager(cache).begin();
                   cache.get(key);
+                  if (USE_TRANSACTIONS) TestingUtil.getTransactionManager(cache).commit();
                   d = System.nanoTime() - st;
                   break;
                case REMOVE:
                   st = System.nanoTime();
+                  if (USE_TRANSACTIONS) TestingUtil.getTransactionManager(cache).begin();
                   cache.remove(key);
+                  if (USE_TRANSACTIONS) TestingUtil.getTransactionManager(cache).commit();
                   d = System.nanoTime() - st;
                   break;
             }
