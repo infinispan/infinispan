@@ -33,7 +33,7 @@ import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
 /**
- * Ispn234Test.
+ * Test single owner distributed cache configurations.
  * 
  * @author Galder Zamarreño
  * @since 4.0
@@ -51,7 +51,7 @@ public class SingleOwnerTest extends BaseDistFunctionalTest {
          // tests repeatedly queries changes
          configuration.setIsolationLevel(IsolationLevel.REPEATABLE_READ);
       }
-      configuration.setSyncReplTimeout(60, TimeUnit.SECONDS);
+      configuration.setSyncReplTimeout(360, TimeUnit.SECONDS);
       configuration.setNumOwners(1);
       configuration.setLockAcquisitionTimeout(45, TimeUnit.SECONDS);
       caches = createClusteredCaches(2, cacheName, configuration);
@@ -70,6 +70,21 @@ public class SingleOwnerTest extends BaseDistFunctionalTest {
       assert caches.length == 1;
       Cache ownerCache = caches[0];
       ownerCache.put("mykey", new Object());
+   }
+
+   public void testRetrieveKeyFromNonOwner() {
+      Cache[] owners = getOwners("yourkey", 1);
+      Cache[] nonOwners = getNonOwners("yourkey", 1);
+      assert owners.length == 1;
+      assert nonOwners.length == 1;
+      Cache ownerCache = owners[0];
+      Cache nonOwnerCache = nonOwners[0];
+      ownerCache.put("yourkey", new Object());
+      try {
+         nonOwnerCache.get("yourkey");
+         assert false : "Should have failed with a org.infinispan.marshall.NotSerializableException";
+      } catch (org.infinispan.marshall.NotSerializableException e) {
+      }
    }
 
 }

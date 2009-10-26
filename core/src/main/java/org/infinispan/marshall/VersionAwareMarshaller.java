@@ -34,6 +34,7 @@ import org.infinispan.util.logging.LogFactory;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.NotSerializableException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.OutputStream;
@@ -88,6 +89,12 @@ public class VersionAwareMarshaller extends AbstractMarshaller {
       ObjectOutput out = startObjectOutput(baos, false);
       try {
          defaultMarshaller.objectToObjectStream(obj, out);
+      } catch(NotSerializableException nse) {
+         if (log.isTraceEnabled()) log.trace("Object is not serializable", nse);
+         throw new org.infinispan.marshall.NotSerializableException(nse.getMessage(), nse.getCause());
+      } catch(IOException ioe) {
+         if (log.isTraceEnabled()) log.trace("Exception while marshalling object", ioe);
+         throw ioe;
       } finally {
          finishObjectOutput(out);
       }

@@ -258,7 +258,11 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
    }
 
    protected Cache<Object, String>[] getNonOwners(Object key) {
-      Cache<Object, String>[] nonOwners = new Cache[2];
+      return getNonOwners(key, 2);
+   }
+
+   protected Cache<Object, String>[] getNonOwners(Object key, int expectedNumberNonOwners) {
+      Cache<Object, String>[] nonOwners = new Cache[expectedNumberNonOwners];
       int i = 0;
       for (Cache<Object, String> c : caches) {
          if (!isOwner(c, key)) nonOwners[i++] = c;

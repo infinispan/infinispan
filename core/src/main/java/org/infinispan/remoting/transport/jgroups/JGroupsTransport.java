@@ -376,16 +376,21 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
             } else {
                noValidResponses = false;
                if (rsp.getValue() != null) {
-                  Response value = (Response) rsp.getValue();
-                  if (value instanceof ExceptionResponse) {
-                     Exception e = ((ExceptionResponse) value).getException();
-                     if (!(e instanceof ReplicationException)) {
-                        // if we have any application-level exceptions make sure we throw them!!
-                        if (trace) log.trace("Received exception from " + rsp.getSender(), e);
-                        throw e;
-                     }
+                  Object value = rsp.getValue();
+                  Exception e = null;
+                  if (value instanceof Exception)
+                     e = (Exception) value;
+                  if (value instanceof ExceptionResponse)
+                     e = ((ExceptionResponse) value).getException();
+                  
+                  if (e != null && !(e instanceof ReplicationException)) {
+                     // if we have any application-level exceptions make sure we throw them!!
+                     if (trace) log.trace("Received exception from " + rsp.getSender(), e);
+                     throw e;
+                  } else {
+                     Response response = (Response) rsp.getValue();
+                     retval.add(response);
                   }
-                  retval.add(value);
                }
             }
          }
