@@ -6,6 +6,11 @@
 
 JVM_OPTS="$JVM_OPTS -Xms512M -Xmx512M -Dbind.address=127.0.0.1 -Djava.net.preferIPv4Stack=true -Dprotocol.stack=udp"
 
+PROFILED=false
+if [ $1 = "-p" ] ; then
+  PROFILED=true
+fi
+
 ## Set up a classpath.
 if [ -z $ISPN_HOME ] ; then
    dn=`dirname $0`
@@ -26,6 +31,13 @@ unzip -q target/distribution/*-bin.zip -d .tmp_profile_script
 for i in `find .tmp_profile_script/*/modules/core/lib -name "*.jar"` ; do
   CP=$CP:$i
 done
+
+if [ $PROFILED = "true" ] ; then
+  JVM_OPTS="$JVM_OPTS 
+-agentlib:jprofilerti=offline,id=177,config=/opt/jprofiler_cfg/config.xml  -Xbootclasspath/a:/opt/jprofiler/bin/agent.jar"
+fi
+
+export LD_LIBRARY_PATH=/opt/jprofiler/bin/linux-x86:$LD_LIBRARY_PATH
 
 java ${JVM_OPTS} -cp $CP ${*}
 
