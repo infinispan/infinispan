@@ -60,7 +60,7 @@ public class ReplaceCommand extends AbstractDataCommand implements DataWriteComm
    }
 
    public Object perform(InvocationContext ctx) throws Throwable {
-      MVCCEntry e = lookupMvccEntry(ctx, key);
+      MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
       if (e != null) {
          if (ctx.isOriginLocal()) {
             if (e.isNull()) return returnValue(null, false);

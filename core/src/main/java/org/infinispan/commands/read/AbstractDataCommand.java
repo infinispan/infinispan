@@ -22,8 +22,6 @@
 package org.infinispan.commands.read;
 
 import org.infinispan.commands.DataCommand;
-import org.infinispan.container.entries.MVCCEntry;
-import org.infinispan.context.InvocationContext;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -65,10 +63,6 @@ public abstract class AbstractDataCommand implements DataCommand {
       if (key != null ? !key.equals(that.key) : that.key != null) return false;
 
       return true;
-   }
-
-   protected final MVCCEntry lookupMvccEntry(InvocationContext ctx, Object key) {
-      return (MVCCEntry) ctx.lookupEntry(key);
    }
 
    public int hashCode() {

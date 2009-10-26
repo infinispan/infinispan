@@ -71,7 +71,7 @@ public class RemoveCommand extends AbstractDataCommand implements DataWriteComma
    }
 
    public Object perform(InvocationContext ctx) throws Throwable {
-      MVCCEntry e = lookupMvccEntry(ctx, key);
+      MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
       if (e == null || e.isNull()) {
          log.trace("Nothing to remove since the entry is null or we have a null entry");
          if (value == null) {

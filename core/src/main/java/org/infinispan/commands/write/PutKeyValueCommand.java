@@ -79,21 +79,21 @@ public class PutKeyValueCommand extends AbstractDataCommand implements DataWrite
 
    public Object perform(InvocationContext ctx) throws Throwable {
       Object o;
-      MVCCEntry e = lookupMvccEntry(ctx, key);
-      if (e.getValue() != null && putIfAbsent) {
+      MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
+      Object entryValue = e.getValue();
+      if (entryValue != null && putIfAbsent) {
          successful = false;
-         return e.getValue();
+         return entryValue;
       } else {
-         notifier.notifyCacheEntryModified(key, e.getValue(), true, ctx);
+         notifier.notifyCacheEntryModified(key, entryValue, true, ctx);
 
          if (value instanceof Delta) {
             // magic
             Delta dv = (Delta) value;
-            Object existing = e.getValue();
             DeltaAware toMergeWith = null;
-            if (existing instanceof DeltaAware) toMergeWith = (DeltaAware) existing;
+            if (entryValue instanceof DeltaAware) toMergeWith = (DeltaAware) entryValue;
             e.setValue(dv.merge(toMergeWith));
-            o = existing;
+            o = entryValue;
             e.setLifespan(lifespanMillis);
             e.setMaxIdle(maxIdleTimeMillis);
          } else {
