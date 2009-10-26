@@ -1,5 +1,8 @@
 package org.infinispan.profiling;
 
+import org.infinispan.notifications.Listener;
+import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
+import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.testng.annotations.Test;
 
 @Test(groups = "profiling", enabled = false, testName = "profiling.ProfileTestSlave")
@@ -44,7 +47,10 @@ public class ProfileTestSlave extends AbstractProfileTest {
    }
 
    private void waitForTest() throws Exception {
+      // attach a view change listener
+      cacheManager.addListener(new ShutdownHook());
       System.out.println("Slave listening for remote connections.  Hit Enter when done.");
+      System.in.read();
       System.in.read();
    }
 
@@ -59,5 +65,16 @@ public class ProfileTestSlave extends AbstractProfileTest {
       System.out.println("Waiting for test completion.  Hit any key when done.");
       doTest();
       waitForTest();
+   }
+
+   @Listener
+   public static final class ShutdownHook {
+      @ViewChanged
+      public void viewChanged(ViewChangedEvent vce) {
+         // if the new view ONLY contains me, die!
+         if (vce.getOldMembers().size() > vce.getNewMembers().size() && vce.getNewMembers().size() == 1 && vce.getNewMembers().contains(vce.getLocalAddress())) {
+            System.exit(0);
+         }
+      }
    }
 }

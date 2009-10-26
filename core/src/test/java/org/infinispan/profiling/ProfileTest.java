@@ -26,7 +26,7 @@ public class ProfileTest extends AbstractProfileTest {
    /*
       Test configuration flags
     */
-   protected static final long NUM_OPERATIONS = 1000000; // DURATION is replaced with a fixed number of operations instead.
+   protected static long NUM_OPERATIONS = 1000000; // DURATION is replaced with a fixed number of operations instead.
    protected static final int NUM_THREADS = 25;
    protected static final int MAX_RANDOM_SLEEP_MILLIS = 1;
    protected static final int MAX_OVERALL_KEYS = 2000;
@@ -41,6 +41,8 @@ public class ProfileTest extends AbstractProfileTest {
       pst.startedInCmdLine = true;
 
       String mode = args[0];
+      if (args.length > 1) NUM_OPERATIONS = Integer.parseInt(args[1]);
+      
       try {
          if (args.length > 1) pst.clusterNameOverride = args[1];
          pst.testWith(mode);
@@ -76,7 +78,7 @@ public class ProfileTest extends AbstractProfileTest {
       doTest();
 
       // wait for user exit
-      System.in.read();
+//      System.in.read();
    }
 
    /**
