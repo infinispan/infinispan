@@ -60,7 +60,6 @@ public class ProfileTestSlave extends AbstractProfileTest {
 
       // attach a view change listener
       cacheManager.addListener(new ShutdownHook(t));
-      System.out.println("Slave listening for remote connections.  Hit Enter when done.");
       t.setDaemon(true);
       t.start();
       try {
