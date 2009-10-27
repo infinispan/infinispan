@@ -12,6 +12,7 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.marshall.NotSerializableException;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -24,7 +25,6 @@ import javax.transaction.NotSupportedException;
 import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
-import java.io.NotSerializableException;
 import java.io.Serializable;
 
 @Test(groups = "functional", testName = "replication.ReplicationExceptionTest")

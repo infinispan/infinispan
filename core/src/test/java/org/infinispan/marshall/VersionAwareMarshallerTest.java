@@ -81,7 +81,6 @@ import org.testng.annotations.Test;
 
 import java.io.Externalizable;
 import java.io.IOException;
-import java.io.NotSerializableException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.*;
