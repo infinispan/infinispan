@@ -382,7 +382,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
                      e = (Exception) value;
                   if (value instanceof ExceptionResponse)
                      e = ((ExceptionResponse) value).getException();
-                  
+
                   if (e != null && !(e instanceof ReplicationException)) {
                      // if we have any application-level exceptions make sure we throw them!!
                      if (trace) log.trace("Received exception from " + rsp.getSender(), e);
@@ -543,12 +543,10 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
    private Vector<org.jgroups.Address> toJGroupsAddressVector(Collection<Address> list) {
       if (list == null) return null;
       if (list.isEmpty()) return new Vector<org.jgroups.Address>();
-
+      // optimize for the single node case
       Vector<org.jgroups.Address> retval = new Vector<org.jgroups.Address>(list.size());
-      for (Address a : list) {
-         JGroupsAddress ja = (JGroupsAddress) a;
-         retval.add(ja.address);
-      }
+      for (Address a : list) retval.add(toJGroupsAddress(a));
+
       return retval;
    }
 
@@ -558,10 +556,13 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
 
    private List<Address> fromJGroupsAddressList(List<org.jgroups.Address> list) {
       if (list == null || list.isEmpty()) return Collections.emptyList();
-
-      List<Address> retval = new ArrayList<Address>(list.size());
-      for (org.jgroups.Address a : list) {
-         retval.add(new JGroupsAddress(a));
+      // optimize for the single node case
+      int sz = list.size();
+      List<Address> retval = new ArrayList<Address>(sz);
+      if (sz == 1) {
+         retval.add(new JGroupsAddress(list.get(0)));
+      } else {
+         for (org.jgroups.Address a : list) retval.add(new JGroupsAddress(a));
       }
       return retval;
    }
