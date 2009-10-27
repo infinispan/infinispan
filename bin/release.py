@@ -16,25 +16,6 @@ except:
     sys.exit(1)
 
 from pythonTools import *
-try:
-    import pysvn
-except:
-    print '''
-        Welcome to the Infinispan Release Script.
-        This release script needs the PySVN module to be installed.  Please
-        install this by visiting 
-
-            http://pysvn.tigris.org/project_downloads.html
-
-        or if you are using Linux, using
-
-            sudo apt-get install python-svn (Ubuntu/Debian)
-
-        or
-
-            sudo yum install pysvn (Fedora/RHEL/CentOS)
-    '''
-    sys.exit(1)
 
 ### Globals
 #  CONFIGURABLE VARIABLES
@@ -55,39 +36,29 @@ localMvnRepoDir="/Users/manik/Code/maven2/org/infinispan"
 ################################################################################
 maven_pom_xml_namespace = "http://maven.apache.org/POM/4.0.0"
 
-def ssl_server_trust_prompt( trust_dict ):
-    # The PySVN docs do not detail what the 'failure codes' retval should be!!
-    return True, 100, False
-
-def get_login( realm, username, may_save ):
-    raise Exception('Subversion server requires a username and password.  Please connect to this server using your command-line svn client and save credentials.')
-
-checkInMessage = ""
-
-def get_log_message():
-    return True, checkInMessage
-
-class SvnConn():
-    def __init__(self):
-        self.client = pysvn.Client()
-        self.client.callback_ssl_server_trust_prompt = ssl_server_trust_prompt
-        self.client.callback_get_login = get_login
-        self.client.callback_get_log_message = get_log_message
-
-    def tag(self, fr, to, version):
+class SvnConn(object):
+    def tag(self, fr_url, to_url, version):
         checkInMessage = "Infinispan Release Script: Tagging " + version
-        self.client.copy(fr, to)
+        subprocess.check_call(["svn", "cp", fr_url, to_url, "-m", checkInMessage])
 
-    def getClient(self):
-        return self.client
+    def checkout(self, url, to_dir):
+       subprocess.check_call(["svn", "checkout", url, to_dir])
 
+    def checkin(self, working_dir, msg):
+       subprocess.check_call(["svn", "commit", "-m", msg, working_dir])
 
-svnConn = None
+    def add(self, directory):
+       if directory:
+          call_params = ["svn", "add"]
+          if isinstance(directory, str):
+             call_params.append(directory)
+          else:
+             for d in directory:
+                call_params.append(d)
+          subprocess.check_call(call_params)
 
 def get_svn_conn():
-    if not svnConn:
-        svnConn = SvnConn()
-    return svnConn
+    return SvnConn()
 
 modules = []
 def getModules(directory):
@@ -189,9 +160,9 @@ def get_poms_to_patch(workingDir):
     return pomsToPatch
  
 def updateVersions(version, workingDir):
-    client = get_svn_conn().getClient()
+    client = get_svn_conn()
     client.checkout(svnBase + "/tags/" + version, localTagsDir + '/' + version)
-    pomsToPatch = get_poms_to_patch()
+    pomsToPatch = get_poms_to_patch(workingDir)
     
     for pom in pomsToPatch:
         patch(pom, version)
@@ -237,7 +208,7 @@ def getModuleName(pomFile):
 
 def checkInMaven2Repo(version, workingDir):
     os.chdir(localMvnRepoDir)
-    client = get_svn_conn().getClient()
+    client = get_svn_conn()
     poms = [workingDir + "/pom.xml"]
     for m in modules:
         poms.append(workingDir + "/" + m + "/pom.xml")
