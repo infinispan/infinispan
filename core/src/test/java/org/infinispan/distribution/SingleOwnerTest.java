@@ -23,10 +23,15 @@
 package org.infinispan.distribution;
 
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
+import org.infinispan.CacheException;
 import org.infinispan.config.Configuration;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -51,7 +56,7 @@ public class SingleOwnerTest extends BaseDistFunctionalTest {
          // tests repeatedly queries changes
          configuration.setIsolationLevel(IsolationLevel.REPEATABLE_READ);
       }
-      configuration.setSyncReplTimeout(360, TimeUnit.SECONDS);
+      configuration.setSyncReplTimeout(3, TimeUnit.SECONDS);
       configuration.setNumOwners(1);
       configuration.setLockAcquisitionTimeout(45, TimeUnit.SECONDS);
       caches = createClusteredCaches(2, cacheName, configuration);
@@ -72,7 +77,7 @@ public class SingleOwnerTest extends BaseDistFunctionalTest {
       ownerCache.put("mykey", new Object());
    }
 
-   public void testRetrieveKeyFromNonOwner() {
+   public void testRetrieveNonSerializableKeyFromNonOwner() {
       Cache[] owners = getOwners("yourkey", 1);
       Cache[] nonOwners = getNonOwners("yourkey", 1);
       assert owners.length == 1;
@@ -87,4 +92,25 @@ public class SingleOwnerTest extends BaseDistFunctionalTest {
       }
    }
 
+   public void testErrorWhenRetrievingKeyFromNonOwner() {
+      Cache[] owners = getOwners("diffkey", 1);
+      Cache[] nonOwners = getNonOwners("diffkey", 1);
+      assert owners.length == 1;
+      assert nonOwners.length == 1;
+      Cache ownerCache = owners[0];
+      Cache nonOwnerCache = nonOwners[0];
+      ownerCache.put("diffkey", new Externalizable() {
+         public void writeExternal(ObjectOutput out) throws IOException {
+            throw new UnknownError();
+         }
+         public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+         }
+      });
+      try {
+         nonOwnerCache.get("diffkey");
+         assert false : "Should have failed with a CacheException that contains an UnknownError";
+      } catch (CacheException e) {
+         assert e.getCause() instanceof UnknownError;
+      }
+   }
 }

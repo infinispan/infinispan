@@ -74,6 +74,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * An encapsulation of a JGroups transport
  *
  * @author Manik Surtani
+ * @author Galder Zamarreño
  * @since 4.0
  */
 public class JGroupsTransport implements Transport, ExtendedMembershipListener, ExtendedMessageListener {
@@ -375,22 +376,26 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
                }
             } else {
                noValidResponses = false;
-               if (rsp.getValue() != null) {
-                  Object value = rsp.getValue();
-                  Exception e = null;
-                  if (value instanceof Exception)
-                     e = (Exception) value;
-                  if (value instanceof ExceptionResponse)
-                     e = ((ExceptionResponse) value).getException();
-
-                  if (e != null && !(e instanceof ReplicationException)) {
-                     // if we have any application-level exceptions make sure we throw them!!
-                     if (trace) log.trace("Received exception from " + rsp.getSender(), e);
-                     throw e;
-                  } else {
-                     Response response = (Response) rsp.getValue();
-                     retval.add(response);
+               Object value = rsp.getValue();
+               if (value instanceof Response) {
+                  Response response = (Response) value;
+                  if (response instanceof ExceptionResponse) {
+                     Exception e = ((ExceptionResponse) value).getException();
+                     if (!(e instanceof ReplicationException)) {
+                        // if we have any application-level exceptions make sure we throw them!!
+                        if (trace) log.trace("Received exception from " + rsp.getSender(), e);
+                        throw e;
+                     }
                   }
+                  retval.add(response);
+               } else if (value instanceof Exception) {
+                  Exception e = (Exception) value;
+                  if (trace) log.trace("Unexpected exception from " + rsp.getSender(), e);
+                  throw e;
+               } else if (value instanceof Throwable) {
+                  Throwable t = (Throwable) value;
+                  if (trace) log.trace("Unexpected throwable from " + rsp.getSender(), t);
+                  throw new CacheException("Remote (" + rsp.getSender() +") failed unexpectedly", t);
                }
             }
          }
