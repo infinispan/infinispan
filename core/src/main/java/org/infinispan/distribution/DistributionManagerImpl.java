@@ -204,7 +204,8 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    boolean willReceiveLeaverState(Address leaver) {
-      int dist = consistentHash.getDistance(leaver, self);
+      ConsistentHash ch = consistentHash instanceof UnionConsistentHash ? oldConsistentHash : consistentHash;
+      int dist = ch.getDistance(leaver, self);
       return dist <= replCount;
    }
 
