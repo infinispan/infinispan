@@ -81,7 +81,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
    public static final String CONFIGURATION_STRING = "configurationString";
    public static final String CONFIGURATION_XML = "configurationXml";
    public static final String CONFIGURATION_FILE = "configurationFile";
-   private static final String DEFAULT_JGROUPS_CONFIGURATION_FILE = "flush-udp.xml";
+   private static final String DEFAULT_JGROUPS_CONFIGURATION_FILE = "config-samples/jgroups-udp.xml";
 
    Channel channel;
    boolean createdChannel = false;
