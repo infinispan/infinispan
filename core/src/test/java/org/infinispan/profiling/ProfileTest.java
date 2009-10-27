@@ -66,7 +66,7 @@ public class ProfileTest extends AbstractProfileTest {
       runCompleteTest(LOCAL_CACHE_NAME);
    }
 
-   @Test(enabled = true)
+   @Test(enabled = false)
    public void testReplMode() throws Exception {
       runCompleteTest(REPL_SYNC_CACHE_NAME);
    }
