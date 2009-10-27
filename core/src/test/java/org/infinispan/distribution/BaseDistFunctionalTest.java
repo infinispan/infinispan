@@ -62,7 +62,17 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       RehashWaiter.waitForInitRehashToComplete(c1, c2, c3, c4);
 
    }
-   
+
+   public static ConsistentHash createNewConsistentHash(List<Address> servers) {
+      try {
+         return ConsistentHashHelper.createConsistentHash(DefaultConsistentHash.class, servers);
+      } catch (RuntimeException re) {
+         throw re;
+      } catch (Exception e) {
+         throw new RuntimeException(e);
+      }
+   }
+
    /**
     * This is a separate class because some tools try and run this method as a test 
     */
@@ -94,7 +104,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
 
       // seed this with an initial cache.  Any one will do.
       Cache seed = caches.get(0);
-      DefaultConsistentHash ch = getDefaultConsistentHash(seed, SECONDS.toMillis(480));
+      ConsistentHash ch = getNonUnionConsistentHash(seed, SECONDS.toMillis(480));
       List<Cache<Object, String>> reordered = new ArrayList<Cache<Object, String>>();
 
       
@@ -279,18 +289,18 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       return c.getAdvancedCache().getComponentRegistry().getComponent(DistributionManager.class);
    }
 
-   protected DefaultConsistentHash getDefaultConsistentHash(Cache<?, ?> c) {
-      return (DefaultConsistentHash) getDistributionManager(c).getConsistentHash();
+   protected ConsistentHash getConsistentHash(Cache<?, ?> c) {
+      return getDistributionManager(c).getConsistentHash();
    }
 
-   protected DefaultConsistentHash getDefaultConsistentHash(Cache<?, ?> c, long timeout) {
+   protected ConsistentHash getNonUnionConsistentHash(Cache<?, ?> c, long timeout) {
       long expTime = System.currentTimeMillis() + timeout;
       while (System.currentTimeMillis() < expTime) {
          ConsistentHash ch = getDistributionManager(c).getConsistentHash();
-         if (ch instanceof DefaultConsistentHash) return (DefaultConsistentHash) ch;
+         if (!(ch instanceof UnionConsistentHash)) return ch;
          TestingUtil.sleepThread(100);
       }
-      throw new RuntimeException("Timed out waiting for a DefaultConsistentHash to be present on cache [" + addressOf(c) + "]");
+      throw new RuntimeException("Timed out waiting for a non-UnionConsistentHash to be present on cache [" + addressOf(c) + "]");
    }
 
    /**

@@ -27,8 +27,7 @@ public class DefaultConsistentHashTest extends AbstractInfinispanTest {
          servers.add(new TestAddress(i));
       }
 
-      ch = new DefaultConsistentHash();
-      ch.setCaches(servers);
+      ch = BaseDistFunctionalTest.createNewConsistentHash(servers);
    }
 
    @AfterTest
@@ -83,8 +82,7 @@ public class DefaultConsistentHashTest extends AbstractInfinispanTest {
       Address a3 = new TestAddress(3000);
       Address a4 = new TestAddress(4000);
 
-      ConsistentHash ch = new DefaultConsistentHash();
-      ch.setCaches(Arrays.asList(a1, a2, a3, a4));
+      ch = BaseDistFunctionalTest.createNewConsistentHash(Arrays.asList(a1, a2, a3, a4));
 
       // the CH may reorder the addresses.  Get the new order.
       List<Address> adds = ch.getCaches();
@@ -111,8 +109,7 @@ public class DefaultConsistentHashTest extends AbstractInfinispanTest {
       Address a3 = new TestAddress(3000);
       Address a4 = new TestAddress(4000);
 
-      ConsistentHash ch = new DefaultConsistentHash();
-      ch.setCaches(Arrays.asList(a1, a2, a3, a4));
+      ch = BaseDistFunctionalTest.createNewConsistentHash(Arrays.asList(a1, a2, a3, a4));
 
       String[] keys = new String[10000];
       Random r = new Random();

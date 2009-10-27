@@ -40,10 +40,7 @@ public class JoinTaskTest extends AbstractInfinispanTest {
 
       JoinTask jt = new JoinTask(rpc, null, null, null, null, null);
 
-      ConsistentHash ch = new DefaultConsistentHash();
-      ch.setCaches(Arrays.asList(a1, a2, a3, a4, a5, a6, joiner));
-
-      jt.chNew = ch;
+      jt.chNew = BaseDistFunctionalTest.createNewConsistentHash(Arrays.asList(a1, a2, a3, a4, a5, a6, joiner));
 
       List<Address> a = jt.getAddressesWhoMaySendStuff(rc);
       List<Address> expected;

@@ -60,4 +60,22 @@ public class ConsistentHashHelper {
       list.addAll(moreAddresses);
       return createConsistentHash(c, list);
    }
+
+   public static ConsistentHash createConsistentHash(Class<? extends ConsistentHash> clazz, List<Address> addresses) throws IllegalAccessException, InstantiationException, ClassNotFoundException {
+      ConsistentHash ch = Util.getInstance(clazz);
+      if (addresses != null && addresses.size() > 0) ch.setCaches(addresses);
+      return ch;
+   }
+
+   public static ConsistentHash createConsistentHash(Class<? extends ConsistentHash> clazz, List<Address> addresses, Address... moreAddresses) throws IllegalAccessException, ClassNotFoundException, InstantiationException {
+      List<Address> list = new LinkedList<Address>(addresses);
+      list.addAll(Arrays.asList(moreAddresses));
+      return createConsistentHash(clazz, list);
+   }
+
+   public static ConsistentHash createConsistentHash(Class<? extends ConsistentHash> clazz, List<Address> addresses, Collection<Address> moreAddresses) throws IllegalAccessException, ClassNotFoundException, InstantiationException {
+      List<Address> list = new LinkedList<Address>(addresses);
+      list.addAll(moreAddresses);
+      return createConsistentHash(clazz, list);
+   }
 }

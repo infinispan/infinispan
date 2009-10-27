@@ -3,6 +3,7 @@ package org.infinispan.distribution;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.Util;
 import org.testng.annotations.Test;
 
@@ -21,7 +22,7 @@ import java.util.concurrent.TimeUnit;
  * @since 4.0
  */
 @Test(testName = "distribution.ConsistentHashPerfTest", groups = "manual", enabled = false)
-public class ConsistentHashPerfTest {
+public class ConsistentHashPerfTest extends AbstractInfinispanTest {
 
    private void addCaches(ConsistentHash ch, int numNodes) {
       Random r = new Random();
@@ -48,7 +49,7 @@ public class ConsistentHashPerfTest {
       for (int nn : numNodes) {
          System.gc();
          TestingUtil.sleepThread(1000);
-         ConsistentHash ch = new DefaultConsistentHash();
+         ConsistentHash ch = BaseDistFunctionalTest.createNewConsistentHash(null);
          addCaches(ch, nn);
          long start = System.nanoTime();
          Object key = new Object();
@@ -64,7 +65,7 @@ public class ConsistentHashPerfTest {
       final int numNodes = 100;
 
       List<Object> keys = new ArrayList<Object>(numKeys);
-      ConsistentHash ch = new DefaultConsistentHash();
+      ConsistentHash ch = BaseDistFunctionalTest.createNewConsistentHash(null);
       addCaches(ch, numNodes);
       for (int i = 0; i < numKeys; i++) keys.add(UUID.randomUUID());
 

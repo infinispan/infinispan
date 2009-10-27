@@ -2,7 +2,7 @@ package org.infinispan.distribution.rehash;
 
 import org.infinispan.Cache;
 import org.infinispan.distribution.BaseDistFunctionalTest;
-import org.infinispan.distribution.DefaultConsistentHash;
+import org.infinispan.distribution.ConsistentHash;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
@@ -47,7 +47,7 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
 
    protected int locateJoiner(Address joinerAddress) {
       for (Cache c : Arrays.asList(c1, c2, c3, c4)) {
-         DefaultConsistentHash dch = getDefaultConsistentHash(c, SECONDS.toMillis(480));
+         ConsistentHash dch = getNonUnionConsistentHash(c, SECONDS.toMillis(480));
          int i = 0;
          for (Address a : dch.getCaches()) {
             if (a.equals(joinerAddress)) return i;
