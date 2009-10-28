@@ -220,15 +220,31 @@ def checkInMaven2Repo(version, workingDir):
         checkInMessage = "Infinispan Release Script: Releasing module " + mn + " version " + version + " to public Maven2 repo"
         client.checkin(mn, checkInMessage)
 
-def uploadJavadocs(workingDir):
-    print "TODO.  Please do this manually for now."
+def uploadJavadocs(base_dir, workingDir, version):
+    os.chdir("%s/target/distribution" % workingDir)
+    ## Grab the distribution archive and un-arch it
+    subprocess.check_call(["unzip", "infinispan-%s-all.zip" % version])
+    os.chdir("infinispan-%s/doc" % version)
+    ## "Fix" the docs to use the appropriate analytics tracker ID
+    subprocess.check_call(["%s/bin/updateTracker.sh" % workingDir])
+    subprocess.check_call(["tar", "zcf", "%s/apidocs-%s.tar.gz" % (base_dir, version), "apidocs"])
+    ## Upload to sourceforge
+    os.chdir(base_dir)
+    subprocess.check_call(["scp", "apidocs-%s.tar.gz" % version, "sourceforge_frs:"])
+
+    print "API docs are in %s/apidocs-%s.tar.gz" % (base_dir, version)
+    print "They have also been uploaded to Sourceforge."
+    print "MANUAL STEPS:"
+    print "  1) Email archive to helpdesk@redhat.com"
+    print "  2) SSH to sourceforge and run apidocs.sh"
+    print ""    
 
 ### This is the starting place for this script.
 def release():
     # We start by determining whether the version passed in is a valid one
     if len(sys.argv) < 2:
         helpAndExit()
-
+    base_dir = os.getcwd()
     version = validateVersion(sys.argv[1])
     print "Releasing Infinispan version " + version
     print "Please stand by!"
@@ -259,7 +275,7 @@ def release():
 
     # Step 5: Upload javadocs to FTP
     print "Step 5: Uploading Javadocs"
-    uploadJavadocs(workingDir)
+    uploadJavadocs(base_dir, workingDir, version)
     print "Step 5: Complete"
 
     # (future)
