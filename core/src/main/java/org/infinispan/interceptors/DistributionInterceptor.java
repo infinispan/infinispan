@@ -15,6 +15,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.EntryFactory;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -48,6 +49,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    CommandsFactory cf;
    DataContainer dataContainer;
    boolean isL1CacheEnabled, needReliableReturnValues;
+   EntryFactory entryFactory;
 
 
    static final RecipientGenerator CLEAR_COMMAND_GENERATOR = new RecipientGenerator() {
@@ -63,10 +65,11 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    };
 
    @Inject
-   public void injectDependencies(DistributionManager distributionManager, CommandsFactory cf, DataContainer dataContainer) {
+   public void injectDependencies(DistributionManager distributionManager, CommandsFactory cf, DataContainer dataContainer, EntryFactory entryFactory) {
       this.dm = distributionManager;
       this.cf = cf;
       this.dataContainer = dataContainer;
+      this.entryFactory = entryFactory;
    }
 
    @Start
@@ -114,6 +117,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
                if (trace) log.trace("Caching remotely retrieved entry for key {0} in L1", key);
                long lifespan = ice.getLifespan() < 0 ? configuration.getL1Lifespan() : Math.min(ice.getLifespan(), configuration.getL1Lifespan());
                PutKeyValueCommand put = cf.buildPutKeyValueCommand(ice.getKey(), ice.getValue(), lifespan, -1);
+               entryFactory.wrapEntryForWriting(ctx, key, true, false, ctx.hasLockedKey(key), false);
                invokeNextInterceptor(ctx, put);
             } else {
                if (trace) log.trace("Not caching remotely retrieved entry for key {0} in L1", key);
@@ -306,7 +310,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    private boolean isSingleOwnerAndLocal(RecipientGenerator recipientGenerator) {
       return configuration.getNumOwners() == 1 && recipientGenerator.generateRecipients().get(0).equals(rpcManager.getTransport().getAddress());
    }
-   
+
    interface KeyGenerator {
       Object[] getKeys();
    }

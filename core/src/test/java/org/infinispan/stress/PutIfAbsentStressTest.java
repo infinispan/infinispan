@@ -47,7 +47,7 @@ import org.testng.annotations.Test;
  * @see java.util.concurrent.ConcurrentMap#putIfAbsent(Object, Object)
  * @author Sanne Grinovero
  */
-@Test(groups = "stress", testName = "atomic.PutIfAbsentStressTest")
+@Test(groups = "stress", testName = "stress.PutIfAbsentStressTest")
 public class PutIfAbsentStressTest {
 
    private static final int NODES_NUM = 5;
@@ -123,7 +123,7 @@ public class PutIfAbsentStressTest {
       } finally {
          for (CacheManager cm : cacheManagers) {
             try {
-               TestingUtil.clearContent(cm);
+               TestingUtil.killCacheManagers(cm);
             } catch (Exception e) {
                // try cleaning up the other cacheManagers too
             }

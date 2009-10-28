@@ -1,11 +1,11 @@
 package org.infinispan.container.entries;
 
+import org.infinispan.marshall.Ids;
+import org.infinispan.marshall.Marshallable;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-
-import org.infinispan.marshall.Ids;
-import org.infinispan.marshall.Marshallable;
 
 /**
  * A cache entry that is immortal/cannot expire
@@ -121,5 +121,12 @@ public class ImmortalCacheEntry extends AbstractInternalCacheEntry {
          Object v = input.readObject();
          return new ImmortalCacheEntry(k, v);
       }
+   }
+
+   @Override
+   public String toString() {
+      return "ImmortalCacheEntry{" +
+            "cacheValue=" + cacheValue +
+            "} " + super.toString();
    }
 }

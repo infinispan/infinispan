@@ -68,7 +68,6 @@ public class AsyncTest extends AbstractInfinispanTest {
       String value = "testMultiplePutsOnSameKey-v-";
       doTestSameKeyPut(number, key, value);
       doTestSameKeyRemove(key);
-      
    }
 
    public void testRestrictionOnAddingToAsyncQueue() throws Exception {
@@ -121,15 +120,20 @@ public class AsyncTest extends AbstractInfinispanTest {
    }
    
    private void doTestSameKeyPut(int number, String key, String value) throws Exception {
-      for (int i = 0; i < number; i++) store.store(InternalEntryFactory.create(key, value + i));
-      
+      for (int i = 0; i < number; i++)
+         store.store(InternalEntryFactory.create(key, value + i));
+
       InternalCacheEntry entry;
-      do {
+      boolean success = false;
+      for (int i = 0; i < 120; i++) {
          TestingUtil.sleepRandom(1000);
          entry = store.load(key);
-      } while (!entry.getValue().equals(value + (number-1)));
+         success = entry.getValue().equals(value + (number-1));
+         if (success) break;
+      }
+      assert success;
    }
-   
+
    private void doTestRemove(int number, String key) throws Exception {
       for (int i = 0; i < number; i++) store.remove(key + i);
       
@@ -156,9 +160,9 @@ public class AsyncTest extends AbstractInfinispanTest {
       do {
          TestingUtil.sleepRandom(1000);
          entry = store.load(key);
-      } while (entry != null);      
+      } while (entry != null);
    }
-   
+
    private void doTestClear(int number, String key) throws Exception {
       store.clear();
       TestingUtil.sleepRandom(1000);

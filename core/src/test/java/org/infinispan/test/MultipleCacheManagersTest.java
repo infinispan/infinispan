@@ -4,7 +4,6 @@ import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.concurrent.locks.LockManager;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -173,15 +172,4 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
     * {@link #addClusterEnabledCacheManager()}
     */
    protected abstract void createCacheManagers() throws Throwable;
-
-
-   protected void assertNotLocked(Cache cache, Object key) {
-      LockManager lockManager = TestingUtil.extractLockManager(cache);
-      assert !lockManager.isLocked(key) : "expected key '" + key + "' not to be locked, and it is by: " + lockManager.getOwner(key);
-   }
-
-   protected void assertLocked(Cache cache, Object key) {
-      LockManager lockManager = TestingUtil.extractLockManager(cache);
-      assert lockManager.isLocked(key) : "expected key '" + key + "' to be locked, but it is not";
-   }
 }

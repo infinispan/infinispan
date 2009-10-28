@@ -110,7 +110,7 @@ public class RepeatableReadLockTest extends LockTestBase {
       tm.resume(tx);
       cache.remove("a");
       tx.commit();
-      assert cache.get("a") == null;
+      assert cache.get("a") == null : "expected null but received " + cache.get("a");
    }
 
    public void testLocksOnPutKeyVal() throws Exception {
@@ -126,6 +126,8 @@ public class RepeatableReadLockTest extends LockTestBase {
 
       tm.begin();
       assert cache.get("k").equals("v");
+
+
       assertNotLocked("k");
       tm.commit();
 

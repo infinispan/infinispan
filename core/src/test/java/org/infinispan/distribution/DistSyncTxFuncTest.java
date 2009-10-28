@@ -201,7 +201,13 @@ public class DistSyncTxFuncTest extends BaseDistFunctionalTest {
       MagicKey k2 = new MagicKey(c2, "k2"); // maps on to c2 and c3
 
       init(k1, k2);
+      asserLocked(c1, false, k1, k2);
+      asserLocked(c2, false, k1, k2);
+      asserLocked(c3, false, k1, k2);
+      asserLocked(c4, false, k1, k2);
+      
 
+      log.info("***** Here it starts!");
       TransactionManager tm4 = getTransactionManager(c4);
       tm4.begin();
       Object ret = c4.remove(k1);
@@ -212,19 +218,38 @@ public class DistSyncTxFuncTest extends BaseDistFunctionalTest {
       assert !c4.containsKey(k1);
       assert !c4.containsKey(k2);
       tm4.rollback();
+      log.info("----- Here it ends!");
+
+      asserLocked(c1, false, k1, k2);
+      asserLocked(c2, false, k1, k2);
+      asserLocked(c3, false, k1, k2);
+      asserLocked(c4, false, k1 );
+      asserLocked(c4, false, k2 );
 
       assertIsInContainerImmortal(c1, k1);
       assertIsInContainerImmortal(c2, k1);
       assertIsInContainerImmortal(c2, k2);
       assertIsInContainerImmortal(c3, k2);
 
+      asserLocked(c1, false, k1, k2);
+      asserLocked(c2, false, k1, k2);
+      asserLocked(c3, false, k1, k2);
+      asserLocked(c4, false, k1, k2);
+
+
       assertIsNotInL1(c4, k1);
       assertIsNotInL1(c4, k2);
       assertIsNotInL1(c1, k2);
       assertIsNotInL1(c3, k1);
 
+      asserLocked(c1, false, k1, k2);
+      asserLocked(c2, false, k1, k2);
+      asserLocked(c3, false, k1, k2);
+      asserLocked(c4, false, k1, k2);
+      
       checkOwnership(k1, k2, "value1", "value2");
    }
+
 
    public void testConditionalRemoveFromNonOwner() throws Exception {
       // we need 2 keys that reside on different caches...

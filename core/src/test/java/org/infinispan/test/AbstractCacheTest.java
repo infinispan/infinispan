@@ -6,6 +6,7 @@ import org.infinispan.manager.CacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.util.concurrent.locks.LockManager;
 
 import java.util.Set;
 
@@ -60,5 +61,15 @@ public class AbstractCacheTest extends AbstractInfinispanTest {
 
    protected boolean xor(boolean b1, boolean b2) {
       return (b1 || b2) && !(b1 && b2);
+   }
+
+   protected void assertNotLocked(Cache cache, Object key) {
+      LockManager lockManager = TestingUtil.extractLockManager(cache);
+      assert !lockManager.isLocked(key) : "expected key '" + key + "' not to be locked, and it is by: " + lockManager.getOwner(key);
+   }
+
+   protected void assertLocked(Cache cache, Object key) {
+      LockManager lockManager = TestingUtil.extractLockManager(cache);
+      assert lockManager.isLocked(key) : "expected key '" + key + "' to be locked, but it is not";
    }
 }

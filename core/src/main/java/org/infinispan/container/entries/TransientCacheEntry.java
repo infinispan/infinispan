@@ -1,12 +1,12 @@
 package org.infinispan.container.entries;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
 import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.Marshallable;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
  * A cache entry that is transient, i.e., it can be considered expired afer a period of not being used.
@@ -138,5 +138,12 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
          Long maxIdle = input.readLong();
          return new TransientCacheEntry(k, v, maxIdle, lastUsed);
       }      
+   }
+
+   @Override
+   public String toString() {
+      return "TransientCacheEntry{" +
+            "cacheValue=" + cacheValue +
+            "} " + super.toString();
    }
 }

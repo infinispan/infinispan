@@ -71,4 +71,9 @@ public class LocalTxInvocationContext extends AbstractTxInvocationContext {
    public void clearLookedUpEntries() {
       xaAdapter.clearLookedUpEntries();
    }
+
+   @Override
+   public boolean hasLockedKey(Object key) {
+      return xaAdapter != null && super.hasLockedKey(key);
+   }
 }

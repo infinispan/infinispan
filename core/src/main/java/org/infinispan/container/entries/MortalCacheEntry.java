@@ -1,12 +1,12 @@
 package org.infinispan.container.entries;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
 import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.Marshallable;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
  * A cache entry that is mortal.  I.e., has a lifespan.
@@ -136,5 +136,12 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
          Long lifespan = input.readLong();
          return new MortalCacheEntry(k, v, lifespan, created);
       }      
+   }
+
+   @Override
+   public String toString() {
+      return "MortalCacheEntry{" +
+            "cacheValue=" + cacheValue +
+            "} " + super.toString();
    }
 }

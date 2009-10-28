@@ -116,7 +116,11 @@ public abstract class AbstractInvocationContext implements InvocationContext {
 
    public boolean hasLockedKey(Object key) {
       CacheEntry e = lookupEntry(key);
-      return e != null && e.isChanged();
+      if (e == null) {
+         return getLookedUpEntries().containsKey(key); // this will chk if the key is present
+      } else {
+         return e.isChanged();
+      }
    }
 
    public boolean hasLockedEntries() {
@@ -124,7 +128,6 @@ public abstract class AbstractInvocationContext implements InvocationContext {
       boolean result = false;
       for (CacheEntry e : lookedUpEntries.values()) {
          if (e.isChanged()) {
-            System.out.println("Entry is locked = " + e);
             result = true;
          }
       }
