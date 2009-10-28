@@ -33,7 +33,7 @@ public class SuiteResourcesAndLogTest {
       log("sun.arch.data.model = " + System.getProperty("sun.arch.data.model"));
       log("sun.cpu.endian = " + System.getProperty("sun.cpu.endian"));
       log("protocol.stack = " + System.getProperty("protocol.stack"));
-      log("infinispan.marshaller.class = " + System.getProperty("infinispan.marshaller.class"));
+//      log("infinispan.marshaller.class = " + System.getProperty("infinispan.marshaller.class"));
       String preferIpV4 = System.getProperty("java.net.preferIPv4Stack");
       log("java.net.preferIPv4Stack = " + preferIpV4);
       log("java.net.preferIPv6Stack = " + System.getProperty("java.net.preferIPv6Stack"));
