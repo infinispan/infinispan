@@ -6,6 +6,7 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.config.Configuration;
+import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.testng.annotations.Test;
 
@@ -125,5 +126,19 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       assert yetAnotherSecondCacheConfiguration.getExpirationMaxIdle() == Long.MAX_VALUE;
       assert secondCacheConfiguration.getIsolationLevel().equals(IsolationLevel.NONE);
       assert anotherSecondCacheConfiguration.getIsolationLevel().equals(IsolationLevel.SERIALIZABLE);
+   }
+
+   public void testDefiningConfigurationOverridingBooleans() {
+      CacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
+      Configuration c = new Configuration();
+      c.setUseLazyDeserialization(true);
+      Configuration lazy = cm.defineConfiguration("lazyDeserialization", c);
+      assert lazy.isUseLazyDeserialization();
+
+      c = new Configuration();
+      c.setEvictionStrategy(EvictionStrategy.LRU);
+      Configuration lazyLru = cm.defineConfiguration("lazyDeserializationWithLRU", "lazyDeserialization", c);
+      assert lazyLru.isUseLazyDeserialization();
+      assert lazyLru.getEvictionStrategy() == EvictionStrategy.LRU;
    }
 }
