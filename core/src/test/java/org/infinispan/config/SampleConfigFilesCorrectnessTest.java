@@ -47,6 +47,7 @@ public class SampleConfigFilesCorrectnessTest {
 
    public void testConfigWarnings() throws Exception {
       for (String aConfFile : getConfigFileNames()) {
+         System.out.println("Testing config file " + getRootFolder() + "/" + aConfFile);
          DefaultCacheManager dcm = new DefaultCacheManager(getRootFolder() + "/" + aConfFile);
          try {
             Cache defaultCache = dcm.getCache();
@@ -68,7 +69,7 @@ public class SampleConfigFilesCorrectnessTest {
       }
       return file.list(new FilenameFilter() {
          public boolean accept(File dir, String name) {
-            return name.indexOf("xml") > 0;
+            return name.endsWith(".xml") && !name.startsWith("jgroups");
          }
       });
    }
