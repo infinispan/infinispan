@@ -1,12 +1,10 @@
-<?xml version="1.0"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version='1.0' encoding='UTF-8'?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
    <modelVersion>4.0.0</modelVersion>
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-cachestore-parent</artifactId>
-      <version>4.0.0-SNAPSHOT</version>
+      <version>4.0.0.CR1</version>
       <relativePath>../pom.xml</relativePath>
    </parent>
    <artifactId>infinispan-cachestore-s3</artifactId>
@@ -14,8 +12,8 @@
    <description>Infinispan Amazon S3 CacheStore module</description>
 
    <properties>
-      <jclouds.aws.accesskeyid></jclouds.aws.accesskeyid>
-      <jclouds.aws.secretaccesskey></jclouds.aws.secretaccesskey>
+      <jclouds.aws.accesskeyid />
+      <jclouds.aws.secretaccesskey />
       <version.jclouds>1.0-beta-2</version.jclouds>
       <version.commons.io>1.4</version.commons.io>
    </properties>
