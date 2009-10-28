@@ -71,13 +71,13 @@ public class OverrideConfigurationVisitor extends AbstractConfigurationBeanVisit
 
    public void override(OverrideConfigurationVisitor override) {
       
-      //special handling for BooleanAttributeType
-      Set<Entry<String, BooleanAttributeType>> entrySet = override.bats.entrySet();      
+      // special handling for BooleanAttributeType
+      Set<Entry<String, BooleanAttributeType>> entrySet = override.bats.entrySet();
       for (Entry<String, BooleanAttributeType> entry : entrySet) {
-         BooleanAttributeType attributeType = bats.get(entry.getKey());
-         if(attributeType != null) {
-            attributeType.enabled = entry.getValue().enabled;
-         }
+         String booleanAttributeName = entry.getKey();
+         BooleanAttributeType attributeType = bats.get(booleanAttributeName);
+         BooleanAttributeType overrideAttributeType = override.bats.get(booleanAttributeName);
+         overrideFields(attributeType, overrideAttributeType);
       }
       
       //do we need to make clones of complex objects like list of cache loaders?
