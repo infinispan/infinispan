@@ -1,10 +1,10 @@
 package org.infinispan.distribution.rehash;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
-
 import org.infinispan.Cache;
 import org.infinispan.manager.CacheManager;
 import org.testng.annotations.Test;
+
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 @Test(groups = "functional", testName = "distribution.rehash.SingleJoinTest")
 public class SingleJoinTest extends RehashTestBase {

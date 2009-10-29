@@ -27,6 +27,7 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
    protected RehashTestBase() {
       cleanup = CleanupPhase.AFTER_METHOD;
       tx = true;
+      performRehashing = true;
    }
 
    // this setup has 4 running caches: {c1, c2, c3, c4}
