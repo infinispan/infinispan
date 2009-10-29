@@ -40,24 +40,4 @@
 			<version>1.2.2</version>
 		</dependency>
 	</dependencies>	
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>ideauidesigner-maven-plugin</artifactId>
-				<executions>
-					<execution>
-						<goals>
-							<goal>javac2</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<fork>true</fork>
-					<debug>true</debug>
-					<failOnError>true</failOnError>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
 </project>
