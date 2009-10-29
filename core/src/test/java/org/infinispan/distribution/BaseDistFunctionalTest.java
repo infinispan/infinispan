@@ -35,6 +35,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
    protected boolean sync = true;
    protected boolean tx = false;
    protected boolean testRetVals = true;
+   protected boolean l1CacheEnabled = true;
 
    protected void createCacheManagers() throws Throwable {
       cacheName = "dist";
@@ -47,6 +48,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       }
       configuration.setSyncReplTimeout(60, TimeUnit.SECONDS);
       configuration.setLockAcquisitionTimeout(45, TimeUnit.SECONDS);
+      configuration.setL1CacheEnabled(l1CacheEnabled);
       caches = createClusteredCaches(4, cacheName, configuration);
 
       reorderBasedOnCHPositions();
@@ -332,6 +334,8 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
     * cache (plus however many additional caches in the hash space)
     */
    public static class MagicKey implements Serializable {
+      /** The serialVersionUID */
+      private static final long serialVersionUID = -835275755945753954L;
       String name = null;
       int hashcode;
       String address;
