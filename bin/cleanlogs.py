@@ -45,8 +45,6 @@ def usage():
     N: (number) the JGroups VIEW ID to use as the definite list of caches.  Choose a view which has the most complete cache list.
     input_file: path to log file to transform
     output_file: path to result file
-
-    ** All arguments are mandatory!
   '''
 
 def guess_view(fn):
