@@ -101,7 +101,7 @@ public class JoinTask extends RehashTask {
          // 2.  new CH instance
          chNew = createConsistentHash(configuration, chOld.getCaches(), self);
          dmi.setConsistentHash(chNew);
-
+         
          if (configuration.isFetchInMemoryState()) {
             // 3.  Enable TX logging
             transactionLogger.enable();
@@ -109,7 +109,7 @@ public class JoinTask extends RehashTask {
             // 4.  Broadcast new temp CH
             rpcManager.broadcastRpcCommand(cf.buildRehashControlCommand(JOIN_REHASH_START, self), true, true);
 
-            // 5.  txLogger being enabled will cause CLusteredGetCommands to return uncertain responses.
+            // 5.  txLogger being enabled will cause ClusteredGetCommands to return uncertain responses.
 
             // 6.  pull state from everyone.
             Address myAddress = rpcManager.getTransport().getAddress();
