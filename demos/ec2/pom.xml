@@ -1,0 +1,63 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	
+	<parent>
+		<groupId>org.infinispan</groupId>
+		<artifactId>infinispan-parent</artifactId>
+		<version>4.0.0-SNAPSHOT</version>
+		<relativePath>../../parent/pom.xml</relativePath>
+	</parent>
+	
+	<artifactId>infinispan-ec2-demo</artifactId>
+	<version>4.0.0-SNAPSHOT</version>
+	<name>Infinispan EC2 Demo</name>
+	<description>Infinispan - EC2 Demo</description>
+	<repositories>
+		<repository>
+			<id>codehaus.m2.snapshots</id>
+			<url>http://snapshots.repository.codehaus.org</url>
+		</repository>
+	</repositories>
+	<dependencies>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>infinispan-core</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.martiansoftware</groupId>
+			<artifactId>jsap</artifactId>
+			<version>2.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.milyn</groupId>
+			<artifactId>milyn-smooks-javabean</artifactId>
+			<version>1.2.2</version>
+		</dependency>
+		<dependency>
+			<groupId>org.milyn</groupId>
+			<artifactId>milyn-smooks-csv</artifactId>
+			<version>1.2.2</version>
+		</dependency>
+	</dependencies>	
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>ideauidesigner-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<goals>
+							<goal>javac2</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<fork>true</fork>
+					<debug>true</debug>
+					<failOnError>true</failOnError>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+</project>
