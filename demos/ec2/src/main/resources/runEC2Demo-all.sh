@@ -24,9 +24,10 @@ JVM_PARAMS="${JVM_PARAMS} -DEC2Demo-jgroups-config=${ISPN_HOME}/etc/jgroups-s3_p
 #Load protein file => -p   e.g. -p /opt/influenza-data-files/influenza_aa.dat
 #Load nucleotide file => -n  e.g. -n /opt/influenza-data-files/influenza_na.dat
 #Load Influenze virus file => -i    e.g. -i /opt/influenza-data-files/influenza.dat
-gunzip ${ISPN_HOME}/etc/Amazon-TestData/*.gz
+
+gunzip ${ISPN_HOME}/etc/Amazon-TestData/*.gz > /dev/null
 
 DEMO_ARGS="-p ${ISPN_HOME}/etc/Amazon-TestData/influenza_aa.dat"
 DEMO_ARGS="${DEMO_ARGS} -n ${ISPN_HOME}/etc/Amazon-TestData/influenza_na.dat"
 DEMO_ARGS="${DEMO_ARGS} -i ${ISPN_HOME}/etc/Amazon-TestData/influenza.dat"
-echo java -cp ${CP} ${JVM_PARAMS} org.infinispan.ec2demo.InfinispanFluDemo ${DEMO_ARGS} 
+java -cp ${CP} ${JVM_PARAMS} org.infinispan.ec2demo.InfinispanFluDemo ${DEMO_ARGS}
