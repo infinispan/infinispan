@@ -11,22 +11,8 @@ export ISPN_HOME
 
 CP=${CP}:${ISPN_HOME}/etc
 
-#add the modules/ec2 dir
-for i in ${ISPN_HOME}/modules/ec2/*.jar ; do
-   CP=${i}:${CP}
-done
-
-#add the modules/ec2/libs
-for i in ${ISPN_HOME}/modules/ec2/lib/*.jar ; do
-   CP=${i}:${CP}
-done
-
-for i in ${ISPN_HOME}/modules/core/*.jar ; do
-   CP=${i}:${CP}
-done
-
-for i in ${ISPN_HOME}/modules/core/lib/*.jar ; do
-   CP=${i}:${CP}
+for i in `find ${ISPN_HOME}/modules -name "*.jar"` ; do
+  CP=${CP}:${i}
 done
 
 JVM_PARAMS="${JVM_PARAMS} -Djava.net.preferIPv4Stack=true -Dlog4j.configuration=file:${ISPN_HOME}/etc/log4j.xml"
@@ -38,7 +24,9 @@ JVM_PARAMS="${JVM_PARAMS} -DEC2Demo-jgroups-config=${ISPN_HOME}/etc/jgroups-s3_p
 #Load protein file => -p   e.g. -p /opt/influenza-data-files/influenza_aa.dat
 #Load nucleotide file => -n  e.g. -n /opt/influenza-data-files/influenza_na.dat
 #Load Influenze virus file => -i    e.g. -i /opt/influenza-data-files/influenza.dat
+gunzip ${ISPN_HOME}/etc/Amazon-TestData/*.gz
+
 DEMO_ARGS="-p ${ISPN_HOME}/etc/Amazon-TestData/influenza_aa.dat"
 DEMO_ARGS="${DEMO_ARGS} -n ${ISPN_HOME}/etc/Amazon-TestData/influenza_na.dat"
 DEMO_ARGS="${DEMO_ARGS} -i ${ISPN_HOME}/etc/Amazon-TestData/influenza.dat"
-java -cp ${CP} ${JVM_PARAMS} org.infinispan.ec2demo.InfinispanFluDemo ${DEMO_ARGS} 
+echo java -cp ${CP} ${JVM_PARAMS} org.infinispan.ec2demo.InfinispanFluDemo ${DEMO_ARGS} 
