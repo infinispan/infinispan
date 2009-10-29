@@ -17,7 +17,7 @@
 
         thread_pool.enabled="true"
         thread_pool.min_threads="2"
-        thread_pool.max_threads="8"
+        thread_pool.max_threads="30"
         thread_pool.keep_alive_time="5000"
         thread_pool.queue_enabled="false"
         thread_pool.queue_max_size="100"
@@ -25,7 +25,7 @@
 
         oob_thread_pool.enabled="true"
         oob_thread_pool.min_threads="2"
-        oob_thread_pool.max_threads="8"
+        oob_thread_pool.max_threads="30"
         oob_thread_pool.keep_alive_time="5000"
         oob_thread_pool.queue_enabled="false"
         oob_thread_pool.queue_max_size="100"
@@ -47,11 +47,6 @@
    <MERGE2 max_interval="30000"
            min_interval="10000"/>
    <FD_SOCK/>
-   <!--
-       Note that this is an atypically short timeout and a small number of retries
-       configured this way to speed up unit testing, since we know all nodes run in the same JVM
-       and hence failure detections will be very quick.
-          -->
    <FD timeout="3000" max_tries="3"/>
    <VERIFY_SUSPECT timeout="1500"/>
    <pbcast.NAKACK
