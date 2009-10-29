@@ -156,8 +156,7 @@
                      </goals>
                      <configuration>
                          <artifactItems>
-                             <!-- TODO include other needed external jars
-                                  that should go into your jar file -->
+                             <!-- TODO include other needed external jars that should go into your jar file -->
                              <artifactItem>
                                  <groupId>org.infinispan</groupId>
                                  <artifactId>infinispan-core</artifactId>

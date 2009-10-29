@@ -97,7 +97,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
          cacheDbName = locationStr.substring(offset + 1);
          locationStr = locationStr.substring(0, offset);
       } else {
-         cacheDbName = cache.getName(); // TODO
+         cacheDbName = cache.getName();
          if (cacheDbName == null)
             cacheDbName = "jdbm";
       }

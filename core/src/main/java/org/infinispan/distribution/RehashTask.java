@@ -22,7 +22,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 /**
- * // TODO: Manik: Document this
+ * A task that handles the rehashing of data in the cache system wheh nodes join or leave the cluster.  This abstract
+ * class contains common functionality.  Subclasses will specify different behavior for nodes joining and leaving.
  *
  * @author Manik Surtani
  * @since 4.0

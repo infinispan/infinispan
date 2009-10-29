@@ -19,7 +19,9 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * // TODO: Manik: Document this
+ * A transaction logger to log ongoing transactions in an efficient and thread-safe manner while a rehash is going on.
+ *
+ * Transaction logs can then be replayed after the state transferred during a rehash has been written.
  *
  * @author Manik Surtani
  * @since 4.0

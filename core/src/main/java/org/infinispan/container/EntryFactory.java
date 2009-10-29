@@ -28,7 +28,10 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.util.concurrent.TimeoutException;
 
 /**
- * // TODO: MANIK: Document this
+ * A factory for constructing {@link org.infinispan.container.entries.MVCCEntry} instances for use in the {@link org.infinispan.context.InvocationContext}.
+ * Implementations of this interface would typically wrap an internal {@link org.infinispan.container.entries.CacheEntry}
+ * with an {@link org.infinispan.container.entries.MVCCEntry}, optionally acquiring the necessary locks via the
+ * {@link org.infinispan.util.concurrent.locks.LockManager}.
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @author Galder Zamarreño
@@ -51,9 +54,45 @@ public interface EntryFactory {
     */
    boolean acquireLock(InvocationContext ctx, Object key) throws InterruptedException, TimeoutException;
 
+   /**
+    * Wraps an entry for writing.  This would typically acquire write locks if necessary, and place the wrapped
+    * entry in the invocation context.
+    *
+    * @param ctx current invocation context
+    * @param key key to look up and wrap
+    * @param createIfAbsent if true, an entry is created if it does not exist in the data container.
+    * @param forceLockIfAbsent forces a lock even if the entry is absent
+    * @param alreadyLocked if true, this hint prevents the method from acquiring any locks and the existence and ownership of the lock is presumed.
+    * @param forRemoval if true, this hint informs this method that the lock is being acquired for removal.
+    * @return an MVCCEntry instance
+    * @throws InterruptedException when things go wrong, usually trying to acquire a lock
+    */
    MVCCEntry wrapEntryForWriting(InvocationContext ctx, Object key, boolean createIfAbsent, boolean forceLockIfAbsent, boolean alreadyLocked, boolean forRemoval) throws InterruptedException;
-   
+
+   /**
+    * Wraps an entry for writing.  This would typically acquire write locks if necessary, and place the wrapped
+    * entry in the invocation context.
+    *
+    * @param ctx current invocation context
+    * @param entry an internal entry to wrap
+    * @param createIfAbsent if true, an entry is created if it does not exist in the data container.
+    * @param forceLockIfAbsent forces a lock even if the entry is absent
+    * @param alreadyLocked if true, this hint prevents the method from acquiring any locks and the existence and ownership of the lock is presumed.
+    * @param forRemoval if true, this hint informs this method that the lock is being acquired for removal.
+    * @return an MVCCEntry instance
+    * @throws InterruptedException when things go wrong, usually trying to acquire a lock
+    */
    MVCCEntry wrapEntryForWriting(InvocationContext ctx, InternalCacheEntry entry, boolean createIfAbsent, boolean forceLockIfAbsent, boolean alreadyLocked, boolean forRemoval) throws InterruptedException;
 
+   /**
+    * Wraps an entry for reading.  Usually this is just a raw {@link CacheEntry} but certain combinations of isolation
+    * levels and the presence of an ongoing JTA transaction may force this to be a proper, wrapped MVCCEntry.  The entry
+    * is also typically placed in the invocation context.
+    *
+    * @param ctx current invocation context
+    * @param key key to look up and wrap
+    * @return an entry for reading
+    * @throws InterruptedException when things go wrong, usually trying to acquire a lock
+    */
    CacheEntry wrapEntryForReading(InvocationContext ctx, Object key) throws InterruptedException;
 }

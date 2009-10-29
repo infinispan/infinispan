@@ -84,7 +84,6 @@
 
          <binaries>
             <unpack>false</unpack>
-            <!-- TODO do not insert the project jar itself, only the deps -->
             <outputDirectory>/.ignore</outputDirectory>
             <dependencySets>
                <dependencySet>

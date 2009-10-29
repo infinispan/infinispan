@@ -23,7 +23,6 @@ package org.infinispan.commands.control;
 
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
-import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -93,9 +92,8 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
 
       boolean remoteTxinitiated = transaction != null;
       if (!remoteTxinitiated) {
-         //create bogus modifications (we do not know modifications ahead of time)
-         //todo - make a create method that does not require creation of a WriteCommand[]
-         transaction = txTable.createRemoteTransaction(globalTx, new WriteCommand[]{});
+         //create a remote tx without any modifications (we do not know modifications ahead of time)
+         transaction = txTable.createRemoteTransaction(globalTx);
       }
       ctxt.setRemoteTransaction(transaction);
       return invoker.invoke(ctxt, this);

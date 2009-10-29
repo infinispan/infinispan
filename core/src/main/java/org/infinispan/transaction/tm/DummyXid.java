@@ -19,11 +19,11 @@ public class DummyXid implements Xid {
    }
 
    public byte[] getGlobalTransactionId() {
-      throw new IllegalStateException("TODO - please implement me!!!"); //todo implement!!!
+      throw new IllegalStateException("Not implemented!");
    }
 
    public byte[] getBranchQualifier() {
-      throw new IllegalStateException("TODO - please implement me!!!"); //todo implement!!!
+      throw new IllegalStateException("Not implemented!");
    }
 
    @Override

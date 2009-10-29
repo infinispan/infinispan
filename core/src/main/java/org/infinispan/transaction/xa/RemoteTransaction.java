@@ -4,9 +4,11 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.util.BidirectionalLinkedHashMap;
 import org.infinispan.util.BidirectionalMap;
+import org.infinispan.util.InfinispanCollections;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -20,7 +22,7 @@ public class RemoteTransaction implements CacheTransaction, Cloneable {
 
    private List<WriteCommand> modifications;
 
-   private BidirectionalLinkedHashMap<Object, CacheEntry> lookedUpEntries;
+   private BidirectionalMap<Object, CacheEntry> lookedUpEntries;
 
    private GlobalTransaction tx;
 
@@ -28,6 +30,12 @@ public class RemoteTransaction implements CacheTransaction, Cloneable {
    public RemoteTransaction(WriteCommand[] modifications, GlobalTransaction tx) {
       this.modifications = Arrays.asList(modifications);
       lookedUpEntries = new BidirectionalLinkedHashMap<Object, CacheEntry>(modifications.length);
+      this.tx = tx;
+   }
+
+   public RemoteTransaction(GlobalTransaction tx) {
+      this.modifications = Collections.emptyList();
+      lookedUpEntries = InfinispanCollections.emptyBidirectionalMap();
       this.tx = tx;
    }
 
@@ -81,11 +89,12 @@ public class RemoteTransaction implements CacheTransaction, Cloneable {
    }
 
    @Override
+   @SuppressWarnings("unchecked")
    public Object clone() {
       try {
          RemoteTransaction dolly = (RemoteTransaction) super.clone();
          dolly.modifications = new ArrayList<WriteCommand>(modifications);
-         dolly.lookedUpEntries = lookedUpEntries.clone();
+         dolly.lookedUpEntries = ((BidirectionalLinkedHashMap) lookedUpEntries).clone();
          return dolly;
       } catch (CloneNotSupportedException e) {
          throw new IllegalStateException("Impossible!!");

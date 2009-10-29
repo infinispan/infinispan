@@ -4,8 +4,6 @@ import org.infinispan.Cache;
 import org.infinispan.query.QueryIterator;
 
 /**
- * // TODO: Document this
- * <p/>
  * This is the abstract superclass of the 2 iterators. Since some of the methods have the same implementations they have
  * been put onto a separate class.
  *

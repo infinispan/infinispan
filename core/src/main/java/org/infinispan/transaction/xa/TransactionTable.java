@@ -73,16 +73,32 @@ public class TransactionTable {
     */
    public RemoteTransaction createRemoteTransaction(GlobalTransaction globalTx, WriteCommand[] modifications) {
       RemoteTransaction remoteTransaction = new RemoteTransaction(modifications, globalTx);
-      RemoteTransaction transaction = remoteTransactions.put(globalTx, remoteTransaction);
+      registerRemoteTransaction(globalTx, remoteTransaction);
+      return remoteTransaction;
+   }
+
+   /**
+    * Creates and register a {@link org.infinispan.transaction.xa.RemoteTransaction} with no modifications.
+    * Returns the created transaction.
+    *
+    * @throws IllegalStateException if an attempt to create a {@link org.infinispan.transaction.xa.RemoteTransaction}
+    *                               for an already registered id is made.
+    */
+   public RemoteTransaction createRemoteTransaction(GlobalTransaction globalTx) {
+      RemoteTransaction remoteTransaction = new RemoteTransaction(globalTx);
+      registerRemoteTransaction(globalTx, remoteTransaction);
+      return remoteTransaction;
+   }
+
+   private void registerRemoteTransaction(GlobalTransaction gtx, RemoteTransaction rtx) {
+      RemoteTransaction transaction = remoteTransactions.put(gtx, rtx);
       if (transaction != null) {
          String message = "A remote transaction with the given id was already registred!!!";
          log.error(message);
          throw new IllegalStateException(message);
       }
-      if (trace) {
-         log.trace("Created and registered remote transaction " + remoteTransaction);
-      }
-      return remoteTransaction;
+
+      if (trace) log.trace("Created and registered remote transaction " + rtx);
    }
 
    /**

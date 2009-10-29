@@ -22,6 +22,7 @@
 package org.infinispan.interceptors;
 
 import org.infinispan.CacheException;
+import org.infinispan.config.ConfigurationException;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Start;
@@ -41,8 +42,7 @@ import java.util.List;
  *
  * @author Mircea.Markus@jboss.com
  * @author Galder Zamarreño
- * @since 4.0 todo - if you add the same interceptor instance twice, things get really dirty. -- this should be treated
- *        as an missuse and an exception should be thrown
+ * @since 4.0
  */
 @Scope(Scopes.NAMED_CACHE)
 public class InterceptorChain {
@@ -68,12 +68,25 @@ public class InterceptorChain {
    }
 
    /**
+    * Ensures that the interceptor of type passed in isn't already added
+    * @param clazz type of interceptor to check for
+    */
+   private void assertNotAdded(Class<? extends CommandInterceptor> clazz) {
+      CommandInterceptor next = firstInChain;
+      while (next != null) {
+         if (next.getClass().equals(clazz)) throw new ConfigurationException("Detected interceptor of type [" + clazz.getName() + "] being added to the interceptor chain more than once!");
+         next = next.getNext();
+      }
+   }
+
+   /**
     * Inserts the given interceptor at the specified position in the chain (o based indexing).
     *
     * @throws IllegalArgumentException if the position is invalid (e.g. 5 and there are only 2 interceptors in the
     *                                  chain)
     */
    public synchronized void addInterceptor(CommandInterceptor interceptor, int position) {
+      assertNotAdded(interceptor.getClass());
       if (position == 0) {
          interceptor.setNext(firstInChain);
          firstInChain = interceptor;

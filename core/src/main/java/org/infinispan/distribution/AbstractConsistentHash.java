@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * // TODO: Manik: Document this
+ * An abstract consistent hash implementation that handles common implementations of certain methods.
  *
  * @author Manik Surtani
  * @since 4.0
