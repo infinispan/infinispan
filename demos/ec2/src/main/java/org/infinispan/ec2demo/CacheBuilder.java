@@ -47,10 +47,27 @@ public class CacheBuilder {
 		c.setUseReplQueue(true);
 		c.setL1Lifespan(6000000);		 
 		cache_manager = new DefaultCacheManager(gc, c,false);
+        ShutdownHook shutdownHook = new ShutdownHook(cache_manager);
+        Runtime.getRuntime().addShutdownHook(shutdownHook);
 	}
 
 	public CacheManager getCacheManager() {
 		return this.cache_manager;
 	}
 
+}
+
+class ShutdownHook extends Thread {
+	private CacheManager currCache;
+    /**
+	 * @param cache_manager
+	 */
+	public ShutdownHook(CacheManager cache_manager) {
+		currCache = cache_manager;
+	}
+
+	public void run() {
+        System.out.println("Shutting down Cache Manager");
+        currCache.stop();
+    }
 }
