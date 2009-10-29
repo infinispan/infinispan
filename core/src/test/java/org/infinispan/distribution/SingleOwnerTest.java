@@ -43,7 +43,7 @@ import org.testng.annotations.Test;
  * @author Galder Zamarreño
  * @since 4.0
  */
-@Test(groups = "unit", testName = "distribution.Ispn234Test")
+@Test(groups = "unit", testName = "distribution.SingleOwnerTest")
 public class SingleOwnerTest extends BaseDistFunctionalTest {
    
    @Override
