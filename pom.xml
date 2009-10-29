@@ -30,6 +30,7 @@
       <module>server/rest</module>
       <module>jopr-plugin</module>
       <module>demos/gui</module>
+      <module>demos/ec2</module>
       <module>tools</module>
    </modules>
 
