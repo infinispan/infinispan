@@ -22,6 +22,11 @@ public class TestCacheManagerFactory {
    public static final String MARSHALLER = System.getProperties().getProperty("infinispan.marshaller.class");
    private static Log log = LogFactory.getLog(TestCacheManagerFactory.class);
 
+   private static DefaultCacheManager newDefaultCacheManager(GlobalConfiguration gc, Configuration c) {
+      gc.setJmxDomain("infinispan-" + Thread.currentThread().getName());
+      return new DefaultCacheManager(gc, c);
+   }
+
    /**
     * Creates an cache manager that does not support clustering or transactions.
     */
@@ -39,7 +44,7 @@ public class TestCacheManagerFactory {
       amendMarshaller(globalConfiguration);
       Configuration c = new Configuration();
       if (transactional) amendJTA(c);
-      return new DefaultCacheManager(globalConfiguration, c);
+      return newDefaultCacheManager(globalConfiguration, c);
    }
 
    private static void amendJTA(Configuration c) {
@@ -55,7 +60,7 @@ public class TestCacheManagerFactory {
       Properties newTransportProps = new Properties();
       newTransportProps.put(JGroupsTransport.CONFIGURATION_STRING, JGroupsConfigBuilder.getJGroupsConfig());
       globalConfiguration.setTransportProperties(newTransportProps);
-      return new DefaultCacheManager(globalConfiguration);
+      return newDefaultCacheManager(globalConfiguration, new Configuration());
    }
 
    /**
@@ -64,11 +69,10 @@ public class TestCacheManagerFactory {
    public static CacheManager createClusteredCacheManager(Configuration defaultCacheConfig) {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
       amendMarshaller(globalConfiguration);
-//      amendJmx(globalConfiguration);
       Properties newTransportProps = new Properties();
       newTransportProps.put(JGroupsTransport.CONFIGURATION_STRING, JGroupsConfigBuilder.getJGroupsConfig());
       globalConfiguration.setTransportProperties(newTransportProps);
-      return new DefaultCacheManager(globalConfiguration, defaultCacheConfig);
+      return newDefaultCacheManager(globalConfiguration, defaultCacheConfig);
    }
 
    /**
@@ -78,8 +82,7 @@ public class TestCacheManagerFactory {
    public static CacheManager createCacheManager(GlobalConfiguration configuration) {
       amendMarshaller(configuration);
       amendTransport(configuration);
-//      amendJmx(configuration);
-      return new DefaultCacheManager(configuration);
+      return newDefaultCacheManager(configuration, new Configuration());
    }
 
    /**
@@ -98,21 +101,14 @@ public class TestCacheManagerFactory {
    public static CacheManager createCacheManager(Configuration defaultCacheConfig, boolean transactional) {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
       amendMarshaller(globalConfiguration);
-//      amendJmx(globalConfiguration);
       if (transactional) amendJTA(defaultCacheConfig);
-      return new DefaultCacheManager(globalConfiguration, defaultCacheConfig);
+      return newDefaultCacheManager(globalConfiguration, defaultCacheConfig);
    }
 
    public static DefaultCacheManager createCacheManager(GlobalConfiguration configuration, Configuration defaultCfg) {
       amendMarshaller(configuration);
       amendTransport(configuration);
-//      amendJmx(configuration);
-      return new DefaultCacheManager(configuration, defaultCfg);
-   }
-
-   private static void amendJmx(GlobalConfiguration globalConfiguration) {
-      globalConfiguration.setExposeGlobalJmxStatistics(false);
-      globalConfiguration.setAllowDuplicateDomains(true);
+      return newDefaultCacheManager(configuration, defaultCfg);
    }
 
    private static void amendTransport(GlobalConfiguration configuration) {
