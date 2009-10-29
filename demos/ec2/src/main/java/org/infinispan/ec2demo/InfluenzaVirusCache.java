@@ -3,18 +3,18 @@
  */
 package org.infinispan.ec2demo;
 
-import java.io.IOException;
-import java.net.URL;
-import org.apache.log4j.Logger;
 import org.infinispan.Cache;
-import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
+import java.io.IOException;
 
 /**
  * @author noconnor@redhat.com
  * 
  */
 public class InfluenzaVirusCache {
-	Logger myLogger = Logger.getLogger(InfluenzaVirusCache.class);
+	private static final Log myLogger = LogFactory.getLog(InfluenzaVirusCache.class);
 	private Cache<String, Influenza_N_P_CR_Element> myCache;
 
 	public InfluenzaVirusCache(CacheBuilder cacheManger) throws IOException {

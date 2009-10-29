@@ -3,16 +3,18 @@
  */
 package org.infinispan.ec2demo;
 
-import java.io.IOException;
-import org.apache.log4j.*;
 import org.infinispan.Cache;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
+import java.io.IOException;
 
 /**
  * @author noelo
  * 
  */
 public class ProteinCache {
-	Logger myLogger = Logger.getLogger(ProteinCache.class);
+	private static final Log myLogger = LogFactory.getLog(ProteinCache.class);
 	private Cache<String, Nucleotide_Protein_Element> myCache;
 
 	public ProteinCache(CacheBuilder cacheManger) throws IOException {

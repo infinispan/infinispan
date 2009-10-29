@@ -1,13 +1,5 @@
 package org.infinispan.ec2demo;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.List;
-import java.util.Map;
-import org.apache.log4j.*;
-import org.jboss.logging.Logger;
-import org.xml.sax.SAXException;
 import com.martiansoftware.jsap.FlaggedOption;
 import com.martiansoftware.jsap.JSAP;
 import com.martiansoftware.jsap.JSAPException;
@@ -15,6 +7,12 @@ import com.martiansoftware.jsap.JSAPResult;
 import com.martiansoftware.jsap.Parameter;
 import com.martiansoftware.jsap.SimpleJSAP;
 import com.martiansoftware.jsap.Switch;
+import org.xml.sax.SAXException;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Map;
 
 /**
  * 
@@ -29,7 +27,6 @@ public class InfinispanFluDemo {
 	/**
 	 * @param args
 	 * @throws InterruptedException
-	 * @throws ParseException
 	 * @throws JSAPException
 	 * @throws SAXException
 	 */

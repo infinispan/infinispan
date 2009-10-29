@@ -3,14 +3,15 @@
  */
 package org.infinispan.ec2demo;
 
-import java.io.IOException;
-import java.util.List;
+import com.martiansoftware.jsap.JSAPResult;
 import org.infinispan.Cache;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.statetransfer.StateTransferException;
-import org.apache.log4j.*;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.xml.sax.SAXException;
-import com.martiansoftware.jsap.JSAPResult;
+
+import java.io.IOException;
+import java.util.List;
 
 /**
  * @author noconnor@redhat.com
@@ -24,7 +25,7 @@ public class InfluenzaDataLoader {
 	private Nucleotide_Protein_Parser npParser;
 	private Influenza_Parser iParser;
 
-	Logger myLogger = Logger.getLogger(InfluenzaDataLoader.class);
+	private static final Log myLogger = LogFactory.getLog(InfluenzaDataLoader.class);
 
 	public void populateCache(JSAPResult config) throws SAXException {
 		String cfgFileName = System.getProperty("infinispan.demo.cfg");
