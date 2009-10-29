@@ -23,7 +23,6 @@ public class TestCacheManagerFactory {
    private static Log log = LogFactory.getLog(TestCacheManagerFactory.class);
 
    private static DefaultCacheManager newDefaultCacheManager(GlobalConfiguration gc, Configuration c) {
-      gc.setJmxDomain("infinispan-" + Thread.currentThread().getName());
       return new DefaultCacheManager(gc, c);
    }
 
