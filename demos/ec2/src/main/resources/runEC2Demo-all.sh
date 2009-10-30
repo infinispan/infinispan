@@ -11,7 +11,7 @@ export ISPN_HOME
 
 CP=${CP}:${ISPN_HOME}/etc
 
-for i in `find ${ISPN_HOME}/modules -name "*.jar"` ; do
+for i in `find ${ISPN_HOME}/modules/core -name "*.jar"` ; do
   CP=${CP}:${i}
 done
 
