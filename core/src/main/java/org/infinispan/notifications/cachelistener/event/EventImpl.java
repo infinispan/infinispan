@@ -21,7 +21,10 @@
  */
 package org.infinispan.notifications.cachelistener.event;
 
+import net.jcip.annotations.NotThreadSafe;
+
 import org.infinispan.Cache;
+import org.infinispan.marshall.MarshalledValue;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
 /**
@@ -30,6 +33,7 @@ import org.infinispan.transaction.xa.GlobalTransaction;
  * @author <a href="mailto:manik@jboss.org">Manik Surtani</a>
  * @since 4.0
  */
+@NotThreadSafe
 public class EventImpl implements CacheEntryActivatedEvent, CacheEntryCreatedEvent, CacheEntryEvictedEvent, CacheEntryLoadedEvent, CacheEntryModifiedEvent,
                                   CacheEntryPassivatedEvent, CacheEntryRemovedEvent, CacheEntryVisitedEvent, TransactionCompletedEvent, TransactionRegisteredEvent,
                                   CacheEntryInvalidatedEvent {
@@ -58,6 +62,8 @@ public class EventImpl implements CacheEntryActivatedEvent, CacheEntryCreatedEve
    }
 
    public Object getKey() {
+      if (key instanceof MarshalledValue)
+         key = ((MarshalledValue) key).get();
       return key;
    }
 
@@ -104,6 +110,8 @@ public class EventImpl implements CacheEntryActivatedEvent, CacheEntryCreatedEve
    }
 
    public Object getValue() {
+      if (value instanceof MarshalledValue)
+         value = ((MarshalledValue) value).get();
       return value;
    }
 

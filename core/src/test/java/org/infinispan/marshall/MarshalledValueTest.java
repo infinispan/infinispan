@@ -73,6 +73,7 @@ import java.util.Set;
  */
 @Test(groups = "functional", testName = "marshall.MarshalledValueTest")
 public class MarshalledValueTest extends MultipleCacheManagersTest {   
+   private static final Log log = LogFactory.getLog(MarshalledValueTest.class);
    private MarshalledValueListenerInterceptor mvli;
    String k = "key", v = "value";
    private VersionAwareMarshaller marshaller;
@@ -98,9 +99,9 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
 
    @BeforeMethod
    public void addMarshalledValueInterceptor() {
-      Cache cache1, cache2;
+      Cache cache1;
       cache1 = cache(0, "replSync");
-      cache2 = cache(1, "replSync");
+      cache(1, "replSync");
       InterceptorChain chain = TestingUtil.extractComponent(cache1, InterceptorChain.class);
       chain.removeInterceptor(MarshalledValueListenerInterceptor.class);
       mvli = new MarshalledValueListenerInterceptor();
@@ -112,7 +113,7 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
    }
    
    @AfterClass(alwaysRun=true)
-   protected void destroy() {           
+   protected void destroy() {
       if(marshaller != null) {
          marshaller.stop();
          marshaller = null;
@@ -143,9 +144,9 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       assert Pojo.deserializationCount == deserializationCount : "Deserialization count: expected " + deserializationCount + " but was " + Pojo.deserializationCount;
    }
 
-   public void testNonSerializable() {      
+   public void testNonSerializable() {
       Cache cache1 = cache(0, "replSync");
-      Cache cache2 = cache(1, "replSync");
+      cache(1, "replSync");
       try {
          cache1.put("Hello", new Object());
          assert false : "Should have failed";
@@ -438,19 +439,19 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       assertSerializationCounts(1, 1);
    }
 
-   public void testCallbackValues() {
+   public void testCallbackValues() throws Exception {
       Cache cache1 = cache(0, "replSync");
-      Cache cache2 = cache(1, "replSync");
+      cache(1, "replSync");
       MockListener l = new MockListener();
       cache1.addListener(l);
-      Pojo pojo = new Pojo();
-      cache1.put("key", pojo);
-
-      assert l.newValue != null;
-      assert l.newValue instanceof MarshalledValue : "recieved " + l.newValue.getClass().getName();
-      MarshalledValue mv = (MarshalledValue) l.newValue;
-      assert mv.instance instanceof Pojo;
-      assertSerializationCounts(1, 0);
+      try {
+         Pojo pojo = new Pojo();
+         cache1.put("key", pojo);
+         assert l.newValue instanceof Pojo : "recieved " + l.newValue.getClass().getName();
+         assertSerializationCounts(1, 0);
+      } finally {
+         cache1.removeListener(l);
+      }
    }
 
    public void testRemoteCallbackValues() throws Exception {
@@ -458,19 +459,19 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       Cache cache2 = cache(1, "replSync");
       MockListener l = new MockListener();
       cache2.addListener(l);
-      Pojo pojo = new Pojo();
-      cache1.put("key", pojo);
-
-      assert l.newValue != null;
-      assert l.newValue instanceof MarshalledValue;
-      MarshalledValue mv = (MarshalledValue) l.newValue;
-      assert mv.get() instanceof Pojo;
-      assertSerializationCounts(1, 1);
+      try {
+         Pojo pojo = new Pojo();
+         cache1.put("key", pojo);
+         assert l.newValue instanceof Pojo;
+         assertSerializationCounts(1, 1);
+      } finally {
+         cache2.removeListener(l);
+      }
    }
    
    public void testEvictWithMarshalledValueKey() {
       Cache cache1 = cache(0, "replSync");
-      Cache cache2 = cache(1, "replSync");
+      cache(1, "replSync");
       Pojo pojo = new Pojo();
       cache1.put(pojo, pojo);
       cache1.evict(pojo);
@@ -539,6 +540,7 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
          i = in.readInt();
          b = in.readBoolean();
          deserializationCount++;
+         log.trace("deserializationCount=" + deserializationCount);
       }
    }
 
