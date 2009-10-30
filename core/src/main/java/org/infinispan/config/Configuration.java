@@ -442,6 +442,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    public void setNumOwners(int numOwners) {
       this.clustering.hash.setNumOwners(numOwners);
    }
+
+   public void setRehashEnabled(boolean rehashEnabled) {
+      this.clustering.hash.setRehashEnabled(rehashEnabled);
+   }
  
    public void setRehashWaitTime(long rehashWaitTime) {
       this.clustering.hash.setRehashWait(rehashWaitTime);
@@ -565,6 +569,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
    public int getNumOwners() {
       return clustering.hash.numOwners;
+   }
+
+   public boolean isRehashEnabled() {
+      return clustering.hash.rehashEnabled;
    }
 
    public long getRehashWaitTime() {
@@ -692,6 +700,9 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    }  
 
    public void assertValid() throws ConfigurationException {
+      // certain combinations are illegal, such as state transfer + DIST
+      if (clustering.mode.isDistributed() && clustering.stateRetrieval.fetchInMemoryState)
+         throw new ConfigurationException("Cache cannot use DISTRIBUTION mode and have fetchInMemoryState set to true");
    }
 
    public boolean isOnePhaseCommit() {
@@ -1402,7 +1413,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       protected Long rehashWait=60000L;
       
       /** @configRef desc="Rehashing timeout" */
-      protected Long rehashRpcTimeout=60 * 1000 * 10L;     
+      protected Long rehashRpcTimeout=60 * 1000 * 10L;
+
+      /** @configRef desc="If false, no rebalancing or rehashing will take place when a new node joins the cluster or a node leaves.  Defaults to true." **/
+      protected Boolean rehashEnabled=true;
       
       @XmlAttribute(name="class")
       public void setConsistentHashClass(String consistentHashClass) {
@@ -1432,6 +1446,12 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          this.rehashRpcTimeout = rehashRpcTimeout;
       }
 
+      @XmlAttribute
+      public void setRehashEnabled(Boolean rehashEnabled) {
+         testImmutability("rehashEnabled");
+         this.rehashEnabled = rehashEnabled;
+      }
+
       @Override
       public boolean equals(Object o) {
          if (this == o) return true;
@@ -1445,6 +1465,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          if (rehashRpcTimeout != null ? !rehashRpcTimeout.equals(hashType.rehashRpcTimeout) : hashType.rehashRpcTimeout != null)
             return false;
          if (rehashWait != null ? !rehashWait.equals(hashType.rehashWait) : hashType.rehashWait != null) return false;
+         if (rehashEnabled != hashType.rehashEnabled) return false;
 
          return true;
       }
@@ -1455,6 +1476,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          result = 31 * result + (numOwners != null ? numOwners.hashCode() : 0);
          result = 31 * result + (rehashWait != null ? rehashWait.hashCode() : 0);
          result = 31 * result + (rehashRpcTimeout != null ? rehashRpcTimeout.hashCode() : 0);
+         result = 31 * result + (rehashEnabled ? 0 : 1);
          return result;
       }
    }

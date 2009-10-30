@@ -41,7 +41,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       cacheName = "dist";
       configuration = getDefaultClusteredConfig(sync ? Configuration.CacheMode.DIST_SYNC : Configuration.CacheMode.DIST_ASYNC, tx);
-      configuration.setFetchInMemoryState(performRehashing);
+      configuration.setRehashEnabled(performRehashing);
       if (!testRetVals) {
          configuration.setUnsafeUnreliableReturnValues(true);
          // we also need to use repeatable read for tests to work when we dont have reliable return values, since the

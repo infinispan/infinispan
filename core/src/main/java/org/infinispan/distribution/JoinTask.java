@@ -102,7 +102,7 @@ public class JoinTask extends RehashTask {
          chNew = createConsistentHash(configuration, chOld.getCaches(), self);
          dmi.setConsistentHash(chNew);
          
-         if (configuration.isFetchInMemoryState()) {
+         if (configuration.isRehashEnabled()) {
             // 3.  Enable TX logging
             transactionLogger.enable();
 
@@ -131,7 +131,7 @@ public class JoinTask extends RehashTask {
          }
          unlocked = true;
 
-         if (!configuration.isFetchInMemoryState()) {
+         if (!configuration.isRehashEnabled()) {
             rpcManager.broadcastRpcCommand(cf.buildRehashControlCommand(JOIN_REHASH_START, self), true, true);            
          }
          // 10.
@@ -139,7 +139,7 @@ public class JoinTask extends RehashTask {
          rpcManager.invokeRemotely(coordinator(), cf.buildRehashControlCommand(JOIN_COMPLETE, self), SYNCHRONOUS,
                                    configuration.getRehashRpcTimeout(), true);
 
-         if (configuration.isFetchInMemoryState()) {
+         if (configuration.isRehashEnabled()) {
             // 11.
             invalidateInvalidHolders(chOld, chNew);
          }
