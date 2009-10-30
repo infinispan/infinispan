@@ -3,6 +3,7 @@ import re
 import sys
 import os
 import subprocess
+import shutil
 
 try:
     from xml.etree.ElementTree import ElementTree
@@ -220,6 +221,13 @@ def checkInMaven2Repo(version, workingDir):
         checkInMessage = "Infinispan Release Script: Releasing module " + mn + " version " + version + " to public Maven2 repo"
         client.checkin(mn, checkInMessage)
 
+def uploadArtifactsToSourceforge(version):
+    os.mkdir(".tmp")
+    os.mkdir(".tmp/%s" % version)
+    os.chdir(".tmp")
+    shutil.copy("%s/infinispan/%s/*.zip" % (localMvnRepoDir, version), "%s/" % version)
+    subprocess.check_call(["scp", "-r", version, "sourceforge_frs:/home/frs/project/i/in/infinispan/infinispan"])
+
 def uploadJavadocs(base_dir, workingDir, version):
     os.chdir("%s/target/distribution" % workingDir)
     ## Grab the distribution archive and un-arch it
@@ -278,6 +286,10 @@ def release():
     uploadJavadocs(base_dir, workingDir, version)
     print "Step 5: Complete"
 
+    print "Step 6: Uploading to Sourceforge"
+    uploadArtifactsToSourceforge(version)
+    print "Step 6: Complete"
+
     # (future)
     # Step 6: Update www.infinispan.org
     # Step 7; Upload to SF.net
@@ -286,7 +298,7 @@ def release():
     print "\n\n\nDone!  Now all you need to do is:"
     print "   1.  Update http://www.infinispan.org"
     print "   2.  Update wiki pages with relevant information and links to docs, etc"
-    print "   3.  Upload artifacts from http://repository.jboss.org/maven2/org/infinispan/<blah>/" + version + " to Sourceforge.net\n\n"
+    print "   3.  Login to the Sourceforge project admin page and mark the -bin.ZIP package as the default download for all platforms."
 
 
 if __name__ == "__main__":
