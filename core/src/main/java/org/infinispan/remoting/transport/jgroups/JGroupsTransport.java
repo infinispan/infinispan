@@ -71,8 +71,17 @@ import java.util.concurrent.ExecutorService;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
- * An encapsulation of a JGroups transport
- *
+ * An encapsulation of a JGroups transport.  JGroups transports can be configured using a variety of methods, usually
+ * by passing in one of the following properties:
+ * <ul>
+ * <li><tt>configurationString</tt> - a JGroups configuration String</li>
+ * <li><tt>configurationXml</tt> - JGroups configuration XML as a String</li>
+ * <li><tt>configurationFile</tt> - String pointing to a JGroups XML configuration file</li>
+ * <li><tt>channelLookup</tt> - Fully qualified class name of a {@link org.infinispan.remoting.transport.jgroups.JGroupsChannelLookup} instance</li>
+ * </ul>
+ * These are normally passed in as Properties in {@link org.infinispan.config.GlobalConfiguration#setTransportProperties(java.util.Properties)}
+ * or in the Infinispan XML configuration file.
+ * 
  * @author Manik Surtani
  * @author Galder Zamarreño
  * @since 4.0
@@ -81,7 +90,9 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
    public static final String CONFIGURATION_STRING = "configurationString";
    public static final String CONFIGURATION_XML = "configurationXml";
    public static final String CONFIGURATION_FILE = "configurationFile";
+   public static final String CHANNEL_LOOKUP = "channelLookup";
    private static final String DEFAULT_JGROUPS_CONFIGURATION_FILE = "config-samples/jgroups-udp.xml";
+   private boolean startChannel = true, stopChannel = true;
 
    Channel channel;
    boolean createdChannel = false;
@@ -137,11 +148,12 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
 
       initChannelAndRPCDispatcher();
 
-      //otherwise just connect
-      try {
-         channel.connect(c.getClusterName());
-      } catch (ChannelException e) {
-         throw new CacheException("Unable to start JGroups Channel", e);
+      if (startChannel) {
+         try {
+            channel.connect(c.getClusterName());
+         } catch (ChannelException e) {
+            throw new CacheException("Unable to start JGroups Channel", e);
+         }
       }
       log.info("Cache local address is {0}", getAddress());
 
@@ -158,7 +170,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
 
    public void stop() {
       try {
-         if (channel != null && channel.isOpen()) {
+         if (stopChannel && channel != null && channel.isOpen()) {
             log.info("Disconnecting and closing JGroups Channel");
             channel.disconnect();
             channel.close();
@@ -208,7 +220,22 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
       // finally the legacy JGroups String properties.
       String cfg;
       if (props != null) {
-         if (props.containsKey(CONFIGURATION_FILE)) {
+         if (props.containsKey(CHANNEL_LOOKUP)) {
+            String channelLookupClassName = props.getProperty(CHANNEL_LOOKUP);
+
+            try {
+               JGroupsChannelLookup lookup = (JGroupsChannelLookup) Util.getInstance(channelLookupClassName);
+               channel = lookup.getJGroupsChannel();
+               startChannel = lookup.shouldStartAndConnect();
+               stopChannel = lookup.shouldStopAndDisconnect();
+            } catch (ClassCastException e) {
+               log.error("Class [" + channelLookupClassName + "] cannot be cast to JGroupsChannelLookup!  Not using a channel lookup.");
+            } catch (Exception e) {
+               log.error("Errors instantiating [" + channelLookupClassName + "]!  Not using a channel lookup.");
+            }
+         }
+
+         if (channel == null && props.containsKey(CONFIGURATION_FILE)) {
             cfg = props.getProperty(CONFIGURATION_FILE);
             try {
                channel = new JChannel(new FileLookup().lookupFileLocation(cfg));
@@ -218,7 +245,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
             }
          }
 
-         if (props.containsKey(CONFIGURATION_XML)) {
+         if (channel == null && props.containsKey(CONFIGURATION_XML)) {
             cfg = props.getProperty(CONFIGURATION_XML);
             try {
                channel = new JChannel(XmlConfigHelper.stringToElement(cfg));
@@ -228,7 +255,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
             }
          }
 
-         if (props.containsKey(CONFIGURATION_STRING)) {
+         if (channel == null && props.containsKey(CONFIGURATION_STRING)) {
             cfg = props.getProperty(CONFIGURATION_STRING);
             try {
                channel = new JChannel(cfg);
@@ -395,7 +422,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
                } else if (value instanceof Throwable) {
                   Throwable t = (Throwable) value;
                   if (trace) log.trace("Unexpected throwable from " + rsp.getSender(), t);
-                  throw new CacheException("Remote (" + rsp.getSender() +") failed unexpectedly", t);
+                  throw new CacheException("Remote (" + rsp.getSender() + ") failed unexpectedly", t);
                }
             }
          }
@@ -577,4 +604,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
       return dispatcher;
    }
 
+   public Channel getChannel() {
+      return channel;
+   }
 }
