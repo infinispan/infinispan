@@ -15,6 +15,11 @@ for i in `find ${ISPN_HOME}/modules/core -name "*.jar"` ; do
   CP=${CP}:${i}
 done
 
+for i in `find ${ISPN_HOME}/modules/ec2 -name "*.jar"` ; do
+  CP=${CP}:${i}
+done
+
+
 JVM_PARAMS="${JVM_PARAMS} -Djava.net.preferIPv4Stack=true -Dlog4j.configuration=file:${ISPN_HOME}/etc/log4j.xml"
 JVM_PARAMS="${JVM_PARAMS} -DEC2Demo-jgroups-config=${ISPN_HOME}/etc/jgroups-s3_ping-aws.xml"
 
