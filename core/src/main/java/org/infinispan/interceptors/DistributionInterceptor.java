@@ -267,6 +267,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
     * time. If the operation didn't originate locally we won't do any replication either.
     */
    private Object handleWriteCommand(InvocationContext ctx, WriteCommand command, RecipientGenerator recipientGenerator, boolean skipRemoteGet) throws Throwable {
+      // TODO Remove isSingleOwnerAndLocal() once https://jira.jboss.org/jira/browse/JGRP-1084 has been implemented
       boolean localModeForced = isLocalModeForced(ctx) || isSingleOwnerAndLocal(recipientGenerator);
       // see if we need to load values from remote srcs first
       if (!skipRemoteGet) remoteGetBeforeWrite(ctx, command.isConditional(), recipientGenerator);
