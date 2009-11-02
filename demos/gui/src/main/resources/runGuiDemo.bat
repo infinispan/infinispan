@@ -13,13 +13,13 @@ for /f "tokens=* delims=" %%f in ('dir /s /b /a-d "..\modules\core\*.jar"') do (
 set my_classpath=%my_classpath:~1%
 
 
-for /f "tokens=* delims=" %%f in ('dir /s /b /a-d "..\modules\gui-demo\*.jar"') do (
+for /f "tokens=* delims=" %%f in ('dir /s /b /a-d "..\modules\gui\*.jar"') do (
                 call set my_classpath=%%my_classpath%%;%%~f)
         )
 set my_classpath=%my_classpath:~1%
 
 
-for /f "tokens=* delims=" %%f in ('dir /s /b /a-d "..\modules\gui-demo\lib\*.jar"') do (
+for /f "tokens=* delims=" %%f in ('dir /s /b /a-d "..\modules\gui\lib\*.jar"') do (
                 call set my_classpath=%%my_classpath%%;%%~f)
         )
 set my_classpath=%my_classpath:~1%

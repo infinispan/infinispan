@@ -19,11 +19,11 @@ for i in ${ISPN_HOME}/modules/core/lib/*.jar ; do
    CP=${i}:${CP}
 done
 
-for i in ${ISPN_HOME}/modules/gui-demo/*.jar ; do
+for i in ${ISPN_HOME}/modules/gui/*.jar ; do
    CP=${i}:${CP}
 done
 
-for i in ${ISPN_HOME}/modules/gui-demo/lib/*.jar ; do
+for i in ${ISPN_HOME}/modules/gui/lib/*.jar ; do
    CP=${i}:${CP}
 done
 
