@@ -3,11 +3,11 @@ package org.infinispan.api.mvcc;
 import org.easymock.EasyMock;
 import static org.easymock.EasyMock.*;
 import org.infinispan.Cache;
+import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.config.Configuration;
-import org.infinispan.context.Flag;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -301,8 +301,8 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
     * @throws Exception
     */
    private void cacheModeLocalTest(boolean transactional) throws Exception {
-      Cache cache1 = cache(0, "replSync");
-      Cache cache2 = cache(1, "replSync");
+      Cache<Object, Object> cache1 = cache(0, "replSync");
+      Cache<Object, Object> cache2 = cache(1, "replSync");
       TransactionManager tm1 = TestingUtil.getTransactionManager(cache1);
       TransactionManager tm2 = TestingUtil.getTransactionManager(cache2);
       RpcManager rpcManager = EasyMock.createMock(RpcManager.class);
@@ -316,7 +316,7 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
          if (transactional)
             tm1.begin();
 
-         cache1.getAdvancedCache().putForExternalRead(key, value, Flag.CACHE_MODE_LOCAL);
+         cache1.getAdvancedCache().withFlags(CACHE_MODE_LOCAL).putForExternalRead(key, value);
 
          if (transactional)
             tm1.commit();

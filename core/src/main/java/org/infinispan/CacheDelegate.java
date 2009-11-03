@@ -40,6 +40,7 @@ import org.infinispan.config.ConfigurationException;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
+import static org.infinispan.context.Flag.*;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.eviction.EvictionManager;
@@ -71,8 +72,10 @@ import org.rhq.helpers.pluginAnnotations.agent.Operation;
 
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -110,6 +113,7 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V> {
    // as above for ResponseGenerator
    private ResponseGenerator responseGenerator;
    private long defaultLifespan, defaultMaxIdleTime;
+   private ThreadLocal<PreInvocationContext> flagHolder = new ThreadLocal<PreInvocationContext>();
 
    public CacheDelegate(String name) {
       this.name = name;
@@ -150,11 +154,9 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V> {
    }
 
    public final boolean remove(Object key, Object value) {
-      if (value instanceof Flag) {
-         // this can happen!
-         log.warn("Did you intend to call Cache.remove(Object, Object), with a Flag as value, or did you intend to call Cache.remove(Object, Flag... )?  If it was the latter and you are just passing in one flag, please cast this to an array of Flag, e.g., remove(key, new Flag[]{flag}) to ensure the correct method gets called!");
-      }
-      return remove(key, value, (Flag[]) null);
+      InvocationContext ctx = getInvocationContext();
+      RemoveCommand command = commandsFactory.buildRemoveCommand(key, value);
+      return (Boolean) invoker.invoke(ctx, command);
    }
 
    public final boolean replace(K key, V oldValue, V newValue) {
@@ -175,23 +177,32 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V> {
    }
 
    public final boolean containsKey(Object key) {
-      return containsKey(key, (Flag[]) null);
+      InvocationContext ctx = getInvocationContext();
+      GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key);
+      Object response = invoker.invoke(ctx, command);
+      return response != null;
    }
 
    public final boolean containsValue(Object value) {
       throw new UnsupportedOperationException("Go away");
    }
 
+   @SuppressWarnings("unchecked")
    public final V get(Object key) {
-      return get(key, (Flag[]) null);
+      InvocationContext ctx = getInvocationContext();
+      GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key);
+      return (V) invoker.invoke(ctx, command);
    }
 
    public final V put(K key, V value) {
       return put(key, value, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
    }
 
+   @SuppressWarnings("unchecked")
    public final V remove(Object key) {
-      return remove(key, (Flag[]) null);
+      InvocationContext ctx = getInvocationContext();
+      RemoveCommand command = commandsFactory.buildRemoveCommand(key, null);
+      return (V) invoker.invoke(ctx, command);
    }
 
    public final void putAll(Map<? extends K, ? extends V> map) {
@@ -199,26 +210,49 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V> {
    }
 
    public final void clear() {
-      clear((Flag[]) null);
+      InvocationContext ctx = getInvocationContext();
+      ClearCommand command = commandsFactory.buildClearCommand();
+      invoker.invoke(ctx, command);
    }
 
+   @SuppressWarnings("unchecked")
    public Set<K> keySet() {
       KeySetCommand command = commandsFactory.buildKeySetCommand();
       return (Set<K>) invoker.invoke(icc.createNonTxInvocationContext(), command);
    }
 
+   @SuppressWarnings("unchecked")
    public Collection<V> values() {
       ValuesCommand command = commandsFactory.buildValuesCommand();
       return (Collection<V>) invoker.invoke(icc.createNonTxInvocationContext(), command);
    }
 
+   @SuppressWarnings("unchecked")
    public Set<Map.Entry<K, V>> entrySet() {
       EntrySetCommand command = commandsFactory.buildEntrySetCommand();
       return (Set<Map.Entry<K, V>>) invoker.invoke(icc.createNonTxInvocationContext(), command);
    }
 
    public final void putForExternalRead(K key, V value) {
-      putForExternalRead(key, value, (Flag[]) null);
+      Transaction ongoingTransaction = null;
+      try {
+         if (transactionManager != null && (ongoingTransaction = transactionManager.getTransaction()) != null) {
+            transactionManager.suspend();
+         }
+         // if the entry exists then this should be a no-op.
+         withFlags(FAIL_SILENTLY, FORCE_ASYNCHRONOUS, ZERO_LOCK_ACQUISITION_TIMEOUT, PUT_FOR_EXTERNAL_READ).putIfAbsent(key, value);
+      }
+      catch (Exception e) {
+         if (log.isDebugEnabled()) log.debug("Caught exception while doing putForExternalRead()", e);
+      }
+      finally {
+         try {
+            if (ongoingTransaction != null) transactionManager.resume(ongoingTransaction);
+         }
+         catch (Exception e) {
+            log.debug("Had problems trying to resume a transaction after putForExternalread()", e);
+         }
+      }
    }
 
    public final void evict(K key) {
@@ -243,7 +277,11 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V> {
    }
 
    private InvocationContext getInvocationContext() {
-      return icc.createInvocationContext();
+      InvocationContext ctx = icc.createInvocationContext();
+      PreInvocationContext pic = flagHolder.get();
+      if (pic != null && !pic.flags.isEmpty()) ctx.setFlags(pic.flags);
+      flagHolder.remove();
+      return ctx;
    }
 
    public void lock(K key) {
@@ -305,211 +343,13 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V> {
       return componentRegistry;
    }
 
-   public final void putForExternalRead(K key, V value, Flag... flags) {
-      InvocationContext invocationContext = getInvocationContext();
-      if (flags != null) invocationContext.setFlags(flags);
-      Transaction ongoingTransaction = null;
-      try {
-         if (transactionManager != null && (ongoingTransaction = transactionManager.getTransaction()) != null) {
-            transactionManager.suspend();
-         }
-         // if the entry exists then this should be a no-op.
-         putIfAbsent(key, value, Flag.FAIL_SILENTLY, Flag.FORCE_ASYNCHRONOUS, Flag.ZERO_LOCK_ACQUISITION_TIMEOUT, Flag.PUT_FOR_EXTERNAL_READ);
-      }
-      catch (Exception e) {
-         if (log.isDebugEnabled()) log.debug("Caught exception while doing putForExternalRead()", e);
-      }
-      finally {
-         try {
-            if (ongoingTransaction != null) transactionManager.resume(ongoingTransaction);
-         }
-         catch (Exception e) {
-            log.debug("Had problems trying to resume a transaction after putForExternalread()", e);
-         }
-      }
-   }
-
-   public final V put(K key, V value, Flag... flags) {
-      return put(key, value, MILLISECONDS.toMillis(defaultLifespan), MILLISECONDS, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS, flags);
-   }
-
-   @SuppressWarnings("unchecked")
-   public final V put(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags) {
-      InvocationContext ctx = getInvocationContext();
-      if (flags != null) ctx.setFlags(flags);
-      PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, lifespanUnit.toMillis(lifespan), maxIdleTimeUnit.toMillis(maxIdleTime));
-      return (V) invoker.invoke(ctx, command);
-   }
-
-   public final V putIfAbsent(K key, V value, Flag... flags) {
-      return putIfAbsent(key, value, MILLISECONDS.toMillis(defaultLifespan), MILLISECONDS, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS, flags);
-   }
-
-   @SuppressWarnings("unchecked")
-   public final V putIfAbsent(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags) {
-      InvocationContext context = getInvocationContext();
-      context.setFlags(flags);
-      PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, lifespanUnit.toMillis(lifespan), maxIdleTimeUnit.toMillis(maxIdleTime));
-      command.setPutIfAbsent(true);
-      return (V) invoker.invoke(context, command);
-   }
-
-   public final void putAll(Map<? extends K, ? extends V> map, Flag... flags) {
-      putAll(map, MILLISECONDS.toMillis(defaultLifespan), MILLISECONDS, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS, flags);
-   }
-
-   public final void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags) {
-      InvocationContext ctx = getInvocationContext();
-      if (flags != null) ctx.setFlags(flags);
-      PutMapCommand command = commandsFactory.buildPutMapCommand(map, MILLISECONDS.toMillis(defaultLifespan), MILLISECONDS.toMillis(defaultMaxIdleTime));
-      invoker.invoke(ctx, command);
-   }
-
-   @SuppressWarnings("unchecked")
-   public final V remove(Object key, Flag... flags) {
-      InvocationContext ctx = getInvocationContext();
-      if (flags != null) ctx.setFlags(flags);
-      RemoveCommand command = commandsFactory.buildRemoveCommand(key, null);
-      return (V) invoker.invoke(ctx, command);
-   }
-
-   public final boolean remove(Object key, Object oldValue, Flag... flags) {
-      InvocationContext ctx = getInvocationContext();
-      if (flags != null) ctx.setFlags(flags);
-      RemoveCommand command = commandsFactory.buildRemoveCommand(key, oldValue);
-      return (Boolean) invoker.invoke(ctx, command);
-   }
-
-   public final void clear(Flag... flags) {
-      InvocationContext ctx = getInvocationContext();
-      if (flags != null) ctx.setFlags(flags);
-      ClearCommand command = commandsFactory.buildClearCommand();
-      invoker.invoke(ctx, command);
-   }
-
-   public final V replace(K k, V v, Flag... flags) {
-      return replace(k, v, MILLISECONDS.toMillis(defaultLifespan), MILLISECONDS, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS, flags);
-   }
-
-   public final boolean replace(K k, V oV, V nV, Flag... flags) {
-      return replace(k, oV, nV, MILLISECONDS.toMillis(defaultLifespan), MILLISECONDS, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS, flags);
-   }
-
-   @SuppressWarnings("unchecked")
-   public final V replace(K k, V v, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, Flag... flags) {
-      InvocationContext ctx = getInvocationContext();
-      if (flags != null) ctx.setFlags(flags);
-      ReplaceCommand command = commandsFactory.buildReplaceCommand(k, null, v, lifespanUnit.toMillis(lifespan), maxIdleUnit.toMillis(maxIdle));
-      return (V) invoker.invoke(ctx, command);
-   }
-
-   public final boolean replace(K k, V oV, V nV, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, Flag... flags) {
-      InvocationContext ctx = getInvocationContext();
-      if (flags != null) ctx.setFlags(flags);
-      ReplaceCommand command = commandsFactory.buildReplaceCommand(k, oV, nV, lifespanUnit.toMillis(lifespan), maxIdleUnit.toMillis(maxIdle));
-      return (Boolean) invoker.invoke(ctx, command);
-   }
-
-   public final NotifyingFuture<V> putAsync(K key, V value, Flag... flags) {
-      return putAsync(key, value, MILLISECONDS.toMillis(defaultLifespan), MILLISECONDS, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS, flags);
-   }
-
-   public final NotifyingFuture<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags) {
-      InvocationContext ctx = getInvocationContext();
-      if (flags != null) ctx.setFlags(flags);
-      ctx.setUseFutureReturnType(true);
-      PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, lifespanUnit.toMillis(lifespan), maxIdleTimeUnit.toMillis(maxIdleTime));
-      return wrapInFuture(invoker.invoke(ctx, command));
-   }
-
-   public final NotifyingFuture<V> putIfAbsentAsync(K key, V value, Flag... flags) {
-      return putIfAbsentAsync(key, value, MILLISECONDS.toMillis(defaultLifespan), MILLISECONDS, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS, flags);
-   }
-
-   public final NotifyingFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags) {
-      InvocationContext ctx = getInvocationContext();
-      if (flags != null) ctx.setFlags(flags);
-      ctx.setUseFutureReturnType(true);
-      PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, lifespanUnit.toMillis(lifespan), maxIdleTimeUnit.toMillis(maxIdleTime));
-      command.setPutIfAbsent(true);
-      return wrapInFuture(invoker.invoke(ctx, command));
-   }
-
-   public final NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> map, Flag... flags) {
-      return putAllAsync(map, MILLISECONDS.toMillis(defaultLifespan), MILLISECONDS, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS, flags);
-   }
-
-   public final NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags) {
-      InvocationContext ctx = getInvocationContext();
-      if (flags != null) ctx.setFlags(flags);
-      ctx.setUseFutureReturnType(true);
-      PutMapCommand command = commandsFactory.buildPutMapCommand(map, MILLISECONDS.toMillis(MILLISECONDS.toMillis(defaultLifespan)), MILLISECONDS.toMillis(MILLISECONDS.toMillis(defaultMaxIdleTime)));
-      return wrapInFuture(invoker.invoke(ctx, command));
-   }
-
-   public final NotifyingFuture<V> removeAsync(Object key, Flag... flags) {
-      InvocationContext ctx = getInvocationContext();
-      if (flags != null) ctx.setFlags(flags);
-      ctx.setUseFutureReturnType(true);
-      RemoveCommand command = commandsFactory.buildRemoveCommand(key, null);
-      return wrapInFuture(invoker.invoke(ctx, command));
-   }
-
-   public final NotifyingFuture<Void> clearAsync(Flag... flags) {
-      InvocationContext ctx = getInvocationContext();
-      if (flags != null) ctx.setFlags(flags);
-      ctx.setUseFutureReturnType(true);
-      ClearCommand command = commandsFactory.buildClearCommand();
-      return wrapInFuture(invoker.invoke(ctx, command));
-   }
-
-   public final NotifyingFuture<V> replaceAsync(K k, V v, Flag... flags) {
-      return replaceAsync(k, v, MILLISECONDS.toMillis(defaultLifespan), MILLISECONDS, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS, flags);
-   }
-
-   public final NotifyingFuture<Boolean> replaceAsync(K k, V oV, V nV, Flag... flags) {
-      return replaceAsync(k, oV, nV, MILLISECONDS.toMillis(defaultLifespan), MILLISECONDS, MILLISECONDS.toMillis(defaultMaxIdleTime), MILLISECONDS, flags);
-   }
-
-   public final NotifyingFuture<V> replaceAsync(K k, V v, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, Flag... flags) {
-      InvocationContext ctx = getInvocationContext();
-      if (flags != null) ctx.setFlags(flags);
-      ctx.setUseFutureReturnType(true);
-      ReplaceCommand command = commandsFactory.buildReplaceCommand(k, null, v, lifespanUnit.toMillis(lifespan), maxIdleUnit.toMillis(maxIdle));
-      return wrapInFuture(invoker.invoke(ctx, command));
-   }
-
-   public final NotifyingFuture<Boolean> replaceAsync(K k, V oV, V nV, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, Flag... flags) {
-      InvocationContext ctx = getInvocationContext();
-      if (flags != null) ctx.setFlags(flags);
-      ctx.setUseFutureReturnType(true);
-      ReplaceCommand command = commandsFactory.buildReplaceCommand(k, oV, nV, lifespanUnit.toMillis(lifespan), maxIdleUnit.toMillis(maxIdle));
-      return wrapInFuture(invoker.invoke(ctx, command));
-   }
-
-   public final boolean containsKey(Object key, Flag... flags) {
-      InvocationContext ctx = getInvocationContext();
-      if (flags != null) ctx.setFlags(flags);
-      GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key);
-      Object response = invoker.invoke(ctx, command);
-      return response != null;
-   }
-
-   @SuppressWarnings("unchecked")
-   public final V get(Object key, Flag... flags) {
-      InvocationContext ctx = getInvocationContext();
-      if (flags != null) ctx.setFlags(flags);
-      GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key);
-      return (V) invoker.invoke(ctx, command);
-   }
-
    public ComponentStatus getStatus() {
       return componentRegistry.getStatus();
    }
 
-   /** 
-    * Returns String representation of ComponentStatus enumeration in order to avoid 
-    * class not found exceptions in JMX tools that don't have access to infinispan classes.
+   /**
+    * Returns String representation of ComponentStatus enumeration in order to avoid class not found exceptions in JMX
+    * tools that don't have access to infinispan classes.
     */
    @ManagedAttribute(description = "Returns the cache status")
    @Metric(displayName = "Cache status", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
@@ -533,8 +373,8 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V> {
       return name;
    }
 
-   /** 
-    * Returns the cache name. If this is the default cache, it returns a more friendly name. 
+   /**
+    * Returns the cache name. If this is the default cache, it returns a more friendly name.
     */
    @ManagedAttribute(description = "Returns the cache name")
    @Metric(displayName = "Cache name", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
@@ -567,12 +407,19 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V> {
       return cacheManager;
    }
 
+   @SuppressWarnings("unchecked")
    public final V put(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit) {
-      return put(key, value, lifespan, lifespanUnit, maxIdleTime, idleTimeUnit, (Flag[]) null);
+      InvocationContext ctx = getInvocationContext();
+      PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, lifespanUnit.toMillis(lifespan), idleTimeUnit.toMillis(maxIdleTime));
+      return (V) invoker.invoke(ctx, command);
    }
 
+   @SuppressWarnings("unchecked")
    public final V putIfAbsent(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit) {
-      return putIfAbsent(key, value, lifespan, lifespanUnit, maxIdleTime, idleTimeUnit, (Flag[]) null);
+      InvocationContext context = getInvocationContext();
+      PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, lifespanUnit.toMillis(lifespan), idleTimeUnit.toMillis(maxIdleTime));
+      command.setPutIfAbsent(true);
+      return (V) invoker.invoke(context, command);
    }
 
    public final void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit) {
@@ -580,12 +427,18 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V> {
       invoker.invoke(getInvocationContext(), command);
    }
 
+   @SuppressWarnings("unchecked")
    public final V replace(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit) {
-      return replace(key, value, lifespan, lifespanUnit, maxIdleTime, idleTimeUnit, (Flag[]) null);
+      InvocationContext ctx = getInvocationContext();
+      ReplaceCommand command = commandsFactory.buildReplaceCommand(key, null, value, lifespanUnit.toMillis(lifespan), idleTimeUnit.toMillis(maxIdleTime));
+      return (V) invoker.invoke(ctx, command);
+
    }
 
    public final boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit) {
-      return replace(key, oldValue, value, lifespan, lifespanUnit, maxIdleTime, idleTimeUnit, (Flag[]) null);
+      InvocationContext ctx = getInvocationContext();
+      ReplaceCommand command = commandsFactory.buildReplaceCommand(key, oldValue, value, lifespanUnit.toMillis(lifespan), idleTimeUnit.toMillis(maxIdleTime));
+      return (Boolean) invoker.invoke(ctx, command);
    }
 
    /**
@@ -711,7 +564,10 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V> {
    }
 
    public final NotifyingFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return replaceAsync(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit, (Flag[]) null);
+      InvocationContext ctx = getInvocationContext();
+      ctx.setUseFutureReturnType(true);
+      ReplaceCommand command = commandsFactory.buildReplaceCommand(key, null, value, lifespanUnit.toMillis(lifespan), maxIdleUnit.toMillis(maxIdle));
+      return wrapInFuture(invoker.invoke(ctx, command));
    }
 
    public final NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue) {
@@ -762,5 +618,29 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V> {
 
    public RpcManager getRpcManager() {
       return rpcManager;
+   }
+
+   public AdvancedCache<K, V> withFlags(Flag... flags) {
+      if (flags != null && flags.length > 0) {
+         PreInvocationContext pic = flagHolder.get();
+         if (pic == null)
+            flagHolder.set(new PreInvocationContext(flags));
+         else
+            flagHolder.set(pic.add(flags));
+      }
+      return this;
+   }
+
+   private static final class PreInvocationContext {
+      EnumSet<Flag> flags;
+
+      private PreInvocationContext(Flag[] flags) {
+         this.flags = flags != null && flags.length > 0 ? EnumSet.copyOf(Arrays.asList(flags)) : EnumSet.noneOf(Flag.class);
+      }
+
+      private PreInvocationContext add(Flag[] newFlags) {
+         if (newFlags != null && newFlags.length > 0) flags.addAll(Arrays.asList(newFlags));
+         return this;
+      }
    }
 }

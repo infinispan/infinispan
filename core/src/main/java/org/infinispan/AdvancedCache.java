@@ -8,12 +8,9 @@ import org.infinispan.eviction.EvictionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.util.concurrent.NotifyingFuture;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * An advanced interface that exposes additional methods not available on {@link Cache}.
@@ -22,6 +19,18 @@ import java.util.concurrent.TimeUnit;
  * @since 4.0
  */
 public interface AdvancedCache<K, V> extends Cache<K, V> {
+
+   /**
+    * A builder-style method that adds flags to any API call.  For example, consider the following code snippet:
+    * <pre>
+    *   cache.withFlags(Flag.FORCE_WRITE_LOCK).get(key);
+    * </pre>
+    * will invoke a cache.get() with a write lock forced.
+    * @param flags a set of flags to apply.  See the {@link Flag} documentation.
+    * @return a cache on which a real operation is to be invoked.
+    */
+   AdvancedCache<K, V> withFlags(Flag... flags);
+
    /**
     * Adds a custom interceptor to the interceptor chain, at specified position, where the first interceptor in the
     * chain is at position 0 and the last one at NUM_INTERCEPTORS - 1.
@@ -109,60 +118,4 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
    InvocationContextContainer getInvocationContextContainer();
 
    DataContainer getDataContainer();
-
-   void putForExternalRead(K key, V value, Flag... flags);
-
-   V put(K key, V value, Flag... flags);
-
-   V put(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags);
-
-   V putIfAbsent(K key, V value, Flag... flags);
-
-   V putIfAbsent(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags);
-
-   void putAll(Map<? extends K, ? extends V> map, Flag... flags);
-
-   void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags);
-
-   V remove(Object key, Flag... flags);
-
-   void clear(Flag... flags);
-
-   V replace(K k, V v, Flag... flags);
-
-   boolean replace(K k, V oV, V nV, Flag... flags);
-
-   V replace(K k, V v, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, Flag... flags);
-
-   boolean replace(K k, V oV, V nV, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, Flag... flags);
-
-
-   // -- async methods --
-   NotifyingFuture<V> putAsync(K key, V value, Flag... flags);
-
-   NotifyingFuture<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags);
-
-   NotifyingFuture<V> putIfAbsentAsync(K key, V value, Flag... flags);
-
-   NotifyingFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags);
-
-   NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> map, Flag... flags);
-
-   NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag... flags);
-
-   NotifyingFuture<V> removeAsync(Object key, Flag... flags);
-
-   NotifyingFuture<Void> clearAsync(Flag... flags);
-
-   NotifyingFuture<V> replaceAsync(K k, V v, Flag... flags);
-
-   NotifyingFuture<Boolean> replaceAsync(K k, V oV, V nV, Flag... flags);
-
-   NotifyingFuture<V> replaceAsync(K k, V v, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, Flag... flags);
-
-   NotifyingFuture<Boolean> replaceAsync(K k, V oV, V nV, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit, Flag... flags);
-
-   boolean containsKey(Object key, Flag... flags);
-
-   V get(Object key, Flag... flags);
 }

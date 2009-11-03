@@ -2,7 +2,7 @@ package org.infinispan.distribution;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
-import org.infinispan.context.Flag;
+import static org.infinispan.context.Flag.SKIP_REMOTE_LOOKUP;
 import org.infinispan.replication.AsyncAPISyncReplTest;
 import org.infinispan.test.data.Key;
 import org.infinispan.util.Util;
@@ -31,7 +31,7 @@ public class AsyncAPISyncDistTest extends AsyncAPISyncReplTest {
    @Override
    protected void assertOnAllCaches(Key k, String v) {
       Object real;
-      assert Util.safeEquals((real = c1.getAdvancedCache().get(k, Flag.SKIP_REMOTE_LOOKUP)), v) : "Error on cache 1.  Expected " + v + " and got " + real;
-      assert Util.safeEquals((real = c2.getAdvancedCache().get(k, Flag.SKIP_REMOTE_LOOKUP)), v) : "Error on cache 2.  Expected " + v + " and got " + real;
+      assert Util.safeEquals((real = c1.getAdvancedCache().withFlags(SKIP_REMOTE_LOOKUP).get(k)), v) : "Error on cache 1.  Expected " + v + " and got " + real;
+      assert Util.safeEquals((real = c2.getAdvancedCache().withFlags(SKIP_REMOTE_LOOKUP).get(k)), v) : "Error on cache 2.  Expected " + v + " and got " + real;
    }
 }

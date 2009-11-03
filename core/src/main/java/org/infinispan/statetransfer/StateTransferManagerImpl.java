@@ -32,6 +32,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
+import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -67,7 +68,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 public class StateTransferManagerImpl implements StateTransferManager {
 
    RpcManager rpcManager;
-   AdvancedCache cache;
+   AdvancedCache<Object, Object> cache;
    Configuration configuration;
    DataContainer dataContainer;
    CacheLoaderManager clm;
@@ -87,6 +88,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
    volatile Address stateSender;
 
    @Inject
+   @SuppressWarnings("unchecked")
    public void injectDependencies(RpcManager rpcManager, AdvancedCache cache, Configuration configuration,
                                   DataContainer dataContainer, CacheLoaderManager clm, Marshaller marshaller,
                                   TransactionLog transactionLog, InterceptorChain interceptorChain, InvocationContextContainer invocationContextContainer,
@@ -226,7 +228,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
          if (trace) log.trace("Mods = {0}", Arrays.toString(mods));
          for (WriteCommand mod : mods) {
             commandsFactory.initializeReplicableCommand(mod);
-            ctx.setFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_CACHE_STATUS_CHECK);
+            ctx.setFlags(CACHE_MODE_LOCAL, Flag.SKIP_CACHE_STATUS_CHECK);
             interceptorChain.invoke(ctx, mod);
          }
 
@@ -262,7 +264,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
                RemoteTxInvocationContext ctx = invocationContextContainer.createRemoteTxInvocationContext();
                RemoteTransaction transaction = txTable.createRemoteTransaction(command.getGlobalTransaction(), command.getModifications());
                ctx.setRemoteTransaction(transaction);
-               ctx.setFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_CACHE_STATUS_CHECK);
+               ctx.setFlags(CACHE_MODE_LOCAL, Flag.SKIP_CACHE_STATUS_CHECK);
                interceptorChain.invoke(ctx, command);
             } else {
                if (trace) log.trace("Prepare {0} not in tx log; not applying", command);
@@ -327,7 +329,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
       try {
          Set<InternalCacheEntry> set = (Set<InternalCacheEntry>) marshaller.objectFromObjectStream(i);
          for (InternalCacheEntry se : set)
-            cache.put(se.getKey(), se.getValue(), se.getLifespan(), MILLISECONDS, se.getMaxIdle(), MILLISECONDS, Flag.CACHE_MODE_LOCAL);
+            cache.withFlags(CACHE_MODE_LOCAL).put(se.getKey(), se.getValue(), se.getLifespan(), MILLISECONDS, se.getMaxIdle(), MILLISECONDS);
       } catch (Exception e) {
          dataContainer.clear();
          throw new StateTransferException(e);

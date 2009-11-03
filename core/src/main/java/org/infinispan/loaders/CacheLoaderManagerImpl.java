@@ -123,8 +123,7 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
             }
 
             for (InternalCacheEntry e : state)
-               cache.getAdvancedCache().put(e.getKey(), e.getValue(), e.getLifespan(), MILLISECONDS,
-                                            e.getMaxIdle(), MILLISECONDS, SKIP_CACHE_STATUS_CHECK);
+               cache.getAdvancedCache().withFlags(SKIP_CACHE_STATUS_CHECK).put(e.getKey(), e.getValue(), e.getLifespan(), MILLISECONDS, e.getMaxIdle(), MILLISECONDS);
 
             if (log.isDebugEnabled()) stop = System.currentTimeMillis();
             if (log.isDebugEnabled()) total = stop - start;

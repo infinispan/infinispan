@@ -3,7 +3,7 @@ package org.infinispan.invalidation;
 import org.infinispan.Cache;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.config.Configuration;
-import org.infinispan.context.Flag;
+import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.data.Key;
 import org.infinispan.util.Util;
@@ -44,7 +44,7 @@ public class AsyncAPISyncInvalTest extends MultipleCacheManagersTest {
    private void initC2(Key k) {
       Cache c1 = cache(0,getClass().getSimpleName());
       Cache c2 = cache(1,getClass().getSimpleName());
-      c2.getAdvancedCache().put(k, "v", Flag.CACHE_MODE_LOCAL);
+      c2.getAdvancedCache().withFlags(CACHE_MODE_LOCAL).put(k, "v");
    }
 
    public void testAsyncMethods() throws ExecutionException, InterruptedException {

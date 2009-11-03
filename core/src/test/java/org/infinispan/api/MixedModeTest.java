@@ -2,7 +2,7 @@ package org.infinispan.api;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.config.Configuration;
-import org.infinispan.context.Flag;
+import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
@@ -43,10 +43,10 @@ public class MixedModeTest extends MultipleCacheManagersTest {
       localCache1 = cache(0, "local").getAdvancedCache();
       localCache2 = cache(1, "local").getAdvancedCache();
 
-      invalSyncCache2.put("k", "v", Flag.CACHE_MODE_LOCAL);
+      invalSyncCache2.withFlags(CACHE_MODE_LOCAL).put("k", "v");
       assert invalSyncCache2.get("k").equals("v");
       assert invalSyncCache1.get("k") == null;
-      invalAsyncCache2.put("k", "v", Flag.CACHE_MODE_LOCAL);
+      invalAsyncCache2.withFlags(CACHE_MODE_LOCAL).put("k", "v");
       assert invalAsyncCache2.get("k").equals("v");
       assert invalAsyncCache1.get("k") == null;
 
