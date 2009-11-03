@@ -1497,7 +1497,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       /** @configRef desc="Maximum lifespan of an entry in the L1 cache." */
       protected Long lifespan=600000L;
 
-      /** @configRef desc="Toggle to enable/disable populating L1 cache after rehash" */
+      /** @configRef desc="If true, entries removed due to a rehash will be moved to L1 rather than being removed 
+       *             altogether." */
       protected Boolean onRehash=true;
 
       @XmlAttribute
