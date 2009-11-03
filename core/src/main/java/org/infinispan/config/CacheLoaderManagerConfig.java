@@ -57,19 +57,28 @@ public class CacheLoaderManagerConfig extends AbstractNamedCacheConfigurationBea
    private static final long serialVersionUID = 2210349340378984424L;
 
    /**
-    * @configRef desc="If true, activates entries that have been passivated to a store by loading
-    *            them into memory as well as writes evicted entries back to the store"
+    * @configRef desc="If true, data is only written to the cache store when it is evicted from memory, 
+    *            a phenomenon known as passivation. Next time the data is requested, it will be activated which
+    *            means that data will be brought back to memory and deleted from the persistent store. 
+    *            If false, the cache store contains a copy of the contents in memory, so writes to cache 
+    *            result in cache store writes."
     * */
    protected Boolean passivation = false;
 
    /**
-    * @configRef desc= "If true, performs a preload on the cache loader"
+    * @configRef desc= "If true, when the cache starts, data stored in the cache store will be pre-loaded into 
+    *            memory. This is particularly useful when data in the cache store will be needed immediately 
+    *            after startup and you want to avoid cache operations being delayed as a result of loading this
+    *            data."
     * */
    protected Boolean preload = false;
 
    /**
-    * @configRef desc="If true, the node that makes a modification is the only one who writes it to
-    *            the store using the relevant cache loader."
+    * @configRef desc="This setting should be set to true when multiple cache instances share the same cache store 
+    *            in order to avoid multiple cache writing the same cache modification multiple times. So if true, 
+    *            only the node where the cache modification originated will write to the cache store. If false, 
+    *            each individual cache reacts to a potential replication message by storing the data to the cache 
+    *            store. Note that this could be useful if each individual cache has its own cache store.
     * */
    protected Boolean shared = false;
 

@@ -44,6 +44,9 @@ import java.util.Properties;
 @XmlType(propOrder={})
 public class GlobalConfiguration extends AbstractConfigurationBean {
 
+   /** The serialVersionUID */
+   private static final long serialVersionUID = 8910865501990177720L;
+
    public GlobalConfiguration() {
       super();
    }
@@ -52,31 +55,31 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
     * Default replication version, from {@link org.infinispan.Version#getVersionShort}.
     */
    public static final short DEFAULT_MARSHALL_VERSION = Version.getVersionShort();
-   
+
    @XmlElement
    private FactoryClassWithPropertiesType asyncListenerExecutor = new FactoryClassWithPropertiesType(DefaultExecutorFactory.class.getName());
-   
+
    @XmlElement
    private FactoryClassWithPropertiesType asyncTransportExecutor= new FactoryClassWithPropertiesType(DefaultExecutorFactory.class.getName());
-   
+
    @XmlElement
    private FactoryClassWithPropertiesType evictionScheduledExecutor= new FactoryClassWithPropertiesType(DefaultScheduledExecutorFactory.class.getName());
-   
+
    @XmlElement
    private FactoryClassWithPropertiesType replicationQueueScheduledExecutor= new FactoryClassWithPropertiesType(DefaultScheduledExecutorFactory.class.getName());
-   
+
    @XmlElement
    private GlobalJmxStatisticsType globalJmxStatistics = new GlobalJmxStatisticsType();
-   
+
    @XmlElement
    private TransportType transport = new TransportType(null);
-  
+
    @XmlElement
    private SerializationType serialization = new SerializationType();
-   
+
    @XmlTransient
    private Configuration defaultConfiguration;
-   
+
    @XmlElement
    private ShutdownType shutdown = new ShutdownType();
 
@@ -86,7 +89,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    public boolean isExposeGlobalJmxStatistics() {
       return globalJmxStatistics.enabled;
    }
-   
+
    public void setExposeGlobalJmxStatistics(boolean exposeGlobalJmxStatistics) {
       testImmutability("exposeGlobalManagementStatistics");
       globalJmxStatistics.setEnabled(exposeGlobalJmxStatistics);
@@ -457,9 +460,8 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       gc.setTransportProperties((Properties) null);
       return gc;
    }
-   
+
    /**
-    * 
     * @configRef name="asyncListenerExecutor",desc="Executor for listeners."
     * @configRef name="asyncTransportExecutor",desc="Transport executor."
     * @configRef name="evictionScheduledExecutor",desc="Eviction executor."
@@ -467,11 +469,14 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    public static class FactoryClassWithPropertiesType extends AbstractConfigurationBeanWithGCR {
-      
-      /** @configRef desc="Executor fully qualified class name" */
+
+      /** The serialVersionUID */
+      private static final long serialVersionUID = 7625606997888180254L;
+
+      /** @configRef desc="Executor fully qualified class name. It must implement org.infinispan.executors.ExecutorFactory" */
       @XmlAttribute
       protected String factory;
-      
+
       /** 
        * @configPropertyRef name="maxThreads",desc="Number of threads for this executor"
        * @configPropertyRef name="threadNamePrefix",desc="Name prefix for threads created in this executor"
@@ -483,7 +488,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
          super();
          this.factory = factory;
       }   
-      
+
       public void accept(ConfigurationBeanVisitor v) {
          v.visitFactoryClassWithPropertiesType(this);
       }
@@ -510,35 +515,39 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
          return dolly;
       }
    }
-   
+
    /**
-    * 
-    * @configRef name="transport",desc="Determines Infinispan transport type and accompanying properties." 
-    */   
+    * @configRef name="transport",desc="This element configures the transport used to communicate accross the cluster." 
+    */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    public static class TransportType extends AbstractConfigurationBeanWithGCR {
-     
+
+      /** The serialVersionUID */
+      private static final long serialVersionUID = -4739815717370060368L;
+
       /** @configRef desc="Cluster name where all cache instances defined are connected" */
       protected String clusterName = "Infinispan-Cluster";
-      
-      /** @configRef desc="todo" */ 
+
+      /** @configRef desc="Cluster-wide synchronization timeout for locks that are aware of block and unblock commands 
+       *             issued across a cluster and sub-phases such as a start processing" */
       protected Long distributedSyncTimeout = 60000L; // default
-     
-      /** @configRef desc="Fully qualified name of a class that implements network transport"*/
+
+      /** @configRef desc="Fully qualified name of a class that implements network transport which must 
+       *             implement org.infinispan.remoting.transport.Transport"*/
       protected String transportClass = null; // this defaults to a non-clustered cache.
-      
+
       /**
        * @configRef desc="Node name for the underlying transport channel"
        */
       protected String nodeName = null;
-      
+
       protected TypedProperties properties = EMPTY_PROPERTIES;
 
       public TransportType() {
          super();
          transportClass = JGroupsTransport.class.getName();
       }
-      
+
       public void accept(ConfigurationBeanVisitor v) {
          v.visitTransportType(this);
       }
@@ -585,21 +594,24 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
          return dolly;
       }
    }
-   
+
    /**
-    * 
     * @configRef name="serialization",desc="Serialization and marshalling settings."
     */   
    @XmlAccessorType(XmlAccessType.PROPERTY)
    public static class SerializationType extends AbstractConfigurationBeanWithGCR {
-      
-      /** @configRef desc="Fully qualified name of a class that marshalls objects between cache nodes"*/
+
+      /** The serialVersionUID */
+      private static final long serialVersionUID = -925947118621507282L;
+
+      /** @configRef desc="Fully qualified name of a class that marshalls objects between cache nodes. It must 
+       *             implement org.infinispan.marshall.Marshaller."*/
       protected String marshallerClass = VersionAwareMarshaller.class.getName(); // the default
-      
-      /** @configRef desc="Marshalling serialization version"*/
+
+      /** @configRef desc="Marshalling serialization version."*/
       protected String version = Version.getMajorVersion();
-      
-      public SerializationType() {        
+
+      public SerializationType() {
          super();
       }
 
@@ -617,26 +629,31 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       public void setVersion(String version) {
          testImmutability("version");
          this.version = version;
-      }                      
+      }
    }
-   
+
    /**
-    * 
-    * @configRef name="globalJmxStatistics",desc="Determines global JMX settings for all cache instances." 
+    * @configRef name="globalJmxStatistics",desc="This element specifies whether global statistics are gathered and 
+    *            reported via JMX for all caches under this cache manager."
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    public static class GlobalJmxStatisticsType extends AbstractConfigurationBeanWithGCR {
-      
-      /** @configRef desc="Toggle to enable/disable exposing Infinispan objects to JMX" */
+
+      /** The serialVersionUID */
+      private static final long serialVersionUID = 6639689526822921024L;
+
+      /** @configRef desc="Toggle to enable/disable global statistics being exported via JMX." */
       protected Boolean enabled = false;
-      
+
       /** @configRef desc="JMX domain name where all relevant JMX exposed objects will be bound" */
       protected String jmxDomain = "infinispan";
-      
+
       /** @configRef desc="Fully qualified name of class that will attempt to find JMX MBean server" */
       protected String mBeanServerLookup = PlatformMBeanServerLookup.class.getName();
-      
-      /** @configRef desc="If true, multiple cache manager instances could be configured under the same JMX domain" */
+
+      /** @configRef desc="If true, multiple cache manager instances could be configured under the same configured 
+       *            JMX domain. Each cache manager will in practice use a different JMX domain that has been 
+       *            calculated based on the configured one by adding an index number to it." */
       protected Boolean allowDuplicateDomains = false;
 
       @XmlAttribute
@@ -665,18 +682,23 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       public void setAllowDuplicateDomains(Boolean allowDuplicateDomains) {
          testImmutability("allowDuplicateDomains");
          this.allowDuplicateDomains = allowDuplicateDomains;
-      }            
+      }
    }
-   
+
    /**
     * 
-    * @configRef name="shutdown",desc="Determines shutdown hook settings. 
-    * By default a shutdown hook is registered even if no MBean server (apart from the JDK default) is detected."
+    * @configRef name="shutdown",desc=" This element specifies behavior when the cache shuts down."
     */   
    @XmlAccessorType(XmlAccessType.PROPERTY)
    public static class ShutdownType extends AbstractConfigurationBeanWithGCR {
-      
-      /** @configRef desc="Behavior of the JVM shutdown hook registered by the cache" */
+
+      /** The serialVersionUID */
+      private static final long serialVersionUID = 3427920991221031456L;
+
+      /** @configRef desc="Behavior of the JVM shutdown hook registered by the cache. The options available are: 
+       *         DEFAULT - A shutdown hook is registered even if no MBean server (apart from the JDK default) is detected.
+       *         REGISTER - Forces the cache to register a shutdown hook even if an MBean server is detected.
+       *         DONT_REGISTER - Forces the cache NOT to register a shutdown hook, even if no MBean server is detected.*/
       protected ShutdownHookBehavior hookBehavior = ShutdownHookBehavior.DEFAULT;
 
       @XmlAttribute
@@ -693,22 +715,24 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
 
 abstract class AbstractConfigurationBeanWithGCR extends AbstractConfigurationBean{
 
+   /** The serialVersionUID */
+   private static final long serialVersionUID = -5124687543159561028L;
+
    GlobalComponentRegistry gcr = null;
-   
-   
+
    @Inject
    public void inject(GlobalComponentRegistry gcr) {
       this.gcr = gcr;
    }
 
-
    @Override
    protected boolean hasComponentStarted() {
       return gcr != null && gcr.getStatus() != null && gcr.getStatus() == ComponentStatus.RUNNING;
    }
-   
+
 }
- class PropertiesType {
+
+class PropertiesType {
     
    @XmlElement(name = "property")
    Property properties[];

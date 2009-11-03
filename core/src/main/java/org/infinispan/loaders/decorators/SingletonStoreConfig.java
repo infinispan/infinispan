@@ -30,32 +30,27 @@ public class SingletonStoreConfig extends AbstractNamedCacheConfigurationBean {
 
    private static final long serialVersionUID = 824251894176131850L;
 
-   /**
-    *  @configRef desc="If true, the relevant cache store is turned into singleton store"
-    *  */
+   /** @configRef desc="If true, the singleton store cache store is enabled. "*/
    protected Boolean enabled = false;
    
-   /**
-    *  @configRef desc="If true and the node becomes the coordinator, the in-memory state transfer 
-    *  to the underlying cache store is initiated"
-    *  */
+   /** @configRef desc="If true, when a node becomes the coordinator, it will transfer in-memory state to the 
+    *             underlying cache store. This can be very useful in situations where the coordinator crashes and 
+    *             there's a gap in time until the new coordinator is elected." */
    protected Boolean pushStateWhenCoordinator = true;
    
-   /**
-    *  @configRef desc="If pushStateWhenCoordinator is true, the in-memory state transfer to cache store timeout"
-    *  */
+   /** @configRef desc="If pushStateWhenCoordinator is true, this property sets the maximum number of milliseconds that 
+    *             the process of pushing the in-memory state to the underlying cache loader should take." */
    protected Long pushStateTimeout = 10000L;
 
    @XmlAttribute(name="enabled")
    public Boolean isSingletonStoreEnabled() {
       return enabled;
    }
-   
+
    public void setSingletonStoreEnabled(Boolean singletonStoreEnabled) {
       testImmutability("enabled");
       this.enabled = singletonStoreEnabled;
    }
-
 
    @XmlAttribute
    public Boolean isPushStateWhenCoordinator() {

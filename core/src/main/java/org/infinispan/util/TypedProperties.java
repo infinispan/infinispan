@@ -22,6 +22,10 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 @XmlJavaTypeAdapter(TypedPropertiesAdapter.class)
 @XmlType(name="properties")
 public class TypedProperties extends Properties {
+
+   /** The serialVersionUID */
+   private static final long serialVersionUID = 3799321248100686287L;
+
    private static final Log log = LogFactory.getLog(TypedProperties.class);
 
    /**

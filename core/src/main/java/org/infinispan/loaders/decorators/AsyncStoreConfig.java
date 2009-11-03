@@ -25,20 +25,17 @@ import org.infinispan.config.Dynamic;
  */
 @XmlAccessorType(XmlAccessType.PUBLIC_MEMBER)
 public class AsyncStoreConfig extends AbstractNamedCacheConfigurationBean {
-   
-   /** 
-    * @configRef desc="If true, modifications are stored in the cache store asynchronously."  
-    * */
+
+   /** The serialVersionUID */
+   private static final long serialVersionUID = -8596800049019004961L;
+
+   /** @configRef desc="If true, all modifications to this cache store happen asynchronously, on a separate thread." */
    protected Boolean enabled = false;
-  
-   /** 
-    * @configRef desc="Size of the thread pool whose threads are responsible for applying the modifications."
-    *  */
+
+   /** @configRef desc="Size of the thread pool whose threads are responsible for applying the modifications." */
    protected Integer threadPoolSize = 1;
-   
-   /** 
-    * @configRef desc="Lock timeout for access to map containing latest state."
-    * */
+
+   /** @configRef desc="Lock timeout for access to map containing latest state." */
    @Dynamic
    protected Long mapLockTimeout = 5000L;
 
@@ -46,7 +43,7 @@ public class AsyncStoreConfig extends AbstractNamedCacheConfigurationBean {
    public Boolean isEnabled() {
       return enabled;
    }
-   
+
    public void setEnabled(Boolean enabled) {
       testImmutability("enabled");
       this.enabled = enabled;
@@ -71,7 +68,7 @@ public class AsyncStoreConfig extends AbstractNamedCacheConfigurationBean {
       testImmutability("mapLockTimeout");
       this.mapLockTimeout = stateLockTimeout;
    }   
-   
+
    @Override
    public AsyncStoreConfig clone() {
       try {

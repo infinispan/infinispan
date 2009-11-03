@@ -24,17 +24,19 @@ import org.infinispan.config.PluggableConfigurationComponent;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 public class AbstractCacheLoaderConfig extends PluggableConfigurationComponent implements CacheLoaderConfig {
-   
-   /** 
-    * @configRef name="class",desc="Fully qualified name of a cache loader class"
-    * */
+
+   /** The serialVersionUID */
+   private static final long serialVersionUID = -4303705423800914433L;
+
+   /** @configRef name="class",desc="Fully qualified name of a cache loader class that must implement 
+    *             org.infinispan.loaders.CacheLoader interface." */
    @XmlAttribute(name="class")
    protected String cacheLoaderClassName;
 
    public String getCacheLoaderClassName() {
       return cacheLoaderClassName;
    }
-   
+
    public void setCacheLoaderClassName(String className) {
       if (className == null || className.length() == 0) return;
       testImmutability("cacheLoaderClassName");
@@ -49,6 +51,6 @@ public class AbstractCacheLoaderConfig extends PluggableConfigurationComponent i
          throw new CacheException(e);
       }
    }
-   
+
    public void accept(ConfigurationBeanVisitor v) {}
 }

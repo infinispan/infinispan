@@ -35,32 +35,30 @@ import javax.xml.bind.annotation.XmlType;
 @XmlAccessorType(XmlAccessType.PUBLIC_MEMBER)
 @XmlType(propOrder= {"singletonStoreConfig", "asyncStoreConfig"})
 public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implements CacheStoreConfig {
-   
-   /** 
-    * @configRef desc="If true, any operation that modifies the cache store (remove, clear, store...etc) won't be applied to it"
-    * */
-   
+
+   /** The serialVersionUID */
+   private static final long serialVersionUID = 4607371052771122893L;
+
+   /** @configRef desc="If true, any operation that modifies the cache (put, remove, clear, store...etc) won't be 
+    *             applied to the cache store." */
    protected Boolean ignoreModifications = false;
-   
-   /**
-    *  @configRef desc="If true, fetch persistent state on state transfer"
-    *  */
+
+   /** @configRef desc="If true, fetch persistent state when joining a cluster. If multiple cache stores are chained, 
+    *             only one of them can have this propertye enabled. Persistent state transfer with a shared cache 
+    *             store does not make sense, as the same persistent store that provides the data will just end up 
+    *             receiving it. Therefore, if a shared cache store is used, the cache will not allow a persistent 
+    *             state transfer even if a cache store has this property set to true. Finally, setting it to true only 
+    *             makes sense if for clustered environments." */
    protected Boolean fetchPersistentState = false;
-   
-   /**
-    *  @configRef desc="If true, purge node state on startup"
-    *  */
-   
+
+   /** @configRef desc="If true, purges this cache store when it starts up." */
    protected Boolean purgeOnStartup = false;
-   
-   /**
-    *  @configRef desc="If true, CacheStore#purgeExpired() call will be done synchronously"
-    *  */
-   
+
+   /** @configRef desc="If true, CacheStore#purgeExpired() call will be done synchronously" */
    protected Boolean purgeSynchronously = false;
-   
+
    protected SingletonStoreConfig singletonStore = new SingletonStoreConfig();
-   
+
    protected AsyncStoreConfig async = new AsyncStoreConfig();
 
    @XmlAttribute

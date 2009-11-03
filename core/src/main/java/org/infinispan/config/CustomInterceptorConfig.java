@@ -42,7 +42,8 @@ import java.util.Properties;
  * provide meta data for configuration file XML schema generation. Please modify these annotations
  * and Java element types they annotate with utmost understanding and care.
  *
- * @configRef name="interceptor",desc="Holds information about the custom interceptors defined in the configuration file."
+ * @configRef name="interceptor",desc=" This element allows you configure a custom interceptor. This tag may appear 
+ *            multiple times."
  *
  * @author Mircea.Markus@jboss.com
  * @author Vladimir Blagojevic
@@ -51,46 +52,47 @@ import java.util.Properties;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name="interceptor")
 public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean {
-   
+
+   /** The serialVersionUID */
+   private static final long serialVersionUID = 6206233611032238190L;
+
    @XmlTransient
    protected CommandInterceptor interceptor;
-   
+
    @XmlTransient
    protected boolean isFirst;
-   
+
    @XmlTransient
    protected boolean isLast;
-   
-   /** 
-    * @configRef desc="Position this interceptor at the specified valid index of the interceptor chain"
-    * */
+
+   /** @configRef desc="A position at which to place this interceptor in the chain, with 0 being the first position. 
+    *             Note that this attribute is mutually exclusive with position, before and after." */
    @XmlAttribute
    protected Integer index = -1;
-   
-   /** 
-    * @configRef desc="Position this interceptor after the inteceptor specified by intereceptor's fully qualified class name"
-    * */
+
+   /** @configRef desc="Will place the new interceptor directly after the instance of the named interceptor which is 
+    *             specified via its fully qualified class name. Note that this attribute is mutually exclusive with 
+    *             position, before and index." */
    @XmlAttribute
    protected String after;
-   
-   /** 
-    * @configRef desc="Position this interceptor before the inteceptor specified by intereceptor's fully qualified class name"
-    * */
+
+   /** @configRef desc="Will place the new interceptor directly before the instance of the named interceptor which is 
+    *             specified via its fully qualified class name.. Note that this attribute is mutually exclusive with 
+    *             position, after and index." */
    @XmlAttribute
    protected String before;
-   
-   /** 
-    * @configRef desc="Position this interceptor as either FIRST or LAST intereceptor" 
-    * */
+
+   /** @configRef desc="A position at which to place this interceptor in the chain. First is the first interceptor 
+    *             encountered when an invocation is made on the cache, last is the last interceptor before the call is 
+    *             passed on to the data structure. Note that this attribute is mutually exclusive with before, after 
+    *             and index." */
    @XmlAttribute
    protected Position position;   
-   
-   /** 
-    * @configRef name="class",desc="Fully qualified intereceptor class name"
-    * */
+
+   /** @configRef name="class",desc="Fully qualified intereceptor class name which must extend CommandInterceptor." */
    @XmlAttribute(name="class")
    protected String className;
-   
+
    @XmlElement
    private TypedProperties properties = EMPTY_PROPERTIES;
 
@@ -166,7 +168,7 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
    public String getClassName() {
       return className;
    }
-   
+
    public void setClassName(String className) {
       this.className = className;
    }
@@ -238,14 +240,14 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
    /**
     * Returns a the interceptor that we want to add to the chain.
     */
-   public CommandInterceptor getInterceptor() {      
+   public CommandInterceptor getInterceptor() {
       return interceptor;
    }
    
    /**
     * Returns a the interceptor that we want to add to the chain.
     */
-   public void setInterceptor(CommandInterceptor interceptor) {      
+   public void setInterceptor(CommandInterceptor interceptor) {
       this.interceptor = interceptor;
    }
 
