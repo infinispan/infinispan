@@ -30,7 +30,7 @@ import java.io.Serializable;
  * @author Lukasz Moren
  * @author Sanne Grinovero
  */
-final class FileCacheKey implements Serializable, CacheKey {
+public final class FileCacheKey implements Serializable, CacheKey {
 
    /** The serialVersionUID */
    private static final long serialVersionUID = -228474937509042691L;

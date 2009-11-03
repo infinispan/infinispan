@@ -46,7 +46,7 @@ import org.testng.annotations.Test;
  * @author Sanne Grinovero
  */
 @SuppressWarnings("deprecation")
-@Test(groups = "profiling", testName = "lucene.InfinispanDirectoryTest")
+@Test(groups = "profiling", testName = "lucene.InfinispanDirectoryStressTest")
 public class InfinispanDirectoryStressTest {
 
    private static final Log log = LogFactory.getLog(InfinispanDirectoryStressTest.class);

@@ -33,6 +33,7 @@ import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.store.LockFactory;
 import org.infinispan.Cache;
+import org.infinispan.lucene.locking.LuceneLockFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -40,12 +41,12 @@ import org.infinispan.util.logging.LogFactory;
  * Implementation that uses Infinispan to store Lucene indices.
  * 
  * Directory locking is assured with
- * {@link org.infinispan.lucene.InfinispanLockFactory.InfinispanLock}
+ * {@link org.infinispan.lucene.locking.SharedLuceneLock}
  * 
  * @since 4.0
  * @author Lukasz Moren
  * @author Sanne Grinovero
- * @see org.infinispan.lucene.InfinispanLockFactory
+ * @see org.infinispan.lucene.locking.LuceneLockFactory
  */
 // todo add support for ConcurrentMergeSheduler
 public class InfinispanDirectory extends Directory {
@@ -83,11 +84,11 @@ public class InfinispanDirectory extends Directory {
    }
 
    public InfinispanDirectory(Cache<CacheKey, Object> cache, String indexName, int chunkSize) {
-      this(cache, indexName, new InfinispanLockFactory(cache, indexName), chunkSize);
+      this(cache, indexName, new LuceneLockFactory(cache, indexName), chunkSize);
    }
 
    public InfinispanDirectory(Cache<CacheKey, Object> cache, String indexName) {
-      this(cache, indexName, new InfinispanLockFactory(cache, indexName), InfinispanIndexIO.DEFAULT_BUFFER_SIZE);
+      this(cache, indexName, new LuceneLockFactory(cache, indexName), InfinispanIndexIO.DEFAULT_BUFFER_SIZE);
    }
 
    public InfinispanDirectory(Cache<CacheKey, Object> cache) {

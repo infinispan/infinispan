@@ -51,7 +51,7 @@ public abstract class CacheTestSupport {
       return TestCacheManagerFactory.createClusteredCacheManager( createTestConfiguration() );
    }
    
-   protected static Configuration createTestConfiguration() {
+   public static Configuration createTestConfiguration() {
       Configuration c = new Configuration();
       c.setCacheMode(Configuration.CacheMode.REPL_SYNC);
       c.setSyncReplTimeout(10000);
