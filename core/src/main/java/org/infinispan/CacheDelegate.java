@@ -150,6 +150,10 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V> {
    }
 
    public final boolean remove(Object key, Object value) {
+      if (value instanceof Flag) {
+         // this can happen!
+         log.warn("Did you intend to call Cache.remove(Object, Object), with a Flag as value, or did you intend to call Cache.remove(Object, Flag... )?  If it was the latter and you are just passing in one flag, please cast this to an array of Flag, e.g., remove(key, new Flag[]{flag}) to ensure the correct method gets called!");
+      }
       return remove(key, value, (Flag[]) null);
    }
 
