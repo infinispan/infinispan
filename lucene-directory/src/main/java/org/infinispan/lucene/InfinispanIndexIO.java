@@ -202,27 +202,21 @@ public class InfinispanIndexIO {
 
       private final int bufferSize;
 
-      private Cache<CacheKey, Object> cache;
-      private FileMetadata file;
-      private FileCacheKey fileKey;
+      private final Cache<CacheKey, Object> cache;
+      private final FileMetadata file;
+      private final FileCacheKey fileKey;
 
       private byte[] buffer;
       private int bufferPosition = 0;
       private int filePosition = 0;
       private int chunkNumber;
 
-      public InfinispanIndexOutput(Cache<CacheKey, Object> cache, FileCacheKey fileKey) throws IOException {
-         this(cache, fileKey, InfinispanIndexIO.DEFAULT_BUFFER_SIZE);
-      }
-
-      public InfinispanIndexOutput(Cache<CacheKey, Object> cache, FileCacheKey fileKey, int bufferSize) throws IOException {
+      public InfinispanIndexOutput(Cache<CacheKey, Object> cache, FileCacheKey fileKey, int bufferSize, FileMetadata fileMetadata) throws IOException {
          this.cache = cache;
          this.fileKey = fileKey;
          this.bufferSize = bufferSize;
-
-         buffer = new byte[this.bufferSize];
-
-         this.file = (FileMetadata) cache.get(fileKey);
+         this.buffer = new byte[this.bufferSize];
+         this.file = fileMetadata;
          if (log.isDebugEnabled()) {
             log.debug("Opened new IndexOutput for file:{0} in index: {1}", fileKey.getFileName(), fileKey.getIndexName());
          }

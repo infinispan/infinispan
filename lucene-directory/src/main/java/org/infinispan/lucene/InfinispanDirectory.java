@@ -23,9 +23,8 @@ package org.infinispan.lucene;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.lucene.store.AlreadyClosedException;
 import org.apache.lucene.store.Directory;
@@ -57,24 +56,22 @@ public class InfinispanDirectory extends Directory {
    // access type will be changed in the next Lucene version
    volatile boolean isOpen = true;
 
-   private Cache<CacheKey, Object> cache;
+   private final Cache<CacheKey, Object> cache;
    // indexName is required when one common cache is used
-   private String indexName;
+   private final String indexName;
    // chunk size used in this directory, static filed not used as we want to have different chunk
    // size per dir
-   private int chunkSize;
+   private final int chunkSize;
+
+   private final FileListCacheKey fileListCacheKey;
 
    public InfinispanDirectory(Cache<CacheKey, Object> cache, String indexName, LockFactory lf, int chunkSize) {
       this.cache = cache;
       this.indexName = indexName;
       this.setLockFactory(lf);
       this.chunkSize = chunkSize;
-
-      // fixme change it to ConcurrentHashMap when [JBMAR-68] bug is fixed
-      // Infinispan does not provide efficient API (existing .keySet() is not recommended for
-      // production use) to retrieve list of available
-      // objects in cache. One entry in cache, store list of lucene file names.
-      cache.put(new FileListCacheKey(indexName), Collections.synchronizedMap(new HashMap<String, String>()));
+      this.fileListCacheKey = new FileListCacheKey(indexName);
+      cache.put(fileListCacheKey, new ConcurrentHashMap<String, String>());
       // register listener which add/remove file names to/from above list
       cache.addListener(new InfinispanCacheEntryListener(indexName));
    }
@@ -99,9 +96,9 @@ public class InfinispanDirectory extends Directory {
     * {@inheritDoc}
     */
    @SuppressWarnings("unchecked")
-   public synchronized String[] list() throws IOException {
+   public String[] list() throws IOException {
       checkIsOpen();
-      Map<String, String> filesList = (Map<String, String>) cache.get(new FileListCacheKey(indexName));
+      Map<String, String> filesList = (Map<String, String>) cache.get(fileListCacheKey);
       return (String[]) filesList.values().toArray(new String[] {});
    }
 
@@ -187,7 +184,7 @@ public class InfinispanDirectory extends Directory {
    /**
     * {@inheritDoc}
     */
-   public synchronized long fileLength(String name) throws IOException {
+   public long fileLength(String name) throws IOException {
       checkIsOpen();
       final FileMetadata file = getFile(indexName, name);
       if (file == null) {
@@ -199,12 +196,12 @@ public class InfinispanDirectory extends Directory {
    /**
     * {@inheritDoc}
     */
-   public synchronized IndexOutput createOutput(String name) throws IOException {
+   public IndexOutput createOutput(String name) throws IOException {
       final FileCacheKey key = new FileCacheKey(indexName, name);
-      if (!fileExists(name)) {
-         cache.put(key, new FileMetadata());
-      }
-      return new InfinispanIndexIO.InfinispanIndexOutput(cache, key, chunkSize);
+      FileMetadata newFileMetadata = new FileMetadata();
+      FileMetadata previous = (FileMetadata) cache.putIfAbsent(key, newFileMetadata);
+      FileMetadata usedMetadata = previous==null ? newFileMetadata : previous;
+      return new InfinispanIndexIO.InfinispanIndexOutput(cache, key, chunkSize, usedMetadata);
    }
 
    /**
@@ -222,7 +219,6 @@ public class InfinispanDirectory extends Directory {
       isOpen = false;
       if (cache != null) {
          cache.stop();
-         cache = null;
       }
    }
 
