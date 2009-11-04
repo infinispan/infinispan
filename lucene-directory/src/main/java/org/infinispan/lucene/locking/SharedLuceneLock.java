@@ -67,7 +67,7 @@ class SharedLuceneLock extends Lock {
     */
    @Override
    public boolean obtain() throws IOException {
-      Object previousValue = cache.putIfAbsent(keyOfLock, keyOfLock, lockFlags);
+      Object previousValue = cache.withFlags(lockFlags).putIfAbsent(keyOfLock, keyOfLock);
       if (previousValue == null) {
          if (log.isTraceEnabled()) {
             log.trace("Lock: {0} acquired for index: {1}", lockName, indexName);
@@ -101,7 +101,7 @@ class SharedLuceneLock extends Lock {
     * at Directory creation: we expect the lock to not exist in this case.
     */
    private void clearLock() {
-      Object previousValue = cache.remove(keyOfLock, lockFlags);
+      Object previousValue = cache.withFlags(lockFlags).remove(keyOfLock);
       if (previousValue!=null && log.isTraceEnabled()) {
          log.trace("Lock removed for index: {0}", indexName);
       }
@@ -116,7 +116,7 @@ class SharedLuceneLock extends Lock {
          if ((tx = tm.getTransaction()) != null) {
             tm.suspend();
          }
-         locked = cache.containsKey(keyOfLock, lockFlags);
+         locked = cache.withFlags(lockFlags).containsKey(keyOfLock);
       } catch (Exception e) {
          log.error("Error in suspending transaction", e);
       } finally {
