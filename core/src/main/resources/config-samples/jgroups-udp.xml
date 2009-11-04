@@ -34,8 +34,6 @@
          oob_thread_pool.queue_enabled="false"
          oob_thread_pool.queue_max_size="100"
          oob_thread_pool.rejection_policy="Discard"
-
-         marshaller_pool_size="25"
          />
 
    <PING timeout="3000" num_initial_members="3"/>
