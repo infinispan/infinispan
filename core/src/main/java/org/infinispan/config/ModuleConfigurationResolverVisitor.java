@@ -61,6 +61,8 @@ public class ModuleConfigurationResolverVisitor extends AbstractConfigurationBea
                 if (props != null) {
                     Class<AbstractConfigurationBean> configurationClass = module.resolveConfigurationClass(props.getConfigurationClassName());
                     NodeList nodeList = root.getElementsByTagName(Configuration.ELEMENT_MODULE_NAME);
+                    
+                    findModuleInXML:
                     for (int i = nodeList.getLength() - 1; i >= 0; i--) {
                         Element node = (Element) nodeList.item(i);
                         String name = node.getAttribute(Configuration.MODULE_IDENTIFIER);
@@ -68,9 +70,11 @@ public class ModuleConfigurationResolverVisitor extends AbstractConfigurationBea
                             NodeList childNodes = node.getChildNodes();
                             for (int j = 0; j < childNodes.getLength(); j++) {
                                 Node item = childNodes.item(j);
+                                //find first child element
                                 if (item.getNodeType() == Node.ELEMENT_NODE) {
                                     AbstractConfigurationBean configBean = loadConfigurationBeanModule((Element) item, configurationClass);
                                     module.setConfigurationBean(configBean);
+                                    break findModuleInXML;
                                 }
                             }
                         }
