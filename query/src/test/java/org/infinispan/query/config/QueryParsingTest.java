@@ -27,7 +27,7 @@ public class QueryParsingTest extends AbstractInfinispanTest {
             "      <clustering mode=\"replication\">\n" +
             "      </clustering>\n" +
             "   <modules>\n" +
-            "     <module name=\"query\" configClassName=\"org.infinispan.query.config.QueryConfigurationBean\">\n"+
+            "     <module name=\"query\">\n"+
             "           <query:indexing enabled=\"true\" indexLocalOnly=\"true\"/>\n" +
             "     </module>\n" +
             "   </modules>\n" +
