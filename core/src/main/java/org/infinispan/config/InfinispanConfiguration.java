@@ -27,6 +27,8 @@ import org.infinispan.util.FileLookup;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jboss.util.StringPropertyReplacer;
+import org.w3c.dom.Document;
+import org.xml.sax.InputSource;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
@@ -36,6 +38,8 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.SchemaFactory;
 
@@ -208,20 +212,25 @@ public class InfinispanConfiguration implements XmlConfigurationParser {
             });
          }
          
-         StreamSource source = null;
+         InputSource source = null;
          if (skipTokenReplacement()) {
-            source = new StreamSource(config);
+            source = new InputSource(config);
          } else {
             source = replaceProperties(config);
          }
-         InfinispanConfiguration ic = (InfinispanConfiguration) u.unmarshal(source);                    
-       
+         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+         dbf.setNamespaceAware(true);
+         DocumentBuilder db = dbf.newDocumentBuilder();
+         Document document = db.parse(source);
+         InfinispanConfiguration ic = (InfinispanConfiguration) u.unmarshal(document);     
+         
          // legacy, don't ask
          GlobalConfiguration gconf = ic.parseGlobalConfiguration();
          gconf.setDefaultConfiguration(ic.parseDefaultConfiguration());
          if (cbv != null) {
             ic.accept(cbv);
          }
+         ic.accept(new ModuleConfigurationResolverVisitor(document));
          return ic;
       } catch (ConfigurationException cex) {
          throw cex;
@@ -234,7 +243,7 @@ public class InfinispanConfiguration implements XmlConfigurationParser {
       }
    }
 
-   private static StreamSource replaceProperties(InputStream config) throws Exception{
+   private static InputSource replaceProperties(InputStream config) throws Exception{
       BufferedReader br = new BufferedReader ( new InputStreamReader(config));
       StringBuilder w = new StringBuilder();
       String line;
@@ -250,7 +259,7 @@ public class InfinispanConfiguration implements XmlConfigurationParser {
             w.append(line);
          }         
       }
-      return new StreamSource(new StringReader(w.toString()));
+      return new InputSource(new StringReader(w.toString()));
    }
 
    private static boolean skipSchemaValidation() {

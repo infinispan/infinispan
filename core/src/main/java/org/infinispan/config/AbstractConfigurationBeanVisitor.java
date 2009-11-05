@@ -31,6 +31,7 @@ import org.infinispan.config.Configuration.ExpirationType;
 import org.infinispan.config.Configuration.HashType;
 import org.infinispan.config.Configuration.L1Type;
 import org.infinispan.config.Configuration.LockingType;
+import org.infinispan.config.Configuration.ModulesExtensionType;
 import org.infinispan.config.Configuration.StateRetrievalType;
 import org.infinispan.config.Configuration.SyncType;
 import org.infinispan.config.Configuration.TransactionType;
@@ -140,6 +141,10 @@ public abstract class AbstractConfigurationBeanVisitor implements ConfigurationB
 
    public void visitLockingType(LockingType bean) {
       defaultVisit(bean);
+   }
+   
+   public void visitModulesExtentionsType(ModulesExtensionType bean) {
+       defaultVisit(bean);
    }
 
    public void visitSerializationType(SerializationType bean) {

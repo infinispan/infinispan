@@ -29,11 +29,14 @@ import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
+import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.CacheException;
+import org.w3c.dom.Element;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAnyElement;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlTransient;
@@ -68,6 +71,10 @@ import java.util.concurrent.TimeUnit;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(propOrder={})
 public class Configuration extends AbstractNamedCacheConfigurationBean {  
+    
+   public static final String ELEMENT_MODULE_NAME = "module";
+
+   public static final String MODULE_IDENTIFIER = "name";
 
    private static final long serialVersionUID = 5553791890144997466L;
 
@@ -121,6 +128,9 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
    @XmlElement
    private DeadlockDetectionType deadlockDetection = new DeadlockDetectionType();
+   
+   @XmlElement
+   private ModulesExtensionType modules = new ModulesExtensionType();
 
    @SuppressWarnings("unused")
    @Start(priority = 1)
@@ -178,6 +188,14 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    
    public void setDeadlockDetectionSpinDuration(long eagerDeadlockSpinDuration) {
       this.deadlockDetection.setSpinDuration(eagerDeadlockSpinDuration);
+   }
+   
+   public ModuleConfigurationBean getModuleConfigurationBean(String moduleName) {
+       return modules.getModuleConfigBean(moduleName);
+   }
+   
+   public List<ModuleConfigurationBean> getModuleConfigurationBeans() {
+       return modules.moduleList;
    }
 
    public boolean isEnableDeadlockDetection() {
@@ -591,6 +609,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       locking.accept(v);
       transaction.accept(v);
       unsafe.accept(v);
+      modules.accept(v);
       v.visitConfiguration(this);
    }
 
@@ -1788,6 +1807,119 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       public int hashCode() {
          return customInterceptors != null ? customInterceptors.hashCode() : 0;
       }
+   }
+   
+   /**
+    * 
+    * @configRef name="modules",desc="Configures custom modules"
+    */
+   @XmlAccessorType(XmlAccessType.FIELD)
+   public static class ModulesExtensionType extends AbstractNamedCacheConfigurationBean {
+
+       /** The serialVersionUID */
+       private static final long serialVersionUID = 7187545782011884661L;
+
+       @XmlElement(name = ELEMENT_MODULE_NAME)
+       private List<ModuleConfigurationBean> moduleList = new ArrayList<ModuleConfigurationBean>();
+
+       @Override
+       public ModulesExtensionType clone() throws CloneNotSupportedException {
+           ModulesExtensionType dolly = (ModulesExtensionType) super.clone();
+           if (moduleList != null) {
+               dolly.moduleList = new ArrayList<ModuleConfigurationBean>();
+               for (ModuleConfigurationBean config : moduleList) {
+                   ModuleConfigurationBean clone = config.clone();
+                   dolly.moduleList.add(clone);
+               }
+           }
+           return dolly;
+       }
+       
+       public ModuleConfigurationBean getModuleConfigBean(String moduleName) {
+           if(moduleName == null) throw new IllegalArgumentException("module name cannot be null");
+           
+           for (ModuleConfigurationBean c : moduleList) {
+               if(moduleName.equalsIgnoreCase(c.name))
+                   return c;
+           }
+           
+           return null;
+       }
+
+       public void accept(ConfigurationBeanVisitor v) {
+           v.visitModulesExtentionsType(this);
+       }
+
+       public List<ModuleConfigurationBean> getModuleConfigs() {
+           return moduleList;
+       }
+
+       @Override
+       public boolean equals(Object o) {
+           if (this == o)
+               return true;
+           if (!(o instanceof ModulesExtensionType))
+               return false;
+           ModulesExtensionType that = (ModulesExtensionType) o;
+           if (moduleList != null ? !moduleList.equals(that.moduleList) : that.moduleList != null)
+               return false;
+           return true;
+       }
+
+       @Override
+       public int hashCode() {
+           return moduleList != null ? moduleList.hashCode() : 0;
+       }
+   }
+
+   @XmlAccessorType(XmlAccessType.FIELD)
+   @XmlType(name = ELEMENT_MODULE_NAME)
+   public static class ModuleConfigurationBean extends AbstractNamedCacheConfigurationBean {
+       
+
+       /** The serialVersionUID */
+       private static final long serialVersionUID = -3590043692128929343L;
+
+       @XmlAttribute(name = MODULE_IDENTIFIER)
+       private String name;
+
+       @XmlAttribute
+       private String configClassName;
+
+       @XmlTransient
+       private AbstractConfigurationBean configBean;
+
+       @XmlAnyElement
+       private Element child;
+       
+       public String getName() {
+           return name;
+       }
+
+       @Override
+       public ModuleConfigurationBean clone() throws CloneNotSupportedException {
+           ModuleConfigurationBean dolly = (ModuleConfigurationBean) super.clone();
+           return dolly;
+       }
+
+       public Class<AbstractConfigurationBean> resolveConfigurationClass(String className)
+                       throws ClassNotFoundException {
+           if(className!= null) {
+               return Util.loadClass(className);
+           }
+           if(configClassName != null) {
+               return Util.loadClass(configClassName);
+           } 
+           throw new ClassNotFoundException("Class for module configuration bean is not specified");
+       }
+
+       void setConfigurationBean(AbstractConfigurationBean configBean) {
+           this.configBean = configBean;
+       }
+
+       public AbstractConfigurationBean getConfigurationBean() {
+           return configBean;
+       }
    }
 
    /**

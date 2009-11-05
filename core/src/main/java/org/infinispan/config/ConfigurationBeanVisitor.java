@@ -31,6 +31,7 @@ import org.infinispan.config.Configuration.ExpirationType;
 import org.infinispan.config.Configuration.HashType;
 import org.infinispan.config.Configuration.L1Type;
 import org.infinispan.config.Configuration.LockingType;
+import org.infinispan.config.Configuration.ModulesExtensionType;
 import org.infinispan.config.Configuration.StateRetrievalType;
 import org.infinispan.config.Configuration.SyncType;
 import org.infinispan.config.Configuration.TransactionType;
@@ -96,6 +97,8 @@ public interface ConfigurationBeanVisitor {
    void visitL1Type(L1Type bean);
    
    void visitLockingType(LockingType bean);
+   
+   void visitModulesExtentionsType(ModulesExtensionType bean);
    
    void visitStateRetrievalType(StateRetrievalType bean);
    
