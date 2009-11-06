@@ -1,0 +1,76 @@
+/*
+ * JBoss, Home of Professional Open Source.
+ * Copyright 2009, Red Hat Middleware LLC, and individual contributors
+ * as indicated by the @author tags. See the copyright.txt file in the
+ * distribution for a full listing of individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
+package org.infinispan.util;
+
+import java.lang.reflect.Method;
+
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
+/**
+ * Proxies is a collection of useful dynamic profixes. Internal use only.
+ * 
+ * @author vladimir
+ * @since 4.0
+ */
+public class Proxies {
+
+    public static Object newCatchThrowableProxy(Object obj) {
+        return java.lang.reflect.Proxy.newProxyInstance(obj.getClass().getClassLoader(), 
+                        obj.getClass().getInterfaces(), new CatchThrowableProxy(obj));
+    }
+    
+   /**
+    * CatchThrowableProxy is a wrapper around interface that does not allow any exception to be
+    * thrown when invoking methods on that interface. All exceptions are logged but not propagated
+    * to the caller.
+    * 
+    * 
+    */
+   static class CatchThrowableProxy implements java.lang.reflect.InvocationHandler {
+
+        private static final Log log = LogFactory.getLog(CatchThrowableProxy.class);
+
+        private Object obj;
+
+        public static Object newInstance(Object obj) {
+            return java.lang.reflect.Proxy.newProxyInstance(obj.getClass().getClassLoader(), 
+                            obj.getClass().getInterfaces(), new CatchThrowableProxy(obj));
+        }
+
+        private CatchThrowableProxy(Object obj) {
+            this.obj = obj;
+        }
+
+        public Object invoke(Object proxy, Method m, Object[] args) throws Throwable {
+            Object result = null;
+            try {
+                result = m.invoke(obj, args);
+            } catch (Throwable t) {
+                log.warn("Invocation of " + m.getName() + " threw an exception " + t.getCause() + ". Exception is ignored.");
+            } finally {
+            }
+            return result;
+        }
+    }
+}
+

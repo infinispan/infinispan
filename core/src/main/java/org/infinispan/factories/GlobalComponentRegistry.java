@@ -8,6 +8,7 @@ import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.CacheManagerJmxRegistration;
+import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -117,5 +118,35 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    public final void rewireNamedRegistries() {
       for (ComponentRegistry cr : namedComponents.values())
          cr.rewire();
+   }
+
+   public void start() {
+      boolean needToNotify = state != ComponentStatus.RUNNING && state != ComponentStatus.INITIALIZING;
+      if (needToNotify) {
+         for (ModuleLifecycle l : moduleLifecycles) {
+            l.cacheManagerStarting(this);
+         }
+      }
+      super.start();
+      if (needToNotify && state == ComponentStatus.RUNNING) {
+         for (ModuleLifecycle l : moduleLifecycles) {
+            l.cacheManagerStarted(this);
+         }
+      }
+   }
+   
+   public void stop() {
+      boolean needToNotify = state == ComponentStatus.RUNNING || state == ComponentStatus.INITIALIZING;
+      if (needToNotify) {
+         for (ModuleLifecycle l : moduleLifecycles) {
+            l.cacheManagerStopping(this);
+         }
+      }
+      super.stop();
+      if (state == ComponentStatus.TERMINATED && needToNotify) {
+         for (ModuleLifecycle l : moduleLifecycles) {
+            l.cacheManagerStopped(this);
+         }
+      }
    }
 }

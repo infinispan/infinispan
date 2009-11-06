@@ -1811,7 +1811,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    
    /**
     * 
-    * @configRef name="modules",desc="Configures custom modules"
+    * @configRef name="modules",desc="Modules configuration."
     */
    @XmlAccessorType(XmlAccessType.FIELD)
    public static class ModulesExtensionType extends AbstractNamedCacheConfigurationBean {
@@ -1849,6 +1849,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
        public void accept(ConfigurationBeanVisitor v) {
            v.visitModulesExtentionsType(this);
        }
+       
+      public void addModuleConfigurationBean(ModuleConfigurationBean bean) {
+         moduleList.add(bean);
+      }
 
        public List<ModuleConfigurationBean> getModuleConfigs() {
            return moduleList;
@@ -1872,54 +1876,67 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
        }
    }
 
+   /**
+    * 
+    * @configRef name="module",desc="Configures a single custom module."
+    */
    @XmlAccessorType(XmlAccessType.FIELD)
    @XmlType(name = ELEMENT_MODULE_NAME)
    public static class ModuleConfigurationBean extends AbstractNamedCacheConfigurationBean {
-       
 
-       /** The serialVersionUID */
-       private static final long serialVersionUID = -3590043692128929343L;
+      /** The serialVersionUID */
+      private static final long serialVersionUID = -3590043692128929343L;
 
-       @XmlAttribute(name = MODULE_IDENTIFIER)
-       private String name;
+      /** @configRef desc="Name of the module" */
+      @XmlAttribute(name = MODULE_IDENTIFIER)
+      private String name;
 
-       @XmlAttribute
-       private String configClassName;
+      @XmlTransient
+      private String configClassName;
 
-       @XmlTransient
-       private AbstractConfigurationBean configBean;
+      @XmlTransient
+      private AbstractConfigurationBean configBean;
 
-       @XmlAnyElement
-       private Element child;
-       
-       public String getName() {
-           return name;
-       }
+      @XmlAnyElement
+      private Element child;
 
-       @Override
-       public ModuleConfigurationBean clone() throws CloneNotSupportedException {
-           ModuleConfigurationBean dolly = (ModuleConfigurationBean) super.clone();
-           return dolly;
-       }
+      public String getName() {
+         return name;
+      }
 
-       public Class<AbstractConfigurationBean> resolveConfigurationClass(String className)
-                       throws ClassNotFoundException {
-           if(className!= null) {
-               return Util.loadClass(className);
-           }
-           if(configClassName != null) {
-               return Util.loadClass(configClassName);
-           } 
-           throw new ClassNotFoundException("Class for module configuration bean is not specified");
-       }
+      @Override
+      public ModuleConfigurationBean clone() throws CloneNotSupportedException {
+         ModuleConfigurationBean dolly = (ModuleConfigurationBean) super.clone();
+         return dolly;
+      }
 
-       void setConfigurationBean(AbstractConfigurationBean configBean) {
-           this.configBean = configBean;
-       }
+      public Class<AbstractConfigurationBean> resolveConfigurationClass()
+               throws ClassNotFoundException {
+         if (configClassName != null) {
+            return Util.loadClass(configClassName);
+         }
+         throw new ClassNotFoundException("Class for module configuration bean is not specified");
+      }
 
-       public AbstractConfigurationBean getConfigurationBean() {
-           return configBean;
-       }
+      void setConfigurationBean(AbstractConfigurationBean configBean) {
+         this.configBean = configBean;
+      }
+
+      public AbstractConfigurationBean getConfigurationBean() {
+         return configBean;
+      }
+
+      public String getConfigClassName() {
+         return configClassName;
+      }
+
+      public void setConfigClassName(String configClassName) {
+         this.configClassName = configClassName;
+      }
+
+      public void setName(String name) {
+         this.name = name;
+      }
    }
 
    /**

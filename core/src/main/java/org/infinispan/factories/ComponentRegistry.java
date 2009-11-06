@@ -139,17 +139,35 @@ public class ComponentRegistry extends AbstractComponentRegistry {
       // able to locate this registry via the InboundInvocationHandler
       globalComponents.registerNamedComponentRegistry(this, cacheName);
 
+      if (needToNotify) {
+         for (ModuleLifecycle l : moduleLifecycles) {
+            l.cacheStarting(this, cacheName);
+         }
+      }
       super.start();
       if (needToNotify && state == ComponentStatus.RUNNING) {
+         for (ModuleLifecycle l : moduleLifecycles) {
+            l.cacheStarted(this, cacheName);
+         } 
          cacheManagerNotifier.notifyCacheStarted(cacheName);
       }
    }
 
    @Override
    public void stop() {
-      if (state.stopAllowed()) globalComponents.unregisterNamedComponentRegistry(cacheName);
+      if (state.stopAllowed())globalComponents.unregisterNamedComponentRegistry(cacheName);
       boolean needToNotify = state == ComponentStatus.RUNNING || state == ComponentStatus.INITIALIZING;
+      if (needToNotify) {
+         for (ModuleLifecycle l : moduleLifecycles) {
+            l.cacheStopping(this, cacheName);
+         }
+      }
       super.stop();
-      if (state == ComponentStatus.TERMINATED && needToNotify) cacheManagerNotifier.notifyCacheStopped(cacheName);
+      if (state == ComponentStatus.TERMINATED && needToNotify) {
+         for (ModuleLifecycle l : moduleLifecycles) {
+            l.cacheStopped(this, cacheName);
+         }
+         cacheManagerNotifier.notifyCacheStopped(cacheName);
+      }
    }
 }

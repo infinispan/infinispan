@@ -3,17 +3,19 @@ package org.infinispan.query.config;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
+import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.config.InfinispanConfiguration;
 import org.infinispan.config.Configuration.ModuleConfigurationBean;
+import org.infinispan.manager.CacheManager;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "config.parsing.QueryParsingTest")
 public class QueryParsingTest extends AbstractInfinispanTest {
-
 
    public void testQueryConfig() throws Exception {
       String config = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
@@ -34,20 +36,24 @@ public class QueryParsingTest extends AbstractInfinispanTest {
             "   </default>\n" +
             "</infinispan>";
       
-      System.out.println(config);
+         System.out.println(config);
 
-      InputStream is = new ByteArrayInputStream(config.getBytes());
-      InputStream schema = InfinispanConfiguration.findSchemaInputStream();
-      assert schema != null;
-      InfinispanConfiguration c = InfinispanConfiguration.newInfinispanConfiguration(is,schema);
-      GlobalConfiguration gc = c.parseGlobalConfiguration();
-      assert gc.getTransportClass().equals(JGroupsTransport.class.getName());
-      assert gc.getClusterName().equals("demoCluster");
+        InputStream is = new ByteArrayInputStream(config.getBytes());
+        InputStream schema = InfinispanConfiguration.findSchemaInputStream();
+        assert schema != null;
+        InfinispanConfiguration c = InfinispanConfiguration.newInfinispanConfiguration(is, schema);
+        GlobalConfiguration gc = c.parseGlobalConfiguration();
+        assert gc.getTransportClass().equals(JGroupsTransport.class.getName());
+        assert gc.getClusterName().equals("demoCluster");
 
-      Configuration def = c.parseDefaultConfiguration();
-      ModuleConfigurationBean extensionConfig = def.getModuleConfigurationBean("query");
-      QueryConfigurationBean bean = (QueryConfigurationBean) extensionConfig.getConfigurationBean();
-      assert bean.isEnabled();
-      assert bean.isIndexLocalOnly();
-   }
-  }
+        Configuration def = c.parseDefaultConfiguration();
+        ModuleConfigurationBean extensionConfig = def.getModuleConfigurationBean("query");
+        QueryConfigurationBean bean = (QueryConfigurationBean) extensionConfig.getConfigurationBean();
+        assert bean.isEnabled();
+        assert bean.isIndexLocalOnly();
+        
+        CacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(def);
+        Cache<Object, Object> cache = cm.getCache("test");
+        cache.stop();
+    }
+}

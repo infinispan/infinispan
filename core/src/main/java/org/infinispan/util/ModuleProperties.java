@@ -23,10 +23,16 @@ package org.infinispan.util;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
+import java.util.Map.Entry;
 
 import org.infinispan.config.ConfigurationException;
+import org.infinispan.factories.ModuleLifecycle;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -47,7 +53,7 @@ public class ModuleProperties extends Properties {
     public static final String MODULE_NAME_KEY = "infinispan.module.name";
     public static final String MODULE_CONFIGURATION_CLASS = "infinispan.module.configurationClassName";
     public static final String MODULE_LIFECYCLE = "infinispan.module.lifecycle";
-
+    
     protected static Enumeration<URL> getResources(String filename) throws IOException {
         Enumeration<URL> result;
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
@@ -60,10 +66,11 @@ public class ModuleProperties extends Properties {
     }
 
     public static ModuleProperties loadModuleProperties(String moduleName) throws IOException {
+
         Enumeration<URL> resources = getResources(MODULE_PROPERTIES_FILENAME);
         if (resources == null)
-            throw new IOException("Could not find any " + MODULE_PROPERTIES_FILENAME
-                            + " files on classpath");
+            throw new IOException("Could not find " + MODULE_PROPERTIES_FILENAME
+                            + " files on classpath for module " + moduleName);
 
         while (resources.hasMoreElements()) {
             URL url = resources.nextElement();
@@ -77,6 +84,42 @@ public class ModuleProperties extends Properties {
         }
         return null;
     }
+    
+   private static Map<String, ModuleProperties> loadModuleProperties() throws IOException {
+      Map<String, ModuleProperties> map = new HashMap<String, ModuleProperties>();
+      Enumeration<URL> resources = getResources(MODULE_PROPERTIES_FILENAME);
+      if (resources != null) {
+         while (resources.hasMoreElements()) {
+            URL url = null;
+            try {
+               url = resources.nextElement();
+               ModuleProperties props = new ModuleProperties();
+               props.load(url.openStream());
+               props.verify();
+               map.put(props.getName(), props);
+            } catch (Exception e) {
+               log.warn("Could not load module at URL " + url, e);
+            }
+         }
+      }
+      return map;
+   }
+    
+   public static List<ModuleLifecycle> resolveModuleLifecycles() throws Exception {
+      List<ModuleLifecycle> lifecycles = new ArrayList<ModuleLifecycle>();
+      Map<String, ModuleProperties> p = ModuleProperties.loadModuleProperties();
+      for (Entry<String, ModuleProperties> m : p.entrySet()) {
+         try {
+            String lifecycleClassName = m.getValue().getLifecycleClassName();
+            Class<?> loadClass = Util.loadClass(lifecycleClassName);
+            ModuleLifecycle ml = (ModuleLifecycle) Proxies.newCatchThrowableProxy((ModuleLifecycle) loadClass.newInstance());
+            lifecycles.add(ml);
+         } catch (Exception e) {
+            log.warn("Module " + m.getKey() + " loaded, but could not be initialized ", e);
+         }
+      }
+      return lifecycles;
+   }
 
     public String getName() {
         return super.getProperty(MODULE_NAME_KEY);

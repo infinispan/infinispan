@@ -59,7 +59,8 @@ public class ModuleConfigurationResolverVisitor extends AbstractConfigurationBea
             try {
                 ModuleProperties props = ModuleProperties.loadModuleProperties(module.getName());
                 if (props != null) {
-                    Class<AbstractConfigurationBean> configurationClass = module.resolveConfigurationClass(props.getConfigurationClassName());
+                    module.setConfigClassName(props.getConfigurationClassName());
+                    Class<AbstractConfigurationBean> configurationClass = module.resolveConfigurationClass();
                     NodeList nodeList = root.getElementsByTagName(Configuration.ELEMENT_MODULE_NAME);
                     
                     findModuleInXML:

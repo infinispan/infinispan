@@ -36,6 +36,7 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.Lifecycle;
 import org.infinispan.util.BeanUtils;
+import org.infinispan.util.ModuleProperties;
 import org.infinispan.util.ReflectionUtil;
 import org.infinispan.util.logging.Log;
 
@@ -93,6 +94,19 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
 
    // component and method containers
    final Map<String, Component> componentLookup = new HashMap<String, Component>();
+   
+   protected static List<ModuleLifecycle> moduleLifecycles;
+   
+   static {
+      try {
+         moduleLifecycles = ModuleProperties.resolveModuleLifecycles();
+      } catch (Exception e) {         
+         moduleLifecycles = Collections.emptyList();
+      }
+   }
+   
+   
+
 
    volatile ComponentStatus state = ComponentStatus.INSTANTIATED;
 
