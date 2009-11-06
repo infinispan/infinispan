@@ -45,10 +45,12 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jgroups.Channel;
 import org.jgroups.ChannelException;
+import org.jgroups.Event;
 import org.jgroups.ExtendedMembershipListener;
 import org.jgroups.ExtendedMessageListener;
 import org.jgroups.JChannel;
 import org.jgroups.Message;
+import org.jgroups.PhysicalAddress;
 import org.jgroups.View;
 import org.jgroups.blocks.GroupRequest;
 import org.jgroups.blocks.RspFilter;
@@ -155,7 +157,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
             throw new CacheException("Unable to start JGroups Channel", e);
          }
       }
-      log.info("Cache local address is {0}", getAddress());
+      log.info("Cache local address is {0}, physical address is {1}", getAddress(), getPhysicalAddress());
 
       // ensure that the channel has FLUSH enabled.
       // see ISPN-83 for details.
@@ -352,6 +354,10 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
 //         address = new JGroupsAddress(channel.getLocalAddress());
       }
       return address;
+   }
+
+   private PhysicalAddress getPhysicalAddress() {
+      return (PhysicalAddress) channel.downcall(new Event(Event.GET_PHYSICAL_ADDRESS, channel.getAddress()));
    }
 
    // ------------------------------------------------------------------------------------------------------------------
