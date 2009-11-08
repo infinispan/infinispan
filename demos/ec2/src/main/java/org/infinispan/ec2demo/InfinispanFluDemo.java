@@ -39,13 +39,16 @@ public class InfinispanFluDemo {
 								"Location of influenza.dat"),
 						new FlaggedOption("pfile", JSAP.STRING_PARSER, null, JSAP.NOT_REQUIRED, 'p', JSAP.NO_LONGFLAG,
 								"location of influenza_aa.dat."),
+						new FlaggedOption("count", JSAP.INTEGER_PARSER, "-1", JSAP.NOT_REQUIRED, 'l', JSAP.NO_LONGFLAG,
+								"Number of records to load from file"),
 						new Switch("query", 'q', "true", "Enable query cli"),
+						new Switch("randomquery", 'r', "randomquery",
+								"Randomly query the influenza to test that the cache is fully populated"),
 						new FlaggedOption("nfile", JSAP.STRING_PARSER, null, JSAP.NOT_REQUIRED, 'n', JSAP.NO_LONGFLAG,
 								"Location of influenza_na.dat") });
 		if (jsap.messagePrinted())
-			System.exit(1);	
-		
-		
+			System.exit(1);
+
 		JSAPResult config = jsap.parse(args);
 		InfluenzaDataLoader fluDemo = new InfluenzaDataLoader();
 		try {
@@ -57,7 +60,6 @@ public class InfinispanFluDemo {
 		}
 
 		while (true) {
-
 			if (config.getBoolean("query")) {
 				System.out.print("Enter Virus Genbank Accession Number: ");
 				BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
@@ -70,26 +72,8 @@ public class InfinispanFluDemo {
 				}
 				System.out.println("Searching cache...");
 
-				// Find the virus details
-				Influenza_N_P_CR_Element myRec = fluDemo.influenzaCache.get(GBAN);
+				fluDemo.searchCache(GBAN);
 
-				if (myRec != null) {
-					System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-					System.out.println("Virus Details->" + myRec);
-					Nucleotide_Protein_Element nucldet = fluDemo.nucleiodCache.get(myRec.getGanNucleoid());
-					System.out.println("Nucleotide detils->" + nucldet);
-
-					// Display the protein details
-					Map<String, String> myProt = myRec.getProtein_Data();
-					for (String x : myProt.keySet()) {
-						Nucleotide_Protein_Element myProtdet = fluDemo.proteinCache.get(x);	
-						System.out.println("Protein->" + myProtdet);
-						String protein_CR = myProt.get(x);
-						System.out.println("Protein coding region->" + protein_CR);
-					}
-					System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-				} else
-					System.out.println("No virus found");
 			} else {
 				try {
 					Thread.currentThread().sleep(2000);
@@ -98,9 +82,8 @@ public class InfinispanFluDemo {
 					e.printStackTrace();
 				}
 			}
-			System.out.println("Protein Cache Size-->" + fluDemo.proteinCache.size());
-			System.out.println("Influenza Cache Size-->" + fluDemo.influenzaCache.size());
-			System.out.println("Nucleotide Cache Size-->" + fluDemo.nucleiodCache.size());
+			System.out.println("Protein/Influenza/Nucleotide Cache Size-->" + fluDemo.proteinCache.size()+"/"+fluDemo.influenzaCache.size()+"/"+fluDemo.nucleiodCache.size());
 		}
 	}
+
 }
