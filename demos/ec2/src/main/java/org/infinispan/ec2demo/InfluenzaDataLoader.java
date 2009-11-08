@@ -12,6 +12,8 @@ import org.xml.sax.SAXException;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
 /**
  * @author noconnor@redhat.com
@@ -37,37 +39,66 @@ public class InfluenzaDataLoader {
 			influenzaCache = cbuilder.getCacheManager().getCache("InfluenzaCache");
 			proteinCache = cbuilder.getCacheManager().getCache("ProteinCache");
 			nucleiodCache = cbuilder.getCacheManager().getCache("NucleotideCache");
-		
+
 			npParser = new Nucleotide_Protein_Parser();
 			iParser = new Influenza_Parser();
 
 			System.out.println("Caches created....Starting CacheManager");
 			cbuilder.getCacheManager().start();
 
+			int loadLimit = config.getInt("count");
+
+			// Dump the cluster list
 			List<Address> z = cbuilder.getCacheManager().getMembers();
 			for (Address k : z)
 				if (k != null)
 					System.out.println("Cache Address=" + k.toString());
 
 			System.out.println("Parsing files....");
-			
+
 			if (config.getString("ifile") != null) {
 				myLogger.info("Parsing Influenza data");
 				List<Influenza_N_P_CR_Element> iList = iParser.parseFile(config.getString("ifile"));
-				System.out.println("About to load " + iList.size() + " influenza elements into influenzaCache");
-				int loopCount = 0;
-				influenzaCache.startBatch();
-				for (Influenza_N_P_CR_Element x : iList) {
-					influenzaCache.put(x.getGanNucleoid(), x);
-					loopCount++;
-					if ((loopCount % 5000) == 0) {
-						System.out.println("Added " + loopCount + " Influenza records");
-						influenzaCache.endBatch(true);
-						influenzaCache.startBatch();
+
+				boolean rQuery = config.getBoolean("randomquery");
+				int lSize = iList.size() - 1;
+
+				if (rQuery) {
+					System.out.println("Performing random queries");
+					Random randomGenerator = new Random();
+					while (true) {
+						int currRec = randomGenerator.nextInt(lSize);
+						Influenza_N_P_CR_Element curreElem = iList.get(currRec);
+						
+						this.searchCache(curreElem.getGanNucleoid());
+
+						try {
+							Thread.currentThread().sleep(1000);
+						} catch (InterruptedException ex) {
+							// do nothing, yea I know its naughty...
+						}
 					}
+
+				} else {
+					System.out.println("About to load " + iList.size() + " influenza elements into influenzaCache");
+					int loopCount = 0;
+					influenzaCache.startBatch();
+					for (Influenza_N_P_CR_Element x : iList) {
+						influenzaCache.put(x.getGanNucleoid(), x);
+						loopCount++;
+						if ((loopCount % 5000) == 0) {
+							System.out.println("Added " + loopCount + " Influenza records");
+							influenzaCache.endBatch(true);
+							influenzaCache.startBatch();
+						}
+						if (loopCount == loadLimit) {
+							System.out.println("Limited to " + loadLimit + " records");
+							break;
+						}
+					}
+					influenzaCache.endBatch(true);
+					System.out.println("Loaded " + influenzaCache.size() + " influenza elements into influenzaCache");
 				}
-				influenzaCache.endBatch(true);
-				System.out.println("Loaded " + influenzaCache.size() + " influenza elements into influenzaCache");
 			}
 
 			if (config.getString("pfile") != null) {
@@ -77,12 +108,16 @@ public class InfluenzaDataLoader {
 				int loopCount = 0;
 				proteinCache.startBatch();
 				for (Nucleotide_Protein_Element x : npList) {
-					proteinCache.put(x.getGenbankAccessionNumber(),x);
+					proteinCache.put(x.getGenbankAccessionNumber(), x);
 					loopCount++;
 					if ((loopCount % 5000) == 0) {
 						System.out.println("Added " + loopCount + " protein records");
 						proteinCache.endBatch(true);
 						proteinCache.startBatch();
+					}
+					if (loopCount == loadLimit) {
+						System.out.println("Limited to " + loadLimit + " records");
+						break;
 					}
 				}
 				proteinCache.endBatch(true);
@@ -96,17 +131,20 @@ public class InfluenzaDataLoader {
 				int loopCount = 0;
 				nucleiodCache.startBatch();
 				for (Nucleotide_Protein_Element x : npList) {
-					nucleiodCache.put(x.getGenbankAccessionNumber(),x);
+					nucleiodCache.put(x.getGenbankAccessionNumber(), x);
 					loopCount++;
 					if ((loopCount % 5000) == 0) {
 						System.out.println("Added " + loopCount + " Nucleotide records");
 						nucleiodCache.endBatch(true);
 						nucleiodCache.startBatch();
 					}
+					if (loopCount == loadLimit) {
+						System.out.println("Limited to " + loadLimit + " records");
+						break;
+					}
 				}
 				nucleiodCache.endBatch(true);
-				System.out
-						.println("Loaded " + nucleiodCache.size() + " nucleotide elements into NucleiodCache");
+				System.out.println("Loaded " + nucleiodCache.size() + " nucleotide elements into NucleiodCache");
 			}
 			System.out.println("Parsing files....Done");
 
@@ -116,4 +154,31 @@ public class InfluenzaDataLoader {
 		}
 	}
 
+	public void searchCache(String inGBAN) {
+		myLogger.trace("Searching influenzaCache for "+inGBAN);
+		// Find the virus details
+		Influenza_N_P_CR_Element myRec = influenzaCache.get(inGBAN);
+
+		if (myRec != null) {
+			System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+			System.out.println("Virus Details->" + myRec);
+			myLogger.trace("Searching nucleiodCache for "+myRec.getGanNucleoid());
+			Nucleotide_Protein_Element nucldet = nucleiodCache.get(myRec.getGanNucleoid());
+			System.out.println("Nucleotide detils->" + nucldet);
+
+			// Display the protein details
+			Map<String, String> myProt = myRec.getProtein_Data();
+			for (String x : myProt.keySet()) {
+				myLogger.trace("Searching proteinCache for "+x);
+				Nucleotide_Protein_Element myProtdet = proteinCache.get(x);
+				System.out.println("Protein->" + myProtdet);
+				String protein_CR = myProt.get(x);
+				System.out.println("Protein coding region->" + protein_CR);
+			}
+			System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+		} else{
+			myLogger.trace("No virus data found for "+inGBAN);
+			System.out.println("No virus data found for "+inGBAN);
+		}
+	}
 }
