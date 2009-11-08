@@ -11,22 +11,8 @@ export ISPN_HOME
 
 CP=${CP}:${ISPN_HOME}/etc
 
-#add the modules/ec2 dir
-for i in ${ISPN_HOME}/modules/ec2/*.jar ; do
-   CP=${i}:${CP}
-done
-
-#add the modules/ec2/libs
-for i in ${ISPN_HOME}/modules/ec2/lib/*.jar ; do
-   CP=${i}:${CP}
-done
-
-for i in ${ISPN_HOME}/modules/core/*.jar ; do
-   CP=${i}:${CP}
-done
-
-for i in ${ISPN_HOME}/modules/core/lib/*.jar ; do
-   CP=${i}:${CP}
+for i in `find ${ISPN_HOME}/modules -name "*.jar"` ; do
+  CP=${CP}:${i}
 done
 
 JVM_PARAMS="${JVM_PARAMS} -Djava.net.preferIPv4Stack=true -Dlog4j.configuration=file:${ISPN_HOME}/etc/log4j.xml"
