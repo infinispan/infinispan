@@ -110,13 +110,13 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    private Object remoteGetAndStoreInL1(InvocationContext ctx, Object key, boolean dmWasRehashingDuringLocalLookup) throws Throwable {
       boolean isMappedToLocalNode = false;
       if (ctx.isOriginLocal() && !(isMappedToLocalNode = dm.isLocal(key)) && isNotInL1(key)) {
-         return realRemoteGetAndStoreInL1(ctx, key);
+         return realRemoteGet(ctx, key, true);
       } else {
          // maybe we are still rehashing as a joiner? ISPN-258
          if (isMappedToLocalNode && dmWasRehashingDuringLocalLookup) {
             if (trace) log.trace("Key is mapped to local node, but a rehash is in progress so may need to look elsewhere");
             // try a remote lookup all the same
-            return realRemoteGetAndStoreInL1(ctx, key);
+            return realRemoteGet(ctx, key, false);
          } else {
             if (trace)
                log.trace("Not doing a remote get for key {0} since entry is mapped to current node, or is in L1", key);
@@ -125,13 +125,13 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       return null;
    }
 
-   private Object realRemoteGetAndStoreInL1(InvocationContext ctx, Object key) throws Throwable {
+   private Object realRemoteGet(InvocationContext ctx, Object key, boolean storeInL1) throws Throwable {
       if (trace) log.trace("Doing a remote get for key {0}", key);
       // attempt a remote lookup
       InternalCacheEntry ice = dm.retrieveFromRemoteSource(key);
 
       if (ice != null) {
-         if (isL1CacheEnabled) {
+         if (storeInL1 && isL1CacheEnabled) {
             if (trace) log.trace("Caching remotely retrieved entry for key {0} in L1", key);
             long lifespan = ice.getLifespan() < 0 ? configuration.getL1Lifespan() : Math.min(ice.getLifespan(), configuration.getL1Lifespan());
             PutKeyValueCommand put = cf.buildPutKeyValueCommand(ice.getKey(), ice.getValue(), lifespan, -1);
