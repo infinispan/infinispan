@@ -105,6 +105,8 @@ public interface DistributionManager {
 
    boolean isRehashInProgress();
 
+   boolean isJoinComplete();
+
    void applyReceivedState(Map<Object, InternalCacheValue> state);
 }
 

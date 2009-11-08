@@ -357,6 +357,10 @@ public class DistributionManagerImpl implements DistributionManager {
       }
    }
 
+   public boolean isJoinComplete() {
+      return joinComplete;
+   }
+
    void drainTransactionLog() {
       List<WriteCommand> c;
       while (transactionLogger.size() > 10) {
