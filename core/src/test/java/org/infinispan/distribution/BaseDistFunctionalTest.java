@@ -28,7 +28,8 @@ import java.util.concurrent.locks.LockSupport;
 @Test(groups = "functional", testName = "distribution.BaseDistFunctionalTest")
 public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
    protected String cacheName;
-   protected Cache<Object, String> c1, c2, c3, c4;
+   protected int INIT_CLUSTER_SIZE = 4;
+   protected Cache<Object, String> c1 = null, c2 = null, c3 = null, c4 = null;
    protected Configuration configuration;
    protected List<Cache<Object, String>> caches;
    protected List<Address> cacheAddresses;
@@ -37,11 +38,13 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
    protected boolean testRetVals = true;
    protected boolean l1CacheEnabled = true;
    protected boolean performRehashing = false;
+   protected static final int NUM_OWNERS = 2;
 
    protected void createCacheManagers() throws Throwable {
       cacheName = "dist";
       configuration = getDefaultClusteredConfig(sync ? Configuration.CacheMode.DIST_SYNC : Configuration.CacheMode.DIST_ASYNC, tx);
       configuration.setRehashEnabled(performRehashing);
+      configuration.setNumOwners(NUM_OWNERS);
       if (!testRetVals) {
          configuration.setUnsafeUnreliableReturnValues(true);
          // we also need to use repeatable read for tests to work when we dont have reliable return values, since the
@@ -51,19 +54,19 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       configuration.setSyncReplTimeout(60, TimeUnit.SECONDS);
       configuration.setLockAcquisitionTimeout(45, TimeUnit.SECONDS);
       configuration.setL1CacheEnabled(l1CacheEnabled);
-      caches = createClusteredCaches(4, cacheName, configuration);
+      caches = createClusteredCaches(INIT_CLUSTER_SIZE, cacheName, configuration);
 
       reorderBasedOnCHPositions();
 
-      c1 = caches.get(0);
-      c2 = caches.get(1);
-      c3 = caches.get(2);
-      c4 = caches.get(3);
+      if (INIT_CLUSTER_SIZE > 0) c1 = caches.get(0);
+      if (INIT_CLUSTER_SIZE > 1) c2 = caches.get(1);
+      if (INIT_CLUSTER_SIZE > 2) c3 = caches.get(2);
+      if (INIT_CLUSTER_SIZE > 3) c4 = caches.get(3);
 
-      cacheAddresses = new ArrayList<Address>(4);
+      cacheAddresses = new ArrayList<Address>(INIT_CLUSTER_SIZE);
       for (Cache cache : caches) cacheAddresses.add(cache.getCacheManager().getAddress());
 
-      RehashWaiter.waitForInitRehashToComplete(c1, c2, c3, c4);
+      RehashWaiter.waitForInitRehashToComplete(caches.toArray(new Cache[INIT_CLUSTER_SIZE]));
 
    }
 
@@ -103,7 +106,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       // wait for all joiners to join
       List<Cache> clist = new ArrayList<Cache>(cacheManagers.size());
       for (CacheManager cm : cacheManagers) clist.add(cm.getCache(cacheName));
-      assert clist.size() == 4;
+      assert clist.size() == INIT_CLUSTER_SIZE;
       waitForJoinTasksToComplete(SECONDS.toMillis(480), clist.toArray(new Cache[clist.size()]));
 
       // seed this with an initial cache.  Any one will do.
