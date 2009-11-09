@@ -21,6 +21,7 @@
  */
 package org.infinispan.util.concurrent;
 
+import java.io.Serializable;
 import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Iterator;
@@ -35,9 +36,15 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author <a href="mailto:manik@jboss.org">Manik Surtani</a>
  * @since 4.0
  */
-public class ConcurrentHashSet<E> extends AbstractSet<E> {
-   protected ConcurrentHashMap<E, Object> map;
-   private static final Object DUMMY = new Object();
+public class ConcurrentHashSet<E> extends AbstractSet<E> implements Serializable {
+   
+   /** The serialVersionUID */
+   private static final long serialVersionUID = 5312604953511379869L;
+   
+   protected final ConcurrentHashMap<E, Object> map;
+   
+   /** any Serializable object will do, Integer.valueOf(0) is known cheap **/
+   private static final Serializable DUMMY = Integer.valueOf(0);
 
    public ConcurrentHashSet() {
       map = new ConcurrentHashMap<E, Object>();

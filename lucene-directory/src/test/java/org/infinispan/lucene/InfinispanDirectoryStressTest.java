@@ -34,7 +34,6 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.search.Hits;
 import org.apache.lucene.search.TopDocs;
 import org.infinispan.Cache;
 import org.infinispan.manager.CacheManager;
@@ -46,7 +45,6 @@ import org.testng.annotations.Test;
  * @author Lukasz Moren
  * @author Sanne Grinovero
  */
-@SuppressWarnings("deprecation")
 @Test(groups = "profiling", testName = "lucene.InfinispanDirectoryStressTest")
 public class InfinispanDirectoryStressTest {
 
@@ -85,19 +83,26 @@ public class InfinispanDirectoryStressTest {
       List<InfinispanDirectoryThread> threads = new ArrayList<InfinispanDirectoryThread>();
       Cache<CacheKey, Object> cache = CacheTestSupport.createTestCacheManager().getCache();
       Cache<CacheKey, Object> cache2 = CacheTestSupport.createTestCacheManager().getCache(); // dummy cache, to force replication
-      Directory directory = new InfinispanDirectory(cache, "indexName");
+      Directory directory1 = new InfinispanDirectory(cache, "indexName");
+      Directory directory2 = new InfinispanDirectory(cache2, "indexName");
 
       IndexWriter.MaxFieldLength fieldLength = new IndexWriter.MaxFieldLength(IndexWriter.DEFAULT_MAX_FIELD_LENGTH);
-      IndexWriter iw = new IndexWriter(directory, new StandardAnalyzer(), true, fieldLength);
+      IndexWriter iw = new IndexWriter(directory1, new StandardAnalyzer(), true, fieldLength);
       iw.close();
 
       // create first writing thread
-      InfinispanDirectoryThread tr = new InfinispanDirectoryThread(latch, directory, true);
+      InfinispanDirectoryThread tr = new InfinispanDirectoryThread(latch, directory1, true);
       threads.add(tr);
       tr.start();
       // others reading threads
       for (int i = 0; i < THREADS_NUM - 1; i++) {
-         InfinispanDirectoryThread thread = new InfinispanDirectoryThread(latch, directory, false);
+         InfinispanDirectoryThread thread;
+         if (i%2==0) {
+            thread = new InfinispanDirectoryThread(latch, directory1, false);
+         }
+         else {
+            thread = new InfinispanDirectoryThread(latch, directory2, false);
+         }
          threads.add(thread);
          thread.start();
       }
@@ -110,12 +115,11 @@ public class InfinispanDirectoryStressTest {
 
       for (InfinispanDirectoryThread thread : threads) {
          if (thread.e != null) {
-            log.error("Exception was catched during the test: ", thread.e);
-            assert false : "Exception during test in parallel thread";
+            throw thread.e;
          }
       }
 
-      IndexSearcher search = new IndexSearcher(directory);
+      IndexSearcher search = new IndexSearcher(directory1);
       Term t = new Term("info", "good");
       Query query = new TermQuery(t);
       int expectedDocs = writeCount.get();
@@ -124,7 +128,8 @@ public class InfinispanDirectoryStressTest {
       assert expectedDocs == hits.totalHits;
 
       search.close();
-      directory.close();
+      directory1.close();
+      directory2.close();
       cache.getCacheManager().stop();
       cache2.getCacheManager().stop();
    }

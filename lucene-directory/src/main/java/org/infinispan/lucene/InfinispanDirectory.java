@@ -33,6 +33,7 @@ import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.store.LockFactory;
 import org.infinispan.Cache;
 import org.infinispan.lucene.locking.LuceneLockFactory;
+import org.infinispan.util.concurrent.ConcurrentHashSet;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -219,7 +220,7 @@ public class InfinispanDirectory extends Directory {
    private Set<String> getFileList() {
       Set<String> fileList = (Set<String>) cache.get(fileListCacheKey);
       if (fileList == null)
-         fileList = new HashSet<String>();
+         fileList = new ConcurrentHashSet<String>();
       return fileList;
    }
 
