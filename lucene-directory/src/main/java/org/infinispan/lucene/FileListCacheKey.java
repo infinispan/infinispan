@@ -83,7 +83,7 @@ final class FileListCacheKey implements Serializable, CacheKey {
    
    @Override
    public String toString() {
-      return "FileListCacheKey{indexName='" + indexName + '}';
+      return "FileListCacheKey{indexName='" + indexName + "'}";
    }
    
 }

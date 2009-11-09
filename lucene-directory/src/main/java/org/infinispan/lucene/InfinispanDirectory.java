@@ -23,8 +23,8 @@ package org.infinispan.lucene;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.lucene.store.AlreadyClosedException;
 import org.apache.lucene.store.Directory;
@@ -39,8 +39,7 @@ import org.infinispan.util.logging.LogFactory;
 /**
  * Implementation that uses Infinispan to store Lucene indices.
  * 
- * Directory locking is assured with
- * {@link org.infinispan.lucene.locking.SharedLuceneLock}
+ * Directory locking is assured with {@link org.infinispan.lucene.locking.SharedLuceneLock}
  * 
  * @since 4.0
  * @author Lukasz Moren
@@ -71,9 +70,6 @@ public class InfinispanDirectory extends Directory {
       this.setLockFactory(lf);
       this.chunkSize = chunkSize;
       this.fileListCacheKey = new FileListCacheKey(indexName);
-      cache.put(fileListCacheKey, new ConcurrentHashMap<String, String>());
-      // register listener which add/remove file names to/from above list
-      cache.addListener(new InfinispanCacheEntryListener(indexName));
    }
 
    public InfinispanDirectory(Cache<CacheKey, Object> cache, String indexName, LockFactory lf) {
@@ -95,11 +91,10 @@ public class InfinispanDirectory extends Directory {
    /**
     * {@inheritDoc}
     */
-   @SuppressWarnings("unchecked")
    public String[] list() throws IOException {
       checkIsOpen();
-      Map<String, String> filesList = (Map<String, String>) cache.get(fileListCacheKey);
-      return (String[]) filesList.values().toArray(new String[] {});
+      Set<String> filesList = getFileList();
+      return filesList.toArray(new String[] {});
    }
 
    /**
@@ -115,7 +110,7 @@ public class InfinispanDirectory extends Directory {
     */
    public long fileModified(String name) throws IOException {
       checkIsOpen();
-      FileMetadata file = getFile(indexName, name);
+      FileMetadata file = getFileMetadata(name);
       if (file == null) {
          throw new FileNotFoundException(name);
       }
@@ -125,13 +120,15 @@ public class InfinispanDirectory extends Directory {
    /**
     * {@inheritDoc}
     */
-   public void touchFile(String name) throws IOException {
+   public void touchFile(String fileName) throws IOException {
       checkIsOpen();
-      FileMetadata file = getFile(indexName, name);
+      CacheKey key = new FileCacheKey(indexName, fileName);
+      FileMetadata file = (FileMetadata) cache.get(key);
       if (file == null) {
-         throw new FileNotFoundException(name);
+         throw new FileNotFoundException(fileName);
       }
       file.touch();
+      cache.put(key, file);
    }
 
    /**
@@ -142,6 +139,9 @@ public class InfinispanDirectory extends Directory {
       FileCacheKey key = new FileCacheKey(indexName, name);
       // remove main file
       cache.remove(key);
+      Set<String> fileList = getFileList();
+      fileList.remove(name);
+      cache.put(fileListCacheKey, fileList);
       // and all of its chunks
       int i = 0;
       Object removed;
@@ -161,23 +161,27 @@ public class InfinispanDirectory extends Directory {
    public void renameFile(String from, String to) throws IOException {
       checkIsOpen();
       // rename main file header
-      FileMetadata fileFrom = getFile(indexName, from);
-      cache.remove(new FileCacheKey(indexName, from));
+      CacheKey fromKey = new FileCacheKey(indexName, from);
+      FileMetadata fileFrom = (FileMetadata) cache.remove(fromKey);
       cache.put(new FileCacheKey(indexName, to), fileFrom);
+      Set<String> fileList = getFileList();
+      fileList.remove(from);
+      fileList.add(to);
+      cache.put(fileListCacheKey, fileList);
       // rename also all chunks
       int i = -1;
       Object ob;
       do {
-         ChunkCacheKey chunkKey = new ChunkCacheKey(indexName, from, ++i);
-         ob = cache.get(chunkKey);
+         ChunkCacheKey fromChunkKey = new ChunkCacheKey(indexName, from, ++i);
+         ob = cache.get(fromChunkKey);
          if (ob == null) {
             break;
          }
-         chunkKey = new ChunkCacheKey(indexName, to, i);
-         cache.put(chunkKey, ob);
+         ChunkCacheKey toChunkKey = new ChunkCacheKey(indexName, to, i);
+         cache.put(toChunkKey, ob);
       } while (true);
       if (log.isTraceEnabled()) {
-         log.trace("Renamed file from: {0} to: {1} in index {2}",from, to, indexName);
+         log.trace("Renamed file from: {0} to: {1} in index {2}", from, to, indexName);
       }
    }
 
@@ -186,7 +190,7 @@ public class InfinispanDirectory extends Directory {
     */
    public long fileLength(String name) throws IOException {
       checkIsOpen();
-      final FileMetadata file = getFile(indexName, name);
+      final FileMetadata file = getFileMetadata(name);
       if (file == null) {
          throw new FileNotFoundException(name);
       }
@@ -200,8 +204,23 @@ public class InfinispanDirectory extends Directory {
       final FileCacheKey key = new FileCacheKey(indexName, name);
       FileMetadata newFileMetadata = new FileMetadata();
       FileMetadata previous = (FileMetadata) cache.putIfAbsent(key, newFileMetadata);
-      FileMetadata usedMetadata = previous==null ? newFileMetadata : previous;
-      return new InfinispanIndexIO.InfinispanIndexOutput(cache, key, chunkSize, usedMetadata);
+      if (previous == null) {
+         // creating new file
+         Set<String> fileList = getFileList();
+         fileList.add(name);
+         cache.put(fileListCacheKey, fileList);
+         return new InfinispanIndexIO.InfinispanIndexOutput(cache, key, chunkSize, newFileMetadata);
+      } else {
+         return new InfinispanIndexIO.InfinispanIndexOutput(cache, key, chunkSize, previous);
+      }
+   }
+
+   @SuppressWarnings("unchecked")
+   private Set<String> getFileList() {
+      Set<String> fileList = (Set<String>) cache.get(fileListCacheKey);
+      if (fileList == null)
+         fileList = new HashSet<String>();
+      return fileList;
    }
 
    /**
@@ -228,7 +247,7 @@ public class InfinispanDirectory extends Directory {
       }
    }
 
-   private FileMetadata getFile(String indexName, String fileName) {
+   private FileMetadata getFileMetadata(String fileName) {
       CacheKey key = new FileCacheKey(indexName, fileName);
       return (FileMetadata) cache.get(key);
    }

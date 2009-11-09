@@ -38,6 +38,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "lucene.InfinispanDirectoryIOTest")
 public class InfinispanDirectoryIOTest {
 
+   @Test(enabled=false)
    public void testReadChunks() throws Exception {
       final int BUFFER_SIZE = 64;
 

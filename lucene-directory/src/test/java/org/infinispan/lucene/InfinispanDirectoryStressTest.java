@@ -35,6 +35,7 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.Hits;
+import org.apache.lucene.search.TopDocs;
 import org.infinispan.Cache;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.util.logging.Log;
@@ -71,9 +72,9 @@ public class InfinispanDirectoryStressTest {
       IndexSearcher search = new IndexSearcher(directory);
       Term t = new Term("info", "good");
       Query query = new TermQuery(t);
-      Hits hits = search.search(query);
+      TopDocs hits = search.search(query, 1);
 
-      assert OPERATIONS == hits.length();
+      assert OPERATIONS == hits.totalHits;
 
       directory.close();
       cacheManager.stop();
@@ -117,9 +118,10 @@ public class InfinispanDirectoryStressTest {
       IndexSearcher search = new IndexSearcher(directory);
       Term t = new Term("info", "good");
       Query query = new TermQuery(t);
-      Hits hits = search.search(query);
+      int expectedDocs = writeCount.get();
+      TopDocs hits = search.search(query, 1);
 
-      assert writeCount.get() == hits.length();
+      assert expectedDocs == hits.totalHits;
 
       search.close();
       directory.close();
