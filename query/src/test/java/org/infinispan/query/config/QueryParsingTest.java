@@ -7,7 +7,7 @@ import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.config.InfinispanConfiguration;
-import org.infinispan.config.Configuration.ModuleConfigurationBean;
+import org.infinispan.config.Configuration.QueryConfigurationBean;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -28,11 +28,7 @@ public class QueryParsingTest extends AbstractInfinispanTest {
             "   <default>\n" +
             "      <clustering mode=\"replication\">\n" +
             "      </clustering>\n" +
-            "   <modules>\n" +
-            "     <module name=\"query\">\n"+
-            "           <query:indexing enabled=\"true\" indexLocalOnly=\"true\"/>\n" +
-            "     </module>\n" +
-            "   </modules>\n" +
+            "      <indexing enabled=\"true\" indexLocalOnly=\"true\"/>\n" +
             "   </default>\n" +
             "</infinispan>";
       
@@ -47,8 +43,7 @@ public class QueryParsingTest extends AbstractInfinispanTest {
         assert gc.getClusterName().equals("demoCluster");
 
         Configuration def = c.parseDefaultConfiguration();
-        ModuleConfigurationBean extensionConfig = def.getModuleConfigurationBean("query");
-        QueryConfigurationBean bean = (QueryConfigurationBean) extensionConfig.getConfigurationBean();
+        QueryConfigurationBean bean = def.getQueryConfigurationBean();
         assert bean.isEnabled();
         assert bean.isIndexLocalOnly();
         
