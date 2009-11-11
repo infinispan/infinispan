@@ -21,6 +21,13 @@
  */
 package org.infinispan.stress;
 
+import org.infinispan.Cache;
+import org.infinispan.config.Configuration;
+import org.infinispan.manager.CacheManager;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.Test;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,13 +38,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
-import org.infinispan.manager.CacheManager;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.Test;
-
 /**
  * Verifies the atomic semantic of Infinispan's implementations of
  * java.util.concurrent.ConcurrentMap<K, V>.putIfAbsent(K key, V value); which is an interesting
@@ -47,7 +47,8 @@ import org.testng.annotations.Test;
  * @see java.util.concurrent.ConcurrentMap#putIfAbsent(Object, Object)
  * @author Sanne Grinovero
  */
-@Test(groups = "stress", testName = "stress.PutIfAbsentStressTest")
+@Test(groups = "stress", testName = "stress.PutIfAbsentStressTest", enabled = false,
+      description = "Since this test is slow to run, it should be disabled by default and run by hand as necessary.")
 public class PutIfAbsentStressTest {
 
    private static final int NODES_NUM = 5;
