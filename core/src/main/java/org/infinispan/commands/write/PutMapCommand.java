@@ -30,6 +30,7 @@ import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 
 import java.util.Map;
+import java.util.Collection;
 import java.util.Map.Entry;
 
 /**
@@ -137,6 +138,10 @@ public class PutMapCommand implements WriteCommand {
 
    public boolean isConditional() {
       return false;
+   }
+
+   public Collection<Object> getAffectedKeys() {
+      return map.keySet();
    }
 
    public long getLifespanMillis() {

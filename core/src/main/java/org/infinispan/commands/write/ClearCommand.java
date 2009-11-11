@@ -30,6 +30,9 @@ import org.infinispan.marshall.Marshallable;
 import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 
+import java.util.Collection;
+import java.util.Collections;
+
 /**
  * @author Mircea.Markus@jboss.com
  * @since 4.0
@@ -92,5 +95,9 @@ public class ClearCommand implements WriteCommand {
 
    public boolean isConditional() {
       return false;
+   }
+
+   public Collection<Object> getAffectedKeys() {
+      return Collections.emptySet();
    }
 }

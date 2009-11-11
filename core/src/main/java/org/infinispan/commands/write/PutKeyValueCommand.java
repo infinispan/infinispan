@@ -24,7 +24,6 @@ package org.infinispan.commands.write;
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
 import org.infinispan.commands.Visitor;
-import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.marshall.Ids;
@@ -39,7 +38,7 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
  * @since 4.0
  */
 @Marshallable(externalizer = ReplicableCommandExternalizer.class, id = Ids.PUT_KEY_VALUE_COMMAND)
-public class PutKeyValueCommand extends AbstractDataCommand implements DataWriteCommand {
+public class PutKeyValueCommand extends AbstractDataWriteCommand {
    public static final byte COMMAND_ID = 8;
 
    Object value;

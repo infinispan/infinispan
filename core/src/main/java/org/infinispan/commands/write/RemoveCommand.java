@@ -22,7 +22,6 @@
 package org.infinispan.commands.write;
 
 import org.infinispan.commands.Visitor;
-import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.marshall.Ids;
@@ -39,7 +38,7 @@ import org.infinispan.util.logging.LogFactory;
  * @since 4.0
  */
 @Marshallable(externalizer = ReplicableCommandExternalizer.class, id = Ids.REMOVE_COMMAND)
-public class RemoveCommand extends AbstractDataCommand implements DataWriteCommand {
+public class RemoveCommand extends AbstractDataWriteCommand {
    private static final Log log = LogFactory.getLog(RemoveCommand.class);
    private static final boolean trace = log.isTraceEnabled();
    public static final byte COMMAND_ID = 10;

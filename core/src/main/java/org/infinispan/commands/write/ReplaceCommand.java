@@ -22,7 +22,6 @@
 package org.infinispan.commands.write;
 
 import org.infinispan.commands.Visitor;
-import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.marshall.Ids;
@@ -35,7 +34,7 @@ import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
  * @since 4.0
  */
 @Marshallable(externalizer = ReplicableCommandExternalizer.class, id = Ids.REPLACE_COMMAND)
-public class ReplaceCommand extends AbstractDataCommand implements DataWriteCommand {
+public class ReplaceCommand extends AbstractDataWriteCommand {
    public static final byte COMMAND_ID = 11;
 
    Object oldValue;
