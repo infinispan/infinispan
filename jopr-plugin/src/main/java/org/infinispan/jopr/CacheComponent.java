@@ -130,19 +130,11 @@ public class CacheComponent implements ResourceComponent<CacheManagerComponent>,
                Class attrType = att.getTypeClass();
                DataType type = req.getDataType();
                if (type == DataType.MEASUREMENT) {
-                  if (trace) log.trace("Metric ({0}) is measurement with value {1}", req.getName(), o);
-                  if (attrType.equals(Long.class) || attrType.equals(long.class)) {
-                     Long tmp = (Long) o;
-                     MeasurementDataNumeric res = new MeasurementDataNumeric(req, Double.valueOf(tmp));
-                     report.addData(res);
-                  } else if (attrType.equals(Double.class) || attrType.equals(double.class)) {
-                     Double tmp = (Double) o;
-                     MeasurementDataNumeric res = new MeasurementDataNumeric(req, tmp);
-                     report.addData(res);
-                  } else if (attrType.equals(Integer.class) || attrType.equals(int.class)) {
-                     Integer tmp = (Integer) o;
-                     MeasurementDataNumeric res = new MeasurementDataNumeric(req, Double.valueOf(tmp));
-                     report.addData(res);
+                  if (o != null) {
+                     MeasurementDataNumeric res = constructMeasurementDataNumeric(attrType, o, req);
+                     if (res != null) report.addData(res);
+                  } else {
+                     if (log.isDebugEnabled()) log.debug("Metric ({0}) has null value, do not add to report", req.getName());
                   }
                } else if (type == DataType.TRAIT) {
                   String value = (String) o;
@@ -172,8 +164,6 @@ public class CacheComponent implements ResourceComponent<CacheManagerComponent>,
                                           Configuration parameters) throws Exception {
       EmsConnection conn = getConnection();
       String abbrev = name.substring(0, name.indexOf("."));
-//      String mbean = abbrevToMBean.get(abbrev);
-//      mbean = myNamePattern + mbean;
       String mbean = myNamePattern + abbrev;
       EmsBean bean = conn.getBean(mbean);
       String opName = name.substring(name.indexOf(".") + 1);
@@ -191,4 +181,24 @@ public class CacheComponent implements ResourceComponent<CacheManagerComponent>,
       return context.getParentResourceComponent().getConnection();
    }
 
+   private MeasurementDataNumeric constructMeasurementDataNumeric(Class attrType, Object o, MeasurementScheduleRequest req) {
+      boolean trace = log.isTraceEnabled();
+      if (trace) log.trace("Metric ({0}) is measurement with value {1}", req.getName(), o);
+      if (attrType.equals(Long.class) || attrType.equals(long.class)) {
+         Long tmp = (Long) o;
+         return new MeasurementDataNumeric(req, Double.valueOf(tmp));
+      } else if (attrType.equals(Double.class) || attrType.equals(double.class)) {
+         Double tmp = (Double) o;
+         return new MeasurementDataNumeric(req, tmp);
+      } else if (attrType.equals(Integer.class) || attrType.equals(int.class)) {
+         Integer tmp = (Integer) o;
+         return new MeasurementDataNumeric(req, Double.valueOf(tmp));
+      } else if (attrType.equals(String.class)) {
+         String tmp = (String) o;
+         return new MeasurementDataNumeric(req, Double.valueOf(tmp));
+      } 
+      
+      log.warn("Unknown {0} attribute type for {1}", attrType, o);
+      return null;
+   }
 }

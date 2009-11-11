@@ -298,20 +298,20 @@ public class RpcManagerImpl implements RpcManager {
 
    @ManagedAttribute(description = "Number of successful replications")
    @Metric(displayName = "Number of successfull replications", measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
-   public String getReplicationCount() {
+   public long getReplicationCount() {
       if (!isStatisticsEnabled()) {
-         return "N/A";
+         return -1;
       }
-      return String.valueOf(replicationCount.get());
+      return replicationCount.get();
    }
 
    @ManagedAttribute(description = "Number of failed replications")
    @Metric(displayName = "Number of failed replications", measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
-   public String getReplicationFailures() {
+   public long getReplicationFailures() {
       if (!isStatisticsEnabled()) {
-         return "N/A";
+         return -1;
       }
-      return String.valueOf(replicationFailures.get());
+      return replicationFailures.get();
    }
 
    @Metric(displayName = "Statistics enabled", dataType = DataType.TRAIT)
@@ -342,8 +342,8 @@ public class RpcManagerImpl implements RpcManager {
 
    @ManagedAttribute(description = "Size of the cluster in number of nodes")
    @Metric(displayName = "Cluster size", displayType = DisplayType.SUMMARY)
-   public String getClusterSize() {
-      return t.getMembers().size() + "";
+   public int getClusterSize() {
+      return t.getMembers().size();
    }
 
    @ManagedAttribute(description = "Successful replications as a ratio of total replications")
@@ -360,6 +360,9 @@ public class RpcManagerImpl implements RpcManager {
    @ManagedAttribute(description = "The average time spent in the transport layer, in milliseconds")
    @Metric(displayName = "Average time spent in the transport layer", units = Units.MILLISECONDS, displayType = DisplayType.SUMMARY)
    public long getAverageReplicationTime() {
+      if (numReplications.get() == 0) {
+         return 0;
+      }
       return totalReplicationTime.get() / numReplications.get();
    }
 
