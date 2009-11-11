@@ -52,11 +52,16 @@ public class InfinispanFluDemo {
 		JSAPResult config = jsap.parse(args);
 		InfluenzaDataLoader fluDemo = new InfluenzaDataLoader();
 		try {
+			fluDemo.createCache(config.getString("InfinispanCfg"));
 			fluDemo.populateCache(config);
 		} catch (SAXException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 			System.exit(1);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			System.exit(2);
 		}
 
 		while (true) {
@@ -82,7 +87,7 @@ public class InfinispanFluDemo {
 					e.printStackTrace();
 				}
 			}
-			System.out.println("Protein/Influenza/Nucleotide Cache Size-->" + fluDemo.proteinCache.size()+"/"+fluDemo.influenzaCache.size()+"/"+fluDemo.nucleiodCache.size());
+			System.out.println(fluDemo.cacheSizes());
 		}
 	}
 
