@@ -21,15 +21,19 @@ public class CacheBuilder {
 	private CacheManager cache_manager;
 	private static final Log myLogger = LogFactory.getLog(CacheBuilder.class);
 
-	public CacheBuilder(String configFile) throws IOException {
-		myLogger.debug("CacheBuilder called with "+configFile);
+	public CacheBuilder(String inConfigFile) throws IOException {
+		//system property gets priority
+		String configFile = System.getProperty("EC2Demo-jgroups-config");		
+
 		if ((configFile==null)||(configFile.isEmpty()))
-			configFile = System.getProperty("EC2Demo-jgroups-config");
+			configFile = inConfigFile;
 		
 		if ((configFile==null)||(configFile.isEmpty()))
 			throw new RuntimeException(
 					"Need to either set system property EC2Demo-jgroups-config to point to the jgroups configuration file or pass in the the location of the jgroups configuration file");
 
+		System.out.println("CacheBuilder called with "+configFile);
+		
 		GlobalConfiguration gc = GlobalConfiguration.getClusteredDefault();
 		gc.setClusterName("infinispan-demo-cluster");
 		gc.setTransportClass(JGroupsTransport.class.getName());
