@@ -7,10 +7,12 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.commands.write.WriteCommand;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A component that manages the distribution of elements across a cache cluster
@@ -108,5 +110,9 @@ public interface DistributionManager {
    boolean isJoinComplete();
 
    void applyReceivedState(Map<Object, InternalCacheValue> state);
+   
+   List<Address> getAffectedNodes(Set<Object> affectedKeys);
+
+   void applyRemoteTxLog(List<WriteCommand> txLogCommands);
 }
 

@@ -25,6 +25,8 @@ import org.infinispan.Cache;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.control.RehashControlCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
+import static org.infinispan.commands.control.RehashControlCommand.Type.DRAIN_TX_PREPARES;
+import static org.infinispan.commands.control.RehashControlCommand.Type.DRAIN_TX;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
@@ -275,7 +277,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case RehashControlCommand.COMMAND_ID:
             RehashControlCommand rcc = (RehashControlCommand) c;
-            rcc.init(distributionManager, configuration, dataContainer);
+            rcc.init(distributionManager, configuration, dataContainer, this);
             break;
          default:
             if (trace)
@@ -295,8 +297,16 @@ public class CommandsFactoryImpl implements CommandsFactory {
       return buildRehashControlCommand(type, sender, state, null);
    }
 
+   public RehashControlCommand buildRehashControlCommandTxLog(Address sender, List<WriteCommand> commands) {
+      return new RehashControlCommand(cacheName, DRAIN_TX, sender, commands, null, this);
+   }
+
+   public RehashControlCommand buildRehashControlCommandTxLogPendingPrepares(Address sender, List<PrepareCommand> commands) {
+      return new RehashControlCommand(cacheName, DRAIN_TX_PREPARES, sender, null, commands, this);
+   }
+
    public RehashControlCommand buildRehashControlCommand(RehashControlCommand.Type type, Address sender, Map<Object, InternalCacheValue> state, ConsistentHash consistentHash) {
-      return new RehashControlCommand(cacheName, type, sender, state, consistentHash);
+      return new RehashControlCommand(cacheName, type, sender, state, consistentHash, this);
    }
 
 }

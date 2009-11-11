@@ -44,9 +44,12 @@ import org.rhq.helpers.pluginAnnotations.agent.Parameter;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -178,8 +181,8 @@ public class DistributionManagerImpl implements DistributionManager {
             throw new CacheException(e);
          }
 
-         if (willReceiveLeaverState) {
-            log.info("Starting transaction logging; expecting state from someone!");
+         if (willReceiveLeaverState || willSendLeaverState) {
+            log.info("Starting transaction logging!");
             transactionLogger.enable();
          }
 
@@ -350,7 +353,7 @@ public class DistributionManagerImpl implements DistributionManager {
       applyState(consistentHash, state);
       boolean unlocked = false;
       try {
-         drainTransactionLog();
+         drainLocalTransactionLog();
          unlocked = true;
       } finally {
          if (!unlocked) transactionLogger.unlockAndDisable();
@@ -361,9 +364,9 @@ public class DistributionManagerImpl implements DistributionManager {
       return joinComplete;
    }
 
-   void drainTransactionLog() {
+   void drainLocalTransactionLog() {
       List<WriteCommand> c;
-      while (transactionLogger.size() > 10) {
+      while (transactionLogger.shouldDrainWithoutLock()) {
          c = transactionLogger.drain();
          apply(c);
       }
@@ -381,6 +384,18 @@ public class DistributionManagerImpl implements DistributionManager {
          ctx.setFlags(Flag.CACHE_MODE_LOCAL);
          interceptorChain.invoke(ctx, cmd);
       }
+   }
+
+   public List<Address> getAffectedNodes(Set<Object> affectedKeys) {
+      if (affectedKeys == null || affectedKeys.isEmpty()) return Collections.emptyList();
+
+      Set<Address> an = new HashSet<Address>();
+      for (List<Address> addresses : locateAll(affectedKeys).values()) an.addAll(addresses);
+      return new ArrayList<Address>(an);
+   }
+
+   public void applyRemoteTxLog(List<WriteCommand> txLogCommands) {
+      apply(txLogCommands);
    }
 
    @ManagedOperation(description = "Tells you whether a given key is local to this instance of the cache.  Only works with String keys.")

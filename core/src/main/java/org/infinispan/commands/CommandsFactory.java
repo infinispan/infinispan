@@ -120,5 +120,9 @@ public interface CommandsFactory {
 
    RehashControlCommand buildRehashControlCommand(RehashControlCommand.Type subtype, Address sender, Map<Object, InternalCacheValue> state);
 
+   RehashControlCommand buildRehashControlCommandTxLog(Address sender, List<WriteCommand> state);
+
+   RehashControlCommand buildRehashControlCommandTxLogPendingPrepares(Address sender, List<PrepareCommand> state);
+
    RehashControlCommand buildRehashControlCommand(RehashControlCommand.Type subtype, Address sender, Map<Object, InternalCacheValue> state, ConsistentHash consistentHash);
 }

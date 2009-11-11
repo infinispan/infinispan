@@ -8,6 +8,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -19,7 +20,7 @@ import org.infinispan.util.concurrent.locks.LockManager;
 
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
-import java.util.Set;
+import java.util.HashSet;
 
 /**
  * This interceptor populates the {@link org.infinispan.transaction.xa.DeadlockDetectingGlobalTransaction} with
@@ -37,12 +38,15 @@ public class DeadlockDetectingInterceptor extends CommandInterceptor {
    private TransactionTable txTable;
    private LockManager lockManager;
    private TransactionManager txManager;
+   private DistributionManager distributionManager;
 
    @Inject
-   public void init(TransactionTable txTable, LockManager lockManager, TransactionManager txManager) {
+   public void init(TransactionTable txTable, LockManager lockManager, TransactionManager txManager,
+                    DistributionManager distributionManager) {
       this.txTable = txTable;
       this.lockManager = lockManager;
       this.txManager = txManager;
+      this.distributionManager = distributionManager;
    }
 
 
@@ -114,8 +118,7 @@ public class DeadlockDetectingInterceptor extends CommandInterceptor {
       globalTransaction.setProcessingThread(Thread.currentThread());
       if (ctx.isOriginLocal()) {
          if (configuration.getCacheMode().isDistributed()) {
-            Set<Address> transactionParticipants = ctx.getTransactionParticipants();
-            globalTransaction.setReplicatingTo(transactionParticipants);
+            globalTransaction.setReplicatingTo(new HashSet<Address>(distributionManager.getAffectedNodes(ctx.getAffectedKeys())));
          } else {
             globalTransaction.setReplicatingTo(null);
          }

@@ -127,7 +127,7 @@ public class JoinTask extends RehashTask {
             }
 
             // 8.  Drain logs
-            dmi.drainTransactionLog();
+            dmi.drainLocalTransactionLog();
          }
          unlocked = true;
 

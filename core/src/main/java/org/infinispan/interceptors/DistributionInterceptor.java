@@ -30,7 +30,6 @@ import org.infinispan.util.concurrent.AggregatingNotifyingFutureImpl;
 import org.infinispan.util.concurrent.NotifyingFutureImpl;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -189,10 +188,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
 
    @Override
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
-      if (ctx.isOriginLocal()) {
-         List<Address> recipients = new ArrayList<Address>(ctx.getTransactionParticipants());
-         rpcManager.invokeRemotely(recipients, command, true, true);
-      }
+      if (ctx.isOriginLocal()) rpcManager.invokeRemotely(dm.getAffectedNodes(ctx.getAffectedKeys()), command, true, true);
       return invokeNextInterceptor(ctx, command);
    }
 
@@ -200,7 +196,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (ctx.isOriginLocal() && ctx.hasModifications()) {
-         List<Address> recipients = new ArrayList<Address>(ctx.getTransactionParticipants());
+         List<Address> recipients = dm.getAffectedNodes(ctx.getAffectedKeys());
          rpcManager.invokeRemotely(recipients, command, configuration.isSyncCommitPhase(), true);
          List<WriteCommand> mods = ctx.getModifications();
          flushL1Cache(recipients.size(), getKeys(mods), false, null, configuration.isSyncCommitPhase());
@@ -215,8 +211,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       boolean sync = isSynchronous(ctx);
 
       if (ctx.isOriginLocal() && ctx.hasModifications()) {
-         List<Address> recipients = new ArrayList<Address>(ctx.getTransactionParticipants());
-         if (trace) log.trace("Multicasting PrepareCommand to recipients : " + recipients);
+         List<Address> recipients = dm.getAffectedNodes(ctx.getAffectedKeys());
          // this method will return immediately if we're the only member (because exclude_self=true)
          rpcManager.invokeRemotely(recipients, command, sync);
          if (command.isOnePhaseCommit())
@@ -227,10 +222,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
 
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
-      if (ctx.isOriginLocal()) {
-         List<Address> recipients = new ArrayList<Address>(ctx.getTransactionParticipants());
-         rpcManager.invokeRemotely(recipients, command, configuration.isSyncRollbackPhase(), true);
-      }
+      if (ctx.isOriginLocal()) rpcManager.invokeRemotely(dm.getAffectedNodes(ctx.getAffectedKeys()), command, configuration.isSyncRollbackPhase(), true);
       return invokeNextInterceptor(ctx, command);
    }
 
@@ -312,7 +304,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
                }
             }
          } else {
-            ((TxInvocationContext) ctx).addTransactionParticipants(recipientGenerator.generateRecipients());
+            ((TxInvocationContext) ctx).addAffectedKeys(recipientGenerator.getKeys());
          }
       }
       return returnValue;

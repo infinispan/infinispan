@@ -67,4 +67,19 @@ public interface TransactionLogger {
    int size();
 
    boolean isEnabled();
+
+   /**
+    * Tests whether the drain() method can be called without a lock.  This is usually true if there is a lot of stuff
+    * to drain.  After a certain threshold (once there are relatively few entries in the tx log) this will return false
+    * after which you should call drainAndLock() to clear the final parts of the log.
+    * @return true if drain() should be called, false if drainAndLock() should be called.
+    */
+   boolean shouldDrainWithoutLock();
+
+   /**
+    * Drains pending prepares.  Note that this should *only* be done after calling drainAndLock() to prevent race
+    * conditions
+    * @return a list of prepares pending commit or rollback
+    */
+   Collection<PrepareCommand> getPendingPrepares();
 }

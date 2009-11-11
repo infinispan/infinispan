@@ -2,7 +2,6 @@ package org.infinispan.context.impl;
 
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
 import javax.transaction.Transaction;
@@ -23,10 +22,10 @@ public interface TxInvocationContext extends InvocationContext {
    public boolean hasModifications();
 
    /**
-    * Returns the set of cluster participants (identified through {@link org.infinispan.remoting.transport.Address}
-    * objects) that participate within the transaction. Null indicates all cluster members.
+    * Returns the set of keys that are affected by this transaction.  Used to generate appropriate recipient groups
+    * for cluster-wide prepare and commit calls.
     */
-   Set<Address> getTransactionParticipants();
+   Set<Object> getAffectedKeys();
 
    /**
     * Returns the id of the transaction assoctiated  with the current call.
@@ -54,5 +53,5 @@ public interface TxInvocationContext extends InvocationContext {
    /**
     * Registers a new participant with the transaction.
     */
-   void addTransactionParticipants(List<Address> addresses);
+   void addAffectedKeys(Object... keys);
 }

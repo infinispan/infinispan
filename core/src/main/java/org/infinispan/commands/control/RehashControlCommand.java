@@ -1,7 +1,11 @@
 package org.infinispan.commands.control;
 
 import org.infinispan.CacheException;
+import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -20,6 +24,7 @@ import org.infinispan.remoting.transport.Transport;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Arrays;
 
 /**
  * A control command to coordinate rehashes that may occur when nodes join or leave a cluster, when DIST is used as a
@@ -34,7 +39,7 @@ public class RehashControlCommand extends BaseRpcCommand {
    public static final int COMMAND_ID = 17;
 
    public enum Type {
-      JOIN_REQ, JOIN_REHASH_START, JOIN_REHASH_END, JOIN_COMPLETE, JOIN_ABORT, PULL_STATE, PUSH_STATE
+      JOIN_REQ, JOIN_REHASH_START, JOIN_REHASH_END, JOIN_COMPLETE, JOIN_ABORT, PULL_STATE, PUSH_STATE, DRAIN_TX, DRAIN_TX_PREPARES
    }
 
    Type type;
@@ -47,26 +52,51 @@ public class RehashControlCommand extends BaseRpcCommand {
    Transport transport;
    Configuration configuration;
    DataContainer dataContainer;
+   List<WriteCommand> txLogCommands;
+   List<PrepareCommand> pendingPrepares;
+   CommandsFactory commandsFactory;
 
-   public RehashControlCommand(String cacheName, Type type, Address sender, Map<Object, InternalCacheValue> state, ConsistentHash consistentHash) {
+   public RehashControlCommand() {
+   }
+
+
+   public RehashControlCommand(String cacheName, Type type, Address sender, Map<Object, InternalCacheValue> state,
+                               ConsistentHash consistentHash, CommandsFactory commandsFactory) {
       super(cacheName);
       this.type = type;
       this.sender = sender;
       this.state = state;
       this.consistentHash = consistentHash;
+      this.commandsFactory = commandsFactory;
    }
 
-   public RehashControlCommand() {
+   public RehashControlCommand(String cacheName, Type type, Address sender, List<WriteCommand> txLogCommands,
+                               List<PrepareCommand> pendingPrepares, CommandsFactory commandsFactory) {
+      super(cacheName);
+      this.type = type;
+      this.sender = sender;
+      this.txLogCommands = txLogCommands;
+      this.pendingPrepares = pendingPrepares;
+      this.commandsFactory = commandsFactory;
    }
 
    public RehashControlCommand(Transport transport) {
       this.transport = transport;
    }
 
-   public void init(DistributionManager distributionManager, Configuration configuration, DataContainer dataContainer) {
+   public void init(DistributionManager distributionManager, Configuration configuration, DataContainer dataContainer,
+                    CommandsFactory commandsFactory) {
       this.distributionManager = distributionManager;
       this.configuration = configuration;
       this.dataContainer = dataContainer;
+      this.commandsFactory = commandsFactory;
+
+      // we need to "fix" these command lists - essentially propagate the init.  TODO think of a nicer way to do this!!
+      for (List<? extends ReplicableCommand> commandList : Arrays.asList(txLogCommands, pendingPrepares)) {
+         if (commandList != null) {
+            for (ReplicableCommand cmd : commandList) commandsFactory.initializeReplicableCommand(cmd);
+         }
+      }
    }
 
    public Object perform(InvocationContext ctx) throws Throwable {
@@ -86,6 +116,12 @@ public class RehashControlCommand extends BaseRpcCommand {
             return pullState();
          case PUSH_STATE:
             return pushState();
+         case DRAIN_TX:
+            distributionManager.applyRemoteTxLog(txLogCommands);
+            return null;
+         case DRAIN_TX_PREPARES:
+            for (PrepareCommand pc : pendingPrepares) pc.perform(null);
+            return null;
       }
       throw new CacheException("Unknown rehash control command type " + type);
    }
@@ -133,7 +169,7 @@ public class RehashControlCommand extends BaseRpcCommand {
    }
 
    public Object[] getParameters() {
-      return new Object[]{cacheName, (byte) type.ordinal(), sender, state, consistentHash};
+      return new Object[]{cacheName, (byte) type.ordinal(), sender, state, consistentHash, txLogCommands, pendingPrepares};
    }
 
    @SuppressWarnings("unchecked")
@@ -144,6 +180,8 @@ public class RehashControlCommand extends BaseRpcCommand {
       sender = (Address) parameters[i++];
       state = (Map<Object, InternalCacheValue>) parameters[i++];
       consistentHash = (ConsistentHash) parameters[i++];
+      txLogCommands = (List<WriteCommand>) parameters[i++];
+      pendingPrepares = (List<PrepareCommand>) parameters[i++];
    }
 
    @Override
@@ -153,6 +191,8 @@ public class RehashControlCommand extends BaseRpcCommand {
             ", sender=" + sender +
             ", state=" + state +
             ", consistentHash=" + consistentHash +
+            ", txLogCommands=" + txLogCommands +
+            ", pendingPrepares=" + pendingPrepares +
             '}';
    }
 }

@@ -1,14 +1,13 @@
 package org.infinispan.context.impl;
 
 import org.infinispan.CacheException;
-import org.infinispan.remoting.transport.Address;
 
 import javax.transaction.Status;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -19,25 +18,25 @@ import java.util.Set;
  */
 public abstract class AbstractTxInvocationContext extends AbstractInvocationContext implements TxInvocationContext {
 
-   protected Set<Address> txParticipants = null;
+   protected Set<Object> affectedKeys = null;
 
    public boolean hasModifications() {
       return getModifications() != null && !getModifications().isEmpty();
    }
 
-   public Set<Address> getTransactionParticipants() {
-      return txParticipants == null ? Collections.EMPTY_SET : txParticipants;
+   public Set<Object> getAffectedKeys() {
+      return affectedKeys == null ? Collections.EMPTY_SET : affectedKeys;
    }
 
    public boolean isValidRunningTx() {
       return isValid(getRunningTransaction());
    }
 
-   public void addTransactionParticipants(List<Address> addresses) {
-      if (txParticipants == null) {
-         txParticipants = new HashSet<Address>();
+   public void addAffectedKeys(Object... keys) {
+      if (affectedKeys == null) {
+         affectedKeys = new HashSet<Object>();
       }
-      txParticipants.addAll(addresses);
+      affectedKeys.addAll(Arrays.asList(keys));
    }
 
 
@@ -97,8 +96,8 @@ public abstract class AbstractTxInvocationContext extends AbstractInvocationCont
    @Override
    public AbstractTxInvocationContext clone() {
       AbstractTxInvocationContext dolly = (AbstractTxInvocationContext) super.clone();
-      if (this.txParticipants != null) {
-         dolly.txParticipants = new HashSet<Address>(txParticipants);
+      if (this.affectedKeys != null) {
+         dolly.affectedKeys = new HashSet<Object>(affectedKeys);
       }
       return dolly;
    }
