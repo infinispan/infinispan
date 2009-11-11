@@ -115,15 +115,18 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
       if (!cacheEntryCreatedListeners.isEmpty()) {
          boolean originLocal = ctx.isOriginLocal();
          InvocationContext contexts = icc.suspend();
-         EventImpl e = new EventImpl();
-         e.setCache(cache);
-         e.setOriginLocal(originLocal);
-         e.setPre(pre);
-         e.setKey(key);
-         setTx(ctx, e);
-         e.setType(CACHE_ENTRY_CREATED);
-         for (ListenerInvocation listener : cacheEntryCreatedListeners) listener.invoke(e);
-         icc.resume(contexts);
+         try {
+            EventImpl e = new EventImpl();
+            e.setCache(cache);
+            e.setOriginLocal(originLocal);
+            e.setPre(pre);
+            e.setKey(key);
+            setTx(ctx, e);
+            e.setType(CACHE_ENTRY_CREATED);
+            for (ListenerInvocation listener : cacheEntryCreatedListeners) listener.invoke(e);
+         } finally {
+            icc.resume(contexts);
+         }
       }
    }
 
@@ -131,16 +134,19 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
       if (!cacheEntryModifiedListeners.isEmpty()) {
          boolean originLocal = ctx.isOriginLocal();
          InvocationContext contexts = icc.suspend();
-         EventImpl e = new EventImpl();
-         e.setCache(cache);
-         e.setOriginLocal(originLocal);
-         e.setValue(value);
-         e.setPre(pre);
-         e.setKey(key);
-         setTx(ctx, e);
-         e.setType(CACHE_ENTRY_MODIFIED);
-         for (ListenerInvocation listener : cacheEntryModifiedListeners) listener.invoke(e);
-         icc.resume(contexts);
+         try {
+            EventImpl e = new EventImpl();
+            e.setCache(cache);
+            e.setOriginLocal(originLocal);
+            e.setValue(value);
+            e.setPre(pre);
+            e.setKey(key);
+            setTx(ctx, e);
+            e.setType(CACHE_ENTRY_MODIFIED);
+            for (ListenerInvocation listener : cacheEntryModifiedListeners) listener.invoke(e);
+         } finally {
+            icc.resume(contexts);
+         }
       }
    }
 
@@ -148,30 +154,36 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
       if (!cacheEntryRemovedListeners.isEmpty()) {
          boolean originLocal = ctx.isOriginLocal();
          InvocationContext contexts = icc.suspend();
-         EventImpl e = new EventImpl();
-         e.setCache(cache);
-         e.setOriginLocal(originLocal);
-         e.setValue(value);
-         e.setPre(pre);
-         e.setKey(key);
-         setTx(ctx, e);
-         e.setType(CACHE_ENTRY_REMOVED);
-         for (ListenerInvocation listener : cacheEntryRemovedListeners) listener.invoke(e);
-         icc.resume(contexts);
+         try {
+            EventImpl e = new EventImpl();
+            e.setCache(cache);
+            e.setOriginLocal(originLocal);
+            e.setValue(value);
+            e.setPre(pre);
+            e.setKey(key);
+            setTx(ctx, e);
+            e.setType(CACHE_ENTRY_REMOVED);
+            for (ListenerInvocation listener : cacheEntryRemovedListeners) listener.invoke(e);
+         } finally {
+            icc.resume(contexts);
+         }
       }
    }
 
    public void notifyCacheEntryVisited(Object key, boolean pre, InvocationContext ctx) {
       if (!cacheEntryVisitedListeners.isEmpty()) {
          InvocationContext contexts = icc.suspend();
-         EventImpl e = new EventImpl();
-         e.setCache(cache);
-         e.setPre(pre);
-         e.setKey(key);
-         setTx(ctx, e);
-         e.setType(CACHE_ENTRY_VISITED);
-         for (ListenerInvocation listener : cacheEntryVisitedListeners) listener.invoke(e);
-         icc.resume(contexts);
+         try {
+            EventImpl e = new EventImpl();
+            e.setCache(cache);
+            e.setPre(pre);
+            e.setKey(key);
+            setTx(ctx, e);
+            e.setType(CACHE_ENTRY_VISITED);
+            for (ListenerInvocation listener : cacheEntryVisitedListeners) listener.invoke(e);
+         } finally {
+            icc.resume(contexts);
+         }
       }
    }
 
@@ -179,15 +191,18 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
       if (!cacheEntryEvictedListeners.isEmpty()) {
          final boolean originLocal = ctx.isOriginLocal();
          InvocationContext contexts = icc.suspend();
-         EventImpl e = new EventImpl();
-         e.setCache(cache);
-         e.setOriginLocal(originLocal);
-         e.setPre(pre);
-         e.setKey(key);
-         setTx(ctx, e);
-         e.setType(CACHE_ENTRY_EVICTED);
-         for (ListenerInvocation listener : cacheEntryEvictedListeners) listener.invoke(e);
-         icc.resume(contexts);
+         try {
+            EventImpl e = new EventImpl();
+            e.setCache(cache);
+            e.setOriginLocal(originLocal);
+            e.setPre(pre);
+            e.setKey(key);
+            setTx(ctx, e);
+            e.setType(CACHE_ENTRY_EVICTED);
+            for (ListenerInvocation listener : cacheEntryEvictedListeners) listener.invoke(e);
+         } finally {
+            icc.resume(contexts);
+         }
       }
    }
 
@@ -195,15 +210,18 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
       if (!cacheEntryInvalidatedListeners.isEmpty()) {
          final boolean originLocal = ctx.isOriginLocal();
          InvocationContext contexts = icc.suspend();
-         EventImpl e = new EventImpl();
-         e.setCache(cache);
-         e.setOriginLocal(originLocal);
-         e.setPre(pre);
-         e.setKey(key);
-         setTx(ctx, e);
-         e.setType(CACHE_ENTRY_INVALIDATED);
-         for (ListenerInvocation listener : cacheEntryInvalidatedListeners) listener.invoke(e);
-         icc.resume(contexts);
+         try {
+            EventImpl e = new EventImpl();
+            e.setCache(cache);
+            e.setOriginLocal(originLocal);
+            e.setPre(pre);
+            e.setKey(key);
+            setTx(ctx, e);
+            e.setType(CACHE_ENTRY_INVALIDATED);
+            for (ListenerInvocation listener : cacheEntryInvalidatedListeners) listener.invoke(e);
+         } finally {
+            icc.resume(contexts);
+         }
       }
    }
 
@@ -211,15 +229,18 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
       if (!cacheEntryLoadedListeners.isEmpty()) {
          boolean originLocal = ctx.isOriginLocal();
          InvocationContext contexts = icc.suspend();
-         EventImpl e = new EventImpl();
-         e.setCache(cache);
-         e.setOriginLocal(originLocal);
-         e.setPre(pre);
-         e.setKey(key);
-         setTx(ctx, e);
-         e.setType(CACHE_ENTRY_LOADED);
-         for (ListenerInvocation listener : cacheEntryLoadedListeners) listener.invoke(e);
-         icc.resume(contexts);
+         try {
+            EventImpl e = new EventImpl();
+            e.setCache(cache);
+            e.setOriginLocal(originLocal);
+            e.setPre(pre);
+            e.setKey(key);
+            setTx(ctx, e);
+            e.setType(CACHE_ENTRY_LOADED);
+            for (ListenerInvocation listener : cacheEntryLoadedListeners) listener.invoke(e);
+         } finally {
+            icc.resume(contexts);
+         }
       }
    }
 
@@ -227,15 +248,18 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
       if (!cacheEntryActivatedListeners.isEmpty()) {
          boolean originLocal = ctx.isOriginLocal();
          InvocationContext contexts = icc.suspend();
-         EventImpl e = new EventImpl();
-         e.setCache(cache);
-         e.setOriginLocal(originLocal);
-         e.setPre(pre);
-         e.setKey(key);
-         setTx(ctx, e);
-         e.setType(CACHE_ENTRY_ACTIVATED);
-         for (ListenerInvocation listener : cacheEntryActivatedListeners) listener.invoke(e);
-         icc.resume(contexts);
+         try {
+            EventImpl e = new EventImpl();
+            e.setCache(cache);
+            e.setOriginLocal(originLocal);
+            e.setPre(pre);
+            e.setKey(key);
+            setTx(ctx, e);
+            e.setType(CACHE_ENTRY_ACTIVATED);
+            for (ListenerInvocation listener : cacheEntryActivatedListeners) listener.invoke(e);
+         } finally {
+            icc.resume(contexts);
+         }
       }
    }
 
@@ -249,14 +273,17 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
    public void notifyCacheEntryPassivated(Object key, boolean pre, InvocationContext ctx) {
       if (!cacheEntryPassivatedListeners.isEmpty()) {
          InvocationContext contexts = icc.suspend();
-         EventImpl e = new EventImpl();
-         e.setCache(cache);
-         e.setPre(pre);
-         e.setKey(key);
-         setTx(ctx, e);
-         e.setType(CACHE_ENTRY_PASSIVATED);
-         for (ListenerInvocation listener : cacheEntryPassivatedListeners) listener.invoke(e);
-         icc.resume(contexts);
+         try {
+            EventImpl e = new EventImpl();
+            e.setCache(cache);
+            e.setPre(pre);
+            e.setKey(key);
+            setTx(ctx, e);
+            e.setType(CACHE_ENTRY_PASSIVATED);
+            for (ListenerInvocation listener : cacheEntryPassivatedListeners) listener.invoke(e);
+         } finally {
+            icc.resume(contexts);
+         }
       }
    }
 
@@ -264,14 +291,17 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
       if (!transactionCompletedListeners.isEmpty()) {
          boolean isOriginLocal = ctx.isOriginLocal();
          InvocationContext contexts = icc.suspend();
-         EventImpl e = new EventImpl();
-         e.setCache(cache);
-         e.setOriginLocal(isOriginLocal);
-         e.setTransactionId(transaction);
-         e.setTransactionSuccessful(successful);
-         e.setType(TRANSACTION_COMPLETED);
-         for (ListenerInvocation listener : transactionCompletedListeners) listener.invoke(e);
-         icc.resume(contexts);
+         try {
+            EventImpl e = new EventImpl();
+            e.setCache(cache);
+            e.setOriginLocal(isOriginLocal);
+            e.setTransactionId(transaction);
+            e.setTransactionSuccessful(successful);
+            e.setType(TRANSACTION_COMPLETED);
+            for (ListenerInvocation listener : transactionCompletedListeners) listener.invoke(e);
+         } finally {
+            icc.resume(contexts);
+         }
       }
    }
 
@@ -279,13 +309,16 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
       if (!transactionRegisteredListeners.isEmpty()) {
          boolean isOriginLocal = ctx.isOriginLocal();
          InvocationContext contexts = icc.suspend();
-         EventImpl e = new EventImpl();
-         e.setCache(cache);
-         e.setOriginLocal(isOriginLocal);
-         e.setTransactionId(globalTransaction);
-         e.setType(TRANSACTION_REGISTERED);
-         for (ListenerInvocation listener : transactionRegisteredListeners) listener.invoke(e);
-         icc.resume(contexts);
+         try {
+            EventImpl e = new EventImpl();
+            e.setCache(cache);
+            e.setOriginLocal(isOriginLocal);
+            e.setTransactionId(globalTransaction);
+            e.setType(TRANSACTION_REGISTERED);
+            for (ListenerInvocation listener : transactionRegisteredListeners) listener.invoke(e);
+         } finally {
+            icc.resume(contexts);
+         }
       }
    }
 }
