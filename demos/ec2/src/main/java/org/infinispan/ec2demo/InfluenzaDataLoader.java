@@ -20,26 +20,33 @@ import java.util.Random;
  * 
  */
 public class InfluenzaDataLoader {
-	public CacheBuilder cbuilder;
-	public Cache<String, Influenza_N_P_CR_Element> influenzaCache;
-	public Cache<String, Nucleotide_Protein_Element> proteinCache;
-	public Cache<String, Nucleotide_Protein_Element> nucleiodCache;
+	private CacheBuilder cbuilder;
+	private Cache<String, Influenza_N_P_CR_Element> influenzaCache;
+	private Cache<String, Nucleotide_Protein_Element> proteinCache;
+	private Cache<String, Nucleotide_Protein_Element> nucleiodCache;
 	private Nucleotide_Protein_Parser npParser;
 	private Influenza_Parser iParser;
 
 	private static final Log myLogger = LogFactory.getLog(InfluenzaDataLoader.class);
 
-	public void populateCache(JSAPResult config) throws SAXException {
-		String cfgFileName = System.getProperty("infinispan.demo.cfg");
+	public void createCache(String configFile) throws IOException {
+		String cfgFileName = System.getProperty("infinispan.demo.cfg");		
 		if (cfgFileName == null)
-			cfgFileName = config.getString("InfinispanCfg");
+			cfgFileName = configFile;
+		
+		cbuilder = new CacheBuilder(cfgFileName);
+		influenzaCache = cbuilder.getCacheManager().getCache("InfluenzaCache");
+		proteinCache = cbuilder.getCacheManager().getCache("ProteinCache");
+		nucleiodCache = cbuilder.getCacheManager().getCache("NucleotideCache");
+	}
+
+	/**
+	 * @param config
+	 * @throws SAXException
+	 */
+	public void populateCache(JSAPResult config) throws SAXException {
 
 		try {
-			cbuilder = new CacheBuilder(cfgFileName);
-			influenzaCache = cbuilder.getCacheManager().getCache("InfluenzaCache");
-			proteinCache = cbuilder.getCacheManager().getCache("ProteinCache");
-			nucleiodCache = cbuilder.getCacheManager().getCache("NucleotideCache");
-
 			npParser = new Nucleotide_Protein_Parser();
 			iParser = new Influenza_Parser();
 
@@ -69,7 +76,7 @@ public class InfluenzaDataLoader {
 					while (true) {
 						int currRec = randomGenerator.nextInt(lSize);
 						Influenza_N_P_CR_Element curreElem = iList.get(currRec);
-						
+
 						this.searchCache(curreElem.getGanNucleoid());
 
 						try {
@@ -155,30 +162,36 @@ public class InfluenzaDataLoader {
 	}
 
 	public void searchCache(String inGBAN) {
-		myLogger.trace("Searching influenzaCache for "+inGBAN);
+		myLogger.trace("Searching influenzaCache for " + inGBAN);
 		// Find the virus details
 		Influenza_N_P_CR_Element myRec = influenzaCache.get(inGBAN);
 
 		if (myRec != null) {
 			System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
 			System.out.println("Virus Details->" + myRec);
-			myLogger.trace("Searching nucleiodCache for "+myRec.getGanNucleoid());
+			myLogger.trace("Searching nucleiodCache for " + myRec.getGanNucleoid());
 			Nucleotide_Protein_Element nucldet = nucleiodCache.get(myRec.getGanNucleoid());
-			System.out.println("Nucleotide detils->" + nucldet);
+			System.out.println("Nucleotide details->" + nucldet);
 
 			// Display the protein details
 			Map<String, String> myProt = myRec.getProtein_Data();
 			for (String x : myProt.keySet()) {
-				myLogger.trace("Searching proteinCache for "+x);
+				System.out.println("=========================================================================");
+				myLogger.trace("Searching proteinCache for " + x);
 				Nucleotide_Protein_Element myProtdet = proteinCache.get(x);
 				System.out.println("Protein->" + myProtdet);
 				String protein_CR = myProt.get(x);
 				System.out.println("Protein coding region->" + protein_CR);
 			}
 			System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-		} else{
-			myLogger.trace("No virus data found for "+inGBAN);
-			System.out.println("No virus data found for "+inGBAN);
+		} else {
+			myLogger.trace("No virus data found for " + inGBAN);
+			System.out.println("No virus data found for " + inGBAN);
 		}
+	}
+	public String cacheSizes(){
+		String retStr = "Protein/Influenza/Nucleotide Cache Size-->" + proteinCache.size() + "/"
+		+ influenzaCache.size() + "/" + nucleiodCache.size();
+		return retStr;		
 	}
 }
