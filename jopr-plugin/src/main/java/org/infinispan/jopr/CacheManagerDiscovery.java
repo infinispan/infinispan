@@ -62,71 +62,34 @@ public class CacheManagerDiscovery implements ResourceDiscoveryComponent<CacheMa
    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<CacheManagerComponent> ctx) throws Exception {
       boolean trace = log.isTraceEnabled();
       if (trace) log.trace("Discover resources with context: {0}", ctx);
-
       Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
-      // TODO check if we e.g. run inside a JBossAS to which we have a connection already that we can reuse.
-      Configuration c = new Configuration();
-      c.put(new PropertySimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY, REMOTE));
-      c.put(new PropertySimple(JMXDiscoveryComponent.CONNECTION_TYPE, CONNECTOR));
-      c.put(new PropertySimple(OBJECT_NAME_KEY, MANAGER_OBJECT));
-      if (trace) log.trace("To be used configuration is {0}", c.toString(true));
-
-      ConnectionHelper helper = new ConnectionHelper();
-      EmsConnection conn = helper.getEmsConnection(c);
-
-      if (trace) log.trace("Connection to ems server stablished: {0}", conn);
-
-      // Run query for manager_object
-      ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(MANAGER_OBJECT);
-      List<EmsBean> beans = conn.queryBeans(queryUtility.getTranslatedQuery());
-      if (trace) log.trace("Querying [{0}] returned beans: {1}", queryUtility.getTranslatedQuery(), beans);
-      for (EmsBean bean : beans) {
-         String managerName = bean.getBeanName().getCanonicalName();
-         c.put(new PropertySimple(OBJECT_NAME_KEY, managerName));
-         String resourceName = bean.getAttribute("Name").getValue().toString();
-         String version = bean.getAttribute("Version").getValue().toString();
-         /* A discovered resource must have a unique key, that must
-          * stay the same when the resource is discovered the next
-          * time */
-         if (trace) log.trace("Add resource with name '{0}', version '{1}' and type {2}", 
-                  resourceName, version, ctx.getResourceType());
-         DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
-               ctx.getResourceType(), // Resource type
-               resourceName, // Resource key
-               resourceName, // Resource name
-               version, // Resource version
-               "A cache manager within Infinispan", // Description
-               c, // Plugin config
-               null // Process info from a process scan
-         );
-
-         // Add to return values
-         discoveredResources.add(detail);
-         log.info("Automatically discovered Infinispan instance with key {0} and name {1}", resourceName, managerName);
+      DiscoveredResourceDetails resource = null;
+      List<Configuration> manualCfgs = ctx.getPluginConfigurations();
+      if (!manualCfgs.isEmpty()) {
+         // Process any manually-added resource.
+         Configuration cfg = ctx.getPluginConfigurations().get(0);
+         String objectName = cfg.getSimple(OBJECT_NAME_KEY).getStringValue();
+         String connectorAddress = cfg.getSimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY).getStringValue();
+         resource = createDiscoveredResource(ctx, objectName, connectorAddress);
+         if (trace) log.trace("Manually discovered resource is {0}", resource);
+      } else {
+         // Process auto discovered resource
+         resource = createDiscoveredResource(ctx, MANAGER_OBJECT, REMOTE);
+         if (trace) log.trace("Automatically discovered resource is {0}", resource);
+         discoveredResources.add(resource);
       }
-
-      // Process any manually-added resources.
-      List<Configuration> contextPluginConfigurations = ctx.getPluginConfigurations();
-      for (Configuration pluginConfiguration : contextPluginConfigurations) {
-         DiscoveredResourceDetails resource = parsePluginConfig(ctx, pluginConfiguration);
-         if (resource != null) {
-            discoveredResources.add(resource);
-         }
-      }
-
+      discoveredResources.add(resource);
       return discoveredResources;
    }
 
-   private DiscoveredResourceDetails parsePluginConfig(ResourceDiscoveryContext ctx, Configuration cfg) {
+   private DiscoveredResourceDetails createDiscoveredResource(ResourceDiscoveryContext ctx, String objectName, String connectorAddress) {
       boolean trace = log.isTraceEnabled();
-      String objectName = cfg.getSimple(OBJECT_NAME_KEY).getStringValue();
-      String connectorAddress = cfg.getSimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY).getStringValue();
 
       Configuration c = new Configuration();
       c.put(new PropertySimple(OBJECT_NAME_KEY, objectName));
       c.put(new PropertySimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY, connectorAddress));
       c.put(new PropertySimple(JMXDiscoveryComponent.CONNECTION_TYPE, CONNECTOR));
-      if (trace) log.trace("Manual configuration is {0}", c.toString(true));
+      if (trace) log.trace("Configuration is {0}", c.toString(true));
       
       ConnectionHelper helper = new ConnectionHelper();
       EmsConnection conn = helper.getEmsConnection(c);
@@ -142,7 +105,7 @@ public class CacheManagerDiscovery implements ResourceDiscoveryComponent<CacheMa
       String resourceName = bean.getAttribute("Name").getValue().toString();
       String version = bean.getAttribute("Version").getValue().toString();
       /* A discovered resource must have a unique key, that must stay the same when the resource is discovered the next time */
-      if (trace) log.trace("Add resource with name '{0}', version '{1}' and type {2}", resourceName, version, ctx.getResourceType());
+      if (trace) log.trace("Add resource with version '{1}' and type {2}", version, ctx.getResourceType());
       DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
             ctx.getResourceType(), // Resource type
             resourceName, // Resource key
@@ -152,7 +115,7 @@ public class CacheManagerDiscovery implements ResourceDiscoveryComponent<CacheMa
             c, // Plugin config
             null // Process info from a process scan
       );
-      log.info("Manually discovered Infinispan instance with key {0} and name {1}", resourceName, managerName);
+      log.info("Discovered Infinispan instance with key {0} and name {1}", resourceName, managerName);
       return detail;
    }
 }

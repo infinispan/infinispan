@@ -120,7 +120,7 @@ public class RhqPluginXmlGenerator {
       objectName.setType("string");
       objectName.setReadOnly(true);
       root.getSimpleProps().add(objectName);
-      Template defaultTemplate = new Template("default");
+      Template defaultTemplate = new Template("defaultManualDiscovery");
       defaultTemplate.setDescription("The default setup for Infinispan");
       SimpleProperty connect2 = new SimpleProperty("connectorAddress");
       connect2.setDisplayName("URL of the remote server");
