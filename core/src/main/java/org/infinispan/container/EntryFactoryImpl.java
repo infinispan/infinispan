@@ -87,20 +87,20 @@ public class EntryFactoryImpl implements EntryFactory {
          // do not bother wrapping though if this is not in a tx.  repeatable read etc are all meaningless unless there is a tx.
          if (useRepeatableRead && ctx.isInTxScope()) {
             MVCCEntry mvccEntry = cacheEntry == null ?
-                     createWrappedEntry(key, null, false, false, -1) :
-                     createWrappedEntry(key, cacheEntry.getValue(), false, false, cacheEntry.getLifespan());
-               if (mvccEntry != null) ctx.putLookedUpEntry(key, mvccEntry);
-               return mvccEntry;
+                  createWrappedEntry(key, null, false, false, -1) :
+                  createWrappedEntry(key, cacheEntry.getValue(), false, false, cacheEntry.getLifespan());
+            if (mvccEntry != null) ctx.putLookedUpEntry(key, mvccEntry);
+            return mvccEntry;
          }
          // if not in transaction and repeatable read, or simply read committed (regardless of whether in TX or not), do not wrap
          if (cacheEntry != null) ctx.putLookedUpEntry(key, cacheEntry);
-            return cacheEntry;
+         return cacheEntry;
       } else {
          if (trace) log.trace("Key is already in context");
          return cacheEntry;
       }
    }
-   
+
    public final MVCCEntry wrapEntryForWriting(InvocationContext ctx, Object key, boolean createIfAbsent, boolean forceLockIfAbsent, boolean alreadyLocked, boolean forRemoval) throws InterruptedException {
       return wrapEntryForWriting(ctx, key, null, createIfAbsent, forceLockIfAbsent, alreadyLocked, forRemoval);
    }
@@ -203,11 +203,19 @@ public class EntryFactoryImpl implements EntryFactory {
       if (!ctx.hasLockedKey(key) && !shouldSkipLocking) {
          if (lockManager.lockAndRecord(key, ctx)) {
             // successfully locked!
+            if (trace) log.trace("Successfully acquired lock!");
             return true;
          } else {
             Object owner = lockManager.getOwner(key);
             throw new TimeoutException("Unable to acquire lock after [" + Util.prettyPrintTime(getLockAcquisitionTimeout(ctx)) + "] on key [" + key + "] for requestor [" +
                   ctx.getLockOwner() + "]! Lock held by [" + owner + "]");
+         }
+      } else {
+         if (trace) {
+            if (shouldSkipLocking)
+               log.trace("SKIP_LOCKING flag used!");
+            else
+               log.trace("Already own lock for entry");
          }
       }
 

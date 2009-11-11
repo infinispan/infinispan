@@ -1,6 +1,7 @@
 package org.infinispan.api.mvcc.repeatable_read;
 
 import org.infinispan.Cache;
+import org.infinispan.CacheException;
 import org.infinispan.api.mvcc.LockAssert;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContextContainer;
@@ -32,7 +33,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-@Test(groups = {"functional", "mvcc"}, testName = "api.mvcc.repeatable_read.WriteSkewTest")
+@Test(groups = "functional", testName = "api.mvcc.repeatable_read.WriteSkewTest")
 public class WriteSkewTest extends AbstractInfinispanTest {
    private static final Log log = LogFactory.getLog(WriteSkewTest.class);
    protected TransactionManager tm;
@@ -201,6 +202,12 @@ public class WriteSkewTest extends AbstractInfinispanTest {
          assert "v3".equals(cache.get("k")) : "W2 should have overwritten W1's work!";
 
          assertNoLocks();
+      } else {
+         Collection<Exception> combined = new HashSet<Exception>(w1exceptions);
+         combined.addAll(w2exceptions);
+         assert !combined.isEmpty();
+         assert combined.size() == 1;
+         assert combined.iterator().next() instanceof CacheException;
       }
    }
 

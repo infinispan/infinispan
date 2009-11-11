@@ -47,16 +47,18 @@ public class RepeatableReadEntry extends ReadCommittedEntry {
       setChanged();
 
       if (writeSkewCheck) {
-         // check for write skew.
-         Object actualValue = container.get(key);
+      // check for write skew.
+         InternalCacheEntry ice = container.get(key);
+         Object actualValue = ice == null ? null : ice.getValue();
 
+         // Note that this identity-check is intentional.  We don't *want* to call actualValue.equals() since that defeats the purpose.
+         // the implicit "versioning" we have in R_R creates a new wrapper "value" instance for every update.
          if (actualValue != null && actualValue != value) {
             String errormsg = new StringBuilder().append("Detected write skew on key [").append(getKey()).append("].  Another process has changed the entry since we last read it!").toString();
             if (log.isWarnEnabled()) log.warn(errormsg + ".  Unable to copy entry for update.");
             throw new CacheException(errormsg);
          }
       }
-
       // make a backup copy
       oldValue = value;
    }
