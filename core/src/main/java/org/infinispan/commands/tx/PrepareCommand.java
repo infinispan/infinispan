@@ -37,7 +37,10 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 
 /**
  * Command corresponding to the 1st phase of 2PC.
@@ -190,5 +193,13 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
 
    public boolean hasModifications() {
       return modifications != null && modifications.length > 0;
+   }
+
+   public Set<Object> getAffectedKeys() {
+      if (modifications == null || modifications.length == 0) return Collections.emptySet();
+      if (modifications.length == 1) return modifications[0].getAffectedKeys();
+      Set<Object> keys = new HashSet<Object>();
+      for (WriteCommand wc: modifications) keys.addAll(wc.getAffectedKeys());
+      return keys;
    }
 }

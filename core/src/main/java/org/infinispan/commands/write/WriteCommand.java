@@ -2,7 +2,7 @@ package org.infinispan.commands.write;
 
 import org.infinispan.commands.VisitableCommand;
 
-import java.util.Collection;
+import java.util.Set;
 
 /**
  * A command that modifies the cache in some way
@@ -34,5 +34,5 @@ public interface WriteCommand extends VisitableCommand {
     * @return a collection of keys affected by this write command.  Some commands - such as ClearCommand - may return
     * an empty collection for this method.
     */
-   Collection<Object> getAffectedKeys();
+   Set<Object> getAffectedKeys();
 }

@@ -30,8 +30,8 @@ import org.infinispan.marshall.Marshallable;
 import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 
-import java.util.Collection;
 import java.util.Collections;
+import java.util.Set;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -97,7 +97,7 @@ public class ClearCommand implements WriteCommand {
       return false;
    }
 
-   public Collection<Object> getAffectedKeys() {
+   public Set<Object> getAffectedKeys() {
       return Collections.emptySet();
    }
 }

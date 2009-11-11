@@ -2,8 +2,8 @@ package org.infinispan.commands.write;
 
 import org.infinispan.commands.read.AbstractDataCommand;
 
-import java.util.Collection;
 import java.util.Collections;
+import java.util.Set;
 
 /**
  * Stuff common to WriteCommands
@@ -20,7 +20,7 @@ public abstract class AbstractDataWriteCommand extends AbstractDataCommand imple
       super(key);
    }
 
-   public Collection<Object> getAffectedKeys() {
+   public Set<Object> getAffectedKeys() {
       return Collections.singleton(key);
    }
 }
