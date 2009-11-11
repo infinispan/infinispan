@@ -48,6 +48,7 @@ public class CacheManagerComponent implements ResourceComponent, MeasurementFace
    private static final Log log = LogFactory.getLog(CacheManagerComponent.class);
    private ResourceContext context;
    private ConnectionHelper helper;
+   private String objectName;
 
    /**
     * Return availability of this resource. We do this by checking the connection to it. If the Manager would expose
@@ -59,7 +60,7 @@ public class CacheManagerComponent implements ResourceComponent, MeasurementFace
       EmsConnection conn = getConnection();
       try {
          conn.refresh();
-         EmsBean bean = conn.getBean(context.getResourceKey());
+         EmsBean bean = conn.getBean(objectName);
          if (bean != null)
             bean.refreshAttributes();
          return AvailabilityType.UP;
@@ -75,7 +76,8 @@ public class CacheManagerComponent implements ResourceComponent, MeasurementFace
     */
    public void start(ResourceContext context) throws InvalidPluginConfigurationException, Exception {
       this.context = context;
-      helper = new ConnectionHelper();
+      this.objectName = context.getPluginConfiguration().getSimpleValue("objectName", null);
+      this.helper = new ConnectionHelper();
       getConnection();
    }
 
@@ -99,7 +101,7 @@ public class CacheManagerComponent implements ResourceComponent, MeasurementFace
       boolean trace = log.isTraceEnabled();
       if (trace) log.trace("Get values for these metrics: {0}", metrics);
       EmsConnection conn = getConnection();
-      EmsBean bean = conn.getBean(context.getPluginConfiguration().getSimpleValue("objectName", null));
+      EmsBean bean = conn.getBean(objectName);
       bean.refreshAttributes();
       for (MeasurementScheduleRequest req : metrics) {
          DataType type = req.getDataType();
