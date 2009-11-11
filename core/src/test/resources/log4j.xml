@@ -45,7 +45,7 @@
    <!-- ================ -->
 
    <category name="org.infinispan">
-      <priority value="TRACE"/>
+      <priority value="INFO"/>
    </category>
 
    <category name="org.infinispan.profiling">
@@ -66,8 +66,8 @@
 
    <root>
       <priority value="WARN"/>
-      <appender-ref ref="CONSOLE"/>
-      <!--<appender-ref ref="FILE"/>-->
+      <!--<appender-ref ref="CONSOLE"/>-->
+      <appender-ref ref="FILE"/>
    </root>
 
 </log4j:configuration>
