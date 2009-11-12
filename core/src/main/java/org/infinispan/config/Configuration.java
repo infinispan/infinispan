@@ -57,9 +57,10 @@ import java.util.concurrent.TimeUnit;
  * @configRef name="default",desc="Configures the default cache which can be retrieved via CacheManager.getCache().
  *                                 These default settings are also used as a starting point when configuring namedCaches,
  *                                 since the default settings are inherited by any named cache."
- * @configRef name="namedCache",desc="Configures a named cache whose name can be passed to CacheManager.getCache(String)
+ * @configRef name="namedCache",desc="&nbsp;&nbsp;If you use &lt;namedCache ... &gt; instead of &lt;default ... &gt; this defines a
+ *                                    a named cache whose name can be passed to CacheManager.getCache(String)
  *                                    in order to retrieve the named instance.  Named caches inherit settings from the
- *                                    default, and additional behavior can be specified or overridden."
+ *                                    default, and additional behavior can be specified or overridden.  Also the 'name' attribute is mandatory."
  * 
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
  * @author Vladimir Blagojevic
