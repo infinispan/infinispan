@@ -320,7 +320,8 @@ public class DummyTransaction implements Transaction {
       Collection<XAResource> resources = transaction.getEnlistedResources();
       for (XAResource res : resources) {
          try {
-            res.commit(xid, false);//todo we only support one phase commit for now, change this!!!
+            //we only do 2-phase commits
+            res.commit(xid, false);
          } catch (XAException e) {
             log.warn("exception while committing", e);
             throw new HeuristicMixedException(e.getMessage());
