@@ -47,7 +47,10 @@ sortedKeys.sort()
 
 i=1
 for k in sortedKeys:
-  print '   %s) Class [%s] has COMMAND_ID [%s]' % (i, command_ids[k], k)
+  zeropad = ""
+  if (i < 10 and len(sortedKeys) > 9):
+    zeropad = " "
+  print '   %s%s) Class [%s] has COMMAND_ID [%s]' % (zeropad, i, command_ids[k], k)
   i += 1
 
 print "\n"
