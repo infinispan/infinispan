@@ -35,7 +35,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
-@Test(groups = {"functional"}, testName = "marshall.InvocationContextInterceptorErrorTest")
+@Test(groups = {"functional"}, testName = "context.InvocationContextResumeTest")
 public class InvocationContextResumeTest extends MultipleCacheManagersTest {
    private static final Log log = LogFactory.getLog(InvocationContextResumeTest.class);
 
