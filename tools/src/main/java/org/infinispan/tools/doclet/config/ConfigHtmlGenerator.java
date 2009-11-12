@@ -321,20 +321,25 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
          sb.append(m.get("desc"));
       }
 
+      sb.append("<BR/><BR />");
+
       if (n.getParent().getParent() != null) {
-         sb.append(" Parent element is " + "<a href=\"").append("#ce_" + n.getParent().getParent().getName()
-               + "_" + n.getParent().getName() + "\">" + "&lt;" + n.getParent().getName() + "&gt;" + "</a>.");
+         sb.append("The parent element is " + "<a href=\"").append("#ce_" + n.getParent().getParent().getName()
+               + "_" + n.getParent().getName() + "\">" + "&lt;" + n.getParent().getName() + "&gt;" + "</a>.  ");
       }
 
       if (!n.getChildren().isEmpty()) {
-         sb.append(" Child elements are ");
          int childCount = n.getChildren().size();
          int count = 1;
+         if (childCount == 1)
+            sb.append("The only child element is ");
+         else
+            sb.append("Child elements are ");
          for (TreeNode tn : n.getChildren()) {
             sb.append("<a href=\"").append("#ce_" + tn.getParent().getName() + "_"
                   + tn.getName() + "\">" + "&lt;" + tn.getName() + "&gt;" + "</a>");
             if (count < childCount) {
-               sb.append(",");
+               sb.append(", ");
             } else {
                sb.append(".");
             }
