@@ -45,6 +45,8 @@ import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.Immutables;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.rhq.helpers.pluginAnnotations.agent.DataType;
 import org.rhq.helpers.pluginAnnotations.agent.DisplayType;
 import org.rhq.helpers.pluginAnnotations.agent.Metric;
@@ -53,6 +55,8 @@ import org.rhq.helpers.pluginAnnotations.agent.Parameter;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -105,6 +109,7 @@ import java.util.concurrent.ConcurrentMap;
 public class DefaultCacheManager implements CacheManager {
    public static final String DEFAULT_CACHE_NAME = "org.infinispan.manager.DefaultCacheManager.DEFAULT_CACHE_NAME";
    public static final String OBJECT_NAME = "CacheManager";
+   private static final Log log = LogFactory.getLog(DefaultCacheManager.class);
    protected GlobalConfiguration globalConfiguration;
    private final ConcurrentMap<String, Cache> caches = new ConcurrentHashMap<String, Cache>();
    private final ConcurrentMap<String, Configuration> configurationOverrides = new ConcurrentHashMap<String, Configuration>();
@@ -504,8 +509,25 @@ public class DefaultCacheManager implements CacheManager {
    @ManagedAttribute(description = "The name of this cache manager")
    @Metric(displayName = "Cache manager name", displayType = DisplayType.SUMMARY, dataType = DataType.TRAIT)
    public String getName() {
-      String address = getAddress() == null ? "local" : getAddress().toString();
-      return globalConfiguration.getJmxDomain() + '@' + address;
+      StringBuilder sb = new StringBuilder();
+      sb.append(globalConfiguration.getJmxDomain()).append('@');
+      String jmxPort = System.getProperty("com.sun.management.jmxremote.port");
+      if (jmxPort != null) {
+         try {
+            // At least until jdk6, Sun bind the jmx agent to 0.0.0.0:jmxPort, so using local host name is safe.
+            sb.append(InetAddress.getLocalHost().getHostName()).append(':').append(jmxPort);
+         } catch (UnknownHostException e) {
+            if (log.isTraceEnabled()) log.trace("Unable to resolve host", e);
+            sb.append(getLogicalAddressString());
+         }
+      } else {
+         sb.append(getLogicalAddressString());
+      }
+      return sb.toString();
+   }
+
+   private String getLogicalAddressString() {
+      return getAddress() == null ? "local" : getAddress().toString();
    }
 
    @Override
