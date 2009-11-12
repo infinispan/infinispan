@@ -72,21 +72,21 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
 
       cache1.put("key", "value2");
       assert cache2.get("key").equals("value2");
-      assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals("1") : "Expected 1, was " + mBeanServer.getAttribute(rpcManager1, "ReplicationCount");
-      assert mBeanServer.getAttribute(rpcManager1, "ReplicationFailures").equals("0");
-      mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals("N/A");
+      assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals(new Long(1)) : "Expected 1, was " + mBeanServer.getAttribute(rpcManager1, "ReplicationCount");
+      assert mBeanServer.getAttribute(rpcManager1, "ReplicationFailures").equals(new Long(0));
+      mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals(new Long(-1));
 
       // now resume statistics
       mBeanServer.invoke(rpcManager1, "resetStatistics", new Object[0], new String[0]);
-      assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals("0");
-      assert mBeanServer.getAttribute(rpcManager1, "ReplicationFailures").equals("0");
+      assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals(new Long(0));
+      assert mBeanServer.getAttribute(rpcManager1, "ReplicationFailures").equals(new Long(0));
 
       mBeanServer.setAttribute(rpcManager1, new Attribute("StatisticsEnabled", Boolean.FALSE));
 
       cache1.put("key", "value");
       assert cache2.get("key").equals("value");
-      assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals("N/A");
-      assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals("N/A");
+      assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals(new Long(-1));
+      assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals(new Long(-1));
 
       // reset stats enabled parameter
       mBeanServer.setAttribute(rpcManager1, new Attribute("StatisticsEnabled", Boolean.TRUE));
@@ -101,8 +101,8 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
       ObjectName rpcManager1 = new ObjectName("RpcManagerMBeanTest:cache-name=" + cachename + "(repl_sync),jmx-resource=RpcManager");
       ObjectName rpcManager2 = new ObjectName("RpcManagerMBeanTest2:cache-name=" + cachename + "(repl_sync),jmx-resource=RpcManager");
       
-      assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals("0");
-      assert mBeanServer.getAttribute(rpcManager1, "ReplicationFailures").equals("0");
+      assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals(new Long(0));
+      assert mBeanServer.getAttribute(rpcManager1, "ReplicationFailures").equals(new Long(0));
       assert mBeanServer.getAttribute(rpcManager1, "SuccessRatio").equals("N/A");
 
       cache1.put("a1", "b1");
