@@ -93,29 +93,34 @@ public class CacheManagerDiscovery implements ResourceDiscoveryComponent<CacheMa
       
       ConnectionHelper helper = new ConnectionHelper();
       EmsConnection conn = helper.getEmsConnection(c);
-      if (trace) log.trace("Connection to ems server stablished: {0}", conn);
+      if (conn != null) {
+         if (trace) log.trace("Connection to ems server stablished: {0}", conn);
 
-      // Run query for manager_object
-      ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(objectName);
-      List<EmsBean> beans = conn.queryBeans(queryUtility.getTranslatedQuery());
-      if (trace) log.trace("Querying [{0}] returned beans: {1}", queryUtility.getTranslatedQuery(), beans);
+         // Run query for manager_object
+         ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(objectName);
+         List<EmsBean> beans = conn.queryBeans(queryUtility.getTranslatedQuery());
+         if (trace) log.trace("Querying [{0}] returned beans: {1}", queryUtility.getTranslatedQuery(), beans);
 
-      EmsBean bean = beans.get(0);
-      String managerName = bean.getBeanName().getCanonicalName();
-      String resourceName = bean.getAttribute("Name").getValue().toString();
-      String version = bean.getAttribute("Version").getValue().toString();
-      /* A discovered resource must have a unique key, that must stay the same when the resource is discovered the next time */
-      if (trace) log.trace("Add resource with version '{1}' and type {2}", version, ctx.getResourceType());
-      DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
-            ctx.getResourceType(), // Resource type
-            resourceName, // Resource key
-            resourceName, // Resource name
-            version, // Resource version
-            "A cache manager within Infinispan", // Description
-            c, // Plugin config
-            null // Process info from a process scan
-      );
-      log.info("Discovered Infinispan instance with key {0} and name {1}", resourceName, managerName);
-      return detail;
+         EmsBean bean = beans.get(0);
+         String managerName = bean.getBeanName().getCanonicalName();
+         String resourceName = bean.getAttribute("Name").getValue().toString();
+         String version = bean.getAttribute("Version").getValue().toString();
+         /* A discovered resource must have a unique key, that must stay the same when the resource is discovered the next time */
+         if (trace) log.trace("Add resource with version '{1}' and type {2}", version, ctx.getResourceType());
+         DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
+               ctx.getResourceType(), // Resource type
+               resourceName, // Resource key
+               resourceName, // Resource name
+               version, // Resource version
+               "A cache manager within Infinispan", // Description
+               c, // Plugin config
+               null // Process info from a process scan
+         );
+         log.info("Discovered Infinispan instance with key {0} and name {1}", resourceName, managerName);
+         return detail;
+      } else {
+         log.debug("Unable to establish connection");
+         return null;
+      }
    }
 }

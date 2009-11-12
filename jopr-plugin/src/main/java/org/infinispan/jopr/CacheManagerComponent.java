@@ -35,6 +35,7 @@ import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
+import org.rhq.plugins.jmx.ObjectNameQueryUtility;
 
 import java.util.Set;
 
@@ -48,7 +49,6 @@ public class CacheManagerComponent implements ResourceComponent, MeasurementFace
    private static final Log log = LogFactory.getLog(CacheManagerComponent.class);
    private ResourceContext context;
    private ConnectionHelper helper;
-   private String objectName;
 
    /**
     * Return availability of this resource. We do this by checking the connection to it. If the Manager would expose
@@ -57,14 +57,20 @@ public class CacheManagerComponent implements ResourceComponent, MeasurementFace
     * @see org.rhq.core.pluginapi.inventory.ResourceComponent#getAvailability()
     */
    public AvailabilityType getAvailability() {
+      boolean trace = log.isTraceEnabled();
       EmsConnection conn = getConnection();
       try {
          conn.refresh();
-         EmsBean bean = conn.getBean(objectName);
-         if (bean != null)
+         EmsBean bean = queryCacheManagerBean(conn);
+         if (bean != null) {
             bean.refreshAttributes();
-         return AvailabilityType.UP;
+            if (trace) log.trace("Cache manager could be found and attributes where refreshed, so it's up.", bean);
+            return AvailabilityType.UP;
+         }
+         if (trace) log.trace("Cache manager could not be found, so cache manager is down");
+         return AvailabilityType.DOWN;
       } catch (Exception e) {
+         if (trace) log.trace("There was an exception checking availability, so cache manager is down");
          return AvailabilityType.DOWN;
       }
    }
@@ -76,7 +82,6 @@ public class CacheManagerComponent implements ResourceComponent, MeasurementFace
     */
    public void start(ResourceContext context) throws InvalidPluginConfigurationException, Exception {
       this.context = context;
-      this.objectName = context.getPluginConfiguration().getSimpleValue("objectName", null);
       this.helper = new ConnectionHelper();
       getConnection();
    }
@@ -101,8 +106,10 @@ public class CacheManagerComponent implements ResourceComponent, MeasurementFace
       boolean trace = log.isTraceEnabled();
       if (trace) log.trace("Get values for these metrics: {0}", metrics);
       EmsConnection conn = getConnection();
-      EmsBean bean = conn.getBean(objectName);
+      if (trace) log.trace("Connection to ems server stablished: {0}", conn);
+      EmsBean bean = queryCacheManagerBean(conn);
       bean.refreshAttributes();
+      if (trace) log.trace("Querying returned bean: {0}", bean);
       for (MeasurementScheduleRequest req : metrics) {
          DataType type = req.getDataType();
          if (type == DataType.MEASUREMENT) {
@@ -130,4 +137,10 @@ public class CacheManagerComponent implements ResourceComponent, MeasurementFace
       return conn;
    }
 
+   private EmsBean queryCacheManagerBean(EmsConnection conn) {
+      String pattern = context.getPluginConfiguration().getSimpleValue("objectName", null);
+      if (log.isTraceEnabled()) log.trace("Pattern to query is {0}", pattern);
+      ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(pattern);
+      return conn.queryBeans(queryUtility.getTranslatedQuery()).get(0);
+   }
 }

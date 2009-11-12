@@ -70,8 +70,8 @@ public class CacheComponent implements ResourceComponent<CacheManagerComponent>,
          EmsBean bean = conn.getBean(context.getResourceKey());
          EmsAttribute attribute = bean.getAttribute("CacheStatus");
          if (attribute.getValue().equals(ComponentStatus.RUNNING.toString())) {
-            if (trace) log.trace("Cache status is running, so it's up."); 
             bean.refreshAttributes();
+            if (trace) log.trace("Cache status is running and attributes could be refreshed, so it's up."); 
             return AvailabilityType.UP;
          }
          if (trace) log.trace("Cache status is anything other than running, so it's down.");
@@ -126,21 +126,25 @@ public class CacheComponent implements ResourceComponent<CacheManagerComponent>,
                String attName = metric.substring(metric.indexOf(".") + 1);
                EmsAttribute att = bean.getAttribute(attName);
                // Attribute values are of various data types
-               Object o = att.getValue();
-               Class attrType = att.getTypeClass();
-               DataType type = req.getDataType();
-               if (type == DataType.MEASUREMENT) {
-                  if (o != null) {
-                     MeasurementDataNumeric res = constructMeasurementDataNumeric(attrType, o, req);
-                     if (res != null) report.addData(res);
-                  } else {
-                     if (log.isDebugEnabled()) log.debug("Metric ({0}) has null value, do not add to report", req.getName());
+               if (att != null) {
+                  Object o = att.getValue();
+                  Class attrType = att.getTypeClass();
+                  DataType type = req.getDataType();
+                  if (type == DataType.MEASUREMENT) {
+                     if (o != null) {
+                        MeasurementDataNumeric res = constructMeasurementDataNumeric(attrType, o, req);
+                        if (res != null) report.addData(res);
+                     } else {
+                        if (log.isDebugEnabled()) log.debug("Metric ({0}) has null value, do not add to report", req.getName());
+                     }
+                  } else if (type == DataType.TRAIT) {
+                     String value = (String) o;
+                     if (trace) log.trace("Metric ({0}) is trait with value {1}", req.getName(), value);
+                     MeasurementDataTrait res = new MeasurementDataTrait(req, value);
+                     report.addData(res);
                   }
-               } else if (type == DataType.TRAIT) {
-                  String value = (String) o;
-                  if (trace) log.trace("Metric ({0}) is trait with value {1}", req.getName(), value);
-                  MeasurementDataTrait res = new MeasurementDataTrait(req, value);
-                  report.addData(res);
+               } else {
+                  log.warn("Attribute {0} not found", attName);
                }
             } else {
                if (trace) log.trace("No mbean found with name {0}", mbean);
