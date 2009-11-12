@@ -4,7 +4,6 @@ import re
 import sys
 from pythonTools import *
 
-
 command_file_name = re.compile('(commands/[a-zA-Z0-9/]*Command.java)')
 
 def trimName(nm):

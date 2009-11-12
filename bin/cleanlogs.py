@@ -1,5 +1,4 @@
 #!/usr/bin/python
-
 from __future__ import with_statement
 
 import re
@@ -12,14 +11,16 @@ INPUT_FILE = "infinispan.log"
 OUTPUT_FILE = "infinispan0.log"
 addresses = {}
 new_addresses = {}
+
 def find(filename, expr):
   with open(filename) as f:
     for l in f:
       if expr.match(l):
         handle(l, expr)
         break
-
+        
 def handle(l, expr):
+  """Handles a given line of log file, to be parsed and substituted"""
   m = expr.match(l)
   print "Using JGROUPS VIEW line:"
   print "   %s" % l 
@@ -37,7 +38,7 @@ def help():
 
 def usage():
   print '''
-    Usage: 
+  Usage: 
       $ bin/cleanlogs.py <N> <input_file> <output_file>
     OR:
       $ bin/cleanlogs.py <input_file> <output_file> to allow the script to guess which view is most appropriate.
@@ -48,6 +49,7 @@ def usage():
   '''
 
 def guess_view(fn):
+  """Guesses which view is the most complete, by looking for the view with the largest number of members.  Inaccurate for log files that involve members leaving and others joining at the same time."""
   all_views_re = re.compile('.*Received new cluster view.*\|([0-9]+). \[(.*)\].*')
   views = {}
   with open(fn) as f:
@@ -60,6 +62,7 @@ def guess_view(fn):
   return views
 
 def most_likely_view(views):
+  """Picks the most likely view from a dictionary of views, keyed on view ID.  Returns the view ID."""
   largest_view = -1
   lvid = -1
   for i in views.items():
@@ -69,6 +72,7 @@ def most_likely_view(views):
   return lvid
 
 def as_list(string_members):
+  """Returns a string of comma-separated member addresses as a list"""
   ml = []
   for m in string_members.split(","):
     ml.append(m.strip())
@@ -76,7 +80,6 @@ def as_list(string_members):
     
 def main():
   help()
-
   ### Get args
   if len(sys.argv) != 4 and len(sys.argv) != 3:
     usage()
