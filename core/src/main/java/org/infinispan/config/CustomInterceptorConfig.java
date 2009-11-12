@@ -42,8 +42,8 @@ import java.util.Properties;
  * provide meta data for configuration file XML schema generation. Please modify these annotations
  * and Java element types they annotate with utmost understanding and care.
  *
- * @configRef name="interceptor",desc=" This element allows you configure a custom interceptor. This tag may appear 
- *            multiple times."
+ * @configRef name="interceptor",desc=" This element allows you configure and inject a custom interceptor.
+ * This tag may appear multiple times."
  *
  * @author Mircea.Markus@jboss.com
  * @author Vladimir Blagojevic
@@ -66,30 +66,30 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
    protected boolean isLast;
 
    /** @configRef desc="A position at which to place this interceptor in the chain, with 0 being the first position. 
-    *             Note that this attribute is mutually exclusive with position, before and after." */
+    *             Note that this attribute is mutually exclusive with 'position', 'before' and 'after'." */
    @XmlAttribute
    protected Integer index = -1;
 
    /** @configRef desc="Will place the new interceptor directly after the instance of the named interceptor which is 
     *             specified via its fully qualified class name. Note that this attribute is mutually exclusive with 
-    *             position, before and index." */
+    *             'position', 'before' and 'index'." */
    @XmlAttribute
    protected String after;
 
    /** @configRef desc="Will place the new interceptor directly before the instance of the named interceptor which is 
     *             specified via its fully qualified class name.. Note that this attribute is mutually exclusive with 
-    *             position, after and index." */
+    *             'position', 'after' and 'index'." */
    @XmlAttribute
    protected String before;
 
-   /** @configRef desc="A position at which to place this interceptor in the chain. First is the first interceptor 
-    *             encountered when an invocation is made on the cache, last is the last interceptor before the call is 
-    *             passed on to the data structure. Note that this attribute is mutually exclusive with before, after 
-    *             and index." */
+   /** @configRef desc="A position at which to place this interceptor in the chain. FIRST is the first interceptor
+    *             encountered when an invocation is made on the cache, LAST is the last interceptor before the call is
+    *             passed on to the data structure. Note that this attribute is mutually exclusive with 'before', 'after'
+    *             and 'index'." */
    @XmlAttribute
    protected Position position;   
 
-   /** @configRef name="class",desc="Fully qualified intereceptor class name which must extend CommandInterceptor." */
+   /** @configRef name="class",desc="Fully qualified intereceptor class name which must extend org.infinispan.interceptors.base.CommandInterceptor." */
    @XmlAttribute(name="class")
    protected String className;
 

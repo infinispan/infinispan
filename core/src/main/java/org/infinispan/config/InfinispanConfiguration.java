@@ -60,7 +60,7 @@ import java.util.Map;
  * file XML schema generation. Please modify these annotations and Java element types they annotate with utmost
  * understanding and care.
  * 
- * @configRef name="infinispan",desc="Root of Infinispan configuration."
+ * @configRef name="infinispan",desc="The root element of an Infinispan configuration.  This element can be empty for sensible defaults throughout, however that would only give you the most basic of local, non-clustered caches."
  *
  * @author Vladimir Blagojevic
  * @since 4.0

@@ -32,7 +32,7 @@ import java.util.Properties;
  * provide meta data for configuration file XML schema generation. Please modify these annotations
  * and Java element types they annotate with utmost understanding and care.
  * 
- * @configRef name="global",desc="Defines global configuration shared among all cache instances."
+ * @configRef name="global",desc="Defines global settings shared among all cache instances created by a single CacheManager."
  *
  * @author Manik Surtani
  * @author Vladimir Blagojevic
@@ -462,10 +462,10 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    }
 
    /**
-    * @configRef name="asyncListenerExecutor",desc="Executor for listeners."
-    * @configRef name="asyncTransportExecutor",desc="Transport executor."
-    * @configRef name="evictionScheduledExecutor",desc="Eviction executor."
-    * @configRef name="replicationQueueScheduledExecutor",desc="Executor for replication."
+    * @configRef name="asyncListenerExecutor",desc="Configuration for the executor service used to emit notifications to asynchronous listeners."
+    * @configRef name="asyncTransportExecutor",desc="Configuration for the executor service used for asynchronous work on the Transport, including asynchronous marshalling and Cache 'async operations' such as Cache.putAsync()."
+    * @configRef name="evictionScheduledExecutor",desc="Configuration for the scheduled executor service used to periodically run eviction cleanup tasks."
+    * @configRef name="replicationQueueScheduledExecutor",desc="Configuration for the scheduled executor service used to periodically flush replication queues, used if asynchronous clustering is enabled along with useReplQueue being set to true."
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    public static class FactoryClassWithPropertiesType extends AbstractConfigurationBeanWithGCR {
@@ -473,13 +473,13 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       /** The serialVersionUID */
       private static final long serialVersionUID = 7625606997888180254L;
 
-      /** @configRef desc="Executor fully qualified class name. It must implement org.infinispan.executors.ExecutorFactory" */
+      /** @configRef desc="Fully qualified class name of the ExecutorFactory (or ScheduledExecutorFactory) to use.  Must implement org.infinispan.executors.ExecutorFactory (or ScheduledExecutorFactory), and defaults to org.infinispan.executors.DefaultExecutorFactory (or DefaultScheduledExecutorFactory)" */
       @XmlAttribute
       protected String factory;
 
       /** 
-       * @configPropertyRef name="maxThreads",desc="Number of threads for this executor"
-       * @configPropertyRef name="threadNamePrefix",desc="Name prefix for threads created in this executor"
+       * @configPropertyRef name="maxThreads",desc="Maximum number of threads for this executor."
+       * @configPropertyRef name="threadNamePrefix",desc="Thread name prefix for threads created by this executor."
        * */
       @XmlElement(name="properties")
       protected TypedProperties properties = EMPTY_PROPERTIES;
@@ -517,7 +517,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    }
 
    /**
-    * @configRef name="transport",desc="This element configures the transport used to communicate accross the cluster." 
+    * @configRef name="transport",desc="This element configures the transport used for network communications across the cluster." 
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    public static class TransportType extends AbstractConfigurationBeanWithGCR {
@@ -525,19 +525,18 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       /** The serialVersionUID */
       private static final long serialVersionUID = -4739815717370060368L;
 
-      /** @configRef desc="Cluster name where all cache instances defined are connected" */
+      /** @configRef desc="This defines the name of the cluster.  Nodes only connect to clusters sharing the same name." */
       protected String clusterName = "Infinispan-Cluster";
 
-      /** @configRef desc="Cluster-wide synchronization timeout for locks that are aware of block and unblock commands 
-       *             issued across a cluster and sub-phases such as a start processing" */
+      /** @configRef desc="Cluster-wide synchronization timeout for locks.  Used to coordinate changes in cluster membership." */
       protected Long distributedSyncTimeout = 60000L; // default
 
-      /** @configRef desc="Fully qualified name of a class that implements network transport which must 
+      /** @configRef desc="Fully qualified name of a class that represents a network transport.  Must
        *             implement org.infinispan.remoting.transport.Transport"*/
       protected String transportClass = null; // this defaults to a non-clustered cache.
 
       /**
-       * @configRef desc="Node name for the underlying transport channel"
+       * @configRef desc="Name of the current node.  This is a friendly name to make logs, etc. make more sense.  Defaults to a combination of host name and a random number (to differentiate multiple nodes on the same host)"
        */
       protected String nodeName = null;
 
@@ -604,11 +603,13 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       /** The serialVersionUID */
       private static final long serialVersionUID = -925947118621507282L;
 
-      /** @configRef desc="Fully qualified name of a class that marshalls objects between cache nodes. It must 
+      /** @configRef desc="Fully qualified name of the marshaller to use. It must
        *             implement org.infinispan.marshall.Marshaller."*/
       protected String marshallerClass = VersionAwareMarshaller.class.getName(); // the default
 
-      /** @configRef desc="Marshalling serialization version."*/
+      /** @configRef desc="Largest allowable version to use when marshalling internal state.  Set this to the lowest version
+       *                   cache instance in your cluster to ensure compatibility of communications.  However, setting this
+       *                   too low will mean you lose out on the benefit of improvements in newer versions of the marshaller."*/
       protected String version = Version.getMajorVersion();
 
       public SerializationType() {
@@ -648,12 +649,12 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       /** @configRef desc="JMX domain name where all relevant JMX exposed objects will be bound" */
       protected String jmxDomain = "infinispan";
 
-      /** @configRef desc="Fully qualified name of class that will attempt to find JMX MBean server" */
+      /** @configRef desc="Fully qualified name of class that will attempt to locate a JMX MBean server to bind to" */
       protected String mBeanServerLookup = PlatformMBeanServerLookup.class.getName();
 
       /** @configRef desc="If true, multiple cache manager instances could be configured under the same configured 
        *            JMX domain. Each cache manager will in practice use a different JMX domain that has been 
-       *            calculated based on the configured one by adding an index number to it." */
+       *            calculated based on the configured one by adding an incrementing index to it." */
       protected Boolean allowDuplicateDomains = false;
 
       @XmlAttribute
@@ -687,7 +688,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
 
    /**
     * 
-    * @configRef name="shutdown",desc=" This element specifies behavior when the cache shuts down."
+    * @configRef name="shutdown",desc=" This element specifies behavior when the JVM running the cache instance shuts down."
     */   
    @XmlAccessorType(XmlAccessType.PROPERTY)
    public static class ShutdownType extends AbstractConfigurationBeanWithGCR {
