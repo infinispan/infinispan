@@ -85,10 +85,10 @@ public class TransactionXaAdapter implements CacheTransaction, XAResource {
       ctx.setXaCache(this);
       try {
          invoker.invoke(ctx, prepareCommand);
-         return XA_OK; //todo validate code here
+         return XA_OK;
       } catch (Throwable e) {
          log.error("Error while processing PrepareCommand", e);
-         throw new XAException(XAException.XAER_RMERR);//todo validate code here
+         throw new XAException(XAException.XAER_RMERR);
       }
    }
 
@@ -165,12 +165,12 @@ public class TransactionXaAdapter implements CacheTransaction, XAResource {
 
    public Xid[] recover(int i) throws XAException {
       if (trace) log.trace("recover called: " + i);
-      return null; //todo validate with javadoc
+      return null;
    }
 
    public boolean setTransactionTimeout(int i) throws XAException {
       this.txTimeout = i;
-      return true; //todo check javadoc
+      return true;
    }
 
    public void putLookedUpEntries(Map<Object, CacheEntry> entries) {
