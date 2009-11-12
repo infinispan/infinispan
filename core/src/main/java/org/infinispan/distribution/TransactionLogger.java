@@ -11,18 +11,39 @@ import java.util.List;
 /**
  * Typically adding a command, the following pattern would be used:
  * <p/>
- * <code> if (txLogger.logIfNeeded(cmd)) { // do NOT proceed with executing this command! } else { // proceed with
- * executing this command as per normal! } </code>
+ * <code>
+ *
+ * if (txLogger.logIfNeeded(cmd)) {
+ *     // do NOT proceed with executing this command!
+ * } else {
+ *     // proceed with executing this command as per normal!
+ * }
+ *
+ * </code>
  * <p/>
  * When draining, the following pattern should be used:
  * <p/>
- * <code> List<WriteCommand> c = null; while (txLogger.size() > THRESHOLD) { c = txLogger.drain(); applyCommands(c); } c
- * = txLogger.drainAndLock(); applyCommands(c); txLogger.unlockAndDisable(); </code>
+ * <code>
+ *
+ * List&lt;WriteCommand&gt; c = null;
+ * while (txLogger.shouldDrainWithoutLock()) {
+ *     c = txLogger.drain();
+ *     applyCommands(c);
+ * }
+ *
+ * c = txLogger.drainAndLock();
+ * applyCommands(c);
+ * applyPendingPrepares(txLogger.getPendingPrepares());
+ * txLogger.unlockAndDisable();
+ * </code>
  *
  * @author Manik Surtani
  * @since 4.0
  */
 public interface TransactionLogger {
+   /**
+    * Enables transaction logging
+    */
    void enable();
 
    /**
@@ -40,6 +61,9 @@ public interface TransactionLogger {
     */
    List<WriteCommand> drainAndLock();
 
+   /**
+    * Unlocks and disables the transaction logger.  Should <i>only</i> be called after {@link #drainAndLock()}.
+    */
    void unlockAndDisable();
 
    /**
@@ -50,10 +74,22 @@ public interface TransactionLogger {
     */
    boolean logIfNeeded(WriteCommand command);
 
+   /**
+    * Logs a PrepareCommand if needed.
+    * @param command PrepoareCommand to log
+    */
    void logIfNeeded(PrepareCommand command);
 
+   /**
+    * Logs a CommitCommand if needed.
+    * @param command CommitCommand to log
+    */
    void logIfNeeded(CommitCommand command);
 
+   /**
+    * Logs a RollbackCommand if needed.
+    * @param command RollbackCommand to log
+    */
    void logIfNeeded(RollbackCommand command);
 
    /**
@@ -64,8 +100,10 @@ public interface TransactionLogger {
     */
    boolean logIfNeeded(Collection<WriteCommand> commands);
 
-   int size();
-
+   /**
+    * Checks whether transaction logging is enabled
+    * @return true if enabled, false otherwise.
+    */
    boolean isEnabled();
 
    /**

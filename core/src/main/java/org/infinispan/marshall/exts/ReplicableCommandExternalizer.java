@@ -21,7 +21,7 @@
  */
 package org.infinispan.marshall.exts;
 
-import org.infinispan.commands.RemoteCommandFactory;
+import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.marshall.Externalizer;
 import org.infinispan.io.UnsignedNumeric;
@@ -37,9 +37,9 @@ import java.io.ObjectOutput;
  * @since 4.0
  */
 public class ReplicableCommandExternalizer implements Externalizer {
-   private RemoteCommandFactory cmdFactory;
+   private RemoteCommandsFactory cmdFactory;
    
-   public void inject(RemoteCommandFactory cmdFactory) {
+   public void inject(RemoteCommandsFactory cmdFactory) {
       this.cmdFactory = cmdFactory;
    }
 

@@ -46,32 +46,52 @@ public interface DistributionManager {
    Map<Object, List<Address>> locateAll(Collection<Object> keys);
 
    /**
-    * Transforms a cache entry so it is marked for L1 rather than the primary cache data structure.
+    * Transforms a cache entry so it is marked for L1 rather than the primary cache data structure.  This should be done
+    * if it is deemed that the entry is targeted for L1 storage rather than storage in the primary data container.
     *
     * @param entry entry to transform
     */
    void transformForL1(CacheEntry entry);
 
    /**
-    * Retrieves a cache entry from a remote source
+    * Retrieves a cache entry from a remote source.  Would typically involve an RPC call using a {@link org.infinispan.commands.remote.ClusteredGetCommand}
+    * and some form of quorum of responses if the responses returned are inconsistent - often the case if there is a
+    * rehash in progress, involving nodes that the key maps to.
     *
     * @param key key to look up
     * @return an internal cache entry, or null if it cannot be located
+    * @throws Exception if something bad happens 
     */
    InternalCacheEntry retrieveFromRemoteSource(Object key) throws Exception;
 
+   /**
+    * Retrieves the consistent hash instance currently in use, which may be an instance of the configured ConsistentHash
+    * instance (which defaults to {@link org.infinispan.distribution.DefaultConsistentHash}, or an instance of
+    * {@link org.infinispan.distribution.UnionConsistentHash} if a rehash is in progress.
+    *
+    * @return a ConsistentHash instance
+    */
    ConsistentHash getConsistentHash();
 
+   /**
+    * Sets the consistent hash implementation in use.
+    * @param consistentHash consistent hash to set to
+    */
    void setConsistentHash(ConsistentHash consistentHash);
 
    /**
-    * Tests whether a given key is affected by a rehash that may be in progress.
+    * Tests whether a given key is affected by a rehash that may be in progress.  If no rehash is in progress, this method
+    * returns false.  Helps determine whether additional steps are necessary in handling an operation with a given key.
     *
     * @param key key to test
     * @return whether a key is affected by a rehash
     */
    boolean isAffectedByRehash(Object key);
 
+   /**
+    * Retrieves the transaction logger instance associated with this DistributionManager
+    * @return a TransactionLogger
+    */
    TransactionLogger getTransactionLogger();
 
    /**
@@ -91,10 +111,11 @@ public interface DistributionManager {
    void notifyJoinComplete(Address joiner);
 
    /**
-    * This will cause all nodes to add the joiner to their UnionCH
+    * This will cause all nodes to add the joiner to their consistent hash instance (usually by creating a {@link org.infinispan.distribution.UnionConsistentHash}
     *
-    * @param joiner
-    * @param starting
+    * @param joiner address of joiner
+    * @param starting if true, the joiner is reporting that it is starting the join process.  If false, the joiner is
+    * reporting that it has completed the join process.
     */
    void informRehashOnJoin(Address joiner, boolean starting);
 
@@ -105,14 +126,38 @@ public interface DistributionManager {
     */
    CacheStore getCacheStoreForRehashing();
 
+   /**
+    * Tests whether a rehash is in progress
+    * @return true if a rehash is in progress, false otherwise
+    */
    boolean isRehashInProgress();
 
+   /**
+    * Tests whether the current instance has completed joining the cluster
+    * @return true if join is in progress, false otherwise
+    */
    boolean isJoinComplete();
 
+   /**
+    * Applies a state map received via a RehashControlCommand.  Usually this means state has been pushed to the
+    * current node probably due to another node leaving the cluster.
+    * @param state state to apply
+    */
    void applyReceivedState(Map<Object, InternalCacheValue> state);
-   
+
+   /**
+    * A helper method that retrieves a list of nodes affected by operations on a set of keys.  This helper will in turn
+    * call {@link #locateAll(java.util.Collection)} and then combine the result addresses.
+    * @param affectedKeys keys to locate
+    * @return a list of addresses which represent a combined set of all addresses affected by the set of keys.
+    */
    List<Address> getAffectedNodes(Set<Object> affectedKeys);
 
-   void applyRemoteTxLog(List<WriteCommand> txLogCommands);
+   /**
+    * Applies an ordered list of modifications to the current node.  Typically used when state is pushed to the node
+    * (i.e., anotehr node leaves the cluster) and the transaction log needs to be flushed after pushing state.
+    * @param modifications ordered list of mods
+    */
+   void applyRemoteTxLog(List<WriteCommand> modifications);
 }
 

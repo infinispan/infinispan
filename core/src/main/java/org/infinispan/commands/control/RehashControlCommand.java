@@ -28,7 +28,10 @@ import java.util.Arrays;
 
 /**
  * A control command to coordinate rehashes that may occur when nodes join or leave a cluster, when DIST is used as a
- * cache mode.
+ * cache mode.  This complex command coordinates the various phases of a rehash event when a joiner joins or a leaver
+ * leaves a cluster running in "distribution" mode.
+ * <p />
+ * It may break up into several commands in future.
  *
  * @author Manik Surtani
  * @since 4.0

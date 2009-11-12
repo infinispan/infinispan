@@ -25,12 +25,18 @@ import org.infinispan.remoting.transport.Transport;
 
 /**
  * Specifically used to create un-initialized {@link org.infinispan.commands.ReplicableCommand}s from a byte stream.
+ * This is a {@link Scopes#GLOBAL} component and doesn't have knowledge of initializing a command by injecting
+ * cache-specific components into it.
+ * <p />
+ * Usually a second step to unmarshalling a command from a byte stream (after
+ * creating an un-initialized version using this factory) is to pass the command though {@link org.infinispan.commands.CommandsFactory#initializeReplicableCommand(ReplicableCommand)}.
  *
+ * @see org.infinispan.commands.CommandsFactory#initializeReplicableCommand(ReplicableCommand)
  * @author Manik Surtani
  * @since 4.0
  */
 @Scope(Scopes.GLOBAL)
-public class RemoteCommandFactory {
+public class RemoteCommandsFactory {
    Transport transport;
 
    @Inject

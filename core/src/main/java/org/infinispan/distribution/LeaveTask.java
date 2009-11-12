@@ -78,7 +78,7 @@ public class LeaveTask extends RehashTask {
          Set<Future<Object>> pushFutures = new HashSet<Future<Object>>();
          for (Map.Entry<Address, Map<Object, InternalCacheValue>> entry : statemap.getState().entrySet()) {
             if (log.isDebugEnabled()) log.debug("Pushing {0} entries to {1}", entry.getValue().size(), entry.getKey());
-            RehashControlCommand push = cf.buildRehashControlCommand(RehashControlCommand.Type.PUSH_STATE, self, entry.getValue());
+            RehashControlCommand push = cf.buildRehashControlCommand(self, entry.getValue());
             NotifyingNotifiableFuture<Object> f = new NotifyingFutureImpl(null);
             pushFutures.add(f);
             rpcManager.invokeRemotelyInFuture(Collections.singleton(entry.getKey()), push, true, f, configuration.getRehashRpcTimeout());

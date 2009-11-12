@@ -25,7 +25,7 @@ package org.infinispan.marshall;
 import org.infinispan.atomic.AtomicHashMap;
 import org.infinispan.atomic.AtomicHashMapDelta;
 import org.infinispan.atomic.NullDelta;
-import org.infinispan.commands.RemoteCommandFactory;
+import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -95,7 +95,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
 
    @BeforeTest
    public void setUp() {
-      marshaller.inject(Thread.currentThread().getContextClassLoader(), new RemoteCommandFactory());
+      marshaller.inject(Thread.currentThread().getContextClassLoader(), new RemoteCommandsFactory());
       marshaller.start();
    }
 

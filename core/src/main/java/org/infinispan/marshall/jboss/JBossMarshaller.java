@@ -22,7 +22,7 @@
 package org.infinispan.marshall.jboss;
 
 import org.infinispan.CacheException;
-import org.infinispan.commands.RemoteCommandFactory;
+import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.io.ByteBuffer;
 import org.infinispan.io.ExposedByteArrayOutputStream;
 import org.infinispan.marshall.AbstractMarshaller;
@@ -93,7 +93,7 @@ public class JBossMarshaller extends AbstractMarshaller {
       }
    };
 
-   public void start(ClassLoader defaultCl, RemoteCommandFactory cmdFactory, org.infinispan.marshall.Marshaller ispnMarshaller) {
+   public void start(ClassLoader defaultCl, RemoteCommandsFactory cmdFactory, org.infinispan.marshall.Marshaller ispnMarshaller) {
       if (log.isDebugEnabled()) log.debug("Using JBoss Marshalling");
       this.defaultCl = defaultCl;
       try {
@@ -207,7 +207,7 @@ public class JBossMarshaller extends AbstractMarshaller {
       return in.readObject();
    }
 
-   private ConstantObjectTable createCustomObjectTable(RemoteCommandFactory cmdFactory, org.infinispan.marshall.Marshaller ispnMarshaller) {
+   private ConstantObjectTable createCustomObjectTable(RemoteCommandsFactory cmdFactory, org.infinispan.marshall.Marshaller ispnMarshaller) {
       ConstantObjectTable objectTable = new ConstantObjectTable();
       objectTable.start(cmdFactory, ispnMarshaller);
       return objectTable;

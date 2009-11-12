@@ -21,7 +21,7 @@
  */
 package org.infinispan.marshall;
 
-import org.infinispan.commands.RemoteCommandFactory;
+import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -57,22 +57,22 @@ public class VersionAwareMarshaller extends AbstractMarshaller {
 
    private final JBossMarshaller defaultMarshaller;
    private ClassLoader loader;
-   private RemoteCommandFactory remoteCommandFactory;
+   private RemoteCommandsFactory remoteCommandsFactory;
 
    public VersionAwareMarshaller() {
       defaultMarshaller = new JBossMarshaller();
    }
 
    @Inject
-   public void inject(ClassLoader loader, RemoteCommandFactory remoteCommandFactory) {
+   public void inject(ClassLoader loader, RemoteCommandsFactory remoteCommandsFactory) {
       this.loader = loader;
-      this.remoteCommandFactory = remoteCommandFactory;
+      this.remoteCommandsFactory = remoteCommandsFactory;
    }
 
    @Start(priority = 9)
    // should start before Transport component
    public void start() {
-      defaultMarshaller.start(loader, remoteCommandFactory, this);
+      defaultMarshaller.start(loader, remoteCommandsFactory, this);
    }
 
    @Stop

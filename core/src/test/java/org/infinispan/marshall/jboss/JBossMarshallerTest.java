@@ -22,12 +22,8 @@
  */
 package org.infinispan.marshall.jboss;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
 import org.infinispan.CacheException;
-import org.infinispan.commands.RemoteCommandFactory;
+import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.Marshallable;
 import org.infinispan.marshall.Marshaller;
@@ -36,6 +32,10 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.transaction.xa.GlobalTransactionFactory;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
  * Test the behaivour of JBoss Marshalling based {@link Marshaller} implementation 
@@ -50,7 +50,7 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
 
    @BeforeTest
    public void setUp() {
-      marshaller.inject(Thread.currentThread().getContextClassLoader(), new RemoteCommandFactory());
+      marshaller.inject(Thread.currentThread().getContextClassLoader(), new RemoteCommandsFactory());
       marshaller.start();
    }
 
@@ -63,7 +63,7 @@ public class JBossMarshallerTest extends AbstractInfinispanTest {
       JBossMarshaller jbmarshaller = new JBossMarshaller();
       ConstantObjectTable.MARSHALLABLES.add(DuplicateIdClass.class.getName());
       try {
-         jbmarshaller.start(Thread.currentThread().getContextClassLoader(), new RemoteCommandFactory(), marshaller);
+         jbmarshaller.start(Thread.currentThread().getContextClassLoader(), new RemoteCommandsFactory(), marshaller);
          assert false : "Should have thrown a CacheException reporting the duplicate id";
       } catch (CacheException ce) {
       } finally {

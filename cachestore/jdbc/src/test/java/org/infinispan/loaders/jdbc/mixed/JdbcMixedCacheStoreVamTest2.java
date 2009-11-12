@@ -21,7 +21,7 @@
  */
 package org.infinispan.loaders.jdbc.mixed;
 
-import org.infinispan.commands.RemoteCommandFactory;
+import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.VersionAwareMarshaller;
 import org.testng.annotations.Test;
@@ -37,7 +37,7 @@ public class JdbcMixedCacheStoreVamTest2 extends JdbcMixedCacheStoreTest2 {
    @Override
    protected Marshaller getMarshaller() {
       VersionAwareMarshaller marshaller = new VersionAwareMarshaller();
-      marshaller.inject(Thread.currentThread().getContextClassLoader(), new RemoteCommandFactory());
+      marshaller.inject(Thread.currentThread().getContextClassLoader(), new RemoteCommandsFactory());
       marshaller.start();
       return marshaller;
    }

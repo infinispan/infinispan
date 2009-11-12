@@ -55,6 +55,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * A factory to build commands, initializing and injecting dependencies accordingly.  Commands built for a specific,
+ * named cache instance cannot be reused on a different cache instance since most commands contain the cache name it
+ * was built for along with references to other named-cache scoped components.
+ *
+ * @author Manik Surtani
  * @author Mircea.Markus@jboss.com
  * @author Galder Zamarreño
  * @since 4.0
@@ -62,36 +67,123 @@ import java.util.Map;
 @Scope(Scopes.NAMED_CACHE)
 public interface CommandsFactory {
 
+   /**
+    * Builds a PutKeyValueCommand
+    * @param key key to put
+    * @param value value to put
+    * @param lifespanMillis lifespan in milliseconds.  -1 if lifespan is not used.
+    * @param maxIdleTimeMillis max idle time in milliseconds.  -1 if maxIdle is not used.
+    * @return a PutKeyValueCommand
+    */
    PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, long lifespanMillis, long maxIdleTimeMillis);
 
+   /**
+    * Builds a RemoveCommand
+    * @param key key to remove
+    * @param value value to check for ina  conditional remove, or null for an unconditional remove.
+    * @return a RemoveCommand
+    */
    RemoveCommand buildRemoveCommand(Object key, Object value);
 
+   /**
+    * Builds an InvalidateCommand
+    * @param keys keys to invalidate
+    * @return an InvalidateCommand
+    */
    InvalidateCommand buildInvalidateCommand(Object... keys);
 
+   /**
+    * Builds an InvalidateFromL1Command
+    * @param keys keys to invalidate
+    * @return an InvalidateFromL1Command
+    */
    InvalidateCommand buildInvalidateFromL1Command(Object... keys);
 
+   /**
+    * Builds a ReplaceCommand
+    * @param key key to replace
+    * @param oldValue existing value to check for if conditional, null if unconditional.
+    * @param newValue value to replace with
+    * @param lifespanMillis lifespan in milliseconds.  -1 if lifespan is not used.
+    * @param maxIdleTimeMillis max idle time in milliseconds.  -1 if maxIdle is not used.
+    * @return a ReplaceCommand
+    */
    ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, long lifespanMillis, long maxIdleTimeMillis);
 
+   /**
+    * Builds a SizeCommand
+    * @return a SizeCommand
+    */
    SizeCommand buildSizeCommand();
 
+   /**
+    * Builds a GetKeyValueCommand
+    * @param key key to get
+    * @return a GetKeyValueCommand
+    */
    GetKeyValueCommand buildGetKeyValueCommand(Object key);
 
+   /**
+    * Builds a KeySetCommand
+    * @return a KeySetCommand
+    */
    KeySetCommand buildKeySetCommand();
 
+   /**
+    * Builds a ValuesCommand
+    * @return a ValuesCommand
+    */
    ValuesCommand buildValuesCommand();
 
+   /**
+    * Builds a EntrySetCommand
+    * @return a EntrySetCommand
+    */
    EntrySetCommand buildEntrySetCommand();
 
+   /**
+    * Builds a PutMapCommand
+    * @param map map containing key/value entries to put
+    * @param lifespanMillis lifespan in milliseconds.  -1 if lifespan is not used.
+    * @param maxIdleTimeMillis max idle time in milliseconds.  -1 if maxIdle is not used.
+    * @return a PutMapCommand
+    */
    PutMapCommand buildPutMapCommand(Map map, long lifespanMillis, long maxIdleTimeMillis);
 
+   /**
+    * Builds a ClearCommand
+    * @return a ClearCommand
+    */
    ClearCommand buildClearCommand();
 
+   /**
+    * Builds an EvictCommand
+    * @param key key to evict
+    * @return an EvictCommand
+    */
    EvictCommand buildEvictCommand(Object key);
 
+   /**
+    * Builds a PrepareCommand
+    * @param gtx global transaction associated with the prepare
+    * @param modifications list of modifications
+    * @param onePhaseCommit is this a one-phase or two-phase transaction?
+    * @return a PrepareCommand
+    */
    PrepareCommand buildPrepareCommand(GlobalTransaction gtx, List<WriteCommand> modifications, boolean onePhaseCommit);
 
+   /**
+    * Builds a CommitCommand
+    * @param gtx global transaction associated with the commit
+    * @return a CommitCommand
+    */
    CommitCommand buildCommitCommand(GlobalTransaction gtx);
 
+   /**
+    * Builds a RollbackCommand
+    * @param gtx global transaction associated with the rollback
+    * @return a RollbackCommand
+    */
    RollbackCommand buildRollbackCommand(GlobalTransaction gtx);
 
    /**
@@ -106,23 +198,94 @@ public interface CommandsFactory {
     */
    void initializeReplicableCommand(ReplicableCommand command);
 
+   /**
+    * Builds an RpcCommand "envelope" containing multiple ReplicableCommands
+    * @param toReplicate ReplicableCommands to include in the envelope
+    * @return a MultipleRpcCommand
+    */
    MultipleRpcCommand buildReplicateCommand(List<ReplicableCommand> toReplicate);
 
+   /**
+    * Builds a SingleRpcCommand "envelope" containing a single ReplicableCommand
+    * @param call ReplicableCommand to include in the envelope
+    * @return a SingleRpcCommand
+    */
    SingleRpcCommand buildSingleRpcCommand(ReplicableCommand call);
 
+   /**
+    * Builds a StateTransferControlCommand
+    * @param block whether to start blocking or not
+    * @return a StateTransferControlCommand
+    */
    StateTransferControlCommand buildStateTransferControlCommand(boolean block);
 
+   /**
+    * Builds a ClusteredGetCommand, which is a remote lookup command
+    * @param key key to look up
+    * @return a ClusteredGetCommand
+    */
    ClusteredGetCommand buildClusteredGetCommand(Object key);
 
+   /**
+    * Builds a LockControlCommand to control exilicit remote locking
+    * @param keys keys to lock
+    * @param implicit whether the lock command was implicit (triggered internally) or explicit (triggered by an API call)
+    * @return a LockControlCommand
+    */
    LockControlCommand buildLockControlCommand(Collection keys, boolean implicit);
 
+   /**
+    * Builds a RehashControlCommand for coordinating a rehash event.  This version of this factory method creates a simple
+    * control command with just a command type and sender.
+    * @param subtype type of RehashControlCommand
+    * @param sender sender's Address
+    * @return a RehashControlCommand
+    */
    RehashControlCommand buildRehashControlCommand(RehashControlCommand.Type subtype, Address sender);
 
-   RehashControlCommand buildRehashControlCommand(RehashControlCommand.Type subtype, Address sender, Map<Object, InternalCacheValue> state);
+   /**
+    * Builds a RehashControlCommand for coordinating a rehash event.  This version of this factory method creates a
+    * control command with a sender and a payload - a map of state to be pushed to the recipient.  The {@link org.infinispan.commands.control.RehashControlCommand.Type}
+    * of this command is {@link org.infinispan.commands.control.RehashControlCommand.Type#PUSH_STATE}.
+    *
+    * @param sender sender's Address
+    * @param state state map to be pushed to the recipient of this command
+    * @return a RehashControlCommand
+    */
+   RehashControlCommand buildRehashControlCommand(Address sender, Map<Object, InternalCacheValue> state);
 
+   /**
+    * Builds a RehashControlCommand for coordinating a rehash event.  This version of this factory method creates a
+    * control command with a sender and a payload - a transaction log of writes that occured during the generation and
+    * delivery of state.  The {@link org.infinispan.commands.control.RehashControlCommand.Type}
+    * of this command is {@link org.infinispan.commands.control.RehashControlCommand.Type#DRAIN_TX}.
+    *
+    * @param sender sender's Address
+    * @param state list of writes
+    * @return a RehashControlCommand
+    */
    RehashControlCommand buildRehashControlCommandTxLog(Address sender, List<WriteCommand> state);
 
+   /**
+    * Builds a RehashControlCommand for coordinating a rehash event.  This version of this factory method creates a
+    * control command with a sender and a payload - a transaction log of pending prepares that occured during the generation
+    * and delivery of state.  The {@link org.infinispan.commands.control.RehashControlCommand.Type}
+    * of this command is {@link org.infinispan.commands.control.RehashControlCommand.Type#DRAIN_TX_PREPARES}.
+    *
+    * @param sender sender's Address
+    * @param state list of pending prepares
+    * @return a RehashControlCommand
+    */
    RehashControlCommand buildRehashControlCommandTxLogPendingPrepares(Address sender, List<PrepareCommand> state);
 
+   /**
+    * A more generic version of this factory method that allows the setting of various fields.
+    *
+    * @param subtype type of RehashControlCommand
+    * @param sender sender's Address
+    * @param state state to push
+    * @param consistentHash consistent hash to deliver
+    * @return a RehashControlCommand
+    */
    RehashControlCommand buildRehashControlCommand(RehashControlCommand.Type subtype, Address sender, Map<Object, InternalCacheValue> state, ConsistentHash consistentHash);
 }

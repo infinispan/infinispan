@@ -148,7 +148,7 @@ public class TransactionLoggerImpl implements TransactionLogger {
       return false;
    }
 
-   public int size() {
+   private int size() {
       return enabled ? 0 : commandQueue.size();
    }
 

@@ -46,7 +46,6 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
 
    private static final Log log = LogFactory.getLog(JdbcBinaryCacheStore.class);
 
-   // TODO shouldn't we move this delimiter to a superclass, if it is the same and needs to be shared between this class and JdbcStringBasedCacheStore ?
    private final static byte BINARY_STREAM_DELIMITER = 100;
 
    private JdbcBinaryCacheStoreConfig config;

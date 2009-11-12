@@ -27,7 +27,7 @@ import org.infinispan.atomic.AtomicHashMapDelta;
 import org.infinispan.atomic.ClearOperation;
 import org.infinispan.atomic.PutOperation;
 import org.infinispan.atomic.RemoveOperation;
-import org.infinispan.commands.RemoteCommandFactory;
+import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.control.RehashControlCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
@@ -178,7 +178,7 @@ public class ConstantObjectTable implements ObjectTable {
     */
    private final Map<Integer, ExternalizerAdapter> readers = new HashMap<Integer, ExternalizerAdapter>();
 
-   public void start(RemoteCommandFactory cmdFactory, org.infinispan.marshall.Marshaller ispnMarshaller) {
+   public void start(RemoteCommandsFactory cmdFactory, org.infinispan.marshall.Marshaller ispnMarshaller) {
       HashSet<Integer> ids = new HashSet<Integer>();
 
       for (Map.Entry<String, String> entry : JDK_EXTERNALIZERS.entrySet()) {
