@@ -53,11 +53,14 @@ public abstract class CacheTestSupport {
    
    public static Configuration createTestConfiguration() {
       Configuration c = new Configuration();
-      c.setCacheMode(Configuration.CacheMode.REPL_SYNC);
+      c.setCacheMode(Configuration.CacheMode.DIST_SYNC);
       c.setSyncReplTimeout(10000);
       c.setLockAcquisitionTimeout(10000);
       c.setUseLockStriping(false);
       c.setSyncCommitPhase(true);
+      c.setL1CacheEnabled(true);
+      c.setExposeJmxStatistics(false);
+      c.setUseEagerLocking(false);
       c.setSyncRollbackPhase(true);
       c.setTransactionManagerLookupClass(JBossStandaloneJTAManagerLookup.class.getName());
       c.setDeadlockDetectionSpinDuration( 10000 );

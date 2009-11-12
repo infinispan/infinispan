@@ -42,6 +42,7 @@ import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
 /**
+ * Basic stress test: one thread writes, some other read.
  * @author Lukasz Moren
  * @author Sanne Grinovero
  */
@@ -82,13 +83,16 @@ public class InfinispanDirectoryStressTest {
       final CountDownLatch latch = new CountDownLatch(1);
       List<InfinispanDirectoryThread> threads = new ArrayList<InfinispanDirectoryThread>();
       Cache<CacheKey, Object> cache = CacheTestSupport.createTestCacheManager().getCache();
-      Cache<CacheKey, Object> cache2 = CacheTestSupport.createTestCacheManager().getCache(); // dummy cache, to force replication
       Directory directory1 = new InfinispanDirectory(cache, "indexName");
-      Directory directory2 = new InfinispanDirectory(cache2, "indexName");
 
       IndexWriter.MaxFieldLength fieldLength = new IndexWriter.MaxFieldLength(IndexWriter.DEFAULT_MAX_FIELD_LENGTH);
       IndexWriter iw = new IndexWriter(directory1, new StandardAnalyzer(), true, fieldLength);
       iw.close();
+
+      // second cache joins after index creation: tests proper configuration
+      Cache<CacheKey, Object> cache2 = CacheTestSupport.createTestCacheManager().getCache(); // dummy cache, to force replication
+      Directory directory2 = new InfinispanDirectory(cache2, "indexName");
+      Thread.sleep(3000);
 
       // create first writing thread
       InfinispanDirectoryThread tr = new InfinispanDirectoryThread(latch, directory1, true);
