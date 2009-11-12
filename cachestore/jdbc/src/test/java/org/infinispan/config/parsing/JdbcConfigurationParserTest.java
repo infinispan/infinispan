@@ -32,7 +32,7 @@ public class JdbcConfigurationParserTest {
       CacheStoreConfig iclc = (CacheStoreConfig) clc.getFirstCacheLoaderConfig();
       assert iclc.getCacheLoaderClassName().equals(JdbcStringBasedCacheStore.class.getName());
       assert iclc.getAsyncStoreConfig().isEnabled();
-      assert iclc.getAsyncStoreConfig().getMapLockTimeout() == 10000;
+      assert iclc.getAsyncStoreConfig().getFlushLockTimeout() == 10000;
       assert iclc.getAsyncStoreConfig().getThreadPoolSize() == 10;
       assert iclc.isFetchPersistentState();
       assert iclc.isIgnoreModifications();

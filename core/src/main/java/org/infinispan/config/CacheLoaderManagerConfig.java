@@ -57,11 +57,11 @@ public class CacheLoaderManagerConfig extends AbstractNamedCacheConfigurationBea
    private static final long serialVersionUID = 2210349340378984424L;
 
    /**
-    * @configRef desc="If true, data is only written to the cache store when it is evicted from memory, 
+    * @configRef desc="If true, data is only written to the cache store when it is evicted from memory,
     *            a phenomenon known as 'passivation'. Next time the data is requested, it will be 'activated' which
     *            means that data will be brought back to memory and removed from the persistent store.  This gives you
     *            the ability to 'overflow' to disk, similar to swapping in an operating system.
-    *            <p />
+    *            <br /><br />
     *            If false, the cache store contains a copy of the contents in memory, so writes to cache 
     *            result in cache store writes.  This essentially gives you a 'write-through' configuration."
     * */
@@ -81,7 +81,7 @@ public class CacheLoaderManagerConfig extends AbstractNamedCacheConfigurationBea
     *            (e.g., multiple nodes in a cluster using a JDBC-based CacheStore pointing to the same, shared
     *            database.)  Setting this to true avoids multiple cache instances writing the same modification multiple
     *            times. If enabled, only the node where the modification originated will write to the cache store.
-    *            <p />
+    *            <br /><br />
     *            If disabled, each individual cache reacts to a potential remote update by storing the data to the cache
     *            store. Note that this could be useful if each individual node has its own cache store - perhaps local
     *            on-disk.

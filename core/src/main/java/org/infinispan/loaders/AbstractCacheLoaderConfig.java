@@ -1,12 +1,12 @@
 package org.infinispan.loaders;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlAttribute;
-
 import org.infinispan.CacheException;
 import org.infinispan.config.ConfigurationBeanVisitor;
 import org.infinispan.config.PluggableConfigurationComponent;
+
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
 
 /**
  * Abstract base class for CacheLoaderConfigs.

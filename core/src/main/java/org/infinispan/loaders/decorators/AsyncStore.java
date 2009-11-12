@@ -203,7 +203,7 @@ public class AsyncStore extends AbstractDelegatingStore {
 
    private void acquireLock(Lock lock) {
       try {
-         if (!lock.tryLock(asyncStoreConfig.getMapLockTimeout(), TimeUnit.MILLISECONDS))
+         if (!lock.tryLock(asyncStoreConfig.getFlushLockTimeout(), TimeUnit.MILLISECONDS))
             throw new CacheException("Unable to acquire lock on update map");
       } catch (InterruptedException ie) {
          // restore interrupted status

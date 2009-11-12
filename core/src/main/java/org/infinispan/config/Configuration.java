@@ -840,7 +840,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       protected Long lockAcquisitionTimeout = 10000L;
 
       /** @configRef desc="Cache isolation level. Infinispan only supports READ_COMMITTED
-       *             or REPEATABLE_READ isolation levels.  See <a href="http://en.wikipedia.org/wiki/Isolation_level">http://en.wikipedia.org/wiki/Isolation_level</a>
+       *             or REPEATABLE_READ isolation levels.  See <a href='http://en.wikipedia.org/wiki/Isolation_level'>http://en.wikipedia.org/wiki/Isolation_level</a>
        *             for a discussion on isolation levels." */
       protected IsolationLevel isolationLevel = IsolationLevel.READ_COMMITTED;
 
@@ -941,7 +941,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       /** 
        * @configRef name="mode",desc="Cache mode. For distribution, set mode to either 'd', 'dist' or 'distribution'.
        *            For replication, use either 'r', 'repl' or 'replication'. Finally, for invalidation, 
-       *            'i', 'inv' or 'invalidation'.*/
+       *            'i', 'inv' or 'invalidation'.",defaultValue="D"
+       */
       @XmlAttribute(name="mode")
       protected String stringMode;
 
@@ -1062,7 +1063,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     * @configRef name="async",parentName="clustering",desc="If this element is present, all communications are 
     *            asynchronous, in that whenever a thread sends a message sent over the wire, it does not wait 
     *            for an acknowledgement before returning. This element is mutually exclusive with the <sync /> 
-    *            element.<p />Characteristics of this can be tuned here."
+    *            element.<br /><br />Characteristics of this can be tuned here."
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    public static class AsyncType extends AbstractNamedCacheConfigurationBean {
@@ -1167,13 +1168,13 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       private static final long serialVersionUID = 5757161438110848530L;
 
       /** @configRef desc="Maximum lifespan of a cache entry, after which the entry is expired cluster-wide.  -1 means the entries never expire.
-       *                   <p />Note that this can be overriden on a per-entry bassi by using the Cache API."
+       *                   <br /><br />Note that this can be overriden on a per-entry bassi by using the Cache API."
        */
       protected Long lifespan=-1L;
 
       /** @configRef desc="Maximum idle time a cache entry will be maintained in the cache. If the idle time 
        *             is exceeded, the entry will be expired cluster-wide.  -1 means the entries never expire.
-       *             <p />Note that this can be overriden on a per-entry bassi by using the Cache API."
+       *             <br /><br />Note that this can be overriden on a per-entry bassi by using the Cache API."
        */
       protected Long maxIdle=-1L;
 
@@ -1373,7 +1374,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    /**
     * @configRef name="sync",desc="If this element is present, all communications are synchronous, in that whenever a 
     *            thread sends a message sent over the wire, it blocks until it receives an acknowledgement from the 
-    *            recipient. This element is mutually exclusive with the <async />  element.  <p />Characteristics of this can be tuned here."
+    *            recipient. This element is mutually exclusive with the <async />  element.  <br /><br />Characteristics of this can be tuned here."
     *
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)

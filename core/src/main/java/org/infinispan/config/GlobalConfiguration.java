@@ -25,26 +25,28 @@ import java.util.Properties;
 
 /**
  * Configuration component that encapsulates the global configuration.
- * 
- * <p>
- * Note that class GlobalConfiguration contains JAXB annotations. These annotations determine how XML
- * configuration files are read into instances of configuration class hierarchy as well as they
- * provide meta data for configuration file XML schema generation. Please modify these annotations
- * and Java element types they annotate with utmost understanding and care.
- * 
- * @configRef name="global",desc="Defines global settings shared among all cache instances created by a single CacheManager."
+ * <p/>
+ * <p/>
+ * Note that class GlobalConfiguration contains JAXB annotations. These annotations determine how XML configuration
+ * files are read into instances of configuration class hierarchy as well as they provide meta data for configuration
+ * file XML schema generation. Please modify these annotations and Java element types they annotate with utmost
+ * understanding and care.
  *
  * @author Manik Surtani
  * @author Vladimir Blagojevic
+ * @configRef name="global",desc="Defines global settings shared among all cache instances created by a single
+ * CacheManager."
  * @since 4.0
  */
 @SurvivesRestarts
 @Scope(Scopes.GLOBAL)
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(propOrder={})
+@XmlType(propOrder = {})
 public class GlobalConfiguration extends AbstractConfigurationBean {
 
-   /** The serialVersionUID */
+   /**
+    * The serialVersionUID
+    */
    private static final long serialVersionUID = 8910865501990177720L;
 
    public GlobalConfiguration() {
@@ -57,16 +59,16 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    public static final short DEFAULT_MARSHALL_VERSION = Version.getVersionShort();
 
    @XmlElement
-   private FactoryClassWithPropertiesType asyncListenerExecutor = new FactoryClassWithPropertiesType(DefaultExecutorFactory.class.getName());
+   private ExecutorFactoryType asyncListenerExecutor = new ExecutorFactoryType();
 
    @XmlElement
-   private FactoryClassWithPropertiesType asyncTransportExecutor= new FactoryClassWithPropertiesType(DefaultExecutorFactory.class.getName());
+   private ExecutorFactoryType asyncTransportExecutor = new ExecutorFactoryType();
 
    @XmlElement
-   private FactoryClassWithPropertiesType evictionScheduledExecutor= new FactoryClassWithPropertiesType(DefaultScheduledExecutorFactory.class.getName());
+   private ScheduledExecutorFactoryType evictionScheduledExecutor = new ScheduledExecutorFactoryType();
 
    @XmlElement
-   private FactoryClassWithPropertiesType replicationQueueScheduledExecutor= new FactoryClassWithPropertiesType(DefaultScheduledExecutorFactory.class.getName());
+   private ScheduledExecutorFactoryType replicationQueueScheduledExecutor = new ScheduledExecutorFactoryType();
 
    @XmlElement
    private GlobalJmxStatisticsType globalJmxStatistics = new GlobalJmxStatisticsType();
@@ -146,7 +148,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
 
    @Inject
    private void injectDependencies(GlobalComponentRegistry gcr) {
-      this.gcr = gcr;     
+      this.gcr = gcr;
       gcr.registerComponent(asyncListenerExecutor, "asyncListenerExecutor");
       gcr.registerComponent(asyncTransportExecutor, "asyncTransportExecutor");
       gcr.registerComponent(evictionScheduledExecutor, "evictionScheduledExecutor");
@@ -202,11 +204,11 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    public void setMarshallerClass(String marshallerClass) {
       serialization.setMarshallerClass(marshallerClass);
    }
-   
+
    public String getTransportNodeName() {
       return transport.nodeName;
    }
-   
+
    public void setTransportNodeName(String nodeName) {
       transport.setNodeName(nodeName);
    }
@@ -227,7 +229,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    public void setTransportProperties(Properties transportProperties) {
       transport.setProperties(toTypedProperties(transportProperties));
    }
-   
+
    public void setTransportProperties(String transportPropertiesString) {
       transport.setProperties(toTypedProperties(transportPropertiesString));
    }
@@ -270,7 +272,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    public Properties getAsyncListenerExecutorProperties() {
       return asyncListenerExecutor.properties;
    }
-   
+
 
    public void setAsyncListenerExecutorProperties(Properties asyncListenerExecutorProperties) {
       asyncListenerExecutor.setProperties(toTypedProperties(asyncListenerExecutorProperties));
@@ -295,7 +297,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    public Properties getEvictionScheduledExecutorProperties() {
       return evictionScheduledExecutor.properties;
    }
-  
+
    public void setEvictionScheduledExecutorProperties(Properties evictionScheduledExecutorProperties) {
       evictionScheduledExecutor.setProperties(toTypedProperties(evictionScheduledExecutorProperties));
    }
@@ -307,7 +309,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    public Properties getReplicationQueueScheduledExecutorProperties() {
       return replicationQueueScheduledExecutor.properties;
    }
-     
+
    public void setReplicationQueueScheduledExecutorProperties(Properties replicationQueueScheduledExecutorProperties) {
       this.replicationQueueScheduledExecutor.setProperties(toTypedProperties(replicationQueueScheduledExecutorProperties));
    }
@@ -328,7 +330,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       testImmutability("marshallVersion");
       serialization.version = Version.decodeVersionForSerialization(marshallVersion);
    }
-   
+
    public void setMarshallVersion(String marshallVersion) {
       serialization.setVersion(marshallVersion);
    }
@@ -336,24 +338,24 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    public long getDistributedSyncTimeout() {
       return transport.distributedSyncTimeout;
    }
-   
+
    public void setDistributedSyncTimeout(long distributedSyncTimeout) {
       transport.distributedSyncTimeout = distributedSyncTimeout;
    }
-   
-    public void accept(ConfigurationBeanVisitor v) {        
-        asyncListenerExecutor.accept(v);
-        asyncTransportExecutor.accept(v);
-        evictionScheduledExecutor.accept(v);
-        globalJmxStatistics.accept(v);
-        replicationQueueScheduledExecutor.accept(v);
-        serialization.accept(v);
-        shutdown.accept(v);
-        transport.accept(v);   
-        v.visitGlobalConfiguration(this);
-    }
 
-@Override
+   public void accept(ConfigurationBeanVisitor v) {
+      asyncListenerExecutor.accept(v);
+      asyncTransportExecutor.accept(v);
+      evictionScheduledExecutor.accept(v);
+      globalJmxStatistics.accept(v);
+      replicationQueueScheduledExecutor.accept(v);
+      serialization.accept(v);
+      shutdown.accept(v);
+      transport.accept(v);
+      v.visitGlobalConfiguration(this);
+   }
+
+   @Override
    public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
@@ -369,21 +371,21 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
          return false;
       if (asyncTransportExecutor.properties != null ? !asyncTransportExecutor.properties.equals(that.asyncTransportExecutor.properties) : that.asyncTransportExecutor.properties != null)
          return false;
-      if (transport.clusterName != null ? !transport.clusterName.equals(that.transport.clusterName) : that.transport.clusterName != null) 
+      if (transport.clusterName != null ? !transport.clusterName.equals(that.transport.clusterName) : that.transport.clusterName != null)
          return false;
       if (defaultConfiguration != null ? !defaultConfiguration.equals(that.defaultConfiguration) : that.defaultConfiguration != null)
          return false;
       if (evictionScheduledExecutor.factory != null ? !evictionScheduledExecutor.factory.equals(that.evictionScheduledExecutor.factory) : that.evictionScheduledExecutor.factory != null)
          return false;
-      if (evictionScheduledExecutor.properties != null ? !evictionScheduledExecutor.properties.equals(that.evictionScheduledExecutor.properties) : that.evictionScheduledExecutor.properties  != null)
+      if (evictionScheduledExecutor.properties != null ? !evictionScheduledExecutor.properties.equals(that.evictionScheduledExecutor.properties) : that.evictionScheduledExecutor.properties != null)
          return false;
-      if (serialization.marshallerClass != null ? !serialization.marshallerClass .equals(that.serialization.marshallerClass ) : that.serialization.marshallerClass  != null)
+      if (serialization.marshallerClass != null ? !serialization.marshallerClass.equals(that.serialization.marshallerClass) : that.serialization.marshallerClass != null)
          return false;
-      if (replicationQueueScheduledExecutor.factory != null ? !replicationQueueScheduledExecutor.factory .equals(that.replicationQueueScheduledExecutor.factory ) : that.replicationQueueScheduledExecutor.factory  != null)
+      if (replicationQueueScheduledExecutor.factory != null ? !replicationQueueScheduledExecutor.factory.equals(that.replicationQueueScheduledExecutor.factory) : that.replicationQueueScheduledExecutor.factory != null)
          return false;
       if (replicationQueueScheduledExecutor.properties != null ? !replicationQueueScheduledExecutor.properties.equals(that.replicationQueueScheduledExecutor.properties) : that.replicationQueueScheduledExecutor.properties != null)
          return false;
-      if (shutdown.hookBehavior != null ? !shutdown.hookBehavior.equals(that.shutdown.hookBehavior) : that.shutdown.hookBehavior != null) 
+      if (shutdown.hookBehavior != null ? !shutdown.hookBehavior.equals(that.shutdown.hookBehavior) : that.shutdown.hookBehavior != null)
          return false;
       if (transport.transportClass != null ? !transport.transportClass.equals(that.transport.transportClass) : that.transport.transportClass != null)
          return false;
@@ -400,14 +402,14 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       result = 31 * result + (asyncTransportExecutor.factory != null ? asyncTransportExecutor.factory.hashCode() : 0);
       result = 31 * result + (asyncTransportExecutor.properties != null ? asyncTransportExecutor.properties.hashCode() : 0);
       result = 31 * result + (evictionScheduledExecutor.factory != null ? evictionScheduledExecutor.factory.hashCode() : 0);
-      result = 31 * result + ( evictionScheduledExecutor.properties  != null ? evictionScheduledExecutor.properties.hashCode() : 0);
-      result = 31 * result + (replicationQueueScheduledExecutor.factory  != null ? replicationQueueScheduledExecutor.factory.hashCode() : 0);
+      result = 31 * result + (evictionScheduledExecutor.properties != null ? evictionScheduledExecutor.properties.hashCode() : 0);
+      result = 31 * result + (replicationQueueScheduledExecutor.factory != null ? replicationQueueScheduledExecutor.factory.hashCode() : 0);
       result = 31 * result + (replicationQueueScheduledExecutor.properties != null ? replicationQueueScheduledExecutor.properties.hashCode() : 0);
-      result = 31 * result + (serialization.marshallerClass  != null ? serialization.marshallerClass .hashCode() : 0);
+      result = 31 * result + (serialization.marshallerClass != null ? serialization.marshallerClass.hashCode() : 0);
       result = 31 * result + (transport.transportClass != null ? transport.transportClass.hashCode() : 0);
-      result = 31 * result + (transport.properties  != null ? transport.properties .hashCode() : 0);
+      result = 31 * result + (transport.properties != null ? transport.properties.hashCode() : 0);
       result = 31 * result + (defaultConfiguration != null ? defaultConfiguration.hashCode() : 0);
-      result = 31 * result + (transport.clusterName  != null ? transport.clusterName .hashCode() : 0);
+      result = 31 * result + (transport.clusterName != null ? transport.clusterName.hashCode() : 0);
       result = 31 * result + (shutdown.hookBehavior.hashCode());
       result = 31 * result + ((int) serialization.version.hashCode());
       result = (int) (31 * result + transport.distributedSyncTimeout);
@@ -421,8 +423,10 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
          if (asyncListenerExecutor != null) dolly.asyncListenerExecutor = asyncListenerExecutor.clone();
          if (asyncTransportExecutor != null) dolly.asyncTransportExecutor = asyncTransportExecutor.clone();
          if (evictionScheduledExecutor != null) dolly.evictionScheduledExecutor = evictionScheduledExecutor.clone();
-         if (replicationQueueScheduledExecutor != null) dolly.replicationQueueScheduledExecutor = replicationQueueScheduledExecutor.clone();
-         if (globalJmxStatistics != null) dolly.globalJmxStatistics = (GlobalJmxStatisticsType) globalJmxStatistics.clone();
+         if (replicationQueueScheduledExecutor != null)
+            dolly.replicationQueueScheduledExecutor = replicationQueueScheduledExecutor.clone();
+         if (globalJmxStatistics != null)
+            dolly.globalJmxStatistics = (GlobalJmxStatisticsType) globalJmxStatistics.clone();
          if (transport != null) dolly.transport = transport.clone();
          if (serialization != null) dolly.serialization = (SerializationType) serialization.clone();
          if (shutdown != null) dolly.shutdown = (ShutdownType) shutdown.clone();
@@ -461,46 +465,22 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       return gc;
    }
 
-   /**
-    * @configRef name="asyncListenerExecutor",desc="Configuration for the executor service used to emit notifications to asynchronous listeners."
-    * @configRef name="asyncTransportExecutor",desc="Configuration for the executor service used for asynchronous work on the Transport, including asynchronous marshalling and Cache 'async operations' such as Cache.putAsync()."
-    * @configRef name="evictionScheduledExecutor",desc="Configuration for the scheduled executor service used to periodically run eviction cleanup tasks."
-    * @configRef name="replicationQueueScheduledExecutor",desc="Configuration for the scheduled executor service used to periodically flush replication queues, used if asynchronous clustering is enabled along with useReplQueue being set to true."
-    */
-   @XmlAccessorType(XmlAccessType.PROPERTY)
-   public static class FactoryClassWithPropertiesType extends AbstractConfigurationBeanWithGCR {
+   public abstract static class FactoryClassWithPropertiesType extends AbstractConfigurationBeanWithGCR {
 
-      /** The serialVersionUID */
+      /**
+       * The serialVersionUID
+       */
       private static final long serialVersionUID = 7625606997888180254L;
 
-      /** @configRef desc="Fully qualified class name of the ExecutorFactory (or ScheduledExecutorFactory) to use.  Must implement org.infinispan.executors.ExecutorFactory (or ScheduledExecutorFactory), and defaults to org.infinispan.executors.DefaultExecutorFactory (or DefaultScheduledExecutorFactory)" */
-      @XmlAttribute
-      protected String factory;
-
-      /** 
+      /**
        * @configPropertyRef name="maxThreads",desc="Maximum number of threads for this executor."
        * @configPropertyRef name="threadNamePrefix",desc="Thread name prefix for threads created by this executor."
-       * */
-      @XmlElement(name="properties")
+       */
+      @XmlElement(name = "properties")
       protected TypedProperties properties = EMPTY_PROPERTIES;
-
-      public FactoryClassWithPropertiesType(String factory) {
-         super();
-         this.factory = factory;
-      }   
 
       public void accept(ConfigurationBeanVisitor v) {
          v.visitFactoryClassWithPropertiesType(this);
-      }
-
-      public FactoryClassWithPropertiesType() {
-         super();
-         this.factory = "";
-      }
-
-      public void setFactory(String factory) {
-         testImmutability("factory");
-         this.factory = factory;
       }
 
       public void setProperties(TypedProperties properties) {
@@ -517,26 +497,104 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    }
 
    /**
-    * @configRef name="transport",desc="This element configures the transport used for network communications across the cluster." 
+    * @configRef name="asyncListenerExecutor",desc="Configuration for the executor service used to emit notifications to
+    * asynchronous listeners."
+    * @configRef name="asyncTransportExecutor",desc="Configuration for the executor service used for asynchronous work
+    * on the Transport, including asynchronous marshalling and Cache 'async operations' such as Cache.putAsync()."
+    */
+   @XmlAccessorType(XmlAccessType.PROPERTY)
+   public static class ExecutorFactoryType extends FactoryClassWithPropertiesType {
+      /**
+       * @configRef desc="Fully qualified class name of the ExecutorFactory to use.  Must
+       * implement org.infinispan.executors.ExecutorFactory"
+       */
+      @XmlAttribute
+      protected String factory = DefaultExecutorFactory.class.getName();
+
+      public ExecutorFactoryType(String factory) {
+         this.factory = factory;
+      }
+
+      public ExecutorFactoryType() {
+      }
+
+      public void setFactory(String factory) {
+         testImmutability("factory");
+         this.factory = factory;
+      }
+
+      @Override
+      public ExecutorFactoryType clone() throws CloneNotSupportedException {
+         return (ExecutorFactoryType) super.clone();
+      }
+   }
+
+   /**
+    * @configRef name="evictionScheduledExecutor",desc="Configuration for the scheduled executor service used to
+    * periodically run eviction cleanup tasks."
+    * @configRef name="replicationQueueScheduledExecutor",desc="Configuration for the scheduled executor service used to
+    * periodically flush replication queues, used if asynchronous clustering is enabled along with useReplQueue being
+    * set to true."
+    */
+   @XmlAccessorType(XmlAccessType.PROPERTY)
+   public static class ScheduledExecutorFactoryType extends FactoryClassWithPropertiesType {
+      /**
+       * @configRef desc="Fully qualified class name of the ScheduledExecutorFactory to use.  Must
+       * implement org.infinispan.executors.ScheduledExecutorFactory"
+       */
+      @XmlAttribute
+      protected String factory = DefaultScheduledExecutorFactory.class.getName();
+
+      public ScheduledExecutorFactoryType(String factory) {
+         this.factory = factory;
+      }
+
+      public ScheduledExecutorFactoryType() {
+      }
+
+      public void setFactory(String factory) {
+         testImmutability("factory");
+         this.factory = factory;
+      }
+
+      @Override
+      public ScheduledExecutorFactoryType clone() throws CloneNotSupportedException {
+         return (ScheduledExecutorFactoryType) super.clone();
+      }
+   }
+
+   /**
+    * @configRef name="transport",desc="This element configures the transport used for network communications across the
+    * cluster."
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    public static class TransportType extends AbstractConfigurationBeanWithGCR {
 
-      /** The serialVersionUID */
+      /**
+       * The serialVersionUID
+       */
       private static final long serialVersionUID = -4739815717370060368L;
 
-      /** @configRef desc="This defines the name of the cluster.  Nodes only connect to clusters sharing the same name." */
+      /**
+       * @configRef desc="This defines the name of the cluster.  Nodes only connect to clusters sharing the same name."
+       */
       protected String clusterName = "Infinispan-Cluster";
 
-      /** @configRef desc="Cluster-wide synchronization timeout for locks.  Used to coordinate changes in cluster membership." */
+      /**
+       * @configRef desc="Cluster-wide synchronization timeout for locks.  Used to coordinate changes in cluster
+       * membership."
+       */
       protected Long distributedSyncTimeout = 60000L; // default
 
-      /** @configRef desc="Fully qualified name of a class that represents a network transport.  Must
-       *             implement org.infinispan.remoting.transport.Transport"*/
+      /**
+       * @configRef desc="Fully qualified name of a class that represents a network transport.  Must implement
+       * org.infinispan.remoting.transport.Transport"
+       */
       protected String transportClass = null; // this defaults to a non-clustered cache.
 
       /**
-       * @configRef desc="Name of the current node.  This is a friendly name to make logs, etc. make more sense.  Defaults to a combination of host name and a random number (to differentiate multiple nodes on the same host)"
+       * @configRef desc="Name of the current node.  This is a friendly name to make logs, etc. make more sense.
+       * Defaults to a combination of host name and a random number (to differentiate multiple nodes on the same host)"
        */
       protected String nodeName = null;
 
@@ -580,7 +638,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
          this.nodeName = nodeName;
       }
 
-    @XmlElement
+      @XmlElement
       public void setProperties(TypedProperties properties) {
          testImmutability("properties");
          this.properties = properties;
@@ -596,20 +654,26 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
 
    /**
     * @configRef name="serialization",desc="Serialization and marshalling settings."
-    */   
+    */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    public static class SerializationType extends AbstractConfigurationBeanWithGCR {
 
-      /** The serialVersionUID */
+      /**
+       * The serialVersionUID
+       */
       private static final long serialVersionUID = -925947118621507282L;
 
-      /** @configRef desc="Fully qualified name of the marshaller to use. It must
-       *             implement org.infinispan.marshall.Marshaller."*/
+      /**
+       * @configRef desc="Fully qualified name of the marshaller to use. It must implement
+       * org.infinispan.marshall.Marshaller."
+       */
       protected String marshallerClass = VersionAwareMarshaller.class.getName(); // the default
 
-      /** @configRef desc="Largest allowable version to use when marshalling internal state.  Set this to the lowest version
-       *                   cache instance in your cluster to ensure compatibility of communications.  However, setting this
-       *                   too low will mean you lose out on the benefit of improvements in newer versions of the marshaller."*/
+      /**
+       * @configRef desc="Largest allowable version to use when marshalling internal state.  Set this to the lowest
+       * version cache instance in your cluster to ensure compatibility of communications.  However, setting this too
+       * low will mean you lose out on the benefit of improvements in newer versions of the marshaller."
+       */
       protected String version = Version.getMajorVersion();
 
       public SerializationType() {
@@ -634,27 +698,37 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    }
 
    /**
-    * @configRef name="globalJmxStatistics",desc="This element specifies whether global statistics are gathered and 
-    *            reported via JMX for all caches under this cache manager."
+    * @configRef name="globalJmxStatistics",desc="This element specifies whether global statistics are gathered and
+    * reported via JMX for all caches under this cache manager."
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    public static class GlobalJmxStatisticsType extends AbstractConfigurationBeanWithGCR {
 
-      /** The serialVersionUID */
+      /**
+       * The serialVersionUID
+       */
       private static final long serialVersionUID = 6639689526822921024L;
 
-      /** @configRef desc="Toggle to enable/disable global statistics being exported via JMX." */
+      /**
+       * @configRef desc="Toggle to enable/disable global statistics being exported via JMX."
+       */
       protected Boolean enabled = false;
 
-      /** @configRef desc="JMX domain name where all relevant JMX exposed objects will be bound" */
+      /**
+       * @configRef desc="JMX domain name where all relevant JMX exposed objects will be bound"
+       */
       protected String jmxDomain = "infinispan";
 
-      /** @configRef desc="Fully qualified name of class that will attempt to locate a JMX MBean server to bind to" */
+      /**
+       * @configRef desc="Fully qualified name of class that will attempt to locate a JMX MBean server to bind to"
+       */
       protected String mBeanServerLookup = PlatformMBeanServerLookup.class.getName();
 
-      /** @configRef desc="If true, multiple cache manager instances could be configured under the same configured 
-       *            JMX domain. Each cache manager will in practice use a different JMX domain that has been 
-       *            calculated based on the configured one by adding an incrementing index to it." */
+      /**
+       * @configRef desc="If true, multiple cache manager instances could be configured under the same configured JMX
+       * domain. Each cache manager will in practice use a different JMX domain that has been calculated based on the
+       * configured one by adding an incrementing index to it."
+       */
       protected Boolean allowDuplicateDomains = false;
 
       @XmlAttribute
@@ -687,19 +761,23 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    }
 
    /**
-    * 
-    * @configRef name="shutdown",desc=" This element specifies behavior when the JVM running the cache instance shuts down."
-    */   
+    * @configRef name="shutdown",desc=" This element specifies behavior when the JVM running the cache instance shuts
+    * down."
+    */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    public static class ShutdownType extends AbstractConfigurationBeanWithGCR {
 
-      /** The serialVersionUID */
+      /**
+       * The serialVersionUID
+       */
       private static final long serialVersionUID = 3427920991221031456L;
 
-      /** @configRef desc="Behavior of the JVM shutdown hook registered by the cache. The options available are: 
-       *         DEFAULT - A shutdown hook is registered even if no MBean server (apart from the JDK default) is detected.
-       *         REGISTER - Forces the cache to register a shutdown hook even if an MBean server is detected.
-       *         DONT_REGISTER - Forces the cache NOT to register a shutdown hook, even if no MBean server is detected.*/
+      /**
+       * @configRef desc="Behavior of the JVM shutdown hook registered by the cache. The options available are: DEFAULT
+       * - A shutdown hook is registered even if no MBean server (apart from the JDK default) is detected. REGISTER -
+       * Forces the cache to register a shutdown hook even if an MBean server is detected. DONT_REGISTER - Forces the
+       * cache NOT to register a shutdown hook, even if no MBean server is detected.
+       */
       protected ShutdownHookBehavior hookBehavior = ShutdownHookBehavior.DEFAULT;
 
       @XmlAttribute
@@ -714,9 +792,11 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    }
 }
 
-abstract class AbstractConfigurationBeanWithGCR extends AbstractConfigurationBean{
+abstract class AbstractConfigurationBeanWithGCR extends AbstractConfigurationBean {
 
-   /** The serialVersionUID */
+   /**
+    * The serialVersionUID
+    */
    private static final long serialVersionUID = -5124687543159561028L;
 
    GlobalComponentRegistry gcr = null;
@@ -734,16 +814,16 @@ abstract class AbstractConfigurationBeanWithGCR extends AbstractConfigurationBea
 }
 
 class PropertiesType {
-    
+
    @XmlElement(name = "property")
    Property properties[];
 }
 
 class Property {
-   
+
    @XmlAttribute
    String name;
-   
+
    @XmlAttribute
    String value;
 }

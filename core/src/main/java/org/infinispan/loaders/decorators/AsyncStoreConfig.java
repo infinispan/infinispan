@@ -1,12 +1,12 @@
 package org.infinispan.loaders.decorators;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlAttribute;
-
 import org.infinispan.config.AbstractNamedCacheConfigurationBean;
 import org.infinispan.config.ConfigurationBeanVisitor;
 import org.infinispan.config.Dynamic;
+
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
 
 /**
  * Configuration for the async cache loader
@@ -17,7 +17,8 @@ import org.infinispan.config.Dynamic;
  * provide meta data for configuration file XML schema generation. Please modify these annotations
  * and Java element types they annotate with utmost understanding and care.
  *
- * @configRef name="async",parentName="loader",desc="Configuration for the async cache loader."
+ * @configRef name="async",parentName="loader",desc="Configuration for the async cache loader.  If enabled, this provides
+ *                   you with asynchronous writes to the cache store, giving you 'write-behind' caching."
  *
  * @author Manik Surtani
  * @author Vladimir Blagojevic
@@ -35,9 +36,9 @@ public class AsyncStoreConfig extends AbstractNamedCacheConfigurationBean {
    /** @configRef desc="Size of the thread pool whose threads are responsible for applying the modifications." */
    protected Integer threadPoolSize = 1;
 
-   /** @configRef desc="Lock timeout for access to map containing latest state." */
+   /** @configRef desc="Timeout to acquire the lock which guards the state to be flushed to the cache store periodically." */
    @Dynamic
-   protected Long mapLockTimeout = 5000L;
+   protected Long flushLockTimeout = 5000L;
 
    @XmlAttribute
    public Boolean isEnabled() {
@@ -60,13 +61,13 @@ public class AsyncStoreConfig extends AbstractNamedCacheConfigurationBean {
    }
 
    @XmlAttribute
-   public Long getMapLockTimeout() {
-      return mapLockTimeout;
+   public Long getFlushLockTimeout() {
+      return flushLockTimeout;
    }
 
-   public void setMapLockTimeout(Long stateLockTimeout) {
-      testImmutability("mapLockTimeout");
-      this.mapLockTimeout = stateLockTimeout;
+   public void setFlushLockTimeout(Long stateLockTimeout) {
+      testImmutability("flushLockTimeout");
+      this.flushLockTimeout = stateLockTimeout;
    }   
 
    @Override

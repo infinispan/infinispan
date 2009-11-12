@@ -1,11 +1,11 @@
 package org.infinispan.loaders.decorators;
 
+import org.infinispan.config.AbstractNamedCacheConfigurationBean;
+import org.infinispan.config.ConfigurationBeanVisitor;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
-
-import org.infinispan.config.AbstractNamedCacheConfigurationBean;
-import org.infinispan.config.ConfigurationBeanVisitor;
 
 /**
  * Configuration for a singleton store
@@ -17,7 +17,7 @@ import org.infinispan.config.ConfigurationBeanVisitor;
  * and Java element types they annotate with utmost understanding and care.
  *
  * @configRef name="singletonStore",desc="SingletonStore is a delegating cache store used for situations when only one 
- * instance should interact with the underlying store. The coordinator of the cluster will be responsible for 
+ * instance in a cluster should interact with the underlying store. The coordinator of the cluster will be responsible for
  * the underlying CacheStore. SingletonStore is a simply facade to a real CacheStore implementation. It always 
  * delegates reads to the real CacheStore."
  *

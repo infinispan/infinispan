@@ -164,7 +164,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert csConf.getSingletonStoreConfig().getPushStateTimeout() == 20000;
       assert csConf.getSingletonStoreConfig().isPushStateWhenCoordinator() == true;
       assert csConf.getAsyncStoreConfig().getThreadPoolSize() == 5;
-      assert csConf.getAsyncStoreConfig().getMapLockTimeout() == 15000;
+      assert csConf.getAsyncStoreConfig().getFlushLockTimeout() == 15000;
       assert csConf.getAsyncStoreConfig().isEnabled();
 
       c = namedCaches.get("withouthJmxEnabled");
@@ -294,7 +294,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert csConf.getSingletonStoreConfig().getPushStateTimeout() == 254L;
       assert csConf.getSingletonStoreConfig().isPushStateWhenCoordinator() == true;
       assert csConf.getAsyncStoreConfig().getThreadPoolSize() == 7;
-      assert csConf.getAsyncStoreConfig().getMapLockTimeout() == 15000;
+      assert csConf.getAsyncStoreConfig().getFlushLockTimeout() == 15000;
       assert csConf.getAsyncStoreConfig().isEnabled();
    }
 }
