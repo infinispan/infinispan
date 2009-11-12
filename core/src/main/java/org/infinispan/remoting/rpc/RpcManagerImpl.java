@@ -347,14 +347,24 @@ public class RpcManagerImpl implements RpcManager {
    }
 
    @ManagedAttribute(description = "Successful replications as a ratio of total replications")
-   @Metric(displayName = "Successful replication ratio", units = Units.PERCENTAGE, displayType = DisplayType.SUMMARY)
    public String getSuccessRatio() {
       if (replicationCount.get() == 0 || !statisticsEnabled) {
          return "N/A";
       }
-      double totalCount = replicationCount.get() + replicationFailures.get();
-      double ration = (double) replicationCount.get() / totalCount * 100d;
+      double ration = calculateSuccessRatio() * 100d;
       return NumberFormat.getInstance().format(ration) + "%";
+   }
+
+   @ManagedAttribute(description = "Successful replications as a ratio of total replications in numeric double format")
+   @Metric(displayName = "Successful replication ratio", units = Units.PERCENTAGE, displayType = DisplayType.SUMMARY)
+   public double getSuccessRatioFloatingPoint() {
+      if (replicationCount.get() == 0 || !statisticsEnabled) return 0;
+      return calculateSuccessRatio();
+   }
+
+   private double calculateSuccessRatio() {
+      double totalCount = replicationCount.get() + replicationFailures.get();
+      return replicationCount.get() / totalCount;
    }
 
    @ManagedAttribute(description = "The average time spent in the transport layer, in milliseconds")
