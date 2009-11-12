@@ -253,7 +253,7 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
                   sb.append("<td>").append("null").append("</td>\n");
                }
             } catch (Exception e) {
-               debug("Caught exception!", 2);
+               debug("Caught exception, bean is " + bean.getName() + ", looking for field " + a.getName() + ", field " + field, 2);               
                e.printStackTrace();
                sb.append("<td>").append("N/A").append("</td>\n");
             }
@@ -358,9 +358,11 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
          ClassDoc classDoc = rootDoc.classNamed(c.getName());
          for (FieldDoc fd : classDoc.fields()) {
             for (Tag t : fd.tags(CONFIG_REF)) {
-               if (t.text().startsWith(fieldName)) {
+                Map<String, String> m = parseTag(t.text().trim());
+                String field = m.get("name");               
+                if (field != null && field.startsWith(fieldName)) {
                   return findFieldRecursively(c, fd.name());
-               }
+                }
             }
          }
          if (!c.equals(Object.class))

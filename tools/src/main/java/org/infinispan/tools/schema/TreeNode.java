@@ -22,6 +22,7 @@
 package org.infinispan.tools.schema;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -37,7 +38,7 @@ import com.sun.xml.xsom.XSComplexType;
  * @since 4.0
  */
 @SuppressWarnings("restriction")
-public class TreeNode implements Iterable<TreeNode> {
+public class TreeNode implements Iterable<TreeNode>, Comparable<TreeNode> {
    private final String name;
    private TreeNode parent;
    private final Set<TreeNode> children = new HashSet<TreeNode>();
@@ -135,6 +136,11 @@ public class TreeNode implements Iterable<TreeNode> {
       return this.parent.name != null && tn.parent != null
                && this.parent.name.equals(tn.parent.name) && this.name.equals(tn.name);
    }
+   
+   @Override
+   public int compareTo(TreeNode o) {       
+       return name.compareTo(o.getName());
+   }
 
    public int hashCode() {
       int result = 17;
@@ -157,6 +163,7 @@ public class TreeNode implements Iterable<TreeNode> {
          super();
          nodes = new ArrayList<TreeNode>();
          preOrderTraverse(TreeNode.this);
+         Collections.sort(nodes);
          i = nodes.iterator();
       }
 
