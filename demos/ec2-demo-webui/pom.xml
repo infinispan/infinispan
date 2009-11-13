@@ -10,16 +10,13 @@
 		<relativePath>../../parent/pom.xml</relativePath>
 	</parent>
 	
-	<artifactId>infinispan-ec2-demo</artifactId>
+	
+	<artifactId>infinispan-ec2-demo-webui</artifactId>
 	<version>4.0.0-SNAPSHOT</version>
 	<name>Infinispan EC2 Demo</name>
 	<description>Infinispan - EC2 Demo</description>
-	<repositories>
-		<repository>
-			<id>codehaus.m2.snapshots</id>
-			<url>http://snapshots.repository.codehaus.org</url>
-		</repository>
-	</repositories>
+	<packaging>war</packaging>
+	
 	<dependencies>
 		<dependency>
 			<groupId>${project.groupId}</groupId>
@@ -27,24 +24,21 @@
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>com.martiansoftware</groupId>
-			<artifactId>jsap</artifactId>
-			<version>2.1</version>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>infinispan-ec2-demo</artifactId>
+			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>org.milyn</groupId>
-			<artifactId>milyn-smooks-javabean</artifactId>
-			<version>1.2.2</version>
+			<groupId>javax.servlet</groupId>
+			<artifactId>servlet-api</artifactId>
+			<version>2.5</version>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.milyn</groupId>
-			<artifactId>milyn-smooks-csv</artifactId>
-			<version>1.2.2</version>
-		</dependency>
-		<dependency>
-			<groupId>commons-logging</groupId>
-			<artifactId>commons-logging</artifactId>
-			<version>1.1</version>
+			<groupId>log4j</groupId>
+			<artifactId>log4j</artifactId>
+			<version>1.2.14</version>
+			<scope>provided</scope>
 		</dependency>
 	</dependencies>
 </project>
