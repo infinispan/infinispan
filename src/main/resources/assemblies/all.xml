@@ -122,6 +122,7 @@
             <include>org.infinispan:infinispan-query</include>
             <include>org.infinispan:infinispan-server-rest</include>
             <include>org.infinispan:infinispan-lucene-directory</include>
+            <include>org.infinispan:infinispan-lucene-demo</include>
          </includes>
          <sources>
             <includeModuleDirectory>false</includeModuleDirectory>
@@ -184,7 +185,7 @@
 
          </sources>
 
-         <!-- All modules except core and REST server -->
+         <!-- All modules except core and Webapp modules -->
          <binaries>
 
             <outputDirectory>modules/${module.basedir.name}</outputDirectory>
@@ -198,6 +199,7 @@
                   <excludes>
                      <exclude>org.infinispan:infinispan-core</exclude>
                      <exclude>org.infinispan:infinispan-server-rest</exclude>
+                     <exclude>org.infinispan:infinispan-ec2-demo</exclude>                     
                   </excludes>
                   <useTransitiveDependencies>true</useTransitiveDependencies>
                   <useTransitiveFiltering>true</useTransitiveFiltering>
@@ -221,6 +223,7 @@
             <include>org.infinispan:infinispan-tree</include>
             <include>org.infinispan:infinispan-query</include>
             <include>org.infinispan:infinispan-lucene-directory</include>
+            <include>org.infinispan:infinispan-lucene-demo</include>            
          </includes>         
          <binaries>
             <attachmentClassifier>tests</attachmentClassifier>
