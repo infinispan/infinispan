@@ -1,10 +1,12 @@
 package org.infinispan.ec2demo.web;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import org.infinispan.Cache;
+import org.infinispan.ec2demo.CacheBuilder;
+import org.infinispan.ec2demo.Influenza_N_P_CR_Element;
+import org.infinispan.ec2demo.Nucleotide_Protein_Element;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletConfig;
@@ -12,19 +14,17 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.apache.log4j.*;
-
-import org.infinispan.Cache;
-import org.infinispan.ec2demo.CacheBuilder;
-import org.infinispan.ec2demo.Influenza_N_P_CR_Element;
-import org.infinispan.ec2demo.Nucleotide_Protein_Element;
-import org.infinispan.remoting.transport.Address;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Servlet implementation class CacheSearchServlet
  */
 public class CacheSearchServlet extends HttpServlet {
-	private Logger myLogger = Logger.getLogger(CacheSearchServlet.class);
+	private Log myLogger = LogFactory.getLog(CacheSearchServlet.class);
 	private static final long serialVersionUID = 1L;
 	private Cache<String, Influenza_N_P_CR_Element> influenzaCache;
 	private Cache<String, Nucleotide_Protein_Element> proteinCache;

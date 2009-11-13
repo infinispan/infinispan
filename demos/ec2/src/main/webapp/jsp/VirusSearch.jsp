@@ -41,7 +41,7 @@
 </table>
 
 <h1>Enter Virus GBAN</h1>
-<form action="/infinispan-ec2-demo-webui/CacheSearchServlet" method="POST">
+<form action="/infinispan-ec2-demo/CacheSearchServlet" method="POST">
 Genbank Accession Number <INPUT TYPE="TEXT" NAME="vGBAN"> <INPUT
 	type="submit" value="Go" /></form>
 </body>
