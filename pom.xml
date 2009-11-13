@@ -165,6 +165,9 @@ pageTracker._trackPageview();
                </plugin>
             </plugins>
          </build>
+         <properties>
+            <maven.test.skip.exec>true</maven.test.skip.exec>
+         </properties>
       </profile>
 
       <!-- TODO somehow combine this with the 'distribution' profile so all docs are built together -->
@@ -210,6 +213,9 @@ pageTracker._trackPageview();
                </plugin>
             </plugins>
          </build>
+         <properties>
+            <maven.test.skip.exec>true</maven.test.skip.exec>
+         </properties>
       </profile>
 
       <!-- TODO somehow combine this with the 'distribution' profile so all docs are built together -->
@@ -274,6 +280,9 @@ pageTracker._trackPageview();
                </plugin>
             </plugins>
          </build>
+         <properties>
+            <maven.test.skip.exec>true</maven.test.skip.exec>
+         </properties>
       </profile>
 
    </profiles>
