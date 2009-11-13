@@ -165,7 +165,7 @@
                <property name="location" value="${java.io.tmpdir}"/>
             </properties>
             <singletonStore enabled="true" pushStateWhenCoordinator="true" pushStateTimeout="20000"/>
-            <async enabled="true" mapLockTimeout="15000" threadPoolSize="5"/>
+            <async enabled="true" flushLockTimeout="15000" threadPoolSize="5"/>
          </loader>
       </loaders>
 

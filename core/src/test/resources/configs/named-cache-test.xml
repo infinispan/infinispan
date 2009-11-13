@@ -106,7 +106,7 @@
                <property name="location" value="/tmp/FileCacheStore-Location"/>
             </properties>
             <singletonStore enabled="true" pushStateWhenCoordinator="true" pushStateTimeout="20000"/>
-            <async enabled="true" mapLockTimeout="15000" threadPoolSize="5"/>
+            <async enabled="true" flushLockTimeout="15000" threadPoolSize="5"/>
          </loader>
       </loaders>
    </namedCache>
@@ -158,7 +158,7 @@
              <property name="location" value="${java.io.tmpdir}"/>
             </properties>
            <singletonStore enabled="true" pushStateWhenCoordinator="true" pushStateTimeout="20000"/> 
-            <async enabled="true" threadPoolSize="10" mapLockTimeout="10000"/> 
+            <async enabled="true" threadPoolSize="10" flushLockTimeout="10000"/> 
        </loader>
      </loaders>   
    </namedCache>
@@ -171,7 +171,7 @@
       Here we use existing class so we can actually load it
       -->   
       <customInterceptors>
-         <interceptor position="FIRST" class="org.infinispan.interceptors.CallInterceptor"></interceptor>
+         <interceptor position="FIRST" class="org.infinispan.interceptors.CallInterceptor" />
          <interceptor position="LAST" class="org.infinispan.interceptors.CallInterceptor"/>
          <interceptor index="3" class="org.infinispan.interceptors.CallInterceptor"/>
          <interceptor before="org.infinispan.interceptors.CallInterceptor" class="org.infinispan.interceptors.CallInterceptor"/>

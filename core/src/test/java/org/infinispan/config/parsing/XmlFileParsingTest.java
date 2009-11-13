@@ -1,17 +1,12 @@
 package org.infinispan.config.parsing;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Map;
-
 import org.infinispan.Version;
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationValidatingVisitor;
 import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.config.InfinispanConfiguration;
 import org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior;
+import org.infinispan.config.InfinispanConfiguration;
 import org.infinispan.distribution.DefaultConsistentHash;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.loaders.file.FileCacheStoreConfig;
@@ -19,6 +14,11 @@ import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Map;
 
 @Test(groups = "unit", testName = "config.parsing.XmlFileParsingTest")
 public class XmlFileParsingTest extends AbstractInfinispanTest {
@@ -292,7 +292,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert csConf.isPurgeOnStartup();
       assert csConf.getLocation().equals("/tmp/FileCacheStore-Location");
       assert csConf.getSingletonStoreConfig().getPushStateTimeout() == 254L;
-      assert csConf.getSingletonStoreConfig().isPushStateWhenCoordinator() == true;
+      assert csConf.getSingletonStoreConfig().isPushStateWhenCoordinator();
       assert csConf.getAsyncStoreConfig().getThreadPoolSize() == 7;
       assert csConf.getAsyncStoreConfig().getFlushLockTimeout() == 15000;
       assert csConf.getAsyncStoreConfig().isEnabled();
