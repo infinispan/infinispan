@@ -32,6 +32,7 @@
       <module>jopr-plugin</module>
       <module>demos/gui</module>
       <module>demos/ec2</module>
+      <module>demos/ec2-demo-webui</module>
       <module>tools</module>
    </modules>
 
