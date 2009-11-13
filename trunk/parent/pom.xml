@@ -1,0 +1,397 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+   <modelVersion>4.0.0</modelVersion>
+   <groupId>org.infinispan</groupId>
+   <artifactId>infinispan-parent</artifactId>
+   <version>4.0.0-SNAPSHOT</version>
+   <name>Infinispan Common Parent</name>
+   <description>Infinispan common parent POM module</description>
+   <url>http://www.infinispan.org</url>
+   <packaging>pom</packaging>
+
+   <organization>
+      <name>JBoss, a division of Red Hat</name>
+      <url>http://www.jboss.org</url>
+   </organization>
+
+   <licenses>
+      <license>
+         <name>GNU Lesser General Public License</name>
+         <url>http://www.gnu.org/copyleft/lesser.html</url>
+         <distribution>repo</distribution>
+      </license>
+   </licenses>
+
+   <scm>
+      <connection>scm:svn:http://anonsvn.jboss.org/repos/infinispan</connection>
+      <developerConnection>scm:svn:https://svn.jboss.org/repos/infinispan</developerConnection>
+      <url>http://viewvc.jboss.org/cgi-bin/viewvc.cgi/infinispan/</url>
+   </scm>
+
+   <issueManagement>
+      <system>jira</system>
+      <url>https://jira.jboss.com/jira/browse/ISPN</url>
+   </issueManagement>
+
+   <ciManagement>
+      <system>hudson</system>
+      <url>http://hudson.jboss.org/hudson/view/Infinispan</url>
+      <notifiers>
+         <notifier>
+            <type>mail</type>
+            <address>infinispan-commits@lists.jboss.org</address>
+         </notifier>
+      </notifiers>
+   </ciManagement>
+
+   <mailingLists>
+      <mailingList>
+         <name>Infinispan Commit Notificatons</name>
+         <post>infinispan-commits@lists.jboss.org</post>
+         <subscribe>https://lists.jboss.org/mailman/listinfo/infinispan-commits</subscribe>
+         <unsubscribe>https://lists.jboss.org/mailman/listinfo/infinispan-commits</unsubscribe>
+         <archive>http://lists.jboss.org/pipermail/infinispan-commits/</archive>
+      </mailingList>
+      <mailingList>
+         <name>Infinispan Developers</name>
+         <post>infinispan-dev@lists.jboss.org</post>
+         <subscribe>https://lists.jboss.org/mailman/listinfo/infinispan-dev</subscribe>
+         <unsubscribe>https://lists.jboss.org/mailman/listinfo/infinispan-dev</unsubscribe>
+         <archive>http://lists.jboss.org/pipermail/infinispan-dev/</archive>
+      </mailingList>
+   </mailingLists>
+
+   <properties>
+      <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+      <defaultTestGroup>functional,unit</defaultTestGroup>
+   </properties>
+
+
+   <dependencies>
+      <dependency>
+         <groupId>org.testng</groupId>
+         <artifactId>testng</artifactId>
+         <version>5.9</version>
+         <scope>test</scope>
+         <classifier>jdk15</classifier>
+      </dependency>
+      <dependency>
+         <groupId>net.jcip</groupId>
+         <artifactId>jcip-annotations</artifactId>
+         <version>1.0</version>
+         <optional>true</optional>
+      </dependency>
+      <dependency>
+         <groupId>org.easymock</groupId>
+         <artifactId>easymockclassextension</artifactId>
+         <version>2.4</version>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.easymock</groupId>
+         <artifactId>easymock</artifactId>
+         <version>2.4</version>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>jboss.jbossts</groupId>
+         <artifactId>jbossjta</artifactId>
+         <version>4.4.0.GA</version>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>jboss.jbossts</groupId>
+         <artifactId>jbossjts</artifactId>
+         <version>4.6.1.GA</version>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>commons-logging</groupId>
+         <artifactId>commons-logging</artifactId>
+         <version>1.1</version>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>jboss.jbossts</groupId>
+         <artifactId>jbossts-common</artifactId>
+         <version>4.6.1.GA</version>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>log4j</groupId>
+         <artifactId>log4j</artifactId>
+         <version>1.2.14</version>
+      </dependency>
+
+      <!-- used to serialize non-serializable objects for a dummy marshaller -->
+      <dependency>
+         <groupId>com.thoughtworks.xstream</groupId>
+         <artifactId>xstream</artifactId>
+         <version>1.3.1</version>
+         <scope>test</scope>
+      </dependency>
+   </dependencies>
+
+   <build>
+      <plugins>
+         <!-- enforce java 1.6 and maven 2.1.0 -->
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-enforcer-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>enforce-java</id>
+                  <goals>
+                     <goal>enforce</goal>
+                  </goals>
+                  <configuration>
+                     <rules>
+                        <requireJavaVersion>
+                           <version>[1.6,)</version>
+                        </requireJavaVersion>
+                        <requireMavenVersion>
+                           <version>[2.1.0,)</version>
+                        </requireMavenVersion>
+                     </rules>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+         <!-- by default, compile to JDK 1.6 compatibility (individual modules and/or user can override) -->
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <configuration>
+               <source>1.6</source>
+               <target>1.6</target>
+               <encoding>UTF-8</encoding>
+            </configuration>
+         </plugin>
+
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-resources-plugin</artifactId>
+            <configuration>
+               <encoding>UTF-8</encoding>
+            </configuration>
+         </plugin>
+
+         <!-- ensure parallel test execution -->
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>2.4.3-JBOSS</version>
+            <configuration>
+               <parallel>tests</parallel>
+               <threadCount>10</threadCount>
+               <forkMode>none</forkMode>
+               <systemProperties>
+                  <property>
+                     <name>protocol.stack</name>
+                     <value>${protocol.stack}</value>
+                  </property>
+                  <property>
+                     <name>bind.address</name>
+                     <value>127.0.0.1</value>
+                  </property>
+                  <property>
+                     <name>java.net.preferIPv4Stack</name>
+                     <value>true</value>
+                  </property>
+                  <property>
+                     <name>infinispan.marshaller.class</name>
+                     <value>${marshaller.class}</value>
+                  </property>
+               </systemProperties>
+               <trimStackTrace>false</trimStackTrace>
+               <properties>
+                  <property>
+                     <name>listener</name>
+                     <value>org.infinispan.test.testng.UnitTestTestNGListener</value>
+                  </property>
+               </properties>
+            </configuration>
+         </plugin>
+         <!-- eclipse project file generation -->
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-eclipse-plugin</artifactId>
+            <configuration>
+               <downloadSources>true</downloadSources>
+               <buildOutputDirectory>${basedir}/eclipse-output</buildOutputDirectory>
+            </configuration>
+         </plugin>
+         <!-- IntelliJ project file generation -->
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-idea-plugin</artifactId>
+            <configuration>
+               <downloadSources>true</downloadSources>
+            </configuration>
+         </plugin>
+         <!-- Make sure we generate src jars too -->
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <inherited>true</inherited>
+            <executions>
+               <execution>
+                  <id>attach-sources</id>
+                  <goals>
+                     <goal>jar</goal>
+                  </goals>
+               </execution>
+            </executions>
+         </plugin>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-jar-plugin</artifactId>
+            <configuration>
+               <archive>
+                  <manifest>
+                     <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                     <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                     <mainClass>org.infinispan.Version</mainClass>
+                  </manifest>
+               </archive>
+               <excludes>
+                  <exclude>**/log4j.xml</exclude>
+               </excludes>
+            </configuration>
+            <executions>
+               <execution>
+                  <id>build-test-jar</id>
+                  <goals>
+                     <goal>test-jar</goal>
+                  </goals>
+                  <configuration>
+                     <archive>
+                        <manifest>
+                           <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                           <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                        </manifest>
+                     </archive>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+      </plugins>
+      <finalName>${artifactId}</finalName>
+   </build>
+
+   <reporting>
+      <plugins>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-report-plugin</artifactId>
+            <version>2.4.3-JBOSS</version>
+         </plugin>
+         <!-- Findbugs report -->
+         <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>findbugs-maven-plugin</artifactId>
+            <version>1.2-SNAPSHOT</version>
+            <configuration>
+               <onlyAnalyze>org.infinispan.*</onlyAnalyze>
+               <xmlOutput>true</xmlOutput>
+               <xmlOutputDirectory>target</xmlOutputDirectory>
+            </configuration>
+         </plugin>
+      </plugins>
+   </reporting>
+
+   <repositories>
+      <!-- basic JBoss repository -->
+      <repository>
+         <id>repository.jboss.org</id>
+         <url>http://repository.jboss.org/maven2</url>
+      </repository>
+      <repository>
+         <id>snapshots.jboss.org</id>
+         <url>http://snapshots.jboss.org/maven2</url>
+      </repository>
+      <repository>
+         <id>scala-tools.org</id>
+         <name>Scala-tools Maven2 Repository</name>
+         <url>http://scala-tools.org/repo-releases</url>
+      </repository>
+   </repositories>
+
+   <pluginRepositories>
+      <pluginRepository>
+         <id>Main Maven Repo</id>
+         <url>http://repo1.maven.org/maven2/</url>
+      </pluginRepository>
+      <pluginRepository>
+         <id>snapshots.repository.codehaus.org</id>
+         <url>http://snapshots.repository.codehaus.org</url>
+      </pluginRepository>
+      <pluginRepository>
+         <id>repository.jboss.org</id>
+         <url>http://repository.jboss.org/maven2</url>
+      </pluginRepository>
+      <pluginRepository>
+         <id>snapshots.jboss.org</id>
+         <url>http://snapshots.jboss.org/maven2</url>
+      </pluginRepository>
+      <pluginRepository>
+         <id>scala-tools.org</id>
+         <name>Scala-tools Maven2 Repository</name>
+         <url>http://scala-tools.org/repo-releases</url>
+      </pluginRepository>
+   </pluginRepositories>
+
+   <distributionManagement>
+      <repository>
+         <!-- Copy the dist to the local checkout of the JBoss maven2 repo ${maven.repository.root} -->
+         <!-- It is anticipated that ${maven.repository.root} be set in user's settings.xml -->
+         <id>repository.jboss.org</id>
+         <url>file://${maven.repository.root}</url>
+      </repository>
+      <snapshotRepository>
+         <id>snapshots.jboss.org</id>
+         <name>JBoss Snapshot Repository</name>
+         <url>dav:https://snapshots.jboss.org/maven2</url>
+      </snapshotRepository>
+   </distributionManagement>
+
+
+   <profiles>
+      <profile>
+         <id>test-hudson</id>
+         <activation>
+            <activeByDefault>true</activeByDefault>
+         </activation>
+         <properties>
+            <defaultTestGroup>functional,unit</defaultTestGroup>
+            <protocol.stack>tcp</protocol.stack>
+         </properties>
+      </profile>
+      <profile>
+         <id>test-functional</id>
+         <properties>
+            <defaultTestGroup>functional</defaultTestGroup>
+            <protocol.stack>tcp</protocol.stack>
+         </properties>
+      </profile>
+      <profile>
+         <id>test-unit</id>
+         <properties>
+            <defaultTestGroup>unit</defaultTestGroup>
+         </properties>
+      </profile>
+      <profile>
+         <id>test-jgroups</id>
+         <properties>
+            <defaultTestGroup>jgroups</defaultTestGroup>
+         </properties>
+      </profile>
+      <profile>
+         <id>test-transaction</id>
+         <properties>
+            <defaultTestGroup>transaction</defaultTestGroup>
+         </properties>
+      </profile>
+   </profiles>
+</project>

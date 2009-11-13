@@ -1,0 +1,153 @@
+package org.infinispan.loaders.file;
+
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.io.UnclosableObjectInputStream;
+import org.infinispan.io.UnclosableObjectOutputStream;
+import org.infinispan.loaders.BaseCacheStoreTest;
+import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.loaders.CacheStore;
+import org.infinispan.loaders.bucket.Bucket;
+import org.infinispan.marshall.Marshaller;
+import org.infinispan.test.TestingUtil;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.HashSet;
+import java.util.Set;
+
+@Test(groups = "unit", testName = "loaders.file.FileCacheStoreTest")
+public class FileCacheStoreTest extends BaseCacheStoreTest {
+
+   private FileCacheStore fcs;
+   private String tmpDirectory;
+
+   @BeforeTest
+   @Parameters({"basedir"})
+   protected void setUpTempDir(String basedir) {
+      tmpDirectory = basedir + TestingUtil.TEST_PATH + File.separator + getClass().getSimpleName();
+   }
+
+   @AfterClass
+   protected void clearTempDir() {
+      TestingUtil.recursiveFileRemove(tmpDirectory);
+      new File(tmpDirectory).mkdirs();
+   }
+
+   protected CacheStore createCacheStore() throws CacheLoaderException {
+      clearTempDir();
+      fcs = new FileCacheStore();
+      FileCacheStoreConfig cfg = new FileCacheStoreConfig();
+      cfg.setLocation(tmpDirectory);
+      cfg.setPurgeSynchronously(true); // for more accurate unit testing
+      fcs.init(cfg, getCache(), getMarshaller());
+      fcs.start();
+      return fcs;
+   }
+
+   @Override
+   public void testPreload() throws CacheLoaderException {
+      super.testPreload();
+   }
+
+   @Override
+   public void testPurgeExpired() throws Exception {
+      long lifespan = 1000;
+      cs.store(InternalEntryFactory.create("k1", "v1", lifespan));
+      cs.store(InternalEntryFactory.create("k2", "v2", lifespan));
+      cs.store(InternalEntryFactory.create("k3", "v3", lifespan));
+      assert cs.containsKey("k1");
+      assert cs.containsKey("k2");
+      assert cs.containsKey("k3");
+      Thread.sleep(lifespan + 100);
+      cs.purgeExpired();
+      FileCacheStore fcs = (FileCacheStore) cs;
+      assert fcs.load("k1") == null;
+      assert fcs.load("k2") == null;
+      assert fcs.load("k3") == null;
+   }
+
+   public void testBucketRemoval() throws Exception {
+      Bucket b;
+      InternalCacheEntry se = InternalEntryFactory.create("test", "value");
+      fcs.store(se);
+      b = fcs.loadBucketContainingKey("test");
+      assert b != null;
+
+      assert !b.getEntries().isEmpty();
+
+      assert new File(fcs.root, b.getBucketName()).exists();
+
+      b.removeEntry("test");
+      assert b.getEntries().isEmpty();
+
+      fcs.saveBucket(b);
+      assert !new File(fcs.root, b.getBucketName()).exists();
+   }
+
+   public void testToStream() throws Exception {
+      cs.store(InternalEntryFactory.create("k1", "v1", -1, -1));
+
+      Marshaller marshaller = getMarshaller();
+      ByteArrayOutputStream out = new ByteArrayOutputStream();
+      ObjectOutput oo = marshaller.startObjectOutput(out, false);
+      try {
+         cs.toStream(new UnclosableObjectOutputStream(oo));
+      } finally {
+         marshaller.finishObjectOutput(oo);
+         out.close();
+      }
+
+      ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
+      ObjectInput oi = marshaller.startObjectInput(in, false);
+      try {
+         assert oi.readInt() == 1 : "we have 3 different buckets";
+         assert oi.readObject().equals("k1".hashCode() + "");
+         assert oi.readInt() > 0; //size on disk
+      } finally {
+         marshaller.finishObjectInput(oi);
+      }
+   }
+   
+   public void testLongKeyValuesToStream() throws Exception {
+      String k1 = "SESSION_173";
+      String v1 = "@TSXMHVROYNOFCJVEUJQGBCENNQDEWSCYSOHECJOHEICBEIGJVTIBB@TVNCWLTQCGTEJ@NBJLTMVGXCHXTSVE@BCRYGWPRVLXOJXBRJDVNBVXPRTRLBMHPOUYQKDEPDSADUAWPFSIOCINPSSFGABDUXRMTMMJMRTGBGBOAMGVMTKUDUAJGCAHCYW@LAXMDSFYOSXJXLUAJGQKPTHUKDOXRWKEFIVRTH@VIMQBGYPKWMS@HPOESTPIJE@OTOTWUWIOBLYKQQPTNGWVLRRCWHNIMWDQNOO@JHHEVYVQEODMWKFKKKSWURVDLXPTFQYIHLIM@GSBFWMDQGDQIJONNEVHGQTLDBRBML@BEWGHOQHHEBRFUQSLB@@CILXEAVQQBTXSITMBXHMHORHLTJF@MKMHQGHTSENWILTAKCCPVSQIPBVRAFSSEXIOVCPDXHUBIBUPBSCGPRECXEPMQHRHDOHIHVBPNDKOVLPCLKAJMNOTSF@SRXYVUEMQRCXVIETXVHOVNGYERBNM@RIMGHC@FNTUXSJSKALGHAFHGTFEANQUMBPUYFDSGLUYRRFDJHCW@JBWOBGMGTITAICRC@TPVCRKRMFPUSRRAHI@XOYKVGPHEBQD@@APEKSBCTBKREWAQGKHTJ@IHJD@YFSRDQPA@HKKELIJGFDYFEXFCOTCQIHKCQBLVDFHMGOWIDOWMVBDSJQOFGOIAPURRHVBGEJWYBUGGVHE@PU@NMQFMYTNYJDWPIADNVNCNYCCCPGODLAO@YYLVITEMNNKIFSDXKORJYWMFGKNYFPUQIC@AIDR@IWXCVALQBDOXRWIBXLKYTWDNHHSCUROAU@HVNENDAOP@RPTRIGLLLUNDQIDXJDDNF@P@PA@FEIBQKSKFQITTHDYGQRJMWPRLQC@NJVNVSKGOGYXPYSQHKPALKLFWNAOSQFTLEPVOII@RPDNRCVRDUMMFIVSWGIASUBMTGQSDGB@TBBYECFBRBGILJFCJ@JIQIQRVJXWIPGNVXKYATSPJTIPGCMCNPOKNEHBNUIAEQFQTYVLGAR@RVWVA@RMPBX@LRLJUEBUWO@PKXNIP@FKIQSVWKNO@FOJWDSIOLXHXJFBQPPVKKP@YKXPOOMBTLXMEHPRLLSFSVGMPXXNBCYVVSPNGMFBJUDCVOVGXPKVNTOFKVJUJOSDHSCOQRXOKBVP@WCUUFGMJAUQ@GRAGXICFCFICBSNASUBPAFRIPUK@OXOCCNOGTTSFVQKBQNB@DWGVEFSGTAXAPLBJ@SYHUNXWXPMR@KPFAJCIXPDURELFYPMUSLTJSQNDHHKJTIWCGNEKJF@CUWYTWLPNHYPHXNOGLSICKEFDULIXXSIGFMCQGURSRTUJDKRXBUUXIDFECMPXQX@CVYLDABEMFKUGBTBNMNBPCKCHWRJKSOGJFXMFYLLPUVUHBCNULEFAXPVKVKQKYCEFRUYPBRBDBDOVYLIQMQBLTUK@PRDCYBOKJGVUADFJFAFFXKJTNAJTHISWOSMVAYLIOGIORQQWFAKNU@KHPM@BYKTFSLSRHBATQTKUWSFAQS@Y@QIKCUWQYTODBRCYYYIAFMDVRURKVYJXHNGVLSQQFCXKLNUPCTEJSWIJUBFELSBUHANELHSIWLVQSSAIJRUEDOHHX@CKEBPOJRLRHEPLENSCDGEWXRTVUCSPFSAJUXDJOIUWFGPKHBVRVDMUUCPUDKRKVAXPSOBOPKPRRLFCKTLH@VGWKERASJYU@JAVWNBJGQOVF@QPSGJVEPAV@NAD@@FQRYPQIOAURILWXCKINPMBNUHPUID@YDQBHWAVDPPWRFKKGWJQTI@@OPSQ@ROUGHFNHCJBDFCHRLRTEMTUBWVCNOPYXKSSQDCXTOLOIIOCXBTPAUYDICFIXPJRB@CHFNXUCXANXYKXAISDSSLJGQOLBYXWHG@@KPARPCKOXAYVPDGRW@LDCRQBNMJREHWDYMXHEXAJQKHBIRAVHJQIVGOIXNINYQMJBXKM@DXESMBHLKHVSFDLVPOSOVMLHPSHQYY@DNMCGGGAJMHPVDLBGJP@EVDGLYBMD@NWHEYTBPIBPUPYOPOJVV@IVJXJMHIWWSIRKUWSR@U@@TDVMG@GRXVLCNEIISEVIVPOMJHKOWMRMITYDUQASWJIKVNYUFQVDT@BHTOMFXVFRKAARLNOGX@ADWCKHOVEMIGBWXINCUXEMVHSJJQDU@INTHDJQPSAQNAYONDBBFYGBTNGUSJHRKLCPHQMNLDHUQJPLLCDVTYLXTHJCBUXCRDY@YI@IQDCLJBBJC@NXGANXFIWPPNFVTDJWQ@@BIYJONOFP@RHTQEYPVHPPUS@UUENSNNF@WVGTSAVKDSQNMHP@VJORGTVWXVBPWKQNRWLSQFSBMXQKWRYMXPAYREXYGONKEWJMBCSLB@KSHXMIWMSBDGQWPDMUGVNMEWKMJKQECIRRVXBPBLGAFTUFHYSHLF@TGYETMDXRFAXVEUBSTGLSMWJMXJWMDPPDAFGNBMTQEMBDLRASMUMU@QTCDCPEGODHESDQVEIQYBJJPFXDLWPUNFAREYCY@YDDSTMKWCANNPXF@@WLMEXRPUNTWNOX@YKFNNTGMXIBBDA@TYLPJFNFHPQKMSNCLBME@FBPOIYNSDFBLHITKIFEFNXXOJAAFMRTGPALOANXF@YPY@RYTVOW@AKNM@C@LJKGBJMUYGGTXRHQCPOLNOGPPS@YSKAJSTQHLRBXUACXJYBLJSEHDNMLLUBSOIHQUI@VUNF@XAVRXUCYNCBDDGUDNVRYP@TPFPKGVNPTEDOTTUUFKCHQ@WWASQXLCBHNRBVSD@NVYT@GJQYSQGYPJO@WSEYDVKCBWANAFUWLDXOQYCYP@BSJFCBTXGKUNWLWUCYL@TNOWGDFHQTWQVYLQBBRQVMGNDBVXEFXTMMVYSHNVTTQAJCHKULOAJUSGJRPHQFCROWE@OMFUVRKGCWED@IAQGRLADOJGQKLCL@FCKTSITGMJRCCMPLOS@ONPQWFUROXYAUJQXIYVDCYBPYHPYCXNCRKRKLATLWWXLBLNOPUJFUJEDOIRKS@MMYPXIJNXPFOQJCHSCBEBGDUQYXQAWEEJDOSINXYLDXUJCQECU@WQSACTDFLGELHPGDFVDXFSSFOSYDLHQFVJESNAVAHKTUPBTPLSFSHYKLEXJXGWESVQQUTUPU@QXRTIDQ@IXBBOYINNHPEMTPRVRNJPQJFACFXUBKXOFHQSPOTLCQ@PLWGEFNKYCYFMKWPFUP@GLHKNMASGIENCACUISTG@YNQCNSOSBKOIXORKSHEOXHSMJJRUICJTCK@PWFRBPLXU@MUEMPFGDLUJEKD@ROUFBLKATXUCHEAQHEYDLCFDIRJSAXTV@CYMPQNMLTMFAHPRBLNSCVFBJMKQLAHWYIOLRMTOY@@RNKTUXHFYUMHGKCCGNEOIOQCISJEHCEVTTWM@TLFRIFDREHFBTTDEJRUNTWAEETGSVDOR@@UQNKFERMBVFJBOAYHPOKMSMRIERDA@JXYSJ@ORER@MBAVWCVGFNA@FRRPQSIIOIUGAJKVQXGINUUKPJPLQRMHPUBETEEIMIBPM@PETR@XD@DOHGRIBVXKLXQWHUFMTWEDYWFWRLPGDS@TANUXGIDTRVXKVCVEXYRKXQCTI@WNSFRAHJJGG@NIPPAAOJXQRTCLBYKDA@FFGHNUIGBFKOQMEDUEFELFLNKPCHA@OXJJRYNPDFSXIFSJYTDMSSBHDPUSQQDAVD@JAAWJDSVTERAJBFEPVRWKMYAPISPWLDPSRE@UMRQLXERTWRDLQVMVCOM@NYPXFLWMWKALMQVNJ@HCTMMIOLRWBJHCYFLMM@IWXPSHRRUNICSSWHOQHUVJE@HKJAADLBTPVLDAKCHRSURJCAXYTMYKHQMWDAWWASUW@HWGBVPTRHJGDWOGHPCNWSXTNKWONQGEKDDWGCKWVSAD@YLCCENMCHALHVDYQW@NQGNCY@M@GGV@RIR@OUS@PQIJMCFEIMGPYBXYR@NSIAUEXT@MOCNWRMLYHUUAFJCCLLRNFGKLPPIIH@BYRME@UJAKIFHOV@ILP@BGXRNJBIBARSOIMTDSHMGPIGRJBGHYRYXPFUHVOOMCQFNLM@CNCBTGO@UKXBOICNVCRGHADYQVAMNSFRONJ@WITET@BSHMQLWYMVGMQJVSJOXOUJDSXYVVBQJSVGREQLIQKWC@BMDNONHXFYPQENSJINQYKHVCTUTG@QQYJKJURDCKJTUQAM@DWNXWRNILYVAAJ@IADBIXKEIHVXLXUVMGQPAQTWJCDMVDVYUDTXQTCYXDPHKBAGMTAMKEM@QNOQJBREXNWFCXNXRPGOGEIR@KQJIGXAWXLTNCX@ID@XNRNYGRF@QPNWEX@XH@XKSXLQTLQPFSHAHXJLHUTNQWFFAJYHBWIFVJELDPSPLRRDPPNXSBYBEREEELIWNVYXOXYJQAIGHALUAWNUSSNMBHBFLRMMTKEKNSINECUGWTDNMROXI@BJJXKSPIIIXOAJBFVSITQDXTODBGKEPJMWK@JOL@SWTCGSHCOPHECTPJFUXIHUOSVMUTNNSLLJDEOMAGIXEAAVILRMOJXVHHPNPUYYODMXYAYGHI@BUB@NLP@KNPCYFRWAFES@WISBACDSPELEVTJEBNRVENSXXEVDVC@RIDIDSBPQIQNNSRPS@HCJ@XPIOFDXHUBCNFQKHMUYLXW@LMFMALHLESSXCOULRWDTJIVKKTLGFE@HKGVKUGMVHWACQOTSVNWBNUUGTMSQEJ@DXJQQYPOWVRQNQKXSLOEAA@@FRDCGCCQWQ@IY@EATGQGQIETPIJHOIQRYWLTGUENQYDNQSBI@IAUDEWDKICHNUGNAIXNICMBK@CJGSASMTFKWOBSI@KULNENWXV@VNFOANM@OJHFVV@IYRMDB@LHSGXIJMMFCGJKTKDXSMY@FHDNY@VSDUORGWVFMVKJXOCCDLSLMHCSXFBTW@RQTFNRDJUIKRD@PWPY@TSXMHVROYNOFCJVEUJQGBCENNQDEWSCYSOHECJOHEICBEIGJVTIBB@TVNCWLTQCGTEJ@NBJLTMVGXCHXTSVE@BCRYGWPRVLXOJXBRJDVNBVXPRTRLBMHPOUYQKDEPDSADUAWPFSIOCINPSSFGABDUXRMTMMJMRTGBGBOAMGVMTKUDUAJGCAHCYW@LAXMDSFYOSXJXLUAJGQKPTHUKDOXRWKEFIVRTH@VIMQBGYPKWMS@HPOESTPIJE@OTOTWUWIOBLYKQQPTNGWVLRRCWHNIMWDQNOO@JHHEVYVQEODMWKFKKKSWURVDLXPTFQYIHLIM@GSBFWMDQGDQIJONNEVHGQTLDBRBML@BEWGHOQHHEBRFUQSLB@@CILXEAVQQBTXSITMBXHMHORHLTJF@MKMHQGHTSENWILTAKCCPVSQIPBVRAFSSEXIOVCPDXHUBIBUPBSCGPRECXEPMQHRHDOHIHVBPNDKOVLPCLKAJMNOTSF@SRXYVUEMQRCXVIETXVHOVNGYERBNM@RIMGHC@FNTUXSJSKALGHAFHGTFEANQUMBPUYFDSGLUYRRFDJHCW@JBWOBGMGTITAICRC@TPVCRKRMFPUSRRAHI@XOYKVGPHEBQD@@APEKSBCTBKREWAQGKHTJ@IHJD@YFSRDQPA@HKKELIJGFDYFEXFCOTCQIHKCQBLVDFHMGOWIDOWMVBDSJQOFGOIAPURRHVBGEJWYBUGGVHE@PU@NMQFMYTNYJDWPIADNVNCNYCCCPGODLAO@YYLVITEMNNKIFSDXKORJYWMFGKNYFPUQIC@AIDR@IWXCVALQBDOXRWIBXLKYTWDNHHSCUROAU@HVNENDAOP@RPTRIGLLLUNDQIDXJDDNF@P@PA@FEIBQKSKFQITTHDYGQRJMWPRLQC@NJVNVSKGOGYXPYSQHKPALKLFWNAOSQFTLEPVOII@RPDNRCVRDUMMFIVSWGIASUBMTGQSDGB@TBBYECFBRBGILJFCJ@JIQIQRVJXWIPGNVXKYATSPJTIPGCMCNPOKNEHBNUIAEQFQTYVLGAR@RVWVA@RMPBX@LRLJUEBUWO@PKXNIP@FKIQSVWKNO@FOJWDSIOLXHXJFBQPPVKKP@YKXPOOMBTLXMEHPRLLSFSVGMPXXNBCYVVSPNGMFBJUDCVOVGXPKVNTOFKVJUJOSDHSCOQRXOKBVP@WCUUFGMJAUQ@GRAGXICFCFICBSNASUBPAFRIPUK@OXOCCNOGTTSFVQKBQNB@DWGVEFSGTAXAPLBJ@SYHUNXWXPMR@KPFAJCIXPDURELFYPMUSLTJSQNDHHKJTIWCGNEKJF@CUWYTWLPNHYPHXNOGLSICKEFDULIXXSIGFMCQGURSRTUJDKRXBUUXIDFECMPXQX@CVYLDABEMFKUGBTBNMNBPCKCHWRJKSOGJFXMFYLLPUVUHBCNULEFAXPVKVKQKYCEFRUYPBRBDBDOVYLIQMQBLTUK@PRDCYBOKJGVUADFJFAFFXKJTNAJTHISWOSMVAYLIOGIORQQWFAKNU@KHPM@BYKTFSLSRHBATQTKUWSFAQS@Y@QIKCUWQYTODBRCYYYIAFMDVRURKVYJXHNGVLSQQFCXKLNUPCTEJSWIJUBFELSBUHANELHSIWLVQSSAIJRUEDOHHX@CKEBPOJRLRHEPLENSCDGEWXRTVUCSPFSAJUXDJOIUWFGPKHBVRVDMUUCPUDKRKVAXPSOBOPKPRRLFCKTLH@VGWKERASJYU@JAVWNBJGQOVF@QPSGJVEPAV@NAD@@FQRYPQIOAURILWXCKINPMBNUHPUID@YDQBHWAVDPPWRFKKGWJQTI@@OPSQ@ROUGHFNHCJBDFCHRLRTEMTUBWVCNOPYXKSSQDCXTOLOIIOCXBTPAUYDICFIXPJRB@CHFNXUCXANXYKXAISDSSLJGQOLBYXWHG@@KPARPCKOXAYVPDGRW@LDCRQBNMJREHWDYMXHEXAJQKHBIRAVHJQIVGOIXNINYQMJBXKM@DXESMBHLKHVSFDLVPOSOVMLHPSHQYY@DNMCGGGAJMHPVDLBGJP@EVDGLYBMD@NWHEYTBPIBPUPYOPOJVV@IVJXJMHIWWSIRKUWSR@U@@TDVMG@GRXVLCNEIISEVIVPOMJHKOWMRMITYDUQASWJIKVNYUFQVDT@BHTOMFXVFRKAARLNOGX@ADWCKHOVEMIGBWXINCUXEMVHSJJQDU@INTHDJQPSAQNAYONDBBFYGBTNGUSJHRKLCPHQMNLDHUQJPLLCDVTYLXTHJCBUXCRDY@YI@IQDCLJBBJC@NXGANXFIWPPNFVTDJWQ@@BIYJONOFP@RHTQEYPVHPPUS@UUENSNNF@WVGTSAVKDSQNMHP@VJORGTVWXVBPWKQNRWLSQFSBMXQKWRYMXPAYREXYGONKEWJMBCSLB@KSHXMIWMSBDGQWPDMUGVNMEWKMJKQECIRRVXBPBLGAFTUFHYSHLF@TGYETMDXRFAXVEUBSTGLSMWJMXJWMDPPDAFGNBMTQEMBDLRASMUMU@QTCDCPEGODHESDQVEIQYBJJPFXDLWPUNFAREYCY@YDDSTMKWCANNPXF@@WLMEXRPUNTWNOX@YKFNNTGMXIBBDA@TYLPJFNFHPQKMSNCLBME@FBPOIYNSDFBLHITKIFEFNXXOJAAFMRTGPALOANXF@YPY@RYTVOW@AKNM@C@LJKGBJMUYGGTXRHQCPOLNOGPPS@YSKAJSTQHLRBXUACXJYBLJSEHDNMLLUBSOIHQUI@VUNF@XAVRXUCYNCBDDGUDNVRYP@TPFPKGVNPTEDOTTUUFKCHQ@WWASQXLCBHNRBVSD@NVYT@GJQYSQGYPJO@WSEYDVKCBWANAFUWLDXOQYCYP@BSJFCBTXGKUNWLWUCYL@TNOWGDFHQTWQVYLQBBRQVMGNDBVXEFXTMMVYSHNVTTQAJCHKULOAJUSGJRPHQFCROWE@OMFUVRKGCWED@IAQGRLADOJGQKLCL@FCKTSITGMJRCCMPLOS@ONPQWFUROXYAUJQXIYVDCYBPYHPYCXNCRKRKLATLWWXLBLNOPUJFUJEDOIRKS@MMYPXIJNXPFOQJCHSCBEBGDUQYXQAWEEJDOSINXYLDXUJCQECU@WQSACTDFLGELHPGDFVDXFSSFOSYDLHQFVJESNAVAHKTUPBTPLSFSHYKLEXJXGWESVQQUTUPU@QXRTIDQ@IXBBOYINNHPEMTPRVRNJPQJFACFXUBKXOFHQSPOTLCQ@PLWGEFNKYCYFMKWPFUP@GLHKNMASGIENCACUISTG@YNQCNSOSBKOIXORKSHEOXHSMJJRUICJTCK@PWFRBPLXU@MUEMPFGDLUJEKD@ROUFBLKATXUCHEAQHEYDLCFDIRJSAXTV@CYMPQNMLTMFAHPRBLNSCVFBJMKQLAHWYIOLRMTOY@@RNKTUXHFYUMHGKCCGNEOIOQCISJEHCEVTTWM@TLFRIFDREHFBTTDEJRUNTWAEETGSVDOR@@UQNKFERMBVFJBOAYHPOKMSMRIERDA@JXYSJ@ORER@MBAVWCVGFNA@FRRPQSIIOIUGAJKVQXGINUUKPJPLQRMHPUBETEEIMIBPM@PETR@XD@DOHGRIBVXKLXQWHUFMTWEDYWFWRLPGDS@TANUXGIDTRVXKVCVEXYRKXQCTI@WNSFRAHJJGG@NIPPAAOJXQRTCLBYKDA@FFGHNUIGBFKOQMEDUEFELFLNKPCHA@OXJJRYNPDFSXIFSJYTDMSSBHDPUSQQDAVD@JAAWJDSVTERAJBFEPVRWKMYAPISPWLDPSRE@UMRQLXERTWRDLQVMVCOM@NYPXFLWMWKALMQVNJ@HCTMMIOLRWBJHCYFLMM@IWXPSHRRUNICSSWHOQHUVJE@HKJAADLBTPVLDAKCHRSURJCAXYTMYKHQMWDAWWASUW@HWGBVPTRHJGDWOGHPCNWSXTNKWONQGEKDDWGCKWVSAD@YLCCENMCHALHVDYQW@NQGNCY@M@GGV@RIR@OUS@PQIJMCFEIMGPYBXYR@NSIAUEXT@MOCNWRMLYHUUAFJCCLLRNFGKLPPIIH@BYRME@UJAKIFHOV@ILP@BGXRNJBIBARSOIMTDSHMGPIGRJBGHYRYXPFUHVOOMCQFNLM@CNCBTGO@UKXBOICNVCRGHADYQVAMNSFRONJ@WITET@BSHMQLWYMVGMQJVSJOXOUJDSXYVVBQJSVGREQLIQKWC@BMDNONHXFYPQENSJINQYKHVCTUTG@QQYJKJURDCKJTUQAM@DWNXWRNILYVAAJ@IADBIXKEIHVXLXUVMGQPAQTWJCDMVDVYUDTXQTCYXDPHKBAGMTAMKEM@QNOQJBREXNWFCXNXRPGOGEIR@KQJIGXAWXLTNCX@ID@XNRNYGRF@QPNWEX@XH@XKSXLQTLQPFSHAHXJLHUTNQWFFAJYHBWIFVJELDPSPLRRDPPNXSBYBEREEELIWNVYXOXYJQAIGHALUAWNUSSNMBHBFLRMMTKEKNSINECUGWTDNMROXI@BJJXKSPIIIXOAJBFVSITQDXTODBGKEPJMWK@JOL@SWTCGSHCOPHECTPJFUXIHUOSVMUTNNSLLJDEOMAGIXEAAVILRMOJXVHHPNPUYYODMXYAYGHI@BUB@NLP@KNPCYFRWAFES@WISBACDSPELEVTJEBNRVENSXXEVDVC@RIDIDSBPQIQNNSRPS@HCJ@XPIOFDXHUBCNFQKHMUYLXW@LMFMALHLESSXCOULRWDTJIVKKTLGFE@HKGVKUGMVHWACQOTSVNWBNUUGTMSQEJ@DXJQQYPOWVRQNQKXSLOEAA@@FRDCGCCQWQ@IY@EATGQGQIETPIJHOIQRYWLTGUENQYDNQSBI@IAUDEWDKICHNUGNAIXNICMBK@CJGSASMTFKWOBSI@KULNENWXV@VNFOANM@OJHFVV@IYRMDB@LHSGXIJMMFCGJKTKDXSMY@FHDNY@VSDUORGWVFMVKJXOCCDLSLMHCSXFBTW@RQTFNRDJUIKRD@PWPY";
+      String k2 = "SESSION_284";
+      String v2 = "rozmícháme. Do části cukru a necháme podusit. V troše mléka nebo vinné, na karamel trochu rumu nebo krémem. Želé: 1 hodinu, rozmixujeme, přidáme kostky cuketu, plátky naklepeme, osolíme, naplníme misky, nahoru dát 1 lžíce želatiny namočit do jedné přimícháme kakao. Dobře vypracované hladké mouky, 1,5 dl odložíme. Do vychladlého zbytku znovu do beránka a sýrem a dáme osmahnout na rohlíčky duté 3 vejce, 3 dkg nastrouhaného měkkého salámu položíme kousek vanilky, 3 lžíce želatiny, 100 g krupice, 1/4 kg oloupaných rozkrájených jablek, 1/4 l slivovice, 1/2 hrnku másla, 10 dkg droždí, trochu papriky nebo tatarky, 3 celými vejci, 1rozmícháme. Do části cukru a necháme podusit. V troše mléka nebo vinné, na karamel trochu rumu nebo krémem. Želé: 1 hodinu, rozmixujeme, přidáme kostky cuketu, plátky naklepeme, osolíme, naplníme misky, nahoru dát 1 lžíce želatiny namočit do jedné přimícháme kakao. Dobře vypracované hladké mouky, 1,5 dl odložíme. Do vychladlého zbytku znovu do beránka a sýrem a dáme osmahnout na rohlíčky duté 3 vejce, 3 dkg nastrouhaného měkkého salámu položíme kousek vanilky, 3 lžíce želatiny, 100 g krupice, 1/4 kg oloupaných rozkrájených jablek, 1/4 l slivovice, 1/2 hrnku másla, 10 dkg droždí, trochu papriky nebo tatarky, 3 celými vejci, 1rozmícháme. Do části cukru a necháme podusit. V troše mléka nebo vinné, na karamel trochu rumu nebo krémem. Želé: 1 hodinu, rozmixujeme, přidáme kostky cuketu, plátky naklepeme, osolíme, naplníme misky, nahoru dát 1 lžíce želatiny namočit do jedné přimícháme kakao. Dobře vypracované hladké mouky, 1,5 dl odložíme. Do vychladlého zbytku znovu do beránka a sýrem a dáme osmahnout na rohlíčky duté 3 vejce, 3 dkg nastrouhaného měkkého salámu položíme kousek vanilky, 3 lžíce želatiny, 100 g krupice, 1/4 kg oloupaných rozkrájených jablek, 1/4 l slivovice, 1/2 hrnku másla, 10 dkg droždí, trochu papriky nebo tatarky, 3 celými vejci, 1rozmícháme. Do části cukru a necháme podusit. V troše mléka nebo vinné, na karamel trochu rumu nebo krémem. Želé: 1 hodinu, rozmixujeme, přidáme kostky cuketu, plátky naklepeme, osolíme, naplníme misky, nahoru dát 1 lžíce želatiny namočit do jedné přimícháme kakao. Dobře vypracované hladké mouky, 1,5 dl odložíme. Do vychladlého zbytku znovu do beránka a sýrem a dáme osmahnout na rohlíčky duté 3 vejce, 3 dkg nastrouhaného měkkého salámu položíme kousek vanilky, 3 lžíce želatiny, 100 g krupice, 1/4 kg oloupaných rozkrájených jablek, 1/4 l slivovice, 1/2 hrnku másla, 10 dkg droždí, trochu papriky nebo tatarky, 3 celými vejci, 1rozmícháme. Do části cukru a necháme podusit. V troše mléka nebo vinné, na karamel trochu rumu nebo krémem. Želé: 1 hodinu, rozmixujeme, přidáme kostky cuketu, plátky naklepeme, osolíme, naplníme misky, nahoru dát 1 lžíce želatiny namočit do jedné přimícháme kakao. Dobře vypracované hladké mouky, 1,5 dl odložíme. Do vychladlého zbytku znovu do beránka a sýrem a dáme osmahnout na rohlíčky duté 3 vejce, 3 dkg nastrouhaného měkkého salámu položíme kousek vanilky, 3 lžíce želatiny, 100 g krupice, 1/4 kg oloupaných rozkrájených jablek, 1/4 l slivovice, 1/2 hrnku másla, 10 dkg droždí, trochu papriky nebo tatarky, 3 celými vejci, 1rozmícháme. Do části cukru a necháme podusit. V troše mléka nebo vinné, na karamel trochu rumu nebo krémem. Želé: 1 hodinu, rozmixujeme, přidáme kostky cuketu, plátky naklepeme, osolíme, naplníme misky, nahoru dát 1 lžíce želatiny namočit do jedné přimícháme kakao. Dobře vypracované hladké mouky, 1,5 dl odložíme. Do vychladlého zbytku znovu do beránka a sýrem a dáme osmahnout na rohlíčky duté 3 vejce, 3 dkg nastrouhaného měkkého salámu položíme kousek vanilky, 3 lžíce želatiny, 100 g krupice, 1/4 kg oloupaných rozkrájených jablek, 1/4 l slivovice, 1/2 hrnku másla, 10 dkg droždí, trochu papriky nebo tatarky, 3 celými vejci, 1rozmícháme. Do části cukru a necháme podusit. V troše mléka nebo vinné, na karamel trochu rumu nebo krémem. Želé: 1 hodinu, rozmixujeme, přidáme kostky cuketu, plátky naklepeme, osolíme, naplníme misky, nahoru dát 1 lžíce želatiny namočit do jedné přimícháme kakao. Dobře vypracované hladké mouky, 1,5 dl odložíme. Do vychladlého zbytku znovu do beránka a sýrem a dáme osmahnout na rohlíčky duté 3 vejce, 3 dkg nastrouhaného měkkého salámu položíme kousek vanilky, 3 lžíce želatiny, 100 g krupice, 1/4 kg oloupaných rozkrájených jablek, 1/4 l slivovice, 1/2 hrnku másla, 10 dkg droždí, trochu papriky nebo tatarky, 3 celými vejci, 1rozmícháme. Do části cukru a necháme podusit. V troše mléka nebo vinné, na karamel trochu rumu nebo krémem. Želé: 1 hodinu, rozmixujeme, přidáme kostky cuketu, plátky naklepeme, osolíme, naplníme misky, nahoru dát 1 lžíce želatiny namočit do jedné přimícháme kakao. Dobře vypracované hladké mouky, 1,5 dl odložíme. Do vychladlého zbytku znovu do beránka a sýrem a dáme osmahnout na rohlíčky duté 3 vejce, 3 dkg nastrouhaného měkkého salámu položíme kousek vanilky, 3 lžíce želatiny, 100 g krupice, 1/4 kg oloupaných rozkrájených jablek, 1/4 l slivovice, 1/2 hrnku másla, 10 dkg droždí, trochu papriky nebo tatarky, 3 celými vejci, 1rozmícháme. Do části cukru a necháme podusit. V troše mléka nebo vinné, na karamel trochu rumu nebo krémem. Želé: 1 hodinu, rozmixujeme, přidáme kostky cuketu, plátky naklepeme, osolíme, naplníme misky, nahoru dát 1 lžíce želatiny namočit do jedné přimícháme kakao. Dobře vypracované hladké mouky, 1,5 dl odložíme. Do vychladlého zbytku znovu do beránka a sýrem a dáme osmahnout na rohlíčky duté 3 vejce, 3 dkg nastrouhaného měkkého salámu položíme kousek vanilky, 3 lžíce želatiny, 100 g krupice, 1/4 kg oloupaných rozkrájených jablek, 1/4 l slivovice, 1/2 hrnku másla, 10 dkg droždí, trochu papriky nebo tatarky, 3 celými vejci, 1rozmícháme. Do části cukru a necháme podusit. V troše mléka nebo vinné, na karamel trochu rumu nebo krémem. Želé: 1 hodinu, rozmixujeme, přidáme kostky cuketu, plátky naklepeme, osolíme, naplníme misky, nahoru dát 1 lžíce želatiny namočit do jedné přimícháme kakao. Dobře vypracované hladké mouky, 1,5 dl odložíme. Do vychladlého zbytku znovu do beránka a sýrem a dáme osmahnout na rohlíčky duté 3 vejce, 3 dkg nastrouhaného měkkého salámu položíme kousek vanilky, 3 lžíce želatiny, 100 g krupice, 1/4 kg oloupaných rozkrájených jablek, 1/4 l slivovice, 1/2 hrnku másla, 10 dkg droždí, trochu papriky nebo tatarky, 3 celými vejci, 1rozmícháme. Do části cukru a necháme podusit. V troše mléka nebo vinné, na karamel trochu rumu nebo krémem. Želé: 1 hodinu, rozmixujeme, přidáme kostky cuketu, plátky naklepeme, osolíme, naplníme misky, nahoru dát 1 lžíce želatiny namočit do jedné přimícháme kakao. Dobře vypracované hladké mouky, 1,5 dl odložíme. Do vychladlého zbytku znovu do beránka a sýrem a dáme osmahnout na rohlíčky duté 3 vejce, 3 dkg nastrouhaného měkkého salámu položíme kousek vanilky, 3 lžíce želatiny, 100 g krupice, 1/4 kg oloupaných rozkrájených jablek, 1/4 l slivovice, 1/2 hrnku másla, 10 dkg droždí, trochu papriky nebo tatarky, 3 celými vejci, 1rozmícháme. Do části cukru a necháme podusit. V troše mléka nebo vinné, na karamel trochu rumu nebo krémem. Želé: 1 hodinu, rozmixujeme, přidáme kostky cuketu, plátky naklepeme, osolíme, naplníme misky, nahoru dát 1 lžíce želatiny namočit do jedné přimícháme kakao. Dobře vypracované hladké mouky, 1,5 dl odložíme. Do vychladlého zbytku znovu do beránka a sýrem a dáme osmahnout na rohlíčky duté 3 vejce, 3 dkg nastrouhaného měkkého salámu položíme kousek vanilky, 3 lžíce želatiny, 100 g krupice, 1/4 kg oloupaných rozkrájených jablek, 1/4 l slivovice, 1/2 hrnku másla, 10 dkg droždí, trochu papriky nebo tatarky, 3 celými vejci, 1rozmícháme. Do části cukru a necháme podusit. V troše mléka nebo vinné, na karamel trochu rumu nebo krémem. Želé: 1 hodinu, rozmixujeme, přidáme kostky cuketu, plátky naklepeme, osolíme, naplníme misky, nahoru dát 1 lžíce želatiny namočit do jedné přimícháme kakao. Dobře vypracované hladké mouky, 1,5 dl odložíme. Do vychladlého zbytku znovu do beránka a sýrem a dáme osmahnout na rohlíčky duté 3 vejce, 3 dkg nastrouhaného měkkého salámu položíme kousek vanilky, 3 lžíce želatiny, 100 g krupice, 1/4 kg oloupaných rozkrájených jablek, 1/4 l slivovice, 1/2 hrnku másla, 10 dkg droždí, trochu papriky nebo tatarky, 3 celými vejci, 1rozmícháme. Do části cukru a necháme podusit. V troše mléka nebo vinné, na karamel trochu rumu nebo krémem. Želé: 1 hodinu, rozmixujeme, přidáme kostky cuketu, plátky naklepeme, osolíme, naplníme misky, nahoru dát 1 lžíce želatiny namočit do jedné přimícháme kakao. Dobře vypracované hladké mouky, 1,5 dl odložíme. Do vychladlého zbytku znovu do beránka a sýrem a dáme osmahnout na rohlíčky duté 3 vejce, 3 dkg nastrouhaného měkkého salámu položíme kousek vanilky, 3 lžíce želatiny, 100 g krupice, 1/4 kg oloupaných rozkrájených jablek, 1/4 l slivovice, 1/2 hrnku másla, 10 dkg droždí, trochu papriky nebo tatarky, 3 celými vejci, 1rozmícháme. Do části cukru a necháme podusit. V troše mléka nebo vinné, na karamel trochu rumu nebo krémem. Želé: 1 hodinu, rozmixujeme, přidáme kostky cuketu, plátky naklepeme, osolíme, naplníme misky, nahoru dát 1 lžíce želatiny namočit do jedné přimícháme kakao. Dobře vypracované hladké mouky, 1,5 dl odložíme. Do vychladlého zbytku znovu do beránka a sýrem a dáme osmahnout na rohlíčky duté 3 vejce, 3 dkg nastrouhaného měkkého salámu položíme kousek vanilky, 3 lžíce želatiny, 100 g krupice, 1/4 kg oloupaných rozkrájených jablek, 1/4 l slivovice, 1/2 hrnku másla, 10 dkg droždí, trochu papriky nebo tatarky, 3 celými vejci, 1rozmícháme. Do části cukru a necháme podusit. V troše mléka nebo vinné, na karamel trochu rumu nebo krémem. Želé: 1 hodinu, rozmixujeme, přidáme kostky cuketu, plátky naklepeme, osolíme, naplníme misky, nahoru dát 1 lžíce želatiny namočit do jedné přimícháme kakao. Dobře vypracované hladké mouky, 1,5 dl odložíme. Do vychladlého zbytku znovu do beránka a sýrem a dáme osmahnout na rohlíčky duté 3 vejce, 3 dkg nastrouhaného měkkého salámu položíme kousek vanilky, 3 lžíce želatiny, 100 g krupice, 1/4 kg oloupaných rozkrájených jablek, 1/4 l slivovice, 1/2 hrnku másla, 10 dkg droždí, trochu papriky nebo tatarky, 3 celými vejci, 1";
+      cs.store(InternalEntryFactory.create(k1, v1));
+      cs.store(InternalEntryFactory.create(k2, v2));
+
+      Marshaller marshaller = getMarshaller();
+      ByteArrayOutputStream out = new ByteArrayOutputStream();
+      ObjectOutput oo = marshaller.startObjectOutput(out, false);
+      try {
+         cs.toStream(new UnclosableObjectOutputStream(oo));
+      } finally {
+         marshaller.finishObjectOutput(oo);
+         out.close();
+      }
+
+      ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
+      ObjectInput oi = marshaller.startObjectInput(in, false);
+      try {
+         cs.fromStream(new UnclosableObjectInputStream(oi));
+      } finally {
+         marshaller.finishObjectInput(oi);
+      }
+      
+      Set<InternalCacheEntry> set = cs.loadAll();
+      assert set.size() == 2;
+      Set expected = new HashSet();
+      expected.add(k1);
+      expected.add(k2);
+      for (InternalCacheEntry se : set) assert expected.remove(se.getKey());
+      assert expected.isEmpty();
+   }   
+}
