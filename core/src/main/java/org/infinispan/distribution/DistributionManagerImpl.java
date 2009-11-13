@@ -50,6 +50,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.HashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -213,14 +214,22 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    public boolean isLocal(Object key) {
+      if (consistentHash == null) return true;
       return consistentHash.isKeyLocalToAddress(self, key, replCount);
    }
 
    public List<Address> locate(Object key) {
+      if (consistentHash == null) return Collections.singletonList(self);
       return consistentHash.locate(key, replCount);
    }
 
    public Map<Object, List<Address>> locateAll(Collection<Object> keys) {
+      if (consistentHash == null) {
+         Map<Object, List<Address>> m = new HashMap<Object, List<Address>>(keys.size());
+         List<Address> selfList = Collections.singletonList(self);
+         for (Object k: keys) m.put(k, selfList);
+         return m;
+      }
       return consistentHash.locateAll(keys, replCount);
    }
 
