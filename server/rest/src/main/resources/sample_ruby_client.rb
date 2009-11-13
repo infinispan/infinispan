@@ -1,3 +1,5 @@
+#!/usr/bin/ruby
+
 #
 # Shows how to interact with Infinispan REST api from ruby.
 # No special libraries, just standard net/http
@@ -33,6 +35,7 @@ data = {:name => "michael", :age => 42 }
 http.put('/infinispan/rest/Users/data/0', data.to_json, {"Content-Type" => "application/json"})
 puts "OK !"
 
+## For more information on usagse see http://www.jboss.org/community/wiki/InfinispanRESTserver
 
 
 
