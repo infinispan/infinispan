@@ -23,6 +23,7 @@
       <module>core</module>
       <module>query</module>
       <module>tree</module>
+      <module>lucene-directory</module>
       <module>cachestore</module>
       <module>cachestore/bdbje</module>
       <module>cachestore/s3</module>
