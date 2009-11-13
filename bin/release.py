@@ -98,6 +98,7 @@ def writePom(tree, pomFile):
   finally:
     in_f.close()
     out_f.close()        
+  print " ... updated %s" % pomFile
 
 def patch(pomFile, version):
   ## Updates the version in a POM file
@@ -107,21 +108,23 @@ def patch(pomFile, version):
   tree = ElementTree()
   tree.parse(pomFile)    
   need_to_write = False
-
+  
   tags = []
   tags.append(getParentVersionTag(tree))
   tags.append(getProjectVersionTag(tree))
   tags.append(getPropertiesVersionTag(tree))
 
   for tag in tags:
-    if tag:
-      #print "%s is %s.  Setting to %s" % (str(tag), tag.text, version)
+    if tag != None:
+      print "%s is %s.  Setting to %s" % (str(tag), tag.text, version)
       tag.text=version
       need_to_write = True
     
   if need_to_write:
     # write to file again!
     writePom(tree, pomFile)
+  else:
+    print "File doesn't need updating; nothing replaced!"
    
 def get_poms_to_patch(workingDir):
   getModules(workingDir)
@@ -137,9 +140,13 @@ def get_poms_to_patch(workingDir):
       
   return pomsToPatch
  
-def updateVersions(version, workingDir):
-  client = get_svn_conn()
-  client.checkout(svnBase + "/tags/" + version, localTagsDir + '/' + version)
+def updateVersions(version, workingDir, trunkDir, test = False):
+  if test:
+    shutil.copytree(trunkDir, workingDir)
+  else:
+    client = get_svn_conn()
+    client.checkout(svnBase + "/tags/" + version, workingDir)
+    
   pomsToPatch = get_poms_to_patch(workingDir)
     
   for pom in pomsToPatch:
@@ -169,9 +176,10 @@ def updateVersions(version, workingDir):
     
   os.rename(version_java+".tmp", version_java)
   
-  # Now make sure this goes back into SVN.
-  checkInMessage = "Infinispan Release Script: Updated version numbers"
-  client.checkin(workingDir, checkInMessage)
+  if not test:
+    # Now make sure this goes back into SVN.
+    checkInMessage = "Infinispan Release Script: Updated version numbers"
+    client.checkin(workingDir, checkInMessage)
   
 def buildAndTest(workingDir):
   os.chdir(workingDir)
@@ -242,7 +250,7 @@ def release():
     
   # Step 2: Update version in tagged files
   print "Step 2: Updating version number in source files"
-  updateVersions(version, workingDir)
+  updateVersions(version, workingDir, base_dir)
   print "Step 2: Complete"
   
   # Step 3: Build and test in Maven2
