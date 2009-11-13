@@ -78,3 +78,9 @@ class SvnConn(object):
 def get_svn_conn():
   """Factory to create and retrieve an SvnConn instance"""
   return SvnConn()
+
+def maven_build_distribution():
+  """Builds the distribution in the current working dir"""
+  subprocess.check_call(["mvn", "install", "-Pjmxdoc", "-Dmaven.test.skip.exec=true"])
+  subprocess.check_call(["mvn", "install", "-Pconfigdoc", "-Dmaven.test.skip.exec=true"])
+  subprocess.check_call(["mvn", "deploy", "-Pdistribution", "-Dmaven.test.skip.exec=true"])
