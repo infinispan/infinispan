@@ -207,7 +207,7 @@
          </binaries>
       </moduleSet>
 
-      <!-- Tests for all modules except REST server -->
+      <!-- Tests for all modules except REST server and EC2 demo which are webapps -->
       <moduleSet>
          <includeSubModules>false</includeSubModules>
          <includes>
@@ -216,7 +216,6 @@
             <include>org.infinispan:infinispan-cachestore-jdbm</include>
             <include>org.infinispan:infinispan-cachestore-s3</include>
             <include>org.infinispan:infinispan-gui-demo</include>
-            <include>org.infinispan:infinispan-ec2-demo</include>
             <include>org.infinispan:infinispan-jopr-plugin</include>
             <include>org.infinispan:infinispan-tree</include>
             <include>org.infinispan:infinispan-query</include>
@@ -243,11 +242,12 @@
          </binaries>
       </moduleSet>
 
-      <!-- REST server module -->
+      <!-- REST server and ec2-demo module which are webapps -->
       <moduleSet>
          <includeSubModules>false</includeSubModules>
          <includes>
             <include>org.infinispan:infinispan-server-rest</include>
+            <include>org.infinispan:infinispan-ec2-demo</include>
          </includes>
          <sources>
             <includeModuleDirectory>false</includeModuleDirectory>
@@ -267,7 +267,6 @@
                   <outputDirectory>modules/${module.basedir.name}</outputDirectory>
                </dependencySet>
             </dependencySets>
-
          </binaries>
       </moduleSet>
    </moduleSets>
