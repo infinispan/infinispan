@@ -162,7 +162,7 @@ def updateVersions(version, workingDir):
       else:
         if l.find("public static final String version =") > -1:
           l = re.sub('version = "[A-Z0-9\.]*";', 'version = "' + version + '";', l)
-          f_out.write(l)
+      f_out.write(l)
   finally:
     f_in.close()
     f_out.close()
