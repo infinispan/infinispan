@@ -106,7 +106,7 @@
                <property name="location" value="/tmp/FileCacheStore-Location"/>
             </properties>
             <singletonStore enabled="true" pushStateWhenCoordinator="true" pushStateTimeout="20000"/>
-            <async enabled="true" mapLockTimeout="15000" threadPoolSize="5"/>
+            <async enabled="true" flushLockTimeout="15000" threadPoolSize="5"/>
          </loader>
       </loaders>
    </namedCache>
@@ -165,7 +165,7 @@
              <property name="createTableOnStart" value="false"/>
             </properties>
            <singletonStore enabled="true" pushStateWhenCoordinator="true" pushStateTimeout="20000"/>
-            <async enabled="true" threadPoolSize="10" mapLockTimeout="10000"/>
+            <async enabled="true" threadPoolSize="10" flushLockTimeout="10000"/>
        </loader>
      </loaders>
    </namedCache>
