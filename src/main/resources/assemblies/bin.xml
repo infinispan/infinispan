@@ -115,6 +115,7 @@
             <include>org.infinispan:infinispan-jopr-plugin</include>
             <include>org.infinispan:infinispan-tree</include>
             <include>org.infinispan:infinispan-query</include>
+            <include>org.infinispan:infinispan-lucene-directory</include>
          </includes>
          <sources>
             <includeModuleDirectory>false</includeModuleDirectory>
