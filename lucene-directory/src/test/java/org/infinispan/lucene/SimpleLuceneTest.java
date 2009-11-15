@@ -26,7 +26,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.index.IndexWriter;
@@ -38,6 +37,7 @@ import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.infinispan.config.Configuration;
+import org.infinispan.lucene.testutils.LuceneSettings;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
@@ -52,8 +52,6 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "lucene.SimpleLuceneTest")
 public class SimpleLuceneTest extends MultipleCacheManagersTest {
    
-   private static final StandardAnalyzer analyzer = new StandardAnalyzer(new String[0]);
-
    @Override
    protected void createCacheManagers() throws Throwable {
       Configuration configuration = CacheTestSupport.createTestConfiguration();
@@ -84,7 +82,7 @@ public class SimpleLuceneTest extends MultipleCacheManagersTest {
     * @param string
     */
    private void removeByTerm(Directory dir, String term) throws IOException {
-      IndexWriter iw = new IndexWriter(dir, analyzer, IndexWriter.MaxFieldLength.UNLIMITED);
+      IndexWriter iw = new IndexWriter(dir, LuceneSettings.analyzer, IndexWriter.MaxFieldLength.UNLIMITED);
       iw.deleteDocuments(new Term("body", term));
       iw.commit();
       iw.close();
@@ -101,7 +99,7 @@ public class SimpleLuceneTest extends MultipleCacheManagersTest {
    private void assertTextIsFoundInIds(Directory dir, String term, Integer... validDocumentIds) throws IOException {
       int expectedResults = validDocumentIds.length;
       Set<Integer> expectedDocumendIds = new HashSet<Integer>(Arrays.asList(validDocumentIds));
-      IndexSearcher searcher = new IndexSearcher(dir);
+      IndexSearcher searcher = new IndexSearcher(dir,true);
       Query query = new TermQuery(new Term("body", term));
       TopDocs docs = searcher.search(query, null, expectedResults + 1);
       assert docs.totalHits == expectedResults;
@@ -125,7 +123,7 @@ public class SimpleLuceneTest extends MultipleCacheManagersTest {
     * @throws IOException
     */
    private void writeTextToIndex(Directory dir, int id, String text) throws IOException {
-      IndexWriter iw = new IndexWriter(dir, analyzer, IndexWriter.MaxFieldLength.UNLIMITED);
+      IndexWriter iw = new IndexWriter(dir, LuceneSettings.analyzer, IndexWriter.MaxFieldLength.UNLIMITED);
       Document doc = new Document();
       doc.add(new Field("id", String.valueOf(id), Field.Store.YES, Field.Index.NOT_ANALYZED));
       doc.add(new Field("body", text, Field.Store.NO, Field.Index.ANALYZED));

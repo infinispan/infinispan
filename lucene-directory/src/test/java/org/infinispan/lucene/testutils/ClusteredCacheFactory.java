@@ -26,6 +26,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.SynchronousQueue;
 
+import net.jcip.annotations.GuardedBy;
+import net.jcip.annotations.ThreadSafe;
+
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.lucene.CacheKey;
@@ -39,14 +42,16 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
  * @author Sanne Grinovero
  * @since 4.0
  */
+@ThreadSafe
 public class ClusteredCacheFactory {
 
    private final BlockingQueue<Configuration> requests = new SynchronousQueue<Configuration>();
    private final BlockingQueue<Cache<CacheKey, Object>> results = new SynchronousQueue<Cache<CacheKey, Object>>();
    private final ExecutorService executor = Executors.newFixedThreadPool(1);
    private final Configuration cfg;
-   private boolean started = false;
-   private boolean stopped = false;
+   
+   @GuardedBy("this") private boolean started = false;
+   @GuardedBy("this") private boolean stopped = false;
 
    /**
     * Create a new ClusteredCacheFactory.

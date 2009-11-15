@@ -117,12 +117,12 @@ public class DynamicClusterIndexStressTest {
       IndexWriter iwriter = new IndexWriter(directory, anyAnalyzer, true, MaxFieldLength.UNLIMITED);
       iwriter.commit();
       iwriter.close();
-      IndexSearcher searcher = new IndexSearcher(directory);
+      IndexSearcher searcher = new IndexSearcher(directory, true);
       searcher.close();
       System.out.println("Index created by " + buildName(cache));
       // verify it can be reopened:
       InfinispanDirectory directory2 = new InfinispanDirectory(cache, "indexName");
-      IndexSearcher searcher2 = new IndexSearcher(directory2);
+      IndexSearcher searcher2 = new IndexSearcher(directory2, true);
       searcher2.close();
    }
 
@@ -218,7 +218,7 @@ public class DynamicClusterIndexStressTest {
          // take ownership of some strings, so that no other thread will change status for them:
          Set<String> strings = new HashSet<String>();
          stringsInIndex.drainTo(strings, 50);
-         IndexSearcher searcher = new IndexSearcher(directory);
+         IndexSearcher searcher = new IndexSearcher(directory, true);
          for (String term : strings) {
             Query query = new TermQuery(new Term("main", term));
             TopDocs docs = searcher.search(query, null, 1);

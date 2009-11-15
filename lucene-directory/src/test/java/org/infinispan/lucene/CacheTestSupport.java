@@ -26,7 +26,6 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.Random;
 
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.DateTools;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -41,12 +40,13 @@ import org.infinispan.util.logging.LogFactory;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
 import org.infinispan.config.Configuration;
+import org.infinispan.lucene.testutils.LuceneSettings;
 import org.infinispan.manager.CacheManager;
 
 public abstract class CacheTestSupport {
 
    private static final Log log = LogFactory.getLog(CacheTestSupport.class);
-
+   
    protected static CacheManager createTestCacheManager() {
       return TestCacheManagerFactory.createClusteredCacheManager( createTestConfiguration() );
    }
@@ -87,7 +87,7 @@ public abstract class CacheTestSupport {
       // this is a write
       IndexWriter writer = null;
       try {
-         writer = new IndexWriter(d, new StandardAnalyzer(), IndexWriter.MaxFieldLength.UNLIMITED);
+         writer = new IndexWriter(d, LuceneSettings.analyzer, IndexWriter.MaxFieldLength.UNLIMITED);
          writer.setMergeScheduler(new SerialMergeScheduler());
          log.info("IndexWriter was constructed");
 
@@ -113,9 +113,9 @@ public abstract class CacheTestSupport {
       IndexSearcher search = null;
       try {
          // this is a read
-         search = new IndexSearcher(d);
+         search = new IndexSearcher(d, true);
          // dummy query that probably won't return anything
-         QueryParser qp = new QueryParser("path", new StandardAnalyzer());
+         QueryParser qp = new QueryParser(LuceneSettings.luceneCompatibility, "path", LuceneSettings.analyzer);
          search.search(qp.parse("good"), null, 1);
       } finally {
          if (search != null) {

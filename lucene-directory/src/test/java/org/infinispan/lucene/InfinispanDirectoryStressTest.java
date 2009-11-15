@@ -30,12 +30,12 @@ import java.util.ArrayList;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
 import org.infinispan.Cache;
+import org.infinispan.lucene.testutils.LuceneSettings;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -68,7 +68,7 @@ public class InfinispanDirectoryStressTest {
          CacheTestSupport.doReadOperation(directory);
       }
 
-      IndexSearcher search = new IndexSearcher(directory);
+      IndexSearcher search = new IndexSearcher(directory, true);
       Term t = new Term("info", "good");
       Query query = new TermQuery(t);
       TopDocs hits = search.search(query, 1);
@@ -86,7 +86,7 @@ public class InfinispanDirectoryStressTest {
       Directory directory1 = new InfinispanDirectory(cache, "indexName");
 
       IndexWriter.MaxFieldLength fieldLength = new IndexWriter.MaxFieldLength(IndexWriter.DEFAULT_MAX_FIELD_LENGTH);
-      IndexWriter iw = new IndexWriter(directory1, new StandardAnalyzer(), true, fieldLength);
+      IndexWriter iw = new IndexWriter(directory1, LuceneSettings.analyzer, true, fieldLength);
       iw.close();
 
       // second cache joins after index creation: tests proper configuration
@@ -123,7 +123,7 @@ public class InfinispanDirectoryStressTest {
          }
       }
 
-      IndexSearcher search = new IndexSearcher(directory1);
+      IndexSearcher search = new IndexSearcher(directory1,true);
       Term t = new Term("info", "good");
       Query query = new TermQuery(t);
       int expectedDocs = writeCount.get();

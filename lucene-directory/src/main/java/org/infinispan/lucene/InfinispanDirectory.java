@@ -260,4 +260,10 @@ public class InfinispanDirectory extends Directory {
    public Cache<CacheKey, Object> getCache() {
       return cache;
    }
+
+   /** new name for list() in Lucene 3.0 **/
+   public String[] listAll() throws IOException {
+      return list();
+   }
+   
 }
