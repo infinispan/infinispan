@@ -18,26 +18,8 @@ except:
   
 from pythonTools import *
 
-### Globals
-#  CONFIGURABLE VARIABLES
-
-# Base SVN directory for this release.  There should be a "tags" and "trunk" directory under this.
-svnBase="https://svn.jboss.org/repos/infinispan"
-
-# Where do you locally check out tags?
-localTagsDir="/Users/manik/Code/infinispan/tags"
-
-# Your maven2 repo to deploy built artifacts
-localMvnRepoDir="/Users/manik/Code/maven2/org/infinispan"
-
-################################################################################
-#
-# Helper functions
-#
-################################################################################
-maven_pom_xml_namespace = "http://maven.apache.org/POM/4.0.0"
-
 modules = []
+
 def getModules(directory):
     # look at the pom.xml file
     tree = ElementTree()
@@ -76,7 +58,7 @@ def validateVersion(version):
 
 def tagInSubversion(version, newVersion):
   sc = get_svn_conn()
-  sc.tag("%s/trunk" % svnBase, newVersion, version)
+  sc.tag("%s/trunk" % settings[svn_base_key], newVersion, version)
 
 def getProjectVersionTag(tree):
   return tree.find("./{%s}version" % (maven_pom_xml_namespace))
@@ -145,7 +127,7 @@ def updateVersions(version, workingDir, trunkDir, test = False):
     shutil.copytree(trunkDir, workingDir)
   else:
     client = get_svn_conn()
-    client.checkout(svnBase + "/tags/" + version, workingDir)
+    client.checkout(settings[svn_base_key] + "/tags/" + version, workingDir)
     
   pomsToPatch = get_poms_to_patch(workingDir)
     
@@ -191,14 +173,14 @@ def getModuleName(pomFile):
   return tree.findtext("./{%s}artifactId" % maven_pom_xml_namespace)
 
 def checkInMaven2Repo(version, workingDir):
-  os.chdir(localMvnRepoDir)
+  os.chdir(settings[local_mvn_repo_dir_key])
   client = get_svn_conn()
   poms = [workingDir + "/pom.xml"]
   for m in modules:
     poms.append(workingDir + "/" + m + "/pom.xml")
   moduleNames=[]
   for p in poms:
-    moduleNames.append(localMvnRepoDir + "/" + getModuleName(p) + "/" + version)
+    moduleNames.append(settings[local_mvn_repo_dir_key] + "/" + getModuleName(p) + "/" + version)
   client.add(moduleNames)
   for mn in moduleNames:
     checkInMessage = "Infinispan Release Script: Releasing module " + mn + " version " + version + " to public Maven2 repo"
@@ -208,7 +190,7 @@ def uploadArtifactsToSourceforge(version):
   os.mkdir(".tmp")
   os.chdir(".tmp")
   do_not_copy = shutil.ignore_patterns('*.xml', '*.sha1', '*.md5')
-  shutil.copytree("%s/infinispan/%s" % (localMvnRepoDir, version), "%s" % version, ignore = do_not_copy)
+  shutil.copytree("%s/infinispan/%s" % (settings[local_mvn_repo_dir_key], version), "%s" % version, ignore = do_not_copy)
   subprocess.check_call(["scp", "-r", version, "sourceforge_frs:/home/frs/project/i/in/infinispan/infinispan"])
 
 def uploadJavadocs(base_dir, workingDir, version):
@@ -231,6 +213,18 @@ def uploadJavadocs(base_dir, workingDir, version):
   
 ### This is the starting place for this script.
 def release():
+  require_settings_file()
+  
+  missing_keys = []
+  expected_keys = [svn_base_key, local_tags_dir_key, local_mvn_repo_dir_key]
+  for expected_key in expected_keys:
+    if expected_key not in settings:
+      missing_keys.append(expected_key)
+  
+  if len(missing_keys) > 0:
+    print "Entries %s are missing in configuration file %s!  Cannot proceed!" % (missing_keys, settings_file)
+    sys.exit(2)
+
   # We start by determining whether the version passed in is a valid one
   if len(sys.argv) < 2:
     helpAndExit()
@@ -241,12 +235,12 @@ def release():
   
   ## Release order:
   # Step 1: Tag in SVN
-  newVersion = "%s/tags/%s" % (svnBase, version)
+  newVersion = "%s/tags/%s" % (settings[svn_base_key], version)
   print "Step 1: Tagging trunk in SVN as %s" % newVersion    
   tagInSubversion(version, newVersion)
   print "Step 1: Complete"
   
-  workingDir = localTagsDir + "/" + version
+  workingDir = settings[local_tags_dir_key] + "/" + version
     
   # Step 2: Update version in tagged files
   print "Step 2: Updating version number in source files"
@@ -283,4 +277,4 @@ def release():
 
 
 if __name__ == "__main__":
-    release()
+  release()

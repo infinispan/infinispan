@@ -2,7 +2,47 @@ import os
 import fnmatch
 import re
 import subprocess
+import sys
 
+settings_file = '%s/.infinispan_dev_settings' % os.getenv('HOME')
+
+### Known config keys
+svn_base_key = "svn_base"
+local_tags_dir_key = "local_tags_dir"
+local_mvn_repo_dir_key = "local_mvn_repo_dir"
+maven_pom_xml_namespace = "http://maven.apache.org/POM/4.0.0"
+
+def get_settings():
+  """Retrieves user-specific settings for all Infinispan tools.  Returns a dict of key/value pairs, or an empty dict if the settings file doesn't exist."""
+  f = None
+  try:
+    settings = {}
+    f = open(settings_file)
+    for l in f:
+      if not l.strip().startswith("#"):
+        kvp = l.split("=")
+        if kvp and len(kvp) > 0 and kvp[0] and len(kvp) > 1:
+          settings[kvp[0].strip()] = kvp[1].strip()
+    return settings
+  except IOError as ioe:
+    return {}
+  finally:
+    if f:
+      f.close()
+
+settings = get_settings()
+
+def require_settings_file():
+  """Tests whether the settings file exists, and if not exits with an error message."""
+  f = None
+  try:
+    f = open(settings_file)
+  except IOError as ioe:
+    print "User-specific environment settings file %s is missing!  Cannot proceed!" % settings_file
+    sys.exit(3)
+  finally:
+    if f:
+      f.close()
 
 def toSet(list):
   """Crappy implementation of creating a Set from a List.  To cope with older Python versions"""
