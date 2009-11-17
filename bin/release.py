@@ -192,6 +192,7 @@ def uploadArtifactsToSourceforge(version):
   do_not_copy = shutil.ignore_patterns('*.xml', '*.sha1', '*.md5')
   shutil.copytree("%s/infinispan/%s" % (settings[local_mvn_repo_dir_key], version), "%s" % version, ignore = do_not_copy)
   subprocess.check_call(["scp", "-r", version, "sourceforge_frs:/home/frs/project/i/in/infinispan/infinispan"])
+  shutil.rmtree(".tmp", ignore_errors = True)  
 
 def uploadJavadocs(base_dir, workingDir, version):
   os.chdir("%s/target/distribution" % workingDir)
