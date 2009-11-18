@@ -33,6 +33,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.marshall.MarshalledValue;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -207,6 +208,10 @@ public class EntryFactoryImpl implements EntryFactory {
             return true;
          } else {
             Object owner = lockManager.getOwner(key);
+            // if lock cannot be acquired, expose the key itself, not the marshalled value
+            if (key instanceof MarshalledValue) {
+               key = ((MarshalledValue) key).get();
+            }
             throw new TimeoutException("Unable to acquire lock after [" + Util.prettyPrintTime(getLockAcquisitionTimeout(ctx)) + "] on key [" + key + "] for requestor [" +
                   ctx.getLockOwner() + "]! Lock held by [" + owner + "]");
          }
