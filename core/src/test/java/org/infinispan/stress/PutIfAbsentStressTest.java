@@ -61,7 +61,6 @@ public class PutIfAbsentStressTest {
     * Purpose is not testing JDK's ConcurrentHashMap but ensuring the test is correct. It's also
     * interesting to compare performance.
     */
-   @Test
    protected void testonConcurrentHashMap() throws Exception {
       ConcurrentMap<String, String> map = new ConcurrentHashMap<String, String>();
       testConcurrentLocking(map);
@@ -70,7 +69,6 @@ public class PutIfAbsentStressTest {
    /**
     * Testing putIfAbsent's behaviour on a Local cache.
     */
-   @Test
    protected void testonInfinispanLocal() throws Exception {
       CacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
       ConcurrentMap<String, String> map = cm.getCache();
@@ -84,7 +82,6 @@ public class PutIfAbsentStressTest {
    /**
     * Testing putIfAbsent's behaviour in DIST_SYNC cache.
     */
-   @Test
    protected void testonInfinispanDIST() throws Exception {
       Configuration c = new Configuration();
       c.setCacheMode(Configuration.CacheMode.DIST_SYNC);
@@ -94,7 +91,6 @@ public class PutIfAbsentStressTest {
    /**
     * Testing putIfAbsent's behaviour in REPL_SYNC cache.
     */
-   @Test
    protected void testonInfinispanREPL() throws Exception {
       Configuration c = new Configuration();
       c.setCacheMode(Configuration.CacheMode.REPL_SYNC);
