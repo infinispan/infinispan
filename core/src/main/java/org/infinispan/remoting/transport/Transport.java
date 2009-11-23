@@ -27,6 +27,7 @@ import java.util.concurrent.ExecutorService;
  * this cache instance.
  *
  * @author Manik Surtani
+ * @author Galder Zamarreño
  * @since 4.0
  */
 @Scope(Scopes.GLOBAL)
@@ -81,6 +82,16 @@ public interface Transport extends Lifecycle {
     * @return an Address
     */
    Address getAddress();
+
+   /**
+    * Retrieves the current cache instance's phyical network address. Some implementations might differentiate 
+    * between logical and physical addresses in which case, this method allows clients to query the physical one. 
+    * Implementations where logical and physical address are the same will simply return the same Address 
+    * as {@link #getAddress()}.
+    *
+    * @return an Address
+    */   
+   Address getPhysicalAddress();
 
    /**
     * Returns a list of  members in the current cluster view.

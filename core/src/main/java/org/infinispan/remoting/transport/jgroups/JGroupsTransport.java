@@ -50,7 +50,6 @@ import org.jgroups.ExtendedMembershipListener;
 import org.jgroups.ExtendedMessageListener;
 import org.jgroups.JChannel;
 import org.jgroups.Message;
-import org.jgroups.PhysicalAddress;
 import org.jgroups.View;
 import org.jgroups.blocks.GroupRequest;
 import org.jgroups.blocks.RspFilter;
@@ -99,6 +98,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
    Channel channel;
    boolean createdChannel = false;
    Address address;
+   Address physicalAddress;
    volatile List<Address> members = Collections.emptyList();
    volatile boolean coordinator = false;
    final Object membersListLock = new Object(); // guards members
@@ -356,8 +356,12 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
       return address;
    }
 
-   private PhysicalAddress getPhysicalAddress() {
-      return (PhysicalAddress) channel.downcall(new Event(Event.GET_PHYSICAL_ADDRESS, channel.getAddress()));
+   public Address getPhysicalAddress() {
+      if (physicalAddress == null && channel != null) {
+         org.jgroups.Address addr = (org.jgroups.Address) channel.downcall(new Event(Event.GET_PHYSICAL_ADDRESS, channel.getAddress()));
+         physicalAddress = new JGroupsAddress(addr);
+      }
+      return physicalAddress;
    }
 
    // ------------------------------------------------------------------------------------------------------------------

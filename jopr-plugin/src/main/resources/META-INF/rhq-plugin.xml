@@ -148,6 +148,12 @@
                    description="Statistics enabled" />
            <metric property="Invalidation.Invalidations" displayName="[Invalidation] Number of invalidations" displayType="detail" units="none" dataType="measurement"
                    description="Number of invalidations" />
+           <metric property="LockManager.ConcurrencyLevel" displayName="[LockManager] Concurrency level" displayType="detail" units="none" dataType="trait"
+                   description="The concurrency level that the MVCC Lock Manager has been configured with." />
+           <metric property="LockManager.NumberOfLocksHeld" displayName="[LockManager] Number of locks held" displayType="detail" units="none" dataType="measurement"
+                   description="The number of exclusive locks that are held." />
+           <metric property="LockManager.NumberOfLocksAvailable" displayName="[LockManager] Number of locks available" displayType="detail" units="none" dataType="measurement"
+                   description="The number of exclusive locks that are available." />
            <metric property="CacheStore.CacheLoaderStores" displayName="[CacheStore] Number of cache stores" displayType="detail" units="none" dataType="measurement"
                    description="number of cache loader stores" />
            <metric property="CacheLoader.CacheLoaderLoads" displayName="[CacheLoader] Number of cache store loads" displayType="detail" units="none" dataType="measurement"
@@ -192,18 +198,14 @@
                    description="Number of failed replications" />
            <metric property="RpcManager.StatisticsEnabled" displayName="[RpcManager] Statistics enabled" displayType="detail" units="none" dataType="trait"
                    description="Statistics enabled" />
+           <metric property="RpcManager.PhysicalAddress" displayName="[RpcManager] Physical network address" displayType="summary" units="none" dataType="trait"
+                   description="The physical network address associated with this instance" />
            <metric property="RpcManager.ClusterSize" displayName="[RpcManager] Cluster size" displayType="summary" units="none" dataType="measurement"
                    description="Size of the cluster in number of nodes" />
            <metric property="RpcManager.SuccessRatioFloatingPoint" displayName="[RpcManager] Successful replication ratio" displayType="summary" units="percentage" dataType="measurement"
                    description="Successful replications as a ratio of total replications in numeric double format" />
            <metric property="RpcManager.AverageReplicationTime" displayName="[RpcManager] Average time spent in the transport layer" displayType="summary" units="milliseconds" dataType="measurement"
                    description="The average time spent in the transport layer, in milliseconds" />
-           <metric property="LockManager.ConcurrencyLevel" displayName="[LockManager] Concurrency level" displayType="detail" units="none" dataType="trait"
-                   description="The concurrency level that the MVCC Lock Manager has been configured with." />
-           <metric property="LockManager.NumberOfLocksHeld" displayName="[LockManager] Number of locks held" displayType="detail" units="none" dataType="measurement"
-                   description="The number of exclusive locks that are held." />
-           <metric property="LockManager.NumberOfLocksAvailable" displayName="[LockManager] Number of locks available" displayType="detail" units="none" dataType="measurement"
-                   description="The number of exclusive locks that are available." />
            <metric property="Cache.CacheName" displayName="[Cache] Cache name" displayType="summary" units="none" dataType="trait"
                    description="Returns the cache name" />
            <metric property="Cache.CacheStatus" displayName="[Cache] Cache status" displayType="summary" units="none" dataType="trait"

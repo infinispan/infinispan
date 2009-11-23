@@ -43,6 +43,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * implementations.
  *
  * @author Manik Surtani
+ * @author Galder Zamarreño
  * @since 4.0
  */
 @MBean(objectName = "RpcManager", description = "Manages all remote calls to remote cache instances in the cluster.")
@@ -329,6 +330,14 @@ public class RpcManagerImpl implements RpcManager {
    public String getAddress() {
       if (t == null || !isStatisticsEnabled()) return "N/A";
       Address address = t.getAddress();
+      return address == null ? "N/A" : address.toString();
+   }
+
+   @ManagedAttribute(description = "The physical network address associated with this instance")
+   @Metric(displayName = "Physical network address", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
+   public String getPhysicalAddress() {
+      if (t == null || !isStatisticsEnabled()) return "N/A";
+      Address address = t.getPhysicalAddress();
       return address == null ? "N/A" : address.toString();
    }
 
