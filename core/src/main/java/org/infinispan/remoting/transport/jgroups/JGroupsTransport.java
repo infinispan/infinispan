@@ -24,6 +24,7 @@ package org.infinispan.remoting.transport.jgroups;
 
 import org.infinispan.CacheException;
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.config.ConfigurationException;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.config.parsing.XmlConfigHelper;
 import org.infinispan.marshall.Marshaller;
@@ -53,6 +54,7 @@ import org.jgroups.Message;
 import org.jgroups.View;
 import org.jgroups.blocks.GroupRequest;
 import org.jgroups.blocks.RspFilter;
+import org.jgroups.protocols.pbcast.FLUSH;
 import org.jgroups.protocols.pbcast.STREAMING_STATE_TRANSFER;
 import org.jgroups.stack.ProtocolStack;
 import org.jgroups.util.Rsp;
@@ -161,9 +163,8 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
 
       // ensure that the channel has FLUSH enabled.
       // see ISPN-83 for details.
-      if (!channel.flushSupported()) {
-         log.warn("FLUSH is not present in your JGroups stack!  FLUSH is needed to ensure messages are not dropped while new nodes join the cluster.  Will proceed, but inconsistencies may arise!");
-      }
+      if ( channel.getProtocolStack()!= null && channel.getProtocolStack().findProtocol(FLUSH.class) == null)
+         throw new ConfigurationException("Flush should be enabled. This is related to https://jira.jboss.org/jira/browse/ISPN-83");
    }
 
    public int getViewId() {

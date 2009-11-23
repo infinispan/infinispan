@@ -17,7 +17,7 @@
 
       <transport transportClass="org.infinispan.remoting.transport.jgroups.JGroupsTransport">
       <properties>
-         <property name="configurationFile" value="${test.property.jgroupsConfigFile:udp.xml}"/>
+         <property name="configurationFile" value="${test.property.jgroupsConfigFile:config-samples/jgroups-tcp.xml}"/>
          </properties>
       </transport>
 

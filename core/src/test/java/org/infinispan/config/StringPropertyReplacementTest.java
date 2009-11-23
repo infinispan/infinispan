@@ -32,7 +32,7 @@ public class StringPropertyReplacementTest extends SingleCacheManagerTest {
       asyncListenerExecutorProperties.get("maxThreads").equals("2");
 
       Properties transportProps = cacheManager.getGlobalConfiguration().getTransportProperties();
-      assert transportProps.get("configurationFile").equals("udp.xml");
+      assert transportProps.get("configurationFile").equals("config-samples/jgroups-tcp.xml");
    }
 
    public void testDefaultCache() {
