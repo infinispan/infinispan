@@ -54,7 +54,7 @@ public class QueryInterceptor extends CommandInterceptor {
       Object toReturn = invokeNextInterceptor(ctx, command);
 
       if (shouldModifyIndexes(ctx)) {         
-         addToIndexes(extractValue(command.getKey()), extractValue(command.getValue()));
+         addToIndexes(extractValue(command.getValue()), extractValue(command.getKey()));
       }
 
 

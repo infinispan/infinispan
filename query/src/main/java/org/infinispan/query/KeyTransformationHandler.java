@@ -48,13 +48,19 @@ public class KeyTransformationHandler {
          //   "D:5.34"
          //   "B:f"
          //   "T:com.myorg.MyTransformer:STRING_GENERATED_BY_MY_TRANSFORMER"
-         return key.toString();
+
+
+         // for now just support Strings!!
+         return "S:" + key.toString();
       }
       else
-         throw new IllegalArgumentException("Indexing only works with entries keyed on Strings!");
+         throw new IllegalArgumentException("Indexing only works with entries keyed on Strings - you passed in a " + key.getClass().toString());
    }
 
    private static boolean validKey(Object key) {
+      // for now we just support Strings and bypass the rest of the logic!
+      if (true) return key instanceof String;
+      
       // we support String and JDK primitives and their wrappers.
       if (key instanceof String ||
             key instanceof Integer ||
