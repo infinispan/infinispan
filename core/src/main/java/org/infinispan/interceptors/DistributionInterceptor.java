@@ -255,7 +255,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    private NotifyingNotifiableFuture<Object> flushL1Cache(int numCallRecipients, Object[] keys, boolean useFuture, Object retval, boolean sync) {
       if (isL1CacheEnabled && numCallRecipients > 0 && rpcManager.getTransport().getMembers().size() > numCallRecipients) {
          if (trace) log.trace("Invalidating L1 caches");
-         InvalidateCommand ic = cf.buildInvalidateFromL1Command(keys);
+         InvalidateCommand ic = cf.buildInvalidateFromL1Command(false, keys);
          if (useFuture) {
             NotifyingNotifiableFuture<Object> future = new AggregatingNotifyingFutureImpl(retval, 2);
             rpcManager.broadcastRpcCommandInFuture(ic, future);
