@@ -47,6 +47,7 @@ import org.hibernate.transform.ResultTransformer;
 import org.infinispan.Cache;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.QueryIterator;
+import org.infinispan.query.KeyTransformationHandler;
 import org.infinispan.query.backend.IndexSearcherCloser;
 
 import java.io.IOException;
@@ -290,21 +291,21 @@ public class CacheQueryImpl implements CacheQuery {
 
          DocumentExtractor extractor = new DocumentExtractor(queryHits, searchFactory, indexProjection, idFieldNames, allowFieldSelectionInProjection);
 
-         List<Object> keysForCache = new ArrayList<Object>(size);
+         List<String> keysForCache = new ArrayList<String>(size);
          for (int index = first; index <= max; index++) {
             // Since the documentId is same thing as the key in each key, value pairing. We can just get the documentId
             // from Lucene and then get it from the cache.
 
             // The extractor.extract.id gives me the documentId that we need.
 
-            Object cacheKey = extractor.extract(index).id;
+            String cacheKey = extractor.extract(index).id.toString(); // these are always strings
             keysForCache.add(cacheKey);
          }
 
          // Loop through my list of keys and get it from the cache. Put each object that I get into a separate list.
          List<Object> listToReturn = new ArrayList<Object>(size);
-         for (Object key : keysForCache) {
-            listToReturn.add(cache.get(key));
+         for (String key : keysForCache) {
+            listToReturn.add(cache.get(KeyTransformationHandler.stringToKey(key)));
          }
 
 

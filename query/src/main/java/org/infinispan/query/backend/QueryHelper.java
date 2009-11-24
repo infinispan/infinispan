@@ -117,13 +117,13 @@ public class QueryHelper {
          try {
             if (indexLocal) {
                // Add a LocalQueryInterceptor to the chain
-               addInterceptor(LocalQueryInterceptor.class);
+               initComponents(LocalQueryInterceptor.class);
             }
             // We're indexing data even if it comes from other sources
 
             else {
                // Add in a QueryInterceptor to the chain
-               addInterceptor(QueryInterceptor.class);
+               initComponents(QueryInterceptor.class);
             }
          } catch (Exception e) {
             throw new CacheException("Unable to add interceptor", e);
@@ -166,7 +166,7 @@ public class QueryHelper {
    // Private method that adds the interceptor from the classname parameter.
 
 
-   private void addInterceptor(Class<? extends QueryInterceptor> interceptorClass)
+   private void initComponents(Class<? extends QueryInterceptor> interceptorClass)
          throws IllegalAccessException, InstantiationException {
 
       // get the component registry and then register the searchFactory.

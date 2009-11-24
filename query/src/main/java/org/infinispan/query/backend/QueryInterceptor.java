@@ -12,6 +12,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.marshall.MarshalledValue;
+import static org.infinispan.query.KeyTransformationHandler.keyToString;
 
 import javax.transaction.TransactionManager;
 import java.util.Map;
@@ -41,18 +42,21 @@ public class QueryInterceptor extends CommandInterceptor {
       this.transactionManager = transactionManager;
    }
 
+   protected boolean shouldModifyIndexes(InvocationContext ctx) {
+      return true;
+   }
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
 
       // This method will get the put() calls on the cache and then send them into Lucene once it's successful.
-
-      if (log.isDebugEnabled()) log.debug("Entered the searchable core interceptor visitPutKeyValueCommand()");
-
       // do the actual put first.
       Object toReturn = invokeNextInterceptor(ctx, command);
 
-      addToIndexes(checkForMarshalledValue(command.getValue()), checkForMarshalledValue(command.getKey()).toString());
+      if (shouldModifyIndexes(ctx)) {         
+         addToIndexes(extractValue(command.getKey()), extractValue(command.getValue()));
+      }
+
 
       return toReturn;
    }
@@ -67,8 +71,8 @@ public class QueryInterceptor extends CommandInterceptor {
 
       if (log.isDebugEnabled()) log.debug("Transaction Manager is " + transactionManager);
 
-      if (command.isSuccessful()) {
-         removeFromIndexes(checkForMarshalledValue(valueRemoved), checkForMarshalledValue(command.getKey()).toString());
+      if (command.isSuccessful() && shouldModifyIndexes(ctx)) {
+         removeFromIndexes(extractValue(valueRemoved), extractValue(command.getKey()));
       }
 
       return valueRemoved;
@@ -82,13 +86,13 @@ public class QueryInterceptor extends CommandInterceptor {
       if (log.isDebugEnabled()) log.debug("Entered the searchable core interceptor visitReplaceCommand()");
 
       Object valueReplaced = invokeNextInterceptor(ctx, command);
-      if (valueReplaced != null) {
+      if (valueReplaced != null && shouldModifyIndexes(ctx)) {
 
          Object[] parameters = command.getParameters();
-         String keyString = checkForMarshalledValue(command.getKey()).toString();
+         Object key = extractValue(command.getKey());
 
-         removeFromIndexes(checkForMarshalledValue(parameters[1]), keyString);
-         addToIndexes(checkForMarshalledValue(parameters[2]), keyString);
+         removeFromIndexes(extractValue(parameters[1]), key);
+         addToIndexes(extractValue(parameters[2]), key);
       }
 
       return valueReplaced;
@@ -101,48 +105,47 @@ public class QueryInterceptor extends CommandInterceptor {
 
       Object mapPut = invokeNextInterceptor(ctx, command);
 
+      if (shouldModifyIndexes(ctx)) {
+         Map<Object, Object> dataMap = command.getMap();
 
-      Map<Object, Object> dataMap = command.getMap();
+         // Loop through all the keys and put those key, value pairings into lucene.
 
-      // Loop through all the keys and put those key, value pairings into lucene.
-
-      for (Map.Entry entry : dataMap.entrySet()) {
-         addToIndexes(checkForMarshalledValue(entry.getValue()), checkForMarshalledValue(entry.getKey()).toString());
+         for (Map.Entry entry : dataMap.entrySet()) {
+            addToIndexes(extractValue(entry.getValue()), extractValue(entry.getKey()));
+         }
       }
       return mapPut;
    }
 
 
    // Method that will be called when data needs to be added into Lucene.
-   protected void addToIndexes(Object value, String key) {
+   protected void addToIndexes(Object value, Object key) {
+      if (log.isDebugEnabled()) log.debug("Adding to indexes for key [{0}] and value [{0}]", key, value);
 
       // The key here is the String representation of the key that is stored in the cache.
       // The key is going to be the documentID for Lucene.
       // The object parameter is the actual value that needs to be put into lucene.
 
       TransactionContext transactionContext = new TransactionalEventTransactionContext(transactionManager);
-      searchFactory.getWorker().performWork(new Work(value, key, WorkType.ADD), transactionContext);
+      searchFactory.getWorker().performWork(new Work<Object>(value, keyToString(key), WorkType.ADD), transactionContext);
    }
 
 
    // Method that will be called when data needs to be removed from Lucene.
-   protected void removeFromIndexes(Object value, String key) {
+   protected void removeFromIndexes(Object value, Object key) {
 
       // The key here is the String representation of the key that is stored in the cache.
       // The key is going to be the documentID for Lucene.
       // The object parameter is the actual value that needs to be removed from lucene.
 
       TransactionContext transactionContext = new TransactionalEventTransactionContext(transactionManager);
-      searchFactory.getWorker().performWork(new Work(value, key, WorkType.DELETE), transactionContext);
+      searchFactory.getWorker().performWork(new Work<Object>(value, keyToString(key), WorkType.DELETE), transactionContext);
    }
 
-   // Check to see if a given object is a marshalled value or not.
-   protected Object checkForMarshalledValue(Object o) {
-      if (o instanceof MarshalledValue) {
-         return ((MarshalledValue) o).get();
-      } else {
-         return o;
-      }
+   private Object extractValue(Object wrappedValue) {
+      if (wrappedValue instanceof MarshalledValue)
+         return ((MarshalledValue) wrappedValue).get();
+      else
+         return wrappedValue;
    }
-
 }
