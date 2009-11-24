@@ -23,6 +23,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * TODO: For some reason, if you add to any of the methods below 'assert false;'
+ * Eclipse 3.5 and org.testng.eclipse_5.9.0.4.jar combination will indicate that 
+ * the test passes correctly. Command line mvn execution does show the failure.
+ * Need to show this to Max either in the office or via a screencast to see how 
+ * to debug it.
+ * 
  * @author Mircea.Markus@jboss.com
  */
 @Test(groups = "functional", testName = "jmx.RpcManagerMBeanTest")
@@ -92,7 +98,6 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
       mBeanServer.setAttribute(rpcManager1, new Attribute("StatisticsEnabled", Boolean.TRUE));
    }
 
-
    @Test(dependsOnMethods = "testEnableJmxStats")
    public void testSuccessRatio() throws Exception {
       Cache cache1 = manager(0).getCache(cachename);
@@ -109,7 +114,10 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
       cache1.put("a2", "b2");
       cache1.put("a3", "b3");
       cache1.put("a4", "b4");
+      assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals(new Long(4));
       assert mBeanServer.getAttribute(rpcManager1, "SuccessRatio").equals("100%");
+      assert !mBeanServer.getAttribute(rpcManager1, "AverageReplicationTime").equals(new Long(0));
+
       RpcManagerImpl rpcManager = (RpcManagerImpl) TestingUtil.extractComponent(cache1, RpcManager.class);
       Transport originalTransport = rpcManager.getTransport();
 

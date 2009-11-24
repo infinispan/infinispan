@@ -56,7 +56,6 @@ public class RpcManagerImpl implements RpcManager {
    private final AtomicLong replicationCount = new AtomicLong(0);
    private final AtomicLong replicationFailures = new AtomicLong(0);
    private final AtomicLong totalReplicationTime = new AtomicLong(0);
-   private final AtomicLong numReplications = new AtomicLong(0);
 
    @ManagedAttribute(description = "Enables or disables the gathering of statistics by this component", writable = true)
    boolean statisticsEnabled = false; // by default, don't gather statistics.
@@ -95,6 +94,8 @@ public class RpcManagerImpl implements RpcManager {
             log.debug("We're the only member in the cluster; Don't invoke remotely.");
          return Collections.emptyList();
       } else {
+         long startTime = 0;
+         if (statisticsEnabled) startTime = System.currentTimeMillis();
          try {
             List<Response> result = t.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue, responseFilter, stateTransferEnabled);
             if (isStatisticsEnabled()) replicationCount.incrementAndGet();
@@ -110,6 +111,11 @@ public class RpcManagerImpl implements RpcManager {
             log.error("unexpected error while replicating", th);
             if (isStatisticsEnabled()) replicationFailures.incrementAndGet();
             throw new CacheException(th);
+         } finally {
+            if (statisticsEnabled) {
+               long timeTaken = System.currentTimeMillis() - startTime;
+               totalReplicationTime.getAndAdd(timeTaken);
+            }
          }
       }
    }
@@ -123,73 +129,62 @@ public class RpcManagerImpl implements RpcManager {
    }
 
    public void retrieveState(String cacheName, long timeout) throws StateTransferException {
-      long startTime = 0;
-      if (statisticsEnabled) startTime = System.currentTimeMillis();
+      if (t.isSupportStateTransfer()) {
+         long initialWaitTime = configuration.getStateRetrievalInitialRetryWaitTime();
+         int waitTimeIncreaseFactor = configuration.getStateRetrievalRetryWaitTimeIncreaseFactor();
+         int numRetries = configuration.getStateRetrievalNumRetries();
+         List<Address> members = t.getMembers();
+         if (members.size() < 2) {
+            if (log.isDebugEnabled())
+               log.debug("We're the only member in the cluster; no one to retrieve state from. Not doing anything!");
+            return;
+         }
 
-      try {
-         if (t.isSupportStateTransfer()) {
-            long initialWaitTime = configuration.getStateRetrievalInitialRetryWaitTime();
-            int waitTimeIncreaseFactor = configuration.getStateRetrievalRetryWaitTimeIncreaseFactor();
-            int numRetries = configuration.getStateRetrievalNumRetries();
-            List<Address> members = t.getMembers();
-            if (members.size() < 2) {
-               if (log.isDebugEnabled())
-                  log.debug("We're the only member in the cluster; no one to retrieve state from. Not doing anything!");
-               return;
-            }
+         boolean success = false;
 
-            boolean success = false;
-
-            try {
-               long wait = initialWaitTime;
-               outer:
-               for (int i = 0; i < numRetries; i++) {
-                  for (Address member : members) {
-                     if (!member.equals(t.getAddress())) {
-                        try {
-                           if (log.isInfoEnabled()) log.info("Trying to fetch state from {0}", member);
-                           currentStateTransferSource = member;
-                           if (t.retrieveState(cacheName, member, timeout)) {
-                              if (log.isInfoEnabled())
-                                 log.info("Successfully retrieved and applied state from {0}", member);
-                              success = true;
-                              break outer;
-                           }
-                        } catch (StateTransferException e) {
-                           if (log.isDebugEnabled()) log.debug("Error while fetching state from member " + member, e);
-                        } finally {
-                           currentStateTransferSource = null;
-                        }
-                     }
-                  }
-
-                  if (!success) {
-                     if (log.isWarnEnabled())
-                        log.warn("Could not find available peer for state, backing off and retrying");
-
+         try {
+            long wait = initialWaitTime;
+            outer:
+            for (int i = 0; i < numRetries; i++) {
+               for (Address member : members) {
+                  if (!member.equals(t.getAddress())) {
                      try {
-                        Thread.sleep(wait *= waitTimeIncreaseFactor);
-                     }
-                     catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
+                        if (log.isInfoEnabled()) log.info("Trying to fetch state from {0}", member);
+                        currentStateTransferSource = member;
+                        if (t.retrieveState(cacheName, member, timeout)) {
+                           if (log.isInfoEnabled())
+                              log.info("Successfully retrieved and applied state from {0}", member);
+                           success = true;
+                           break outer;
+                        }
+                     } catch (StateTransferException e) {
+                        if (log.isDebugEnabled()) log.debug("Error while fetching state from member " + member, e);
+                     } finally {
+                        currentStateTransferSource = null;
                      }
                   }
-
                }
-            } finally {
-               currentStateTransferSource = null;
-            }
 
-            if (!success) throw new StateTransferException("Unable to fetch state on startup");
-         } else {
-            throw new StateTransferException("Transport does not, or is not configured to, support state transfer.  Please disable fetching state on startup, or reconfigure your transport.");
+               if (!success) {
+                  if (log.isWarnEnabled())
+                     log.warn("Could not find available peer for state, backing off and retrying");
+
+                  try {
+                     Thread.sleep(wait *= waitTimeIncreaseFactor);
+                  }
+                  catch (InterruptedException e) {
+                     Thread.currentThread().interrupt();
+                  }
+               }
+
+            }
+         } finally {
+            currentStateTransferSource = null;
          }
-      } finally {
-         if (statisticsEnabled) {
-            long timeTaken = System.currentTimeMillis() - startTime;
-            totalReplicationTime.getAndAdd(timeTaken);
-            numReplications.getAndIncrement();
-         }
+
+         if (!success) throw new StateTransferException("Unable to fetch state on startup");
+      } else {
+         throw new StateTransferException("Transport does not, or is not configured to, support state transfer.  Please disable fetching state on startup, or reconfigure your transport.");
       }
    }
 
@@ -294,7 +289,6 @@ public class RpcManagerImpl implements RpcManager {
       replicationCount.set(0);
       replicationFailures.set(0);
       totalReplicationTime.set(0);
-      numReplications.set(0);
    }
 
    @ManagedAttribute(description = "Number of successful replications")
@@ -379,10 +373,10 @@ public class RpcManagerImpl implements RpcManager {
    @ManagedAttribute(description = "The average time spent in the transport layer, in milliseconds")
    @Metric(displayName = "Average time spent in the transport layer", units = Units.MILLISECONDS, displayType = DisplayType.SUMMARY)
    public long getAverageReplicationTime() {
-      if (numReplications.get() == 0) {
+      if (replicationCount.get() == 0) {
          return 0;
       }
-      return totalReplicationTime.get() / numReplications.get();
+      return totalReplicationTime.get() / replicationCount.get();
    }
 
    // mainly for unit testing
