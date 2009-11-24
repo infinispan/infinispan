@@ -60,7 +60,7 @@ public interface ConsistentHash {
     * @param a2 address to test
     * @return the distance between the 2 nodes.  Always a positive number, where the distance between a1 and itself is
     *         0. The distance between a1 and the next adjacent node is 1 and teh distance between a1 and the previous
-    *         adjacent node is caches.size() - 1.
+    *         adjacent node is caches.size() - 1.  A -1 may be returned if either of the addresses do not exist.
     */
    int getDistance(Address a1, Address a2);
 

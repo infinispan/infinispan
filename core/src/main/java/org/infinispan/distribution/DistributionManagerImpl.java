@@ -175,7 +175,8 @@ public class DistributionManagerImpl implements DistributionManager {
          boolean willReceiveLeaverState = willReceiveLeaverState(leaver);
          boolean willSendLeaverState = willSendLeaverState(leaver);
          try {
-            oldConsistentHash = consistentHash;
+            if (!(consistentHash instanceof UnionConsistentHash)) oldConsistentHash = consistentHash;
+            else oldConsistentHash = ((UnionConsistentHash) consistentHash).newCH;
             consistentHash = ConsistentHashHelper.removeAddress(consistentHash, leaver, configuration);
          } catch (Exception e) {
             log.fatal("Unable to process leaver!!", e);
@@ -204,18 +205,18 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    boolean willSendLeaverState(Address leaver) {
-      return consistentHash.isAdjacent(leaver, self);
+      ConsistentHash ch = consistentHash instanceof UnionConsistentHash ? oldConsistentHash : consistentHash;
+      return ch.isAdjacent(leaver, self);
    }
 
    boolean willReceiveLeaverState(Address leaver) {
       ConsistentHash ch = consistentHash instanceof UnionConsistentHash ? oldConsistentHash : consistentHash;
       int dist = ch.getDistance(leaver, self);
-      return dist <= replCount;
+      return dist >= 0 && dist <= replCount;
    }
 
    public boolean isLocal(Object key) {
-      if (consistentHash == null) return true;
-      return consistentHash.isKeyLocalToAddress(self, key, replCount);
+      return consistentHash == null || consistentHash.isKeyLocalToAddress(self, key, replCount);
    }
 
    public List<Address> locate(Object key) {
@@ -296,11 +297,13 @@ public class DistributionManagerImpl implements DistributionManager {
          if (consistentHash instanceof UnionConsistentHash) {
             UnionConsistentHash uch = (UnionConsistentHash) consistentHash;
             consistentHash = uch.getNewConsistentHash();
+            oldConsistentHash = null;
          }
          rehashInProgress = false;
       } else {
          ConsistentHash chOld = consistentHash;
          if (chOld instanceof UnionConsistentHash) throw new RuntimeException("Not expecting a union CH!");
+         oldConsistentHash = chOld;
          this.joiner = joiner;
          rehashInProgress = true;
 

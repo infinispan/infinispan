@@ -123,11 +123,11 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
 
       int p1 = addresses.indexOf(a1);
       if (p1 < 0)
-         throw new IllegalArgumentException("Address " + a1 + " not in the addresses list of this consistent hash impl!");
+         return -1;
 
       int p2 = addresses.indexOf(a2);
       if (p2 < 0)
-         throw new IllegalArgumentException("Address " + a2 + " not in the addresses list of this consistent hash impl!");
+         return -1;
 
       if (p1 <= p2)
          return p2 - p1;
