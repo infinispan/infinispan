@@ -30,6 +30,7 @@ import java.lang.reflect.Modifier;
 import java.text.NumberFormat;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * General utility methods used throughout the JBC code base.
@@ -145,6 +146,10 @@ public final class Util {
       public String toString() {
          return "Added Entries " + addedEntries + " Removeed Entries " + removedEntries + " Modified Entries " + modifiedEntries;
       }
+   }
+
+   public static String prettyPrintTime(long time, TimeUnit unit) {
+      return prettyPrintTime(unit.toMillis(time));
    }
 
    /**
