@@ -21,15 +21,6 @@
  */
 package org.infinispan.lucene;
 
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.BlockingDeque;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.TimeUnit;
-
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.SimpleAnalyzer;
 import org.apache.lucene.document.Document;
@@ -38,8 +29,8 @@ import org.apache.lucene.document.Field.Index;
 import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.Term;
 import org.apache.lucene.index.IndexWriter.MaxFieldLength;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
@@ -53,6 +44,15 @@ import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.TimeUnit;
 
 /**
  * <p>
@@ -73,7 +73,8 @@ import org.testng.annotations.Test;
  * @author Sanne Grinovero
  * @since 4.0
  */
-@Test(groups = "profiling", testName = "lucene.DynamicClusterIndexStressTest")
+@Test(groups = "profiling", testName = "lucene.DynamicClusterIndexStressTest", enabled = false,
+      description = "This is a 'manual' test and should only be enabled and run when attached to a profiler.")
 public class DynamicClusterIndexStressTest {
 
    private static final int TOTAL_NODES_TO_CREATE = 1000;
@@ -137,17 +138,15 @@ public class DynamicClusterIndexStressTest {
       Assert.assertTrue(!failed, failureMessage);
    }
    
-   @Test
-   public void testWihtoutRehashing() throws InterruptedException{
+   public void testWithoutRehashing() throws InterruptedException{
       ExecutorService executor = Executors.newFixedThreadPool(CONCURRENCY_LIMIT);
       Cache[] caches = new Cache[CONCURRENCY_LIMIT];
       for (int i=0; i<CONCURRENCY_LIMIT; i++){
          caches[i] = cacheFactory.createClusteredCacheWaitingForNodesView(i+1);
       }
       //TODO run the tests
-      //FIXME: some NPEs are logged here during cleanup
       for (int i=0; i<CONCURRENCY_LIMIT; i++){
-//         Thread.sleep(1000); Enabling sleep here "fixes" the NPEs
+         Thread.sleep(250); // there should be some sleep here
          cleanup(caches[i]);
       }
    }
