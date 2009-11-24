@@ -2,8 +2,6 @@ package org.infinispan.distribution.rehash;
 
 import org.infinispan.Cache;
 import org.infinispan.distribution.BaseDistFunctionalTest;
-import org.infinispan.distribution.ConsistentHash;
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
@@ -16,7 +14,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
-import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
  * A base test for all rehashing tests
@@ -45,19 +42,6 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
    void additionalWait() {
       TestingUtil.sleepThread(1000);
    }
-
-   protected int locateJoiner(Address joinerAddress) {
-      for (Cache c : Arrays.asList(c1, c2, c3, c4)) {
-         ConsistentHash dch = getNonUnionConsistentHash(c, SECONDS.toMillis(480));
-         int i = 0;
-         for (Address a : dch.getCaches()) {
-            if (a.equals(joinerAddress)) return i;
-            i++;
-         }
-      }
-      throw new RuntimeException("Cannot locate joiner! Joiner is [" + joinerAddress + "]");
-   }
-
 
    private List<MagicKey> init() {
       List<MagicKey> keys = new ArrayList<MagicKey>(Arrays.asList(

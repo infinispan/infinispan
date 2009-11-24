@@ -44,7 +44,7 @@ public class InvalidateCommand extends RemoveCommand {
    public static final int COMMAND_ID = 6;
    private static final Log log = LogFactory.getLog(InvalidateCommand.class);
    private static final boolean trace = log.isTraceEnabled();
-   private Object[] keys;
+   protected Object[] keys;
 
    public InvalidateCommand() {
    }

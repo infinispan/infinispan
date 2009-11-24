@@ -94,10 +94,11 @@ public interface CommandsFactory {
 
    /**
     * Builds an InvalidateFromL1Command
+    * @param forRehash set to true if the invalidation is happening due to a new node taking ownership.  False if it is due to a write, changing the state of the entry.
     * @param keys keys to invalidate
     * @return an InvalidateFromL1Command
     */
-   InvalidateCommand buildInvalidateFromL1Command(Object... keys);
+   InvalidateCommand buildInvalidateFromL1Command(boolean forRehash, Object... keys);
 
    /**
     * Builds a ReplaceCommand

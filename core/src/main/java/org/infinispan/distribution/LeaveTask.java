@@ -103,6 +103,11 @@ public class LeaveTask extends RehashTask {
       }
    }
 
+   @Override
+   protected Log getLog() {
+      return log;
+   }
+
    private void processAndDrainTxLog(ConsistentHash oldCH, ConsistentHash newCH, int replCount) {
       if (trace) log.trace("Processing transaction log iteratively");
 

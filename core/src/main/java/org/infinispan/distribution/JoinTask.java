@@ -155,6 +155,11 @@ public class JoinTask extends RehashTask {
       }
    }
 
+   @Override
+   protected Log getLog() {
+      return log;
+   }
+
    // TODO unit test this!!!
    List<Address> getAddressesWhoMaySendStuff(int replCount) {
       List<Address> l = new LinkedList<Address>();

@@ -37,6 +37,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
    protected boolean tx = false;
    protected boolean testRetVals = true;
    protected boolean l1CacheEnabled = true;
+   protected boolean l1OnRehash = false;
    protected boolean performRehashing = false;
    protected static final int NUM_OWNERS = 2;
 
@@ -54,6 +55,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       configuration.setSyncReplTimeout(60, TimeUnit.SECONDS);
       configuration.setLockAcquisitionTimeout(45, TimeUnit.SECONDS);
       configuration.setL1CacheEnabled(l1CacheEnabled);
+      if (l1CacheEnabled) configuration.setL1OnRehash(l1OnRehash);
       caches = createClusteredCaches(INIT_CLUSTER_SIZE, cacheName, configuration);
 
       reorderBasedOnCHPositions();
@@ -198,6 +200,18 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       }
    }
 
+   protected int locateJoiner(Address joinerAddress) {
+      for (Cache c : caches) {
+         ConsistentHash dch = getNonUnionConsistentHash(c, SECONDS.toMillis(480));
+         int i = 0;
+         for (Address a : dch.getCaches()) {
+            if (a.equals(joinerAddress)) return i;
+            i++;
+         }
+      }
+      throw new RuntimeException("Cannot locate joiner! Joiner is [" + joinerAddress + "]");
+   }
+
    protected static final String safeType(Object o) {
       if (o == null) return "null";
       return o.getClass().getSimpleName();
@@ -206,14 +220,14 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
    protected void assertIsInL1(Cache<?, ?> cache, Object key) {
       DataContainer dc = cache.getAdvancedCache().getDataContainer();
       InternalCacheEntry ice = dc.get(key);
-      assert ice != null : "Entry for key [" + key + "] should be in data container on cache at [" + addressOf(cache) + "]!";
+      assert ice != null : "Entry for key [" + key + "] should be in L1 on cache at [" + addressOf(cache) + "]!";
       assert !(ice instanceof ImmortalCacheEntry) : "Entry for key [" + key + "] should have a lifespan on cache at [" + addressOf(cache) + "]!";
    }
 
    protected void assertIsNotInL1(Cache<?, ?> cache, Object key) {
       DataContainer dc = cache.getAdvancedCache().getDataContainer();
       InternalCacheEntry ice = dc.get(key);
-      assert ice == null : "Entry for key [" + key + "] should not be in data container on cache at [" + addressOf(cache) + "]!";
+      assert ice == null : "Entry for key [" + key + "] should not be in data container at all on cache at [" + addressOf(cache) + "]!";
    }
 
    protected void assertIsInContainerImmortal(Cache<?, ?> cache, Object key) {

@@ -127,8 +127,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
       return new InvalidateCommand(notifier, keys);
    }
 
-   public InvalidateCommand buildInvalidateFromL1Command(Object... keys) {
-      return new InvalidateL1Command(distributionManager, notifier, keys);
+   public InvalidateCommand buildInvalidateFromL1Command(boolean forRehash, Object... keys) {
+      return new InvalidateL1Command(forRehash, dataContainer, configuration, distributionManager, notifier, keys);
    }
 
    public ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, long lifespan, long maxIdleTimeMillis) {
@@ -247,7 +247,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case InvalidateL1Command.COMMAND_ID:
             InvalidateL1Command ilc = (InvalidateL1Command) c;
-            ilc.init(distributionManager, notifier);
+            ilc.init(configuration, distributionManager, notifier, dataContainer);
             break;
          case PrepareCommand.COMMAND_ID:
             PrepareCommand pc = (PrepareCommand) c;

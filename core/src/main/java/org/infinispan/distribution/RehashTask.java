@@ -8,6 +8,7 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.concurrent.NotifyingFutureImpl;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
+import org.infinispan.util.logging.Log;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -59,11 +60,14 @@ public abstract class RehashTask implements Callable<Void> {
 
    protected abstract void performRehash() throws Exception;
 
+   protected abstract Log getLog();
+
    protected Collection<Address> coordinator() {
       return Collections.singleton(rpcManager.getTransport().getCoordinator());
    }
 
    protected void invalidateInvalidHolders(ConsistentHash chOld, ConsistentHash chNew) throws ExecutionException, InterruptedException {
+      if (getLog().isDebugEnabled()) getLog().debug("Invalidating entries that have migrated across");
       Map<Address, Set<Object>> invalidations = new HashMap<Address, Set<Object>>();
       for (Object key : dataContainer.keySet()) {
          Collection<Address> invalidHolders = getInvalidHolders(key, chOld, chNew);
@@ -80,7 +84,7 @@ public abstract class RehashTask implements Callable<Void> {
       Set<Future> futures = new HashSet<Future>();
 
       for (Map.Entry<Address, Set<Object>> e : invalidations.entrySet()) {
-         InvalidateCommand ic = cf.buildInvalidateFromL1Command(e.getValue().toArray());
+         InvalidateCommand ic = cf.buildInvalidateFromL1Command(true, e.getValue().toArray());
          NotifyingNotifiableFuture f = new NotifyingFutureImpl(null);
          rpcManager.invokeRemotelyInFuture(Collections.singletonList(e.getKey()), ic, true, f);
          futures.add(f);
