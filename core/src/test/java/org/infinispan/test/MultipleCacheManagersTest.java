@@ -40,7 +40,7 @@ import java.util.List;
  *
  * @author Mircea.Markus@jboss.com
  */
-@Test(groups = {"functional", "unit"})
+@Test
 public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
    protected List<CacheManager> cacheManagers = new ArrayList<CacheManager>();

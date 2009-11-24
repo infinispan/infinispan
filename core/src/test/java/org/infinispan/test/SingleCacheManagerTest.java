@@ -17,7 +17,7 @@ import org.testng.annotations.Test;
  * @author Mircea.Markus@jboss.com
  * @see org.infinispan.test.MultipleCacheManagersTest
  */
-@Test(groups = {"functional", "unit"})
+@Test
 public abstract class SingleCacheManagerTest extends AbstractCacheTest {
    protected CacheManager cacheManager;
    protected Cache cache;
