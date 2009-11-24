@@ -1,26 +1,24 @@
 package org.infinispan.query.blackbox;
 
-import org.testng.annotations.Test;
-import org.testng.annotations.AfterMethod;
-import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.query.test.Person;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.queryParser.ParseException;
+import org.apache.lucene.queryParser.QueryParser;
+import org.apache.lucene.search.Filter;
+import org.apache.lucene.search.PrefixFilter;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.Sort;
+import org.infinispan.Cache;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.QueryFactory;
 import org.infinispan.query.QueryIterator;
 import org.infinispan.query.backend.QueryHelper;
-import org.infinispan.Cache;
-import org.apache.lucene.queryParser.QueryParser;
-import org.apache.lucene.queryParser.ParseException;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.Sort;
-import org.apache.lucene.search.Filter;
-import org.apache.lucene.search.PrefixFilter;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.index.Term;
+import org.infinispan.query.test.Person;
+import org.infinispan.test.SingleCacheManagerTest;
+import org.testng.annotations.AfterMethod;
 
 import java.util.List;
 
-@Test (testName = "query.blackbox.AbstractLocalQueryTest", groups = "functional")
 public abstract class AbstractLocalQueryTest extends SingleCacheManagerTest {
    protected Person person1;
    protected Person person2;
