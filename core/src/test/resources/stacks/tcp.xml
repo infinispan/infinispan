@@ -33,8 +33,7 @@
 
    <TCPPING timeout="3000"
             initial_hosts="localhost[7800],localhost[7801]}"
-            port_range="5"
-            num_initial_members="3"/>
+            port_range="2"/>
 
    <!--<MPING bind_addr="127.0.0.1" break_on_coord_rsp="true"-->
    <!--mcast_addr="230.8.8.8" mcast_port="17890" ip_ttl="2"-->
