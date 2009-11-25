@@ -4,10 +4,20 @@ import org.infinispan.util.Util;
 import org.infinispan.CacheException;
 
 /**
- * // TODO: Manik: Document this
+ * This transforms arbitrary keys to a String which can be used by Lucene as a document identifier, and vice versa.
+ * <p />
+ * There are 2 approaches to doing so; one for SimpleKeys: Java primitives (and their object wrappers) and Strings,
+ * and one for custom, user-defined types that could be used as keys.
+ * <p />
+ * For SimpleKeys, users don't need to do anything, these keys are automatically transformed by this class.
+ * <p />
+ * For user-defined keys, only types annotated with @Transformable, and declaring an appropriate {@link org.infinispan.query.Transformer}
+ * implementation, are supported.
  *
  * @author Manik Surtani
  * @since 4.0
+ * @see org.infinispan.query.Transformable
+ * @see org.infinispan.query.Transformer
  */
 public class KeyTransformationHandler {
    public static Object stringToKey(String s) {
@@ -49,9 +59,16 @@ public class KeyTransformationHandler {
          //   "B:f"
          //   "T:com.myorg.MyTransformer:STRING_GENERATED_BY_MY_TRANSFORMER"
 
+         char prefix = ' ';
+         if (key instanceof String)
+            prefix = 'S';
+         else if (key instanceof Integer)
+            prefix = 'I';
+         else if (key instanceof Boolean)
+            prefix = 'B';
+         /// etc etc etc
 
-         // for now just support Strings!!
-         return "S:" + key.toString();
+         return prefix + ":" + key;
       }
       else
          throw new IllegalArgumentException("Indexing only works with entries keyed on Strings - you passed in a " + key.getClass().toString());
@@ -69,7 +86,8 @@ public class KeyTransformationHandler {
             key instanceof Double ||
             key instanceof Boolean ||
             key instanceof Short ||
-            key instanceof Byte
+            key instanceof Byte ||
+            key instanceof Character
             )
          return true;
       if (key.getClass().isAnnotationPresent(Transformable.class))
