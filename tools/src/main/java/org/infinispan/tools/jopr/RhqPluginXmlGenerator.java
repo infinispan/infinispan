@@ -247,15 +247,20 @@ public class RhqPluginXmlGenerator {
                      operation.getParams().add(new SimpleProperty("p" + i++));
                   }
                }
+               Class<?> returnType = method.getReturnType();
+               if (!returnType.equals(Void.TYPE)) {
+                  SimpleProperty prop = new SimpleProperty("operationResult");
+                  operation.setResult(prop);
+               }
                props.getOperations().add(operation);
             }
          }
          Field[] fields = clazz.getDeclaredFields();
          for (Field field : fields) {
-            System.out.println("Inspecting field " + field);
+            debug("Inspecting field " + field);
             Metric rhqMetric = field.getAnnotation(Metric.class);
             if (rhqMetric != null) {
-               System.out.println("Field " + field + " contains Metric annotation " + rhqMetric);
+               debug("Field " + field + " contains Metric annotation " + rhqMetric);
                String property = prefix + BeanConventions.getPropertyFromBeanConvention(field);
                if (!rhqMetric.property().isEmpty()) {
                   property = prefix + rhqMetric.property();
