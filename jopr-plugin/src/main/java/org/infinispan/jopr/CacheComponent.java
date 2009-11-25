@@ -29,6 +29,7 @@ import org.mc4j.ems.connection.bean.EmsBean;
 import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 import org.mc4j.ems.connection.bean.operation.EmsOperation;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
@@ -41,6 +42,7 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 
+import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -164,21 +166,29 @@ public class CacheComponent implements ResourceComponent<CacheManagerComponent>,
     * @return OperationResult object if successful
     * @throws Exception If operation was not successful
     */
-   public OperationResult invokeOperation(String name,
-                                          Configuration parameters) throws Exception {
+   public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
+      boolean trace = log.isTraceEnabled();
       EmsConnection conn = getConnection();
       String abbrev = name.substring(0, name.indexOf("."));
       String mbean = myNamePattern + abbrev;
       EmsBean bean = conn.getBean(mbean);
       String opName = name.substring(name.indexOf(".") + 1);
       EmsOperation ops = bean.getOperation(opName);
-      if (ops != null)
-         ops.invoke(new Object[]{});
-      else
+      Collection<PropertySimple> simples = parameters.getSimpleProperties().values();
+      if (trace) log.trace("Parameters, as simple properties, are {0}", simples);
+      Object[] realParams = new Object[simples.size()];
+      int i = 0;
+      for (PropertySimple property : simples) {
+         // Since parameters are typed in UI, passing them as Strings is the only reasonable way of dealing with this
+         realParams[i++] = property.getStringValue();
+      }
+
+      if (ops == null)
          throw new Exception("Operation " + name + " can't be found");
-
-
-      return new OperationResult();
+      
+      Object result = ops.invoke(realParams);
+      if (trace) log.trace("Returning operation result containing {0}", result.toString());
+      return new OperationResult(result.toString());
    }
 
    private EmsConnection getConnection() {
