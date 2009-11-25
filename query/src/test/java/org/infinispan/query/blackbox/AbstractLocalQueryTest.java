@@ -8,6 +8,7 @@ import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.PrefixFilter;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
+import org.apache.lucene.search.TermQuery;
 import org.infinispan.Cache;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.QueryFactory;
@@ -216,5 +217,30 @@ public abstract class AbstractLocalQueryTest extends SingleCacheManagerTest {
       cacheQuery = new QueryFactory(cache, qh).getQuery(luceneQuery);
 
       assert cacheQuery.getResultSize() == 1;
+   }
+
+   public void testClear() throws ParseException{
+
+      // Create a term that will return me everyone called Navin.
+      Term navin = new Term("name", "navin");
+
+      // Create a term that I know will return me everything with name goat.
+      Term goat = new Term ("name", "goat");
+
+      Query[] queries = new Query[2];
+      queries[0] = new TermQuery(goat);
+      queries[1] = new TermQuery(navin);
+
+      luceneQuery = queries[0].combine(queries);
+      cacheQuery = new QueryFactory(cache, qh).getQuery(luceneQuery);
+
+      // We know that we've got all 3 hits.
+      assert cacheQuery.getResultSize() == 3;
+
+      cache.clear();
+
+      cacheQuery = new QueryFactory(cache, qh).getQuery(luceneQuery);
+
+      assert cacheQuery.getResultSize() == 0;
    }
 }

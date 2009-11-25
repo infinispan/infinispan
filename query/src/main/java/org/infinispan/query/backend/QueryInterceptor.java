@@ -4,6 +4,7 @@ import org.hibernate.search.backend.TransactionContext;
 import org.hibernate.search.backend.Work;
 import org.hibernate.search.backend.WorkType;
 import org.hibernate.search.engine.SearchFactoryImplementor;
+import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -15,7 +16,9 @@ import org.infinispan.marshall.MarshalledValue;
 import static org.infinispan.query.KeyTransformationHandler.keyToString;
 
 import javax.transaction.TransactionManager;
+import java.io.Serializable;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * This interceptor will be created when the System Property "infinispan.query.indexLocalOnly" is "false"
@@ -53,7 +56,7 @@ public class QueryInterceptor extends CommandInterceptor {
       // do the actual put first.
       Object toReturn = invokeNextInterceptor(ctx, command);
 
-      if (shouldModifyIndexes(ctx)) {         
+      if (shouldModifyIndexes(ctx)) {
          addToIndexes(extractValue(command.getValue()), extractValue(command.getKey()));
       }
 
@@ -64,7 +67,7 @@ public class QueryInterceptor extends CommandInterceptor {
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
 
-      if (log.isDebugEnabled()) log.debug("Entered the searchable core interceptor visitRemoveCommand()");
+      if (log.isDebugEnabled()) log.debug("Entered QueryInterceptor.visitRemoveCommand()");
 
       // remove the object out of the cache first.
       Object valueRemoved = invokeNextInterceptor(ctx, command);
@@ -83,7 +86,7 @@ public class QueryInterceptor extends CommandInterceptor {
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
 
-      if (log.isDebugEnabled()) log.debug("Entered the searchable core interceptor visitReplaceCommand()");
+      if (log.isDebugEnabled()) log.debug("Entered the QueryInterceptor.visitReplaceCommand()");
 
       Object valueReplaced = invokeNextInterceptor(ctx, command);
       if (valueReplaced != null && shouldModifyIndexes(ctx)) {
@@ -101,7 +104,7 @@ public class QueryInterceptor extends CommandInterceptor {
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
 
-      if (log.isDebugEnabled()) log.debug("Entered searchable core interceptor visitPutMapCommand()");
+      if (log.isDebugEnabled()) log.debug("Entered the QueryInterceptor.visitPutMapCommand()");
 
       Object mapPut = invokeNextInterceptor(ctx, command);
 
@@ -115,6 +118,29 @@ public class QueryInterceptor extends CommandInterceptor {
          }
       }
       return mapPut;
+   }
+
+   @Override
+   public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+
+      if (log.isDebugEnabled()) log.debug("Entered the QueryInterceptor.visitClearCommand()");
+
+      Object returnValue = invokeNextInterceptor(ctx, command);
+
+      if (shouldModifyIndexes(ctx)) {
+         if (log.isDebugEnabled()) log.debug("shouldModifyIndexes() is true and we can clear the indexes");
+
+         Set<Class<?>> classes = searchFactory.getDocumentBuildersIndexedEntities().keySet();
+         for (Class c : classes) {
+            Serializable id = null;
+
+            if (log.isDebugEnabled()) log.debug("Clearing indexes for class: - " + c);
+
+            searchFactory.getWorker().performWork(new Work<Object>(c, id, WorkType.PURGE_ALL),
+                                                  new TransactionalEventTransactionContext(transactionManager));
+         }
+      }
+      return returnValue;
    }
 
 

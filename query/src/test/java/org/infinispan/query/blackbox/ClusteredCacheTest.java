@@ -8,13 +8,14 @@ import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.QueryFactory;
-import org.infinispan.query.helper.TestQueryHelperFactory;
 import org.infinispan.query.backend.QueryHelper;
+import org.infinispan.query.helper.TestQueryHelperFactory;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -57,7 +58,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
    }
 
    @BeforeMethod
-   public void setUp(){
+   public void setUp() {
 
       // We will put objects into cache1 and then try and run the queries on cache2. This would mean that indexLocal
       // must be set to false.
@@ -86,9 +87,14 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       cache1.put(key1, person1);
       cache1.put(key2, person2);
       cache1.put(key3, person3);
-
-
    }
+
+   @AfterMethod(alwaysRun = true)
+   public void tearDown() {
+      if (cache1 != null) cache1.stop();
+      if (cache2 != null) cache2.stop();
+   }
+
 
    public void testSimple() throws ParseException {
       cacheQuery = new QueryFactory(cache2, qh)
@@ -193,6 +199,39 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       found = cacheQuery.list();
 
       assert found.size() == 1;
+
+   }
+
+   public void testClear() throws ParseException {
+
+      queryParser = new QueryParser("blurb", new StandardAnalyzer());
+      luceneQuery = queryParser.parse("eats");
+      cacheQuery = new QueryFactory(cache1, qh).getQuery(luceneQuery);
+      found = cacheQuery.list();
+
+
+      Query[] queries = new Query[2];
+      queries[0] = luceneQuery;
+
+      luceneQuery = queryParser.parse("playing");
+      queries[1] = luceneQuery;
+
+      luceneQuery = luceneQuery.combine(queries);
+
+      cacheQuery = new QueryFactory(cache1, qh).getQuery(luceneQuery);
+      assert cacheQuery.getResultSize() == 3;
+
+      // run the same query on cache 2
+      cacheQuery = new QueryFactory(cache2, qh).getQuery(luceneQuery);
+      assert cacheQuery.getResultSize() == 3;
+
+      cache1.clear();
+      cacheQuery = new QueryFactory(cache1, qh).getQuery(luceneQuery);
+      assert cacheQuery.getResultSize() == 0;
+
+      // run the same query on cache 2
+      cacheQuery = new QueryFactory(cache2, qh).getQuery(luceneQuery);
+      assert cacheQuery.getResultSize() == 0;
 
    }
 
