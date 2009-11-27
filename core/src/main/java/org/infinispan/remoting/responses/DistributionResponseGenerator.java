@@ -26,7 +26,7 @@ public class DistributionResponseGenerator implements ResponseGenerator {
       if (command instanceof ClusteredGetCommand) {
          ClusteredGetCommand clusteredGet = (ClusteredGetCommand) command;
          if (distributionManager.isAffectedByRehash(clusteredGet.getKey()))
-            return new UnsureResponse();
+            return UnsureResponse.INSTANCE;
          return returnValue == null ? null : new SuccessfulResponse(returnValue);
       } else if (command instanceof SingleRpcCommand) {
          SingleRpcCommand src = (SingleRpcCommand) command;

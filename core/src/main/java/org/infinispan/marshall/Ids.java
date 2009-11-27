@@ -48,6 +48,7 @@ public interface Ids {
    static final byte EXCEPTION_RESPONSE = 7;
    static final byte UNSUCCESSFUL_RESPONSE = 8;
    static final byte REQUEST_IGNORED_RESPONSE = 9;
+   static final byte UNSURE_RESPONSE = 54;
 
    // entries and values
    static final byte IMMORTAL_ENTRY = 10;
