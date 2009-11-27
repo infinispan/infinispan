@@ -22,7 +22,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Manik Surtani
  * @since 4.0
  */
-@Test(testName = "stress.DataContainerStressTest", groups = "stress")
+@Test(testName = "stress.DataContainerStressTest", groups = "stress", enabled = false,
+      description = "Disabled by default, designed to be run manually.")
 public class DataContainerStressTest {
    final CountDownLatch latch = new CountDownLatch(1);
    final int RUN_TIME_MILLIS = 60 * 1000; // 1 min
