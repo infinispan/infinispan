@@ -89,7 +89,7 @@
 
          <binaries>
 
-            <outputDirectory>modules/${module.basedir.name}</outputDirectory>
+            <outputDirectory>.</outputDirectory>
             <unpack>false</unpack>
             <outputFileNameMapping>
                ${module.artifactId}.${module.extension}
@@ -97,7 +97,7 @@
             <dependencySets>
                <dependencySet>
                   <useTransitiveDependencies>false</useTransitiveDependencies>
-                  <outputDirectory>modules/${module.basedir.name}/lib</outputDirectory>
+                  <outputDirectory>./lib</outputDirectory>
                </dependencySet>
             </dependencySets>
 
@@ -184,6 +184,8 @@
                <dependencySet>
                   <excludes>
                      <exclude>infinispan-core*</exclude>
+                     <exclude>log4j</exclude>
+                     <exclude>net.jcip</exclude>
                   </excludes>
                   <useTransitiveDependencies>true</useTransitiveDependencies>
                   <useTransitiveFiltering>true</useTransitiveFiltering>
@@ -199,9 +201,6 @@
          <includes>
             <include>org.infinispan:infinispan-server-rest</include>
          </includes>
-         <sources>
-            <includeModuleDirectory>false</includeModuleDirectory>
-         </sources>
 
          <binaries>
             <outputDirectory>modules/${module.basedir.name}</outputDirectory>
