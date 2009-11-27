@@ -12,7 +12,6 @@ import org.xml.sax.SAXException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Map;
 
 /**
  * 
@@ -55,11 +54,9 @@ public class InfinispanFluDemo {
 			fluDemo.createCache(config.getString("InfinispanCfg"));
 			fluDemo.populateCache(config);
 		} catch (SAXException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 			System.exit(1);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			System.exit(2);
 		}
@@ -83,7 +80,6 @@ public class InfinispanFluDemo {
 				try {
 					Thread.currentThread().sleep(2000);
 				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}

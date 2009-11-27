@@ -475,7 +475,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
          boolean needNotification = false;
          if (newMembers != null) {
 
-            // TODO: Implement breaking stale locks for dead members.  This should be in the TxINterceptor or TransactionTable, with a listener on the cache manager.
+            // TODO: Implement breaking stale locks for dead members.  This should be in the TxInterceptor or TransactionTable, with a listener on the cache manager.
 //            if (members != null) {
             // we had a membership list before this event.  Check to make sure we haven't lost any members,
             // and if so, determine what members have been removed

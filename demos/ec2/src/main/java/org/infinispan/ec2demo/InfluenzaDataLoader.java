@@ -156,7 +156,6 @@ public class InfluenzaDataLoader {
 			System.out.println("Parsing files....Done");
 
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

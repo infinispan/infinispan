@@ -51,10 +51,8 @@ public class Nucleotide_Protein_Parser {
          System.out.println("Processed " + myData.size() + " records from file...");
          System.out.println("Number stored in cache=" + cacheImpl.getCacheSize());
       } catch (IOException e) {
-         // TODO Auto-generated catch block
          e.printStackTrace();
       } catch (SAXException e) {
-         // TODO Auto-generated catch block
          e.printStackTrace();
       }
    }

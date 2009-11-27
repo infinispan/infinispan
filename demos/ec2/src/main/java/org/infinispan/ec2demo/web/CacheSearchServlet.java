@@ -30,17 +30,7 @@ public class CacheSearchServlet extends HttpServlet {
 	private Cache<String, Nucleotide_Protein_Element> proteinCache;
 	private Cache<String, Nucleotide_Protein_Element> nucleiodCache;
 
-	/**
-	 * @see HttpServlet#HttpServlet()
-	 */
-	public CacheSearchServlet() {
-		super();
-		// TODO Auto-generated constructor stub
-	}
-
-	/**
-	 * @see Servlet#init(ServletConfig)
-	 */
+   @Override
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
 		CacheBuilder cacheBuilder = (CacheBuilder) getServletContext().getAttribute("cacheBuilder");
@@ -53,11 +43,13 @@ public class CacheSearchServlet extends HttpServlet {
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse
 	 *      response)
 	 */
+   @Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		RequestDispatcher dispatcher = getServletContext().getRequestDispatcher("/jsp/displayVirusDetails.jsp");
 		dispatcher.forward(request, response);
 	}
 
+   @Override
 	public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		CacheBuilder cacheBuilder = (CacheBuilder) getServletContext().getAttribute("cacheBuilder");
 		String searchGBAN = request.getParameter("vGBAN");

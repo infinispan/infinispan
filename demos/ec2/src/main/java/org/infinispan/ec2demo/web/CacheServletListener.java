@@ -3,12 +3,12 @@
  */
 package org.infinispan.ec2demo.web;
 
-import java.io.IOException;
+import org.infinispan.ec2demo.CacheBuilder;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
-import org.infinispan.ec2demo.CacheBuilder;
+import java.io.IOException;
 
 /**
  * @author noconnor@redhat.com
@@ -41,7 +41,6 @@ public class CacheServletListener implements ServletContextListener {
 			System.out.println("in CacheServletListener...starting cache...done");
 			context.setAttribute("cacheBuilder", currCacheBuilder);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		System.out.println("in CacheServletListener...exit");

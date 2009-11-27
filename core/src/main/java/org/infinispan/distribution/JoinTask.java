@@ -160,7 +160,17 @@ public class JoinTask extends RehashTask {
       return log;
    }
 
-   // TODO unit test this!!!
+   /**
+    * Retrieves a List of Address of who should be sending state to the joiner (self), given a repl count (numOwners)
+    * for each entry.
+    * <p />
+    * The algorithm essentially works like this.  Given a list of all Addresses in the system (ordered by their positions
+    * in the new consistent hash wheel), locate where the current address (self, the joiner) is, on this list.  Addresses
+    * from (replCount - 1) positions behind self, and 1 position ahead of self would be sending state.
+    * <p /> 
+    * @param replCount
+    * @return
+    */
    List<Address> getAddressesWhoMaySendStuff(int replCount) {
       List<Address> l = new LinkedList<Address>();
       List<Address> caches = chNew.getCaches();
