@@ -5,7 +5,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalEntryFactory;
 
 /**
- * Based on the same techniques outlined in the {@link org.infinispan.container.FIFODataContainer}, this implementation
+ * Based on the same techniques outlined in the {@link FIFODataContainer}, this implementation
  * additionally unlinks and re-links entries at the tail whenever entries are visited (using a get()) or are updated (a
  * put() on an existing key).
  * <p/>
@@ -20,9 +20,9 @@ import org.infinispan.container.entries.InternalEntryFactory;
  * @since 4.0
  */
 @ThreadSafe
-public class LRUDataContainer extends FIFODataContainer {
+public class LRUAMRDataContainer extends FIFOAMRDataContainer {
 
-   public LRUDataContainer(int concurrencyLevel) {
+   public LRUAMRDataContainer(int concurrencyLevel) {
       super(concurrencyLevel);
    }
 
@@ -30,7 +30,6 @@ public class LRUDataContainer extends FIFODataContainer {
    public InternalCacheEntry get(Object k) {
       int h = hash(k.hashCode());
       Segment s = segmentFor(h);
-
       LinkedEntry le = s.get(k, h);
       InternalCacheEntry ice = null;
       if (le != null) ice = le.e;
@@ -40,13 +39,13 @@ public class LRUDataContainer extends FIFODataContainer {
             ice = null;
          } else {
             ice.touch();
-            boolean needToUnlockSegment = false;
+            boolean needToUnlock = false;
             try {
-               s.lock(); // we need to lock this segment to safely update links
-               needToUnlockSegment = true;
+               s.lock(); // no not update links unless segment is locked!
+               needToUnlock = true;
                updateLinks(le);
             } finally {
-               if (needToUnlockSegment) s.unlock();
+               if (needToUnlock) s.unlock();
             }
          }
       }

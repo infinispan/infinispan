@@ -1,18 +1,23 @@
 package org.infinispan.container;
 
-import net.jcip.annotations.ThreadSafe;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.util.Immutables;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.AbstractCollection;
 import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Random;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicMarkableReference;
 import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
+
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * A container that maintains order of entries based on when they were placed in the container.  Iterators obtained from
@@ -26,11 +31,10 @@ import java.util.concurrent.locks.ReentrantLock;
  * Links are maintained using techniques inspired by H. Sundell and P. Tsigas' 2008 paper, <a
  * href="http://www.md.chalmers.se/~tsigas/papers/Lock-Free-Deques-Doubly-Lists-JPDC.pdf"><i>Lock Free Deques and Doubly
  * Linked Lists</i></a>, M. Michael's 2002 paper, <a href="http://www.research.ibm.com/people/m/michael/spaa-2002.pdf"><i>High
- * Performance Dynamic Lock-Free Hash Tables and List-Based Sets</i></a>
+ * Performance Dynamic Lock-Free Hash Tables and List-Based Sets</i></a>.
  * <p />
- * This implementation uses a technique of delegating marker nodes similar to the technique used in Sun's
- * {@link java.util.concurrent.ConcurrentSkipListMap}, which is deemed more memory efficient and better performing than
- * {@link java.util.concurrent.atomic.AtomicMarkableReference}s.
+ * This implementation uses JDK {@link java.util.concurrent.atomic.AtomicMarkableReference}
+ * to implement reference deletion markers.
  * <p/>
  *
  * @author Manik Surtani
@@ -38,7 +42,13 @@ import java.util.concurrent.locks.ReentrantLock;
  * @since 4.0
  */
 @ThreadSafe
-public class FIFODataContainer implements DataContainer {
+public class FIFOAMRDataContainer implements DataContainer {
+
+   /*
+      This implementation closely follows the pseudocode in Sundell and Tsigas' paper (Referred to as STP) for managing
+      the lock-free, threadsafe doubly linked list.  AtomicMarkedReferences are used to implement the pointers referred
+      to in the paper.
+    */
 
    /**
     * The maximum capacity, used if a higher value is implicitly specified by either of the constructors with arguments.
@@ -67,7 +77,7 @@ public class FIFODataContainer implements DataContainer {
 
    final LinkedEntry head = new LinkedEntry(null), tail = new LinkedEntry(null);
 
-   public FIFODataContainer(int concurrencyLevel) {
+   public FIFOAMRDataContainer(int concurrencyLevel) {
       float loadFactor = 0.75f;
       int initialCapacity = 256;
 
@@ -103,16 +113,17 @@ public class FIFODataContainer implements DataContainer {
     * @param nanos nanos to back off for.  If -1, starts at a default
     * @return next time, back off for these nanos
     */
+   Random r = new Random();
    private static final long backoffStart = 10000;
 
    private long backoff(long nanos) {
-      long actualNanos = nanos < 0 ? backoffStart : nanos;
-      LockSupport.parkNanos(actualNanos);
-      long newNanos = actualNanos << 1;
-      return newNanos > 10000000 ? backoffStart : newNanos;
-//      int millis = (1+ r.nextInt(9)) * 10;
-//      LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(millis));
-//      return -1;
+//      long actualNanos = nanos < 0 ? backoffStart : nanos;
+//      LockSupport.parkNanos(actualNanos);
+//      long newNanos = actualNanos << 1;
+//      return newNanos > 10000000 ? backoffStart : newNanos;
+      int millis = (1 + r.nextInt(9)) * 10;
+      LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(millis));
+      return -1;
    }
 
    /**
@@ -125,9 +136,9 @@ public class FIFODataContainer implements DataContainer {
     * @return true if the entry is marked for removal.  False if it is not, or if the entry is the head or tail dummy
     *         entry.
     */
-   protected final boolean isMarkedForRemoval(LinkedEntry e) {
-      return e != head && e != tail && e.e == null;
-   }
+//   protected final boolean isMarkedForRemoval(LinkedEntry e) {
+//      return e != head && e != tail && e.e == null;
+//   }
 
    /**
     * Places a removal marker the 'previous' reference on the given entry.  Note that marking a reference does not mean
@@ -138,11 +149,9 @@ public class FIFODataContainer implements DataContainer {
     * @return true if the marking was successful, false otherwise.  Could return false if the reference is already
     *         marked, or if the CAS failed.
     */
-   protected final boolean markPrevReference(LinkedEntry e) {
-      if (isMarkedForRemoval(e.p)) return false;
-      Marker m = new Marker(e.p);
-      return e.casPrev(e.p, m);
-   }
+//   protected final boolean markPrevReference(LinkedEntry e) {
+//      return !e.p.isMarked() && e.p.attemptMark(e.p.getReference(), true);
+//   }
 
    /**
     * Places a removal marker the 'next' reference on the given entry.  Note that marking a reference does not mean that
@@ -153,11 +162,9 @@ public class FIFODataContainer implements DataContainer {
     * @return true if the marking was successful, false otherwise.  Could return false if the reference is already
     *         marked, or if the CAS failed.
     */
-   protected final boolean markNextReference(LinkedEntry e) {
-      if (isMarkedForRemoval(e.n)) return false;
-      Marker m = new Marker(e.n);
-      return e.casNext(e.n, m);
-   }
+//   protected final boolean markNextReference(LinkedEntry e) {
+//      return !e.n.isMarked() && e.n.attemptMark(e.n.getReference(), true);
+//   }
 
    /**
     * The LinkedEntry class.  This entry is stored in the lockable Segments, and is also capable of being doubly
@@ -168,13 +175,15 @@ public class FIFODataContainer implements DataContainer {
       /**
        * Links to next and previous entries.  Needs to be volatile.
        */
-      volatile LinkedEntry n, p;
+//      volatile LinkedEntry n, p;
+      AtomicMarkableReference<LinkedEntry> n = new AtomicMarkableReference<LinkedEntry>(null, false),
+            p = new AtomicMarkableReference<LinkedEntry>(null, false);
 
       /**
        * CAS updaters for prev and next references
        */
-      private static final AtomicReferenceFieldUpdater<LinkedEntry, LinkedEntry> N_UPDATER = AtomicReferenceFieldUpdater.newUpdater(LinkedEntry.class, LinkedEntry.class, "n");
-      private static final AtomicReferenceFieldUpdater<LinkedEntry, LinkedEntry> P_UPDATER = AtomicReferenceFieldUpdater.newUpdater(LinkedEntry.class, LinkedEntry.class, "p");
+//      private static final AtomicReferenceFieldUpdater<LinkedEntry, LinkedEntry> N_UPDATER = AtomicReferenceFieldUpdater.newUpdater(LinkedEntry.class, LinkedEntry.class, "n");
+//      private static final AtomicReferenceFieldUpdater<LinkedEntry, LinkedEntry> P_UPDATER = AtomicReferenceFieldUpdater.newUpdater(LinkedEntry.class, LinkedEntry.class, "p");
 
       /**
        * LinkedEntries must always have a valid InternalCacheEntry.
@@ -185,71 +194,70 @@ public class FIFODataContainer implements DataContainer {
          this.e = e;
       }
 
-      final boolean casNext(LinkedEntry expected, LinkedEntry newValue) {
-         return N_UPDATER.compareAndSet(this, expected, newValue);
-      }
-
-      final boolean casPrev(LinkedEntry expected, LinkedEntry newValue) {
-         return P_UPDATER.compareAndSet(this, expected, newValue);
-      }
-
-      @Override
-      public String toString() {
-         return "E" + Integer.toHexString(System.identityHashCode(this));
-      }
+//      final boolean casNext(LinkedEntry expected, LinkedEntry newValue) {
+//         return n.compareAndSet(expected, newValue, false, false);
+//      }
+//
+//      final boolean casPrev(LinkedEntry expected, LinkedEntry newValue) {
+//         return p.compareAndSet(expected, newValue, false, false);
+//      }
+//
+//      @Override
+//      public String toString() {
+//         return "E" + Integer.toHexString(System.identityHashCode(this));
+//      }
    }
 
    /**
     * A marker.  If a reference in LinkedEntry (either to its previous or next entry) needs to be marked, it should be
     * CAS'd with an instance of Marker that points to the actual entry.  Typically this is done by calling {@link
-    * FIFODataContainer#markNextReference(org.infinispan.container.FIFODataContainer.LinkedEntry)} or {@link
-    * FIFODataContainer#markPrevReference(org.infinispan.container.FIFODataContainer.LinkedEntry)}
+    * FIFOAMRDataContainer#markNextReference(FIFOAMRDataContainer.LinkedEntry)} or {@link
+    * FIFOAMRDataContainer#markPrevReference(FIFOAMRDataContainer.LinkedEntry)}
     */
-   static final class Marker extends LinkedEntry {
-      Marker(LinkedEntry actual) {
-         super(null);
-         n = actual;
-         p = actual;
-      }
-
-      @Override
-      public String toString() {
-         return "M" + Integer.toHexString(System.identityHashCode(this));
-      }
-   }
+//   static final class Marker extends LinkedEntry {
+//      Marker(LinkedEntry actual) {
+//         super(null);
+//         n = actual;
+//         p = actual;
+//      }
+//
+//      @Override
+//      public String toString() {
+//         return "M" + Integer.toHexString(System.identityHashCode(this));
+//      }
+//   }
 
    /**
     * Initializes links to an empty container
     */
    protected final void initLinks() {
-      head.n = tail;
-      head.p = tail;
-      tail.n = head;
-      tail.p = head;
+      head.n.set(tail, false);
+      head.p.set(tail, false);
+      tail.n.set(head, false);
+      tail.p.set(head, false);
    }
 
    /**
     * Un-links an entry from the doubly linked list in a threadsafe, lock-free manner.  The entry is typically retrieved
     * using Segment#locklessRemove() after locking the Segment.
     *
-    * @param entry entry to unlink
+    * @param node entry to unlink
     */
-   protected final void unlink(LinkedEntry entry) {
-      if (entry == head || entry == tail) return;
-      for (; ;) {
-         LinkedEntry next = entry.n;
-         if (isMarkedForRemoval(next)) return;
-         LinkedEntry prev;
-         if (markNextReference(entry)) {
-            next = entry.n;
+   // This corresponds to the Delete() function in STP
+   protected final void unlink(LinkedEntry node) {
+      if (node == head || node == tail) return;
+      while (true) {
+         AtomicMarkableReference<LinkedEntry> next = node.n;
+         if (next.isMarked()) return;
+         if (node.n.compareAndSet(next.getReference(), next.getReference(), false, true)) {
+            AtomicMarkableReference<LinkedEntry> prev;
             while (true) {
-               prev = entry.p;
-               if (isMarkedForRemoval(prev) || markPrevReference(entry)) {
-                  prev = entry.p;
+               prev = node.p;
+               if (prev.isMarked() || node.p.compareAndSet(prev.getReference(), prev.getReference(), false, true)) {
                   break;
                }
             }
-            prev = correctPrev(prev.p, next.n);
+            correctPrev(prev.getReference().p.getReference(), next.getReference());
          }
       }
    }
@@ -257,28 +265,30 @@ public class FIFODataContainer implements DataContainer {
    /**
     * Links a new entry at the end of the linked list.  Typically done when a put() creates a new entry, or if ordering
     * needs to be updated based on access.  If this entry already exists in the linked list, it should first be {@link
-    * #unlink(org.infinispan.container.FIFODataContainer.LinkedEntry)}ed.
+    * #unlink(FIFOAMRDataContainer.LinkedEntry)}ed.
     *
-    * @param entry entry to link at end
+    * @param node entry to link at end
     */
-   // Corresponds to PushLeft() in the Sundell/Tsigas paper
-   protected final void linkAtEnd(LinkedEntry entry) {
-      LinkedEntry prev = tail.p;
+   // Corresponds to PushRight() in STP
+   protected final void linkAtEnd(LinkedEntry node) {
+      LinkedEntry next = tail;
+      LinkedEntry prev = next.p.getReference();
       long backoffTime = -1;
-      for (; ;) {
-         entry.p = unmarkPrevIfNeeded(prev);
-         entry.n = tail;
-         if (prev.casNext(tail, entry)) break;
-         prev = correctPrev(prev, tail);
+      while (true) {
+         node.p.set(prev, false);
+         node.n.set(next, false);
+         if (prev.n.compareAndSet(next, node, false, false)) break;
+         prev = correctPrev(prev, next);
          backoffTime = backoff(backoffTime);
       }
 
+      // PushEnd()
       backoffTime = -1;
-      for (; ;) {
-         LinkedEntry l1 = tail.p;
-         if (isMarkedForRemoval(l1) || entry.n != tail) break;
-         if (tail.casPrev(l1, entry)) {
-            if (isMarkedForRemoval(entry.p)) correctPrev(entry, tail);
+      while (true) {
+         AtomicMarkableReference<LinkedEntry> l1 = next.p;
+         if (l1.isMarked() || (node.n.isMarked() || node.n.getReference() != next)) break;
+         if (next.p.compareAndSet(l1.getReference(), node, false, false)) {
+            if (node.p.isMarked()) correctPrev(node, next);
             break;
          }
          backoffTime = backoff(backoffTime);
@@ -291,19 +301,21 @@ public class FIFODataContainer implements DataContainer {
     * @param current current entry to inspect
     * @return the next valid entry, or null if we have reached the end of the list.
     */
+   // Corresponds to the Next() function in STP                                            pom
    protected final LinkedEntry getNext(LinkedEntry current) {
-      for (; ;) {
+      while (true) {
          if (current == tail) return null;
-         LinkedEntry next = current.n;
-         if (isMarkedForRemoval(next)) next = next.n;
-         boolean marked = isMarkedForRemoval(next.n);
-         if (marked && !isMarkedForRemoval(current.n)) {
-            markPrevReference(next);
-            current.casNext(next, next.n.n); // since next.n is a marker
+         AtomicMarkableReference<LinkedEntry> next = current.n;
+         boolean d = next.getReference().n.isMarked();
+         if (d && (!current.n.isMarked() || current.n.getReference() != next.getReference())) {
+            // set mark next.p
+            next.getReference().p.attemptMark(next.getReference().p.getReference(), true);
+            current.n.compareAndSet(next.getReference(), next.getReference().n.getReference(), false, false);
             continue;
          }
-         current = next;
-         if (!marked && next != tail) return current;
+
+         current = next.getReference();
+         if (!d && next.getReference() != tail) return current;
       }
    }
 
@@ -311,44 +323,48 @@ public class FIFODataContainer implements DataContainer {
     * Correct 'previous' links.  This 'helper' function is used if unable to properly set previous pointers (due to a
     * concurrent update) and is used when traversing the list in reverse.
     *
-    * @param suggestedPreviousEntry suggested previous entry
-    * @param currentEntry           current entry
+    * @param prev           suggested previous entry
+    * @param node           current entry
     * @return the actual valid, previous entry.  Links are also corrected in the process.
     */
-   protected final LinkedEntry correctPrev(LinkedEntry suggestedPreviousEntry, LinkedEntry currentEntry) {
-//      verifyLL();
-      LinkedEntry lastLink = null, link1, prev2;
-      LinkedEntry prev = suggestedPreviousEntry, node = currentEntry;
+   // Corresponds to CorrectPrev() in STP
+   protected final LinkedEntry correctPrev(LinkedEntry prev, LinkedEntry node) {
+      LinkedEntry lastLink = null;
+      AtomicMarkableReference<LinkedEntry> link1, prev2;
       long backoffTime = -1;
+
+      // holders to atomically retrieve ref + mark
+      boolean[] markHolder = new boolean[1];
+      LinkedEntry referenceHolder;
+
       while (true) {
          link1 = node.p;
-         if (isMarkedForRemoval(link1)) break;
+         if (link1.isMarked()) break;
+
          prev2 = prev.n;
-         if (isMarkedForRemoval(prev2)) {
+         if (prev2.isMarked()) {
             if (lastLink != null) {
-               markPrevReference(prev);
-               LinkedEntry unmarkedPrev2P = unmarkPrevIfNeeded(prev2.p);
-               lastLink.casNext(prev, unmarkedPrev2P);
+               AtomicMarkableReference<LinkedEntry> prevP = prev.p;
+               while (!prevP.attemptMark(prevP.getReference(), true)) {}
+               lastLink.n.compareAndSet(prev, prev2.getReference(), lastLink.n.isMarked(), false);
                prev = lastLink;
                lastLink = null;
                continue;
             }
             prev2 = prev.p;
-            prev = prev2;
+            prev = prev2.getReference();
             continue;
          }
 
-         if (prev2 != node) {
+         if (prev2.getReference() != node) {
             lastLink = prev;
-            prev = prev2;
+            prev = prev2.getReference();
             continue;
          }
 
-         LinkedEntry unmarked = unmarkPrevIfNeeded(prev);
-         if (node.casPrev(link1, unmarked)) {
-            if (isMarkedForRemoval(prev.p)) {
-               continue;
-            }
+         referenceHolder = link1.get(markHolder);
+         if (node.p.compareAndSet(referenceHolder, prev, markHolder[0], false)) {
+            if (prev.p.isMarked()) continue;
             break;
          }
          backoffTime = backoff(backoffTime);
@@ -356,10 +372,10 @@ public class FIFODataContainer implements DataContainer {
       return prev;
    }
 
-   private LinkedEntry unmarkPrevIfNeeded(LinkedEntry e) {
-      if (isMarkedForRemoval(e)) return e.p;
-      else return e;
-   }
+//   private LinkedEntry unmarkPrevIfNeeded(LinkedEntry e) {
+//      if (isMarkedForRemoval(e)) return e.p;
+//      else return e;
+//   }
 
 
    /**
@@ -383,7 +399,7 @@ public class FIFODataContainer implements DataContainer {
     * uniform distribution of hash values. This uses a <a href = "http://burtleburtle.net/bob/hash/integer.html">4-byte
     * (integer) hash</a>, which produces well distributed values even when the original hash produces thghtly clustered
     * values.
-    * <p />
+    * <p/>
     * Contributed by akluge <a href-="http://www.vizitsolutions.com/ConsistentHashingCaching.html">http://www.vizitsolutions.com/ConsistentHashingCaching.html</a>
     */
    final int hash(int hash) {
@@ -652,7 +668,7 @@ public class FIFODataContainer implements DataContainer {
       }
 
       public int size() {
-         return FIFODataContainer.this.size();
+         return FIFOAMRDataContainer.this.size();
       }
    }
 
@@ -662,7 +678,7 @@ public class FIFODataContainer implements DataContainer {
       }
 
       public int size() {
-         return FIFODataContainer.this.size();
+         return FIFOAMRDataContainer.this.size();
       }
    }
 
@@ -672,7 +688,7 @@ public class FIFODataContainer implements DataContainer {
       }
 
       public int size() {
-         return FIFODataContainer.this.size();
+         return FIFOAMRDataContainer.this.size();
       }
    }
 
