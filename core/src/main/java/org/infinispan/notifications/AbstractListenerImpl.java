@@ -43,7 +43,7 @@ public abstract class AbstractListenerImpl {
       this.asyncProcessor = executor;
    }
 
-   @Start
+   @Start (priority = 9)
    public void start() {
       syncProcessor = new WithinThreadExecutor();
    }
