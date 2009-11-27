@@ -34,6 +34,7 @@ import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.MembershipArithmetic;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -145,31 +146,16 @@ public class DistributionManagerImpl implements DistributionManager {
       joinComplete = false;
    }
 
-   final List<Address> diffAll(List<Address> l1, List<Address> l2) {
-      List<Address> largerList = l1.size() > l2.size() ? l1 : l2;
-      List<Address> smallerList = largerList == l1 ? l2 : l1;
-
-      List<Address> list = new ArrayList<Address>(largerList);
-      list.removeAll(smallerList);
-      return list;
-   }
-
-   final Address diff(List<Address> l1, List<Address> l2) {
-      List<Address> l = diffAll(l1, l2);
-      return l.isEmpty() ? null : l.get(0);
-   }
-
-
    public void rehash(List<Address> newMembers, List<Address> oldMembers) {
       boolean join = oldMembers.size() < newMembers.size();
       // on view change, we should update our view
       log.info("Detected a veiw change.  Member list changed from {0} to {1}", oldMembers, newMembers);
 
       if (join) {
-         Address joiner = diff(newMembers, oldMembers);
+         Address joiner = MembershipArithmetic.getMemberJoined(oldMembers, newMembers);
          log.info("This is a JOIN event!  Wait for notification from new joiner " + joiner);
       } else {
-         Address leaver = diff(newMembers, oldMembers);
+         Address leaver = MembershipArithmetic.getMemberLeft(oldMembers, newMembers);
          log.info("This is a LEAVE event!  Node {0} has just left", leaver);
 
          boolean willReceiveLeaverState = willReceiveLeaverState(leaver);
