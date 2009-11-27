@@ -2,13 +2,20 @@ package org.infinispan.transaction.xa;
 
 import org.infinispan.CacheException;
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.manager.CacheManager;
+import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
+import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
+import org.infinispan.remoting.MembershipArithmetic;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
@@ -16,7 +23,12 @@ import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.Transaction;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Repository for {@link org.infinispan.transaction.xa.RemoteTransaction} and {@link
@@ -41,11 +53,12 @@ public class TransactionTable {
    private CacheNotifier notifier;
    private RpcManager rpcManager;
    private GlobalTransactionFactory gtf;
-
+   private ExecutorService lockBreakingService = Executors.newFixedThreadPool(1);
 
    @Inject
    public void initialize(CommandsFactory commandsFactory, RpcManager rpcManager, Configuration configuration,
-                          InvocationContextContainer icc, InterceptorChain invoker, CacheNotifier notifier, GlobalTransactionFactory gtf) {
+                          InvocationContextContainer icc, InterceptorChain invoker, CacheNotifier notifier,
+                          GlobalTransactionFactory gtf, CacheManager cm) {
       this.commandsFactory = commandsFactory;
       this.rpcManager = rpcManager;
       this.configuration = configuration;
@@ -53,6 +66,46 @@ public class TransactionTable {
       this.invoker = invoker;
       this.notifier = notifier;
       this.gtf = gtf;
+      cm.addListener(new StaleTransactionCleanup());
+   }
+
+   @Stop
+   private void stop() {
+      lockBreakingService.shutdownNow();
+   }
+
+   @Listener
+   public class StaleTransactionCleanup {
+      @ViewChanged
+      public void onViewChange(ViewChangedEvent vce) {
+         final List<Address> leavers = MembershipArithmetic.getMembersLeft(vce.getOldMembers(), vce.getNewMembers());
+         if (!leavers.isEmpty()) {
+            if (trace) log.trace("Saw {0} leavers - kicking off a lock breaking task", leavers.size());
+            lockBreakingService.submit(new Runnable() {
+               public void run() {
+                  Set<GlobalTransaction> toKill = new HashSet<GlobalTransaction>();
+                  for (GlobalTransaction gt: remoteTransactions.keySet()) {
+                     if (leavers.contains(gt.getAddress())) toKill.add(gt);
+                  }
+
+                  if (trace) log.trace("Global transactions {0} pertain to leavers list {1} and need to be killed", toKill, leavers);
+
+                  for (GlobalTransaction gtx: toKill) {
+                     if (trace) log.trace("Killing {0}", gtx);
+                     RollbackCommand rc = new RollbackCommand(gtx);
+                     rc.init(invoker, icc, TransactionTable.this);
+                     try {
+                        rc.perform(null);
+                     } catch (Throwable e) {
+                        log.warn("Unable to roll back gtx " + gtx, e);
+                     } finally {
+                        removeRemoteTransaction(gtx);
+                     }
+                  }
+               }
+            });
+         }
+      }
    }
 
 
@@ -159,4 +212,6 @@ public class TransactionTable {
    public boolean containRemoteTx(GlobalTransaction globalTransaction) {
       return remoteTransactions.containsKey(globalTransaction);
    }
+
+
 }

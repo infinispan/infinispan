@@ -474,21 +474,6 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
       synchronized (membersListLock) {
          boolean needNotification = false;
          if (newMembers != null) {
-
-            // TODO: Implement breaking stale locks for dead members.  This should be in the TxInterceptor or TransactionTable, with a listener on the cache manager.
-//            if (members != null) {
-            // we had a membership list before this event.  Check to make sure we haven't lost any members,
-            // and if so, determine what members have been removed
-            // and roll back any tx and break any locks
-//               List<org.jgroups.Address> removed = toJGroupsAddressList(members);
-//               removed.removeAll(newMembers);
-//               spi.createInvocationContext().getOptionOverrides().setSkipCacheStatusCheck(true);
-//                  if (root != null)
-//                  {
-            //removeLocksForDeadMembers(root.getDelegationTarget(), removed);
-//                  }
-//            }
-
             oldMembers = members;
             // we need a defensive copy anyway            
             members = fromJGroupsAddressList(newMembers);
