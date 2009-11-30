@@ -1,6 +1,3 @@
-
-$Id$
-
 NAME:    Sleepycat Berkeley DB Java Edition
 PROJECT: http://www.oracle.com/database/berkeley-db/je/index.html
 PURPOSE: Used for Berkeley DB-based CacheLoader (org.infinispan.loaders.bdbje.BdbjeCacheStore) in Infinispan

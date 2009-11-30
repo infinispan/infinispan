@@ -3,5 +3,3 @@ covered by the LGPL-2.1 license.
 
 It is important to note that not all the libraries shipped are needed in all cases and if you do not use certain
 libraries you may not come under some of the licenses in this directory.
-
-See README-libs.txt for details on the licenses attached to each library.
