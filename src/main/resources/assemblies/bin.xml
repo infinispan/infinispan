@@ -187,9 +187,9 @@
                <dependencySet>
                   <excludes>
                      <exclude>infinispan-core*</exclude>
-                     <exclude>net.jcip</exclude>
-                     <exclude>rhq-pluginAnnotations</exclude>
-                     <exclude>jta</exclude>
+                     <exclude>net.jcip:jcip-annotations</exclude>
+                     <exclude>org.rhq.helpers:rhq-pluginAnnotations</exclude>
+                     <exclude>javax.transaction:jta</exclude>
                   </excludes>
                   <useTransitiveDependencies>true</useTransitiveDependencies>
                   <useTransitiveFiltering>true</useTransitiveFiltering>
