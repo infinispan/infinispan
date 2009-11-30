@@ -40,6 +40,7 @@
          </includes>
          <sources>
             <includeModuleDirectory>false</includeModuleDirectory>
+            <outputDirectory>src</outputDirectory>
 
             <fileSets>
 
@@ -92,7 +93,7 @@
 
          <binaries>
 
-            <outputDirectory>modules/${module.basedir.name}</outputDirectory>
+            <outputDirectory>.</outputDirectory>
             <outputFileNameMapping>
                ${module.artifactId}.${module.extension}
             </outputFileNameMapping>
@@ -100,8 +101,11 @@
 
             <dependencySets>
                <dependencySet>
+                  <excludes>
+                     <exclude>org.rhq.helpers:rhq-pluginAnnotations</exclude>
+                  </excludes>
                   <useTransitiveDependencies>false</useTransitiveDependencies>
-                  <outputDirectory>modules/${module.basedir.name}/lib</outputDirectory>
+                  <outputDirectory>./lib</outputDirectory>
                </dependencySet>
             </dependencySets>
 
@@ -126,6 +130,7 @@
          </includes>
          <sources>
             <includeModuleDirectory>false</includeModuleDirectory>
+            <outputDirectory>src</outputDirectory>
 
             <fileSets>
 
@@ -197,6 +202,9 @@
             <dependencySets>
                <dependencySet>
                   <excludes>
+                     <exclude>infinispan-core*</exclude>
+                     <exclude>net.jcip:jcip-annotations</exclude>
+                     <exclude>org.rhq.helpers:rhq-pluginAnnotations</exclude>
                      <exclude>org.infinispan:infinispan-core</exclude>
                      <exclude>org.infinispan:infinispan-server-rest</exclude>
                      <exclude>org.infinispan:infinispan-ec2-demo</exclude>                     
@@ -256,6 +264,7 @@
          </includes>
          <sources>
             <includeModuleDirectory>false</includeModuleDirectory>
+            <outputDirectory>src</outputDirectory>
          </sources>
 
          <binaries>
