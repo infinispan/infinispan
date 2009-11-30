@@ -3,8 +3,6 @@ package org.infinispan.container;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.util.Immutables;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 import java.util.AbstractCollection;
 import java.util.AbstractSet;
@@ -449,6 +447,9 @@ public class FIFOAMRDataContainer implements DataContainer {
     * Very similar to a Segment in a ConcurrentHashMap
     */
    static final class Segment extends ReentrantLock {
+
+      private static final long serialVersionUID = -6980774204494312874L;
+
       /**
        * The number of elements in this segment's region.
        */

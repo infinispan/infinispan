@@ -38,7 +38,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 /**
- * Test the behaivour of JBoss Marshalling based {@link Marshaller} implementation 
+ * Test the behaviour of JBoss Marshalling based {@link Marshaller} implementation 
  * which is {@link JBossMarshaller}}. This class should contain methods that exercise
  * logic in this particular implementation.
  */

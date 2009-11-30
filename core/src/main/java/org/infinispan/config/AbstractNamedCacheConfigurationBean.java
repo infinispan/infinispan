@@ -18,6 +18,8 @@ import org.infinispan.lifecycle.ComponentStatus;
 @Scope(Scopes.NAMED_CACHE)
 public abstract class AbstractNamedCacheConfigurationBean extends AbstractConfigurationBean {
 
+   private static final long serialVersionUID = -3838074220419703543L;
+   
    protected ComponentRegistry cr;
 
    @Inject

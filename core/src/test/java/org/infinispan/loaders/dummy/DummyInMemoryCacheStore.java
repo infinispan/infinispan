@@ -129,6 +129,9 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
    }
 
    public static class Cfg extends AbstractCacheStoreConfig {
+
+      private static final long serialVersionUID = 4258914047690999424L;
+      
       boolean debug;
       String store = "__DEFAULT_STORE__";
       boolean cleanBetweenRestarts = true;

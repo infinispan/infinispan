@@ -54,7 +54,7 @@ public class ObjectDuplicator {
    @SuppressWarnings("unchecked")
    public static <E> ReversibleOrderedSet<E> duplicateReversibleOrderedSet(ReversibleOrderedSet<E> original) {
       if (original instanceof VisitableBidirectionalLinkedHashSet)
-         return (ReversibleOrderedSet<E>) ((VisitableBidirectionalLinkedHashSet) original).clone();
+         return ((VisitableBidirectionalLinkedHashSet) original).clone();
 
       return attemptClone(original);
    }

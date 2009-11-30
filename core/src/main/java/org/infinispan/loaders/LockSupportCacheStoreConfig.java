@@ -7,6 +7,9 @@ package org.infinispan.loaders;
  * @author Mircea.Markus@jboss.com
  */
 public class LockSupportCacheStoreConfig extends AbstractCacheStoreConfig {
+
+   private static final long serialVersionUID = 842757200078048889L;
+   
    public static final int DEFAULT_CONCURRENCY_LEVEL = 2048;
    public static final int DEFAULT_LOCK_ACQUISITION_TIMEOUT = 60000;
 

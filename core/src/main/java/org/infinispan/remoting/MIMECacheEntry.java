@@ -9,7 +9,9 @@ import java.io.*;
  */
 public class MIMECacheEntry implements Serializable {
 
-    /**
+   private static final long serialVersionUID = -7857224258673285445L;
+
+   /**
      * The MIME <a href="http://en.wikipedia.org/wiki/MIME">Content type</a>
      * value, for example application/octet-stream.
      * Often used in HTTP headers.

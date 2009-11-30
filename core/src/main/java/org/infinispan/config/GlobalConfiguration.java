@@ -411,7 +411,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       result = 31 * result + (defaultConfiguration != null ? defaultConfiguration.hashCode() : 0);
       result = 31 * result + (transport.clusterName != null ? transport.clusterName.hashCode() : 0);
       result = 31 * result + (shutdown.hookBehavior.hashCode());
-      result = 31 * result + ((int) serialization.version.hashCode());
+      result = 31 * result + serialization.version.hashCode();
       result = (int) (31 * result + transport.distributedSyncTimeout);
       return result;
    }
@@ -504,6 +504,9 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    public static class ExecutorFactoryType extends FactoryClassWithPropertiesType {
+
+      private static final long serialVersionUID = 6895901500645539386L;
+      
       /**
        * @configRef desc="Fully qualified class name of the ExecutorFactory to use.  Must
        * implement org.infinispan.executors.ExecutorFactory"
@@ -538,6 +541,9 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    public static class ScheduledExecutorFactoryType extends FactoryClassWithPropertiesType {
+
+      private static final long serialVersionUID = 7806391452092647488L;
+      
       /**
        * @configRef desc="Fully qualified class name of the ScheduledExecutorFactory to use.  Must
        * implement org.infinispan.executors.ScheduledExecutorFactory"

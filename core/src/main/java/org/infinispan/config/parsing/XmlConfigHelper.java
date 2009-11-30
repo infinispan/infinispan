@@ -192,7 +192,7 @@ public class XmlConfigHelper {
    }
 
    /**
-    * Reads the contents of the first occurence of elementName under the given element, trimming results of whitespace.
+    * Reads the contents of the first occurrence of elementName under the given element, trimming results of whitespace.
     * <p/>
     * None of the parameters should be null - otherwise the method may throw a NullPointerException.
     *

@@ -7,6 +7,9 @@ package org.infinispan.config;
  * @since 4.0
  */
 public class DuplicateCacheNameException extends ConfigurationException {
+   
+   private static final long serialVersionUID = 3829520782638366878L;
+
    public DuplicateCacheNameException(Exception e) {
       super(e);
    }

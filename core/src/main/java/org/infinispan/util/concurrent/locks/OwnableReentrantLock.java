@@ -24,8 +24,6 @@ package org.infinispan.util.concurrent.locks;
 import net.jcip.annotations.ThreadSafe;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.AbstractQueuedSynchronizer;
@@ -48,7 +46,8 @@ import java.util.concurrent.locks.Lock;
 @ThreadSafe
 public class OwnableReentrantLock extends AbstractQueuedSynchronizer implements Lock {
 
-   private static Log log = LogFactory.getLog(OwnableReentrantLock.class);
+   private static final long serialVersionUID = 4932974734462848792L;
+
    /**
     * Current owner
     */

@@ -5,8 +5,6 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.Marshallable;
 import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Similar to {@link org.infinispan.commands.remote.MultipleRpcCommand}, but it only aggregates a single command for
@@ -17,8 +15,6 @@ import org.infinispan.util.logging.LogFactory;
 @Marshallable(externalizer = ReplicableCommandExternalizer.class, id = Ids.SINGLE_RPC_COMMAND)
 public class SingleRpcCommand extends BaseRpcInvokingCommand {
    public static final int COMMAND_ID = 1;
-   private static Log log = LogFactory.getLog(SingleRpcCommand.class);
-   private static boolean trace = log.isTraceEnabled();
 
    private ReplicableCommand command;
 

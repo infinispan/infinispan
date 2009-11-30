@@ -7,6 +7,9 @@ package org.infinispan.statetransfer;
  * @since 4.0
  */
 public class StateTransferException extends Exception {
+
+   private static final long serialVersionUID = -7679740750970789100L;
+
    public StateTransferException() {
    }
 

@@ -40,6 +40,9 @@ import javax.xml.bind.annotation.XmlElement;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 public abstract class PluggableConfigurationComponent extends AbstractNamedCacheConfigurationBean {
+
+   private static final long serialVersionUID = 7579338902186477489L;
+   
    @XmlElement(name="properties")
    protected TypedProperties properties = EMPTY_PROPERTIES;
 

@@ -9,6 +9,8 @@ import org.infinispan.loaders.AbstractCacheLoaderConfig;
  */
 public class ClusterCacheLoaderConfig extends AbstractCacheLoaderConfig {
 
+   private static final long serialVersionUID = -44748358960849539L;
+   
    private long remoteCallTimeout;
 
    public String getCacheLoaderClassName() {

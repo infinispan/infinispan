@@ -6,8 +6,6 @@ import java.io.ObjectOutput;
 
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.Marshallable;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * An immortal cache value, to correspond with {@link org.infinispan.container.entries.ImmortalCacheEntry}
@@ -17,7 +15,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 @Marshallable(externalizer = ImmortalCacheValue.Externalizer.class, id = Ids.IMMORTAL_VALUE)
 public class ImmortalCacheValue implements InternalCacheValue, Cloneable {
-   private static final Log log = LogFactory.getLog(ImmortalCacheValue.class);
+
    Object value;
 
    ImmortalCacheValue(Object value) {

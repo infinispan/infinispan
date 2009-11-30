@@ -48,6 +48,9 @@ import org.infinispan.util.logging.LogFactory;
  * @since 4.0
  */
 public class ModuleProperties extends Properties {
+   
+    private static final long serialVersionUID = 2558131508076199744L;
+   
     private static final Log log = LogFactory.getLog(ModuleProperties.class);
     public static final String MODULE_PROPERTIES_FILENAME = "infinispan-module.properties";
     public static final String MODULE_NAME_KEY = "infinispan.module.name";

@@ -433,6 +433,9 @@ public class FIFODataContainer implements DataContainer {
     * Very similar to a Segment in a ConcurrentHashMap
     */
    static final class Segment extends ReentrantLock {
+
+      private static final long serialVersionUID = 6057507888185462418L;
+
       /**
        * The number of elements in this segment's region.
        */

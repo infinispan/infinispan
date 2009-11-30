@@ -7,6 +7,9 @@ package org.infinispan.loaders;
  * @since 4.0
  */
 public class CacheLoaderException extends Exception {
+
+   private static final long serialVersionUID = -7640401612614646818L;
+
    public CacheLoaderException() {
    }
 

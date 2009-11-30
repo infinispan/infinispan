@@ -22,6 +22,9 @@ import org.infinispan.loaders.LockSupportCacheStoreConfig;
  * @since 4.0
  */
 public class FileCacheStoreConfig extends LockSupportCacheStoreConfig {
+
+   private static final long serialVersionUID = 1551092386868095926L;
+   
    String location = "Infinispan-FileCacheStore";
    private int streamBufferSize = 8192;
 

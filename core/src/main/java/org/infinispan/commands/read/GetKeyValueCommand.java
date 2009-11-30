@@ -59,7 +59,7 @@ public class GetKeyValueCommand extends AbstractDataCommand {
    }
 
    /**
-    * Will make this method to return an {@link CacheEntry} insted of the coresponding value associated with the key.
+    * Will make this method to return an {@link CacheEntry} instead of the corresponding value associated with the key.
     */
    public void setReturnCacheEntry(boolean returnCacheEntry) {
       this.returnCacheEntry = returnCacheEntry;

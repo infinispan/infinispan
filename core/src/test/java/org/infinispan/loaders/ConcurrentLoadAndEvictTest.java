@@ -90,6 +90,9 @@ public class ConcurrentLoadAndEvictTest extends SingleCacheManagerTest {
    }
 
    public static class SlowDownInterceptor extends CommandInterceptor implements CloneableConfigurationComponent{
+   
+      private static final long serialVersionUID = 8790944676490291484L;
+   
       volatile boolean enabled = false;
       transient CountDownLatch getLatch = new CountDownLatch(1);
       transient CountDownLatch evictLatch = new CountDownLatch(1);

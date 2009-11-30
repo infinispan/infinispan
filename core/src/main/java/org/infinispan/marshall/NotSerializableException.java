@@ -32,6 +32,8 @@ import org.infinispan.CacheException;
  */
 public class NotSerializableException extends CacheException {
 
+   private static final long serialVersionUID = 8217398736102723887L;
+
    public NotSerializableException(String message, Throwable cause) {
       super(message, cause);
    }

@@ -7,6 +7,9 @@ package org.infinispan.manager;
  * @since 4.0
  */
 public class NamedCacheNotFoundException extends Exception {
+
+   private static final long serialVersionUID = 5937213470732655993L;
+
    public NamedCacheNotFoundException() {
    }
 
