@@ -70,6 +70,7 @@ import org.infinispan.remoting.responses.ExtendedResponse;
 import org.infinispan.remoting.responses.RequestIgnoredResponse;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.responses.UnsuccessfulResponse;
+import org.infinispan.remoting.responses.UnsureResponse;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.transaction.xa.DeadlockDetectingGlobalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -128,6 +129,7 @@ public class ConstantObjectTable implements ObjectTable {
       MARSHALLABLES.add(ExceptionResponse.class.getName());
       MARSHALLABLES.add(RequestIgnoredResponse.class.getName());
       MARSHALLABLES.add(UnsuccessfulResponse.class.getName());
+      MARSHALLABLES.add(UnsureResponse.class.getName());      
 
       MARSHALLABLES.add(StateTransferControlCommand.class.getName());
       MARSHALLABLES.add(ClusteredGetCommand.class.getName());
