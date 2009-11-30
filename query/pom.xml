@@ -24,12 +24,6 @@
          <groupId>org.hibernate</groupId>
          <artifactId>hibernate-search</artifactId>
          <version>3.1.0.GA</version>
-         <exclusions>
-            <exclusion>
-               <groupId>javax.transaction</groupId>
-               <artifactId>jta</artifactId>
-            </exclusion>
-         </exclusions>
       </dependency>
 
       <dependency>

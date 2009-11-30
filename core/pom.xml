@@ -63,7 +63,6 @@
          <groupId>org.rhq.helpers</groupId>
          <artifactId>rhq-pluginAnnotations</artifactId>
          <version>${version.rhq.pluginAnnotations}</version>
-         <scope>provided</scope>
       </dependency>
 
       <dependency>

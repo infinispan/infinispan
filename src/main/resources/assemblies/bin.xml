@@ -88,14 +88,17 @@
          </sources>
 
          <binaries>
-
             <outputDirectory>.</outputDirectory>
             <unpack>false</unpack>
             <outputFileNameMapping>
                ${module.artifactId}.${module.extension}
             </outputFileNameMapping>
+
             <dependencySets>
                <dependencySet>
+                  <excludes>
+                     <exclude>org.rhq.helpers:rhq-pluginAnnotations</exclude>
+                  </excludes>
                   <useTransitiveDependencies>false</useTransitiveDependencies>
                   <outputDirectory>./lib</outputDirectory>
                </dependencySet>
@@ -184,8 +187,9 @@
                <dependencySet>
                   <excludes>
                      <exclude>infinispan-core*</exclude>
-                     <exclude>log4j</exclude>
                      <exclude>net.jcip</exclude>
+                     <exclude>rhq-pluginAnnotations</exclude>
+                     <exclude>jta</exclude>
                   </excludes>
                   <useTransitiveDependencies>true</useTransitiveDependencies>
                   <useTransitiveFiltering>true</useTransitiveFiltering>
