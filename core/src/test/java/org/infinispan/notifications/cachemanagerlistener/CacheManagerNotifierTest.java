@@ -1,6 +1,7 @@
 package org.infinispan.notifications.cachemanagerlistener;
 
 import static org.easymock.EasyMock.*;
+
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
@@ -8,6 +9,8 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.xa.TransactionTable;
+import org.infinispan.transaction.xa.TransactionTable.StaleTransactionCleanup;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -63,6 +66,7 @@ public class CacheManagerNotifierTest extends AbstractInfinispanTest {
       try {
          cm1.defineConfiguration("testCache", new Configuration());
          mockNotifier.notifyCacheStarted("testCache");
+         mockNotifier.addListener(isA(StaleTransactionCleanup.class));
          replay(mockNotifier);
          // start a second cache.
          Cache testCache = cm1.getCache("testCache");

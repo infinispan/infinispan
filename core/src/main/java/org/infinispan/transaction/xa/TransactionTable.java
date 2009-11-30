@@ -8,6 +8,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.manager.CacheManager;
@@ -54,6 +55,7 @@ public class TransactionTable {
    private RpcManager rpcManager;
    private GlobalTransactionFactory gtf;
    private ExecutorService lockBreakingService = Executors.newFixedThreadPool(1);
+   private CacheManager cm;
 
    @Inject
    public void initialize(CommandsFactory commandsFactory, RpcManager rpcManager, Configuration configuration,
@@ -66,6 +68,11 @@ public class TransactionTable {
       this.invoker = invoker;
       this.notifier = notifier;
       this.gtf = gtf;
+      this.cm = cm;
+   }
+
+   @Start
+   private void start() {
       cm.addListener(new StaleTransactionCleanup());
    }
 
