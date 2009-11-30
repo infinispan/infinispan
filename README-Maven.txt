@@ -103,8 +103,48 @@ Working with the Infinispan source tree, I have configured my ~/.m2/settings.xml
     <profile>
       <id>jboss</id>
       <properties>
-        <maven.repository.root>/Users/manik/Code/maven2</maven.repository.root>
+        <!-- you only need this if you intend to deploy releases of Infinispan -->
+        <maven.repository.root>/PATH/TO/MAVEN/REPO</maven.repository.root>
       </properties>
+
+	   <pluginRepositories>
+        <pluginRepository>
+          <id>repository.jboss.com</id>
+          <name>JBoss Maven Repo</name>
+          <url>http://repository.jboss.com/maven2/</url>
+        </pluginRepository>
+
+        <pluginRepository>
+          <id>snapshots.jboss.org</id>
+          <name>JBoss Maven Snap Repo</name>
+          <url>http://snapshots.jboss.org/maven2/</url>
+        </pluginRepository>
+		</pluginRepositories>
+
+      <repositories>
+        <repository>
+          <id>repository.jboss.com</id>
+          <name>JBoss Maven Repo</name>
+          <url>http://repository.jboss.com/maven2/</url>
+          <releases>
+            <enabled>true</enabled>
+          </releases>
+          <snapshots>
+            <enabled>true</enabled>
+          </snapshots>
+	     </repository>
+		  <repository>
+          <id>snap.jboss.com</id>
+		    <name>JBoss Maven Snap Repo</name>
+		    <url>http://snapshots.jboss.org/maven2/</url>
+		    <releases>
+            <enabled>true</enabled>
+          </releases>
+          <snapshots>
+            <enabled>true</enabled>
+          </snapshots>
+		  </repository>
+	   </repositories>
     </profile>
   </profiles>
 
