@@ -134,7 +134,7 @@ public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable 
     * a 0 lock acquisition timeout so it does not block in attempting to acquire locks.  It behaves as a no-op if the
     * lock on the entry cannot be acquired <i>immediately</i>.
     * <p/>
-    * Important: this method should not be called from within a tx's scope.  
+    * Important: this method should not be called from within a transaction scope.  
     *
     * @param key key to evict
     */
@@ -186,7 +186,7 @@ public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable 
     *
     * @param key      key to use
     * @param value    value to store
-    * @param lifespan lifespan of the entry.  Negative values are intepreted as unlimited lifespan.
+    * @param lifespan lifespan of the entry.  Negative values are interpreted as unlimited lifespan.
     * @param unit     unit of measurement for the lifespan
     * @return the value being replaced, or null if nothing is being replaced.
     */
@@ -197,7 +197,7 @@ public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable 
     *
     * @param key      key to use
     * @param value    value to store
-    * @param lifespan lifespan of the entry.  Negative values are intepreted as unlimited lifespan.
+    * @param lifespan lifespan of the entry.  Negative values are interpreted as unlimited lifespan.
     * @param unit     unit of measurement for the lifespan
     * @return the value being replaced, or null if nothing is being replaced.
     */
@@ -208,7 +208,7 @@ public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable 
     * to all mappings in the map passed in.
     *
     * @param map      map containing mappings to enter
-    * @param lifespan lifespan of the entry.  Negative values are intepreted as unlimited lifespan.
+    * @param lifespan lifespan of the entry.  Negative values are interpreted as unlimited lifespan.
     * @param unit     unit of measurement for the lifespan
     */
    void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit unit);
@@ -218,7 +218,7 @@ public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable 
     *
     * @param key      key to use
     * @param value    value to store
-    * @param lifespan lifespan of the entry.  Negative values are intepreted as unlimited lifespan.
+    * @param lifespan lifespan of the entry.  Negative values are interpreted as unlimited lifespan.
     * @param unit     unit of measurement for the lifespan
     * @return the value being replaced, or null if nothing is being replaced.
     */
@@ -230,7 +230,7 @@ public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable 
     * @param key      key to use
     * @param oldValue value to replace
     * @param value    value to store
-    * @param lifespan lifespan of the entry.  Negative values are intepreted as unlimited lifespan.
+    * @param lifespan lifespan of the entry.  Negative values are interpreted as unlimited lifespan.
     * @param unit     unit of measurement for the lifespan
     * @return true if the value was replaced, false otherwise
     */
@@ -241,7 +241,7 @@ public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable 
     *
     * @param key             key to use
     * @param value           value to store
-    * @param lifespan        lifespan of the entry.  Negative values are intepreted as unlimited lifespan.
+    * @param lifespan        lifespan of the entry.  Negative values are interpreted as unlimited lifespan.
     * @param lifespanUnit    time unit for lifespan
     * @param maxIdleTime     the maximum amount of time this key is allowed to be idle for before it is considered as
     *                        expired
@@ -255,7 +255,7 @@ public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable 
     *
     * @param key             key to use
     * @param value           value to store
-    * @param lifespan        lifespan of the entry.  Negative values are intepreted as unlimited lifespan.
+    * @param lifespan        lifespan of the entry.  Negative values are interpreted as unlimited lifespan.
     * @param lifespanUnit    time unit for lifespan
     * @param maxIdleTime     the maximum amount of time this key is allowed to be idle for before it is considered as
     *                        expired
@@ -269,7 +269,7 @@ public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable 
     * to all mappings in the map passed in.
     *
     * @param map             map containing mappings to enter
-    * @param lifespan        lifespan of the entry.  Negative values are intepreted as unlimited lifespan.
+    * @param lifespan        lifespan of the entry.  Negative values are interpreted as unlimited lifespan.
     * @param lifespanUnit    time unit for lifespan
     * @param maxIdleTime     the maximum amount of time this key is allowed to be idle for before it is considered as
     *                        expired
@@ -282,7 +282,7 @@ public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable 
     *
     * @param key             key to use
     * @param value           value to store
-    * @param lifespan        lifespan of the entry.  Negative values are intepreted as unlimited lifespan.
+    * @param lifespan        lifespan of the entry.  Negative values are interpreted as unlimited lifespan.
     * @param lifespanUnit    time unit for lifespan
     * @param maxIdleTime     the maximum amount of time this key is allowed to be idle for before it is considered as
     *                        expired
@@ -297,7 +297,7 @@ public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable 
     * @param key             key to use
     * @param oldValue        value to replace
     * @param value           value to store
-    * @param lifespan        lifespan of the entry.  Negative values are intepreted as unlimited lifespan.
+    * @param lifespan        lifespan of the entry.  Negative values are interpreted as unlimited lifespan.
     * @param lifespanUnit    time unit for lifespan
     * @param maxIdleTime     the maximum amount of time this key is allowed to be idle for before it is considered as
     *                        expired
@@ -535,7 +535,7 @@ public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable 
 
    /**
     * Method that releases object references of cached objects held in the cache by serializing them to byte buffers.
-    * Cached objects are lazily deserialized when accessed again, based on the calling thread's context class loader.
+    * Cached objects are lazily de-serialized when accessed again, based on the calling thread's context class loader.
     * <p/>
     * This can be expensive, based on the effort required to serialize cached objects.
     * <p/>
@@ -550,7 +550,7 @@ public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable 
     * distribution mode, the set returned only contains the keys locally available in the cache instance. To avoid 
     * memory issues, there will be not attempt to bring keys from other nodes.
     * <p/>
-    * This method should only be used for debugging purpouses such as to verify that the cache contains all the keys 
+    * This method should only be used for debugging purposes such as to verify that the cache contains all the keys 
     * entered. Any other use involving execution of this method on a production system is not recommended.
     * <p/>
     * 
@@ -564,7 +564,7 @@ public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable 
     * distribution mode, the collection returned only contains the values locally available in the cache instance. To avoid 
     * memory issues, there is not attempt to bring values from other nodes.
     * <p/>
-    * This method should only be used for testing or debugging purpouses such as to verify that the cache contains all the 
+    * This method should only be used for testing or debugging purposes such as to verify that the cache contains all the 
     * values entered. Any other use involving execution of this method on a production system is not recommended.
     * <p/>
     * 
@@ -579,7 +579,7 @@ public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable 
     * contains the mappings locally available in the cache instance. To avoid memory issues, there will be not attempt 
     * to bring mappings from other nodes.
     * <p/>
-    * This method should only be used for debugging purpouses such as to verify that the cache contains all the mappings 
+    * This method should only be used for debugging purposes such as to verify that the cache contains all the mappings 
     * entered. Any other use involving execution of this method on a production system is not recommended.
     * <p/>
     * 
