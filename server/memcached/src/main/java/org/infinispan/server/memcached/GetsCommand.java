@@ -22,18 +22,24 @@
  */
 package org.infinispan.server.memcached;
 
+import org.infinispan.Cache;
+
 /**
- * CasValue.
+ * GetsCommand.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class CasValue {
-   final Value value;
-   final long unique;
-   
-   CasValue(Value value, long unique) {
-      this.value = value;
-      this.unique = unique;
+public class GetsCommand extends GetCommand {
+
+   GetsCommand(Cache cache, CommandType type, RetrievalParameters params) {
+      super(cache, type, params);
    }
+
+   @Override
+   protected StringBuilder constructValue(String key, Value value) {
+      return super.constructValue(key, value)
+         .append(value.getCas()).append(" ");
+   }
+
 }

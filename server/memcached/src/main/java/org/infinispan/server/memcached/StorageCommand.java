@@ -64,11 +64,11 @@ public abstract class StorageCommand implements Command {
 
    public static Command newStorageCommand(Cache cache, CommandType type, StorageParameters params, byte[] data) throws IOException {
       switch(type) {
-         case SET: return new SetCommand(cache, params, data);
-         case ADD: return new AddCommand(cache, params, data);
-         case REPLACE: return new ReplaceCommand(cache, params, data);
-         case APPEND: return new AppendCommand(cache, params, data);
-         case PREPEND: return new PrependCommand(cache, params, data);
+         case SET: return new SetCommand(cache, type, params, data);
+         case ADD: return new AddCommand(cache, type, params, data);
+         case REPLACE: return new ReplaceCommand(cache, type, params, data);
+         case APPEND: return new AppendCommand(cache, type, params, data);
+         case PREPEND: return new PrependCommand(cache, type, params, data);
          default: throw new StreamCorruptedException("Unable to build storage command for type: " + type);
       }
    }

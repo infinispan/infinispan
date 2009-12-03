@@ -49,10 +49,8 @@ public abstract class RetrievalCommand implements Command {
    public static Command newRetrievalCommand(Cache cache, CommandType type, RetrievalParameters params) {
       switch(type) {
          case GET: return new GetCommand(cache, type, params);
-//       case GETS: ...
+         case GETS: return new GetsCommand(cache, type, params);
          default: throw new IllegalStateException("Unable to build storage command for type: " + type);
       }
-      
-      
    }
 }

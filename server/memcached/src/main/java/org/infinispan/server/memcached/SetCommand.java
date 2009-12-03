@@ -44,10 +44,6 @@ public class SetCommand extends StorageCommand {
 
    private static final Log log = LogFactory.getLog(SetCommand.class);
 
-   SetCommand(Cache cache, StorageParameters params, byte[] data) {
-      super(cache, CommandType.SET, params, data);
-   }
-   
    SetCommand(Cache cache, CommandType type, StorageParameters params, byte[] data) {
       super(cache, type, params, data);
    }
@@ -56,16 +52,15 @@ public class SetCommand extends StorageCommand {
    public Object perform(Channel ch) throws Exception {
       StorageReply reply;
       try {
-         Value value = new Value(params.flags, data);
          if (params.expiry == 0) {
-            reply = put(params.key, value);
+            reply = put(params.key, params.flags, data);
          } else {
             if (params.expiry > 60*60*24*30) {
                // If expiry bigger number of seconds in 30 days, then it's considered unix time
                long future = TimeUnit.SECONDS.toMillis(params.expiry);
                long expiry = future - System.currentTimeMillis();
                if (expiry > 0) {
-                  reply = putExpiryUnixTime(params.key, value, expiry);
+                  reply = put(params.key, params.flags, data, expiry);
                } else {
                   StringBuilder sb = new StringBuilder();
                   sb.append("Given expiry is bigger than 30 days, hence is treated as Unix time, ")
@@ -74,7 +69,9 @@ public class SetCommand extends StorageCommand {
                   throw new CacheException(sb.toString());
                }
             } else {
-               reply = putExpiry(params.key, value, params.expiry);
+               // Convert seconds to milliseconds to simplify code
+               long expiry = TimeUnit.SECONDS.toMillis(params.expiry);
+               reply = put(params.key, params.flags, data, expiry);
             }
          }
          
@@ -86,18 +83,13 @@ public class SetCommand extends StorageCommand {
       return null;
    }
 
-   protected StorageReply put(String key, Value value) {
-      cache.put(params.key, value);
-      return reply();
+   protected StorageReply put(String key, int flags, byte[] data) {
+      return put(key, flags, data, -1);
    }
 
-   protected StorageReply putExpiry(String key, Value value, long expiry) {
-      cache.put(params.key, value, params.expiry, TimeUnit.SECONDS);
-      return reply();
-   }
-
-   protected StorageReply putExpiryUnixTime(String key, Value value, long expiry) {
-      cache.put(params.key, value, expiry, TimeUnit.MILLISECONDS);
+   protected StorageReply put(String key, int flags, byte[] data, long expiry) {
+      Value value = new Value(flags, data);
+      cache.put(key, value, expiry, TimeUnit.MILLISECONDS);
       return reply();
    }
 

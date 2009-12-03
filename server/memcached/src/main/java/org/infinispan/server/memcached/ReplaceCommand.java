@@ -34,24 +34,18 @@ import org.infinispan.Cache;
  */
 public class ReplaceCommand extends SetCommand {
 
-   ReplaceCommand(Cache cache, StorageParameters params, byte[] data) {
-      super(cache, CommandType.REPLACE, params, data);
+   ReplaceCommand(Cache cache, CommandType type, StorageParameters params, byte[] data) {
+      super(cache, type, params, data);
    }
 
    @Override
-   protected StorageReply put(String key, Value value) {
-      Object prev = cache.replace(params.key, value);
-      return reply(prev);
+   protected StorageReply put(String key, int flags, byte[] data) {
+      return put(key, flags, data, -1);
    }
 
    @Override
-   protected StorageReply putExpiry(String key, Value value, long expiry) {
-      Object prev = cache.replace(params.key, value, expiry, TimeUnit.SECONDS);
-      return reply(prev);
-   }
-
-   @Override
-   protected StorageReply putExpiryUnixTime(String key, Value value, long expiry) {
+   protected StorageReply put(String key, int flags, byte[] data, long expiry) {
+      Value value = new Value(flags, data);
       Object prev = cache.replace(params.key, value, expiry, TimeUnit.MILLISECONDS);
       return reply(prev);
    }

@@ -37,10 +37,17 @@ import java.util.Arrays;
 class Value implements Externalizable {
    private int flags;
    private byte[] data;
+   private long cas;
    
    Value(int flags, byte[] data) {
       this.flags = flags;
       this.data = data;
+      // Since nano time is an offset from an arbitrary time, it is very unlikely that 
+      // two threads running on different VMs will generate the same value, so even two 
+      // modifications on the same key on different VMs will generate different cas, 
+      // making it a safe option for cas unique id.
+      // Also, using nano time avoid issues after expiration and eviction.
+      cas = System.nanoTime();
    }
 
    public int getFlags() {
@@ -51,6 +58,10 @@ class Value implements Externalizable {
       return data;
    }
 
+   public long getCas() {
+      return cas;
+   }
+
    @Override
    public boolean equals(Object obj) {
       if (obj == this)
@@ -58,7 +69,9 @@ class Value implements Externalizable {
       if (!(obj instanceof Value))
          return false;
       Value other = (Value) obj;
-      return Arrays.equals(data, other.data) && flags == other.flags;
+      return Arrays.equals(data, other.data) 
+         && flags == other.flags
+         && cas == other.cas;
    }
 
    @Override
@@ -66,6 +79,7 @@ class Value implements Externalizable {
       int result = 17;
       result = 31 * result + flags;
       result = 31 * result + data.hashCode();
+      result = 31 * result + (int)(cas ^ (cas >>> 32));
       return result;
    }
 
@@ -74,6 +88,7 @@ class Value implements Externalizable {
       flags = in.read();
       data = new byte[in.read()];
       in.read(data);
+      cas = in.readLong();
    }
 
    @Override
@@ -81,5 +96,6 @@ class Value implements Externalizable {
       out.write(flags);
       out.write(data.length);
       out.write(data);
+      out.writeLong(cas);
    }
 }

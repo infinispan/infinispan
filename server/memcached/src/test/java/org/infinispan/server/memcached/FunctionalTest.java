@@ -29,6 +29,8 @@ import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import net.spy.memcached.CASResponse;
+import net.spy.memcached.CASValue;
 import net.spy.memcached.DefaultConnectionFactory;
 import net.spy.memcached.MemcachedClient;
 
@@ -67,7 +69,7 @@ public class FunctionalTest extends SingleCacheManagerTest {
    public void testBasicSet(Method m) throws Exception {
       Future<Boolean> f = client.set(k(m), 0, v(m));
       assert f.get(5, TimeUnit.SECONDS);
-      assert client.get(k(m)).equals(v(m));
+      assert v(m).equals(client.get(k(m)));
    }
 
    public void testSetWithExpirySeconds(Method m) throws Exception {
@@ -199,6 +201,25 @@ public class FunctionalTest extends SingleCacheManagerTest {
       assert f.get(5, TimeUnit.SECONDS);
       String expected = v(m, "v1-").toString() + v(m).toString();
       assert expected.equals(client.get(k(m)));
+   }
+
+   public void testBasicGets(Method m) throws Exception {
+      Future<Boolean> f = client.set(k(m), 0, v(m));
+      assert f.get(5, TimeUnit.SECONDS);
+      CASValue<Object> value = client.gets(k(m));
+      assert v(m).equals(value.getValue());
+      assert value.getCas() != 0;
+   }
+
+   public void testBasicCas(Method m) throws Exception {
+      Future<Boolean> f = client.set(k(m), 0, v(m));
+      assert f.get(5, TimeUnit.SECONDS);
+      CASValue<Object> value = client.gets(k(m));
+      assert v(m).equals(value.getValue());
+      assert value.getCas() != 0;
+
+      CASResponse resp = client.cas(k(m), value.getCas(), v(m, "k1-"));
+      assert CASResponse.OK == resp;
    }
 
    private String k(Method method, String prefix) {

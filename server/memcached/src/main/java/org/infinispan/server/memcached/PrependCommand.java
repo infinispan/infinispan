@@ -32,8 +32,8 @@ import org.infinispan.Cache;
  */
 public class PrependCommand extends AppendCommand {
 
-   PrependCommand(Cache cache, StorageParameters params, byte[] data) {
-      super(cache, CommandType.PREPEND, params, data);
+   PrependCommand(Cache cache, CommandType type, StorageParameters params, byte[] data) {
+      super(cache, type, params, data);
    }
 
    @Override

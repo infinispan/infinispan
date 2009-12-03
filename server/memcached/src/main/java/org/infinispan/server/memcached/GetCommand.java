@@ -43,17 +43,14 @@ public class GetCommand extends RetrievalCommand {
       super(cache, type, params);
    }
 
+   
    @Override
    public Object perform(Channel ch) throws Exception {
       ChannelBuffer buffer;
       for (String key : params.keys) {
          Value value = (Value) cache.get(key);
          if (value != null) {
-            StringBuilder sb = new StringBuilder();
-            sb.append(VALUE).append(" ")
-               .append(key).append(" ")
-               .append(value.getFlags()).append(" ")
-               .append(value.getData().length).append(" ");
+            StringBuilder sb = constructValue(key, value);
             buffer = wrappedBuffer(wrappedBuffer(sb.toString().getBytes()), wrappedBuffer(CRLF),
                      wrappedBuffer(value.getData()), wrappedBuffer(CRLF));
             ch.write(buffer);
@@ -64,4 +61,12 @@ public class GetCommand extends RetrievalCommand {
       return null;
    }
 
+   protected StringBuilder constructValue(String key, Value value) {
+      StringBuilder sb = new StringBuilder();
+      sb.append(VALUE).append(" ")
+         .append(key).append(" ")
+         .append(value.getFlags()).append(" ")
+         .append(value.getData().length).append(" ");
+      return sb;
+   }
 }

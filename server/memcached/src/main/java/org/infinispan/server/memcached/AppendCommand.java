@@ -41,11 +41,12 @@ public class AppendCommand extends SetCommand {
    }
 
    @Override
-   protected StorageReply put(String key, Value append) {
+   protected StorageReply put(String key, int flags, byte[] data) {
+      Value append = new Value(flags, data);
       Value current = (Value) cache.get(key);
       if (current != null) {
-         byte[] data = concat(current.getData(), append.getData());
-         Value next = new Value(current.getFlags(), data);
+         byte[] concatenated = concat(current.getData(), append.getData());
+         Value next = new Value(current.getFlags(), concatenated);
          boolean replaced = cache.replace(key, current, next);
          if (replaced)
             return StorageReply.STORED;
@@ -61,13 +62,8 @@ public class AppendCommand extends SetCommand {
    }
 
    @Override
-   protected StorageReply putExpiry(String key, Value value, long expiry) {
-      return put(key, value); // ignore expiry
-   }
-
-   @Override
-   protected StorageReply putExpiryUnixTime(String key, Value value, long expiry) {
-      return put(key, value); // ignore expiry
+   protected StorageReply put(String key, int flags, byte[] data, long expiry) {
+      return put(key, flags, data); // ignore expiry
    }
 
 }
