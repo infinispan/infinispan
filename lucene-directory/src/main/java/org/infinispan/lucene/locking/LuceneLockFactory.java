@@ -25,6 +25,7 @@ import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.store.LockFactory;
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
+import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lucene.CacheKey;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -56,9 +57,15 @@ public class LuceneLockFactory extends LockFactory {
       this.indexName = indexName;
       tm = cache.getAdvancedCache().getComponentRegistry().getComponent(TransactionManager.class);
       if (tm == null) {
-         throw new CacheException(
-                  "Failed looking up TransactionManager, check if any transaction manager is associated with Infinispan cache: "
-                           + cache.getName());
+         ComponentStatus status = cache.getAdvancedCache().getComponentRegistry().getStatus();
+         if (status.equals(ComponentStatus.RUNNING)) {
+            throw new CacheException(
+                     "Failed looking up TransactionManager. Check if any transaction manager is associated with Infinispan cache: \'"
+                              + cache.getName() + "\'");
+         }
+         else {
+            throw new CacheException("Failed looking up TransactionManager: the cache is not running");
+         }
       }
       defLock = new SharedLuceneLock(cache, indexName, DEF_LOCK_NAME, tm);
    }

@@ -236,9 +236,6 @@ public class InfinispanDirectory extends Directory {
     */
    public void close() throws IOException {
       isOpen = false;
-      if (cache != null) {
-         cache.stop();
-      }
    }
 
    private void checkIsOpen() throws AlreadyClosedException {

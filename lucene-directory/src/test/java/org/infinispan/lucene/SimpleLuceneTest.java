@@ -73,7 +73,18 @@ public class SimpleLuceneTest extends MultipleCacheManagersTest {
       assertTextIsFoundInIds(dirB, "node", 1, 0);
       removeByTerm(dirA, "from");
       assertTextIsFoundInIds(dirB, "node", 1);
+      dirA.close();
+      dirB.close();
    }
+   
+   @Test(description="Verifies the caches can be reused after a Directory close")
+   @SuppressWarnings("unchecked")
+   public void testCacheReuse() throws IOException {
+      testIndexWritingAndFinding();
+      cache(0, "lucene").clear();
+      testIndexWritingAndFinding();
+   }
+
 
    /**
     * Used in test to remove all documents containing some term
