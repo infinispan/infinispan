@@ -327,8 +327,6 @@ public class DefaultCacheManager implements CacheManager {
     *
     * @return the default cache.
     */
-   @ManagedOperation(description = "Retrieves the default cache associated with this cache manager and starts it up.")
-   @Operation(displayName = "Starts the default cache.")
    public <K, V> Cache<K, V> getCache() {
       return getCache(DEFAULT_CACHE_NAME);
    }
@@ -346,9 +344,7 @@ public class DefaultCacheManager implements CacheManager {
     * @return a cache instance identified by cacheName
     */
    @SuppressWarnings("unchecked")
-   @ManagedOperation(description = "Retrieves a named cache from the system and starts it up.")
-   @Operation(name = "getCacheWithCacheName", displayName = "Starts a cache with the given name.")
-   public <K, V> Cache<K, V> getCache(@Parameter(name = "cacheName", description = "Name of cache to start") String cacheName) {
+   public <K, V> Cache<K, V> getCache(String cacheName) {
       if (cacheName == null)
          throw new NullPointerException("Null arguments not allowed");
 
@@ -447,12 +443,6 @@ public class DefaultCacheManager implements CacheManager {
       return globalComponentRegistry.getStatus();
    }
    
-   @ManagedAttribute(description = "The status of the cache manager instance.")
-   @Metric(displayName = "Cache manager status", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
-   public String getCacheManagerStatus() {
-      return getStatus().toString();
-   }
-
    public GlobalConfiguration getGlobalConfiguration() {
       return globalConfiguration;
    }
@@ -464,6 +454,12 @@ public class DefaultCacheManager implements CacheManager {
          return Collections.emptySet();
       else
          return Immutables.immutableSetWrap(names);
+   }
+
+   @ManagedAttribute(description = "The status of the cache manager instance.")
+   @Metric(displayName = "Cache manager status", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
+   public String getCacheManagerStatus() {
+      return getStatus().toString();
    }
 
    @ManagedAttribute(description = "The defined cache names and their statuses.  The default cache is not included in this representation.")
@@ -524,6 +520,18 @@ public class DefaultCacheManager implements CacheManager {
          sb.append(getLogicalAddressString());
       }
       return sb.toString();
+   }
+
+   @ManagedOperation(description = "Starts the default cache associated with this cache manager")
+   @Operation(displayName = "Starts the default cache")
+   public void startCache() {
+      getCache();
+   }
+
+   @ManagedOperation(description = "Starts a named cache from this cache manager")
+   @Operation(name = "startCacheWithCacheName", displayName = "Starts a cache with the given name")
+   public void startCache(@Parameter(name = "cacheName", description = "Name of cache to start") String cacheName) {
+      getCache(cacheName);
    }
 
    private String getLogicalAddressString() {
