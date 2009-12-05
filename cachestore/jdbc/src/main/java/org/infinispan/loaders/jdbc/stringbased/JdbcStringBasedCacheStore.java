@@ -1,3 +1,24 @@
+/*
+ * JBoss, Home of Professional Open Source.
+ * Copyright 2009, Red Hat Middleware LLC, and individual contributors
+ * as indicated by the @author tags. See the copyright.txt file in the
+ * distribution for a full listing of individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.loaders.jdbc.stringbased;
 
 import org.infinispan.Cache;
@@ -7,7 +28,7 @@ import org.infinispan.io.ByteBuffer;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.LockSupportCacheStore;
-import org.infinispan.loaders.jdbc.DataManiulationHelper;
+import org.infinispan.loaders.jdbc.DataManipulationHelper;
 import org.infinispan.loaders.jdbc.JdbcUtil;
 import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
@@ -45,7 +66,7 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
    private static Log log = LogFactory.getLog(JdbcStringBasedCacheStore.class);
 
    /**
-    * delimits the stram for stream trasfer operations
+    * delimits the stream for stream transfer operations
     */
    private static final byte STRING_STREAM_DELIMITER = 100;
 
@@ -53,7 +74,7 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
    private Key2StringMapper key2StringMapper;
    private ConnectionFactory connectionFactory;
    private TableManipulation tableManipulation;
-   private DataManiulationHelper dmHelper;
+   private DataManipulationHelper dmHelper;
    private String cacheName;
 
    public void init(CacheLoaderConfig config, Cache cache, Marshaller m) throws CacheLoaderException {
@@ -72,7 +93,7 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
          doConnectionFactoryInitialization(connectionFactory);
       }
       this.key2StringMapper = config.getKey2StringMapper();
-      dmHelper = new DataManiulationHelper(connectionFactory, tableManipulation, marshaller) {
+      dmHelper = new DataManipulationHelper(connectionFactory, tableManipulation, marshaller) {
 
          @Override
          public void loadAllProcess(ResultSet rs, Set<InternalCacheEntry> result) throws SQLException, CacheLoaderException {

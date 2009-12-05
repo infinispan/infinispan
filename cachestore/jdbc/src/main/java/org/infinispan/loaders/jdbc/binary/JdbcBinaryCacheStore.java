@@ -1,3 +1,24 @@
+/*
+ * JBoss, Home of Professional Open Source.
+ * Copyright 2009, Red Hat Middleware LLC, and individual contributors
+ * as indicated by the @author tags. See the copyright.txt file in the
+ * distribution for a full listing of individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.loaders.jdbc.binary;
 
 import org.infinispan.Cache;
@@ -7,9 +28,9 @@ import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.loaders.bucket.BucketBasedCacheStore;
+import org.infinispan.loaders.jdbc.DataManipulationHelper;
 import org.infinispan.loaders.jdbc.JdbcUtil;
 import org.infinispan.loaders.jdbc.TableManipulation;
-import org.infinispan.loaders.jdbc.DataManiulationHelper;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.util.logging.Log;
@@ -30,13 +51,13 @@ import java.util.Set;
 
 /**
  * {@link BucketBasedCacheStore} implementation that will store all the buckets as rows in database, each row
- * coresponding to a bucket. This is in contrast to {@link org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore}
- * which stores each StoredEntry as an row in the database.
+ * corresponding to a bucket. This is in contrast to {@link org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore}
+ * which stores each StoredEntry as a row in the database.
  * <p/>
  * This class has the benefit of being able to store StoredEntries that do not have String keys, at the cost of coarser
  * grained access granularity, and inherently performance.
  * <p/>
- * All the DB releated configurations are described in {@link org.infinispan.loaders.jdbc.binary.JdbcBinaryCacheStoreConfig}.
+ * All the DB related configurations are described in {@link org.infinispan.loaders.jdbc.binary.JdbcBinaryCacheStoreConfig}.
  *
  * @author Mircea.Markus@jboss.com
  * @see JdbcBinaryCacheStoreConfig
@@ -51,7 +72,7 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
    private JdbcBinaryCacheStoreConfig config;
    private ConnectionFactory connectionFactory;
    private TableManipulation tableManipulation;
-   private DataManiulationHelper dmHelper;
+   private DataManipulationHelper dmHelper;
    private String cacheName;
 
    public void init(CacheLoaderConfig config, Cache cache, Marshaller m) throws CacheLoaderException {
@@ -70,7 +91,7 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
          factory.start(config.getConnectionFactoryConfig());
          doConnectionFactoryInitialization(factory);
       }
-      dmHelper = new DataManiulationHelper(connectionFactory, tableManipulation, marshaller) {
+      dmHelper = new DataManipulationHelper(connectionFactory, tableManipulation, marshaller) {
          @Override
          public void loadAllProcess(ResultSet rs, Set<InternalCacheEntry> result) throws SQLException, CacheLoaderException {
             InputStream binaryStream = rs.getBinaryStream(1);
@@ -127,7 +148,7 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
             throw new CacheLoaderException("Unexpected insert result: '" + insertedRows + "'. Expected values is 1");
          }
       } catch (SQLException ex) {
-         DataManiulationHelper.logAndThrow(ex, "sql failure while inserting bucket: " + bucket);
+         DataManipulationHelper.logAndThrow(ex, "sql failure while inserting bucket: " + bucket);
       } finally {
          JdbcUtil.safeClose(ps);
          connectionFactory.releaseConnection(conn);
@@ -153,7 +174,7 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
             throw new CacheLoaderException("Unexpected  update result: '" + updatedRows + "'. Expected values is 1");
          }
       } catch (SQLException e) {
-         DataManiulationHelper.logAndThrow(e, "sql failure while updating bucket: " + bucket);
+         DataManipulationHelper.logAndThrow(e, "sql failure while updating bucket: " + bucket);
       } finally {
          JdbcUtil.safeClose(ps);
          connectionFactory.releaseConnection(conn);
@@ -237,7 +258,7 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
          //if something happens make sure buckets locks are being release
          releaseLocks(expiredBuckets);
          connectionFactory.releaseConnection(conn);
-         DataManiulationHelper.logAndThrow(ex, "Failed clearing JdbcBinaryCacheStore");
+         DataManipulationHelper.logAndThrow(ex, "Failed clearing JdbcBinaryCacheStore");
       } finally {
          JdbcUtil.safeClose(ps);
          JdbcUtil.safeClose(rs);
@@ -281,7 +302,7 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
          //if something happens make sure buckets locks are being release
          releaseLocks(emptyBuckets);
          connectionFactory.releaseConnection(conn);
-         DataManiulationHelper.logAndThrow(ex, "Failed clearing JdbcBinaryCacheStore");
+         DataManipulationHelper.logAndThrow(ex, "Failed clearing JdbcBinaryCacheStore");
       } finally {
          //release locks for the updated buckets.This won't include empty buckets, as these were migrated to emptyBuckets
          releaseLocks(expiredBuckets);
@@ -314,7 +335,7 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
          }
       } catch (SQLException ex) {
          //if something happens make sure buckets locks are being release
-         DataManiulationHelper.logAndThrow(ex, "Failed clearing JdbcBinaryCacheStore");
+         DataManipulationHelper.logAndThrow(ex, "Failed clearing JdbcBinaryCacheStore");
       } finally {
          releaseLocks(emptyBuckets);
          JdbcUtil.safeClose(ps);

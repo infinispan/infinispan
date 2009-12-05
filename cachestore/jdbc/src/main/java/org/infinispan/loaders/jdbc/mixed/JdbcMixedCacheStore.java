@@ -1,3 +1,24 @@
+/*
+ * JBoss, Home of Professional Open Source.
+ * Copyright 2009, Red Hat Middleware LLC, and individual contributors
+ * as indicated by the @author tags. See the copyright.txt file in the
+ * distribution for a full listing of individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.loaders.jdbc.mixed;
 
 import org.infinispan.Cache;
@@ -22,7 +43,7 @@ import java.util.Set;
  * (sometimes both, see below) based on the passed in key. In order to determine which store to use it will rely on the
  * configured {@link org.infinispan.loaders.jdbc.stringbased.Key2StringMapper} )(see configuration).
  * <p/>
- * The advantage it brings is the possibility of effeciently storing string(able) keyd {@link
+ * The advantage it brings is the possibility of efficiently storing string(able) keyd {@link
  * org.infinispan.container.entries.InternalCacheEntry}s, and at the same time being able to store any other keys, a la
  * {@link org.infinispan.loaders.jdbc.binary.JdbcBinaryCacheStore}.
  * <p/>
@@ -32,7 +53,7 @@ import java.util.Set;
  * startup for warm caches), so performance drawback shouldn't be significant (again, most of the cases).
  * <p/>
  * Resource sharing - both aggregated cache loaders have locks and connection pools. The locking is not shared, each
- * loader keeping its own {@link org.infinispan.util.concurrent.locks.StripedLock} instace. Also the tables (even though
+ * loader keeping its own {@link org.infinispan.util.concurrent.locks.StripedLock} instance. Also the tables (even though
  * similar as definition) are different in order to avoid key collision. On the other hand, the connection pooling is a
  * shared resource.
  *

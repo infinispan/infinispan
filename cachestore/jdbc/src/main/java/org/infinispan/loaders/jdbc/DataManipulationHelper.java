@@ -45,17 +45,16 @@ import java.util.Set;
  *
  * @author Mircea.Markus@jboss.com
  */
-@Deprecated //use org.infinispan.loaders.jdbc.DataManipulationHelper instead
-public abstract class DataManiulationHelper {
+public abstract class DataManipulationHelper {
 
-   private static Log log = LogFactory.getLog(DataManiulationHelper.class);
+   private static Log log = LogFactory.getLog(DataManipulationHelper.class);
 
    private ConnectionFactory connectionFactory;
    private TableManipulation tableManipulation;
    protected Marshaller marshaller;
 
 
-   public DataManiulationHelper(ConnectionFactory connectionFactory, TableManipulation tableManipulation, Marshaller marshaller) {
+   public DataManipulationHelper(ConnectionFactory connectionFactory, TableManipulation tableManipulation, Marshaller marshaller) {
       this.connectionFactory = connectionFactory;
       this.tableManipulation = tableManipulation;
       this.marshaller = marshaller;
@@ -146,9 +145,7 @@ public abstract class DataManiulationHelper {
          JdbcUtil.safeClose(ps);
          connectionFactory.releaseConnection(connection);
       }
-
    }
-
 
    public final Set<InternalCacheEntry> loadAllSupport() throws CacheLoaderException {
       Connection conn = null;
@@ -186,4 +183,5 @@ public abstract class DataManiulationHelper {
       log.error(message, e);
       throw new CacheLoaderException(message, e);
    }
+   
 }
