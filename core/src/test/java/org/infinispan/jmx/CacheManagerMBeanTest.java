@@ -37,7 +37,7 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
       cacheManager = TestCacheManagerFactory.createCacheManager(globalConfiguration);
       name = new ObjectName(JMX_DOMAIN + ":cache-name=[global],jmx-resource=CacheManager");
       server = PerThreadMBeanServerLookup.getThreadMBeanServer();
-      server.invoke(name, "getCache", new Object[]{}, new String[]{});
+      server.invoke(name, "startCache", new Object[]{}, new String[]{});
       return cacheManager;
    }
 
@@ -60,8 +60,8 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
       assert attribute.contains("c(");
 
       //now start some caches
-      server.invoke(name, "getCache", new Object[]{"a"}, new String[]{String.class.getName()});
-      server.invoke(name, "getCache", new Object[]{"b"}, new String[]{String.class.getName()});
+      server.invoke(name, "startCache", new Object[]{"a"}, new String[]{String.class.getName()});
+      server.invoke(name, "startCache", new Object[]{"b"}, new String[]{String.class.getName()});
       assert server.getAttribute(name, "CreatedCacheCount").equals("3");
       assert server.getAttribute(name, "DefinedCacheCount").equals("3");
       assert server.getAttribute(name, "RunningCacheCount").equals("3");
