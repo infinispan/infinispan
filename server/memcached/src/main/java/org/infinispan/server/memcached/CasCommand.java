@@ -22,24 +22,48 @@
  */
 package org.infinispan.server.memcached;
 
+import java.io.IOException;
+
+import org.infinispan.Cache;
+
 /**
  * CasCommand.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class CasCommand /* extends StorageCommand */ {
-//   final long unique;
-//   
-//   CasCommand(String key, int flags, long expiry, int bytes, long unique) {
-//      super(CommandType.CAS, key, flags, expiry, bytes);
-//      this.unique = unique;
-//   }
-//
-//   @Override
-//   public Object perform() throws Throwable {
-//      throw new org.jboss.util.NotImplementedException("FIXME NYI perform");
-//      return null;
-//   }
+public class CasCommand extends SetCommand {
+   final long cas;
 
+   CasCommand(Cache cache, StorageParameters params, long cas, byte[] data) {
+      super(cache, CommandType.CAS, params, data);
+      this.cas = cas;
+   }
+
+   @Override
+   public Command setData(byte[] data) throws IOException {
+      return newCasCommand(cache, params, cas, data);
+   }
+
+   @Override
+   protected StorageReply put(String key, int flags, byte[] data, long expiry) {
+      Value old = (Value) cache.get(key);
+      if (old != null) {
+         if (old.getCas() == cas) {
+            Value value = new Value(flags, data);
+            boolean replaced = cache.replace(key, old, value);
+            if (replaced)
+               return StorageReply.STORED;
+            else
+               return StorageReply.EXISTS;
+         } else {
+            return StorageReply.EXISTS;
+         }
+      }
+      return StorageReply.NOT_FOUND;
+   }
+
+   public static CasCommand newCasCommand(Cache cache, StorageParameters params, long cas, byte[] data) {
+      return new CasCommand(cache, params, cas, data);
+   }
 }

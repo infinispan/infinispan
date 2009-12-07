@@ -58,7 +58,8 @@ public class FunctionalTest extends SingleCacheManagerTest {
       DefaultConnectionFactory d = new DefaultConnectionFactory() {
          @Override
          public long getOperationTimeout() {
-            return 5000;
+            return 360000;
+            // return 5000;
          }
       };
       
@@ -213,12 +214,44 @@ public class FunctionalTest extends SingleCacheManagerTest {
 
    public void testBasicCas(Method m) throws Exception {
       Future<Boolean> f = client.set(k(m), 0, v(m));
+      assert f.get(5, TimeUnit.MINUTES);
+      CASValue<Object> value = client.gets(k(m));
+      assert v(m).equals(value.getValue());
+      assert value.getCas() != 0;
+
+      CASResponse resp = client.cas(k(m), value.getCas(), v(m, "v1-"));
+      assert CASResponse.OK == resp;
+   }
+
+   public void testCasNotFound(Method m) throws Exception {
+      Future<Boolean> f = client.set(k(m), 0, v(m));
+      assert f.get(5, TimeUnit.MINUTES);
+      CASValue<Object> value = client.gets(k(m));
+      assert v(m).equals(value.getValue());
+      assert value.getCas() != 0;
+
+      CASResponse resp = client.cas(k(m, "k1-"), value.getCas(), v(m, "v1-"));
+      assert CASResponse.NOT_FOUND == resp;
+   }
+
+   public void testCasExists(Method m) throws Exception {
+      Future<Boolean> f = client.set(k(m), 0, v(m));
       assert f.get(5, TimeUnit.SECONDS);
       CASValue<Object> value = client.gets(k(m));
       assert v(m).equals(value.getValue());
       assert value.getCas() != 0;
 
-      CASResponse resp = client.cas(k(m), value.getCas(), v(m, "k1-"));
+      long old = value.getCas();
+      CASResponse resp = client.cas(k(m), value.getCas(), v(m, "v1-"));
+      value = client.gets(k(m));
+      assert v(m, "v1-").equals(value.getValue());
+      assert value.getCas() != 0;
+      assert value.getCas() != old;
+
+      resp = client.cas(k(m), old, v(m, "v2-"));
+      assert CASResponse.EXISTS == resp;
+
+      resp = client.cas(k(m), value.getCas(), v(m, "v2-"));
       assert CASResponse.OK == resp;
    }
 

@@ -29,10 +29,7 @@ package org.infinispan.server.memcached;
  * @since 4.0
  */
 public enum StorageReply {
-   STORED, NOT_STORED, EXISTS, NOT_FOUND;
-
-//   @Override
-//   public String toString() {
-//      return super.toString() + "\r\n";
-//   }
+   STORED, NOT_STORED, 
+   EXISTS, NOT_FOUND // replies only valid for cas
+   ;
 }

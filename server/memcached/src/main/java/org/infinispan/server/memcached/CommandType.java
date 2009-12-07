@@ -49,6 +49,7 @@ enum CommandType {
          case REPLACE:
          case APPEND:
          case PREPEND:
+         case CAS:
             return true;
          default:
             return false;

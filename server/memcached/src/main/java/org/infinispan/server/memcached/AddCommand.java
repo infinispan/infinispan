@@ -39,11 +39,6 @@ public class AddCommand extends SetCommand {
    }
 
    @Override
-   protected StorageReply put(String key, int flags, byte[] data) {
-      return put(key, flags, data, -1);
-   }
-
-   @Override
    protected StorageReply put(String key, int flags, byte[] data, long expiry) {
       Value value = new Value(flags, data);
       Object prev = cache.putIfAbsent(key, value, expiry, TimeUnit.MILLISECONDS);

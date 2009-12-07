@@ -38,8 +38,7 @@ public class GetsCommand extends GetCommand {
 
    @Override
    protected StringBuilder constructValue(String key, Value value) {
-      return super.constructValue(key, value)
-         .append(value.getCas()).append(" ");
+      return super.constructValue(key, value).append(value.getCas()).append(" ");
    }
 
 }

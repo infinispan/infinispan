@@ -81,13 +81,15 @@ public class CommandFactory {
             if(tmp == null) throw new EOFException();
             int bytes = Integer.parseInt(tmp);
 
-//            if (type == CommandType.CAS) {
-//               tmp = args[5]; // cas unique, 64-bit integer
-//               long unique = Long.parseLong(tmp);
-//               return type.buildCasCommand(key, flags, expiry, bytes, unique); 
-//            }
+            StorageParameters storage = new StorageParameters(key, flags, expiry, bytes);
 
-            return StorageCommand.newStorageCommand(cache, type, new StorageParameters(key, flags, expiry, bytes), null);
+            if (type == CommandType.CAS) {
+               tmp = args[5]; // cas unique, 64-bit integer
+               long cas = Long.parseLong(tmp);
+               return CasCommand.newCasCommand(cache, storage, cas, null);
+            }
+
+            return StorageCommand.newStorageCommand(cache, type, storage, null);
          case GET:
          case GETS:
             List<String> keys = new ArrayList<String>(5);
