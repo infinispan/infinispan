@@ -96,9 +96,6 @@
 
             <dependencySets>
                <dependencySet>
-                  <excludes>
-                     <exclude>org.rhq.helpers:rhq-pluginAnnotations</exclude>
-                  </excludes>
                   <useTransitiveDependencies>false</useTransitiveDependencies>
                   <outputDirectory>./lib</outputDirectory>
                </dependencySet>

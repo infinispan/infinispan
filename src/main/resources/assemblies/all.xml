@@ -101,9 +101,6 @@
 
             <dependencySets>
                <dependencySet>
-                  <excludes>
-                     <exclude>org.rhq.helpers:rhq-pluginAnnotations</exclude>
-                  </excludes>
                   <useTransitiveDependencies>false</useTransitiveDependencies>
                   <outputDirectory>./lib</outputDirectory>
                </dependencySet>
@@ -212,43 +209,6 @@
                   <useTransitiveDependencies>true</useTransitiveDependencies>
                   <useTransitiveFiltering>true</useTransitiveFiltering>
                   <outputDirectory>modules/${module.basedir.name}/lib</outputDirectory>
-               </dependencySet>
-            </dependencySets>
-
-         </binaries>
-      </moduleSet>
-
-      <!-- Tests for all modules except REST server and EC2 demo which are webapps -->
-      <moduleSet>
-         <includeSubModules>false</includeSubModules>
-         <includes>
-            <include>org.infinispan:infinispan-cachestore-bdbje</include>
-            <include>org.infinispan:infinispan-cachestore-jdbc</include>
-            <include>org.infinispan:infinispan-cachestore-jdbm</include>
-            <include>org.infinispan:infinispan-cachestore-s3</include>
-            <include>org.infinispan:infinispan-gui-demo</include>
-            <include>org.infinispan:infinispan-jopr-plugin</include>
-            <include>org.infinispan:infinispan-tree</include>
-            <include>org.infinispan:infinispan-query</include>
-            <include>org.infinispan:infinispan-lucene-directory</include>
-            <include>org.infinispan:infinispan-lucene-demo</include>            
-         </includes>         
-         <binaries>
-            <attachmentClassifier>tests</attachmentClassifier>
-            <outputDirectory>test/modules/${module.basedir.name}</outputDirectory>
-            <outputFileNameMapping>
-               ${module.artifactId}-test.${module.extension}
-            </outputFileNameMapping>
-            <unpack>false</unpack>
-
-            <dependencySets>
-               <dependencySet>
-                  <scope>test</scope>
-                  <excludes>
-                     <exclude>infinispan-core*</exclude>
-                  </excludes>
-                  <useTransitiveDependencies>false</useTransitiveDependencies>
-                  <outputDirectory>test/modules/${module.basedir.name}/lib</outputDirectory>
                </dependencySet>
             </dependencySets>
 
