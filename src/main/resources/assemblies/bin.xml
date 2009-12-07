@@ -45,6 +45,7 @@
                      <exclude>**/*.bat</exclude>
                      <exclude>**/*.cmd</exclude>
                      <exclude>**/*.py</exclude>
+                     <exclude>**/*.rb</exclude>
                   </excludes>
                </fileSet>
 
@@ -57,6 +58,7 @@
                      <include>**/*.bat</include>
                      <include>**/*.cmd</include>
                      <include>**/*.py</include>
+                     <include>**/*.rb</include>
                   </includes>
                   <fileMode>0777</fileMode>
                </fileSet>
@@ -70,6 +72,15 @@
                   </includes>
                </fileSet>
 
+               <!-- schema (generated!) -->
+               <fileSet>
+                  <directory>target/classes</directory>
+                  <outputDirectory>etc</outputDirectory>
+                  <includes>
+                     <include>**/*.xsd</include>
+                  </includes>
+               </fileSet>
+
                <!-- EULAs and license files -->
                <fileSet>
                   <directory>src/main/release</directory>
@@ -77,11 +88,6 @@
                   <includes>
                      <include>**/*.txt</include>
                   </includes>
-               </fileSet>
-
-               <fileSet>
-                  <directory>target/docbook</directory>
-                  <outputDirectory>doc/</outputDirectory>
                </fileSet>
             </fileSets>
 
@@ -131,6 +137,7 @@
                      <exclude>**/*.bat</exclude>
                      <exclude>**/*.cmd</exclude>
                      <exclude>**/*.py</exclude>
+                     <exclude>**/*.py</exclude>
                   </excludes>
                </fileSet>
 
@@ -143,17 +150,9 @@
                      <include>**/*.bat</include>
                      <include>**/*.cmd</include>
                      <include>**/*.py</include>
+                     <include>**/*.rb</include>
                   </includes>
                   <fileMode>0777</fileMode>
-               </fileSet>
-
-               <!-- Log4j XML -->
-               <fileSet>
-                  <directory>src/test/resources</directory>
-                  <outputDirectory>etc</outputDirectory>
-                  <includes>
-                     <include>log4j.xml</include>
-                  </includes>
                </fileSet>
 
                <!-- EULAs and license files -->
@@ -164,17 +163,10 @@
                      <include>**/*.txt</include>
                   </includes>
                </fileSet>
-
-               <fileSet>
-                  <directory>target/docbook</directory>
-                  <outputDirectory>doc/</outputDirectory>
-               </fileSet>
             </fileSets>
-
          </sources>
 
          <binaries>
-
             <outputDirectory>modules/${module.basedir.name}</outputDirectory>
             <unpack>false</unpack>
             <outputFileNameMapping>

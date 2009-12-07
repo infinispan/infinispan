@@ -40,7 +40,6 @@
          </includes>
          <sources>
             <includeModuleDirectory>false</includeModuleDirectory>
-            <outputDirectory>src</outputDirectory>
 
             <fileSets>
 
@@ -53,6 +52,7 @@
                      <exclude>**/*.bat</exclude>
                      <exclude>**/*.cmd</exclude>
                      <exclude>**/*.py</exclude>
+                     <exclude>**/*.rb</exclude>
                   </excludes>
                </fileSet>
 
@@ -65,8 +65,18 @@
                      <include>**/*.bat</include>
                      <include>**/*.cmd</include>
                      <include>**/*.py</include>
+                     <include>**/*.rb</include>
                   </includes>
                   <fileMode>0777</fileMode>
+               </fileSet>
+
+               <!-- schema (generated!) -->
+               <fileSet>
+                  <directory>target/classes</directory>
+                  <outputDirectory>etc</outputDirectory>
+                  <includes>
+                     <include>**/*.xsd</include>
+                  </includes>
                </fileSet>
 
                <!-- Log4j XML -->
@@ -127,7 +137,6 @@
          </includes>
          <sources>
             <includeModuleDirectory>false</includeModuleDirectory>
-            <outputDirectory>src</outputDirectory>
 
             <fileSets>
 
@@ -140,16 +149,8 @@
                      <exclude>**/*.bat</exclude>
                      <exclude>**/*.cmd</exclude>
                      <exclude>**/*.py</exclude>
+                     <exclude>**/*.rb</exclude>
                   </excludes>
-               </fileSet>
-
-               <!-- schema (generated!) -->
-               <fileSet>
-                  <directory>target/classes</directory>
-                  <outputDirectory>etc</outputDirectory>
-                  <includes>
-                     <include>**/*.xsd</include>
-                  </includes>
                </fileSet>
 
                <!-- Executable resources -->
@@ -161,17 +162,9 @@
                      <include>**/*.bat</include>
                      <include>**/*.cmd</include>
                      <include>**/*.py</include>
+                     <include>**/*.rb</include>
                   </includes>
                   <fileMode>0777</fileMode>
-               </fileSet>
-
-               <!-- Log4j XML -->
-               <fileSet>
-                  <directory>src/test/resources</directory>
-                  <outputDirectory>etc</outputDirectory>
-                  <includes>
-                     <include>log4j.xml</include>
-                  </includes>
                </fileSet>
 
                <!-- EULAs and license files -->
@@ -222,10 +215,6 @@
             <include>org.infinispan:infinispan-server-rest</include>
             <include>org.infinispan:infinispan-ec2-demo</include>
          </includes>
-         <sources>
-            <includeModuleDirectory>false</includeModuleDirectory>
-            <outputDirectory>src</outputDirectory>
-         </sources>
 
          <binaries>
             <outputDirectory>modules/${module.basedir.name}</outputDirectory>
