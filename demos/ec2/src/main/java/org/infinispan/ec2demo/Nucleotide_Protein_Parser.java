@@ -25,7 +25,7 @@ public class Nucleotide_Protein_Parser {
    @SuppressWarnings("unchecked")
    public List<Nucleotide_Protein_Element> parseFile(String fileName) throws IOException, SAXException {
       System.out.println("Parsing [" + fileName + "]");
-      Smooks smooks = new Smooks("smooks-config.xml");
+      Smooks smooks = new Smooks("config-samples/ec2-demo/smooks-config.xml");
 
       try {
          JavaResult result = new JavaResult();
