@@ -21,10 +21,6 @@
  */
 package org.infinispan.lucenedemo;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
@@ -34,6 +30,10 @@ import org.infinispan.manager.CacheManager;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 
 /**
  * Utility to create a Directory for the demo.
@@ -59,7 +59,10 @@ public class DirectoryFactory {
       gc.setClusterName("infinispan-lucene-demo-cluster");
       gc.setTransportClass(JGroupsTransport.class.getName());
       Properties p = new Properties();
-      p.setProperty("configurationFile", "jgroups-configuration.xml");
+
+      // use the default that ships with Infinispan! - Manik Surtani, 7-Dec-2009
+//      p.setProperty("configurationFile", "jgroups-configuration.xml");
+
       gc.setTransportProperties(p);
 
       Configuration config = new Configuration();
