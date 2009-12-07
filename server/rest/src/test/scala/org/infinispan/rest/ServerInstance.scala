@@ -1,9 +1,9 @@
 package org.infinispan.rest
 
 
-import apache.commons.httpclient.{HttpClient, HttpMethodBase}
-import jboss.resteasy.plugins.server.servlet.{ResteasyBootstrap, HttpServletDispatcher}
-import mortbay.jetty.servlet.Context
+import org.apache.commons.httpclient.{HttpClient, HttpMethodBase}
+import org.jboss.resteasy.plugins.server.servlet.{ResteasyBootstrap, HttpServletDispatcher}
+import org.mortbay.jetty.servlet.Context
 
 /**
  * 

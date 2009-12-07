@@ -1,14 +1,14 @@
 package org.infinispan.rest
 
 
-import apache.commons.httpclient.methods._
-import apache.commons.httpclient.{Header, HttpClient}
-import container.entries.CacheEntry
+import org.apache.commons.httpclient.methods._
+import org.apache.commons.httpclient.{Header, HttpClient}
+import org.infinispan.container.entries.CacheEntry
 import javax.servlet.http.{HttpServletResponse}
-import remoting.MIMECacheEntry
+import org.infinispan.remoting.MIMECacheEntry
 import java.io._
-import testng.annotations.Test
-import testng.Assert._
+import org.testng.annotations.Test
+import org.testng.Assert._
 
 
 /**

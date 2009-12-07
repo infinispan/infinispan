@@ -11,7 +11,8 @@ import org.infinispan.manager.DefaultCacheManager
  */
 class StartupListener extends ServletContextListener {
   def contextInitialized(ev: ServletContextEvent) = {
-    ManagerInstance.instance = new DefaultCacheManager("infinispan-config.xml")
+    // Start with the default config (LOCAL mode!)  TODO - add the ability to specify a config file when deploying (ISPN-281)
+    ManagerInstance.instance = new DefaultCacheManager()
     ManagerInstance.instance.start
   }
   def contextDestroyed(ev: ServletContextEvent) = {
