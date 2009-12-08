@@ -13,7 +13,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.marshall.MarshalledValue;
-import static org.infinispan.query.KeyTransformationHandler.keyToString;
+import static org.infinispan.query.backend.KeyTransformationHandler.keyToString;
 
 import javax.transaction.TransactionManager;
 import java.io.Serializable;
@@ -133,9 +133,7 @@ public class QueryInterceptor extends CommandInterceptor {
          Set<Class<?>> classes = searchFactory.getDocumentBuildersIndexedEntities().keySet();
          for (Class c : classes) {
             Serializable id = null;
-
             if (log.isDebugEnabled()) log.debug("Clearing indexes for class: - " + c);
-
             searchFactory.getWorker().performWork(new Work<Object>(c, id, WorkType.PURGE_ALL),
                                                   new TransactionalEventTransactionContext(transactionManager));
          }

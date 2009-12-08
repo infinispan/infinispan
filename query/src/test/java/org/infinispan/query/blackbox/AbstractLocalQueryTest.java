@@ -35,7 +35,7 @@ public abstract class AbstractLocalQueryTest extends SingleCacheManagerTest {
    protected String key2 = "BigGoat";
    protected String key3 = "MiniGoat";
 
-   protected Cache<String, Person> cache;
+   protected Cache<Object, Person> cache;
    protected QueryHelper qh;
 
    @AfterMethod(alwaysRun = true)

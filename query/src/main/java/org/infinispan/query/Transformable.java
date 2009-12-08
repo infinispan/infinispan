@@ -14,5 +14,5 @@ import java.lang.annotation.RetentionPolicy;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Transformable {
-   Class<? extends Transformer> transformer();
+   Class<? extends Transformer> transformer() default DefaultTransformer.class;
 }

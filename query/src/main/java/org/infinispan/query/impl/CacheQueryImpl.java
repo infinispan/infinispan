@@ -47,7 +47,7 @@ import org.hibernate.transform.ResultTransformer;
 import org.infinispan.Cache;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.QueryIterator;
-import org.infinispan.query.KeyTransformationHandler;
+import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.backend.IndexSearcherCloser;
 
 import java.io.IOException;
@@ -305,6 +305,7 @@ public class CacheQueryImpl implements CacheQuery {
          // Loop through my list of keys and get it from the cache. Put each object that I get into a separate list.
          List<Object> listToReturn = new ArrayList<Object>(size);
          for (String key : keysForCache) {
+            System.out.println(key);
             listToReturn.add(cache.get(KeyTransformationHandler.stringToKey(key)));
          }
 
