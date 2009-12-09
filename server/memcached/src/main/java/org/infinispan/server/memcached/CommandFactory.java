@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
@@ -43,9 +44,11 @@ public class CommandFactory {
    private static final Log log = LogFactory.getLog(CommandFactory.class);
 
    private final Cache cache;
+   private final BlockingQueue<DeleteDelayedEntry> queue;
    
-   public CommandFactory(Cache cache) {
+   public CommandFactory(Cache cache, BlockingQueue<DeleteDelayedEntry> queue) {
       this.cache = cache;
+      this.queue = queue;
    }
 
    public Command createCommand(String line) throws IOException {
@@ -65,39 +68,51 @@ public class CommandFactory {
          case REPLACE:
          case APPEND:
          case PREPEND:
+            return StorageCommand.newStorageCommand(cache, type, getStorageParameters(args), null);
          case CAS:
-            String key = args[1]; // key
-            if(key == null) throw new EOFException();
-
-            tmp = args[2]; // flags
-            if(tmp == null) throw new EOFException();
-            int flags = Integer.parseInt(tmp);
-
-            tmp = args[3]; // expiry time
-            if(tmp == null) throw new EOFException();
-            long expiry = Long.parseLong(tmp); // seconds
-
-            tmp = args[4]; // number of bytes
-            if(tmp == null) throw new EOFException();
-            int bytes = Integer.parseInt(tmp);
-
-            StorageParameters storage = new StorageParameters(key, flags, expiry, bytes);
-
-            if (type == CommandType.CAS) {
-               tmp = args[5]; // cas unique, 64-bit integer
-               long cas = Long.parseLong(tmp);
-               return CasCommand.newCasCommand(cache, storage, cas, null);
-            }
-
-            return StorageCommand.newStorageCommand(cache, type, storage, null);
+            tmp = args[5]; // cas unique, 64-bit integer
+            long cas = Long.parseLong(tmp);
+            return CasCommand.newCasCommand(cache, getStorageParameters(args), cas, null);
          case GET:
          case GETS:
             List<String> keys = new ArrayList<String>(5);
             keys.addAll(Arrays.asList(args).subList(1, args.length));
             return RetrievalCommand.newRetrievalCommand(cache, type, new RetrievalParameters(keys));
+         case DELETE:
+            String key = getKey(args[1]);
+            long time = getOptionalTime(args[2]);
+            return DeleteCommand.newDeleteCommand(cache, key, time, queue);
          default:
             return null;
       }
    }
 
+   private StorageParameters getStorageParameters(String[] args) throws IOException {
+      return new StorageParameters(getKey(args[1]), getFlags(args[2]), getExpiry(args[3]), getBytes(args[4]));
+   }
+
+   private String getKey(String key) throws IOException {
+      if (key == null) throw new EOFException();
+      return key;
+   }
+
+   private int getFlags(String flags) throws IOException {
+      if (flags == null) throw new EOFException();
+      return Integer.parseInt(flags);
+   }
+
+   private long getExpiry(String expiry) throws IOException {
+      if (expiry == null) throw new EOFException();
+      return Long.parseLong(expiry); // seconds
+   }
+
+   private int getBytes(String bytes) throws IOException {
+      if (bytes == null) throw new EOFException();
+      return Integer.parseInt(bytes);
+   }
+
+   private long getOptionalTime(String time) {
+      if (time == null) return 0;
+      return Long.parseLong(time); // seconds
+   }
 }

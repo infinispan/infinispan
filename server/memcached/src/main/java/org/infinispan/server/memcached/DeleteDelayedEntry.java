@@ -22,22 +22,47 @@
  */
 package org.infinispan.server.memcached;
 
+import java.util.concurrent.Delayed;
+import java.util.concurrent.TimeUnit;
+
 /**
- * TextProtocolUtil.
+ * DelayedDeleteEntry.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class TextProtocolUtil {
-   static final byte CR = 13;
-   static final byte LF = 10;
-   static final byte[] CRLF = new byte[] { CR, LF };
-   static final long SECONDS_IN_A_MONTH = 60*60*24*30;
+public class DeleteDelayedEntry implements Delayed {
 
-   public static byte[] concat(byte[] a, byte[] b) {
-      byte[] data = new byte[a.length + b.length];
-      System.arraycopy(a, 0, data, 0, a.length);
-      System.arraycopy(b, 0, data, a.length , b.length);
-      return data;
+   final String key;
+   private final long time;
+   private final boolean isUnix;
+
+   DeleteDelayedEntry(String key, long time) {
+      this.time = time;
+      this.key = key;
+      this.isUnix = time > TextProtocolUtil.SECONDS_IN_A_MONTH;
    }
+
+   @Override
+   public long getDelay(TimeUnit unit) {
+      long now = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+      return unit.convert(time - now, TimeUnit.SECONDS);
+   }
+
+   @Override
+   public int compareTo(Delayed o) {
+      if (o == this)
+         return 0;
+
+      if (o instanceof DeleteDelayedEntry) {
+         DeleteDelayedEntry x = (DeleteDelayedEntry) o;
+         long diff = time - x.time;
+         if (diff < 0) return -1;
+         else if (diff > 0) return 1;
+         else return 0;
+      } else {
+         throw new ClassCastException(o.getClass() + " is not of type " + DeleteDelayedEntry.class);
+      }
+   }
+
 }

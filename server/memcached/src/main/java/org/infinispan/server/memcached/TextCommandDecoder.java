@@ -24,6 +24,7 @@ package org.infinispan.server.memcached;
 
 import java.io.IOException;
 import java.io.StreamCorruptedException;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.infinispan.Cache;
@@ -35,6 +36,7 @@ import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.handler.codec.replay.ReplayingDecoder;
 import static org.infinispan.server.memcached.TextProtocolUtil.*;
+import static org.jboss.netty.buffer.ChannelBuffers.wrappedBuffer;
 
 /**
  * TextCommandDecoder.
@@ -47,15 +49,15 @@ public class TextCommandDecoder extends ReplayingDecoder<TextCommandDecoder.Stat
    
    private final CommandFactory factory;
    private volatile Command command;
-   private final AtomicBoolean corrupted = new AtomicBoolean();
+//   private final AtomicBoolean corrupted = new AtomicBoolean();
 
    protected enum State {
       READ_COMMAND, READ_UNSTRUCTURED_DATA;
    }
 
-   TextCommandDecoder(Cache cache) {
+   TextCommandDecoder(Cache cache, BlockingQueue<DeleteDelayedEntry> queue) {
       super(State.READ_COMMAND, true);
-      factory = new CommandFactory(cache);
+      factory = new CommandFactory(cache, queue);
    }
 
    @Override
@@ -63,15 +65,15 @@ public class TextCommandDecoder extends ReplayingDecoder<TextCommandDecoder.Stat
       switch (state) {
          case READ_COMMAND:
             String line = readLine(buffer);
-            try {
+//            try {
                command = factory.createCommand(line);
-               corrupted.set(false);
-            } catch (IOException ioe) {
-               if (corrupted.get())
-                  log.debug("Channel is corrupted and we're reading garbage, ignore read until we find a good command again");
-               else
-                  throw ioe;
-            }
+//               corrupted.set(false);
+//            } catch (IOException ioe) {
+//               if (corrupted.get())
+//                  log.debug("Channel is corrupted and we're reading garbage, ignore read until we find a good command again");
+//               else
+//                  throw ioe;
+//            }
             
             if (command.getType().isStorage())
                checkpoint(State.READ_UNSTRUCTURED_DATA);
@@ -104,8 +106,21 @@ public class TextCommandDecoder extends ReplayingDecoder<TextCommandDecoder.Stat
 
    @Override
    public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-      corrupted.compareAndSet(false, true);
-      log.error("Unexpected exception", e.getCause());
+//      corrupted.compareAndSet(false, true);
+      Throwable t = e.getCause();
+      log.error("Unexpected exception", t);
+      Channel ch = ctx.getChannel();
+      if (t instanceof UnknownCommandException) {
+         ch.write(wrappedBuffer(wrappedBuffer(ErrorReply.ERROR.toString().getBytes()), wrappedBuffer(CRLF)));
+      } else if (t instanceof IOException) {
+         StringBuilder sb = new StringBuilder();
+         sb.append(ErrorReply.CLIENT_ERROR).append(' ').append(t);
+         ch.write(wrappedBuffer(wrappedBuffer(sb.toString().getBytes()), wrappedBuffer(CRLF)));
+      } else {
+         StringBuilder sb = new StringBuilder();
+         sb.append(ErrorReply.SERVER_ERROR).append(' ').append(t);
+         ch.write(wrappedBuffer(wrappedBuffer(sb.toString().getBytes()), wrappedBuffer(CRLF)));
+      }
    }
 
    private Object reset(Command c) {

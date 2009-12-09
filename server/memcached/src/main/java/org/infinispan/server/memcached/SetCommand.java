@@ -55,7 +55,7 @@ public class SetCommand extends StorageCommand {
          if (params.expiry == 0) {
             reply = put(params.key, params.flags, data);
          } else {
-            if (params.expiry > 60*60*24*30) {
+            if (params.expiry > TextProtocolUtil.SECONDS_IN_A_MONTH) {
                // If expiry bigger number of seconds in 30 days, then it's considered unix time
                long future = TimeUnit.SECONDS.toMillis(params.expiry);
                long expiry = future - System.currentTimeMillis();

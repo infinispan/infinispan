@@ -24,10 +24,13 @@ package org.infinispan.server.memcached;
 
 import static org.jboss.netty.channel.Channels.*;
 
+import java.util.concurrent.BlockingQueue;
+
 import org.infinispan.Cache;
 import org.jboss.netty.channel.ChannelHandler;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
+import org.jboss.netty.handler.codec.replay.ReplayingDecoder;
 
 /**
  * TextProtocolPipelineFactory.
@@ -43,18 +46,23 @@ class TextProtocolPipelineFactory implements ChannelPipelineFactory {
 //      this.handler = handler;
 //   }
 
-   private final Cache cache;
+//   private final Cache cache;
+//   private final BlockingQueue<DelayedDeleteEntry> queue;
+   
+   private final ReplayingDecoder<TextCommandDecoder.State> decoder;
+   private final ChannelHandler handler;
 
-   public TextProtocolPipelineFactory(Cache cache) {
-      this.cache = cache;
+   public TextProtocolPipelineFactory(Cache cache, BlockingQueue<DeleteDelayedEntry> queue) {
+      this.decoder = new TextCommandDecoder(cache, queue);
+      this.handler = new TextCommandHandler();
    }
 
    @Override
    public ChannelPipeline getPipeline() throws Exception {
       // Create a default pipeline implementation.
       ChannelPipeline pipeline = pipeline();
-      pipeline.addLast("decoder", new TextCommandDecoder(cache));
-      pipeline.addLast("handler", new TextCommandHandler());
+      pipeline.addLast("decoder", decoder);
+      pipeline.addLast("handler", handler);
 //      pipeline.addLast("encoder", new TextResponseEncoder());
 
       return pipeline;

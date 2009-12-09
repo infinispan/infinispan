@@ -36,7 +36,10 @@ import net.spy.memcached.MemcachedClient;
 
 import org.infinispan.manager.CacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.test.AbstractCacheTest.CleanupPhase;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 /**
@@ -58,8 +61,8 @@ public class FunctionalTest extends SingleCacheManagerTest {
       DefaultConnectionFactory d = new DefaultConnectionFactory() {
          @Override
          public long getOperationTimeout() {
-            return 360000;
-            // return 5000;
+            // return 360000;
+            return 5000;
          }
       };
       
@@ -67,6 +70,11 @@ public class FunctionalTest extends SingleCacheManagerTest {
       return cacheManager;
    }
 
+   @AfterClass(alwaysRun=true)
+   protected void destroyAfterClass() {
+      server.stop();
+   }
+   
    public void testBasicSet(Method m) throws Exception {
       Future<Boolean> f = client.set(k(m), 0, v(m));
       assert f.get(5, TimeUnit.SECONDS);
@@ -214,7 +222,7 @@ public class FunctionalTest extends SingleCacheManagerTest {
 
    public void testBasicCas(Method m) throws Exception {
       Future<Boolean> f = client.set(k(m), 0, v(m));
-      assert f.get(5, TimeUnit.MINUTES);
+      assert f.get(5, TimeUnit.SECONDS);
       CASValue<Object> value = client.gets(k(m));
       assert v(m).equals(value.getValue());
       assert value.getCas() != 0;
@@ -225,7 +233,7 @@ public class FunctionalTest extends SingleCacheManagerTest {
 
    public void testCasNotFound(Method m) throws Exception {
       Future<Boolean> f = client.set(k(m), 0, v(m));
-      assert f.get(5, TimeUnit.MINUTES);
+      assert f.get(5, TimeUnit.SECONDS);
       CASValue<Object> value = client.gets(k(m));
       assert v(m).equals(value.getValue());
       assert value.getCas() != 0;
@@ -253,6 +261,11 @@ public class FunctionalTest extends SingleCacheManagerTest {
 
       resp = client.cas(k(m), value.getCas(), v(m, "v2-"));
       assert CASResponse.OK == resp;
+   }
+
+   public void testBasicDelete(Method m) throws Exception {
+      Future<Boolean> f = client.delete(k(m));
+      assert f.get(5, TimeUnit.SECONDS);
    }
 
    private String k(Method method, String prefix) {

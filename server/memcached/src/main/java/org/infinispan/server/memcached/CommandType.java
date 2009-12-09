@@ -77,7 +77,7 @@ enum CommandType {
      else if(type.equals(CommandType.FLUSH_ALL.toString())) return FLUSH_ALL;
      else if(type.equals(CommandType.VERSION.toString())) return VERSION;
      else if(type.equals(CommandType.QUIT.toString())) return QUIT;
-     else throw new StreamCorruptedException("request \"" + type + "\" not known");
+     else throw new UnknownCommandException("request \"" + type + "\" not known");
    }
 
 

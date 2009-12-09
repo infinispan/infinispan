@@ -23,6 +23,9 @@
 package org.infinispan.server.memcached;
 
 import java.net.InetSocketAddress;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.DelayQueue;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.infinispan.Cache;
@@ -40,19 +43,31 @@ import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
  */
 class MemcachedTextServer {
    final CacheManager manager;
+   final ExecutorService delayedExecutor;
    
    MemcachedTextServer(CacheManager manager) {
       this.manager = manager;
+      this.delayedExecutor = Executors.newSingleThreadExecutor();
    }
 
    public void start() {
       // Configure Infinispan Cache instance
       Cache cache = manager.getCache();
 
+      // Create delaye queue for delayed deletes and start thread
+      BlockingQueue<DeleteDelayedEntry> queue = new DelayQueue<DeleteDelayedEntry>();
+      DeleteDelayed runnable = new DeleteDelayed(cache, queue);
+      delayedExecutor.submit(runnable);
+
       // Configure the server.
       ChannelFactory factory = new NioServerSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool());
       ServerBootstrap bootstrap = new ServerBootstrap(factory);
-      bootstrap.setPipelineFactory(new TextProtocolPipelineFactory(cache));
+      bootstrap.setPipelineFactory(new TextProtocolPipelineFactory(cache, queue));
       bootstrap.bind(new InetSocketAddress(11211));
+   }
+
+   public void stop() {
+      manager.stop();
+      delayedExecutor.shutdown();
    }
 }

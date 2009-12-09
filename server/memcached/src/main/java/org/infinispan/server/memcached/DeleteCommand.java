@@ -22,22 +22,47 @@
  */
 package org.infinispan.server.memcached;
 
+import java.util.concurrent.BlockingQueue;
+
+import org.infinispan.Cache;
+import org.jboss.netty.channel.Channel;
+
 /**
- * TextProtocolUtil.
+ * DeleteCommand.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class TextProtocolUtil {
-   static final byte CR = 13;
-   static final byte LF = 10;
-   static final byte[] CRLF = new byte[] { CR, LF };
-   static final long SECONDS_IN_A_MONTH = 60*60*24*30;
+public class DeleteCommand implements Command {
 
-   public static byte[] concat(byte[] a, byte[] b) {
-      byte[] data = new byte[a.length + b.length];
-      System.arraycopy(a, 0, data, 0, a.length);
-      System.arraycopy(b, 0, data, a.length , b.length);
-      return data;
+   final Cache cache;
+   final String key;
+   final long time;
+   final BlockingQueue<DeleteDelayedEntry> queue;
+
+   DeleteCommand(Cache cache, String key, long time, BlockingQueue<DeleteDelayedEntry> queue) {
+      this.cache = cache;
+      this.key = key;
+      this.time = time;
+      this.queue = queue;
+   }
+
+   @Override
+   public CommandType getType() {
+      return CommandType.DELETE;
+   }
+
+   @Override
+   public Object perform(Channel ch) throws Exception {
+      if (time > 0) {
+         queue.offer(new DeleteDelayedEntry(key, time));
+      } else {
+         cache.remove(key);
+      }
+      return null;
+   }
+
+   public static DeleteCommand newDeleteCommand(Cache cache, String key, long time, BlockingQueue<DeleteDelayedEntry> queue) {
+      return new DeleteCommand(cache, key, time, queue);
    }
 }
