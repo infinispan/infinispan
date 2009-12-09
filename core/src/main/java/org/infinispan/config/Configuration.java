@@ -452,6 +452,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       this.clustering.async.setAsyncMarshalling(useAsyncMarshalling);
    }
 
+   public void setQueryConfigurationBean(QueryConfigurationBean indexing) {
+      this.indexing = indexing;
+   }
+
    // ------------------------------------------------------------------------------------------------------------
    //   GETTERS
    // ------------------------------------------------------------------------------------------------------------
