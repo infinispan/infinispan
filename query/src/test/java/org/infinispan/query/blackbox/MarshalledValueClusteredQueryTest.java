@@ -32,6 +32,14 @@ public class MarshalledValueClusteredQueryTest extends ClusteredCacheTest {
       cache1 = caches.get(0);
       cache2 = caches.get(1);
 
-   }
+      Configuration.QueryConfigurationBean qcb = new Configuration.QueryConfigurationBean();
+      qcb.setEnabled(true);
 
+
+      // We will put objects into cache1 and then try and run the queries on cache2. This would mean that indexLocal
+      // must be set to false.
+      qcb.setIndexLocalOnly(false);
+      cache1.getConfiguration().setQueryConfigurationBean(qcb);
+      cache2.getConfiguration().setQueryConfigurationBean(qcb);
+   }
 }

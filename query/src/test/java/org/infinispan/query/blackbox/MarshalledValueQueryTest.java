@@ -24,6 +24,9 @@ public class MarshalledValueQueryTest extends LocalCacheTest {
       Configuration c = new Configuration();
       c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
       c.setUseLazyDeserialization(true);
+      Configuration.QueryConfigurationBean qcb = new Configuration.QueryConfigurationBean();
+      qcb.setEnabled(true);
+      c.setQueryConfigurationBean(qcb);
       return TestCacheManagerFactory.createCacheManager(c, true);
    }
 

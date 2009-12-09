@@ -6,6 +6,7 @@ import org.hibernate.search.impl.SearchFactoryImpl;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
+import org.infinispan.config.Configuration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.InterceptorChainFactory;
 import org.infinispan.interceptors.LockingInterceptor;
@@ -35,9 +36,6 @@ import java.util.Properties;
 
 
 public class QueryHelper {
-
-   public static final String QUERY_ENABLED_PROPERTY = "infinispan.query.enabled";
-   public static final String QUERY_INDEX_LOCAL_ONLY_PROPERTY = "infinispan.query.indexLocalOnly";
 
    private Cache cache;
    private Properties properties;
@@ -86,7 +84,7 @@ public class QueryHelper {
       SearchConfiguration cfg = new SearchableCacheConfiguration(classes, properties);
       searchFactory = new SearchFactoryImpl(cfg);
 
-      applyProperties();
+      applyProperties(cache.getConfiguration().getQueryConfigurationBean());
    }
 
    /**
@@ -104,24 +102,17 @@ public class QueryHelper {
     * indexed.
     */
 
-   private void applyProperties() {
+   private void applyProperties(Configuration.QueryConfigurationBean qcb) {
       if (log.isDebugEnabled()) log.debug("Entered QueryHelper.applyProperties()");
 
-      // If the query property is set to true, i.e. we want to query objects in the cache, then we need to add the QueryInterceptor.
-      boolean query = Boolean.getBoolean(QUERY_ENABLED_PROPERTY);
-
-      if (query) {
-
-         boolean indexLocal = Boolean.getBoolean(QUERY_INDEX_LOCAL_ONLY_PROPERTY);
+      if (qcb.isEnabled()) {
 
          try {
-            if (indexLocal) {
+            if (qcb.isIndexLocalOnly()) {
                // Add a LocalQueryInterceptor to the chain
                initComponents(LocalQueryInterceptor.class);
-            }
-            // We're indexing data even if it comes from other sources
-
-            else {
+            } else {
+               // We're indexing data even if it comes from other sources
                // Add in a QueryInterceptor to the chain
                initComponents(QueryInterceptor.class);
             }

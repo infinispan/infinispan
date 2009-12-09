@@ -38,14 +38,15 @@ public class KeyTypeTest extends SingleCacheManagerTest{
    protected CacheManager createCacheManager() throws Exception {
       Configuration c = new Configuration();
       c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
+      Configuration.QueryConfigurationBean qcb = new Configuration.QueryConfigurationBean();
+      qcb.setEnabled(true);
+      qcb.setIndexLocalOnly(false);
+      c.setQueryConfigurationBean(qcb);
       return TestCacheManagerFactory.createCacheManager(c, true);
    }
 
    @BeforeMethod (alwaysRun = true)
    public void setUp() throws Exception{
-      System.setProperty(QueryHelper.QUERY_ENABLED_PROPERTY, "true");
-      System.setProperty(QueryHelper.QUERY_INDEX_LOCAL_ONLY_PROPERTY, "true");
-
       CacheManager manager = createCacheManager();
       cache = manager.getCache();
       qh = new QueryHelper(cache, new Properties(), Person.class);

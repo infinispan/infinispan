@@ -6,9 +6,11 @@ import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.search.Query;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
+import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.QueryFactory;
 import org.infinispan.query.backend.QueryHelper;
+import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.helper.TestQueryHelperFactory;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -46,7 +48,6 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
    }
 
    protected void createCacheManagers() throws Throwable {
-
       Configuration cacheCfg = new Configuration();
       cacheCfg.setCacheMode(Configuration.CacheMode.REPL_SYNC);
       cacheCfg.setFetchInMemoryState(false);
@@ -55,17 +56,20 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
       cache1 = caches.get(0);
       cache2 = caches.get(1);
+
+      Configuration.QueryConfigurationBean qcb = new Configuration.QueryConfigurationBean();
+      qcb.setEnabled(true);
+
+
+      // We will put objects into cache1 and then try and run the queries on cache2. This would mean that indexLocal
+      // must be set to false.
+      qcb.setIndexLocalOnly(false);
+      cache1.getConfiguration().setQueryConfigurationBean(qcb);
+      cache2.getConfiguration().setQueryConfigurationBean(qcb);
    }
 
    @BeforeMethod
    public void setUp() {
-
-      // We will put objects into cache1 and then try and run the queries on cache2. This would mean that indexLocal
-      // must be set to false.
-
-      System.setProperty(QueryHelper.QUERY_ENABLED_PROPERTY, "true");
-      System.setProperty(QueryHelper.QUERY_INDEX_LOCAL_ONLY_PROPERTY, "false");
-
       qh = TestQueryHelperFactory.createTestQueryHelperInstance(cache2, Person.class);
 
       TestingUtil.blockUntilViewsReceived(60000, cache1, cache2);
@@ -119,14 +123,21 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
    }
 
+   private void assertQueryInterceptorPresent(Cache<?, ?> c) {
+      CommandInterceptor i = TestingUtil.findInterceptor(c, QueryInterceptor.class);
+      assert i != null : "Expected to find a QueryInterceptor, only found " + c.getAdvancedCache().getInterceptorChain();
+   }
+
    public void testModified() throws ParseException {
+      assertQueryInterceptorPresent(cache2);
+
       queryParser = new QueryParser("blurb", new StandardAnalyzer());
       luceneQuery = queryParser.parse("playing");
       cacheQuery = new QueryFactory(cache2, qh).getQuery(luceneQuery);
 
       found = cacheQuery.list();
 
-      assert found.size() == 1;
+      assert found.size() == 1 : "Expected list of size 1, was of size " + found.size();
       assert found.get(0).equals(person1);
 
       person1.setBlurb("Likes pizza");

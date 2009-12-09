@@ -2,7 +2,6 @@ package org.infinispan.query.blackbox;
 
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
-import org.infinispan.query.backend.QueryHelper;
 import org.infinispan.query.helper.TestQueryHelperFactory;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -20,16 +19,16 @@ public class LocalCacheTest extends AbstractLocalQueryTest {
    protected CacheManager createCacheManager() throws Exception {
       Configuration c = new Configuration();
       c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
+      Configuration.QueryConfigurationBean qcb = new Configuration.QueryConfigurationBean();
+      qcb.setEnabled(true);
+      qcb.setIndexLocalOnly(false);
+      c.setQueryConfigurationBean(qcb);
       return TestCacheManagerFactory.createCacheManager(c, true);
    }
 
 
    @BeforeMethod
    public void setUp() throws Exception {
-      System.setProperty(QueryHelper.QUERY_ENABLED_PROPERTY, "true");
-      System.setProperty(QueryHelper.QUERY_INDEX_LOCAL_ONLY_PROPERTY, "true");
-
-
       cache = createCacheManager().getCache();
 
       qh = TestQueryHelperFactory.createTestQueryHelperInstance(cache, Person.class);
