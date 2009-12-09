@@ -101,9 +101,9 @@ public class KeyTypeTest extends SingleCacheManagerTest{
    }
 
    public void testCustomKeys(){
-      CustomKey key1 = new CustomKey("Kim", 3);
-      CustomKey key2 = new CustomKey("Jong", 4);
-      CustomKey key3 = new CustomKey("Il", 2);
+      CustomKey key1 = new CustomKey(1, 2, 3);
+      CustomKey key2 = new CustomKey(900, 800, 700);
+      CustomKey key3 = new CustomKey(1024, 2048, 4096);
 
       cache.put(key1, person1);
       cache.put(key2, person1);

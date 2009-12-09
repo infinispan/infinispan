@@ -1,7 +1,8 @@
 package org.infinispan.query.backend;
 
-import org.testng.annotations.Test;
 import org.infinispan.query.test.CustomKey;
+import org.infinispan.query.test.CustomKey2;
+import org.testng.annotations.Test;
 
 /**
  * This is the test class for {@link org.infinispan.query.backend.KeyTransformationHandler}
@@ -84,7 +85,14 @@ public class KeyTransformationHandlerTest {
    }
 
    public void testStringToKeyWithCustomTransformable(){
-      CustomKey customKey = new CustomKey("hello", 5);
-      System.out.println(customKey.getClass().getName());
+      CustomKey customKey = new CustomKey(88, 8800, 12889976);
+      String strRep = KeyTransformationHandler.keyToString(customKey);
+      assert customKey.equals(KeyTransformationHandler.stringToKey(strRep));
+   }
+
+   public void testStringToKeyWithDefaultTransformer() {
+      CustomKey2 ck2 = new CustomKey2(Integer.MAX_VALUE, Integer.MIN_VALUE, 0);
+      String strRep = KeyTransformationHandler.keyToString(ck2);
+      assert ck2.equals(KeyTransformationHandler.stringToKey(strRep));
    }
 }

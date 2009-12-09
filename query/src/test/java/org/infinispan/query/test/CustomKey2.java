@@ -1,20 +1,20 @@
 package org.infinispan.query.test;
 
 import org.infinispan.query.Transformable;
-import org.infinispan.query.backend.KeyTransformationHandlerTest;
 
-@Transformable(transformer = CustomTransformer.class)
-public class CustomKey {
+import java.io.Serializable;
 
+@Transformable
+public class CustomKey2 implements Serializable {
    int i, j, k;
 
-   public CustomKey(int i, int j, int k) {
+   public CustomKey2(int i, int j, int k) {
       this.i = i;
       this.j = j;
       this.k = k;
    }
 
-   public CustomKey() {
+   public CustomKey2() {
    }
 
    public int getI() {
@@ -46,11 +46,11 @@ public class CustomKey {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
-      CustomKey customKey = (CustomKey) o;
+      CustomKey2 that = (CustomKey2) o;
 
-      if (i != customKey.i) return false;
-      if (j != customKey.j) return false;
-      if (k != customKey.k) return false;
+      if (i != that.i) return false;
+      if (j != that.j) return false;
+      if (k != that.k) return false;
 
       return true;
    }

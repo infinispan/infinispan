@@ -1,9 +1,10 @@
 package org.infinispan.query.backend;
 
-import org.infinispan.util.Util;
 import org.infinispan.CacheException;
-import org.infinispan.query.Transformer;
 import org.infinispan.query.Transformable;
+import org.infinispan.query.Transformer;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * This transforms arbitrary keys to a String which can be used by Lucene as a document identifier, and vice versa.
@@ -22,6 +23,8 @@ import org.infinispan.query.Transformable;
  * @since 4.0
  */
 public class KeyTransformationHandler {
+   private static Log log = LogFactory.getLog(KeyTransformationHandler.class);
+
    public static Object stringToKey(String s) {
       char type = s.charAt(0);
       switch (type) {
@@ -55,17 +58,18 @@ public class KeyTransformationHandler {
          case 'T':
             // this is a custom transformable.
             int indexOfSecondDelimiter = s.indexOf(":", 2);
-            String transformerClassName = s.substring(2, indexOfSecondDelimiter);
+            String keyClassName = s.substring(2, indexOfSecondDelimiter);
             String keyAsString = s.substring(indexOfSecondDelimiter + 1);
             Transformer t;
             // try and locate class
+            Class keyClass = null;
             try {
-               t = (Transformer) Util.getInstance(transformerClassName);
-            } catch (Exception e) {
-               // uh oh, cannot load this class!  What now?
-               throw new CacheException(e);
+               keyClass = Thread.currentThread().getContextClassLoader().loadClass(keyClassName);
+            } catch (ClassNotFoundException e) {
+               log.error("Could not locate class " + keyClass, e);
             }
-
+            t = getTransformer(keyClass);
+            if (t == null) throw new CacheException("Cannot find an appropriate Transformer for key type " + keyClass);
             return t.fromString(keyAsString);
       }
       throw new CacheException("Unknown type metadata " + type);
@@ -85,6 +89,8 @@ public class KeyTransformationHandler {
 
       // First going to check if the key is a primitive or a String. Otherwise, check if it's a transformable.
       // If none of those conditions are satisfied, we'll throw an Exception.
+
+      Transformer tf = null;
 
       if (isStringOrPrimitive(key)) {
          // Using 'X' for Shorts and 'Y' for Bytes because 'S' is used for Strings and 'B' is being used for Booleans.
@@ -111,32 +117,9 @@ public class KeyTransformationHandler {
 
          return prefix + ":" + key;
 
-      } else if (isTransformable(key)) {
+      } else if ((tf = getTransformer(key.getClass())) != null) {
          // There is a bit more work to do for this case.
-         prefix = 'T';
-
-         System.out.println("key class is: - " + key.getClass());
-         // Do the transformer casting
-
-         // Try and get the @Transformable annotation.
-         Transformable transformableAnnotation = key.getClass().getAnnotation(Transformable.class);
-
-         // Use that to find the class that is being used as the transformer.
-         Class<? extends Transformer> transformerClass = transformableAnnotation.transformer();
-         Transformer t;
-         try {
-            t = Util.getInstance(transformerClass);
-         }
-         catch (Exception e) {
-            throw new CacheException(e);
-         }
-         //Get the name of the Class that has been used. Add it to the toString() method that has to be defined
-         // in the Transformer implementation
-         String subKey = key.getClass().getName() + ":" + t.toString(key);
-         // We've built the second part of the String and now need to add that bit to the prefix for our complete keyString
-         // for lucene.
-         return prefix + ":" + subKey;
-
+         return "T:" + key.getClass().getName() + ":" + tf.toString(key);
       } else
          throw new IllegalArgumentException("Indexing only works with entries keyed on Strings, primitives " +
                "and classes that have the @Transformable annotation - you passed in a " + key.getClass().toString());
@@ -160,10 +143,23 @@ public class KeyTransformationHandler {
       return false;
    }
 
-   private static Boolean isTransformable(Object key) {
-      // returns true if the Transformable annotation is present on the custom key class. 
-      return key.getClass().isAnnotationPresent(Transformable.class);
-
+   /**
+    * Retrieves a {@link org.infinispan.query.Transformer} instance for this {@link org.infinispan.query.Transformable}
+    * type key.  If the key is not {@link org.infinispan.query.Transformable}, a null is returned.
+    *
+    * @param keyClass key class to analyze
+    * @return a Transformer for this key, or null if the key type is not properly annotated.
+    * @throws IllegalAccessException if a Transformer instance cannot be created vai reflection.
+    * @throws InstantiationException if a Transformer instance cannot be created vai reflection.
+    */
+   private static Transformer getTransformer(Class<?> keyClass) {
+      Transformable t = keyClass.getAnnotation(Transformable.class);
+      Transformer tf = null;
+      if (t != null) try {
+         tf = t.transformer().newInstance();
+      } catch (Exception e) {
+         log.error("Cannot instantiate an instance of Transformer class " + t.transformer() + "!", e);
+      }
+      return tf;
    }
-
 }
