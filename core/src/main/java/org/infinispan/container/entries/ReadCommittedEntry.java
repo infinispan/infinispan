@@ -23,9 +23,10 @@ package org.infinispan.container.entries;
 
 import org.infinispan.atomic.AtomicHashMap;
 import org.infinispan.container.DataContainer;
-import static org.infinispan.container.entries.ReadCommittedEntry.Flags.*;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import static org.infinispan.container.entries.ReadCommittedEntry.Flags.*;
 
 /**
  * A wrapper around a cached entry that encapsulates read committed semantics when writes are initiated, committed or
@@ -107,14 +108,12 @@ public class ReadCommittedEntry implements MVCCEntry {
       return maxIdle;
    }
 
-   public final MVCCEntry setMaxIdle(long maxIdle) {
+   public final void setMaxIdle(long maxIdle) {
       this.maxIdle = maxIdle;
-      return this;
    }
 
-   public final MVCCEntry setLifespan(long lifespan) {
+   public final void setLifespan(long lifespan) {
       this.lifespan = lifespan;
-      return this;
    }
 
    public final Object getKey() {

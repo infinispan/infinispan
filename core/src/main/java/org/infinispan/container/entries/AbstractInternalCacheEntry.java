@@ -59,6 +59,13 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
       return false;
    }
 
+   public void setMaxIdle(long maxIdle) {
+   }
+
+   public void setLifespan(long lifespan) {
+   }
+
+
    public final Object getKey() {
       return key;
    }

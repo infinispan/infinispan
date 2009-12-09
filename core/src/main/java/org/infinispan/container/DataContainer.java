@@ -22,6 +22,7 @@
 package org.infinispan.container;
 
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 
@@ -92,6 +93,7 @@ public interface DataContainer extends Iterable<InternalCacheEntry> {
    /**
     * Removes all entries in the container
     */
+   @Stop(priority = 999)
    void clear();
 
    /**

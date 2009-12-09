@@ -488,11 +488,11 @@ public class Immutables {
          return entry.isExpired();
       }
 
-      public InternalCacheEntry setLifespan(long lifespan) {
+      public void setLifespan(long lifespan) {
          throw new UnsupportedOperationException();
       }
 
-      public InternalCacheEntry setMaxIdle(long maxIdle) {
+      public void setMaxIdle(long maxIdle) {
          throw new UnsupportedOperationException();
       }
 

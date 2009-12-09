@@ -30,22 +30,6 @@ public class ImmortalCacheEntry extends AbstractInternalCacheEntry {
       return false;
    }
 
-   public InternalCacheEntry setMaxIdle(long maxIdle) {
-      if (maxIdle > -1) {
-         return new TransientCacheEntry(key, cacheValue.value, maxIdle);
-      } else {
-         return this;
-      }
-   }
-
-   public InternalCacheEntry setLifespan(long lifespan) {
-      if (lifespan > -1) {
-         return new MortalCacheEntry(key, cacheValue.value, lifespan);
-      } else {
-         return this;
-      }
-   }
-
    public final long getCreated() {
       return -1;
    }

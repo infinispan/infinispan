@@ -1,12 +1,12 @@
 package org.infinispan.container.entries;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
 import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.Marshallable;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
  * A cache entry that is both transient and mortal.
@@ -36,22 +36,12 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
       this.cacheValue = new TransientMortalCacheValue(value, created, lifespan, maxIdle, lastUsed);
    }
 
-   public InternalCacheEntry setLifespan(long lifespan) {
-      if (lifespan < 0) {
-         return new TransientCacheEntry(key, cacheValue.value, cacheValue.lastUsed, cacheValue.maxIdle);
-      } else {
-         this.cacheValue.lifespan = lifespan;
-         return this;
-      }
+   public void setLifespan(long lifespan) {
+      this.cacheValue.lifespan = lifespan;
    }
 
-   public InternalCacheEntry setMaxIdle(long maxIdle) {
-      if (maxIdle < 0) {
-         return new MortalCacheEntry(key, cacheValue.value, cacheValue.lifespan, cacheValue.created);
-      } else {
-         this.cacheValue.maxIdle = maxIdle;
-         return this;
-      }
+   public void setMaxIdle(long maxIdle) {
+      this.cacheValue.maxIdle = maxIdle;
    }
 
    public Object getValue() {
@@ -125,11 +115,11 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
       clone.cacheValue = cacheValue.clone();
       return clone;
    }
-   
+
    @Override
    public String toString() {
       return getClass().getSimpleName() + "{" +
-            "cacheValue=" + cacheValue + 
+            "cacheValue=" + cacheValue +
             "} " + super.toString();
    }
 

@@ -47,23 +47,8 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
       return cacheValue.isExpired();
    }
 
-   public InternalCacheEntry setMaxIdle(long maxIdle) {
-      if (maxIdle < 0) {
-         return new ImmortalCacheEntry(key, cacheValue.value);
-      } else {
-         cacheValue.maxIdle = maxIdle;
-         return this;
-      }
-   }
-
-   public InternalCacheEntry setLifespan(long lifespan) {
-      if (lifespan > -1) {
-         TransientMortalCacheEntry tmce = new TransientMortalCacheEntry(key, cacheValue.value);
-         tmce.setLifespan(lifespan);
-         return tmce;
-      } else {
-         return this;
-      }
+   public void setMaxIdle(long maxIdle) {
+      cacheValue.maxIdle = maxIdle;
    }
 
    public long getCreated() {
@@ -137,7 +122,7 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
          long lastUsed = UnsignedNumeric.readUnsignedLong(input);
          Long maxIdle = input.readLong();
          return new TransientCacheEntry(k, v, maxIdle, lastUsed);
-      }      
+      }
    }
 
    @Override

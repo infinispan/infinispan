@@ -38,7 +38,7 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       Thread.sleep(100);
 
       InternalCacheEntry entry = dc.get("k");
-      assert entry instanceof TransientCacheEntry;
+      assert entry.getClass().equals(transienttype());
       assert entry.getLastUsed() <= System.currentTimeMillis();
       long entryLastUsed = entry.getLastUsed();
       Thread.sleep(100);
@@ -53,7 +53,7 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
 
       entry = dc.get("k");
       assert entry != null : "Entry should not be null!";
-      assert entry instanceof MortalCacheEntry : "Expected MortalCacheEntry, was " + entry.getClass().getSimpleName();
+      assert entry.getClass().equals(mortaltype()) : "Expected "+mortaltype()+", was " + entry.getClass().getSimpleName();
       assert entry.getCreated() <= System.currentTimeMillis();
 
       dc.put("k", "v", 0, -1);
@@ -72,23 +72,20 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       long idle = 600000;
       dc.put("k", "v", -1, -1);
       InternalCacheEntry ice = dc.get("k");
-      assert ice instanceof ImmortalCacheEntry;
+      assert ice.getClass().equals(immortaltype());
       assert ice.getExpiryTime() == -1;
-      assert ice.getLastUsed() == -1;
-      assert ice.getCreated() == -1;
       assert ice.getMaxIdle() == -1;
       assert ice.getLifespan() == -1;
       dc.put("k", "v", -1, idle);
       long oldTime = System.currentTimeMillis();
       Thread.sleep(100); // for time calc granularity
       ice = dc.get("k");
-      assert ice instanceof TransientCacheEntry;
+      assert ice.getClass().equals(transienttype());
       assert ice.getExpiryTime() == -1;
       assert ice.getLastUsed() > oldTime;
       Thread.sleep(100); // for time calc granularity
       assert ice.getLastUsed() < System.currentTimeMillis();
       assert ice.getMaxIdle() == idle;
-      assert ice.getCreated() == -1;
       assert ice.getLifespan() == -1;
 
       oldTime = System.currentTimeMillis();
@@ -101,18 +98,30 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       assert ice.getLastUsed() < System.currentTimeMillis();
    }
 
+   protected Class<? extends InternalCacheEntry> mortaltype() {
+      return MortalCacheEntry.class;
+   }
+
+   protected Class<? extends InternalCacheEntry> immortaltype() {
+      return ImmortalCacheEntry.class;
+   }
+
+   protected Class<? extends InternalCacheEntry> transienttype() {
+      return TransientCacheEntry.class;
+   }
+
    public void testExpirableToImmortalAndBack() {
       dc.put("k", "v", 6000000, -1);
       assert dc.containsKey("k");
-      assert dc.get("k") instanceof MortalCacheEntry;
+      assert dc.get("k").getClass().equals(mortaltype());
 
       dc.put("k", "v2", -1, -1);
       assert dc.containsKey("k");
-      assert dc.get("k") instanceof ImmortalCacheEntry;
+      assert dc.get("k").getClass().equals(immortaltype());
 
       dc.put("k", "v3", -1, 6000000);
       assert dc.containsKey("k");
-      assert dc.get("k") instanceof TransientCacheEntry;
+      assert dc.get("k").getClass().equals(transienttype());
 
       dc.put("k", "v3", 6000000, 6000000);
       assert dc.containsKey("k");
@@ -120,7 +129,7 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
 
       dc.put("k", "v", 6000000, -1);
       assert dc.containsKey("k");
-      assert dc.get("k") instanceof MortalCacheEntry;
+      assert dc.get("k").getClass().equals(mortaltype());
    }
 
    public void testKeySet() {
@@ -205,9 +214,10 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       expected.add(Immutables.immutableInternalCacheEntry(dc.get("k3")));
       expected.add(Immutables.immutableInternalCacheEntry(dc.get("k4")));
 
-      for (Map.Entry o : dc.entrySet()) assert expected.remove(o);
+      Set actual = new HashSet();
+      for (Map.Entry o : dc.entrySet()) actual.add(o);
 
-      assert expected.isEmpty() : "Did not see keys " + expected + " in iterator!";
+      assert actual.equals(expected) : "Expected to see keys " + expected + " but only saw " + actual;
    }
 
    public void testGetDuringKeySetLoop() {

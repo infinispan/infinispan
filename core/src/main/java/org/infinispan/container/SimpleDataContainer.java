@@ -3,7 +3,6 @@ package org.infinispan.container;
 import net.jcip.annotations.ThreadSafe;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalEntryFactory;
-import org.infinispan.factories.annotations.Stop;
 import org.infinispan.util.Immutables;
 
 import java.util.AbstractCollection;
@@ -33,10 +32,17 @@ public class SimpleDataContainer implements DataContainer {
    final ConcurrentMap<Object, InternalCacheEntry> immortalEntries;
    final ConcurrentMap<Object, InternalCacheEntry> mortalEntries;
    final AtomicInteger numEntries = new AtomicInteger(0);
+   final InternalEntryFactory entryFactory;
 
-   public SimpleDataContainer(int concurrencyLevel) {      
+
+   public SimpleDataContainer(int concurrencyLevel) {
+      this(concurrencyLevel, false, false);
+   }
+
+   SimpleDataContainer(int concurrencyLevel, boolean recordCreation, boolean recordLastUsed) {
       immortalEntries = new ConcurrentHashMap<Object, InternalCacheEntry>(128, 0.75f, concurrencyLevel);
       mortalEntries = new ConcurrentHashMap<Object, InternalCacheEntry>(64, 0.75f, concurrencyLevel);
+      entryFactory = new InternalEntryFactory(recordCreation, recordLastUsed);
    }
 
    public InternalCacheEntry peek(Object key) {
@@ -59,23 +65,27 @@ public class SimpleDataContainer implements DataContainer {
       return e;
    }
 
+   protected void successfulPut(InternalCacheEntry ice, boolean newEntry) {
+      // no-op
+   }
+
    public void put(Object k, Object v, long lifespan, long maxIdle) {
       InternalCacheEntry e = immortalEntries.get(k);
       if (e != null) {
          e.setValue(v);
-         if (lifespan > -1) e = e.setLifespan(lifespan);
-         if (maxIdle > -1) e = e.setMaxIdle(maxIdle);
+         e = entryFactory.update(e, lifespan, maxIdle);
 
          if (e.canExpire()) {
             immortalEntries.remove(k);
             mortalEntries.put(k, e);
          }
+         successfulPut(e, false);
       } else {
          e = mortalEntries.get(k);
          if (e != null) {
             e.setValue(v);
             InternalCacheEntry original = e;
-            e = e.setLifespan(lifespan).setMaxIdle(maxIdle);
+            e = entryFactory.update(e, lifespan, maxIdle);
 
             if (!e.canExpire()) {
                mortalEntries.remove(k);
@@ -84,15 +94,16 @@ public class SimpleDataContainer implements DataContainer {
                // the entry has changed type, but still can expire!
                mortalEntries.put(k, e);
             }
+            successfulPut(e, false);
          } else {
             // this is a brand-new entry
             numEntries.getAndIncrement();
-            e = InternalEntryFactory.create(k, v, lifespan, maxIdle);
+            e = entryFactory.createNewEntry(k, v, lifespan, maxIdle);
             if (e.canExpire())
                mortalEntries.put(k, e);
             else
                immortalEntries.put(k, e);
-
+            successfulPut(e, true);
          }
       }
    }
@@ -119,7 +130,6 @@ public class SimpleDataContainer implements DataContainer {
       return numEntries.get();
    }
 
-   @Stop(priority = 999)
    public void clear() {
       immortalEntries.clear();
       mortalEntries.clear();

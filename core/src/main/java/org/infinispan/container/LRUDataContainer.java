@@ -70,7 +70,7 @@ public class LRUDataContainer extends FIFODataContainer {
             le = new LinkedEntry(ice);
          } else {
             ice.setValue(v);
-            ice = ice.setLifespan(lifespan).setMaxIdle(maxIdle);
+            ice = entryFactory.update(ice, lifespan, maxIdle);
             // need to do this anyway since the ICE impl may have changed
             le.e = ice;
          }

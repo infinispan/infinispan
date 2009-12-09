@@ -1,10 +1,9 @@
 package org.infinispan.container;
 
-import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MortalCacheEntry;
-import org.infinispan.container.entries.TransientCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
+import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
 import java.util.Random;
@@ -15,130 +14,56 @@ public class FIFODataContainerTest extends SimpleDataContainerTest {
 
    @Override
    protected DataContainer createContainer() {
-      return new FIFODataContainer(16);
+      return new FIFOSimpleDataContainer(16, 1);
+   }
+
+   @Override
+   protected Class<? extends InternalCacheEntry> transienttype() {
+      return TransientMortalCacheEntry.class;
+   }
+
+   @Override
+   protected Class<? extends InternalCacheEntry> immortaltype() {
+      return MortalCacheEntry.class;
    }
 
    public void testOrdering() {
       long lifespan = 600000;
       long idle = 600000;
-      for (int i = 0; i < 10; i++) dc.put("k" + i, "value", -1, -1);
-      for (int i = 10; i < 20; i++) dc.put("k" + i, "value", lifespan, -1);
-      for (int i = 20; i < 30; i++) dc.put("k" + i, "value", -1, idle);
-      for (int i = 30; i < 40; i++) dc.put("k" + i, "value", lifespan, idle);
+      for (int i = 0; i < 10; i++) {
+         dc.put("k" + i, "value", -1, -1);
+         TestingUtil.sleepThread(10);
+      }
+      for (int i = 10; i < 20; i++) {
+         dc.put("k" + i, "value", lifespan, -1);
+         TestingUtil.sleepThread(10);
+      }
+      for (int i = 20; i < 30; i++) {
+         dc.put("k" + i, "value", -1, idle);
+         TestingUtil.sleepThread(10);
+      }
+      for (int i = 30; i < 40; i++) {
+         dc.put("k" + i, "value", lifespan, idle);
+         TestingUtil.sleepThread(10);
+      }
 
       // random visits
       Random r = new Random();
-      for (int i = 0; i < 100; i++) dc.get("k" + r.nextInt(40));
+      for (int i = 0; i < 100; i++) {
+         dc.get("k" + r.nextInt(40));
+         TestingUtil.sleepThread(10);
+      }
 
       // ensure order is maintained.
       int i = 0;
       for (InternalCacheEntry ice : dc) {
          assert ice.getKey().equals("k" + i);
-         if (i < 10) assert ice instanceof ImmortalCacheEntry;
-         if (i >= 10 && i < 20) assert ice instanceof MortalCacheEntry;
-         if (i >= 20 && i < 30) assert ice instanceof TransientCacheEntry;
+         if (i < 10) assert ice.getClass().equals(immortaltype());
+         if (i >= 10 && i < 20) assert ice.getClass().equals(mortaltype());
+         if (i >= 20 && i < 30) assert ice.getClass().equals(transienttype());
          if (i >= 30 && i < 40) assert ice instanceof TransientMortalCacheEntry;
          i++;
       }
-   }
-
-   private void setInitialEntry() {
-      FIFODataContainer ldc = (FIFODataContainer) dc;
-      dc.put("k", "v", -1, -1);
-
-      assert dc.size() == 1;
-
-      FIFODataContainer.LinkedEntry tail = ldc.tail;
-      FIFODataContainer.LinkedEntry head = ldc.head;
-      FIFODataContainer.LinkedEntry e = ldc.head.n;
-
-      assert head.n == e;
-      assert head.p == tail;
-      assert tail.n == head;
-      assert tail.p == e;
-      assert e.n == tail;
-      assert e.p == head;
-      assert !ldc.isMarkedForRemoval(e);
-   }
-
-   public void testInsertingLinks() {
-      FIFODataContainer ldc = (FIFODataContainer) dc;
-      assert dc.size() == 0;
-      assert ldc.head.n == ldc.tail;
-      assert ldc.tail.n == ldc.head;
-      assert ldc.head.p == ldc.tail;
-      assert ldc.tail.p == ldc.head;
-
-      setInitialEntry();
-
-      // add one more
-      dc.put("k2", "v2", -1, -1);
-
-      assert dc.size() == 2;
-
-      FIFODataContainer.LinkedEntry tail = ldc.tail;
-      FIFODataContainer.LinkedEntry head = ldc.head;
-      FIFODataContainer.LinkedEntry le1 = head.n;
-      FIFODataContainer.LinkedEntry le2 = le1.n;
-
-      assert tail == le2.n;
-      assert tail != le1.n;
-      assert le1 != ldc.head;
-      assert le2 != ldc.head;
-      assert le1 != ldc.tail;
-      assert le2 != ldc.tail;
-      assert le1 != le2;
-
-      assert le1.p == head;
-      assert le1.n == le2;
-      assert le2.p == le1;
-      assert le2.n == tail;
-
-      assert le1.e != null;
-      assert le1.e.getKey().equals("k");
-      assert le1.e.getValue().equals("v");
-
-      assert le2.e != null;
-      assert le2.e.getKey().equals("k2");
-      assert le2.e.getValue().equals("v2");
-   }
-
-   public void testRemovingLinks() {
-      FIFODataContainer aldc = (FIFODataContainer) dc;
-      assert dc.size() == 0;
-      assert aldc.head.n == aldc.tail;
-      assert aldc.tail.n == aldc.head;
-      assert aldc.head.p == aldc.tail;
-      assert aldc.tail.p == aldc.head;
-
-      setInitialEntry();
-
-      dc.remove("k");
-
-      assert dc.size() == 0;
-      assert aldc.head.n == aldc.tail;
-      assert aldc.tail.n == aldc.head;
-      assert aldc.head.p == aldc.tail;
-      assert aldc.tail.p == aldc.head;
-   }
-
-   public void testClear() {
-      FIFODataContainer aldc = (FIFODataContainer) dc;
-      assert dc.size() == 0;
-      assert aldc.head.n == aldc.tail;
-      assert aldc.tail.n == aldc.head;
-      assert aldc.head.p == aldc.tail;
-      assert aldc.tail.p == aldc.head;
-
-      setInitialEntry();
-
-      dc.clear();
-
-      assert dc.size() == 0;
-      assert aldc.head.n == aldc.tail;
-      assert aldc.tail.n == aldc.head;
-      assert aldc.head.p == aldc.tail;
-      assert aldc.tail.p == aldc.head;
    }
 
    public void testMultithreadAccess() throws InterruptedException {

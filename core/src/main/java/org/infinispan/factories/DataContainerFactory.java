@@ -23,8 +23,8 @@ package org.infinispan.factories;
 
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.container.DataContainer;
-import org.infinispan.container.FIFODataContainer;
-import org.infinispan.container.LRUDataContainer;
+import org.infinispan.container.FIFOSimpleDataContainer;
+import org.infinispan.container.LRUSimpleDataContainer;
 import org.infinispan.container.SimpleDataContainer;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 
@@ -43,9 +43,9 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
          case NONE:
             return (T) new SimpleDataContainer(configuration.getConcurrencyLevel());
          case FIFO:
-            return (T) new FIFODataContainer(configuration.getConcurrencyLevel());
+            return (T) new FIFOSimpleDataContainer(configuration.getConcurrencyLevel());
          case LRU:
-            return (T) new LRUDataContainer(configuration.getConcurrencyLevel());
+            return (T) new LRUSimpleDataContainer(configuration.getConcurrencyLevel());
          default:
             throw new ConfigurationException("Unknown eviction strategy " + configuration.getEvictionStrategy());
       }

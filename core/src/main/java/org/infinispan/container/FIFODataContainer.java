@@ -40,6 +40,8 @@ import java.util.concurrent.locks.ReentrantLock;
 @ThreadSafe
 public class FIFODataContainer implements DataContainer {
 
+   InternalEntryFactory entryFactory = new InternalEntryFactory(false, false);
+
    /**
     * The maximum capacity, used if a higher value is implicitly specified by either of the constructors with arguments.
     * MUST be a power of two <= 1<<30 to ensure that entries are indexable using ints.
@@ -763,7 +765,7 @@ public class FIFODataContainer implements DataContainer {
             le = new LinkedEntry(ice);
          } else {
             ice.setValue(v);
-            ice = ice.setLifespan(lifespan).setMaxIdle(maxIdle);
+            ice = entryFactory.update(ice, lifespan, maxIdle);
             // need to do this anyway since the ICE impl may have changed
             le.e = ice;
          }
