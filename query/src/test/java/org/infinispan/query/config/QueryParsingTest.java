@@ -1,18 +1,17 @@
 package org.infinispan.query.config;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.config.InfinispanConfiguration;
-import org.infinispan.config.Configuration.QueryConfigurationBean;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
+
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 
 @Test(groups = "unit", testName = "config.parsing.QueryParsingTest")
 public class QueryParsingTest extends AbstractInfinispanTest {
@@ -31,24 +30,38 @@ public class QueryParsingTest extends AbstractInfinispanTest {
             "      <indexing enabled=\"true\" indexLocalOnly=\"true\"/>\n" +
             "   </default>\n" +
             "</infinispan>";
-      
-         System.out.println(config);
 
-        InputStream is = new ByteArrayInputStream(config.getBytes());
-        InputStream schema = InfinispanConfiguration.findSchemaInputStream();
-        assert schema != null;
-        InfinispanConfiguration c = InfinispanConfiguration.newInfinispanConfiguration(is, schema);
-        GlobalConfiguration gc = c.parseGlobalConfiguration();
-        assert gc.getTransportClass().equals(JGroupsTransport.class.getName());
-        assert gc.getClusterName().equals("demoCluster");
+      System.out.println(config);
 
-        Configuration def = c.parseDefaultConfiguration();
-        QueryConfigurationBean bean = def.getQueryConfigurationBean();
-        assert bean.isEnabled();
-        assert bean.isIndexLocalOnly();
-        
-        CacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(def);
-        Cache<Object, Object> cache = cm.getCache("test");
-        cache.stop();
-    }
+      InputStream is = new ByteArrayInputStream(config.getBytes());
+      InputStream schema = InfinispanConfiguration.findSchemaInputStream();
+      assert schema != null;
+      InfinispanConfiguration c = InfinispanConfiguration.newInfinispanConfiguration(is, schema);
+      GlobalConfiguration gc = c.parseGlobalConfiguration();
+      assert gc.getTransportClass().equals(JGroupsTransport.class.getName());
+      assert gc.getClusterName().equals("demoCluster");
+
+      Configuration def = c.parseDefaultConfiguration();
+      assert def.isIndexingEnabled();
+      assert def.isIndexLocalOnly();
+
+      // test cloneability
+      Configuration dolly = def.clone();
+      assert dolly.isIndexingEnabled();
+      assert dolly.isIndexLocalOnly();
+
+      // test mergeability
+      Configuration other = new Configuration();
+      other.setUseLazyDeserialization(true);
+      other.setUseLockStriping(false);
+      other.applyOverrides(dolly);
+      assert other.isUseLazyDeserialization();
+      assert !other.isUseLockStriping();
+      assert other.isIndexingEnabled();
+      assert other.isIndexLocalOnly();
+
+      CacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(def);
+      Cache<Object, Object> cache = cm.getCache("test");
+      cache.stop();
+   }
 }

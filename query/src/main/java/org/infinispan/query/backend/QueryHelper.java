@@ -84,7 +84,7 @@ public class QueryHelper {
       SearchConfiguration cfg = new SearchableCacheConfiguration(classes, properties);
       searchFactory = new SearchFactoryImpl(cfg);
 
-      applyProperties(cache.getConfiguration().getQueryConfigurationBean());
+      applyProperties(cache.getConfiguration());
    }
 
    /**
@@ -102,13 +102,13 @@ public class QueryHelper {
     * indexed.
     */
 
-   private void applyProperties(Configuration.QueryConfigurationBean qcb) {
+   private void applyProperties(Configuration cfg) {
       if (log.isDebugEnabled()) log.debug("Entered QueryHelper.applyProperties()");
 
-      if (qcb.isEnabled()) {
+      if (cfg.isIndexingEnabled()) {
 
          try {
-            if (qcb.isIndexLocalOnly()) {
+            if (cfg.isIndexLocalOnly()) {
                // Add a LocalQueryInterceptor to the chain
                initComponents(LocalQueryInterceptor.class);
             } else {

@@ -39,16 +39,13 @@ import org.hibernate.search.filter.StandardFilterKey;
 import org.hibernate.search.query.FullTextFilterImpl;
 import org.hibernate.search.query.QueryHits;
 import org.hibernate.search.reader.ReaderProvider;
-import static org.hibernate.search.reader.ReaderProviderHelper.getIndexReaders;
 import org.hibernate.search.store.DirectoryProvider;
-import static org.hibernate.search.util.FilterCacheModeTypeHelper.cacheInstance;
-import static org.hibernate.search.util.FilterCacheModeTypeHelper.cacheResults;
 import org.hibernate.transform.ResultTransformer;
 import org.infinispan.Cache;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.QueryIterator;
-import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.backend.IndexSearcherCloser;
+import org.infinispan.query.backend.KeyTransformationHandler;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -59,6 +56,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static org.hibernate.search.reader.ReaderProviderHelper.getIndexReaders;
+import static org.hibernate.search.util.FilterCacheModeTypeHelper.cacheInstance;
+import static org.hibernate.search.util.FilterCacheModeTypeHelper.cacheResults;
 
 /**
  * Implementation class of the CacheQuery interface.
@@ -304,11 +305,7 @@ public class CacheQueryImpl implements CacheQuery {
 
          // Loop through my list of keys and get it from the cache. Put each object that I get into a separate list.
          List<Object> listToReturn = new ArrayList<Object>(size);
-         for (String key : keysForCache) {
-            System.out.println(key);
-            listToReturn.add(cache.get(KeyTransformationHandler.stringToKey(key)));
-         }
-
+         for (String key : keysForCache) listToReturn.add(cache.get(KeyTransformationHandler.stringToKey(key)));
 
          // TODO: navssurtani --> Speak with EB or HF about what a resultTransformer is and what it does etc etc.
 

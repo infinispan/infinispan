@@ -8,17 +8,18 @@ import org.infinispan.manager.CacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.QueryFactory;
 import org.infinispan.query.backend.QueryHelper;
-import org.infinispan.query.test.Person;
 import org.infinispan.query.test.CustomKey;
+import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.Test;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 import java.util.List;
 import java.util.Properties;
+
+import static org.infinispan.config.Configuration.CacheMode.LOCAL;
 
 /**
  * Class that will put in different kinds of keys into the cache and run a query on it to see if
@@ -36,12 +37,9 @@ public class KeyTypeTest extends SingleCacheManagerTest{
 
    @Override
    protected CacheManager createCacheManager() throws Exception {
-      Configuration c = new Configuration();
-      c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
-      Configuration.QueryConfigurationBean qcb = new Configuration.QueryConfigurationBean();
-      qcb.setEnabled(true);
-      qcb.setIndexLocalOnly(false);
-      c.setQueryConfigurationBean(qcb);
+      Configuration c = getDefaultClusteredConfig(LOCAL, true);
+      c.setIndexingEnabled(true);
+      c.setIndexLocalOnly(false);
       return TestCacheManagerFactory.createCacheManager(c, true);
    }
 

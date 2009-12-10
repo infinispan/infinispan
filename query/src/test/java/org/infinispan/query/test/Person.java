@@ -24,6 +24,15 @@ public class Person implements Serializable {
    @Field(store = Store.YES, index = Index.UN_TOKENIZED)
    private int age;
 
+   public Person() {
+   }
+
+   public Person(String name, String blurb, int age) {
+      this.name = name;
+      this.blurb = blurb;
+      this.age = age;
+   }
+
    public String getName() {
       return name;
    }

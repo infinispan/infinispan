@@ -23,6 +23,8 @@ import org.testng.annotations.Test;
 
 import java.util.List;
 
+import static org.infinispan.config.Configuration.CacheMode.REPL_SYNC;
+
 /**
  * @author Navin Surtani
  */
@@ -47,25 +49,19 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       cleanup = CleanupPhase.AFTER_METHOD;
    }
 
-   protected void createCacheManagers() throws Throwable {
-      Configuration cacheCfg = new Configuration();
-      cacheCfg.setCacheMode(Configuration.CacheMode.REPL_SYNC);
-      cacheCfg.setFetchInMemoryState(false);
+   protected void enhanceConfig(Configuration c) {
+      // meant to be overridden
+   }
 
+   protected void createCacheManagers() throws Throwable {
+      Configuration cacheCfg = getDefaultClusteredConfig(REPL_SYNC);
+      enhanceConfig(cacheCfg);
+      cacheCfg.setIndexingEnabled(true);
+      cacheCfg.setIndexLocalOnly(false);
       List<Cache<String, Person>> caches = createClusteredCaches(2, "infinispan-query", cacheCfg);
 
       cache1 = caches.get(0);
       cache2 = caches.get(1);
-
-      Configuration.QueryConfigurationBean qcb = new Configuration.QueryConfigurationBean();
-      qcb.setEnabled(true);
-
-
-      // We will put objects into cache1 and then try and run the queries on cache2. This would mean that indexLocal
-      // must be set to false.
-      qcb.setIndexLocalOnly(false);
-      cache1.getConfiguration().setQueryConfigurationBean(qcb);
-      cache2.getConfiguration().setQueryConfigurationBean(qcb);
    }
 
    @BeforeMethod

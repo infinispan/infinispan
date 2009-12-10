@@ -1,9 +1,6 @@
 package org.infinispan.query.blackbox;
 
 import org.infinispan.config.Configuration;
-import org.infinispan.manager.CacheManager;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.testng.annotations.Test;
 
 /**
@@ -17,18 +14,9 @@ import org.testng.annotations.Test;
 
 @Test(groups="functional")
 public class MarshalledValueQueryTest extends LocalCacheTest {
-
-
    @Override
-   protected CacheManager createCacheManager() throws Exception {
-      Configuration c = new Configuration();
-      c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
+   protected void enhanceConfig(Configuration c) {
       c.setUseLazyDeserialization(true);
-      Configuration.QueryConfigurationBean qcb = new Configuration.QueryConfigurationBean();
-      qcb.setEnabled(true);
-      c.setQueryConfigurationBean(qcb);
-      return TestCacheManagerFactory.createCacheManager(c, true);
    }
-
 }
 

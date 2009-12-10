@@ -5,9 +5,10 @@ import org.infinispan.manager.CacheManager;
 import org.infinispan.query.helper.TestQueryHelperFactory;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import static org.infinispan.config.Configuration.CacheMode.LOCAL;
 
 /**
  * @author Navin Surtani
@@ -16,13 +17,15 @@ import org.testng.annotations.Test;
 @Test(groups = "functional")
 public class LocalCacheTest extends AbstractLocalQueryTest {
 
+   protected void enhanceConfig(Configuration c) {
+      // no op, meant to be overridden
+   }
+
    protected CacheManager createCacheManager() throws Exception {
-      Configuration c = new Configuration();
-      c.setTransactionManagerLookupClass(DummyTransactionManagerLookup.class.getName());
-      Configuration.QueryConfigurationBean qcb = new Configuration.QueryConfigurationBean();
-      qcb.setEnabled(true);
-      qcb.setIndexLocalOnly(false);
-      c.setQueryConfigurationBean(qcb);
+      Configuration c = getDefaultClusteredConfig(LOCAL, true);
+      c.setIndexingEnabled(true);
+      c.setIndexLocalOnly(false);
+      enhanceConfig(c);
       return TestCacheManagerFactory.createCacheManager(c, true);
    }
 
