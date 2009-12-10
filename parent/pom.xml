@@ -218,6 +218,7 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-eclipse-plugin</artifactId>
+            <version>2.7</version>
             <configuration>
                <downloadSources>true</downloadSources>
                <buildOutputDirectory>${basedir}/eclipse-output</buildOutputDirectory>
@@ -227,6 +228,7 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-idea-plugin</artifactId>
+            <version>2.2</version>
             <configuration>
                <downloadSources>true</downloadSources>
             </configuration>
@@ -235,6 +237,7 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-source-plugin</artifactId>
+            <version>2.1.1</version>
             <inherited>true</inherited>
             <executions>
                <execution>
@@ -248,6 +251,7 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-jar-plugin</artifactId>
+            <version>2.3</version>
             <configuration>
                <archive>
                   <manifest>
