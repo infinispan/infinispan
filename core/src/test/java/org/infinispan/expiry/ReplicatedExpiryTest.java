@@ -51,7 +51,7 @@ public class ReplicatedExpiryTest extends MultipleCacheManagersTest {
       c1.put("k", "v", lifespan, MILLISECONDS, idle, MILLISECONDS);
       InternalCacheEntry ice = c2.getAdvancedCache().getDataContainer().get("k");
       assert ice instanceof TransientMortalCacheEntry;
-      assert ice.getLifespan() == lifespan;
-      assert ice.getMaxIdle() == idle;
+      assert ice.getLifespan() == lifespan : "Expected " + lifespan + " but was " + ice.getLifespan();
+      assert ice.getMaxIdle() == idle : "Expected " + idle + " but was " + ice.getMaxIdle();
    }
 }

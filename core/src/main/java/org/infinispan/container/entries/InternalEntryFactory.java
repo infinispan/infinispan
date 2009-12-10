@@ -61,7 +61,7 @@ public class InternalEntryFactory {
 
       if (lifespan > -1 && maxIdle < 0) {
          if (recordLastUsed) {
-            return new TransientMortalCacheEntry(key, value, lifespan, -1);
+            return new TransientMortalCacheEntry(key, value, -1, lifespan);
          } else {
             return new MortalCacheEntry(key, value, lifespan);
          }
@@ -69,14 +69,14 @@ public class InternalEntryFactory {
 
       if (lifespan < 0 && maxIdle > -1) {
          if (recordCreation) {
-            return new TransientMortalCacheEntry(key, value, -1, maxIdle);
+            return new TransientMortalCacheEntry(key, value, maxIdle, -1);
          } else {
             return new TransientCacheEntry(key, value, maxIdle);
          }
       }
 
       // else...
-      return new TransientMortalCacheEntry(key, value, lifespan, maxIdle);
+      return new TransientMortalCacheEntry(key, value, maxIdle, lifespan);
    }
 
    /**
