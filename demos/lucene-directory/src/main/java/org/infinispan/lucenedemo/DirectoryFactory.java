@@ -33,7 +33,6 @@ import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 
 /**
  * Utility to create a Directory for the demo.
@@ -58,12 +57,6 @@ public class DirectoryFactory {
       GlobalConfiguration gc = GlobalConfiguration.getClusteredDefault();
       gc.setClusterName("infinispan-lucene-demo-cluster");
       gc.setTransportClass(JGroupsTransport.class.getName());
-      Properties p = new Properties();
-
-      // use the default that ships with Infinispan! - Manik Surtani, 7-Dec-2009
-//      p.setProperty("configurationFile", "jgroups-configuration.xml");
-
-      gc.setTransportProperties(p);
 
       Configuration config = new Configuration();
       config.setCacheMode(Configuration.CacheMode.DIST_SYNC);
