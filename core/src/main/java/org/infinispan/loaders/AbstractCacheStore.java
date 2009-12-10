@@ -55,11 +55,12 @@ public abstract class AbstractCacheStore extends AbstractCacheLoader implements 
          purgerService = new WithinThreadExecutor();
       } else {
          multiThreadedPurge = supportsMultiThreadedPurge() && config.getPurgerThreads() > 1;
+         final String loaderName = getClass().getSimpleName();
          purgerService = Executors.newFixedThreadPool(supportsMultiThreadedPurge() ? config.getPurgerThreads() : 1, new ThreadFactory() {
             @Override
             public Thread newThread(Runnable r) {
                // Thread name: <cache>-<CacheStore>-<purger>-ID
-               Thread t = new Thread(r, cache.getName() + "-" + config.getCacheLoaderClassName().substring(config.getCacheLoaderClassName().lastIndexOf(".") + 1) + "-" + THREAD_COUNTER.getAndIncrement());
+               Thread t = new Thread(r, cache.getName() + "-" + loaderName + "-" + THREAD_COUNTER.getAndIncrement());
                t.setDaemon(true);
                return t;
             }
