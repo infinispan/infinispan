@@ -98,7 +98,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
       } catch (IOException e) {
          throw new CacheLoaderException("I/O error", e);
       } catch (ClassNotFoundException e) {
-         throw new CacheLoaderException("Unexpected expcetion", e);
+         throw new CacheLoaderException("Unexpected exception", e);
       }
    }
 
@@ -130,7 +130,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
             }
          }
       } catch (IOException e) {
-         throw new CacheLoaderException("I/O expcetion while generating stream", e);
+         throw new CacheLoaderException("I/O exception while generating stream", e);
       }
    }
 
