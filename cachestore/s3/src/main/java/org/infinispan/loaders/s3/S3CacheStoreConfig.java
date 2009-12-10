@@ -10,7 +10,9 @@ import org.infinispan.loaders.LockSupportCacheStoreConfig;
  * is no default.</li> <li><tt>awsSecretKey</tt> - used to authenticate you as the owner of <tt>awsAccessKey</tt>.  This
  * is required and there is no default.</li> <li><tt>bucket</tt> - the name of the s3 bucket used to store cache data.
  * This is required and there is no default.</li> <li><tt>requestTimeout</tt> - The maximum amount of milliseconds a
- * single S3 request can take before throwing an exception.  Default is 10000</li></ul>
+ * single S3 request can take before throwing an exception.  Default is 10000</li><li><tt>lazyPurgingOnly</tt> - Causes
+ * {@link org.infinispan.loaders.CacheStore#purgeExpired()} to be a no-op, and only removes expired entries lazily, on a
+ * {@link org.infinispan.loaders.CacheLoader#load(Object)}.  Defaults to <tt>true</tt>.</li></ul>
  *
  * @author Adrian Cole
  * @since 4.0
@@ -22,10 +24,18 @@ public class S3CacheStoreConfig extends LockSupportCacheStoreConfig {
    private String proxyHost;
    private int proxyPort;
    private long requestTimeout = 10000;
-
    private String bucketClass;
    private String connectionClass;
+   private Boolean lazyPurgingOnly = true;
 
+
+   public Boolean isLazyPurgingOnly() {
+      return lazyPurgingOnly;
+   }
+
+   public void setLazyPurgingOnly(Boolean lazyPurgingOnly) {
+      this.lazyPurgingOnly = lazyPurgingOnly;
+   }
 
    public long getRequestTimeout() {
       return requestTimeout;

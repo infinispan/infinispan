@@ -49,7 +49,7 @@ public class S3CacheStore extends BucketBasedCacheStore {
       S3Connection cloudsConnection;
       try {
          cloudsConnection = config.getConnectionClass() != null ? (S3Connection) Util.getInstance(config.getConnectionClass()) : new JCloudsConnection();
-         cloudsBucket = config.getBucketClass()!=null ? (S3Bucket) Util.getInstance(config.getBucketClass()) : new JCloudsBucket();
+         cloudsBucket = config.getBucketClass() != null ? (S3Bucket) Util.getInstance(config.getBucketClass()) : new JCloudsBucket();
       } catch (Exception e) {
          throw new CacheLoaderException(e);
       }
@@ -90,7 +90,7 @@ public class S3CacheStore extends BucketBasedCacheStore {
 
    private String getThisBucketName() {
       if (log.isTraceEnabled()) {
-         log.trace("Bucket prefix is " + config.getBucketPrefix()  + " and cache name is " + cache.getName());
+         log.trace("Bucket prefix is " + config.getBucketPrefix() + " and cache name is " + cache.getName());
       }
       return config.getBucketPrefix() + "-" + cache.getName().toLowerCase();
    }
@@ -123,6 +123,11 @@ public class S3CacheStore extends BucketBasedCacheStore {
       }
    }
 
+   @Override
+   protected boolean supportsMultiThreadedPurge() {
+      return true;
+   }
+
    protected void toStreamLockSafe(ObjectOutput objectOutput) throws CacheLoaderException {
       try {
          objectOutput.writeObject(getThisBucketName());
@@ -140,8 +145,29 @@ public class S3CacheStore extends BucketBasedCacheStore {
             new CacheLoaderException(message, caught);
    }
 
+   @SuppressWarnings("unchecked")
    protected void purgeInternal() throws CacheLoaderException {
-      loadAll();
+      if (!config.isLazyPurgingOnly()) {
+         acquireGlobalLock(false);
+         try {
+            if (multiThreadedPurge) {
+               purgerService.execute(new Runnable() {
+                  @Override
+                  public void run() {
+                     try {
+                        for (Bucket bucket : (Set<Bucket>) s3Bucket.values()) if (bucket.removeExpiredEntries()) saveBucket(bucket);
+                     } catch (CacheLoaderException e) {
+                        log.warn("Problems purging bucket", e);
+                     }
+                  }
+               });
+            } else {
+               for (Bucket bucket : (Set<Bucket>) s3Bucket.values()) if (bucket.removeExpiredEntries()) saveBucket(bucket);
+            }
+         } finally {
+            releaseGlobalLock(false);
+         }
+      }
    }
 
    protected Bucket loadBucket(String bucketName) throws CacheLoaderException {
