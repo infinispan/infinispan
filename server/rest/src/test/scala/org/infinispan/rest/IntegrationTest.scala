@@ -254,10 +254,6 @@ class IntegrationTest {
     assertEquals("application/json", get3.getResponseHeader("Content-Type").getValue)
 
 
-    get3.setRequestHeader("Accept", "*/*")
-    Client.call(get3)
-    assertEquals(HttpServletResponse.SC_NOT_ACCEPTABLE, get3.getStatusCode)
-
   }
 
 
