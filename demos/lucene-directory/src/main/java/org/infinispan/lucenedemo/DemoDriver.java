@@ -30,7 +30,9 @@ import org.apache.lucene.search.Query;
 import org.infinispan.remoting.transport.Address;
 
 /**
- * DemoBoot.
+ * DemoDriver is a console hello-world application to show the Lucene
+ * clustering capabilities.
+ * This class parses the user input and drives the actions implemented in DemoActions.
  * 
  * @author Sanne Grinovero
  * @since 4.0

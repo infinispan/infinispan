@@ -35,7 +35,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Utility to create a Directory for the demo.
+ * Utility to create an InfinispanDirectory for the demo.
+ * 
+ * @see org.infinispan.lucene.InfinispanDirectory
  * 
  * @author Sanne Grinovero
  * @since 4.0

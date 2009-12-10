@@ -44,7 +44,8 @@ import org.infinispan.lucene.InfinispanDirectory;
 import org.infinispan.remoting.transport.Address;
 
 /**
- * DemoActions.
+ * DemoActions does some basic operations on the Lucene index,
+ * to be used by DemoDriver to show base operations on Lucene.
  * 
  * @author Sanne Grinovero
  * @since 4.0
@@ -80,7 +81,7 @@ public class DemoActions {
    }
    
    /**
-    * Returns all stored fields
+    * Returns a list of the values of all stored fields
     * @throws IOException 
     */
    public List<String> listAllDocuments() throws IOException {
@@ -89,7 +90,7 @@ public class DemoActions {
    }
 
    /**
-    * Creates a new document having just one field containing a string. 
+    * Creates a new document having just one field containing a string
     * 
     * @param line The text snippet to add
     * @throws IOException
@@ -109,6 +110,7 @@ public class DemoActions {
 
    /**
     * Parses a query using the single field as default
+    * 
     * @throws ParseException 
     */
    public Query parseQuery(String queryLine) throws ParseException {
@@ -118,7 +120,7 @@ public class DemoActions {
    }
 
    /**
-    * Returns a list of Adresses of all members in the cluster 
+    * Returns a list of Addresses of all members in the cluster 
     */
    public List<Address> listAllMembers() {
       return index.getCache().getCacheManager().getMembers();
