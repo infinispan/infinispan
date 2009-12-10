@@ -21,27 +21,14 @@
  */
 package org.infinispan.config;
 
+import org.infinispan.CacheException;
+import org.infinispan.config.Configuration.*;
+import org.infinispan.util.ReflectionUtil;
+
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
-
-import org.infinispan.CacheException;
-import org.infinispan.config.Configuration.AsyncType;
-import org.infinispan.config.Configuration.BooleanAttributeType;
-import org.infinispan.config.Configuration.ClusteringType;
-import org.infinispan.config.Configuration.CustomInterceptorsType;
-import org.infinispan.config.Configuration.DeadlockDetectionType;
-import org.infinispan.config.Configuration.EvictionType;
-import org.infinispan.config.Configuration.ExpirationType;
-import org.infinispan.config.Configuration.HashType;
-import org.infinispan.config.Configuration.L1Type;
-import org.infinispan.config.Configuration.LockingType;
-import org.infinispan.config.Configuration.StateRetrievalType;
-import org.infinispan.config.Configuration.SyncType;
-import org.infinispan.config.Configuration.TransactionType;
-import org.infinispan.config.Configuration.UnsafeType;
-import org.infinispan.util.ReflectionUtil;
+import java.util.Set;
 
 /**
  * OverrideConfigurationVisitor breaks down fields of Configuration object to individual components
@@ -52,22 +39,23 @@ import org.infinispan.util.ReflectionUtil;
  */
 public class OverrideConfigurationVisitor extends AbstractConfigurationBeanVisitor {
 
-   AsyncType asyncType = null;
-   CacheLoaderManagerConfig cacheLoaderManagerConfig = null;
-   ClusteringType clusteringType = null;
-   Map <String,BooleanAttributeType> bats = new HashMap<String,BooleanAttributeType>();
+   private AsyncType asyncType = null;
+   private CacheLoaderManagerConfig cacheLoaderManagerConfig = null;
+   private ClusteringType clusteringType = null;
+   private final Map <String,BooleanAttributeType> bats = new HashMap<String,BooleanAttributeType>();
 
-   CustomInterceptorsType customInterceptorsType = null;
-   DeadlockDetectionType deadlockDetectionType = null;
-   EvictionType evictionType = null;
-   ExpirationType expirationType = null;
-   HashType hashType = null;
-   L1Type l1Type = null;
-   LockingType lockingType = null;
-   StateRetrievalType stateRetrievalType = null;
-   SyncType syncType = null;
-   TransactionType transactionType = null;
-   UnsafeType unsafeType = null;
+   private CustomInterceptorsType customInterceptorsType = null;
+   private DeadlockDetectionType deadlockDetectionType = null;
+   private EvictionType evictionType = null;
+   private ExpirationType expirationType = null;
+   private HashType hashType = null;
+   private L1Type l1Type = null;
+   private LockingType lockingType = null;
+   private StateRetrievalType stateRetrievalType = null;
+   private SyncType syncType = null;
+   private TransactionType transactionType = null;
+   private UnsafeType unsafeType = null;
+   private QueryConfigurationBean indexingType = null;
 
    public void override(OverrideConfigurationVisitor override) {
       
@@ -96,6 +84,7 @@ public class OverrideConfigurationVisitor extends AbstractConfigurationBeanVisit
       overrideFields(syncType, override.syncType);
       overrideFields(transactionType, override.transactionType);
       overrideFields(unsafeType, override.unsafeType);
+      overrideFields(indexingType, override.indexingType);
    }
 
    private void overrideFields(AbstractConfigurationBean bean, AbstractConfigurationBean overrides) {
@@ -112,63 +101,83 @@ public class OverrideConfigurationVisitor extends AbstractConfigurationBeanVisit
       } 
    }
 
+   @Override
    public void visitAsyncType(AsyncType bean) {
       asyncType = bean;
    }
-   
+
+   @Override
    public void visitBooleanAttributeType(BooleanAttributeType bat) {
       bats.put(bat.getFieldName(), bat);
    }
 
+   @Override
    public void visitCacheLoaderManagerConfig(CacheLoaderManagerConfig bean) {
       cacheLoaderManagerConfig = bean;
    }
 
+   @Override
    public void visitClusteringType(ClusteringType bean) {
       clusteringType = bean;
    }
 
+   @Override
    public void visitCustomInterceptorsType(CustomInterceptorsType bean) {
       customInterceptorsType = bean;
    }
 
+   @Override
    public void visitDeadlockDetectionType(DeadlockDetectionType bean) {
       deadlockDetectionType = bean;
    }
 
+   @Override
    public void visitEvictionType(EvictionType bean) {
       evictionType = bean;
    }
 
+   @Override
    public void visitExpirationType(ExpirationType bean) {
       expirationType = bean;
    }
 
+   @Override
    public void visitHashType(HashType bean) {
       hashType = bean;
    }
 
+   @Override
    public void visitL1Type(L1Type bean) {
       l1Type = bean;
    }
 
+   @Override
    public void visitLockingType(LockingType bean) {
       lockingType = bean;
    }
 
+   @Override
    public void visitStateRetrievalType(StateRetrievalType bean) {
       stateRetrievalType = bean;
    }
 
+   @Override
    public void visitSyncType(SyncType bean) {
       syncType = bean;
    }
 
+   @Override
    public void visitTransactionType(TransactionType bean) {
       transactionType = bean;
    }
 
+   @Override
    public void visitUnsafeType(UnsafeType bean) {
       unsafeType = bean;
+   }
+
+   @Override
+   public void visitQueryConfigurationBean(QueryConfigurationBean bean) {
+      indexingType = bean;
    }
 }

@@ -452,8 +452,12 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       this.clustering.async.setAsyncMarshalling(useAsyncMarshalling);
    }
 
-   public void setQueryConfigurationBean(QueryConfigurationBean indexing) {
-      this.indexing = indexing;
+   public void setIndexingEnabled(boolean enabled) {
+      this.indexing.setEnabled(enabled);
+   }
+
+   public void setIndexLocalOnly(boolean indexLocalOnly) {
+      this.indexing.setIndexLocalOnly(indexLocalOnly);
    }
 
    // ------------------------------------------------------------------------------------------------------------
@@ -488,8 +492,12 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       return invocationBatching.enabled ;
    }
    
-   public QueryConfigurationBean getQueryConfigurationBean() {
-      return indexing;
+   public boolean isIndexingEnabled() {
+      return indexing.isEnabled();
+   }
+
+   public boolean isIndexLocalOnly() {
+      return indexing.isIndexLocalOnly();
    }
 
    public boolean isFetchInMemoryState() {
@@ -676,6 +684,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          if (lazyDeserialization != null) dolly.lazyDeserialization = (LazyDeserialization) lazyDeserialization.clone();
          if (invocationBatching != null) dolly.invocationBatching = (InvocationBatching) invocationBatching.clone();
          if (deadlockDetection != null) dolly.deadlockDetection = (DeadlockDetectionType) deadlockDetection.clone();
+         if (indexing != null) dolly.indexing = (QueryConfigurationBean) indexing.clone();
          return dolly;
       } catch (CloneNotSupportedException e) {
          throw new CacheException("Unexpected!",e);
@@ -1820,7 +1829,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    }
    
    /**
-    * @configRef name="indexing",desc="Configures indexing of entries in the cache for searching."
+    * @configRef name="indexing",desc="Configures indexing of entries in the cache for searching.  Note that infinispan-query.jar and its dependencies needs to be available if this option is to be used."
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    public static class QueryConfigurationBean extends AbstractConfigurationBean {
@@ -1828,10 +1837,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
        /** The serialVersionUID */
        private static final long serialVersionUID = 2891683014353342549L;
 
-       /** @configRef desc="If enabled, entries will be indexed when they are added to the cache.  INdexes will be updated as entries change or are removed." */
+       /** @configRef desc="If enabled, entries will be indexed when they are added to the cache.  Indexes will be updated as entries change or are removed." */
        protected Boolean enabled = false;
 
-       /** @configRef desc="If true, only index changes made locally, ignoring remote changes.  This is useful if indexes are shared across a cluster." */
+       /** @configRef desc="If true, only index changes made locally, ignoring remote changes.  This is useful if indexes are shared across a cluster to prevent redundant indexing of updates." */
        protected Boolean indexLocalOnly = false;
 
        public Boolean isEnabled() {
@@ -1887,6 +1896,18 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
        protected boolean hasComponentStarted() {
            return false;
        }
+
+      @Override
+      public QueryConfigurationBean clone() {
+         try {
+            QueryConfigurationBean dolly = (QueryConfigurationBean) super.clone();
+            dolly.enabled = enabled;
+            dolly.indexLocalOnly = indexLocalOnly;
+            return dolly;
+         } catch (CloneNotSupportedException shouldNotHappen) {
+            throw new RuntimeException("Should not happen!", shouldNotHappen);
+         }
+      }
    }
 
 
