@@ -48,8 +48,5 @@ public class DeclarativeConfigTest extends SingleCacheManagerTest {
       assert p.getName().equals("A Person's Name");
       assert p.getBlurb().equals("A paragraph containing some text");
       assert p.getAge() == 75;
-
-
-
    }
 }
