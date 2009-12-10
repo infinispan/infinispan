@@ -34,6 +34,7 @@ import java.util.Set;
 public class FileCacheStore extends BucketBasedCacheStore {
 
    private static final Log log = LogFactory.getLog(FileCacheStore.class);
+   private static final boolean trace = log.isTraceEnabled();
    private int streamBufferSize;
 
    FileCacheStoreConfig config;
@@ -83,7 +84,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
                } else {
                   bytesRead = objectInput.read(buffer, 0, numBytes - totalBytesRead);
                }
-               
+
                if (bytesRead == -1) break;
                totalBytesRead += bytesRead;
                bos.write(buffer, 0, bytesRead);
@@ -145,8 +146,38 @@ public class FileCacheStore extends BucketBasedCacheStore {
       }
    }
 
+   @Override
+   protected boolean supportsMultiThreadedPurge() {
+      return true;
+   }   
+
    protected void purgeInternal() throws CacheLoaderException {
-      loadAll();
+      if (trace) log.trace("purgeInternal()");
+      acquireGlobalLock(false);
+      try {
+         for (final File bucketFile : root.listFiles()) {
+            if (multiThreadedPurge) {
+               purgerService.execute(new Runnable() {
+                  @Override
+                  public void run() {
+                     Bucket bucket;
+                     try {
+                        if ((bucket = loadBucket(bucketFile)) != null && bucket.removeExpiredEntries())
+                           saveBucket(bucket);
+                     } catch (CacheLoaderException e) {
+                        log.warn("Problems purging file " + bucketFile, e);
+                     }
+                  }
+               });
+            } else {
+               Bucket bucket;
+               if ((bucket = loadBucket(bucketFile)) != null && bucket.removeExpiredEntries()) saveBucket(bucket);
+            }
+         }
+      } finally {
+         releaseGlobalLock(false);
+         if (trace) log.trace("Exit purgeInternal()");
+      }
    }
 
    protected Bucket loadBucket(String bucketName) throws CacheLoaderException {
@@ -215,9 +246,9 @@ public class FileCacheStore extends BucketBasedCacheStore {
          location = "Infinispan-FileCacheStore"; // use relative path!
       location += File.separator + cache.getName();
       root = new File(location);
-      if(!root.exists()) {
+      if (!root.exists()) {
          if (!root.mkdirs()) {
-            log.warn("Problems creating the directory: " + root);  
+            log.warn("Problems creating the directory: " + root);
          }
       }
       if (!root.exists()) {

@@ -17,7 +17,8 @@ import javax.xml.bind.annotation.XmlType;
  * <p/>
  * <ul> <li><tt>purgeSynchronously</tt> - whether {@link org.infinispan.loaders.CacheStore#purgeExpired()} calls happen
  * synchronously or not.  By default, this is set to <tt>false</tt>.</li>
- * <p/>
+ * <li><tt>purgerThreads</tt> - number of threads to use when purging.  Defaults to <tt>1</tt> if <tt>purgeSynchronously</tt>
+ * is <tt>true</tt>, ignored if <tt>false</tt>.</li>
  * </ul>
  * 
  * <p>
@@ -57,6 +58,9 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
    /** @configRef desc="If true, CacheStore#purgeExpired() call will be done synchronously" */
    protected Boolean purgeSynchronously = false;
 
+   /** @configRef desc="The number of threads to use when purging asynchronously." */
+   protected Integer purgerThreads = 1;
+
    protected SingletonStoreConfig singletonStore = new SingletonStoreConfig();
 
    protected AsyncStoreConfig async = new AsyncStoreConfig();
@@ -66,9 +70,19 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
       return purgeSynchronously;
    }
 
+   @XmlAttribute
+   public Integer getPurgerThreads() {
+      return purgerThreads;
+   }
+
    public void setPurgeSynchronously(Boolean purgeSynchronously) {
       testImmutability("purgeSynchronously");
       this.purgeSynchronously = purgeSynchronously;
+   }
+
+   public void setPurgerThreads(Integer purgerThreads) {
+      testImmutability("purgerThreads");
+      this.purgerThreads = purgerThreads;
    }
 
    @XmlAttribute
@@ -145,7 +159,8 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
             && (this.fetchPersistentState.equals(other.fetchPersistentState))
             && Util.safeEquals(this.singletonStore, other.singletonStore)
             && Util.safeEquals(this.async, other.async)
-            && Util.safeEquals(this.purgeSynchronously, other.purgeSynchronously);
+            && Util.safeEquals(this.purgeSynchronously, other.purgeSynchronously)
+            && Util.safeEquals(this.purgerThreads, other.purgerThreads);
    }
 
    @Override
@@ -161,6 +176,7 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
       result = 31 * result + (singletonStore == null ? 0 : singletonStore.hashCode());
       result = 31 * result + (async == null ? 0 : async.hashCode());
       result = 31 * result + (purgeOnStartup ? 0 : 1);
+      result = 31 * result + (purgerThreads);
       return result;
    }
 
@@ -174,6 +190,7 @@ public class AbstractCacheStoreConfig extends AbstractCacheLoaderConfig implemen
             .append(", singletonStore{").append(singletonStore).append('}')
             .append(", async{").append(async).append('}')
             .append(", purgeSynchronously{").append(purgeSynchronously).append('}')
+            .append(", purgerThreads{").append(purgerThreads).append('}')
             .toString();
    }
 

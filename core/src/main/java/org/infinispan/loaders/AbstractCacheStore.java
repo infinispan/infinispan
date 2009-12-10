@@ -15,9 +15,11 @@ import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * An abstract {@link org.infinispan.loaders.CacheStore} that holds common implementations for some methods
@@ -30,9 +32,11 @@ public abstract class AbstractCacheStore extends AbstractCacheLoader implements 
    private Map<GlobalTransaction, List<? extends Modification>> transactions;
    private static Log log = LogFactory.getLog(AbstractCacheStore.class);
    private AbstractCacheStoreConfig config;
-   private ExecutorService purgerService;
+   protected ExecutorService purgerService;
    protected Marshaller marshaller;
    protected Cache cache;
+   private static final AtomicInteger THREAD_COUNTER = new AtomicInteger(0);
+   protected boolean multiThreadedPurge = false;
 
    public void init(CacheLoaderConfig config, Cache cache, Marshaller m) throws CacheLoaderException{
       this.config = (AbstractCacheStoreConfig) config;
@@ -50,9 +54,22 @@ public abstract class AbstractCacheStore extends AbstractCacheLoader implements 
       if (config.isPurgeSynchronously()) {
          purgerService = new WithinThreadExecutor();
       } else {
-         purgerService = Executors.newSingleThreadExecutor();
+         multiThreadedPurge = supportsMultiThreadedPurge() && config.getPurgerThreads() > 1;
+         purgerService = Executors.newFixedThreadPool(supportsMultiThreadedPurge() ? config.getPurgerThreads() : 1, new ThreadFactory() {
+            @Override
+            public Thread newThread(Runnable r) {
+               // Thread name: <cache>-<CacheStore>-<purger>-ID
+               Thread t = new Thread(r, cache.getName() + "-" + config.getCacheLoaderClassName().substring(config.getCacheLoaderClassName().lastIndexOf(".") + 1) + "-" + THREAD_COUNTER.getAndIncrement());
+               t.setDaemon(true);
+               return t;
+            }
+         });
       }
       transactions = new ConcurrentHashMap<GlobalTransaction, List<? extends Modification>>(64, 0.75f, getConcurrencyLevel());
+   }
+
+   protected boolean supportsMultiThreadedPurge() {
+      return false;
    }
 
    public void stop() throws CacheLoaderException {
@@ -61,7 +78,7 @@ public abstract class AbstractCacheStore extends AbstractCacheLoader implements 
 
    public void purgeExpired() throws CacheLoaderException {
       if (purgerService == null)
-         throw new IllegalStateException("PurgeService is null (did you call super.start() from cache loader implementation ?");
+         throw new IllegalStateException("purgerService is null (did you call super.start() from cache loader implementation ?");
       purgerService.execute(new Runnable() {
          public void run() {
             try {
@@ -73,8 +90,7 @@ public abstract class AbstractCacheStore extends AbstractCacheLoader implements 
       });
    }
 
-   protected void purgeInternal() throws CacheLoaderException {
-   }
+   protected abstract void purgeInternal() throws CacheLoaderException;
 
    protected void applyModifications(List<? extends Modification> mods) throws CacheLoaderException {
       for (Modification m : mods) {
