@@ -43,6 +43,7 @@ import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
  */
 class MemcachedTextServer {
    final CacheManager manager;
+   @Deprecated
    final ExecutorService delayedExecutor;
    
    MemcachedTextServer(CacheManager manager) {

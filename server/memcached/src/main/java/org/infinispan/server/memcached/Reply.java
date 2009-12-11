@@ -23,11 +23,16 @@
 package org.infinispan.server.memcached;
 
 /**
- * ErrorReply.
+ * StorageReply.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-public enum ErrorReply {
+public enum Reply {
+   STORED, NOT_STORED, EXISTS, NOT_FOUND, DELETED,
    ERROR, CLIENT_ERROR, SERVER_ERROR;
+   
+   public byte[] bytes() {
+      return this.toString().getBytes();
+   }
 }

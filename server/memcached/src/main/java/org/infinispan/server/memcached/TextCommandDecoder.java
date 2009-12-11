@@ -111,14 +111,14 @@ public class TextCommandDecoder extends ReplayingDecoder<TextCommandDecoder.Stat
       log.error("Unexpected exception", t);
       Channel ch = ctx.getChannel();
       if (t instanceof UnknownCommandException) {
-         ch.write(wrappedBuffer(wrappedBuffer(ErrorReply.ERROR.toString().getBytes()), wrappedBuffer(CRLF)));
+         ch.write(wrappedBuffer(wrappedBuffer(Reply.ERROR.bytes()), wrappedBuffer(CRLF)));
       } else if (t instanceof IOException) {
          StringBuilder sb = new StringBuilder();
-         sb.append(ErrorReply.CLIENT_ERROR).append(' ').append(t);
+         sb.append(Reply.CLIENT_ERROR).append(' ').append(t);
          ch.write(wrappedBuffer(wrappedBuffer(sb.toString().getBytes()), wrappedBuffer(CRLF)));
       } else {
          StringBuilder sb = new StringBuilder();
-         sb.append(ErrorReply.SERVER_ERROR).append(' ').append(t);
+         sb.append(Reply.SERVER_ERROR).append(' ').append(t);
          ch.write(wrappedBuffer(wrappedBuffer(sb.toString().getBytes()), wrappedBuffer(CRLF)));
       }
    }

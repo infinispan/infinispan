@@ -22,40 +22,29 @@
  */
 package org.infinispan.server.memcached;
 
-import java.util.concurrent.BlockingQueue;
+import java.math.BigInteger;
 
 import org.infinispan.Cache;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * DelayedDelete.
+ * IncrementCommand.
  * 
  * @author Galder Zamarreño
  * @since 4.0
- * @deprecated No longer in memcached spec: http://github.com/memcached/memcached/blob/master/doc/protocol.txt
  */
-@Deprecated
-public class DeleteDelayed implements Runnable {
-   private static final Log log = LogFactory.getLog(DeleteDelayed.class);
+public class IncrementCommand extends NumericCommand {
+   private static final Log log = LogFactory.getLog(IncrementCommand.class);
 
-   private final Cache cache;
-   private final BlockingQueue<DeleteDelayedEntry> queue;
-
-   DeleteDelayed(Cache cache, BlockingQueue<DeleteDelayedEntry> queue) {
-      this.queue = queue;
-      this.cache = cache;
+   public IncrementCommand(Cache cache, CommandType type, String key, BigInteger value) {
+      super(cache, type, key, value);
    }
 
    @Override
-   public void run() {
-      try {
-         while (!Thread.currentThread().isInterrupted()) {
-            DeleteDelayedEntry entry = queue.take();
-            cache.remove(entry.key);
-         }
-      } catch (InterruptedException e) {
-         log.debug("Interrupted, so allow thread to exit"); /*  Allow thread to exit  */
-      }
+   protected BigInteger operate(BigInteger oldValue, BigInteger newValue) {
+      if (log.isTraceEnabled()) log.trace("Increment {0} with {1}", oldValue, newValue);
+      return oldValue.add(newValue);
    }
+
 }

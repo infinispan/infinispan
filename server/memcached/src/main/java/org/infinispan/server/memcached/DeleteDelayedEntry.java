@@ -30,7 +30,9 @@ import java.util.concurrent.TimeUnit;
  * 
  * @author Galder Zamarreño
  * @since 4.0
+ * @deprecated No longer in memcached spec: http://github.com/memcached/memcached/blob/master/doc/protocol.txt
  */
+@Deprecated
 public class DeleteDelayedEntry implements Delayed {
 
    final String key;

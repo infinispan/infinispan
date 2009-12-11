@@ -46,21 +46,21 @@ public class CasCommand extends SetCommand {
    }
 
    @Override
-   protected StorageReply put(String key, int flags, byte[] data, long expiry) {
+   protected Reply put(String key, int flags, byte[] data, long expiry) {
       Value old = (Value) cache.get(key);
       if (old != null) {
          if (old.getCas() == cas) {
             Value value = new Value(flags, data);
             boolean replaced = cache.replace(key, old, value);
             if (replaced)
-               return StorageReply.STORED;
+               return Reply.STORED;
             else
-               return StorageReply.EXISTS;
+               return Reply.EXISTS;
          } else {
-            return StorageReply.EXISTS;
+            return Reply.EXISTS;
          }
       }
-      return StorageReply.NOT_FOUND;
+      return Reply.NOT_FOUND;
    }
 
    public static CasCommand newCasCommand(Cache cache, StorageParameters params, long cas, byte[] data) {

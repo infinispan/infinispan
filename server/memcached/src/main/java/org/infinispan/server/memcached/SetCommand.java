@@ -41,7 +41,6 @@ import org.jboss.netty.channel.Channel;
  * @since 4.0
  */
 public class SetCommand extends StorageCommand {
-
    private static final Log log = LogFactory.getLog(SetCommand.class);
 
    SetCommand(Cache cache, CommandType type, StorageParameters params, byte[] data) {
@@ -50,7 +49,7 @@ public class SetCommand extends StorageCommand {
 
    @Override
    public Object perform(Channel ch) throws Exception {
-      StorageReply reply;
+      Reply reply;
       try {
          if (params.expiry == 0) {
             reply = put(params.key, params.flags, data);
@@ -77,23 +76,23 @@ public class SetCommand extends StorageCommand {
          
       } catch (Exception e) {
          log.error("Unexpected exception performing command", e);
-         reply = StorageReply.NOT_STORED;
+         reply = Reply.NOT_STORED;
       }
-      ch.write(wrappedBuffer(wrappedBuffer(reply.toString().getBytes()), wrappedBuffer(CRLF)));
+      ch.write(wrappedBuffer(wrappedBuffer(reply.bytes()), wrappedBuffer(CRLF)));
       return null;
    }
 
-   protected StorageReply put(String key, int flags, byte[] data) {
+   protected Reply put(String key, int flags, byte[] data) {
       return put(key, flags, data, -1);
    }
 
-   protected StorageReply put(String key, int flags, byte[] data, long expiry) {
+   protected Reply put(String key, int flags, byte[] data, long expiry) {
       Value value = new Value(flags, data);
       cache.put(key, value, expiry, TimeUnit.MILLISECONDS);
       return reply();
    }
 
-   private StorageReply reply() {
-      return StorageReply.STORED;
+   private Reply reply() {
+      return Reply.STORED;
    }
 }

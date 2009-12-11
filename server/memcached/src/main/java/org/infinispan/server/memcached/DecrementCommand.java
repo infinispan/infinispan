@@ -22,14 +22,33 @@
  */
 package org.infinispan.server.memcached;
 
+import java.math.BigInteger;
+
+import org.infinispan.Cache;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
 /**
- * StorageReply.
+ * DecrementCommand.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-public enum StorageReply {
-   STORED, NOT_STORED, 
-   EXISTS, NOT_FOUND // replies only valid for cas
-   ;
+public class DecrementCommand extends NumericCommand {
+   private static final Log log = LogFactory.getLog(DecrementCommand.class);
+
+   public DecrementCommand(Cache cache, CommandType type, String key, BigInteger value) {
+      super(cache, type, key, value);
+   }
+
+   @Override
+   protected BigInteger operate(BigInteger oldValue, BigInteger newValue) {
+      if (log.isTraceEnabled()) log.trace("Substract {0} to {1}", newValue, oldValue);
+      BigInteger b = oldValue.subtract(newValue);
+      if (b.signum() < 0)
+         return BigInteger.valueOf(0);
+      else
+         return b; 
+   }
+
 }

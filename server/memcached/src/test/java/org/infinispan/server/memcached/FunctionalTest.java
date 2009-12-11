@@ -61,8 +61,8 @@ public class FunctionalTest extends SingleCacheManagerTest {
       DefaultConnectionFactory d = new DefaultConnectionFactory() {
          @Override
          public long getOperationTimeout() {
-            // return 360000;
-            return 5000;
+            return 360000;
+            // return 5000;
          }
       };
       
@@ -75,7 +75,7 @@ public class FunctionalTest extends SingleCacheManagerTest {
       server.stop();
    }
    
-   public void testBasicSet(Method m) throws Exception {
+   public void testSetBasic(Method m) throws Exception {
       Future<Boolean> f = client.set(k(m), 0, v(m));
       assert f.get(5, TimeUnit.SECONDS);
       assert v(m).equals(client.get(k(m)));
@@ -110,7 +110,7 @@ public class FunctionalTest extends SingleCacheManagerTest {
       assert ret.get(k(m, "k3-")).equals(v(m, "v3-"));
    }
 
-   public void testBasicAdd(Method m) throws Exception {
+   public void testAddBasic(Method m) throws Exception {
       Future<Boolean> f = client.add(k(m), 0, v(m));
       assert f.get(5, TimeUnit.SECONDS);
       assert v(m).equals(client.get(k(m)));
@@ -149,7 +149,7 @@ public class FunctionalTest extends SingleCacheManagerTest {
       assert client.get(k(m)).equals(v(m));
    }
 
-   public void testBasicReplace(Method m) throws Exception {
+   public void testReplaceBasic(Method m) throws Exception {
       Future<Boolean> f = client.add(k(m), 0, v(m));
       assert(f.get(5, TimeUnit.SECONDS));
       assert v(m).equals(client.get(k(m)));
@@ -190,7 +190,7 @@ public class FunctionalTest extends SingleCacheManagerTest {
       assert null == client.get(k(m));
    }
 
-   public void testBasicAppend(Method m) throws Exception {
+   public void testAppendBasic(Method m) throws Exception {
       Future<Boolean> f = client.add(k(m), 0, v(m));
       assert f.get(5, TimeUnit.SECONDS);
       assert v(m).equals(client.get(k(m)));
@@ -201,7 +201,7 @@ public class FunctionalTest extends SingleCacheManagerTest {
       assert expected.equals(client.get(k(m)));
    }
 
-   public void testBasicPrepend(Method m) throws Exception {
+   public void testPrependBasic(Method m) throws Exception {
       Future<Boolean> f = client.add(k(m), 0, v(m));
       assert f.get(5, TimeUnit.SECONDS);
       assert v(m).equals(client.get(k(m)));
@@ -212,7 +212,7 @@ public class FunctionalTest extends SingleCacheManagerTest {
       assert expected.equals(client.get(k(m)));
    }
 
-   public void testBasicGets(Method m) throws Exception {
+   public void testGetsBasic(Method m) throws Exception {
       Future<Boolean> f = client.set(k(m), 0, v(m));
       assert f.get(5, TimeUnit.SECONDS);
       CASValue<Object> value = client.gets(k(m));
@@ -220,7 +220,7 @@ public class FunctionalTest extends SingleCacheManagerTest {
       assert value.getCas() != 0;
    }
 
-   public void testBasicCas(Method m) throws Exception {
+   public void testCasBasic(Method m) throws Exception {
       Future<Boolean> f = client.set(k(m), 0, v(m));
       assert f.get(5, TimeUnit.SECONDS);
       CASValue<Object> value = client.gets(k(m));
@@ -263,9 +263,72 @@ public class FunctionalTest extends SingleCacheManagerTest {
       assert CASResponse.OK == resp;
    }
 
-   public void testBasicDelete(Method m) throws Exception {
-      Future<Boolean> f = client.delete(k(m));
+   public void testDeleteBasic(Method m) throws Exception {
+      Future<Boolean> f = client.set(k(m), 0, v(m));
       assert f.get(5, TimeUnit.SECONDS);
+      f = client.delete(k(m));
+      assert f.get(5, TimeUnit.SECONDS);
+   }
+
+   public void testDeleteDoesNotExist(Method m) throws Exception {
+      Future<Boolean> f = client.delete(k(m));
+      assert !f.get(5, TimeUnit.SECONDS);
+   }
+
+   public void testIncrementBasic(Method m) throws Exception {
+      Future<Boolean> f = client.set(k(m), 0, 1);
+      assert f.get(5, TimeUnit.SECONDS);
+      assert 2 == client.incr(k(m), 1);
+   }
+
+   public void testIncrementTriple(Method m) throws Exception {
+      Future<Boolean> f = client.set(k(m), 0, 1);
+      assert f.get(5, TimeUnit.SECONDS);
+      assert 2 == client.incr(k(m), 1);
+      assert 4 == client.incr(k(m), 2);
+      assert 8 == client.incr(k(m), 4);
+   }
+
+   public void testIncrementNotExist(Method m) throws Exception {
+      assert -1 == client.incr(k(m), 1);
+   }
+
+   public void testIncrementIntegerMax(Method m) throws Exception {
+      Future<Boolean> f = client.set(k(m), 0, 0);
+      assert f.get(5, TimeUnit.SECONDS);
+      assert Integer.MAX_VALUE == client.incr(k(m), Integer.MAX_VALUE);
+   }
+
+   public void testIncrementBeyondIntegerMax(Method m) throws Exception {
+      Future<Boolean> f = client.set(k(m), 0, 1);
+      assert f.get(5, TimeUnit.SECONDS);
+      long newValue = client.incr(k(m), Integer.MAX_VALUE);
+      assert new Long(Integer.MAX_VALUE) + 1 == newValue : "New value not expected: " + newValue;
+   }
+
+   public void testDecrementBasic(Method m) throws Exception {
+      Future<Boolean> f = client.set(k(m), 0, 1);
+      assert f.get(5, TimeUnit.SECONDS);
+      assert 0 == client.decr(k(m), 1);
+   }
+
+   public void testDecrementTriple(Method m) throws Exception {
+      Future<Boolean> f = client.set(k(m), 0, 8);
+      assert f.get(5, TimeUnit.SECONDS);
+      assert 7 == client.decr(k(m), 1);
+      assert 5 == client.decr(k(m), 2);
+      assert 1 == client.decr(k(m), 4);
+   }
+
+   public void testDecrementNotExist(Method m) throws Exception {
+      assert -1 == client.decr(k(m), 1);
+   }
+
+   public void testDecrementBelowZero(Method m) throws Exception {
+      Future<Boolean> f = client.set(k(m), 0, 1);
+      assert f.get(5, TimeUnit.SECONDS);
+      long newValue = client.decr(k(m), 2);
+      assert 0 ==  newValue : "Unexpected result: " + newValue;
    }
 
    private String k(Method method, String prefix) {

@@ -24,6 +24,7 @@ package org.infinispan.server.memcached;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -33,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.Cache;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.jboss.util.NotImplementedException;
 
 /**
  * CommandFactory.
@@ -44,6 +46,7 @@ public class CommandFactory {
    private static final Log log = LogFactory.getLog(CommandFactory.class);
 
    private final Cache cache;
+   @Deprecated
    private final BlockingQueue<DeleteDelayedEntry> queue;
    
    public CommandFactory(Cache cache, BlockingQueue<DeleteDelayedEntry> queue) {
@@ -79,11 +82,16 @@ public class CommandFactory {
             keys.addAll(Arrays.asList(args).subList(1, args.length));
             return RetrievalCommand.newRetrievalCommand(cache, type, new RetrievalParameters(keys));
          case DELETE:
+            String delKey = getKey(args[1]);
+            return DeleteCommand.newDeleteCommand(cache, delKey, queue);
+         case INCR:
+         case DECR:
             String key = getKey(args[1]);
-            long time = getOptionalTime(args[2]);
-            return DeleteCommand.newDeleteCommand(cache, key, time, queue);
+            // Value is defined as unsigned 64-integer (or simply unsigned long in java language)
+            BigInteger value = new BigInteger(args[2]);
+            return NumericCommand.newNumericCommand(cache, type, key, value);
          default:
-            return null;
+            throw new NotImplementedException("Parsed type not implemented yet");
       }
    }
 
@@ -111,8 +119,4 @@ public class CommandFactory {
       return Integer.parseInt(bytes);
    }
 
-   private long getOptionalTime(String time) {
-      if (time == null) return 0;
-      return Long.parseLong(time); // seconds
-   }
 }

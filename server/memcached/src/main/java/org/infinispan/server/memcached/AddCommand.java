@@ -39,17 +39,17 @@ public class AddCommand extends SetCommand {
    }
 
    @Override
-   protected StorageReply put(String key, int flags, byte[] data, long expiry) {
+   protected Reply put(String key, int flags, byte[] data, long expiry) {
       Value value = new Value(flags, data);
       Object prev = cache.putIfAbsent(key, value, expiry, TimeUnit.MILLISECONDS);
       return reply(prev);
    }
 
-   private StorageReply reply(Object prev) {
+   private Reply reply(Object prev) {
       if (prev == null)
-         return StorageReply.STORED;
+         return Reply.STORED;
       else 
-         return StorageReply.NOT_STORED;
+         return Reply.NOT_STORED;
    }
 
 }
