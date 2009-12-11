@@ -4,6 +4,8 @@ import sys
 import os
 import subprocess
 import shutil
+from datetime import *
+from multiprocessing import Process
 
 try:
   from xml.etree.ElementTree import ElementTree
@@ -181,6 +183,15 @@ def checkInMaven2Repo(version, workingDir):
   moduleNames=[]
   for p in poms:
     moduleNames.append(settings[local_mvn_repo_dir_key] + "/" + getModuleName(p) + "/" + version)
+    
+  # See if any of the modules are new and need to be added as well.
+  newmodules = []
+  for m in modules:
+    mod_dir = settings[local_mvn_repo_dir_key] + "/" + getModuleName(p)
+    if not is_in_svn(mod_dir):
+      newmodules.append(mod_dir)
+  if len(newmodules) > 0:
+    client.add(newmodules)
   client.add(moduleNames)
   for mn in moduleNames:
     checkInMessage = "Infinispan Release Script: Releasing module " + mn + " version " + version + " to public Maven2 repo"
@@ -209,9 +220,9 @@ def uploadJavadocs(base_dir, workingDir, version):
   print "They have also been uploaded to Sourceforge."
   print "MANUAL STEPS:"
   print "  1) Email archive to helpdesk@redhat.com"
-  print "  2) SSH to sourceforge and run apidocs.sh"
+  print "  2) SSH to sourceforge (ssh -t SF_USERNAME,infinispan@shell.sourceforge.net create) and run '/home/groups/i/in/infinispan/install_apidocs.sh'"
   print ""    
-  
+
 ### This is the starting place for this script.
 def release():
   require_settings_file()
@@ -229,6 +240,12 @@ def release():
   # We start by determining whether the version passed in is a valid one
   if len(sys.argv) < 2:
     helpAndExit()
+  
+  ### Ensure that the maven repo root is in SVN
+  if not is_in_svn(settings[local_mvn_repo_dir_key]):
+    print "Your 'local_mvn_repo_dir' - %s - is not in Subversion so cannot be checked in!  Cannot proceed!" % settings[local_mvn_repo_dir_key]
+    sys.exit(3)
+      
   base_dir = os.getcwd()
   version = validateVersion(sys.argv[1])
   print "Releasing Infinispan version " + version
@@ -253,19 +270,28 @@ def release():
   buildAndTest(workingDir)
   print "Step 3: Complete"
   
+  async_processes = []
+    
   # Step 4: Check in to Maven2 repo
   print "Step 4: Checking in to Maven2 Repo (this can take a while, go get coffee)"
-  checkInMaven2Repo(version, workingDir)
+  async_processes.append(Process(target = checkInMaven2Repo, args = (version, workingDir)))  
   print "Step 4: Complete"
   
   # Step 5: Upload javadocs to FTP
-  print "Step 5: Uploading Javadocs"
-  uploadJavadocs(base_dir, workingDir, version)
+  print "Step 5: Uploading Javadocs"  
+  async_processes.append(Process(target = uploadJavadocs, args = (base_dir, workingDir, version)))  
   print "Step 5: Complete"
   
   print "Step 6: Uploading to Sourceforge"
-  uploadArtifactsToSourceforge(version)
+  async_processes.append(Process(target = uploadArtifactsToSourceforge, args = (version)))    
   print "Step 6: Complete"
+  
+  ## Wait for processes to finish
+  for p in async_processes:
+    p.start()
+  
+  for p in async_processes:
+    p.join()
   
   # (future)
   # Step 6: Update www.infinispan.org
@@ -274,7 +300,8 @@ def release():
   print "\n\n\nDone!  Now all you need to do is:"
   print "   1.  Update http://www.infinispan.org"
   print "   2.  Update wiki pages with relevant information and links to docs, etc"
-  print "   3.  Login to the Sourceforge project admin page and mark the -bin.ZIP package as the default download for all platforms."
+  print "   3.  Log in to the Sourceforge project admin page and mark the -bin.ZIP package as the default download for all platforms."
+  print "   4.  Log in to JIRA and update the version info, mark %s as released on date %s, etc." % (version, date.today().isoformat())
 
 
 if __name__ == "__main__":
