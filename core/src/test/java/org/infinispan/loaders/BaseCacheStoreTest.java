@@ -421,15 +421,15 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
    }
 
    public void testPurgeExpired() throws Exception {
-      long lifespan = 1000;
-      long idle = 500;
+      long lifespan = 3000;
+      long idle = 2000;
       cs.store(InternalEntryFactory.create("k1", "v1", lifespan));
       cs.store(InternalEntryFactory.create("k2", "v2", -1, idle));
       cs.store(InternalEntryFactory.create("k3", "v3", lifespan, idle));
       assert cs.containsKey("k1");
       assert cs.containsKey("k2");
       assert cs.containsKey("k3");
-      Thread.sleep(lifespan + 100);
+      Thread.sleep(lifespan + 10);
       cs.purgeExpired();
       assert !cs.containsKey("k1");
       assert !cs.containsKey("k2");
