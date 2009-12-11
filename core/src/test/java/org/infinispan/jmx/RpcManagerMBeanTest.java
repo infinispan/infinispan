@@ -29,6 +29,13 @@ import java.util.List;
  * Need to show this to Max either in the office or via a screencast to see how 
  * to debug it.
  * 
+ * More information: Seems to be a problem with enabling java assertion. If no -ea is
+ * passed, the command line does show '-ea' but no assertions are checked. If -ear is 
+ * explicitly passed, you see '-ea -ea' in the command line and then assertions are 
+ * enabled.
+ * 
+ * A workaround in Eclipse is to add -ea to the default VM parameters used.
+ * 
  * @author Mircea.Markus@jboss.com
  */
 @Test(groups = "functional", testName = "jmx.RpcManagerMBeanTest")
