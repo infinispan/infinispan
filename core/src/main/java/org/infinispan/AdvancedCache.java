@@ -9,6 +9,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.remoting.rpc.RpcManager;
 
+import javax.transaction.TransactionManager;
 import java.util.Collection;
 import java.util.List;
 
@@ -118,4 +119,6 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
    InvocationContextContainer getInvocationContextContainer();
 
    DataContainer getDataContainer();
+
+   TransactionManager getTransactionManager();
 }

@@ -9,6 +9,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.remoting.rpc.RpcManager;
 
+import javax.transaction.TransactionManager;
 import java.util.Collection;
 import java.util.List;
 
@@ -73,6 +74,10 @@ public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDele
 
    public DataContainer getDataContainer() {
       return cache.getDataContainer();
+   }
+
+   public TransactionManager getTransactionManager() {
+      return cache.getTransactionManager();
    }
 
    public AdvancedCache<K, V> withFlags(Flag... flags) {

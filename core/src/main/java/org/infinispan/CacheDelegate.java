@@ -40,7 +40,6 @@ import org.infinispan.config.ConfigurationException;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
-import static org.infinispan.context.Flag.*;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.eviction.EvictionManager;
@@ -81,8 +80,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import java.util.concurrent.TimeoutException;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.infinispan.context.Flag.*;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -401,6 +402,10 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V> {
 
    public DataContainer getDataContainer() {
       return dataContainer;
+   }
+
+   public TransactionManager getTransactionManager() {
+      return transactionManager;
    }
 
    public CacheManager getCacheManager() {
