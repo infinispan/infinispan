@@ -159,7 +159,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
             throw new CacheException("Unable to start JGroups Channel", e);
          }
       }
-      log.info("Cache local address is {0}, physical address is {1}", getAddress(), getPhysicalAddress());
+      log.info("Cache local address is {0}, physical addresses are {1}", getAddress(), getPhysicalAddresses());
 
       // ensure that the channel has FLUSH enabled.
       // see ISPN-83 for details.
@@ -357,12 +357,12 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
       return address;
    }
 
-   public Address getPhysicalAddress() {
+   public List<Address> getPhysicalAddresses() {
       if (physicalAddress == null && channel != null) {
          org.jgroups.Address addr = (org.jgroups.Address) channel.downcall(new Event(Event.GET_PHYSICAL_ADDRESS, channel.getAddress()));
          physicalAddress = new JGroupsAddress(addr);
       }
-      return physicalAddress;
+      return Collections.singletonList(physicalAddress);
    }
 
    // ------------------------------------------------------------------------------------------------------------------

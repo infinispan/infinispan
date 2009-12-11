@@ -327,11 +327,11 @@ public class RpcManagerImpl implements RpcManager {
       return address == null ? "N/A" : address.toString();
    }
 
-   @ManagedAttribute(description = "The physical network address associated with this instance")
-   @Metric(displayName = "Physical network address", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
-   public String getPhysicalAddress() {
+   @ManagedAttribute(description = "The physical network addresses associated with this instance")
+   @Metric(displayName = "Physical network addresses", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
+   public String getPhysicalAddresses() {
       if (t == null || !isStatisticsEnabled()) return "N/A";
-      Address address = t.getPhysicalAddress();
+      List<Address> address = t.getPhysicalAddresses();
       return address == null ? "N/A" : address.toString();
    }
 
