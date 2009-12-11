@@ -23,7 +23,7 @@
       <scm.module.path>plugin/infinispan</scm.module.path>
       <rhq.defaultDevContainerPath>/jon/dev-container</rhq.defaultDevContainerPath>
       <version.rhq>1.2.0.GA</version.rhq>
-      <version.rhq.plugingen>1.4.0-SNAPSHOT</version.rhq.plugingen>
+      <version.rhq.plugingen>1.4.0.B01</version.rhq.plugingen>
       <version.mc4j>1.2.6</version.mc4j>
       <version.hibernate.core>3.3.1.GA</version.hibernate.core>
       <version.hibernate.annotations>3.4.0.GA</version.hibernate.annotations>

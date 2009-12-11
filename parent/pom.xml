@@ -296,7 +296,7 @@
          <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>findbugs-maven-plugin</artifactId>
-            <version>1.2-SNAPSHOT</version>
+            <version>2.3</version>
             <configuration>
                <onlyAnalyze>org.infinispan.*</onlyAnalyze>
                <xmlOutput>true</xmlOutput>
