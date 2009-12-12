@@ -21,9 +21,17 @@
  */
 package org.infinispan.lucene.testutils;
 
+import java.io.IOException;
+
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.util.Version;
+import org.apache.lucene.analysis.SimpleAnalyzer;
+import org.apache.lucene.index.CorruptIndexException;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.MergeScheduler;
+import org.apache.lucene.index.SerialMergeScheduler;
+import org.apache.lucene.index.IndexWriter.MaxFieldLength;
+import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.LockObtainFailedException;
 
 /**
  * Collects common LuceneSettings for all tests; especially define the backwards compatibility.
@@ -33,7 +41,17 @@ import org.apache.lucene.util.Version;
  */
 public class LuceneSettings {
 
-   public static final Version luceneCompatibility = Version.LUCENE_24;
-   public static final Analyzer analyzer = new StandardAnalyzer(luceneCompatibility);
+   public static final Analyzer analyzer = new SimpleAnalyzer();
+   
+   private static final MergeScheduler mergeScheduler = new SerialMergeScheduler();
+   
+   /**
+    * Until ISPN-307 it's mandatory to set the MergeScheduler to a SerialMergeScheduler when opening an IndexWriter
+    */
+   public static IndexWriter openWriter(Directory directory) throws CorruptIndexException, LockObtainFailedException, IOException {
+      IndexWriter iwriter = new IndexWriter(directory, LuceneSettings.analyzer, false, MaxFieldLength.UNLIMITED);
+      iwriter.setMergeScheduler( mergeScheduler );
+      return iwriter;
+   }
 
 }

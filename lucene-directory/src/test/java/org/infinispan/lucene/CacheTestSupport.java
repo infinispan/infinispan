@@ -24,6 +24,7 @@ package org.infinispan.lucene;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Random;
 
 import org.apache.lucene.document.DateTools;
@@ -31,8 +32,10 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.SerialMergeScheduler;
-import org.apache.lucene.queryParser.QueryParser;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.index.IndexWriter.MaxFieldLength;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.LockObtainFailedException;
 import org.infinispan.util.logging.Log;
@@ -40,17 +43,20 @@ import org.infinispan.util.logging.LogFactory;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
 import org.infinispan.config.Configuration;
+import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.config.Configuration.CacheMode;
 import org.infinispan.lucene.testutils.LuceneSettings;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.DefaultCacheManager;
 
 public abstract class CacheTestSupport {
 
    private static final Log log = LogFactory.getLog(CacheTestSupport.class);
-   
+
    protected static CacheManager createTestCacheManager() {
       return TestCacheManagerFactory.createClusteredCacheManager( createTestConfiguration() );
    }
-   
+
    public static Configuration createTestConfiguration() {
       Configuration c = new Configuration();
       c.setCacheMode(Configuration.CacheMode.DIST_SYNC);
@@ -115,13 +121,35 @@ public abstract class CacheTestSupport {
          // this is a read
          search = new IndexSearcher(d, true);
          // dummy query that probably won't return anything
-         QueryParser qp = new QueryParser(LuceneSettings.luceneCompatibility, "path", LuceneSettings.analyzer);
-         search.search(qp.parse("good"), null, 1);
+         Term term = new Term( "path", "good" );
+         TermQuery termQuery = new TermQuery(term);
+         search.search(termQuery, null, 1);
       } finally {
          if (search != null) {
             search.close();
          }
       }
+   }
+
+   public static CacheManager createLocalCacheManager() {
+      GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
+      Configuration cfg = new Configuration();
+      cfg.setCacheMode(CacheMode.LOCAL);
+      cfg.setEnableDeadlockDetection(false);
+      cfg.setExposeJmxStatistics(false);
+      cfg.setL1CacheEnabled(false);
+      cfg.setWriteSkewCheck(false);
+      cfg.setTransactionManagerLookupClass(JBossStandaloneJTAManagerLookup.class.getName());
+      return new DefaultCacheManager(globalConfiguration, cfg);
+   }
+   
+   public static void initializeDirectory(Directory directory) throws IOException {
+      IndexWriter iwriter = new IndexWriter(directory, LuceneSettings.analyzer, true, MaxFieldLength.UNLIMITED);
+      iwriter.commit();
+      iwriter.close();
+      //reopen to check for index
+      IndexSearcher searcher = new IndexSearcher(directory, true);
+      searcher.close();
    }
 
 }

@@ -37,7 +37,9 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 
 /**
- * CacheFactory. This is currently needed as a workaround for ISPN-261 : Cachemanager instantiated in different threads in same JVM don't interact
+ * CacheFactory useful to create clustered caches on-demand in several tests.
+ * The same thread is used to actually create each cache, making it possible to create
+ * several connected caches even though the testing suite in infinispan isolates different threads.
  * 
  * @author Sanne Grinovero
  * @since 4.0
@@ -47,7 +49,7 @@ public class ClusteredCacheFactory {
 
    private final BlockingQueue<Configuration> requests = new SynchronousQueue<Configuration>();
    private final BlockingQueue<Cache<CacheKey, Object>> results = new SynchronousQueue<Cache<CacheKey, Object>>();
-   private final ExecutorService executor = Executors.newFixedThreadPool(1);
+   private final ExecutorService executor = Executors.newSingleThreadExecutor();
    private final Configuration cfg;
    
    @GuardedBy("this") private boolean started = false;
@@ -64,8 +66,7 @@ public class ClusteredCacheFactory {
 
    /**
     * Create a cache using default configuration 
-    * @return
-    * @throws InterruptedException
+    * @throws InterruptedException if interrupted while waiting for the cache construction
     */
    public synchronized Cache<CacheKey, Object> createClusteredCache() throws InterruptedException {
       if (!started)
