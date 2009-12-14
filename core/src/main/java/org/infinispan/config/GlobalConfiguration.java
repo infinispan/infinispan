@@ -37,6 +37,9 @@ import java.util.Properties;
  * @configRef name="global",desc="Defines global settings shared among all cache instances created by a single
  * CacheManager."
  * @since 4.0
+ * 
+ * @see <a href="../../../config.html#ce_infinispan_global">Configuration reference</a>
+ * 
  */
 @SurvivesRestarts
 @Scope(Scopes.GLOBAL)
@@ -501,6 +504,9 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
     * asynchronous listeners."
     * @configRef name="asyncTransportExecutor",desc="Configuration for the executor service used for asynchronous work
     * on the Transport, including asynchronous marshalling and Cache 'async operations' such as Cache.putAsync()."
+    * 
+    * @see <a href="../../../config.html#ce_global_asyncListenerExecutor">Configuration reference</a>
+    * 
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    public static class ExecutorFactoryType extends FactoryClassWithPropertiesType {
@@ -538,6 +544,9 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
     * @configRef name="replicationQueueScheduledExecutor",desc="Configuration for the scheduled executor service used to
     * periodically flush replication queues, used if asynchronous clustering is enabled along with useReplQueue being
     * set to true."
+    * 
+    * @see <a href="../../../config.html#ce_global_evictionScheduledExecutor">Configuration reference</a>
+    * 
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    public static class ScheduledExecutorFactoryType extends FactoryClassWithPropertiesType {
@@ -572,6 +581,8 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    /**
     * @configRef name="transport",desc="This element configures the transport used for network communications across the
     * cluster."
+    * 
+    * @see <a href="../../../config.html#ce_global_transport">Configuration reference</a>
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    public static class TransportType extends AbstractConfigurationBeanWithGCR {
@@ -660,6 +671,8 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
 
    /**
     * @configRef name="serialization",desc="Serialization and marshalling settings."
+    * 
+    * @see <a href="../../../config.html#ce_global_serialization">Configuration reference</a>
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    public static class SerializationType extends AbstractConfigurationBeanWithGCR {
@@ -706,6 +719,8 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    /**
     * @configRef name="globalJmxStatistics",desc="This element specifies whether global statistics are gathered and
     * reported via JMX for all caches under this cache manager."
+    * 
+    * @see <a href="../../../config.html#ce_global_globalJmxStatistics">Configuration reference</a>
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    public static class GlobalJmxStatisticsType extends AbstractConfigurationBeanWithGCR {
@@ -769,6 +784,8 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    /**
     * @configRef name="shutdown",desc=" This element specifies behavior when the JVM running the cache instance shuts
     * down."
+    * 
+    * @see <a href="../../../config.html#ce_global_shutdown">Configuration reference</a>
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    public static class ShutdownType extends AbstractConfigurationBeanWithGCR {

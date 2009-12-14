@@ -264,7 +264,13 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
          if (fieldDoc != null) {
             Tag[] tags = fieldDoc.tags(CONFIG_REF);
             Map<String, String> p = parseTag(tags[0].text().trim());
-            sb.append("<td>").append(p.get("desc")).append("</td>\n");
+            sb.append("<td>").append(p.get("desc")).append("\n");
+            String packageDir = fieldDoc.containingPackage().toString().replace(".", "/").concat("/");
+            String htmlFile = fieldDoc.containingClass().typeName().concat(".html");
+            String field = fieldDoc.name();
+            sb.append("<a href=\"" +packageDir.concat(htmlFile).concat("#").concat(field) +"\">" + " API</a>");
+            sb.append("</td>\n");
+            
          }
          sb.append("</tr>\n");
       }

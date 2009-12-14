@@ -45,6 +45,8 @@ import java.util.List;
  * 
  * @configRef name="loaders",desc="Holds the configuration for cache loaders and stores."
  * 
+ * @see <a href="../../../config.html#ce_default_loaders">Configuration reference</a>
+ * 
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
  * @author Brian Stansberry
  * @author Vladimir Blagojevic

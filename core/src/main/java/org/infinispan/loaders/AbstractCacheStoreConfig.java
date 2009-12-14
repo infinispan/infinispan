@@ -32,6 +32,8 @@ import javax.xml.bind.annotation.XmlType;
  * @author Mircea.Markus@jboss.com
  * @author Vladimir Blagojevic
  * @since 4.0
+ * 
+ * @see <a href="../../../config.html#ce_loaders_loader">Configuration reference</a>
  */
 @XmlAccessorType(XmlAccessType.PUBLIC_MEMBER)
 @XmlType(propOrder= {"singletonStoreConfig", "asyncStoreConfig"})

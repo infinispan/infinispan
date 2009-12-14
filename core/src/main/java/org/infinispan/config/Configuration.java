@@ -66,6 +66,8 @@ import java.util.concurrent.TimeUnit;
  * @author Vladimir Blagojevic
  * @author Galder Zamarreño
  * @since 4.0
+ * 
+ * @see <a href="../../../config.html#ce_infinispan_default">Configuration reference</a>
  */
 @SurvivesRestarts
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -727,6 +729,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    /**
     * 
     * @configRef name="transaction",desc="Defines transactional (JTA) characteristics of the cache."
+    * 
+    * @see <a href="../../../config.html#ce_default_transaction">Configuration reference</a>
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    public static class TransactionType extends AbstractNamedCacheConfigurationBean{
@@ -842,6 +846,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    /**
     * 
     * @configRef name="locking",desc="Defines the local, in-VM locking and concurrency characteristics of the cache."
+    * 
+    * @see <a href="../../../config.html#ce_default_locking">Configuration reference</a>
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    public static class LockingType  extends AbstractNamedCacheConfigurationBean{
@@ -943,6 +949,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    
    /**
     * @configRef name="clustering",desc="Defines clustered characteristics of the cache."
+    * 
+    * @see <a href="../../../config.html#ce_default_clustering">Configuration reference</a>
     */
    @XmlJavaTypeAdapter(ClusteringTypeAdapter.class)
    @XmlAccessorType(XmlAccessType.PROPERTY)
@@ -1078,6 +1086,9 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     *            asynchronous, in that whenever a thread sends a message sent over the wire, it does not wait 
     *            for an acknowledgement before returning. This element is mutually exclusive with the <sync /> 
     *            element.<br /><br />Characteristics of this can be tuned here."
+    *            
+    * @see <a href="../../../config.html#ce_clustering_async">Configuration reference</a>
+    *            
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    public static class AsyncType extends AbstractNamedCacheConfigurationBean {
@@ -1174,6 +1185,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    
    /**
     * @configRef name="expiration",desc="This element controls the default expiration settings for entries in the cache."
+    * 
+    * @see <a href="../../../config.html#ce_default_expiration">Configuration reference</a>
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    public static class ExpirationType extends AbstractNamedCacheConfigurationBean{
@@ -1231,6 +1244,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
    /**
     * @configRef name="eviction",desc="This element controls the eviction settings for the cache."
+    * 
+    * @see <a href="../../../config.html#ce_default_eviction">Configuration reference</a>
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    public static class EvictionType extends AbstractNamedCacheConfigurationBean {
@@ -1298,6 +1313,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    /**
     * @configRef name="stateRetrieval",desc="Configures how state is retrieved when a new cache joins the cluster.  This
     *                                  element is only used with invalidation and replication clustered modes."
+    *                                  
+    * @see <a href="../../../config.html#ce_clustering_stateRetrieval">Configuration reference</a>                                  
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    public static class StateRetrievalType extends AbstractNamedCacheConfigurationBean {
@@ -1390,6 +1407,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     *            thread sends a message sent over the wire, it blocks until it receives an acknowledgement from the 
     *            recipient. This element is mutually exclusive with the <async />  element.  <br /><br />Characteristics of this can be tuned here."
     *
+    * @see <a href="../../../config.html#ce_clustering_sync">Configuration reference</a>
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    public static class SyncType  extends AbstractNamedCacheConfigurationBean {
@@ -1433,6 +1451,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    /**
     * @configRef name="hash",desc="Allows fine-tuning of rehashing characteristics. Only used with 'distributed' 
     *            cache mode, and otherwise ignored."
+    *            
+    * @see <a href="../../../config.html#ce_clustering_hash">Configuration reference</a>
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    public static class HashType extends AbstractNamedCacheConfigurationBean {
@@ -1522,6 +1542,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    /**
     * @configRef name="l1",desc="This element configures the L1 cache behavior in 'distributed' caches instances.
     *            In any other cache modes, this element is ignored. "
+    *            
+    * @see <a href="../../../config.html#ce_clustering_l1">Configuration reference</a>           
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    public static class L1Type extends AbstractNamedCacheConfigurationBean {
@@ -1641,6 +1663,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     *            deferred till the point in time in which they are used and needed. This typically means that any 
     *            deserialization happens using the thread context class loader of the invocation that requires 
     *            deserialization, and is an effective mechanism to provide classloader isolation."
+    *            
+    * @see <a href="../../../config.html#ce_default_lazyDeserialization">Configuration reference</a>           
     */
    public static class LazyDeserialization extends BooleanAttributeType {
       /** The serialVersionUID */
@@ -1654,6 +1678,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    /**
     * @configRef name="jmxStatistics",desc=" This element specifies whether cache statistics are gathered and reported 
     *            via JMX."
+    * @see <a href="../../../config.html#ce_default_jmxStatistics">Configuration reference</a>           
     */
    public static class JmxStatistics extends BooleanAttributeType {
       /** The serialVersionUID */
@@ -1666,6 +1691,9 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
    /**
     * @configRef name="invocationBatching",desc="Defines whether invocation batching is allowed in this cache instance, and sets up internals accordingly to allow use of this API."
+    * 
+    * @see <a href="../../../config.html#ce_default_invocationBatching">Configuration reference</a>
+    * 
     */
    public static class InvocationBatching extends BooleanAttributeType {
       /** The serialVersionUID */
@@ -1678,6 +1706,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
    /**
     * @configRef name="deadlockDetection",desc="This element configures deadlock detection."
+    * 
+    * @see <a href="../../../config.html#ce_default_deadlockDetection">Configuration reference</a>
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    public static class DeadlockDetectionType  extends AbstractNamedCacheConfigurationBean{
@@ -1734,6 +1764,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     * such as Cache.put() that are supposed to return the previous value associated with the specified key according 
     * to the java.util.Map contract will not fulfill this contract if unsafe toggle is turned on. Use with care.  
     * See details at http://www.jboss.org/community/wiki/infinispantechnicalfaqs"
+    * 
+    * @see <a href="../../../config.html#ce_default_unsafe">Configuration reference</a>
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    public static class UnsafeType  extends AbstractNamedCacheConfigurationBean{
@@ -1775,6 +1807,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
    /**
     * @configRef name="customInterceptors",desc="Configures custom interceptors to be added to the cache."
+    * 
+    * @see <a href="../../../config.html#ce_default_customInterceptors">Configuration reference</a>
     */
    @XmlAccessorType(XmlAccessType.FIELD)
    public static class CustomInterceptorsType extends AbstractNamedCacheConfigurationBean {
@@ -1830,6 +1864,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    
    /**
     * @configRef name="indexing",desc="Configures indexing of entries in the cache for searching.  Note that infinispan-query.jar and its dependencies needs to be available if this option is to be used."
+    * 
+    * @see <a href="../../../config.html#ce_default_indexing">Configuration reference</a>
     */
    @XmlAccessorType(XmlAccessType.PROPERTY)
    public static class QueryConfigurationBean extends AbstractConfigurationBean {

@@ -24,6 +24,8 @@ import javax.xml.bind.annotation.XmlAttribute;
  * @author Manik Surtani
  * @author Vladimir Blagojevic
  * @since 4.0
+ * 
+ * @see <a href="../../../../config.html#ce_loader_singletonStore">Configuration reference</a>
  */
 @XmlAccessorType(XmlAccessType.PUBLIC_MEMBER)
 public class SingletonStoreConfig extends AbstractNamedCacheConfigurationBean {
