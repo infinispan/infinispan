@@ -268,7 +268,7 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
             String packageDir = fieldDoc.containingPackage().toString().replace(".", "/").concat("/");
             String htmlFile = fieldDoc.containingClass().typeName().concat(".html");
             String field = fieldDoc.name();
-            sb.append("<a href=\"" +packageDir.concat(htmlFile).concat("#").concat(field) +"\">" + " API</a>");
+            sb.append(" (<a href=\"" +packageDir.concat(htmlFile).concat("#").concat(field) +"\">" + "Javadoc</a>)");
             sb.append("</td>\n");
             
          }
