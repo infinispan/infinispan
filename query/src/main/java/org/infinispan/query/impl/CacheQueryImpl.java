@@ -227,8 +227,8 @@ public class CacheQueryImpl implements CacheQuery {
             // The extractor.extract.id gives me the documentId that we need.
 
 
-            Object key = extractor.extract(index).id;
-            keyList.add(key);
+            String keyString = (String) extractor.extract(index).id;
+            keyList.add(KeyTransformationHandler.stringToKey(keyString));
          }
 
       }

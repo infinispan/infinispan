@@ -29,6 +29,7 @@ import org.hibernate.search.engine.SearchFactoryImplementor;
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.query.backend.IndexSearcherCloser;
+import org.infinispan.query.backend.KeyTransformationHandler;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -100,7 +101,7 @@ public class LazyIterator extends AbstractIterator {
 
          try {
             String documentId = (String) extractor.extract(index).id;
-            toReturn = cache.get(documentId);
+            toReturn = cache.get(KeyTransformationHandler.stringToKey(documentId));
 
             //Wiping bufferObjects and the bufferIndex so that there is no stale data.
             Arrays.fill(buffer, null);
@@ -112,7 +113,7 @@ public class LazyIterator extends AbstractIterator {
 
             for (int i = 1; i < bufferSize; i++) {
                String bufferDocumentId = (String) extractor.extract(index + i).id;
-               Object toBuffer = cache.get(bufferDocumentId);
+               Object toBuffer = cache.get(KeyTransformationHandler.stringToKey(bufferDocumentId));
                buffer[i] = toBuffer;
             }
             bufferIndex = index;
@@ -148,14 +149,14 @@ public class LazyIterator extends AbstractIterator {
          Arrays.fill(buffer, null);
 
          String documentId = (String) extractor.extract(index).id;
-         toReturn = cache.get(documentId);
+         toReturn = cache.get(KeyTransformationHandler.stringToKey(documentId));
 
          buffer[0] = toReturn;
 
          //now loop through bufferSize times to add the rest of the objects into the list.
          for (int i = 1; i < bufferSize; i++) {
             String bufferDocumentId = (String) extractor.extract(index - i).id;    //In this case it has to be index - i because previous() is called.
-            Object toBuffer = cache.get(bufferDocumentId);
+            Object toBuffer = cache.get(KeyTransformationHandler.stringToKey(bufferDocumentId));
             buffer[i] = toBuffer;
          }
 
