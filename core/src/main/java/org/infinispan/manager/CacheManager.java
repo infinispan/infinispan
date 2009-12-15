@@ -99,7 +99,7 @@ public interface CacheManager extends Lifecycle, Listenable {
     * configuration.
     *
     * @param cacheName             name of cache whose configuration is being defined
-    * @param templateName          name of cache to which to which apply overrides if cache name has not been previously
+    * @param templateCacheName          name of cache to which to which apply overrides if cache name has not been previously
     *                              defined
     * @param configurationOverride configuration overrides to use
     * @return a cloned configuration instance
