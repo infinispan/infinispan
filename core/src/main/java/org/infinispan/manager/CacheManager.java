@@ -42,6 +42,10 @@ import java.util.Set;
  * When the system shuts down, it should call {@link #stop()} on the <tt>CacheManager</tt>.  This will ensure all caches
  * within its scope are properly stopped as well.
  * <p/>
+ * <b>NB:</b> Shared caches are supported (and in fact encouraged) but if they are used it's the users responsibility to
+ * ensure that <i>at least one</i> but <i>only one</i> caller calls stop() on the cache, and it does so with the awareness
+ * that others may be using the cache.
+ * <p />
  * Sample usage: <code> CacheManager manager = new DefaultCacheManager("my-config-file.xml"); Cache entityCache =
  * manager.getCache("myEntityCache"); entityCache.put("aPerson", new Person());
  * <p/>
@@ -106,6 +110,10 @@ public interface CacheManager extends Lifecycle, Listenable {
     * Retrieves the default cache associated with this cache manager.
     * <p/>
     * As such, this method is always guaranteed to return the default cache.
+    * <p />
+    * <b>NB:</b> Shared caches are supported (and in fact encouraged) but if they are used it's the users responsibility to
+    * ensure that <i>at least one</i> but <i>only one</i> caller calls stop() on the cache, and it does so with the awareness
+    * that others may be using the cache.
     *
     * @return the default cache.
     */
@@ -119,6 +127,10 @@ public interface CacheManager extends Lifecycle, Listenable {
     * as a template, and then optionally apply any overrides previously defined for the named cache using the {@link
     * #defineConfiguration(String, Configuration)} or {@link #defineConfiguration(String, String, Configuration)}
     * methods, or declared in the configuration file.
+    * <p />
+    * <b>NB:</b> Shared caches are supported (and in fact encouraged) but if they are used it's the users responsibility to
+    * ensure that <i>at least one</i> but <i>only one</i> caller calls stop() on the cache, and it does so with the awareness
+    * that others may be using the cache.
     *
     * @param cacheName name of cache to retrieve
     * @return a cache instance identified by cacheName
