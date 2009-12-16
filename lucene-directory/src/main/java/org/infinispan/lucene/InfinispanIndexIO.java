@@ -36,6 +36,7 @@ import org.infinispan.util.logging.LogFactory;
  * 
  * @since 4.0
  * @author Lukasz Moren
+ * @author Davide Di Somma
  * @see org.apache.lucene.store.Directory
  * @see org.apache.lucene.store.IndexInput
  * @see org.apache.lucene.store.IndexOutput
@@ -43,7 +44,7 @@ import org.infinispan.util.logging.LogFactory;
 public class InfinispanIndexIO {
 
    // used as default chunk size if not provided in conf
-   // each Lucene index is splitted into parts with default size defined here
+   // each Lucene index segment is splitted into parts with default size defined here
    public final static int DEFAULT_BUFFER_SIZE = 16 * 1024;
 
    private static byte[] getChunkFromPosition(Map<CacheKey, Object> cache, FileCacheKey fileKey, int pos, int bufferSize) {
@@ -52,11 +53,11 @@ public class InfinispanIndexIO {
       return (byte[]) cache.get(key);
    }
 
-   private static int getPositionInBuffer(int pos, int bufferSize) {
+   private static final int getPositionInBuffer(int pos, int bufferSize) {
       return (pos % bufferSize);
    }
 
-   private static int getChunkNumberFromPosition(int pos, int bufferSize) {
+   private static final int getChunkNumberFromPosition(int pos, int bufferSize) {
       return ((pos) / (bufferSize));
    }
 
@@ -76,6 +77,7 @@ public class InfinispanIndexIO {
       private byte[] buffer;
       private int bufferPosition = 0;
       private int filePosition = 0;
+      private int lastChunkNumberLoaded = -1;
 
       public InfinispanIndexInput(Cache<CacheKey, Object> cache, FileCacheKey fileKey) throws IOException {
          this(cache, fileKey, InfinispanIndexIO.DEFAULT_BUFFER_SIZE);
@@ -110,25 +112,20 @@ public class InfinispanIndexIO {
       }
 
       private byte[] getChunkFromPosition(Cache<CacheKey, Object> cache, FileCacheKey fileKey, int pos, int bufferSize) {
-         Object object = InfinispanIndexIO.getChunkFromPosition(cache, fileKey, pos, bufferSize);
-         if (object == null) {
-            object = InfinispanIndexIO.getChunkFromPosition(localCache, fileKey, pos, bufferSize);
-         }
-         return (byte[]) object;
+      	if(lastChunkNumberLoaded != getChunkNumberFromPosition(filePosition, bufferSize)) {
+	         Object object = InfinispanIndexIO.getChunkFromPosition(cache, fileKey, pos, bufferSize);
+	         if (object == null) {
+	            object = InfinispanIndexIO.getChunkFromPosition(localCache, fileKey, pos, bufferSize);
+	         }
+	         lastChunkNumberLoaded = getChunkNumberFromPosition(filePosition, bufferSize);
+	         return (byte[]) object;
+	      } else {
+	      	return buffer;
+	      }
+      	
       }
 
       public byte readByte() throws IOException {
-         if (file == null) {
-            throw new IOException("File " + fileKey + " does not exist");
-         }
-
-         if (filePosition == 0 && file.getSize() == 0) {
-            if (log.isTraceEnabled()) {
-               log.trace("pointer and file sizes are both 0; returning -1");
-            }
-            return -1;
-         }
-
          buffer = getChunkFromPosition(cache, fileKey, filePosition, bufferSize);
          if (buffer == null) {
             throw new IOException("Chunk id = [ " + getChunkNumberFromPosition(filePosition, bufferSize)
@@ -141,17 +138,6 @@ public class InfinispanIndexIO {
       }
 
       public void readBytes(byte[] b, int offset, int len) throws IOException {
-
-         if (file == null) {
-            throw new IOException("(null): File does not exist");
-         }
-
-         if (filePosition == 0 && file.getSize() == 0) {
-            if (log.isTraceEnabled()) {
-               log.trace("pointer and file sizes are both 0; returning -1");
-            }
-         }
-
          int bytesToRead = len;
          while (bytesToRead > 0) {
             buffer = getChunkFromPosition(cache, fileKey, filePosition, bufferSize);
@@ -173,6 +159,7 @@ public class InfinispanIndexIO {
       public void close() throws IOException {
          filePosition = 0;
          bufferPosition = 0;
+         lastChunkNumberLoaded = -1;
          buffer = null;
          localCache = null;
          if (log.isDebugEnabled()) {
