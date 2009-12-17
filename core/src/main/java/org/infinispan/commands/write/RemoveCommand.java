@@ -74,6 +74,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
       if (e == null || e.isNull()) {
          log.trace("Nothing to remove since the entry is null or we have a null entry");
          if (value == null) {
+            successful = false;
             return null;
          } else {
             successful = false;
