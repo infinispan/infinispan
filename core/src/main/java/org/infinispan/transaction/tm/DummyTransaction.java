@@ -73,14 +73,13 @@ public class DummyTransaction implements Transaction {
     */
    public void commit() throws RollbackException, HeuristicMixedException, HeuristicRollbackException, SecurityException, SystemException {
       try {
-         if (!notifyBeforeCompletion()) {
-            log.trace("Not running 2PC as Synchronization.before not successful");
-            return;
-         }
+         boolean successfulInit = notifyBeforeCompletion();
 
-         //1) run prepare first
-         status = Status.STATUS_PREPARING;
-         if (!runPrepare()) {
+         if (successfulInit) {
+            //1) run prepare first
+            status = Status.STATUS_PREPARING;
+         }
+         if (!successfulInit || !runPrepare()) {
             status = Status.STATUS_ROLLING_BACK;
          } else {
             status = Status.STATUS_PREPARED;
@@ -252,13 +251,10 @@ public class DummyTransaction implements Transaction {
       boolean retval = true;
       if (syncs == null) return true;
       for (Synchronization s : syncs) {
-         if (trace) {
-            log.trace("processing beforeCompletion for " + s);
-         }
+         if (trace) log.trace("processing beforeCompletion for " + s);
          try {
             s.beforeCompletion();
-         }
-         catch (Throwable t) {
+         } catch (Throwable t) {
             retval = false;
             log.error("beforeCompletion() failed for " + s, t);
          }
