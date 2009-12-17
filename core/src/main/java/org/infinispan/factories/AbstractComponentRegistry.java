@@ -282,7 +282,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     *
     * @param componentClass type of component to be retrieved.  Should not be null.
     * @return a fully wired component instance, or null if one cannot be found or constructed.
-    * @throws ConfigurationException if there is a problem with consructing or wiring the instance.
+    * @throws ConfigurationException if there is a problem with constructing or wiring the instance.
     */
    protected <T> T getOrCreateComponent(Class<T> componentClass) {
       return getOrCreateComponent(componentClass, componentClass.getName());
@@ -856,7 +856,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
    }
 
    /**
-    * Returns an immutable set contating all the components that exists in the reporsitory at this moment.
+    * Returns an immutable set containing all the components that exists in the repository at this moment.
     *
     * @return a set of components
     */

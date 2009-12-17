@@ -36,7 +36,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * Changes that have occured on an AtomicHashMap
+ * Changes that have occurred on an AtomicHashMap
  *
  * @author Manik Surtani (<a href="mailto:manik AT jboss DOT org">manik AT jboss DOT org</a>)
  * @since 4.0

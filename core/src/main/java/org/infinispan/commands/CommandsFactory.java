@@ -228,7 +228,7 @@ public interface CommandsFactory {
    ClusteredGetCommand buildClusteredGetCommand(Object key);
 
    /**
-    * Builds a LockControlCommand to control exilicit remote locking
+    * Builds a LockControlCommand to control explicit remote locking
     * @param keys keys to lock
     * @param implicit whether the lock command was implicit (triggered internally) or explicit (triggered by an API call)
     * @return a LockControlCommand

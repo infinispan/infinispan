@@ -28,7 +28,7 @@ import java.lang.annotation.Target;
 
 /**
  * This annotation is used for those classes that need to be marshalled/unmarshalled between nodes
- * in the cluster or to/from cahe stores. Such classes need to provide an implementation for 
+ * in the cluster or to/from cache stores. Such classes need to provide an implementation for 
  * {@link Externalizer} interface and a unique index number (see {@link Ids} for index numbers 
  * currently allocated).
  * 

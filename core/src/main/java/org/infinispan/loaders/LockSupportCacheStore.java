@@ -12,10 +12,10 @@ import java.io.ObjectOutput;
 import java.util.Set;
 
 /**
- * This class extends {@link AbstractCacheStore} adding lock support for consistently acceessing stored data.
+ * This class extends {@link AbstractCacheStore} adding lock support for consistently accessing stored data.
  * <p/>
  * In-memory locking is needed by aggregation operations(e.g. loadAll, toStream, fromStream) to make sure that
- * manipulated data won't be corrupted by concurrent access to Store. It also assurce atomic data access for each stored
+ * manipulated data won't be corrupted by concurrent access to Store. It also assures atomic data access for each stored
  * entry.
  * <p/>
  * Locking is based on a {@link StripedLock}. You can tune the concurrency level of the striped lock (see the Javadocs
