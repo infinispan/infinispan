@@ -3,7 +3,6 @@ package org.infinispan.query.impl;
 import org.apache.lucene.queryParser.ParseException;
 import org.apache.lucene.search.IndexSearcher;
 import org.easymock.EasyMock;
-import static org.easymock.EasyMock.*;
 import org.easymock.IAnswer;
 import org.hibernate.search.engine.DocumentExtractor;
 import org.hibernate.search.engine.EntityInfo;
@@ -20,6 +19,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static org.easymock.EasyMock.*;
 
 
 /**
@@ -78,16 +79,16 @@ public class LazyIteratorTest {
 
       keyList = new ArrayList<String>();
 
-      keyList.add("key1");
-      keyList.add("key2");
-      keyList.add("key3");
-      keyList.add("key4");
-      keyList.add("key5");
-      keyList.add("key6");
-      keyList.add("key7");
-      keyList.add("key8");
-      keyList.add("key9");
-      keyList.add("key10");
+      keyList.add("S:key1");
+      keyList.add("S:key2");
+      keyList.add("S:key3");
+      keyList.add("S:key4");
+      keyList.add("S:key5");
+      keyList.add("S:key6");
+      keyList.add("S:key7");
+      keyList.add("S:key8");
+      keyList.add("S:key9");
+      keyList.add("S:key10");
 
 
    }
