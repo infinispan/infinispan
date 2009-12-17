@@ -13,12 +13,13 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.marshall.MarshalledValue;
-import static org.infinispan.query.backend.KeyTransformationHandler.keyToString;
 
 import javax.transaction.TransactionManager;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.Set;
+
+import static org.infinispan.query.backend.KeyTransformationHandler.keyToString;
 
 /**
  * This interceptor will be created when the System Property "infinispan.query.indexLocalOnly" is "false"
@@ -38,9 +39,6 @@ public class QueryInterceptor extends CommandInterceptor {
 
    @Inject
    public void init(SearchFactoryImplementor searchFactory, TransactionManager transactionManager) {
-
-      if (log.isDebugEnabled()) log.debug("Entered QueryInterceptor.init()");
-
       this.searchFactory = searchFactory;
       this.transactionManager = transactionManager;
    }
@@ -56,38 +54,26 @@ public class QueryInterceptor extends CommandInterceptor {
       // do the actual put first.
       Object toReturn = invokeNextInterceptor(ctx, command);
 
-      if (shouldModifyIndexes(ctx)) {
+      if (shouldModifyIndexes(ctx))
          addToIndexes(extractValue(command.getValue()), extractValue(command.getKey()));
-      }
-
 
       return toReturn;
    }
 
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-
-      if (log.isDebugEnabled()) log.debug("Entered QueryInterceptor.visitRemoveCommand()");
-
       // remove the object out of the cache first.
       Object valueRemoved = invokeNextInterceptor(ctx, command);
 
-      if (log.isDebugEnabled()) log.debug("Transaction Manager is " + transactionManager);
-
-      if (command.isSuccessful() && shouldModifyIndexes(ctx)) {
+      if (command.isSuccessful() && shouldModifyIndexes(ctx))
          removeFromIndexes(extractValue(valueRemoved), extractValue(command.getKey()));
-      }
 
       return valueRemoved;
-
    }
 
 
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-
-      if (log.isDebugEnabled()) log.debug("Entered the QueryInterceptor.visitReplaceCommand()");
-
       Object valueReplaced = invokeNextInterceptor(ctx, command);
       if (valueReplaced != null && shouldModifyIndexes(ctx)) {
 
@@ -103,9 +89,6 @@ public class QueryInterceptor extends CommandInterceptor {
 
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-
-      if (log.isDebugEnabled()) log.debug("Entered the QueryInterceptor.visitPutMapCommand()");
-
       Object mapPut = invokeNextInterceptor(ctx, command);
 
       if (shouldModifyIndexes(ctx)) {
@@ -122,13 +105,10 @@ public class QueryInterceptor extends CommandInterceptor {
 
    @Override
    public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-
-      if (log.isDebugEnabled()) log.debug("Entered the QueryInterceptor.visitClearCommand()");
-
       Object returnValue = invokeNextInterceptor(ctx, command);
 
       if (shouldModifyIndexes(ctx)) {
-         if (log.isDebugEnabled()) log.debug("shouldModifyIndexes() is true and we can clear the indexes");
+         if (trace) log.trace("shouldModifyIndexes() is true and we can clear the indexes");
 
          Set<Class<?>> classes = searchFactory.getDocumentBuildersIndexedEntities().keySet();
          for (Class c : classes) {
@@ -144,12 +124,12 @@ public class QueryInterceptor extends CommandInterceptor {
 
    // Method that will be called when data needs to be added into Lucene.
    protected void addToIndexes(Object value, Object key) {
-      if (log.isDebugEnabled()) log.debug("Adding to indexes for key [{0}] and value [{0}]", key, value);
+      if (trace) log.trace("Adding to indexes for key [{0}] and value [{0}]", key, value);
 
       // The key here is the String representation of the key that is stored in the cache.
       // The key is going to be the documentID for Lucene.
       // The object parameter is the actual value that needs to be put into lucene.
-
+      if (value == null) throw new NullPointerException("Cannot handle a null value!");
       TransactionContext transactionContext = new TransactionalEventTransactionContext(transactionManager);
       searchFactory.getWorker().performWork(new Work<Object>(value, keyToString(key), WorkType.ADD), transactionContext);
    }
@@ -161,7 +141,7 @@ public class QueryInterceptor extends CommandInterceptor {
       // The key here is the String representation of the key that is stored in the cache.
       // The key is going to be the documentID for Lucene.
       // The object parameter is the actual value that needs to be removed from lucene.
-
+      if (value == null) throw new NullPointerException("Cannot handle a null value!");
       TransactionContext transactionContext = new TransactionalEventTransactionContext(transactionManager);
       searchFactory.getWorker().performWork(new Work<Object>(value, keyToString(key), WorkType.DELETE), transactionContext);
    }
