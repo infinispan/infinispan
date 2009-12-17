@@ -97,13 +97,13 @@
       <dependency>
          <groupId>jboss.jbossts</groupId>
          <artifactId>jbossjta</artifactId>
-         <version>4.4.0.GA</version>
+         <version>4.9.0.GA</version>
          <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>jboss.jbossts</groupId>
          <artifactId>jbossjts</artifactId>
-         <version>4.6.1.GA</version>
+         <version>4.9.0.GA</version>
          <scope>test</scope>
       </dependency>
       <dependency>
