@@ -33,6 +33,12 @@ public class TestCacheManagerFactory {
       return createLocalCacheManager(false);
    }
 
+   private static void minimizeThreads(GlobalConfiguration gc) {
+      Properties p = new Properties();
+      p.setProperty("maxThreads", "1");
+      gc.setAsyncTransportExecutorProperties(p);
+   }
+
    /**
     * Creates an cache manager that does not support clustering.
     *
@@ -41,6 +47,7 @@ public class TestCacheManagerFactory {
    public static CacheManager createLocalCacheManager(boolean transactional) {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
       amendMarshaller(globalConfiguration);
+      minimizeThreads(globalConfiguration);
       Configuration c = new Configuration();
       if (transactional) amendJTA(c);
       return newDefaultCacheManager(globalConfiguration, c);
@@ -56,6 +63,7 @@ public class TestCacheManagerFactory {
    public static CacheManager createClusteredCacheManager() {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
       amendMarshaller(globalConfiguration);
+      minimizeThreads(globalConfiguration);
       Properties newTransportProps = new Properties();
       newTransportProps.put(JGroupsTransport.CONFIGURATION_STRING, JGroupsConfigBuilder.getJGroupsConfig());
       globalConfiguration.setTransportProperties(newTransportProps);
@@ -68,6 +76,7 @@ public class TestCacheManagerFactory {
    public static CacheManager createClusteredCacheManager(Configuration defaultCacheConfig) {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
       amendMarshaller(globalConfiguration);
+      minimizeThreads(globalConfiguration);
       Properties newTransportProps = new Properties();
       newTransportProps.put(JGroupsTransport.CONFIGURATION_STRING, JGroupsConfigBuilder.getJGroupsConfig());
       globalConfiguration.setTransportProperties(newTransportProps);
@@ -80,6 +89,7 @@ public class TestCacheManagerFactory {
     */
    public static CacheManager createCacheManager(GlobalConfiguration configuration) {
       amendMarshaller(configuration);
+      minimizeThreads(configuration);
       amendTransport(configuration);
       return newDefaultCacheManager(configuration, new Configuration());
    }
@@ -100,11 +110,13 @@ public class TestCacheManagerFactory {
    public static CacheManager createCacheManager(Configuration defaultCacheConfig, boolean transactional) {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
       amendMarshaller(globalConfiguration);
+      minimizeThreads(globalConfiguration);
       if (transactional) amendJTA(defaultCacheConfig);
       return newDefaultCacheManager(globalConfiguration, defaultCacheConfig);
    }
 
    public static DefaultCacheManager createCacheManager(GlobalConfiguration configuration, Configuration defaultCfg) {
+      minimizeThreads(configuration);
       amendMarshaller(configuration);
       amendTransport(configuration);
       return newDefaultCacheManager(configuration, defaultCfg);
