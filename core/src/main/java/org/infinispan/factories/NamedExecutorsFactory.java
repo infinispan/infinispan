@@ -11,6 +11,8 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 
+import static org.infinispan.factories.KnownComponentNames.*;
+
 /**
  * A factory that specifically knows how to create named executors.
  *
@@ -23,16 +25,16 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
    @SuppressWarnings("unchecked")
    public <T> T construct(Class<T> componentType, String componentName) {
       try {
-         if (componentName.equals(KnownComponentNames.ASYNC_NOTIFICATION_EXECUTOR)) {
+         if (componentName.equals(ASYNC_NOTIFICATION_EXECUTOR)) {
             return (T) buildAndConfigureExecutorService(globalConfiguration.getAsyncListenerExecutorFactoryClass(),
                                                         globalConfiguration.getAsyncListenerExecutorProperties(), componentName);
-         } else if (componentName.equals(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR)) {
+         } else if (componentName.equals(ASYNC_TRANSPORT_EXECUTOR)) {
             return (T) buildAndConfigureExecutorService(globalConfiguration.getAsyncTransportExecutorFactoryClass(),
                                                         globalConfiguration.getAsyncTransportExecutorProperties(), componentName);
-         } else if (componentName.equals(KnownComponentNames.EVICTION_SCHEDULED_EXECUTOR)) {
+         } else if (componentName.equals(EVICTION_SCHEDULED_EXECUTOR)) {
             return (T) buildAndConfigureScheduledExecutorService(globalConfiguration.getEvictionScheduledExecutorFactoryClass(),
                                                                  globalConfiguration.getEvictionScheduledExecutorProperties(), componentName);
-         } else if (componentName.equals(KnownComponentNames.ASYNC_REPLICATION_QUEUE_EXECUTOR)) {
+         } else if (componentName.equals(ASYNC_REPLICATION_QUEUE_EXECUTOR)) {
             return (T) buildAndConfigureScheduledExecutorService(globalConfiguration.getReplicationQueueScheduledExecutorFactoryClass(),
                                                                  globalConfiguration.getReplicationQueueScheduledExecutorProperties(), componentName);
          } else {
@@ -45,16 +47,29 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
       }
    }
 
-   private ExecutorService buildAndConfigureExecutorService(String factoryName, Properties props, String componentName) throws Exception {
+   private ExecutorService buildAndConfigureExecutorService(String factoryName, Properties p, String componentName) throws Exception {
+      Properties props = new Properties(p); // defensive copy
       ExecutorFactory f = (ExecutorFactory) Util.getInstance(factoryName);
       setComponentName(componentName, props);
+      setDefaultThreads(KnownComponentNames.getDefaultThreads(componentName), props);
+      setDefaultThreadPrio(KnownComponentNames.getDefaultThreadPrio(componentName), props);
       return f.getExecutor(props);
    }
 
-   private ScheduledExecutorService buildAndConfigureScheduledExecutorService(String factoryName, Properties props, String componentName) throws Exception {
+   private ScheduledExecutorService buildAndConfigureScheduledExecutorService(String factoryName, Properties p, String componentName) throws Exception {
+      Properties props = new Properties(p); // defensive copy
       ScheduledExecutorFactory f = (ScheduledExecutorFactory) Util.getInstance(factoryName);
       setComponentName(componentName, props);
+      setDefaultThreadPrio(KnownComponentNames.getDefaultThreadPrio(componentName), props);
       return f.getScheduledExecutor(props);
+   }
+
+   private void setDefaultThreadPrio(int prio, Properties props) {
+      if (!props.containsKey("threadPriority")) props.setProperty("threadPriority", "" + prio);
+   }
+
+   private void setDefaultThreads(int numThreads, Properties props) {
+      if (!props.containsKey("maxThreads")) props.setProperty("maxThreads", "" + numThreads);
    }
 
    private void setComponentName(String cn, Properties p) {
