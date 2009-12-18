@@ -44,6 +44,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
    public static final byte COMMAND_ID = 10;
    protected CacheNotifier notifier;
    boolean successful = true;
+   boolean nonExistent = false;
 
    /**
     * When not null, value indicates that the entry should only be removed if the key is mapped to this value. By the
@@ -72,9 +73,9 @@ public class RemoveCommand extends AbstractDataWriteCommand {
    public Object perform(InvocationContext ctx) throws Throwable {
       MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
       if (e == null || e.isNull()) {
+         nonExistent = true;
          log.trace("Nothing to remove since the entry is null or we have a null entry");
          if (value == null) {
-            successful = false;
             return null;
          } else {
             successful = false;
@@ -133,5 +134,9 @@ public class RemoveCommand extends AbstractDataWriteCommand {
 
    public boolean isConditional() {
       return value != null;
+   }
+
+   public boolean isNonExistent() {
+      return nonExistent;
    }
 }

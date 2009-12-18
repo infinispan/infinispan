@@ -65,7 +65,7 @@ public class QueryInterceptor extends CommandInterceptor {
       // remove the object out of the cache first.
       Object valueRemoved = invokeNextInterceptor(ctx, command);
 
-      if (command.isSuccessful() && shouldModifyIndexes(ctx))
+      if (command.isSuccessful() && !command.isNonExistent() && shouldModifyIndexes(ctx))
          removeFromIndexes(extractValue(valueRemoved), extractValue(command.getKey()));
 
       return valueRemoved;
