@@ -8,6 +8,7 @@ import org.infinispan.eviction.EvictionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.stats.Stats;
 
 import javax.transaction.TransactionManager;
 import java.util.Collection;
@@ -121,4 +122,6 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
    DataContainer getDataContainer();
 
    TransactionManager getTransactionManager();
+
+   Stats getStats();
 }

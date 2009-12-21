@@ -25,6 +25,7 @@ import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.container.DataContainer;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
@@ -59,6 +60,8 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    private AtomicLong evictions = new AtomicLong(0);
    private AtomicLong start = new AtomicLong(System.currentTimeMillis());
    private AtomicLong reset = new AtomicLong(start.get());
+   private AtomicLong removeHits = new AtomicLong(0);
+   private AtomicLong removeMisses = new AtomicLong(0);
 
    private DataContainer dataContainer;
 
@@ -114,6 +117,17 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       return retval;
    }
 
+   @Override
+   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+      Object retval = invokeNextInterceptor(ctx, command);
+      if (retval == null) {
+         removeMisses.incrementAndGet();
+      } else {
+         removeHits.incrementAndGet();
+      }
+      return retval;
+   }
+
    @ManagedAttribute(description = "Number of cache attribute hits")
    @Metric(displayName = "Number of cache hits", measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
    public long getHits() {
@@ -124,6 +138,18 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    @Metric(displayName = "Number of cache misses", measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
    public long getMisses() {
       return misses.get();
+   }
+
+   @ManagedAttribute(description = "Number of cache removal hits")
+   @Metric(displayName = "Number of cache removal hits", measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
+   public long getRemoveHits() {
+      return removeHits.get();
+   }
+
+   @ManagedAttribute(description = "Number of cache removals where keys were not found")
+   @Metric(displayName = "Number of cache removal misses", measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
+   public long getRemoveMisses() {
+      return removeMisses.get();
    }
 
    @ManagedAttribute(description = "number of cache attribute put operations")
@@ -172,8 +198,8 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       return (storeTimes.get()) / stores.get();
    }
 
-   @ManagedAttribute(description = "Number of entries in the cache")
-   @Metric(displayName = "Number of cache entries", displayType = DisplayType.SUMMARY)
+   @ManagedAttribute(description = "Number of entries currently in the cache")
+   @Metric(displayName = "Number of current cache entries", displayType = DisplayType.SUMMARY)
    public int getNumberOfEntries() {
       return dataContainer.size();
    }
@@ -200,6 +226,8 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       hitTimes.set(0);
       missTimes.set(0);
       storeTimes.set(0);
+      removeHits.set(0);
+      removeMisses.set(0);
       reset.set(System.currentTimeMillis());
    }
 }

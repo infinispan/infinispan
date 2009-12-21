@@ -60,6 +60,8 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.responses.ResponseGenerator;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.statetransfer.StateTransferManager;
+import org.infinispan.stats.Stats;
+import org.infinispan.stats.StatsImpl;
 import org.infinispan.util.concurrent.FutureListener;
 import org.infinispan.util.concurrent.NotifyingFuture;
 import org.infinispan.util.logging.Log;
@@ -410,6 +412,10 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V> {
 
    public CacheManager getCacheManager() {
       return cacheManager;
+   }
+
+   public Stats getStats() {
+      return new StatsImpl(invoker);
    }
 
    @SuppressWarnings("unchecked")
