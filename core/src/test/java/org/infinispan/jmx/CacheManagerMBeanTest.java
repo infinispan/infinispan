@@ -3,7 +3,6 @@ package org.infinispan.jmx;
 import java.lang.reflect.Method;
 
 import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -30,11 +29,7 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
    private ObjectName name;
 
    protected CacheManager createCacheManager() throws Exception {
-      GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
-      globalConfiguration.setJmxDomain(JMX_DOMAIN);
-      globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
-      globalConfiguration.setExposeGlobalJmxStatistics(true);
-      cacheManager = TestCacheManagerFactory.createCacheManager(globalConfiguration);
+      cacheManager = TestCacheManagerFactory.createJmxEnabledCacheManager(JMX_DOMAIN, true, false);
       name = new ObjectName(JMX_DOMAIN + ":cache-name=[global],jmx-resource=CacheManager");
       server = PerThreadMBeanServerLookup.getThreadMBeanServer();
       server.invoke(name, "startCache", new Object[]{}, new String[]{});
@@ -82,12 +77,8 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
    }
    
    public void testJmxRegistrationAtStartupAndStop(Method method) throws Exception {
-      GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
       final String otherJmxDomain = JMX_DOMAIN + '.' + method.getName();
-      globalConfiguration.setJmxDomain(otherJmxDomain);
-      globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
-      globalConfiguration.setExposeGlobalJmxStatistics(true);
-      CacheManager otherManager = TestCacheManagerFactory.createCacheManager(globalConfiguration);
+      CacheManager otherManager = TestCacheManagerFactory.createJmxEnabledCacheManager(otherJmxDomain, true, false);
       ObjectName otherName = new ObjectName(otherJmxDomain + ":cache-name=[global],jmx-resource=CacheManager");
       try {
          assert server.getAttribute(otherName, "CreatedCacheCount").equals("0");

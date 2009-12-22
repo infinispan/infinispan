@@ -2,6 +2,7 @@ package org.infinispan.test.fwk;
 
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
@@ -115,11 +116,25 @@ public class TestCacheManagerFactory {
       return newDefaultCacheManager(globalConfiguration, defaultCacheConfig);
    }
 
-   public static DefaultCacheManager createCacheManager(GlobalConfiguration configuration, Configuration defaultCfg) {
+   public static CacheManager createCacheManager(GlobalConfiguration configuration, Configuration defaultCfg) {
       minimizeThreads(configuration);
       amendMarshaller(configuration);
       amendTransport(configuration);
       return newDefaultCacheManager(configuration, defaultCfg);
+   }
+
+   public static CacheManager createJmxEnabledCacheManager(String jmxDomain) {
+      return createJmxEnabledCacheManager(jmxDomain, true, true);
+   }
+
+   public static CacheManager createJmxEnabledCacheManager(String jmxDomain, boolean exposeGlobalJmx, boolean exposeCacheJmx) {
+      GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
+      globalConfiguration.setJmxDomain(jmxDomain);
+      globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
+      globalConfiguration.setExposeGlobalJmxStatistics(exposeGlobalJmx);
+      Configuration configuration = new Configuration();
+      configuration.setExposeJmxStatistics(exposeCacheJmx);
+      return createCacheManager(globalConfiguration, configuration);
    }
 
    private static void amendTransport(GlobalConfiguration configuration) {

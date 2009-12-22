@@ -29,8 +29,6 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 import org.infinispan.CacheException;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.manager.DefaultCacheManager;
@@ -48,13 +46,7 @@ public class CacheMBeanTest extends SingleCacheManagerTest {
 
    @Override
    protected CacheManager createCacheManager() throws Exception {
-      GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
-      globalConfiguration.setJmxDomain(JMX_DOMAIN);
-      globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
-      globalConfiguration.setExposeGlobalJmxStatistics(true);
-      Configuration configuration = new Configuration();
-      configuration.setExposeJmxStatistics(true);
-      cacheManager = TestCacheManagerFactory.createCacheManager(globalConfiguration, configuration);
+      cacheManager = TestCacheManagerFactory.createJmxEnabledCacheManager(JMX_DOMAIN);
       server = PerThreadMBeanServerLookup.getThreadMBeanServer();
       return cacheManager;
    }
@@ -89,17 +81,11 @@ public class CacheMBeanTest extends SingleCacheManagerTest {
    }
    
    public void testManagerStopRemovesCacheMBean(Method m) throws Exception {
-      GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
       final String otherJmxDomain = JMX_DOMAIN + '.' + m.getName();
-      globalConfiguration.setJmxDomain(otherJmxDomain);
-      globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
-      globalConfiguration.setExposeGlobalJmxStatistics(true);
-      Configuration configuration = new Configuration();
-      configuration.setExposeJmxStatistics(true);
       ObjectName defaultOn = new ObjectName(otherJmxDomain + ":cache-name=" + DefaultCacheManager.DEFAULT_CACHE_NAME + "(local),jmx-resource=Cache");
       ObjectName galderOn = new ObjectName(otherJmxDomain + ":cache-name=galder(local),jmx-resource=Cache");
       ObjectName managerON = new ObjectName(otherJmxDomain + ":cache-name=[global],jmx-resource=CacheManager");
-      CacheManager otherManager = TestCacheManagerFactory.createCacheManager(globalConfiguration, configuration);
+      CacheManager otherManager = TestCacheManagerFactory.createJmxEnabledCacheManager(otherJmxDomain);
       server.invoke(managerON, "startCache", new Object[]{}, new String[]{});
       server.invoke(managerON, "startCache", new Object[]{"galder"}, new String[]{String.class.getName()});
       assert ComponentStatus.RUNNING.toString().equals(server.getAttribute(defaultOn, "CacheStatus"));
@@ -124,18 +110,18 @@ public class CacheMBeanTest extends SingleCacheManagerTest {
 
 
    public void testDuplicateJmxDomainOnlyCacheExposesJmxStatistics() throws Exception {
-      GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
-      final String otherJmxDomain = JMX_DOMAIN;
-      globalConfiguration.setJmxDomain(otherJmxDomain);
-      globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
-      Configuration configuration = new Configuration();
-      configuration.setExposeJmxStatistics(true);
-      CacheManager otherManager = TestCacheManagerFactory.createCacheManager(globalConfiguration, configuration);
+      CacheManager otherManager = TestCacheManagerFactory.createJmxEnabledCacheManager(JMX_DOMAIN, false, true);
       try {
          otherManager.getCache();
-         assert false : "Failure expected, " + otherJmxDomain + " is a duplicate!";
+         assert false : "Failure expected, " + JMX_DOMAIN + " is a duplicate!";
       } catch (CacheException e) {
          assert e.getCause().getCause() instanceof JmxDomainConflictException;
       }
+   }
+
+   public void testMalformedCacheName(Method m) throws Exception {
+      final String otherJmxDomain = JMX_DOMAIN + '.' + m.getName();
+      CacheManager otherManager = TestCacheManagerFactory.createJmxEnabledCacheManager(otherJmxDomain);
+      otherManager.getCache("persistence.unit:unitName=#helloworld.MyRegion");
    }
 }
