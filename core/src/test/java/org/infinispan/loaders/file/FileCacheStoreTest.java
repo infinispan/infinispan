@@ -88,7 +88,7 @@ public class FileCacheStoreTest extends BaseCacheStoreTest {
       b.removeEntry("test");
       assert b.getEntries().isEmpty();
 
-      fcs.saveBucket(b);
+      fcs.updateBucket(b);
       assert !new File(fcs.root, b.getBucketName()).exists();
    }
 
