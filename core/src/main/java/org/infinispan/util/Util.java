@@ -108,6 +108,16 @@ public final class Util {
       return (a == b) || (a != null && a.equals(b));
    }
 
+   public static InputStream loadResourceAsStream(String resource) {
+      ClassLoader cl = Thread.currentThread().getContextClassLoader();
+      InputStream s = cl.getResourceAsStream(resource);
+      if (s == null) {
+         cl = Util.class.getClassLoader();
+         s = cl.getResourceAsStream(resource);
+      }
+      return s;
+   }
+
    /**
     * Static inner class that holds 3 maps - for data added, removed and modified.
     */
