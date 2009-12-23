@@ -29,6 +29,7 @@ import org.infinispan.config.CustomInterceptorConfig;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.interceptors.*;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.util.Util;
 
 import java.util.List;
 
@@ -40,6 +41,7 @@ import java.util.List;
  */
 @DefaultFactoryFor(classes = InterceptorChain.class)
 public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
+
    public CommandInterceptor createInterceptor(Class<? extends CommandInterceptor> clazz) throws IllegalAccessException, InstantiationException {
       CommandInterceptor chainedInterceptor = componentRegistry.getComponent(clazz);
       if (chainedInterceptor == null) {
@@ -136,7 +138,6 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
             //Nothing...
       }
 
-
       CommandInterceptor callInterceptor = createInterceptor(CallInterceptor.class);
       interceptorChain.appendIntereceptor(callInterceptor);
       if (log.isTraceEnabled()) log.trace("Finished building default interceptor chain.");
@@ -144,31 +145,45 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       return interceptorChain;
    }
 
-   private void buildCustomInterceptors(InterceptorChain interceptorChain, List<CustomInterceptorConfig> customInterceptors) {
+   @SuppressWarnings("unchecked")
+   private Class<? extends CommandInterceptor> getCustomInterceptorType(CustomInterceptorConfig cfg) throws ClassNotFoundException {
+      if (cfg.getInterceptor() != null) return cfg.getInterceptor().getClass();
+      return Util.loadClass(cfg.getClassName());
+   }
+
+   private CommandInterceptor getOrCreateCustomInterceptor(CustomInterceptorConfig cfg) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+      if (cfg.getInterceptor() != null) return cfg.getInterceptor();
+      return (CommandInterceptor) Util.getInstance(cfg.getClassName());
+   }
+
+   private void buildCustomInterceptors(InterceptorChain interceptorChain, List<CustomInterceptorConfig> customInterceptors) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
+
       for (CustomInterceptorConfig config : customInterceptors) {
-         if (interceptorChain.containsInstance(config.getInterceptor())) continue;
-         if (config.isFirst()) {
-            interceptorChain.addInterceptor(config.getInterceptor(), 0);
-         }
-         if (config.isLast()) interceptorChain.appendIntereceptor(config.getInterceptor());
-         if (config.getIndex() >= 0) interceptorChain.addInterceptor(config.getInterceptor(), config.getIndex());
-         if (config.getAfter() != null) {
+         if (interceptorChain.containsInterceptorType(getCustomInterceptorType(config))) continue;
+         if (config.isFirst())
+            interceptorChain.addInterceptor(getOrCreateCustomInterceptor(config), 0);
+         else if (config.isLast())
+            interceptorChain.appendIntereceptor(getOrCreateCustomInterceptor(config));
+         else if (config.getIndex() >= 0)
+            interceptorChain.addInterceptor(getOrCreateCustomInterceptor(config), config.getIndex());
+         else if (config.getAfter() != null) {
             List<CommandInterceptor> withClassName = interceptorChain.getInterceptorsWithClassName(config.getAfter());
             if (withClassName.isEmpty()) {
                throw new ConfigurationException("Cannot add after class: " + config.getAfter()
-                     + " as no such iterceptor exists in the default chain");
+                     + " as no such interceptor exists in the default chain");
             }
-            interceptorChain.addInterceptorAfter(config.getInterceptor(), withClassName.get(0).getClass());
+            interceptorChain.addInterceptorAfter(getOrCreateCustomInterceptor(config), withClassName.get(0).getClass());
          }
-         if (config.getBefore() != null) {
+         else if (config.getBefore() != null) {
             List<CommandInterceptor> withClassName = interceptorChain.getInterceptorsWithClassName(config.getBefore());
             if (withClassName.isEmpty()) {
                throw new ConfigurationException("Cannot add before class: " + config.getAfter()
-                     + " as no such iterceptor exists in the default chain");
+                     + " as no such interceptor exists in the default chain");
             }
-            interceptorChain.addInterceptorBefore(config.getInterceptor(), withClassName.get(0).getClass());
+            interceptorChain.addInterceptorBefore(getOrCreateCustomInterceptor(config), withClassName.get(0).getClass());
          }
       }
+      
    }
 
    @Override
