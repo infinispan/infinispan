@@ -59,7 +59,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
          Bucket bucket = loadBucket(bucketFile);
          if (bucket != null) {
             if (bucket.removeExpiredEntries()) {
-               saveBucket(bucket);
+               updateBucket(bucket);
             }
             result.addAll(bucket.getStoredEntries());
          }
@@ -163,7 +163,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
                      Bucket bucket;
                      try {
                         if ((bucket = loadBucket(bucketFile)) != null && bucket.removeExpiredEntries())
-                           saveBucket(bucket);
+                           updateBucket(bucket);
                      } catch (CacheLoaderException e) {
                         log.warn("Problems purging file " + bucketFile, e);
                      }
@@ -171,7 +171,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
                });
             } else {
                Bucket bucket;
-               if ((bucket = loadBucket(bucketFile)) != null && bucket.removeExpiredEntries()) saveBucket(bucket);
+               if ((bucket = loadBucket(bucketFile)) != null && bucket.removeExpiredEntries()) updateBucket(bucket);
             }
          }
       } finally {
@@ -207,10 +207,10 @@ public class FileCacheStore extends BucketBasedCacheStore {
    }
 
    protected void insertBucket(Bucket bucket) throws CacheLoaderException {
-      saveBucket(bucket);
+      updateBucket(bucket);
    }
 
-   public void saveBucket(Bucket b) throws CacheLoaderException {
+   public void updateBucket(Bucket b) throws CacheLoaderException {
       File f = new File(root, b.getBucketName());
       if (f.exists()) {
          if (!f.delete()) log.warn("Had problems removing file {0}", f);

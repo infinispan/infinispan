@@ -5,27 +5,27 @@ import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.LockSupportCacheStore;
 
 /**
- * Base class for cache store that want to use the 'buckets approach' for storing data.
+ * Base class for CacheStore implementations that combine entries into buckets when storing data.
  * <p/>
  * A hashing algorithm is used to map keys to buckets, and a bucket consists of a collection of key/value pairs.
  * <p/>
- * This approach, while adding an overhead of having to search buckets for keys, means that we can use any serializable
- * object we like as keys and not just Strings or objects that translate to something meaningful for a store(e.g. file
- * system).
+ * This approach, while adding an overhead of having to search through the contents of buckets a relevant entry,
+ * allows us to use any Serializable object as a key since the bucket is identified by a hash code.  This hash code
+ * is often easy to represent in a physical store, such as a file system, database, etc.
  * <p/>
  *
  * @author Mircea.Markus@jboss.com
+ * @author Manik Surtani
  * @since 4.0
  */
 public abstract class BucketBasedCacheStore extends LockSupportCacheStore {
 
    /**
-    * Loads the bucket coresponding to the given key, and lookups the key within it. if the bucket is found and the key
-    * is expired, then it won't be returned.
+    * Loads an entry from a Bucket, locating the relevant Bucket using the key's hash code.
     *
-    * @param key        the passed in key, from {@link LockSupportCacheStore#load(Object)}
+    * @param key        key of the entry to remove.
     * @param lockingKey the hash of the key, as returned by {@link LockSupportCacheStore#getLockFromKey(Object)}. This
-    *                   is present here in order to avoid hash recomputation.
+    *                   is required in order to avoid hash re-computation.
     */
    protected InternalCacheEntry loadLockSafe(Object key, String lockingKey) throws CacheLoaderException {
       Bucket bucket = loadBucket(lockingKey);
@@ -43,31 +43,31 @@ public abstract class BucketBasedCacheStore extends LockSupportCacheStore {
    }
 
    /**
-    * Tries to find a bucket corresponding to storedEntry's key, and updates it with the storedEntry. If no bucket is
-    * found, a new one is created.
+    * Stores an entry in an appropriate Bucket, based on the key's hash code.  If the Bucket does not exist in the
+    * underlying store, a new one is created.
     *
+    * @param entry      the entry to store
     * @param lockingKey the hash of the key, as returned by {@link LockSupportCacheStore#getLockFromKey(Object)}. This
-    *                   is present here in order to avoid hash recomputation.
+    *                   is required in order to avoid hash re-computation.
     */
-   protected void storeLockSafe(InternalCacheEntry ed, String lockingKey) throws CacheLoaderException {
+   protected void storeLockSafe(InternalCacheEntry entry, String lockingKey) throws CacheLoaderException {
       Bucket bucket = loadBucket(lockingKey);
       if (bucket != null) {
-         bucket.addEntry(ed);
-         saveBucket(bucket);
+         bucket.addEntry(entry);
+         updateBucket(bucket);
       } else {
          bucket = new Bucket();
          bucket.setBucketName(lockingKey);
-         bucket.addEntry(ed);
+         bucket.addEntry(entry);
          insertBucket(bucket);
       }
    }
 
    /**
-    * Lookups a bucket where the given key is stored. Then removes the StoredEntry having with gven key from there (if
-    * such a bucket exists).
-    *
+    * Removes an entry from a Bucket, locating the relevant Bucket using the key's hash code.
+    * @param key        key of the entry to remove.
     * @param lockingKey the hash of the key, as returned by {@link LockSupportCacheStore#getLockFromKey(Object)}. This
-    *                   is present here in order to avoid hash recomputation.
+    *                   is required in order to avoid hash re-computation.
     */
    protected boolean removeLockSafe(Object key, String lockingKey) throws CacheLoaderException {
       Bucket bucket = loadBucket(lockingKey);
@@ -75,30 +75,41 @@ public abstract class BucketBasedCacheStore extends LockSupportCacheStore {
          return false;
       } else {
          boolean success = bucket.removeEntry(key);
-         if (success) saveBucket(bucket);
+         if (success) updateBucket(bucket);
          return success;
       }
    }
 
    /**
     * For {@link BucketBasedCacheStore}s the lock should be acquired at bucket level. So we're locking based on the
-    * hashCode of the key, as all keys having same hascode will be mapped to same bucket.
+    * hash code of the key, as all keys having same hash code will be mapped to same bucket.
     */
    protected String getLockFromKey(Object key) {
       return String.valueOf(key.hashCode());
    }
 
+   /**
+    * Inserts a new Bucket in the storage system.  If the bucket already exists, this method should simply update the
+    * store with the contents of the bucket - i.e., behave the same as {@link #updateBucket(Bucket)}.
+    *
+    * @param bucket bucket to insert
+    * @throws CacheLoaderException in case of problems with the store.
+    */
    protected abstract void insertBucket(Bucket bucket) throws CacheLoaderException;
 
    /**
-    * This method assumes that the bucket is already persisted in the database.
-    *
-    * @throws CacheLoaderException if the bucket is not already present, or something happens while persisting.
+    * Updates a bucket in the store with the Bucket passed in to the method.  This method assumes that the bucket
+    * already exists in the store.
+    * @param bucket bucket to update.
+    * @throws CacheLoaderException in case of problems with the store.
     */
-   protected abstract void saveBucket(Bucket bucket) throws CacheLoaderException;
+   protected abstract void updateBucket(Bucket bucket) throws CacheLoaderException;
 
    /**
-    * Loads the bucket from the store, base on the hashcode.
+    * Loads a Bucket from the store, based on the hash code of the bucket.
+    * @param hash String representation of the Bucket's hash
+    * @return a Bucket if one exists, null otherwise.
+    * @throws CacheLoaderException in case of problems with the store.
     */
-   protected abstract Bucket loadBucket(String keyHashCode) throws CacheLoaderException;
+   protected abstract Bucket loadBucket(String hash) throws CacheLoaderException;
 }

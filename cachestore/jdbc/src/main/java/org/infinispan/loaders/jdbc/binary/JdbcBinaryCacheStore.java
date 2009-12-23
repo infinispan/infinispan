@@ -155,13 +155,13 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
       }
    }
 
-   protected void saveBucket(Bucket bucket) throws CacheLoaderException {
+   protected void updateBucket(Bucket bucket) throws CacheLoaderException {
       Connection conn = null;
       PreparedStatement ps = null;
       try {
          String sql = tableManipulation.getUpdateRowSql();
          if (log.isTraceEnabled()) {
-            log.trace("Running saveBucket. Sql: '" + sql + "', on bucket: " + bucket);
+            log.trace("Running updateBucket. Sql: '" + sql + "', on bucket: " + bucket);
          }
          conn = connectionFactory.getConnection();
          ps = conn.prepareStatement(sql);
