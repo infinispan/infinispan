@@ -4,6 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.executors.ScheduledExecutorFactory;
+import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -244,7 +245,8 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
          for (Map.Entry<Object, Object> entry: myProps.entrySet())
             toCompareWith.setProperty((String) entry.getKey(), (String) entry.getValue()); 
          toCompareWith.setProperty("componentName", "replicationQueue-thread");
-         assert p.equals(toCompareWith);
+         toCompareWith.setProperty("threadPriority", "" + KnownComponentNames.getDefaultThreadPrio(KnownComponentNames.ASYNC_REPLICATION_QUEUE_EXECUTOR));
+         assert p.equals(toCompareWith) : "Expected " + p + " but was " + toCompareWith;
          methodCalled = true;
          return new ScheduledThreadPoolExecutor(1) {
             @Override

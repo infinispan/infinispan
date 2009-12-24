@@ -57,7 +57,8 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
    }
 
    private ScheduledExecutorService buildAndConfigureScheduledExecutorService(String factoryName, Properties p, String componentName) throws Exception {
-      Properties props = new Properties(p); // defensive copy
+      Properties props = new Properties(); // defensive copy
+      if (p != null && !p.isEmpty()) props.putAll(p);
       ScheduledExecutorFactory f = (ScheduledExecutorFactory) Util.getInstance(factoryName);
       setComponentName(componentName, props);
       setDefaultThreadPrio(KnownComponentNames.getDefaultThreadPrio(componentName), props);
