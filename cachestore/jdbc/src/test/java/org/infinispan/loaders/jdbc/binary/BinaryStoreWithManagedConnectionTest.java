@@ -31,8 +31,8 @@ import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.infinispan.loaders.jdbc.connectionfactory.ManagedConnectionFactory;
 import org.infinispan.manager.CacheManager;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.Test;
 
@@ -58,7 +58,7 @@ public class BinaryStoreWithManagedConnectionTest extends ManagedConnectionFacto
    public void testLoadFromFile() throws Exception {
       CacheManager cm = null;
       try {
-         cm = new DefaultCacheManager("configs/managed/binary-managed-connection-factory.xml");
+         cm = TestCacheManagerFactory.fromXml("configs/managed/binary-managed-connection-factory.xml");
          Cache<String, String> first = cm.getCache("first");
          Cache<String, String> second = cm.getCache("second");
 

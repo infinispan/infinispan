@@ -1,9 +1,10 @@
 package org.infinispan.config.parsing;
 
 import org.infinispan.Cache;
-import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.CacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
@@ -32,7 +33,7 @@ public class Coherence2InfinispanTransformerTest extends AbstractInfinispanTest 
     */
    private void testAllFile(String coherenceFileName) throws Exception {
       ClassLoader existingCl = Thread.currentThread().getContextClassLoader();
-      DefaultCacheManager dcm = null;
+      CacheManager dcm = null;
       Cache<Object, Object> sampleDistributedCache2 = null;
       try {
          ClassLoader delegatingCl = new Jbc2InfinispanTransformerTest.TestClassLoader(existingCl);
@@ -50,7 +51,7 @@ public class Coherence2InfinispanTransformerTest extends AbstractInfinispanTest 
          baos.close();
          fos.close();
 
-         dcm = new DefaultCacheManager(new ByteArrayInputStream(baos.toByteArray()));
+         dcm = TestCacheManagerFactory.fromStream(new ByteArrayInputStream(baos.toByteArray()));
          Cache<Object,Object> defaultCache = dcm.getCache();
          defaultCache.put("key", "value");
 

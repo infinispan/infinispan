@@ -8,13 +8,15 @@ import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
-import static org.testng.Assert.assertEquals;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+
+import static org.testng.Assert.assertEquals;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -58,7 +60,7 @@ public class EHCache2InfinispanTransformerTest extends AbstractInfinispanTest {
          baos.close();
          fos.close();
 
-         dcm = new DefaultCacheManager(new ByteArrayInputStream(baos.toByteArray()));
+         dcm = (DefaultCacheManager) TestCacheManagerFactory.fromStream(new ByteArrayInputStream(baos.toByteArray()));
          Cache<Object,Object> defaultCache = dcm.getCache();
          defaultCache.put("key", "value");
          Configuration configuration = defaultCache.getConfiguration();

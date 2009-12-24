@@ -23,9 +23,10 @@ package org.infinispan.profiling;
 
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
-import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.config.Configuration;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -53,7 +54,7 @@ public class MemConsumptionTest extends AbstractInfinispanTest {
       int kBytesCached = (bytesPerCharacter * numEntries * (payloadSize + keySize)) / 1024;
       System.out.println("Bytes to be cached: " + NumberFormat.getIntegerInstance().format(kBytesCached) + " kb");
 
-      Cache c = new DefaultCacheManager().getCache();
+      Cache c = TestCacheManagerFactory.createCacheManager(new Configuration()).getCache();
       for (int i = 0; i < numEntries; i++) {
          switch (payloadType) {
             case STRINGS:

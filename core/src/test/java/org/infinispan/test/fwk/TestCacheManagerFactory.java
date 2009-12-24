@@ -1,7 +1,9 @@
 package org.infinispan.test.fwk;
 
 import org.infinispan.config.Configuration;
+import org.infinispan.config.ConfigurationValidatingVisitor;
 import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.config.InfinispanConfiguration;
 import org.infinispan.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.manager.DefaultCacheManager;
@@ -10,6 +12,9 @@ import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -25,6 +30,34 @@ public class TestCacheManagerFactory {
 
    private static DefaultCacheManager newDefaultCacheManager(GlobalConfiguration gc, Configuration c) {
       return new DefaultCacheManager(gc, c);
+   }
+
+   public static CacheManager fromXml(String xmlFile) throws IOException {
+      InfinispanConfiguration parser = InfinispanConfiguration.newInfinispanConfiguration(
+               xmlFile,
+               InfinispanConfiguration.resolveSchemaPath(),
+               new ConfigurationValidatingVisitor());
+      return fromConfigFileParser(parser);
+   }
+
+   public static CacheManager fromStream(InputStream is) throws IOException {
+      InfinispanConfiguration parser = InfinispanConfiguration.newInfinispanConfiguration(
+               is, InfinispanConfiguration.findSchemaInputStream(),
+               new ConfigurationValidatingVisitor());
+      return fromConfigFileParser(parser);      
+   }
+
+   private static CacheManager fromConfigFileParser(InfinispanConfiguration parser) {
+      GlobalConfiguration gc = parser.parseGlobalConfiguration();
+      Map<String, Configuration> named = parser.parseNamedConfigurations();
+      Configuration c = parser.parseDefaultConfiguration();
+
+      minimizeThreads(gc);
+
+      CacheManager cm = new DefaultCacheManager(gc, c, false);
+      for (Map.Entry<String, Configuration> e: named.entrySet()) cm.defineConfiguration(e.getKey(), e.getValue());
+      cm.start();
+      return cm;
    }
 
    /**
@@ -117,9 +150,14 @@ public class TestCacheManagerFactory {
    }
 
    public static CacheManager createCacheManager(GlobalConfiguration configuration, Configuration defaultCfg) {
+      return createCacheManager(configuration, defaultCfg, false);
+   }
+
+   public static CacheManager createCacheManager(GlobalConfiguration configuration, Configuration defaultCfg, boolean transactional) {
       minimizeThreads(configuration);
       amendMarshaller(configuration);
       amendTransport(configuration);
+      if (transactional) amendJTA(defaultCfg);
       return newDefaultCacheManager(configuration, defaultCfg);
    }
 

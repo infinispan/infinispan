@@ -31,8 +31,8 @@ import org.infinispan.loaders.jdbc.mixed.JdbcMixedCacheStore;
 import org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore;
 import org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStoreConfig;
 import org.infinispan.manager.CacheManager;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 import java.io.Serializable;
@@ -47,7 +47,7 @@ import java.sql.Connection;
 public class TableNameUniquenessTest {
 
    public void testForJdbcStringBasedCacheStore() throws Exception {
-      CacheManager cm = new DefaultCacheManager("configs/string-based.xml");
+      CacheManager cm = TestCacheManagerFactory.fromXml("configs/string-based.xml");
       Cache<String, String> first = cm.getCache("first");
       Cache<String, String> second = cm.getCache("second");
 
@@ -67,7 +67,7 @@ public class TableNameUniquenessTest {
    }
 
    public void testForJdbcBinaryCacheStore() throws Exception {
-      CacheManager cm = new DefaultCacheManager("configs/binary.xml");
+      CacheManager cm = TestCacheManagerFactory.fromXml("configs/binary.xml");
       Cache<String, String> first = cm.getCache("first");
       Cache<String, String> second = cm.getCache("second");
 
@@ -81,7 +81,7 @@ public class TableNameUniquenessTest {
 
    @SuppressWarnings("unchecked")
    public void testForMixedCacheStore() throws Exception {
-      CacheManager cm = new DefaultCacheManager("configs/mixed.xml");
+      CacheManager cm = TestCacheManagerFactory.fromXml("configs/mixed.xml");
       Cache first = cm.getCache("first");
       Cache second = cm.getCache("second");
 

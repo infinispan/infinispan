@@ -21,33 +21,32 @@
  */
 package org.infinispan.lucene;
 
+import org.apache.lucene.document.DateTools;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexWriter.MaxFieldLength;
+import org.apache.lucene.index.SerialMergeScheduler;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.LockObtainFailedException;
+import org.infinispan.config.Configuration;
+import org.infinispan.config.Configuration.CacheMode;
+import org.infinispan.config.GlobalConfiguration;
+import org.infinispan.lucene.testutils.LuceneSettings;
+import org.infinispan.manager.CacheManager;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Random;
-
-import org.apache.lucene.document.DateTools;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.SerialMergeScheduler;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.index.IndexWriter.MaxFieldLength;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.LockObtainFailedException;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.config.Configuration.CacheMode;
-import org.infinispan.lucene.testutils.LuceneSettings;
-import org.infinispan.manager.CacheManager;
-import org.infinispan.manager.DefaultCacheManager;
 
 public abstract class CacheTestSupport {
 
@@ -139,8 +138,7 @@ public abstract class CacheTestSupport {
       cfg.setExposeJmxStatistics(false);
       cfg.setL1CacheEnabled(false);
       cfg.setWriteSkewCheck(false);
-      cfg.setTransactionManagerLookupClass(JBossStandaloneJTAManagerLookup.class.getName());
-      return new DefaultCacheManager(globalConfiguration, cfg);
+      return TestCacheManagerFactory.createCacheManager(globalConfiguration, cfg, true);
    }
    
    public static void initializeDirectory(Directory directory) throws IOException {

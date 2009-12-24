@@ -4,8 +4,8 @@ import org.infinispan.Cache;
 import org.infinispan.interceptors.InvocationContextInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.manager.CacheManager;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -26,7 +26,7 @@ public class CustomInterceptorConfigTest {
             "</customInterceptors> </default></infinispan>";
 
       InputStream stream = new ByteArrayInputStream(xml.getBytes());
-      cm = new DefaultCacheManager(stream);
+      cm = TestCacheManagerFactory.fromStream(stream);
       c = cm.getCache();
       DummyInterceptor i = TestingUtil.findInterceptor(c, DummyInterceptor.class);
       assert i != null;

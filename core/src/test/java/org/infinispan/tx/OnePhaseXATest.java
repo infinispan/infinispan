@@ -4,10 +4,9 @@ import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.manager.CacheManager;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TransactionSetup;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
@@ -63,9 +62,7 @@ public class OnePhaseXATest extends AbstractInfinispanTest {
       c.setLockAcquisitionTimeout(60000);
       c.setUseLockStriping(false);
       c.setSyncCommitPhase(true);
-      c.setTransactionManagerLookupClass(TransactionSetup.getManagerLookup());
-
-      CacheManager manager = new DefaultCacheManager(gc, c);
+      CacheManager manager = TestCacheManagerFactory.createCacheManager(gc, c, true);
       return manager.getCache("TestCache");
    }
 }

@@ -5,6 +5,7 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.config.Configuration;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -18,7 +19,7 @@ import java.io.IOException;
  */
 @Test(groups = "functional", testName = "manager.CacheManagerXmlConfigurationTest")
 public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
-   DefaultCacheManager cm;
+   CacheManager cm;
 
    @AfterMethod
    public void tearDown() {
@@ -27,7 +28,7 @@ public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
    }
 
    public void testNamedCacheXML() throws IOException {
-      cm = new DefaultCacheManager("configs/named-cache-test.xml");
+      cm = TestCacheManagerFactory.fromXml("configs/named-cache-test.xml");
 
       // test default cache
       Cache c = cm.getCache();
@@ -80,7 +81,7 @@ public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
 
       ByteArrayInputStream bais = new ByteArrayInputStream(xml.getBytes());
       try {
-         cm = new DefaultCacheManager(bais);
+         cm = TestCacheManagerFactory.fromStream(bais);
          assert false : "Should fail";
       } catch (Throwable expected) {
 
@@ -106,7 +107,7 @@ public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
             "</infinispan>";
 
       ByteArrayInputStream bais = new ByteArrayInputStream(xml.getBytes());
-      cm = new DefaultCacheManager(bais);
+      cm = TestCacheManagerFactory.fromStream(bais);
 
       assert cm.getCache() != null;
       assert cm.getCache("c1") != null;

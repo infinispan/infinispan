@@ -3,12 +3,12 @@ package org.infinispan.profiling;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.profiling.testinternals.FqnGenerator;
 import org.infinispan.profiling.testinternals.Generator;
 import org.infinispan.profiling.testinternals.TaskRunner;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.TreeTestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.infinispan.tree.Fqn;
 import org.infinispan.tree.TreeCache;
@@ -66,7 +66,7 @@ public class TreeProfileTest {
       cfg.setConcurrencyLevel(2000);
       cfg.setLockAcquisitionTimeout(120000);
       cfg.setIsolationLevel(IsolationLevel.READ_COMMITTED);
-      cacheManager = new DefaultCacheManager(cfg);
+      cacheManager = TestCacheManagerFactory.createCacheManager(cfg);
       Cache c = cacheManager.getCache();
       cache = new TreeCacheImpl(c);
    }

@@ -1,8 +1,8 @@
 package org.infinispan.api;
 
-import org.infinispan.Cache;
+import org.infinispan.config.ConfigurationException;
 import org.infinispan.manager.CacheManager;
-import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 /**
@@ -14,20 +14,12 @@ import org.testng.annotations.Test;
 public class NoFlushFailureTest {
 
    CacheManager cm1;
-   CacheManager cm2;
    private static final String FILE = "configs/no-flush.xml";
-   private Cache<Object,Object> c1;
-   private Cache<Object,Object> c2;
 
-   @Test
+   @Test (expectedExceptions = ConfigurationException.class)
    public void simpleTest() throws Exception {
-      cm1 = new DefaultCacheManager(FILE);
-      try {
-         cm1.getCache();
-         assert false : "Exception expected!";
-      } catch (Exception e) {
-         //expected
-      }
+      cm1 = TestCacheManagerFactory.fromXml(FILE);
+      cm1.getCache();
    }
 }
 

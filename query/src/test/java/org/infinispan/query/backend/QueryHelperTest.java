@@ -4,9 +4,9 @@ import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -41,7 +41,7 @@ public class QueryHelperTest {
    }
 
    private Cache<?, ?> createCache(Configuration c) {
-      CacheManager cm = new DefaultCacheManager(c);
+      CacheManager cm = TestCacheManagerFactory.createCacheManager(c);
       cacheManagers.add(cm);
       return cm.getCache();
    }

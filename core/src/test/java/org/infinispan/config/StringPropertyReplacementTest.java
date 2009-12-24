@@ -1,10 +1,10 @@
 package org.infinispan.config;
 
-import org.testng.annotations.Test;
-import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.manager.CacheManager;
-import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.IsolationLevel;
+import org.testng.annotations.Test;
 
 import java.util.Properties;
 
@@ -24,7 +24,7 @@ public class StringPropertyReplacementTest extends SingleCacheManagerTest {
       System.setProperty("test.property.IsolationLevel","READ_COMMITTED");
       System.setProperty("test.property.writeSkewCheck","true");
       System.setProperty("test.property.SyncCommitPhase","true");
-      return new DefaultCacheManager("configs/string-property-replaced.xml");
+      return TestCacheManagerFactory.fromXml("configs/string-property-replaced.xml");
    }
 
    public void testGlobalConfig() {

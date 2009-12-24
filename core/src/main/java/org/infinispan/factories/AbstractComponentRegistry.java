@@ -28,9 +28,9 @@ import org.infinispan.config.ConfigurationException;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -41,6 +41,7 @@ import org.infinispan.util.ReflectionUtil;
 import org.infinispan.util.logging.Log;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -639,7 +640,11 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     */
    private void handleLifecycleTransitionFailure(Throwable t) {
       state = ComponentStatus.FAILED;
-      if (t instanceof CacheException)
+      if (t.getCause() != null && t.getCause() instanceof ConfigurationException)
+         throw (ConfigurationException) t.getCause();
+      else if (t.getCause() != null && t.getCause() instanceof InvocationTargetException && t.getCause().getCause() != null && t.getCause().getCause() instanceof ConfigurationException)
+         throw (ConfigurationException) t.getCause().getCause();
+      else if (t instanceof CacheException)
          throw (CacheException) t;
       else if (t instanceof RuntimeException)
          throw (RuntimeException) t;

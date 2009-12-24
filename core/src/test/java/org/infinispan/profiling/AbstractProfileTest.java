@@ -1,18 +1,19 @@
 package org.infinispan.profiling;
 
 import org.infinispan.config.Configuration;
-import static org.infinispan.config.Configuration.CacheMode.*;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.executors.ExecutorFactory;
 import org.infinispan.manager.CacheManager;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.util.concurrent.WithinThreadExecutor;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
+import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.testng.annotations.Test;
 
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
+
+import static org.infinispan.config.Configuration.CacheMode.*;
 
 @Test(groups = "profiling", enabled = false, testName = "profiling.AbstractProfileTest")
 public abstract class AbstractProfileTest extends SingleCacheManagerTest {
@@ -56,7 +57,7 @@ public abstract class AbstractProfileTest extends SingleCacheManagerTest {
    protected CacheManager createCacheManager() throws Exception {
       GlobalConfiguration gc = GlobalConfiguration.getClusteredDefault();
       gc.setAsyncTransportExecutorFactoryClass(WTE.class.getName());
-      cacheManager = new DefaultCacheManager(gc);
+      cacheManager = TestCacheManagerFactory.createCacheManager(gc);
 
       cacheManager.defineConfiguration(LOCAL_CACHE_NAME, getBaseCfg());
 

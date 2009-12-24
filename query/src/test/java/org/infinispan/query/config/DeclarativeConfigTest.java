@@ -9,6 +9,7 @@ import org.infinispan.query.backend.QueryHelper;
 import org.infinispan.query.helper.TestQueryHelperFactory;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
@@ -31,7 +32,7 @@ public class DeclarativeConfigTest extends SingleCacheManagerTest {
             "</infinispan>";
 
       InputStream is = new ByteArrayInputStream(config.getBytes());
-      cacheManager = new DefaultCacheManager(is, true);
+      cacheManager = TestCacheManagerFactory.fromStream(is);
       cache = cacheManager.getCache();
       QueryHelper qh = TestQueryHelperFactory.createTestQueryHelperInstance(cache, Person.class);
       qf = new QueryFactory(cache, qh);
