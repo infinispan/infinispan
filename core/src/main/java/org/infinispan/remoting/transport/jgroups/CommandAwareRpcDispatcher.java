@@ -49,8 +49,9 @@ import java.util.Vector;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * A JGroups RPC dispatcher that knows how to deal with {@link ReplicableCommand}s.
@@ -235,7 +236,9 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          if (mode != GroupRequest.GET_NONE) {
             msg.setFlag(Message.DONT_BUNDLE);
          }
-         
+
+         if (filter != null) mode = GroupRequest.GET_FIRST;
+
          RspList retval = castMessage(dests, msg, mode, timeout, anycasting, filter);
          if (trace) log.trace("responses: {0}", retval);
 
