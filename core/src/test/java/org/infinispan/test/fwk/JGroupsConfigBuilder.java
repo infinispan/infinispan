@@ -85,13 +85,13 @@ public class JGroupsConfigBuilder {
       loadTcp();
 
       if (tcpConfig.contains("TCPPING")) {
-         return getTcpConfigWithTCPPINGDiscoevry();
+         return getTcpConfigWithTCPPINGDiscovery();
       } else {
          return replaceMCastAddressAndPort(tcpConfig);
       }
    }
 
-   private static String getTcpConfigWithTCPPINGDiscoevry() {
+   private static String getTcpConfigWithTCPPINGDiscovery() {
       // replace mcast_addr
       Matcher m = TCP_START_PORT.matcher(tcpConfig);
       String result;
