@@ -19,7 +19,7 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.loaders.s3;
+package org.infinispan.loaders.cloud;
 
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.marshall.Marshaller;
@@ -27,13 +27,13 @@ import org.infinispan.marshall.VersionAwareMarshaller;
 import org.testng.annotations.Test;
 
 /**
- * S3CacheStoreIntegrationTest using production level marshaller.
+ * CloudCacheStoreIntegrationTest using production level marshaller.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-@Test(groups = "unit", sequential = true, testName = "loaders.s3.S3CacheStoreIntegrationVamTest")
-public class S3CacheStoreIntegrationVamTest extends S3CacheStoreIntegrationTest {
+@Test(groups = "unit", sequential = true, testName = "loaders.cloud.CloudCacheStoreIntegrationVamTest")
+public class CloudCacheStoreIntegrationVamTest extends CloudCacheStoreIntegrationTest {
    @Override
    protected Marshaller getMarshaller() {
       VersionAwareMarshaller marshaller = new VersionAwareMarshaller();

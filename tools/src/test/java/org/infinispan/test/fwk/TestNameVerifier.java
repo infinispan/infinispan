@@ -207,7 +207,7 @@ public class TestNameVerifier {
    // method that populates the list of module names
    private void populateModuleList() {
       modules.add("core");
-      modules.add("cachestore/s3");
+      modules.add("cachestore/cloud");
       modules.add("cachestore/bdbje");
       modules.add("cachestore/jdbc");
       modules.add("cachestore/jdbm");

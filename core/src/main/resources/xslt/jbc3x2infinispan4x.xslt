@@ -301,7 +301,7 @@
                                           <xsl:otherwise>
                                              <xsl:choose>
                                                 <xsl:when test="@class='org.jboss.cache.loader.s3.S3CacheLoader'">
-                                                   <xsl:text>org.infinispan.loaders.s3.S3CacheStore</xsl:text>
+                                                   <xsl:text>org.infinispan.loaders.cloud.CloudCacheStore</xsl:text>
                                                 </xsl:when>
                                                 <xsl:otherwise>
                                                    <xsl:message terminate="no">WARNING! Cannot convert classloader's class, please do it manually!</xsl:message>

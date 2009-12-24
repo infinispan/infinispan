@@ -1,4 +1,4 @@
-package org.infinispan.loaders.s3;
+package org.infinispan.loaders.cloud;
 
 import org.infinispan.CacheDelegate;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -8,10 +8,7 @@ import org.infinispan.io.UnclosableObjectOutputStream;
 import org.infinispan.loaders.BaseCacheStoreTest;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
-import org.infinispan.loaders.s3.jclouds.JCloudsBucket;
-import org.infinispan.loaders.s3.jclouds.JCloudsConnection;
 import org.infinispan.marshall.Marshaller;
-import static org.testng.Assert.assertEquals;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeTest;
@@ -27,53 +24,46 @@ import java.io.ObjectOutput;
 import java.util.HashSet;
 import java.util.Set;
 
+import static org.testng.Assert.assertEquals;
+
 /**
  * @author Adrian Cole
  * @since 4.0
  */
-@Test(groups = "unit", sequential = true, testName = "loaders.s3.S3CacheStoreIntegrationTest")
-public class S3CacheStoreIntegrationTest extends BaseCacheStoreTest {
+@Test(groups = "unit", sequential = true, testName = "loaders.cloud.CloudCacheStoreIntegrationTest")
+public class CloudCacheStoreIntegrationTest extends BaseCacheStoreTest {
 
    private String proxyHost;
    private int proxyPort = -1;
    private int maxConnections = 20;
    private boolean isSecure = false;
-   private Class<? extends S3Connection> connectionClass;
-   private Class<? extends S3Bucket> bucketClass;
    private String csBucket;
    private String cs2Bucket;
    private String accessKey;
    private String secretKey;
+   private String service;
 
-   private static final String sysAWSAccessKeyId = System
-         .getProperty("jclouds.aws.accesskeyid");
-   private static final String sysAWSSecretAccessKey = System
-         .getProperty("jclouds.aws.secretaccesskey");
+   private static final String sysUsername = System.getProperty("infinispan.jclouds.username");
+   private static final String sysPassword = System.getProperty("infinispan.jclouds.password");
+   private static final String sysService = System.getProperty("infinispan.jclouds.service");
 
    @BeforeTest
-   @Parameters({"jclouds.aws.accesskeyid", "jclouds.aws.secretaccesskey"})
-   protected void setUpClient(@Optional String AWSAccessKeyId,
-                              @Optional String AWSSecretAccessKey) throws Exception {
+   @Parameters({"infinispan.jclouds.username", "infinispan.jclouds.password", "infinispan.jclouds.service"})
+   protected void setUpClient(@Optional String JcloudsUsername,
+                              @Optional String JcloudsPassword,
+                              @Optional String JcloudsService) throws Exception {
 
-      accessKey = (AWSAccessKeyId == null) ? sysAWSAccessKeyId : AWSAccessKeyId;
-      secretKey = (AWSSecretAccessKey == null) ? sysAWSSecretAccessKey : AWSSecretAccessKey;
+      accessKey = (JcloudsUsername == null) ? sysUsername : JcloudsUsername;
+      secretKey = (JcloudsPassword == null) ? sysPassword : JcloudsPassword;
+      service = (JcloudsService == null) ? sysService : JcloudsService;
 
-      if (accessKey == null || accessKey.trim().equals("") ||
-            secretKey == null || secretKey.trim().equals("")) {
+      if (accessKey == null || accessKey.trim().equals("") || secretKey == null || secretKey.trim().equals("")) {
          accessKey = "dummy";
          secretKey = "dummy";
-         connectionClass = MockS3Connection.class;
-         bucketClass = MockS3Bucket.class;
-      } else {
-         connectionClass = JCloudsConnection.class;
-         bucketClass = JCloudsBucket.class;
-         proxyHost = "localhost";  // TODO  not yet used
-         proxyPort = 8888; // TODO  not yet used
       }
       csBucket = (System.getProperty("user.name")
             + "." + this.getClass().getSimpleName()).toLowerCase();
-      System.out.printf("accessKey: %1$s, connectionClass: %2$s, bucketClass: %3$s, bucket: %4$s%n", accessKey,
-                        connectionClass, bucketClass, csBucket);
+      System.out.printf("accessKey: %1$s, bucket: %2$s%n", accessKey, csBucket);
 
       cs2Bucket = csBucket + "2";
    }
@@ -87,17 +77,18 @@ public class S3CacheStoreIntegrationTest extends BaseCacheStoreTest {
    }
 
    private CacheStore createAndStartCacheStore(String bucket) throws Exception {
-      S3CacheStore cs = new S3CacheStore();
-      S3CacheStoreConfig cfg = new S3CacheStoreConfig();
+      CloudCacheStore cs = new CloudCacheStore();
+      CloudCacheStoreConfig cfg = new CloudCacheStoreConfig();
       cfg.setBucketPrefix(bucket);
-      cfg.setAwsAccessKey(accessKey);
-      cfg.setAwsSecretKey(secretKey);
+      cfg.setCloudService(service);
+      cfg.setIdentity(accessKey);
+      cfg.setPassword(secretKey);
       cfg.setProxyHost(proxyHost);
       cfg.setProxyPort(proxyPort);
       cfg.setSecure(isSecure);
       cfg.setMaxConnections(maxConnections);
       cfg.setPurgeSynchronously(true); // for more accurate unit testing
-      cs.init(cfg, new CacheDelegate("aName"), getMarshaller(), connectionClass.newInstance(), bucketClass.newInstance());
+      cs.init(cfg, new CacheDelegate("aName"), getMarshaller());
       cs.start();
       return cs;
    }

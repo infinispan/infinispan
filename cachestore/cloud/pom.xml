@@ -1,0 +1,114 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+   <modelVersion>4.0.0</modelVersion>
+   <parent>
+      <groupId>org.infinispan</groupId>
+      <artifactId>infinispan-cachestore-parent</artifactId>
+      <version>4.0.0-SNAPSHOT</version>
+      <relativePath>../pom.xml</relativePath>
+   </parent>
+   <artifactId>infinispan-cachestore-cloud</artifactId>
+   <name>Infinispan CloudCacheStore</name>
+   <description>Infinispan CloudCacheStore module</description>
+
+   <properties>
+      <jclouds.aws.accesskeyid></jclouds.aws.accesskeyid>
+      <jclouds.aws.secretaccesskey></jclouds.aws.secretaccesskey>
+      <version.jclouds>1.0-SNAPSHOT</version.jclouds>
+   </properties>
+
+   <dependencies>
+      <dependency>
+         <groupId>org.jclouds</groupId>
+         <artifactId>jclouds-blobstore</artifactId>
+         <version>${version.jclouds}</version>
+      </dependency>
+      <dependency>
+         <groupId>org.jclouds</groupId>
+         <artifactId>jclouds-joda</artifactId>
+         <version>${version.jclouds}</version>
+      </dependency>
+      <dependency>
+         <groupId>org.jclouds</groupId>
+         <artifactId>jclouds-bouncycastle</artifactId>
+         <version>${version.jclouds}</version>
+      </dependency>
+      <dependency>
+         <groupId>org.jclouds</groupId>
+         <artifactId>jclouds-httpnio</artifactId>
+         <version>${version.jclouds}</version>
+      </dependency>
+      <dependency>
+         <groupId>org.jclouds</groupId>
+         <artifactId>jclouds-log4j</artifactId>
+         <version>${version.jclouds}</version>
+      </dependency>
+
+      <!-- =========================================================== -->
+      <!-- optional cloud provider plug-ins.  You'd need at least one! -->
+      <dependency>
+         <groupId>org.jclouds</groupId>
+         <artifactId>jclouds-aws</artifactId>
+         <version>${version.jclouds}</version>
+         <scope>optional</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.jclouds</groupId>
+         <artifactId>jclouds-azure</artifactId>
+         <version>${version.jclouds}</version>
+         <scope>optional</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.jclouds</groupId>
+         <artifactId>jclouds-rackspace</artifactId>
+         <version>${version.jclouds}</version>
+         <scope>optional</scope>
+      </dependency>
+      <!-- =========================================================== -->
+   </dependencies>
+   <repositories>
+      <repository>
+         <id>jclouds</id>
+         <url>http://jclouds.googlecode.com/svn/repo</url>
+         <snapshots>
+            <enabled>false</enabled>
+         </snapshots>
+      </repository>
+      <repository>
+         <id>jclouds-snapshots</id>
+         <url>http://jclouds.rimuhosting.com/maven2/snapshots</url>
+         <snapshots>
+            <enabled>true</enabled>
+         </snapshots>
+      </repository>
+   </repositories>
+   <build>
+      <plugins>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>2.4.3</version>
+            <configuration>
+               <forkMode>once</forkMode>
+               <parallel>false</parallel>
+               <systemProperties>
+                  <property>
+                     <name>infinispan.jclouds.username</name>
+                     <value>${infinispan.jclouds.username}</value>
+                  </property>
+                  <property>
+                     <name>infinispan.jclouds.password</name>
+                     <value>${infinispan.jclouds.password}</value>
+                  </property>
+                  <property>
+                     <name>infinispan.jclouds.service</name>
+                     <value>${infinispan.jclouds.service}</value>
+                  </property>
+               </systemProperties>
+            </configuration>
+         </plugin>
+      </plugins>
+   </build>
+</project>

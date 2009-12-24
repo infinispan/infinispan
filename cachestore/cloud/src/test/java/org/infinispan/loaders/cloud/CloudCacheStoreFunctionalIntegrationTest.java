@@ -19,7 +19,7 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.loaders.s3;
+package org.infinispan.loaders.cloud;
 
 import org.infinispan.loaders.BaseCacheStoreFunctionalTest;
 import org.infinispan.loaders.CacheStoreConfig;
@@ -28,8 +28,8 @@ import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-@Test(groups = "unit", sequential = true, testName = "loaders.s3.S3CacheStoreFunctionalIntegrationTest")
-public class S3CacheStoreFunctionalIntegrationTest extends BaseCacheStoreFunctionalTest {
+@Test(groups = "unit", sequential = true, testName = "loaders.cloud.CloudCacheStoreFunctionalIntegrationTest")
+public class CloudCacheStoreFunctionalIntegrationTest extends BaseCacheStoreFunctionalTest {
 
    private String proxyHost;
    private int proxyPort = -1;
@@ -38,53 +38,43 @@ public class S3CacheStoreFunctionalIntegrationTest extends BaseCacheStoreFunctio
    private String csBucket;
    private String accessKey;
    private String secretKey;
-   String connectionClass;
-   String bucketClass;
+   private String cs;
 
-
-   private static final String sysAWSAccessKeyId = System
-         .getProperty("jclouds.aws.accesskeyid");
-   private static final String sysAWSSecretAccessKey = System
-         .getProperty("jclouds.aws.secretaccesskey");
+   private static final String sysUsername = System.getProperty("infinispan.jclouds.username");
+   private static final String sysPassword = System.getProperty("infinispan.jclouds.password");
+   private static final String sysService = System.getProperty("infinispan.jclouds.service");
 
    @BeforeTest
-   @Parameters({"jclouds.aws.accesskeyid", "jclouds.aws.secretaccesskey"})
-   protected void setUpClient(@Optional String AWSAccessKeyId,
-                              @Optional String AWSSecretAccessKey) throws Exception {
+   @Parameters({"infinispan.jclouds.username", "infinispan.jclouds.password", "infinispan.jclouds.service"})
+   protected void setUpClient(@Optional String JcloudsUsername,
+                              @Optional String JcloudsPassword,
+                              @Optional String JcloudsService) throws Exception {
 
-      accessKey = (AWSAccessKeyId == null) ? sysAWSAccessKeyId : AWSAccessKeyId;
-      secretKey = (AWSSecretAccessKey == null) ? sysAWSSecretAccessKey : AWSSecretAccessKey;
+      accessKey = (JcloudsUsername == null) ? sysUsername : JcloudsUsername;
+      secretKey = (JcloudsPassword == null) ? sysPassword : JcloudsPassword;
+      cs = (JcloudsService == null) ? sysService : JcloudsService;
 
-      if (accessKey == null || accessKey.trim().equals("") ||
-            secretKey == null || secretKey.trim().equals("")) {
+      if (accessKey == null || accessKey.trim().equals("") || secretKey == null || secretKey.trim().equals("")) {
          accessKey = "dummy";
          secretKey = "dummy";
-         connectionClass = MockS3Connection.class.getName();
-         bucketClass = MockS3Bucket.class.getName();
-      } else {
-         proxyHost = "localhost";  // TODO  not yet used
-         proxyPort = 8888; // TODO  not yet used
       }
-      csBucket = (System.getProperty("user.name")
-            + "." + this.getClass().getSimpleName()).toLowerCase();
+      csBucket = (System.getProperty("user.name") + "." + this.getClass().getSimpleName()).toLowerCase();
       System.out.printf("accessKey: %1$s, bucket: %2$s%n", accessKey, csBucket);
    }
 
 
    @Override
    protected CacheStoreConfig createCacheStoreConfig() throws Exception {
-      S3CacheStoreConfig cfg = new S3CacheStoreConfig();
+      CloudCacheStoreConfig cfg = new CloudCacheStoreConfig();
+      cfg.setCloudService(cs);
       cfg.setBucketPrefix(csBucket);
-      cfg.setAwsAccessKey(accessKey);
-      cfg.setAwsSecretKey(secretKey);
+      cfg.setIdentity(accessKey);
+      cfg.setPassword(secretKey);
       cfg.setProxyHost(proxyHost);
       cfg.setProxyPort(proxyPort);
       cfg.setSecure(isSecure);
       cfg.setMaxConnections(maxConnections);
-      cfg.setBucketClass(bucketClass);
-      cfg.setConnectionClass(connectionClass);
       cfg.setPurgeSynchronously(true); // for more accurate unit testing
       return cfg;
    }
-
 }
