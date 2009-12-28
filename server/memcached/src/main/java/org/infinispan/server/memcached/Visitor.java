@@ -43,7 +43,7 @@ public interface Visitor {
    Object visitIncrement(Channel ch, IncrementCommand command) throws Exception;
    Object visitDecrement(Channel ch, DecrementCommand command) throws Exception;
    Object visitStats(Channel ch, StatsCommand command) throws Exception;
-///   Object visitFlushAll(Channel ch, FlushAllCommand command);
-//   Object visitVersion(Channel ch, VersionCommand command);
-//   Object visitQuit(Channel ch, QuitCommand command);
+   Object visitFlushAll(Channel ch, FlushAllCommand command) throws Exception;
+   Object visitVersion(Channel ch, VersionCommand command) throws Exception;
+   Object visitQuit(Channel ch, QuitCommand command) throws Exception;
 }

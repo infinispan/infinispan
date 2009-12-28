@@ -24,8 +24,7 @@ package org.infinispan.server.memcached;
 
 import java.io.IOException;
 import java.io.StreamCorruptedException;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.ScheduledExecutorService;
 
 import org.infinispan.Cache;
 import org.infinispan.util.logging.Log;
@@ -49,15 +48,14 @@ public class TextCommandDecoder extends ReplayingDecoder<TextCommandDecoder.Stat
    
    private final CommandFactory factory;
    private volatile Command command;
-//   private final AtomicBoolean corrupted = new AtomicBoolean();
 
    protected enum State {
       READ_COMMAND, READ_UNSTRUCTURED_DATA;
    }
 
-   TextCommandDecoder(Cache cache, InterceptorChain chain) {
+   TextCommandDecoder(Cache cache, InterceptorChain chain, ScheduledExecutorService scheduler) {
       super(State.READ_COMMAND, true);
-      factory = new CommandFactory(cache, chain);
+      factory = new CommandFactory(cache, chain, scheduler);
    }
 
    @Override

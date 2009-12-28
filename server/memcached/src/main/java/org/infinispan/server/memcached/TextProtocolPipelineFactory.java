@@ -25,6 +25,7 @@ package org.infinispan.server.memcached;
 import static org.jboss.netty.channel.Channels.*;
 
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ScheduledExecutorService;
 
 import org.infinispan.Cache;
 import org.jboss.netty.channel.ChannelHandler;
@@ -51,8 +52,8 @@ class TextProtocolPipelineFactory implements ChannelPipelineFactory {
    private final ReplayingDecoder<TextCommandDecoder.State> decoder;
    private final ChannelHandler handler;
 
-   public TextProtocolPipelineFactory(Cache cache, InterceptorChain chain) {
-      this.decoder = new TextCommandDecoder(cache, chain);
+   public TextProtocolPipelineFactory(Cache cache, InterceptorChain chain, ScheduledExecutorService scheduler) {
+      this.decoder = new TextCommandDecoder(cache, chain, scheduler);
       this.handler = new TextCommandHandler(cache, chain);
    }
 

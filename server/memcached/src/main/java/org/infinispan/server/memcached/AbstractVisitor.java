@@ -92,6 +92,21 @@ public abstract class AbstractVisitor implements Visitor {
       return handleDefault(ch, command);
    }
 
+   @Override
+   public Object visitFlushAll(Channel ch, FlushAllCommand command) throws Exception {
+      return handleDefault(ch, command);
+   }
+
+   @Override
+   public Object visitVersion(Channel ch, VersionCommand command) throws Exception {
+      return handleDefault(ch, command);
+   }
+
+   @Override
+   public Object visitQuit(Channel ch, QuitCommand command) throws Exception {
+      return handleDefault(ch, command);
+   }
+
    protected Object handleDefault(Channel ch, Command command) throws Exception {
       return null;
    }

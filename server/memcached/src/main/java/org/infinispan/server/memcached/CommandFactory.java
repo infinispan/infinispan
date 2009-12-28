@@ -29,6 +29,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
@@ -47,10 +50,12 @@ public class CommandFactory {
 
    private final Cache cache;
    private final InterceptorChain chain;
+   private final ScheduledExecutorService scheduler;
    
-   public CommandFactory(Cache cache, InterceptorChain chain) {
+   public CommandFactory(Cache cache, InterceptorChain chain, ScheduledExecutorService scheduler) {
       this.cache = cache;
       this.chain = chain;
+      this.scheduler = scheduler;
    }
 
    public Command createCommand(String line) throws IOException {
@@ -92,6 +97,13 @@ public class CommandFactory {
             return NumericCommand.newNumericCommand(cache, type, key, value);
          case STATS:
             return StatsCommand.newStatsCommand(cache, type, chain);
+         case FLUSH_ALL:
+            long delay = args.length > 1 ? Long.parseLong(args[1]) : 0;
+            return FlushAllCommand.newFlushAllCommand(cache, delay, scheduler);
+         case VERSION:
+            return VersionCommand.newVersionCommand();
+         case QUIT:
+            return QuitCommand.newQuitCommand();
          default:
             throw new NotImplementedException("Parsed type not implemented yet");
       }

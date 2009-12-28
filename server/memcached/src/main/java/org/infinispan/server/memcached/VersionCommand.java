@@ -22,17 +22,40 @@
  */
 package org.infinispan.server.memcached;
 
+import static org.infinispan.server.memcached.Reply.VERSION;
+import static org.infinispan.server.memcached.TextProtocolUtil.CRLF;
+import static org.jboss.netty.buffer.ChannelBuffers.wrappedBuffer;
+
+import org.infinispan.Version;
+import org.jboss.netty.channel.Channel;
+
 /**
- * StorageReply.
+ * VersionCommand.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-public enum Reply {
-   STORED, NOT_STORED, EXISTS, NOT_FOUND, DELETED, STAT, VALUE, END, OK, VERSION,
-   ERROR, CLIENT_ERROR, SERVER_ERROR;
-   
-   public byte[] bytes() {
-      return this.toString().getBytes();
+public enum VersionCommand implements Command {
+   INSTANCE;
+
+   @Override
+   public Object acceptVisitor(Channel ch, CommandInterceptor next) throws Exception {
+      return next.visitVersion(ch, this);
+   }
+
+   @Override
+   public CommandType getType() {
+      return CommandType.VERSION;
+   }
+
+   @Override
+   public Object perform(Channel ch) throws Exception {
+      String version = ' ' + Version.version;
+      ch.write(wrappedBuffer(wrappedBuffer(VERSION.bytes()), wrappedBuffer(version.getBytes()), wrappedBuffer(CRLF)));
+      return null;
+   }
+
+   public static VersionCommand newVersionCommand() {
+      return INSTANCE;
    }
 }

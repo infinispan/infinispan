@@ -23,6 +23,7 @@
 package org.infinispan.server.memcached;
 
 import java.lang.reflect.Method;
+import java.net.SocketAddress;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.Future;
@@ -32,9 +33,11 @@ import net.spy.memcached.CASResponse;
 import net.spy.memcached.CASValue;
 import net.spy.memcached.MemcachedClient;
 
+import org.infinispan.Version;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.server.memcached.test.MemcachedTestingUtil;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
@@ -322,4 +325,50 @@ public class FunctionalTest extends SingleCacheManagerTest {
       assert 0 ==  newValue : "Unexpected result: " + newValue;
    }
 
+   public void testFlushAll(Method m) throws Exception {
+      Future<Boolean> f;
+      for (int i = 0; i < 5; i++) {
+         String key = k(m, "k" + i + "-");
+         Object value = v(m, "v" + i + "-");
+         f = client.set(key, 0, value);
+         assert f.get(5, TimeUnit.SECONDS);
+         assert value.equals(client.get(key));
+      }
+
+      f = client.flush();
+      assert f.get(5, TimeUnit.SECONDS);
+
+      for (int i = 0; i < 5; i++) {
+         String key = k(m, "k" + i + "-");
+         assert null == client.get(key);
+      }
+   }
+
+   public void testFlushAllDelayed(Method m) throws Exception {
+      Future<Boolean> f;
+      for (int i = 0; i < 5; i++) {
+         String key = k(m, "k" + i + "-");
+         Object value = v(m, "v" + i + "-");
+         f = client.set(key, 0, value);
+         assert f.get(5, TimeUnit.SECONDS);
+         assert value.equals(client.get(key));
+      }
+
+      f = client.flush(2);
+      assert f.get(5, TimeUnit.SECONDS);
+
+      TestingUtil.sleepThread(2200);
+
+      for (int i = 0; i < 5; i++) {
+         String key = k(m, "k" + i + "-");
+         assert null == client.get(key);
+      }
+   }
+
+   public void testVersion() throws Exception {
+      Map<SocketAddress, String> versions = client.getVersions();
+      assert 1 == versions.size();
+      String version = versions.values().iterator().next();
+      assert Version.version.equals(version);
+   }
 }

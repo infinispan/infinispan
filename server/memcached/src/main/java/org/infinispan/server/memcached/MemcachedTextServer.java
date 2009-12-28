@@ -23,7 +23,11 @@
 package org.infinispan.server.memcached;
 
 import java.net.InetSocketAddress;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.DelayQueue;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 import org.infinispan.Cache;
 import org.infinispan.manager.CacheManager;
@@ -40,10 +44,12 @@ import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 public class MemcachedTextServer {
    private final CacheManager manager;
    private final int port;
+   private final ScheduledExecutorService scheduler;
    
    public MemcachedTextServer(CacheManager manager, int port) {
       this.manager = manager;
       this.port = port;
+      this.scheduler = Executors.newScheduledThreadPool(1);
    }
 
    public int getPort() {
@@ -58,11 +64,12 @@ public class MemcachedTextServer {
       ChannelFactory factory = new NioServerSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool());
       ServerBootstrap bootstrap = new ServerBootstrap(factory);
       InterceptorChain chain = InterceptorChainFactory.getInstance(cache).buildInterceptorChain();
-      bootstrap.setPipelineFactory(new TextProtocolPipelineFactory(cache, chain));
+      bootstrap.setPipelineFactory(new TextProtocolPipelineFactory(cache, chain, scheduler));
       bootstrap.bind(new InetSocketAddress(port));
    }
 
    public void stop() {
       manager.stop();
+      scheduler.shutdown();
    }
 }

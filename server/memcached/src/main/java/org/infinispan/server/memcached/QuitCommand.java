@@ -22,17 +22,34 @@
  */
 package org.infinispan.server.memcached;
 
+import org.jboss.netty.channel.Channel;
+
 /**
- * StorageReply.
+ * QuitCommand.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-public enum Reply {
-   STORED, NOT_STORED, EXISTS, NOT_FOUND, DELETED, STAT, VALUE, END, OK, VERSION,
-   ERROR, CLIENT_ERROR, SERVER_ERROR;
+public enum QuitCommand implements Command {
+   INSTANCE;
    
-   public byte[] bytes() {
-      return this.toString().getBytes();
+   @Override
+   public Object acceptVisitor(Channel ch, CommandInterceptor next) throws Exception {
+      return next.visitQuit(ch, this);
+   }
+
+   @Override
+   public CommandType getType() {
+      return CommandType.QUIT;
+   }
+
+   @Override
+   public Object perform(Channel ch) throws Exception {
+      ch.disconnect();
+      return null;
+   }
+
+   public static QuitCommand newQuitCommand() {
+      return INSTANCE;
    }
 }
