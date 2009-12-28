@@ -25,6 +25,7 @@ package org.infinispan.server.memcached;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
+import org.jboss.netty.channel.Channel;
 
 /**
  * AddCommand.
@@ -36,6 +37,11 @@ public class AddCommand extends SetCommand {
 
    AddCommand(Cache cache, CommandType type, StorageParameters params, byte[] data) {
       super(cache, type, params, data);
+   }
+
+   @Override
+   public Object acceptVisitor(Channel ch, CommandInterceptor next) throws Exception {
+      return next.visitAdd(ch, this);
    }
 
    @Override

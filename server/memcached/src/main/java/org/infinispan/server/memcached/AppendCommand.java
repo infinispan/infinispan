@@ -23,6 +23,7 @@
 package org.infinispan.server.memcached;
 
 import org.infinispan.Cache;
+import org.jboss.netty.channel.Channel;
 
 /**
  * AppendCommand.
@@ -38,6 +39,11 @@ public class AppendCommand extends SetCommand {
 
    AppendCommand(Cache cache, CommandType type, StorageParameters params, byte[] data) {
       super(cache, type, params, data);
+   }
+
+   @Override
+   public Object acceptVisitor(Channel ch, CommandInterceptor next) throws Exception {
+      return next.visitAppend(ch, this);
    }
 
    @Override

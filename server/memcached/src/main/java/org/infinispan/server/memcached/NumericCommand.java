@@ -73,10 +73,11 @@ public abstract class NumericCommand implements Command {
          } else {
             throw new CacheException("Value modified since we retrieved from the cache, old value was " + oldBigInt);
          }
+         return curr;
       } else {
          ch.write(wrappedBuffer(wrappedBuffer(Reply.NOT_FOUND.bytes()), wrappedBuffer(CRLF)));
+         return null;
       }
-      return null;
    }
 
    protected abstract BigInteger operate(BigInteger oldValue, BigInteger newValue);

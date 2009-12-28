@@ -47,14 +47,13 @@ class TextProtocolPipelineFactory implements ChannelPipelineFactory {
 //   }
 
 //   private final Cache cache;
-//   private final BlockingQueue<DelayedDeleteEntry> queue;
    
    private final ReplayingDecoder<TextCommandDecoder.State> decoder;
    private final ChannelHandler handler;
 
-   public TextProtocolPipelineFactory(Cache cache, BlockingQueue<DeleteDelayedEntry> queue) {
-      this.decoder = new TextCommandDecoder(cache, queue);
-      this.handler = new TextCommandHandler();
+   public TextProtocolPipelineFactory(Cache cache, InterceptorChain chain) {
+      this.decoder = new TextCommandDecoder(cache, chain);
+      this.handler = new TextCommandHandler(cache, chain);
    }
 
    @Override

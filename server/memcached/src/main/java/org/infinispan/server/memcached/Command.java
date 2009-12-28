@@ -33,6 +33,8 @@ import org.jboss.netty.channel.Channel;
 public interface Command {
 
    Object perform(Channel ch) throws Exception;
+   
+   Object acceptVisitor(Channel ch, CommandInterceptor next) throws Exception;
 
    CommandType getType();
 }

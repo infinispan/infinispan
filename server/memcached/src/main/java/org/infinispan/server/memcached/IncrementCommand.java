@@ -27,6 +27,7 @@ import java.math.BigInteger;
 import org.infinispan.Cache;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.jboss.netty.channel.Channel;
 
 /**
  * IncrementCommand.
@@ -42,9 +43,15 @@ public class IncrementCommand extends NumericCommand {
    }
 
    @Override
+   public Object acceptVisitor(Channel ch, CommandInterceptor next) throws Exception {
+      return next.visitIncrement(ch, this);
+   }
+
+   @Override
    protected BigInteger operate(BigInteger oldValue, BigInteger newValue) {
       if (log.isTraceEnabled()) log.trace("Increment {0} with {1}", oldValue, newValue);
       return oldValue.add(newValue);
    }
+
 
 }

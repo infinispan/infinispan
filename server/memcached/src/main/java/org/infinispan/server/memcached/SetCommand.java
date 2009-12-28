@@ -48,6 +48,11 @@ public class SetCommand extends StorageCommand {
    }
 
    @Override
+   public Object acceptVisitor(Channel ch, CommandInterceptor next) throws Exception {
+      return next.visitSet(ch, this);
+   }
+
+   @Override
    public Object perform(Channel ch) throws Exception {
       Reply reply;
       try {
@@ -79,7 +84,7 @@ public class SetCommand extends StorageCommand {
          reply = Reply.NOT_STORED;
       }
       ch.write(wrappedBuffer(wrappedBuffer(reply.bytes()), wrappedBuffer(CRLF)));
-      return null;
+      return reply;
    }
 
    protected Reply put(String key, int flags, byte[] data) {
@@ -95,4 +100,7 @@ public class SetCommand extends StorageCommand {
    private Reply reply() {
       return Reply.STORED;
    }
+
+
+
 }

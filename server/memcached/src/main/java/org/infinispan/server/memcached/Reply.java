@@ -29,7 +29,7 @@ package org.infinispan.server.memcached;
  * @since 4.0
  */
 public enum Reply {
-   STORED, NOT_STORED, EXISTS, NOT_FOUND, DELETED,
+   STORED, NOT_STORED, EXISTS, NOT_FOUND, DELETED, STAT, VALUE, END,
    ERROR, CLIENT_ERROR, SERVER_ERROR;
    
    public byte[] bytes() {

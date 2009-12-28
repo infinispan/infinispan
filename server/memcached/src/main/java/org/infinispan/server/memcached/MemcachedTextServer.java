@@ -23,14 +23,10 @@
 package org.infinispan.server.memcached;
 
 import java.net.InetSocketAddress;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.DelayQueue;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.infinispan.Cache;
 import org.infinispan.manager.CacheManager;
-import org.infinispan.manager.DefaultCacheManager;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.ChannelFactory;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
@@ -41,34 +37,32 @@ import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
  * @author Galder Zamarreño
  * @since 4.0
  */
-class MemcachedTextServer {
-   final CacheManager manager;
-   @Deprecated
-   final ExecutorService delayedExecutor;
+public class MemcachedTextServer {
+   private final CacheManager manager;
+   private final int port;
    
-   MemcachedTextServer(CacheManager manager) {
+   public MemcachedTextServer(CacheManager manager, int port) {
       this.manager = manager;
-      this.delayedExecutor = Executors.newSingleThreadExecutor();
+      this.port = port;
+   }
+
+   public int getPort() {
+      return port;
    }
 
    public void start() {
       // Configure Infinispan Cache instance
       Cache cache = manager.getCache();
 
-      // Create delaye queue for delayed deletes and start thread
-      BlockingQueue<DeleteDelayedEntry> queue = new DelayQueue<DeleteDelayedEntry>();
-      DeleteDelayed runnable = new DeleteDelayed(cache, queue);
-      delayedExecutor.submit(runnable);
-
       // Configure the server.
       ChannelFactory factory = new NioServerSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool());
       ServerBootstrap bootstrap = new ServerBootstrap(factory);
-      bootstrap.setPipelineFactory(new TextProtocolPipelineFactory(cache, queue));
-      bootstrap.bind(new InetSocketAddress(11211));
+      InterceptorChain chain = InterceptorChainFactory.getInstance(cache).buildInterceptorChain();
+      bootstrap.setPipelineFactory(new TextProtocolPipelineFactory(cache, chain));
+      bootstrap.bind(new InetSocketAddress(port));
    }
 
    public void stop() {
       manager.stop();
-      delayedExecutor.shutdown();
    }
 }

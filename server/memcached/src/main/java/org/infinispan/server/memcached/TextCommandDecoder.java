@@ -55,9 +55,9 @@ public class TextCommandDecoder extends ReplayingDecoder<TextCommandDecoder.Stat
       READ_COMMAND, READ_UNSTRUCTURED_DATA;
    }
 
-   TextCommandDecoder(Cache cache, BlockingQueue<DeleteDelayedEntry> queue) {
+   TextCommandDecoder(Cache cache, InterceptorChain chain) {
       super(State.READ_COMMAND, true);
-      factory = new CommandFactory(cache, queue);
+      factory = new CommandFactory(cache, chain);
    }
 
    @Override

@@ -28,8 +28,8 @@ import org.jboss.netty.channel.Channel;
 
 import static org.infinispan.server.memcached.TextProtocolUtil.CRLF;
 import static org.jboss.netty.buffer.ChannelBuffers.*;
-import static org.infinispan.server.memcached.RetrievalReply.VALUE;
-import static org.infinispan.server.memcached.RetrievalReply.END;
+import static org.infinispan.server.memcached.Reply.VALUE;
+import static org.infinispan.server.memcached.Reply.END;
 
 /**
  * GetCommand.
@@ -43,6 +43,10 @@ public class GetCommand extends RetrievalCommand {
       super(cache, type, params);
    }
 
+   @Override
+   public Object acceptVisitor(Channel ch, CommandInterceptor next) throws Exception {
+      return next.visitGet(ch, this);
+   }
    
    @Override
    public Object perform(Channel ch) throws Exception {

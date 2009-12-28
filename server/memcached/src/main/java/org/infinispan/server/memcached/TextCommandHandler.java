@@ -22,9 +22,7 @@
  */
 package org.infinispan.server.memcached;
 
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.channel.Channel;
+import org.infinispan.Cache;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelPipelineCoverage;
 import org.jboss.netty.channel.MessageEvent;
@@ -38,18 +36,19 @@ import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
  */
 @ChannelPipelineCoverage("one")
 class TextCommandHandler extends SimpleChannelUpstreamHandler {
+   final Cache cache;
+   final InterceptorChain chain;
+
+   TextCommandHandler(Cache cache, InterceptorChain chain) {
+      this.cache = cache;
+      this.chain = chain;
+   }
 
    @Override
    public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
-      Command c = (Command) e.getMessage();
-      c.perform(ctx.getChannel());
-//      Channel ch = ctx.getChannel();
-//      
-//      byte[] bytes = ret.toString().getBytes();
-//      ChannelBuffer buffer = ChannelBuffers.buffer(bytes.length);
-//      buffer.writeBytes(bytes);
-//      
-//      ch.write(buffer);
+      chain.invoke(ctx.getChannel(), (Command) e.getMessage());
+//      Command c = (Command) e.getMessage();
+//      c.perform(ctx.getChannel());
    }
 
    

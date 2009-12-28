@@ -22,40 +22,28 @@
  */
 package org.infinispan.server.memcached;
 
-import java.util.concurrent.TimeUnit;
-
-import org.infinispan.Cache;
 import org.jboss.netty.channel.Channel;
 
 /**
- * ReplaceCommand.
+ * CommandInterceptor.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class ReplaceCommand extends SetCommand {
-
-   ReplaceCommand(Cache cache, CommandType type, StorageParameters params, byte[] data) {
-      super(cache, type, params, data);
-   }
-
-   @Override
-   public Object acceptVisitor(Channel ch, CommandInterceptor next) throws Exception {
-      return next.visitReplace(ch, this);
-   }
-
-   @Override
-   protected Reply put(String key, int flags, byte[] data, long expiry) {
-      Value value = new Value(flags, data);
-      Object prev = cache.replace(params.key, value, expiry, TimeUnit.MILLISECONDS);
-      return reply(prev);
-   }
-
-   private Reply reply(Object prev) {
-      if (prev == null)
-         return Reply.NOT_STORED;
-      else
-         return Reply.STORED;
-   }
-
+public interface Visitor {
+   Object visitSet(Channel ch, SetCommand command) throws Exception;
+   Object visitAdd(Channel ch, AddCommand command) throws Exception;
+   Object visitReplace(Channel ch, ReplaceCommand command) throws Exception;
+   Object visitAppend(Channel ch, AppendCommand command) throws Exception;
+   Object visitPrepend(Channel ch, PrependCommand command) throws Exception;
+   Object visitCas(Channel ch, CasCommand command) throws Exception;
+   Object visitGet(Channel ch, GetCommand command) throws Exception;
+   Object visitGets(Channel ch, GetsCommand command) throws Exception;
+   Object visitDelete(Channel ch, DeleteCommand command) throws Exception;
+   Object visitIncrement(Channel ch, IncrementCommand command) throws Exception;
+   Object visitDecrement(Channel ch, DecrementCommand command) throws Exception;
+   Object visitStats(Channel ch, StatsCommand command) throws Exception;
+///   Object visitFlushAll(Channel ch, FlushAllCommand command);
+//   Object visitVersion(Channel ch, VersionCommand command);
+//   Object visitQuit(Channel ch, QuitCommand command);
 }

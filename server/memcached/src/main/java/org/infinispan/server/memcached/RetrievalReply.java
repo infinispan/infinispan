@@ -29,5 +29,5 @@ package org.infinispan.server.memcached;
  * @since 4.0
  */
 public enum RetrievalReply {
-   VALUE, END;
+   , ;
 }

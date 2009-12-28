@@ -41,18 +41,10 @@ public class DeleteCommand implements Command {
 
    final Cache cache;
    final String key;
-   @Deprecated
-   /** @deprecated No longer in memcached spec: http://github.com/memcached/memcached/blob/master/doc/protocol.txt */
-   final long time;
-   @Deprecated
-   /** @deprecated No longer in memcached spec: http://github.com/memcached/memcached/blob/master/doc/protocol.txt */
-   final BlockingQueue<DeleteDelayedEntry> queue;
 
-   DeleteCommand(Cache cache, String key, long time, BlockingQueue<DeleteDelayedEntry> queue) {
+   DeleteCommand(Cache cache, String key, long time) {
       this.cache = cache;
       this.key = key;
-      this.time = time;
-      this.queue = queue;
    }
 
    @Override
@@ -61,16 +53,15 @@ public class DeleteCommand implements Command {
    }
 
    @Override
+   public Object acceptVisitor(Channel ch, CommandInterceptor next) throws Exception {
+      return next.visitDelete(ch, this);
+   }
+
+   @Override
    public Object perform(Channel ch) throws Exception {
       Reply reply;
-      if (time > 0) {
-         DeleteDelayedEntry d = new DeleteDelayedEntry(key, time);
-         queue.offer(d);
-         reply = Reply.DELETED;
-      } else {
-         Object prev = cache.remove(key);
-         reply = reply(prev);
-      }
+      Object prev = cache.remove(key);
+      reply = reply(prev);
       ch.write(wrappedBuffer(wrappedBuffer(reply.bytes()), wrappedBuffer(CRLF)));
       return null;
    }
@@ -82,7 +73,7 @@ public class DeleteCommand implements Command {
          return Reply.DELETED;
    }
 
-   public static DeleteCommand newDeleteCommand(Cache cache, String key, BlockingQueue<DeleteDelayedEntry> queue) {
-      return new DeleteCommand(cache, key, 0, queue);
+   public static DeleteCommand newDeleteCommand(Cache cache, String key) {
+      return new DeleteCommand(cache, key, 0);
    }
 }

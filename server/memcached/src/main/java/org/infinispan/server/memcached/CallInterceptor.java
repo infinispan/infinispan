@@ -22,40 +22,22 @@
  */
 package org.infinispan.server.memcached;
 
-import java.util.concurrent.TimeUnit;
-
-import org.infinispan.Cache;
 import org.jboss.netty.channel.Channel;
 
 /**
- * ReplaceCommand.
+ * CallInterceptor.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class ReplaceCommand extends SetCommand {
+public class CallInterceptor extends CommandInterceptor {
 
-   ReplaceCommand(Cache cache, CommandType type, StorageParameters params, byte[] data) {
-      super(cache, type, params, data);
+   public CallInterceptor(CommandInterceptor next) {
+      super(next);
    }
 
    @Override
-   public Object acceptVisitor(Channel ch, CommandInterceptor next) throws Exception {
-      return next.visitReplace(ch, this);
+   protected Object handleDefault(Channel ch, Command command) throws Exception {
+      return command.perform(ch);
    }
-
-   @Override
-   protected Reply put(String key, int flags, byte[] data, long expiry) {
-      Value value = new Value(flags, data);
-      Object prev = cache.replace(params.key, value, expiry, TimeUnit.MILLISECONDS);
-      return reply(prev);
-   }
-
-   private Reply reply(Object prev) {
-      if (prev == null)
-         return Reply.NOT_STORED;
-      else
-         return Reply.STORED;
-   }
-
 }

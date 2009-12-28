@@ -46,12 +46,11 @@ public class CommandFactory {
    private static final Log log = LogFactory.getLog(CommandFactory.class);
 
    private final Cache cache;
-   @Deprecated
-   private final BlockingQueue<DeleteDelayedEntry> queue;
+   private final InterceptorChain chain;
    
-   public CommandFactory(Cache cache, BlockingQueue<DeleteDelayedEntry> queue) {
+   public CommandFactory(Cache cache, InterceptorChain chain) {
       this.cache = cache;
-      this.queue = queue;
+      this.chain = chain;
    }
 
    public Command createCommand(String line) throws IOException {
@@ -83,13 +82,16 @@ public class CommandFactory {
             return RetrievalCommand.newRetrievalCommand(cache, type, new RetrievalParameters(keys));
          case DELETE:
             String delKey = getKey(args[1]);
-            return DeleteCommand.newDeleteCommand(cache, delKey, queue);
+            return DeleteCommand.newDeleteCommand(cache, delKey);
          case INCR:
          case DECR:
             String key = getKey(args[1]);
             // Value is defined as unsigned 64-integer (or simply unsigned long in java language)
+            // TODO: To simplify, could use long as long as the value was less than Long.MAX_VALUE
             BigInteger value = new BigInteger(args[2]);
             return NumericCommand.newNumericCommand(cache, type, key, value);
+         case STATS:
+            return StatsCommand.newStatsCommand(cache, type, chain);
          default:
             throw new NotImplementedException("Parsed type not implemented yet");
       }

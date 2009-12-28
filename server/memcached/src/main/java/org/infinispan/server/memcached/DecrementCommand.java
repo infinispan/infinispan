@@ -27,6 +27,7 @@ import java.math.BigInteger;
 import org.infinispan.Cache;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.jboss.netty.channel.Channel;
 
 /**
  * DecrementCommand.
@@ -39,6 +40,11 @@ public class DecrementCommand extends NumericCommand {
 
    public DecrementCommand(Cache cache, CommandType type, String key, BigInteger value) {
       super(cache, type, key, value);
+   }
+
+   @Override
+   public Object acceptVisitor(Channel ch, CommandInterceptor next) throws Exception {
+      return next.visitDecrement(ch, this);
    }
 
    @Override

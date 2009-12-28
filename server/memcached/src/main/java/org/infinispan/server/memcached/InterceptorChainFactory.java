@@ -22,40 +22,36 @@
  */
 package org.infinispan.server.memcached;
 
-import java.util.concurrent.TimeUnit;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.infinispan.Cache;
-import org.jboss.netty.channel.Channel;
 
 /**
- * ReplaceCommand.
+ * InterceptorChainFactory.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class ReplaceCommand extends SetCommand {
-
-   ReplaceCommand(Cache cache, CommandType type, StorageParameters params, byte[] data) {
-      super(cache, type, params, data);
+public class InterceptorChainFactory {
+   final boolean statsEnabled;
+   
+   private InterceptorChainFactory(Cache cache) {
+      statsEnabled = cache.getConfiguration().isExposeJmxStatistics();
    }
 
-   @Override
-   public Object acceptVisitor(Channel ch, CommandInterceptor next) throws Exception {
-      return next.visitReplace(ch, this);
+   public InterceptorChain buildInterceptorChain() {
+      CommandInterceptor first;
+      if (statsEnabled) {
+         first = new StatsInterceptor(new CallInterceptor(null));
+      } else {
+         first = new CallInterceptor(null);
+      }
+      
+      return new InterceptorChain(first);
    }
 
-   @Override
-   protected Reply put(String key, int flags, byte[] data, long expiry) {
-      Value value = new Value(flags, data);
-      Object prev = cache.replace(params.key, value, expiry, TimeUnit.MILLISECONDS);
-      return reply(prev);
+   public static InterceptorChainFactory getInstance(Cache cache) {
+      return new InterceptorChainFactory(cache);
    }
-
-   private Reply reply(Object prev) {
-      if (prev == null)
-         return Reply.NOT_STORED;
-      else
-         return Reply.STORED;
-   }
-
 }

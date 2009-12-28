@@ -23,7 +23,6 @@
 package org.infinispan.server.memcached;
 
 import java.lang.reflect.Method;
-import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.Future;
@@ -31,16 +30,16 @@ import java.util.concurrent.TimeUnit;
 
 import net.spy.memcached.CASResponse;
 import net.spy.memcached.CASValue;
-import net.spy.memcached.DefaultConnectionFactory;
 import net.spy.memcached.MemcachedClient;
 
 import org.infinispan.manager.CacheManager;
+import org.infinispan.server.memcached.test.MemcachedTestingUtil;
 import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.test.AbstractCacheTest.CleanupPhase;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
+
+import static org.infinispan.server.memcached.test.MemcachedTestingUtil.*;
 
 /**
  * FunctionalTest.
@@ -50,23 +49,15 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "server.memcached.FunctionalTest")
 public class FunctionalTest extends SingleCacheManagerTest {
-   private MemcachedClient client;
-   private MemcachedTextServer server;
+   MemcachedClient client;
+   MemcachedTextServer server;
 
    @Override
    protected CacheManager createCacheManager() throws Exception {
       cacheManager = TestCacheManagerFactory.createLocalCacheManager();
-      server = new MemcachedTextServer(cacheManager);
+      server = MemcachedTestingUtil.createMemcachedTextServer(cacheManager);
       server.start();
-      DefaultConnectionFactory d = new DefaultConnectionFactory() {
-         @Override
-         public long getOperationTimeout() {
-            return 360000;
-            // return 5000;
-         }
-      };
-      
-      client = new MemcachedClient(d, Arrays.asList(new InetSocketAddress[]{new InetSocketAddress(11211)}));
+      client = createMemcachedClient(5000, server.getPort());
       return cacheManager;
    }
 
@@ -329,22 +320,6 @@ public class FunctionalTest extends SingleCacheManagerTest {
       assert f.get(5, TimeUnit.SECONDS);
       long newValue = client.decr(k(m), 2);
       assert 0 ==  newValue : "Unexpected result: " + newValue;
-   }
-
-   private String k(Method method, String prefix) {
-      return prefix + method.getName();
-   }
-
-   private Object v(Method method, String prefix) {
-      return prefix  + method.getName();
-   }
-
-   private String k(Method method) {
-      return k(method, "k-");
-   }
-
-   private Object v(Method method) {
-      return v(method, "v-");
    }
 
 }

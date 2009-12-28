@@ -25,6 +25,7 @@ package org.infinispan.server.memcached;
 import java.io.IOException;
 
 import org.infinispan.Cache;
+import org.jboss.netty.channel.Channel;
 
 /**
  * CasCommand.
@@ -38,6 +39,11 @@ public class CasCommand extends SetCommand {
    CasCommand(Cache cache, StorageParameters params, long cas, byte[] data) {
       super(cache, CommandType.CAS, params, data);
       this.cas = cas;
+   }
+
+   @Override
+   public Object acceptVisitor(Channel ch, CommandInterceptor next) throws Exception {
+      return next.visitCas(ch, this);
    }
 
    @Override

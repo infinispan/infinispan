@@ -22,40 +22,28 @@
  */
 package org.infinispan.server.memcached;
 
-import java.util.concurrent.TimeUnit;
-
-import org.infinispan.Cache;
-import org.jboss.netty.channel.Channel;
+import org.infinispan.stats.Stats;
 
 /**
- * ReplaceCommand.
+ * MemcachedStats.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class ReplaceCommand extends SetCommand {
+public interface MemcachedStats {
+   
+   long getIncrMisses();
 
-   ReplaceCommand(Cache cache, CommandType type, StorageParameters params, byte[] data) {
-      super(cache, type, params, data);
-   }
+   long getIncrHits();
 
-   @Override
-   public Object acceptVisitor(Channel ch, CommandInterceptor next) throws Exception {
-      return next.visitReplace(ch, this);
-   }
+   long getDecrMisses();
 
-   @Override
-   protected Reply put(String key, int flags, byte[] data, long expiry) {
-      Value value = new Value(flags, data);
-      Object prev = cache.replace(params.key, value, expiry, TimeUnit.MILLISECONDS);
-      return reply(prev);
-   }
+   long getDecrHits();
 
-   private Reply reply(Object prev) {
-      if (prev == null)
-         return Reply.NOT_STORED;
-      else
-         return Reply.STORED;
-   }
+   long getCasMisses();
+
+   long getCasHits();
+
+   long getCasBadval();
 
 }
