@@ -19,41 +19,46 @@ import java.util.Properties;
 
 @Test(testName = "remoting.jgroups.ChannelLookupTest", groups = "functional")
 public class ChannelLookupTest extends AbstractInfinispanTest {
-   public void channelLookupTest() {
-      GlobalConfiguration gc = GlobalConfiguration.getClusteredDefault();
-      Properties p = new Properties();
-      p.setProperty("channelLookup", DummyLookup.class.getName());
-      gc.setTransportProperties(p);
-      CacheManager cm = TestCacheManagerFactory.createCacheManager(gc);
-      cm.start();
-      cm.getCache();
-      GlobalComponentRegistry gcr = TestingUtil.extractGlobalComponentRegistry(cm);
-      Transport t = gcr.getComponent(Transport.class);
-      assert t != null;
-      assert t instanceof JGroupsTransport;
-      assert !(((JGroupsTransport) t).getChannel() instanceof JChannel);
-   }
+    public void channelLookupTest() {
+        CacheManager cm = null;
+        try {
+            GlobalConfiguration gc = GlobalConfiguration.getClusteredDefault();
+            Properties p = new Properties();
+            p.setProperty("channelLookup", DummyLookup.class.getName());
+            gc.setTransportProperties(p);
+            cm = TestCacheManagerFactory.createCacheManager(gc);
+            cm.start();
+            cm.getCache();
+            GlobalComponentRegistry gcr = TestingUtil.extractGlobalComponentRegistry(cm);
+            Transport t = gcr.getComponent(Transport.class);
+            assert t != null;
+            assert t instanceof JGroupsTransport;
+            assert !(((JGroupsTransport) t).getChannel() instanceof JChannel);
+        } finally {
+            TestingUtil.killCacheManagers(cm);
+        }
+    }
 
-   public static class DummyLookup implements JGroupsChannelLookup {
-      Channel mockChannel;
-      Address a = EasyMock.createNiceMock(Address.class);
+    public static class DummyLookup implements JGroupsChannelLookup {
+        Channel mockChannel;
+        Address a = EasyMock.createNiceMock(Address.class);
 
-      public DummyLookup() {
-         mockChannel = EasyMock.createNiceMock(Channel.class);
-         EasyMock.expect(mockChannel.getAddress()).andReturn(a);
-         EasyMock.replay(mockChannel, a);
-      }
+        public DummyLookup() {
+            mockChannel = EasyMock.createNiceMock(Channel.class);
+            EasyMock.expect(mockChannel.getAddress()).andReturn(a);
+            EasyMock.replay(mockChannel, a);
+        }
 
-      public Channel getJGroupsChannel() {
-         return mockChannel;
-      }
+        public Channel getJGroupsChannel() {
+            return mockChannel;
+        }
 
-      public boolean shouldStartAndConnect() {
-         return false;
-      }
+        public boolean shouldStartAndConnect() {
+            return false;
+        }
 
-      public boolean shouldStopAndDisconnect() {
-         return false;
-      }
-   }
+        public boolean shouldStopAndDisconnect() {
+            return false;
+        }
+    }
 }
