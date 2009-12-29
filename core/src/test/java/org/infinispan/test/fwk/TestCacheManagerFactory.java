@@ -178,6 +178,10 @@ public class TestCacheManagerFactory {
    private static void amendTransport(GlobalConfiguration configuration) {
       if (configuration.getTransportClass() != null) { //this is local
          Properties newTransportProps = new Properties();
+         Properties previousSettings = configuration.getTransportProperties();
+         if (previousSettings!=null) {
+            newTransportProps.putAll(previousSettings);
+         }
          newTransportProps.put(JGroupsTransport.CONFIGURATION_STRING, JGroupsConfigBuilder.getJGroupsConfig());
          configuration.setTransportProperties(newTransportProps);
       }
