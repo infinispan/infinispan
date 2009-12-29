@@ -7,6 +7,7 @@ import org.infinispan.config.InfinispanConfiguration;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -61,7 +62,12 @@ public class QueryParsingTest extends AbstractInfinispanTest {
       assert other.isIndexLocalOnly();
 
       CacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(def);
-      Cache<Object, Object> cache = cm.getCache("test");
-      cache.stop();
+      try {
+         Cache<Object, Object> cache = cm.getCache("test");
+         cache.stop();
+      }
+      finally {
+         TestingUtil.killCacheManagers(cm);
+      }
    }
 }
