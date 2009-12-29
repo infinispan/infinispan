@@ -65,6 +65,7 @@
    <properties>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
       <defaultTestGroup>functional,unit</defaultTestGroup>
+      <testNGListener>org.infinispan.test.testng.UnitTestTestNGListener</testNGListener>
    </properties>
 
 
@@ -209,7 +210,7 @@
                <properties>
                   <property>
                      <name>listener</name>
-                     <value>org.infinispan.test.testng.UnitTestTestNGListener</value>
+                     <value>${testNGListener}</value>
                   </property>
                </properties>
             </configuration>
@@ -396,6 +397,13 @@
          <id>test-transaction</id>
          <properties>
             <defaultTestGroup>transaction</defaultTestGroup>
+         </properties>
+      </profile>
+      <profile>
+         <id>debug-tests</id>
+         <properties>
+            <testNGListener>org.infinispan.test.testng.DebuggingUnitTestNGListener</testNGListener>
+            <protocol.stack>tcp</protocol.stack>
          </properties>
       </profile>
    </profiles>
