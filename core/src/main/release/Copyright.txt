@@ -6,6 +6,7 @@ Any omission should be sent to msurtani@redhat.com.
 
 SVN Login(s)                                 Name
 -------------------------------------------------------------------------------
+adriancole                                   Adrian Cole
 bela, bela@jboss.com, belaban                Bela Ban
 bstansberry, bstansberry@jboss.com           Brian Stansberry
 dpospisi@redhat.com                          Dominik Pospisil
@@ -14,6 +15,6 @@ jgreene, jason.greene@jboss.com              Jason T. Greene
 msurtani, manik.surtani@jboss.com            Manik Surtani
 mmarkus, mircea.markus                       Mircea Markus
 navssurtani                                  Navin Surtani
+sannegrinovero                               Sanne Grinovero
 vblagojevic, vblagojevic@jboss.com           Vladimir Blagojevic
-adriancole                                   Adrian Cole
 -------------------------------------------------------------------------------
