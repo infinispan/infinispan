@@ -12,8 +12,8 @@
 
    <artifactId>infinispan-lucene-demo</artifactId>
    <version>4.0.0-SNAPSHOT</version>
-   <name>Infinispan Directory Demo</name>
-   <description>Infinispan - Directory Demo</description>
+   <name>Infinispan Lucene Directory Demo</name>
+   <description>Infinispan - Lucene Directory Demo</description>
 
    <dependencies>
       <dependency>
@@ -24,7 +24,7 @@
       <dependency>
          <groupId>jboss.jbossts</groupId>
          <artifactId>jbossjts</artifactId>
-         <version>4.6.1.GA</version>
+         <version>4.9.0.GA</version>
       </dependency>
       <dependency>
          <groupId>jboss.jbossts</groupId>
