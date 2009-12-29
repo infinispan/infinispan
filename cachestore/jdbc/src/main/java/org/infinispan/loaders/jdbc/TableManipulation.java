@@ -91,7 +91,7 @@ public class TableManipulation implements Cloneable {
    }
 
    public boolean tableExists(Connection connection, String tableName) throws CacheLoaderException {
-      assrtNotNull(getTableName(), "table name is mandatory");
+      assertNotNull(getTableName(), "table name is mandatory");
       ResultSet rs = null;
       try {
          // (a j2ee spec compatible jdbc driver has to fully
@@ -141,7 +141,7 @@ public class TableManipulation implements Cloneable {
 
    public void createTable(Connection conn) throws CacheLoaderException {
       // removed CONSTRAINT clause as this causes problems with some databases, like Informix.
-      assertMandatoryElemenetsPresent();
+      assertMandatoryElementsPresent();
       String creatTableDdl = "CREATE TABLE " + getTableName() + "(" + idColumnName + " " + idColumnType
             + " NOT NULL, " + dataColumnName + " " + dataColumnType + ", "
             + timestampColumnName + " " + timestampColumnType +
@@ -151,18 +151,18 @@ public class TableManipulation implements Cloneable {
       executeUpdateSql(conn, creatTableDdl);
    }
 
-   private void assertMandatoryElemenetsPresent() throws CacheLoaderException {
-      assrtNotNull(idColumnType, "idColumnType needed in order to create table");
-      assrtNotNull(idColumnName, "idColumnName needed in order to create table");
-      assrtNotNull(tableNamePrefix, "tableNamePrefix needed in order to create table");
-      assrtNotNull(cacheName, "cacheName needed in order to create table");
-      assrtNotNull(dataColumnName, "dataColumnName needed in order to create table");
-      assrtNotNull(dataColumnType, "dataColumnType needed in order to create table");
-      assrtNotNull(timestampColumnName, "timestampColumnName needed in order to create table");
-      assrtNotNull(timestampColumnType, "timestampColumnType needed in order to create table");
+   private void assertMandatoryElementsPresent() throws CacheLoaderException {
+      assertNotNull(idColumnType, "idColumnType needed in order to create table");
+      assertNotNull(idColumnName, "idColumnName needed in order to create table");
+      assertNotNull(tableNamePrefix, "tableNamePrefix needed in order to create table");
+      assertNotNull(cacheName, "cacheName needed in order to create table");
+      assertNotNull(dataColumnName, "dataColumnName needed in order to create table");
+      assertNotNull(dataColumnType, "dataColumnType needed in order to create table");
+      assertNotNull(timestampColumnName, "timestampColumnName needed in order to create table");
+      assertNotNull(timestampColumnType, "timestampColumnType needed in order to create table");
    }
 
-   private void assrtNotNull(String keyColumnType, String message) throws CacheLoaderException {
+   private void assertNotNull(String keyColumnType, String message) throws CacheLoaderException {
       if (keyColumnType == null || keyColumnType.trim().length() == 0) throw new CacheLoaderException(message);
    }
 

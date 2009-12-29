@@ -123,7 +123,7 @@ public class JdbcBinaryCacheStoreConfig extends LockSupportCacheStoreConfig {
    }
 
    /**
-    * Databse user name.
+    * Database user name.
     */
    public void setUserName(String userName) {
       testImmutability("connectionFactoryConfig");
