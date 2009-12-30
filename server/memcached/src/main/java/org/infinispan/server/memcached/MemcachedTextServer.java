@@ -34,6 +34,8 @@ import org.infinispan.server.core.netty.NettyChannelUpstreamHandler;
 import org.infinispan.server.core.netty.NettyServerBootstrap;
 import org.infinispan.server.core.netty.memcached.NettyMemcachedDecoder;
 import org.infinispan.server.core.InterceptorChain;
+import org.infinispan.server.memcached.commands.TextCommandHandler;
+import org.infinispan.server.memcached.interceptors.TextProtocolInterceptorChainFactory;
 
 /**
  * TextServer.

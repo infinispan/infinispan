@@ -22,7 +22,6 @@
  */
 package org.infinispan.server.core.netty;
 
-import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.concurrent.Executors;
 

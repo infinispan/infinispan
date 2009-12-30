@@ -20,24 +20,42 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.server.memcached;
+package org.infinispan.server.memcached.interceptors;
+
+import org.infinispan.Cache;
+import org.infinispan.server.core.InterceptorChainFactory;
+import org.infinispan.server.core.InterceptorChain;
 
 /**
- * TextProtocolUtil.
+ * InterceptorChainFactory.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class TextProtocolUtil {
-   public static final byte CR = 13;
-   public static final byte LF = 10;
-   public static final byte[] CRLF = new byte[] { CR, LF };
-   public static final long SECONDS_IN_A_MONTH = 60*60*24*30;
+public enum TextProtocolInterceptorChainFactory implements InterceptorChainFactory {
+   STATS_ENABLED(true), NOT_STATS_ENABLED(false);
 
-   public static byte[] concat(byte[] a, byte[] b) {
-      byte[] data = new byte[a.length + b.length];
-      System.arraycopy(a, 0, data, 0, a.length);
-      System.arraycopy(b, 0, data, a.length , b.length);
-      return data;
+   private final boolean statsEnabled;
+
+   private TextProtocolInterceptorChainFactory(boolean statsEnabled) {
+      this.statsEnabled = statsEnabled;
+   }
+
+   public InterceptorChain buildInterceptorChain() {
+      TextCommandInterceptor first;
+      if (statsEnabled) {
+         first = new StatsInterceptor(new CallInterceptor(null));
+      } else {
+         first = new CallInterceptor(null);
+      }
+      
+      return new TextProtocolInterceptorChain(first);
+   }
+
+   public static TextProtocolInterceptorChainFactory getInstance(Cache cache) {
+      if (cache.getConfiguration().isExposeJmxStatistics())
+         return STATS_ENABLED;
+      else
+         return NOT_STATS_ENABLED;
    }
 }

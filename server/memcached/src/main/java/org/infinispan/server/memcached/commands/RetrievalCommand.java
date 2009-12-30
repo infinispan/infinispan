@@ -20,24 +20,37 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.server.memcached;
+package org.infinispan.server.memcached.commands;
+
+import org.infinispan.Cache;
 
 /**
- * TextProtocolUtil.
+ * RetrievalCommand.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class TextProtocolUtil {
-   public static final byte CR = 13;
-   public static final byte LF = 10;
-   public static final byte[] CRLF = new byte[] { CR, LF };
-   public static final long SECONDS_IN_A_MONTH = 60*60*24*30;
+public abstract class RetrievalCommand implements TextCommand {
+   final Cache<String, Value> cache;
+   private final CommandType type;
+   final RetrievalParameters params;
+   
+   RetrievalCommand(Cache<String, Value> cache, CommandType type, RetrievalParameters params) {
+      this.cache = cache;
+      this.type = type;
+      this.params = params;
+   }
 
-   public static byte[] concat(byte[] a, byte[] b) {
-      byte[] data = new byte[a.length + b.length];
-      System.arraycopy(a, 0, data, 0, a.length);
-      System.arraycopy(b, 0, data, a.length , b.length);
-      return data;
+   @Override
+   public CommandType getType() {
+      return type;
+   }
+
+   public static TextCommand newRetrievalCommand(Cache<String, Value> cache, CommandType type, RetrievalParameters params) {
+      switch(type) {
+         case GET: return new GetCommand(cache, type, params);
+         case GETS: return new GetsCommand(cache, type, params);
+         default: throw new IllegalStateException("Unable to build storage command for type: " + type);
+      }
    }
 }

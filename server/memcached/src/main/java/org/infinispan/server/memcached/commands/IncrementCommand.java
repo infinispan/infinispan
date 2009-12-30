@@ -20,24 +20,39 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.server.memcached;
+package org.infinispan.server.memcached.commands;
+
+import java.math.BigInteger;
+
+import org.infinispan.Cache;
+import org.infinispan.server.core.ChannelHandlerContext;
+import org.infinispan.server.memcached.interceptors.TextProtocolVisitor;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
- * TextProtocolUtil.
+ * IncrementCommand.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class TextProtocolUtil {
-   public static final byte CR = 13;
-   public static final byte LF = 10;
-   public static final byte[] CRLF = new byte[] { CR, LF };
-   public static final long SECONDS_IN_A_MONTH = 60*60*24*30;
+public class IncrementCommand extends NumericCommand {
+   private static final Log log = LogFactory.getLog(IncrementCommand.class);
 
-   public static byte[] concat(byte[] a, byte[] b) {
-      byte[] data = new byte[a.length + b.length];
-      System.arraycopy(a, 0, data, 0, a.length);
-      System.arraycopy(b, 0, data, a.length , b.length);
-      return data;
+   public IncrementCommand(Cache cache, CommandType type, String key, BigInteger value) {
+      super(cache, type, key, value);
    }
+
+   @Override
+   public Object acceptVisitor(ChannelHandlerContext ctx, TextProtocolVisitor next) throws Throwable {
+      return next.visitIncrement(ctx, this);
+   }
+
+   @Override
+   protected BigInteger operate(BigInteger oldValue, BigInteger newValue) {
+      if (log.isTraceEnabled()) log.trace("Increment {0} with {1}", oldValue, newValue);
+      return oldValue.add(newValue);
+   }
+
+
 }
