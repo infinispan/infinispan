@@ -34,7 +34,7 @@ import org.infinispan.server.core.InterceptorChain;
  * @author Galder Zamarreño
  * @since 4.0
  */
-class TextCommandHandler implements CommandHandler {
+public class TextCommandHandler implements CommandHandler {
    final Cache cache;
    final InterceptorChain chain;
 
