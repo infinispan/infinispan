@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.StreamCorruptedException;
 
 import org.infinispan.Cache;
+import org.infinispan.server.core.Command;
 
 /**
  * StorageCommand.
@@ -33,24 +34,16 @@ import org.infinispan.Cache;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public abstract class StorageCommand implements Command {
-   final Cache cache;
+public abstract class StorageCommand implements TextCommand {
    private final CommandType type;
+   final Cache<String, Value> cache;
    final StorageParameters params;
-//   final String key;
-//   final int flags;
-//   final long expiry;
-//   final int bytes;
    final byte[] data;
 
-   StorageCommand(Cache cache, CommandType type, StorageParameters params, byte[] data) {
+   StorageCommand(Cache<String, Value> cache, CommandType type, StorageParameters params, byte[] data) {
       this.type = type;
       this.params = params;
       this.cache = cache;
-//      this.key = key;
-//      this.flags = flags;
-//      this.expiry = expiry;
-//      this.bytes = bytes;
       this.data = data;
    }
 
@@ -62,7 +55,11 @@ public abstract class StorageCommand implements Command {
       return newStorageCommand(cache, type, params, data);
    }
 
-   public static Command newStorageCommand(Cache cache, CommandType type, StorageParameters params, byte[] data) throws IOException {
+   public StorageParameters getParams() {
+      return params;
+   }
+
+   public static TextCommand newStorageCommand(Cache<String, Value> cache, CommandType type, StorageParameters params, byte[] data) throws IOException {
       switch(type) {
          case SET: return new SetCommand(cache, type, params, data);
          case ADD: return new AddCommand(cache, type, params, data);
@@ -72,8 +69,4 @@ public abstract class StorageCommand implements Command {
          default: throw new StreamCorruptedException("Unable to build storage command for type: " + type);
       }
    }
-   
-//   public static Command buildCasCommand(String key, int flags, long expiry, int bytes, long unique) {
-//      return new CasCommand(key, flags, expiry, bytes, unique);
-//   }
 }

@@ -23,17 +23,17 @@
 package org.infinispan.server.memcached;
 
 import java.net.InetSocketAddress;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.DelayQueue;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
 import org.infinispan.Cache;
 import org.infinispan.manager.CacheManager;
-import org.jboss.netty.bootstrap.ServerBootstrap;
-import org.jboss.netty.channel.ChannelFactory;
-import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
+import org.infinispan.server.core.ServerBootstrap;
+import org.infinispan.server.core.netty.NettyChannelPipelineFactory;
+import org.infinispan.server.core.netty.NettyChannelUpstreamHandler;
+import org.infinispan.server.core.netty.NettyServerBootstrap;
+import org.infinispan.server.core.netty.memcached.NettyMemcachedDecoder;
+import org.infinispan.server.core.InterceptorChain;
 
 /**
  * TextServer.
@@ -45,6 +45,7 @@ public class MemcachedTextServer {
    private final CacheManager manager;
    private final int port;
    private final ScheduledExecutorService scheduler;
+   private ServerBootstrap bootstrap;
    
    public MemcachedTextServer(CacheManager manager, int port) {
       this.manager = manager;
@@ -60,15 +61,17 @@ public class MemcachedTextServer {
       // Configure Infinispan Cache instance
       Cache cache = manager.getCache();
 
-      // Configure the server.
-      ChannelFactory factory = new NioServerSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool());
-      ServerBootstrap bootstrap = new ServerBootstrap(factory);
-      InterceptorChain chain = InterceptorChainFactory.getInstance(cache).buildInterceptorChain();
-      bootstrap.setPipelineFactory(new TextProtocolPipelineFactory(cache, chain, scheduler));
-      bootstrap.bind(new InetSocketAddress(port));
+      InterceptorChain chain = TextProtocolInterceptorChainFactory.getInstance(cache).buildInterceptorChain();
+      NettyMemcachedDecoder decoder = new NettyMemcachedDecoder(cache, chain, scheduler);
+      TextCommandHandler commandHandler = new TextCommandHandler(cache, chain);
+      NettyChannelUpstreamHandler handler = new NettyChannelUpstreamHandler(commandHandler);
+      NettyChannelPipelineFactory pipelineFactory = new NettyChannelPipelineFactory(decoder, handler);
+      bootstrap = new NettyServerBootstrap(pipelineFactory, new InetSocketAddress(port));
+      bootstrap.start();
    }
 
    public void stop() {
+      bootstrap.stop();
       manager.stop();
       scheduler.shutdown();
    }

@@ -22,49 +22,40 @@
  */
 package org.infinispan.server.memcached;
 
-import java.util.concurrent.Delayed;
-import java.util.concurrent.TimeUnit;
+import org.infinispan.Cache;
+import org.infinispan.server.core.InterceptorChainFactory;
+import org.infinispan.server.core.InterceptorChain;
 
 /**
- * DelayedDeleteEntry.
+ * InterceptorChainFactory.
  * 
  * @author Galder Zamarreño
  * @since 4.0
- * @deprecated No longer in memcached spec: http://github.com/memcached/memcached/blob/master/doc/protocol.txt
  */
-@Deprecated
-public class DeleteDelayedEntry implements Delayed {
+public enum TextProtocolInterceptorChainFactory implements InterceptorChainFactory {
+   STATS_ENABLED(true), NOT_STATS_ENABLED(false);
 
-   final String key;
-   private final long time;
-   private final boolean isUnix;
+   private final boolean statsEnabled;
 
-   DeleteDelayedEntry(String key, long time) {
-      this.time = time;
-      this.key = key;
-      this.isUnix = time > TextProtocolUtil.SECONDS_IN_A_MONTH;
+   private TextProtocolInterceptorChainFactory(boolean statsEnabled) {
+      this.statsEnabled = statsEnabled;
    }
 
-   @Override
-   public long getDelay(TimeUnit unit) {
-      long now = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
-      return unit.convert(time - now, TimeUnit.SECONDS);
-   }
-
-   @Override
-   public int compareTo(Delayed o) {
-      if (o == this)
-         return 0;
-
-      if (o instanceof DeleteDelayedEntry) {
-         DeleteDelayedEntry x = (DeleteDelayedEntry) o;
-         long diff = time - x.time;
-         if (diff < 0) return -1;
-         else if (diff > 0) return 1;
-         else return 0;
+   public InterceptorChain buildInterceptorChain() {
+      TextCommandInterceptor first;
+      if (statsEnabled) {
+         first = new StatsInterceptor(new CallInterceptor(null));
       } else {
-         throw new ClassCastException(o.getClass() + " is not of type " + DeleteDelayedEntry.class);
+         first = new CallInterceptor(null);
       }
+      
+      return new TextProtocolInterceptorChain(first);
    }
 
+   public static TextProtocolInterceptorChainFactory getInstance(Cache cache) {
+      if (cache.getConfiguration().isExposeJmxStatistics())
+         return STATS_ENABLED;
+      else
+         return NOT_STATS_ENABLED;
+   }
 }

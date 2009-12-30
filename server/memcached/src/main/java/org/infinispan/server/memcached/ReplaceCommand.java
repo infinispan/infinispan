@@ -25,7 +25,7 @@ package org.infinispan.server.memcached;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
-import org.jboss.netty.channel.Channel;
+import org.infinispan.server.core.ChannelHandlerContext;
 
 /**
  * ReplaceCommand.
@@ -35,24 +35,35 @@ import org.jboss.netty.channel.Channel;
  */
 public class ReplaceCommand extends SetCommand {
 
-   ReplaceCommand(Cache cache, CommandType type, StorageParameters params, byte[] data) {
+   ReplaceCommand(Cache<String, Value> cache, CommandType type, StorageParameters params, byte[] data) {
       super(cache, type, params, data);
    }
 
    @Override
-   public Object acceptVisitor(Channel ch, CommandInterceptor next) throws Exception {
-      return next.visitReplace(ch, this);
+   public Object acceptVisitor(ChannelHandlerContext ctx, TextProtocolVisitor next) throws Throwable {
+      return next.visitReplace(ctx, this);
    }
 
    @Override
    protected Reply put(String key, int flags, byte[] data, long expiry) {
-      Value value = new Value(flags, data);
-      Object prev = cache.replace(params.key, value, expiry, TimeUnit.MILLISECONDS);
-      return reply(prev);
+      Value old = cache.get(key);
+      if (old != null) {
+         Value value = new Value(flags, data, old.getCas() + 1);
+         boolean replaced = cache.replace(params.key, old, value, expiry, TimeUnit.MILLISECONDS);
+         return reply(replaced);
+      }
+      return reply(old);
    }
 
-   private Reply reply(Object prev) {
+   private Reply reply(Value prev) {
       if (prev == null)
+         return Reply.NOT_STORED;
+      else
+         return Reply.STORED;
+   }
+
+   private Reply reply(boolean replaced) {
+      if (!replaced)
          return Reply.NOT_STORED;
       else
          return Reply.STORED;

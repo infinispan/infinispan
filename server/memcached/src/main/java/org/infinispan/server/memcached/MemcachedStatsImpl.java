@@ -25,7 +25,8 @@ package org.infinispan.server.memcached;
 import java.util.List;
 
 import org.infinispan.stats.Stats;
-import org.infinispan.server.memcached.InterceptorChain;
+import org.infinispan.server.core.CommandInterceptor;
+import org.infinispan.server.core.InterceptorChain;
 
 /**
  * MemcachedStats.

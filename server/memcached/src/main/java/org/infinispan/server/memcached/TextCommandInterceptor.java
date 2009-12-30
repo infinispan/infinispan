@@ -22,36 +22,15 @@
  */
 package org.infinispan.server.memcached;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.infinispan.Cache;
+import org.infinispan.server.core.ChannelHandlerContext;
+import org.infinispan.server.core.CommandInterceptor;
 
 /**
- * InterceptorChainFactory.
+ * TextCommandInterceptor.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class InterceptorChainFactory {
-   final boolean statsEnabled;
-   
-   private InterceptorChainFactory(Cache cache) {
-      statsEnabled = cache.getConfiguration().isExposeJmxStatistics();
-   }
-
-   public InterceptorChain buildInterceptorChain() {
-      CommandInterceptor first;
-      if (statsEnabled) {
-         first = new StatsInterceptor(new CallInterceptor(null));
-      } else {
-         first = new CallInterceptor(null);
-      }
-      
-      return new InterceptorChain(first);
-   }
-
-   public static InterceptorChainFactory getInstance(Cache cache) {
-      return new InterceptorChainFactory(cache);
-   }
+public interface TextCommandInterceptor extends CommandInterceptor, TextProtocolVisitor {
+   Object invokeNextInterceptor(ChannelHandlerContext ctx, TextCommand command) throws Throwable;
 }

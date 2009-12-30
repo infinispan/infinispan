@@ -28,16 +28,14 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jboss.util.NotImplementedException;
+
+import org.infinispan.server.core.InterceptorChain;
 
 /**
  * CommandFactory.
@@ -58,7 +56,7 @@ public class CommandFactory {
       this.scheduler = scheduler;
    }
 
-   public Command createCommand(String line) throws IOException {
+   public TextCommand createCommand(String line) throws IOException {
       if (log.isTraceEnabled()) log.trace("Command line: " + line);
       String[] args = line.trim().split(" +");
 

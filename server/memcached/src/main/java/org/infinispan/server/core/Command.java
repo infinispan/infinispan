@@ -20,38 +20,16 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.server.memcached;
-
-import org.infinispan.server.core.Channel;
-import org.infinispan.server.core.ChannelHandlerContext;
+package org.infinispan.server.core;
 
 /**
- * QuitCommand.
+ * Command.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-public enum QuitCommand implements TextCommand {
-   INSTANCE;
-   
-   @Override
-   public Object acceptVisitor(ChannelHandlerContext ctx, TextProtocolVisitor next) throws Throwable {
-      return next.visitQuit(ctx, this);
-   }
+public interface Command {
 
-   @Override
-   public CommandType getType() {
-      return CommandType.QUIT;
-   }
+   Object perform(ChannelHandlerContext ctx) throws Throwable;
 
-   @Override
-   public Object perform(ChannelHandlerContext ctx) throws Throwable {
-      Channel ch = ctx.getChannel();
-      ch.disconnect();
-      return null;
-   }
-
-   public static QuitCommand newQuitCommand() {
-      return INSTANCE;
-   }
 }

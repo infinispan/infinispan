@@ -29,9 +29,9 @@ package org.infinispan.server.memcached;
  * @since 4.0
  */
 public class TextProtocolUtil {
-   static final byte CR = 13;
-   static final byte LF = 10;
-   static final byte[] CRLF = new byte[] { CR, LF };
+   public static final byte CR = 13;
+   public static final byte LF = 10;
+   public static final byte[] CRLF = new byte[] { CR, LF };
    static final long SECONDS_IN_A_MONTH = 60*60*24*30;
 
    public static byte[] concat(byte[] a, byte[] b) {

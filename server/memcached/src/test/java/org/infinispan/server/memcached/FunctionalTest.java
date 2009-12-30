@@ -60,7 +60,7 @@ public class FunctionalTest extends SingleCacheManagerTest {
       cacheManager = TestCacheManagerFactory.createLocalCacheManager();
       server = MemcachedTestingUtil.createMemcachedTextServer(cacheManager);
       server.start();
-      client = createMemcachedClient(5000, server.getPort());
+      client = createMemcachedClient(60000, server.getPort());
       return cacheManager;
    }
 
@@ -216,7 +216,7 @@ public class FunctionalTest extends SingleCacheManagerTest {
 
    public void testCasBasic(Method m) throws Exception {
       Future<Boolean> f = client.set(k(m), 0, v(m));
-      assert f.get(5, TimeUnit.SECONDS);
+      assert f.get(60, TimeUnit.SECONDS);
       CASValue<Object> value = client.gets(k(m));
       assert v(m).equals(value.getValue());
       assert value.getCas() != 0;

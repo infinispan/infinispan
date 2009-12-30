@@ -20,38 +20,26 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.server.memcached;
+package org.infinispan.server.core;
 
-import org.infinispan.server.core.Channel;
-import org.infinispan.server.core.ChannelHandlerContext;
+import java.util.concurrent.TimeUnit;
 
 /**
- * QuitCommand.
+ * ChannelFuture.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-public enum QuitCommand implements TextCommand {
-   INSTANCE;
-   
-   @Override
-   public Object acceptVisitor(ChannelHandlerContext ctx, TextProtocolVisitor next) throws Throwable {
-      return next.visitQuit(ctx, this);
-   }
-
-   @Override
-   public CommandType getType() {
-      return CommandType.QUIT;
-   }
-
-   @Override
-   public Object perform(ChannelHandlerContext ctx) throws Throwable {
-      Channel ch = ctx.getChannel();
-      ch.disconnect();
-      return null;
-   }
-
-   public static QuitCommand newQuitCommand() {
-      return INSTANCE;
-   }
+public interface ChannelFuture {
+   Channel getChannel();
+   boolean isDone();
+   boolean isCancelled();
+   boolean setSuccess();
+   boolean setFailure(Throwable cause);
+   ChannelFuture await() throws InterruptedException;
+   ChannelFuture awaitUninterruptibly();
+   boolean await(long timeout, TimeUnit unit) throws InterruptedException;
+   boolean await(long timeoutMillis) throws InterruptedException;
+   boolean awaitUninterruptibly(long timeout, TimeUnit unit);
+   boolean awaitUninterruptibly(long timeoutMillis);
 }

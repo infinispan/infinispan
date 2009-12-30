@@ -30,12 +30,12 @@ import org.infinispan.Cache;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public abstract class RetrievalCommand implements Command {
-   final Cache cache;
+public abstract class RetrievalCommand implements TextCommand {
+   final Cache<String, Value> cache;
    private final CommandType type;
    final RetrievalParameters params;
    
-   RetrievalCommand(Cache cache, CommandType type, RetrievalParameters params) {
+   RetrievalCommand(Cache<String, Value> cache, CommandType type, RetrievalParameters params) {
       this.cache = cache;
       this.type = type;
       this.params = params;
@@ -46,7 +46,7 @@ public abstract class RetrievalCommand implements Command {
       return type;
    }
 
-   public static Command newRetrievalCommand(Cache cache, CommandType type, RetrievalParameters params) {
+   public static TextCommand newRetrievalCommand(Cache<String, Value> cache, CommandType type, RetrievalParameters params) {
       switch(type) {
          case GET: return new GetCommand(cache, type, params);
          case GETS: return new GetsCommand(cache, type, params);

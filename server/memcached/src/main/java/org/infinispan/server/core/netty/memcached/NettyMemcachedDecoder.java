@@ -20,13 +20,25 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.server.memcached;
+package org.infinispan.server.core.netty.memcached;
+
+import static org.infinispan.server.memcached.TextProtocolUtil.CR;
+import static org.infinispan.server.memcached.TextProtocolUtil.CRLF;
+import static org.infinispan.server.memcached.TextProtocolUtil.LF;
+import static org.jboss.netty.buffer.ChannelBuffers.wrappedBuffer;
 
 import java.io.IOException;
 import java.io.StreamCorruptedException;
 import java.util.concurrent.ScheduledExecutorService;
 
 import org.infinispan.Cache;
+import org.infinispan.server.core.Command;
+import org.infinispan.server.core.InterceptorChain;
+import org.infinispan.server.memcached.CommandFactory;
+import org.infinispan.server.memcached.Reply;
+import org.infinispan.server.memcached.StorageCommand;
+import org.infinispan.server.memcached.TextCommand;
+import org.infinispan.server.memcached.UnknownCommandException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -34,26 +46,24 @@ import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.handler.codec.replay.ReplayingDecoder;
-import static org.infinispan.server.memcached.TextProtocolUtil.*;
-import static org.jboss.netty.buffer.ChannelBuffers.wrappedBuffer;
 
 /**
- * TextCommandDecoder.
+ * NettyMemcachedDecoder.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class TextCommandDecoder extends ReplayingDecoder<TextCommandDecoder.State> {
-   private static final Log log = LogFactory.getLog(TextCommandDecoder.class);
+public class NettyMemcachedDecoder extends ReplayingDecoder<NettyMemcachedDecoder.State> {
+   private static final Log log = LogFactory.getLog(NettyMemcachedDecoder.class);
    
    private final CommandFactory factory;
-   private volatile Command command;
+   private volatile TextCommand command;
 
    protected enum State {
       READ_COMMAND, READ_UNSTRUCTURED_DATA;
    }
 
-   TextCommandDecoder(Cache cache, InterceptorChain chain, ScheduledExecutorService scheduler) {
+   public NettyMemcachedDecoder(Cache cache, InterceptorChain chain, ScheduledExecutorService scheduler) {
       super(State.READ_COMMAND, true);
       factory = new CommandFactory(cache, chain, scheduler);
    }
@@ -62,17 +72,7 @@ public class TextCommandDecoder extends ReplayingDecoder<TextCommandDecoder.Stat
    protected Object decode(ChannelHandlerContext ctx, Channel channel, ChannelBuffer buffer, State state) throws Exception {
       switch (state) {
          case READ_COMMAND:
-            String line = readLine(buffer);
-//            try {
-               command = factory.createCommand(line);
-//               corrupted.set(false);
-//            } catch (IOException ioe) {
-//               if (corrupted.get())
-//                  log.debug("Channel is corrupted and we're reading garbage, ignore read until we find a good command again");
-//               else
-//                  throw ioe;
-//            }
-            
+            command = factory.createCommand(readLine(buffer));
             if (command.getType().isStorage())
                checkpoint(State.READ_UNSTRUCTURED_DATA);
             else
@@ -80,7 +80,7 @@ public class TextCommandDecoder extends ReplayingDecoder<TextCommandDecoder.Stat
             break;
          case READ_UNSTRUCTURED_DATA:
             StorageCommand storageCmd = (StorageCommand) command;
-            byte[] data= new byte[storageCmd.params.bytes];
+            byte[] data= new byte[storageCmd.getParams().getBytes()];
             buffer.readBytes(data, 0, data.length);
             byte next = buffer.readByte();
             if (next == CR) {
@@ -104,7 +104,6 @@ public class TextCommandDecoder extends ReplayingDecoder<TextCommandDecoder.Stat
 
    @Override
    public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-//      corrupted.compareAndSet(false, true);
       Throwable t = e.getCause();
       log.error("Unexpected exception", t);
       Channel ch = ctx.getChannel();
@@ -146,52 +145,4 @@ public class TextCommandDecoder extends ReplayingDecoder<TextCommandDecoder.Stat
       }
    }
 
-   // private String readLine(ChannelBuffer buffer) {
-   // int minFrameLength = Integer.MAX_VALUE;
-   //
-   // ChannelBuffer minDelim = null;
-   // int frameLength = indexOf(buffer, CR);
-   // if (frameLength >= 0 && frameLength < minFrameLength) {
-   // minFrameLength = frameLength;
-   // minDelim = CR;
-   // }
-   //
-   // if (minDelim != null) {
-   // int minDelimLength = minDelim.capacity();
-   // ChannelBuffer frame = buffer.readBytes(minFrameLength);
-   // buffer.skipBytes(minDelimLength);
-   // return frame.toString(Charset.defaultCharset().name());
-   // } else {
-   // return null;
-   // }
-   // }
-   //
-   // /**
-   // * Returns the number of bytes between the readerIndex of the haystack and
-   // * the first needle found in the haystack. -1 is returned if no needle is
-   // * found in the haystack.
-   // */
-   // private static int indexOf(ChannelBuffer haystack, ChannelBuffer needle) {
-   // for (int i = haystack.readerIndex(); i < haystack.writerIndex(); i ++) {
-   // int haystackIndex = i;
-   // int needleIndex;
-   // for (needleIndex = 0; needleIndex < needle.capacity(); needleIndex ++) {
-   // if (haystack.getByte(haystackIndex) != needle.getByte(needleIndex)) {
-   // break;
-   // } else {
-   // haystackIndex ++;
-   // if (haystackIndex == haystack.writerIndex() &&
-   // needleIndex != needle.capacity() - 1) {
-   // return -1;
-   // }
-   // }
-   // }
-   //
-   // if (needleIndex == needle.capacity()) {
-   // // Found the needle from the haystack!
-   // return i - haystack.readerIndex();
-   // }
-   // }
-   // return -1;
-   // }
 }

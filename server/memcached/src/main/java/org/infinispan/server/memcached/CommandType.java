@@ -23,7 +23,6 @@
 package org.infinispan.server.memcached;
 
 import java.io.IOException;
-import java.io.StreamCorruptedException;
 
 /**
  * Command.
@@ -31,7 +30,7 @@ import java.io.StreamCorruptedException;
  * @author Galder Zamarreño
  * @since 4.0
  */
-enum CommandType {
+public enum CommandType {
    SET, ADD, REPLACE, APPEND, PREPEND, CAS,
    GET, GETS,
    DELETE,
@@ -42,7 +41,7 @@ enum CommandType {
    QUIT
    ;
    
-   boolean isStorage() {
+   public boolean isStorage() {
       switch(this) {
          case SET:
          case ADD:

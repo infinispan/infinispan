@@ -20,47 +20,33 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.server.memcached;
+package org.infinispan.server.core.netty;
 
-import static org.infinispan.server.memcached.Reply.VERSION;
-
-import static org.infinispan.server.memcached.TextProtocolUtil.CRLF;
-
-import org.infinispan.Version;
 import org.infinispan.server.core.Channel;
 import org.infinispan.server.core.ChannelBuffers;
 import org.infinispan.server.core.ChannelHandlerContext;
 
-
 /**
- * VersionCommand.
+ * NettyChannelHandlerContext.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-public enum VersionCommand implements TextCommand {
-   INSTANCE;
+public class NettyChannelHandlerContext implements ChannelHandlerContext {
+   final org.jboss.netty.channel.ChannelHandlerContext ctx;
+   final Channel ch;
 
-   @Override
-   public Object acceptVisitor(ChannelHandlerContext ctx, TextProtocolVisitor next) throws Throwable {
-      return next.visitVersion(ctx, this);
+   public NettyChannelHandlerContext(org.jboss.netty.channel.ChannelHandlerContext ctx) {
+      this.ctx = ctx;
+      this.ch = new NettyChannel(ctx.getChannel());
    }
 
    @Override
-   public CommandType getType() {
-      return CommandType.VERSION;
+   public Channel getChannel() {
+      return ch;
    }
 
-   @Override
-   public Object perform(ChannelHandlerContext ctx) throws Exception {
-      Channel ch = ctx.getChannel();
-      String version = ' ' + Version.version;
-      ChannelBuffers buffers = ctx.getChannelBuffers();
-      ch.write(buffers.wrappedBuffer(buffers.wrappedBuffer(VERSION.bytes()), buffers.wrappedBuffer(version.getBytes()), buffers.wrappedBuffer(CRLF)));
-      return VERSION;
-   }
-
-   public static VersionCommand newVersionCommand() {
-      return INSTANCE;
+   public ChannelBuffers getChannelBuffers() {
+      return NettyChannelBuffers.INSTANCE;
    }
 }

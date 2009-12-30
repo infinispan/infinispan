@@ -24,7 +24,7 @@ package org.infinispan.server.memcached;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.jboss.netty.channel.Channel;
+import org.infinispan.server.core.ChannelHandlerContext;
 
 /**
  * StatsInterceptor.
@@ -32,7 +32,7 @@ import org.jboss.netty.channel.Channel;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class StatsInterceptor extends CommandInterceptor implements MemcachedStats {
+public class StatsInterceptor extends TextCommandInterceptorImpl implements MemcachedStats {
    private final AtomicLong incrMisses = new AtomicLong(0);
    private final AtomicLong incrHits = new AtomicLong(0);
    private final AtomicLong decrMisses = new AtomicLong(0);
@@ -41,14 +41,14 @@ public class StatsInterceptor extends CommandInterceptor implements MemcachedSta
    private final AtomicLong casHits = new AtomicLong(0);
    private final AtomicLong casBadval = new AtomicLong(0);
 
-   public StatsInterceptor(CommandInterceptor next) {
+   public StatsInterceptor(TextCommandInterceptor next) {
       super(next);
    }
 
    @Override
-   public Object visitIncrement(Channel ch, IncrementCommand command) throws Exception {
-      Object ret = invokeNextInterceptor(ch, command);
-      if (ret != null)
+   public Object visitIncrement(ChannelHandlerContext ctx, IncrementCommand command) throws Throwable {
+      Object ret = invokeNextInterceptor(ctx, command);
+      if (ret != Reply.NOT_FOUND)
          incrHits.incrementAndGet();
       else
          incrMisses.incrementAndGet();
@@ -56,9 +56,9 @@ public class StatsInterceptor extends CommandInterceptor implements MemcachedSta
    }
 
    @Override
-   public Object visitDecrement(Channel ch, DecrementCommand command) throws Exception {
-      Object ret = invokeNextInterceptor(ch, command);
-      if (ret != null)
+   public Object visitDecrement(ChannelHandlerContext ctx, DecrementCommand command) throws Throwable {
+      Object ret = invokeNextInterceptor(ctx, command);
+      if (ret != Reply.NOT_FOUND)
          decrHits.incrementAndGet();
       else
          decrMisses.incrementAndGet();
@@ -66,9 +66,9 @@ public class StatsInterceptor extends CommandInterceptor implements MemcachedSta
    }
 
    @Override
-   public Object visitCas(Channel ch, CasCommand command) throws Exception {
-      Reply ret = (Reply) invokeNextInterceptor(ch, command);
-      switch(ret) {
+   public Object visitCas(ChannelHandlerContext ctx, CasCommand command) throws Throwable {
+      Reply ret = (Reply) invokeNextInterceptor(ctx, command);
+      switch (ret) {
          case STORED:
             casHits.incrementAndGet();
             break;

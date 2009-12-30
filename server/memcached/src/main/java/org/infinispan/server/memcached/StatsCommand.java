@@ -25,12 +25,14 @@ package org.infinispan.server.memcached;
 import static org.infinispan.server.memcached.Reply.END;
 import static org.infinispan.server.memcached.Reply.STAT;
 import static org.infinispan.server.memcached.TextProtocolUtil.CRLF;
-import static org.jboss.netty.buffer.ChannelBuffers.wrappedBuffer;
 
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
-import org.jboss.netty.channel.Channel;
+import org.infinispan.server.core.Channel;
+import org.infinispan.server.core.ChannelBuffers;
+import org.infinispan.server.core.ChannelHandlerContext;
+import org.infinispan.server.core.InterceptorChain;
 
 /**
  * StatsCommand.
@@ -38,7 +40,7 @@ import org.jboss.netty.channel.Channel;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class StatsCommand implements Command {
+public class StatsCommand implements TextCommand {
    final Cache cache;
    private final CommandType type;
    final InterceptorChain chain;
@@ -55,64 +57,68 @@ public class StatsCommand implements Command {
    }
 
    @Override
-   public Object acceptVisitor(Channel ch, CommandInterceptor next) throws Exception {
-      return next.visitStats(ch, this);
+   public Object acceptVisitor(ChannelHandlerContext ctx, TextProtocolVisitor next) throws Throwable {
+      return next.visitStats(ctx, this);
    }
 
    @Override
-   public Object perform(Channel ch) throws Exception {
+   public Object perform(ChannelHandlerContext ctx) throws Throwable {
       MemcachedStatsImpl stats = new MemcachedStatsImpl(cache.getAdvancedCache().getStats(), chain);
       
       StringBuilder sb = new StringBuilder();
-      writeStat("pid", 0, sb, ch); // Unsupported
-      writeStat("uptime", stats.getTimeSinceStart(), sb, ch);
-      writeStat("time", TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()), sb, ch);
-      writeStat("version", cache.getVersion(), sb, ch);
-      writeStat("pointer_size", 0, sb, ch); // Unsupported
-      writeStat("rusage_user", 0, sb, ch); // Unsupported
-      writeStat("rusage_system", 0, sb, ch); // Unsupported
-      writeStat("curr_items", stats.getCurrentNumberOfEntries(), sb, ch);
-      writeStat("total_items", stats.getTotalNumberOfEntries(), sb, ch);
-      writeStat("bytes", 0, sb, ch); // Unsupported
-      writeStat("curr_connections", 0, sb, ch); // TODO: Through netty?
-      writeStat("total_connections", 0, sb, ch); // TODO: Through netty?
-      writeStat("connection_structures", 0, sb, ch); // Unsupported
-      writeStat("cmd_get", stats.getRetrievals(), sb, ch);
-      writeStat("cmd_set", stats.getStores(), sb, ch);
-      writeStat("get_hits", stats.getHits(), sb, ch);
-      writeStat("get_misses", stats.getMisses(), sb, ch);
-      writeStat("delete_misses", stats.getRemoveMisses(), sb, ch);
-      writeStat("delete_hits", stats.getRemoveHits(), sb, ch);
-      writeStat("incr_misses", stats.getIncrMisses(), sb, ch);
-      writeStat("incr_hits", stats.getIncrHits(), sb, ch);
-      writeStat("decr_misses", stats.getDecrMisses(), sb, ch);
-      writeStat("decr_hits", stats.getDecrHits(), sb, ch);
-      writeStat("cas_misses", stats.getCasMisses(), sb, ch);
-      writeStat("cas_hits", stats.getCasHits(), sb, ch);
-      writeStat("cas_badval", stats.getCasBadval(), sb, ch);
-      writeStat("auth_cmds", 0, sb, ch);  // Unsupported
-      writeStat("auth_errors", 0, sb, ch); // Unsupported
+      writeStat("pid", 0, sb, ctx); // Unsupported
+      writeStat("uptime", stats.getTimeSinceStart(), sb, ctx);
+      writeStat("time", TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()), sb, ctx);
+      writeStat("version", cache.getVersion(), sb, ctx);
+      writeStat("pointer_size", 0, sb, ctx); // Unsupported
+      writeStat("rusage_user", 0, sb, ctx); // Unsupported
+      writeStat("rusage_system", 0, sb, ctx); // Unsupported
+      writeStat("curr_items", stats.getCurrentNumberOfEntries(), sb, ctx);
+      writeStat("total_items", stats.getTotalNumberOfEntries(), sb, ctx);
+      writeStat("bytes", 0, sb, ctx); // Unsupported
+      writeStat("curr_connections", 0, sb, ctx); // TODO: Through netty?
+      writeStat("total_connections", 0, sb, ctx); // TODO: Through netty?
+      writeStat("connection_structures", 0, sb, ctx); // Unsupported
+      writeStat("cmd_get", stats.getRetrievals(), sb, ctx);
+      writeStat("cmd_set", stats.getStores(), sb, ctx);
+      writeStat("get_hits", stats.getHits(), sb, ctx);
+      writeStat("get_misses", stats.getMisses(), sb, ctx);
+      writeStat("delete_misses", stats.getRemoveMisses(), sb, ctx);
+      writeStat("delete_hits", stats.getRemoveHits(), sb, ctx);
+      writeStat("incr_misses", stats.getIncrMisses(), sb, ctx);
+      writeStat("incr_hits", stats.getIncrHits(), sb, ctx);
+      writeStat("decr_misses", stats.getDecrMisses(), sb, ctx);
+      writeStat("decr_hits", stats.getDecrHits(), sb, ctx);
+      writeStat("cas_misses", stats.getCasMisses(), sb, ctx);
+      writeStat("cas_hits", stats.getCasHits(), sb, ctx);
+      writeStat("cas_badval", stats.getCasBadval(), sb, ctx);
+      writeStat("auth_cmds", 0, sb, ctx);  // Unsupported
+      writeStat("auth_errors", 0, sb, ctx); // Unsupported
       //TODO: Evictions are measure by evict calls, but not by nodes are that 
       //      are expired after the entry's lifespan has expired.
-      writeStat("evictions", stats.getEvictions(), sb, ch);
-      writeStat("bytes_read", 0, sb, ch); // TODO: Through netty?
-      writeStat("bytes_written", 0, sb, ch); // TODO: Through netty?
-      writeStat("limit_maxbytes", 0, sb, ch); // Unsupported
-      writeStat("threads", 0, sb, ch); // TODO: Through netty?
-      writeStat("conn_yields", 0, sb, ch); // Unsupported
+      writeStat("evictions", stats.getEvictions(), sb, ctx);
+      writeStat("bytes_read", 0, sb, ctx); // TODO: Through netty?
+      writeStat("bytes_written", 0, sb, ctx); // TODO: Through netty?
+      writeStat("limit_maxbytes", 0, sb, ctx); // Unsupported
+      writeStat("threads", 0, sb, ctx); // TODO: Through netty?
+      writeStat("conn_yields", 0, sb, ctx); // Unsupported
+
+      ChannelBuffers buffers = ctx.getChannelBuffers();
+      Channel ch = ctx.getChannel();
+      ch.write(buffers.wrappedBuffer(buffers.wrappedBuffer(END.bytes()), buffers.wrappedBuffer(CRLF)));
       
-      ch.write(wrappedBuffer(wrappedBuffer(END.toString().getBytes()), wrappedBuffer(CRLF)));
-      
-      return null;
+      return END;
    }
 
-   private void writeStat(String stat, Object value, StringBuilder sb, Channel ch) {
+   private void writeStat(String stat, Object value, StringBuilder sb, ChannelHandlerContext ctx) {
+      ChannelBuffers buffers = ctx.getChannelBuffers();
+      Channel ch = ctx.getChannel();
       sb.append(STAT).append(' ').append(stat).append(' ').append(value);
-      ch.write(wrappedBuffer(wrappedBuffer(sb.toString().getBytes()), wrappedBuffer(CRLF)));
+      ch.write(buffers.wrappedBuffer(buffers.wrappedBuffer(sb.toString().getBytes()), buffers.wrappedBuffer(CRLF)));
       sb.setLength(0);
    }
 
-   public static Command newStatsCommand(Cache cache, CommandType type, InterceptorChain chain) {
+   public static TextCommand newStatsCommand(Cache cache, CommandType type, InterceptorChain chain) {
       return new StatsCommand(cache, type, chain);
    }
 

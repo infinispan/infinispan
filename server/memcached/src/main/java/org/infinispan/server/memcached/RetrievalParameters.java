@@ -32,7 +32,7 @@ import java.util.List;
  */
 public class RetrievalParameters {
    final List<String> keys;
-   
+
    RetrievalParameters(List<String> keys) {
       this.keys = keys;
    }

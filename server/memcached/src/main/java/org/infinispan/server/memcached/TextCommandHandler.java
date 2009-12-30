@@ -23,10 +23,10 @@
 package org.infinispan.server.memcached;
 
 import org.infinispan.Cache;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.ChannelPipelineCoverage;
-import org.jboss.netty.channel.MessageEvent;
-import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
+import org.infinispan.server.core.ChannelHandlerContext;
+import org.infinispan.server.core.CommandHandler;
+import org.infinispan.server.core.MessageEvent;
+import org.infinispan.server.core.InterceptorChain;
 
 /**
  * TextProtocolServerHandler.
@@ -34,22 +34,18 @@ import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
  * @author Galder Zamarreño
  * @since 4.0
  */
-@ChannelPipelineCoverage("one")
-class TextCommandHandler extends SimpleChannelUpstreamHandler {
+class TextCommandHandler implements CommandHandler {
    final Cache cache;
    final InterceptorChain chain;
 
-   TextCommandHandler(Cache cache, InterceptorChain chain) {
+   public TextCommandHandler(Cache cache, InterceptorChain chain) {
       this.cache = cache;
       this.chain = chain;
    }
 
    @Override
-   public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
-      chain.invoke(ctx.getChannel(), (Command) e.getMessage());
-//      Command c = (Command) e.getMessage();
-//      c.perform(ctx.getChannel());
+   public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Throwable {
+      chain.invoke(ctx, (TextCommand) e.getMessage());
    }
 
-   
 }

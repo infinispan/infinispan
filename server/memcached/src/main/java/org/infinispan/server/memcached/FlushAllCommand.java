@@ -24,14 +24,15 @@ package org.infinispan.server.memcached;
 
 import static org.infinispan.server.memcached.Reply.OK;
 import static org.infinispan.server.memcached.TextProtocolUtil.CRLF;
-import static org.jboss.netty.buffer.ChannelBuffers.wrappedBuffer;
 
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.context.Flag;
-import org.jboss.netty.channel.Channel;
+import org.infinispan.server.core.Channel;
+import org.infinispan.server.core.ChannelBuffers;
+import org.infinispan.server.core.ChannelHandlerContext;
 
 /**
  * FlushAllCommand.
@@ -39,7 +40,7 @@ import org.jboss.netty.channel.Channel;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class FlushAllCommand implements Command {
+public class FlushAllCommand implements TextCommand {
    final Cache cache;
    final long delay;
    final ScheduledExecutorService scheduler;
@@ -51,8 +52,8 @@ public class FlushAllCommand implements Command {
    }
 
    @Override
-   public Object acceptVisitor(Channel ch, CommandInterceptor next) throws Exception {
-      return next.visitFlushAll(ch, this);
+   public Object acceptVisitor(ChannelHandlerContext ctx, TextProtocolVisitor next) throws Throwable {
+      return next.visitFlushAll(ctx, this);
    }
 
    @Override
@@ -61,14 +62,16 @@ public class FlushAllCommand implements Command {
    }
 
    @Override
-   public Object perform(Channel ch) throws Exception {
+   public Object perform(ChannelHandlerContext ctx) throws Throwable {
+      Channel ch = ctx.getChannel();
       if (delay == 0) {
          cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_CACHE_STORE).clear();
       } else {
          scheduler.schedule(new FlushAllDelayed(cache), delay, TimeUnit.SECONDS);
       }
-      ch.write(wrappedBuffer(wrappedBuffer(OK.toString().getBytes()), wrappedBuffer(CRLF)));
-      return null;
+      ChannelBuffers buffers = ctx.getChannelBuffers();
+      ch.write(buffers.wrappedBuffer(buffers.wrappedBuffer(OK.bytes()), buffers.wrappedBuffer(CRLF)));
+      return OK;
    }
 
    public static FlushAllCommand newFlushAllCommand(Cache cache, long delay, ScheduledExecutorService scheduler) {

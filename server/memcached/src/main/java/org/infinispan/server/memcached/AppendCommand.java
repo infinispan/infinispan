@@ -23,7 +23,7 @@
 package org.infinispan.server.memcached;
 
 import org.infinispan.Cache;
-import org.jboss.netty.channel.Channel;
+import org.infinispan.server.core.ChannelHandlerContext;
 
 /**
  * AppendCommand.
@@ -33,26 +33,25 @@ import org.jboss.netty.channel.Channel;
  */
 public class AppendCommand extends SetCommand {
 
-   AppendCommand(Cache cache, StorageParameters params, byte[] data) {
+   AppendCommand(Cache<String, Value> cache, StorageParameters params, byte[] data) {
       super(cache, CommandType.APPEND, params, data);
    }
 
-   AppendCommand(Cache cache, CommandType type, StorageParameters params, byte[] data) {
+   AppendCommand(Cache<String, Value> cache, CommandType type, StorageParameters params, byte[] data) {
       super(cache, type, params, data);
    }
 
    @Override
-   public Object acceptVisitor(Channel ch, CommandInterceptor next) throws Exception {
-      return next.visitAppend(ch, this);
+   public Object acceptVisitor(ChannelHandlerContext ctx, TextProtocolVisitor next) throws Throwable {
+      return next.visitAppend(ctx, this);
    }
 
    @Override
    protected Reply put(String key, int flags, byte[] data) {
-      Value append = new Value(flags, data);
-      Value current = (Value) cache.get(key);
+      Value current = cache.get(key);
       if (current != null) {
-         byte[] concatenated = concat(current.getData(), append.getData());
-         Value next = new Value(current.getFlags(), concatenated);
+         byte[] concatenated = concat(current.getData(), data);
+         Value next = new Value(current.getFlags(), concatenated, current.getCas() + 1);
          boolean replaced = cache.replace(key, current, next);
          if (replaced)
             return Reply.STORED;

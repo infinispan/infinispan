@@ -41,4 +41,8 @@ public class StorageParameters {
       this.expiry = expiry;
       this.bytes = bytes;
    }
+
+   public int getBytes() {
+      return bytes;
+   }
 }

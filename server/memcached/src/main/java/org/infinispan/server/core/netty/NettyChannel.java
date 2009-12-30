@@ -20,34 +20,37 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.server.memcached;
+package org.infinispan.server.core.netty;
 
-import org.jboss.netty.channel.Channel;
-
+import org.infinispan.server.core.Channel;
+import org.infinispan.server.core.ChannelFuture;
 
 /**
- * CommandInterceptor.
+ * NettyChannel.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class CommandInterceptor extends AbstractVisitor {
-   private final CommandInterceptor next;
+public class NettyChannel implements Channel {
+   final org.jboss.netty.channel.Channel ch;
+
+   public NettyChannel(org.jboss.netty.channel.Channel ch) {
+      this.ch = ch;
+   }
    
-   public CommandInterceptor(CommandInterceptor next) {
-      this.next = next;
+   @Override
+   public ChannelFuture disconnect() {
+      return new NettyChannelFuture(ch.disconnect(), this);
    }
 
-   public CommandInterceptor getNext() {
-      return next;
+   @Override
+   public ChannelFuture write(Object message) {
+      return new NettyChannelFuture(ch.write(message), this);
    }
 
-   public final Object invokeNextInterceptor(Channel ch, Command command) throws Exception {
-      return command.acceptVisitor(ch, next);
-   }
-
-   protected Object handleDefault(Channel ch, Command command) throws Exception {
-      return invokeNextInterceptor(ch, command);
+   @Override
+   public int compareTo(Channel o) {
+      return ch.compareTo(((NettyChannel) o).ch);
    }
 
 }

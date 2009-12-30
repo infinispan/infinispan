@@ -22,8 +22,6 @@
  */
 package org.infinispan.server.memcached;
 
-import org.infinispan.stats.Stats;
-
 /**
  * MemcachedStats.
  * 

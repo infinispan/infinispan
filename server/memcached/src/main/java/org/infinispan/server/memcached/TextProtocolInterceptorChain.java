@@ -28,24 +28,27 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.infinispan.server.core.ChannelHandlerContext;
+import org.infinispan.server.core.Command;
 import org.infinispan.server.core.CommandInterceptor;
+import org.infinispan.server.core.InterceptorChain;
 
 /**
- * InterceptorChain.
+ * TextProtocolInterceptorChain.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class InterceptorChain {
+public class TextProtocolInterceptorChain implements InterceptorChain {
 
    private final TextCommandInterceptor firstInChain;
 
-   public InterceptorChain(TextCommandInterceptor firstInChain) {
+   public TextProtocolInterceptorChain(TextCommandInterceptor firstInChain) {
       this.firstInChain = firstInChain;
    }
-
-   public Object invoke(ChannelHandlerContext ctx, TextCommand command) throws Throwable {
-      return command.acceptVisitor(ctx, firstInChain);
+   
+   @Override
+   public Object invoke(ChannelHandlerContext ctx, Command command) throws Throwable {
+      return ((TextCommand) command).acceptVisitor(ctx, firstInChain);
    }
 
    public List<CommandInterceptor> getInterceptorsWhichExtend(Class<? extends CommandInterceptor> interceptorClass) {
@@ -75,5 +78,6 @@ public class InterceptorChain {
       while (tmp != null);
       return Collections.unmodifiableList(retval);
    }
+
 
 }

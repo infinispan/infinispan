@@ -20,14 +20,16 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.server.memcached;
+package org.infinispan.server.core;
+
 
 /**
- * RetrievalReply.
+ * Channel.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-public enum RetrievalReply {
-   , ;
+public interface Channel extends Comparable<Channel> {
+   ChannelFuture write(Object message);
+   ChannelFuture disconnect();
 }

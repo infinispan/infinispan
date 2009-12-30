@@ -22,7 +22,7 @@
  */
 package org.infinispan.server.memcached;
 
-import org.jboss.netty.channel.Channel;
+import org.infinispan.server.core.ChannelHandlerContext;
 
 /**
  * CallInterceptor.
@@ -30,14 +30,14 @@ import org.jboss.netty.channel.Channel;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class CallInterceptor extends CommandInterceptor {
+public class CallInterceptor extends TextCommandInterceptorImpl {
 
-   public CallInterceptor(CommandInterceptor next) {
+   public CallInterceptor(TextCommandInterceptor next) {
       super(next);
    }
 
    @Override
-   protected Object handleDefault(Channel ch, Command command) throws Exception {
-      return command.perform(ch);
+   protected Object handleDefault(ChannelHandlerContext ctx, TextCommand command) throws Throwable {
+      return command.perform(ctx);
    }
 }

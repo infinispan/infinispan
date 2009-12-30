@@ -39,15 +39,10 @@ class Value implements Externalizable {
    private byte[] data;
    private long cas;
    
-   Value(int flags, byte[] data) {
+   Value(int flags, byte[] data, long cas) {
       this.flags = flags;
       this.data = data;
-      // Since nano time is an offset from an arbitrary time, it is very unlikely that 
-      // two threads running on different VMs will generate the same value, so even two 
-      // modifications on the same key on different VMs will generate different cas, 
-      // making it a safe option for cas unique id.
-      // Also, using nano time avoid issues after expiration and eviction.
-      cas = System.nanoTime();
+      this.cas = cas;
    }
 
    public int getFlags() {
@@ -81,6 +76,15 @@ class Value implements Externalizable {
       result = 31 * result + data.hashCode();
       result = 31 * result + (int)(cas ^ (cas >>> 32));
       return result;
+   }
+
+   @Override
+   public String toString() {
+      return getClass().getSimpleName() + "{" +
+         "data=" + Arrays.toString(data) +
+         ", flags=" + flags +
+         ", cas=" + cas +
+         "}";
    }
 
    @Override

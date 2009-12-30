@@ -20,47 +20,35 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.server.memcached;
+package org.infinispan.server.core.netty;
 
-import static org.infinispan.server.memcached.Reply.VERSION;
-
-import static org.infinispan.server.memcached.TextProtocolUtil.CRLF;
-
-import org.infinispan.Version;
-import org.infinispan.server.core.Channel;
+import org.infinispan.server.core.ChannelBuffer;
 import org.infinispan.server.core.ChannelBuffers;
-import org.infinispan.server.core.ChannelHandlerContext;
-
 
 /**
- * VersionCommand.
+ * NettyChannelBuffers.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-public enum VersionCommand implements TextCommand {
+public enum NettyChannelBuffers implements ChannelBuffers {
    INSTANCE;
 
    @Override
-   public Object acceptVisitor(ChannelHandlerContext ctx, TextProtocolVisitor next) throws Throwable {
-      return next.visitVersion(ctx, this);
+   public ChannelBuffer wrappedBuffer(byte[] array) {
+      return new NettyChannelBuffer(org.jboss.netty.buffer.ChannelBuffers.wrappedBuffer(array));
    }
 
    @Override
-   public CommandType getType() {
-      return CommandType.VERSION;
+   public ChannelBuffer wrappedBuffer(ChannelBuffer... buffers) {
+      org.jboss.netty.buffer.ChannelBuffer[] nettyBuffers = new org.jboss.netty.buffer.ChannelBuffer[buffers.length];
+      for (int i =0; i < buffers.length; i++) {
+         nettyBuffers[i] = ((NettyChannelBuffer) buffers[i]).buffer;
+      }
+      return new NettyChannelBuffer(org.jboss.netty.buffer.ChannelBuffers.wrappedBuffer(nettyBuffers));
    }
 
-   @Override
-   public Object perform(ChannelHandlerContext ctx) throws Exception {
-      Channel ch = ctx.getChannel();
-      String version = ' ' + Version.version;
-      ChannelBuffers buffers = ctx.getChannelBuffers();
-      ch.write(buffers.wrappedBuffer(buffers.wrappedBuffer(VERSION.bytes()), buffers.wrappedBuffer(version.getBytes()), buffers.wrappedBuffer(CRLF)));
-      return VERSION;
-   }
-
-   public static VersionCommand newVersionCommand() {
+   public static NettyChannelBuffers getInstance() {
       return INSTANCE;
    }
 }

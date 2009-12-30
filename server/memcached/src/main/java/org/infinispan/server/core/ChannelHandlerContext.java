@@ -20,42 +20,15 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.server.memcached;
-
-import java.util.concurrent.BlockingQueue;
-
-import org.infinispan.Cache;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+package org.infinispan.server.core;
 
 /**
- * DelayedDelete.
+ * ChannelHandlerContext.
  * 
  * @author Galder Zamarreño
  * @since 4.0
- * @deprecated No longer in memcached spec: http://github.com/memcached/memcached/blob/master/doc/protocol.txt
  */
-@Deprecated
-public class DeleteDelayed implements Runnable {
-   private static final Log log = LogFactory.getLog(DeleteDelayed.class);
-
-   private final Cache cache;
-   private final BlockingQueue<DeleteDelayedEntry> queue;
-
-   DeleteDelayed(Cache cache, BlockingQueue<DeleteDelayedEntry> queue) {
-      this.queue = queue;
-      this.cache = cache;
-   }
-
-   @Override
-   public void run() {
-      try {
-         while (!Thread.currentThread().isInterrupted()) {
-            DeleteDelayedEntry entry = queue.take();
-            cache.remove(entry.key);
-         }
-      } catch (InterruptedException e) {
-         log.debug("Interrupted, so allow thread to exit"); /*  Allow thread to exit  */
-      }
-   }
+public interface ChannelHandlerContext {
+   Channel getChannel();
+   ChannelBuffers getChannelBuffers();
 }

@@ -23,7 +23,7 @@
 package org.infinispan.server.memcached;
 
 import org.infinispan.Cache;
-import org.jboss.netty.channel.Channel;
+import org.infinispan.server.core.ChannelHandlerContext;
 
 /**
  * PrependCommand.
@@ -38,8 +38,8 @@ public class PrependCommand extends AppendCommand {
    }
 
    @Override
-   public Object acceptVisitor(Channel ch, CommandInterceptor next) throws Exception {
-      return next.visitPrepend(ch, this);
+   public Object acceptVisitor(ChannelHandlerContext ctx, TextProtocolVisitor next) throws Throwable {
+      return next.visitPrepend(ctx, this);
    }
 
    @Override

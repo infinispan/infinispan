@@ -20,38 +20,38 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.server.memcached;
+package org.infinispan.server.core.netty;
 
-import org.infinispan.server.core.Channel;
-import org.infinispan.server.core.ChannelHandlerContext;
+import org.infinispan.CacheException;
+import org.infinispan.server.core.CommandHandler;
+import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.channel.ChannelPipelineCoverage;
+import org.jboss.netty.channel.MessageEvent;
+import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 
 /**
- * QuitCommand.
+ * NettyUpstreamHandler.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-public enum QuitCommand implements TextCommand {
-   INSTANCE;
+@ChannelPipelineCoverage("one")
+public class NettyChannelUpstreamHandler extends SimpleChannelUpstreamHandler {
+   final CommandHandler handler;
+
+   public NettyChannelUpstreamHandler(CommandHandler handler) {
+      this.handler = handler;
+   }
    
    @Override
-   public Object acceptVisitor(ChannelHandlerContext ctx, TextProtocolVisitor next) throws Throwable {
-      return next.visitQuit(ctx, this);
+   public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
+      try {
+         handler.messageReceived(new NettyChannelHandlerContext(ctx), new NettyMessageEvent(e));
+      } catch (Exception ee) {
+         throw ee;
+      } catch (Throwable t) {
+         throw new CacheException(t);
+      }
    }
 
-   @Override
-   public CommandType getType() {
-      return CommandType.QUIT;
-   }
-
-   @Override
-   public Object perform(ChannelHandlerContext ctx) throws Throwable {
-      Channel ch = ctx.getChannel();
-      ch.disconnect();
-      return null;
-   }
-
-   public static QuitCommand newQuitCommand() {
-      return INSTANCE;
-   }
 }

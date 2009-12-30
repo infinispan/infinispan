@@ -22,45 +22,16 @@
  */
 package org.infinispan.server.memcached;
 
-import static org.infinispan.server.memcached.Reply.VERSION;
-
-import static org.infinispan.server.memcached.TextProtocolUtil.CRLF;
-
-import org.infinispan.Version;
-import org.infinispan.server.core.Channel;
-import org.infinispan.server.core.ChannelBuffers;
 import org.infinispan.server.core.ChannelHandlerContext;
-
+import org.infinispan.server.core.Command;
 
 /**
- * VersionCommand.
+ * TextCommand.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-public enum VersionCommand implements TextCommand {
-   INSTANCE;
-
-   @Override
-   public Object acceptVisitor(ChannelHandlerContext ctx, TextProtocolVisitor next) throws Throwable {
-      return next.visitVersion(ctx, this);
-   }
-
-   @Override
-   public CommandType getType() {
-      return CommandType.VERSION;
-   }
-
-   @Override
-   public Object perform(ChannelHandlerContext ctx) throws Exception {
-      Channel ch = ctx.getChannel();
-      String version = ' ' + Version.version;
-      ChannelBuffers buffers = ctx.getChannelBuffers();
-      ch.write(buffers.wrappedBuffer(buffers.wrappedBuffer(VERSION.bytes()), buffers.wrappedBuffer(version.getBytes()), buffers.wrappedBuffer(CRLF)));
-      return VERSION;
-   }
-
-   public static VersionCommand newVersionCommand() {
-      return INSTANCE;
-   }
+public interface TextCommand extends Command {
+   Object acceptVisitor(ChannelHandlerContext ctx, TextProtocolVisitor next) throws Throwable;
+   CommandType getType();
 }

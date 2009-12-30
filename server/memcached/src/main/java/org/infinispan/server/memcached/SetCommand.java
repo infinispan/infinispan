@@ -27,12 +27,13 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
+import org.infinispan.server.core.Channel;
+import org.infinispan.server.core.ChannelBuffers;
+import org.infinispan.server.core.ChannelHandlerContext;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import static org.infinispan.server.memcached.TextProtocolUtil.CRLF;
-import static org.jboss.netty.buffer.ChannelBuffers.*;
-import org.jboss.netty.channel.Channel;
 
 /**
  * SetCommand.
@@ -43,17 +44,18 @@ import org.jboss.netty.channel.Channel;
 public class SetCommand extends StorageCommand {
    private static final Log log = LogFactory.getLog(SetCommand.class);
 
-   SetCommand(Cache cache, CommandType type, StorageParameters params, byte[] data) {
+   SetCommand(Cache<String, Value> cache, CommandType type, StorageParameters params, byte[] data) {
       super(cache, type, params, data);
    }
 
    @Override
-   public Object acceptVisitor(Channel ch, CommandInterceptor next) throws Exception {
-      return next.visitSet(ch, this);
+   public Object acceptVisitor(ChannelHandlerContext ctx, TextProtocolVisitor next) throws Throwable {
+      return next.visitSet(ctx, this);
    }
 
    @Override
-   public Object perform(Channel ch) throws Exception {
+   public Object perform(ChannelHandlerContext ctx) throws Exception {
+      Channel ch = ctx.getChannel();
       Reply reply;
       try {
          if (params.expiry == 0) {
@@ -83,7 +85,8 @@ public class SetCommand extends StorageCommand {
          log.error("Unexpected exception performing command", e);
          reply = Reply.NOT_STORED;
       }
-      ch.write(wrappedBuffer(wrappedBuffer(reply.bytes()), wrappedBuffer(CRLF)));
+      ChannelBuffers buffers = ctx.getChannelBuffers();
+      ch.write(buffers.wrappedBuffer(buffers.wrappedBuffer(reply.bytes()), buffers.wrappedBuffer(CRLF)));
       return reply;
    }
 
@@ -92,15 +95,30 @@ public class SetCommand extends StorageCommand {
    }
 
    protected Reply put(String key, int flags, byte[] data, long expiry) {
-      Value value = new Value(flags, data);
-      cache.put(key, value, expiry, TimeUnit.MILLISECONDS);
-      return reply();
+      Value prev = cache.get(key);
+      Value value;
+      if (prev != null) {
+         value = new Value(flags, data, prev.getCas() + 1);
+         boolean replaced = cache.replace(key, prev, value, expiry, TimeUnit.MILLISECONDS);
+         return reply(replaced);
+      } else {
+         value = new Value(flags, data, System.currentTimeMillis());
+         prev = cache.putIfAbsent(key, value, expiry, TimeUnit.MILLISECONDS);
+         return reply(prev);
+      }
    }
 
-   private Reply reply() {
-      return Reply.STORED;
+   private Reply reply(boolean replaced) {
+      if (!replaced)
+         return Reply.NOT_STORED;
+      else
+         return Reply.STORED;
    }
 
-
-
+   private Reply reply(Value prev) {
+      if (prev == null)
+         return Reply.STORED;
+      else 
+         return Reply.NOT_STORED;
+   }
 }

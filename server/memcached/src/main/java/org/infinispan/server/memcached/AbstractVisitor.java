@@ -22,7 +22,7 @@
  */
 package org.infinispan.server.memcached;
 
-import org.jboss.netty.channel.Channel;
+import org.infinispan.server.core.ChannelHandlerContext;
 
 /**
  * CommandInterceptor.
@@ -30,84 +30,84 @@ import org.jboss.netty.channel.Channel;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public abstract class AbstractVisitor implements Visitor {
+public abstract class AbstractVisitor implements TextProtocolVisitor {
 
    @Override
-   public Object visitAdd(Channel ch, AddCommand command) throws Exception {
-      return handleDefault(ch, command);
+   public Object visitAdd(ChannelHandlerContext ctx, AddCommand command) throws Throwable {
+      return handleDefault(ctx, command);
    }
 
    @Override
-   public Object visitAppend(Channel ch, AppendCommand command) throws Exception {
-      return handleDefault(ch, command);
+   public Object visitAppend(ChannelHandlerContext ctx, AppendCommand command) throws Throwable {
+      return handleDefault(ctx, command);
    }
 
    @Override
-   public Object visitCas(Channel ch, CasCommand command) throws Exception {
-      return handleDefault(ch, command);
+   public Object visitCas(ChannelHandlerContext ctx, CasCommand command) throws Throwable {
+      return handleDefault(ctx, command);
    }
 
    @Override
-   public Object visitDecrement(Channel ch, DecrementCommand command) throws Exception {
-      return handleDefault(ch, command);
+   public Object visitDecrement(ChannelHandlerContext ctx, DecrementCommand command) throws Throwable {
+      return handleDefault(ctx, command);
    }
 
    @Override
-   public Object visitDelete(Channel ch, DeleteCommand command) throws Exception {
-      return handleDefault(ch, command);
+   public Object visitDelete(ChannelHandlerContext ctx, DeleteCommand command) throws Throwable {
+      return handleDefault(ctx, command);
    }
 
    @Override
-   public Object visitGet(Channel ch, GetCommand command) throws Exception {
-      return handleDefault(ch, command);
+   public Object visitGet(ChannelHandlerContext ctx, GetCommand command) throws Throwable {
+      return handleDefault(ctx, command);
    }
 
    @Override
-   public Object visitGets(Channel ch, GetsCommand command) throws Exception {
-      return handleDefault(ch, command);
+   public Object visitGets(ChannelHandlerContext ctx, GetsCommand command) throws Throwable {
+      return handleDefault(ctx, command);
    }
 
    @Override
-   public Object visitIncrement(Channel ch, IncrementCommand command) throws Exception {
-      return handleDefault(ch, command);
+   public Object visitIncrement(ChannelHandlerContext ctx, IncrementCommand command) throws Throwable {
+      return handleDefault(ctx, command);
    }
 
    @Override
-   public Object visitPrepend(Channel ch, PrependCommand command) throws Exception {
-      return handleDefault(ch, command);
+   public Object visitPrepend(ChannelHandlerContext ctx, PrependCommand command) throws Throwable {
+      return handleDefault(ctx, command);
    }
 
    @Override
-   public Object visitReplace(Channel ch, ReplaceCommand command) throws Exception {
-      return handleDefault(ch, command);
+   public Object visitReplace(ChannelHandlerContext ctx, ReplaceCommand command) throws Throwable {
+      return handleDefault(ctx, command);
    }
 
    @Override
-   public Object visitSet(Channel ch, SetCommand command) throws Exception {
-      return handleDefault(ch, command);
+   public Object visitSet(ChannelHandlerContext ctx, SetCommand command) throws Throwable {
+      return handleDefault(ctx, command);
    }
 
    @Override
-   public Object visitStats(Channel ch, StatsCommand command) throws Exception {
-      return handleDefault(ch, command);
+   public Object visitStats(ChannelHandlerContext ctx, StatsCommand command) throws Throwable {
+      return handleDefault(ctx, command);
    }
 
    @Override
-   public Object visitFlushAll(Channel ch, FlushAllCommand command) throws Exception {
-      return handleDefault(ch, command);
+   public Object visitFlushAll(ChannelHandlerContext ctx, FlushAllCommand command) throws Throwable {
+      return handleDefault(ctx, command);
    }
 
    @Override
-   public Object visitVersion(Channel ch, VersionCommand command) throws Exception {
-      return handleDefault(ch, command);
+   public Object visitVersion(ChannelHandlerContext ctx, VersionCommand command) throws Throwable {
+      return handleDefault(ctx, command);
    }
 
    @Override
-   public Object visitQuit(Channel ch, QuitCommand command) throws Exception {
-      return handleDefault(ch, command);
+   public Object visitQuit(ChannelHandlerContext ctx, QuitCommand command) throws Throwable {
+      return handleDefault(ctx, command);
    }
 
-   protected Object handleDefault(Channel ch, Command command) throws Exception {
+   protected Object handleDefault(ChannelHandlerContext ctx, TextCommand command) throws Throwable {
       return null;
    }
 }

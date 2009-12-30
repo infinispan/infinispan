@@ -22,45 +22,35 @@
  */
 package org.infinispan.server.memcached;
 
-import static org.infinispan.server.memcached.Reply.VERSION;
-
-import static org.infinispan.server.memcached.TextProtocolUtil.CRLF;
-
-import org.infinispan.Version;
-import org.infinispan.server.core.Channel;
-import org.infinispan.server.core.ChannelBuffers;
 import org.infinispan.server.core.ChannelHandlerContext;
-
+import org.infinispan.server.core.CommandInterceptor;
 
 /**
- * VersionCommand.
+ * TextCommandInterceptorImpl.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-public enum VersionCommand implements TextCommand {
-   INSTANCE;
+public class TextCommandInterceptorImpl extends AbstractVisitor implements TextCommandInterceptor {
+   private final TextCommandInterceptor next;
 
-   @Override
-   public Object acceptVisitor(ChannelHandlerContext ctx, TextProtocolVisitor next) throws Throwable {
-      return next.visitVersion(ctx, this);
+   TextCommandInterceptorImpl(TextCommandInterceptor next) {
+      this.next = next;
    }
 
    @Override
-   public CommandType getType() {
-      return CommandType.VERSION;
+   public Object invokeNextInterceptor(ChannelHandlerContext ctx, TextCommand command) throws Throwable {
+      return command.acceptVisitor(ctx, next);
    }
 
    @Override
-   public Object perform(ChannelHandlerContext ctx) throws Exception {
-      Channel ch = ctx.getChannel();
-      String version = ' ' + Version.version;
-      ChannelBuffers buffers = ctx.getChannelBuffers();
-      ch.write(buffers.wrappedBuffer(buffers.wrappedBuffer(VERSION.bytes()), buffers.wrappedBuffer(version.getBytes()), buffers.wrappedBuffer(CRLF)));
-      return VERSION;
+   public CommandInterceptor getNext() {
+      return next;
    }
 
-   public static VersionCommand newVersionCommand() {
-      return INSTANCE;
+   @Override
+   protected Object handleDefault(ChannelHandlerContext ctx, TextCommand command) throws Throwable {
+      return invokeNextInterceptor(ctx, command);
    }
+
 }

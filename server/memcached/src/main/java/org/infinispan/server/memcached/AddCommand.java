@@ -25,7 +25,7 @@ package org.infinispan.server.memcached;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
-import org.jboss.netty.channel.Channel;
+import org.infinispan.server.core.ChannelHandlerContext;
 
 /**
  * AddCommand.
@@ -35,23 +35,23 @@ import org.jboss.netty.channel.Channel;
  */
 public class AddCommand extends SetCommand {
 
-   AddCommand(Cache cache, CommandType type, StorageParameters params, byte[] data) {
+   AddCommand(Cache<String, Value> cache, CommandType type, StorageParameters params, byte[] data) {
       super(cache, type, params, data);
    }
 
    @Override
-   public Object acceptVisitor(Channel ch, CommandInterceptor next) throws Exception {
-      return next.visitAdd(ch, this);
+   public Object acceptVisitor(ChannelHandlerContext ctx, TextProtocolVisitor next) throws Throwable {
+      return next.visitAdd(ctx, this);
    }
 
    @Override
    protected Reply put(String key, int flags, byte[] data, long expiry) {
-      Value value = new Value(flags, data);
-      Object prev = cache.putIfAbsent(key, value, expiry, TimeUnit.MILLISECONDS);
+      Value value = new Value(flags, data, System.currentTimeMillis());
+      Value prev = cache.putIfAbsent(key, value, expiry, TimeUnit.MILLISECONDS);
       return reply(prev);
    }
 
-   private Reply reply(Object prev) {
+   private Reply reply(Value prev) {
       if (prev == null)
          return Reply.STORED;
       else 

@@ -20,47 +20,33 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.server.memcached;
+package org.infinispan.server.core.netty;
 
-import static org.infinispan.server.memcached.Reply.VERSION;
+import java.net.SocketAddress;
 
-import static org.infinispan.server.memcached.TextProtocolUtil.CRLF;
-
-import org.infinispan.Version;
-import org.infinispan.server.core.Channel;
-import org.infinispan.server.core.ChannelBuffers;
-import org.infinispan.server.core.ChannelHandlerContext;
-
+import org.infinispan.server.core.MessageEvent;
 
 /**
- * VersionCommand.
+ * NettyMessageEvent.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-public enum VersionCommand implements TextCommand {
-   INSTANCE;
+public class NettyMessageEvent implements MessageEvent {
+   final org.jboss.netty.channel.MessageEvent event;
 
-   @Override
-   public Object acceptVisitor(ChannelHandlerContext ctx, TextProtocolVisitor next) throws Throwable {
-      return next.visitVersion(ctx, this);
+   public NettyMessageEvent(org.jboss.netty.channel.MessageEvent event) {
+      this.event = event;
    }
 
    @Override
-   public CommandType getType() {
-      return CommandType.VERSION;
+   public Object getMessage() {
+      return event.getMessage();
    }
 
    @Override
-   public Object perform(ChannelHandlerContext ctx) throws Exception {
-      Channel ch = ctx.getChannel();
-      String version = ' ' + Version.version;
-      ChannelBuffers buffers = ctx.getChannelBuffers();
-      ch.write(buffers.wrappedBuffer(buffers.wrappedBuffer(VERSION.bytes()), buffers.wrappedBuffer(version.getBytes()), buffers.wrappedBuffer(CRLF)));
-      return VERSION;
+   public SocketAddress getRemoteAddress() {
+      return event.getRemoteAddress();
    }
 
-   public static VersionCommand newVersionCommand() {
-      return INSTANCE;
-   }
 }

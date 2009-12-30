@@ -23,7 +23,6 @@
 package org.infinispan.server.memcached;
 
 import static org.infinispan.server.memcached.TextProtocolUtil.CRLF;
-import static org.jboss.netty.buffer.ChannelBuffers.wrappedBuffer;
 
 import java.io.IOException;
 import java.io.StreamCorruptedException;
@@ -33,7 +32,9 @@ import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.jboss.netty.channel.Channel;
+import org.infinispan.server.core.ChannelBuffers;
+import org.infinispan.server.core.ChannelHandlerContext;
+import org.infinispan.server.core.Channel;
 
 /**
  * NumericCommand.
@@ -41,7 +42,7 @@ import org.jboss.netty.channel.Channel;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public abstract class NumericCommand implements Command {
+public abstract class NumericCommand implements TextCommand {
    private static final Log log = LogFactory.getLog(NumericCommand.class);
    final Cache cache;
    private final CommandType type;
@@ -60,29 +61,31 @@ public abstract class NumericCommand implements Command {
    }
 
    @Override
-   public Object perform(Channel ch) throws Exception {
+   public Object perform(ChannelHandlerContext ctx) throws Throwable {
+      Channel ch = ctx.getChannel();
+      ChannelBuffers buffers = ctx.getChannelBuffers();
       Value old = (Value) cache.get(key);
       if (old != null) {
          BigInteger oldBigInt = old.getData().length == 0 ? BigInteger.valueOf(0) : new BigInteger(old.getData());
          BigInteger newBigInt = operate(oldBigInt, value);
          byte[] newData = newBigInt.toByteArray();
-         Value curr = new Value(old.getFlags(), newData);
+         Value curr = new Value(old.getFlags(), newData, old.getCas() + 1);
          boolean replaced = cache.replace(key, old, curr);
          if (replaced) {
-            ch.write(wrappedBuffer(wrappedBuffer(newBigInt.toString().getBytes()), wrappedBuffer(CRLF)));
+            ch.write(buffers.wrappedBuffer(buffers.wrappedBuffer(newBigInt.toString().getBytes()), buffers.wrappedBuffer(CRLF)));
          } else {
             throw new CacheException("Value modified since we retrieved from the cache, old value was " + oldBigInt);
          }
          return curr;
       } else {
-         ch.write(wrappedBuffer(wrappedBuffer(Reply.NOT_FOUND.bytes()), wrappedBuffer(CRLF)));
-         return null;
+         ch.write(buffers.wrappedBuffer(buffers.wrappedBuffer(Reply.NOT_FOUND.bytes()), buffers.wrappedBuffer(CRLF)));
+         return Reply.NOT_FOUND;
       }
    }
 
    protected abstract BigInteger operate(BigInteger oldValue, BigInteger newValue);
 
-   public static Command newNumericCommand(Cache cache, CommandType type, String key, BigInteger value) throws IOException {
+   public static TextCommand newNumericCommand(Cache cache, CommandType type, String key, BigInteger value) throws IOException {
       switch(type) {
          case INCR: return new IncrementCommand(cache, type, key, value);
          case DECR: return new DecrementCommand(cache, type, key, value);

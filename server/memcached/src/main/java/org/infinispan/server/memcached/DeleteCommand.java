@@ -23,13 +23,11 @@
 package org.infinispan.server.memcached;
 
 import static org.infinispan.server.memcached.TextProtocolUtil.CRLF;
-import static org.jboss.netty.buffer.ChannelBuffers.wrappedBuffer;
-
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Delayed;
 
 import org.infinispan.Cache;
-import org.jboss.netty.channel.Channel;
+import org.infinispan.server.core.Channel;
+import org.infinispan.server.core.ChannelBuffers;
+import org.infinispan.server.core.ChannelHandlerContext;
 
 /**
  * DeleteCommand.
@@ -37,7 +35,7 @@ import org.jboss.netty.channel.Channel;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class DeleteCommand implements Command {
+public class DeleteCommand implements TextCommand {
 
    final Cache cache;
    final String key;
@@ -53,17 +51,19 @@ public class DeleteCommand implements Command {
    }
 
    @Override
-   public Object acceptVisitor(Channel ch, CommandInterceptor next) throws Exception {
-      return next.visitDelete(ch, this);
+   public Object acceptVisitor(ChannelHandlerContext ctx, TextProtocolVisitor next) throws Throwable {
+      return next.visitDelete(ctx, this);
    }
 
    @Override
-   public Object perform(Channel ch) throws Exception {
+   public Object perform(ChannelHandlerContext ctx) throws Throwable {
+      Channel ch = ctx.getChannel();
       Reply reply;
       Object prev = cache.remove(key);
       reply = reply(prev);
-      ch.write(wrappedBuffer(wrappedBuffer(reply.bytes()), wrappedBuffer(CRLF)));
-      return null;
+      ChannelBuffers buffers = ctx.getChannelBuffers();
+      ch.write(buffers.wrappedBuffer(buffers.wrappedBuffer(reply.bytes()), buffers.wrappedBuffer(CRLF)));
+      return reply;
    }
 
    private Reply reply(Object prev) {

@@ -59,7 +59,7 @@ public class StatsTest extends SingleCacheManagerTest {
       cacheManager = TestCacheManagerFactory.createJmxEnabledCacheManager(JMX_DOMAIN);
       server = MemcachedTestingUtil.createMemcachedTextServer(cacheManager);
       server.start();
-      client = createMemcachedClient(5000, server.getPort());
+      client = createMemcachedClient(60000, server.getPort());
       return cacheManager;
    }
 
@@ -132,9 +132,9 @@ public class StatsTest extends SingleCacheManagerTest {
 
       stats = getStats();
       assert "2".equals(stats.get("cmd_set"));
-      assert "2".equals(stats.get("cmd_get"));
+      assert "4".equals(stats.get("cmd_get"));
       assert "2".equals(stats.get("get_hits"));
-      assert "0".equals(stats.get("get_misses"));
+      assert "2".equals(stats.get("get_misses"));
       assert "0".equals(stats.get("delete_hits"));
       assert "0".equals(stats.get("delete_misses"));
       assert "2".equals(stats.get("curr_items"));
@@ -151,7 +151,7 @@ public class StatsTest extends SingleCacheManagerTest {
       assert null == client.get(k(m, "k99-"));
       stats = getStats();
       assert "2".equals(stats.get("get_hits"));
-      assert "1".equals(stats.get("get_misses"));
+      assert "3".equals(stats.get("get_misses"));
 
       f = client.delete(k(m, "k99-"));
       assert !f.get(5, TimeUnit.SECONDS);

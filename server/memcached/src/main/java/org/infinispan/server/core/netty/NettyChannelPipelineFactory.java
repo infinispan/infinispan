@@ -20,41 +20,27 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.server.memcached;
+package org.infinispan.server.core.netty;
 
-import static org.jboss.netty.channel.Channels.*;
+import static org.jboss.netty.channel.Channels.pipeline;
 
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ScheduledExecutorService;
-
-import org.infinispan.Cache;
 import org.jboss.netty.channel.ChannelHandler;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
-import org.jboss.netty.handler.codec.replay.ReplayingDecoder;
 
 /**
- * TextProtocolPipelineFactory.
+ * NettyChannelPipelineFactory.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-class TextProtocolPipelineFactory implements ChannelPipelineFactory {
-
-//   private final ChannelHandler handler;
-//
-//   public TextProtocolPipelineFactory(TextCommandHandler handler) {
-//      this.handler = handler;
-//   }
-
-//   private final Cache cache;
-   
-   private final ReplayingDecoder<TextCommandDecoder.State> decoder;
+public class NettyChannelPipelineFactory implements ChannelPipelineFactory {
+   private final ChannelHandler decoder;
    private final ChannelHandler handler;
 
-   public TextProtocolPipelineFactory(Cache cache, InterceptorChain chain, ScheduledExecutorService scheduler) {
-      this.decoder = new TextCommandDecoder(cache, chain, scheduler);
-      this.handler = new TextCommandHandler(cache, chain);
+   public NettyChannelPipelineFactory(ChannelHandler decoder, ChannelHandler handler) {
+      this.decoder = decoder;
+      this.handler = handler;
    }
 
    @Override
@@ -63,8 +49,6 @@ class TextProtocolPipelineFactory implements ChannelPipelineFactory {
       ChannelPipeline pipeline = pipeline();
       pipeline.addLast("decoder", decoder);
       pipeline.addLast("handler", handler);
-//      pipeline.addLast("encoder", new TextResponseEncoder());
-
       return pipeline;
    }
 

@@ -20,21 +20,17 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.server.memcached;
+package org.infinispan.server.core;
 
-import org.jboss.netty.channel.Channel;
+import java.util.List;
 
 /**
- * Command.
+ * InterceptorChain.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-public interface Command {
-
-   Object perform(Channel ch) throws Exception;
-   
-   Object acceptVisitor(Channel ch, CommandInterceptor next) throws Exception;
-
-   CommandType getType();
+public interface InterceptorChain {
+   Object invoke(ChannelHandlerContext ctx, Command command) throws Throwable;
+   List<CommandInterceptor> getInterceptorsWhichExtend(Class<? extends CommandInterceptor> interceptorClass);
 }

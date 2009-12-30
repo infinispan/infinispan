@@ -25,9 +25,9 @@ package org.infinispan.server.memcached;
 import java.math.BigInteger;
 
 import org.infinispan.Cache;
+import org.infinispan.server.core.ChannelHandlerContext;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.jboss.netty.channel.Channel;
 
 /**
  * IncrementCommand.
@@ -43,8 +43,8 @@ public class IncrementCommand extends NumericCommand {
    }
 
    @Override
-   public Object acceptVisitor(Channel ch, CommandInterceptor next) throws Exception {
-      return next.visitIncrement(ch, this);
+   public Object acceptVisitor(ChannelHandlerContext ctx, TextProtocolVisitor next) throws Throwable {
+      return next.visitIncrement(ctx, this);
    }
 
    @Override

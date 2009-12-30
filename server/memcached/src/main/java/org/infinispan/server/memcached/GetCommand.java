@@ -23,11 +23,12 @@
 package org.infinispan.server.memcached;
 
 import org.infinispan.Cache;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.channel.Channel;
+import org.infinispan.server.core.Channel;
+import org.infinispan.server.core.ChannelBuffer;
+import org.infinispan.server.core.ChannelBuffers;
+import org.infinispan.server.core.ChannelHandlerContext;
 
 import static org.infinispan.server.memcached.TextProtocolUtil.CRLF;
-import static org.jboss.netty.buffer.ChannelBuffers.*;
 import static org.infinispan.server.memcached.Reply.VALUE;
 import static org.infinispan.server.memcached.Reply.END;
 
@@ -39,30 +40,32 @@ import static org.infinispan.server.memcached.Reply.END;
  */
 public class GetCommand extends RetrievalCommand {
 
-   GetCommand(Cache cache, CommandType type, RetrievalParameters params) {
+   GetCommand(Cache<String, Value> cache, CommandType type, RetrievalParameters params) {
       super(cache, type, params);
    }
 
    @Override
-   public Object acceptVisitor(Channel ch, CommandInterceptor next) throws Exception {
-      return next.visitGet(ch, this);
+   public Object acceptVisitor(ChannelHandlerContext ctx, TextProtocolVisitor next) throws Throwable {
+      return next.visitGet(ctx, this);
    }
    
    @Override
-   public Object perform(Channel ch) throws Exception {
+   public Object perform(ChannelHandlerContext ctx) throws Throwable {
+      Channel ch = ctx.getChannel();
       ChannelBuffer buffer;
+      ChannelBuffers buffers = ctx.getChannelBuffers();
       for (String key : params.keys) {
-         Value value = (Value) cache.get(key);
+         Value value = cache.get(key);
          if (value != null) {
             StringBuilder sb = constructValue(key, value);
-            buffer = wrappedBuffer(wrappedBuffer(sb.toString().getBytes()), wrappedBuffer(CRLF),
-                     wrappedBuffer(value.getData()), wrappedBuffer(CRLF));
+            buffer = buffers.wrappedBuffer(buffers.wrappedBuffer(sb.toString().getBytes()), buffers.wrappedBuffer(CRLF),
+                     buffers.wrappedBuffer(value.getData()), buffers.wrappedBuffer(CRLF));
             ch.write(buffer);
          }
       }
       
-      ch.write(wrappedBuffer(wrappedBuffer(END.toString().getBytes()), wrappedBuffer(CRLF)));
-      return null;
+      ch.write(buffers.wrappedBuffer(buffers.wrappedBuffer(END.bytes()), buffers.wrappedBuffer(CRLF)));
+      return END;
    }
 
    protected StringBuilder constructValue(String key, Value value) {
