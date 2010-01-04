@@ -49,12 +49,14 @@ public abstract class NumericCommand implements TextCommand {
    private final CommandType type;
    final String key;
    final BigInteger value;
+   final boolean noReply;
 
-   public NumericCommand(Cache cache, CommandType type, String key, BigInteger value) {
+   public NumericCommand(Cache cache, CommandType type, String key, BigInteger value, boolean noReply) {
       this.cache = cache;
       this.type = type;
       this.key = key;
       this.value = value;
+      this.noReply = noReply;
    }
 
    public CommandType getType() {
@@ -72,24 +74,26 @@ public abstract class NumericCommand implements TextCommand {
          byte[] newData = newBigInt.toByteArray();
          Value curr = new Value(old.getFlags(), newData, old.getCas() + 1);
          boolean replaced = cache.replace(key, old, curr);
-         if (replaced) {
+         if (replaced && !noReply) {
             ch.write(buffers.wrappedBuffer(buffers.wrappedBuffer(newBigInt.toString().getBytes()), buffers.wrappedBuffer(CRLF)));
-         } else {
+         } else if (!replaced) {
             throw new CacheException("Value modified since we retrieved from the cache, old value was " + oldBigInt);
          }
          return curr;
       } else {
-         ch.write(buffers.wrappedBuffer(buffers.wrappedBuffer(Reply.NOT_FOUND.bytes()), buffers.wrappedBuffer(CRLF)));
+         if (!noReply) {
+            ch.write(buffers.wrappedBuffer(buffers.wrappedBuffer(Reply.NOT_FOUND.bytes()), buffers.wrappedBuffer(CRLF)));
+         }
          return Reply.NOT_FOUND;
       }
    }
 
    protected abstract BigInteger operate(BigInteger oldValue, BigInteger newValue);
 
-   public static TextCommand newNumericCommand(Cache cache, CommandType type, String key, BigInteger value) throws IOException {
+   public static TextCommand newNumericCommand(Cache cache, CommandType type, String key, BigInteger value, boolean noReply) throws IOException {
       switch(type) {
-         case INCR: return new IncrementCommand(cache, type, key, value);
-         case DECR: return new DecrementCommand(cache, type, key, value);
+         case INCR: return new IncrementCommand(cache, type, key, value, noReply);
+         case DECR: return new DecrementCommand(cache, type, key, value, noReply);
          default: throw new StreamCorruptedException("Unable to build storage command for type: " + type);
       }
    }

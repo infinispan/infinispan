@@ -41,10 +41,12 @@ public class DeleteCommand implements TextCommand {
 
    final Cache cache;
    final String key;
+   final boolean noReply;
 
-   DeleteCommand(Cache cache, String key, long time) {
+   DeleteCommand(Cache cache, String key, long time, boolean noReply) {
       this.cache = cache;
       this.key = key;
+      this.noReply = noReply;
    }
 
    @Override
@@ -63,8 +65,10 @@ public class DeleteCommand implements TextCommand {
       Reply reply;
       Object prev = cache.remove(key);
       reply = reply(prev);
-      ChannelBuffers buffers = ctx.getChannelBuffers();
-      ch.write(buffers.wrappedBuffer(buffers.wrappedBuffer(reply.bytes()), buffers.wrappedBuffer(CRLF)));
+      if (!noReply) {
+         ChannelBuffers buffers = ctx.getChannelBuffers();
+         ch.write(buffers.wrappedBuffer(buffers.wrappedBuffer(reply.bytes()), buffers.wrappedBuffer(CRLF)));
+      }
       return reply;
    }
 
@@ -75,7 +79,7 @@ public class DeleteCommand implements TextCommand {
          return Reply.DELETED;
    }
 
-   public static DeleteCommand newDeleteCommand(Cache cache, String key) {
-      return new DeleteCommand(cache, key, 0);
+   public static DeleteCommand newDeleteCommand(Cache cache, String key, boolean noReply) {
+      return new DeleteCommand(cache, key, 0, noReply);
    }
 }

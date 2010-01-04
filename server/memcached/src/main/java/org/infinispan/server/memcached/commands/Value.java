@@ -81,7 +81,7 @@ class Value implements Externalizable {
    @Override
    public String toString() {
       return getClass().getSimpleName() + "{" +
-         "data=" + Arrays.toString(data) +
+         "data=" + data +
          ", flags=" + flags +
          ", cas=" + cas +
          "}";

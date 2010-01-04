@@ -58,7 +58,7 @@ public class FunctionalTest extends SingleCacheManagerTest {
    @Override
    protected CacheManager createCacheManager() throws Exception {
       cacheManager = TestCacheManagerFactory.createLocalCacheManager();
-      server = MemcachedTestingUtil.createMemcachedTextServer(cacheManager);
+      server = MemcachedTestingUtil.createMemcachedTextServer(cacheManager.getCache());
       server.start();
       client = createMemcachedClient(60000, server.getPort());
       return cacheManager;
@@ -68,7 +68,7 @@ public class FunctionalTest extends SingleCacheManagerTest {
    protected void destroyAfterClass() {
       server.stop();
    }
-   
+
    public void testSetBasic(Method m) throws Exception {
       Future<Boolean> f = client.set(k(m), 0, v(m));
       assert f.get(5, TimeUnit.SECONDS);

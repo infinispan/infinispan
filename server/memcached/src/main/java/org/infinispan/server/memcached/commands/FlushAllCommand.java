@@ -45,11 +45,13 @@ public class FlushAllCommand implements TextCommand {
    final Cache cache;
    final long delay;
    final ScheduledExecutorService scheduler;
+   final boolean noReply;
 
-   FlushAllCommand(Cache cache, long delay, ScheduledExecutorService scheduler) {
+   FlushAllCommand(Cache cache, long delay, ScheduledExecutorService scheduler, boolean noReply) {
       this.cache = cache;
       this.delay = delay;
       this.scheduler = scheduler;
+      this.noReply = noReply;
    }
 
    @Override
@@ -70,13 +72,15 @@ public class FlushAllCommand implements TextCommand {
       } else {
          scheduler.schedule(new FlushAllDelayed(cache), delay, TimeUnit.SECONDS);
       }
-      ChannelBuffers buffers = ctx.getChannelBuffers();
-      ch.write(buffers.wrappedBuffer(buffers.wrappedBuffer(OK.bytes()), buffers.wrappedBuffer(CRLF)));
+      if (!noReply) {
+         ChannelBuffers buffers = ctx.getChannelBuffers();
+         ch.write(buffers.wrappedBuffer(buffers.wrappedBuffer(OK.bytes()), buffers.wrappedBuffer(CRLF)));
+      }
       return OK;
    }
 
-   public static FlushAllCommand newFlushAllCommand(Cache cache, long delay, ScheduledExecutorService scheduler) {
-      return new FlushAllCommand(cache, delay, scheduler);
+   public static FlushAllCommand newFlushAllCommand(Cache cache, long delay, ScheduledExecutorService scheduler, boolean noReply) {
+      return new FlushAllCommand(cache, delay, scheduler, noReply);
    }
 
    private static class FlushAllDelayed implements Runnable {

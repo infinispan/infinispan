@@ -35,8 +35,8 @@ import org.infinispan.server.memcached.interceptors.TextProtocolVisitor;
  */
 public class PrependCommand extends AppendCommand {
 
-   PrependCommand(Cache cache, CommandType type, StorageParameters params, byte[] data) {
-      super(cache, type, params, data);
+   PrependCommand(Cache cache, CommandType type, StorageParameters params, byte[] data, boolean noReply) {
+      super(cache, type, params, data, noReply);
    }
 
    @Override

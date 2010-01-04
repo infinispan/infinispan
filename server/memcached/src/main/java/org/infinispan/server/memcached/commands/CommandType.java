@@ -42,7 +42,7 @@ public enum CommandType {
    VERSION,
    QUIT
    ;
-   
+
    public boolean isStorage() {
       switch(this) {
          case SET:
@@ -57,29 +57,12 @@ public enum CommandType {
       }
    }
 
-   @Override
-   public String toString() {
-      return super.toString().toLowerCase();
-   }
-
    static CommandType parseType(String type) throws IOException {
-     if(type.equals(CommandType.SET.toString())) return SET;
-     else if(type.equals(CommandType.ADD.toString())) return ADD;
-     else if(type.equals(CommandType.REPLACE.toString())) return REPLACE;
-     else if(type.equals(CommandType.APPEND.toString())) return APPEND;
-     else if(type.equals(CommandType.PREPEND.toString())) return PREPEND;
-     else if(type.equals(CommandType.CAS.toString())) return CAS;
-     else if(type.equals(CommandType.GET.toString())) return GET;
-     else if(type.equals(CommandType.GETS.toString())) return GETS;
-     else if(type.equals(CommandType.DELETE.toString())) return DELETE;
-     else if(type.equals(CommandType.INCR.toString())) return INCR;
-     else if(type.equals(CommandType.DECR.toString())) return DECR;
-     else if(type.equals(CommandType.STATS.toString())) return STATS;
-     else if(type.equals(CommandType.FLUSH_ALL.toString())) return FLUSH_ALL;
-     else if(type.equals(CommandType.VERSION.toString())) return VERSION;
-     else if(type.equals(CommandType.QUIT.toString())) return QUIT;
-     else throw new UnknownCommandException("request \"" + type + "\" not known");
+      try {
+         return valueOf(type.toUpperCase());
+      } catch(IllegalStateException e) {
+         throw new UnknownCommandException("request \"" + type + "\" not known");
+      }
    }
-
 
 }

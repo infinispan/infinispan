@@ -24,6 +24,7 @@ package org.infinispan.server.memcached.commands;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.StreamCorruptedException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -45,6 +46,7 @@ import org.infinispan.server.core.InterceptorChain;
  */
 public class CommandFactory {
    private static final Log log = LogFactory.getLog(CommandFactory.class);
+   private static final String NO_REPLY = "noreply";
 
    private final Cache cache;
    private final InterceptorChain chain;
@@ -73,11 +75,11 @@ public class CommandFactory {
          case REPLACE:
          case APPEND:
          case PREPEND:
-            return StorageCommand.newStorageCommand(cache, type, getStorageParameters(args), null);
+            return StorageCommand.newStorageCommand(cache, type, getStorageParameters(args), null, parseNoReply(5, args));
          case CAS:
             tmp = args[5]; // cas unique, 64-bit integer
             long cas = Long.parseLong(tmp);
-            return CasCommand.newCasCommand(cache, getStorageParameters(args), cas, null);
+            return CasCommand.newCasCommand(cache, getStorageParameters(args), cas, null, parseNoReply(6, args));
          case GET:
          case GETS:
             List<String> keys = new ArrayList<String>(5);
@@ -85,19 +87,19 @@ public class CommandFactory {
             return RetrievalCommand.newRetrievalCommand(cache, type, new RetrievalParameters(keys));
          case DELETE:
             String delKey = getKey(args[1]);
-            return DeleteCommand.newDeleteCommand(cache, delKey);
+            return DeleteCommand.newDeleteCommand(cache, delKey, parseNoReply(2, args));
          case INCR:
          case DECR:
             String key = getKey(args[1]);
             // Value is defined as unsigned 64-integer (or simply unsigned long in java language)
             // TODO: To simplify, could use long as long as the value was less than Long.MAX_VALUE
             BigInteger value = new BigInteger(args[2]);
-            return NumericCommand.newNumericCommand(cache, type, key, value);
+            return NumericCommand.newNumericCommand(cache, type, key, value, parseNoReply(3, args));
          case STATS:
             return StatsCommand.newStatsCommand(cache, type, chain);
          case FLUSH_ALL:
             long delay = args.length > 1 ? Long.parseLong(args[1]) : 0;
-            return FlushAllCommand.newFlushAllCommand(cache, delay, scheduler);
+            return FlushAllCommand.newFlushAllCommand(cache, delay, scheduler, parseNoReply(2, args));
          case VERSION:
             return VersionCommand.newVersionCommand();
          case QUIT:
@@ -131,4 +133,14 @@ public class CommandFactory {
       return Integer.parseInt(bytes);
    }
 
+   private boolean parseNoReply(int expectedIndex, String[] args) throws IOException {
+      if (args.length > expectedIndex) {
+         if (NO_REPLY.equals(args[expectedIndex])) {
+            return true;
+         } else {
+            throw new StreamCorruptedException("Unable to parse noreply optional argument");
+         }
+      }
+      return false;
+   }
 }

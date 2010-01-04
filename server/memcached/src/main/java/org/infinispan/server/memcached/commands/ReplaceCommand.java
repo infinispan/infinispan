@@ -37,8 +37,8 @@ import org.infinispan.server.memcached.interceptors.TextProtocolVisitor;
  */
 public class ReplaceCommand extends SetCommand {
 
-   ReplaceCommand(Cache<String, Value> cache, CommandType type, StorageParameters params, byte[] data) {
-      super(cache, type, params, data);
+   ReplaceCommand(Cache<String, Value> cache, CommandType type, StorageParameters params, byte[] data, boolean noReply) {
+      super(cache, type, params, data, noReply);
    }
 
    @Override

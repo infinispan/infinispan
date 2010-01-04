@@ -39,8 +39,8 @@ import org.infinispan.server.memcached.interceptors.TextProtocolVisitor;
 public class CasCommand extends SetCommand {
    final long cas;
 
-   CasCommand(Cache cache, StorageParameters params, long cas, byte[] data) {
-      super(cache, CommandType.CAS, params, data);
+   CasCommand(Cache cache, CommandType type, StorageParameters params, long cas, byte[] data, boolean noReply) {
+      super(cache, type, params, data, noReply);
       this.cas = cas;
    }
 
@@ -51,7 +51,7 @@ public class CasCommand extends SetCommand {
 
    @Override
    public Command setData(byte[] data) throws IOException {
-      return newCasCommand(cache, params, cas, data);
+      return newCasCommand(cache, params, cas, data, noReply);
    }
 
    @Override
@@ -72,7 +72,7 @@ public class CasCommand extends SetCommand {
       return Reply.NOT_FOUND;
    }
 
-   public static CasCommand newCasCommand(Cache cache, StorageParameters params, long cas, byte[] data) {
-      return new CasCommand(cache, params, cas, data);
+   public static CasCommand newCasCommand(Cache cache, StorageParameters params, long cas, byte[] data, boolean noReply) {
+      return new CasCommand(cache, CommandType.CAS, params, cas, data, noReply);
    }
 }

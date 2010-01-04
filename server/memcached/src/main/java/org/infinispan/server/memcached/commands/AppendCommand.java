@@ -36,12 +36,8 @@ import org.infinispan.server.memcached.interceptors.TextProtocolVisitor;
  */
 public class AppendCommand extends SetCommand {
 
-   AppendCommand(Cache<String, Value> cache, StorageParameters params, byte[] data) {
-      super(cache, CommandType.APPEND, params, data);
-   }
-
-   AppendCommand(Cache<String, Value> cache, CommandType type, StorageParameters params, byte[] data) {
-      super(cache, type, params, data);
+   AppendCommand(Cache<String, Value> cache, CommandType type, StorageParameters params, byte[] data, boolean noReply) {
+      super(cache, type, params, data, noReply);
    }
 
    @Override

@@ -28,7 +28,7 @@ import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.infinispan.manager.CacheManager;
+import org.infinispan.Cache;
 import org.infinispan.server.memcached.MemcachedTextServer;
 
 import net.spy.memcached.DefaultConnectionFactory;
@@ -77,7 +77,11 @@ public class MemcachedTestingUtil {
       return new MemcachedClient(d, Arrays.asList(new InetSocketAddress[]{new InetSocketAddress(port)}));
    }
 
-   public static MemcachedTextServer createMemcachedTextServer(CacheManager cacheManager) {
-      return new MemcachedTextServer(cacheManager, threadMemcachedPort.get());
+   public static MemcachedTextServer createMemcachedTextServer(Cache cache) {
+      return new MemcachedTextServer(cache, threadMemcachedPort.get());
+   }
+
+   public static MemcachedTextServer createMemcachedTextServer(Cache cache, int port) {
+      return new MemcachedTextServer(cache, port);
    }
 }

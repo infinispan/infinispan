@@ -57,7 +57,7 @@ public class StatsTest extends SingleCacheManagerTest {
    @Override
    protected CacheManager createCacheManager() throws Exception {
       cacheManager = TestCacheManagerFactory.createJmxEnabledCacheManager(JMX_DOMAIN);
-      server = MemcachedTestingUtil.createMemcachedTextServer(cacheManager);
+      server = MemcachedTestingUtil.createMemcachedTextServer(cacheManager.getCache());
       server.start();
       client = createMemcachedClient(60000, server.getPort());
       return cacheManager;

@@ -47,8 +47,8 @@ import static org.infinispan.server.memcached.TextProtocolUtil.CRLF;
 public class SetCommand extends StorageCommand {
    private static final Log log = LogFactory.getLog(SetCommand.class);
 
-   SetCommand(Cache<String, Value> cache, CommandType type, StorageParameters params, byte[] data) {
-      super(cache, type, params, data);
+   SetCommand(Cache<String, Value> cache, CommandType type, StorageParameters params, byte[] data, boolean noReply) {
+      super(cache, type, params, data, noReply);
    }
 
    @Override
@@ -88,8 +88,10 @@ public class SetCommand extends StorageCommand {
          log.error("Unexpected exception performing command", e);
          reply = Reply.NOT_STORED;
       }
-      ChannelBuffers buffers = ctx.getChannelBuffers();
-      ch.write(buffers.wrappedBuffer(buffers.wrappedBuffer(reply.bytes()), buffers.wrappedBuffer(CRLF)));
+      if (!noReply) {
+         ChannelBuffers buffers = ctx.getChannelBuffers();
+         ch.write(buffers.wrappedBuffer(buffers.wrappedBuffer(reply.bytes()), buffers.wrappedBuffer(CRLF)));
+      }
       return reply;
    }
 

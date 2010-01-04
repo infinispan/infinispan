@@ -27,7 +27,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
 import org.infinispan.Cache;
-import org.infinispan.manager.CacheManager;
 import org.infinispan.server.core.ServerBootstrap;
 import org.infinispan.server.core.netty.NettyChannelPipelineFactory;
 import org.infinispan.server.core.netty.NettyChannelUpstreamHandler;
@@ -44,13 +43,13 @@ import org.infinispan.server.memcached.interceptors.TextProtocolInterceptorChain
  * @since 4.0
  */
 public class MemcachedTextServer {
-   private final CacheManager manager;
+   private final Cache cache;
    private final int port;
    private final ScheduledExecutorService scheduler;
    private ServerBootstrap bootstrap;
    
-   public MemcachedTextServer(CacheManager manager, int port) {
-      this.manager = manager;
+   public MemcachedTextServer(Cache cache, int port) {
+      this.cache = cache;
       this.port = port;
       this.scheduler = Executors.newScheduledThreadPool(1);
    }
@@ -60,9 +59,6 @@ public class MemcachedTextServer {
    }
 
    public void start() {
-      // Configure Infinispan Cache instance
-      Cache cache = manager.getCache();
-
       InterceptorChain chain = TextProtocolInterceptorChainFactory.getInstance(cache).buildInterceptorChain();
       NettyMemcachedDecoder decoder = new NettyMemcachedDecoder(cache, chain, scheduler);
       TextCommandHandler commandHandler = new TextCommandHandler(cache, chain);
@@ -74,7 +70,7 @@ public class MemcachedTextServer {
 
    public void stop() {
       bootstrap.stop();
-      manager.stop();
+      cache.stop();
       scheduler.shutdown();
    }
 }

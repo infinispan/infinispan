@@ -39,12 +39,14 @@ public abstract class StorageCommand implements TextCommand {
    final Cache<String, Value> cache;
    final StorageParameters params;
    final byte[] data;
+   final boolean noReply;
 
-   StorageCommand(Cache<String, Value> cache, CommandType type, StorageParameters params, byte[] data) {
+   StorageCommand(Cache<String, Value> cache, CommandType type, StorageParameters params, byte[] data, boolean noReply) {
       this.type = type;
       this.params = params;
       this.cache = cache;
       this.data = data;
+      this.noReply = noReply;
    }
 
    public CommandType getType() {
@@ -52,20 +54,20 @@ public abstract class StorageCommand implements TextCommand {
    }
 
    public Command setData(byte[] data) throws IOException {
-      return newStorageCommand(cache, type, params, data);
+      return newStorageCommand(cache, type, params, data, noReply);
    }
 
    public StorageParameters getParams() {
       return params;
    }
 
-   public static TextCommand newStorageCommand(Cache<String, Value> cache, CommandType type, StorageParameters params, byte[] data) throws IOException {
+   public static TextCommand newStorageCommand(Cache<String, Value> cache, CommandType type, StorageParameters params, byte[] data, boolean noReply) throws IOException {
       switch(type) {
-         case SET: return new SetCommand(cache, type, params, data);
-         case ADD: return new AddCommand(cache, type, params, data);
-         case REPLACE: return new ReplaceCommand(cache, type, params, data);
-         case APPEND: return new AppendCommand(cache, type, params, data);
-         case PREPEND: return new PrependCommand(cache, type, params, data);
+         case SET: return new SetCommand(cache, type, params, data, noReply);
+         case ADD: return new AddCommand(cache, type, params, data, noReply);
+         case REPLACE: return new ReplaceCommand(cache, type, params, data, noReply);
+         case APPEND: return new AppendCommand(cache, type, params, data, noReply);
+         case PREPEND: return new PrependCommand(cache, type, params, data, noReply);
          default: throw new StreamCorruptedException("Unable to build storage command for type: " + type);
       }
    }
