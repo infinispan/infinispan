@@ -391,7 +391,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
       if (!usePriorityQueue && ResponseMode.SYNCHRONOUS == mode) usePriorityQueue = true;
       try {
          RspList rsps = dispatcher.invokeRemoteCommands(toJGroupsAddressVector(recipients), rpcCommand, toJGroupsMode(mode),
-                                                        timeout, false, usePriorityQueue,
+                                                        timeout, recipients != null, usePriorityQueue,
                                                         toJGroupsFilter(responseFilter), supportReplay, asyncMarshalling);
 
          if (mode.isAsynchronous()) return Collections.emptyList();// async case
