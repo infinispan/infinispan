@@ -1,6 +1,5 @@
 package org.infinispan.api;
 
-import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -269,25 +268,25 @@ public abstract class CacheAPITest extends SingleCacheManagerTest {
 
    public void testConcurrentMapMethods() {
 
-      assert ((Cache<String, String>) cache).putIfAbsent("A", "B") == null;
-      assert ((Cache<String, String>) cache).putIfAbsent("A", "C").equals("B");
-      assert ((Cache<String, String>) cache).get("A").equals("B");
+      assert cache.putIfAbsent("A", "B") == null;
+      assert cache.putIfAbsent("A", "C").equals("B");
+      assert cache.get("A").equals("B");
 
-      assert !((Cache<String, String>) cache).remove("A", "C");
-      assert ((Cache<String, String>) cache).containsKey("A");
-      assert ((Cache<String, String>) cache).remove("A", "B");
-      assert !((Cache<String, String>) cache).containsKey("A");
+      assert !cache.remove("A", "C");
+      assert cache.containsKey("A");
+      assert cache.remove("A", "B");
+      assert !cache.containsKey("A");
 
-      ((Cache<String, String>) cache).put("A", "B");
+      cache.put("A", "B");
 
-      assert !((Cache<String, String>) cache).replace("A", "D", "C");
-      assert ((Cache<String, String>) cache).get("A").equals("B");
-      assert ((Cache<String, String>) cache).replace("A", "B", "C");
-      assert ((Cache<String, String>) cache).get("A").equals("C");
+      assert !cache.replace("A", "D", "C");
+      assert cache.get("A").equals("B");
+      assert cache.replace("A", "B", "C");
+      assert cache.get("A").equals("C");
 
-      assert ((Cache<String, String>) cache).replace("A", "X").equals("C");
-      assert ((Cache<String, String>) cache).replace("X", "A") == null;
-      assert !((Cache<String, String>) cache).containsKey("X");
+      assert cache.replace("A", "X").equals("C");
+      assert cache.replace("X", "A") == null;
+      assert !cache.containsKey("X");
    }
 
    public void testSizeAndContents() throws Exception {
@@ -366,15 +365,15 @@ public abstract class CacheAPITest extends SingleCacheManagerTest {
       Set expKeyEntries = ObjectDuplicator.duplicateSet(expKeys);
       Set expValueEntries = ObjectDuplicator.duplicateSet(expValues);
 
-      Set<String> keys = cache.keySet();
-      for (String key : keys) assert expKeys.remove(key);
+      Set<Object> keys = cache.keySet();
+      for (Object key : keys) assert expKeys.remove(key);
       assert expKeys.isEmpty() : "Did not see keys " + expKeys + " in iterator!";
 
-      Collection<String> values = cache.values();
-      for (String value : values) assert expValues.remove(value);
+      Collection<Object> values = cache.values();
+      for (Object value : values) assert expValues.remove(value);
       assert expValues.isEmpty() : "Did not see keys " + expValues + " in iterator!";
 
-      Set<Map.Entry> entries = cache.entrySet();
+      Set<Map.Entry<Object, Object>> entries = cache.entrySet();
       for (Map.Entry entry : entries) {
          assert expKeyEntries.remove(entry.getKey());
          assert expValueEntries.remove(entry.getValue());
@@ -391,9 +390,9 @@ public abstract class CacheAPITest extends SingleCacheManagerTest {
       m.put(key3, value3);
       cache.putAll(m);
 
-      Set<String> keys = cache.keySet();
-      Collection<String> values = cache.values();
-      Set<Map.Entry> entries = cache.entrySet();
+      Set<Object> keys = cache.keySet();
+      Collection<Object> values = cache.values();
+      Set<Map.Entry<Object, Object>> entries = cache.entrySet();
       Collection[] collections = new Collection[]{keys, values, entries};
       Object newObj = new Object();
       List newObjCol = new ArrayList();

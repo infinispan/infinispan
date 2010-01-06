@@ -20,7 +20,7 @@ import org.testng.annotations.Test;
 @Test
 public abstract class SingleCacheManagerTest extends AbstractCacheTest {
    protected CacheManager cacheManager;
-   protected Cache cache;
+   protected Cache<Object, Object> cache;
 
    @BeforeClass()
    protected void createBeforeClass() throws Exception {

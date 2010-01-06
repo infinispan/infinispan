@@ -209,7 +209,6 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
       }
 
       channel.setOpt(Channel.LOCAL, false);
-      channel.setOpt(Channel.BLOCK, true);
 
       dispatcher = new CommandAwareRpcDispatcher(channel, this,
                                                  asyncExecutor, inboundInvocationHandler, flushTracker, distributedSyncTimeout);
