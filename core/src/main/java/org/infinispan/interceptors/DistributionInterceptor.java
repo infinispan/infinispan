@@ -316,7 +316,8 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
     * If a single owner has been configured and the target for the key is the local address, it returns true.
     */
    private boolean isSingleOwnerAndLocal(RecipientGenerator recipientGenerator) {
-      return configuration.getNumOwners() == 1 && recipientGenerator.generateRecipients().get(0).equals(rpcManager.getTransport().getAddress());
+      List<Address> recipients;
+      return configuration.getNumOwners() == 1 && (recipients = recipientGenerator.generateRecipients()) != null && recipients.get(0).equals(rpcManager.getTransport().getAddress());
    }
 
    interface KeyGenerator {

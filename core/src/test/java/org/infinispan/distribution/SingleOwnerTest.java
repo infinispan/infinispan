@@ -23,19 +23,19 @@
 package org.infinispan.distribution;
 
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.concurrent.TimeUnit;
-
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.config.Configuration;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
+
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Test single owner distributed cache configurations.
@@ -75,6 +75,13 @@ public class SingleOwnerTest extends BaseDistFunctionalTest {
       assert caches.length == 1;
       Cache ownerCache = caches[0];
       ownerCache.put("mykey", new Object());
+   }
+
+   public void testClearOnKeyOwner() {
+      Cache[] caches = getOwners("mykey", 1);
+      assert caches.length == 1;
+      Cache ownerCache = caches[0];
+      ownerCache.clear();
    }
 
    public void testRetrieveNonSerializableKeyFromNonOwner() {
