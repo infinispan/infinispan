@@ -4,6 +4,7 @@ import org.infinispan.batch.BatchContainer;
 import org.infinispan.container.DataContainer;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -92,6 +93,13 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @return the component registry for this cache instance
     */
    ComponentRegistry getComponentRegistry();
+
+   /**
+    * Retrieves a reference to the {@link org.infinispan.distribution.DistributionManager} if the cache is configured
+    * to use Distribution.  Otherwise, returns a null.
+    * @return a DistributionManager, or null.
+    */
+   DistributionManager getDistributionManager();
 
 
    /**

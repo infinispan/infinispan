@@ -4,6 +4,7 @@ import org.infinispan.batch.BatchContainer;
 import org.infinispan.container.DataContainer;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -58,6 +59,10 @@ public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDele
 
    public ComponentRegistry getComponentRegistry() {
       return cache.getComponentRegistry();
+   }
+
+   public DistributionManager getDistributionManager() {
+      return cache.getDistributionManager();
    }
 
    public RpcManager getRpcManager() {

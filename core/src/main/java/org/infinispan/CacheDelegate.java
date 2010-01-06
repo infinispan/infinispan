@@ -42,6 +42,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
@@ -115,6 +116,7 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V> {
    private StateTransferManager stateTransferManager;
    // as above for ResponseGenerator
    private ResponseGenerator responseGenerator;
+   private DistributionManager distributionManager;
    private long defaultLifespan, defaultMaxIdleTime;
    private ThreadLocal<PreInvocationContext> flagHolder = new ThreadLocal<PreInvocationContext>();
 
@@ -134,6 +136,7 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V> {
                                   BatchContainer batchContainer,
                                   RpcManager rpcManager, DataContainer dataContainer,
                                   Marshaller marshaller, ResponseGenerator responseGenerator,
+                                  DistributionManager distributionManager,
                                   CacheManager cacheManager, StateTransferManager stateTransferManager) {
       this.commandsFactory = commandsFactory;
       this.invoker = interceptorChain;
@@ -150,6 +153,7 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V> {
       this.responseGenerator = responseGenerator;
       this.stateTransferManager = stateTransferManager;
       this.icc = icc;
+      this.distributionManager = distributionManager; 
    }
 
    public final V putIfAbsent(K key, V value) {
@@ -344,6 +348,10 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V> {
 
    public ComponentRegistry getComponentRegistry() {
       return componentRegistry;
+   }
+
+   public DistributionManager getDistributionManager() {
+      return distributionManager;
    }
 
    public ComponentStatus getStatus() {
