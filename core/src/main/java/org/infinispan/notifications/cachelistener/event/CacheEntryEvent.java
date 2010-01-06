@@ -22,9 +22,9 @@
 package org.infinispan.notifications.cachelistener.event;
 
 /**
- * Transactional events that additionally expose a key as such events pertain to a specific cache entry.
+ * A transactional event subtype that additionally expose a key as such events pertain to a specific cache entry.
  *
- * @author <a href="mailto:manik@jboss.org">Manik Surtani</a>
+ * @author Manik Surtani
  * @since 4.0
  */
 public interface CacheEntryEvent extends TransactionalEvent {

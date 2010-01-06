@@ -22,11 +22,21 @@
 package org.infinispan.notifications.cachelistener.event;
 
 /**
- * This event is passed in to any method annotated with {@link org.infinispan.notifications.cachelistener.annotation.CacheEntryModified}
- *
- * @author <a href="mailto:manik@jboss.org">Manik Surtani</a>
+ * This event subtype is passed in to any method annotated with {@link org.infinispan.notifications.cachelistener.annotation.CacheEntryModified}
+ * <p />
+ * The {@link #getValue()} method's behavior is specific to whether the callback is triggered before or after the event
+ * in question.  For example, if <tt>event.isPre()</tt> is <tt>true</tt>, then <tt>event.getValue()</tt> would return the
+ * <i>old</i> value, prior to modification.  If <tt>event.isPre()</tt> is <tt>false</tt>, then <tt>event.getValue()</tt>
+ * would return new <i>new</i> value.  If the event is creating and inserting a new entry, the old value would be <tt>null</tt>.
+ * <p />
+ * @author Manik Surtani
  * @since 4.0
  */
 public interface CacheEntryModifiedEvent extends CacheEntryEvent {
+   /**
+    * Retrieves the value of the entry being modified.
+    * <p />
+    * @return the previous or new value of the entry, depending on whether isPre() is true or false.
+    */
    Object getValue();
 }

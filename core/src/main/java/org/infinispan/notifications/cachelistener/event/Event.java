@@ -26,7 +26,7 @@ import org.infinispan.Cache;
 /**
  * An interface that defines common characteristics of events
  *
- * @author <a href="mailto:manik@jboss.org">Manik Surtani</a>
+ * @author Manik Surtani
  * @since 4.0
  */
 public interface Event {
@@ -42,7 +42,7 @@ public interface Event {
    Type getType();
 
    /**
-    * @return true if the notification is before the event has occured, false if after the event has occured.
+    * @return <tt>true</tt> if the notification is before the event has occurred, <tt>false</tt> if after the event has occurred.
     */
    boolean isPre();
 

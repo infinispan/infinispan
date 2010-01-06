@@ -22,9 +22,9 @@
 package org.infinispan.notifications.cachelistener.event;
 
 /**
- * Notifies a listener of an invalidation event
+ * Notifies a listener of an invalidation event.
  *
- * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
+ * @author Manik Surtani
  * @since 4.0
  */
 public interface CacheEntryInvalidatedEvent extends CacheEntryEvent {

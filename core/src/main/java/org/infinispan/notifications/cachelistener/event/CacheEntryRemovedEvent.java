@@ -22,11 +22,20 @@
 package org.infinispan.notifications.cachelistener.event;
 
 /**
- * This event is passed in to any method annotated with {@link org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved}.
+ * This event subtype is passed in to any method annotated with {@link org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved}.
+ * <p />
+ * The {@link #getValue()} method would return the <i>old</i> value prior to deletion, if <tt>isPre()</tt> is <tt>true</tt>.
+ * If <tt>isPre()</tt> is <tt>false</tt>, {@link #getValue()} will return <tt>null</tt>.
  *
- * @author <a href="mailto:manik@jboss.org">Manik Surtani</a>
+ * @author Manik Surtani
  * @since 4.0
  */
 public interface CacheEntryRemovedEvent extends CacheEntryEvent {
+
+   /**
+    * Retrieves the value of the entry being deleted.
+    * <p />
+    * @return the value of the entry being deleted, if <tt>isPre()</tt> is <tt>true</tt>.  <tt>null</tt> otherwise.
+    */
    Object getValue();
 }

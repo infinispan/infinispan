@@ -24,10 +24,10 @@ package org.infinispan.notifications.cachelistener.event;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
 /**
- * An event type that includes a transaction context - if one exists - as well as a boolean as to whether the call
+ * An event subtype that includes a transaction context - if one exists - as well as a boolean as to whether the call
  * originated locally or remotely.
  *
- * @author <a href="mailto:manik@jboss.org">Manik Surtani</a>
+ * @author Manik Surtani
  * @since 4.0
  */
 public interface TransactionalEvent extends Event {

@@ -22,9 +22,9 @@
 package org.infinispan.notifications.cachelistener.event;
 
 /**
- * This event is passed in to any method annotated with {@link org.infinispan.notifications.cachelistener.annotation.CacheEntryActivated}.
+ * This event subtype is passed in to any method annotated with {@link org.infinispan.notifications.cachelistener.annotation.CacheEntryActivated}.
  *
- * @author <a href="mailto:manik@jboss.org">Manik Surtani</a>
+ * @author Manik Surtani
  * @since 4.0
  */
 public interface CacheEntryActivatedEvent extends CacheEntryEvent {

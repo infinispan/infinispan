@@ -30,7 +30,7 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 /**
  * Basic implementation of an event that covers all event types.
  *
- * @author <a href="mailto:manik@jboss.org">Manik Surtani</a>
+ * @author Manik Surtani
  * @since 4.0
  */
 @NotThreadSafe
