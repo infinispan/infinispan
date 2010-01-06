@@ -49,6 +49,10 @@ import java.util.concurrent.TimeUnit;
  * For convenience, Cache extends {@link ConcurrentMap} and implements all methods accordingly, although methods like
  * {@link ConcurrentMap#keySet()}, {@link ConcurrentMap#values()} and {@link ConcurrentMap#entrySet()} are expensive
  * (prohibitively so when using a distributed cache) and frequent use of these methods is not recommended.
+ * <p /> 
+ * Other methods such as {@link #size()} provide an approximation-only, and should not be relied on for an accurate picture
+ * as to the size of the entire, distributed cache.  Remote nodes are <i>not</i> queried and in-fly transactions are not
+ * taken into account, even if {@link #size()} is invoked from within such a transaction.
  * <p/>
  * Also, like many {@link ConcurrentMap} implementations, Cache does not support the use of <tt>null</tt> keys or
  * values.
