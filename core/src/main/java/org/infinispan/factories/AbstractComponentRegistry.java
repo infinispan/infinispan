@@ -35,6 +35,7 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.Lifecycle;
+import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.util.BeanUtils;
 import org.infinispan.util.ModuleProperties;
 import org.infinispan.util.ReflectionUtil;

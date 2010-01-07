@@ -19,16 +19,30 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.factories;
+package org.infinispan.lifecycle;
+
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.GlobalComponentRegistry;
 
 /**
- * ModuleLifecycle is an internal API hook for delegating lifecycle events to modules.
+ * ModuleLifecycle is an internal API hook for delegating lifecycle events to Infinispan sub-modules.
  * <p>
- * 
  * For example, the 'tree' module needs to register specific types with the Marshaller. The 'query'
  * module needs to register an interceptor with the Cache if the Cache has enabled querying etc etc.
- * 
- * 
+ * <p />
+ * To use this hook, you would need to implement this interface (or extend {@link AbstractModuleLifecycle})
+ * and then create a file called <tt>infinispan-module.properties</tt> in the root of your module's JAR.
+ * When using Maven, for example, <tt>infinispan-module.properties</tt> would typically be in the module's
+ * <tt>src/main/resources</tt> directory so it gets packaged appropriately.
+ * <p />
+ * <u>infinispan-modules.properties</u>
+ * <p />
+ * Currently, the following properties are supported:
+ * <ul>
+ * <li><tt>infinispan.module.name</tt> - the name of the module</li>
+ * <li><tt>infinispan.module.lifecycle</tt> - the name of the class implementing {@link ModuleLifecycle}.  This implementation would typically reside in the module's codebase.</li>
+ * </ul>
+ *
  * @author Manik Surtani
  * @since 4.0
  */

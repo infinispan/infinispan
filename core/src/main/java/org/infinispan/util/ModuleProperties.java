@@ -21,6 +21,11 @@
  */
 package org.infinispan.util;
 
+import org.infinispan.config.ConfigurationException;
+import org.infinispan.lifecycle.ModuleLifecycle;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -29,12 +34,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Map.Entry;
-
-import org.infinispan.config.ConfigurationException;
-import org.infinispan.factories.ModuleLifecycle;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * The <code>ModuleProperties</code> class represents Infinispan's module configuration key value
@@ -111,7 +110,7 @@ public class ModuleProperties extends Properties {
    public static List<ModuleLifecycle> resolveModuleLifecycles() throws Exception {
       List<ModuleLifecycle> lifecycles = new ArrayList<ModuleLifecycle>();
       Map<String, ModuleProperties> p = ModuleProperties.loadModuleProperties();
-      for (Entry<String, ModuleProperties> m : p.entrySet()) {
+      for (Map.Entry<String, ModuleProperties> m : p.entrySet()) {
          try {
             String lifecycleClassName = m.getValue().getLifecycleClassName();
             Class<?> loadClass = Util.loadClass(lifecycleClassName);

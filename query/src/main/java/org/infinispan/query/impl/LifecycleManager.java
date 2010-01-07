@@ -22,48 +22,18 @@
 package org.infinispan.query.impl;
 
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.factories.GlobalComponentRegistry;
-import org.infinispan.factories.ModuleLifecycle;
+import org.infinispan.lifecycle.AbstractModuleLifecycle;
 
-public class LifecycleManager implements ModuleLifecycle {
-
-    @Override
-    public void cacheManagerStarted(GlobalComponentRegistry gcr) {
-        System.out.println("cacheManagerStarted");
-    }
-
-    @Override
-    public void cacheManagerStarting(GlobalComponentRegistry gcr) {
-        System.out.println("cacheManagerStarting");
-    }
-
-    @Override
-    public void cacheManagerStopped(GlobalComponentRegistry gcr) {
-        System.out.println("cacheManagerStopped");
-    }
-
-    @Override
-    public void cacheManagerStopping(GlobalComponentRegistry gcr) {
-        System.out.println("cacheManagerStopping");
-    }
+public class LifecycleManager extends AbstractModuleLifecycle {
 
     @Override
     public void cacheStarted(ComponentRegistry cr, String cacheName) {
-        System.out.println("cacheStarted");
-    }
-
-    @Override
-    public void cacheStarting(ComponentRegistry cr, String cacheName) {
-        System.out.println("cacheStarting");
+       // TODO: at this point, initialise the query interceptor and inject into the cache's interceptor chain?  Essentially the work done in QueryHelper
+       // this can only be completed once we have HSEARCH-397 in place so that the indexable types can be gathered on the fly, rather than a-priori
     }
 
     @Override
     public void cacheStopped(ComponentRegistry cr, String cacheName) {
-        System.out.println("cacheStopped " + cacheName);
-    }
-
-    @Override
-    public void cacheStopping(ComponentRegistry cr, String cacheName) {
-        System.out.println("cacheStopping " + cacheName);
+       // TODO: do we need to "shut down" anything in Hibernate Search?
     }
 }
