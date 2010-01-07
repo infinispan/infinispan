@@ -40,19 +40,9 @@ public class CloudCacheStoreFunctionalIntegrationTest extends BaseCacheStoreFunc
    private String secretKey;
    private String cs;
 
-//   private static final String sysUsername = System.getProperty("infinispan.jclouds.username");
-//   private static final String sysPassword = System.getProperty("infinispan.jclouds.password");
-//   private static final String sysService = System.getProperty("infinispan.jclouds.service");
-
-   private static final String sysUsername = "manik";
-   private static final String sysPassword = "7391796c16e20c7b9e3eddbf997bc972";
-   private static final String sysService = "cloudfiles";
-
-
-//   private static final String sysUsername = "AKIAJOFQDJPJL7K4H2RQ";
-//   private static final String sysPassword = "rfOop3ZKoaUVxUK9zCT7WOXsSL7R2sRtbmJtmHNS";
-//   private static final String sysService = "s3";
-
+   private static final String sysUsername = System.getProperty("infinispan.jclouds.username");
+   private static final String sysPassword = System.getProperty("infinispan.jclouds.password");
+   private static final String sysService = System.getProperty("infinispan.jclouds.service");
 
    @BeforeTest
    @Parameters({"infinispan.jclouds.username", "infinispan.jclouds.password", "infinispan.jclouds.service"})
