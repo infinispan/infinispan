@@ -34,7 +34,7 @@ import static org.testng.Assert.assertEquals;
 public class CloudCacheStoreIntegrationTest extends BaseCacheStoreTest {
 
    private String proxyHost;
-   private int proxyPort = -1;
+   private String proxyPort = "-1";
    private int maxConnections = 20;
    private boolean isSecure = false;
    private String csBucket;

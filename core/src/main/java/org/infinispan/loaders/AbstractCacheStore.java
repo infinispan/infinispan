@@ -38,7 +38,7 @@ public abstract class AbstractCacheStore extends AbstractCacheLoader implements 
    private static final AtomicInteger THREAD_COUNTER = new AtomicInteger(0);
    protected boolean multiThreadedPurge = false;
 
-   public void init(CacheLoaderConfig config, Cache cache, Marshaller m) throws CacheLoaderException{
+   public void init(CacheLoaderConfig config, Cache<?, ?> cache, Marshaller m) throws CacheLoaderException{
       this.config = (AbstractCacheStoreConfig) config;
       this.marshaller = m;
       if (config == null) throw new IllegalStateException("Null config!!!");

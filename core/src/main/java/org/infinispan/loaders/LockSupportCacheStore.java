@@ -34,7 +34,7 @@ public abstract class LockSupportCacheStore extends AbstractCacheStore {
    private long globalLockTimeoutMillis;
    private LockSupportCacheStoreConfig config;
 
-   public void init(CacheLoaderConfig config, Cache cache, Marshaller m) throws CacheLoaderException {
+   public void init(CacheLoaderConfig config, Cache<?, ?> cache, Marshaller m) throws CacheLoaderException {
       super.init(config, cache, m);
       this.config = (LockSupportCacheStoreConfig) config;
    }
