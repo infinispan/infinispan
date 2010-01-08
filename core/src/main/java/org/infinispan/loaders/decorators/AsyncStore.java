@@ -14,10 +14,12 @@ import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.loaders.modifications.PurgeExpired;
 import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
+import org.infinispan.util.concurrent.locks.containers.ReentrantPerEntryLockContainer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -77,6 +79,7 @@ public class AsyncStore extends AbstractDelegatingStore {
    private final Lock write = mapLock.writeLock();
    private int concurrencyLevel;
    @GuardedBy("mapLock") private ConcurrentMap<Object, Modification> state;
+   private ReleaseAllLockContainer lockContainer;
    
    public AsyncStore(CacheStore delegate, AsyncStoreConfig asyncStoreConfig) {
       super(delegate);
@@ -87,6 +90,7 @@ public class AsyncStore extends AbstractDelegatingStore {
    public void init(CacheLoaderConfig config, Cache cache, Marshaller m) throws CacheLoaderException {
       super.init(config, cache, m);
       concurrencyLevel = cache == null || cache.getConfiguration() == null ? 16 : cache.getConfiguration().getConcurrencyLevel();
+      lockContainer = new ReleaseAllLockContainer(concurrencyLevel);
    }
 
    @Override
@@ -167,13 +171,13 @@ public class AsyncStore extends AbstractDelegatingStore {
                super.purgeExpired();
                break;
          }
-      }      
+      }
    }
-   
+
    protected Runnable createAsyncProcessor() {
       return new AsyncProcessor();
    }
-   
+
    private void enqueue(Object key, Modification mod) {
       try {
          if (stopped.get()) {
@@ -248,7 +252,8 @@ public class AsyncStore extends AbstractDelegatingStore {
     */
    class AsyncProcessor implements Runnable {
       private ConcurrentMap<Object, Modification> swap = newStateMap();
-      
+      private final Set<Object> lockedKeys = new HashSet<Object>();
+
       public void run() {
          while (!Thread.interrupted()) {
             try {
@@ -272,23 +277,43 @@ public class AsyncStore extends AbstractDelegatingStore {
       void run0() throws InterruptedException {
          if (trace) log.trace("Checking for modifications");
          boolean unlock = false;
+         
          try {
             acquireLock(write);
             unlock = true;
             swap = state;
             state = newStateMap();
+
+            // This needs doing within the WL section, because if a key is in use, we need to put it back in the state
+            // map for later processing and we don't wanna do it in such way that we override a newer value that might 
+            // have been enqueued by a user thread.
+            for (Object key : swap.keySet()) {
+               boolean acquired = lockContainer.acquireLock(key, 0, TimeUnit.NANOSECONDS);
+               if (trace) log.trace("Lock for key {0} was acquired={1}", key, acquired);
+               if (!acquired) {
+                  Modification prev = swap.remove(key);
+                  state.put(key, prev);
+               } else {
+                  lockedKeys.add(key);
+               }
+            }
          } finally {
             if (unlock) write.unlock();
          }
-         
-         int size = swap.size();
-         if (size == 0) 
-            awaitNotEmpty();
-         else 
-            decrementAndGet(size);
 
-         if (trace) log.trace("Calling put(List) with {0} modifications", size);
-         put(swap);
+         try {
+            int size = swap.size();
+            if (size == 0) 
+               awaitNotEmpty();
+            else 
+               decrementAndGet(size);
+
+            if (trace) log.trace("Apply {0} modifications", size);
+            put(swap);
+         } finally {
+            lockContainer.releaseLocks(lockedKeys);
+            lockedKeys.clear();
+         }
       }
       
       void put(ConcurrentMap<Object, Modification> mods) {
@@ -303,5 +328,18 @@ public class AsyncStore extends AbstractDelegatingStore {
 
    private ConcurrentMap<Object, Modification> newStateMap() {
       return new ConcurrentHashMap<Object, Modification>(64, 0.75f, concurrencyLevel);
+   }
+
+   private static class ReleaseAllLockContainer extends ReentrantPerEntryLockContainer {
+      private ReleaseAllLockContainer(int concurrencyLevel) {
+         super(concurrencyLevel);
+      }
+
+      void releaseLocks(Set<Object> keys) {
+         for (Object key : keys) {
+            if (trace) log.trace("Release lock for key {0}", key);
+            releaseLock(key);
+         }
+      }
    }
 }

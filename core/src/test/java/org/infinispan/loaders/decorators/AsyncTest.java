@@ -4,7 +4,9 @@ import org.infinispan.CacheException;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
+import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.logging.Log;
@@ -13,7 +15,11 @@ import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
+import java.lang.reflect.Method;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Test(groups = "unit", testName = "loaders.decorators.AsyncTest")
 public class AsyncTest extends AbstractInfinispanTest {
@@ -91,7 +97,27 @@ public class AsyncTest extends AbstractInfinispanTest {
       store.start();
       doTestRemove(number, key);
    }
-   
+
+   public void testThreadSafetyWritingDiffValuesForKey(Method m) throws Exception {
+      final String key = "k1";
+      final CountDownLatch v1Latch = new CountDownLatch(1);
+      final CountDownLatch v2Latch = new CountDownLatch(1);
+      final CountDownLatch endLatch = new CountDownLatch(1);
+      DummyInMemoryCacheStore underlying = new DummyInMemoryCacheStore();
+      store = new MockAsyncStore(key, v1Latch, v2Latch, endLatch, underlying, asyncConfig);
+      dummyCfg = new DummyInMemoryCacheStore.Cfg();
+      dummyCfg.setStore(m.getName());
+      store.init(dummyCfg, null, null);
+      store.start();
+      
+      store.store(InternalEntryFactory.create(key, "v1"));
+      v2Latch.await();
+      store.store(InternalEntryFactory.create(key, "v2"));
+      endLatch.await();
+
+      assert store.load(key).getValue().equals("v2");
+   }
+
    private void doTestPut(int number, String key, String value) throws Exception {
       for (int i = 0; i < number; i++) store.store(InternalEntryFactory.create(key + i, value + i));
       
@@ -182,4 +208,40 @@ public class AsyncTest extends AbstractInfinispanTest {
       }
    }
 
+   class MockAsyncStore extends AsyncStore {
+      volatile boolean block = true;
+      final CountDownLatch v1Latch;
+      final CountDownLatch v2Latch;
+      final CountDownLatch endLatch;
+      final Object key;
+
+      MockAsyncStore(Object key, CountDownLatch v1Latch, CountDownLatch v2Latch, CountDownLatch endLatch, 
+               CacheStore delegate, AsyncStoreConfig asyncStoreConfig) {
+         super(delegate, asyncStoreConfig);
+         this.v1Latch = v1Latch;
+         this.v2Latch = v2Latch;
+         this.endLatch = endLatch;
+         this.key = key;
+      }
+
+      @Override
+      protected void applyModificationsSync(ConcurrentMap<Object, Modification> mods) throws CacheLoaderException {
+         if (mods.get(key) != null && block) {
+            if (log.isTraceEnabled()) log.trace("Wait for v1 latch");
+            try {
+               v2Latch.countDown();
+               block = false;
+               v1Latch.await(2, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+            }
+            super.applyModificationsSync(mods);
+         } else if (mods.get(key) != null && !block) {
+            if (log.isTraceEnabled()) log.trace("Do v2 modification and unleash v1 latch");
+            super.applyModificationsSync(mods);
+            v1Latch.countDown();
+            endLatch.countDown();
+         }
+      }
+      
+   };
 }
