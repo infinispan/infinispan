@@ -409,4 +409,9 @@ public class DistributionManagerImpl implements DistributionManager {
       for (Address a : locate(key)) l.add(a.toString());
       return l;
    }
+
+   @Override
+   public String toString() {
+      return "DistributionManagerImpl[rehashInProgress=" + rehashInProgress + ", consistentHash=" + consistentHash + "]";
+   }
 }

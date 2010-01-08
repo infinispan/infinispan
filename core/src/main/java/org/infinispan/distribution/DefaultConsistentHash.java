@@ -179,7 +179,8 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
    @Override
    public String toString() {
       return "DefaultConsistentHash{" +
-            "addresses (in order of hash space position)=" + positions.values() +
+            "addresses =" + positions +
+            ", hash space =" + HASH_SPACE +
             '}';
    }
 }
