@@ -84,7 +84,7 @@ public interface Transport extends Lifecycle {
    Address getAddress();
 
    /**
-    * Retrieves the current cache instance's phyical network addresses. Some implementations might differentiate 
+    * Retrieves the current cache instance's physical network addresses. Some implementations might differentiate 
     * between logical and physical addresses in which case, this method allows clients to query the physical ones 
     * associated with the logical address. Implementations where logical and physical address are the same will simply 
     * return a single entry List that contains the same Address as {@link #getAddress()}.
