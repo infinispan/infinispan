@@ -378,7 +378,8 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
          return Collections.emptyList();
       }
 
-      log.trace("dests={0}, command={1}, mode={2}, timeout={3}", recipients, rpcCommand, mode, timeout);
+      if(log.isTraceEnabled())
+         log.trace("dests={0}, command={1}, mode={2}, timeout={3}", recipients, rpcCommand, mode, timeout);
 
       // Acquire a "processing" lock so that any other code is made aware of a network call in progress
       // make sure this is non-exclusive since concurrent network calls are valid for most situations.
