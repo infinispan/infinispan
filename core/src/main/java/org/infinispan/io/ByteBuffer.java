@@ -76,4 +76,8 @@ public class ByteBuffer {
    public InputStream getStream() {
       return new ByteArrayInputStream(getBuf(), getOffset(), getLength());
    }
+
+   public java.nio.ByteBuffer toJDKByteBuffer() {
+      return java.nio.ByteBuffer.wrap(buf, offset, length);
+   }
 }
