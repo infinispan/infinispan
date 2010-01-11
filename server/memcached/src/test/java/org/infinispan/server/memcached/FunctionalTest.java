@@ -39,6 +39,8 @@ import org.infinispan.server.memcached.test.MemcachedTestingUtil;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
@@ -52,8 +54,9 @@ import static org.infinispan.server.memcached.test.MemcachedTestingUtil.*;
  */
 @Test(groups = "functional", testName = "server.memcached.FunctionalTest")
 public class FunctionalTest extends SingleCacheManagerTest {
+   static final Log log = LogFactory.getLog(FunctionalTest.class);
    MemcachedClient client;
-   MemcachedTextServer server;
+   TextServer server;
 
    @Override
    protected CacheManager createCacheManager() throws Exception {
@@ -66,6 +69,7 @@ public class FunctionalTest extends SingleCacheManagerTest {
 
    @AfterClass(alwaysRun=true)
    protected void destroyAfterClass() {
+      log.debug("Test finished, close memcached server");
       server.stop();
    }
 

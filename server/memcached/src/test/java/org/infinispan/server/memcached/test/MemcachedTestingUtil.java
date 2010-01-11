@@ -29,7 +29,7 @@ import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.Cache;
-import org.infinispan.server.memcached.MemcachedTextServer;
+import org.infinispan.server.memcached.TextServer;
 
 import net.spy.memcached.DefaultConnectionFactory;
 import net.spy.memcached.MemcachedClient;
@@ -41,6 +41,7 @@ import net.spy.memcached.MemcachedClient;
  * @since 4.0
  */
 public class MemcachedTestingUtil {
+   private static final String HOST = "127.0.0.1";
 
    private static final ThreadLocal<Integer> threadMemcachedPort = new ThreadLocal<Integer>() {
       private final AtomicInteger uniqueAddr = new AtomicInteger(11211);
@@ -77,11 +78,11 @@ public class MemcachedTestingUtil {
       return new MemcachedClient(d, Arrays.asList(new InetSocketAddress[]{new InetSocketAddress(port)}));
    }
 
-   public static MemcachedTextServer createMemcachedTextServer(Cache cache) {
-      return new MemcachedTextServer(cache, threadMemcachedPort.get());
+   public static TextServer createMemcachedTextServer(Cache cache) throws IOException {
+      return new TextServer(HOST, threadMemcachedPort.get().intValue(), cache, 0, 0);
    }
 
-   public static MemcachedTextServer createMemcachedTextServer(Cache cache, int port) {
-      return new MemcachedTextServer(cache, port);
+   public static TextServer createMemcachedTextServer(Cache cache, int port) throws IOException {
+      return new TextServer(HOST, port, cache, 0, 0);
    }
 }

@@ -39,6 +39,7 @@ import net.spy.memcached.MemcachedClient;
 import org.infinispan.config.Configuration;
 import org.infinispan.server.memcached.test.MemcachedTestingUtil;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 /**
@@ -51,8 +52,8 @@ import org.testng.annotations.Test;
 public class ClusterTest extends MultipleCacheManagersTest {
    MemcachedClient client1;
    MemcachedClient client2;
-   MemcachedTextServer server1;
-   MemcachedTextServer server2;
+   TextServer server1;
+   TextServer server2;
    
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -64,6 +65,12 @@ public class ClusterTest extends MultipleCacheManagersTest {
       server2.start();
       client1 = createMemcachedClient(60000, server1.getPort());
       client2 = createMemcachedClient(60000, server2.getPort());
+   }
+
+   @AfterClass(alwaysRun=true)
+   protected void destroyAfterClass() {
+      server1.stop();
+      server2.stop();
    }
 
    public void testReplicatedSet(Method m) throws Exception {

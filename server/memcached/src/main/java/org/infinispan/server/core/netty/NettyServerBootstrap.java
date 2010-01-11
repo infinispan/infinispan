@@ -23,11 +23,19 @@
 package org.infinispan.server.core.netty;
 
 import java.net.SocketAddress;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
 
+import org.infinispan.server.core.CommandHandler;
+import org.infinispan.server.core.netty.memcached.NettyMemcachedDecoder;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.jboss.netty.bootstrap.ServerBootstrap;
+import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFactory;
 import org.jboss.netty.channel.ChannelPipelineFactory;
+import org.jboss.netty.channel.group.ChannelGroup;
+import org.jboss.netty.channel.group.ChannelGroupFuture;
+import org.jboss.netty.channel.group.DefaultChannelGroup;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 
 /**
@@ -37,29 +45,46 @@ import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
  * @since 4.0
  */
 public class NettyServerBootstrap implements org.infinispan.server.core.ServerBootstrap {
+   private static final Log log = LogFactory.getLog(NettyServerBootstrap.class);
    final ChannelPipelineFactory pipeline;
    final SocketAddress address;
+   final ChannelFactory factory;
+   final ChannelGroup serverChannels = new DefaultChannelGroup("memcached-channels");
+   final ChannelGroup acceptedChannels = new DefaultChannelGroup("memcached-accepted");
    
-   public NettyServerBootstrap(ChannelPipelineFactory pipeline, SocketAddress address) {
-      this.pipeline = pipeline;
+   public NettyServerBootstrap(CommandHandler commandHandler, NettyMemcachedDecoder decoder, SocketAddress address, 
+            ExecutorService masterExecutor, ExecutorService workerExecutor, int workerThreads) {
+      NettyChannelUpstreamHandler handler = new NettyChannelUpstreamHandler(commandHandler, acceptedChannels);
+      this.pipeline = new NettyChannelPipelineFactory(decoder, handler);
       this.address = address;
+      if (workerThreads == 0) {
+         factory = new NioServerSocketChannelFactory(masterExecutor, workerExecutor);
+      } else {
+         factory = new NioServerSocketChannelFactory(masterExecutor, workerExecutor, workerThreads);
+      }
    }
 
    @Override
    public void start() {
-      ChannelFactory factory = new NioServerSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool());
       ServerBootstrap bootstrap = new ServerBootstrap(factory);
       bootstrap.setPipelineFactory(pipeline);
-      bootstrap.bind(address);
+      Channel ch = bootstrap.bind(address);
+      serverChannels.add(ch);
    }
 
    @Override
    public void stop() {
-      // TODO how to close shutdown the nettty server?
+      serverChannels.close().awaitUninterruptibly();
+      ChannelGroupFuture future = acceptedChannels.close().awaitUninterruptibly();
+      if (!future.isCompleteSuccess()) {
+         log.warn("Channel group did not completely close");
+         for (Channel ch : future.getGroup()) {
+            if (ch.isBound()) {
+               log.warn(ch + " is still connected to " + ch.getRemoteAddress());
+            }
+         }
+      }
+      log.debug("Channel group completely closed, release external resources");
+      factory.releaseExternalResources();
    }
-
-   public static NettyServerBootstrap newNettyServerBootstrap(ChannelPipelineFactory pipeline, SocketAddress address) {
-      return new NettyServerBootstrap(pipeline, address);
-   }
-
 }

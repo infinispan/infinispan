@@ -26,8 +26,10 @@ import org.infinispan.CacheException;
 import org.infinispan.server.core.CommandHandler;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelPipelineCoverage;
+import org.jboss.netty.channel.ChannelStateEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
+import org.jboss.netty.channel.group.ChannelGroup;
 
 /**
  * NettyUpstreamHandler.
@@ -38,11 +40,19 @@ import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 @ChannelPipelineCoverage("one")
 public class NettyChannelUpstreamHandler extends SimpleChannelUpstreamHandler {
    final CommandHandler handler;
+   final ChannelGroup group;
 
-   public NettyChannelUpstreamHandler(CommandHandler handler) {
+   public NettyChannelUpstreamHandler(CommandHandler handler, ChannelGroup group) {
       this.handler = handler;
+      this.group = group;
    }
-   
+
+   @Override
+   public void channelOpen(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+      group.add(e.getChannel());
+      super.channelOpen(ctx, e);
+   }
+
    @Override
    public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
       try {
@@ -53,5 +63,7 @@ public class NettyChannelUpstreamHandler extends SimpleChannelUpstreamHandler {
          throw new CacheException(t);
       }
    }
+
+
 
 }

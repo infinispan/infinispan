@@ -52,7 +52,7 @@ import static org.infinispan.server.memcached.test.MemcachedTestingUtil.*;
 public class StatsTest extends SingleCacheManagerTest {
    static final String JMX_DOMAIN = StatsTest.class.getSimpleName();
    MemcachedClient client;
-   MemcachedTextServer server;
+   TextServer server;
 
    @Override
    protected CacheManager createCacheManager() throws Exception {
