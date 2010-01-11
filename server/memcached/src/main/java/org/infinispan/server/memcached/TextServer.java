@@ -91,26 +91,8 @@ public class TextServer {
       NettyMemcachedDecoder decoder = new NettyMemcachedDecoder(cache, chain, scheduler);
       TextCommandHandler commandHandler = new TextCommandHandler(cache, chain);
 
-      ThreadFactory tf = new MemcachedThreadFactory(cache, ExecutorType.MASTER);
-      if (masterThreads == 0) {
-         log.debug("Configured unlimited threads for master thread pool");
-         masterExecutor = Executors.newCachedThreadPool(tf);
-      } else {
-         log.debug("Configured {0} threads for master thread pool", masterThreads);
-         masterExecutor = Executors.newFixedThreadPool(masterThreads, tf);
-      }
-
-      tf = new MemcachedThreadFactory(cache, ExecutorType.WORKER);
-      if (workerThreads == 0) {
-         log.debug("Configured unlimited threads for worker thread pool");
-         workerExecutor = Executors.newCachedThreadPool(tf);
-      } else {
-         log.debug("Configured {0} threads for worker thread pool", workerThreads);
-         workerExecutor = Executors.newFixedThreadPool(workerThreads, tf);
-      }
-
       bootstrap = new NettyServerBootstrap(commandHandler, decoder, new InetSocketAddress(host, port), 
-               masterExecutor, workerExecutor, workerThreads);
+               masterThreads, workerThreads, cache.getName());
       bootstrap.start();
       log.info("Started Memcached text server bound to {0}:{1}", host, port);
    }
@@ -123,34 +105,4 @@ public class TextServer {
       scheduler.shutdown();
    }
 
-   private static class MemcachedThreadFactory implements ThreadFactory {
-      final Cache cache;
-      final ExecutorType type;
-
-      MemcachedThreadFactory(Cache cache, ExecutorType type) {
-         this.cache = cache;
-         this.type = type;
-      }
-
-      @Override
-      public Thread newThread(Runnable r) {
-         Thread t = new Thread(r, System.getProperty("program.name") + "-" + cache.getName() + '-' + type.toString().toLowerCase() + '-' + type.getAndIncrement());
-         t.setDaemon(true);
-         return t;
-      }
-   }
-
-   private static enum ExecutorType {
-      MASTER(1), WORKER(1);
-
-      final AtomicInteger threadCounter;
-
-      ExecutorType(int startIndex) {
-         this.threadCounter = new AtomicInteger(startIndex);
-      }
-
-      int getAndIncrement() {
-         return threadCounter.getAndIncrement();
-      }
-   }
 }
