@@ -26,7 +26,7 @@
       <module>lucene-directory</module>
       <module>cachestore</module>
       <module>cachestore/bdbje</module>
-      <module>cachestore/cloud</module>
+      <!--<module>cachestore/cloud</module>-->
       <module>cachestore/jdbc</module>
       <module>cachestore/jdbm</module>
       <module>server/rest</module>
@@ -35,6 +35,7 @@
       <module>demos/ec2</module>
       <module>demos/directory</module>
       <module>demos/lucene-directory</module>
+      <module>jgroupsnettytransport</module>
       <module>tools</module>
    </modules>
 
