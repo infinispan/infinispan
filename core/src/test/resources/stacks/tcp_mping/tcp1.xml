@@ -12,7 +12,6 @@
         enable_bundling="false"
         use_send_queues="false"
         sock_conn_timeout="300"
-        skip_suspected_members="true"
 
         thread_pool.enabled="true"
         thread_pool.min_threads="1"
