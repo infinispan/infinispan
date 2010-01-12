@@ -78,7 +78,7 @@ public class AsyncStore extends AbstractDelegatingStore {
    private final Lock read = mapLock.readLock();
    private final Lock write = mapLock.writeLock();
    private int concurrencyLevel;
-   @GuardedBy("mapLock") private ConcurrentMap<Object, Modification> state;
+   @GuardedBy("mapLock") protected ConcurrentMap<Object, Modification> state;
    private ReleaseAllLockContainer lockContainer;
    
    public AsyncStore(CacheStore delegate, AsyncStoreConfig asyncStoreConfig) {
@@ -87,7 +87,7 @@ public class AsyncStore extends AbstractDelegatingStore {
    }
 
    @Override
-   public void init(CacheLoaderConfig config, Cache cache, Marshaller m) throws CacheLoaderException {
+   public void init(CacheLoaderConfig config, Cache<?, ?> cache, Marshaller m) throws CacheLoaderException {
       super.init(config, cache, m);
       concurrencyLevel = cache == null || cache.getConfiguration() == null ? 16 : cache.getConfiguration().getConcurrencyLevel();
       lockContainer = new ReleaseAllLockContainer(concurrencyLevel);
@@ -309,19 +309,30 @@ public class AsyncStore extends AbstractDelegatingStore {
                decrementAndGet(size);
 
             if (trace) log.trace("Apply {0} modifications", size);
-            put(swap);
+            int maxRetries = 3;
+            int attemptNumber = 0;
+            boolean successful;
+            do {
+               if (attemptNumber > 0 && log.isDebugEnabled()) log.debug("Retrying due to previous failure. {0} attempts left.", maxRetries - attemptNumber);
+               successful = put(swap);
+               attemptNumber++;
+            } while (!successful && attemptNumber <= maxRetries);
+
+            if (!successful) log.warn("Unable to process some async modifications after " + maxRetries + " retries!");
+
          } finally {
             lockContainer.releaseLocks(lockedKeys);
             lockedKeys.clear();
          }
       }
       
-      void put(ConcurrentMap<Object, Modification> mods) {
+      boolean put(ConcurrentMap<Object, Modification> mods) {
          try {
             AsyncStore.this.applyModificationsSync(mods);
+            return true;
          } catch (Exception e) {
-            if (log.isWarnEnabled()) log.warn("Failed to process async modifications", e);
-            if (log.isDebugEnabled()) log.debug("Exception: ", e);
+            if (log.isDebugEnabled()) log.debug("Failed to process async modifications", e);
+            return false;
          }
       }
    }

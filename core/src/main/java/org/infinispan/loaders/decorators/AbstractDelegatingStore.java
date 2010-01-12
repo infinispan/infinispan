@@ -78,7 +78,7 @@ public class AbstractDelegatingStore implements CacheStore {
       delegate.prepare(list, tx, isOnePhase);
    }
 
-   public void init(CacheLoaderConfig config, Cache cache, Marshaller m) throws CacheLoaderException {
+   public void init(CacheLoaderConfig config, Cache<?, ?> cache, Marshaller m) throws CacheLoaderException {
       delegate.init(config, cache, m);
    }
 
