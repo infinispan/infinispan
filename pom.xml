@@ -35,7 +35,6 @@
       <module>demos/ec2</module>
       <module>demos/directory</module>
       <module>demos/lucene-directory</module>
-      <module>jgroupsnettytransport</module>
       <module>tools</module>
    </modules>
 
