@@ -264,10 +264,13 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    public List<Address> requestPermissionToJoin(Address joiner) {
-      if (JOINER_CAS.compareAndSet(this, null, joiner))
+      if (JOINER_CAS.compareAndSet(this, null, joiner)) {
+         if (trace) log.trace("Allowing {0} to join", joiner);
          return new LinkedList<Address>(consistentHash.getCaches());
-      else
+      } else {
+         if (trace) log.trace("Not allowing {0} to join since there is a join already in progress {1}", joiner, this.joiner);
          return null;
+      }
    }
 
    public void notifyJoinComplete(Address joiner) {

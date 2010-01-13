@@ -145,7 +145,7 @@ public class JoinTask extends RehashTask {
          }
 
          if (log.isInfoEnabled())
-            log.info("Completed in {0}!", Util.prettyPrintTime(System.currentTimeMillis() - start));
+            log.info("{0} completed join in {1}!", self, Util.prettyPrintTime(System.currentTimeMillis() - start));
       } catch (Exception e) {
          log.error("Caught exception!", e);
          throw new CacheException("Unexpected exception", e);
