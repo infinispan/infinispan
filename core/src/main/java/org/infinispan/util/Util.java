@@ -235,4 +235,18 @@ public final class Util {
 
       }
    }
+
+   public static String formatString(Object message, Object... params) {
+      if (params.length == 0) return message == null ? "null" : message.toString();
+
+      StringBuilder value = new StringBuilder(String.valueOf(message));
+      for (int i = 0; i < params.length; i++) {
+         String placeholder = "{" + i + "}";
+         int phIndex;
+         if ((phIndex = value.indexOf(placeholder)) > -1) {
+            value = value.replace(phIndex, phIndex + placeholder.length(), String.valueOf(params[i]));
+         }
+      }
+      return value.toString();
+   }    
 }
