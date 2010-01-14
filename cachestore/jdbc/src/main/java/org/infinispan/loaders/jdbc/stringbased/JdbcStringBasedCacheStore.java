@@ -49,13 +49,18 @@ import java.util.Set;
 /**
  * {@link org.infinispan.loaders.CacheStore} implementation that stores the entries in a database. In contrast to the
  * {@link org.infinispan.loaders.jdbc.binary.JdbcBinaryCacheStore}, this cache store will store each entry within a row
- * in the table (rather than grouping multiple entries into an row). This assures a finer graned granularity for all
+ * in the table (rather than grouping multiple entries into an row). This assures a finer grained granularity for all
  * operation, and better performance. In order to be able to store non-string keys, it relies on an {@link
  * Key2StringMapper}.
  * <p/>
  * The actual storage table is defined through configuration {@link JdbcStringBasedCacheStore}. The table can be
  * created/dropped on-the-fly, at deployment time. For more details consult javadoc for {@link
  * JdbcStringBasedCacheStore}.
+ * <p/>
+ * It is recommeneded to use {@link org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore}} over
+ * {@link org.infinispan.loaders.jdbc.binary.JdbcBinaryCacheStore}} whenever it is possible, as is has a better performance.
+ * One scenario in which this is not possible to use it though, is when you can't write an {@link Key2StringMapper}} to map the
+ * keys to to string objects (e.g. when you don't have control over the types of the keys, for whatever reason).
  *
  * @author Mircea.Markus@jboss.com
  * @see Key2StringMapper

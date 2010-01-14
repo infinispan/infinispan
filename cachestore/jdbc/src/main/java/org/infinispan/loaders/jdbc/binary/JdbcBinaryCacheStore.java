@@ -53,6 +53,10 @@ import java.util.Set;
  * {@link BucketBasedCacheStore} implementation that will store all the buckets as rows in database, each row
  * corresponding to a bucket. This is in contrast to {@link org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore}
  * which stores each StoredEntry as a row in the database.
+ * </p>
+ * It is generally recommended to use {@link org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore} whenever
+ * possible as it performs better. Please read {@link org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore}'s
+ * javadoc for more details on this.
  * <p/>
  * This class has the benefit of being able to store StoredEntries that do not have String keys, at the cost of coarser
  * grained access granularity, and inherently performance.
