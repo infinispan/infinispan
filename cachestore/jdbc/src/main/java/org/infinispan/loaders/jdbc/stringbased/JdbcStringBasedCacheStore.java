@@ -57,7 +57,7 @@ import java.util.Set;
  * created/dropped on-the-fly, at deployment time. For more details consult javadoc for {@link
  * JdbcStringBasedCacheStore}.
  * <p/>
- * It is recommeneded to use {@link org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore}} over
+ * It is recommended to use {@link org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore}} over
  * {@link org.infinispan.loaders.jdbc.binary.JdbcBinaryCacheStore}} whenever it is possible, as is has a better performance.
  * One scenario in which this is not possible to use it though, is when you can't write an {@link Key2StringMapper}} to map the
  * keys to to string objects (e.g. when you don't have control over the types of the keys, for whatever reason).
