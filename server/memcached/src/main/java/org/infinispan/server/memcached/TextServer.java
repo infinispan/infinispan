@@ -27,7 +27,6 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.Cache;
@@ -98,9 +97,9 @@ public class TextServer {
    }
 
    public void stop() {
-      masterExecutor.shutdown();
-      workerExecutor.shutdown();
-      bootstrap.stop();
+      if (bootstrap != null) {
+         bootstrap.stop();
+      }
       cache.stop();
       scheduler.shutdown();
    }

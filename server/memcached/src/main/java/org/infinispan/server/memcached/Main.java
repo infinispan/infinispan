@@ -24,6 +24,7 @@ package org.infinispan.server.memcached;
 
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -37,6 +38,8 @@ import gnu.getopt.Getopt;
 import gnu.getopt.LongOpt;
 
 import org.infinispan.Version;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Main.
@@ -46,6 +49,7 @@ import org.infinispan.Version;
  */
 public class Main {
 
+   private static final Log log = LogFactory.getLog(Main.class);
    public static final String PROP_KEY_PORT = "infinispan.memcached.port";
    public static final String PROP_KEY_HOST = "infinispan.memcached.host";
    public static final String PROP_KEY_MASTER_THREADS = "infinispan.memcached.master.threads";
@@ -189,6 +193,7 @@ public class Main {
    }
 
    public static void main(final String[] args) throws Exception {
+      log.info("Start main with args: {0}", Arrays.toString(args));
       Callable<Void> worker = new Callable<Void>() {
          @Override
          public Void call() throws Exception {
@@ -204,14 +209,14 @@ public class Main {
          }
       };
 
-      Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
+      Future<Void> f = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
          @Override
          public Thread newThread(Runnable r) {
-            Thread t = new Thread(r, System.getProperty("program.name") + "-main");
-            t.setDaemon(true);
-            return t;
+            return new Thread(r, System.getProperty("program.name") + "-main");
          }
       }).submit(worker);
+
+      f.get();
    }
 
    /**
