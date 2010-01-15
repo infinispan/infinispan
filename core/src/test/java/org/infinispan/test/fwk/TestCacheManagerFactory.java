@@ -169,7 +169,15 @@ public class TestCacheManagerFactory {
       return createCacheManager(configuration, defaultCfg, false, false);
    }
 
-   public static CacheManager createCacheManager(GlobalConfiguration configuration, Configuration defaultCfg, boolean transactional, boolean keepJmxDomainName) {
+   public static CacheManager createCacheManager(GlobalConfiguration configuration, Configuration defaultCfg, boolean transactional) {
+      minimizeThreads(configuration);
+      amendMarshaller(configuration);
+      amendTransport(configuration);
+      if (transactional) amendJTA(defaultCfg);
+      return newDefaultCacheManager(configuration, defaultCfg, false);
+   }
+
+   private static CacheManager createCacheManager(GlobalConfiguration configuration, Configuration defaultCfg, boolean transactional, boolean keepJmxDomainName) {
       minimizeThreads(configuration);
       amendMarshaller(configuration);
       amendTransport(configuration);

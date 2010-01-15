@@ -138,7 +138,7 @@ public abstract class CacheTestSupport {
       cfg.setExposeJmxStatistics(false);
       cfg.setL1CacheEnabled(false);
       cfg.setWriteSkewCheck(false);
-      return TestCacheManagerFactory.createCacheManager(globalConfiguration, cfg, true, false);
+      return TestCacheManagerFactory.createCacheManager(globalConfiguration, cfg, true);
    }
    
    public static void initializeDirectory(Directory directory) throws IOException {
