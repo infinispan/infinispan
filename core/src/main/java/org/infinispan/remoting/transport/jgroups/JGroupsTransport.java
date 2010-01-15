@@ -400,7 +400,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
       try {
          RspList rsps = dispatcher.invokeRemoteCommands(toJGroupsAddressVector(recipients), rpcCommand, toJGroupsMode(mode),
                                                         timeout, recipients != null, usePriorityQueue,
-                                                        toJGroupsFilter(responseFilter), supportReplay, asyncMarshalling);
+                                                        toJGroupsFilter(responseFilter), supportReplay, asyncMarshalling, recipients == null || recipients.size() == members.size());
 
          if (mode.isAsynchronous()) return Collections.emptyList();// async case
 
@@ -579,6 +579,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
    private Vector<org.jgroups.Address> toJGroupsAddressVector(Collection<Address> list) {
       if (list == null) return null;
       if (list.isEmpty()) return new Vector<org.jgroups.Address>();
+
       // optimize for the single node case
       Vector<org.jgroups.Address> retval = new Vector<org.jgroups.Address>(list.size());
       for (Address a : list) retval.add(toJGroupsAddress(a));
