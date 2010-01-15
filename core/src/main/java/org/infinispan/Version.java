@@ -45,6 +45,13 @@ public class Version {
     * Prints version information.
     */
    public static void main(String[] args) {
+      printFullVersionInformation();
+   }
+
+   /**
+    * Prints full version information to the standard output.
+    */
+   public static void printFullVersionInformation() {
       System.out.println(projectName);
       System.out.println();
       System.out.println("\nVersion: \t" + version);
