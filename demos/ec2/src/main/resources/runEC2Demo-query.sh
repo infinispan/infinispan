@@ -15,6 +15,12 @@ for i in `find ${ISPN_HOME}/modules -name "*.jar"` ; do
   CP=${CP}:${i}
 done
 
+for i in `find ${ISPN_HOME}/lib -name "*.jar"` ; do
+  CP=${CP}:${i}
+done
+
+CP=${ISPN_HOME}/infinispan-core.jar:$CP
+
 JVM_PARAMS="${JVM_PARAMS} -Djava.net.preferIPv4Stack=true -Dlog4j.configuration=file:${ISPN_HOME}/etc/log4j.xml"
 JVM_PARAMS="${JVM_PARAMS} -DEC2Demo-jgroups-config=${ISPN_HOME}/etc/config-samples/ec2-demo/jgroups-s3_ping-aws.xml"
 

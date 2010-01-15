@@ -11,11 +11,9 @@ export ISPN_HOME
 
 CP=${CP}:${ISPN_HOME}/etc
 
-for i in ${ISPN_HOME}/modules/core/*.jar ; do
-   CP=${i}:${CP}
-done
+CP=${CP}:${ISPN_HOME}/infinispan-core.jar
 
-for i in ${ISPN_HOME}/modules/core/lib/*.jar ; do
+for i in ${ISPN_HOME}/lib/*.jar ; do
    CP=${i}:${CP}
 done
 

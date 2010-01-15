@@ -9,12 +9,12 @@ if [ "x$ISPN_HOME" = "x" ]; then
 fi
 export ISPN_HOME
 
-if [ -e ${ISPN_HOME}/modules/core/lib ]
+if [ -e ${ISPN_HOME}/lib ]
 then
-   for JAR in ${ISPN_HOME}/modules/core/lib/*
+   for JAR in ${ISPN_HOME}/lib/*
    do
       CLASSPATH=$CLASSPATH:$JAR
    done
 fi
-CLASSPATH=${ISPN_HOME}/modules/core/infinispan-core.jar:$CLASSPATH
+CLASSPATH=${ISPN_HOME}/infinispan-core.jar:$CLASSPATH
 java -classpath $CLASSPATH org.infinispan.config.parsing.ConfigFilesConvertor ${*}
