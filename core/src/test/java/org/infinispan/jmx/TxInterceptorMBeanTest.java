@@ -29,9 +29,9 @@ public class TxInterceptorMBeanTest extends MultipleCacheManagersTest {
       globalConfiguration.setAllowDuplicateDomains(true);
       globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
       globalConfiguration.setJmxDomain("TxInterceptorMBeanTest");
-      CacheManager cacheManager1 = TestCacheManagerFactory.createCacheManager(globalConfiguration);
+      CacheManager cacheManager1 = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(globalConfiguration);
       registerCacheManager(cacheManager1);
-      CacheManager cacheManager2 = TestCacheManagerFactory.createCacheManager(globalConfiguration.clone());
+      CacheManager cacheManager2 = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(globalConfiguration.clone());
       registerCacheManager(cacheManager2);
 
       Configuration configuration = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);

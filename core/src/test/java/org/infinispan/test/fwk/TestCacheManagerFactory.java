@@ -16,20 +16,29 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * CacheManagers in unit tests should be created with this factory, in order to avoit resource clashes.
+ * CacheManagers in unit tests should be created with this factory, in order to avoid resource clashes.
+ * See http://community.jboss.org/wiki/ParallelTestSuite for more details.
  *
  * @author Mircea.Markus@jboss.com
  * @author Galder Zamarreño
  */
 public class TestCacheManagerFactory {
 
+
+   private static AtomicInteger jmxDomainPostfix = new AtomicInteger();
+
    public static final String MARSHALLER = System.getProperties().getProperty("infinispan.marshaller.class");
    private static Log log = LogFactory.getLog(TestCacheManagerFactory.class);
 
-   private static DefaultCacheManager newDefaultCacheManager(GlobalConfiguration gc, Configuration c) {
-      return new DefaultCacheManager(gc, c);
+   private static DefaultCacheManager newDefaultCacheManager(GlobalConfiguration gc, Configuration c, boolean keepJmxDomain) {
+      if (!keepJmxDomain) {
+         gc.setJmxDomain("infinispan" + jmxDomainPostfix.incrementAndGet());
+      }
+      DefaultCacheManager defaultCacheManager = new DefaultCacheManager(gc, c);
+      return defaultCacheManager;
    }
 
    public static CacheManager fromXml(String xmlFile) throws IOException {
@@ -67,12 +76,6 @@ public class TestCacheManagerFactory {
       return createLocalCacheManager(false);
    }
 
-   private static void minimizeThreads(GlobalConfiguration gc) {
-      Properties p = new Properties();
-      p.setProperty("maxThreads", "1");
-      gc.setAsyncTransportExecutorProperties(p);
-   }
-
    /**
     * Creates an cache manager that does not support clustering.
     *
@@ -84,7 +87,7 @@ public class TestCacheManagerFactory {
       minimizeThreads(globalConfiguration);
       Configuration c = new Configuration();
       if (transactional) amendJTA(c);
-      return newDefaultCacheManager(globalConfiguration, c);
+      return newDefaultCacheManager(globalConfiguration, c, false);
    }
 
    private static void amendJTA(Configuration c) {
@@ -101,7 +104,7 @@ public class TestCacheManagerFactory {
       Properties newTransportProps = new Properties();
       newTransportProps.put(JGroupsTransport.CONFIGURATION_STRING, JGroupsConfigBuilder.getJGroupsConfig());
       globalConfiguration.setTransportProperties(newTransportProps);
-      return newDefaultCacheManager(globalConfiguration, new Configuration());
+      return newDefaultCacheManager(globalConfiguration, new Configuration(), false);
    }
 
    /**
@@ -114,7 +117,7 @@ public class TestCacheManagerFactory {
       Properties newTransportProps = new Properties();
       newTransportProps.put(JGroupsTransport.CONFIGURATION_STRING, JGroupsConfigBuilder.getJGroupsConfig());
       globalConfiguration.setTransportProperties(newTransportProps);
-      return newDefaultCacheManager(globalConfiguration, defaultCacheConfig);
+      return newDefaultCacheManager(globalConfiguration, defaultCacheConfig, false);
    }
 
    /**
@@ -122,10 +125,23 @@ public class TestCacheManagerFactory {
     * during running tests in parallel.
     */
    public static CacheManager createCacheManager(GlobalConfiguration configuration) {
+      return internalCreateJmxDomain(configuration, false);
+   }
+
+   /**
+    * Creates a cache manager that won't try to modify the configured jmx domain name: {@link org.infinispan.config.GlobalConfiguration#getJmxDomain()}}.
+    * This method must be used with care, and one should make sure that no domain name collision happens when the parallel suite executes.
+    * An approach to ensure this, is to set the domain name to the name of the test class that instantiates the CacheManager.
+    */
+   public static CacheManager createCacheManagerEnforceJmxDomain(GlobalConfiguration configuration) {
+      return internalCreateJmxDomain(configuration, true);
+   }
+
+   private static CacheManager internalCreateJmxDomain(GlobalConfiguration configuration, boolean enforceJmxDomain) {
       amendMarshaller(configuration);
       minimizeThreads(configuration);
       amendTransport(configuration);
-      return newDefaultCacheManager(configuration, new Configuration());
+      return newDefaultCacheManager(configuration, new Configuration(), enforceJmxDomain);
    }
 
    /**
@@ -146,33 +162,45 @@ public class TestCacheManagerFactory {
       amendMarshaller(globalConfiguration);
       minimizeThreads(globalConfiguration);
       if (transactional) amendJTA(defaultCacheConfig);
-      return newDefaultCacheManager(globalConfiguration, defaultCacheConfig);
+      return newDefaultCacheManager(globalConfiguration, defaultCacheConfig, false);
    }
 
    public static CacheManager createCacheManager(GlobalConfiguration configuration, Configuration defaultCfg) {
-      return createCacheManager(configuration, defaultCfg, false);
+      return createCacheManager(configuration, defaultCfg, false, false);
    }
 
-   public static CacheManager createCacheManager(GlobalConfiguration configuration, Configuration defaultCfg, boolean transactional) {
+   public static CacheManager createCacheManager(GlobalConfiguration configuration, Configuration defaultCfg, boolean transactional, boolean keepJmxDomainName) {
       minimizeThreads(configuration);
       amendMarshaller(configuration);
       amendTransport(configuration);
       if (transactional) amendJTA(defaultCfg);
-      return newDefaultCacheManager(configuration, defaultCfg);
+      return newDefaultCacheManager(configuration, defaultCfg, keepJmxDomainName);
    }
 
-   public static CacheManager createJmxEnabledCacheManager(String jmxDomain) {
-      return createJmxEnabledCacheManager(jmxDomain, true, true);
+   /**
+    * @see #createCacheManagerEnforceJmxDomain(String)
+    */
+   public static CacheManager createCacheManagerEnforceJmxDomain(String jmxDomain) {
+      return createCacheManagerEnforceJmxDomain(jmxDomain, true, true);
    }
 
-   public static CacheManager createJmxEnabledCacheManager(String jmxDomain, boolean exposeGlobalJmx, boolean exposeCacheJmx) {
+   /**
+    * @see #createCacheManagerEnforceJmxDomain(String)
+    */
+   public static CacheManager createCacheManagerEnforceJmxDomain(String jmxDomain, boolean exposeGlobalJmx, boolean exposeCacheJmx) {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
       globalConfiguration.setJmxDomain(jmxDomain);
       globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
       globalConfiguration.setExposeGlobalJmxStatistics(exposeGlobalJmx);
       Configuration configuration = new Configuration();
       configuration.setExposeJmxStatistics(exposeCacheJmx);
-      return createCacheManager(globalConfiguration, configuration);
+      return createCacheManager(globalConfiguration, configuration, false, true);
+   }
+
+   public static Configuration getDefaultConfiguration(boolean transactional) {
+      Configuration c = new Configuration();
+      if (transactional) amendJTA(c);
+      return c;
    }
 
    private static void amendTransport(GlobalConfiguration configuration) {
@@ -187,6 +215,12 @@ public class TestCacheManagerFactory {
       }
    }
 
+   private static void minimizeThreads(GlobalConfiguration gc) {
+      Properties p = new Properties();
+      p.setProperty("maxThreads", "1");
+      gc.setAsyncTransportExecutorProperties(p);
+   }
+
    private static void amendMarshaller(GlobalConfiguration configuration) {
       if (MARSHALLER != null) {
          try {
@@ -196,11 +230,5 @@ public class TestCacheManagerFactory {
             // No-op, stick to GlobalConfiguration default.
          }
       }
-   }
-
-   public static Configuration getDefaultConfiguration(boolean transactional) {
-      Configuration c = new Configuration();
-      if (transactional) amendJTA(c);
-      return c;
    }
 }

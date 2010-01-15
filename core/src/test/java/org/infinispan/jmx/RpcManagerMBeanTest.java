@@ -49,7 +49,7 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
       globalConfiguration.setAllowDuplicateDomains(true);
       globalConfiguration.setJmxDomain(JMX_DOMAIN);
       globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
-      CacheManager cacheManager1 = TestCacheManagerFactory.createCacheManager(globalConfiguration);
+      CacheManager cacheManager1 = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(globalConfiguration);
       cacheManager1.start();
 
       GlobalConfiguration globalConfiguration2 = GlobalConfiguration.getClusteredDefault();
@@ -57,7 +57,7 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
       globalConfiguration2.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
       globalConfiguration2.setJmxDomain(JMX_DOMAIN);
       globalConfiguration2.setAllowDuplicateDomains(true);
-      CacheManager cacheManager2 = TestCacheManagerFactory.createCacheManager(globalConfiguration2);
+      CacheManager cacheManager2 = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(globalConfiguration2);
       cacheManager2.start();
 
       registerCacheManager(cacheManager1, cacheManager2);

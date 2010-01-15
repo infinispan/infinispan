@@ -24,20 +24,21 @@ public class CacheMgmtInterceptorMBeanTest extends SingleCacheManagerTest {
    private ObjectName mgmtInterceptor;
    private MBeanServer threadMBeanServer;
    AdvancedCache advanced;
+   private static final String JMX_DOMAIN = CacheMgmtInterceptorMBeanTest.class.getName();
 
    protected CacheManager createCacheManager() throws Exception {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
       globalConfiguration.setExposeGlobalJmxStatistics(true);
       globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
-      globalConfiguration.setJmxDomain("CacheMgmtInterceptorMBeanTest");
-      cacheManager = TestCacheManagerFactory.createCacheManager(globalConfiguration);
+      globalConfiguration.setJmxDomain(JMX_DOMAIN);
+      cacheManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(globalConfiguration);
 
       Configuration configuration = getDefaultClusteredConfig(Configuration.CacheMode.LOCAL);
       configuration.setExposeJmxStatistics(true);
       cacheManager.defineConfiguration("test", configuration);
       cache = cacheManager.getCache("test");
       advanced = cache.getAdvancedCache();
-      mgmtInterceptor = new ObjectName("CacheMgmtInterceptorMBeanTest:cache-name=test(local),jmx-resource=Statistics");
+      mgmtInterceptor = new ObjectName(JMX_DOMAIN + ":cache-name=test(local),jmx-resource=Statistics");
 
       threadMBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
       return cacheManager;

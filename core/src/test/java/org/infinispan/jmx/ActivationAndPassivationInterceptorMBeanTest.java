@@ -33,13 +33,14 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
    ObjectName activationInterceptorObjName;
    ObjectName passivationInterceptorObjName;
    CacheStore cacheStore;
+   private static final String JMX_DOMAIN = ActivationAndPassivationInterceptorMBeanTest.class.getName();
 
    protected CacheManager createCacheManager() throws Exception {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
       globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
-      globalConfiguration.setJmxDomain("ActivationAndPassivationInterceptorMBeanTest");
+      globalConfiguration.setJmxDomain(JMX_DOMAIN);
       globalConfiguration.setExposeGlobalJmxStatistics(true);
-      cacheManager = TestCacheManagerFactory.createCacheManager(globalConfiguration);
+      cacheManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(globalConfiguration);
       DummyInMemoryCacheStore.Cfg cfg = new DummyInMemoryCacheStore.Cfg();
       CacheLoaderManagerConfig clManagerConfig = new CacheLoaderManagerConfig();
       clManagerConfig.setPassivation(true);
@@ -50,8 +51,8 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
 
       cacheManager.defineConfiguration("test", configuration);
       cache = cacheManager.getCache("test");
-      activationInterceptorObjName = new ObjectName("ActivationAndPassivationInterceptorMBeanTest:cache-name=test(local),jmx-resource=Activation");
-      passivationInterceptorObjName = new ObjectName("ActivationAndPassivationInterceptorMBeanTest:cache-name=test(local),jmx-resource=Passivation");
+      activationInterceptorObjName = new ObjectName(JMX_DOMAIN + ":cache-name=test(local),jmx-resource=Activation");
+      passivationInterceptorObjName = new ObjectName(JMX_DOMAIN + ":cache-name=test(local),jmx-resource=Passivation");
 
       threadMBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
       cacheStore = TestingUtil.extractComponent(cache, CacheLoaderManager.class).getCacheStore();

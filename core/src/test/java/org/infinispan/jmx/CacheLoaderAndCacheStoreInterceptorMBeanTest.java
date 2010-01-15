@@ -28,13 +28,14 @@ public class CacheLoaderAndCacheStoreInterceptorMBeanTest extends SingleCacheMan
    private ObjectName storeInterceptorObjName;
    private MBeanServer threadMBeanServer;
    private CacheStore cacheStore;
+   private static final String JMX_DOMAIN = CacheLoaderAndCacheStoreInterceptorMBeanTest.class.getName();
 
    protected CacheManager createCacheManager() throws Exception {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
       globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
-      globalConfiguration.setJmxDomain("CacheLoaderAndCacheStoreInterceptorMBeanTest");
+      globalConfiguration.setJmxDomain(JMX_DOMAIN);
       globalConfiguration.setExposeGlobalJmxStatistics(true);
-      cacheManager = TestCacheManagerFactory.createCacheManager(globalConfiguration);
+      cacheManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(globalConfiguration);
 
       DummyInMemoryCacheStore.Cfg cfg = new DummyInMemoryCacheStore.Cfg();
 
@@ -47,8 +48,8 @@ public class CacheLoaderAndCacheStoreInterceptorMBeanTest extends SingleCacheMan
 
       cacheManager.defineConfiguration("test", configuration);
       cache = cacheManager.getCache("test");
-      loaderInterceptorObjName = new ObjectName("CacheLoaderAndCacheStoreInterceptorMBeanTest:cache-name=test(local),jmx-resource=CacheLoader");
-      storeInterceptorObjName = new ObjectName("CacheLoaderAndCacheStoreInterceptorMBeanTest:cache-name=test(local),jmx-resource=CacheStore");
+      loaderInterceptorObjName = new ObjectName(JMX_DOMAIN + ":cache-name=test(local),jmx-resource=CacheLoader");
+      storeInterceptorObjName = new ObjectName(JMX_DOMAIN + ":cache-name=test(local),jmx-resource=CacheStore");
 
       threadMBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
       cacheStore = TestingUtil.extractComponent(cache, CacheLoaderManager.class).getCacheStore();

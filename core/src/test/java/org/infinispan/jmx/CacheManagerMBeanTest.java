@@ -29,7 +29,7 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
    private ObjectName name;
 
    protected CacheManager createCacheManager() throws Exception {
-      cacheManager = TestCacheManagerFactory.createJmxEnabledCacheManager(JMX_DOMAIN, true, false);
+      cacheManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(JMX_DOMAIN, true, false);
       name = new ObjectName(JMX_DOMAIN + ":cache-name=[global],jmx-resource=CacheManager");
       server = PerThreadMBeanServerLookup.getThreadMBeanServer();
       server.invoke(name, "startCache", new Object[]{}, new String[]{});
@@ -78,7 +78,7 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
    
    public void testJmxRegistrationAtStartupAndStop(Method method) throws Exception {
       final String otherJmxDomain = JMX_DOMAIN + '.' + method.getName();
-      CacheManager otherManager = TestCacheManagerFactory.createJmxEnabledCacheManager(otherJmxDomain, true, false);
+      CacheManager otherManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(otherJmxDomain, true, false);
       ObjectName otherName = new ObjectName(otherJmxDomain + ":cache-name=[global],jmx-resource=CacheManager");
       try {
          assert server.getAttribute(otherName, "CreatedCacheCount").equals("0");

@@ -23,13 +23,14 @@ public class MvccLockManagerMBeanTest extends SingleCacheManagerTest {
 
    private ObjectName lockManagerObjName;
    private MBeanServer threadMBeanServer;
+   private static final String JMX_DOMAIN = "MvccLockManagerMBeanTest";
 
    protected CacheManager createCacheManager() throws Exception {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
       globalConfiguration.setExposeGlobalJmxStatistics(true);
       globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
-      globalConfiguration.setJmxDomain("MvccLockManagerMBeanTest");
-      cacheManager = TestCacheManagerFactory.createCacheManager(globalConfiguration);
+      globalConfiguration.setJmxDomain(JMX_DOMAIN);
+      cacheManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(globalConfiguration);
 
       Configuration configuration = getDefaultStandaloneConfig(true);
       configuration.setExposeJmxStatistics(true);
@@ -37,7 +38,7 @@ public class MvccLockManagerMBeanTest extends SingleCacheManagerTest {
 
       cacheManager.defineConfiguration("test", configuration);
       cache = cacheManager.getCache("test");
-      lockManagerObjName = new ObjectName("MvccLockManagerMBeanTest:cache-name=test(local),jmx-resource=LockManager");
+      lockManagerObjName = new ObjectName(JMX_DOMAIN + ":cache-name=test(local),jmx-resource=LockManager");
 
       threadMBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
       return cacheManager;
