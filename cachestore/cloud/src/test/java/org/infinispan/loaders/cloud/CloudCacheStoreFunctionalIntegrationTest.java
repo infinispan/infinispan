@@ -58,7 +58,8 @@ public class CloudCacheStoreFunctionalIntegrationTest extends BaseCacheStoreFunc
          accessKey = "dummy";
          secretKey = "dummy";
       }
-      csBucket = (System.getProperty("user.name") + "." + this.getClass().getSimpleName()).toLowerCase();
+      csBucket = (System.getProperty("user.name") + "." + this.getClass().getSimpleName()).toLowerCase().replace('.', '-'); // azure limitation on no periods
+      csBucket = csBucket.length() > 32 ? csBucket.substring(0, 32): csBucket;//azure limitation on length
       System.out.printf("accessKey: %1$s, bucket: %2$s%n", accessKey, csBucket);
    }
 

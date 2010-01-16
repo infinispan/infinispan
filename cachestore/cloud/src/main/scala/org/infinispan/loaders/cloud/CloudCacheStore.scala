@@ -18,7 +18,10 @@ import reflect.BeanProperty
 import org.infinispan.loaders.{LockSupportCacheStoreConfig, CacheLoaderConfig, CacheLoaderException}
 import org.jclouds.blobstore._
 import org.scala_tools.javautils.Imports._
-import org.jclouds.concurrent.config.ExecutorServiceModule
+import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
+import org.jclouds.logging.log4j.config.Log4JLoggingModule;
+import com.google.common.collect.ImmutableSet;
+import com.google.inject.Module;
 
 /**
  * The CloudCacheStore implementation that utilizes <a href="http://code.google.com/p/jclouds">JClouds</a> to communicate
@@ -71,7 +74,8 @@ class CloudCacheStore extends BucketBasedCacheStore {
       if (cfg.password == null) throw new ConfigurationException("Password must be set")
       if (cfg.bucketPrefix == null) throw new ConfigurationException("CloudBucket must be set")
       containerName = getThisContainerName
-      ctx = new BlobStoreContextFactory().createContext(cfg.cloudService, cfg.identity, cfg.password).asInstanceOf[BlobStoreContext[Any, Any]]
+      // add an executor as a constructor param to EnterpriseConfigurationModule, pass property overrides instead of Properties()
+      ctx = new BlobStoreContextFactory().createContext(cfg.cloudService, cfg.identity, cfg.password, ImmutableSet.of(new EnterpriseConfigurationModule(), new Log4JLoggingModule()), new Properties()).asInstanceOf[BlobStoreContext[Any, Any]]
       val bs = ctx.getBlobStore
       // the "location" is not currently used.
       if (!bs.containerExists(containerName)) bs.createContainerInLocation(null, containerName)

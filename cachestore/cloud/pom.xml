@@ -38,17 +38,7 @@
       </dependency>
       <dependency>
          <groupId>org.jclouds</groupId>
-         <artifactId>jclouds-joda</artifactId>
-         <version>${version.jclouds}</version>
-      </dependency>
-      <dependency>
-         <groupId>org.jclouds</groupId>
-         <artifactId>jclouds-bouncycastle</artifactId>
-         <version>${version.jclouds}</version>
-      </dependency>
-      <dependency>
-         <groupId>org.jclouds</groupId>
-         <artifactId>jclouds-httpnio</artifactId>
+         <artifactId>jclouds-enterprise</artifactId>
          <version>${version.jclouds}</version>
       </dependency>
       <dependency>
@@ -98,7 +88,6 @@
 
    <build>
       <sourceDirectory>src/main/scala</sourceDirectory>
-      <testSourceDirectory>src/test/scala</testSourceDirectory>
 
       <plugins>
          <plugin>
