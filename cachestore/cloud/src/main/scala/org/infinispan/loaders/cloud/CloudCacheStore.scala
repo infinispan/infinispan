@@ -18,6 +18,7 @@ import reflect.BeanProperty
 import org.infinispan.loaders.{LockSupportCacheStoreConfig, CacheLoaderConfig, CacheLoaderException}
 import org.jclouds.blobstore._
 import org.scala_tools.javautils.Imports._
+import org.jclouds.concurrent.config.ExecutorServiceModule
 
 /**
  * The CloudCacheStore implementation that utilizes <a href="http://code.google.com/p/jclouds">JClouds</a> to communicate
@@ -70,39 +71,21 @@ class CloudCacheStore extends BucketBasedCacheStore {
       if (cfg.password == null) throw new ConfigurationException("Password must be set")
       if (cfg.bucketPrefix == null) throw new ConfigurationException("CloudBucket must be set")
       containerName = getThisContainerName
-      ctx = createBlobStoreContext(cfg)
+      ctx = new BlobStoreContextFactory().createContext(cfg.cloudService, cfg.identity, cfg.password).asInstanceOf[BlobStoreContext[Any, Any]]
       val bs = ctx.getBlobStore
-      if (!bs.containerExists(containerName)) bs.createContainer(containerName)
+      // the "location" is not currently used.
+      if (!bs.containerExists(containerName)) bs.createContainerInLocation(null, containerName)
       blobStore = ctx.getBlobStore
       asyncBlobStore = ctx.getAsyncBlobStore
       pollFutures = !(cfg.getAsyncStoreConfig.isEnabled.booleanValue)
    }
 
-   def createBlobStoreContext(cfg: CloudCacheStoreConfig) = {
-      val properties = new Properties()
-      val is = Util loadResourceAsStream "jclouds.properties"
-      if (is != null) {
-         try {
-            properties load is
-         } catch {
-            case e => log.error("Unable to load contents from jclouds.properties", e)
-         }
-      }
-      val factory = new BlobStoreContextFactory(properties)
-
-      // Need a URI in blobstore://account:key@service/container/path
-      // TODO find a better way to create this context!  Unnecessary construction of a URI only for it to be broken up again into components from within JClouds
-      factory.createContext(HttpUtils.createUri("blobstore://" + cfg.identity +
-            ":" + cfg.password +
-            "@" + cfg.cloudService + "/")).asInstanceOf[BlobStoreContext[Any, Any]]
-   }
-
    def loadAllLockSafe() = {
       val result = new HashSet[InternalCacheEntry]()
-      // TODO change this to use a blobStore
-      val values = ctx.createBlobMap(containerName).values
-      for (blob <- values) {
-         val bucket = readFromBlob(blob)
+//      val values = ctx.createBlobMap(containerName).values
+      val entries = ctx.createBlobMap(containerName).entrySet
+      for (entry <- entries) {
+         val bucket = readFromBlob(entry.getValue, entry.getKey)
          if (bucket.removeExpiredEntries) updateBucket(bucket)
          result addAll bucket.getStoredEntries
       }
@@ -150,17 +133,23 @@ class CloudCacheStore extends BucketBasedCacheStore {
       }
    }
 
-   def loadBucket(hash: String) = readFromBlob(blobStore.getBlob(containerName, hash))
+   def loadBucket(hash: String) = {
+      try {
+         readFromBlob(blobStore.getBlob(containerName, hash), hash)
+      } catch {
+         case e: KeyNotFoundException => null
+      }
+   }
 
    def purge(blobMap: BlobMap) {
-      for (blob <- blobMap.values) {
-         val bucket = readFromBlob(blob)
+      for (entry <- blobMap.entrySet) {
+         val bucket = readFromBlob(entry.getValue, entry.getKey)
          if (bucket.removeExpiredEntries) updateBucket(bucket)
       }
    }
 
    def purgeInternal() {
-      // TODO can expiry data be stored in a blob's metadata?  More efficient purging that way.
+      // TODO can expiry data be stored in a blob's metadata?  More efficient purging that way.  See https://jira.jboss.org/jira/browse/ISPN-334
       if (!cfg.lazyPurgingOnly) {
          acquireGlobalLock(false)
          try {
@@ -233,16 +222,19 @@ class CloudCacheStore extends BucketBasedCacheStore {
       }
    }
 
-   def readFromBlob(blob: Blob): Bucket = {
+   def readFromBlob(blob: Blob, bucketName: String): Bucket = {
       if (blob == null) return null
       try {
-         return marshaller.objectFromInputStream(blob.getContent).asInstanceOf[Bucket]
+         val bucket = marshaller.objectFromInputStream(blob.getContent).asInstanceOf[Bucket]
+         if (bucket != null) bucket setBucketName bucketName
+         bucket
       } catch {
          case e => throw new CacheLoaderException(e)
       }
    }
 
    def getBucketName(bucket: Bucket) = {
+      log.warn("Bucket is {0}", bucket)
       val bucketName = bucket.getBucketName
       if (bucketName startsWith "-")
          bucketName replace ("-", "A")
