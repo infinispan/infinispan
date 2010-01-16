@@ -252,7 +252,12 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          RspList retval = null;
 
          if (broadcast) {
-            retval = castMessage(dests, constructMessage(buf, null), mode, timeout, false, filter);
+            RequestOptions opts = new RequestOptions();
+            opts.setMode(mode);
+            opts.setTimeout(timeout);
+            opts.setRspFilter(filter);
+            opts.setAnycasting(false);
+            retval = castMessage(dests, constructMessage(buf, null), opts);
          } else {
             Set<Address> targets = new HashSet<Address>(dests); // should sufficiently randomize order.
             RequestOptions opts = new RequestOptions();
@@ -332,7 +337,12 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
 
                   if (trace)
                      log.trace("Replaying message to ignoring senders: " + ignorers);
-                  RspList responses = castMessage(ignorers, msg, GroupRequest.GET_ALL, timeout, anycasting, filter);
+                  RequestOptions opts = new RequestOptions();
+                  opts.setMode(GroupRequest.GET_ALL);
+                  opts.setTimeout(timeout);
+                  opts.setAnycasting(anycasting);
+                  opts.setRspFilter(filter);
+                  RspList responses = castMessage(ignorers, msg, opts);
                   if (responses != null)
                      retval.putAll(responses);
                }
