@@ -55,10 +55,6 @@ public class TextServer {
    private final int workerThreads;
    private final ScheduledExecutorService scheduler;
    private ServerBootstrap bootstrap;
-   private ExecutorService masterExecutor;
-   private ExecutorService workerExecutor;
-   private final AtomicInteger masterThreadNumber = new AtomicInteger(1);
-   private final AtomicInteger workerThreadNumber = new AtomicInteger(1);
 
    public TextServer(String host, int port, String configFile, int masterThreads, int workerThreads) throws IOException {
       this(host, port, configFile == null 

@@ -75,7 +75,7 @@ public class MemcachedTestingUtil {
             return timeout;
          }
       };
-      return new MemcachedClient(d, Arrays.asList(new InetSocketAddress[]{new InetSocketAddress(port)}));
+      return new MemcachedClient(d, Arrays.asList(new InetSocketAddress[]{new InetSocketAddress(HOST, port)}));
    }
 
    public static TextServer createMemcachedTextServer(Cache cache) throws IOException {

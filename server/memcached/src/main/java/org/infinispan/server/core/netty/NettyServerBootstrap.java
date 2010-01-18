@@ -98,7 +98,7 @@ public class NettyServerBootstrap implements org.infinispan.server.core.ServerBo
 
    @Override
    public void stop() {
-   // We *pause* the acceptor so no new connections are made
+      // We *pause* the acceptor so no new connections are made
       ChannelGroupFuture future = serverChannels.unbind().awaitUninterruptibly();
       if (!future.isCompleteSuccess()) {
          log.warn("Server channel group did not completely unbind");
