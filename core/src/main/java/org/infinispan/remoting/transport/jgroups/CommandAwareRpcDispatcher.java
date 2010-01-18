@@ -79,6 +79,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
    private Log log = LogFactory.getLog(CommandAwareRpcDispatcher.class);
    AtomicBoolean newCacheStarting = new AtomicBoolean(false);
    AtomicBoolean newCacheStarted = new AtomicBoolean(false);
+   private static final boolean FORCE_MCAST = Boolean.getBoolean("infinispan.unsafe.force_multicast");
 
    public CommandAwareRpcDispatcher() {
    }
@@ -251,7 +252,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
 
          RspList retval = null;
 
-         if (broadcast) {
+         if (broadcast || FORCE_MCAST) {
             RequestOptions opts = new RequestOptions();
             opts.setMode(mode);
             opts.setTimeout(timeout);
