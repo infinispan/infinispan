@@ -147,13 +147,14 @@ public class Main {
                System.out.println("    -l, --host=<host or ip>        Interface to listen on (default: 127.0.0.1, localhost)");
                System.out.println("    -m, --master_threads=<num>     Number of threads accepting incoming connections. (default: unlimited while resources are available)");
                System.out.println("    -t, --work_threads=<num>       Number of threads processing incoming requests and sending responses. (default: unlimited while resources are available)");
-               System.out.println("    -c, --cache_config=<filename>  Cache configuration file (default: creates caches with default values)");
+               System.out.println("    -c, --cache_config=<filename>  Cache configuration file (default: creates cache with default values)");
                System.out.println("    -D<name>[=<value>]             Set a system property");
                System.out.println();
                System.exit(0);
                break; // for completeness
             case 'V' :
                Version.printFullVersionInformation();
+               System.exit(0);
                break;
             case 'p' :
                props.put(PROP_KEY_PORT, getopt.getOptarg());
