@@ -108,7 +108,7 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
    /**
     * Performs a preload on the cache based on the cache loader preload configs used when configuring the cache.
     */
-   @Start(priority = 50)
+   @Start(priority = 56)
    public void preload() {
       if (loader != null) {
          if (clmConfig.isPreload()) {
