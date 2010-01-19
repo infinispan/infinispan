@@ -40,7 +40,7 @@ public class FileCacheStoreFunctionalTest extends BaseCacheStoreFunctionalTest {
    @BeforeTest
    @Parameters({"basedir"})
    protected void setUpTempDir(@Optional(value = "/tmp") String basedir) {
-      tmpDirectory = basedir + TestingUtil.TEST_PATH + File.separator + getClass().getSimpleName();
+      tmpDirectory = TestingUtil.tmpDirectory(basedir, this);
    }
    
    @AfterClass

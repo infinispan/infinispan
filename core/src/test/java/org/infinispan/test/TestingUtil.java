@@ -23,6 +23,7 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.loaders.CacheLoader;
 import org.infinispan.loaders.CacheLoaderManager;
+import org.infinispan.loaders.file.FileCacheStoreTest;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.remoting.ReplicationQueue;
@@ -45,11 +46,13 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
+import static java.io.File.separator;
+
 public class TestingUtil {
    
    private static final Log log = LogFactory.getLog(TestingUtil.class);
    private static final Random random = new Random();
-   public static final String TEST_PATH = "target" + File.separator + "tempFiles";
+   public static final String TEST_PATH = "target" + separator + "tempFiles";
 
    /**
     * Extracts the value of a field in a given target instance using reflection, able to extract private fields as
@@ -751,5 +754,20 @@ public class TestingUtil {
          values.add(entry.getValue());
       }
       return values;
+   }
+
+   /**
+    * Creates a path to a temp directory based on a base directory and a test.
+    * @param basedir may be null, if relative directories are to be used.
+    * @param test test that requires this directory.
+    * @return a path, relative or absolute.
+    */
+   public static String tmpDirectory(String basedir, AbstractInfinispanTest test) {
+      String prefix = "";
+      if (basedir != null) {
+         prefix = basedir;
+         if (!prefix.endsWith(separator)) prefix += separator;
+      }
+      return prefix + TEST_PATH + separator + test.getClass().getSimpleName();
    }
 }

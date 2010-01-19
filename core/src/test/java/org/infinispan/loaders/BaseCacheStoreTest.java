@@ -115,11 +115,11 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       InternalCacheEntry se = InternalEntryFactory.create("k", "v", lifespan);
       cs.store(se);
 
-      assert cs.load("k").getValue().equals("v");
-      assert cs.load("k").getLifespan() == lifespan;
-      assert cs.load("k").getMaxIdle() == -1;
-      assert !cs.load("k").isExpired();
       assert cs.containsKey("k");
+      InternalCacheEntry ice = cs.load("k");
+      assertCorrectExpiry(ice, "v", lifespan, -1, false);
+      ice = cs.loadAll().iterator().next();
+      assertCorrectExpiry(ice, "v", lifespan, -1, false);
 
       lifespan = 1;
       se = InternalEntryFactory.create("k", "v", lifespan);
@@ -129,7 +129,19 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       assert se.isExpired();
       assert cs.load("k") == null;
       assert !cs.containsKey("k");
+      assert cs.loadAll().isEmpty();
    }
+
+   private void assertCorrectExpiry(InternalCacheEntry ice, String value, long lifespan, long maxIdle, boolean expired) {
+      assert ice != null : "Cache entry is null";
+      assert Util.safeEquals(ice.getValue(), value) : ice.getValue() + " was not " + value;
+      assert ice.getLifespan() == lifespan : ice.getLifespan() + " was not " + lifespan;
+      assert ice.getMaxIdle() == maxIdle : ice.getMaxIdle() + " was not " + maxIdle;
+      if (lifespan > -1) assert ice.getCreated() > -1 : "Created is -1 when maxIdle is set";
+      if (maxIdle > -1) assert ice.getLastUsed() > -1 : "LastUsed is -1 when maxIdle is set";
+      assert expired == ice.isExpired() : "isExpired() is not " + expired;
+   }
+
 
    public void testLoadAndStoreWithIdle() throws InterruptedException, CacheLoaderException {
       assert !cs.containsKey("k");
@@ -138,11 +150,11 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       InternalCacheEntry se = InternalEntryFactory.create("k", "v", -1, idle);
       cs.store(se);
 
-      assert cs.load("k").getValue().equals("v");
-      assert cs.load("k").getLifespan() == -1;
-      assert cs.load("k").getMaxIdle() == idle;
-      assert !cs.load("k").isExpired();
       assert cs.containsKey("k");
+      InternalCacheEntry ice = cs.load("k");
+      assertCorrectExpiry(ice, "v", -1, idle, false);
+      ice = cs.loadAll().iterator().next();
+      assertCorrectExpiry(ice, "v", -1, idle, false);
 
       idle = 1;
       se = InternalEntryFactory.create("k", "v", -1, idle);
@@ -152,6 +164,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       assert se.isExpired();
       assert cs.load("k") == null;
       assert !cs.containsKey("k");
+      assert cs.loadAll().isEmpty();
    }
 
    public void testLoadAndStoreWithLifespanAndIdle() throws InterruptedException, CacheLoaderException {
@@ -162,11 +175,11 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       InternalCacheEntry se = InternalEntryFactory.create("k", "v", lifespan, idle);
       cs.store(se);
 
-      assert cs.load("k").getValue().equals("v");
-      assert cs.load("k").getLifespan() == lifespan;
-      assert cs.load("k").getMaxIdle() == idle;
-      assert !cs.load("k").isExpired();
       assert cs.containsKey("k");
+      InternalCacheEntry ice = cs.load("k");
+      assertCorrectExpiry(ice, "v", lifespan, idle, false);
+      ice = cs.loadAll().iterator().next();
+      assertCorrectExpiry(ice, "v", lifespan, idle, false);
 
       idle = 1;
       se = InternalEntryFactory.create("k", "v", lifespan, idle);
@@ -176,6 +189,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       assert se.isExpired();
       assert cs.load("k") == null;
       assert !cs.containsKey("k");
+      assert cs.loadAll().isEmpty();
    }
 
    public void testStopStartDoesntNukeValues() throws InterruptedException, CacheLoaderException {
