@@ -12,6 +12,7 @@ import org.infinispan.marshall.Marshaller;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
@@ -31,7 +32,7 @@ public class FileCacheStoreTest extends BaseCacheStoreTest {
 
    @BeforeTest
    @Parameters({"basedir"})
-   protected void setUpTempDir(String basedir) {
+   protected void setUpTempDir(@Optional(value = "/tmp") String basedir) {
       tmpDirectory = basedir + TestingUtil.TEST_PATH + File.separator + getClass().getSimpleName();
    }
 
