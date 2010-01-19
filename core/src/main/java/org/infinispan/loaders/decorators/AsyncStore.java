@@ -1,19 +1,18 @@
 package org.infinispan.loaders.decorators;
 
 import net.jcip.annotations.GuardedBy;
-
-import org.infinispan.CacheException;
 import org.infinispan.Cache;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.CacheException;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
-import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.modifications.Clear;
 import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.loaders.modifications.PurgeExpired;
 import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
+import org.infinispan.marshall.Marshaller;
 import org.infinispan.util.concurrent.locks.containers.ReentrantPerEntryLockContainer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -38,6 +37,8 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import static org.infinispan.loaders.modifications.Modification.Type.*;
+
 /**
  * The AsyncStore is a delegating CacheStore that extends AbstractDelegatingStore, overriding methods to that should not
  * just delegate the operation to the underlying store.
@@ -57,7 +58,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * <p/>
  *
  * @author Manik Surtani
- * @author Galder Zamarreño 
+ * @author Galder Zamarreño
  * @since 4.0
  */
 public class AsyncStore extends AbstractDelegatingStore {
@@ -66,21 +67,24 @@ public class AsyncStore extends AbstractDelegatingStore {
    private static final AtomicInteger threadId = new AtomicInteger(0);
    private final AtomicBoolean stopped = new AtomicBoolean(true);
    private final AsyncStoreConfig asyncStoreConfig;
-   
-   /** Approximate count of number of modified keys. At points, it could contain negative values. */
+
+   /**
+    * Approximate count of number of modified keys. At points, it could contain negative values.
+    */
    private final AtomicInteger count = new AtomicInteger(0);
    private final ReentrantLock lock = new ReentrantLock();
-   private final Condition notEmpty  = lock.newCondition();
+   private final Condition notEmpty = lock.newCondition();
 
-   private ExecutorService executor;
+   ExecutorService executor;
    private List<Future> processorFutures;
    private final ReadWriteLock mapLock = new ReentrantReadWriteLock();
    private final Lock read = mapLock.readLock();
    private final Lock write = mapLock.writeLock();
    private int concurrencyLevel;
-   @GuardedBy("mapLock") protected ConcurrentMap<Object, Modification> state;
+   @GuardedBy("mapLock")
+   protected ConcurrentMap<Object, Modification> state;
    private ReleaseAllLockContainer lockContainer;
-   
+
    public AsyncStore(CacheStore delegate, AsyncStoreConfig asyncStoreConfig) {
       super(delegate);
       this.asyncStoreConfig = asyncStoreConfig;
@@ -115,7 +119,7 @@ public class AsyncStore extends AbstractDelegatingStore {
       PurgeExpired purge = new PurgeExpired();
       enqueue(purge, purge);
    }
-   
+
    @Override
    public void start() throws CacheLoaderException {
       state = newStateMap();
@@ -152,7 +156,7 @@ public class AsyncStore extends AbstractDelegatingStore {
       executor = null;
       super.stop();
    }
-   
+
    protected void applyModificationsSync(ConcurrentMap<Object, Modification> mods) throws CacheLoaderException {
       Set<Map.Entry<Object, Modification>> entries = mods.entrySet();
       for (Map.Entry<Object, Modification> entry : entries) {
@@ -186,7 +190,7 @@ public class AsyncStore extends AbstractDelegatingStore {
          if (trace) log.trace("Enqueuing modification {0}", mod);
          Modification prev = null;
          int c = -1;
-         boolean unlock = false;      
+         boolean unlock = false;
          try {
             acquireLock(read);
             unlock = true;
@@ -197,7 +201,7 @@ public class AsyncStore extends AbstractDelegatingStore {
          /* Increment can happen outside the lock cos worst case scenario a false not empty would 
           * be sent if the swap and decrement happened between the put and the increment. In this 
           * case, the corresponding processor would see the map empty and would wait again. This 
-          * means that we're allowing count to potentially go negative but that's not a problem. */  
+          * means that we're allowing count to potentially go negative but that's not a problem. */
          if (prev == null) c = count.getAndIncrement();
          if (c == 0) signalNotEmpty();
       } catch (Exception e) {
@@ -214,39 +218,39 @@ public class AsyncStore extends AbstractDelegatingStore {
          Thread.currentThread().interrupt();
       }
    }
-   
+
    private void signalNotEmpty() {
       lock.lock();
       try {
-          notEmpty.signal();
+         notEmpty.signal();
       } finally {
-          lock.unlock();
+         lock.unlock();
       }
    }
-   
+
    private void awaitNotEmpty() throws InterruptedException {
       lock.lockInterruptibly();
       try {
          try {
             while (count.get() == 0)
-                notEmpty.await();
+               notEmpty.await();
          } catch (InterruptedException ie) {
             notEmpty.signal(); // propagate to a non-interrupted thread
             throw ie;
-         }         
+         }
       } finally {
          lock.unlock();
       }
    }
-   
+
    private int decrementAndGet(int delta) {
-      for (;;) {
+      for (; ;) {
          int current = count.get();
          int next = current - delta;
          if (count.compareAndSet(current, next)) return next;
-     }
+      }
    }
-   
+
    /**
     * Processes modifications taking the latest updates from a state map.
     */
@@ -273,11 +277,11 @@ public class AsyncStore extends AbstractDelegatingStore {
             if (trace) log.trace("Remaining interrupted");
          }
       }
-      
+
       void run0() throws InterruptedException {
          if (trace) log.trace("Checking for modifications");
          boolean unlock = false;
-         
+
          try {
             acquireLock(write);
             unlock = true;
@@ -303,29 +307,32 @@ public class AsyncStore extends AbstractDelegatingStore {
 
          try {
             int size = swap.size();
-            if (size == 0) 
+            if (swap.isEmpty()) {
                awaitNotEmpty();
-            else 
+            } else {
                decrementAndGet(size);
 
-            if (trace) log.trace("Apply {0} modifications", size);
-            int maxRetries = 3;
-            int attemptNumber = 0;
-            boolean successful;
-            do {
-               if (attemptNumber > 0 && log.isDebugEnabled()) log.debug("Retrying due to previous failure. {0} attempts left.", maxRetries - attemptNumber);
-               successful = put(swap);
-               attemptNumber++;
-            } while (!successful && attemptNumber <= maxRetries);
+               if (trace) log.trace("Apply {0} modifications", size);
+               int maxRetries = 3;
+               int attemptNumber = 0;
+               boolean successful;
+               do {
+                  if (attemptNumber > 0 && log.isDebugEnabled())
+                     log.debug("Retrying due to previous failure. {0} attempts left.", maxRetries - attemptNumber);
+                  successful = put(swap);
+                  attemptNumber++;
+               } while (!successful && attemptNumber <= maxRetries);
 
-            if (!successful) log.warn("Unable to process some async modifications after " + maxRetries + " retries!");
+               if (!successful)
+                  log.warn("Unable to process some async modifications after " + maxRetries + " retries!");
 
+            }
          } finally {
             lockContainer.releaseLocks(lockedKeys);
             lockedKeys.clear();
          }
       }
-      
+
       boolean put(ConcurrentMap<Object, Modification> mods) {
          try {
             AsyncStore.this.applyModificationsSync(mods);

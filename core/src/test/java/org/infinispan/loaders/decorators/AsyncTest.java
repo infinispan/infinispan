@@ -11,7 +11,9 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
@@ -21,7 +23,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
-@Test(groups = "unit", testName = "loaders.decorators.AsyncTest", enabled = false)
+@Test(groups = "unit", testName = "loaders.decorators.AsyncTest")
 public class AsyncTest extends AbstractInfinispanTest {
    private static final Log log = LogFactory.getLog(AsyncTest.class);
    AsyncStore store;
@@ -30,7 +32,7 @@ public class AsyncTest extends AbstractInfinispanTest {
    AsyncStoreConfig asyncConfig;
    DummyInMemoryCacheStore.Cfg dummyCfg;
 
-   @BeforeTest
+   @BeforeMethod
    public void setUp() throws CacheLoaderException {
       underlying = new DummyInMemoryCacheStore();
       asyncConfig = new AsyncStoreConfig();
@@ -43,7 +45,7 @@ public class AsyncTest extends AbstractInfinispanTest {
       asyncExecutor = (ExecutorService) TestingUtil.extractField(store, "executor");
    }
 
-   @AfterTest
+   @AfterMethod
    public void tearDown() throws CacheLoaderException {
       if (store != null) store.stop();
    }
@@ -55,7 +57,7 @@ public class AsyncTest extends AbstractInfinispanTest {
       doTestPut(number, key, value);
       doTestRemove(number, key);
    }
-   
+
    public void testPutClearPut() throws Exception {
       final int number = 1000;
       String key = "testPutClearPut-k-";
@@ -64,7 +66,7 @@ public class AsyncTest extends AbstractInfinispanTest {
       doTestClear(number, key);
       value = "testPutClearPut-v[2]-";
       doTestPut(number, key, value);
-      
+
       doTestRemove(number, key);
    }
 
@@ -83,7 +85,7 @@ public class AsyncTest extends AbstractInfinispanTest {
       String key = "testRestrictionOnAddingToAsyncQueue-k";
       String value = "testRestrictionOnAddingToAsyncQueue-v-";
       doTestPut(number, key, value);
-      
+
       // stop the cache store
       store.stop();
       try {
@@ -99,35 +101,41 @@ public class AsyncTest extends AbstractInfinispanTest {
    }
 
    public void testThreadSafetyWritingDiffValuesForKey(Method m) throws Exception {
-      final String key = "k1";
-      final CountDownLatch v1Latch = new CountDownLatch(1);
-      final CountDownLatch v2Latch = new CountDownLatch(1);
-      final CountDownLatch endLatch = new CountDownLatch(1);
-      DummyInMemoryCacheStore underlying = new DummyInMemoryCacheStore();
-      store = new MockAsyncStore(key, v1Latch, v2Latch, endLatch, underlying, asyncConfig);
-      dummyCfg = new DummyInMemoryCacheStore.Cfg();
-      dummyCfg.setStore(m.getName());
-      store.init(dummyCfg, null, null);
-      store.start();
-      
-      store.store(InternalEntryFactory.create(key, "v1"));
-      v2Latch.await();
-      store.store(InternalEntryFactory.create(key, "v2"));
-      endLatch.await();
+      try {
+         final String key = "k1";
+         final CountDownLatch v1Latch = new CountDownLatch(1);
+         final CountDownLatch v2Latch = new CountDownLatch(1);
+         final CountDownLatch endLatch = new CountDownLatch(1);
+         DummyInMemoryCacheStore underlying = new DummyInMemoryCacheStore();
+         store = new MockAsyncStore(key, v1Latch, v2Latch, endLatch, underlying, asyncConfig);
+         dummyCfg = new DummyInMemoryCacheStore.Cfg();
+         dummyCfg.setStore(m.getName());
+         store.init(dummyCfg, null, null);
+         store.start();
 
-      assert store.load(key).getValue().equals("v2");
+         store.store(InternalEntryFactory.create(key, "v1"));
+         v2Latch.await();
+         store.store(InternalEntryFactory.create(key, "v2"));
+         endLatch.await();
+
+         assert store.load(key).getValue().equals("v2");
+      } finally {
+         store.delegate.clear();
+         store.stop();
+         store = null;
+      }
    }
 
    private void doTestPut(int number, String key, String value) throws Exception {
       for (int i = 0; i < number; i++) store.store(InternalEntryFactory.create(key + i, value + i));
-      
+
       TestingUtil.sleepRandom(1000);
 
       InternalCacheEntry[] entries = new InternalCacheEntry[number];
       for (int i = 0; i < number; i++) {
          entries[i] = store.load(key + i);
       }
-      
+
       for (int i = 0; i < number; i++) {
          InternalCacheEntry entry = entries[i];
          if (entry != null) {
@@ -144,17 +152,18 @@ public class AsyncTest extends AbstractInfinispanTest {
          }
       }
    }
-   
+
    private void doTestSameKeyPut(int number, String key, String value) throws Exception {
       for (int i = 0; i < number; i++)
          store.store(InternalEntryFactory.create(key, value + i));
 
+      TestingUtil.sleepThread(5000);
       InternalCacheEntry entry;
       boolean success = false;
       for (int i = 0; i < 120; i++) {
          TestingUtil.sleepRandom(1000);
          entry = store.load(key);
-         success = entry.getValue().equals(value + (number-1));
+         success = entry.getValue().equals(value + (number - 1));
          if (success) break;
       }
       assert success;
@@ -162,14 +171,14 @@ public class AsyncTest extends AbstractInfinispanTest {
 
    private void doTestRemove(int number, String key) throws Exception {
       for (int i = 0; i < number; i++) store.remove(key + i);
-      
+
       TestingUtil.sleepRandom(1000);
 
       InternalCacheEntry[] entries = new InternalCacheEntry[number];
       for (int i = 0; i < number; i++) {
          entries[i] = store.load(key + i);
       }
-      
+
       for (int i = 0; i < number; i++) {
          InternalCacheEntry entry = entries[i];
          while (entry != null) {
@@ -179,7 +188,7 @@ public class AsyncTest extends AbstractInfinispanTest {
          }
       }
    }
-   
+
    private void doTestSameKeyRemove(String key) throws Exception {
       store.remove(key);
       InternalCacheEntry entry;
@@ -197,7 +206,7 @@ public class AsyncTest extends AbstractInfinispanTest {
       for (int i = 0; i < number; i++) {
          entries[i] = store.load(key + i);
       }
-      
+
       for (int i = 0; i < number; i++) {
          InternalCacheEntry entry = entries[i];
          while (entry != null) {
@@ -215,8 +224,8 @@ public class AsyncTest extends AbstractInfinispanTest {
       final CountDownLatch endLatch;
       final Object key;
 
-      MockAsyncStore(Object key, CountDownLatch v1Latch, CountDownLatch v2Latch, CountDownLatch endLatch, 
-               CacheStore delegate, AsyncStoreConfig asyncStoreConfig) {
+      MockAsyncStore(Object key, CountDownLatch v1Latch, CountDownLatch v2Latch, CountDownLatch endLatch,
+                     CacheStore delegate, AsyncStoreConfig asyncStoreConfig) {
          super(delegate, asyncStoreConfig);
          this.v1Latch = v1Latch;
          this.v2Latch = v2Latch;
@@ -242,6 +251,8 @@ public class AsyncTest extends AbstractInfinispanTest {
             endLatch.countDown();
          }
       }
-      
-   };
+
+   }
+
+   ;
 }
