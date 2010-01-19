@@ -686,7 +686,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          if (lazyDeserialization != null) dolly.lazyDeserialization = (LazyDeserialization) lazyDeserialization.clone();
          if (invocationBatching != null) dolly.invocationBatching = (InvocationBatching) invocationBatching.clone();
          if (deadlockDetection != null) dolly.deadlockDetection = (DeadlockDetectionType) deadlockDetection.clone();
-         if (indexing != null) dolly.indexing = (QueryConfigurationBean) indexing.clone();
+         if (indexing != null) dolly.indexing = indexing.clone();
          return dolly;
       } catch (CloneNotSupportedException e) {
          throw new CacheException("Unexpected!",e);
