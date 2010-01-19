@@ -21,7 +21,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
-@Test(groups = "unit", testName = "loaders.decorators.AsyncTest")
+@Test(groups = "unit", testName = "loaders.decorators.AsyncTest", enabled = false)
 public class AsyncTest extends AbstractInfinispanTest {
    private static final Log log = LogFactory.getLog(AsyncTest.class);
    AsyncStore store;
