@@ -32,7 +32,7 @@ import org.testng.annotations.Test;
  * @author Galder Zamarreño
  * @since 4.0
  */
-@Test(groups = "unit", sequential = true, testName = "loaders.cloud.CloudCacheStoreIntegrationVamTest")
+@Test(groups = "unit", sequential = true, testName = "loaders.cloud.CloudCacheStoreIntegrationVamTest", enabled = false)
 public class CloudCacheStoreIntegrationVamTest extends CloudCacheStoreIntegrationTest {
    @Override
    protected Marshaller getMarshaller() {

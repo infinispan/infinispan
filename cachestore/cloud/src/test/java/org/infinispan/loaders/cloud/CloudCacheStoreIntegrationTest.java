@@ -30,7 +30,7 @@ import static org.testng.Assert.assertEquals;
  * @author Adrian Cole
  * @since 4.0
  */
-@Test(groups = "unit", sequential = true, testName = "loaders.cloud.CloudCacheStoreIntegrationTest")
+@Test(groups = "unit", sequential = true, testName = "loaders.cloud.CloudCacheStoreIntegrationTest", enabled = false)
 public class CloudCacheStoreIntegrationTest extends BaseCacheStoreTest {
 
    private String proxyHost;
