@@ -5,6 +5,8 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Constructs an instance of a {@link org.infinispan.util.concurrent.NotifyingFuture}.
@@ -23,6 +25,7 @@ public class NotifyingFutureImpl implements NotifyingNotifiableFuture<Object> {
    volatile Future<Object> ioFuture;
    volatile boolean callCompleted = false;
    final Set<FutureListener<Object>> listeners = new CopyOnWriteArraySet<FutureListener<Object>>();
+   final ReadWriteLock listenerLock = new ReentrantReadWriteLock();
 
    public NotifyingFutureImpl(Object actualReturnValue) {
       this.actualReturnValue = actualReturnValue;
@@ -55,13 +58,23 @@ public class NotifyingFutureImpl implements NotifyingNotifiableFuture<Object> {
    }
 
    public void notifyDone() {
-      callCompleted = true;
-      for (FutureListener<Object> l : listeners) l.futureDone(this);
+      listenerLock.writeLock().lock();
+      try {
+         callCompleted = true;
+         for (FutureListener<Object> l : listeners) l.futureDone(this);
+      } finally {
+         listenerLock.writeLock().unlock();
+      }
    }
 
    public NotifyingFuture<Object> attachListener(FutureListener<Object> objectFutureListener) {
-      if (!callCompleted) listeners.add(objectFutureListener);
-      if (callCompleted) objectFutureListener.futureDone(this);
-      return this;
+      listenerLock.readLock().lock();
+      try {
+         if (!callCompleted) listeners.add(objectFutureListener);
+         if (callCompleted) objectFutureListener.futureDone(this);
+         return this;
+      } finally {
+         listenerLock.readLock().unlock();
+      }
    }
 }

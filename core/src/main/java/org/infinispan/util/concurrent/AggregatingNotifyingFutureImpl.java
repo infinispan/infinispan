@@ -61,9 +61,6 @@ public class AggregatingNotifyingFutureImpl extends NotifyingFutureImpl {
 
    @Override
    public void notifyDone() {
-      if (awaitingCompletions.decrementAndGet() == 0) {
-         callCompleted = true;
-         for (FutureListener<Object> l : listeners) l.futureDone(this);
-      }
+      if (awaitingCompletions.decrementAndGet() == 0) super.notifyDone();
    }
 }
