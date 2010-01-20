@@ -78,8 +78,7 @@ public class CloudCacheStore extends BucketBasedCacheStore {
       init(cfg, cache, m, null, null, null);
    }
 
-   public void init(CacheLoaderConfig cfg, Cache<?, ?> cache, Marshaller m, BlobStoreContext<?, ?> ctx,
-                    BlobStore blobStore, AsyncBlobStore asyncBlobStore) throws CacheLoaderException {
+   public void init(CacheLoaderConfig cfg, Cache<?, ?> cache, Marshaller m, BlobStoreContext ctx, BlobStore blobStore, AsyncBlobStore asyncBlobStore) throws CacheLoaderException {
       super.init(cfg, cache, m);
       this.cfg = (CloudCacheStoreConfig) cfg;
       this.cache = cache;
