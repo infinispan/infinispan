@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 
 /**
  * Repository for {@link org.infinispan.transaction.xa.RemoteTransaction} and {@link
@@ -88,29 +89,34 @@ public class TransactionTable {
          final List<Address> leavers = MembershipArithmetic.getMembersLeft(vce.getOldMembers(), vce.getNewMembers());
          if (!leavers.isEmpty()) {
             if (trace) log.trace("Saw {0} leavers - kicking off a lock breaking task", leavers.size());
-            lockBreakingService.submit(new Runnable() {
-               public void run() {
-                  Set<GlobalTransaction> toKill = new HashSet<GlobalTransaction>();
-                  for (GlobalTransaction gt: remoteTransactions.keySet()) {
-                     if (leavers.contains(gt.getAddress())) toKill.add(gt);
-                  }
+            try {
+               lockBreakingService.submit(new Runnable() {
+                  public void run() {
+                     Set<GlobalTransaction> toKill = new HashSet<GlobalTransaction>();
+                     for (GlobalTransaction gt : remoteTransactions.keySet()) {
+                        if (leavers.contains(gt.getAddress())) toKill.add(gt);
+                     }
 
-                  if (trace) log.trace("Global transactions {0} pertain to leavers list {1} and need to be killed", toKill, leavers);
+                     if (trace)
+                        log.trace("Global transactions {0} pertain to leavers list {1} and need to be killed", toKill, leavers);
 
-                  for (GlobalTransaction gtx: toKill) {
-                     if (trace) log.trace("Killing {0}", gtx);
-                     RollbackCommand rc = new RollbackCommand(gtx);
-                     rc.init(invoker, icc, TransactionTable.this);
-                     try {
-                        rc.perform(null);
-                     } catch (Throwable e) {
-                        log.warn("Unable to roll back gtx " + gtx, e);
-                     } finally {
-                        removeRemoteTransaction(gtx);
+                     for (GlobalTransaction gtx : toKill) {
+                        if (trace) log.trace("Killing {0}", gtx);
+                        RollbackCommand rc = new RollbackCommand(gtx);
+                        rc.init(invoker, icc, TransactionTable.this);
+                        try {
+                           rc.perform(null);
+                        } catch (Throwable e) {
+                           log.warn("Unable to roll back gtx " + gtx, e);
+                        } finally {
+                           removeRemoteTransaction(gtx);
+                        }
                      }
                   }
-               }
-            });
+               });
+            } catch (RejectedExecutionException ree) {
+               log.debug("Unable to submit task to executor", ree);
+            }
          }
       }
    }
@@ -138,8 +144,8 @@ public class TransactionTable {
    }
 
    /**
-    * Creates and register a {@link org.infinispan.transaction.xa.RemoteTransaction} with no modifications.
-    * Returns the created transaction.
+    * Creates and register a {@link org.infinispan.transaction.xa.RemoteTransaction} with no modifications. Returns the
+    * created transaction.
     *
     * @throws IllegalStateException if an attempt to create a {@link org.infinispan.transaction.xa.RemoteTransaction}
     *                               for an already registered id is made.
