@@ -302,7 +302,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
                   return future;
                } else {                  
                   rpcManager.invokeRemotely(rec, command, sync);
-                  if (future != null) future.get(); // wait for the inval command to complete
+                  if (future != null && !sync) future.get(); // wait for the inval command to complete
                }
             }
          } else {
