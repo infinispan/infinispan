@@ -116,7 +116,8 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
       if (e == null || e.isNull()) {
 
          // we *may* need to load this.
-         if (!loader.containsKey(key)) {
+         InternalCacheEntry loaded = loader.load(key);
+         if (loaded == null) {
             if (log.isTraceEnabled()) log.trace("No need to load.  Key doesn't exist in the loader.");
             return false;
          }
@@ -133,7 +134,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
 
          // Reuse the lock and create a new entry for loading
          MVCCEntry n = entryFactory.wrapEntryForWriting(ctx, key, true, false, keyLocked, false);
-         loadEntry(ctx, key, n);
+         putLoadedEntryInContainer(ctx, key, n, loaded);
          return true;
       } else {
          return true;
@@ -141,13 +142,10 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    }
 
    /**
-    * Loads an entry from loader
+    * Puts a loaded cache entry into the data container.
     */
-   private MVCCEntry loadEntry(InvocationContext ctx, Object key, MVCCEntry entry) throws Exception {
-      log.trace("Loading key {0}", key);
-
-      InternalCacheEntry storedEntry = loader.load(key);
-      boolean entryExists = (storedEntry != null);
+   private MVCCEntry putLoadedEntryInContainer(InvocationContext ctx, Object key, MVCCEntry entry, InternalCacheEntry loadedEntry) throws Exception {
+      boolean entryExists = (loadedEntry != null);
       if (log.isTraceEnabled()) log.trace("Entry exists in loader? " + entryExists);
 
       if (getStatisticsEnabled()) {
@@ -160,8 +158,10 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
 
       if (entryExists) {
          sendNotification(key, true, ctx);
-         entry.setValue(storedEntry.getValue());
-         entry.setLifespan(storedEntry.getLifespan());
+         entry.setValue(loadedEntry.getValue());
+         entry.setLifespan(loadedEntry.getLifespan());
+         entry.setMaxIdle(loadedEntry.getMaxIdle());
+         // TODO shouldn't we also be setting last used and created timestamps?
          entry.setValid(true);
 
          notifier.notifyCacheEntryLoaded(key, false, ctx);

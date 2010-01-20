@@ -11,6 +11,7 @@ import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -30,7 +31,7 @@ public class FileCacheStoreTest extends BaseCacheStoreTest {
    private FileCacheStore fcs;
    private String tmpDirectory;
 
-   @BeforeTest
+   @BeforeClass
    @Parameters({"basedir"})
    protected void setUpTempDir(@Optional(value = "/tmp") String basedir) {
       tmpDirectory = TestingUtil.tmpDirectory(basedir, this);      
