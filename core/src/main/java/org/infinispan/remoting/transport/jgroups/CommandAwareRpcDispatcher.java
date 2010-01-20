@@ -300,7 +300,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
 
             } else if (mode == GroupRequest.GET_NONE) {
                // An ASYNC call.  We don't care about responses.
-               for (Address dest : targets) sendMessageWithFuture(constructMessage(buf, dest), opts);
+               for (Address dest : targets) sendMessage(constructMessage(buf, dest), opts);
             }
          }
 
