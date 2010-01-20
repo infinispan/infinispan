@@ -27,11 +27,11 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.EntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.container.EntryFactory;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.JmxStatsCommandInterceptor;
@@ -115,21 +115,25 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
       CacheEntry e = entryFactory.wrapEntryForReading(ctx, key);
       if (e == null || e.isNull()) {
 
+         // Obtain a temporary lock to verify the key is not being concurrently added
+         boolean keyLocked = entryFactory.acquireLock(ctx, key);
+         boolean unlockOnWayOut = false;
+         try {
+            // check again, in case there is a concurrent addition
+            if (dataContainer.containsKey(key)) {
+               log.trace("No need to load.  Key exists in the data container.");
+               unlockOnWayOut = true;
+               return true;
+            }
+         } finally {
+            if (keyLocked && unlockOnWayOut) entryFactory.releaseLock(key);
+         }
+
          // we *may* need to load this.
          InternalCacheEntry loaded = loader.load(key);
          if (loaded == null) {
             if (log.isTraceEnabled()) log.trace("No need to load.  Key doesn't exist in the loader.");
             return false;
-         }
-
-         // Obtain a temporary lock to verify the key is not being concurrently added
-         boolean keyLocked = entryFactory.acquireLock(ctx, key);
-
-         // check again, in case there is a concurrent addition
-         if (dataContainer.containsKey(key)) {
-            if (keyLocked) entryFactory.releaseLock(key);
-            log.trace("No need to load.  Key exists in the data container.");
-            return true;
          }
 
          // Reuse the lock and create a new entry for loading
