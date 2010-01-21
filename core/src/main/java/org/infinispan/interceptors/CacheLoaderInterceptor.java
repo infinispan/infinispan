@@ -133,6 +133,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
          InternalCacheEntry loaded = loader.load(key);
          if (loaded == null) {
             if (log.isTraceEnabled()) log.trace("No need to load.  Key doesn't exist in the loader.");
+            if (keyLocked) entryFactory.releaseLock(key);
             return false;
          }
 
