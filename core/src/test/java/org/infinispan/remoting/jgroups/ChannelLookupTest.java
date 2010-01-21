@@ -13,6 +13,8 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.jgroups.Address;
 import org.jgroups.Channel;
 import org.jgroups.JChannel;
+import org.jgroups.protocols.UDP;
+import org.jgroups.stack.ProtocolStack;
 import org.testng.annotations.Test;
 
 import java.util.Properties;
@@ -42,11 +44,14 @@ public class ChannelLookupTest extends AbstractInfinispanTest {
     public static class DummyLookup implements JGroupsChannelLookup {
         Channel mockChannel;
         Address a = EasyMock.createNiceMock(Address.class);
+        ProtocolStack ps = EasyMock.createNiceMock(ProtocolStack.class);
 
         public DummyLookup() {
             mockChannel = EasyMock.createNiceMock(Channel.class);
             EasyMock.expect(mockChannel.getAddress()).andReturn(a);
-            EasyMock.replay(mockChannel, a);
+            EasyMock.expect(mockChannel.getProtocolStack()).andReturn(ps);
+            EasyMock.expect(ps.getTransport()).andReturn(new UDP());
+            EasyMock.replay(mockChannel, a, ps);           
         }
 
         public Channel getJGroupsChannel() {
