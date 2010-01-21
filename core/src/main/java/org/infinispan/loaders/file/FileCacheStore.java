@@ -3,6 +3,7 @@ package org.infinispan.loaders.file;
 import org.infinispan.Cache;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.io.ExposedByteArrayOutputStream;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.bucket.Bucket;
@@ -14,10 +15,12 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.HashSet;
@@ -29,6 +32,7 @@ import java.util.Set;
  *
  * @author Manik Surtani
  * @author Mircea.Markus@jboss.com
+ * 
  * @since 4.0
  */
 public class FileCacheStore extends BucketBasedCacheStore {
@@ -112,6 +116,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
             BufferedInputStream bis = null;
             FileInputStream fileInStream = null;
             try {
+               if (trace) log.trace("Opening file in {0}", file);
                fileInStream = new FileInputStream(file);
                int sz = fileInStream.available();
                bis = new BufferedInputStream(fileInStream);
@@ -140,7 +145,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
          return;
       }
       for (File f : toDelete) {
-         if (!f.delete()) {
+         if (!deleteFile(f)) {
             log.warn("Had problems removing file {0}", f);
          }
       }
@@ -191,7 +196,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
          FileInputStream is = null;
          try {
             is = new FileInputStream(bucketFile);
-            bucket = (Bucket) marshaller.objectFromInputStream(is);
+            bucket = (Bucket) objectFromInputStreamInReentrantMode(is);
          } catch (Exception e) {
             String message = "Error while reading from file: " + bucketFile.getAbsoluteFile();
             log.error(message, e);
@@ -213,7 +218,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
    public void updateBucket(Bucket b) throws CacheLoaderException {
       File f = new File(root, b.getBucketName());
       if (f.exists()) {
-         if (!f.delete()) log.warn("Had problems removing file {0}", f);
+         if (!deleteFile(f)) log.warn("Had problems removing file {0}", f);
       } else if (log.isTraceEnabled()) {
          log.trace("Successfully deleted file: '" + f.getName() + "'");
       }
@@ -259,5 +264,27 @@ public class FileCacheStore extends BucketBasedCacheStore {
 
    public Bucket loadBucketContainingKey(String key) throws CacheLoaderException {
       return loadBucket(key.hashCode() + "");
+   }
+
+   private boolean deleteFile(File f) {
+      if (trace) log.trace("Really delete file {0}", f);
+      return f.delete();
+   }
+
+   private Object objectFromInputStreamInReentrantMode(InputStream is) throws IOException, ClassNotFoundException {
+      int len = is.available();
+      ExposedByteArrayOutputStream bytes = new ExposedByteArrayOutputStream(len);
+      byte[] buf = new byte[Math.min(len, 1024)];
+      int bytesRead;
+      while ((bytesRead = is.read(buf, 0, buf.length)) != -1) bytes.write(buf, 0, bytesRead);
+      is = new ByteArrayInputStream(bytes.getRawBuffer(), 0, bytes.size());
+      ObjectInput unmarshaller = marshaller.startObjectInput(is, true);
+      Object o = null;
+      try {
+         o = marshaller.objectFromObjectStream(unmarshaller);
+      } finally {
+         marshaller.finishObjectInput(unmarshaller);
+      }
+      return o;
    }
 }

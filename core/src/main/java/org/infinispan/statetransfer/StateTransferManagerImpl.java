@@ -363,6 +363,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
    private void generatePersistentState(ObjectOutput oo) throws StateTransferException {
       try {
          // always use the unclosable stream delegate to ensure the impl doesn't close the stream
+         if (trace) log.trace("Generate persistent state");
          cs.toStream(new UnclosableObjectOutputStream(oo));
       } catch (CacheLoaderException cle) {
          throw new StateTransferException(cle);
