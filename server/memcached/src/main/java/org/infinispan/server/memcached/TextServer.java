@@ -24,10 +24,8 @@ package org.infinispan.server.memcached;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.Cache;
 import org.infinispan.manager.DefaultCacheManager;

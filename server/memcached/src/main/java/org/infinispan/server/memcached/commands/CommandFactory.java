@@ -87,7 +87,16 @@ public class CommandFactory {
             return RetrievalCommand.newRetrievalCommand(cache, type, new RetrievalParameters(keys));
          case DELETE:
             String delKey = getKey(args[1]);
-            return DeleteCommand.newDeleteCommand(cache, delKey, parseNoReply(2, args));
+            int time = parseDelayedDeleteTime(2, args);
+            boolean noReply = false;
+            if (time == -1) {
+               // Try parsing noreply just in case
+               noReply = parseNoReply(2, args);
+            } else {
+               // 0 or positive numbers are ignored; We immediately delete since this is no longer in the spec:
+               // http://github.com/trondn/memcached/blob/master/doc/protocol.txt
+            }
+            return DeleteCommand.newDeleteCommand(cache, delKey, noReply);
          case INCR:
          case DECR:
             String key = getKey(args[1]);
@@ -114,22 +123,22 @@ public class CommandFactory {
    }
 
    private String getKey(String key) throws IOException {
-      if (key == null) throw new EOFException();
+      if (key == null) throw new EOFException("No key passed");
       return key;
    }
 
    private int getFlags(String flags) throws IOException {
-      if (flags == null) throw new EOFException();
+      if (flags == null) throw new EOFException("No flags passed");
       return Integer.parseInt(flags);
    }
 
    private long getExpiry(String expiry) throws IOException {
-      if (expiry == null) throw new EOFException();
+      if (expiry == null) throw new EOFException("No expiry passed");
       return Long.parseLong(expiry); // seconds
    }
 
    private int getBytes(String bytes) throws IOException {
-      if (bytes == null) throw new EOFException();
+      if (bytes == null) throw new EOFException("No bytes for storage command passed");
       return Integer.parseInt(bytes);
    }
 
@@ -142,5 +151,17 @@ public class CommandFactory {
          }
       }
       return false;
+   }
+
+   private int parseDelayedDeleteTime(int expectedIndex, String[] args) {
+      if (args.length > expectedIndex) {
+         try {
+            return Integer.parseInt(args[expectedIndex]);
+         } catch (NumberFormatException e) {
+            // Either unformatted number, or noreply found
+            return -1;
+         }
+      }
+      return 0;
    }
 }
