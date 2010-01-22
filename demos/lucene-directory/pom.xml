@@ -23,8 +23,8 @@
       </dependency>
       <dependency>
          <groupId>jboss.jbossts</groupId>
-         <artifactId>jbossjts</artifactId>
-         <version>4.6.0.GA</version>
+         <artifactId>jbossjta</artifactId>
+         <version>4.9.0.GA</version>
       </dependency>
       <dependency>
          <groupId>jboss.jbossts</groupId>
