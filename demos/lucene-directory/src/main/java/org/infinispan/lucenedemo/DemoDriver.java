@@ -44,6 +44,7 @@ public class DemoDriver implements Runnable {
    public static void main(String[] args) throws IOException {
       DemoDriver driver = new DemoDriver();
       driver.run();
+      DirectoryFactory.close();
    }
 
    private void doQuery(Scanner scanner) throws IOException {
@@ -70,7 +71,7 @@ public class DemoDriver implements Runnable {
       actions.addNewDocument(line);
    }
 
-   private void listAllDocuments() throws IOException {
+   private void listAllDocuments() {
       List<String> listMatches = actions.listAllDocuments();
       printResult(listMatches);
    }
@@ -90,7 +91,7 @@ public class DemoDriver implements Runnable {
                "\t[5] quit");
    }
 
-   private void printResult(List<String> storedValues) throws IOException {
+   private void printResult(List<String> storedValues) {
       System.out.println("Matching documents:\n");
       if (storedValues.isEmpty()) {
          System.out.println("\tNo documents found.");
@@ -133,8 +134,7 @@ public class DemoDriver implements Runnable {
                   break;
                case 5:
                   System.out.println("Quit.");
-                  System.exit(0);
-                  break;
+                  return;
                default:
                   System.out.println("Invalid option.");
             }

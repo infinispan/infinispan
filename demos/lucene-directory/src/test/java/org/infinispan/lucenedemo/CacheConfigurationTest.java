@@ -21,8 +21,15 @@
  */
 package org.infinispan.lucenedemo;
 
-import org.apache.lucene.store.Directory;
+import java.io.IOException;
+import java.util.List;
+
+import org.apache.lucene.queryParser.ParseException;
+import org.apache.lucene.search.Query;
+import org.infinispan.lucene.InfinispanDirectory;
 import org.infinispan.lucenedemo.DirectoryFactory;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
@@ -33,15 +40,42 @@ import org.testng.annotations.Test;
  */
 @Test
 public class CacheConfigurationTest {
+   
+   private InfinispanDirectory cacheForIndex1;
+   private InfinispanDirectory cacheForIndex2;
+   private InfinispanDirectory cacheForIndex3;
+
+   @BeforeClass
+   public void init() {
+      cacheForIndex1 = DirectoryFactory.getIndex("firstIndex");
+      cacheForIndex2 = DirectoryFactory.getIndex("firstIndex");
+      cacheForIndex3 = DirectoryFactory.getIndex("secondIndex");
+   }
+   
+   @AfterClass
+   public void cleanup() {
+      DirectoryFactory.close();
+   }
 
    @Test
-   public void testAbleToCreateCaches() {
-      Directory cacheForIndex1 = DirectoryFactory.getIndex("firstIndex");
-      Directory cacheForIndex2 = DirectoryFactory.getIndex("firstIndex");
-      Directory cacheForIndex3 = DirectoryFactory.getIndex("secondIndex");
+   public void testCorrectCacheInstances() {
       assert cacheForIndex1 != null;
       assert cacheForIndex1 == cacheForIndex2;
       assert cacheForIndex1 != cacheForIndex3;
+   }
+   
+   @Test
+   public void inserting() throws IOException, ParseException {
+      DemoActions node1 = new DemoActions(cacheForIndex1);
+      DemoActions node2 = new DemoActions(cacheForIndex2);
+      node1.addNewDocument("hello?");
+      assert node1.listAllDocuments().size()==1;
+      node1.addNewDocument("anybody there?");
+      assert node2.listAllDocuments().size()==2;
+      Query query = node1.parseQuery("hello world");
+      List<String> valuesMatchingQuery = node2.listStoredValuesMatchingQuery(query);
+      assert valuesMatchingQuery.size()==1;
+      assert valuesMatchingQuery.get(0).equals("hello?");
    }
 
 }

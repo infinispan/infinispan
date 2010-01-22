@@ -23,6 +23,7 @@ package org.infinispan.lucenedemo;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.lucene.analysis.Analyzer;
@@ -63,28 +64,38 @@ public class DemoActions {
    public DemoActions() {
       index = DirectoryFactory.getIndex("index");
    }
+   
+   public DemoActions(InfinispanDirectory index) {
+      this.index = index;
+   }
 
    /**
     * Runs a Query and returns the stored field for each matching document
     * @throws IOException
     */
-   public List<String> listStoredValuesMatchingQuery(Query query) throws IOException {
-      IndexSearcher searcher = new IndexSearcher(index);
-      TopDocs topDocs = searcher.search(query, null, 100);// demo limited to 100 documents!
-      ScoreDoc[] scoreDocs = topDocs.scoreDocs;
-      List<String> list = new ArrayList<String>();
-      for (ScoreDoc sd : scoreDocs) {
-         Document doc = searcher.doc(sd.doc);
-         list.add(doc.get(MAIN_FIELD));
+   public List<String> listStoredValuesMatchingQuery(Query query) {
+      try {
+         IndexSearcher searcher = new IndexSearcher(index);
+         TopDocs topDocs = searcher.search(query, null, 100);// demo limited to 100 documents!
+         ScoreDoc[] scoreDocs = topDocs.scoreDocs;
+         List<String> list = new ArrayList<String>();
+         for (ScoreDoc sd : scoreDocs) {
+            Document doc = searcher.doc(sd.doc);
+            list.add(doc.get(MAIN_FIELD));
+         }
+         return list;
+      } catch (IOException ioe) {
+         // not recommended: in the simple demo this likely means that the index was not yet
+         // initialized, so returning empty list.
+         return Collections.EMPTY_LIST;
       }
-      return list;
    }
    
    /**
     * Returns a list of the values of all stored fields
     * @throws IOException 
     */
-   public List<String> listAllDocuments() throws IOException {
+   public List<String> listAllDocuments() {
       MatchAllDocsQuery q = new MatchAllDocsQuery();
       return listStoredValuesMatchingQuery(q);
    }

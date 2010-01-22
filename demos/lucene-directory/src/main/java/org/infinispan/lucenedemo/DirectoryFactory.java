@@ -81,5 +81,11 @@ public class DirectoryFactory {
       }
       return dir;
    }
+   
+   public static synchronized void close() {
+      if (manager!=null) {
+         manager.stop();
+      }
+   }
 
 }
