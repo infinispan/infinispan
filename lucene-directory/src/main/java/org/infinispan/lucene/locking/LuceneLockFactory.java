@@ -55,7 +55,7 @@ public class LuceneLockFactory extends LockFactory {
    public LuceneLockFactory(Cache<CacheKey, Object> cache, String indexName) {
       this.cache = cache;
       this.indexName = indexName;
-      tm = cache.getAdvancedCache().getComponentRegistry().getComponent(TransactionManager.class);
+      tm = cache.getAdvancedCache().getTransactionManager();
       if (tm == null) {
          ComponentStatus status = cache.getAdvancedCache().getComponentRegistry().getStatus();
          if (status.equals(ComponentStatus.RUNNING)) {
