@@ -227,12 +227,15 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          Message msg = new Message();
          msg.setBuffer(buf);
          if (oob) msg.setFlag(Message.OOB);
-         if (mode != GroupRequest.GET_NONE) msg.setFlag(Message.DONT_BUNDLE);
+         if (mode != GroupRequest.GET_NONE) {
+            msg.setFlag(Message.DONT_BUNDLE);
+            msg.setFlag(Message.NO_FC);
+         }
          if (recipient != null) msg.setDest(recipient);
          return msg;
       }
 
-      public RspList call() throws Exception {
+      private Buffer marshallCall() {
          Buffer buf;
          try {
             buf = req_marshaller.objectToBuffer(command);
@@ -240,6 +243,10 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          catch (Exception e) {
             throw new RuntimeException("Failure to marshal argument(s)", e);
          }
+         return buf;
+      }
+
+      public RspList call() throws Exception {
 
          // Replay capability requires responses from all members!
          int mode = supportReplay ? GroupRequest.GET_ALL : this.mode;
@@ -251,13 +258,14 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          if (filter != null) mode = GroupRequest.GET_FIRST;
 
          RspList retval = null;
-
+         Buffer buf;
          if (broadcast || FORCE_MCAST) {
             RequestOptions opts = new RequestOptions();
             opts.setMode(mode);
             opts.setTimeout(timeout);
             opts.setRspFilter(filter);
             opts.setAnycasting(false);
+            buf = marshallCall();
             retval = castMessage(dests, constructMessage(buf, null), opts);
          } else {
             Set<Address> targets = new HashSet<Address>(dests); // should sufficiently randomize order.
@@ -266,6 +274,8 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
             opts.setTimeout(timeout);
 
             targets.remove(channel.getAddress()); // just in case
+            if (targets.isEmpty()) return new RspList();
+            buf = marshallCall();
 
             // if at all possible, try not to use JGroups' ANYCAST for now.  Multiple (parallel) UNICASTs are much faster.
             if (filter != null) {
