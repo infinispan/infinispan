@@ -1,12 +1,17 @@
 package org.infinispan.loaders;
 
+import com.sun.tools.javac.code.Flags;
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.container.entries.InternalCacheEntry;
+
+import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
 import static org.infinispan.context.Flag.SKIP_CACHE_STATUS_CHECK;
+
+import org.infinispan.context.Flag;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -123,7 +128,7 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
             }
 
             for (InternalCacheEntry e : state)
-               cache.getAdvancedCache().withFlags(SKIP_CACHE_STATUS_CHECK).put(e.getKey(), e.getValue(), e.getLifespan(), MILLISECONDS, e.getMaxIdle(), MILLISECONDS);
+               cache.getAdvancedCache().withFlags(SKIP_CACHE_STATUS_CHECK, CACHE_MODE_LOCAL).put(e.getKey(), e.getValue(), e.getLifespan(), MILLISECONDS, e.getMaxIdle(), MILLISECONDS);
 
             if (log.isDebugEnabled()) stop = System.currentTimeMillis();
             if (log.isDebugEnabled()) total = stop - start;
