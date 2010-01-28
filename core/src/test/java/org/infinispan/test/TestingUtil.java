@@ -23,7 +23,6 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.loaders.CacheLoader;
 import org.infinispan.loaders.CacheLoaderManager;
-import org.infinispan.loaders.file.FileCacheStoreTest;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.remoting.ReplicationQueue;
@@ -35,6 +34,7 @@ import org.infinispan.util.logging.LogFactory;
 import javax.transaction.TransactionManager;
 import java.io.File;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -769,5 +769,23 @@ public class TestingUtil {
          if (!prefix.endsWith(separator)) prefix += separator;
       }
       return prefix + TEST_PATH + separator + test.getClass().getSimpleName();
+   }
+
+   public static String k(Method method, String index) {
+      return new StringBuilder().append("k").append(index).append('-')
+         .append(method.getName()).toString();
+   }
+
+   public static String v(Method method, String index) {
+      return new StringBuilder().append("v").append(index).append('-')
+         .append(method.getName()).toString();
+   }
+
+   public static String k(Method method) {
+      return k(method, "");
+   }
+
+   public static Object v(Method method) {
+      return v(method, "");
    }
 }

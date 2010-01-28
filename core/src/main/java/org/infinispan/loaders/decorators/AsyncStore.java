@@ -8,11 +8,14 @@ import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.modifications.Clear;
+import org.infinispan.loaders.modifications.Commit;
 import org.infinispan.loaders.modifications.Modification;
+import org.infinispan.loaders.modifications.Prepare;
 import org.infinispan.loaders.modifications.PurgeExpired;
 import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
 import org.infinispan.marshall.Marshaller;
+import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.locks.containers.ReentrantPerEntryLockContainer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -36,8 +39,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-
-import static org.infinispan.loaders.modifications.Modification.Type.*;
 
 /**
  * The AsyncStore is a delegating CacheStore that extends AbstractDelegatingStore, overriding methods to that should not
@@ -121,6 +122,18 @@ public class AsyncStore extends AbstractDelegatingStore {
    }
 
    @Override
+   public void prepare(List<? extends Modification> list, GlobalTransaction tx, boolean isOnePhase) {
+      Prepare prepare = new Prepare(list, tx, isOnePhase);
+      enqueue(prepare, prepare);
+   }
+
+   @Override
+   public void commit(GlobalTransaction tx) throws CacheLoaderException {
+      Commit commit = new Commit(tx);
+      enqueue(commit, commit);
+   }
+
+   @Override
    public void start() throws CacheLoaderException {
       state = newStateMap();
       log.info("Async cache loader starting {0}", this);
@@ -163,7 +176,7 @@ public class AsyncStore extends AbstractDelegatingStore {
          Modification mod = entry.getValue();
          switch (mod.getType()) {
             case STORE:
-               super.store(((Store)mod).getStoredEntry());
+               super.store(((Store) mod).getStoredEntry());
                break;
             case REMOVE:
                super.remove(entry.getKey());
@@ -173,6 +186,12 @@ public class AsyncStore extends AbstractDelegatingStore {
                break;
             case PURGE_EXPIRED:
                super.purgeExpired();
+               break;
+            case PREPARE:
+               super.prepare(((Prepare) mod).getList(), ((Prepare) mod).getTx(), ((Prepare) mod).isOnePhase());
+               break;
+            case COMMIT:
+               super.commit(((Commit) mod).getTx());
                break;
          }
       }

@@ -7,21 +7,32 @@ import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
 import org.infinispan.loaders.modifications.Modification;
+import org.infinispan.loaders.modifications.Prepare;
+import org.infinispan.loaders.modifications.Remove;
+import org.infinispan.loaders.modifications.Store;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.transaction.xa.GlobalTransactionFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import static org.infinispan.test.TestingUtil.*;
 
 @Test(groups = "unit", testName = "loaders.decorators.AsyncTest")
 public class AsyncTest extends AbstractInfinispanTest {
@@ -119,6 +130,67 @@ public class AsyncTest extends AbstractInfinispanTest {
          endLatch.await();
 
          assert store.load(key).getValue().equals("v2");
+      } finally {
+         store.delegate.clear();
+         store.stop();
+         store = null;
+      }
+   }
+
+   public void testTransactionalModifications(Method m) throws Exception {
+      try {
+         final GlobalTransactionFactory gtf = new GlobalTransactionFactory();
+         final String k1 = k(m, "1"), k2 = k(m, "2"), v1 = v(m, "1"), v2 = v(m, "2");
+         final ConcurrentMap<Object, Modification> localMods = new ConcurrentHashMap<Object, Modification>();
+         final CyclicBarrier barrier = new CyclicBarrier(2);
+         DummyInMemoryCacheStore underlying = new DummyInMemoryCacheStore();
+         store = new AsyncStore(underlying, asyncConfig) {
+            @Override
+            protected void applyModificationsSync(ConcurrentMap<Object, Modification> mods) throws CacheLoaderException {
+               for (Map.Entry<Object, Modification> entry : mods.entrySet()) {
+                  localMods.put(entry.getKey(), entry.getValue());
+               }
+//               try {
+//                  barrier.await(5, TimeUnit.SECONDS);
+//               } catch (TimeoutException e) {
+//                  assert false : "Timed out waiting for modifications";
+//               } catch (Exception e) {
+//                  throw new CacheLoaderException("Barried failed", e);
+//               }
+               super.applyModificationsSync(mods);
+               try {
+                  barrier.await(5, TimeUnit.SECONDS);
+               } catch (TimeoutException e) {
+                  assert false : "Timed out applying for modifications";
+               } catch (Exception e) {
+                  throw new CacheLoaderException("Barried failed", e);
+               }
+            }
+         };
+         dummyCfg = new DummyInMemoryCacheStore.Cfg();
+         dummyCfg.setStore(m.getName());
+         store.init(dummyCfg, null, null);
+         store.start();
+
+         List<Modification> mods = new ArrayList<Modification>();
+         mods.add(new Store(InternalEntryFactory.create(k1, v1)));
+         mods.add(new Store(InternalEntryFactory.create(k2, v2)));
+         mods.add(new Remove(k1));
+         GlobalTransaction tx = gtf.newGlobalTransaction(null, false);
+         store.prepare(mods, tx, false);
+         barrier.await(5, TimeUnit.SECONDS);
+//         barrier.await(5, TimeUnit.SECONDS);
+
+         assert 1 == localMods.size();
+         assert localMods.entrySet().iterator().next().getKey() instanceof Prepare;
+         assert !store.containsKey(k1);
+         assert !store.containsKey(k2);
+
+         store.commit(tx);
+         barrier.await(5, TimeUnit.SECONDS);
+//         barrier.await(5, TimeUnit.SECONDS);
+         assert store.load(k2).getValue().equals(v2);
+         assert !store.containsKey(k1);
       } finally {
          store.delegate.clear();
          store.stop();
