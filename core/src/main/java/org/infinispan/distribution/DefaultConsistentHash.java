@@ -24,8 +24,8 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
    final static int HASH_SPACE = 10240; // no more than 10k nodes?
 
    private int hash(Object o) {
-      // Spread bits to regularize both segment and index locations,
-      // using variant of single-word Wang/Jenkins hash.
+      // Borrowed from Sun's JDK, a bit spreader to help normalize distribution.
+      // Uses a variant of single-word Wang/Jenkins hash.
       int h = o.hashCode();
       h += (h << 15) ^ 0xffffcd7d;
       h ^= (h >>> 10);
