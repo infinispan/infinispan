@@ -206,7 +206,7 @@ public class MarshalledValue {
 
    @Override
    public String toString() {
-      return "MarshalledValue(cachedHashCode=" + cachedHashCode + "; serialized=" + (raw != null) + ")";
+      return "MarshalledValue(cachedHashCode=" + cachedHashCode + "; serialized=" + (raw != null) + ")@" + Integer.toHexString(System.identityHashCode(this));
    }
 
    /**
