@@ -50,10 +50,10 @@ import java.util.Arrays;
  */
 @Marshallable(externalizer = MarshalledValue.Externalizer.class, id = Ids.MARSHALLED_VALUE)
 public class MarshalledValue {
-   protected Object instance;
-   protected byte[] raw;
-   private int cachedHashCode = 0;
-   // by default equals() will test on the istance rather than the byte array if conversion is required.
+   volatile protected Object instance;
+   volatile protected byte[] raw;
+   volatile private int cachedHashCode = 0;
+   // by default equals() will test on the instance rather than the byte array if conversion is required.
    private transient boolean equalityPreferenceForInstance = true;
    private final Marshaller marshaller;
 
