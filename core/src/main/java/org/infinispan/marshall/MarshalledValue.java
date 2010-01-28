@@ -206,7 +206,13 @@ public class MarshalledValue {
 
    @Override
    public String toString() {
-      return "MarshalledValue(cachedHashCode=" + cachedHashCode + "; serialized=" + (raw != null) + ")@" + Integer.toHexString(System.identityHashCode(this));
+      StringBuilder sb = new StringBuilder()
+         .append("MarshalledValue(")
+         .append("instance=").append(instance != null ? instance.toString() : "<undeserialized>")
+         .append("; cachedHashCode=").append(cachedHashCode)
+         .append("; serialized=").append(raw != null)
+         .append(")@").append(Integer.toHexString(System.identityHashCode(this)));
+      return sb.toString();
    }
 
    /**
