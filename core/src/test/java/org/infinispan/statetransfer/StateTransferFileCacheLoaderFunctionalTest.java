@@ -44,6 +44,8 @@ import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import static org.infinispan.statetransfer.StateTransferTestingUtil.*;
+
 /**
  * StateTransferFileCacheStoreFunctionalTest.
  * 
@@ -120,9 +122,9 @@ public class StateTransferFileCacheLoaderFunctionalTest extends MultipleCacheMan
          sharedCacheLoader.set(true);
          cm1 = createCacheManager(tmpDirectory1);
          Cache c1 = cm1.getCache(cacheName);
-         StateTransferTestingUtil.verifyNoDataOnLoader(c1);
-         StateTransferTestingUtil.verifyNoData(c1);
-         StateTransferTestingUtil.writeInitialData(c1);
+         verifyNoDataOnLoader(c1);
+         verifyNoData(c1);
+         writeInitialData(c1);
 
          // starting the second cache would initialize an in-memory state transfer but not a persistent one since the loader is shared
          cm2 = createCacheManager(tmpDirectory2);
@@ -130,11 +132,11 @@ public class StateTransferFileCacheLoaderFunctionalTest extends MultipleCacheMan
 
          TestingUtil.blockUntilViewsReceived(60000, c1, c2);
 
-         StateTransferTestingUtil.verifyInitialDataOnLoader(c1);
-         StateTransferTestingUtil.verifyInitialData(c1);
+         verifyInitialDataOnLoader(c1);
+         verifyInitialData(c1);
 
-         StateTransferTestingUtil.verifyNoDataOnLoader(c2);
-         StateTransferTestingUtil.verifyNoData(c2);
+         verifyNoDataOnLoader(c2);
+         verifyNoData(c2);
       } finally {
          if (cm1 != null) cm1.stop();
          if (cm2 != null) cm2.stop();
@@ -150,7 +152,7 @@ public class StateTransferFileCacheLoaderFunctionalTest extends MultipleCacheMan
          Cache<Object, Object> cache1, cache2;
          cm1 = createCacheManager(tmpDirectory1);
          cache1 = cm1.getCache(cacheName);
-         StateTransferTestingUtil.writeInitialData(cache1);
+         writeInitialData(cache1);
 
          cm2 = createCacheManager(tmpDirectory2);
          cache2 = cm2.getCache(cacheName);
@@ -158,7 +160,7 @@ public class StateTransferFileCacheLoaderFunctionalTest extends MultipleCacheMan
          // Pause to give caches time to see each other
          TestingUtil.blockUntilViewsReceived(60000, cache1, cache2);
 
-         StateTransferTestingUtil.verifyInitialData(cache2);
+         verifyInitialData(cache2);
          log.info("testInitialStateTransfer end - " + testCount);
       } finally {
          if (cm1 != null) cm1.stop();
@@ -174,7 +176,7 @@ public class StateTransferFileCacheLoaderFunctionalTest extends MultipleCacheMan
          Cache<Object, Object> cache1 = null, cache2 = null, cache3 = null;
          cm1 = createCacheManager(tmpDirectory1);
          cache1 = cm1.getCache(cacheName);
-         StateTransferTestingUtil.writeInitialData(cache1);
+         writeInitialData(cache1);
 
          cm2 = createCacheManager(tmpDirectory2);
          cache2 = cm2.getCache(cacheName);
@@ -183,7 +185,7 @@ public class StateTransferFileCacheLoaderFunctionalTest extends MultipleCacheMan
 
          // Pause to give caches time to see each other
          TestingUtil.blockUntilViewsReceived(60000, cache1, cache2);
-         StateTransferTestingUtil.verifyInitialData(cache2);
+         verifyInitialData(cache2);
 
          final CacheManager cm3 = createCacheManager(tmpDirectory3);
 
@@ -205,7 +207,7 @@ public class StateTransferFileCacheLoaderFunctionalTest extends MultipleCacheMan
          cache3 = cm3.getCache(cacheName);
 
          TestingUtil.blockUntilViewsReceived(120000, cache1, cache2, cache3);
-         StateTransferTestingUtil.verifyInitialData(cache3);
+         verifyInitialData(cache3);
          log.info("testConcurrentStateTransfer end - " + testCount);
       } finally {
          if (cm1 != null) cm1.stop();
@@ -214,72 +216,70 @@ public class StateTransferFileCacheLoaderFunctionalTest extends MultipleCacheMan
       }
    }
 
-//   @Override
-//   public void testConcurrentStateTransfer() throws Exception {
-//      testCount++;
-//      log.info("testConcurrentStateTransfer start - " + testCount);
-//      CacheManager cm1 = null, cm2 = null, cm30 = null, cm40 = null;
-//      try {
-//         Cache<Object, Object> cache1 = null, cache2 = null, cache3 = null, cache4 = null;
-//         cm1 = createCacheManager(tmpDirectory1);
-//         cache1 = cm1.getCache(cacheName);
-//         writeInitialData(cache1);
-//
-//         cm2 = createCacheManager(tmpDirectory2);
-//         cache2 = cm2.getCache(cacheName);
-//
-//         cache1.put("delay", new StateTransferFunctionalTest.DelayTransfer());
-//
-//         // Pause to give caches time to see each other
-//         TestingUtil.blockUntilViewsReceived(60000, cache1, cache2);
-//         verifyInitialData(cache2);
-//
-//         final CacheManager cm3 = createCacheManager(tmpDirectory3);
-////         final CacheManager cm4 = createCacheManager(tmpDirectory4);
-//
-//         cm30 = cm3;
-////         cm40 = cm4;
-//
-//         Future<Void> f1 = Executors.newSingleThreadExecutor(new ThreadFactory() {
-//            public Thread newThread(Runnable r) {
-//               return new Thread(r, "CacheStarter-Cache3");
-//            }
-//         }).submit(new Callable<Void>() {
-//            public Void call() throws Exception {
-//               cm3.getCache(cacheName);
-//               return null;
-//            }
-//         });
-//
-////         Future<Void> f2 = Executors.newSingleThreadExecutor(new ThreadFactory() {
-////            public Thread newThread(Runnable r) {
-////               return new Thread(r, "CacheStarter-Cache4");
-////            }
-////         }).submit(new Callable<Void>() {
-////            public Void call() throws Exception {
-////               cm4.getCache(cacheName);
-////               return null;
-////            }
-////         });
-//
-//         f1.get();
-////         f2.get();
-//
-//         cache3 = cm3.getCache(cacheName);
-////         cache4 = cm4.getCache(cacheName);
-//
-//         TestingUtil.blockUntilViewsReceived(120000, cache1, cache2, cache3);
-////         TestingUtil.blockUntilViewsReceived(120000, cache1, cache2, cache3, cache4);
-//         verifyInitialData(cache3);
-////         verifyInitialData(cache4);
-//         log.info("testConcurrentStateTransfer end - " + testCount);
-//      } finally {
-//         if (cm1 != null) cm1.stop();
-//         if (cm2 != null) cm2.stop();
-//         if (cm30 != null) cm30.stop();
-////         if (cm40 != null) cm40.stop();
-//      }
-//   }
+   public void testConcurrentStateTransfer() throws Exception {
+      testCount++;
+      log.info("testConcurrentStateTransfer start - " + testCount);
+      CacheManager cm1 = null, cm2 = null, cm30 = null, cm40 = null;
+      try {
+         Cache<Object, Object> cache1 = null, cache2 = null, cache3 = null, cache4 = null;
+         cm1 = createCacheManager(tmpDirectory1);
+         cache1 = cm1.getCache(cacheName);
+         writeInitialData(cache1);
+
+         cm2 = createCacheManager(tmpDirectory2);
+         cache2 = cm2.getCache(cacheName);
+
+         cache1.put("delay", new StateTransferFunctionalTest.DelayTransfer());
+
+         // Pause to give caches time to see each other
+         TestingUtil.blockUntilViewsReceived(60000, cache1, cache2);
+         verifyInitialData(cache2);
+
+         final CacheManager cm3 = createCacheManager(tmpDirectory3);
+         final CacheManager cm4 = createCacheManager(tmpDirectory4);
+
+         cm30 = cm3;
+         cm40 = cm4;
+
+         Future<Void> f1 = Executors.newSingleThreadExecutor(new ThreadFactory() {
+            public Thread newThread(Runnable r) {
+               return new Thread(r, "CacheStarter-Cache3");
+            }
+         }).submit(new Callable<Void>() {
+            public Void call() throws Exception {
+               cm3.getCache(cacheName);
+               return null;
+            }
+         });
+
+         Future<Void> f2 = Executors.newSingleThreadExecutor(new ThreadFactory() {
+            public Thread newThread(Runnable r) {
+               return new Thread(r, "CacheStarter-Cache4");
+            }
+         }).submit(new Callable<Void>() {
+            public Void call() throws Exception {
+               cm4.getCache(cacheName);
+               return null;
+            }
+         });
+
+         f1.get();
+         f2.get();
+
+         cache3 = cm3.getCache(cacheName);
+         cache4 = cm4.getCache(cacheName);
+
+         TestingUtil.blockUntilViewsReceived(120000, cache1, cache2, cache3, cache4);
+         verifyInitialData(cache3);
+         verifyInitialData(cache4);
+         log.info("testConcurrentStateTransfer end - " + testCount);
+      } finally {
+         if (cm1 != null) cm1.stop();
+         if (cm2 != null) cm2.stop();
+         if (cm30 != null) cm30.stop();
+         if (cm40 != null) cm40.stop();
+      }
+   }
 
 
 }
