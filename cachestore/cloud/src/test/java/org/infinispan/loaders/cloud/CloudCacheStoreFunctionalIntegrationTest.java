@@ -28,54 +28,57 @@ import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-@Test(groups = "unit", sequential = true, testName = "loaders.cloud.CloudCacheStoreFunctionalIntegrationTest", enabled = false)
-public class CloudCacheStoreFunctionalIntegrationTest extends BaseCacheStoreFunctionalTest {
+// TODO figure out why a disabled test is still run in Hudson!!
+public class CloudCacheStoreFunctionalIntegrationTest {}
 
-   private String proxyHost;
-   private String proxyPort = "-1";
-   private int maxConnections = 20;
-   private boolean isSecure = false;
-   private String csBucket;
-   private String accessKey;
-   private String secretKey;
-   private String cs;
-
-   private static final String sysUsername = System.getProperty("infinispan.jclouds.username");
-   private static final String sysPassword = System.getProperty("infinispan.jclouds.password");
-   private static final String sysService = System.getProperty("infinispan.jclouds.service");
-
-   @BeforeTest
-   @Parameters({"infinispan.jclouds.username", "infinispan.jclouds.password", "infinispan.jclouds.service"})
-   protected void setUpClient(@Optional String JcloudsUsername,
-                              @Optional String JcloudsPassword,
-                              @Optional String JcloudsService) throws Exception {
-
-      accessKey = (JcloudsUsername == null) ? sysUsername : JcloudsUsername;
-      secretKey = (JcloudsPassword == null) ? sysPassword : JcloudsPassword;
-      cs = (JcloudsService == null) ? sysService : JcloudsService;
-
-      if (accessKey == null || accessKey.trim().equals("") || secretKey == null || secretKey.trim().equals("")) {
-         accessKey = "dummy";
-         secretKey = "dummy";
-      }
-      csBucket = (System.getProperty("user.name") + "." + this.getClass().getSimpleName()).toLowerCase().replace('.', '-'); // azure limitation on no periods
-      csBucket = csBucket.length() > 32 ? csBucket.substring(0, 32): csBucket;//azure limitation on length
-      System.out.printf("accessKey: %1$s, bucket: %2$s%n", accessKey, csBucket);
-   }
-
-
-   @Override
-   protected CacheStoreConfig createCacheStoreConfig() throws Exception {
-      CloudCacheStoreConfig cfg = new CloudCacheStoreConfig();
-      cfg.setCloudService(cs);
-      cfg.setBucketPrefix(csBucket);
-      cfg.setIdentity(accessKey);
-      cfg.setPassword(secretKey);
-      cfg.setProxyHost(proxyHost);
-      cfg.setProxyPort(proxyPort);
-      cfg.setSecure(isSecure);
-      cfg.setMaxConnections(maxConnections);
-      cfg.setPurgeSynchronously(true); // for more accurate unit testing
-      return cfg;
-   }
-}
+//@Test(groups = "unit", sequential = true, testName = "loaders.cloud.CloudCacheStoreFunctionalIntegrationTest", enabled = false)
+//public class CloudCacheStoreFunctionalIntegrationTest extends BaseCacheStoreFunctionalTest {
+//
+//   private String proxyHost;
+//   private String proxyPort = "-1";
+//   private int maxConnections = 20;
+//   private boolean isSecure = false;
+//   private String csBucket;
+//   private String accessKey;
+//   private String secretKey;
+//   private String cs;
+//
+//   private static final String sysUsername = System.getProperty("infinispan.jclouds.username");
+//   private static final String sysPassword = System.getProperty("infinispan.jclouds.password");
+//   private static final String sysService = System.getProperty("infinispan.jclouds.service");
+//
+//   @BeforeTest
+//   @Parameters({"infinispan.jclouds.username", "infinispan.jclouds.password", "infinispan.jclouds.service"})
+//   protected void setUpClient(@Optional String JcloudsUsername,
+//                              @Optional String JcloudsPassword,
+//                              @Optional String JcloudsService) throws Exception {
+//
+//      accessKey = (JcloudsUsername == null) ? sysUsername : JcloudsUsername;
+//      secretKey = (JcloudsPassword == null) ? sysPassword : JcloudsPassword;
+//      cs = (JcloudsService == null) ? sysService : JcloudsService;
+//
+//      if (accessKey == null || accessKey.trim().equals("") || secretKey == null || secretKey.trim().equals("")) {
+//         accessKey = "dummy";
+//         secretKey = "dummy";
+//      }
+//      csBucket = (System.getProperty("user.name") + "." + this.getClass().getSimpleName()).toLowerCase().replace('.', '-'); // azure limitation on no periods
+//      csBucket = csBucket.length() > 32 ? csBucket.substring(0, 32): csBucket;//azure limitation on length
+//      System.out.printf("accessKey: %1$s, bucket: %2$s%n", accessKey, csBucket);
+//   }
+//
+//
+//   @Override
+//   protected CacheStoreConfig createCacheStoreConfig() throws Exception {
+//      CloudCacheStoreConfig cfg = new CloudCacheStoreConfig();
+//      cfg.setCloudService(cs);
+//      cfg.setBucketPrefix(csBucket);
+//      cfg.setIdentity(accessKey);
+//      cfg.setPassword(secretKey);
+//      cfg.setProxyHost(proxyHost);
+//      cfg.setProxyPort(proxyPort);
+//      cfg.setSecure(isSecure);
+//      cfg.setMaxConnections(maxConnections);
+//      cfg.setPurgeSynchronously(true); // for more accurate unit testing
+//      return cfg;
+//   }
+//}

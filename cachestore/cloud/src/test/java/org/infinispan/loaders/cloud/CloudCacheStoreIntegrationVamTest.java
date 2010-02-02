@@ -26,19 +26,23 @@ import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.VersionAwareMarshaller;
 import org.testng.annotations.Test;
 
+// TODO figure out why a disabled test is still run in Hudson!!
+public class CloudCacheStoreIntegrationVamTest{}
+
+
 /**
  * CloudCacheStoreIntegrationTest using production level marshaller.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-@Test(groups = "unit", sequential = true, testName = "loaders.cloud.CloudCacheStoreIntegrationVamTest", enabled = false)
-public class CloudCacheStoreIntegrationVamTest extends CloudCacheStoreIntegrationTest {
-   @Override
-   protected Marshaller getMarshaller() {
-      VersionAwareMarshaller marshaller = new VersionAwareMarshaller();
-      marshaller.inject(Thread.currentThread().getContextClassLoader(), new RemoteCommandsFactory());
-      marshaller.start();
-      return marshaller;
-   }
-}
+//@Test(groups = "unit", sequential = true, testName = "loaders.cloud.CloudCacheStoreIntegrationVamTest", enabled = false)
+//public class CloudCacheStoreIntegrationVamTest extends CloudCacheStoreIntegrationTest {
+//   @Override
+//   protected Marshaller getMarshaller() {
+//      VersionAwareMarshaller marshaller = new VersionAwareMarshaller();
+//      marshaller.inject(Thread.currentThread().getContextClassLoader(), new RemoteCommandsFactory());
+//      marshaller.start();
+//      return marshaller;
+//   }
+//}
