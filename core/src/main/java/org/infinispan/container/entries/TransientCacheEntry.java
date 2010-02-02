@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
+import static java.lang.Math.min;
+
 /**
  * A cache entry that is transient, i.e., it can be considered expired afer a period of not being used.
  *
@@ -64,7 +66,7 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
    }
 
    public long getExpiryTime() {
-      return -1;
+      return cacheValue.maxIdle > -1 ? cacheValue.lastUsed + cacheValue.maxIdle : -1;
    }
 
    public final long getMaxIdle() {

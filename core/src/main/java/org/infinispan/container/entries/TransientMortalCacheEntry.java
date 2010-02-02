@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
+import static java.lang.Math.min;
+
 /**
  * A cache entry that is both transient and mortal.
  *
@@ -65,7 +67,11 @@ public class TransientMortalCacheEntry extends AbstractInternalCacheEntry {
    }
 
    public final long getExpiryTime() {
-      return cacheValue.lifespan > -1 ? cacheValue.created + cacheValue.lifespan : -1;
+      long lset = cacheValue.lifespan > -1 ? cacheValue.created + cacheValue.lifespan : -1;
+      long muet = cacheValue.maxIdle > -1 ? cacheValue.lastUsed + cacheValue.maxIdle : -1;
+      if (lset == -1) return muet;
+      if (muet == -1) return lset;
+      return min(lset, muet);
    }
 
    public InternalCacheValue toInternalCacheValue() {
