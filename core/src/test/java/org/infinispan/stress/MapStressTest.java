@@ -53,17 +53,14 @@ public class MapStressTest {
         }
     }
     
-    @Test(invocationCount=5)
-    public void testConcurrentHashMap() throws Exception {                        
+    public void testConcurrentHashMap() throws Exception {
         doTest(new ConcurrentHashMap<Integer, Integer>(MAP_CAPACITY, MAP_LOAD_FACTOR, CONCURRENCY));
     }
    
-    @Test(invocationCount=5)
     public void testBufferedConcurrentHashMap() throws Exception {
         doTest(new BufferedConcurrentHashMap<Integer, Integer>(MAP_CAPACITY, MAP_LOAD_FACTOR, CONCURRENCY, EvictionStrategy.LRU,null));
     }
 
-    @Test(invocationCount=5)
     public void testHashMap() throws Exception {
         doTest(Collections.synchronizedMap(new HashMap<Integer, Integer>(MAP_CAPACITY, MAP_LOAD_FACTOR)));
     }
