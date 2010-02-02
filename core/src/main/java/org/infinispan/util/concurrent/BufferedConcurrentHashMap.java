@@ -599,16 +599,22 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
                     }                    
                 } else {
                     oldValue = null;
-                    ++modCount;
-                    tab[index] = new HashEntry<K, V>(key, hash, first, value);
+                    ++modCount;                    
                     count = c; // write-volatile
-                    if (ea.strategy() != EvictionStrategy.NONE) {                       
-                        ea.onEntryMiss(tab[index]);                        
-                        if (c > tab.length) {                           
-                            // remove elements and thus lower count
+                    if (ea.strategy() != EvictionStrategy.NONE) {
+                        if (c > tab.length) {
+                            // remove entries;lower count
                             evicted = ea.execute();
                             assert !evicted.isEmpty();
+                            // re-read first
+                            first = tab[index];
                         }
+                        // add a new entry
+                        tab[index] = new HashEntry<K, V>(key, hash, first, value);
+                        // notify a miss
+                        ea.onEntryMiss(tab[index]);
+                    } else {
+                        tab[index] = new HashEntry<K, V>(key, hash, first, value);
                     }
                 }
                 return oldValue;
