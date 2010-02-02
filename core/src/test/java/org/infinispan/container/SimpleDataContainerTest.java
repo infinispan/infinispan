@@ -81,7 +81,7 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       Thread.sleep(100); // for time calc granularity
       ice = dc.get("k");
       assert ice.getClass().equals(transienttype());
-      assert ice.getExpiryTime() == -1;
+      assert ice.getExpiryTime() > -1;
       assert ice.getLastUsed() > oldTime;
       Thread.sleep(100); // for time calc granularity
       assert ice.getLastUsed() < System.currentTimeMillis();
