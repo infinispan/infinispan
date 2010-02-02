@@ -14,7 +14,7 @@ import org.infinispan.loaders.LockSupportCacheStoreConfig;
  * <li><tt>proxyPort</tt> - The port of a proxy to use.  Optional, no proxy is used if this is un-set.</li>
  * <li><tt>requestTimeout</tt> - A timeout to use when communicating with the cloud storage provider, in milliseconds.  Defaults to 10000.</li>
  * <li><tt>lazyPurgingOnly</tt> - If enabled, then expired entries are only purged on access, lazily, rather than by using the periodic eviction thread.  Defaults to <tt>true</tt>.</li>
- * <li><tt>cloudService</tt> - The cloud service to use.  Supported values are <tt>s3</tt> (Amazon AWS), <tt>cloudfiles</tt> (Rackspace Cloud), <tt>azureblob</tt> (Microsoft Azure), and <tt>atmos</tt> (Atmos).</li>
+ * <li><tt>cloudService</tt> - The cloud service to use.  Supported values are <tt>s3</tt> (Amazon AWS), <tt>cloudfiles</tt> (Rackspace Cloud), <tt>azureblob</tt> (Microsoft Azure), and <tt>atmos</tt> (Atmos Online Storage Service).</li>
  * <li><tt>maxConnections</tt> - The maximum number of concurrent connections to make to the cloud provider.  Defaults to 10.</li>
  * <li><tt>secure</tt> - Whether to use secure (SSL) connections or not.  Defaults to <tt>true</tt>.</li>
  * </ul>
