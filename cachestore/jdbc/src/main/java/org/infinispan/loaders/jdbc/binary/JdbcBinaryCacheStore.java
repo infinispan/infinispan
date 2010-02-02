@@ -100,7 +100,9 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
          public void loadAllProcess(ResultSet rs, Set<InternalCacheEntry> result) throws SQLException, CacheLoaderException {
             InputStream binaryStream = rs.getBinaryStream(1);
             Bucket bucket = (Bucket) JdbcUtil.unmarshall(getMarshaller(), binaryStream);
-            result.addAll(bucket.getStoredEntries());
+            for (InternalCacheEntry ice: bucket.getStoredEntries()) {
+               if (!ice.isExpired()) result.add(ice);
+            }
          }
 
          @Override
