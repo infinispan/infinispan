@@ -64,7 +64,7 @@ public class CloudCacheStore extends BucketBasedCacheStore {
    }
 
    private String getThisContainerName() {
-      return cfg.getBucketPrefix() + "-" + cache.getName().toLowerCase();
+      return cfg.getBucketPrefix() + "-" + cache.getName().toLowerCase().replace("_", "").replace(".", "");
    }
 
    @Override
@@ -104,7 +104,7 @@ public class CloudCacheStore extends BucketBasedCacheStore {
          asyncBlobStore = ctx.getAsyncBlobStore();
 
          // the "location" is not currently used.
-         if (!blobStore.containerExists(containerName)) blobStore.createContainerInLocation(null, containerName);
+         if (!blobStore.containerExists(containerName)) blobStore.createContainerInLocation("DEFAULT", containerName);
          pollFutures = !cfg.getAsyncStoreConfig().isEnabled();
       } catch (IOException ioe) {
          throw new CacheLoaderException("Unable to create context", ioe);
@@ -123,7 +123,7 @@ public class CloudCacheStore extends BucketBasedCacheStore {
    }
 
    protected void fromStreamLockSafe(ObjectInput objectInput) throws CacheLoaderException {
-      String source = null;
+      String source;
       try {
          source = (String) objectInput.readObject();
       } catch (Exception e) {
