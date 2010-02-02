@@ -15,5 +15,4 @@ public abstract class AbstractCacheLoader implements CacheLoader {
    public boolean containsKey(Object key) throws CacheLoaderException {
       return load(key) != null;
    }
-
 }

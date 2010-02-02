@@ -118,16 +118,17 @@ public abstract class DataManipulationHelper {
    }
 
 
-   public final void toStreamSupport(ObjectOutput objectOutput, byte streamDelimiter) throws CacheLoaderException {
+   public final void toStreamSupport(ObjectOutput objectOutput, byte streamDelimiter, boolean filterExpired) throws CacheLoaderException {
       //now write our data
       Connection connection = null;
       PreparedStatement ps = null;
       ResultSet rs = null;
       try {
-         String sql = tableManipulation.getLoadAllRowsSql();
+         String sql = filterExpired ? tableManipulation.getLoadNonExpiredAllRowsSql() : tableManipulation.getLoadAllRowsSql();
          if (log.isTraceEnabled()) log.trace("Running sql '" + sql);
          connection = connectionFactory.getConnection();
          ps = connection.prepareStatement(sql);
+         if (filterExpired) ps.setLong(1, System.currentTimeMillis());
          rs = ps.executeQuery();
          rs.setFetchSize(tableManipulation.getFetchSize());
          while (rs.next()) {
@@ -147,14 +148,16 @@ public abstract class DataManipulationHelper {
       }
    }
 
-   public final Set<InternalCacheEntry> loadAllSupport() throws CacheLoaderException {
+   public final Set<InternalCacheEntry> loadAllSupport(boolean filterExpired) throws CacheLoaderException {
       Connection conn = null;
       PreparedStatement ps = null;
       ResultSet rs = null;
       try {
-         String sql = tableManipulation.getLoadAllRowsSql();
+         String sql = filterExpired ? tableManipulation.getLoadNonExpiredAllRowsSql() : tableManipulation.getLoadAllRowsSql();
+         if (log.isTraceEnabled()) log.trace("Running sql '" + sql);
          conn = connectionFactory.getConnection();
          ps = conn.prepareStatement(sql);
+         if (filterExpired) ps.setLong(1, System.currentTimeMillis());
          rs = ps.executeQuery();
          rs.setFetchSize(tableManipulation.getFetchSize());
          Set<InternalCacheEntry> result = new HashSet<InternalCacheEntry>();

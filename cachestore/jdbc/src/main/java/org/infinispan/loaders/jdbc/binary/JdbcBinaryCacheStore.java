@@ -216,7 +216,7 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
    }
 
    public Set<InternalCacheEntry> loadAllLockSafe() throws CacheLoaderException {
-      return dmHelper.loadAllSupport();
+      return dmHelper.loadAllSupport(false);
    }
 
    protected void fromStreamLockSafe(ObjectInput objectInput) throws CacheLoaderException {
@@ -224,7 +224,7 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
    }
 
    protected void toStreamLockSafe(ObjectOutput objectOutput) throws CacheLoaderException {
-      dmHelper.toStreamSupport(objectOutput, BINARY_STREAM_DELIMITER);
+      dmHelper.toStreamSupport(objectOutput, BINARY_STREAM_DELIMITER, false);
    }
 
    @Override

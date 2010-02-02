@@ -204,7 +204,7 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
 
    @Override
    protected void toStreamLockSafe(ObjectOutput objectOutput) throws CacheLoaderException {
-      dmHelper.toStreamSupport(objectOutput, STRING_STREAM_DELIMITER);
+      dmHelper.toStreamSupport(objectOutput, STRING_STREAM_DELIMITER, true);
    }
 
    @Override
@@ -214,7 +214,7 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
 
    @Override
    protected Set<InternalCacheEntry> loadAllLockSafe() throws CacheLoaderException {
-      return dmHelper.loadAllSupport();
+      return dmHelper.loadAllSupport(true);
    }
 
    @Override

@@ -107,7 +107,7 @@ import java.util.concurrent.ConcurrentMap;
 @SurvivesRestarts
 @MBean(objectName = DefaultCacheManager.OBJECT_NAME, description = "Component that acts as a manager, factory and container for caches in the system.")
 public class DefaultCacheManager implements CacheManager {
-   public static final String DEFAULT_CACHE_NAME = "org.infinispan.manager.DefaultCacheManager.DEFAULT_CACHE_NAME";
+   public static final String DEFAULT_CACHE_NAME = "___defaultcache";
    public static final String OBJECT_NAME = "CacheManager";
    private static final Log log = LogFactory.getLog(DefaultCacheManager.class);
    protected GlobalConfiguration globalConfiguration;

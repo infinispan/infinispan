@@ -72,6 +72,7 @@ public class TableManipulation implements Cloneable {
    private String selectRowSql;
    private String deleteRowSql;
    private String loadAllRowsSql;
+   private String loadAllNonExpiredRowsSql;
    private String deleteAllRows;
    private String selectExpiredRowsSql;
    private String deleteExpiredRowsSql;
@@ -293,6 +294,14 @@ public class TableManipulation implements Cloneable {
       return deleteRowSql;
    }
 
+   public String getLoadNonExpiredAllRowsSql() {
+      if (loadAllNonExpiredRowsSql == null) {
+         loadAllNonExpiredRowsSql = "SELECT " + dataColumnName + "," + idColumnName + ", " + timestampColumnName + " FROM " + getTableName() + " WHERE " +
+               timestampColumnName + " > ? OR " + timestampColumnName + " < 0";
+      }
+      return loadAllNonExpiredRowsSql;
+   }
+
    public String getLoadAllRowsSql() {
       if (loadAllRowsSql == null) {
          loadAllRowsSql = "SELECT " + dataColumnName + "," + idColumnName + " FROM " + getTableName();
@@ -335,7 +344,7 @@ public class TableManipulation implements Cloneable {
          if (tableNamePrefix == null || cacheName == null) {
             throw new IllegalStateException("Both tableNamePrefix and cacheName must be non null at this point!");
          }
-         tableName = tableNamePrefix + "_" + cacheName;
+         tableName = tableNamePrefix + "_" + cacheName.replace(".", "_");
       }
       return tableName;
    }

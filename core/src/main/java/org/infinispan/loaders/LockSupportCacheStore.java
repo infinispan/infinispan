@@ -116,7 +116,12 @@ public abstract class LockSupportCacheStore extends AbstractCacheStore {
       if (trace) log.trace("store(" + ed + ")");
       if (ed == null) return;
       if (ed.isExpired()) {
-         if (trace) log.trace("Entry " + ed + " is expired!  Not doing anything.");
+         if (containsKey(ed.getKey())) {
+            if (trace) log.trace("Entry " + ed + " is expired!  Removing!");
+            remove(ed.getKey());
+         } else {
+            if (trace) log.trace("Entry " + ed + " is expired!  Not doing anything.");
+         }
          return;
       }
 
