@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -403,7 +404,6 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       assert expected.isEmpty();
    }
 
-   @Test
    public void testStoreAndRemoveAll() throws CacheLoaderException {
       cs.store(InternalEntryFactory.create("k1", "v1"));
       cs.store(InternalEntryFactory.create("k2", "v2"));
