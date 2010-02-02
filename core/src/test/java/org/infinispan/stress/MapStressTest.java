@@ -25,7 +25,7 @@ import org.testng.annotations.Test;
  * @author Manik Surtani
  * @since 4.0
  */
-@Test(testName = "stress.MapsStressTest", groups = "stress", enabled = false, description = "Disabled by default, designed to be run manually.")
+@Test(testName = "stress.MapStressTest", groups = "stress", enabled = false, description = "Disabled by default, designed to be run manually.")
 public class MapStressTest {
     volatile CountDownLatch latch;
     final int MAP_CAPACITY = 512;
