@@ -13,6 +13,7 @@ import org.infinispan.factories.annotations.Stop;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.util.Util;
+import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -117,7 +118,11 @@ public class EvictionManagerImpl implements EvictionManager {
                dcsz = dataContainer.size();
                if (dcsz > maxEntries) {
                   if (trace) log.trace("Attempting to evict key [{0}]", k);
-                  cache.evict(k);
+                  try {
+                     cache.evict(k);
+                  } catch (TimeoutException te) {
+                     log.trace("Unable to evict key {0} due to a timeout.  Moving on to next possible evictable entry.", k);
+                  }
                } else {
                   if (trace) log.trace("Evicted enough entries");
                   break;
