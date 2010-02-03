@@ -266,9 +266,11 @@ public class CloudCacheStore extends BucketBasedCacheStore {
    }
 
    private String getBucketName(Bucket bucket) {
-      log.warn("Bucket is {0}", bucket);
       String bucketName = bucket.getBucketName();
-      if (bucketName.startsWith("-")) bucketName = bucketName.replace("-", "A");
+      if (bucketName.startsWith("-"))
+         bucketName = bucketName.replace("-", "A");
+      else if (bucketName.startsWith("A"))
+         bucketName = bucketName.replace("A", "-");
       return bucketName;
    }
 }
