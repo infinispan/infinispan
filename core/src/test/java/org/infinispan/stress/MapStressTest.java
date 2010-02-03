@@ -12,10 +12,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.util.concurrent.BufferedConcurrentHashMap;
+import org.infinispan.util.concurrent.BufferedConcurrentHashMap.Eviction;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -30,9 +28,9 @@ public class MapStressTest {
     volatile CountDownLatch latch;
     final int MAP_CAPACITY = 512;
     final float MAP_LOAD_FACTOR = 0.75f;
-    final int CONCURRENCY = 16;
+    final int CONCURRENCY = 32;
     
-    final int RUN_TIME_MILLIS = 10 * 1000; // 10 sec
+    final int RUN_TIME_MILLIS = 5 * 1000; // 10 sec
     final int NUM_KEYS = 50000;
     final int LOOP_FACTOR=5;
     
@@ -57,8 +55,12 @@ public class MapStressTest {
         doTest(new ConcurrentHashMap<Integer, Integer>(MAP_CAPACITY, MAP_LOAD_FACTOR, CONCURRENCY));
     }
    
-    public void testBufferedConcurrentHashMap() throws Exception {
-        doTest(new BufferedConcurrentHashMap<Integer, Integer>(MAP_CAPACITY, MAP_LOAD_FACTOR, CONCURRENCY, EvictionStrategy.LRU,null));
+    public void testBufferedConcurrentHashMapLRU() throws Exception {
+        doTest(new BufferedConcurrentHashMap<Integer, Integer>(MAP_CAPACITY, MAP_LOAD_FACTOR, CONCURRENCY, Eviction.LRU,null));
+    }
+    
+    public void testBufferedConcurrentHashMapLIRS() throws Exception {
+        doTest(new BufferedConcurrentHashMap<Integer, Integer>(MAP_CAPACITY, MAP_LOAD_FACTOR, CONCURRENCY, Eviction.LIRS,null));
     }
 
     public void testHashMap() throws Exception {
@@ -74,7 +76,6 @@ public class MapStressTest {
 
         latch = new CountDownLatch(1);
         final Map<String, String> perf = new ConcurrentSkipListMap<String, String>();
-        final AtomicBoolean run = new AtomicBoolean(true);
         List<Thread> threads = new LinkedList<Thread>();
 
         for (int i = 0; i < numReaders; i++) {
@@ -83,7 +84,7 @@ public class MapStressTest {
                     waitForStart();
                     long start = System.nanoTime();
                     int runs = 0;
-                    while (run.get() && runs < readOps.size()) {
+                    while (runs < readOps.size()) {
                         map.get(readOps.get(runs));
                         runs++;
                     }
@@ -100,7 +101,7 @@ public class MapStressTest {
                     waitForStart();
                     long start = System.nanoTime();
                     int runs = 0;
-                    while (run.get() && runs < writeOps.size()) {
+                    while (runs < writeOps.size()) {
                         map.put(writeOps.get(runs),runs);
                         runs++;
                     }
@@ -117,7 +118,7 @@ public class MapStressTest {
                     waitForStart();
                     long start = System.nanoTime();
                     int runs = 0;
-                    while (run.get() && runs < removeOps.size()) {
+                    while (runs < removeOps.size()) {
                         map.remove(removeOps.get(runs));
                         runs++;
                     }
@@ -134,7 +135,6 @@ public class MapStressTest {
 
         // wait some time
         Thread.sleep(RUN_TIME_MILLIS);
-        run.set(false);
         for (Thread t : threads)
             t.join();
         
