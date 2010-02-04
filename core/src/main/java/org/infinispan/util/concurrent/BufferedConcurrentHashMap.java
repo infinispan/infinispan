@@ -981,24 +981,27 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
                     if (queue.size() < hirSizeLimit) {
                         assert !queue.contains(e);
                         queue.addLast(e);
-                    } else {
-                        Set<HashEntry<K, V>> evicted = new HashSet<HashEntry<K, V>>();
+                    } else {                        
                         boolean inStack = stack.containsKey(e.hashCode());
 
                         HashEntry<K, V> first = queue.removeFirst();
                         assert first.recency() == Recency.HIR_RESIDENT;
                         first.transitionHIRResidentToHIRNonResident();
-                        evicted.add(first);
+                                                
                         stack.put(e.hashCode(), e);
 
                         if (inStack) {
                             e.transitionHIRResidentToLIRResident();
+                            Set<HashEntry<K, V>> evicted = new HashSet<HashEntry<K, V>>();
                             switchBottomostLIRtoHIRAndPrune(evicted);
+                            removeFromSegment(evicted);
                         } else {
                             assert !queue.contains(e);
                             queue.addLast(e);
                         }
-                        removeFromSegment(evicted);
+                        
+                        //evict from segment
+                        remove(first.key, first.hash, null);
                     }
                 }
             }
