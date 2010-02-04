@@ -154,7 +154,7 @@ public final class Util {
 
       @Override
       public String toString() {
-         return "Added Entries " + addedEntries + " Removeed Entries " + removedEntries + " Modified Entries " + modifiedEntries;
+         return "Added Entries " + addedEntries + " Removed Entries " + removedEntries + " Modified Entries " + modifiedEntries;
       }
    }
 
