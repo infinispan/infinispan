@@ -45,6 +45,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static java.util.concurrent.TimeUnit.MINUTES;
+
 /**
  * Encapsulates the configuration of a Cache.
  * 
@@ -1467,10 +1469,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       protected Integer numOwners=2;
 
       /** @configRef desc="Future flag. Currenly unused." */
-      protected Long rehashWait=60000L;
+      protected Long rehashWait = MINUTES.toMillis(1);
 
       /** @configRef desc="Rehashing timeout" */
-      protected Long rehashRpcTimeout=60 * 1000 * 10L;
+      protected Long rehashRpcTimeout = MINUTES.toMillis(10);
 
       /** @configRef desc="If false, no rebalancing or rehashing will take place when a new node joins the cluster or 
        *             a node leaves." **/

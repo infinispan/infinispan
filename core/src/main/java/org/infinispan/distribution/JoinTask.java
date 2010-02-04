@@ -14,6 +14,7 @@ import static org.infinispan.remoting.rpc.ResponseMode.SYNCHRONOUS;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Util;
+import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -79,12 +80,20 @@ public class JoinTask extends RehashTask {
          long giveupTime = System.currentTimeMillis() + maxWaitTime;
          do {
             if (log.isTraceEnabled()) log.trace("Requesting old consistent hash from coordinator");
-            List<Response> resp = rpcManager.invokeRemotely(coordinator(),
-                                                            cf.buildRehashControlCommand(JOIN_REQ, self),
+            List<Response> resp;
+            List<Address> addresses;
+            try {
+               resp = rpcManager.invokeRemotely(coordinator(), cf.buildRehashControlCommand(JOIN_REQ, self),
                                                             SYNCHRONOUS, configuration.getRehashRpcTimeout(), true);
-            List<Address> addresses = parseResponses(resp);
+               addresses = parseResponses(resp);
+               if (log.isDebugEnabled()) log.debug("Retrieved old consistent hash address list {0}", addresses);
+            } catch (TimeoutException te) {
+               // timed out waiting for responses; retry!
+               resp = null;
+               addresses = null;
+               if (log.isDebugEnabled()) log.debug("Timed out waiting for responses.");
+            }
 
-            if (log.isDebugEnabled()) log.debug("Retrieved old consistent hash address list {0}", addresses);
             if (addresses == null) {
                long time = rand.nextInt((int) (maxSleepTime - minSleepTime) / 10);
                time = (time * 10) + minSleepTime;
