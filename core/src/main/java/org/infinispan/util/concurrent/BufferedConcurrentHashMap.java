@@ -249,6 +249,8 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
     };
 
     interface EvictionPolicy<K, V> {
+        
+        public final static int MAX_BATCH_SIZE = 64;
 
         /**
          * Invokes eviction policy algorithm and returns set of evicted entries.
@@ -783,17 +785,15 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
         }
 
         class LRU implements EvictionPolicy<K, V> {
-            private final static int MAX_BATCH_SIZE = 64;
             private final ConcurrentLinkedQueue<HashEntry<K, V>> accessQueue;
             private final LinkedList<HashEntry<K, V>> lruQueue;
             private final int maxBatchQueueSize;
             private final int trimDownSize;
             private final float batchThresholdFactor;
-            private final AtomicInteger accessQueueSize = new AtomicInteger(0);
 
             public LRU(int capacity, float lf, int maxBatchSize, float batchThresholdFactor) {
                 this.trimDownSize = (int) (capacity * lf);
-                this.maxBatchQueueSize = maxBatchSize > MAX_BATCH_SIZE ? MAX_BATCH_SIZE: maxBatchSize;
+                this.maxBatchQueueSize = maxBatchSize > MAX_BATCH_SIZE ? MAX_BATCH_SIZE : maxBatchSize;
                 this.batchThresholdFactor = batchThresholdFactor;
                 this.accessQueue = new ConcurrentLinkedQueue<HashEntry<K, V>>();
                 this.lruQueue = new LinkedList<HashEntry<K, V>>();
@@ -810,7 +810,7 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
                     }
                     while (isOverflow()) {
                         HashEntry<K, V> first = lruQueue.getLast();
-                        remove(first.key, first.hash,null);
+                        remove(first.key, first.hash, null);
                         if (evicted.isEmpty()) {
                             evicted = new HashSet<HashEntry<K, V>>();
                         }
@@ -818,7 +818,6 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
                     }
                 } finally {
                     accessQueue.clear();
-                    accessQueueSize.set(0);
                 }
                 return evicted;
             }
@@ -838,7 +837,7 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
             @Override
             public boolean onEntryHit(HashEntry<K, V> e) {
                 accessQueue.add(e);
-                return accessQueueSize.incrementAndGet() >= maxBatchQueueSize * batchThresholdFactor;
+                return accessQueue.size() >= maxBatchQueueSize * batchThresholdFactor;
             }
 
             /*
@@ -846,22 +845,20 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
              */
             @Override
             public boolean thresholdExpired() {
-                return accessQueueSize.get() >= maxBatchQueueSize;
+                return accessQueue.size() >= maxBatchQueueSize;
             }
 
             @Override
             public void onEntryRemove(HashEntry<K, V> e) {
                 assert lruQueue.remove(e);
-                if (accessQueue.remove(e)) {
-                    accessQueueSize.decrementAndGet();
-                }
+                // we could have multiple instances of e in accessQueue; remove them all
+                while (accessQueue.remove(e));
             }
 
             @Override
             public void clear() {
                 lruQueue.clear();
                 accessQueue.clear();
-                accessQueueSize.set(0);
             }
 
             @Override
@@ -869,28 +866,26 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
                 return Eviction.LRU;
             }
         }
-        
+
         class LIRS implements EvictionPolicy<K, V> {
-            private final static int MAX_BATCH_SIZE = 64;
             private final ConcurrentLinkedQueue<HashEntry<K, V>> accessQueue;
-            private final LinkedHashMap<Integer,HashEntry<K, V>> stack;
+            private final LinkedHashMap<Integer, HashEntry<K, V>> stack;
             private final LinkedList<HashEntry<K, V>> queue;
 
             private final int maxBatchQueueSize;
             private final int lirSizeLimit;
             private final int hirSizeLimit;
-            private int currentLIRSize = 0;
+            private int currentLIRSize;
             private final float batchThresholdFactor;
-            private final AtomicInteger accessQueueSize = new AtomicInteger(0);
 
             public LIRS(int capacity, float lf, int maxBatchSize, float batchThresholdFactor) {
-                this.lirSizeLimit = (int) (capacity*0.9);
-                int tmp = (int) (capacity *0.1);
-                this.hirSizeLimit = tmp<1?1:tmp;                
-                this.maxBatchQueueSize = maxBatchSize > MAX_BATCH_SIZE ? MAX_BATCH_SIZE: maxBatchSize;
+                this.lirSizeLimit = (int) (capacity * 0.9);
+                int tmp = (int) (capacity * 0.1);
+                this.hirSizeLimit = tmp < 1 ? 1 : tmp;
+                this.maxBatchQueueSize = maxBatchSize > MAX_BATCH_SIZE ? MAX_BATCH_SIZE : maxBatchSize;
                 this.batchThresholdFactor = batchThresholdFactor;
                 this.accessQueue = new ConcurrentLinkedQueue<HashEntry<K, V>>();
-                this.stack = new LinkedHashMap<Integer,HashEntry<K, V>>();
+                this.stack = new LinkedHashMap<Integer, HashEntry<K, V>>();
                 this.queue = new LinkedList<HashEntry<K, V>>();
             }
 
@@ -906,29 +901,28 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
                             } else if (hit.recency() == Recency.HIR_RESIDENT) {
                                 handleHIRHit(hit, evicted);
                             }
-                        } 
-                    }                            
+                        }
+                    }
                     removeFromSegment(evicted);
                 } finally {
                     accessQueue.clear();
-                    accessQueueSize.set(0);
                 }
                 return evicted;
             }
-            
-            private void handleHIRHit(HashEntry<K, V> e,  Set<HashEntry<K,V>> evicted) {
+
+            private void handleHIRHit(HashEntry<K, V> e, Set<HashEntry<K, V>> evicted) {
                 boolean inStack = stack.containsKey(e.hashCode());
-                if(inStack)
+                if (inStack)
                     stack.remove(e.hashCode());
-                
-                //first put on top of the stack
+
+                // first put on top of the stack
                 stack.put(e.hashCode(), e);
-                
-                if(inStack) {
+
+                if (inStack) {
                     assert queue.contains(e);
                     queue.remove(e);
-                    e.transitionHIRResidentToLIRResident();                    
-                    switchBottomostLIRtoHIRAndPrune(evicted);                   
+                    e.transitionHIRResidentToLIRResident();
+                    switchBottomostLIRtoHIRAndPrune(evicted);
                 } else {
                     assert queue.contains(e);
                     queue.remove(e);
@@ -936,23 +930,23 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
                 }
             }
 
-            private void handleLIRHit(HashEntry<K, V> e, Set<HashEntry<K,V>> evicted) {
+            private void handleLIRHit(HashEntry<K, V> e, Set<HashEntry<K, V>> evicted) {
                 stack.remove(e.hashCode());
                 stack.put(e.hashCode(), e);
-                for(Iterator<HashEntry<K, V>> i = stack.values().iterator();i.hasNext();) {
-                    HashEntry<K,V> next = i.next();
-                    if(next.recency() != Recency.LIR_RESIDENT) {
-                        i.remove();
-                        evicted.add(next);
-                    } else {
+                for (Iterator<HashEntry<K, V>> i = stack.values().iterator(); i.hasNext();) {
+                    HashEntry<K, V> next = i.next();
+                    if (next.recency() == Recency.LIR_RESIDENT) {
                         break;
+                    } else {
+                        i.remove();
+                        evicted.add(next);            
                     }
                 }
-            }                       
-            
+            }
+
             private HashEntry<K, V> find(HashEntry<K, V> e) {
                 HashEntry<K, V> hit = stack.get(e.hashCode());
-                if(hit == null && queue.contains(e)) {
+                if (hit == null && queue.contains(e)) {
                     hit = e;
                 }
                 return hit;
@@ -961,23 +955,23 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
             @Override
             public void onEntryMiss(HashEntry<K, V> e) {
                 // initialization
-                if (currentLIRSize+1< lirSizeLimit) {
+                if (currentLIRSize + 1 < lirSizeLimit) {
                     currentLIRSize++;
                     e.transitionHIRResidentToLIRResident();
                     stack.put(e.hashCode(), e);
                 } else {
-                    if (queue.size()< hirSizeLimit) {
+                    if (queue.size() < hirSizeLimit) {
                         queue.addLast(e);
                     } else {
                         Set<HashEntry<K, V>> evicted = new HashSet<HashEntry<K, V>>();
                         boolean inStack = stack.containsKey(e.hashCode());
-                        
+
                         HashEntry<K, V> first = queue.removeFirst();
                         assert first.recency() == Recency.HIR_RESIDENT;
                         first.transitionHIRResidentToHIRNonResident();
                         evicted.add(first);
                         stack.put(e.hashCode(), e);
-                        
+
                         if (inStack) {
                             e.transitionHIRResidentToLIRResident();
                             switchBottomostLIRtoHIRAndPrune(evicted);
@@ -988,26 +982,26 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
                     }
                 }
             }
-            
+
             private void removeFromSegment(Set<HashEntry<K, V>> evicted) {
                 for (HashEntry<K, V> e : evicted) {
-                    remove(e.key,e.hash,null);
+                    remove(e.key, e.hash, null);
                 }
             }
 
-            private void switchBottomostLIRtoHIRAndPrune(Set<HashEntry<K,V>> evicted) {
+            private void switchBottomostLIRtoHIRAndPrune(Set<HashEntry<K, V>> evicted) {
                 boolean seenFirstLIR = false;
-                for(Iterator<HashEntry<K, V>> i = stack.values().iterator();i.hasNext();) {
-                    HashEntry<K,V> next = i.next();
-                    if(next.recency() == Recency.LIR_RESIDENT) {
-                        if(!seenFirstLIR) {
+                for (Iterator<HashEntry<K, V>> i = stack.values().iterator(); i.hasNext();) {
+                    HashEntry<K, V> next = i.next();
+                    if (next.recency() == Recency.LIR_RESIDENT) {
+                        if (!seenFirstLIR) {
                             seenFirstLIR = true;
                             i.remove();
                             next.transitionLIRResidentToHIRResident();
                             queue.addLast(next);
                         } else {
                             break;
-                        }                          
+                        }
                     } else {
                         i.remove();
                         evicted.add(next);
@@ -1021,7 +1015,7 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
             @Override
             public boolean onEntryHit(HashEntry<K, V> e) {
                 accessQueue.add(e);
-                return accessQueueSize.incrementAndGet() >= maxBatchQueueSize * batchThresholdFactor;
+                return accessQueue.size() >= maxBatchQueueSize * batchThresholdFactor;
             }
 
             /*
@@ -1029,26 +1023,24 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
              */
             @Override
             public boolean thresholdExpired() {
-                return accessQueueSize.get() >= maxBatchQueueSize;
+                return accessQueue.size() >= maxBatchQueueSize;
             }
 
             @Override
             public void onEntryRemove(HashEntry<K, V> e) {
                 HashEntry<K, V> removed = stack.remove(e.hashCode());
-                if(removed != null && removed.recency()==Recency.LIR_RESIDENT) {
+                if (removed != null && removed.recency() == Recency.LIR_RESIDENT) {
                     currentLIRSize--;
                 }
-                queue.remove(e);                                  
-                if (accessQueue.remove(e)) {
-                    accessQueueSize.decrementAndGet();
-                }
+                queue.remove(e);
+                // we could have multiple instances of e in accessQueue; remove them all
+                while (accessQueue.remove(e));                    
             }
 
             @Override
             public void clear() {
                 stack.clear();
                 accessQueue.clear();
-                accessQueueSize.set(0);
             }
 
             @Override
