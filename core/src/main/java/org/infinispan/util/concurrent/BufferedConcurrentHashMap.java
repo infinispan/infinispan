@@ -801,6 +801,9 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
             @Override
             public Set<HashEntry<K, V>> execute() {
                 Set<HashEntry<K, V>> evicted = Collections.emptySet();
+                if (isOverflow()) {
+                    evicted = new HashSet<HashEntry<K, V>>();
+                }
                 try {
                     for (HashEntry<K, V> e : accessQueue) {
                         if (lruQueue.remove(e)) {
@@ -810,9 +813,6 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
                     while (isOverflow()) {
                         HashEntry<K, V> first = lruQueue.getLast();
                         remove(first.key, first.hash, null);
-                        if (evicted.isEmpty()) {
-                            evicted = new HashSet<HashEntry<K, V>>();
-                        }
                         evicted.add(first);
                     }
                 } finally {
