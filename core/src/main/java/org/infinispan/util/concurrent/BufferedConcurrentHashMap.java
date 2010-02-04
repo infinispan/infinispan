@@ -32,7 +32,6 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -961,6 +960,7 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
                     stack.put(e.hashCode(), e);
                 } else {
                     if (queue.size() < hirSizeLimit) {
+                        assert !queue.contains(e);
                         queue.addLast(e);
                     } else {
                         Set<HashEntry<K, V>> evicted = new HashSet<HashEntry<K, V>>();
@@ -976,6 +976,7 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
                             e.transitionHIRResidentToLIRResident();
                             switchBottomostLIRtoHIRAndPrune(evicted);
                         } else {
+                            assert !queue.contains(e);
                             queue.addLast(e);
                         }
                         removeFromSegment(evicted);
@@ -998,6 +999,7 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
                             seenFirstLIR = true;
                             i.remove();
                             next.transitionLIRResidentToHIRResident();
+                            assert !queue.contains(next);
                             queue.addLast(next);
                         } else {
                             break;
