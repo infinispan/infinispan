@@ -209,7 +209,24 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
             this.next = next;
             this.value = value;
             this.state = Recency.HIR_RESIDENT;
-        }                        
+        }
+        
+        public int hashCode() {
+            int result = 17;
+            result = (result * 31) + hash;
+            result = (result * 31) + key.hashCode();
+            return result;
+        }
+        
+        public boolean equals(Object o) {            
+            //HashEntry is internal class, never leaks out of CHM, hence slight optimization
+            if (this == o)
+                return true;
+            if (o == null)
+                return false;
+            HashEntry<?, ?> other = (HashEntry<?, ?>) o;
+            return hash == other.hash && key.equals(other.key);
+        }
         
         public void transitionHIRResidentToLIRResident(){
             assert state == Recency.HIR_RESIDENT;
@@ -867,6 +884,7 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
         }
 
         class LIRS implements EvictionPolicy<K, V> {
+            private final static int MIN_HIR_SIZE = 2;
             private final ConcurrentLinkedQueue<HashEntry<K, V>> accessQueue;
             private final LinkedHashMap<Integer, HashEntry<K, V>> stack;
             private final LinkedList<HashEntry<K, V>> queue;
@@ -878,9 +896,15 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
             private final float batchThresholdFactor;
 
             public LIRS(int capacity, float lf, int maxBatchSize, float batchThresholdFactor) {
-                this.lirSizeLimit = (int) (capacity * 0.9);
-                int tmp = (int) (capacity * 0.1);
-                this.hirSizeLimit = tmp < 1 ? 1 : tmp;
+                int tmpLirSize = (int) (capacity * 0.9);
+                int tmpHirSizeLimit = capacity - tmpLirSize;
+                if (tmpHirSizeLimit < MIN_HIR_SIZE) {
+                    hirSizeLimit = MIN_HIR_SIZE;
+                    lirSizeLimit = capacity - hirSizeLimit;
+                } else {
+                    hirSizeLimit = tmpHirSizeLimit;
+                    lirSizeLimit = tmpLirSize;
+                }
                 this.maxBatchQueueSize = maxBatchSize > MAX_BATCH_SIZE ? MAX_BATCH_SIZE : maxBatchSize;
                 this.batchThresholdFactor = batchThresholdFactor;
                 this.accessQueue = new ConcurrentLinkedQueue<HashEntry<K, V>>();
@@ -893,16 +917,15 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
                 Set<HashEntry<K, V>> evicted = new HashSet<HashEntry<K, V>>();
                 try {
                     for (HashEntry<K, V> e : accessQueue) {
-                        HashEntry<K, V> hit = find(e);
-                        if (hit != null) {
-                            if (hit.recency() == Recency.LIR_RESIDENT) {
-                                handleLIRHit(hit, evicted);
-                            } else if (hit.recency() == Recency.HIR_RESIDENT) {
-                                handleHIRHit(hit, evicted);
-                            }
-                        }
-                    }
-                    removeFromSegment(evicted);
+                        if (present(e)) {
+                            if (e.recency() == Recency.LIR_RESIDENT) {
+                                handleLIRHit(e, evicted);
+                            } else if (e.recency() == Recency.HIR_RESIDENT) {
+                                handleHIRHit(e, evicted);
+                            } 
+                        }                  
+                    }                        
+                    removeFromSegment(evicted);                    
                 } finally {
                     accessQueue.clear();
                 }
@@ -943,12 +966,8 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
                 }
             }
 
-            private HashEntry<K, V> find(HashEntry<K, V> e) {
-                HashEntry<K, V> hit = stack.get(e.hashCode());
-                if (hit == null && queue.contains(e)) {
-                    hit = e;
-                }
-                return hit;
+            private boolean present(HashEntry<K, V> e) {
+                return stack.containsKey(e.hashCode()) || queue.contains(e);                
             }
 
             @Override
