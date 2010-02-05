@@ -27,7 +27,7 @@ public class TestNameVerifier {
 
    Pattern packageLinePattern = Pattern.compile("package org.infinispan[^;]*");
    Pattern classLinePattern = Pattern.compile("(abstract\\s*)??(public\\s*)(abstract\\s*)??class [^\\s]*");
-   Pattern atAnnotationPattern = Pattern.compile("$\\s*@Test[^)]*");
+   Pattern atAnnotationPattern = Pattern.compile("^\\s*@Test[^)]*");
    Pattern testNamePattern = Pattern.compile("testName\\s*=\\s*\"[^\"]*\"");
 
    String fileCache;
