@@ -165,7 +165,7 @@ public class CloudCacheStore extends BucketBasedCacheStore {
 
    protected Bucket loadBucket(String hash) throws CacheLoaderException {
       try {
-         return readFromBlob(blobStore.getBlob(containerName, getBucketName(hash)), hash);
+         return readFromBlob(blobStore.getBlob(containerName, encodeBucketName(hash)), hash);
       } catch (KeyNotFoundException e) {
          return null;
       }
@@ -204,7 +204,7 @@ public class CloudCacheStore extends BucketBasedCacheStore {
    }
 
    protected void insertBucket(Bucket bucket) throws CacheLoaderException {
-      Blob blob = blobStore.newBlob(getBucketName(bucket));
+      Blob blob = blobStore.newBlob(encodeBucketName(bucket.getBucketName()));
       writeToBlob(blob, bucket);
 
       Set<Future<?>> futures = asyncCommandFutures.get();
@@ -257,23 +257,16 @@ public class CloudCacheStore extends BucketBasedCacheStore {
       if (blob == null) return null;
       try {
          Bucket bucket = (Bucket) marshaller.objectFromInputStream(blob.getContent());
-         if (bucket != null) bucket.setBucketName(
-               bucketName);
+         if (bucket != null) bucket.setBucketName(bucketName);
          return bucket;
       } catch (Exception e) {
          throw convertToCacheLoaderException("Unable to read blob", e);
       }
    }
 
-   private String getBucketName(Bucket bucket) {
-      return getBucketName(bucket.getBucketName());
-   }
-
-   private String getBucketName(String bucketName) {
-      if (bucketName.startsWith("-"))
-         bucketName = bucketName.replace("-", "A");
-      else if (bucketName.startsWith("A"))
-         bucketName = bucketName.replace("A", "-");
-      return bucketName;
+   private String encodeBucketName(String decodedName) {
+      return (decodedName.startsWith("-")) ?  
+            decodedName.replace('-', 'A') :
+            decodedName;
    }
 }
