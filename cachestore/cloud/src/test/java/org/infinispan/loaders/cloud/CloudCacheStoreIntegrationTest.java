@@ -29,7 +29,7 @@ import static org.testng.Assert.assertEquals;
 // TODO figure out why a disabled test is still run in Hudson!!
 public class CloudCacheStoreIntegrationTest{}
 
-//@Test(groups = "unit", sequential = true, testName = "loaders.cloud.CloudCacheStoreIntegrationTest", enabled = false)
+//@Test(groups = "unit", sequential = true, testName = "loaders.cloud.CloudCacheStoreIntegrationTest", enabled = true)
 //public class CloudCacheStoreIntegrationTest extends BaseCacheStoreTest {
 //
 //   private String proxyHost;
@@ -164,6 +164,31 @@ public class CloudCacheStoreIntegrationTest{}
 //      assert expected.isEmpty();
 //   }
 //
+//   public void testNegativeHashCodes() throws CacheLoaderException {
+//      ObjectWithNegativeHashcode objectWithNegativeHashcode = new ObjectWithNegativeHashcode();
+//      cs.store(InternalEntryFactory.create(objectWithNegativeHashcode, "hello", -1, -1));
+//      InternalCacheEntry ice = cs.load(objectWithNegativeHashcode);
+//      assert ice.getKey().equals(objectWithNegativeHashcode);
+//      assert ice.getValue().equals("hello");
+//   }
+//
+//   private static class ObjectWithNegativeHashcode {
+//      String s = "hello";
+//
+//      @Override
+//      public boolean equals(Object o) {
+//         if (this == o) return true;
+//         if (o == null || getClass() != o.getClass()) return false;
+//
+//         ObjectWithNegativeHashcode blah = (ObjectWithNegativeHashcode) o;
+//         return !(s != null ? !s.equals(blah.s) : blah.s != null);
+//      }
+//
+//      @Override
+//      public int hashCode() {
+//         return -700;
+//      }
+//   }
 //
 //   @SuppressWarnings("unchecked")
 //   @Override

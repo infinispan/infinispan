@@ -165,7 +165,7 @@ public class CloudCacheStore extends BucketBasedCacheStore {
 
    protected Bucket loadBucket(String hash) throws CacheLoaderException {
       try {
-         return readFromBlob(blobStore.getBlob(containerName, hash), hash);
+         return readFromBlob(blobStore.getBlob(containerName, getBucketName(hash)), hash);
       } catch (KeyNotFoundException e) {
          return null;
       }
@@ -266,7 +266,10 @@ public class CloudCacheStore extends BucketBasedCacheStore {
    }
 
    private String getBucketName(Bucket bucket) {
-      String bucketName = bucket.getBucketName();
+      return getBucketName(bucket.getBucketName());
+   }
+
+   private String getBucketName(String bucketName) {
       if (bucketName.startsWith("-"))
          bucketName = bucketName.replace("-", "A");
       else if (bucketName.startsWith("A"))
