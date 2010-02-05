@@ -50,16 +50,6 @@ public class EHCache2InfinispanTransformerTest extends AbstractInfinispanTest {
          String fileName = getFileName(ehCacheFile);
          ByteArrayOutputStream baos = new ByteArrayOutputStream();
          convertor.parse(fileName, baos, XSLT_FILE);
-
-
-         File out = new File("target", "zzzz3.xml");
-         if (out.exists()) out.delete();
-         out.createNewFile();
-         FileOutputStream fos = new FileOutputStream(out);
-         fos.write(baos.toByteArray());
-         baos.close();
-         fos.close();
-
          dcm = (DefaultCacheManager) TestCacheManagerFactory.fromStream(new ByteArrayInputStream(baos.toByteArray()));
          Cache<Object,Object> defaultCache = dcm.getCache();
          defaultCache.put("key", "value");

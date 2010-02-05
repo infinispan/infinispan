@@ -41,16 +41,6 @@ public class Coherence2InfinispanTransformerTest extends AbstractInfinispanTest 
          String fileName = getFileName(coherenceFileName);
          ByteArrayOutputStream baos = new ByteArrayOutputStream();
          convertor.parse(fileName, baos, XSLT_FILE);
-
-
-         File out = new File("target","zzzz2.xml");
-         if (out.exists()) out.delete();
-         out.createNewFile();
-         FileOutputStream fos = new FileOutputStream(out);
-         fos.write(baos.toByteArray());
-         baos.close();
-         fos.close();
-
          dcm = TestCacheManagerFactory.fromStream(new ByteArrayInputStream(baos.toByteArray()));
          Cache<Object,Object> defaultCache = dcm.getCache();
          defaultCache.put("key", "value");
