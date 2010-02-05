@@ -27,15 +27,14 @@ public class TestNameVerifier {
 
    Pattern packageLinePattern = Pattern.compile("package org.infinispan[^;]*");
    Pattern classLinePattern = Pattern.compile("(abstract\\s*)??(public\\s*)(abstract\\s*)??class [^\\s]*");
-   Pattern atAnnotationPattern = Pattern.compile("@Test[^)]*");
+   Pattern atAnnotationPattern = Pattern.compile("$\\s*@Test[^)]*");
    Pattern testNamePattern = Pattern.compile("testName\\s*=\\s*\"[^\"]*\"");
 
    String fileCache;
 
    FilenameFilter javaFilter = new FilenameFilter() {
       public boolean accept(File dir, String name) {
-         if (dir.getAbsolutePath().contains("testng")) return false;
-         return name.endsWith(".java");
+         return !dir.getAbsolutePath().contains("testng") && name.endsWith(".java");
       }
    };
 
@@ -66,7 +65,7 @@ public class TestNameVerifier {
 
    private void persistNewFile(File file, String javaString) throws Exception {
       if (file.delete()) {
-         System.out.println("!!!!!!!!!! error porcessing file " + file.getName());
+         System.out.println("!!!!!!!!!! error processing file " + file.getName());
          return;
       }
       file.createNewFile();
@@ -91,7 +90,7 @@ public class TestNameVerifier {
 
       classNamePart = classNamePart.substring("public class ".length());
       String packagePart = getPackagePart(javaString, filename);
-      //if the test is in org.infinispan package then make sure no . is prepanded
+      //if the test is in org.infinispan package then make sure no . is prepended
       String packagePrepend = ((packagePart != null) && (packagePart.length() > 0)) ? packagePart + "." : "";
       return packagePrepend + classNamePart;
    }
@@ -152,12 +151,6 @@ public class TestNameVerifier {
       result.addAll(Arrays.asList(javaFiles));
       for (File dir : file.listFiles(onlyDirs)) {
          addJavaFiles(dir, result);
-      }
-   }
-
-   private void printFiles(File[] javaFiles) {
-      for (File f : javaFiles) {
-         System.out.println(f.getAbsolutePath());
       }
    }
 
