@@ -17,6 +17,7 @@ import org.infinispan.loaders.LockSupportCacheStoreConfig;
  * <li><tt>cloudService</tt> - The cloud service to use.  Supported values are <tt>s3</tt> (Amazon AWS), <tt>cloudfiles</tt> (Rackspace Cloud), <tt>azureblob</tt> (Microsoft Azure), and <tt>atmos</tt> (Atmos Online Storage Service).</li>
  * <li><tt>maxConnections</tt> - The maximum number of concurrent connections to make to the cloud provider.  Defaults to 10.</li>
  * <li><tt>secure</tt> - Whether to use secure (SSL) connections or not.  Defaults to <tt>true</tt>.</li>
+ * <li><tt>cloudServiceLocation</tt> - the data center to use.  Note that this is specific to the cloud provider in question.  E.g., Amazon's S3 service supports storage buckets in several different locations.  Valid strings for S3, for example, are <a href="http://github.com/jclouds/jclouds/blob/master/aws/core/src/main/java/org/jclouds/aws/domain/Region.java">here</a>.  Optional, and defaults to <tt>DEFAULT</tt>.</li>
  * </ul>
  *
  * @author Manik Surtani
@@ -33,6 +34,7 @@ public class CloudCacheStoreConfig extends LockSupportCacheStoreConfig {
    private String cloudService;
    private int maxConnections = 10000;
    private boolean secure = true;
+   private String cloudServiceLocation = "DEFAULT";
 
    public CloudCacheStoreConfig() {
       setCacheLoaderClassName(CloudCacheStore.class.getName());
@@ -132,6 +134,8 @@ public class CloudCacheStoreConfig extends LockSupportCacheStoreConfig {
       if (secure != that.secure) return false;
       if (bucketPrefix != null ? !bucketPrefix.equals(that.bucketPrefix) : that.bucketPrefix != null) return false;
       if (cloudService != null ? !cloudService.equals(that.cloudService) : that.cloudService != null) return false;
+      if (cloudServiceLocation != null ? !cloudServiceLocation.equals(that.cloudServiceLocation) : that.cloudServiceLocation != null)
+         return false;
       if (identity != null ? !identity.equals(that.identity) : that.identity != null) return false;
       if (password != null ? !password.equals(that.password) : that.password != null) return false;
       if (proxyHost != null ? !proxyHost.equals(that.proxyHost) : that.proxyHost != null) return false;
@@ -153,6 +157,7 @@ public class CloudCacheStoreConfig extends LockSupportCacheStoreConfig {
       result = 31 * result + (cloudService != null ? cloudService.hashCode() : 0);
       result = 31 * result + maxConnections;
       result = 31 * result + (secure ? 1 : 0);
+      result = 31 * result + (cloudServiceLocation != null ? cloudServiceLocation.hashCode() : 0);
       return result;
    }
 
@@ -161,7 +166,7 @@ public class CloudCacheStoreConfig extends LockSupportCacheStoreConfig {
       return "CloudCacheStoreConfig{" +
             "bucketPrefix='" + bucketPrefix + '\'' +
             ", identity='" + identity + '\'' +
-            ", password=(hidden)" +
+            ", password='" + password + '\'' +
             ", proxyHost='" + proxyHost + '\'' +
             ", proxyPort='" + proxyPort + '\'' +
             ", requestTimeout=" + requestTimeout +
@@ -169,6 +174,11 @@ public class CloudCacheStoreConfig extends LockSupportCacheStoreConfig {
             ", cloudService='" + cloudService + '\'' +
             ", maxConnections=" + maxConnections +
             ", secure=" + secure +
+            ", cloudServiceLocation='" + cloudServiceLocation + '\'' +
             '}';
+   }
+
+   public String getCloudServiceLocation() {
+      return cloudServiceLocation;
    }
 }

@@ -57,6 +57,7 @@ public class CloudCacheStore extends BucketBasedCacheStore {
    private BlobStore blobStore;
    private AsyncBlobStore asyncBlobStore;
    private boolean pollFutures = false;
+   private boolean constructInternalBlobstores = true;
 
    @Override
    public Class<? extends CacheStoreConfig> getConfigurationClass() {
@@ -75,10 +76,11 @@ public class CloudCacheStore extends BucketBasedCacheStore {
    @Override
    public void init(CacheLoaderConfig cfg, Cache<?, ?> cache, Marshaller m) throws CacheLoaderException {
       this.cfg = (CloudCacheStoreConfig) cfg;
-      init(cfg, cache, m, null, null, null);
+      init(cfg, cache, m, null, null, null, true);
    }
 
-   public void init(CacheLoaderConfig cfg, Cache<?, ?> cache, Marshaller m, BlobStoreContext ctx, BlobStore blobStore, AsyncBlobStore asyncBlobStore) throws CacheLoaderException {
+   public void init(CacheLoaderConfig cfg, Cache<?, ?> cache, Marshaller m, BlobStoreContext ctx,
+                    BlobStore blobStore, AsyncBlobStore asyncBlobStore, boolean constructInternalBlobstores) throws CacheLoaderException {
       super.init(cfg, cache, m);
       this.cfg = (CloudCacheStoreConfig) cfg;
       this.cache = cache;
@@ -86,25 +88,30 @@ public class CloudCacheStore extends BucketBasedCacheStore {
       this.ctx = ctx;
       this.blobStore = blobStore;
       this.asyncBlobStore = asyncBlobStore;
+      this.constructInternalBlobstores = constructInternalBlobstores;
    }
 
    @Override
    public void start() throws CacheLoaderException {
       super.start();
-      if (cfg.getCloudService() == null) throw new ConfigurationException("CloudService must be set!");
-      if (cfg.getIdentity() == null) throw new ConfigurationException("Identity must be set");
-      if (cfg.getPassword() == null) throw new ConfigurationException("Password must be set");
+      if (constructInternalBlobstores) {
+         if (cfg.getCloudService() == null) throw new ConfigurationException("CloudService must be set!");
+         if (cfg.getIdentity() == null) throw new ConfigurationException("Identity must be set");
+         if (cfg.getPassword() == null) throw new ConfigurationException("Password must be set");
+      }
       if (cfg.getBucketPrefix() == null) throw new ConfigurationException("CloudBucket must be set");
       containerName = getThisContainerName();
       try {
-         // add an executor as a constructor param to EnterpriseConfigurationModule, pass property overrides instead of Properties()
-         ctx = new BlobStoreContextFactory().createContext(cfg.getCloudService(), cfg.getIdentity(), cfg.getPassword(),
+         if (constructInternalBlobstores) {
+            // add an executor as a constructor param to EnterpriseConfigurationModule, pass property overrides instead of Properties()
+            ctx = new BlobStoreContextFactory().createContext(cfg.getCloudService(), cfg.getIdentity(), cfg.getPassword(),
                                                            ImmutableSet.of(new EnterpriseConfigurationModule(), new Log4JLoggingModule()), new Properties());
-         blobStore = ctx.getBlobStore();
-         asyncBlobStore = ctx.getAsyncBlobStore();
+            blobStore = ctx.getBlobStore();
+            asyncBlobStore = ctx.getAsyncBlobStore();
+         }
 
          // the "location" is not currently used.
-         if (!blobStore.containerExists(containerName)) blobStore.createContainerInLocation("DEFAULT", containerName);
+         if (!blobStore.containerExists(containerName)) blobStore.createContainerInLocation(cfg.getCloudServiceLocation(), containerName);
          pollFutures = !cfg.getAsyncStoreConfig().isEnabled();
       } catch (IOException ioe) {
          throw new CacheLoaderException("Unable to create context", ioe);
