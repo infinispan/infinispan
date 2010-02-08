@@ -56,11 +56,11 @@ public class MapStressTest {
     }
    
     public void testBufferedConcurrentHashMapLRU() throws Exception {
-        doTest(new BufferedConcurrentHashMap<Integer, Integer>(MAP_CAPACITY, MAP_LOAD_FACTOR, CONCURRENCY, Eviction.LRU,null));
+        doTest(new BufferedConcurrentHashMap<Integer, Integer>(MAP_CAPACITY, MAP_LOAD_FACTOR, CONCURRENCY, Eviction.LRU));
     }
     
     public void testBufferedConcurrentHashMapLIRS() throws Exception {
-        doTest(new BufferedConcurrentHashMap<Integer, Integer>(MAP_CAPACITY, MAP_LOAD_FACTOR, CONCURRENCY, Eviction.LIRS,null));
+        doTest(new BufferedConcurrentHashMap<Integer, Integer>(MAP_CAPACITY, MAP_LOAD_FACTOR, CONCURRENCY, Eviction.LIRS));
     }
 
     public void testHashMap() throws Exception {

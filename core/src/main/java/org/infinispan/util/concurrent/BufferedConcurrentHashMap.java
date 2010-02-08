@@ -210,16 +210,16 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
             this.value = value;
             this.state = Recency.HIR_RESIDENT;
         }
-        
+
         public int hashCode() {
             int result = 17;
             result = (result * 31) + hash;
             result = (result * 31) + key.hashCode();
             return result;
         }
-        
-        public boolean equals(Object o) {            
-            //HashEntry is internal class, never leaks out of CHM, hence slight optimization
+
+        public boolean equals(Object o) {
+            // HashEntry is internal class, never leaks out of CHM, hence slight optimization
             if (this == o)
                 return true;
             if (o == null)
@@ -227,27 +227,27 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
             HashEntry<?, ?> other = (HashEntry<?, ?>) o;
             return hash == other.hash && key.equals(other.key);
         }
-        
-        public void transitionHIRResidentToLIRResident(){
+
+        public void transitionHIRResidentToLIRResident() {
             assert state == Recency.HIR_RESIDENT;
             state = Recency.LIR_RESIDENT;
         }
-        
+
         public void transitionHIRResidentToHIRNonResident() {
             assert state == Recency.HIR_RESIDENT;
             state = Recency.HIR_NONRESIDENT;
         }
-        
+
         public void transitionHIRNonResidentToLIRResident() {
             assert state == Recency.HIR_NONRESIDENT;
             state = Recency.LIR_RESIDENT;
         }
-        
+
         public void transitionLIRResidentToHIRResident() {
             assert state == Recency.LIR_RESIDENT;
             state = Recency.HIR_RESIDENT;
         }
-        
+
         public Recency recency() {
             return state;
         }
@@ -257,15 +257,47 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
             return new HashEntry[i];
         }
     }
-    
-    private enum Recency{HIR_RESIDENT,LIR_RESIDENT,HIR_NONRESIDENT}
+
+    private enum Recency {
+        HIR_RESIDENT, LIR_RESIDENT, HIR_NONRESIDENT
+    }
 
     public enum Eviction {
-       NONE,LRU,LIRS
+        NONE {
+            @Override
+            public <K, V> EvictionPolicy<K, V> make(Segment<K, V> s, int capacity, float lf) {
+                return new NullEvictionPolicy<K, V>();
+            }
+        },
+        LRU {
+
+            @Override
+            public <K, V> EvictionPolicy<K, V> make(Segment<K, V> s, int capacity, float lf) {
+                return new LRU<K, V>(s,capacity,lf,capacity*10,lf);
+            }
+        },
+        LIRS {
+            @Override
+            public <K, V> EvictionPolicy<K, V> make(Segment<K, V> s, int capacity, float lf) {
+                return new LIRS<K,V>(s,capacity,lf,capacity*10,lf);
+            }
+        };
+
+        abstract <K, V> EvictionPolicy<K, V> make(Segment<K, V> s, int capacity, float lf);
+    }
+    
+    interface EvictionListener<K, V> {
+        void evicted(K key, V value);
+    }
+    
+    static class NullEvictionListener<K,V> implements EvictionListener<K, V>{
+        @Override
+        public void evicted(K key, V value) {            
+        }        
     }
 
     interface EvictionPolicy<K, V> {
-        
+
         public final static int MAX_BATCH_SIZE = 64;
 
         /**
@@ -368,6 +400,283 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
         }
     }
 
+    static final class LRU<K, V> implements EvictionPolicy<K, V> {
+        private final ConcurrentLinkedQueue<HashEntry<K, V>> accessQueue;
+        private final Segment<K,V> segment;
+        private final LinkedList<HashEntry<K, V>> lruQueue;
+        private final int maxBatchQueueSize;
+        private final int trimDownSize;
+        private final float batchThresholdFactor;
+
+        public LRU(Segment<K,V> s, int capacity, float lf, int maxBatchSize, float batchThresholdFactor) {
+            this.segment = s;
+            this.trimDownSize = (int) (capacity * lf);
+            this.maxBatchQueueSize = maxBatchSize > MAX_BATCH_SIZE ? MAX_BATCH_SIZE : maxBatchSize;
+            this.batchThresholdFactor = batchThresholdFactor;
+            this.accessQueue = new ConcurrentLinkedQueue<HashEntry<K, V>>();
+            this.lruQueue = new LinkedList<HashEntry<K, V>>();
+        }
+
+        @Override
+        public Set<HashEntry<K, V>> execute() {
+            Set<HashEntry<K, V>> evicted = Collections.emptySet();
+            if (isOverflow()) {
+                evicted = new HashSet<HashEntry<K, V>>();
+            }
+            try {
+                for (HashEntry<K, V> e : accessQueue) {
+                    if (lruQueue.remove(e)) {
+                        lruQueue.addFirst(e);
+                    }
+                }
+                while (isOverflow()) {
+                    HashEntry<K, V> first = lruQueue.getLast();
+                    segment.remove(first.key, first.hash, null);
+                    evicted.add(first);
+                }
+            } finally {
+                accessQueue.clear();
+            }
+            return evicted;
+        }
+
+        private boolean isOverflow() {
+            return lruQueue.size() > trimDownSize;
+        }
+
+        @Override
+        public void onEntryMiss(HashEntry<K, V> e) {
+            lruQueue.addFirst(e);
+        }
+
+        /*
+         * Invoked without holding a lock on Segment
+         */
+        @Override
+        public boolean onEntryHit(HashEntry<K, V> e) {
+            accessQueue.add(e);
+            return accessQueue.size() >= maxBatchQueueSize * batchThresholdFactor;
+        }
+
+        /*
+         * Invoked without holding a lock on Segment
+         */
+        @Override
+        public boolean thresholdExpired() {
+            return accessQueue.size() >= maxBatchQueueSize;
+        }
+
+        @Override
+        public void onEntryRemove(HashEntry<K, V> e) {
+            assert lruQueue.remove(e);
+            // we could have multiple instances of e in accessQueue; remove them all
+            while (accessQueue.remove(e))
+                ;
+        }
+
+        @Override
+        public void clear() {
+            lruQueue.clear();
+            accessQueue.clear();
+        }
+
+        @Override
+        public Eviction strategy() {
+            return Eviction.LRU;
+        }
+    }
+
+    static final class LIRS<K, V> implements EvictionPolicy<K, V> {
+        private final static int MIN_HIR_SIZE = 2;
+        private final Segment<K,V> segment;
+        private final ConcurrentLinkedQueue<HashEntry<K, V>> accessQueue;
+        private final LinkedHashMap<Integer, HashEntry<K, V>> stack;
+        private final LinkedList<HashEntry<K, V>> queue;
+        private final int maxBatchQueueSize;
+        private final int lirSizeLimit;
+        private final int hirSizeLimit;
+        private int currentLIRSize;
+        private final float batchThresholdFactor;
+
+        public LIRS(Segment<K,V> s, int capacity, float lf, int maxBatchSize, float batchThresholdFactor) {
+            this.segment = s;
+            int tmpLirSize = (int) (capacity * 0.9);
+            int tmpHirSizeLimit = capacity - tmpLirSize;
+            if (tmpHirSizeLimit < MIN_HIR_SIZE) {
+                hirSizeLimit = MIN_HIR_SIZE;
+                lirSizeLimit = capacity - hirSizeLimit;
+            } else {
+                hirSizeLimit = tmpHirSizeLimit;
+                lirSizeLimit = tmpLirSize;
+            }
+            this.maxBatchQueueSize = maxBatchSize > MAX_BATCH_SIZE ? MAX_BATCH_SIZE : maxBatchSize;
+            this.batchThresholdFactor = batchThresholdFactor;
+            this.accessQueue = new ConcurrentLinkedQueue<HashEntry<K, V>>();
+            this.stack = new LinkedHashMap<Integer, HashEntry<K, V>>();
+            this.queue = new LinkedList<HashEntry<K, V>>();
+        }
+
+        @Override
+        public Set<HashEntry<K, V>> execute() {
+            Set<HashEntry<K, V>> evicted = new HashSet<HashEntry<K, V>>();
+            try {
+                for (HashEntry<K, V> e : accessQueue) {
+                    if (present(e)) {
+                        if (e.recency() == Recency.LIR_RESIDENT) {
+                            handleLIRHit(e, evicted);
+                        } else if (e.recency() == Recency.HIR_RESIDENT) {
+                            handleHIRHit(e, evicted);
+                        }
+                    }
+                }
+                removeFromSegment(evicted);
+            } finally {
+                accessQueue.clear();
+            }
+            return evicted;
+        }
+
+        private void handleHIRHit(HashEntry<K, V> e, Set<HashEntry<K, V>> evicted) {
+            boolean inStack = stack.containsKey(e.hashCode());
+            if (inStack)
+                stack.remove(e.hashCode());
+
+            // first put on top of the stack
+            stack.put(e.hashCode(), e);
+
+            if (inStack) {
+                assert queue.contains(e);
+                queue.remove(e);
+                e.transitionHIRResidentToLIRResident();
+                switchBottomostLIRtoHIRAndPrune(evicted);
+            } else {
+                assert queue.contains(e);
+                queue.remove(e);
+                queue.addLast(e);
+            }
+        }
+
+        private void handleLIRHit(HashEntry<K, V> e, Set<HashEntry<K, V>> evicted) {
+            stack.remove(e.hashCode());
+            stack.put(e.hashCode(), e);
+            for (Iterator<HashEntry<K, V>> i = stack.values().iterator(); i.hasNext();) {
+                HashEntry<K, V> next = i.next();
+                if (next.recency() == Recency.LIR_RESIDENT) {
+                    break;
+                } else {
+                    i.remove();
+                    evicted.add(next);
+                }
+            }
+        }
+
+        private boolean present(HashEntry<K, V> e) {
+            return stack.containsKey(e.hashCode()) || queue.contains(e);
+        }
+
+        @Override
+        public void onEntryMiss(HashEntry<K, V> e) {
+            // initialization
+            if (currentLIRSize + 1 < lirSizeLimit) {
+                currentLIRSize++;
+                e.transitionHIRResidentToLIRResident();
+                stack.put(e.hashCode(), e);
+            } else {
+                if (queue.size() < hirSizeLimit) {
+                    assert !queue.contains(e);
+                    queue.addLast(e);
+                } else {
+                    boolean inStack = stack.containsKey(e.hashCode());
+
+                    HashEntry<K, V> first = queue.removeFirst();
+                    assert first.recency() == Recency.HIR_RESIDENT;
+                    first.transitionHIRResidentToHIRNonResident();
+
+                    stack.put(e.hashCode(), e);
+
+                    if (inStack) {
+                        e.transitionHIRResidentToLIRResident();
+                        Set<HashEntry<K, V>> evicted = new HashSet<HashEntry<K, V>>();
+                        switchBottomostLIRtoHIRAndPrune(evicted);
+                        removeFromSegment(evicted);
+                    } else {
+                        assert !queue.contains(e);
+                        queue.addLast(e);
+                    }
+
+                    // evict from segment
+                    segment.remove(first.key, first.hash, null);
+                }
+            }
+        }
+
+        private void removeFromSegment(Set<HashEntry<K, V>> evicted) {
+            for (HashEntry<K, V> e : evicted) {
+                segment.remove(e.key, e.hash, null);
+            }
+        }
+
+        private void switchBottomostLIRtoHIRAndPrune(Set<HashEntry<K, V>> evicted) {
+            boolean seenFirstLIR = false;
+            for (Iterator<HashEntry<K, V>> i = stack.values().iterator(); i.hasNext();) {
+                HashEntry<K, V> next = i.next();
+                if (next.recency() == Recency.LIR_RESIDENT) {
+                    if (!seenFirstLIR) {
+                        seenFirstLIR = true;
+                        i.remove();
+                        next.transitionLIRResidentToHIRResident();
+                        assert !queue.contains(next);
+                        queue.addLast(next);
+                    } else {
+                        break;
+                    }
+                } else {
+                    i.remove();
+                    evicted.add(next);
+                }
+            }
+        }
+
+        /*
+         * Invoked without holding a lock on Segment
+         */
+        @Override
+        public boolean onEntryHit(HashEntry<K, V> e) {
+            accessQueue.add(e);
+            return accessQueue.size() >= maxBatchQueueSize * batchThresholdFactor;
+        }
+
+        /*
+         * Invoked without holding a lock on Segment
+         */
+        @Override
+        public boolean thresholdExpired() {
+            return accessQueue.size() >= maxBatchQueueSize;
+        }
+
+        @Override
+        public void onEntryRemove(HashEntry<K, V> e) {
+            HashEntry<K, V> removed = stack.remove(e.hashCode());
+            if (removed != null && removed.recency() == Recency.LIR_RESIDENT) {
+                currentLIRSize--;
+            }
+            queue.remove(e);
+            // we could have multiple instances of e in accessQueue; remove them all
+            while (accessQueue.remove(e));
+        }
+
+        @Override
+        public void clear() {
+            stack.clear();
+            accessQueue.clear();
+        }
+
+        @Override
+        public Eviction strategy() {
+            return Eviction.LIRS;
+        }
+    }
+
     /**
      * Segments are specialized versions of hash tables. This subclasses from ReentrantLock
      * opportunistically, just to simplify some locking and avoid separate construction.
@@ -429,7 +738,7 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
          */
         transient volatile HashEntry<K, V>[] table;
 
-        transient final EvictionPolicy<K, V> ea;
+        transient final EvictionPolicy<K, V> eviction;
 
         transient final EvictionListener<K, V> evictionListener;
 
@@ -443,14 +752,7 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
 
         Segment(int cap, float lf, Eviction es, EvictionListener<K, V> listener) {
             loadFactor = lf;
-            if (es == Eviction.LRU) {
-                ea = new LRU(cap, lf, cap * 10, lf);
-            } else if (es == Eviction.LIRS) { 
-                ea = new LIRS(cap, lf, cap * 10, lf);
-            }
-            else {
-                ea = new NullEvictionPolicy<K, V>();
-            }
+            eviction = es.make(this, cap, lf);
             evictionListener = listener;
             setTable(HashEntry.<K, V> newArray(cap));
         }
@@ -510,10 +812,10 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
                 }
                 // a hit
                 if (result != null) {
-                    if (ea.onEntryHit(e) && ea.strategy() != Eviction.NONE) {
+                    if (eviction.onEntryHit(e)) {
                         Set<HashEntry<K, V>> evicted = attemptEviction(false);
-                        //piggyback listener invocation on callers thread outside lock
-                        if (evictionListener != null && evicted != null) {
+                        // piggyback listener invocation on callers thread outside lock
+                        if (evicted != null) {
                             for (HashEntry<K, V> he : evicted) {
                                 evictionListener.evicted(he.key, he.value);
                             }
@@ -528,13 +830,13 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
         private Set<HashEntry<K, V>> attemptEviction(boolean lockedAlready) {
             Set<HashEntry<K, V>> evicted = null;
             boolean obtainedLock = !lockedAlready ? tryLock() : true;
-            if (!obtainedLock && ea.thresholdExpired()) {
+            if (!obtainedLock && eviction.thresholdExpired()) {
                 lock();
                 obtainedLock = true;
             }
             if (obtainedLock) {
                 try {
-                    evicted = ea.execute();
+                    evicted = eviction.execute();
                 } finally {
                     if (!lockedAlready)
                         unlock();
@@ -584,15 +886,15 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
                 if (e != null && oldValue.equals(e.value)) {
                     replaced = true;
                     e.value = newValue;
-                    if (ea.onEntryHit(e)) {
+                    if (eviction.onEntryHit(e)) {
                         evicted = attemptEviction(true);
                     }
                 }
                 return replaced;
             } finally {
                 unlock();
-                //piggyback listener invocation on callers thread outside lock
-                if (evictionListener != null && evicted != null) {
+                // piggyback listener invocation on callers thread outside lock   
+                if (evicted != null) {
                     for (HashEntry<K, V> he : evicted) {
                         evictionListener.evicted(he.key, he.value);
                     }
@@ -612,18 +914,18 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
                 if (e != null) {
                     oldValue = e.value;
                     e.value = newValue;
-                    if (ea.onEntryHit(e)) {
+                    if (eviction.onEntryHit(e)) {
                         evicted = attemptEviction(true);
                     }
                 }
                 return oldValue;
             } finally {
                 unlock();
-                //piggyback listener invocation on callers thread outside lock
-                if (evictionListener != null && evicted != null) {
+                // piggyback listener invocation on callers thread outside lock
+                if(evicted != null) {
                     for (HashEntry<K, V> he : evicted) {
                         evictionListener.evicted(he.key, he.value);
-                    }
+                    }                
                 }
             }
         }
@@ -633,7 +935,7 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
             Set<HashEntry<K, V>> evicted = null;
             try {
                 int c = count;
-                if (c++ > threshold && ea.strategy() == Eviction.NONE) // ensure capacity
+                if (c++ > threshold && eviction.strategy() == Eviction.NONE) // ensure capacity
                     rehash();
                 HashEntry<K, V>[] tab = table;
                 int index = hash & (tab.length - 1);
@@ -647,23 +949,23 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
                     oldValue = e.value;
                     if (!onlyIfAbsent) {
                         e.value = value;
-                        ea.onEntryHit(e);
-                    }                    
+                        eviction.onEntryHit(e);
+                    }
                 } else {
                     oldValue = null;
-                    ++modCount;                    
+                    ++modCount;
                     count = c; // write-volatile
-                    if (ea.strategy() != Eviction.NONE) {
+                    if (eviction.strategy() != Eviction.NONE) {
                         if (c > tab.length) {
                             // remove entries;lower count
-                            evicted = ea.execute();
+                            evicted = eviction.execute();
                             // re-read first
                             first = tab[index];
                         }
                         // add a new entry
                         tab[index] = new HashEntry<K, V>(key, hash, first, value);
                         // notify a miss
-                        ea.onEntryMiss(tab[index]);
+                        eviction.onEntryMiss(tab[index]);
                     } else {
                         tab[index] = new HashEntry<K, V>(key, hash, first, value);
                     }
@@ -671,11 +973,11 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
                 return oldValue;
             } finally {
                 unlock();
-                //piggyback listener invocation on callers thread outside lock
-                if (evictionListener != null && evicted != null) {
+                // piggyback listener invocation on callers thread outside lock
+                if(evicted != null) {
                     for (HashEntry<K, V> he : evicted) {
                         evictionListener.evicted(he.key, he.value);
-                    }
+                    }                
                 }
             }
         }
@@ -763,15 +1065,15 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
                         ++modCount;
 
                         // e was removed
-                        ea.onEntryRemove(e);
+                        eviction.onEntryRemove(e);
 
                         HashEntry<K, V> newFirst = e.next;
                         for (HashEntry<K, V> p = first; p != e; p = p.next) {
-                            //allow p to be GC-ed 
-                            ea.onEntryRemove(p);
+                            // allow p to be GC-ed
+                            eviction.onEntryRemove(p);
                             newFirst = new HashEntry<K, V>(p.key, p.hash, newFirst, p.value);
-                            //and notify eviction algorithm about new hash entries
-                            ea.onEntryMiss(newFirst);
+                            // and notify eviction algorithm about new hash entries
+                            eviction.onEntryMiss(newFirst);
                         }
 
                         tab[index] = newFirst;
@@ -792,284 +1094,11 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
                     for (int i = 0; i < tab.length; i++)
                         tab[i] = null;
                     ++modCount;
-                    ea.clear();
+                    eviction.clear();
                     count = 0; // write-volatile
                 } finally {
                     unlock();
                 }
-            }
-        }
-
-        class LRU implements EvictionPolicy<K, V> {
-            private final ConcurrentLinkedQueue<HashEntry<K, V>> accessQueue;
-            private final LinkedList<HashEntry<K, V>> lruQueue;
-            private final int maxBatchQueueSize;
-            private final int trimDownSize;
-            private final float batchThresholdFactor;
-
-            public LRU(int capacity, float lf, int maxBatchSize, float batchThresholdFactor) {
-                this.trimDownSize = (int) (capacity * lf);
-                this.maxBatchQueueSize = maxBatchSize > MAX_BATCH_SIZE ? MAX_BATCH_SIZE : maxBatchSize;
-                this.batchThresholdFactor = batchThresholdFactor;
-                this.accessQueue = new ConcurrentLinkedQueue<HashEntry<K, V>>();
-                this.lruQueue = new LinkedList<HashEntry<K, V>>();
-            }
-
-            @Override
-            public Set<HashEntry<K, V>> execute() {
-                Set<HashEntry<K, V>> evicted = Collections.emptySet();
-                if (isOverflow()) {
-                    evicted = new HashSet<HashEntry<K, V>>();
-                }
-                try {
-                    for (HashEntry<K, V> e : accessQueue) {
-                        if (lruQueue.remove(e)) {
-                            lruQueue.addFirst(e);
-                        }
-                    }
-                    while (isOverflow()) {
-                        HashEntry<K, V> first = lruQueue.getLast();
-                        remove(first.key, first.hash, null);
-                        evicted.add(first);
-                    }
-                } finally {
-                    accessQueue.clear();
-                }
-                return evicted;
-            }
-
-            private boolean isOverflow() {
-                return lruQueue.size() > trimDownSize;
-            }
-
-            @Override
-            public void onEntryMiss(HashEntry<K, V> e) {
-                lruQueue.addFirst(e);
-            }
-
-            /*
-             * Invoked without holding a lock on Segment
-             */
-            @Override
-            public boolean onEntryHit(HashEntry<K, V> e) {
-                accessQueue.add(e);
-                return accessQueue.size() >= maxBatchQueueSize * batchThresholdFactor;
-            }
-
-            /*
-             * Invoked without holding a lock on Segment
-             */
-            @Override
-            public boolean thresholdExpired() {
-                return accessQueue.size() >= maxBatchQueueSize;
-            }
-
-            @Override
-            public void onEntryRemove(HashEntry<K, V> e) {
-                assert lruQueue.remove(e);
-                // we could have multiple instances of e in accessQueue; remove them all
-                while (accessQueue.remove(e));
-            }
-
-            @Override
-            public void clear() {
-                lruQueue.clear();
-                accessQueue.clear();
-            }
-
-            @Override
-            public Eviction strategy() {
-                return Eviction.LRU;
-            }
-        }
-
-        class LIRS implements EvictionPolicy<K, V> {
-            private final static int MIN_HIR_SIZE = 2;
-            private final ConcurrentLinkedQueue<HashEntry<K, V>> accessQueue;
-            private final LinkedHashMap<Integer, HashEntry<K, V>> stack;
-            private final LinkedList<HashEntry<K, V>> queue;
-
-            private final int maxBatchQueueSize;
-            private final int lirSizeLimit;
-            private final int hirSizeLimit;
-            private int currentLIRSize;
-            private final float batchThresholdFactor;
-
-            public LIRS(int capacity, float lf, int maxBatchSize, float batchThresholdFactor) {
-                int tmpLirSize = (int) (capacity * 0.9);
-                int tmpHirSizeLimit = capacity - tmpLirSize;
-                if (tmpHirSizeLimit < MIN_HIR_SIZE) {
-                    hirSizeLimit = MIN_HIR_SIZE;
-                    lirSizeLimit = capacity - hirSizeLimit;
-                } else {
-                    hirSizeLimit = tmpHirSizeLimit;
-                    lirSizeLimit = tmpLirSize;
-                }
-                this.maxBatchQueueSize = maxBatchSize > MAX_BATCH_SIZE ? MAX_BATCH_SIZE : maxBatchSize;
-                this.batchThresholdFactor = batchThresholdFactor;
-                this.accessQueue = new ConcurrentLinkedQueue<HashEntry<K, V>>();
-                this.stack = new LinkedHashMap<Integer, HashEntry<K, V>>();
-                this.queue = new LinkedList<HashEntry<K, V>>();
-            }
-
-            @Override
-            public Set<HashEntry<K, V>> execute() {
-                Set<HashEntry<K, V>> evicted = new HashSet<HashEntry<K, V>>();
-                try {
-                    for (HashEntry<K, V> e : accessQueue) {
-                        if (present(e)) {
-                            if (e.recency() == Recency.LIR_RESIDENT) {
-                                handleLIRHit(e, evicted);
-                            } else if (e.recency() == Recency.HIR_RESIDENT) {
-                                handleHIRHit(e, evicted);
-                            } 
-                        }                  
-                    }                        
-                    removeFromSegment(evicted);                    
-                } finally {
-                    accessQueue.clear();
-                }
-                return evicted;
-            }
-
-            private void handleHIRHit(HashEntry<K, V> e, Set<HashEntry<K, V>> evicted) {
-                boolean inStack = stack.containsKey(e.hashCode());
-                if (inStack)
-                    stack.remove(e.hashCode());
-
-                // first put on top of the stack
-                stack.put(e.hashCode(), e);
-
-                if (inStack) {
-                    assert queue.contains(e);
-                    queue.remove(e);
-                    e.transitionHIRResidentToLIRResident();
-                    switchBottomostLIRtoHIRAndPrune(evicted);
-                } else {
-                    assert queue.contains(e);
-                    queue.remove(e);
-                    queue.addLast(e);
-                }
-            }
-
-            private void handleLIRHit(HashEntry<K, V> e, Set<HashEntry<K, V>> evicted) {
-                stack.remove(e.hashCode());
-                stack.put(e.hashCode(), e);
-                for (Iterator<HashEntry<K, V>> i = stack.values().iterator(); i.hasNext();) {
-                    HashEntry<K, V> next = i.next();
-                    if (next.recency() == Recency.LIR_RESIDENT) {
-                        break;
-                    } else {
-                        i.remove();
-                        evicted.add(next);            
-                    }
-                }
-            }
-
-            private boolean present(HashEntry<K, V> e) {
-                return stack.containsKey(e.hashCode()) || queue.contains(e);                
-            }
-
-            @Override
-            public void onEntryMiss(HashEntry<K, V> e) {
-                // initialization
-                if (currentLIRSize + 1 < lirSizeLimit) {
-                    currentLIRSize++;
-                    e.transitionHIRResidentToLIRResident();
-                    stack.put(e.hashCode(), e);
-                } else {
-                    if (queue.size() < hirSizeLimit) {
-                        assert !queue.contains(e);
-                        queue.addLast(e);
-                    } else {                        
-                        boolean inStack = stack.containsKey(e.hashCode());
-
-                        HashEntry<K, V> first = queue.removeFirst();
-                        assert first.recency() == Recency.HIR_RESIDENT;
-                        first.transitionHIRResidentToHIRNonResident();
-                                                
-                        stack.put(e.hashCode(), e);
-
-                        if (inStack) {
-                            e.transitionHIRResidentToLIRResident();
-                            Set<HashEntry<K, V>> evicted = new HashSet<HashEntry<K, V>>();
-                            switchBottomostLIRtoHIRAndPrune(evicted);
-                            removeFromSegment(evicted);
-                        } else {
-                            assert !queue.contains(e);
-                            queue.addLast(e);
-                        }
-                        
-                        //evict from segment
-                        remove(first.key, first.hash, null);
-                    }
-                }
-            }
-
-            private void removeFromSegment(Set<HashEntry<K, V>> evicted) {
-                for (HashEntry<K, V> e : evicted) {
-                    remove(e.key, e.hash, null);
-                }
-            }
-
-            private void switchBottomostLIRtoHIRAndPrune(Set<HashEntry<K, V>> evicted) {
-                boolean seenFirstLIR = false;
-                for (Iterator<HashEntry<K, V>> i = stack.values().iterator(); i.hasNext();) {
-                    HashEntry<K, V> next = i.next();
-                    if (next.recency() == Recency.LIR_RESIDENT) {
-                        if (!seenFirstLIR) {
-                            seenFirstLIR = true;
-                            i.remove();
-                            next.transitionLIRResidentToHIRResident();
-                            assert !queue.contains(next);
-                            queue.addLast(next);
-                        } else {
-                            break;
-                        }
-                    } else {
-                        i.remove();
-                        evicted.add(next);
-                    }
-                }
-            }
-
-            /*
-             * Invoked without holding a lock on Segment
-             */
-            @Override
-            public boolean onEntryHit(HashEntry<K, V> e) {
-                accessQueue.add(e);
-                return accessQueue.size() >= maxBatchQueueSize * batchThresholdFactor;
-            }
-
-            /*
-             * Invoked without holding a lock on Segment
-             */
-            @Override
-            public boolean thresholdExpired() {
-                return accessQueue.size() >= maxBatchQueueSize;
-            }
-
-            @Override
-            public void onEntryRemove(HashEntry<K, V> e) {
-                HashEntry<K, V> removed = stack.remove(e.hashCode());
-                if (removed != null && removed.recency() == Recency.LIR_RESIDENT) {
-                    currentLIRSize--;
-                }
-                queue.remove(e);
-                // we could have multiple instances of e in accessQueue; remove them all
-                while (accessQueue.remove(e));                    
-            }
-
-            @Override
-            public void clear() {
-                stack.clear();
-                accessQueue.clear();
-            }
-
-            @Override
-            public Eviction strategy() {
-                return Eviction.LIRS;
             }
         }
     }
@@ -1089,13 +1118,13 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
      * @param concurrencyLevel
      *            the estimated number of concurrently updating threads. The implementation performs
      *            internal sizing to try to accommodate this many threads.
-     *            
+     * 
      * @param evictionStrategy
      *            the algorithm used to evict elements from this map
-     *            
+     * 
      * @param evictionListener
      *            the evicton listener callback to be notified about evicted elements
-     *            
+     * 
      * @throws IllegalArgumentException
      *             if the initial capacity is negative or the load factor or concurrencyLevel are
      *             nonpositive.
@@ -1103,6 +1132,9 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
     public BufferedConcurrentHashMap(int initialCapacity, float loadFactor, int concurrencyLevel,
                     Eviction evictionStrategy, EvictionListener<K, V> evictionListener) {
         if (!(loadFactor > 0) || initialCapacity < 0 || concurrencyLevel <= 0)
+            throw new IllegalArgumentException();
+        
+        if (evictionStrategy == null || evictionListener == null)
             throw new IllegalArgumentException();
 
         if (concurrencyLevel > MAX_SEGMENTS)
@@ -1127,13 +1159,18 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
         int cap = 1;
         while (cap < c)
             cap <<= 1;
-
+        
         for (int i = 0; i < this.segments.length; ++i)
-            this.segments[i] = new Segment<K, V>(cap, loadFactor, evictionStrategy,evictionListener);
+            this.segments[i] = new Segment<K, V>(cap, loadFactor, evictionStrategy,
+                            evictionListener);
     }
 
     public BufferedConcurrentHashMap(int initialCapacity, float loadFactor, int concurrencyLevel) {
-        this(initialCapacity, loadFactor, concurrencyLevel, Eviction.LRU, null);
+        this(initialCapacity, loadFactor, concurrencyLevel, Eviction.LRU);
+    }
+    
+    public BufferedConcurrentHashMap(int initialCapacity, float loadFactor, int concurrencyLevel, Eviction evictionStrategy) {
+        this(initialCapacity, loadFactor, concurrencyLevel, evictionStrategy, new NullEvictionListener<K, V>());
     }
 
     /**
@@ -1575,10 +1612,6 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
         return new ValueIterator();
     }
 
-    public interface EvictionListener<K, V> {
-        void evicted(K key, V value);
-    }
-
     /* ---------------- Iterator Support -------------- */
 
     abstract class HashIterator {
@@ -1666,7 +1699,8 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
      * underlying map.
      */
     final class WriteThroughEntry extends AbstractMap.SimpleEntry<K, V> {
-       private static final long serialVersionUID = -1075078642155041669L;
+        private static final long serialVersionUID = -1075078642155041669L;
+
         WriteThroughEntry(K k, V v) {
             super(k, v);
         }
