@@ -200,8 +200,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (ctx.isOriginLocal() && ctx.hasModifications()) {
          List<Address> recipients = dm.getAffectedNodes(ctx.getAffectedKeys());
-         NotifyingNotifiableFuture<Object> f = flushL1Cache(recipients.size(), getKeys(ctx.getModifications()), null,
-                                                            configuration.isSyncCommitPhase());
+         NotifyingNotifiableFuture<Object> f = flushL1Cache(recipients.size(), getKeys(ctx.getModifications()), null);
          rpcManager.invokeRemotely(recipients, command, configuration.isSyncCommitPhase(), true);
          if (f != null) f.get();
       }
@@ -218,7 +217,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
          List<Address> recipients = dm.getAffectedNodes(ctx.getAffectedKeys());
          NotifyingNotifiableFuture<Object> f = null;
          if (command.isOnePhaseCommit())
-            f = flushL1Cache(recipients.size(), getKeys(ctx.getModifications()), null, sync);
+            f = flushL1Cache(recipients.size(), getKeys(ctx.getModifications()), null);
          // this method will return immediately if we're the only member (because exclude_self=true)
          rpcManager.invokeRemotely(recipients, command, sync);
          if (f != null) f.get();
@@ -296,7 +295,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
                if (trace) log.trace("Invoking command {0} on hosts {1}", command, rec);
                boolean useFuture = ctx.isUseFutureReturnType();
                boolean sync = isSynchronous(ctx);
-               NotifyingNotifiableFuture<Object> future = flushL1Cache(rec == null ? 0 : rec.size(), recipientGenerator.getKeys(), returnValue, sync);
+               NotifyingNotifiableFuture<Object> future = flushL1Cache(rec == null ? 0 : rec.size(), recipientGenerator.getKeys(), returnValue);
                if (useFuture) {
                   if (future == null) future = new NotifyingFutureImpl(returnValue);
                   rpcManager.invokeRemotelyInFuture(rec, command, future);
