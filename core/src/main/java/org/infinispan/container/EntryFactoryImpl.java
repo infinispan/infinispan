@@ -233,6 +233,6 @@ public class EntryFactoryImpl implements EntryFactory {
    }
 
    public final void releaseLock(Object key) {
-      lockManager.unlock(key, lockManager.getOwner(key));
+      lockManager.unlock(key);
    }
 }

@@ -286,7 +286,7 @@ public class LockingInterceptor extends CommandInterceptor {
             // and then unlock
             if (needToUnlock) {
                if (trace) log.trace("Releasing lock on [" + key + "] for owner " + owner);
-               lockManager.unlock(key, owner);
+               lockManager.unlock(key);
             }
          }
       } else {

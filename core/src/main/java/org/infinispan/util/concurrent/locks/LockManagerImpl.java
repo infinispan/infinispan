@@ -166,7 +166,7 @@ public class LockManagerImpl implements LockManager {
          // and then unlock
          if (needToUnlock) {
             if (trace) log.trace("Releasing lock on [" + key + "] for owner " + owner);
-            unlock(key, owner);
+            unlock(key);
          }
       }
    }

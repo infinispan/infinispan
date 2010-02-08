@@ -187,7 +187,7 @@ public class ReplDeadlockDetectionTest extends MultipleCacheManagersTest {
       LockManager lm1 = TestingUtil.extractComponent(cache(0, "test"), LockManager.class);
       assert !lm1.isLocked("key") : "It is locked by " + lm1.getOwner("key");
 
-      lm2.unlock("key", ctx.getLockOwner());
+      lm2.unlock("key");
       assert !lm2.isLocked("key");
       assert !lm1.isLocked("key");
    }
@@ -210,7 +210,7 @@ public class ReplDeadlockDetectionTest extends MultipleCacheManagersTest {
       replicationLatch.countDown();
 
       Thread.sleep(3000); //just to make sure the remote tx thread managed to spin around for some times. 
-      lm2.unlock("key", ctx.getLockOwner());
+      lm2.unlock("key");
 
       t1.waitForResponse();
 
