@@ -6,6 +6,7 @@ import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
+import org.infinispan.loaders.modifications.Clear;
 import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.loaders.modifications.Prepare;
 import org.infinispan.loaders.modifications.Remove;
@@ -31,6 +32,7 @@ import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
@@ -138,7 +140,7 @@ public class AsyncTest extends AbstractInfinispanTest {
       }
    }
 
-   public void testTransactionalModifications(Method m) throws Exception {
+   public void testTransactionalModificationsHappenInDiffThread(Method m) throws Exception {
       try {
          final GlobalTransactionFactory gtf = new GlobalTransactionFactory();
          final String k1 = k(m, "1"), k2 = k(m, "2"), v1 = v(m, "1"), v2 = v(m, "2");
@@ -151,13 +153,6 @@ public class AsyncTest extends AbstractInfinispanTest {
                for (Map.Entry<Object, Modification> entry : mods.entrySet()) {
                   localMods.put(entry.getKey(), entry.getValue());
                }
-//               try {
-//                  barrier.await(5, TimeUnit.SECONDS);
-//               } catch (TimeoutException e) {
-//                  assert false : "Timed out waiting for modifications";
-//               } catch (Exception e) {
-//                  throw new CacheLoaderException("Barried failed", e);
-//               }
                super.applyModificationsSync(mods);
                try {
                   barrier.await(5, TimeUnit.SECONDS);
@@ -180,7 +175,6 @@ public class AsyncTest extends AbstractInfinispanTest {
          GlobalTransaction tx = gtf.newGlobalTransaction(null, false);
          store.prepare(mods, tx, false);
          barrier.await(5, TimeUnit.SECONDS);
-//         barrier.await(5, TimeUnit.SECONDS);
 
          assert 1 == localMods.size();
          assert localMods.entrySet().iterator().next().getKey() instanceof Prepare;
@@ -189,9 +183,156 @@ public class AsyncTest extends AbstractInfinispanTest {
 
          store.commit(tx);
          barrier.await(5, TimeUnit.SECONDS);
-//         barrier.await(5, TimeUnit.SECONDS);
          assert store.load(k2).getValue().equals(v2);
          assert !store.containsKey(k1);
+      } finally {
+         store.delegate.clear();
+         store.stop();
+         store = null;
+      }
+   }
+
+   public void testTransactionalModificationsAreCoalesced(Method m) throws Exception {
+      try {
+         final GlobalTransactionFactory gtf = new GlobalTransactionFactory();
+         final String k1 = k(m, "1"), k2 = k(m, "2"), k3 = k(m, "3"), v1 = v(m, "1"), v2 = v(m, "2"), v3 = v(m, "3");
+         final AtomicInteger storeCount = new AtomicInteger();
+         final AtomicInteger removeCount = new AtomicInteger();
+         final AtomicInteger clearCount = new AtomicInteger();
+         final CyclicBarrier barrier = new CyclicBarrier(2);
+         DummyInMemoryCacheStore underlying = new DummyInMemoryCacheStore() {
+            @Override
+            public void store(InternalCacheEntry ed) {
+               super.store(ed);
+               storeCount.getAndIncrement();
+            }
+
+            @Override
+            public boolean remove(Object key) {
+               boolean ret = super.remove(key);
+               removeCount.getAndIncrement();
+               return ret;
+            }
+
+            @Override
+            public void clear() {
+               super.clear();
+               clearCount.getAndIncrement();
+            }
+         };
+         store = new AsyncStore(underlying, asyncConfig) {
+            @Override
+            protected void applyModificationsSync(ConcurrentMap<Object, Modification> mods) throws CacheLoaderException {
+               super.applyModificationsSync(mods);
+               try {
+                  barrier.await(5, TimeUnit.SECONDS);
+               } catch (TimeoutException e) {
+                  assert false : "Timed out applying for modifications";
+               } catch (Exception e) {
+                  throw new CacheLoaderException("Barried failed", e);
+               }
+            }
+         };
+         dummyCfg = new DummyInMemoryCacheStore.Cfg();
+         dummyCfg.setStore(m.getName());
+         store.init(dummyCfg, null, null);
+         store.start();
+
+         List<Modification> mods = new ArrayList<Modification>();
+         mods.add(new Store(InternalEntryFactory.create(k1, v1)));
+         mods.add(new Store(InternalEntryFactory.create(k1, v2)));
+         mods.add(new Store(InternalEntryFactory.create(k2, v1)));
+         mods.add(new Store(InternalEntryFactory.create(k2, v2)));
+         mods.add(new Remove(k1));
+         GlobalTransaction tx = gtf.newGlobalTransaction(null, false);
+         store.prepare(mods, tx, false);
+         barrier.await(5, TimeUnit.SECONDS);
+         assert 0 == storeCount.get();
+         assert 0 == removeCount.get();
+         assert 0 == clearCount.get();
+         store.commit(tx);
+         barrier.await(5, TimeUnit.SECONDS);
+         assert 1 == storeCount.get() : "Store count was " + storeCount.get();
+         assert 1 == removeCount.get();
+         assert 0 == clearCount.get();
+
+         storeCount.set(0);
+         removeCount.set(0);
+         clearCount.set(0);
+         mods = new ArrayList<Modification>();
+         mods.add(new Store(InternalEntryFactory.create(k1, v1)));
+         mods.add(new Remove(k1));
+         mods.add(new Clear());
+         mods.add(new Store(InternalEntryFactory.create(k2, v2)));
+         mods.add(new Remove(k2));
+         tx = gtf.newGlobalTransaction(null, false);
+         store.prepare(mods, tx, false);
+         barrier.await(5, TimeUnit.SECONDS);
+         assert 0 == storeCount.get();
+         assert 0 == removeCount.get();
+         assert 0 == clearCount.get();
+         store.commit(tx);
+         barrier.await(5, TimeUnit.SECONDS);
+         assert 0 == storeCount.get() : "Store count was " + storeCount.get();
+         assert 0 == removeCount.get();
+         assert 1 == clearCount.get();
+
+         storeCount.set(0);
+         removeCount.set(0);
+         clearCount.set(0);
+         mods = new ArrayList<Modification>();
+         mods.add(new Store(InternalEntryFactory.create(k1, v1)));
+         mods.add(new Remove(k1));
+         mods.add(new Store(InternalEntryFactory.create(k2, v2)));
+         mods.add(new Remove(k2));
+         mods.add(new Store(InternalEntryFactory.create(k3, v3)));         
+         tx = gtf.newGlobalTransaction(null, false);
+         store.prepare(mods, tx, false);
+         barrier.await(5, TimeUnit.SECONDS);
+         assert 0 == storeCount.get();
+         assert 0 == removeCount.get();
+         assert 0 == clearCount.get();
+         store.commit(tx);
+         barrier.await(5, TimeUnit.SECONDS);
+         assert 1 == storeCount.get() : "Store count was " + storeCount.get();
+         assert 2 == removeCount.get();
+         assert 0 == clearCount.get();
+
+         storeCount.set(0);
+         removeCount.set(0);
+         clearCount.set(0);
+         mods = new ArrayList<Modification>();
+         mods.add(new Clear());
+         mods.add(new Remove(k1));
+         tx = gtf.newGlobalTransaction(null, false);
+         store.prepare(mods, tx, false);
+         barrier.await(5, TimeUnit.SECONDS);
+         assert 0 == storeCount.get();
+         assert 0 == removeCount.get();
+         assert 0 == clearCount.get();
+         store.commit(tx);
+         barrier.await(5, TimeUnit.SECONDS);
+         assert 0 == storeCount.get() : "Store count was " + storeCount.get();
+         assert 0 == removeCount.get();
+         assert 1 == clearCount.get();
+
+         storeCount.set(0);
+         removeCount.set(0);
+         clearCount.set(0);
+         mods = new ArrayList<Modification>();
+         mods.add(new Clear());
+         mods.add(new Store(InternalEntryFactory.create(k1, v1)));         
+         tx = gtf.newGlobalTransaction(null, false);
+         store.prepare(mods, tx, false);
+         barrier.await(5, TimeUnit.SECONDS);
+         assert 0 == storeCount.get();
+         assert 0 == removeCount.get();
+         assert 0 == clearCount.get();
+         store.commit(tx);
+         barrier.await(5, TimeUnit.SECONDS);
+         assert 1 == storeCount.get() : "Store count was " + storeCount.get();
+         assert 0 == removeCount.get();
+         assert 1 == clearCount.get();
       } finally {
          store.delegate.clear();
          store.stop();

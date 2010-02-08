@@ -21,6 +21,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -188,7 +189,8 @@ public class AsyncStore extends AbstractDelegatingStore {
                super.purgeExpired();
                break;
             case PREPARE:
-               super.prepare(((Prepare) mod).getList(), ((Prepare) mod).getTx(), ((Prepare) mod).isOnePhase());
+               List<? extends Modification> coalesced = coalesceModificationList(((Prepare) mod).getList());
+               super.prepare(coalesced, ((Prepare) mod).getTx(), ((Prepare) mod).isOnePhase());
                break;
             case COMMIT:
                super.commit(((Commit) mod).getTx());
@@ -199,6 +201,33 @@ public class AsyncStore extends AbstractDelegatingStore {
 
    protected Runnable createAsyncProcessor() {
       return new AsyncProcessor();
+   }
+
+   private List<? extends Modification> coalesceModificationList(List<? extends Modification> mods) {
+      Map<Object, Modification> keyMods = new HashMap<Object, Modification>();
+      List<Modification> coalesced = new ArrayList<Modification>();
+      for (Modification mod : mods) {
+         switch (mod.getType()) {
+            case STORE:
+               keyMods.put(((Store) mod).getStoredEntry().getKey(), mod);
+               break;
+            case CLEAR:
+               keyMods.clear(); // remove all pending key modifications
+               coalesced.add(mod); // add a clear so that future put/removes do not need to do anything
+               break;
+            case REMOVE:
+               if (!coalesced.isEmpty() && keyMods.containsKey(((Remove) mod).getKey())) {
+                  keyMods.remove(((Remove) mod).getKey()); // clear, p(k), r(k) sequence should result in no-op for k
+               } else if (coalesced.isEmpty()) {
+                  keyMods.put(((Remove) mod).getKey(), mod);
+               }
+               break;
+            default:
+               throw new IllegalArgumentException("Unknown modification type " + mod.getType());
+         }
+      }
+      coalesced.addAll(keyMods.values());
+      return coalesced;
    }
 
    private void enqueue(Object key, Modification mod) {
