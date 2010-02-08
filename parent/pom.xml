@@ -304,6 +304,14 @@
                <xmlOutputDirectory>target</xmlOutputDirectory>
             </configuration>
          </plugin>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-pmd-plugin</artifactId>
+            <configuration>
+               <minimumTokens>100</minimumTokens>
+               <targetJdk>1.6</targetJdk>
+            </configuration>
+         </plugin>
       </plugins>
    </reporting>
 
