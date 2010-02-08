@@ -159,7 +159,7 @@ public class TransactionTable {
    private void registerRemoteTransaction(GlobalTransaction gtx, RemoteTransaction rtx) {
       RemoteTransaction transaction = remoteTransactions.put(gtx, rtx);
       if (transaction != null) {
-         String message = "A remote transaction with the given id was already registred!!!";
+         String message = "A remote transaction with the given id was already registered!!!";
          log.error(message);
          throw new IllegalStateException(message);
       }
@@ -182,7 +182,7 @@ public class TransactionTable {
          try {
             transaction.enlistResource(current);
          } catch (Exception e) {
-            log.error("Failed to emlist TransactionXaAdapter to transaction");
+            log.error("Failed to enlist TransactionXaAdapter to transaction");
             throw new CacheException(e);
          }
          notifier.notifyTransactionRegistered(tx, ctx);

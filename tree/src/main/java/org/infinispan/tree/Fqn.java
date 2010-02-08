@@ -98,6 +98,7 @@ public class Fqn implements Comparable<Fqn> {
     * A cached string representation of this Fqn, used by toString to it isn't calculated again every time.
     */
    protected String stringRepresentation;
+   private static final Object[] EMPTY_ARRAY = new Object[]{};
 
    // ----------------- START: Private constructors for use by factory methods only. ----------------------
 
@@ -116,7 +117,7 @@ public class Fqn implements Comparable<Fqn> {
       if (names != null)
          elements = names.toArray();
       else
-         elements = new Object[]{};
+         elements = EMPTY_ARRAY;
    }
 
    private Fqn(Fqn base, Object... relative) {
@@ -204,7 +205,7 @@ public class Fqn implements Comparable<Fqn> {
     */
    @SuppressWarnings("unchecked")
    public static Fqn fromString(String stringRepresentation) {
-      if (stringRepresentation == null || stringRepresentation.equals(SEPARATOR) || stringRepresentation.equals(""))
+      if (stringRepresentation == null || stringRepresentation.equals(SEPARATOR) || stringRepresentation.length() == 0)
          return root();
 
       String toMatch = stringRepresentation.startsWith(SEPARATOR) ? stringRepresentation.substring(1) : stringRepresentation;
@@ -431,7 +432,7 @@ public class Fqn implements Comparable<Fqn> {
       }
    }
 
-   public static final Fqn root()  // declared final so compilers can optimise and in-line.
+   public static Fqn root()  // declared final so compilers can optimise and in-line.
    {
       return ROOT;
    }

@@ -126,8 +126,7 @@ public class DemoActions {
     */
    public Query parseQuery(String queryLine) throws ParseException {
       QueryParser parser = new QueryParser(MAIN_FIELD, analyzer);
-      Query query = parser.parse(queryLine);
-      return query;
+      return parser.parse(queryLine);
    }
 
    /**

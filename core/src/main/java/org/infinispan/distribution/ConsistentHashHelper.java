@@ -124,7 +124,7 @@ public class ConsistentHashHelper {
     */
    public static ConsistentHash createConsistentHash(Class<? extends ConsistentHash> clazz, List<Address> addresses) throws IllegalAccessException, InstantiationException, ClassNotFoundException {
       ConsistentHash ch = Util.getInstance(clazz);
-      if (addresses != null && addresses.size() > 0) ch.setCaches(addresses);
+      if (addresses != null && !addresses.isEmpty()) ch.setCaches(addresses);
       return ch;
    }
 

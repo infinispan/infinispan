@@ -488,7 +488,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
             needNotification = true;
          }
          // Now that we have a view, figure out if we are the coordinator
-         coordinator = (members != null && members.size() != 0 && members.get(0).equals(getAddress()));
+         coordinator = (members != null && !members.isEmpty() && members.get(0).equals(getAddress()));
 
          // now notify listeners - *after* updating the coordinator. - JBCACHE-662
          if (needNotification && notifier != null) {

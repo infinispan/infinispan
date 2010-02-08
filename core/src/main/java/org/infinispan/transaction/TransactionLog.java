@@ -144,7 +144,7 @@ public class TransactionLog {
 
    public final void deactivate() {
       active.set(false);
-      if (entries.size() > 0)
+      if (!entries.isEmpty())
          log.error("Unprocessed Transaction Log Entries! = {0}", entries.size());
       entries.clear();
    }

@@ -212,7 +212,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       throw new RuntimeException("Cannot locate joiner! Joiner is [" + joinerAddress + "]");
    }
 
-   protected static final String safeType(Object o) {
+   protected static String safeType(Object o) {
       if (o == null) return "null";
       return o.getClass().getSimpleName();
    }

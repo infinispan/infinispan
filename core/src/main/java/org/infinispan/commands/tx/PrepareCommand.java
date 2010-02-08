@@ -73,7 +73,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
 
    public PrepareCommand(GlobalTransaction gtx, List<WriteCommand> commands, boolean onePhaseCommit) {
       this.globalTx = gtx;
-      this.modifications = commands == null || commands.size() == 0 ? null : commands.toArray(new WriteCommand[commands.size()]);
+      this.modifications = commands == null || commands.isEmpty() ? null : commands.toArray(new WriteCommand[commands.size()]);
       this.onePhaseCommit = onePhaseCommit;
    }
 

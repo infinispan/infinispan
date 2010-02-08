@@ -106,7 +106,7 @@ public class ResourceDMBean implements DynamicMBean {
       ops.toArray(opInfos);
 
       if (log.isTraceEnabled()) {
-         if (ops.size() > 0)
+         if (!ops.isEmpty())
             log.trace("Operations are:");
          for (MBeanOperationInfo op : opInfos) {
             log.trace("Operation " + op.getReturnType() + " " + op.getName());
@@ -177,15 +177,15 @@ public class ResourceDMBean implements DynamicMBean {
 
    public synchronized AttributeList setAttributes(AttributeList list) {
       AttributeList results = new AttributeList();
-      for (int i = 0; i < list.size(); i++) {
-         Attribute attr = (Attribute) list.get(i);
+      for (Object aList : list) {
+         Attribute attr = (Attribute) aList;
 
          if (setNamedAttribute(attr)) {
             results.add(attr);
          } else {
             if (log.isWarnEnabled()) {
                log.warn("Failed to update attribute name " + attr.getName() + " with value "
-                        + attr.getValue());
+                     + attr.getValue());
             }
          }
       }
@@ -225,15 +225,10 @@ public class ResourceDMBean implements DynamicMBean {
 
    public static Class<?> getClassForName(String name) throws ClassNotFoundException {
       try {
-         Class<?> c = Util.loadClass(name);
-         return c;
+         return (Class<?>) Util.loadClass(name);
       } catch (ClassNotFoundException cnfe) {
          // Could be a primitive - let's check
-         for (int i = 0; i < primitives.length; i++) {
-            if (name.equals(primitives[i].getName())) {
-               return primitives[i];
-            }
-         }
+         for (Class<?> primitive : primitives) if (name.equals(primitive.getName())) return primitive;
       }
       throw new ClassNotFoundException("Class " + name + " cannot be found");
    }
@@ -382,8 +377,8 @@ public class ResourceDMBean implements DynamicMBean {
             if (attr != null) {
                String fieldName = renameToJavaCodingConvention(field.getName());
                MBeanAttributeInfo info = new MBeanAttributeInfo(fieldName, field.getType()
-                        .getCanonicalName(), attr.description(), true, Modifier.isFinal(field
-                        .getModifiers()) ? false : attr.writable(), false);
+                        .getCanonicalName(), attr.description(), true, !Modifier.isFinal(field
+                     .getModifiers()) && attr.writable(), false);
 
                atts.put(fieldName, new FieldAttributeEntry(info, field));
             }
@@ -478,9 +473,9 @@ public class ResourceDMBean implements DynamicMBean {
 
       public Object invoke(Attribute a) throws Exception {
          if (a == null && isOrGetmethod != null)
-            return isOrGetmethod.invoke(getObject(), new Object[] {});
+            return isOrGetmethod.invoke(getObject() );
          else if (a != null && setMethod != null)
-            return setMethod.invoke(getObject(), new Object[] { a.getValue() });
+            return setMethod.invoke(getObject(), a.getValue());
          else
             return null;
       }

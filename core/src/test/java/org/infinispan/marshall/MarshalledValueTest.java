@@ -509,6 +509,7 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       boolean b;
       static int serializationCount, deserializationCount;
       final Log log = LogFactory.getLog(Pojo.class);
+      private static final long serialVersionUID = -2888014339659501395L;
 
       public boolean equals(Object o) {
          if (this == o) return true;

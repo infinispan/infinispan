@@ -53,11 +53,11 @@ public class InfinispanIndexIO {
       return (byte[]) cache.get(key);
    }
 
-   private static final int getPositionInBuffer(int pos, int bufferSize) {
+   private static int getPositionInBuffer(int pos, int bufferSize) {
       return (pos % bufferSize);
    }
 
-   private static final int getChunkNumberFromPosition(int pos, int bufferSize) {
+   private static int getChunkNumberFromPosition(int pos, int bufferSize) {
       return ((pos) / (bufferSize));
    }
 

@@ -237,7 +237,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
          throw new Exception("transactionContext for transaction " + gtx + " not found in transaction table");
       }
       List<WriteCommand> modifications = transactionContext.getModifications();
-      if (modifications.size() == 0) {
+      if (modifications.isEmpty()) {
          if (trace) log.trace("Transaction has not logged any modifications!");
          return;
       }

@@ -176,8 +176,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    public EvictCommand buildEvictCommand(Object key) {
-      EvictCommand command = new EvictCommand(key, notifier);
-      return command;
+      return new EvictCommand(key, notifier);
    }
 
    public PrepareCommand buildPrepareCommand(GlobalTransaction gtx, List<WriteCommand> modifications, boolean onePhaseCommit) {

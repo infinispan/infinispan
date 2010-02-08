@@ -33,8 +33,7 @@ public class ConfigurationCloneTest extends SingleCacheManagerTest {
 
    @Override
    protected CacheManager createCacheManager() throws Exception {
-      CacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
-      return cm;
+      return TestCacheManagerFactory.createLocalCacheManager();
    }
 
    public void testCloningBeforeStart(Method method) {

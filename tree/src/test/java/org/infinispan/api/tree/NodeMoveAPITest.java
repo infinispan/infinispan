@@ -28,7 +28,7 @@ import java.util.concurrent.CountDownLatch;
  *
  * @author <a href="mailto:manik AT jboss DOT org">Manik Surtani</a>
  */
-@Test(groups = {"functional", "pessimistic"}, testName = "api.tree.NodeMoveAPITest")
+@Test(groups = "functional", testName = "api.tree.NodeMoveAPITest")
 public class NodeMoveAPITest extends SingleCacheManagerTest {
    protected final Log log = LogFactory.getLog(getClass());
 

@@ -19,13 +19,13 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
 
 
    // The normal bit spreader...
-   protected static final int hash(Object key) {
+   protected static int hash(Object key) {
       int h = key.hashCode();
       h ^= (h >>> 20) ^ (h >>> 12);
       return h ^ (h >>> 7) ^ (h >>> 4);
    }
 
-   protected static final boolean eq(Object o1, Object o2) {
+   protected static boolean eq(Object o1, Object o2) {
       return o1 == o2 || (o1 != null && o1.equals(o2));
    }
 

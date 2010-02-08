@@ -99,7 +99,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       Object retval = invokeNextInterceptor(ctx, command);
       long t2 = System.currentTimeMillis();
 
-      if (data != null && data.size() > 0) {
+      if (data != null && !data.isEmpty()) {
          storeTimes.getAndAdd(t2 - t1);
          stores.getAndAdd(data.size());
       }

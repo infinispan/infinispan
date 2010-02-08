@@ -133,8 +133,7 @@ public class CacheManagerComponent implements ResourceComponent, MeasurementFace
     * @return EmsConnection object
     */
    protected EmsConnection getConnection() {
-      EmsConnection conn = helper.getEmsConnection(context.getPluginConfiguration());
-      return conn;
+      return helper.getEmsConnection(context.getPluginConfiguration());
    }
 
    private EmsBean queryCacheManagerBean(EmsConnection conn) {

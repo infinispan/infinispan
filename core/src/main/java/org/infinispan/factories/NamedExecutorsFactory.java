@@ -66,11 +66,11 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
    }
 
    private void setDefaultThreadPrio(int prio, Properties props) {
-      if (!props.containsKey("threadPriority")) props.setProperty("threadPriority", "" + prio);
+      if (!props.containsKey("threadPriority")) props.setProperty("threadPriority", String.valueOf(prio));
    }
 
    private void setDefaultThreads(int numThreads, Properties props) {
-      if (!props.containsKey("maxThreads")) props.setProperty("maxThreads", "" + numThreads);
+      if (!props.containsKey("maxThreads")) props.setProperty("maxThreads", String.valueOf(numThreads));
    }
 
    private void setComponentName(String cn, Properties p) {

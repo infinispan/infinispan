@@ -43,7 +43,7 @@ public class VisitableBidirectionalLinkedHashSetTest extends AbstractInfinispanT
       }
 
       assert set.isEmpty();
-      assert set.size() == 0 : "Expecting size to be 0 but was " + set.size();
+      assert set.isEmpty() : "Expecting size to be 0 but was " + set.size();
    }
 
 

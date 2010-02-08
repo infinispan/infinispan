@@ -340,7 +340,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                   }
                }
 
-               if (replay && ignorers.size() > 0) {
+               if (replay && !ignorers.isEmpty()) {
                   Message msg = constructMessage(buf, null);
                   //Since we are making a sync call make sure we don't bundle
                   //See ISPN-192 for more details

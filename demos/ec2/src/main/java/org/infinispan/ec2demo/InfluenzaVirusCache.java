@@ -37,8 +37,7 @@ public class InfluenzaVirusCache {
 	}
 
 	public Influenza_N_P_CR_Element getVirusDetails(String GBAN) {
-		Influenza_N_P_CR_Element myVR = myCache.get(GBAN);
-		return myVR;
+      return myCache.get(GBAN);
 	}
 	
 	public Cache getCache(){

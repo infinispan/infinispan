@@ -60,7 +60,7 @@ public abstract class AbstractCacheStore extends AbstractCacheLoader implements 
             @Override
             public Thread newThread(Runnable r) {
                // Thread name: <cache>-<CacheStore>-<purger>-ID
-               Thread t = new Thread(r, (cache == null ? "" : cache.getName() + "-") + loaderName + "-" + THREAD_COUNTER.getAndIncrement());
+               Thread t = new Thread(r, (cache == null ? "" : cache.getName() + '-') + loaderName + '-' + THREAD_COUNTER.getAndIncrement());
                t.setDaemon(true);
                return t;
             }

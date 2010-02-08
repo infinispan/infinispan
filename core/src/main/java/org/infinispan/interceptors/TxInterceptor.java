@@ -177,9 +177,7 @@ public class TxInterceptor extends CommandInterceptor {
       if (shouldEnlist(ctx)) {
          xaAdapter = enlist(ctx);
          LocalTxInvocationContext localTxContext = (LocalTxInvocationContext) ctx;
-         if (!isLocalModeForced(ctx)) {
-            shouldAddMod = true;
-         }
+         if (localModeNotForced(ctx)) shouldAddMod = true;
          localTxContext.setXaCache(xaAdapter);
       }
       Object rv = invokeNextInterceptor(ctx, command);
@@ -193,25 +191,25 @@ public class TxInterceptor extends CommandInterceptor {
       Transaction transaction = tm.getTransaction();
       if (transaction == null) throw new IllegalStateException("This should only be called in an tx scope");
       int status = transaction.getStatus();
-      if (!isValid(status)) throw new IllegalStateException("Transaction " + transaction +
+      if (isNotValid(status)) throw new IllegalStateException("Transaction " + transaction +
             " is not in a valid state to be invoking cache operations on.");
       return txTable.getOrCreateXaAdapter(transaction, ctx);
    }
 
-   private boolean isValid(int status) {
-      return status == Status.STATUS_ACTIVE || status == Status.STATUS_PREPARING;
+   private boolean isNotValid(int status) {
+      return status != Status.STATUS_ACTIVE && status != Status.STATUS_PREPARING;
    }
 
    private boolean shouldEnlist(InvocationContext ctx) {
       return ctx.isInTxScope() && ctx.isOriginLocal();
    }
 
-   private boolean isLocalModeForced(InvocationContext icx) {
+   private boolean localModeNotForced(InvocationContext icx) {
       if (icx.hasFlag(Flag.CACHE_MODE_LOCAL)) {
          if (trace) log.debug("LOCAL mode forced on invocation.  Suppressing clustered events.");
-         return true;
+         return false;
       }
-      return false;
+      return true;
    }
 
    @ManagedOperation(description = "Resets statistics gathered by this component")

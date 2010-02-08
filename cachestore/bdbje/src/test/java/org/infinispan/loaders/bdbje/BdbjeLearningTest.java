@@ -239,9 +239,8 @@ public class BdbjeLearningTest {
 
       }
       catch (Exception e) {
-         CacheLoaderException cle = (e instanceof CacheLoaderException) ? (CacheLoaderException) e :
+         throw (e instanceof CacheLoaderException) ? (CacheLoaderException) e :
                new CacheLoaderException("Problems reading from stream", e);
-         throw cle;
       }
    }
 

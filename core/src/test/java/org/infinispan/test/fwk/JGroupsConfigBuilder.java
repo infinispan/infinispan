@@ -32,7 +32,7 @@ public class JGroupsConfigBuilder {
 
       @Override
       protected String initialValue() {
-         return uniqueAddr.getAndAdd(50) + "";
+         return String.valueOf(uniqueAddr.getAndAdd(50));
       }
    };
 

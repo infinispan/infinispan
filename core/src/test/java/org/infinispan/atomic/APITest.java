@@ -126,7 +126,7 @@ public class APITest extends AbstractInfinispanTest {
       assert map.get("blah").equals("blah");
 
       Transaction t = tm.suspend();
-      assert map.size() == 0;
+      assert map.isEmpty();
       assertIsEmpty(map);
       assertIsEmptyMap(cache, "map");
 

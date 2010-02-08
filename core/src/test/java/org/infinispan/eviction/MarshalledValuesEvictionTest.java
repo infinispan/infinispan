@@ -70,7 +70,7 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
       cache.put(p3, p4);
 
       // wait for the cache size to drop to 1, up to a specified amount of time.
-      long giveupTime = System.currentTimeMillis() + (1000 * 60 * 1); // 1 mins?
+      long giveupTime = System.currentTimeMillis() + (1000 * 60); // 1 mins?
       while (cache.getAdvancedCache().getDataContainer().size() > 1 && System.currentTimeMillis() < giveupTime) {
          TestingUtil.sleepThread(100);
       }
@@ -89,7 +89,7 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
       cache.put("key-hexastyle", p2);
 
       // wait for the cache size to drop to 1, up to a specified amount of time.
-      long giveupTime = System.currentTimeMillis() + (1000 * 60 * 1); // 1 mins?
+      long giveupTime = System.currentTimeMillis() + (1000 * 60); // 1 mins?
       while (cache.getAdvancedCache().getDataContainer().size() > 1 && System.currentTimeMillis() < giveupTime) {
          TestingUtil.sleepThread(100);
       }

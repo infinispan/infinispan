@@ -134,6 +134,7 @@
             <include>org.infinispan:infinispan-server-rest</include>
             <include>org.infinispan:infinispan-lucene-directory</include>
             <include>org.infinispan:infinispan-lucene-demo</include>
+            <include>org.infinispan:infinispan-netty-transport</include>
          </includes>
          <sources>
             <includeModuleDirectory>false</includeModuleDirectory>

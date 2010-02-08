@@ -378,7 +378,7 @@ public class CacheQueryImpl implements CacheQuery {
       List<DirectoryProvider> directories = new ArrayList<DirectoryProvider>();
       Set<String> idFieldNames = new HashSet<String>();
       Similarity searcherSimilarity = null;
-      if (targetedEntities.size() == 0) {
+      if (targetedEntities.isEmpty()) {
          // empty targetedEntities array means search over all indexed enities,
          // but we have to make sure there is at least one
          if (builders.isEmpty()) {
@@ -508,7 +508,7 @@ public class CacheQueryImpl implements CacheQuery {
    // previously done. Also copied in methods like buildLuceneFilter(), createFilter() and those methods that follow down
    // until the end of the class.
    private void buildFilters() {
-      if (filterDefinitions == null || filterDefinitions.size() == 0) {
+      if (filterDefinitions == null || filterDefinitions.isEmpty()) {
          return; // there is nothing to do if we don't have any filter definitions
       }
 
@@ -606,8 +606,7 @@ public class CacheQueryImpl implements CacheQuery {
       for (Map.Entry<String, Object> entry : fullTextFilter.getParameters().entrySet()) {
          def.invoke(entry.getKey(), instance, entry.getValue());
       }
-      if (cacheInstance(def.getCacheMode()) && def.getKeyMethod() == null && fullTextFilter.getParameters()
-            .size() > 0) {
+      if (cacheInstance(def.getCacheMode()) && def.getKeyMethod() == null && !fullTextFilter.getParameters().isEmpty()) {
          throw new SearchException("Filter with parameters and no @Key method: " + fullTextFilter.getName());
       }
       return instance;

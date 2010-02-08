@@ -107,6 +107,8 @@ public class SingleOwnerTest extends BaseDistFunctionalTest {
       Cache ownerCache = owners[0];
       Cache nonOwnerCache = nonOwners[0];
       ownerCache.put("diffkey", new Externalizable() {
+         private static final long serialVersionUID = -483939825697574242L;
+
          public void writeExternal(ObjectOutput out) throws IOException {
             throw new UnknownError();
          }

@@ -71,7 +71,7 @@ public class LeaveTask extends RehashTask {
          CacheStore cs = dmi.getCacheStoreForRehashing();
          if (cs != null) {
             if (log.isTraceEnabled()) log.trace("Examining state in cache store");
-            for (InternalCacheEntry ice : cs.loadAll()) if (!statemap.containsKey(ice.getKey())) statemap.addState(ice);
+            for (InternalCacheEntry ice : cs.loadAll()) if (statemap.doesNotContainKey(ice.getKey())) statemap.addState(ice);
          }
 
          // push state.
@@ -256,8 +256,8 @@ class InMemoryStateMap extends StateMap<Map<Object, InternalCacheValue>> {
       keysHandled.add(key);
    }
 
-   boolean containsKey(Object key) {
-      return keysHandled.contains(key);
+   boolean doesNotContainKey(Object key) {
+      return !keysHandled.contains(key);
    }
 }
 

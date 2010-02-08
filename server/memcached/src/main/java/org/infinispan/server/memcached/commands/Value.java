@@ -38,7 +38,8 @@ class Value implements Externalizable {
    private int flags;
    private byte[] data;
    private long cas;
-   
+   private static final long serialVersionUID = -8421160896234703067L;
+
    Value(int flags, byte[] data, long cas) {
       this.flags = flags;
       this.data = data;

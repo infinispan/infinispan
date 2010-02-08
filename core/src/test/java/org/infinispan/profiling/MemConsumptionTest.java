@@ -93,7 +93,7 @@ public class MemConsumptionTest extends AbstractInfinispanTest {
 
    private byte[] generateUniqueKey(int runNumber, int keySize) {
       byte[] b = new byte[keySize];
-      b[0] = (byte) (runNumber >>> 0);
+      b[0] = (byte) (runNumber);
       b[1] = (byte) (runNumber >>> 8);
       b[2] = (byte) (runNumber >>> 16);
       b[3] = (byte) (runNumber >>> 24);

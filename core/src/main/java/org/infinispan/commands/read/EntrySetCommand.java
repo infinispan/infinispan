@@ -37,6 +37,7 @@ import java.util.Set;
  * @since 4.0
  */
 public class EntrySetCommand implements VisitableCommand, LocalCommand {
+   private static final Object[] EMPTY_ARRAY = new Object[0];
    private final DataContainer container;
 
    public EntrySetCommand(DataContainer container) {
@@ -56,7 +57,7 @@ public class EntrySetCommand implements VisitableCommand, LocalCommand {
    }
 
    public Object[] getParameters() {
-      return new Object[0];  // no-op
+      return EMPTY_ARRAY;  // no-op
    }
 
    public void setParameters(int commandId, Object[] parameters) {

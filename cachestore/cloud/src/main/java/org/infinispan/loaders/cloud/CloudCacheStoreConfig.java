@@ -35,6 +35,7 @@ public class CloudCacheStoreConfig extends LockSupportCacheStoreConfig {
    private int maxConnections = 10000;
    private boolean secure = true;
    private String cloudServiceLocation = "DEFAULT";
+   private static final long serialVersionUID = -9011054600279256849L;
 
    public CloudCacheStoreConfig() {
       setCacheLoaderClassName(CloudCacheStore.class.getName());

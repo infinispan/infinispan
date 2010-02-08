@@ -36,8 +36,7 @@ public class Remove implements Modification {
 
    @Override
    public int hashCode() {
-      int result = key != null ? key.hashCode() : 0;
-      return result;
+      return key != null ? key.hashCode() : 0;
    }
 
    @Override

@@ -23,6 +23,7 @@ public class Person implements Serializable {
    private String blurb;
    @Field(store = Store.YES, index = Index.UN_TOKENIZED)
    private int age;
+   private static final long serialVersionUID = 8251606115293644545L;
 
    public Person() {
    }

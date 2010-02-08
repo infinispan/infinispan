@@ -336,7 +336,7 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
    }
    
    enum Position {
-      FIRST,LAST;
+      FIRST,LAST
    }
 
    public void accept(ConfigurationBeanVisitor v) {

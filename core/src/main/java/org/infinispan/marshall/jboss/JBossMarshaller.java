@@ -214,6 +214,9 @@ public class JBossMarshaller extends AbstractMarshaller {
    }
 
    private static class DebuggingExceptionListener implements ExceptionListener {
+      private static final URL[] EMPTY_URLS = {};
+      private static final Class[] EMPTY_CLASSES = {};
+      private static final Object[] EMPTY_OBJECTS = {};
 
       public void handleMarshallingException(Throwable problem, Object subject) {
          if (log.isDebugEnabled()) {
@@ -250,13 +253,13 @@ public class JBossMarshaller extends AbstractMarshaller {
       }
 
       private static URL[] getClassLoaderURLs(ClassLoader cl) {
-         URL[] urls = {};
+         URL[] urls = EMPTY_URLS;
          try {
             Class returnType = urls.getClass();
-            Class[] parameterTypes = {};
+            Class[] parameterTypes = EMPTY_CLASSES;
             Method getURLs = cl.getClass().getMethod("getURLs", parameterTypes);
             if (returnType.isAssignableFrom(getURLs.getReturnType())) {
-               Object[] args = {};
+               Object[] args = EMPTY_OBJECTS;
                urls = (URL[]) getURLs.invoke(cl, args);
             }
          } catch (Exception ignore) {}

@@ -247,7 +247,7 @@ public class ConstantObjectTable implements ObjectTable {
    }
 
    public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
-      ExternalizerAdapter adapter = (ExternalizerAdapter) readers.get(input.readUnsignedByte());
+      ExternalizerAdapter adapter = readers.get(input.readUnsignedByte());
       return adapter.readObject(input);
    }
 

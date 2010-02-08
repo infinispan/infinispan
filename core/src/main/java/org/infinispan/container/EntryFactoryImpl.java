@@ -110,7 +110,7 @@ public class EntryFactoryImpl implements EntryFactory {
       return wrapEntryForWriting(ctx, entry.getKey(), entry, createIfAbsent, forceLockIfAbsent, alreadyLocked, forRemoval);
    }
 
-   private final MVCCEntry wrapEntryForWriting(InvocationContext ctx, Object key, InternalCacheEntry entry, boolean createIfAbsent, boolean forceLockIfAbsent, boolean alreadyLocked, boolean forRemoval) throws InterruptedException {
+   private MVCCEntry wrapEntryForWriting(InvocationContext ctx, Object key, InternalCacheEntry entry, boolean createIfAbsent, boolean forceLockIfAbsent, boolean alreadyLocked, boolean forRemoval) throws InterruptedException {
       CacheEntry cacheEntry = ctx.lookupEntry(key);
       MVCCEntry mvccEntry = null;
       if (createIfAbsent && cacheEntry != null && cacheEntry.isNull()) cacheEntry = null;

@@ -301,7 +301,7 @@ public class FunctionalTest extends SingleCacheManagerTest {
       Future<Boolean> f = client.set(k(m), 0, 1);
       assert f.get(5, TimeUnit.SECONDS);
       long newValue = client.incr(k(m), Integer.MAX_VALUE);
-      assert new Long(Integer.MAX_VALUE) + 1 == newValue : "New value not expected: " + newValue;
+      assert (long) Integer.MAX_VALUE + 1 == newValue : "New value not expected: " + newValue;
    }
 
    public void testDecrementBasic(Method m) throws Exception {

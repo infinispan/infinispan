@@ -53,11 +53,11 @@ public class CloudCacheStoreTest extends BaseCacheStoreTest {
       super.setUp();
       cs.clear();
       Set entries = cs.loadAll();
-      assert entries.size() == 0;
+      assert entries.isEmpty();
       cs2 = createAnotherCacheStore();
       cs2.clear();
       entries = cs2.loadAll();
-      assert entries.size() == 0;
+      assert entries.isEmpty();
    }
 
 
@@ -121,6 +121,7 @@ public class CloudCacheStoreTest extends BaseCacheStoreTest {
 
    private static class ObjectWithNegativeHashcode implements Serializable {
       String s = "hello";
+      private static final long serialVersionUID = 5010691348616186237L;
 
       @Override
       public boolean equals(Object o) {

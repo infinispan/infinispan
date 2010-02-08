@@ -286,7 +286,7 @@ public class RhqPluginXmlGenerator {
       }
    }
 
-   private static final void debug(Object o) {
+   private static void debug(Object o) {
 //      if (log.isDebugEnabled()) log.debug(o);
 //      System.out.println(o);
    }

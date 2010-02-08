@@ -38,7 +38,7 @@ public class ConfigDoclet {
 
    private static String title() {
       String s = "Configuration options";
-      if (title == null || title.equals(""))
+      if (title == null || title.length() == 0)
          return s;
       else {
          s += " (" + title + ")";

@@ -139,7 +139,7 @@ public class CacheLoaderManagerConfig extends AbstractNamedCacheConfigurationBea
    }
 
    public CacheLoaderConfig getFirstCacheLoaderConfig() {
-      if (cacheLoaderConfigs.size() == 0)
+      if (cacheLoaderConfigs.isEmpty())
          return null;
       return cacheLoaderConfigs.get(0);
    }

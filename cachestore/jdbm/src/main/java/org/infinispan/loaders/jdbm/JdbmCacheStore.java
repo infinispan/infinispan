@@ -60,7 +60,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
 
    private static final String NAME = "CacheLoader";
    private static final String EXPIRY = "Expiry";
-   private final String DATE = "HH:mm:ss.SSS";
+   private static final String DATE = "HH:mm:ss.SSS";
 
    private BlockingQueue<ExpiryEntry> expiryEntryQueue;
 
@@ -175,7 +175,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
 
    private void createTree() throws IOException {
       tree = HTree.createInstance(recman);
-      expiryTree = BTree.createInstance(recman, new NaturalComparator(), (Serializer) null, (Serializer) null);
+      expiryTree = BTree.createInstance(recman, new NaturalComparator(), null, null);
       recman.setNamedObject(NAME, tree.getRecid());
       recman.setNamedObject(EXPIRY, expiryTree.getRecid());
       setSerializer();
@@ -276,7 +276,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
          // which could lead to unexpected results, hence, InternalCacheEntry calls are required
          expiry = entry.getMaxIdle() + System.currentTimeMillis();
       }
-      Long at = new Long(expiry);
+      Long at = expiry;
       Object key = entry.getKey();
       if (trace) log.trace("at " + new SimpleDateFormat(DATE).format(new Date(at)) + " expire " + key);
       
@@ -494,12 +494,12 @@ public class JdbmCacheStore extends AbstractCacheStore {
       }
    }
    
-   private final class ExpiryEntry {
+   private static final class ExpiryEntry {
       private final Long expiry;
       private final Object key;
       
       private ExpiryEntry(long expiry, Object key) {
-         this.expiry = new Long(expiry);
+         this.expiry = expiry;
          this.key = key;
       }
    }

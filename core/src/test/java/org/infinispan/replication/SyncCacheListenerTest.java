@@ -161,7 +161,7 @@ public class SyncCacheListenerTest extends MultipleCacheManagersTest {
       }
 
       public void put(Map map) {
-         if (map.size() == 0) fail("put(): map size can't be 0");
+         if (map.isEmpty()) fail("put(): map size can't be 0");
          cache1.putAll(map);
       }
 

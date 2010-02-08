@@ -7,7 +7,7 @@ import org.testng.annotations.Test;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
-@Test(groups = {"functional", "mvcc"}, testName = "api.mvcc.repeatable_read.RepeatableReadLockTest")
+@Test(groups = "functional", testName = "api.mvcc.repeatable_read.RepeatableReadLockTest")
 public class RepeatableReadLockTest extends LockTestBase {
    public RepeatableReadLockTest() {
       repeatableRead = true;

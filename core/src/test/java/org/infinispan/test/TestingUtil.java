@@ -80,19 +80,21 @@ public class TestingUtil {
 
 
    public static Object extractField(Class type, Object target, String fieldName) {
-      Field field;
-      try {
-         field = type.getDeclaredField(fieldName);
-         field.setAccessible(true);
-         return field.get(target);
-      }
-      catch (Exception e) {
-         if (type.equals(Object.class)) {
-            e.printStackTrace();
-            return null;
-         } else {
-            // try with superclass!!
-            return extractField(type.getSuperclass(), target, fieldName);
+      while (true) {
+         Field field;
+         try {
+            field = type.getDeclaredField(fieldName);
+            field.setAccessible(true);
+            return field.get(target);
+         }
+         catch (Exception e) {
+            if (type.equals(Object.class)) {
+               e.printStackTrace();
+               return null;
+            } else {
+               // try with superclass!!
+               type = type.getSuperclass();
+            }
          }
       }
    }

@@ -7,6 +7,7 @@ import java.io.Serializable;
 @Transformable
 public class CustomKey2 implements Serializable {
    int i, j, k;
+   private static final long serialVersionUID = -8825579871900146417L;
 
    public CustomKey2(int i, int j, int k) {
       this.i = i;

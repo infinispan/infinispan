@@ -17,7 +17,7 @@ public class MBeanOperation extends JmxComponent {
    }
 
    void addParam(String paramType) {
-      if (!signature.equals("")) signature += ", ";
+      if (signature.length() != 0) signature += ", ";
       signature += paramType + " p" + n++;
    }
 }

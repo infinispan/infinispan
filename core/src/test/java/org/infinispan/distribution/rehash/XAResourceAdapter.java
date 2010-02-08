@@ -11,6 +11,8 @@ import javax.transaction.xa.Xid;
  * @since 4.0
  */
 public abstract class XAResourceAdapter implements XAResource {
+   private static final Xid[] XIDS = new Xid[0];
+
    public void commit(Xid xid, boolean b) throws XAException {
       // no-op
    }
@@ -36,7 +38,7 @@ public abstract class XAResourceAdapter implements XAResource {
    }
 
    public Xid[] recover(int i) throws XAException {
-      return new Xid[0];
+      return XIDS;
    }
 
    public void rollback(Xid xid) throws XAException {

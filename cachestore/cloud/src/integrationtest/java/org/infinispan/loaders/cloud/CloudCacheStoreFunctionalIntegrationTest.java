@@ -54,7 +54,7 @@ public class CloudCacheStoreFunctionalIntegrationTest extends BaseCacheStoreFunc
       secretKey = (JcloudsPassword == null) ? sysPassword : JcloudsPassword;
       cs = (JcloudsService == null) ? sysService : JcloudsService;
 
-      if (accessKey == null || accessKey.trim().equals("") || secretKey == null || secretKey.trim().equals("")) {
+      if (accessKey == null || accessKey.trim().length() == 0 || secretKey == null || secretKey.trim().length() == 0) {
          accessKey = "dummy";
          secretKey = "dummy";
       }

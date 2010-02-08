@@ -357,7 +357,7 @@ public class BdbjeCacheStoreTest {
       InternalCacheEntry entry = InternalEntryFactory.create("key", "value");
       expect(cacheMap.put(entry.getKey(), entry)).andReturn(null);
       ObjectInput ois = createMock(ObjectInput.class);
-      expect(ois.readLong()).andReturn(new Long(1));
+      expect(ois.readLong()).andReturn((long) 1);
       com.sleepycat.je.Transaction txn = createMock(com.sleepycat.je.Transaction.class);
       expect(currentTransaction.beginTransaction(null)).andReturn(txn);
       cacheMap.clear();

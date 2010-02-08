@@ -44,7 +44,7 @@ public class ConcurrentHashSet<E> extends AbstractSet<E> implements Serializable
    protected final ConcurrentHashMap<E, Object> map;
    
    /** any Serializable object will do, Integer.valueOf(0) is known cheap **/
-   private static final Serializable DUMMY = Integer.valueOf(0);
+   private static final Serializable DUMMY = 0;
 
    public ConcurrentHashSet() {
       map = new ConcurrentHashMap<E, Object>();

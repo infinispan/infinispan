@@ -253,16 +253,16 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
         }
 
         @SuppressWarnings("unchecked")
-        static final <K, V> HashEntry<K, V>[] newArray(int i) {
+        static <K, V> HashEntry<K, V>[] newArray(int i) {
             return new HashEntry[i];
         }
     }
     
-    private enum Recency{HIR_RESIDENT,LIR_RESIDENT,HIR_NONRESIDENT};
+    private enum Recency{HIR_RESIDENT,LIR_RESIDENT,HIR_NONRESIDENT}
 
     public enum Eviction {
        NONE,LRU,LIRS
-    };
+    }
 
     interface EvictionPolicy<K, V> {
         
@@ -456,7 +456,7 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
         }
 
         @SuppressWarnings("unchecked")
-        static final <K, V> Segment<K, V>[] newArray(int i) {
+        static <K, V> Segment<K, V>[] newArray(int i) {
             return new Segment[i];
         }
 
@@ -1666,6 +1666,7 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
      * underlying map.
      */
     final class WriteThroughEntry extends AbstractMap.SimpleEntry<K, V> {
+       private static final long serialVersionUID = -1075078642155041669L;
         WriteThroughEntry(K k, V v) {
             super(k, v);
         }

@@ -49,7 +49,7 @@ public class FileLookup {
     * @return an input stream to the file or null if nothing found through all lookup steps.
     */
    public InputStream lookupFile(String filename) {
-      InputStream is = filename == null || filename.equals("") ? null : getAsInputStreamFromClassLoader(filename);
+      InputStream is = filename == null || filename.length() == 0 ? null : getAsInputStreamFromClassLoader(filename);
       if (is == null) {
          if (log.isDebugEnabled())
             log.debug("Unable to find configuration file " + filename + " in classpath; searching for this file on the filesystem instead.");

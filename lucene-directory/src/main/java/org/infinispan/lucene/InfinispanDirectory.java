@@ -94,7 +94,7 @@ public class InfinispanDirectory extends Directory {
    public String[] list() throws IOException {
       checkIsOpen();
       Set<String> filesList = getFileList();
-      return filesList.toArray(new String[] {});
+      return filesList.toArray(new String[filesList.size()]);
    }
 
    /**

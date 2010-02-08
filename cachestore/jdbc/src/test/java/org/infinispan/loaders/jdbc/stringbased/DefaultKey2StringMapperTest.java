@@ -46,7 +46,7 @@ public class DefaultKey2StringMapperTest {
 
    @SuppressWarnings(value = "all")
    public void testGetStingMapping() {
-      Object[] toTest = {new Integer(0), new Byte("1"), new Short("2"), new Long(3), new Double("3.4"), new Float("3.5"), Boolean.FALSE, "some string"};
+      Object[] toTest = {0, new Byte("1"), new Short("2"), (long) 3, new Double("3.4"), new Float("3.5"), Boolean.FALSE, "some string"};
       for (Object o : toTest) {
          assert mapper.getStringMapping(o).equals(o.toString());
       }

@@ -396,7 +396,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
            // which could lead to unexpected results, hence, InternalCacheEntry calls are required
             expiry = entry.getMaxIdle() + System.currentTimeMillis();
         }
-        Long at = new Long(expiry);
+        Long at = expiry;
         Object key = entry.getKey();
         expiryMap.put(at, key);
     }

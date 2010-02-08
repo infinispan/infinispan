@@ -154,7 +154,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       Set s1 = new HashSet();
       Set s2 = new TreeSet();
       for (int i = 0; i < 10; i++) {
-         Integer integ = new Integer(1000 * i);
+         Integer integ = 1000 * i;
          s1.add(integ);
          s2.add(integ);
       }
@@ -278,7 +278,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       RollbackCommand c13 = new RollbackCommand(gtx);
       marshallAndAssertEquality(c13);
 
-      MultipleRpcCommand c99 = new MultipleRpcCommand(Arrays.asList(new ReplicableCommand[]{c2, c5, c6, c8, c10, c12, c13}), "mycache");
+      MultipleRpcCommand c99 = new MultipleRpcCommand(Arrays.asList(c2, c5, c6, c8, c10, c12, c13), "mycache");
       marshallAndAssertEquality(c99);
    }
 
@@ -365,7 +365,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       assert merged.size() == 1;
       
       m = new AtomicHashMap();
-      assert m.size() == 0;
+      assert m.isEmpty();
       bytes = marshaller.objectToByteBuffer(m);
       NullDelta nulld = (NullDelta) marshaller.objectFromByteBuffer(bytes);
       assert nulld == NullDelta.INSTANCE;
@@ -393,7 +393,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       m.put("k5", "v2");
       m.put("k5", "v3");
       m.clear();
-      assert m.size() == 0;
+      assert m.isEmpty();
       bytes = marshaller.objectToByteBuffer(m);
       d = (AtomicHashMapDelta) marshaller.objectFromByteBuffer(bytes);
       assert d.getChangeLogSize() == 4;
@@ -402,7 +402,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       for (Map.Entry<String, String> entry : merged.entrySet()) {
          assert m.get(entry.getKey()).equals(entry.getValue());
       }
-      assert merged.size() == 0;
+      assert merged.isEmpty();
    }
    
    public void testMarshallObjectThatContainsACustomReadObjectMethod() throws Exception {
@@ -445,6 +445,8 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    
    public void testErrorUnmarshalling() throws Exception {
       Pojo pojo = new Pojo() {
+         private static final long serialVersionUID = -5109779096242560884L;
+
          @Override
          public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
             throw new IOException("Injected failue!");
@@ -472,6 +474,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       int i;
       boolean b;
       static int serializationCount, deserializationCount;
+      private static final long serialVersionUID = 9032309454840083326L;
 
       public boolean equals(Object o) {
          if (this == o) return true;

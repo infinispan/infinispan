@@ -197,8 +197,8 @@ public class WriteSkewTest extends AbstractInfinispanTest {
       if (allowWriteSkew) {
          // should have no exceptions!!
          throwExceptions(w1exceptions, w2exceptions);
-         assert w2exceptions.size() == 0;
-         assert w1exceptions.size() == 0;
+         assert w2exceptions.isEmpty();
+         assert w1exceptions.isEmpty();
          assert "v3".equals(cache.get("k")) : "W2 should have overwritten W1's work!";
 
          assertNoLocks();

@@ -245,7 +245,7 @@ public class SingletonStore extends AbstractDelegatingStore {
    private boolean isCoordinator(List<Address> newView, Address currentAddress) {
       if (!currentAddress.equals(localAddress)) localAddress = currentAddress;
       if (localAddress != null) {
-         return newView.size() > 0 && localAddress.equals(newView.get(0));
+         return !newView.isEmpty() && localAddress.equals(newView.get(0));
       } else {
          /* Invalid new view, so previous value returned */
          return active;

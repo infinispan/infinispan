@@ -69,7 +69,6 @@ public class ReplicationQueue {
    private Configuration configuration;
    private boolean enabled;
    private CommandsFactory commandsFactory;
-   private boolean stateTransferEnabled;
 
    public boolean isEnabled() {
       return enabled;
@@ -89,7 +88,6 @@ public class ReplicationQueue {
     */
    @Start
    public synchronized void start() {
-      stateTransferEnabled = configuration.isStateTransferEnabled();
       long interval = configuration.getReplQueueInterval();
       log.trace("Starting replication queue, with interval {0} and maxElements {1}", interval, maxElements);
       this.maxElements = configuration.getReplQueueMaxElements();

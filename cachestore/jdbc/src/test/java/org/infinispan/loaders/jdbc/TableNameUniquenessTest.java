@@ -112,6 +112,7 @@ public class TableNameUniquenessTest {
    static class Person implements Serializable {
       int age;
       String name;
+      private static final long serialVersionUID = 4227565864228124235L;
 
       Person(int age, String name) {
          this.age = age;

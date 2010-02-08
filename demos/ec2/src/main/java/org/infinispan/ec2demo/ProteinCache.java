@@ -37,8 +37,7 @@ public class ProteinCache {
 	}
 
 	public Nucleotide_Protein_Element getProteinDetails(String GBAN) {
-		Nucleotide_Protein_Element myVR = myCache.get(GBAN);
-		return myVR;
+      return myCache.get(GBAN);
 	}
 
 	public Cache getCache() {

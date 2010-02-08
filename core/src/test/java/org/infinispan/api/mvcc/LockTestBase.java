@@ -23,7 +23,7 @@ import java.util.Collections;
 /**
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  */
-@Test(groups = {"functional", "mvcc"})
+@Test(groups = "functional")
 public abstract class LockTestBase extends AbstractInfinispanTest {
    private Log log = LogFactory.getLog(LockTestBase.class);
    protected boolean repeatableRead = true;

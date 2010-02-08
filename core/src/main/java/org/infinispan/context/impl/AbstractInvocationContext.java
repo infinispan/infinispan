@@ -98,7 +98,7 @@ public abstract class AbstractInvocationContext implements InvocationContext {
    }
 
    public void setFlags(Collection<Flag> flags) {
-      if (flags == null || flags.size() == 0) return;
+      if (flags == null || flags.isEmpty()) return;
       if (this.flags == null)
          this.flags = EnumSet.copyOf(flags);
       else

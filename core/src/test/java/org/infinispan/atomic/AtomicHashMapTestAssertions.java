@@ -8,7 +8,7 @@ import java.util.Map;
 public class AtomicHashMapTestAssertions extends AbstractInfinispanTest {
 
    public static void assertIsEmpty(Map map) {
-      assert map.size() == 0;
+      assert map.isEmpty();
       assert map.get("blah") == null;
       assert !map.containsKey("blah");
    }

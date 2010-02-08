@@ -118,7 +118,6 @@ public abstract class AbstractConfigurationBean implements CloneableConfiguratio
 
    @Override
    public CloneableConfigurationComponent clone() throws CloneNotSupportedException {
-      AbstractConfigurationBean c = (AbstractConfigurationBean) super.clone();
-      return c;
+      return (AbstractConfigurationBean) super.clone();
    }
 }

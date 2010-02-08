@@ -274,10 +274,7 @@ public class BidirectionalLinkedHashMap<K, V> extends AbstractMap<K, V> implemen
    }
 
    private void putAllForCreate(Map<? extends K, ? extends V> m) {
-      for (Iterator<? extends Map.Entry<? extends K, ? extends V>> i = m.entrySet().iterator(); i.hasNext();) {
-         Map.Entry<? extends K, ? extends V> e = i.next();
-         putForCreate(e.getKey(), e.getValue());
-      }
+      for (Entry<? extends K, ? extends V> e : m.entrySet()) putForCreate(e.getKey(), e.getValue());
    }
 
    /**
@@ -336,10 +333,7 @@ public class BidirectionalLinkedHashMap<K, V> extends AbstractMap<K, V> implemen
             resize(newCapacity);
       }
 
-      for (Iterator<? extends Map.Entry<? extends K, ? extends V>> i = m.entrySet().iterator(); i.hasNext();) {
-         Map.Entry<? extends K, ? extends V> e = i.next();
-         put(e.getKey(), e.getValue());
-      }
+      for (Entry<? extends K, ? extends V> e : m.entrySet()) put(e.getKey(), e.getValue());
    }
 
    /**

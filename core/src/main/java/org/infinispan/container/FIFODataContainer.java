@@ -467,7 +467,7 @@ public class FIFODataContainer implements DataContainer {
          setTable(new HashEntry[initialCapacity]);
       }
 
-      static final Segment[] newArray(int i) {
+      static Segment[] newArray(int i) {
          return new Segment[i];
       }
 

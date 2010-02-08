@@ -123,15 +123,15 @@ public class ClassFinder {
          for (File cf : classFiles) {
             String clazz = null;
             try {
-               clazz = toClassName(cf.getAbsolutePath().toString());
+               clazz = toClassName(cf.getAbsolutePath());
                claz = Util.loadClass(clazz);
                classes.add(claz);
             } catch (NoClassDefFoundError ncdfe) {
-               log.warn(cf.getAbsolutePath().toString() + " has reference to a class "
+               log.warn(cf.getAbsolutePath() + " has reference to a class "
                         + ncdfe.getMessage() + " that could not be loaded from classpath");
             } catch (Throwable e) {
                // Catch all since we do not want skip iteration
-               log.warn("On path " + cf.getAbsolutePath().toString() + " could not load class "+ clazz, e);
+               log.warn("On path " + cf.getAbsolutePath() + " could not load class "+ clazz, e);
             }
          }
       } else {

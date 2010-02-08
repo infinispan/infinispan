@@ -32,7 +32,7 @@ public class ClusteredGetResponseValidityFilter implements ResponseFilter {
    }
 
    public boolean needMoreResponses() {
-      return numValidResponses < 1 && pendingResponders.size() > 0;
+      return numValidResponses < 1 && !pendingResponders.isEmpty();
    }
 
 }

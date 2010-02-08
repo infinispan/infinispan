@@ -146,7 +146,7 @@ public class DistCacheStoreInterceptor extends CacheStoreInterceptor {
    /**
     * Method that skips invocation if: - No store defined or, - The context contains Flag.SKIP_CACHE_STORE or,
     */
-   private final boolean skip(InvocationContext ctx) {
+   private boolean skip(InvocationContext ctx) {
       if (store == null) return true;  // could be because the cache loader oes not implement cache store
       if (ctx.hasFlag(Flag.SKIP_CACHE_STORE)) {
          if (trace)

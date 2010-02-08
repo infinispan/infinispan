@@ -64,19 +64,11 @@ public class SharedState {
    }
 
    public long incrementIndexWriterTaskCount(long delta) {
-      long count = indexWriterActionCount.addAndGet(delta);
-//      if (count%500==0) {
-//         System.out.println("IndexWriter tasks done: " + count);
-//      }
-      return count;
+      return indexWriterActionCount.addAndGet(delta);
    }
    
    public long incrementIndexSearchesCount(long delta) {
-      long count = searchingActionCount.addAndGet(delta);
-//      if (count%500==0) {
-//         System.out.println("Search tasks done: " + count);
-//      }
-      return count;
+      return searchingActionCount.addAndGet(delta);
    }
 
    public String getStringToAddToIndex() throws InterruptedException {

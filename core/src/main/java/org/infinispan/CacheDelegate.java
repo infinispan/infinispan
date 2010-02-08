@@ -161,7 +161,7 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V> {
    }
 
    public final boolean remove(Object key, Object value) {
-      InvocationContext ctx = getInvocationContext();
+      InvocationContext ctx = getInvocationContext(false);
       RemoveCommand command = commandsFactory.buildRemoveCommand(key, value);
       return (Boolean) invoker.invoke(ctx, command);
    }
@@ -184,7 +184,7 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V> {
    }
 
    public final boolean containsKey(Object key) {
-      InvocationContext ctx = getInvocationContext();
+      InvocationContext ctx = getInvocationContext(false);
       GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key);
       Object response = invoker.invoke(ctx, command);
       return response != null;
@@ -196,7 +196,7 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V> {
 
    @SuppressWarnings("unchecked")
    public final V get(Object key) {
-      InvocationContext ctx = getInvocationContext();
+      InvocationContext ctx = getInvocationContext(false);
       GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key);
       return (V) invoker.invoke(ctx, command);
    }
@@ -207,7 +207,7 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V> {
 
    @SuppressWarnings("unchecked")
    public final V remove(Object key) {
-      InvocationContext ctx = getInvocationContext();
+      InvocationContext ctx = getInvocationContext(false);
       RemoveCommand command = commandsFactory.buildRemoveCommand(key, null);
       return (V) invoker.invoke(ctx, command);
    }
@@ -217,7 +217,7 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V> {
    }
 
    public final void clear() {
-      InvocationContext ctx = getInvocationContext();
+      InvocationContext ctx = getInvocationContext(false);
       ClearCommand command = commandsFactory.buildClearCommand();
       invoker.invoke(ctx, command);
    }
@@ -257,13 +257,13 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V> {
             if (ongoingTransaction != null) transactionManager.resume(ongoingTransaction);
          }
          catch (Exception e) {
-            log.debug("Had problems trying to resume a transaction after putForExternalread()", e);
+            log.debug("Had problems trying to resume a transaction after putForExternalRead()", e);
          }
       }
    }
 
    public final void evict(K key) {
-      InvocationContext ctx = getInvocationContext();
+      InvocationContext ctx = getInvocationContext(true);
       EvictCommand command = commandsFactory.buildEvictCommand(key);
       invoker.invoke(ctx, command);
    }
@@ -284,8 +284,8 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V> {
       return notifier.getListeners();
    }
 
-   private InvocationContext getInvocationContext() {
-      InvocationContext ctx = icc.createInvocationContext();
+   private InvocationContext getInvocationContext(boolean forceNonTransactional) {
+      InvocationContext ctx = forceNonTransactional ? icc.createNonTxInvocationContext() : icc.createInvocationContext();
       PreInvocationContext pic = flagHolder.get();
       if (pic != null && !pic.flags.isEmpty()) ctx.setFlags(pic.flags);
       flagHolder.remove();
@@ -302,7 +302,7 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V> {
       if (keys == null || keys.isEmpty())
          throw new IllegalArgumentException("Cannot lock empty list of keys");
       LockControlCommand command = commandsFactory.buildLockControlCommand(keys, false);
-      invoker.invoke(getInvocationContext(), command);
+      invoker.invoke(getInvocationContext(false), command);
    }
 
    @ManagedOperation(description = "Starts the cache.")
@@ -429,14 +429,14 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V> {
 
    @SuppressWarnings("unchecked")
    public final V put(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit) {
-      InvocationContext ctx = getInvocationContext();
+      InvocationContext ctx = getInvocationContext(false);
       PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, lifespanUnit.toMillis(lifespan), idleTimeUnit.toMillis(maxIdleTime));
       return (V) invoker.invoke(ctx, command);
    }
 
    @SuppressWarnings("unchecked")
    public final V putIfAbsent(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit) {
-      InvocationContext context = getInvocationContext();
+      InvocationContext context = getInvocationContext(false);
       PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, lifespanUnit.toMillis(lifespan), idleTimeUnit.toMillis(maxIdleTime));
       command.setPutIfAbsent(true);
       return (V) invoker.invoke(context, command);
@@ -444,19 +444,19 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V> {
 
    public final void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit) {
       PutMapCommand command = commandsFactory.buildPutMapCommand(map, lifespanUnit.toMillis(lifespan), idleTimeUnit.toMillis(maxIdleTime));
-      invoker.invoke(getInvocationContext(), command);
+      invoker.invoke(getInvocationContext(false), command);
    }
 
    @SuppressWarnings("unchecked")
    public final V replace(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit) {
-      InvocationContext ctx = getInvocationContext();
+      InvocationContext ctx = getInvocationContext(false);
       ReplaceCommand command = commandsFactory.buildReplaceCommand(key, null, value, lifespanUnit.toMillis(lifespan), idleTimeUnit.toMillis(maxIdleTime));
       return (V) invoker.invoke(ctx, command);
 
    }
 
    public final boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit) {
-      InvocationContext ctx = getInvocationContext();
+      InvocationContext ctx = getInvocationContext(false);
       ReplaceCommand command = commandsFactory.buildReplaceCommand(key, oldValue, value, lifespanUnit.toMillis(lifespan), idleTimeUnit.toMillis(maxIdleTime));
       return (Boolean) invoker.invoke(ctx, command);
    }
@@ -517,7 +517,7 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V> {
    }
 
    public final NotifyingFuture<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      InvocationContext ctx = getInvocationContext();
+      InvocationContext ctx = getInvocationContext(false);
       ctx.setUseFutureReturnType(true);
       PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, lifespanUnit.toMillis(lifespan), maxIdleUnit.toMillis(maxIdle));
       return wrapInFuture(invoker.invoke(ctx, command));
@@ -532,14 +532,14 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V> {
    }
 
    public final NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      InvocationContext ctx = getInvocationContext();
+      InvocationContext ctx = getInvocationContext(false);
       ctx.setUseFutureReturnType(true);
       PutMapCommand command = commandsFactory.buildPutMapCommand(data, lifespanUnit.toMillis(lifespan), maxIdleUnit.toMillis(maxIdle));
       return wrapInFuture(invoker.invoke(ctx, command));
    }
 
    public final NotifyingFuture<Void> clearAsync() {
-      InvocationContext ctx = getInvocationContext();
+      InvocationContext ctx = getInvocationContext(false);
       ctx.setUseFutureReturnType(true);
       ClearCommand command = commandsFactory.buildClearCommand();
       return wrapInFuture(invoker.invoke(ctx, command));
@@ -554,7 +554,7 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V> {
    }
 
    public final NotifyingFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      InvocationContext ctx = getInvocationContext();
+      InvocationContext ctx = getInvocationContext(false);
       ctx.setUseFutureReturnType(true);
       PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, lifespanUnit.toMillis(lifespan), maxIdleUnit.toMillis(maxIdle));
       command.setPutIfAbsent(true);
@@ -562,14 +562,14 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V> {
    }
 
    public final NotifyingFuture<V> removeAsync(Object key) {
-      InvocationContext ctx = getInvocationContext();
+      InvocationContext ctx = getInvocationContext(false);
       ctx.setUseFutureReturnType(true);
       RemoveCommand command = commandsFactory.buildRemoveCommand(key, null);
       return wrapInFuture(invoker.invoke(ctx, command));
    }
 
    public final NotifyingFuture<Boolean> removeAsync(Object key, Object value) {
-      InvocationContext ctx = getInvocationContext();
+      InvocationContext ctx = getInvocationContext(false);
       ctx.setUseFutureReturnType(true);
       RemoveCommand command = commandsFactory.buildRemoveCommand(key, value);
       return wrapInFuture(invoker.invoke(ctx, command));
@@ -584,7 +584,7 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V> {
    }
 
    public final NotifyingFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      InvocationContext ctx = getInvocationContext();
+      InvocationContext ctx = getInvocationContext(false);
       ctx.setUseFutureReturnType(true);
       ReplaceCommand command = commandsFactory.buildReplaceCommand(key, null, value, lifespanUnit.toMillis(lifespan), maxIdleUnit.toMillis(maxIdle));
       return wrapInFuture(invoker.invoke(ctx, command));
@@ -599,7 +599,7 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V> {
    }
 
    public final NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      InvocationContext ctx = getInvocationContext();
+      InvocationContext ctx = getInvocationContext(false);
       ctx.setUseFutureReturnType(true);
       ReplaceCommand command = commandsFactory.buildReplaceCommand(key, oldValue, newValue, lifespanUnit.toMillis(lifespan), maxIdleUnit.toMillis(maxIdle));
       return wrapInFuture(invoker.invoke(ctx, command));

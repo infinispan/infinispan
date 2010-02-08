@@ -3,9 +3,12 @@ package org.infinispan.jmx;
 import org.easymock.EasyMock;
 import static org.easymock.EasyMock.*;
 import org.infinispan.Cache;
+import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.remoting.rpc.ResponseFilter;
+import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcManagerImpl;
 import org.infinispan.remoting.transport.Address;
@@ -13,6 +16,8 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+
+import static org.easymock.EasyMock.expect;
 import static org.testng.Assert.assertEquals;
 import org.testng.annotations.Test;
 
@@ -20,6 +25,7 @@ import javax.management.Attribute;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -85,21 +91,21 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
 
       cache1.put("key", "value2");
       assert cache2.get("key").equals("value2");
-      assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals(new Long(1)) : "Expected 1, was " + mBeanServer.getAttribute(rpcManager1, "ReplicationCount");
-      assert mBeanServer.getAttribute(rpcManager1, "ReplicationFailures").equals(new Long(0));
-      mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals(new Long(-1));
+      assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals((long) 1) : "Expected 1, was " + mBeanServer.getAttribute(rpcManager1, "ReplicationCount");
+      assert mBeanServer.getAttribute(rpcManager1, "ReplicationFailures").equals((long) 0);
+      mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals((long) -1);
 
       // now resume statistics
       mBeanServer.invoke(rpcManager1, "resetStatistics", new Object[0], new String[0]);
-      assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals(new Long(0));
-      assert mBeanServer.getAttribute(rpcManager1, "ReplicationFailures").equals(new Long(0));
+      assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals((long) 0);
+      assert mBeanServer.getAttribute(rpcManager1, "ReplicationFailures").equals((long) 0);
 
       mBeanServer.setAttribute(rpcManager1, new Attribute("StatisticsEnabled", Boolean.FALSE));
 
       cache1.put("key", "value");
       assert cache2.get("key").equals("value");
-      assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals(new Long(-1));
-      assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals(new Long(-1));
+      assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals((long) -1);
+      assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals((long) -1);
 
       // reset stats enabled parameter
       mBeanServer.setAttribute(rpcManager1, new Attribute("StatisticsEnabled", Boolean.TRUE));
@@ -113,17 +119,17 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
       ObjectName rpcManager1 = new ObjectName("RpcManagerMBeanTest:cache-name=" + cachename + "(repl_sync),jmx-resource=RpcManager");
       ObjectName rpcManager2 = new ObjectName("RpcManagerMBeanTest2:cache-name=" + cachename + "(repl_sync),jmx-resource=RpcManager");
       
-      assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals(new Long(0));
-      assert mBeanServer.getAttribute(rpcManager1, "ReplicationFailures").equals(new Long(0));
+      assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals((long) 0);
+      assert mBeanServer.getAttribute(rpcManager1, "ReplicationFailures").equals((long) 0);
       assert mBeanServer.getAttribute(rpcManager1, "SuccessRatio").equals("N/A");
 
       cache1.put("a1", "b1");
       cache1.put("a2", "b2");
       cache1.put("a3", "b3");
       cache1.put("a4", "b4");
-      assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals(new Long(4));
+      assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals((long) 4);
       assert mBeanServer.getAttribute(rpcManager1, "SuccessRatio").equals("100%");
-      assert !mBeanServer.getAttribute(rpcManager1, "AverageReplicationTime").equals(new Long(0));
+      assert !mBeanServer.getAttribute(rpcManager1, "AverageReplicationTime").equals((long) 0);
 
       RpcManagerImpl rpcManager = (RpcManagerImpl) TestingUtil.extractComponent(cache1, RpcManager.class);
       Transport originalTransport = rpcManager.getTransport();
@@ -135,14 +141,17 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
          memberList.add(mockAddress1);
          memberList.add(mockAddress2);
          Transport transport = createMock(Transport.class);
-         EasyMock.expect(transport.getMembers()).andReturn(memberList).anyTimes();
-         EasyMock.expect(transport.getAddress()).andReturn(null).anyTimes();
+         expect(transport.getMembers()).andReturn(memberList).anyTimes();
+         expect(transport.getAddress()).andReturn(null).anyTimes();
+         expect(transport.invokeRemotely(EasyMock.<Collection<Address>>anyObject(), EasyMock.<ReplicableCommand>anyObject(),
+                                                  EasyMock.<ResponseMode>anyObject(), anyLong(), anyBoolean(), EasyMock.<ResponseFilter>anyObject(),
+                                                  anyBoolean())).andThrow(new RuntimeException()).anyTimes();
          replay(transport);
          rpcManager.setTransport(transport);
          cache1.put("a5", "b5");
-         assert false : "rpc manager should had thrown an expception";
+         assert false : "rpc manager should have thrown an exception";
       } catch (Throwable e) {
-         log.debug("Expected exception", e);
+         log.debug("Expected exception "+ e);
          //expected
          assertEquals(mBeanServer.getAttribute(rpcManager1, "SuccessRatio"), ("80%"));
       }

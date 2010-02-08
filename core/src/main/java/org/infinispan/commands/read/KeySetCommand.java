@@ -38,6 +38,7 @@ import java.util.Set;
  */
 public class KeySetCommand implements VisitableCommand, LocalCommand {
    private final DataContainer container;
+   private static final Object[] EMPTY_ARRAY = new Object[0];
 
    public KeySetCommand(DataContainer container) {
       this.container = container;
@@ -56,7 +57,7 @@ public class KeySetCommand implements VisitableCommand, LocalCommand {
    }
 
    public Object[] getParameters() {
-      return new Object[0];  // no-op
+      return EMPTY_ARRAY;  // no-op
    }
 
    public void setParameters(int commandId, Object[] parameters) {

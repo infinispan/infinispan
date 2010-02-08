@@ -30,6 +30,8 @@ import org.infinispan.CacheException;
  * @since 4.0
  */
 public class NodeNotValidException extends CacheException {
+   private static final long serialVersionUID = 6576866180835456994L;
+
    public NodeNotValidException() {
    }
 

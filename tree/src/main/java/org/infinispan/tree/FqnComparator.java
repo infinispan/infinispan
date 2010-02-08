@@ -41,6 +41,7 @@ import java.util.Comparator;
 @Immutable
 public class FqnComparator implements Comparator<Fqn>, Serializable {
    public static final FqnComparator INSTANCE = new FqnComparator();
+   private static final long serialVersionUID = -1357631755443829281L;
 
    /**
     * Returns -1 if the first comes before; 0 if they are the same; 1 if the second Fqn comes before.  <code>null</code>

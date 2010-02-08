@@ -38,8 +38,7 @@ public class Store implements Modification {
 
    @Override
    public int hashCode() {
-      int result = storedEntry != null ? storedEntry.hashCode() : 0;
-      return result;
+      return storedEntry != null ? storedEntry.hashCode() : 0;
    }
 
    @Override

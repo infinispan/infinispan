@@ -60,7 +60,7 @@ public class NettyMemcachedDecoder extends ReplayingDecoder<NettyMemcachedDecode
    private volatile TextCommand command;
 
    protected enum State {
-      READ_COMMAND, READ_UNSTRUCTURED_DATA;
+      READ_COMMAND, READ_UNSTRUCTURED_DATA
    }
 
    public NettyMemcachedDecoder(Cache cache, InterceptorChain chain, ScheduledExecutorService scheduler) {

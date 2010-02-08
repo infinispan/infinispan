@@ -231,7 +231,7 @@ public class SimpleDataContainer implements DataContainer {
       }
    }
 
-   private class MortalInmortalIterator {
+   private static class MortalInmortalIterator {
       Iterator<Iterator<InternalCacheEntry>> metaIterator;
       Iterator<InternalCacheEntry> currentIterator;
 

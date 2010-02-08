@@ -155,7 +155,7 @@ public class RehashControlCommand extends BaseRpcCommand {
       // if the current address is the current "owner" of this key (in old_ch), and the requestor is in the owner list
       // in new_ch, then add this to the map.
       List<Address> oldOwnerList = oldCH.locate(k, numCopies);
-      if (oldOwnerList.size() > 0 && self.equals(oldOwnerList.get(0))) {
+      if (!oldOwnerList.isEmpty() && self.equals(oldOwnerList.get(0))) {
          List<Address> newOwnerList = consistentHash.locate(k, numCopies);
          if (newOwnerList.contains(sender)) return true;
       }

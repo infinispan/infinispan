@@ -32,7 +32,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.infinispan.test.TestingUtil.*;
+import static org.infinispan.test.TestingUtil.k;
+import static org.infinispan.test.TestingUtil.v;
 
 @Test(groups = "unit", testName = "loaders.decorators.AsyncTest")
 public class AsyncTest extends AbstractInfinispanTest {
@@ -325,6 +326,4 @@ public class AsyncTest extends AbstractInfinispanTest {
       }
 
    }
-
-   ;
 }

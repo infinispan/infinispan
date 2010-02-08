@@ -13,6 +13,7 @@ public class Key implements Externalizable {
    String value;
    final ReclosableLatch latch = new ReclosableLatch(false);
    final boolean lockable;
+   private static final long serialVersionUID = 4745232904453872125L;
 
    public Key() {
       this.lockable = false;

@@ -104,7 +104,7 @@ public class ReflectionUtil {
       
       for (Method m : c.getDeclaredMethods()) {
          // don't bother if this method has already been overridden by a subclass
-         if (!alreadyFound(m, s) && m.isAnnotationPresent(annotationType)) {
+         if (notFound(m, s) && m.isAnnotationPresent(annotationType)) {
             s.add(m);
          }
       }       
@@ -124,13 +124,13 @@ public class ReflectionUtil {
     * @param s collection of methods found
     * @return true a method with the same signature already exists.
     */
-   private static boolean alreadyFound(Method m, Collection<Method> s) {
+   private static boolean notFound(Method m, Collection<Method> s) {
       for (Method found : s) {
          if (m.getName().equals(found.getName()) &&
                Arrays.equals(m.getParameterTypes(), found.getParameterTypes()))
-            return true;
+            return false;
       }
-      return false;
+      return true;
    }
 
    public static void setValue(Object instance, String fieldName, Object value) {
@@ -223,23 +223,25 @@ public class ReflectionUtil {
     */
    @SuppressWarnings("unchecked")
    public static <T extends Annotation> T getAnnotation(Class clazz, Class<T> ann) {
-      // first check class
-      T a = (T) clazz.getAnnotation(ann);
-      if (a != null) return a;
+      while (true) {
+         // first check class
+         T a = (T) clazz.getAnnotation(ann);
+         if (a != null) return a;
 
-      // check interfaces
-      if (!clazz.isInterface()) {
-         Class[] interfaces = clazz.getInterfaces();
-         for (Class inter : interfaces) {
-            a = getAnnotation(inter, ann);
-            if (a != null) return a;
+         // check interfaces
+         if (!clazz.isInterface()) {
+            Class[] interfaces = clazz.getInterfaces();
+            for (Class inter : interfaces) {
+               a = getAnnotation(inter, ann);
+               if (a != null) return a;
+            }
          }
-      }
 
-      // check superclasses
-      Class superclass = clazz.getSuperclass();
-      if (superclass == null) return null; // no where else to look
-      return getAnnotation(superclass, ann);
+         // check superclasses
+         Class superclass = clazz.getSuperclass();
+         if (superclass == null) return null; // no where else to look
+         clazz = superclass;
+      }
    }
 
    /**

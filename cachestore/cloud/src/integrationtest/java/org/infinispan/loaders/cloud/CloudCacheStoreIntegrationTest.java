@@ -55,7 +55,7 @@ public class CloudCacheStoreIntegrationTest extends BaseCacheStoreTest {
       secretKey = (JcloudsPassword == null) ? sysPassword : JcloudsPassword;
       service = (JcloudsService == null) ? sysService : JcloudsService;
 
-      if (accessKey == null || accessKey.trim().equals("") || secretKey == null || secretKey.trim().equals("")) {
+      if (accessKey == null || accessKey.trim().length() == 0 || secretKey == null || secretKey.trim().length() == 0) {
          accessKey = "dummy";
          secretKey = "dummy";
       }
@@ -103,11 +103,11 @@ public class CloudCacheStoreIntegrationTest extends BaseCacheStoreTest {
       super.setUp();
       cs.clear();
       Set entries = cs.loadAll();
-      assert entries.size() == 0;
+      assert entries.isEmpty();
       cs2 = createAnotherCacheStore();
       cs2.clear();
       entries = cs2.loadAll();
-      assert entries.size() == 0;
+      assert entries.isEmpty();
    }
 
 

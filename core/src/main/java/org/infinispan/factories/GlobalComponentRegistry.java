@@ -77,7 +77,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    @Override
    protected void addShutdownHook() {
       ArrayList al = MBeanServerFactory.findMBeanServer(null);
-      boolean registerShutdownHook = (globalConfiguration.getShutdownHookBehavior() == DEFAULT && al.size() == 0)
+      boolean registerShutdownHook = (globalConfiguration.getShutdownHookBehavior() == DEFAULT && al.isEmpty())
             || globalConfiguration.getShutdownHookBehavior() == REGISTER;
 
       if (registerShutdownHook) {

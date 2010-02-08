@@ -357,45 +357,53 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
    }
 
    private Field findFieldRecursively(Class<?> c, String fieldName) {
-      Field f = null;
-      try {
-         f = c.getDeclaredField(fieldName);
-      } catch (NoSuchFieldException e) {
-         ClassDoc classDoc = rootDoc.classNamed(c.getName());
-         for (FieldDoc fd : classDoc.fields()) {
-            for (Tag t : fd.tags(CONFIG_REF)) {
-                Map<String, String> m = parseTag(t.text().trim());
-                String field = m.get("name");               
-                if (field != null && field.startsWith(fieldName)) {
-                  return findFieldRecursively(c, fd.name());
-                }
+      findFieldRecursively:
+      while (true) {
+         Field f = null;
+         try {
+            f = c.getDeclaredField(fieldName);
+         } catch (NoSuchFieldException e) {
+            ClassDoc classDoc = rootDoc.classNamed(c.getName());
+            for (FieldDoc fd : classDoc.fields()) {
+               for (Tag t : fd.tags(CONFIG_REF)) {
+                  Map<String, String> m = parseTag(t.text().trim());
+                  String field = m.get("name");
+                  if (field != null && field.startsWith(fieldName)) {
+                     fieldName = fd.name();
+                     continue findFieldRecursively;
+                  }
+               }
             }
+            if (!c.equals(Object.class))
+               f = findFieldRecursively(c.getSuperclass(), fieldName);
          }
-         if (!c.equals(Object.class))
-            f = findFieldRecursively(c.getSuperclass(), fieldName);
+         return f;
       }
-      return f;
    }
 
    private FieldDoc findFieldDocRecursively(Class<?> c, String fieldName, String tagName) {
-      ClassDoc classDoc = rootDoc.classNamed(c.getName());
-      for (FieldDoc fd : classDoc.fields()) {
-         if (fd.name().equalsIgnoreCase(fieldName)) {
-            return fd;
-         }
-         for (Tag t : fd.tags(tagName)) {
-            Map<String, String> m = parseTag(t.text().trim());
-            if (m.containsKey("name")) {
-               String value = m.get("name").trim();
-               if (fieldName.equalsIgnoreCase(value)) {
-                  return fd;
+      while (true) {
+         ClassDoc classDoc = rootDoc.classNamed(c.getName());
+         for (FieldDoc fd : classDoc.fields()) {
+            if (fd.name().equalsIgnoreCase(fieldName)) {
+               return fd;
+            }
+            for (Tag t : fd.tags(tagName)) {
+               Map<String, String> m = parseTag(t.text().trim());
+               if (m.containsKey("name")) {
+                  String value = m.get("name").trim();
+                  if (fieldName.equalsIgnoreCase(value)) {
+                     return fd;
+                  }
                }
             }
          }
+         if (c.getSuperclass() != null) {
+            c = c.getSuperclass();
+            continue;
+         }
+         return null;
       }
-      if (c.getSuperclass() != null)
-         return findFieldDocRecursively(c.getSuperclass(), fieldName, tagName);
-      return null;
    }
 
    private FieldDoc fieldDocWithTag(Class<?> c, String tagName) {

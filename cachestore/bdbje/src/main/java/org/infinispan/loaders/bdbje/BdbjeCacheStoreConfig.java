@@ -32,6 +32,7 @@ public class BdbjeCacheStoreConfig extends AbstractCacheStoreConfig {
    private String catalogDbName;
    private String expiryDbPrefix;
    private String cacheName;
+   private static final long serialVersionUID = -2913308899139287416L;
 
    public String getExpiryDbPrefix() {
       return expiryDbPrefix;

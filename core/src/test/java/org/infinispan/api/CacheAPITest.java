@@ -134,7 +134,7 @@ public abstract class CacheAPITest extends SingleCacheManagerTest {
 
       assert !cache.containsKey(key1);
       assert !cache.containsKey(key2);
-      assert cache.size() == 0;
+      assert cache.isEmpty();
       assert !cache.keySet().contains(key1);
       assert !cache.keySet().contains(key2);
       assert cache.keySet().isEmpty();
@@ -450,6 +450,6 @@ public abstract class CacheAPITest extends SingleCacheManagerTest {
       
       cache.clear();
       
-      assert 0 == cache.size();
+      assert cache.isEmpty();
    }
 }

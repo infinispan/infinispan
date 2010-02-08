@@ -82,6 +82,6 @@ public abstract class HtmlGenerator {
    protected abstract String generateContents();
 
    protected boolean isValid(String s) {
-      return s != null && !s.trim().equals("");
+      return s != null && s.trim().length() != 0;
    }
 }

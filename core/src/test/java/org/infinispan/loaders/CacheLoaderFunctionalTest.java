@@ -224,7 +224,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       // make sure we have no stale locks!!
       assertNoLocks(cache);
 
-      assert cache.size() == 0; // cache size ops will not trigger a load
+      assert cache.isEmpty(); // cache size ops will not trigger a load
 
       cache.clear(); // this should propagate to the loader though
       assertNotInCacheAndStore("k1", "k2", "k3", "k4");

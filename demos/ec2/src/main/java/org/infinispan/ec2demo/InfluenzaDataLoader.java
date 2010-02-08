@@ -189,8 +189,7 @@ public class InfluenzaDataLoader {
 		}
 	}
 	public String cacheSizes(){
-		String retStr = "Protein/Influenza/Nucleotide Cache Size-->" + proteinCache.size() + "/"
-		+ influenzaCache.size() + "/" + nucleiodCache.size();
-		return retStr;		
+      return "Protein/Influenza/Nucleotide Cache Size-->" + proteinCache.size() + "/"
+      + influenzaCache.size() + "/" + nucleiodCache.size();
 	}
 }

@@ -18,12 +18,12 @@ public class InfinispanCollections {
    private static final BidirectionalMap EMPTY_BIDI_MAP = new EmptyBidiMap();
 
    @SuppressWarnings("unchecked")
-   public static final <T> ReversibleOrderedSet<T> emptyReversibleOrderedSet() {
+   public static <T> ReversibleOrderedSet<T> emptyReversibleOrderedSet() {
       return (ReversibleOrderedSet<T>) EMPTY_ROS;
    }
 
    @SuppressWarnings("unchecked")
-   public static final <K, V> BidirectionalMap<K, V> emptyBidirectionalMap() {
+   public static <K, V> BidirectionalMap<K, V> emptyBidirectionalMap() {
       return (BidirectionalMap<K, V>) EMPTY_BIDI_MAP;
    }
 

@@ -464,6 +464,7 @@ public class InfinispanDemo {
    public class ClusterTableModel extends AbstractTableModel {
       List<String> members = new ArrayList<String>();
       List<String> memberStates = new ArrayList<String>();
+      private static final long serialVersionUID = -4321027648450429007L;
 
       public void setMembers(List<Address> m) {
          if (m != null && !m.isEmpty()) {
@@ -517,6 +518,7 @@ public class InfinispanDemo {
    public class CachedDataTableModel extends AbstractTableModel {
 
       List<InternalCacheEntry> data = new LinkedList<InternalCacheEntry>();
+      private static final long serialVersionUID = -7109980678271415778L;
 
       public int getRowCount() {
          return data.size();
