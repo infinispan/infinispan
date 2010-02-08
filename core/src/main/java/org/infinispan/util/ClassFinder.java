@@ -178,6 +178,6 @@ public class ClassFinder {
    }
 
    private static String toClassName(String fileName) {
-      return fileName.substring(fileName.lastIndexOf("org"), fileName.length() - 6).replaceAll(File.separator, ".");
+      return fileName.substring(fileName.lastIndexOf("org"), fileName.length() - 6).replaceAll(File.separatorChar == '\\' ? "\\\\" : File.separator, ".");
    }
 }
