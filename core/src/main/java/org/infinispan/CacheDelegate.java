@@ -263,8 +263,9 @@ public class CacheDelegate<K, V> implements AdvancedCache<K, V> {
    }
 
    public final void evict(K key) {
+      InvocationContext ctx = getInvocationContext();
       EvictCommand command = commandsFactory.buildEvictCommand(key);
-      invoker.invoke(icc.createNonTxInvocationContext(), command);
+      invoker.invoke(ctx, command);
    }
 
    public Configuration getConfiguration() {

@@ -49,7 +49,7 @@ public class InvocationContextInterceptor extends CommandInterceptor {
       }
       catch (Throwable th) {
          if (suppressExceptions) {
-            log.trace("Exception while executiong code, failing silently...", th);
+            log.trace("Exception while executing code, failing silently...", th);
             return null;
          } else {
             log.error("Execution error: ", th);
