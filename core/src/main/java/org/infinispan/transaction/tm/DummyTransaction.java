@@ -157,18 +157,6 @@ public class DummyTransaction implements Transaction {
    }
 
    /**
-    * Change the transaction timeout for transactions started by the calling thread with the {@link
-    * DummyTransactionManager#begin()} method.
-    *
-    * @param seconds The new timeout value, in seconds. If this parameter is <code>0</code>, the timeout value is reset
-    *                to the default value.
-    * @throws SystemException If the transaction service fails in an unexpected way.
-    */
-   public void setTransactionTimeout(int seconds) throws SystemException {
-      throw new SystemException("not supported");
-   }
-
-   /**
     * Enlist an XA resource with this transaction.
     *
     * @return <code>true</code> if the resource could be enlisted with this transaction, otherwise <code>false</code>.
@@ -311,7 +299,7 @@ public class DummyTransaction implements Transaction {
       }
    }
 
-   private boolean runCommitTx() throws HeuristicMixedException {
+   private void runCommitTx() throws HeuristicMixedException {
       DummyTransaction transaction = tm_.getTransaction();
       Collection<XAResource> resources = transaction.getEnlistedResources();
       for (XAResource res : resources) {
@@ -323,7 +311,6 @@ public class DummyTransaction implements Transaction {
             throw new HeuristicMixedException(e.getMessage());
          }
       }
-      return true;
    }
 
    public void setStatus(int stat) {

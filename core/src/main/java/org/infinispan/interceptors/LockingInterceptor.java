@@ -278,7 +278,7 @@ public class LockingInterceptor extends CommandInterceptor {
             boolean needToUnlock = lockManager.possiblyLocked(entry);
             // could be null with read-committed
             if (entry != null && entry.isChanged()) {
-               commitEntry(ctx, entry);
+               commitEntry(entry);
             } else {
                if (trace) log.trace("Entry for key {0} is null, not calling commitUpdate", key);
             }
@@ -294,7 +294,7 @@ public class LockingInterceptor extends CommandInterceptor {
       }
    }
 
-   protected void commitEntry(InvocationContext ctx, CacheEntry entry) {
+   protected void commitEntry(CacheEntry entry) {
       entry.commit(dataContainer);
    }
 }

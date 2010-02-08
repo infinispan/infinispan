@@ -21,7 +21,7 @@ public class DistLockingInterceptor extends LockingInterceptor {
    }
 
    @Override
-   protected void commitEntry(InvocationContext ctx, CacheEntry entry) {
+   protected void commitEntry(CacheEntry entry) {
       boolean doCommit = true;
       if (!dm.isLocal(entry.getKey())) {
          if (configuration.isL1CacheEnabled()) {

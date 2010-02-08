@@ -50,7 +50,7 @@ public interface LockManager {
     *
     * @param owner lock owner
     */
-   void unlock(Object key, Object owner);
+   void unlock(Object key);
 
    /**
     * Releases locks present in an invocation context and transaction entry, if one is available.

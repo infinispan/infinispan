@@ -93,10 +93,6 @@ public final class Util {
    private Util() {
    }
 
-   public static Util getInstance() {
-      return null;
-   }
-
    /**
     * Null-safe equality test.
     *

@@ -113,7 +113,8 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       } else {
          // maybe we are still rehashing as a joiner? ISPN-258
          if (isMappedToLocalNode && dmWasRehashingDuringLocalLookup) {
-            if (trace) log.trace("Key is mapped to local node, but a rehash is in progress so may need to look elsewhere");
+            if (trace)
+               log.trace("Key is mapped to local node, but a rehash is in progress so may need to look elsewhere");
             // try a remote lookup all the same
             return realRemoteGet(ctx, key, false);
          } else {
@@ -188,11 +189,13 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
 
    @Override
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
-      if (ctx.isOriginLocal()) rpcManager.invokeRemotely(dm.getAffectedNodes(ctx.getAffectedKeys()), command, true, true);
+      if (ctx.isOriginLocal())
+         rpcManager.invokeRemotely(dm.getAffectedNodes(ctx.getAffectedKeys()), command, true, true);
       return invokeNextInterceptor(ctx, command);
    }
 
    // ---- TX boundary commands
+
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (ctx.isOriginLocal() && ctx.hasModifications()) {
@@ -214,7 +217,8 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       if (ctx.isOriginLocal() && ctx.hasModifications()) {
          List<Address> recipients = dm.getAffectedNodes(ctx.getAffectedKeys());
          NotifyingNotifiableFuture<Object> f = null;
-         if (command.isOnePhaseCommit()) f = flushL1Cache(recipients.size(), getKeys(ctx.getModifications()), null, sync);
+         if (command.isOnePhaseCommit())
+            f = flushL1Cache(recipients.size(), getKeys(ctx.getModifications()), null, sync);
          // this method will return immediately if we're the only member (because exclude_self=true)
          rpcManager.invokeRemotely(recipients, command, sync);
          if (f != null) f.get();
@@ -224,7 +228,8 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
 
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
-      if (ctx.isOriginLocal()) rpcManager.invokeRemotely(dm.getAffectedNodes(ctx.getAffectedKeys()), command, configuration.isSyncRollbackPhase(), true);
+      if (ctx.isOriginLocal())
+         rpcManager.invokeRemotely(dm.getAffectedNodes(ctx.getAffectedKeys()), command, configuration.isSyncRollbackPhase(), true);
       return invokeNextInterceptor(ctx, command);
    }
 
@@ -254,17 +259,13 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
       return l.toArray(new Object[l.size()]);
    }
 
-   private NotifyingNotifiableFuture<Object> flushL1Cache(int numCallRecipients, Object[] keys, Object retval, boolean sync) {
+   private NotifyingNotifiableFuture<Object> flushL1Cache(int numCallRecipients, Object[] keys, Object retval) {
       if (isL1CacheEnabled && numCallRecipients > 0 && rpcManager.getTransport().getMembers().size() > numCallRecipients) {
          if (trace) log.trace("Invalidating L1 caches");
          InvalidateCommand ic = cf.buildInvalidateFromL1Command(false, keys);
-//         if (useFuture) {
-            NotifyingNotifiableFuture<Object> future = new AggregatingNotifyingFutureImpl(retval, 2);
-            rpcManager.broadcastRpcCommandInFuture(ic, future);
-            return future;
-//         } else {
-//            rpcManager.broadcastRpcCommand(ic, sync);
-//         }
+         NotifyingNotifiableFuture<Object> future = new AggregatingNotifyingFutureImpl(retval, 2);
+         rpcManager.broadcastRpcCommandInFuture(ic, future);
+         return future;
       }
       return null;
    }
@@ -300,7 +301,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
                   if (future == null) future = new NotifyingFutureImpl(returnValue);
                   rpcManager.invokeRemotelyInFuture(rec, command, future);
                   return future;
-               } else {                  
+               } else {
                   rpcManager.invokeRemotely(rec, command, sync);
                   if (future != null && !sync) future.get(); // wait for the inval command to complete
                }

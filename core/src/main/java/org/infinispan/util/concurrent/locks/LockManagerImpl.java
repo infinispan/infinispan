@@ -92,7 +92,7 @@ public class LockManagerImpl implements LockManager {
             0 : configuration.getLockAcquisitionTimeout();
    }
 
-   public void unlock(Object key, Object owner) {
+   public void unlock(Object key) {
       if (trace) log.trace("Attempting to unlock " + key);
       lockContainer.releaseLock(key);
    }
