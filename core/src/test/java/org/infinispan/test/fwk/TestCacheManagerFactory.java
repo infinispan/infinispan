@@ -46,18 +46,23 @@ public class TestCacheManagerFactory {
                xmlFile,
                InfinispanConfiguration.resolveSchemaPath(),
                new ConfigurationValidatingVisitor());
-      return fromConfigFileParser(parser);
+      return fromConfigFileParser(parser, false);
    }
 
    public static CacheManager fromStream(InputStream is) throws IOException {
+      return fromStream(is, false);
+   }
+
+   public static CacheManager fromStream(InputStream is, boolean allowDupeDomains) throws IOException {
       InfinispanConfiguration parser = InfinispanConfiguration.newInfinispanConfiguration(
                is, InfinispanConfiguration.findSchemaInputStream(),
                new ConfigurationValidatingVisitor());
-      return fromConfigFileParser(parser);      
+      return fromConfigFileParser(parser, allowDupeDomains);
    }
 
-   private static CacheManager fromConfigFileParser(InfinispanConfiguration parser) {
+   private static CacheManager fromConfigFileParser(InfinispanConfiguration parser, boolean allowDupeDomains) {
       GlobalConfiguration gc = parser.parseGlobalConfiguration();
+      if (allowDupeDomains) gc.setAllowDuplicateDomains(true);
       Map<String, Configuration> named = parser.parseNamedConfigurations();
       Configuration c = parser.parseDefaultConfiguration();
 

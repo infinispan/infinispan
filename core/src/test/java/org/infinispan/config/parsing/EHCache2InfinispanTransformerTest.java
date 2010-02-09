@@ -16,6 +16,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 
+import static java.lang.Thread.currentThread;
 import static org.testng.Assert.assertEquals;
 
 /**
@@ -41,16 +42,16 @@ public class EHCache2InfinispanTransformerTest extends AbstractInfinispanTest {
     * Transforms and tests the transformation of a complex file.
     */
    private void testAllFile(String ehCacheFile) throws Exception {
-      ClassLoader existingCl = Thread.currentThread().getContextClassLoader();
+      ClassLoader existingCl = currentThread().getContextClassLoader();
       DefaultCacheManager dcm = null;
       Cache<Object, Object> sampleDistributedCache2 = null;
       try {
          ClassLoader delegatingCl = new Jbc2InfinispanTransformerTest.TestClassLoader(existingCl);
-         Thread.currentThread().setContextClassLoader(delegatingCl);
+         currentThread().setContextClassLoader(delegatingCl);
          String fileName = getFileName(ehCacheFile);
          ByteArrayOutputStream baos = new ByteArrayOutputStream();
          convertor.parse(fileName, baos, XSLT_FILE);
-         dcm = (DefaultCacheManager) TestCacheManagerFactory.fromStream(new ByteArrayInputStream(baos.toByteArray()));
+         dcm = (DefaultCacheManager) TestCacheManagerFactory.fromStream(new ByteArrayInputStream(baos.toByteArray()), true);
          Cache<Object,Object> defaultCache = dcm.getCache();
          defaultCache.put("key", "value");
          Configuration configuration = defaultCache.getConfiguration();
@@ -78,7 +79,7 @@ public class EHCache2InfinispanTransformerTest extends AbstractInfinispanTest {
          assertEquals(sampleDistributedCache2.getConfiguration().getCacheMode(), Configuration.CacheMode.INVALIDATION_SYNC);
 
       } finally {
-         Thread.currentThread().setContextClassLoader(existingCl);
+         currentThread().setContextClassLoader(existingCl);
          TestingUtil.killCaches(sampleDistributedCache2);
          TestingUtil.killCacheManagers(dcm);
       }
