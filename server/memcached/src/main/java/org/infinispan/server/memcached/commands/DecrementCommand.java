@@ -39,8 +39,8 @@ import org.infinispan.util.logging.LogFactory;
 public class DecrementCommand extends NumericCommand {
    private static final Log log = LogFactory.getLog(DecrementCommand.class);
 
-   public DecrementCommand(Cache cache, CommandType type, String key, BigInteger value, boolean noReply) {
-      super(cache, type, key, value, noReply);
+   public DecrementCommand(Cache cache, CommandType type, String key, String delta, boolean noReply) {
+      super(cache, type, key, delta, noReply);
    }
 
    @Override

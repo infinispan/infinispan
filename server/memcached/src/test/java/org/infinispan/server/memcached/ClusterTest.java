@@ -168,13 +168,13 @@ public class ClusterTest extends MultipleCacheManagersTest {
    }
 
    public void testReplicatedIncrement(Method m) throws Exception {
-      Future<Boolean> f = client1.set(k(m), 0, 1);
+      Future<Boolean> f = client1.set(k(m), 0, "1");
       assert f.get(5, TimeUnit.SECONDS);
       assert 2 == client2.incr(k(m), 1);
    }
 
    public void testReplicatedDecrement(Method m) throws Exception {
-      Future<Boolean> f = client1.set(k(m), 0, 1);
+      Future<Boolean> f = client1.set(k(m), 0, "1");
       assert f.get(5, TimeUnit.SECONDS);
       assert 0 == client2.decr(k(m), 1);
    }

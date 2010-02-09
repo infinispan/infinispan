@@ -39,6 +39,7 @@ import org.infinispan.server.memcached.UnknownCommandException;
 import org.infinispan.server.memcached.commands.CommandFactory;
 import org.infinispan.server.memcached.commands.StorageCommand;
 import org.infinispan.server.memcached.commands.TextCommand;
+import org.infinispan.server.memcached.commands.Value;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -63,7 +64,7 @@ public class NettyMemcachedDecoder extends ReplayingDecoder<NettyMemcachedDecode
       READ_COMMAND, READ_UNSTRUCTURED_DATA
    }
 
-   public NettyMemcachedDecoder(Cache cache, InterceptorChain chain, ScheduledExecutorService scheduler) {
+   public NettyMemcachedDecoder(Cache<String, Value> cache, InterceptorChain chain, ScheduledExecutorService scheduler) {
       super(State.READ_COMMAND, true);
       factory = new CommandFactory(cache, chain, scheduler);
    }

@@ -34,6 +34,7 @@ import org.infinispan.server.core.netty.NettyServerBootstrap;
 import org.infinispan.server.core.netty.memcached.NettyMemcachedDecoder;
 import org.infinispan.server.core.InterceptorChain;
 import org.infinispan.server.memcached.commands.TextCommandHandler;
+import org.infinispan.server.memcached.commands.Value;
 import org.infinispan.server.memcached.interceptors.TextProtocolInterceptorChainFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -46,7 +47,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class TextServer {
    private static final Log log = LogFactory.getLog(TextServer.class);
-   private final Cache cache;
+   private final Cache<String, Value> cache;
    private final String host;
    private final int port;
    private final int masterThreads;
@@ -56,9 +57,9 @@ public class TextServer {
 
    public TextServer(String host, int port, String configFile, int masterThreads, int workerThreads) throws IOException {
       this(host, port, configFile == null 
-               ? new DefaultCacheManager().getCache() 
-               : new DefaultCacheManager(configFile).getCache(), 
-               masterThreads, masterThreads);
+               ? new DefaultCacheManager().getCache()
+               : new DefaultCacheManager(configFile).getCache(),
+               masterThreads, workerThreads);
       if (configFile == null) {
          log.debug("Using cache manager using configuration defaults");
       } else {

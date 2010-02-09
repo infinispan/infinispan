@@ -173,7 +173,7 @@ public class StatsTest extends SingleCacheManagerTest {
       assert "1".equals(stats.get("incr_misses"));
       assert "0".equals(stats.get("incr_hits"));
 
-      f = client.set(k(m, "k4-"), 0, 1);
+      f = client.set(k(m, "k4-"), 0, "1");
       assert f.get(5, TimeUnit.SECONDS);
       client.incr(k(m, "k4-"), 1);
       client.incr(k(m, "k4-"), 2);
@@ -187,7 +187,7 @@ public class StatsTest extends SingleCacheManagerTest {
       assert "1".equals(stats.get("decr_misses"));
       assert "0".equals(stats.get("decr_hits"));
       
-      f = client.set(k(m, "k5-"), 0, 8);
+      f = client.set(k(m, "k5-"), 0, "8");
       assert f.get(5, TimeUnit.SECONDS);
       client.decr(k(m, "k5-"), 1);
       client.decr(k(m, "k5-"), 2);

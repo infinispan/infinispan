@@ -34,7 +34,7 @@ import java.util.Arrays;
  * @author Galder Zamarreño
  * @since 4.0
  */
-class Value implements Externalizable {
+public class Value implements Externalizable {
    private int flags;
    private byte[] data;
    private long cas;

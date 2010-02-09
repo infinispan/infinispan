@@ -48,14 +48,14 @@ public abstract class NumericCommand implements TextCommand {
    final Cache cache;
    private final CommandType type;
    final String key;
-   final BigInteger value;
+   final String delta;
    final boolean noReply;
 
-   public NumericCommand(Cache cache, CommandType type, String key, BigInteger value, boolean noReply) {
+   public NumericCommand(Cache cache, CommandType type, String key, String delta, boolean noReply) {
       this.cache = cache;
       this.type = type;
       this.key = key;
-      this.value = value;
+      this.delta = delta;
       this.noReply = noReply;
    }
 
@@ -69,15 +69,15 @@ public abstract class NumericCommand implements TextCommand {
       ChannelBuffers buffers = ctx.getChannelBuffers();
       Value old = (Value) cache.get(key);
       if (old != null) {
-         BigInteger oldBigInt = old.getData().length == 0 ? BigInteger.valueOf(0) : new BigInteger(old.getData());
-         BigInteger newBigInt = operate(oldBigInt, value);
-         byte[] newData = newBigInt.toByteArray();
+         String prev = old.getData().length == 0 ? "0" : new String(old.getData());
+         BigInteger newBigInt = operate(new BigInteger(prev), new BigInteger(delta));
+         byte[] newData = newBigInt.toString().getBytes();
          Value curr = new Value(old.getFlags(), newData, old.getCas() + 1);
          boolean replaced = cache.replace(key, old, curr);
          if (replaced && !noReply) {
-            ch.write(buffers.wrappedBuffer(buffers.wrappedBuffer(newBigInt.toString().getBytes()), buffers.wrappedBuffer(CRLF)));
+            ch.write(buffers.wrappedBuffer(buffers.wrappedBuffer(newData), buffers.wrappedBuffer(CRLF)));
          } else if (!replaced) {
-            throw new CacheException("Value modified since we retrieved from the cache, old value was " + oldBigInt);
+            throw new CacheException("Value modified since we retrieved from the cache, old value was " + prev);
          }
          return curr;
       } else {
@@ -90,10 +90,10 @@ public abstract class NumericCommand implements TextCommand {
 
    protected abstract BigInteger operate(BigInteger oldValue, BigInteger newValue);
 
-   public static TextCommand newNumericCommand(Cache cache, CommandType type, String key, BigInteger value, boolean noReply) throws IOException {
+   public static TextCommand newNumericCommand(Cache cache, CommandType type, String key, String delta, boolean noReply) throws IOException {
       switch(type) {
-         case INCR: return new IncrementCommand(cache, type, key, value, noReply);
-         case DECR: return new DecrementCommand(cache, type, key, value, noReply);
+         case INCR: return new IncrementCommand(cache, type, key, delta, noReply);
+         case DECR: return new DecrementCommand(cache, type, key, delta, noReply);
          default: throw new StreamCorruptedException("Unable to build storage command for type: " + type);
       }
    }

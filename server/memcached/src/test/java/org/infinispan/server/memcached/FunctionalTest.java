@@ -274,13 +274,14 @@ public class FunctionalTest extends SingleCacheManagerTest {
    }
 
    public void testIncrementBasic(Method m) throws Exception {
-      Future<Boolean> f = client.set(k(m), 0, 1);
+      Future<Boolean> f = client.set(k(m), 0, "1");
       assert f.get(5, TimeUnit.SECONDS);
-      assert 2 == client.incr(k(m), 1);
+      long result = client.incr(k(m), 1);
+      assert 2 == result : "Result was " + result;
    }
 
    public void testIncrementTriple(Method m) throws Exception {
-      Future<Boolean> f = client.set(k(m), 0, 1);
+      Future<Boolean> f = client.set(k(m), 0, "1");
       assert f.get(5, TimeUnit.SECONDS);
       assert 2 == client.incr(k(m), 1);
       assert 4 == client.incr(k(m), 2);
@@ -292,26 +293,26 @@ public class FunctionalTest extends SingleCacheManagerTest {
    }
 
    public void testIncrementIntegerMax(Method m) throws Exception {
-      Future<Boolean> f = client.set(k(m), 0, 0);
+      Future<Boolean> f = client.set(k(m), 0, "0");
       assert f.get(5, TimeUnit.SECONDS);
       assert Integer.MAX_VALUE == client.incr(k(m), Integer.MAX_VALUE);
    }
 
    public void testIncrementBeyondIntegerMax(Method m) throws Exception {
-      Future<Boolean> f = client.set(k(m), 0, 1);
+      Future<Boolean> f = client.set(k(m), 0, "1");
       assert f.get(5, TimeUnit.SECONDS);
       long newValue = client.incr(k(m), Integer.MAX_VALUE);
       assert (long) Integer.MAX_VALUE + 1 == newValue : "New value not expected: " + newValue;
    }
 
    public void testDecrementBasic(Method m) throws Exception {
-      Future<Boolean> f = client.set(k(m), 0, 1);
+      Future<Boolean> f = client.set(k(m), 0, "1");
       assert f.get(5, TimeUnit.SECONDS);
       assert 0 == client.decr(k(m), 1);
    }
 
    public void testDecrementTriple(Method m) throws Exception {
-      Future<Boolean> f = client.set(k(m), 0, 8);
+      Future<Boolean> f = client.set(k(m), 0, "8");
       assert f.get(5, TimeUnit.SECONDS);
       assert 7 == client.decr(k(m), 1);
       assert 5 == client.decr(k(m), 2);
@@ -323,7 +324,7 @@ public class FunctionalTest extends SingleCacheManagerTest {
    }
 
    public void testDecrementBelowZero(Method m) throws Exception {
-      Future<Boolean> f = client.set(k(m), 0, 1);
+      Future<Boolean> f = client.set(k(m), 0, "1");
       assert f.get(5, TimeUnit.SECONDS);
       long newValue = client.decr(k(m), 2);
       assert 0 ==  newValue : "Unexpected result: " + newValue;

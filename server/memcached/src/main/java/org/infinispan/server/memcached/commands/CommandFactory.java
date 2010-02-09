@@ -25,7 +25,6 @@ package org.infinispan.server.memcached.commands;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.StreamCorruptedException;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -48,11 +47,11 @@ public class CommandFactory {
    private static final Log log = LogFactory.getLog(CommandFactory.class);
    private static final String NO_REPLY = "noreply";
 
-   private final Cache cache;
+   private final Cache<String, Value> cache;
    private final InterceptorChain chain;
    private final ScheduledExecutorService scheduler;
    
-   public CommandFactory(Cache cache, InterceptorChain chain, ScheduledExecutorService scheduler) {
+   public CommandFactory(Cache<String, Value> cache, InterceptorChain chain, ScheduledExecutorService scheduler) {
       this.cache = cache;
       this.chain = chain;
       this.scheduler = scheduler;
@@ -62,7 +61,7 @@ public class CommandFactory {
       if (log.isTraceEnabled()) log.trace("Command line: " + line);
       String[] args = line.trim().split(" +");
 
-      CommandType type = null;
+      CommandType type;
       String tmp = args[0];
       if(tmp == null) 
          throw new EOFException();
@@ -100,10 +99,8 @@ public class CommandFactory {
          case INCR:
          case DECR:
             String key = getKey(args[1]);
-            // Value is defined as unsigned 64-integer (or simply unsigned long in java language)
-            // TODO: To simplify, could use long as long as the value was less than Long.MAX_VALUE
-            BigInteger value = new BigInteger(args[2]);
-            return NumericCommand.newNumericCommand(cache, type, key, value, parseNoReply(3, args));
+            String delta = args[2];
+            return NumericCommand.newNumericCommand(cache, type, key, delta, parseNoReply(3, args));
          case STATS:
             return StatsCommand.newStatsCommand(cache, type, chain);
          case FLUSH_ALL:
