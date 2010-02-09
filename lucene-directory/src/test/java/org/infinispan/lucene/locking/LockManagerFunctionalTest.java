@@ -42,7 +42,6 @@ public class LockManagerFunctionalTest extends MultipleCacheManagersTest {
       createClusteredCaches(2, "lucene", replSync);
    }
    
-   @Test
    @SuppressWarnings("unchecked")
    public void testLuceneIndexLocking() throws IOException {
       final String commonIndexName = "myIndex";
