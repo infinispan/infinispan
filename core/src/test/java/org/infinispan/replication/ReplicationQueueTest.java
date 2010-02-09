@@ -57,6 +57,7 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
     * tests that the replication queue will use an appropriate executor defined through
     * <tt>replicationQueueScheduledExecutor</tt> config param.
     */
+   @Test(dependsOnMethods = "testReplicationBasedOnTime")
    public void testApropriateExecutorIsUsed() {
       assert ReplQueueTestScheduledExecutorFactory.methodCalled;
       assert ReplQueueTestScheduledExecutorFactory.command != null;
