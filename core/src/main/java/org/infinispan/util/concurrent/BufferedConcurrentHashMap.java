@@ -286,7 +286,7 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
         abstract <K, V> EvictionPolicy<K, V> make(Segment<K, V> s, int capacity, float lf);
     }
     
-    interface EvictionListener<K, V> {
+    public interface EvictionListener<K, V> {
         void evicted(K key, V value);
     }
     
@@ -296,7 +296,7 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
         }        
     }
 
-    interface EvictionPolicy<K, V> {
+    public interface EvictionPolicy<K, V> {
 
         public final static int MAX_BATCH_SIZE = 64;
 
