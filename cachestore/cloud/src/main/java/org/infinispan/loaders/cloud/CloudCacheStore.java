@@ -1,6 +1,16 @@
 package org.infinispan.loaders.cloud;
 
-import com.google.common.collect.ImmutableSet;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+
 import org.infinispan.Cache;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -18,32 +28,23 @@ import org.jclouds.blobstore.BlobMap;
 import org.jclouds.blobstore.BlobStore;
 import org.jclouds.blobstore.BlobStoreContext;
 import org.jclouds.blobstore.BlobStoreContextFactory;
-import org.jclouds.blobstore.KeyNotFoundException;
 import org.jclouds.blobstore.domain.Blob;
 import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
 import org.jclouds.logging.log4j.config.Log4JLoggingModule;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-
+import com.google.common.collect.ImmutableSet;
 
 /**
- * The CloudCacheStore implementation that utilizes <a href="http://code.google.com/p/jclouds">JClouds</a> to
- * communicate with cloud storage providers such as <a href="http://aws.amazon.com/s3/">Amazon's S3<a>, <a
- * href="http://www.rackspacecloud.com/cloud_hosting_products/files">Rackspace's Cloudfiles</a>, or any other such
- * provider supported by JClouds.
+ * The CloudCacheStore implementation that utilizes <a
+ * href="http://code.google.com/p/jclouds">JClouds</a> to communicate with cloud storage providers
+ * such as <a href="http://aws.amazon.com/s3/">Amazon's S3<a>, <a
+ * href="http://www.rackspacecloud.com/cloud_hosting_products/files">Rackspace's Cloudfiles</a>, or
+ * any other such provider supported by JClouds.
  * <p/>
- * This file store stores stuff in the following format: <tt>http://{cloud-storage-provider}/{bucket}/{bucket_number}.bucket</tt>
+ * This file store stores stuff in the following format:
+ * <tt>http://{cloud-storage-provider}/{bucket}/{bucket_number}.bucket</tt>
  * <p/>
- *
+ * 
  * @author Manik Surtani
  * @author Adrian Cole
  * @since 4.0
@@ -65,7 +66,8 @@ public class CloudCacheStore extends BucketBasedCacheStore {
    }
 
    private String getThisContainerName() {
-      return cfg.getBucketPrefix() + "-" + cache.getName().toLowerCase().replace("_", "").replace(".", "");
+      return cfg.getBucketPrefix() + "-"
+               + cache.getName().toLowerCase().replace("_", "").replace(".", "");
    }
 
    @Override
@@ -74,13 +76,15 @@ public class CloudCacheStore extends BucketBasedCacheStore {
    }
 
    @Override
-   public void init(CacheLoaderConfig cfg, Cache<?, ?> cache, Marshaller m) throws CacheLoaderException {
+   public void init(CacheLoaderConfig cfg, Cache<?, ?> cache, Marshaller m)
+            throws CacheLoaderException {
       this.cfg = (CloudCacheStoreConfig) cfg;
       init(cfg, cache, m, null, null, null, true);
    }
 
    public void init(CacheLoaderConfig cfg, Cache<?, ?> cache, Marshaller m, BlobStoreContext ctx,
-                    BlobStore blobStore, AsyncBlobStore asyncBlobStore, boolean constructInternalBlobstores) throws CacheLoaderException {
+            BlobStore blobStore, AsyncBlobStore asyncBlobStore, boolean constructInternalBlobstores)
+            throws CacheLoaderException {
       super.init(cfg, cache, m);
       this.cfg = (CloudCacheStoreConfig) cfg;
       this.cache = cache;
@@ -95,23 +99,31 @@ public class CloudCacheStore extends BucketBasedCacheStore {
    public void start() throws CacheLoaderException {
       super.start();
       if (constructInternalBlobstores) {
-         if (cfg.getCloudService() == null) throw new ConfigurationException("CloudService must be set!");
-         if (cfg.getIdentity() == null) throw new ConfigurationException("Identity must be set");
-         if (cfg.getPassword() == null) throw new ConfigurationException("Password must be set");
+         if (cfg.getCloudService() == null)
+            throw new ConfigurationException("CloudService must be set!");
+         if (cfg.getIdentity() == null)
+            throw new ConfigurationException("Identity must be set");
+         if (cfg.getPassword() == null)
+            throw new ConfigurationException("Password must be set");
       }
-      if (cfg.getBucketPrefix() == null) throw new ConfigurationException("CloudBucket must be set");
+      if (cfg.getBucketPrefix() == null)
+         throw new ConfigurationException("CloudBucket must be set");
       containerName = getThisContainerName();
       try {
          if (constructInternalBlobstores) {
-            // add an executor as a constructor param to EnterpriseConfigurationModule, pass property overrides instead of Properties()
-            ctx = new BlobStoreContextFactory().createContext(cfg.getCloudService(), cfg.getIdentity(), cfg.getPassword(),
-                                                           ImmutableSet.of(new EnterpriseConfigurationModule(), new Log4JLoggingModule()), new Properties());
+            // add an executor as a constructor param to EnterpriseConfigurationModule, pass
+            // property overrides instead of Properties()
+            ctx = new BlobStoreContextFactory().createContext(cfg.getCloudService(), cfg
+                     .getIdentity(), cfg.getPassword(), ImmutableSet.of(
+                     new EnterpriseConfigurationModule(), new Log4JLoggingModule()),
+                     new Properties());
             blobStore = ctx.getBlobStore();
             asyncBlobStore = ctx.getAsyncBlobStore();
          }
 
          // the "location" is not currently used.
-         if (!blobStore.containerExists(containerName)) blobStore.createContainerInLocation(cfg.getCloudServiceLocation(), containerName);
+         if (!blobStore.containerExists(containerName))
+            blobStore.createContainerInLocation(cfg.getCloudServiceLocation(), containerName);
          pollFutures = !cfg.getAsyncStoreConfig().isEnabled();
       } catch (IOException ioe) {
          throw new CacheLoaderException("Unable to create context", ioe);
@@ -123,7 +135,8 @@ public class CloudCacheStore extends BucketBasedCacheStore {
 
       for (Map.Entry<String, Blob> entry : ctx.createBlobMap(containerName).entrySet()) {
          Bucket bucket = readFromBlob(entry.getValue(), entry.getKey());
-         if (bucket.removeExpiredEntries()) updateBucket(bucket);
+         if (bucket.removeExpiredEntries())
+            updateBucket(bucket);
          result.addAll(bucket.getStoredEntries());
       }
       return result;
@@ -139,7 +152,7 @@ public class CloudCacheStore extends BucketBasedCacheStore {
       if (containerName.equals(source)) {
          log.info("Attempt to load the same cloud bucket ({0}) ignored", source);
       } else {
-         // TODO implement stream handling.   What's the JClouds API to "copy" one bucket to another?
+         // TODO implement stream handling. What's the JClouds API to "copy" one bucket to another?
       }
    }
 
@@ -157,7 +170,8 @@ public class CloudCacheStore extends BucketBasedCacheStore {
          // is a sync call
          blobStore.clearContainer(containerName);
       } else {
-         // is an async call - invoke clear() on the container asynchronously and store the future in the 'futures' collection
+         // is an async call - invoke clear() on the container asynchronously and store the future
+         // in the 'futures' collection
          futures.add(asyncBlobStore.clearContainer(containerName));
       }
    }
@@ -171,22 +185,20 @@ public class CloudCacheStore extends BucketBasedCacheStore {
    }
 
    protected Bucket loadBucket(String hash) throws CacheLoaderException {
-      try {
-         return readFromBlob(blobStore.getBlob(containerName, encodeBucketName(hash)), hash);
-      } catch (KeyNotFoundException e) {
-         return null;
-      }
+      return readFromBlob(blobStore.getBlob(containerName, encodeBucketName(hash)), hash);
    }
 
    private void purge(BlobMap blobMap) throws CacheLoaderException {
       for (Map.Entry<String, Blob> entry : blobMap.entrySet()) {
          Bucket bucket = readFromBlob(entry.getValue(), entry.getKey());
-         if (bucket.removeExpiredEntries()) updateBucket(bucket);
+         if (bucket.removeExpiredEntries())
+            updateBucket(bucket);
       }
    }
 
    protected void purgeInternal() throws CacheLoaderException {
-      // TODO can expiry data be stored in a blob's metadata?  More efficient purging that way.  See https://jira.jboss.org/jira/browse/ISPN-334
+      // TODO can expiry data be stored in a blob's metadata? More efficient purging that way. See
+      // https://jira.jboss.org/jira/browse/ISPN-334
       if (!cfg.isLazyPurgingOnly()) {
          acquireGlobalLock(false);
          try {
@@ -219,13 +231,15 @@ public class CloudCacheStore extends BucketBasedCacheStore {
          // is a sync call
          blobStore.putBlob(containerName, blob);
       } else {
-         // is an async call - invoke clear() on the container asynchronously and store the future in the 'futures' collection
+         // is an async call - invoke clear() on the container asynchronously and store the future
+         // in the 'futures' collection
          futures.add(asyncBlobStore.putBlob(containerName, blob));
       }
    }
 
    @Override
-   public void applyModifications(List<? extends Modification> modifications) throws CacheLoaderException {
+   public void applyModifications(List<? extends Modification> modifications)
+            throws CacheLoaderException {
       Set<Future<?>> futures = new HashSet<Future<?>>();
       asyncCommandFutures.set(futures);
 
@@ -234,13 +248,16 @@ public class CloudCacheStore extends BucketBasedCacheStore {
          if (pollFutures) {
             CacheLoaderException exception = null;
             try {
-               for (Future<?> f : asyncCommandFutures.get()) f.get();
+               for (Future<?> f : asyncCommandFutures.get())
+                  f.get();
             } catch (InterruptedException ie) {
                Thread.currentThread().interrupt();
             } catch (ExecutionException ee) {
-               exception = convertToCacheLoaderException("Caught exception in async process", ee.getCause());
+               exception = convertToCacheLoaderException("Caught exception in async process", ee
+                        .getCause());
             }
-            if (exception != null) throw exception;
+            if (exception != null)
+               throw exception;
          }
       } finally {
          asyncCommandFutures.remove();
@@ -253,18 +270,19 @@ public class CloudCacheStore extends BucketBasedCacheStore {
 
    private void writeToBlob(Blob blob, Bucket bucket) throws CacheLoaderException {
       try {
-         blob.setPayload(
-               marshaller.objectToByteBuffer(bucket));
+         blob.setPayload(marshaller.objectToByteBuffer(bucket));
       } catch (IOException e) {
          throw new CacheLoaderException(e);
       }
    }
 
    private Bucket readFromBlob(Blob blob, String bucketName) throws CacheLoaderException {
-      if (blob == null) return null;
+      if (blob == null)
+         return null;
       try {
          Bucket bucket = (Bucket) marshaller.objectFromInputStream(blob.getContent());
-         if (bucket != null) bucket.setBucketName(bucketName);
+         if (bucket != null)
+            bucket.setBucketName(bucketName);
          return bucket;
       } catch (Exception e) {
          throw convertToCacheLoaderException("Unable to read blob", e);
@@ -272,8 +290,6 @@ public class CloudCacheStore extends BucketBasedCacheStore {
    }
 
    private String encodeBucketName(String decodedName) {
-      return (decodedName.startsWith("-")) ?  
-            decodedName.replace('-', 'A') :
-            decodedName;
+      return (decodedName.startsWith("-")) ? decodedName.replace('-', 'A') : decodedName;
    }
 }
