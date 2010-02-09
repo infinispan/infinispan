@@ -14,8 +14,7 @@
    <description>Infinispan CloudCacheStore module</description>
 
    <properties>
-      <jclouds.aws.accesskeyid></jclouds.aws.accesskeyid>
-      <jclouds.aws.secretaccesskey></jclouds.aws.secretaccesskey>
+      <test.src.dir>src/test/java</test.src.dir>
       <version.jclouds>1.0-SNAPSHOT</version.jclouds>
    </properties>
 
@@ -84,6 +83,7 @@
    </repositories>
 
    <build>
+      <testSourceDirectory>${test.src.dir}</testSourceDirectory>
       <plugins>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
@@ -110,4 +110,16 @@
          </plugin>
       </plugins>
    </build>
+
+   <profiles>
+      <profile>
+         <id>integration</id>
+         <activation>
+            <activeByDefault>false</activeByDefault>
+         </activation>
+         <properties>
+            <test.src.dir>src/integrationtest/java</test.src.dir>
+         </properties>
+      </profile>
+   </profiles>
 </project>

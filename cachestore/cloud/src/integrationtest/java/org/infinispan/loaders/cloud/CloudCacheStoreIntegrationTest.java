@@ -86,9 +86,7 @@ public class CloudCacheStoreIntegrationTest extends BaseCacheStoreTest {
       cfg.setSecure(isSecure);
       cfg.setMaxConnections(maxConnections);
       cfg.setPurgeSynchronously(true); // for more accurate unit testing
-      StubBlobStoreContextBuilder cb = new StubBlobStoreContextBuilder();
-      BlobStoreContext ctx = cb.buildBlobStoreContext();
-      cs.init(cfg, new CacheDelegate("aName"), getMarshaller(), ctx, ctx.getBlobStore(), ctx.getAsyncBlobStore(), false);
+      cs.init(cfg, new CacheDelegate("aName"), getMarshaller());
       cs.start();
       return cs;
    }
