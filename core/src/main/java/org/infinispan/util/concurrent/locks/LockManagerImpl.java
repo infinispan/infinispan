@@ -80,6 +80,8 @@ public class LockManagerImpl implements LockManager {
       long lockTimeout = getLockAcquisitionTimeout(ctx);
       if (trace) log.trace("Attempting to lock {0} with acquisition timeout of {1} millis", key, lockTimeout);
       if (lockContainer.acquireLock(key, lockTimeout, MILLISECONDS)) {
+         // successfully locked!
+         if (trace) log.trace("Successfully acquired lock!");         
          return true;
       }
 

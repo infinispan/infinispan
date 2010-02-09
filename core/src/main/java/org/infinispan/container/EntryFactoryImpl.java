@@ -203,8 +203,6 @@ public class EntryFactoryImpl implements EntryFactory {
 
       if (!ctx.hasLockedKey(key) && !shouldSkipLocking) {
          if (lockManager.lockAndRecord(key, ctx)) {
-            // successfully locked!
-            if (trace) log.trace("Successfully acquired lock!");
             return true;
          } else {
             Object owner = lockManager.getOwner(key);
