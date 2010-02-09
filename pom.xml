@@ -49,6 +49,7 @@
                <plugin>
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-javadoc-plugin</artifactId>
+                  <version>2.6.1</version>
                   <executions>
                      <execution>
                         <id>javadoc</id>
@@ -58,6 +59,9 @@
                         </goals>
                         <configuration>
                            <quiet>true</quiet>
+                           <stylesheetfile>${basedir}/src/javadoc/stylesheet.css</stylesheetfile>
+                           <javadocDirectory>${basedir}/src/javadoc</javadocDirectory>
+                           <docfilessubdirs>true</docfilessubdirs>
                            <links>
                               <link>http://java.sun.com/javase/6/docs/api/</link>
                               <link>http://java.sun.com/javaee/5/docs/api/</link>
