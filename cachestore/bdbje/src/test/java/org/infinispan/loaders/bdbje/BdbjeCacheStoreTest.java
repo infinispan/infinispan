@@ -35,7 +35,7 @@ import java.util.Collections;
  * @author Adrian Cole
  * @since 4.0
  */
-@Test(groups = "unit", enabled = true, testName = "loaders.bdbje.BdbjeCacheStoreTest")
+@Test(groups = "unit", testName = "loaders.bdbje.BdbjeCacheStoreTest")
 public class BdbjeCacheStoreTest {
    private BdbjeCacheStore cs;
    private BdbjeCacheStoreConfig cfg;
@@ -116,6 +116,7 @@ public class BdbjeCacheStoreTest {
       cacheMap = createMock(StoredMap.class);
       expiryMap = createMock(StoredSortedMap.class);
       currentTransaction = createMock(CurrentTransaction.class);
+      gtf = new GlobalTransactionFactory();
       WeakReference<Environment> envRef = new WeakReference<Environment>(env);
       ReflectionUtil.setValue(currentTransaction, "envRef", envRef);
       ThreadLocal localTrans = new ThreadLocal();
@@ -136,6 +137,7 @@ public class BdbjeCacheStoreTest {
       cache = null;
       cfg = null;
       cs = null;
+      gtf = null;
    }
 
    void start() throws DatabaseException, CacheLoaderException {
@@ -144,7 +146,6 @@ public class BdbjeCacheStoreTest {
       expect(cache.getConfiguration()).andReturn(null).anyTimes();
    }
 
-   @Test
    public void testGetConfigurationClass() throws Exception {
       replayAll();
       assert cs.getConfigurationClass().equals(BdbjeCacheStoreConfig.class);
@@ -176,7 +177,6 @@ public class BdbjeCacheStoreTest {
       verify(cache);
    }
 
-   @Test
    public void testInitNoMock() throws Exception {
       replayAll();
       cs.init(cfg, cache, null);
@@ -186,8 +186,7 @@ public class BdbjeCacheStoreTest {
       verifyAll();
    }
 
-   @Test
-   void testExceptionClosingCacheDatabaseDoesntPreventEnvironmentFromClosing() throws Exception {
+   public void testExceptionClosingCacheDatabaseDoesntPreventEnvironmentFromClosing() throws Exception {
       start();
       cacheDb.close();
       expiryDb.close();
@@ -201,8 +200,7 @@ public class BdbjeCacheStoreTest {
       verifyAll();
    }
 
-   @Test
-   void testExceptionClosingCatalogDoesntPreventEnvironmentFromClosing() throws Exception {
+   public void testExceptionClosingCatalogDoesntPreventEnvironmentFromClosing() throws Exception {
       start();
       cacheDb.close();
       expiryDb.close();
@@ -216,7 +214,7 @@ public class BdbjeCacheStoreTest {
    }
 
    @Test(expectedExceptions = CacheLoaderException.class)
-   void testExceptionClosingEnvironment() throws Exception {
+   public void testExceptionClosingEnvironment() throws Exception {
       start();
       cacheDb.close();
       expiryDb.close();
@@ -231,7 +229,7 @@ public class BdbjeCacheStoreTest {
 
 
    @Test(expectedExceptions = CacheLoaderException.class)
-   void testThrowsCorrectExceptionOnStartForDatabaseException() throws Exception {
+   public void testThrowsCorrectExceptionOnStartForDatabaseException() throws Exception {
       factory = new MockBdbjeResourceFactory(cfg) {
          @Override
          public StoredClassCatalog createStoredClassCatalog(Database catalogDb) throws DatabaseException {
@@ -245,7 +243,7 @@ public class BdbjeCacheStoreTest {
    }
 
    @Test(expectedExceptions = CacheLoaderException.class)
-   void testEnvironmentDirectoryExistsButNotAFile() throws Exception {
+   public void testEnvironmentDirectoryExistsButNotAFile() throws Exception {
       File file = createMock(File.class);
       expect(file.exists()).andReturn(true);
       expect(file.isDirectory()).andReturn(false);
@@ -254,7 +252,7 @@ public class BdbjeCacheStoreTest {
    }
 
    @Test(expectedExceptions = CacheLoaderException.class)
-   void testCantCreateEnvironmentDirectory() throws Exception {
+   public void testCantCreateEnvironmentDirectory() throws Exception {
       File file = createMock(File.class);
       expect(file.exists()).andReturn(false);
       expect(file.mkdirs()).andReturn(false);
@@ -262,8 +260,7 @@ public class BdbjeCacheStoreTest {
       cs.verifyOrCreateEnvironmentDirectory(file);
    }
 
-   @Test
-   void testCanCreateEnvironmentDirectory() throws Exception {
+   public void testCanCreateEnvironmentDirectory() throws Exception {
       File file = createMock(File.class);
       expect(file.exists()).andReturn(false);
       expect(file.mkdirs()).andReturn(true);
@@ -272,10 +269,8 @@ public class BdbjeCacheStoreTest {
       assert file.equals(cs.verifyOrCreateEnvironmentDirectory(file));
    }
 
-   @Test
    public void testNoExceptionOnRollback() throws Exception {
       start();
-      gtf = new GlobalTransactionFactory();
       GlobalTransaction tx = gtf.newGlobalTransaction(null, false);
       replayAll();
       cs.start();
@@ -283,8 +278,7 @@ public class BdbjeCacheStoreTest {
       verifyAll();
    }
 
-   @Test
-   protected void testApplyModificationsThrowsOriginalDatabaseException() throws Exception {
+   public  void testApplyModificationsThrowsOriginalDatabaseException() throws Exception {
       start();
       DatabaseException ex = new DatabaseException();
       runner.run(isA(TransactionWorker.class));
@@ -303,8 +297,7 @@ public class BdbjeCacheStoreTest {
 
    }
 
-   @Test
-   protected void testCommitThrowsOriginalDatabaseException() throws Exception {
+   public void testCommitThrowsOriginalDatabaseException() throws Exception {
       start();
       DatabaseException ex = new DatabaseException();
       com.sleepycat.je.Transaction txn = createMock(com.sleepycat.je.Transaction.class);
@@ -330,8 +323,7 @@ public class BdbjeCacheStoreTest {
 
    }
 
-   @Test
-   protected void testPrepareThrowsOriginalDatabaseException() throws Exception {
+   public void testPrepareThrowsOriginalDatabaseException() throws Exception {
       start();
       DatabaseException ex = new DatabaseException();
       runner.prepare(isA(TransactionWorker.class));
@@ -351,8 +343,7 @@ public class BdbjeCacheStoreTest {
 
    }
 
-   @Test
-   void testClearOnAbortFromStream() throws Exception {
+   public void testClearOnAbortFromStream() throws Exception {
       start();
       InternalCacheEntry entry = InternalEntryFactory.create("key", "value");
       expect(cacheMap.put(entry.getKey(), entry)).andReturn(null);
