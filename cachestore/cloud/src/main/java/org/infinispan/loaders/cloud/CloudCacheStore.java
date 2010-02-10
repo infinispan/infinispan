@@ -250,10 +250,10 @@ public class CloudCacheStore extends BucketBasedCacheStore {
             CacheLoaderException exception = null;
             try {
                futures = asyncCommandFutures.get();
-               log.info("Futures, in order: {0}", futures);
+               if (log.isTraceEnabled()) log.trace("Futures, in order: {0}", futures);
                for (Future<?> f : futures) {
                   Object o = f.get();
-                  log.info("Future {0} returned {1}", f, o);
+                  if (log.isTraceEnabled()) log.trace("Future {0} returned {1}", f, o);
                }
             } catch (InterruptedException ie) {
                Thread.currentThread().interrupt();
