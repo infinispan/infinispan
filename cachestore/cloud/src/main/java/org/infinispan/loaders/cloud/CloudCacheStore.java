@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -51,7 +52,7 @@ import com.google.common.collect.ImmutableSet;
  */
 public class CloudCacheStore extends BucketBasedCacheStore {
    private static final Log log = LogFactory.getLog(CloudCacheStore.class);
-   private final ThreadLocal<Set<Future<?>>> asyncCommandFutures = new ThreadLocal<Set<Future<?>>>();
+   private final ThreadLocal<List<Future<?>>> asyncCommandFutures = new ThreadLocal<List<Future<?>>>();
    private CloudCacheStoreConfig cfg;
    private String containerName;
    private BlobStoreContext ctx;
@@ -165,7 +166,7 @@ public class CloudCacheStore extends BucketBasedCacheStore {
    }
 
    protected void clearLockSafe() {
-      Set<Future<?>> futures = asyncCommandFutures.get();
+      List<Future<?>> futures = asyncCommandFutures.get();
       if (futures == null) {
          // is a sync call
          blobStore.clearContainer(containerName);
@@ -226,7 +227,7 @@ public class CloudCacheStore extends BucketBasedCacheStore {
       Blob blob = blobStore.newBlob(encodeBucketName(bucket.getBucketName()));
       writeToBlob(blob, bucket);
 
-      Set<Future<?>> futures = asyncCommandFutures.get();
+      List<Future<?>> futures = asyncCommandFutures.get();
       if (futures == null) {
          // is a sync call
          blobStore.putBlob(containerName, blob);
@@ -240,7 +241,7 @@ public class CloudCacheStore extends BucketBasedCacheStore {
    @Override
    public void applyModifications(List<? extends Modification> modifications)
             throws CacheLoaderException {
-      Set<Future<?>> futures = new HashSet<Future<?>>();
+      List<Future<?>> futures = new LinkedList<Future<?>>();
       asyncCommandFutures.set(futures);
 
       try {
@@ -248,8 +249,12 @@ public class CloudCacheStore extends BucketBasedCacheStore {
          if (pollFutures) {
             CacheLoaderException exception = null;
             try {
-               for (Future<?> f : asyncCommandFutures.get())
-                  f.get();
+               futures = asyncCommandFutures.get();
+               log.info("Futures, in order: {0}", futures);
+               for (Future<?> f : futures) {
+                  Object o = f.get();
+                  log.info("Future {0} returned {1}", f, o);
+               }
             } catch (InterruptedException ie) {
                Thread.currentThread().interrupt();
             } catch (ExecutionException ee) {

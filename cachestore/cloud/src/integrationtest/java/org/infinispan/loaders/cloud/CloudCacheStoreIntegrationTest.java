@@ -164,6 +164,9 @@ public class CloudCacheStoreIntegrationTest extends BaseCacheStoreTest {
       assert expected.isEmpty();
    }
 
+   @Test (enabled = false)
+   @Override public void testConcurrency() throws Exception {}
+
    public void testNegativeHashCodes() throws CacheLoaderException {
       ObjectWithNegativeHashcode objectWithNegativeHashcode = new ObjectWithNegativeHashcode();
       cs.store(InternalEntryFactory.create(objectWithNegativeHashcode, "hello", -1, -1));
