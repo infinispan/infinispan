@@ -29,7 +29,7 @@ then
    done
 fi
 
-JVM_PARAMS="${JVM_PARAMS} -Dlog4j.configuration=file:${ISPN_HOME}/etc/log4j.xml"
+JVM_PARAMS="${JVM_PARAMS} -Dbind.address=127.0.0.1 -Djava.net.preferIPv4Stack=true  -Dlog4j.configuration=file:${ISPN_HOME}/etc/log4j.xml"
 
 # Sample JPDA settings for remote socket debuging
 #JVM_PARAMS="$JVM_PARAMS -Xrunjdwp:transport=dt_socket,address=8686,server=y,suspend=n"

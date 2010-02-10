@@ -3,13 +3,18 @@
 #
 # Sample python code using the standard memcached library to talk to Infinispan memcached server
 # To use it, make sure you install Python memcached client library
-# This particular script tests that it's writing to the server correctly 
+# This particular script tests that it's writing to the one of the clustered servers correctly 
 #
 
 import memcache
 import time
 
-mc = memcache.Client(['127.0.0.1:11211'], debug=1)
+ip = "127.0.0.1"
+port = "12211"
+ipaddress = ip + ':' + port
+mc = memcache.Client([ipaddress], debug=1)
+
+print "Connecting to {0}".format(ipaddress)
 
 def set(mc, key, val, time = 0):
     ret = mc.set(key, val, time)
@@ -32,31 +37,42 @@ def decr(mc, expected, key, delta = 1):
    else:
       print "FAIL: returned {0}".format(ret)
 
-print "Testing set ['{0}': {1}] ...".format("Simple_Key", "Simple value"),
-set(mc, "Simple_Key", "Simple value")
+key = "Simple_Key"
+value = "Simple value"
+print "Testing set ['{0}': {1}] ...".format(key, value),
+set(mc, key, value)
 
-print "Testing set ['{0}' : {1} : {2}] ...".format("Expiring_Key", 999, 3),
-set(mc, "Expiring_Key", 999, 3)
+key = "Expiring_Key"
+value = 999
+expiry = 3
+print "Testing set ['{0}' : {1} : {2}] ...".format(key, value, expiry),
+set(mc, key, value, expiry)
 
-print "Testing increment 3 times ['{0}' : starting at {1} ]".format("Incr_Key", "1")
-print "Initialise at {0} ...".format("1"),
-set(mc, "Incr_Key", "1")   # note that the key used for incr/decr must be a string.
+key = "Incr_Key"
+value = "1"
+print "Testing increment 3 times ['{0}' : starting at {1} ]".format(key, value)
+print "Initialise at {0} ...".format(value),
+set(mc, key, value)   # note that the key used for incr/decr must be a string.
 print "Increment by one ...",
-incr(mc, 2, "Incr_Key")
+incr(mc, 2, key)
 print "Increment again ...",
-incr(mc, 3, "Incr_Key")
+incr(mc, 3, key)
 print "Increment yet again ...",
-incr(mc, 4, "Incr_Key")
+incr(mc, 4, key)
 
-print "Testing decrement 1 time ['{0}' : starting at {1} ]".format("Decr_Key", "4")
-print "Initialise at {0} ...".format("4"),
-set(mc, "Decr_Key", "4")
+key = "Decr_Key"
+value = "4"
+print "Testing decrement 1 time ['{0}' : starting at {1} ]".format(key, value)
+print "Initialise at {0} ...".format(value),
+set(mc, key, value)
 print "Decrement by one ...",
-decr(mc, 3, "Decr_Key")
+decr(mc, 3, key)
 
-print "Testing decrement 2 times in one call ['{0}' : {1} ]".format("Multi_Decr_Key", "3")
-print "Initialise at {0} ...".format("3"),
-set(mc, "Multi_Decr_Key", "3")
+key = "Multi_Decr_Key"
+value = "3"
+print "Testing decrement 2 times in one call ['{0}' : {1} ]".format(key, value)
+print "Initialise at {0} ...".format(value),
+set(mc, key, value)
 print "Decrement by 2 ...",
 decr(mc, 1, "Multi_Decr_Key", 2)
 

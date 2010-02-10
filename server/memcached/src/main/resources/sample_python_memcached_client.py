@@ -8,7 +8,12 @@
 import memcache
 import time
 
-mc = memcache.Client(['127.0.0.1:11211'], debug=0)
+ip = "127.0.0.1"
+port = "12211"
+ipaddress = ip + ':' + port
+mc = memcache.Client([ipaddress], debug=1)
+
+print "Connecting to {0}".format(ipaddress)
 
 def setAndGet(mc, k, v):
    mc.set(k, v)

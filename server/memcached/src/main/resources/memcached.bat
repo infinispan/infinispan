@@ -9,6 +9,6 @@ rem echo libs: %LIB%
 
 set CP=%LIB%;..\infinispan-core.jar;..\modules\memcached\infinispan-server-memcached.jar;%CP%
 
-java -classpath "%CP%" org.infinispan.server.memcached.Main %*
+java -classpath "%CP%" -Dbind.address=127.0.0.1 -Djava.net.preferIPv4Stack=true -Dlog4j.configuration=..\etc\log4j.xml org.infinispan.server.memcached.Main %*
 
 :fileEnd

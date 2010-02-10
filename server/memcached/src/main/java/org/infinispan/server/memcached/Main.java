@@ -109,7 +109,10 @@ public class Main {
    private void processCommandLine(String[] args) throws Exception {
       // set this from a system property or default to jboss
       String programName = System.getProperty("program.name", "memcached");
-      String sopts = "-:hD:Vp:l:m:t:c";
+      // TODO: Since this memcached implementation stores stuff as byte[], these could be implemented in the future:
+      // -m <num>      max memory to use for items in megabytes (default: 64 MB)
+      // -M            return error on memory exhausted (rather than removing items)
+      String sopts = "-:hD:Vp:l:m:t:c:";
       LongOpt[] lopts =
       {new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h'),
             new LongOpt("version", LongOpt.NO_ARGUMENT, null, 'V'),
