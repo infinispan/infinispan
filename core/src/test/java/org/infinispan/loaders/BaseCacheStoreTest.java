@@ -13,9 +13,12 @@ import org.infinispan.loaders.modifications.Store;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.GlobalTransactionFactory;
 import org.infinispan.util.Util;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -242,12 +245,10 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       mods = new ArrayList<Modification>();
       mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
       mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
-      mods.add(new Clear());
       mods.add(new Store(InternalEntryFactory.create("k3", "v3")));
-
       cs.prepare(mods, tx, true);
-      assert !cs.containsKey("k1");
-      assert !cs.containsKey("k2");
+      assert cs.containsKey("k1");
+      assert cs.containsKey("k2");
       assert cs.containsKey("k3");
    }
 
@@ -272,7 +273,6 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       mods = new ArrayList<Modification>();
       mods.add(new Store(InternalEntryFactory.create("k1", "v1")));
       mods.add(new Store(InternalEntryFactory.create("k2", "v2")));
-      mods.add(new Clear());
       mods.add(new Store(InternalEntryFactory.create("k3", "v3")));
 
       cs.prepare(mods, tx, false);
@@ -283,8 +283,8 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
 
       cs.commit(tx);
 
-      assert !cs.containsKey("k1");
-      assert !cs.containsKey("k2");
+      assert cs.containsKey("k1");
+      assert cs.containsKey("k2");
       assert cs.containsKey("k3");
    }
 
@@ -539,6 +539,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       assert clc.getCacheLoaderClassName().equals(cs.getClass().getName()) : "Cache loaders doesn't provide a proper configuration type that is capable of creating the loaders!";
    }
 
+   @Test (enabled = false)
    public void testConcurrency() throws Exception {
       int numThreads = 3;
       final int loops = 500;
