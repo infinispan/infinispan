@@ -23,6 +23,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -164,7 +165,7 @@ public class CloudCacheStoreIntegrationTest extends BaseCacheStoreTest {
       assert expected.isEmpty();
    }
 
-   @Test (enabled = false)
+   @Test (enabled = false, description = "Much too slow to run this on a live cloud setup")
    @Override public void testConcurrency() throws Exception {}
 
    public void testNegativeHashCodes() throws CacheLoaderException {
@@ -175,7 +176,7 @@ public class CloudCacheStoreIntegrationTest extends BaseCacheStoreTest {
       assert ice.getValue().equals("hello");
    }
 
-   private static class ObjectWithNegativeHashcode {
+   private static class ObjectWithNegativeHashcode implements Serializable {
       String s = "hello";
 
       @Override
