@@ -81,7 +81,7 @@ public class Immutables {
    public static <T> List<T> immutableListCopy(List<? extends T> list) {
       if (list == null) return null;
       if (list.isEmpty()) return Collections.emptyList();
-      if (list.size() == 1) return Collections.singletonList(list.get(0));
+      if (list.size() == 1) return Collections.<T>singletonList(list.get(0));
       return new ImmutableListCopy<T>(list);
    }
 
@@ -136,7 +136,7 @@ public class Immutables {
    public static <T> Set<T> immutableSetCopy(Set<? extends T> set) {
       if (set == null) return null;
       if (set.isEmpty()) return Collections.emptySet();
-      if (set.size() == 1) return Collections.singleton(set.iterator().next());
+      if (set.size() == 1) return Collections.<T>singleton(set.iterator().next());
       Set<? extends T> copy = ObjectDuplicator.duplicateSet(set);
       if (copy == null)
          // Set uses Collection copy-ctor
@@ -169,7 +169,7 @@ public class Immutables {
       if (map.isEmpty()) return Collections.emptyMap();
       if (map.size() == 1) {
          Map.Entry<? extends K, ? extends V> me = map.entrySet().iterator().next();
-         return Collections.singletonMap(me.getKey(), me.getValue());
+         return Collections.<K,V>singletonMap(me.getKey(), me.getValue());
       }
 
       Map<? extends K, ? extends V> copy = ObjectDuplicator.duplicateMap(map);
@@ -191,7 +191,7 @@ public class Immutables {
    public static <T> Collection<T> immutableCollectionCopy(Collection<? extends T> collection) {
       if (collection == null) return null;
       if (collection.isEmpty()) return Collections.emptySet();
-      if (collection.size() == 1) return Collections.singleton(collection.iterator().next());
+      if (collection.size() == 1) return Collections.<T>singleton(collection.iterator().next());
 
       Collection<? extends T> copy = ObjectDuplicator.duplicateCollection(collection);
       if (copy == null)
