@@ -59,6 +59,7 @@
          <groupId>apache-log4j</groupId>
          <artifactId>log4j</artifactId>
          <version>${version.apache.log4j}</version>
+         <scope>test</scope>
       </dependency>
    </dependencies>
 
