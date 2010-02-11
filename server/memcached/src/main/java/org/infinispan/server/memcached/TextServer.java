@@ -32,7 +32,7 @@ import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.server.core.Server;
 import org.infinispan.server.core.transport.netty.NettyReplayingDecoder;
 import org.infinispan.server.core.transport.netty.NettyServer;
-import org.infinispan.server.memcached.transport.MemcachedDecoder;
+import org.infinispan.server.memcached.transport.TextDecoder;
 import org.infinispan.server.core.InterceptorChain;
 import org.infinispan.server.memcached.commands.TextCommandHandler;
 import org.infinispan.server.memcached.commands.Value;
@@ -83,9 +83,9 @@ public class TextServer {
 
    public void start() throws Exception {
       InterceptorChain chain = TextProtocolInterceptorChainFactory.getInstance(cache).buildInterceptorChain();
-      MemcachedDecoder decoder = new MemcachedDecoder(cache, chain, scheduler);
-      NettyReplayingDecoder nettyDecoder = new NettyReplayingDecoder<MemcachedDecoder.State>(decoder,
-              MemcachedDecoder.State.READ_COMMAND);
+      TextDecoder decoder = new TextDecoder(cache, chain, scheduler);
+      NettyReplayingDecoder nettyDecoder = new NettyReplayingDecoder<TextDecoder.State>(decoder,
+              TextDecoder.State.READ_COMMAND);
       decoder.setCheckpointer(nettyDecoder);
 
       TextCommandHandler commandHandler = new TextCommandHandler(cache, chain);

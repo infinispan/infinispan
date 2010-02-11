@@ -55,8 +55,8 @@ import static org.infinispan.server.memcached.TextProtocolUtil.LF;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class MemcachedDecoder implements Decoder<MemcachedDecoder.State> {
-   private static final Log log = LogFactory.getLog(MemcachedDecoder.class);
+public class TextDecoder implements Decoder<TextDecoder.State> {
+   private static final Log log = LogFactory.getLog(TextDecoder.class);
    private final CommandFactory factory;
    private volatile TextCommand command;
    private Decoder.Checkpointer checkpointer;
@@ -65,7 +65,7 @@ public class MemcachedDecoder implements Decoder<MemcachedDecoder.State> {
       READ_COMMAND, READ_UNSTRUCTURED_DATA
    }
 
-   public MemcachedDecoder(Cache<String, Value> cache, InterceptorChain chain, ScheduledExecutorService scheduler) {
+   public TextDecoder(Cache<String, Value> cache, InterceptorChain chain, ScheduledExecutorService scheduler) {
       this.factory = new CommandFactory(cache, chain, scheduler);
    }
 
