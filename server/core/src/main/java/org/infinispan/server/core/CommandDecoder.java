@@ -28,6 +28,7 @@ package org.infinispan.server.core;
  * @author Galder Zamarreño
  * @since 4.0
  */
+@Deprecated
 public interface CommandDecoder {
 
 }

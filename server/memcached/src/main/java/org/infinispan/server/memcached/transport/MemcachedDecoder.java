@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat, Inc. and/or its affiliates, and
+ * Copyright 2010, Red Hat, Inc. and/or its affiliates, and
  * individual contributors as indicated by the @author tags. See the
  * copyright.txt file in the distribution for a full listing of
  * individual contributors.
@@ -20,20 +20,18 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.server.memcached.transport.netty;
 
-import static org.infinispan.server.memcached.TextProtocolUtil.CR;
-import static org.infinispan.server.memcached.TextProtocolUtil.CRLF;
-import static org.infinispan.server.memcached.TextProtocolUtil.LF;
-import static org.jboss.netty.buffer.ChannelBuffers.wrappedBuffer;
-
-import java.io.IOException;
-import java.io.StreamCorruptedException;
-import java.util.concurrent.ScheduledExecutorService;
+package org.infinispan.server.memcached.transport;
 
 import org.infinispan.Cache;
 import org.infinispan.server.core.Command;
 import org.infinispan.server.core.InterceptorChain;
+import org.infinispan.server.core.transport.Channel;
+import org.infinispan.server.core.transport.ChannelBuffer;
+import org.infinispan.server.core.transport.ChannelBuffers;
+import org.infinispan.server.core.transport.ChannelHandlerContext;
+import org.infinispan.server.core.transport.Decoder;
+import org.infinispan.server.core.transport.ExceptionEvent;
 import org.infinispan.server.memcached.Reply;
 import org.infinispan.server.memcached.UnknownCommandException;
 import org.infinispan.server.memcached.commands.CommandFactory;
@@ -42,41 +40,46 @@ import org.infinispan.server.memcached.commands.TextCommand;
 import org.infinispan.server.memcached.commands.Value;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.ExceptionEvent;
-import org.jboss.netty.handler.codec.replay.ReplayingDecoder;
+
+import java.io.IOException;
+import java.io.StreamCorruptedException;
+import java.util.concurrent.ScheduledExecutorService;
+
+import static org.infinispan.server.memcached.TextProtocolUtil.CR;
+import static org.infinispan.server.memcached.TextProtocolUtil.CRLF;
+import static org.infinispan.server.memcached.TextProtocolUtil.LF;
 
 /**
- * NettyMemcachedDecoder.
- * 
+ * // TODO: Document this
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */
-@Deprecated
-public class NettyMemcachedDecoder extends ReplayingDecoder<NettyMemcachedDecoder.State> {
-   private static final Log log = LogFactory.getLog(NettyMemcachedDecoder.class);
-   
+public class MemcachedDecoder implements Decoder<MemcachedDecoder.State> {
+   private static final Log log = LogFactory.getLog(MemcachedDecoder.class);
    private final CommandFactory factory;
    private volatile TextCommand command;
+   private Decoder.Checkpointer checkpointer;
 
-   protected enum State {
+   public enum State {
       READ_COMMAND, READ_UNSTRUCTURED_DATA
    }
 
-   public NettyMemcachedDecoder(Cache<String, Value> cache, InterceptorChain chain, ScheduledExecutorService scheduler) {
-      super(State.READ_COMMAND, true);
-      factory = new CommandFactory(cache, chain, scheduler);
+   public MemcachedDecoder(Cache<String, Value> cache, InterceptorChain chain, ScheduledExecutorService scheduler) {
+      this.factory = new CommandFactory(cache, chain, scheduler);
+   }
+
+   public void setCheckpointer(Checkpointer checkpointer) {
+      this.checkpointer = checkpointer;
    }
 
    @Override
-   protected Object decode(ChannelHandlerContext ctx, Channel channel, ChannelBuffer buffer, State state) throws Exception {
+   public Object decode(ChannelHandlerContext ctx, ChannelBuffer buffer, State state) throws Exception {
       switch (state) {
          case READ_COMMAND:
             command = factory.createCommand(readLine(buffer));
             if (command.getType().isStorage())
-               checkpoint(State.READ_UNSTRUCTURED_DATA);
+               checkpointer.checkpoint(State.READ_UNSTRUCTURED_DATA);
             else
                return command;
             break;
@@ -91,7 +94,7 @@ public class NettyMemcachedDecoder extends ReplayingDecoder<NettyMemcachedDecode
                   try {
                      return reset(storageCmd.setData(data));
                   } catch (IOException ioe) {
-                     checkpoint(State.READ_COMMAND);
+                     checkpointer.checkpoint(State.READ_COMMAND);
                      throw ioe;
                   }
                } else {
@@ -109,22 +112,23 @@ public class NettyMemcachedDecoder extends ReplayingDecoder<NettyMemcachedDecode
       Throwable t = e.getCause();
       log.error("Unexpected exception", t);
       Channel ch = ctx.getChannel();
+      ChannelBuffers buffers = ctx.getChannelBuffers();
       if (t instanceof UnknownCommandException) {
-         ch.write(wrappedBuffer(wrappedBuffer(Reply.ERROR.bytes()), wrappedBuffer(CRLF)));
+         ch.write(buffers.wrappedBuffer(buffers.wrappedBuffer(Reply.ERROR.bytes()), buffers.wrappedBuffer(CRLF)));
       } else if (t instanceof IOException) {
          StringBuilder sb = new StringBuilder();
          sb.append(Reply.CLIENT_ERROR).append(' ').append(t);
-         ch.write(wrappedBuffer(wrappedBuffer(sb.toString().getBytes()), wrappedBuffer(CRLF)));
+         ch.write(buffers.wrappedBuffer(buffers.wrappedBuffer(sb.toString().getBytes()), buffers.wrappedBuffer(CRLF)));
       } else {
          StringBuilder sb = new StringBuilder();
          sb.append(Reply.SERVER_ERROR).append(' ').append(t);
-         ch.write(wrappedBuffer(wrappedBuffer(sb.toString().getBytes()), wrappedBuffer(CRLF)));
+         ch.write(buffers.wrappedBuffer(buffers.wrappedBuffer(sb.toString().getBytes()), buffers.wrappedBuffer(CRLF)));
       }
    }
 
    private Object reset(Command c) {
       this.command = null;
-      checkpoint(State.READ_COMMAND);
+      checkpointer.checkpoint(State.READ_COMMAND);
       return c;
   }
 
@@ -146,5 +150,4 @@ public class NettyMemcachedDecoder extends ReplayingDecoder<NettyMemcachedDecode
          }
       }
    }
-
 }

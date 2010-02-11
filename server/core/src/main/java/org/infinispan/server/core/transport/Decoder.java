@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat, Inc. and/or its affiliates, and
+ * Copyright 2010, Red Hat, Inc. and/or its affiliates, and
  * individual contributors as indicated by the @author tags. See the
  * copyright.txt file in the distribution for a full listing of
  * individual contributors.
@@ -20,16 +20,20 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.server.core;
 
-import java.io.IOException;
+package org.infinispan.server.core.transport;
 
 /**
- * TODO: This only deals with text based protocols, needs further thought. Will be looked into when implementing Hot Rod
- * 
+ * // TODO: Document this
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */
-public interface CommandFactory {
-   Command createCommand(String line) throws IOException;
+public interface Decoder<T extends Enum<T>> {
+   Object decode(ChannelHandlerContext ctx, ChannelBuffer buffer, T state) throws Exception;
+   void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception;
+
+   interface Checkpointer<T> {
+      void checkpoint(T state);
+   }
 }

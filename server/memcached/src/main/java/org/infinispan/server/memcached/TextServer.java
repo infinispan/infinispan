@@ -30,8 +30,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import org.infinispan.Cache;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.server.core.Server;
+import org.infinispan.server.core.transport.netty.NettyReplayingDecoder;
 import org.infinispan.server.core.transport.netty.NettyServer;
-import org.infinispan.server.memcached.transport.netty.NettyMemcachedDecoder;
+import org.infinispan.server.memcached.transport.MemcachedDecoder;
 import org.infinispan.server.core.InterceptorChain;
 import org.infinispan.server.memcached.commands.TextCommandHandler;
 import org.infinispan.server.memcached.commands.Value;
@@ -82,10 +83,14 @@ public class TextServer {
 
    public void start() throws Exception {
       InterceptorChain chain = TextProtocolInterceptorChainFactory.getInstance(cache).buildInterceptorChain();
-      NettyMemcachedDecoder decoder = new NettyMemcachedDecoder(cache, chain, scheduler);
+      MemcachedDecoder decoder = new MemcachedDecoder(cache, chain, scheduler);
+      NettyReplayingDecoder nettyDecoder = new NettyReplayingDecoder<MemcachedDecoder.State>(decoder,
+              MemcachedDecoder.State.READ_COMMAND);
+      decoder.setCheckpointer(nettyDecoder);
+
       TextCommandHandler commandHandler = new TextCommandHandler(cache, chain);
 
-      server = new NettyServer(commandHandler, decoder, new InetSocketAddress(host, port),
+      server = new NettyServer(commandHandler, nettyDecoder, new InetSocketAddress(host, port),
                masterThreads, workerThreads, cache.getName());
       server.start();
       log.info("Started Memcached text server bound to {0}:{1}", host, port);
