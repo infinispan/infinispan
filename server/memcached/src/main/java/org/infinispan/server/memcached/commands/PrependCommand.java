@@ -23,7 +23,7 @@
 package org.infinispan.server.memcached.commands;
 
 import org.infinispan.Cache;
-import org.infinispan.server.core.ChannelHandlerContext;
+import org.infinispan.server.core.transport.ChannelHandlerContext;
 import org.infinispan.server.memcached.TextProtocolUtil;
 import org.infinispan.server.memcached.interceptors.TextProtocolVisitor;
 

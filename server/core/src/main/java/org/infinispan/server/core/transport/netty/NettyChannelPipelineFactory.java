@@ -20,15 +20,36 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.server.core;
+package org.infinispan.server.core.transport.netty;
+
+import static org.jboss.netty.channel.Channels.pipeline;
+
+import org.jboss.netty.channel.ChannelHandler;
+import org.jboss.netty.channel.ChannelPipeline;
+import org.jboss.netty.channel.ChannelPipelineFactory;
 
 /**
- * ChannelFactory.
+ * NettyChannelPipelineFactory.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-public interface ServerBootstrap {
-   void start();
-   void stop();
+public class NettyChannelPipelineFactory implements ChannelPipelineFactory {
+   private final ChannelHandler decoder;
+   private final ChannelHandler handler;
+
+   public NettyChannelPipelineFactory(ChannelHandler decoder, ChannelHandler handler) {
+      this.decoder = decoder;
+      this.handler = handler;
+   }
+
+   @Override
+   public ChannelPipeline getPipeline() throws Exception {
+      // Create a default pipeline implementation.
+      ChannelPipeline pipeline = pipeline();
+      pipeline.addLast("decoder", decoder);
+      pipeline.addLast("handler", handler);
+      return pipeline;
+   }
+
 }

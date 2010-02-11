@@ -23,7 +23,7 @@
 package org.infinispan.server.memcached.commands;
 
 import org.infinispan.Cache;
-import org.infinispan.server.core.ChannelHandlerContext;
+import org.infinispan.server.core.transport.ChannelHandlerContext;
 import org.infinispan.server.core.CommandHandler;
 import org.infinispan.server.core.MessageEvent;
 import org.infinispan.server.core.InterceptorChain;

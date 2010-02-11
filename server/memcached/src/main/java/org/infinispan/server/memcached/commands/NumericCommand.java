@@ -32,9 +32,9 @@ import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.infinispan.server.core.ChannelBuffers;
-import org.infinispan.server.core.ChannelHandlerContext;
-import org.infinispan.server.core.Channel;
+import org.infinispan.server.core.transport.ChannelBuffers;
+import org.infinispan.server.core.transport.ChannelHandlerContext;
+import org.infinispan.server.core.transport.Channel;
 import org.infinispan.server.memcached.Reply;
 
 /**

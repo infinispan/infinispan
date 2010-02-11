@@ -20,15 +20,35 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.server.core;
+package org.infinispan.server.core.transport.netty;
+
+import org.infinispan.server.core.transport.ChannelBuffer;
+import org.infinispan.server.core.transport.ChannelBuffers;
 
 /**
- * ChannelBuffers.
+ * NettyChannelBuffers.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-public interface ChannelBuffers {
-   ChannelBuffer wrappedBuffer(ChannelBuffer... buffers);
-   ChannelBuffer wrappedBuffer(byte[] array);
+public enum NettyChannelBuffers implements ChannelBuffers {
+   INSTANCE;
+
+   @Override
+   public ChannelBuffer wrappedBuffer(byte[] array) {
+      return new NettyChannelBuffer(org.jboss.netty.buffer.ChannelBuffers.wrappedBuffer(array));
+   }
+
+   @Override
+   public ChannelBuffer wrappedBuffer(ChannelBuffer... buffers) {
+      org.jboss.netty.buffer.ChannelBuffer[] nettyBuffers = new org.jboss.netty.buffer.ChannelBuffer[buffers.length];
+      for (int i =0; i < buffers.length; i++) {
+         nettyBuffers[i] = ((NettyChannelBuffer) buffers[i]).buffer;
+      }
+      return new NettyChannelBuffer(org.jboss.netty.buffer.ChannelBuffers.wrappedBuffer(nettyBuffers));
+   }
+
+   public static NettyChannelBuffers getInstance() {
+      return INSTANCE;
+   }
 }

@@ -24,7 +24,7 @@ package org.infinispan.server.memcached.interceptors;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.infinispan.server.core.ChannelHandlerContext;
+import org.infinispan.server.core.transport.ChannelHandlerContext;
 import org.infinispan.server.memcached.Reply;
 import org.infinispan.server.memcached.commands.CasCommand;
 import org.infinispan.server.memcached.commands.DecrementCommand;

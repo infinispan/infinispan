@@ -22,12 +22,17 @@
  */
 package org.infinispan.server.core;
 
+import org.infinispan.server.core.transport.ChannelHandlerContext;
+
+import java.util.List;
+
 /**
- * CommandHandler.
+ * InterceptorChain.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-public interface CommandHandler {
-   void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Throwable;
+public interface InterceptorChain {
+   Object invoke(ChannelHandlerContext ctx, Command command) throws Throwable;
+   List<CommandInterceptor> getInterceptorsWhichExtend(Class<? extends CommandInterceptor> interceptorClass);
 }

@@ -27,7 +27,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.infinispan.server.core.ChannelHandlerContext;
+import org.infinispan.server.core.transport.ChannelHandlerContext;
 import org.infinispan.server.core.Command;
 import org.infinispan.server.core.CommandInterceptor;
 import org.infinispan.server.core.InterceptorChain;

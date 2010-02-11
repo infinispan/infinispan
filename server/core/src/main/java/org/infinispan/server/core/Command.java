@@ -22,13 +22,16 @@
  */
 package org.infinispan.server.core;
 
+import org.infinispan.server.core.transport.ChannelHandlerContext;
+
 /**
- * ChannelHandlerContext.
+ * Command.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-public interface ChannelHandlerContext {
-   Channel getChannel();
-   ChannelBuffers getChannelBuffers();
+public interface Command {
+
+   Object perform(ChannelHandlerContext ctx) throws Throwable;
+
 }

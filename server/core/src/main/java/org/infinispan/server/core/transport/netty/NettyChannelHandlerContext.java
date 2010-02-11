@@ -20,16 +20,33 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.server.core;
+package org.infinispan.server.core.transport.netty;
 
+import org.infinispan.server.core.transport.Channel;
+import org.infinispan.server.core.transport.ChannelBuffers;
+import org.infinispan.server.core.transport.ChannelHandlerContext;
 
 /**
- * Channel.
+ * NettyChannelHandlerContext.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-public interface Channel extends Comparable<Channel> {
-   ChannelFuture write(Object message);
-   ChannelFuture disconnect();
+public class NettyChannelHandlerContext implements ChannelHandlerContext {
+   final org.jboss.netty.channel.ChannelHandlerContext ctx;
+   final Channel ch;
+
+   public NettyChannelHandlerContext(org.jboss.netty.channel.ChannelHandlerContext ctx) {
+      this.ctx = ctx;
+      this.ch = new NettyChannel(ctx.getChannel());
+   }
+
+   @Override
+   public Channel getChannel() {
+      return ch;
+   }
+
+   public ChannelBuffers getChannelBuffers() {
+      return NettyChannelBuffers.INSTANCE;
+   }
 }

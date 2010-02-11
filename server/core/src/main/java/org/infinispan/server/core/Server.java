@@ -20,37 +20,15 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.server.core.netty;
-
-import org.infinispan.server.core.Channel;
-import org.infinispan.server.core.ChannelFuture;
+package org.infinispan.server.core;
 
 /**
- * NettyChannel.
+ * ChannelFactory.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class NettyChannel implements Channel {
-   final org.jboss.netty.channel.Channel ch;
-
-   public NettyChannel(org.jboss.netty.channel.Channel ch) {
-      this.ch = ch;
-   }
-   
-   @Override
-   public ChannelFuture disconnect() {
-      return new NettyChannelFuture(ch.disconnect(), this);
-   }
-
-   @Override
-   public ChannelFuture write(Object message) {
-      return new NettyChannelFuture(ch.write(message), this);
-   }
-
-   @Override
-   public int compareTo(Channel o) {
-      return ch.compareTo(((NettyChannel) o).ch);
-   }
-
+public interface Server {
+   void start();
+   void stop();
 }

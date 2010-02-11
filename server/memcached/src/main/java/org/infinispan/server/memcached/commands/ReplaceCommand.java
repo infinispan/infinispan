@@ -25,7 +25,7 @@ package org.infinispan.server.memcached.commands;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
-import org.infinispan.server.core.ChannelHandlerContext;
+import org.infinispan.server.core.transport.ChannelHandlerContext;
 import org.infinispan.server.memcached.Reply;
 import org.infinispan.server.memcached.interceptors.TextProtocolVisitor;
 

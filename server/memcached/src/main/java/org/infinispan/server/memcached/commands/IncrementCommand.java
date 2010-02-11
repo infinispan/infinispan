@@ -25,7 +25,7 @@ package org.infinispan.server.memcached.commands;
 import java.math.BigInteger;
 
 import org.infinispan.Cache;
-import org.infinispan.server.core.ChannelHandlerContext;
+import org.infinispan.server.core.transport.ChannelHandlerContext;
 import org.infinispan.server.memcached.interceptors.TextProtocolVisitor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;

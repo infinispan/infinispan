@@ -29,9 +29,9 @@ import java.util.concurrent.ScheduledExecutorService;
 
 import org.infinispan.Cache;
 import org.infinispan.manager.DefaultCacheManager;
-import org.infinispan.server.core.ServerBootstrap;
-import org.infinispan.server.core.netty.NettyServerBootstrap;
-import org.infinispan.server.core.netty.memcached.NettyMemcachedDecoder;
+import org.infinispan.server.core.Server;
+import org.infinispan.server.core.transport.netty.NettyServer;
+import org.infinispan.server.memcached.transport.netty.NettyMemcachedDecoder;
 import org.infinispan.server.core.InterceptorChain;
 import org.infinispan.server.memcached.commands.TextCommandHandler;
 import org.infinispan.server.memcached.commands.Value;
@@ -53,12 +53,12 @@ public class TextServer {
    private final int masterThreads;
    private final int workerThreads;
    private final ScheduledExecutorService scheduler;
-   private ServerBootstrap bootstrap;
+   private Server server;
 
    public TextServer(String host, int port, String configFile, int masterThreads, int workerThreads) throws IOException {
       this(host, port, configFile == null 
-               ? new DefaultCacheManager().getCache()
-               : new DefaultCacheManager(configFile).getCache(),
+               ? new DefaultCacheManager().<String, Value>getCache()
+               : new DefaultCacheManager(configFile).<String, Value>getCache(),
                masterThreads, workerThreads);
       if (configFile == null) {
          log.debug("Using cache manager using configuration defaults");
@@ -67,7 +67,7 @@ public class TextServer {
       }
    }
 
-   public TextServer(String host, int port, Cache cache, int masterThreads, int workerThreads) throws IOException {
+   public TextServer(String host, int port, Cache<String, Value> cache, int masterThreads, int workerThreads) throws IOException {
       this.host = host;
       this.port = port;
       this.masterThreads = masterThreads;
@@ -85,15 +85,15 @@ public class TextServer {
       NettyMemcachedDecoder decoder = new NettyMemcachedDecoder(cache, chain, scheduler);
       TextCommandHandler commandHandler = new TextCommandHandler(cache, chain);
 
-      bootstrap = new NettyServerBootstrap(commandHandler, decoder, new InetSocketAddress(host, port), 
+      server = new NettyServer(commandHandler, decoder, new InetSocketAddress(host, port),
                masterThreads, workerThreads, cache.getName());
-      bootstrap.start();
+      server.start();
       log.info("Started Memcached text server bound to {0}:{1}", host, port);
    }
 
    public void stop() {
-      if (bootstrap != null) {
-         bootstrap.stop();
+      if (server != null) {
+         server.stop();
       }
       cache.stop();
       scheduler.shutdown();

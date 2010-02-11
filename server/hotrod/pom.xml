@@ -10,39 +10,19 @@
       <relativePath>../pom.xml</relativePath>
    </parent>
 
-   <artifactId>infinispan-server-memcached</artifactId>
-   <name>Infinispan Server Memcached Module</name>
-   <description>Infinispan server memcached module</description>
+   <artifactId>infinispan-server-hotrod</artifactId>
+   <name>Infinispan Server Hotrod Module</name>
+   <description>Infinispan server hotrod  module</description>
 
    <properties>
-      <version.spymemcached>2.4.2</version.spymemcached>
    </properties>
 
    <dependencies>
-      <dependency>
+       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-server-core</artifactId>
          <version>${project.version}</version>
       </dependency>
-
-      <dependency>
-         <groupId>spy</groupId>
-         <artifactId>memcached</artifactId>
-         <version>${version.spymemcached}</version>
-         <scope>test</scope>
-      </dependency>
    </dependencies>
 
-  <repositories>
-    <repository>
-      <id>spy</id>
-      <name>Spy Repository</name>
-      <layout>default</layout>
-      <url>http://bleu.west.spy.net/~dustin/m2repo/</url>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-  </repositories>
-  
 </project>

@@ -20,17 +20,15 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.server.core;
-
-import java.util.List;
+package org.infinispan.server.core.transport;
 
 /**
- * InterceptorChain.
+ * ChannelHandlerContext.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-public interface InterceptorChain {
-   Object invoke(ChannelHandlerContext ctx, Command command) throws Throwable;
-   List<CommandInterceptor> getInterceptorsWhichExtend(Class<? extends CommandInterceptor> interceptorClass);
+public interface ChannelHandlerContext {
+   Channel getChannel();
+   ChannelBuffers getChannelBuffers();
 }

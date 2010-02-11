@@ -20,33 +20,16 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.server.core.netty;
+package org.infinispan.server.core;
 
-import java.net.SocketAddress;
-
-import org.infinispan.server.core.MessageEvent;
+import org.infinispan.server.core.transport.ChannelHandlerContext;
 
 /**
- * NettyMessageEvent.
+ * CommandHandler.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class NettyMessageEvent implements MessageEvent {
-   final org.jboss.netty.channel.MessageEvent event;
-
-   public NettyMessageEvent(org.jboss.netty.channel.MessageEvent event) {
-      this.event = event;
-   }
-
-   @Override
-   public Object getMessage() {
-      return event.getMessage();
-   }
-
-   @Override
-   public SocketAddress getRemoteAddress() {
-      return event.getRemoteAddress();
-   }
-
+public interface CommandHandler {
+   void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Throwable;
 }

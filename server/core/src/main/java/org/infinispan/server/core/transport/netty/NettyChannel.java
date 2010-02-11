@@ -20,16 +20,37 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.server.core;
+package org.infinispan.server.core.transport.netty;
+
+import org.infinispan.server.core.transport.Channel;
+import org.infinispan.server.core.transport.ChannelFuture;
 
 /**
- * Command.
+ * NettyChannel.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-public interface Command {
+public class NettyChannel implements Channel {
+   final org.jboss.netty.channel.Channel ch;
 
-   Object perform(ChannelHandlerContext ctx) throws Throwable;
+   public NettyChannel(org.jboss.netty.channel.Channel ch) {
+      this.ch = ch;
+   }
+   
+   @Override
+   public ChannelFuture disconnect() {
+      return new NettyChannelFuture(ch.disconnect(), this);
+   }
+
+   @Override
+   public ChannelFuture write(Object message) {
+      return new NettyChannelFuture(ch.write(message), this);
+   }
+
+   @Override
+   public int compareTo(Channel o) {
+      return ch.compareTo(((NettyChannel) o).ch);
+   }
 
 }

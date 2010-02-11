@@ -23,10 +23,10 @@
 package org.infinispan.server.memcached.commands;
 
 import org.infinispan.Cache;
-import org.infinispan.server.core.Channel;
-import org.infinispan.server.core.ChannelBuffer;
-import org.infinispan.server.core.ChannelBuffers;
-import org.infinispan.server.core.ChannelHandlerContext;
+import org.infinispan.server.core.transport.Channel;
+import org.infinispan.server.core.transport.ChannelBuffer;
+import org.infinispan.server.core.transport.ChannelBuffers;
+import org.infinispan.server.core.transport.ChannelHandlerContext;
 import org.infinispan.server.memcached.interceptors.TextProtocolVisitor;
 
 import static org.infinispan.server.memcached.TextProtocolUtil.CRLF;

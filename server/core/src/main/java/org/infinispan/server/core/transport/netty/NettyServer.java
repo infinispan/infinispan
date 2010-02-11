@@ -20,7 +20,7 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.server.core.netty;
+package org.infinispan.server.core.transport.netty;
 
 import java.net.SocketAddress;
 import java.util.concurrent.ExecutorService;
@@ -30,12 +30,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.server.core.CommandHandler;
-import org.infinispan.server.core.netty.memcached.NettyMemcachedDecoder;
+import org.infinispan.server.core.Server;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFactory;
+import org.jboss.netty.channel.ChannelHandler;
 import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.ChannelGroupFuture;
@@ -48,8 +49,8 @@ import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class NettyServerBootstrap implements org.infinispan.server.core.ServerBootstrap {
-   private static final Log log = LogFactory.getLog(NettyServerBootstrap.class);
+public class NettyServer implements Server {
+   private static final Log log = LogFactory.getLog(NettyServer.class);
    final ChannelPipelineFactory pipeline;
    final SocketAddress address;
    final ChannelFactory factory;
@@ -58,7 +59,7 @@ public class NettyServerBootstrap implements org.infinispan.server.core.ServerBo
    final ExecutorService masterExecutor;
    final ExecutorService workerExecutor;
    
-   public NettyServerBootstrap(CommandHandler commandHandler, NettyMemcachedDecoder decoder, SocketAddress address, 
+   public NettyServer(CommandHandler commandHandler, ChannelHandler decoder, SocketAddress address,
             int masterThreads, int workerThreads, String cacheName) {
       ThreadFactory tf = new MemcachedThreadFactory(cacheName, ExecutorType.MASTER);
       if (masterThreads == 0) {

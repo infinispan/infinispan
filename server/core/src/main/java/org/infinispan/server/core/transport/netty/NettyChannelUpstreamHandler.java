@@ -20,7 +20,7 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.server.core.netty;
+package org.infinispan.server.core.transport.netty;
 
 import org.infinispan.CacheException;
 import org.infinispan.server.core.CommandHandler;

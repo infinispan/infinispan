@@ -22,7 +22,7 @@
  */
 package org.infinispan.server.memcached.interceptors;
 
-import org.infinispan.server.core.ChannelHandlerContext;
+import org.infinispan.server.core.transport.ChannelHandlerContext;
 import org.infinispan.server.core.CommandInterceptor;
 import org.infinispan.server.memcached.commands.TextCommand;
 

@@ -29,9 +29,9 @@ import static org.infinispan.server.memcached.TextProtocolUtil.CRLF;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
-import org.infinispan.server.core.Channel;
-import org.infinispan.server.core.ChannelBuffers;
-import org.infinispan.server.core.ChannelHandlerContext;
+import org.infinispan.server.core.transport.Channel;
+import org.infinispan.server.core.transport.ChannelBuffers;
+import org.infinispan.server.core.transport.ChannelHandlerContext;
 import org.infinispan.server.core.InterceptorChain;
 import org.infinispan.server.memcached.interceptors.TextProtocolVisitor;
 

@@ -20,36 +20,33 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.server.core.netty;
+package org.infinispan.server.core.transport.netty;
 
-import static org.jboss.netty.channel.Channels.pipeline;
+import java.net.SocketAddress;
 
-import org.jboss.netty.channel.ChannelHandler;
-import org.jboss.netty.channel.ChannelPipeline;
-import org.jboss.netty.channel.ChannelPipelineFactory;
+import org.infinispan.server.core.MessageEvent;
 
 /**
- * NettyChannelPipelineFactory.
+ * NettyMessageEvent.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class NettyChannelPipelineFactory implements ChannelPipelineFactory {
-   private final ChannelHandler decoder;
-   private final ChannelHandler handler;
+public class NettyMessageEvent implements MessageEvent {
+   final org.jboss.netty.channel.MessageEvent event;
 
-   public NettyChannelPipelineFactory(ChannelHandler decoder, ChannelHandler handler) {
-      this.decoder = decoder;
-      this.handler = handler;
+   public NettyMessageEvent(org.jboss.netty.channel.MessageEvent event) {
+      this.event = event;
    }
 
    @Override
-   public ChannelPipeline getPipeline() throws Exception {
-      // Create a default pipeline implementation.
-      ChannelPipeline pipeline = pipeline();
-      pipeline.addLast("decoder", decoder);
-      pipeline.addLast("handler", handler);
-      return pipeline;
+   public Object getMessage() {
+      return event.getMessage();
+   }
+
+   @Override
+   public SocketAddress getRemoteAddress() {
+      return event.getRemoteAddress();
    }
 
 }
