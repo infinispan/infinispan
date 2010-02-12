@@ -51,7 +51,7 @@ def helpAndExit():
     sys.exit(0)
 
 def validateVersion(version):
-  versionPattern = re.compile("^[4-9]\.[0-9]\.[0-9]\.(GA|(ALPHA|BETA|CR|SP)[1-9][0-9]?)$", re.IGNORECASE)
+  versionPattern = re.compile("^[4-9]\.[0-9]\.[0-9]\.(Final|(ALPHA|BETA|CR)[1-9][0-9]?)$", re.IGNORECASE)
   if versionPattern.match(version):
     return version.strip().upper()
   else:
