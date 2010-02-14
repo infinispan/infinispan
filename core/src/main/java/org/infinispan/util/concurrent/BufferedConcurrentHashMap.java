@@ -228,23 +228,15 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
             return hash == other.hash && key.equals(other.key);
         }
 
-        public void transitionHIRResidentToLIRResident() {
-            assert state == Recency.HIR_RESIDENT;
+        public void transitionToLIRResident() {           
             state = Recency.LIR_RESIDENT;
         }
 
-        public void transitionHIRResidentToHIRNonResident() {
-            assert state == Recency.HIR_RESIDENT;
+        public void transitionHIRResidentToHIRNonResident() {            
             state = Recency.HIR_NONRESIDENT;
         }
-
-        public void transitionHIRNonResidentToLIRResident() {
-            assert state == Recency.HIR_NONRESIDENT;
-            state = Recency.LIR_RESIDENT;
-        }
-
-        public void transitionLIRResidentToHIRResident() {
-            assert state == Recency.LIR_RESIDENT;
+        
+        public void transitionLIRResidentToHIRResident() {            
             state = Recency.HIR_RESIDENT;
         }
 
@@ -468,10 +460,9 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
 
         @Override
         public void onEntryRemove(HashEntry<K, V> e) {
-            assert lruQueue.remove(e);
+            lruQueue.remove(e);
             // we could have multiple instances of e in accessQueue; remove them all
-            while (accessQueue.remove(e))
-                ;
+            while (accessQueue.remove(e));
         }
 
         @Override
@@ -544,13 +535,11 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
             // first put on top of the stack
             stack.put(e.hashCode(), e);
 
-            if (inStack) {
-                assert queue.contains(e);
+            if (inStack) {                
                 queue.remove(e);
-                e.transitionHIRResidentToLIRResident();
+                e.transitionToLIRResident();
                 switchBottomostLIRtoHIRAndPrune(evicted);
-            } else {
-                assert queue.contains(e);
+            } else {               
                 queue.remove(e);
                 queue.addLast(e);
             }
@@ -579,28 +568,24 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
             // initialization
             if (currentLIRSize + 1 < lirSizeLimit) {
                 currentLIRSize++;
-                e.transitionHIRResidentToLIRResident();
+                e.transitionToLIRResident();
                 stack.put(e.hashCode(), e);
             } else {
-                if (queue.size() < hirSizeLimit) {
-                    assert !queue.contains(e);
+                if (queue.size() < hirSizeLimit) {                    
                     queue.addLast(e);
                 } else {
                     boolean inStack = stack.containsKey(e.hashCode());
-
-                    HashEntry<K, V> first = queue.removeFirst();
-                    assert first.recency() == Recency.HIR_RESIDENT;
+                    HashEntry<K, V> first = queue.removeFirst();                    
                     first.transitionHIRResidentToHIRNonResident();
 
                     stack.put(e.hashCode(), e);
 
                     if (inStack) {
-                        e.transitionHIRResidentToLIRResident();
+                        e.transitionToLIRResident();
                         Set<HashEntry<K, V>> evicted = new HashSet<HashEntry<K, V>>();
                         switchBottomostLIRtoHIRAndPrune(evicted);
                         removeFromSegment(evicted);
-                    } else {
-                        assert !queue.contains(e);
+                    } else {                        
                         queue.addLast(e);
                     }
 
@@ -624,8 +609,7 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
                     if (!seenFirstLIR) {
                         seenFirstLIR = true;
                         i.remove();
-                        next.transitionLIRResidentToHIRResident();
-                        assert !queue.contains(next);
+                        next.transitionLIRResidentToHIRResident();                       
                         queue.addLast(next);
                     } else {
                         break;
