@@ -21,10 +21,15 @@
  */
 package org.infinispan.test.testng;
 
+import java.util.Set;
+
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.concurrent.ConcurrentHashSet;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.testng.ITestContext;
 
 /**
@@ -40,20 +45,47 @@ import org.testng.ITestContext;
  */
 public class DebuggingUnitTestNGListener extends UnitTestTestNGListener {
    
+   private static final Log log = LogFactory.getLog(DebuggingUnitTestNGListener.class);
+   
+   private static final Set<String> failedTestDescriptions = new ConcurrentHashSet<String>();
+   
    @Override
    public void onFinish(ITestContext testCxt) {
+      super.onFinish(testCxt);
+      checkCleanedUp(testCxt);
+   }
+   
+   private void checkCleanedUp(ITestContext testCxt) {
       CacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(new Configuration());
       try {
          cm.start();
          try {
             TestingUtil.blockUntilViewReceived(cm.getCache(), 1, 2000, true);
          } catch (RuntimeException re) {
-            System.out.println("CacheManagers alive after test! - " + testCxt.getName() + " " + re.getMessage());
+            failedTestDescriptions.add(
+                     "CacheManagers alive after test! - " + testCxt.getName() + " " + re.getMessage()
+                     );
          }
       }
       finally {
          TestingUtil.killCacheManagers(cm);
       }
+   }
+
+   public static void describeErrorsIfAny() {
+      if ( ! failedTestDescriptions.isEmpty() ) {
+         log("~~~~~~~~~~~~~~~~~~~~~~~~~ TEST HEALTH INFO ~~~~~~~~~~~~~~~~~~~~~~~~~~");
+         log("Some tests didn't properly shutdown the CacheManager:");
+         for (String errorMsg : failedTestDescriptions) {
+            System.out.println( "\t" + errorMsg);
+         }
+         log("~~~~~~~~~~~~~~~~~~~~~~~~~ TEST HEALTH INFO ~~~~~~~~~~~~~~~~~~~~~~~~~~");
+      }
+   }
+   
+   private static void log(String s) {
+      System.out.println(s);
+      log.info(s);
    }
 
 }

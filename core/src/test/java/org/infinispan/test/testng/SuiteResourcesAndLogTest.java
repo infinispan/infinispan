@@ -12,11 +12,10 @@ import org.testng.annotations.Test;
  * @author Mircea.Markus@jboss.com
  * @author Galder Zamarreño
  */
-@Test(groups = "functional", testName = "test.testng.SuiteResourcesAndLogTest")
+@Test(groups = "functional", testName = "test.testng.SuiteResourcesAndLogTest", alwaysRun=true)
 public class SuiteResourcesAndLogTest {
 
    private static Log log = LogFactory.getLog(SuiteResourcesAndLogTest.class);
-
 
    @BeforeSuite
    @AfterSuite
@@ -39,6 +38,8 @@ public class SuiteResourcesAndLogTest {
       log("java.net.preferIPv6Stack = " + System.getProperty("java.net.preferIPv6Stack"));
       log("MAVEN_OPTS = " + System.getProperty("MAVEN_OPTS"));
       log("~~~~~~~~~~~~~~~~~~~~~~~~~ ENVIRONMENT INFO ~~~~~~~~~~~~~~~~~~~~~~~~~~");
+      
+      DebuggingUnitTestNGListener.describeErrorsIfAny();
    }
 
    private void log(String s) {

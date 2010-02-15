@@ -19,7 +19,7 @@ public class UnitTestTestNGListener implements ITestListener {
     * Holds test classes actually running in all threads.
     */
    private ThreadLocal<IClass> threadTestClass = new ThreadLocal<IClass>();
-   Log log = LogFactory.getLog(UnitTestTestNGListener.class);
+   private static final Log log = LogFactory.getLog(UnitTestTestNGListener.class);
 
    private AtomicInteger failed = new AtomicInteger(0);
    private AtomicInteger succeded = new AtomicInteger(0);
