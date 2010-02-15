@@ -47,6 +47,7 @@
                <fileSet>
                   <directory>src/main/resources</directory>
                   <outputDirectory>etc</outputDirectory>
+                  <lineEnding>unix</lineEnding>
                   <excludes>
                      <exclude>**/*.sh</exclude>
                      <exclude>**/*.bat</exclude>
@@ -60,12 +61,22 @@
                <fileSet>
                   <directory>src/main/resources</directory>
                   <outputDirectory>bin</outputDirectory>
+                  <lineEnding>unix</lineEnding>
                   <includes>
                      <include>**/*.sh</include>
-                     <include>**/*.bat</include>
-                     <include>**/*.cmd</include>
                      <include>**/*.py</include>
                      <include>**/*.rb</include>
+                  </includes>
+                  <fileMode>0777</fileMode>
+               </fileSet>
+
+               <fileSet>
+                  <directory>src/main/resources</directory>
+                  <outputDirectory>bin</outputDirectory>
+                  <lineEnding>dos</lineEnding>
+                  <includes>
+                     <include>**/*.cmd</include>
+                     <include>**/*.bat</include>
                   </includes>
                   <fileMode>0777</fileMode>
                </fileSet>
@@ -74,6 +85,7 @@
                <fileSet>
                   <directory>target/classes</directory>
                   <outputDirectory>etc</outputDirectory>
+                  <lineEnding>unix</lineEnding>
                   <includes>
                      <include>**/*.xsd</include>
                   </includes>
@@ -83,6 +95,7 @@
                <fileSet>
                   <directory>src/test/resources</directory>
                   <outputDirectory>etc</outputDirectory>
+                  <lineEnding>unix</lineEnding>
                   <includes>
                      <include>log4j.xml</include>
                   </includes>
@@ -92,6 +105,7 @@
                <fileSet>
                   <directory>src/main/release</directory>
                   <outputDirectory></outputDirectory>
+                  <lineEnding>dos</lineEnding>
                   <includes>
                      <include>**/*.txt</include>
                   </includes>
@@ -145,6 +159,7 @@
                <fileSet>
                   <directory>src/main/resources</directory>
                   <outputDirectory>etc</outputDirectory>
+                  <lineEnding>unix</lineEnding>
                   <excludes>
                      <exclude>**/*.sh</exclude>
                      <exclude>**/*.bat</exclude>
@@ -158,20 +173,32 @@
                <fileSet>
                   <directory>src/main/resources</directory>
                   <outputDirectory>bin</outputDirectory>
+                  <lineEnding>unix</lineEnding>
                   <includes>
                      <include>**/*.sh</include>
-                     <include>**/*.bat</include>
-                     <include>**/*.cmd</include>
                      <include>**/*.py</include>
                      <include>**/*.rb</include>
                   </includes>
                   <fileMode>0777</fileMode>
                </fileSet>
 
+               <fileSet>
+                  <directory>src/main/resources</directory>
+                  <outputDirectory>bin</outputDirectory>
+                  <lineEnding>dos</lineEnding>
+                  <includes>
+                     <include>**/*.cmd</include>
+                     <include>**/*.bat</include>
+                  </includes>
+                  <fileMode>0777</fileMode>
+               </fileSet>
+
+
                <!-- EULAs and license files -->
                <fileSet>
                   <directory>src/main/release</directory>
                   <outputDirectory></outputDirectory>
+                  <lineEnding>dos</lineEnding>                  
                   <includes>
                      <include>**/*.txt</include>
                   </includes>
