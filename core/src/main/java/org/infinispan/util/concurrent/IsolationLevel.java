@@ -21,6 +21,9 @@
  */
 package org.infinispan.util.concurrent;
 
+import javax.xml.bind.annotation.XmlNsForm;
+import javax.xml.bind.annotation.XmlSchema;
+
 /**
  * Various transaction isolation levels as an enumerated class.  Note that <a href="http://wiki.jboss.org/wiki/JBossCacheMVCC">MVCC</a>
  * only supports {@link #READ_COMMITTED} and {@link #REPEATABLE_READ}, upgrading where possible.
