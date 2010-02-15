@@ -7,7 +7,7 @@ for /f "tokens=* delims=" %%f in ('dir /s /b /a-d "..\lib\*.jar"') do (
 	)
 set my_classpath=%my_classpath:~1%
 
-set my_classpath=%my_classpath;..\infinispan-core.jar
+set my_classpath=%my_classpath%;..\infinispan-core.jar
 
 for /f "tokens=* delims=" %%f in ('dir /s /b /a-d "..\modules\gui\*.jar"') do (
                 call set my_classpath=%%my_classpath%%;%%~f)
