@@ -167,6 +167,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       return globalConfiguration;
    }
 
+   public void setGlobalConfiguration(GlobalConfiguration gc) {
+      this.globalConfiguration = gc;
+   }
+
    public String getName() {
       return name;
    }
@@ -722,6 +726,9 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       // certain combinations are illegal, such as state transfer + DIST
       if (clustering.mode.isDistributed() && clustering.stateRetrieval.fetchInMemoryState)
          throw new ConfigurationException("Cache cannot use DISTRIBUTION mode and have fetchInMemoryState set to true.  Perhaps you meant to enable rehashing?");
+
+      if (clustering.mode.isClustered() && (globalConfiguration.getTransportClass() == null || globalConfiguration.getTransportClass().length() == 0))
+         throw new ConfigurationException("Cache cannot use a clustered mode ("+clustering.mode+") mode and not define a transport!");
    }
 
    public boolean isOnePhaseCommit() {

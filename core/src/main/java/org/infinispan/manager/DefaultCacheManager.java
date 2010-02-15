@@ -377,12 +377,13 @@ public class DefaultCacheManager implements CacheManager {
    }
 
    private Cache createCache(String cacheName) {
-      Configuration c = null;
+      Configuration c;
       if (cacheName.equals(DEFAULT_CACHE_NAME) || !configurationOverrides.containsKey(cacheName))
          c = globalConfiguration.getDefaultConfiguration().clone();
       else
          c = configurationOverrides.get(cacheName);
 
+      c.setGlobalConfiguration(globalConfiguration);
       c.assertValid();
       Cache cache = new InternalCacheFactory().createCache(c, globalComponentRegistry, cacheName);
       Cache other = caches.putIfAbsent(cacheName, cache);
