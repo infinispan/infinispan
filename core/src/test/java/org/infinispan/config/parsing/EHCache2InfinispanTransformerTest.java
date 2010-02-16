@@ -65,12 +65,12 @@ public class EHCache2InfinispanTransformerTest extends AbstractInfinispanTest {
          assertEquals(configuration.getEvictionWakeUpInterval(), 119000);
          assertEquals(configuration.getEvictionStrategy(), EvictionStrategy.LRU);
 
-         assert dcm.getDefinedCacheNames().indexOf("sampleCache1") > 0;
-         assert dcm.getDefinedCacheNames().indexOf("sampleCache2") > 0;
-         assert dcm.getDefinedCacheNames().indexOf("sampleCache3") > 0;
-         assert dcm.getDefinedCacheNames().indexOf("sampleDistributedCache1") > 0;
-         assert dcm.getDefinedCacheNames().indexOf("sampleDistributedCache2") > 0;
-         assert dcm.getDefinedCacheNames().indexOf("sampleDistributedCache3") > 0;
+         assert dcm.getDefinedCacheNames().contains("sampleCache1");
+         assert dcm.getDefinedCacheNames().contains("sampleCache2");
+         assert dcm.getDefinedCacheNames().contains("sampleCache3");
+         assert dcm.getDefinedCacheNames().contains("sampleDistributedCache1");
+         assert dcm.getDefinedCacheNames().contains("sampleDistributedCache2");
+         assert dcm.getDefinedCacheNames().contains("sampleDistributedCache3");
 
          sampleDistributedCache2 = dcm.getCache("sampleDistributedCache2");
          assert sampleDistributedCache2.getConfiguration().getCacheLoaderManagerConfig().getCacheLoaderConfigs().size() == 1;
