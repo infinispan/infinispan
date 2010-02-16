@@ -420,7 +420,7 @@ public class DefaultCacheManager implements CacheManager {
    }
 
    private void unregisterCacheMBean(Cache cache) {
-      if (cache.getConfiguration().isExposeJmxStatistics()) {
+      if (cache.getStatus().allowInvocations() && cache.getConfiguration().isExposeJmxStatistics()) {
          cache.getAdvancedCache().getComponentRegistry().getComponent(CacheJmxRegistration.class).unregisterCacheMBean();
       }
    }

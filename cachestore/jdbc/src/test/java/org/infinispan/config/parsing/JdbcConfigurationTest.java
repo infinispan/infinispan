@@ -31,15 +31,18 @@ import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.infinispan.loaders.jdbc.connectionfactory.PooledConnectionFactory;
 import org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore;
 import org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStoreConfig;
+import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
 import java.util.Map;
 
-@Test(groups = "unit", testName = "config.parsing.JdbcConfigurationParserTest")
-public class JdbcConfigurationParserTest {
+@Test(groups = "unit", testName = "config.parsing.JdbcConfigurationTest")
+public class JdbcConfigurationTest {
    
-   public void testCacheLoaders() throws Exception {
-   
+   public void testParseCacheLoaders() throws Exception {
       InfinispanConfiguration configuration = InfinispanConfiguration.newInfinispanConfiguration("configs/jdbc-parsing-test.xml");
       Map<String, Configuration> namedConfigurations = configuration.parseNamedConfigurations();
       Configuration c = namedConfigurations.get("withJDBCLoader");
@@ -81,5 +84,18 @@ public class JdbcConfigurationParserTest {
       assert ssc.isSingletonStoreEnabled();
       assert ssc.isPushStateWhenCoordinator();
       assert ssc.getPushStateTimeout() == 20000;
+   }
+
+   @Test(expectedExceptions={org.infinispan.CacheException.class})
+   public void testWrongStoreConfiguration() throws IOException {
+      CacheManager cm = null;
+      try {
+         cm = new DefaultCacheManager("configs/illegal.xml");
+         cm.start();
+         //needs to get at least a cache to reproduce:
+         cm.getCache("AnyCache");
+      } finally {
+         TestingUtil.killCacheManagers(cm);
+      }
    }
 }
