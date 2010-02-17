@@ -15,8 +15,8 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 
 /**
- * A dummy marshaller impl that uses JBoss Marshalling object streams as they do not require that the objects being
- * serialized/deserialized implement Serializable.
+ * A dummy marshaller impl that uses object streams converted via XStream as current JBoss Marshalling implementation
+ * requires that the objects being serialized/deserialized implement Serializable or Externalizable.
  *
  * @author Manik Surtani
  */
