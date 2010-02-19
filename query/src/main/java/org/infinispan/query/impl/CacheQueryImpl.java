@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright ${year}, Red Hat Middleware LLC, and individual contributors
+ * Copyright 2009, Red Hat Middleware LLC, and individual contributors
  * by the @authors tag. See the copyright.txt in the distribution for a
  * full listing of individual contributors.
  *
@@ -25,7 +25,6 @@ package org.infinispan.query.impl;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.*;
-import org.hibernate.HibernateException;
 import org.hibernate.search.FullTextFilter;
 import org.hibernate.search.SearchException;
 import org.hibernate.search.engine.DocumentBuilder;
@@ -124,7 +123,7 @@ public class CacheQueryImpl implements CacheQuery {
                resultSize = hits.totalHits;
             }
             catch (IOException e) {
-               throw new HibernateException("Unable to query Lucene index", e);
+               throw new SearchException("Unable to query Lucene index", e);
             }
             finally {
                //searcher cannot be null
@@ -201,11 +200,11 @@ public class CacheQueryImpl implements CacheQuery {
 
    }
 
-   public QueryIterator iterator() throws HibernateException {
+   public QueryIterator iterator() throws SearchException {
       return iterator(1);
    }
 
-   public QueryIterator iterator(int fetchSize) throws HibernateException {
+   public QueryIterator iterator(int fetchSize) throws SearchException {
       List<Object> keyList = null;
       IndexSearcher searcher = buildSearcher(searchFactory);
       if (searcher == null) {
@@ -233,7 +232,7 @@ public class CacheQueryImpl implements CacheQuery {
 
       }
       catch (IOException e) {
-         throw new HibernateException("Unable to query Lucene index", e);
+         throw new SearchException("Unable to query Lucene index", e);
 
       }
 
@@ -269,13 +268,13 @@ public class CacheQueryImpl implements CacheQuery {
          catch (SearchException ee) {
             //we have the initial issue already
          }
-         throw new HibernateException("Unable to query Lucene index", e);
+         throw new SearchException("Unable to query Lucene index", e);
 
       }
 
    }
 
-   public List<Object> list() throws HibernateException {
+   public List<Object> list() throws SearchException {
       IndexSearcher searcher = buildSearcher(searchFactory);
 
       if (searcher == null) return Collections.EMPTY_LIST;
@@ -318,7 +317,7 @@ public class CacheQueryImpl implements CacheQuery {
 
       }
       catch (IOException e) {
-         throw new HibernateException("Unable to query Lucene index", e);
+         throw new SearchException("Unable to query Lucene index", e);
 
       }
       finally {
@@ -382,7 +381,7 @@ public class CacheQueryImpl implements CacheQuery {
          // empty targetedEntities array means search over all indexed enities,
          // but we have to make sure there is at least one
          if (builders.isEmpty()) {
-            throw new HibernateException(
+            throw new SearchException (
                   "There are no mapped entities. Don't forget to add @Indexed to at least one class."
             );
          }
@@ -411,7 +410,7 @@ public class CacheQueryImpl implements CacheQuery {
          for (Class clazz : involvedClasses) {
             DocumentBuilderIndexedEntity builder = builders.get(clazz);
             if (builder == null) {
-               throw new HibernateException("Not a mapped entity (don't forget to add @Indexed): " + clazz);
+               throw new SearchException ("Not a mapped entity (don't forget to add @Indexed): " + clazz);
             }
             if (builder.getIdKeywordName() != null) {
                idFieldNames.add(builder.getIdKeywordName());
@@ -465,7 +464,7 @@ public class CacheQueryImpl implements CacheQuery {
       if (similarity == null) {
          similarity = builder.getSimilarity();
       } else if (!similarity.getClass().equals(builder.getSimilarity().getClass())) {
-         throw new HibernateException("Cannot perform search on two entities with differing Similarity implementations (" + similarity.getClass().getName() + " & " + builder.getSimilarity().getClass().getName() + ")");
+         throw new SearchException("Cannot perform search on two entities with differing Similarity implementations (" + similarity.getClass().getName() + " & " + builder.getSimilarity().getClass().getName() + ")");
       }
 
       return similarity;

@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright ${year}, Red Hat Middleware LLC, and individual contributors
+ * Copyright 2009, Red Hat Middleware LLC, and individual contributors
  * by the @authors tag. See the copyright.txt in the distribution for a
  * full listing of individual contributors.
  *
@@ -202,7 +202,6 @@ public class LazyIterator extends AbstractIterator {
     * @param o
     * @throws UnsupportedOperationException
     */
-
    public void add(Object o) {
       throw new UnsupportedOperationException("Not supported as you are trying to change something in the cache");
    }

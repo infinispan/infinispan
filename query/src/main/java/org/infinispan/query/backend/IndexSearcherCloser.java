@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright ${year}, Red Hat Middleware LLC, and individual contributors
+ * Copyright 2009, Red Hat Middleware LLC, and individual contributors
  * by the @authors tag. See the copyright.txt in the distribution for a
  * full listing of individual contributors.
  *
@@ -34,7 +34,7 @@ import java.util.Set;
  * org.infinispan.query.impl.EagerIterator}
  * <p/>
  * <p/>
- * Simply an abstraction for one method to reduce unneccesary code replication.
+ * Simply an abstraction for one method to reduce unnecessary code replication.
  *
  * @author Navin Surtani
  */

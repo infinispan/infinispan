@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright ${year}, Red Hat Middleware LLC, and individual contributors
+ * Copyright 2009, Red Hat Middleware LLC, and individual contributors
  * by the @authors tag. See the copyright.txt in the distribution for a
  * full listing of individual contributors.
  *
@@ -84,7 +84,6 @@ public class TransactionalEventTransactionContext implements TransactionContext 
     * @return a JTA transaction if one is available, or a null otherwise.
     * @see javax.transaction.TransactionManager
     */
-
    public Object getTransactionIdentifier() {
       if (transactionManager == null) return null;
 

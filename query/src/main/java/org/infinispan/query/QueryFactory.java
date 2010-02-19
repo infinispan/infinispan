@@ -1,3 +1,24 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2009, Red Hat Middleware LLC, and individual contributors
+ * by the @authors tag. See the copyright.txt in the distribution for a
+ * full listing of individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
 package org.infinispan.query;
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -14,8 +35,6 @@ import org.infinispan.query.impl.CacheQueryImpl;
  * @author Navin Surtani
  * @since 4.0
  */
-
-
 public class QueryFactory {
 
    private Cache cache;
@@ -32,7 +51,6 @@ public class QueryFactory {
     * @param luceneQuery - {@link org.apache.lucene.search.Query}
     * @return the query result
     */
-
    public CacheQuery getQuery(Query luceneQuery) {
       return new CacheQueryImpl(luceneQuery, searchFactory, cache);
    }
@@ -54,7 +72,6 @@ public class QueryFactory {
     * @param search - the String that you want to be using to search
     * @return {@link org.infinispan.query.CacheQuery} result
     */
-
    public CacheQuery getBasicQuery(String field, String search) throws org.apache.lucene.queryParser.ParseException {
 
       QueryParser parser = new QueryParser(field, new StandardAnalyzer());
@@ -62,4 +79,5 @@ public class QueryFactory {
       return new CacheQueryImpl(luceneQuery, searchFactory, cache);
 
    }
+   
 }

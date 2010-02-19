@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright ${year}, Red Hat Middleware LLC, and individual contributors
+ * Copyright 2009, Red Hat Middleware LLC, and individual contributors
  * by the @authors tag. See the copyright.txt in the distribution for a
  * full listing of individual contributors.
  *
@@ -19,7 +19,6 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-
 package org.infinispan.query;
 
 import org.apache.lucene.search.Filter;
@@ -40,12 +39,12 @@ import java.util.List;
  * @see QueryFactory#getBasicQuery(String, String)
  */
 public interface CacheQuery extends Iterable {
+  
    /**
     * Returns the results of a search as a list.
     *
     * @return list of objects that were found from the search.
     */
-
    List<Object> list();
 
    /**
@@ -54,7 +53,6 @@ public interface CacheQuery extends Iterable {
     * @param fetchSize integer to be given to the implementation constructor.
     * @return a QueryResultIterator which can be used to iterate through the results that were found.
     */
-
    QueryIterator iterator(int fetchSize);
 
    /**
@@ -63,7 +61,6 @@ public interface CacheQuery extends Iterable {
     *
     * @return a QueryResultIterator which can be used to iterate through the results that were found.
     */
-
    QueryIterator iterator();
 
    /**
@@ -73,7 +70,6 @@ public interface CacheQuery extends Iterable {
     * @param fetchSize integer to be passed into the lazy implementation of {@link QueryIterator}
     * @return a QueryResultIterator which can be used to <B>lazily</B> iterate through results.
     */
-
    QueryIterator lazyIterator(int fetchSize);
 
    /**
@@ -81,8 +77,6 @@ public interface CacheQuery extends Iterable {
     *
     * @return a QueryResultIterator which can be used to <B>lazily</B> iterate through results.
     */
-
-
    QueryIterator lazyIterator();
 
    /**
@@ -91,7 +85,6 @@ public interface CacheQuery extends Iterable {
     * @param index of result to be set to the first.
     * @throws IllegalArgumentException if the index given is less than zero.
     */
-
    void setFirstResult(int index);
 
    /**
@@ -99,7 +92,6 @@ public interface CacheQuery extends Iterable {
     *
     * @param numResults that are to be set to the maxResults.
     */
-
    void setMaxResults(int numResults);
 
    /**
@@ -107,7 +99,6 @@ public interface CacheQuery extends Iterable {
     *
     * @return integer number of results.
     */
-
    int getResultSize();
 
    /**
@@ -115,7 +106,6 @@ public interface CacheQuery extends Iterable {
     *
     * @param s - lucene sort object
     */
-
    void setSort(Sort s);
 
    /**
@@ -125,7 +115,6 @@ public interface CacheQuery extends Iterable {
     * @return a FullTextFilter object.
     */
    public FullTextFilter enableFullTextFilter(String name);
-
 
    /**
     * Disable a given filter by its name.
@@ -139,8 +128,6 @@ public interface CacheQuery extends Iterable {
     *
     * @param f - lucene filter
     */
-
    public void setFilter(Filter f);
-
 
 }
