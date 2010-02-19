@@ -24,6 +24,10 @@ import org.testng.annotations.Test;
 import javax.management.Attribute;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -123,14 +127,14 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
       assert mBeanServer.getAttribute(rpcManager1, "ReplicationFailures").equals((long) 0);
       assert mBeanServer.getAttribute(rpcManager1, "SuccessRatio").equals("N/A");
 
-      cache1.put("a1", "b1");
-      cache1.put("a2", "b2");
-      cache1.put("a3", "b3");
-      cache1.put("a4", "b4");
+      cache1.put("a1", new SlowToSerialize("b1", 50));
+      cache1.put("a2", new SlowToSerialize("b2", 50));
+      cache1.put("a3", new SlowToSerialize("b3", 50));
+      cache1.put("a4", new SlowToSerialize("b4", 50));
       assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals((long) 4);
       assert mBeanServer.getAttribute(rpcManager1, "SuccessRatio").equals("100%");
       Object avgReplTime = mBeanServer.getAttribute(rpcManager1, "AverageReplicationTime");
-      assert !avgReplTime.equals((long) 0) : "Expected 0, was " + avgReplTime;
+      assert !avgReplTime.equals((long) 0) : "Expected !0, was " + avgReplTime;
 
       RpcManagerImpl rpcManager = (RpcManagerImpl) TestingUtil.extractComponent(cache1, RpcManager.class);
       Transport originalTransport = rpcManager.getTransport();
@@ -151,13 +155,51 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
          rpcManager.setTransport(transport);
          cache1.put("a5", "b5");
          assert false : "rpc manager should have thrown an exception";
-      } catch (Throwable e) {
-         log.debug("Expected exception "+ e);
+      } catch (Throwable expected) {
          //expected
          assertEquals(mBeanServer.getAttribute(rpcManager1, "SuccessRatio"), ("80%"));
       }
       finally {
          rpcManager.setTransport(originalTransport);
+      }
+   }
+
+   private static class SlowToSerialize implements Externalizable {
+      String val;
+      transient long delay;
+
+      private SlowToSerialize(String val, long delay) {
+         this.val = val;
+         this.delay = delay;
+      }
+
+      @Override
+      public void writeExternal(ObjectOutput out) throws IOException {
+         out.writeObject(val);
+         TestingUtil.sleepThread(delay);
+      }
+
+      @Override
+      public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+         val = (String) in.readObject();
+         TestingUtil.sleepThread(delay);
+      }
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (o == null || getClass() != o.getClass()) return false;
+
+         SlowToSerialize that = (SlowToSerialize) o;
+
+         if (val != null ? !val.equals(that.val) : that.val != null) return false;
+
+         return true;
+      }
+
+      @Override
+      public int hashCode() {
+         return val != null ? val.hashCode() : 0;
       }
    }
 
