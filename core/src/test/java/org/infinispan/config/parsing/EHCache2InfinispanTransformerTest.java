@@ -14,7 +14,6 @@ import org.testng.annotations.Test;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 
 import static java.lang.Thread.currentThread;
 import static org.testng.Assert.assertEquals;
@@ -25,12 +24,12 @@ import static org.testng.Assert.assertEquals;
 @Test(groups = "functional", testName = "config.parsing.EHCache2InfinispanTransformerTest")
 public class EHCache2InfinispanTransformerTest extends AbstractInfinispanTest {
 
-   public static final String XSLT_FILE = "xslt/ehcache16x2infinispan4x.xslt";
+   public static final String XSLT_FILE = "xslt/ehcache1x2infinispan4x.xslt";
    private static final String BASE_DIR = "configs/ehcache";
    ConfigFilesConvertor convertor = new ConfigFilesConvertor();
 
    public void testEhCache16File() throws Exception {
-      testAllFile("/ehcache-1.6RC1.xml");
+      testAllFile("/ehcache-1.6.xml");
    }
 
 //   @Test(enabled=false)

@@ -55,10 +55,9 @@ import java.util.List;
 public class ConfigFilesConvertor {
 
    static final String JBOSS_CACHE3X = "JBossCache3x";
-   static final String EHCACHE_CACHE16X = "Ehcache16x";
-   static final String EHCACHE_CACHE15X = "Ehcache15x";
+   static final String EHCACHE_CACHE1X = "Ehcache1x";
    static final String COHERENCE_35X = "Coherence35x";
-   static final String[] SUPPORTED_FORMATS = {JBOSS_CACHE3X, EHCACHE_CACHE15X, EHCACHE_CACHE16X, COHERENCE_35X};
+   static final String[] SUPPORTED_FORMATS = {JBOSS_CACHE3X, EHCACHE_CACHE1X, COHERENCE_35X};
 
    public void parse(InputStream is, OutputStream os, String xsltFile) throws Exception {
       InputStream xsltInStream = new FileLookup().lookupFile(xsltFile);
@@ -102,7 +101,7 @@ public class ConfigFilesConvertor {
 
    private static void help() {
       System.out.println("Usage:");
-      System.out.println("ConfigFilesConvertor [-source <the file to be transformed>] [-destination <where to store resulting XML>] [-type <the type of the source, possible values being: " + Arrays.asList(SUPPORTED_FORMATS) + " >]");
+      System.out.println("importConfig [-source <the file to be transformed>] [-destination <where to store resulting XML>] [-type <the type of the source, possible values being: " + Arrays.asList(SUPPORTED_FORMATS) + " >]");
    }
 
 
@@ -139,8 +138,8 @@ public class ConfigFilesConvertor {
 
       if (type.equals(JBOSS_CACHE3X)) {
          transformFromJbossCache3x(sourceName, destinationName);
-      } else if (type.equals(EHCACHE_CACHE15X) || type.equals(EHCACHE_CACHE16X)) {
-         transformFromEhcache15X_16x(sourceName, destinationName);
+      } else if (type.equals(EHCACHE_CACHE1X)) {
+         transformFromEhcache1x(sourceName, destinationName);
       } else if (type.equals(COHERENCE_35X)) {
          transformFromCoherence35x(sourceName, destinationName);
       }
@@ -171,7 +170,7 @@ public class ConfigFilesConvertor {
          }
 
          fos = new FileOutputStream(destinationName);
-         convertor.parse(is, fos, "xslt/ehcache16x2infinispan4x.xslt");
+         convertor.parse(is, fos, "xslt/ehcache1x2infinispan4x.xslt");
       } finally {
          Util.flushAndCloseStream(fos);
          Util.closeStream(is);
@@ -233,13 +232,13 @@ public class ConfigFilesConvertor {
       }
    }
 
-   private static void transformFromEhcache15X_16x(String sourceName, String destinationName) throws Exception {
+   private static void transformFromEhcache1x(String sourceName, String destinationName) throws Exception {
       File oldConfig = new File(sourceName);
       if (!oldConfig.exists()) {
          System.err.println("File specified as input ('" + sourceName + ") does not exist.");
          System.exit(1);
       }
-      ConfigFilesConvertor convertor = new ConfigFilesConvertor();
+      ConfigFilesConvertor converter = new ConfigFilesConvertor();
       FileInputStream is = null;
       FileOutputStream fos = null;
 
@@ -254,7 +253,7 @@ public class ConfigFilesConvertor {
          }
 
          fos = new FileOutputStream(destinationName);
-         convertor.parse(is, fos, "xslt/ehcache16x2infinispan4x.xslt");
+         converter.parse(is, fos, "xslt/ehcache1x2infinispan4x.xslt");
       } finally {
          Util.flushAndCloseStream(fos);
          Util.closeStream(is);

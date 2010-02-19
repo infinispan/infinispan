@@ -4,7 +4,7 @@
    <xsl:output method="xml" indent="yes" version="1.0" encoding="UTF-8" omit-xml-declaration="no"/>
    <xsl:template match="/ehcache">
       <xsl:comment>
-         This XSL stylesheet is used to convert an Ehcache 1.5.x/1.6.x configuration into an Infinispan 4.0.x configuration.
+         This XSL stylesheet is used to convert an EHCache 1.x configuration into an Infinispan 4.0.x configuration.
          Note that Infinispan supports JGroups only, caches are migrated to using JGroups.
          Peer discovery will also be using JGroups. Eviction policies are translated to LRU, FIFO or NONE.
       </xsl:comment>
