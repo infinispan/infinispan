@@ -193,8 +193,8 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
 
    private Object processRetVal(Object retVal) throws IOException, ClassNotFoundException {
       if (retVal instanceof MarshalledValue) {
+         if (trace) log.trace("Return is a marshall value, so extract instance from: {0}", retVal);
          retVal = ((MarshalledValue) retVal).get();
-         if (trace) log.trace("Returning unwrapped marshalled value: {0}", retVal);
       }
       return retVal;
    }
