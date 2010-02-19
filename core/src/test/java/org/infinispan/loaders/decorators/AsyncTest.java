@@ -159,7 +159,7 @@ public class AsyncTest extends AbstractInfinispanTest {
                } catch (TimeoutException e) {
                   assert false : "Timed out applying for modifications";
                } catch (Exception e) {
-                  throw new CacheLoaderException("Barried failed", e);
+                  throw new CacheLoaderException("Barrier failed", e);
                }
             }
          };
@@ -229,7 +229,7 @@ public class AsyncTest extends AbstractInfinispanTest {
                } catch (TimeoutException e) {
                   assert false : "Timed out applying for modifications";
                } catch (Exception e) {
-                  throw new CacheLoaderException("Barried failed", e);
+                  throw new CacheLoaderException("Barrier failed", e);
                }
             }
          };

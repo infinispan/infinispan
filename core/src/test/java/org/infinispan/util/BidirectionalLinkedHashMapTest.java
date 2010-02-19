@@ -19,7 +19,7 @@ public class BidirectionalLinkedHashMapTest extends AbstractInfinispanTest {
 
       testOrderAfterRemoval(map);
 
-      // now attemp a visit and test that the visits are NOT recorded
+      // now attempt a visit and test that the visits are NOT recorded
       map.get(200);
 
       // order should still be maintained
@@ -36,7 +36,7 @@ public class BidirectionalLinkedHashMapTest extends AbstractInfinispanTest {
 
       testOrderBeforeRemoval(map);
 
-      // now attemp a visit and test that the visits are NOT recorded
+      // now attempt a visit and test that the visits are NOT recorded
       map.get(200);
 
       // check the forward iterator that everything is in order of entry

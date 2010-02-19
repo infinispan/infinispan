@@ -133,7 +133,7 @@ public class TableManipulation implements Cloneable {
       catch (SQLException e) {
          // This should not happen. A J2EE compatible JDBC driver is
          // required fully support meta data.
-         throw new CacheLoaderException("Error while checking if table aleady exists " + tableName, e);
+         throw new CacheLoaderException("Error while checking if table already exists " + tableName, e);
       }
       finally {
          JdbcUtil.safeClose(rs);
@@ -143,13 +143,13 @@ public class TableManipulation implements Cloneable {
    public void createTable(Connection conn) throws CacheLoaderException {
       // removed CONSTRAINT clause as this causes problems with some databases, like Informix.
       assertMandatoryElementsPresent();
-      String creatTableDdl = "CREATE TABLE " + getTableName() + "(" + idColumnName + " " + idColumnType
+      String createTableDdl = "CREATE TABLE " + getTableName() + "(" + idColumnName + " " + idColumnType
             + " NOT NULL, " + dataColumnName + " " + dataColumnType + ", "
             + timestampColumnName + " " + timestampColumnType +
             ", PRIMARY KEY (" + idColumnName + "))";
       if (log.isTraceEnabled())
-         log.trace("Creating table with following DDL: '" + creatTableDdl + "'.");
-      executeUpdateSql(conn, creatTableDdl);
+         log.trace("Creating table with following DDL: '" + createTableDdl + "'.");
+      executeUpdateSql(conn, createTableDdl);
    }
 
    private void assertMandatoryElementsPresent() throws CacheLoaderException {

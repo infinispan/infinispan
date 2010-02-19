@@ -37,7 +37,7 @@ public class AbstractCacheStoreTest extends AbstractInfinispanTest {
    }
 
    @Test
-   void testSynchExecutorIsSetWhenCfgPurgeSynchIsTrueOnStart() throws Exception {
+   void testSyncExecutorIsSetWhenCfgPurgeSyncIsTrueOnStart() throws Exception {
       cfg.setPurgeSynchronously(true);
       cs.start();
       ExecutorService service = (ExecutorService) ReflectionUtil.getValue(cs, "purgerService");
@@ -45,7 +45,7 @@ public class AbstractCacheStoreTest extends AbstractInfinispanTest {
    }
 
    @Test
-   void testASynchExecutorIsDefaultOnStart() throws Exception {
+   void testAsyncExecutorIsDefaultOnStart() throws Exception {
       cs.start();
       ExecutorService service = (ExecutorService) ReflectionUtil.getValue(cs, "purgerService");
       assert !(service instanceof WithinThreadExecutor);

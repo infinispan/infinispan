@@ -130,7 +130,7 @@ public class TestCacheManagerFactory {
    }
 
    /**
-    * Creates a cache manager and ammends the supplied configuration in order to avoid conflicts (e.g. jmx, jgroups)
+    * Creates a cache manager and amends the supplied configuration in order to avoid conflicts (e.g. jmx, jgroups)
     * during running tests in parallel.
     */
    public static CacheManager createCacheManager(GlobalConfiguration configuration) {
@@ -154,7 +154,7 @@ public class TestCacheManagerFactory {
    }
 
    /**
-    * Creates a local cache manager and ammends so that it won't conflict (e.g. jmx) with other managers whilst running
+    * Creates a local cache manager and amends so that it won't conflict (e.g. jmx) with other managers whilst running
     * tests in parallel.  This is a non-transactional cache manager.
     */
    public static CacheManager createCacheManager(Configuration defaultCacheConfig) {

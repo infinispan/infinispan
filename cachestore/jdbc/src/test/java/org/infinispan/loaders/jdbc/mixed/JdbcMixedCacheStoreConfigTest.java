@@ -68,7 +68,7 @@ public class JdbcMixedCacheStoreConfigTest {
       config.setTableNamePrefixForBinary("table");
       try {
          config.setTableNamePrefixForStrings("table");
-         assert false : "expection expected as same table name is not allowed for both cache stores";
+         assert false : "exception expected as same table name is not allowed for both cache stores";
       } catch (Exception e) {
          //expected
       }
@@ -76,7 +76,7 @@ public class JdbcMixedCacheStoreConfigTest {
       config.setTableNamePrefixForStrings("table2");
       try {
          config.setTableNamePrefixForBinary("table2");
-         assert false : "expection expected as same table name is not allowed for both cache stores";
+         assert false : "exception expected as same table name is not allowed for both cache stores";
       } catch (Exception e) {
          //expected
       }
@@ -101,7 +101,7 @@ public class JdbcMixedCacheStoreConfigTest {
       assert config.getStringCacheStoreConfig().isPurgeSynchronously();
    }
 
-   public void voidTestLockAquisitionTimeout() {
+   public void voidTestLockAcquisitionTimeout() {
       assert config.getStringCacheStoreConfig().getLockAcquistionTimeout() == LockSupportCacheStoreConfig.DEFAULT_LOCK_ACQUISITION_TIMEOUT;
       assert config.getBinaryCacheStoreConfig().getLockAcquistionTimeout() == LockSupportCacheStoreConfig.DEFAULT_LOCK_ACQUISITION_TIMEOUT;
       config.setLockAcquistionTimeout(13);

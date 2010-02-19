@@ -45,17 +45,17 @@ public abstract class AbstractJmxRegistration {
    MBeanServer mBeanServer;
    GlobalConfiguration globalConfig;
    
-   protected abstract ComponentsJmxRegistration buildRegistrator(Set<AbstractComponentRegistry.Component> components);
+   protected abstract ComponentsJmxRegistration buildRegistrar(Set<AbstractComponentRegistry.Component> components);
    
    protected void registerMBeans(Set<AbstractComponentRegistry.Component> components, GlobalConfiguration globalConfig) {
       mBeanServer = getMBeanServer(globalConfig);
-      ComponentsJmxRegistration registrator = buildRegistrator(components);
-      registrator.registerMBeans();
+      ComponentsJmxRegistration registrar = buildRegistrar(components);
+      registrar.registerMBeans();
    }
    
    protected void unregisterMBeans(Set<AbstractComponentRegistry.Component> components) {
-      ComponentsJmxRegistration registrator = buildRegistrator(components);
-      registrator.unregisterMBeans();
+      ComponentsJmxRegistration registrar = buildRegistrar(components);
+      registrar.unregisterMBeans();
    }
    
    protected MBeanServer getMBeanServer(GlobalConfiguration configuration) {

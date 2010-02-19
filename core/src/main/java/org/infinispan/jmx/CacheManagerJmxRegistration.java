@@ -54,13 +54,13 @@ public class CacheManagerJmxRegistration extends AbstractJmxRegistration {
    }
 
    @Override
-   protected ComponentsJmxRegistration buildRegistrator(Set<AbstractComponentRegistry.Component> components) {
-      ComponentsJmxRegistration registrator = new ComponentsJmxRegistration(mBeanServer, components, GLOBAL_JMX_GROUP);
-      updateDomain(registrator, globalReg, mBeanServer);
-      return registrator;
+   protected ComponentsJmxRegistration buildRegistrar(Set<AbstractComponentRegistry.Component> components) {
+      ComponentsJmxRegistration registrar = new ComponentsJmxRegistration(mBeanServer, components, GLOBAL_JMX_GROUP);
+      updateDomain(registrar, globalReg, mBeanServer);
+      return registrar;
    }
 
-   protected void updateDomain(ComponentsJmxRegistration registrator, GlobalComponentRegistry componentRegistry, MBeanServer mBeanServer) {
+   protected void updateDomain(ComponentsJmxRegistration registrar, GlobalComponentRegistry componentRegistry, MBeanServer mBeanServer) {
       if (jmxDomain == null) {
          jmxDomain = getJmxDomain(globalConfig.getJmxDomain(), mBeanServer);
          String configJmxDomain = globalConfig.getJmxDomain();
@@ -72,7 +72,7 @@ public class CacheManagerJmxRegistration extends AbstractJmxRegistration {
             throw new JmxDomainConflictException(message);
          }
       }
-      registrator.setJmxDomain(jmxDomain);
+      registrar.setJmxDomain(jmxDomain);
    }
 
 }

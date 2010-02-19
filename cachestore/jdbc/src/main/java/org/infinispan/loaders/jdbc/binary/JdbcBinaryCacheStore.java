@@ -90,7 +90,7 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
    public void start() throws CacheLoaderException {
       super.start();
       String connectionFactoryClass = config.getConnectionFactoryConfig().getConnectionFactoryClass();
-      if (config.isManageConnectionFatory()) {
+      if (config.isManageConnectionFactory()) {
          ConnectionFactory factory = ConnectionFactory.getConnectionFactory(connectionFactoryClass);
          factory.start(config.getConnectionFactoryConfig());
          doConnectionFactoryInitialization(factory);
@@ -130,7 +130,7 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
 
    public void stop() throws CacheLoaderException {
       tableManipulation.stop();
-      if (config.isManageConnectionFatory()) {
+      if (config.isManageConnectionFactory()) {
          connectionFactory.stop();
       }
    }

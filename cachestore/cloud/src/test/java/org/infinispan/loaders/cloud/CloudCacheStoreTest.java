@@ -140,7 +140,7 @@ public class CloudCacheStoreTest extends BaseCacheStoreTest {
 
    @Override
    @Test(enabled = false, description = "Disabled until we can build the blobstore stub to retain state somewhere.")
-   public void testStopStartDoesntNukeValues() throws InterruptedException, CacheLoaderException {
+   public void testStopStartDoesNotNukeValues() throws InterruptedException, CacheLoaderException {
 
    }
 

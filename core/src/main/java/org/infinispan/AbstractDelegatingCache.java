@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * This is a convenient base class for implementing a cache delegate. The only constructor takes a {@link Cache}
  * argument, to which each method call is delegated. One can extend this class and override the method sub-set it is
- * interested in. There is also an similar implmentation for {@link org.infinispan.AdvancedCache}: {@link
+ * interested in. There is also an similar implementation for {@link org.infinispan.AdvancedCache}: {@link
  * org.infinispan.AbstractDelegatingAdvancedCache}.
  *
  * @author Mircea.Markus@jboss.com

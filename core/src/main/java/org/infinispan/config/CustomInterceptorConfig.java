@@ -89,7 +89,7 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
    @XmlAttribute
    protected Position position;   
 
-   /** @configRef name="class",desc="Fully qualified intereceptor class name which must extend org.infinispan.interceptors.base.CommandInterceptor." */
+   /** @configRef name="class",desc="Fully qualified interceptor class name which must extend org.infinispan.interceptors.base.CommandInterceptor." */
    @XmlAttribute(name="class")
    protected String className;
 
@@ -183,7 +183,7 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
    }
 
    /**
-    * Shall this intercepto be the last one in the chain?
+    * Shall this interceptor be the last one in the chain?
     */
    public void setLast(boolean last) {
       testImmutability("last");
@@ -204,7 +204,7 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
    }
 
    /**
-    * Adds the interceptor immediately after the first occurance of an interceptor having the given class. If the chain
+    * Adds the interceptor immediately after the first occurrence of an interceptor having the given class. If the chain
     * does not contain such an interceptor then this interceptor definition is ignored.
     */
    public void setAfterInterceptor(String afterClass) {
@@ -213,7 +213,7 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
    }
 
    /**
-    * Adds the interceptor immediately after the first occurance of an interceptor having the given class. If the chain
+    * Adds the interceptor immediately after the first occurrence of an interceptor having the given class. If the chain
     * does not contain such an interceptor then this interceptor definition is ignored.
     */
    public void setAfterInterceptor(Class<? extends CommandInterceptor> interceptorClass) {
@@ -221,7 +221,7 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
    }
 
    /**
-    * Adds the interceptor immediately before the first occurance of an interceptor having the given class. If the chain
+    * Adds the interceptor immediately before the first occurrence of an interceptor having the given class. If the chain
     * does not contain such an interceptor then this interceptor definition is ignored.
     */
    public void setBeforeInterceptor(String beforeClass) {
@@ -230,7 +230,7 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
    }
 
    /**
-    * Adds the interceptor immediately before the first occurance of an interceptor having the given class. If the chain
+    * Adds the interceptor immediately before the first occurrence of an interceptor having the given class. If the chain
     * does not contain such an interceptor then this interceptor definition is ignored.
     */
    public void setBeforeInterceptor(Class<? extends CommandInterceptor> interceptorClass) {

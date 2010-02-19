@@ -26,11 +26,9 @@ import org.infinispan.util.logging.LogFactory;
 
 /**
  * Not really a transaction manager in the truest sense of the word.  Only used to batch up operations.  Proper
- * transactional symantics of rollbacks and recovery are NOT used here.
+ * transactional semantics of rollbacks and recovery are NOT used here.
  *
  * @author bela
- *         <p/>
- *         Date: May 15, 2003 Time: 4:11:37 PM
  * @since 4.0
  */
 public class BatchModeTransactionManager extends DummyBaseTransactionManager {

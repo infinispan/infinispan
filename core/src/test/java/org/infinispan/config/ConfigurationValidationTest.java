@@ -40,11 +40,11 @@ import static org.infinispan.config.Configuration.CacheMode.REPL_ASYNC;
 public class ConfigurationValidationTest extends SingleCacheManagerTest {
    
    @Test (expectedExceptions=ConfigurationException.class)
-   public void testWrongCachemodeConfiguration() {
+   public void testWrongCacheModeConfiguration() {
       cacheManager.getCache().put("key", "value");
    }
 
-   public void testCachemodeConfiguration() {
+   public void testCacheModeConfiguration() {
       cacheManager.getCache("local").put("key", "value");
    }
 

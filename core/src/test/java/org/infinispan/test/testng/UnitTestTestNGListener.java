@@ -22,7 +22,7 @@ public class UnitTestTestNGListener implements ITestListener {
    private static final Log log = LogFactory.getLog(UnitTestTestNGListener.class);
 
    private AtomicInteger failed = new AtomicInteger(0);
-   private AtomicInteger succeded = new AtomicInteger(0);
+   private AtomicInteger succeeded = new AtomicInteger(0);
    private AtomicInteger skipped = new AtomicInteger(0);
 
    public void onTestStart(ITestResult res) {
@@ -33,7 +33,7 @@ public class UnitTestTestNGListener implements ITestListener {
    synchronized public void onTestSuccess(ITestResult arg0) {
       System.out.println(getThreadId() + " Test " + getTestDesc(arg0) + " succeeded.");
       log.info("Test succeeded " + getTestDesc(arg0) + ".");
-      succeded.incrementAndGet();
+      succeeded.incrementAndGet();
       printStatus();
    }
 
@@ -70,6 +70,6 @@ public class UnitTestTestNGListener implements ITestListener {
    }
 
    private void printStatus() {
-      System.out.println("Test suite progress: tests succeeded: " + succeded.get() + ", failed: " + failed.get() + ", skipped: " + skipped.get() + ".");
+      System.out.println("Test suite progress: tests succeeded: " + succeeded.get() + ", failed: " + failed.get() + ", skipped: " + skipped.get() + ".");
    }
 }

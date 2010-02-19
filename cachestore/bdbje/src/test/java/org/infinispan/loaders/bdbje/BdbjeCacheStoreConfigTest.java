@@ -33,7 +33,7 @@ public class BdbjeCacheStoreConfigTest {
     }
 
     @Test
-    public void testgetMaxTxRetries() {
+    public void testGetMaxTxRetries() {
         assert config.getMaxTxRetries() == 5;
     }
 

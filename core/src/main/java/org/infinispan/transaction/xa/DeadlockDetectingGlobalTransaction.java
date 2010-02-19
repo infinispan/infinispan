@@ -32,7 +32,7 @@ public class DeadlockDetectingGlobalTransaction extends GlobalTransaction {
 
    private volatile boolean isMarkedForRollback;
 
-   private transient volatile Object lockInterntion;
+   private transient volatile Object lockIntention;
 
 
    public DeadlockDetectingGlobalTransaction() {
@@ -158,17 +158,17 @@ public class DeadlockDetectingGlobalTransaction extends GlobalTransaction {
    /**
     * Returns the key this transaction intends to lock. 
     */
-   public Object getLockInterntion() {
-      return lockInterntion;
+   public Object getLockIntention() {
+      return lockIntention;
    }
 
    /**
     * Sets the lock this transaction intends to lock.
     */
-   public void setLockInterntion(Object lockInterntion) {
-      this.lockInterntion = lockInterntion;
+   public void setLockIntention(Object lockIntention) {
+      this.lockIntention = lockIntention;
    }
-   
+
    public static class Externalizer extends GlobalTransaction.Externalizer {
       public Externalizer() {
          gtxFactory = new GlobalTransactionFactory(true);

@@ -56,7 +56,7 @@ public class ManagedConnectionFactory extends ConnectionFactory {
          ctx = new InitialContext();
          dataSource = (DataSource) ctx.lookup(datasourceName);
          if (trace) {
-            log.trace("Datasource lookup for " + datasourceName + " succeded: " + dataSource);
+            log.trace("Datasource lookup for " + datasourceName + " succeeded: " + dataSource);
          }
          if (dataSource == null) {
             String msg = "Could not find a connection in jndi under the name '" + datasourceName + "'";

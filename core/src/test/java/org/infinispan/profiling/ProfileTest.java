@@ -53,11 +53,11 @@ public class ProfileTest extends AbstractProfileTest {
       }
    }
 
-   protected void testWith(String cachename) throws Exception {
-      log.warn("Starting profile test, cache name = {0}", cachename);
+   protected void testWith(String cacheName) throws Exception {
+      log.warn("Starting profile test, cache name = {0}", cacheName);
       initTest();
-      cache = cacheManager.getCache(cachename);
-      runCompleteTest(cachename);
+      cache = cacheManager.getCache(cacheName);
+      runCompleteTest(cacheName);
    }
 
 

@@ -88,7 +88,7 @@ public class DummyTransaction implements Transaction {
          //2) shall we rollback?
          if (status == Status.STATUS_MARKED_ROLLBACK || status == Status.STATUS_ROLLING_BACK) {
             runRollback();
-            throw new RollbackException("Exception rollbacked, status is: " + status);
+            throw new RollbackException("Exception rolled back, status is: " + status);
          }
 
          //3) if we reached this point then we shall go on and commit
@@ -99,7 +99,7 @@ public class DummyTransaction implements Transaction {
          } catch (HeuristicMixedException e) {
             status = Status.STATUS_UNKNOWN;
          } finally {
-            //notify syncronizations
+            //notify synchronizations
             notifyAfterCompletion(status);
          }
       }
@@ -119,10 +119,6 @@ public class DummyTransaction implements Transaction {
     */
    public void rollback() throws IllegalStateException, SystemException {
       try {
-         // JBCACHE-360 -- to match JBossTM (and presumable the spec) a
-         // rollback transaction should have status ROLLEDBACK before
-         // calling afterCompletion().
-         //status=Status.STATUS_ROLLING_BACK;
          status = Status.STATUS_ROLLING_BACK;
          runRollback();
          status = Status.STATUS_ROLLEDBACK;
@@ -178,10 +174,10 @@ public class DummyTransaction implements Transaction {
    }
 
    /**
-    * Delist an XA resource from this transaction.
+    * De-list an XA resource from this transaction.
     *
-    * @return <code>true</code> if the resource could be delisted from this transaction, otherwise <code>false</code>.
-    * @throws IllegalStateException If the transaction is in a state where resources cannot be delisted. This could be
+    * @return <code>true</code> if the resource could be de-listed from this transaction, otherwise <code>false</code>.
+    * @throws IllegalStateException If the transaction is in a state where resources cannot be de-listed. This could be
     *                               because the transaction is no longer active.
     * @throws SystemException       If the transaction service fails in an unexpected way.
     */

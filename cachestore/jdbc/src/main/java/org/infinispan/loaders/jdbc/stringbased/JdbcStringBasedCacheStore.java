@@ -263,7 +263,7 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
          }
          return null;
       } catch (SQLException e) {
-         String message = "SQL error while fetching strored entry with key:" + key + " lockingKey: " + lockingKey;
+         String message = "SQL error while fetching stored entry with key:" + key + " lockingKey: " + lockingKey;
          log.error(message, e);
          throw new CacheLoaderException(message, e);
       } finally {

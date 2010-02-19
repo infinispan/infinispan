@@ -425,9 +425,9 @@ public class BdbjeCacheStore extends AbstractCacheStore {
 
     /**
      * {@inheritDoc} This implementation reads the number of entries to load from the stream, then begins a transaction.
-     * During that tranasaction, the cachestore is cleared and replaced with entries from the stream.  If there are any
+     * During that transaction, the cachestore is cleared and replaced with entries from the stream.  If there are any
      * errors during the process, the entire transaction is rolled back.  Deadlock handling is not addressed, as there is
-     * no means to rollback reads from the inputstream.
+     * no means to rollback reads from the input stream.
      *
      * @see BdbjeCacheStore#toStream(java.io.ObjectOutput)
      */

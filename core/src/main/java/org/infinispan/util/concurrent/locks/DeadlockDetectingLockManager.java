@@ -91,9 +91,9 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
    private void localVsLocalDld(InvocationContext ctx, DeadlockDetectingGlobalTransaction lockOwnerTx) {
       if (trace) log.trace("Looking for local vs local deadlocks");
       DeadlockDetectingGlobalTransaction thisThreadsTx = (DeadlockDetectingGlobalTransaction) ctx.getLockOwner();
-      boolean weOwnLock = ownsLock(lockOwnerTx.getLockInterntion(), thisThreadsTx);
+      boolean weOwnLock = ownsLock(lockOwnerTx.getLockIntention(), thisThreadsTx);
       if (trace) {
-         log.trace("Other owner's intention is " + lockOwnerTx.getLockInterntion() + ". Do we(" + thisThreadsTx + ") own lock for it? " + weOwnLock + ". Lock owner is " + getOwner(lockOwnerTx.getLockInterntion()));
+         log.trace("Other owner's intention is " + lockOwnerTx.getLockIntention() + ". Do we(" + thisThreadsTx + ") own lock for it? " + weOwnLock + ". Lock owner is " + getOwner(lockOwnerTx.getLockIntention()));
       }
       if (weOwnLock) {
          boolean iShouldInterrupt = thisThreadsTx.thisWillInterrupt(lockOwnerTx);

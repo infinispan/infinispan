@@ -65,7 +65,7 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
       threadMBeanServer.invoke(activationInterceptorObjName, "resetStatistics", new Object[0], new String[0]);
    }
 
-   public void testDisbaleStatistics() throws Exception {
+   public void testDisableStatistics() throws Exception {
       threadMBeanServer.setAttribute(activationInterceptorObjName, new Attribute("StatisticsEnabled", Boolean.FALSE));
       assert threadMBeanServer.getAttribute(activationInterceptorObjName, "Activations").toString().equals("N/A");
       threadMBeanServer.setAttribute(activationInterceptorObjName, new Attribute("StatisticsEnabled", Boolean.TRUE));

@@ -10,13 +10,13 @@ import java.util.NoSuchElementException;
 
 /**
  * Similar to the JDK's {@link java.util.LinkedHashMap} except that this version makes use of the fact that entries are
- * bidirectionally linked and can hence be nagigated either from the start <i>or</i> from the end.  It exposes such
+ * bidirectionally linked and can hence be navigated either from the start <i>or</i> from the end.  It exposes such
  * navigability by overriding {@link java.util.Map#keySet()} and {@link java.util.Map#entrySet()} to return {@link
  * ReversibleOrderedSet} rather than a standard JDK {@link java.util.Set}.  {@link ReversibleOrderedSet}s allow you to
  * access 2 iterators: one that iterates from start to end, as usual, and a reversed one that iterates from end to start
  * instead.
  * <p/>
- * Unline the JDK {@link java.util.LinkedHashMap}, this implementation does not support null keys.
+ * Unlike the JDK {@link java.util.LinkedHashMap}, this implementation does not support null keys.
  * <p/>
  *
  * @author Manik Surtani
@@ -90,7 +90,7 @@ public class BidirectionalLinkedHashMap<K, V> extends AbstractMap<K, V> implemen
     *
     * @param initialCapacity the initial capacity
     * @param loadFactor      the load factor
-    * @throws IllegalArgumentException if the initial capacity is negative or the load factor is nonpositive
+    * @throws IllegalArgumentException if the initial capacity is negative or the load factor is non-positive
     */
    public BidirectionalLinkedHashMap(int initialCapacity, float loadFactor) {
       this(initialCapacity, loadFactor, false);
@@ -103,7 +103,7 @@ public class BidirectionalLinkedHashMap<K, V> extends AbstractMap<K, V> implemen
     * @param initialCapacity the initial capacity
     * @param loadFactor      the load factor
     * @param accessOrder     the ordering mode - <tt>true</tt> for access-order, <tt>false</tt> for insertion-order
-    * @throws IllegalArgumentException if the initial capacity is negative or the load factor is nonpositive
+    * @throws IllegalArgumentException if the initial capacity is negative or the load factor is non-positive
     */
    public BidirectionalLinkedHashMap(int initialCapacity, float loadFactor, boolean accessOrder) {
       if (initialCapacity < 0)
@@ -249,8 +249,8 @@ public class BidirectionalLinkedHashMap<K, V> extends AbstractMap<K, V> implemen
    }
 
    /**
-    * This method is used instead of put by constructors and pseudoconstructors (clone, readObject).  It does not resize
-    * the table, check for comodification, etc.  It calls createEntry rather than addEntry.
+    * This method is used instead of put by constructors and pseudo constructors (clone, readObject).  It does not resize
+    * the table, check for co-modification, etc.  It calls createEntry rather than addEntry.
     */
    private void putForCreate(K key, V value) {
       int hash = (key == null) ? 0 : hash(key);
@@ -529,7 +529,7 @@ public class BidirectionalLinkedHashMap<K, V> extends AbstractMap<K, V> implemen
    }
 
    /**
-    * Called by superclass constructors and pseudoconstructors (clone, readObject) before any entries are inserted into
+    * Called by superclass constructors and pseudo constructors (clone, readObject) before any entries are inserted into
     * the map.  Initializes the chain.
     */
    void init() {

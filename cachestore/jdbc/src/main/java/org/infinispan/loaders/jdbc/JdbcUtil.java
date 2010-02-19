@@ -87,7 +87,7 @@ public class JdbcUtil {
       try {
          return marshaller.objectFromInputStream(inputStream);
       } catch (IOException e) {
-         String message = "I/O error while unmarshalling from stram";
+         String message = "I/O error while unmarshalling from stream";
          log.error(message, e);
          throw new CacheLoaderException(message, e);
       } catch (ClassNotFoundException e) {

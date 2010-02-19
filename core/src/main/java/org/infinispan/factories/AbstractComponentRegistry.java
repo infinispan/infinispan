@@ -72,7 +72,7 @@ import java.util.Stack;
  * org.infinispan.Cache#start()} is called</li> <li>STOPPED - when {@link org.infinispan.Cache#stop()} is called</li>
  * </ul>
  * <p/>
- * Cache configuration can only be changed and will only be reinjected if the cache is not in the {@link
+ * Cache configuration can only be changed and will only be re-injected if the cache is not in the {@link
  * org.infinispan.lifecycle.ComponentStatus#RUNNING} state.
  *
  * @author Manik Surtani
@@ -256,9 +256,9 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       return name;
    }
 
-   private String findComponentName(Annotation[] anns) {
-      if (anns != null && anns.length > 0) {
-         for (Annotation a : anns) {
+   private String findComponentName(Annotation[] annotations) {
+      if (annotations != null && annotations.length > 0) {
+         for (Annotation a : annotations) {
             if (a instanceof ComponentName) {
                return ((ComponentName) a).value();
             }
@@ -484,7 +484,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
     */
    public void registerDefaultClassLoader(ClassLoader loader) {
       registerComponent(loader == null ? getClass().getClassLoader() : loader, ClassLoader.class);
-      // make sure the class loaderold is non-volatile, so it survives restarts.
+      // make sure the class loader is non-volatile, so it survives restarts.
       componentLookup.get(ClassLoader.class.getName()).nonVolatile = true;
    }
 
@@ -634,7 +634,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
    // ------------------------------ START: Actual internal lifecycle methods --------------------------------
 
    /**
-    * Sets the cacheStatus to FAILED and rethrows the problem as one of the declared types. Converts any
+    * Sets the cacheStatus to FAILED and re-throws the problem as one of the declared types. Converts any
     * non-RuntimeException Exception to CacheException.
     *
     * @param t throwable thrown during failure

@@ -50,7 +50,7 @@ public abstract class AbstractInvocationContext implements InvocationContext {
    }
 
    /**
-    * Unility method that sets a given context flag.
+    * Utility method that sets a given context flag.
     *
     * @param flag context flag to set
     */
@@ -59,7 +59,7 @@ public abstract class AbstractInvocationContext implements InvocationContext {
    }
 
    /**
-    * Utility method that unsets a context flag.
+    * Utility method that un-sets a context flag.
     *
     * @param flag context flag to unset
     */
@@ -68,7 +68,7 @@ public abstract class AbstractInvocationContext implements InvocationContext {
    }
 
    /**
-    * Utility value that sets or unsets a context flag based on a boolean passed in
+    * Utility value that sets or un-sets a context flag based on a boolean passed in
     *
     * @param flag flag to set or unset
     * @param set  if true, the context flag is set.  If false, the context flag is unset.

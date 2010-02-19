@@ -14,7 +14,7 @@ import java.io.InputStream;
 public abstract class AbstractMarshaller implements Marshaller {
 
    public Object objectFromInputStream(InputStream inputStream) throws IOException, ClassNotFoundException {
-      // TODO: available() call commented until https://issues.apache.org/jira/browse/HTTPCORE-199 httcore-nio issue is fixed. 
+      // TODO: available() call commented until https://issues.apache.org/jira/browse/HTTPCORE-199 httpcore-nio issue is fixed. 
       // int len = inputStream.available();
       int len = 1024;
       ExposedByteArrayOutputStream bytes = new ExposedByteArrayOutputStream(len);

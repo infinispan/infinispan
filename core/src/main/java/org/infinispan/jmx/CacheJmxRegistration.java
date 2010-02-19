@@ -123,13 +123,13 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
 
 
    @Override
-   protected ComponentsJmxRegistration buildRegistrator(Set<AbstractComponentRegistry.Component> components) {
-      ComponentsJmxRegistration registrator = new ComponentsJmxRegistration(mBeanServer, components, getGroupName());
-      updateDomain(registrator, cache.getComponentRegistry().getGlobalComponentRegistry(), mBeanServer);
-      return registrator;
+   protected ComponentsJmxRegistration buildRegistrar(Set<AbstractComponentRegistry.Component> components) {
+      ComponentsJmxRegistration registrar = new ComponentsJmxRegistration(mBeanServer, components, getGroupName());
+      updateDomain(registrar, cache.getComponentRegistry().getGlobalComponentRegistry(), mBeanServer);
+      return registrar;
    }
    
-   protected void updateDomain(ComponentsJmxRegistration registrator, GlobalComponentRegistry componentRegistry, MBeanServer mBeanServer) {
+   protected void updateDomain(ComponentsJmxRegistration registrar, GlobalComponentRegistry componentRegistry, MBeanServer mBeanServer) {
       GlobalConfiguration gc = componentRegistry.getComponent(GlobalConfiguration.class);
       CacheManagerJmxRegistration managerJmxReg = componentRegistry.getComponent(CacheManagerJmxRegistration.class);
       if (!gc.isExposeGlobalJmxStatistics() && jmxDomain == null) {
@@ -156,7 +156,7 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
          // when cache manager was started, so no need for synchronization here.
          jmxDomain = managerJmxReg.jmxDomain == null ? gc.getJmxDomain() : managerJmxReg.jmxDomain;
       }
-      registrator.setJmxDomain(jmxDomain);
+      registrar.setJmxDomain(jmxDomain);
    }
 
    protected Set<Component> getNonCacheComponents(Set<Component> components) {

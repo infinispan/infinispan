@@ -186,7 +186,7 @@ public class BdbjeCacheStoreTest {
       verifyAll();
    }
 
-   public void testExceptionClosingCacheDatabaseDoesntPreventEnvironmentFromClosing() throws Exception {
+   public void testExceptionClosingCacheDatabaseDoesNotPreventEnvironmentFromClosing() throws Exception {
       start();
       cacheDb.close();
       expiryDb.close();
@@ -200,7 +200,7 @@ public class BdbjeCacheStoreTest {
       verifyAll();
    }
 
-   public void testExceptionClosingCatalogDoesntPreventEnvironmentFromClosing() throws Exception {
+   public void testExceptionClosingCatalogDoesNotPreventEnvironmentFromClosing() throws Exception {
       start();
       cacheDb.close();
       expiryDb.close();

@@ -46,7 +46,7 @@ public class AtomicHashMapDelta implements Delta {
    private static final Log log = LogFactory.getLog(AtomicHashMapDelta.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private List<Operation> changelog;
+   private List<Operation> changeLog;
 
    public DeltaAware merge(DeltaAware d) {
       AtomicHashMap other;
@@ -55,41 +55,41 @@ public class AtomicHashMapDelta implements Delta {
       else
          other = new AtomicHashMap();
 
-      for (Operation o : changelog) o.replay(other.delegate);
+      for (Operation o : changeLog) o.replay(other.delegate);
       other.commit();
       return other;
    }
 
    public void addOperation(Operation o) {
-      if (changelog == null) {
+      if (changeLog == null) {
          // lazy init
-         changelog = new LinkedList<Operation>();
+         changeLog = new LinkedList<Operation>();
       }
-      changelog.add(o);
+      changeLog.add(o);
    }
 
    @Override
    public String toString() {
       return "AtomicHashMapDelta{" +
-            "changelog=" + changelog +
+            "changeLog=" + changeLog +
             '}';
    }
 
    public int getChangeLogSize() {
-      return changelog == null ? 0 : changelog.size();
+      return changeLog == null ? 0 : changeLog.size();
    }
    
    public static class Externalizer implements org.infinispan.marshall.Externalizer {
       public void writeObject(ObjectOutput output, Object object) throws IOException {
          AtomicHashMapDelta delta = (AtomicHashMapDelta) object;        
-         if (trace) log.trace("Serializing changelog " + delta.changelog);
-         output.writeObject(delta.changelog);
+         if (trace) log.trace("Serializing changeLog " + delta.changeLog);
+         output.writeObject(delta.changeLog);
       }
 
       public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          AtomicHashMapDelta delta = new AtomicHashMapDelta();
-         delta.changelog = (List<Operation>) input.readObject();
-         if (trace) log.trace("Deserialized changelog " + delta.changelog);
+         delta.changeLog = (List<Operation>) input.readObject();
+         if (trace) log.trace("Deserialized changeLog " + delta.changeLog);
          return delta;
       }
    }

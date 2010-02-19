@@ -19,7 +19,7 @@ public class GlobalTransactionFactory {
    /** this class is internally synchronized, so it can be shared between instances */
    private final Random rnd = new Random();
 
-   private long generateRandomdId() {
+   private long generateRandomId() {
       return rnd.nextLong();
    }
 
@@ -53,7 +53,7 @@ public class GlobalTransactionFactory {
       GlobalTransaction gtx;
       if (isEddEnabled) {
          DeadlockDetectingGlobalTransaction globalTransaction = new DeadlockDetectingGlobalTransaction(addr, remote);
-         globalTransaction.setCoinToss(generateRandomdId());
+         globalTransaction.setCoinToss(generateRandomId());
          gtx = globalTransaction;
       } else {
          gtx = new GlobalTransaction(addr, remote);

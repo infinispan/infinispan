@@ -53,7 +53,7 @@ public class JdbcBinaryCacheStoreConfig extends LockSupportCacheStoreConfig {
       cacheLoaderClassName = JdbcBinaryCacheStore.class.getName();
    }
 
-   boolean isManageConnectionFatory() {
+   boolean isManageConnectionFactory() {
       return createConnectionFatory;
    }
 

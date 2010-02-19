@@ -63,7 +63,7 @@ public class DeadlockDetectingInterceptor extends CommandInterceptor {
    private Object handleDataCommand(InvocationContext ctx, DataCommand command) throws Throwable {
       if (ctx.isInTxScope()) {
          DeadlockDetectingGlobalTransaction gtx = (DeadlockDetectingGlobalTransaction) ctx.getLockOwner();
-         gtx.setLockInterntion(command.getKey());
+         gtx.setLockIntention(command.getKey());
          gtx.setProcessingThread(Thread.currentThread());
       }
       try {

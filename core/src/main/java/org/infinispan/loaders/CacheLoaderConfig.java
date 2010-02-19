@@ -37,11 +37,11 @@ public interface CacheLoaderConfig extends Cloneable, Serializable {
    void setCacheLoaderClassName(String s);
 }
 
-class CacheLoaderInvocationhandler implements InvocationHandler {
+class CacheLoaderInvocationHandler implements InvocationHandler {
 
    private AbstractCacheStoreConfig acsc;
 
-   public CacheLoaderInvocationhandler(AbstractCacheStoreConfig acsc) {
+   public CacheLoaderInvocationHandler(AbstractCacheStoreConfig acsc) {
       super();
       this.acsc = acsc;
    }

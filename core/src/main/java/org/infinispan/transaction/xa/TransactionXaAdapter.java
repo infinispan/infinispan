@@ -74,7 +74,7 @@ public class TransactionXaAdapter implements CacheTransaction, XAResource {
    public int prepare(Xid xid) throws XAException {
       if (configuration.isOnePhaseCommit()) {
          if (trace)
-            log.trace("Recieved prepare for tx: " + xid + " . Skipping call as 1PC will be used.");
+            log.trace("Received prepare for tx: " + xid + " . Skipping call as 1PC will be used.");
          return XA_OK;
       }
 
@@ -95,7 +95,7 @@ public class TransactionXaAdapter implements CacheTransaction, XAResource {
    public void commit(Xid xid, boolean isOnePhase) throws XAException {
       // always call prepare() - even if this is just a 1PC!
       if (isOnePhase) prepare(xid);
-      if (trace) log.trace("commiting TransactionXaAdapter: " + globalTx);
+      if (trace) log.trace("committing TransactionXaAdapter: " + globalTx);
       try {
          LocalTxInvocationContext ctx = icc.createTxInvocationContext();
          ctx.setXaCache(this);

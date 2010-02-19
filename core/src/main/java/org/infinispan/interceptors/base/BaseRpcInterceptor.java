@@ -30,7 +30,7 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.remoting.rpc.RpcManager;
 
 /**
- * Acts as a base for all RPC calls - subclassed by
+ * Acts as a base for all RPC calls
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
  * @author Mircea.Markus@jboss.com

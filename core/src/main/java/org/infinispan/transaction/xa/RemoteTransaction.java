@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Defines the state of a remotelly originated transaction.
+ * Defines the state of a remotely originated transaction.
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.0

@@ -34,7 +34,7 @@ import java.util.concurrent.RejectedExecutionException;
 
 /**
  * Repository for {@link org.infinispan.transaction.xa.RemoteTransaction} and {@link
- * org.infinispan.transaction.xa.TransactionXaAdapter}s (locally originated trasactions).
+ * org.infinispan.transaction.xa.TransactionXaAdapter}s (locally originated transactions).
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.0
@@ -191,7 +191,7 @@ public class TransactionTable {
    }
 
    /**
-    * Removes the {@link org.infinispan.transaction.xa.TransactionXaAdapter} coresponding to the given tx. Returns true
+    * Removes the {@link org.infinispan.transaction.xa.TransactionXaAdapter} corresponding to the given tx. Returns true
     * if such an tx exists.
     */
    public boolean removeLocalTransaction(Transaction tx) {
@@ -199,7 +199,7 @@ public class TransactionTable {
    }
 
    /**
-    * Removes the {@link org.infinispan.transaction.xa.RemoteTransaction} coresponding to the given tx. Returns true if
+    * Removes the {@link org.infinispan.transaction.xa.RemoteTransaction} corresponding to the given tx. Returns true if
     * such an tx exists.
     */
    public boolean removeRemoteTransaction(GlobalTransaction txId) {

@@ -43,13 +43,13 @@ import java.util.Set;
  * (sometimes both, see below) based on the passed in key. In order to determine which store to use it will rely on the
  * configured {@link org.infinispan.loaders.jdbc.stringbased.Key2StringMapper} )(see configuration).
  * <p/>
- * The advantage it brings is the possibility of efficiently storing string(able) keyd {@link
+ * The advantage it brings is the possibility of efficiently storing string(able) keyed {@link
  * org.infinispan.container.entries.InternalCacheEntry}s, and at the same time being able to store any other keys, a la
  * {@link org.infinispan.loaders.jdbc.binary.JdbcBinaryCacheStore}.
  * <p/>
  * There will only be a performance cost for the aggregate operations: loadAll, fromStream, toStream and clear. For
  * these operations there will be two distinct database call, one for each JdbcStore implementation. Most of application
- * are only using these operations at lifecycles changes (e.g. fromStram and toStream at cluster join time, loadAll at
+ * are only using these operations at lifecycles changes (e.g. fromStream and toStream at cluster join time, loadAll at
  * startup for warm caches), so performance drawback shouldn't be significant (again, most of the cases).
  * <p/>
  * Resource sharing - both aggregated cache loaders have locks and connection pools. The locking is not shared, each

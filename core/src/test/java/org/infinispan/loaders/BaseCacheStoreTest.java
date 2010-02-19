@@ -196,7 +196,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       assert cs.loadAll().isEmpty();
    }
 
-   public void testStopStartDoesntNukeValues() throws InterruptedException, CacheLoaderException {
+   public void testStopStartDoesNotNukeValues() throws InterruptedException, CacheLoaderException {
       assert !cs.containsKey("k1");
       assert !cs.containsKey("k2");
 

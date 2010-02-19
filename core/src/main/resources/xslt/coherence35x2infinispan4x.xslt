@@ -209,8 +209,8 @@
 
    <xsl:template name="evictionAttributes">
       <xsl:if test="unit-calculator='BINARY'">
-         <xsl:message terminate="no">TODO - Infinispan does not curenlty support computation based on the size of the
-            cache, please adjust the eviction->maxEntries attribute to fit your need
+         <xsl:message terminate="no">TODO - Infinispan does not currently support computation based on the size of the
+            cache, please adjust the eviction/maxEntries attribute to fit your need
          </xsl:message>
       </xsl:if>
       <xsl:if test="high-units">
