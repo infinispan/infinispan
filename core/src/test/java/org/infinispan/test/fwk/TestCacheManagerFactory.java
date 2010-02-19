@@ -41,12 +41,16 @@ public class TestCacheManagerFactory {
       return defaultCacheManager;
    }
 
-   public static CacheManager fromXml(String xmlFile) throws IOException {
+   public static CacheManager fromXml(String xmlFile, boolean allowDupeDomains) throws IOException {
       InfinispanConfiguration parser = InfinispanConfiguration.newInfinispanConfiguration(
                xmlFile,
                InfinispanConfiguration.resolveSchemaPath(),
                new ConfigurationValidatingVisitor());
-      return fromConfigFileParser(parser, false);
+      return fromConfigFileParser(parser, allowDupeDomains);
+   }
+
+   public static CacheManager fromXml(String xmlFile) throws IOException {
+      return fromXml(xmlFile, false);
    }
 
    public static CacheManager fromStream(InputStream is) throws IOException {

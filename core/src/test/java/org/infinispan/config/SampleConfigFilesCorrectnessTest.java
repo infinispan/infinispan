@@ -47,7 +47,7 @@ public class SampleConfigFilesCorrectnessTest {
 
    public void testConfigWarnings() throws Exception {
       for (String aConfFile : getConfigFileNames()) {
-         CacheManager dcm = TestCacheManagerFactory.fromXml(getRootFolder() + "/" + aConfFile);
+         CacheManager dcm = TestCacheManagerFactory.fromXml(getRootFolder() + "/" + aConfFile, true);
          try {
             dcm.getCache();
             assert !appender.isFoundUnknownWarning();
