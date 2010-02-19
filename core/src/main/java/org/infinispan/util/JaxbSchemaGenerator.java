@@ -40,31 +40,44 @@ import org.infinispan.config.InfinispanConfiguration;
  */
 public class JaxbSchemaGenerator {
 
-   public static void main(String[] args) throws Exception {
-      File baseDir = new File(".");
-      String dir = args[0];
-      if (dir != null && dir.length() > 0) {
-         baseDir = new File(dir);
-      }
-      class InfinispanSchemaOutputResolver extends SchemaOutputResolver {
-         private File dir;
+    public static void main(String[] args) throws Exception {
+        try {
+            File baseDir = new File(System.getProperty("user.dir"));
+            if (args.length > 0) {
+                String dir = args[0];
+                if (dir != null && dir.length() > 0) {
+                    baseDir = new File(dir);
+                }
+            }
 
-         private InfinispanSchemaOutputResolver(File dir) {
+            if (!baseDir.exists())
+                baseDir.mkdirs();
+
+            System.out.println("Generating schema file in " + baseDir.getAbsolutePath());
+            try {
+                JAXBContext context = JAXBContext.newInstance(InfinispanConfiguration.class);
+                context.generateSchema(new InfinispanSchemaOutputResolver(baseDir));
+                System.out.println("Generated schema file successfully");
+            } catch (Exception e) {
+                System.err.println("Failed generating schema file " + e);
+                e.printStackTrace(System.err);
+            }
+        } catch (Exception e) {
+            System.err.println("Failed generating schema file " + e);
+            e.printStackTrace(System.err);
+        }
+    }
+
+    static class InfinispanSchemaOutputResolver extends SchemaOutputResolver {
+        private File dir;
+
+        private InfinispanSchemaOutputResolver(File dir) {
             super();
             this.dir = dir;
-         }
+        }
 
-         public Result createOutput(String namespaceUri, String suggestedFileName)
-                  throws IOException {
-            return new StreamResult(new File(dir, "infinispan-config-" + Version.getMajorVersion()
-                     + ".xsd"));
-         }
-      }
-      JAXBContext context = JAXBContext.newInstance(InfinispanConfiguration.class);
-      if (!baseDir.exists()) {
-         if (baseDir.mkdirs()) {
-            context.generateSchema(new InfinispanSchemaOutputResolver(baseDir));
-         }
-      }
-   }
+        public Result createOutput(String namespaceUri, String suggestedFileName) throws IOException {
+            return new StreamResult(new File(dir, "infinispan-config-" + Version.getMajorVersion() + ".xsd"));
+        }
+    }
 }
