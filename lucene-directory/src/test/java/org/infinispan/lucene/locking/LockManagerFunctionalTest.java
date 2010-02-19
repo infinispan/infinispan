@@ -34,7 +34,7 @@ import org.testng.annotations.Test;
  * @author Sanne Grinovero
  * @since 4.0
  */
-@Test(groups = "functional", testName = "lucene.locking.LockManagerFunctionalTest", enabled = false, description = "Disabled until someone can take a look at why this test fails.")
+@Test(groups = "functional", testName = "lucene.locking.LockManagerFunctionalTest", enabled = true)
 public class LockManagerFunctionalTest extends MultipleCacheManagersTest {
    
    protected void createCacheManagers() throws Throwable {
