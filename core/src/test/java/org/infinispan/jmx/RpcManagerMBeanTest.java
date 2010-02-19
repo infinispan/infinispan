@@ -129,7 +129,8 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
       cache1.put("a4", "b4");
       assert mBeanServer.getAttribute(rpcManager1, "ReplicationCount").equals((long) 4);
       assert mBeanServer.getAttribute(rpcManager1, "SuccessRatio").equals("100%");
-      assert !mBeanServer.getAttribute(rpcManager1, "AverageReplicationTime").equals((long) 0);
+      Object avgReplTime = mBeanServer.getAttribute(rpcManager1, "AverageReplicationTime");
+      assert !avgReplTime.equals((long) 0) : "Expected 0, was " + avgReplTime;
 
       RpcManagerImpl rpcManager = (RpcManagerImpl) TestingUtil.extractComponent(cache1, RpcManager.class);
       Transport originalTransport = rpcManager.getTransport();
