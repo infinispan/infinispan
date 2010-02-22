@@ -214,14 +214,8 @@ public class InfinispanConfiguration implements XmlConfigurationParser {
          } else {
             source = replaceProperties(config);
          }
-         InfinispanConfiguration ic = (InfinispanConfiguration) u.unmarshal(source);                    
-       
-         // legacy, don't ask
-         GlobalConfiguration gconf = ic.parseGlobalConfiguration();
-         gconf.setDefaultConfiguration(ic.parseDefaultConfiguration());
-         if (cbv != null) {
-            ic.accept(cbv);
-         }
+         InfinispanConfiguration ic = (InfinispanConfiguration) u.unmarshal(source);                                    
+         ic.accept(cbv);
          return ic;
       } catch (ConfigurationException cex) {
          throw cex;
@@ -304,14 +298,16 @@ public class InfinispanConfiguration implements XmlConfigurationParser {
       super();
    }
    
-   public void accept(ConfigurationBeanVisitor v) {
-      global.accept(v);
-      defaultConfiguration.accept(v);      
-      for (Configuration c : namedCaches) {
-         c.accept(v);
-      }            
-      v.visitInfinispanConfiguration(this);
-   }
+    public void accept(ConfigurationBeanVisitor v) {
+        if (v != null) {
+            global.accept(v);
+            defaultConfiguration.accept(v);
+            for (Configuration c : namedCaches) {
+                c.accept(v);
+            }
+            v.visitInfinispanConfiguration(this);
+        }
+    }
 
    private static InputStream findInputStream(String fileName) throws FileNotFoundException {
       if (fileName == null)

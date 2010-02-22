@@ -1091,11 +1091,14 @@ public class BufferedConcurrentHashMap<K, V> extends AbstractMap<K, V> implement
 
     /**
      * Creates a new, empty map with the specified initial capacity, load factor and concurrency
-     * level.
+     * level. Note that initialCapacity is in fact targeted maximum map capacity in case when 
+     * eviction other than <code>Eviction.NONE</code> is used.  
      * 
      * @param initialCapacity
      *            the initial capacity. The implementation performs internal sizing to accommodate
-     *            this many elements.
+     *            this many elements. Note that initial capacity becomes max capacity in case when
+     *            eviction other than <code>Eviction.NONE</code> is used.                                 
+     *            
      * @param loadFactor
      *            the load factor threshold, used to control resizing. Resizing may be performed
      *            when the average number of elements per bin exceeds this threshold.

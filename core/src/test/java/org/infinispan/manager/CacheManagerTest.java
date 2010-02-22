@@ -92,10 +92,10 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       }
       
       Configuration c = cm.defineConfiguration("cache1", null, new Configuration());
-      assert c.equals(cm.getGlobalConfiguration().getDefaultConfiguration());
+      assert c.equals(cm.getDefaultConfiguration());
       
       c = cm.defineConfiguration("cache1", "does-not-exist-cache", new Configuration());
-      assert c.equals(cm.getGlobalConfiguration().getDefaultConfiguration());
+      assert c.equals(cm.getDefaultConfiguration());
    }
 
    public void testDefiningConfigurationWithTemplateName() {

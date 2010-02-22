@@ -82,9 +82,6 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    @XmlElement
    private SerializationType serialization = new SerializationType();
 
-   @XmlTransient
-   private Configuration defaultConfiguration;
-
    @XmlElement
    private ShutdownType shutdown = new ShutdownType();
 
@@ -236,15 +233,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
    public void setTransportProperties(String transportPropertiesString) {
       transport.setProperties(toTypedProperties(transportPropertiesString));
    }
-
-   public Configuration getDefaultConfiguration() {
-      return defaultConfiguration;
-   }
-
-   public void setDefaultConfiguration(Configuration defaultConfiguration) {
-      this.defaultConfiguration = defaultConfiguration;
-   }
-
+   
    public String getClusterName() {
       return transport.clusterName;
    }
@@ -376,8 +365,6 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
          return false;
       if (transport.clusterName != null ? !transport.clusterName.equals(that.transport.clusterName) : that.transport.clusterName != null)
          return false;
-      if (defaultConfiguration != null ? !defaultConfiguration.equals(that.defaultConfiguration) : that.defaultConfiguration != null)
-         return false;
       if (evictionScheduledExecutor.factory != null ? !evictionScheduledExecutor.factory.equals(that.evictionScheduledExecutor.factory) : that.evictionScheduledExecutor.factory != null)
          return false;
       if (evictionScheduledExecutor.properties != null ? !evictionScheduledExecutor.properties.equals(that.evictionScheduledExecutor.properties) : that.evictionScheduledExecutor.properties != null)
@@ -410,8 +397,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       result = 31 * result + (replicationQueueScheduledExecutor.properties != null ? replicationQueueScheduledExecutor.properties.hashCode() : 0);
       result = 31 * result + (serialization.marshallerClass != null ? serialization.marshallerClass.hashCode() : 0);
       result = 31 * result + (transport.transportClass != null ? transport.transportClass.hashCode() : 0);
-      result = 31 * result + (transport.properties != null ? transport.properties.hashCode() : 0);
-      result = 31 * result + (defaultConfiguration != null ? defaultConfiguration.hashCode() : 0);
+      result = 31 * result + (transport.properties != null ? transport.properties.hashCode() : 0);     
       result = 31 * result + (transport.clusterName != null ? transport.clusterName.hashCode() : 0);
       result = 31 * result + (shutdown.hookBehavior.hashCode());
       result = 31 * result + serialization.version.hashCode();

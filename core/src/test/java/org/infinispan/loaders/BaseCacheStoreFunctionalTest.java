@@ -68,7 +68,7 @@ public abstract class BaseCacheStoreFunctionalTest extends AbstractInfinispanTes
          GlobalConfiguration configuration = localCacheManager.getGlobalConfiguration();
          CacheLoaderManagerConfig clmConfig = new CacheLoaderManagerConfig();
          clmConfig.setCacheLoaderConfigs(Collections.singletonList((CacheLoaderConfig) csConfig));
-         configuration.getDefaultConfiguration().setCacheLoaderManagerConfig(clmConfig);
+         localCacheManager.getDefaultConfiguration().setCacheLoaderManagerConfig(clmConfig);
          localCacheManager.defineConfiguration("first", new Configuration());
          localCacheManager.defineConfiguration("second", new Configuration());
 

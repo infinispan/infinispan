@@ -44,7 +44,7 @@ public class Jbc2InfinispanTransformerTest extends AbstractInfinispanTest {
          XmlConfigurationParser newParser = InfinispanConfiguration.newInfinispanConfiguration(new ByteArrayInputStream(baos.toByteArray()));
          GlobalConfiguration globalConfig = newParser.parseGlobalConfiguration();
          Map<String, Configuration> map = newParser.parseNamedConfigurations();
-         Configuration defaultConfig = globalConfig.getDefaultConfiguration();
+         Configuration defaultConfig = newParser.parseDefaultConfiguration();
          assert defaultConfig.getIsolationLevel().equals(IsolationLevel.READ_COMMITTED);
          assert defaultConfig.getLockAcquisitionTimeout() == 234000;
          assert defaultConfig.isWriteSkewCheck();

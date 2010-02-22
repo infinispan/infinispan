@@ -110,10 +110,11 @@ public class DefaultCacheManager implements CacheManager {
    public static final String DEFAULT_CACHE_NAME = "___defaultcache";
    public static final String OBJECT_NAME = "CacheManager";
    private static final Log log = LogFactory.getLog(DefaultCacheManager.class);
-   protected GlobalConfiguration globalConfiguration;
+   protected final GlobalConfiguration globalConfiguration;
+   protected final Configuration defaultConfiguration;
    private final ConcurrentMap<String, Cache> caches = new ConcurrentHashMap<String, Cache>();
    private final ConcurrentMap<String, Configuration> configurationOverrides = new ConcurrentHashMap<String, Configuration>();
-   private GlobalComponentRegistry globalComponentRegistry;
+   private final GlobalComponentRegistry globalComponentRegistry;
 
    /**
     * Constructs and starts a default instance of the CacheManager, using configuration defaults.
@@ -193,8 +194,8 @@ public class DefaultCacheManager implements CacheManager {
     * @param start                if true, the cache manager is started
     */
    public DefaultCacheManager(GlobalConfiguration globalConfiguration, Configuration defaultConfiguration, boolean start) {
-      this.globalConfiguration = globalConfiguration == null ? new GlobalConfiguration() : globalConfiguration.clone();
-      this.globalConfiguration.setDefaultConfiguration(defaultConfiguration == null ? new Configuration() : defaultConfiguration.clone());
+      this.globalConfiguration = globalConfiguration == null ? new GlobalConfiguration() : globalConfiguration.clone();     
+      this.defaultConfiguration = defaultConfiguration == null ? new Configuration() : defaultConfiguration.clone();
       globalComponentRegistry = new GlobalComponentRegistry(this.globalConfiguration, this);
       if (start) start();
    }
@@ -212,28 +213,38 @@ public class DefaultCacheManager implements CacheManager {
       this(configurationFile, true);
    }
 
-   /**
-    * Constructs a new instance of the CacheManager, using the configuration file name passed in.  This constructor
-    * first searches for the named file on the classpath, and failing that, treats the file name as an absolute path.
-    *
-    * @param configurationFile name of configuration file to use as a template for all caches created
-    * @param start             if true, the cache manager is started
-    * @throws java.io.IOException if there is a problem with the configuration file.
-    */
-   public DefaultCacheManager(String configurationFile, boolean start) throws IOException {
-      try {
-         InfinispanConfiguration configuration = InfinispanConfiguration.newInfinispanConfiguration(
-               configurationFile,
-               InfinispanConfiguration.resolveSchemaPath(),
-               new ConfigurationValidatingVisitor());
+    /**
+     * Constructs a new instance of the CacheManager, using the configuration file name passed in.
+     * This constructor first searches for the named file on the classpath, and failing that, treats
+     * the file name as an absolute path.
+     * 
+     * @param configurationFile
+     *            name of configuration file to use as a template for all caches created
+     * @param start
+     *            if true, the cache manager is started
+     * @throws java.io.IOException
+     *             if there is a problem with the configuration file.
+     */
+    public DefaultCacheManager(String configurationFile, boolean start) throws IOException {
+        try {
+            InfinispanConfiguration configuration = InfinispanConfiguration.newInfinispanConfiguration(configurationFile, 
+                                                                                                                InfinispanConfiguration.resolveSchemaPath(),
+                                                                                                                new ConfigurationValidatingVisitor());
 
-         initialize(configuration);
-      } catch (RuntimeException re) {
-         throw new ConfigurationException(re);
-      }
-      if (start)
-         start();
-   }
+            globalConfiguration = configuration.parseGlobalConfiguration();
+            defaultConfiguration = configuration.parseDefaultConfiguration();
+            for (Map.Entry<String, Configuration> entry : configuration.parseNamedConfigurations().entrySet()) {
+                Configuration c = defaultConfiguration.clone();
+                c.applyOverrides(entry.getValue());
+                configurationOverrides.put(entry.getKey(), c);
+            }
+            globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this);
+        } catch (RuntimeException re) {
+            throw new ConfigurationException(re);
+        }
+        if (start)
+            start();
+    }
 
    /**
     * Constructs and starts a new instance of the CacheManager, using the input stream passed in to read configuration
@@ -261,7 +272,14 @@ public class DefaultCacheManager implements CacheManager {
          InfinispanConfiguration configuration = InfinispanConfiguration.newInfinispanConfiguration(configurationStream,
                                                                                                     InfinispanConfiguration.findSchemaInputStream(),
                                                                                                     new ConfigurationValidatingVisitor());
-         initialize(configuration);
+         globalConfiguration = configuration.parseGlobalConfiguration();
+         defaultConfiguration = configuration.parseDefaultConfiguration();
+         for (Map.Entry<String, Configuration> entry : configuration.parseNamedConfigurations().entrySet()) {
+            Configuration c = defaultConfiguration.clone();
+            c.applyOverrides(entry.getValue());
+            configurationOverrides.put(entry.getKey(), c);
+         }
+         globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this);
       } catch (ConfigurationException ce) {
          throw ce;
       } catch (RuntimeException re) {
@@ -269,23 +287,12 @@ public class DefaultCacheManager implements CacheManager {
       }
       if (start) start();
    }
-
-   private void initialize(XmlConfigurationParser initializedParser) {
-      globalConfiguration = initializedParser.parseGlobalConfiguration();
-      for (Map.Entry<String, Configuration> entry : initializedParser.parseNamedConfigurations().entrySet()) {
-         Configuration c = globalConfiguration.getDefaultConfiguration().clone();
-         c.applyOverrides(entry.getValue());
-         configurationOverrides.put(entry.getKey(), c);
-
-      }
-      globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this);
-   }
-
+   
    /**
     * {@inheritDoc}
     */
    public Configuration defineConfiguration(String cacheName, Configuration configurationOverride) {
-      return defineConfiguration(cacheName, configurationOverride, globalConfiguration.getDefaultConfiguration(), true);
+      return defineConfiguration(cacheName, configurationOverride, defaultConfiguration, true);
    }
 
    /**
@@ -358,20 +365,17 @@ public class DefaultCacheManager implements CacheManager {
       return globalConfiguration.getClusterName();
    }
 
-   public List<Address> getMembers() {
-      if (globalComponentRegistry == null) return null;
+   public List<Address> getMembers() {      
       Transport t = globalComponentRegistry.getComponent(Transport.class);
       return t == null ? null : t.getMembers();
    }
 
-   public Address getAddress() {
-      if (globalComponentRegistry == null) return null;
+   public Address getAddress() {      
       Transport t = globalComponentRegistry.getComponent(Transport.class);
       return t == null ? null : t.getAddress();
    }
 
-   public boolean isCoordinator() {
-      if (globalComponentRegistry == null) return false;
+   public boolean isCoordinator() {      
       Transport t = globalComponentRegistry.getComponent(Transport.class);
       return t != null && t.isCoordinator();
    }
@@ -379,7 +383,7 @@ public class DefaultCacheManager implements CacheManager {
    private Cache createCache(String cacheName) {
       Configuration c;
       if (cacheName.equals(DEFAULT_CACHE_NAME) || !configurationOverrides.containsKey(cacheName))
-         c = globalConfiguration.getDefaultConfiguration().clone();
+         c = defaultConfiguration.clone();
       else
          c = configurationOverrides.get(cacheName);
 
@@ -446,6 +450,10 @@ public class DefaultCacheManager implements CacheManager {
    
    public GlobalConfiguration getGlobalConfiguration() {
       return globalConfiguration;
+   }
+   
+   public Configuration getDefaultConfiguration() {
+       return defaultConfiguration;
    }
 
    public Set<String> getCacheNames() {

@@ -151,9 +151,19 @@ public interface CacheManager extends Lifecycle, Listenable {
    ComponentStatus getStatus();
 
    /**
+    * Returns global configuration for this CacheManager
+    * 
     * @return the global configuration object associated to this CacheManager
     */
    GlobalConfiguration getGlobalConfiguration();
+   
+    /**
+     * Returns default configuration for this CacheManager
+     * 
+     * @return the default configuration associated with this CacheManager
+     */
+    Configuration getDefaultConfiguration();
+   
 
    /**
     * If no named caches are registered, this method returns an empty set.  The default cache is never included in this
