@@ -35,6 +35,20 @@
          <groupId>commons-logging</groupId>
          <artifactId>commons-logging</artifactId>
          <version>1.1</version>
+         <exclusions>
+         	<exclusion>
+         		<artifactId>servlet-api</artifactId>
+         		<groupId>javax.servlet</groupId>
+         	</exclusion>
+         	<exclusion>
+         		<artifactId>avalon-framework</artifactId>
+         		<groupId>avalon-framework</groupId>
+         	</exclusion>
+         	<exclusion>
+         		<artifactId>logkit</artifactId>
+         		<groupId>logkit</groupId>
+         	</exclusion>
+         </exclusions>
       </dependency>
       <dependency>
          <groupId>log4j</groupId>
