@@ -48,9 +48,9 @@ The web ui is war file which is deployed into a basic JBoss container.
 A number of supporting libraries are required in order for the app to work.
 The easiest to get this going is to use the jboss default profile and add the following libraries to the default/lib directory
 
-jgroups-2.8.0.CR5.jar
-marshalling-api-1.2.0.CR4.jar
-river-1.2.0.CR4.jar
+jgroups-2.9.0.GA.jar
+marshalling-api-1.2.0.GA.jar
+river-1.2.0.GA.jar
 infinispan-all.jar
 infinispan-ec2-demo.jar
 
@@ -76,6 +76,6 @@ Possible issues
 * Nodes don't see each other. Make sure that the firewall isn't blocking the inter-node communications
 * Ensure that the correct jgroups properties are being used.
 * If using S3_Ping you can check the cluster member details by using a utility such as s3sync see s3sync.net
-* Make sure you are using the right version of jgroups 2.8CR+ is the one shipped with Infinispan. 2.6 or lower doesn't have s3_ping.
+* Make sure you are using the right version of jgroups: the one shipped with Infinispan. 2.6 or lower doesn't have s3_ping.
 
 
