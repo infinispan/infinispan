@@ -4,7 +4,7 @@
 
 Requirements:
 
-* Java 5.0 and above
+* Java 6.0 and above
 * Maven 2.1.0 and above
 
 
