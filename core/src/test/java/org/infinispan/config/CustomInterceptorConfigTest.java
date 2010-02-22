@@ -20,7 +20,10 @@ public class CustomInterceptorConfigTest {
 
    public void testCustomInterceptors() throws IOException {
       String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
-            "<infinispan xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:infinispan:config:4.0\">" +
+            "<infinispan\n" +
+            "      xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+            "      xsi:schemaLocation=\"urn:infinispan:config:4.0 http://www.infinispan.org/schemas/infinispan-config-4.0.xsd\"\n" +
+            "      xmlns=\"urn:infinispan:config:4.0\">" +
             "<default><customInterceptors> \n" +
             "<interceptor after=\""+ InvocationContextInterceptor.class.getName()+"\" class=\""+DummyInterceptor.class.getName()+"\"/> \n" +
             "</customInterceptors> </default></infinispan>";

@@ -39,9 +39,7 @@ import java.io.InputStream;
 public class QueryParsingTest extends AbstractInfinispanTest {
 
    public void testQueryConfig() throws Exception {
-      String config = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-            "\n" +
-            "<infinispan xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:infinispan:config:4.0\" xmlns:query=\"urn:infinispan:config:query:4.0\">\n" +
+      String config = TestingUtil.INFINISPAN_START_TAG +
             "   <global>\n" +
             "      <transport clusterName=\"demoCluster\"/>\n" +
             "   </global>\n" +
@@ -51,7 +49,7 @@ public class QueryParsingTest extends AbstractInfinispanTest {
             "      </clustering>\n" +
             "      <indexing enabled=\"true\" indexLocalOnly=\"true\"/>\n" +
             "   </default>\n" +
-            "</infinispan>";
+            TestingUtil.INFINISPAN_END_TAG;
 
       System.out.println(config);
 

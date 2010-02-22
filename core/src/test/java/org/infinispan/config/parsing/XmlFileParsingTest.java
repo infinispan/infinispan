@@ -12,6 +12,7 @@ import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.loaders.file.FileCacheStoreConfig;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
@@ -40,9 +41,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
    }
 
    public void testNoNamedCaches() throws Exception {
-      String config = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-            "\n" +
-            "<infinispan xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:infinispan:config:4.0\">\n" +
+      String config = TestingUtil.INFINISPAN_START_TAG +
             "   <global>\n" +
             "      <transport clusterName=\"demoCluster\"/>\n" +
             "   </global>\n" +
@@ -51,7 +50,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             "      <clustering mode=\"replication\">\n" +
             "      </clustering>\n" +
             "   </default>\n" +
-            "</infinispan>";
+            TestingUtil.INFINISPAN_END_TAG;
 
       InputStream is = new ByteArrayInputStream(config.getBytes());
       InfinispanConfiguration c = InfinispanConfiguration.newInfinispanConfiguration(is);

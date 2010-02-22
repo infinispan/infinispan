@@ -13,6 +13,9 @@ import javax.transaction.TransactionManager;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
+import static org.infinispan.test.TestingUtil.INFINISPAN_END_TAG;
+import static org.infinispan.test.TestingUtil.INFINISPAN_START_TAG;
+
 /**
  * @author Manik Surtani
  * @since 4.0
@@ -60,8 +63,7 @@ public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
    }
 
    public void testNamedCacheXMLClashingNames() throws IOException {
-      String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-            "<infinispan xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:infinispan:config:4.0\">\n" +
+      String xml = INFINISPAN_START_TAG +
             "\n" +
             "    <default>\n" +
             "        <locking concurrencyLevel=\"100\" lockAcquisitionTimeout=\"1000\" />\n" +
@@ -76,8 +78,7 @@ public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
             "            <sync replTimeout=\"15000\"/>\n" +
             "        </clustering>\n" +
             "    </namedCache>\n" +
-            "    \n" +
-            "</infinispan>";
+            INFINISPAN_END_TAG;
 
       ByteArrayInputStream bais = new ByteArrayInputStream(xml.getBytes());
       try {
@@ -91,8 +92,7 @@ public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
    }
 
    public void testNamedCacheXMLClashingNamesProgrammatic() throws IOException {
-      String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-            "<infinispan xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:infinispan:config:4.0\">\n" +
+      String xml = INFINISPAN_START_TAG +
             "\n" +
             "<global/>\n" +
             "    <default>\n" +
@@ -101,10 +101,7 @@ public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
             "\n" +
             "    <namedCache name=\"c1\">\n" +
             "        <transaction transactionManagerLookupClass=\"org.infinispan.transaction.lookup.GenericTransactionManagerLookup\"/>\n" +
-            "    </namedCache>\n" +
-            "\n" +            
-            "\n" +
-            "</infinispan>";
+            "    </namedCache>\n" + INFINISPAN_END_TAG;
 
       ByteArrayInputStream bais = new ByteArrayInputStream(xml.getBytes());
       cm = TestCacheManagerFactory.fromStream(bais);

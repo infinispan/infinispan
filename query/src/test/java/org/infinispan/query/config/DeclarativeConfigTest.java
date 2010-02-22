@@ -29,6 +29,7 @@ import org.infinispan.query.backend.QueryHelper;
 import org.infinispan.query.helper.TestQueryHelperFactory;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -43,13 +44,10 @@ public class DeclarativeConfigTest extends SingleCacheManagerTest {
 
    @Override
    protected CacheManager createCacheManager() throws Exception {
-      String config = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-            "\n" +
-            "<infinispan xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:infinispan:config:4.0\" xmlns:query=\"urn:infinispan:config:query:4.0\">\n" +
+      String config = TestingUtil.INFINISPAN_START_TAG +
             "   <default>\n" +
             "      <indexing enabled=\"true\" indexLocalOnly=\"true\"/>\n" +
-            "   </default>\n" +
-            "</infinispan>";
+            "   </default>\n" + TestingUtil.INFINISPAN_END_TAG;
 
       InputStream is = new ByteArrayInputStream(config.getBytes());
       cacheManager = TestCacheManagerFactory.fromStream(is);
