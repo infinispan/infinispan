@@ -41,7 +41,22 @@ public interface LockContainer {
     */
    int size();
 
-   boolean acquireLock(Object key, long timeout, TimeUnit unit) throws InterruptedException;
+   /**
+    * Attempts to acquire a lock for the given object within certain time boundaries defined by the timeout and
+    * time unit parameters.
+    *
+    * @param key Object to acquire lock on
+    * @param timeout Time after which the lock acquisition will fail
+    * @param unit Time unit of the given timeout
+    * @return If lock was acquired it returns the corresponding Lock object. If lock was not acquired, it returns null
+    * @throws InterruptedException If the lock acquisition was interrupted
+    */
+   Lock acquireLock(Object key, long timeout, TimeUnit unit) throws InterruptedException;
 
+   /**
+    * Release lock on the given key.
+    *
+    * @param key Object on which lock is to be removed  
+    */
    void releaseLock(Object key);
 }

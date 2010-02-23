@@ -340,7 +340,7 @@ public class AsyncStore extends AbstractDelegatingStore {
             // map for later processing and we don't wanna do it in such way that we override a newer value that might 
             // have been enqueued by a user thread.
             for (Object key : swap.keySet()) {
-               boolean acquired = lockContainer.acquireLock(key, 0, TimeUnit.NANOSECONDS);
+               boolean acquired = lockContainer.acquireLock(key, 0, TimeUnit.NANOSECONDS) != null;
                if (trace) log.trace("Lock for key {0} was acquired={1}", key, acquired);
                if (!acquired) {
                   Modification prev = swap.remove(key);

@@ -39,7 +39,7 @@ public abstract class AbstractPerEntryLockContainer implements LockContainer {
       return locks.size();
    }
 
-   public boolean acquireLock(Object key, long timeout, TimeUnit unit) throws InterruptedException {
+   public Lock acquireLock(Object key, long timeout, TimeUnit unit) throws InterruptedException {
       while (true) {
          Lock lock = getLock(key);
          if (lock.tryLock(timeout, unit)) {
@@ -50,11 +50,11 @@ public abstract class AbstractPerEntryLockContainer implements LockContainer {
                lock.unlock();
             } else {
                // we got the right lock.
-               return true;
+               return lock;
             }
          } else {
             // we couldn't acquire the lock within the timeout period
-            return false;
+            return null;
          }
       }
    }

@@ -57,7 +57,7 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
          final long start = System.currentTimeMillis();
          long now;
          while ((now = System.currentTimeMillis()) < (start + lockTimeout)) {
-            if (lockContainer.acquireLock(key, spinDuration, MILLISECONDS)) {
+            if (lockContainer.acquireLock(key, spinDuration, MILLISECONDS) != null) {
                if (trace) log.trace("successfully acquired lock on " + key + ", returning ...");
                return true;
             } else {
@@ -80,7 +80,7 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
             }
          }
       } else {
-         if (lockContainer.acquireLock(key, lockTimeout, MILLISECONDS)) {
+         if (lockContainer.acquireLock(key, lockTimeout, MILLISECONDS) != null) {
             return true;
          }
       }
@@ -138,7 +138,7 @@ public class DeadlockDetectingLockManager extends LockManagerImpl {
       if (remainingLockingTime < 0)
          throw new IllegalStateException("No remaining time!!! The outer while condition MUST make sure this always stands true!");
       if (trace) log.trace("trying to lock for the remaining time: " + remainingLockingTime + " millis ");
-      return lockContainer.acquireLock(key, remainingLockingTime, MILLISECONDS);
+      return lockContainer.acquireLock(key, remainingLockingTime, MILLISECONDS) != null;
    }
 
    public void setExposeJmxStats(boolean exposeJmxStats) {

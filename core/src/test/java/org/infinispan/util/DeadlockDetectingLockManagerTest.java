@@ -1,9 +1,11 @@
 package org.infinispan.util;
 
 import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.createNiceMock;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.classextension.EasyMock.replay;
 import static org.easymock.classextension.EasyMock.verify;
+
 import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
@@ -17,6 +19,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Tests functionality in {@link org.infinispan.util.concurrent.locks.DeadlockDetectingLockManager}.
@@ -43,9 +46,11 @@ public class DeadlockDetectingLockManagerTest extends AbstractInfinispanTest {
 
    public void testNoTransaction() throws Exception {
       InvocationContext nonTx = new NonTxInvocationContext();
-      
-      expect(lc.acquireLock("k",config.getLockAcquisitionTimeout(), TimeUnit.MILLISECONDS)).andReturn(Boolean.TRUE);
-      expect(lc.acquireLock("k",config.getLockAcquisitionTimeout(), TimeUnit.MILLISECONDS)).andReturn(false);
+
+//      expect(lc.acquireLock("k",config.getLockAcquisitionTimeout(), TimeUnit.MILLISECONDS)).andReturn(EasyMock.<Lock>anyObject());
+      Lock mockLock = createNiceMock(Lock.class);
+      expect(lc.acquireLock("k",config.getLockAcquisitionTimeout(), TimeUnit.MILLISECONDS)).andReturn(mockLock);      
+      expect(lc.acquireLock("k",config.getLockAcquisitionTimeout(), TimeUnit.MILLISECONDS)).andReturn(null);
       replay(lc);
       assert lockManager.lockAndRecord("k",nonTx);
       assert !lockManager.lockAndRecord("k",nonTx);
@@ -56,10 +61,11 @@ public class DeadlockDetectingLockManagerTest extends AbstractInfinispanTest {
       InvocationContext localTxContext = new LocalTxInvocationContext();
 
       //this makes sure that we cannot acquire lock from the first try
-      expect(lc.acquireLock("k", SPIN_DURATION, TimeUnit.MILLISECONDS)).andReturn(Boolean.FALSE);
+      expect(lc.acquireLock("k", SPIN_DURATION, TimeUnit.MILLISECONDS)).andReturn(null);
       lockManager.setOwner(Thread.currentThread() );
       //next lock acquisition will succeed
-      expect(lc.acquireLock("k", SPIN_DURATION, TimeUnit.MILLISECONDS)).andReturn(Boolean.TRUE);
+      Lock mockLock = createNiceMock(Lock.class);
+      expect(lc.acquireLock("k", SPIN_DURATION, TimeUnit.MILLISECONDS)).andReturn(mockLock);
       replay(lc);
 
       assert lockManager.lockAndRecord("k", localTxContext);
@@ -81,8 +87,9 @@ public class DeadlockDetectingLockManagerTest extends AbstractInfinispanTest {
       assert ddgt.thisWillInterrupt(lockOwner);
 
       //this makes sure that we cannot acquire lock from the first try
-      expect(lc.acquireLock("k", SPIN_DURATION, TimeUnit.MILLISECONDS)).andReturn(Boolean.FALSE);
-      expect(lc.acquireLock("k", SPIN_DURATION, TimeUnit.MILLISECONDS)).andReturn(Boolean.TRUE);
+      expect(lc.acquireLock("k", SPIN_DURATION, TimeUnit.MILLISECONDS)).andReturn(null);
+      Lock mockLock = createNiceMock(Lock.class);
+      expect(lc.acquireLock("k", SPIN_DURATION, TimeUnit.MILLISECONDS)).andReturn(mockLock);
       lockOwner.setRemote(false);
       lockManager.setOwner(lockOwner);
       lockManager.setOwnsLock(true);

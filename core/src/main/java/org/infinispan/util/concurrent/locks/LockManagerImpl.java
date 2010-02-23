@@ -79,7 +79,7 @@ public class LockManagerImpl implements LockManager {
    public boolean lockAndRecord(Object key, InvocationContext ctx) throws InterruptedException {
       long lockTimeout = getLockAcquisitionTimeout(ctx);
       if (trace) log.trace("Attempting to lock {0} with acquisition timeout of {1} millis", key, lockTimeout);
-      if (lockContainer.acquireLock(key, lockTimeout, MILLISECONDS)) {
+      if (lockContainer.acquireLock(key, lockTimeout, MILLISECONDS) != null) {
          // successfully locked!
          if (trace) log.trace("Successfully acquired lock!");         
          return true;

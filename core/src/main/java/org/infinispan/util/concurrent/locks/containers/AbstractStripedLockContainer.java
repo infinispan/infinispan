@@ -24,6 +24,7 @@ package org.infinispan.util.concurrent.locks.containers;
 import net.jcip.annotations.ThreadSafe;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
 
 /**
  * A container for locks.  Used with lock striping.
@@ -75,8 +76,9 @@ public abstract class AbstractStripedLockContainer implements LockContainer {
 
    protected abstract void initLocks(int numLocks);
 
-   public boolean acquireLock(Object key, long timeout, TimeUnit unit) throws InterruptedException {
-      return getLock(key).tryLock(timeout, unit);
+   public Lock acquireLock(Object key, long timeout, TimeUnit unit) throws InterruptedException {
+      Lock lock = getLock(key);
+      return lock.tryLock(timeout, unit) ? lock : null;
    }
 
    public void releaseLock(Object key) {
