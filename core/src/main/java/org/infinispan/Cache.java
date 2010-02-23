@@ -563,7 +563,7 @@ public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable 
    Set<K> keySet();
 
    /**
-    * Returns a collection view of the keys contained in this cache. This collection is immutable, so it cannot be modified 
+    * Returns a collection view of the values contained in this cache. This collection is immutable, so it cannot be modified 
     * and changes to the cache won't be reflected in the set. When this method is called on a cache configured with 
     * distribution mode, the collection returned only contains the values locally available in the cache instance. To avoid 
     * memory issues, there is not attempt to bring values from other nodes.
