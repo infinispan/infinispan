@@ -12,6 +12,8 @@
 
          <xsl:element name="global">
 
+            <transport/>
+
             <asyncListenerExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
                <properties>
                   <property name="threadNamePrefix" value="AsyncTransportThread"/>

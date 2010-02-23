@@ -44,6 +44,8 @@ public class Coherence2InfinispanTransformerTest extends AbstractInfinispanTest 
          dcm = TestCacheManagerFactory.fromStream(new ByteArrayInputStream(baos.toByteArray()), true);
          Cache<Object,Object> defaultCache = dcm.getCache();
          defaultCache.put("key", "value");
+         Cache<Object, Object> cache = dcm.getCache("dist-*");
+         cache.put("a","v");
 
       } finally {
          Thread.currentThread().setContextClassLoader(existingCl);
