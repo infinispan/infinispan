@@ -31,7 +31,7 @@ import org.infinispan.server.memcached.interceptors.TextProtocolVisitor;
  * PrependCommand.
  * 
  * @author Galder Zamarreño
- * @since 4.0
+ * @since 4.1
  */
 public class PrependCommand extends AppendCommand {
 

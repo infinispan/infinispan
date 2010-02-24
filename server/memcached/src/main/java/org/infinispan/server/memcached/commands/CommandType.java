@@ -30,7 +30,7 @@ import org.infinispan.server.memcached.UnknownCommandException;
  * Command.
  * 
  * @author Galder Zamarreño
- * @since 4.0
+ * @since 4.1
  */
 public enum CommandType {
    SET, ADD, REPLACE, APPEND, PREPEND, CAS,

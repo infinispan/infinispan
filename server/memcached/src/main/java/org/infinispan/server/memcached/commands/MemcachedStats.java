@@ -26,7 +26,7 @@ package org.infinispan.server.memcached.commands;
  * MemcachedStats.
  * 
  * @author Galder Zamarreño
- * @since 4.0
+ * @since 4.1
  */
 public interface MemcachedStats {
    

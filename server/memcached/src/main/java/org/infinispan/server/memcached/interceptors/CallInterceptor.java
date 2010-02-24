@@ -29,7 +29,7 @@ import org.infinispan.server.memcached.commands.TextCommand;
  * CallInterceptor.
  * 
  * @author Galder Zamarreño
- * @since 4.0
+ * @since 4.1
  */
 public class CallInterceptor extends TextCommandInterceptorImpl {
 

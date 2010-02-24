@@ -53,7 +53,7 @@ import static org.infinispan.server.memcached.TextProtocolUtil.LF;
  * // TODO: Document this
  *
  * @author Galder Zamarreño
- * @since 4.0
+ * @since 4.1
  */
 public class TextDecoder implements Decoder<TextDecoder.State> {
    private static final Log log = LogFactory.getLog(TextDecoder.class);

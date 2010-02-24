@@ -30,7 +30,7 @@ import org.infinispan.server.memcached.interceptors.TextProtocolVisitor;
  * QuitCommand.
  * 
  * @author Galder Zamarreño
- * @since 4.0
+ * @since 4.1
  */
 public enum QuitCommand implements TextCommand {
    INSTANCE;

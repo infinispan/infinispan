@@ -38,7 +38,7 @@ import net.spy.memcached.MemcachedClient;
  * TestingUtil.
  * 
  * @author Galder Zamarreño
- * @since 4.0
+ * @since 4.1
  */
 public class MemcachedTestingUtil {
    private static final String HOST = "127.0.0.1";

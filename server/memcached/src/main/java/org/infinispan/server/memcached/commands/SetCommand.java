@@ -42,7 +42,7 @@ import static org.infinispan.server.memcached.TextProtocolUtil.CRLF;
  * SetCommand.
  * 
  * @author Galder Zamarreño
- * @since 4.0
+ * @since 4.1
  */
 public class SetCommand extends StorageCommand {
    private static final Log log = LogFactory.getLog(SetCommand.class);

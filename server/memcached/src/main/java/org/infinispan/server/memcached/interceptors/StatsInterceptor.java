@@ -35,7 +35,7 @@ import org.infinispan.server.memcached.commands.MemcachedStats;
  * StatsInterceptor.
  * 
  * @author Galder Zamarreño
- * @since 4.0
+ * @since 4.1
  */
 public class StatsInterceptor extends TextCommandInterceptorImpl implements MemcachedStats {
    private final AtomicLong incrMisses = new AtomicLong(0);

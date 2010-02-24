@@ -46,7 +46,7 @@ import org.testng.annotations.Test;
  * ClusterTest.
  * 
  * @author Galder Zamarreño
- * @since 4.0
+ * @since 4.1
  */
 @Test(groups = "functional", testName = "server.memcached.ClusterTest")
 public class ClusterTest extends MultipleCacheManagersTest {

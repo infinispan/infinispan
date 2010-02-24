@@ -37,7 +37,7 @@ import org.infinispan.server.memcached.commands.TextCommand;
  * TextProtocolInterceptorChain.
  * 
  * @author Galder Zamarreño
- * @since 4.0
+ * @since 4.1
  */
 public class TextProtocolInterceptorChain implements InterceptorChain {
 

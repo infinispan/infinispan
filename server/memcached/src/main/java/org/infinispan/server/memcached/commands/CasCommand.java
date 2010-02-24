@@ -34,7 +34,7 @@ import org.infinispan.server.memcached.interceptors.TextProtocolVisitor;
  * CasCommand.
  * 
  * @author Galder Zamarreño
- * @since 4.0
+ * @since 4.1
  */
 public class CasCommand extends SetCommand {
    final long cas;

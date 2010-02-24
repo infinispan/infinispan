@@ -37,7 +37,7 @@ import org.infinispan.server.memcached.interceptors.TextProtocolVisitor;
  * VersionCommand.
  * 
  * @author Galder Zamarreño
- * @since 4.0
+ * @since 4.1
  */
 public enum VersionCommand implements TextCommand {
    INSTANCE;

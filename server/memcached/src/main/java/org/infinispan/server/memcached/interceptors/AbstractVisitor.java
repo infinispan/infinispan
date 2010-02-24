@@ -44,7 +44,7 @@ import org.infinispan.server.memcached.commands.VersionCommand;
  * CommandInterceptor.
  * 
  * @author Galder Zamarreño
- * @since 4.0
+ * @since 4.1
  */
 public abstract class AbstractVisitor implements TextProtocolVisitor {
 

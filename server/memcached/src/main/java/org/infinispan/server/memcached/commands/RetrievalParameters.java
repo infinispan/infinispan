@@ -28,7 +28,7 @@ import java.util.List;
  * RetrievalParameters.
  * 
  * @author Galder Zamarreño
- * @since 4.0
+ * @since 4.1
  */
 public class RetrievalParameters {
    final List<String> keys;

@@ -41,7 +41,7 @@ import org.infinispan.server.core.InterceptorChain;
  * CommandFactory.
  * 
  * @author Galder Zamarreño
- * @since 4.0
+ * @since 4.1
  */
 public class CommandFactory {
    private static final Log log = LogFactory.getLog(CommandFactory.class);

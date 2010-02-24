@@ -44,7 +44,7 @@ import org.infinispan.util.logging.LogFactory;
  * TextServer.
  * 
  * @author Galder Zamarreño
- * @since 4.0
+ * @since 4.1
  */
 public class TextServer {
    private static final Log log = LogFactory.getLog(TextServer.class);

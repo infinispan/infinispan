@@ -39,7 +39,7 @@ import org.infinispan.server.memcached.interceptors.TextProtocolVisitor;
  * StatsCommand.
  * 
  * @author Galder Zamarreño
- * @since 4.0
+ * @since 4.1
  */
 public class StatsCommand implements TextCommand {
    final Cache cache;

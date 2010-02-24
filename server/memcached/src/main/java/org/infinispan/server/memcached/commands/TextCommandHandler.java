@@ -32,7 +32,7 @@ import org.infinispan.server.core.InterceptorChain;
  * TextProtocolServerHandler.
  * 
  * @author Galder Zamarreño
- * @since 4.0
+ * @since 4.1
  */
 public class TextCommandHandler implements CommandHandler {
    final Cache cache;

@@ -26,7 +26,7 @@ package org.infinispan.server.memcached;
  * StorageReply.
  * 
  * @author Galder Zamarreño
- * @since 4.0
+ * @since 4.1
  */
 public enum Reply {
    STORED, NOT_STORED, EXISTS, NOT_FOUND, DELETED, STAT, VALUE, END, OK, VERSION,

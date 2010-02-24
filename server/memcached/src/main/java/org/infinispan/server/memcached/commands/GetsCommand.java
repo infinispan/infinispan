@@ -28,7 +28,7 @@ import org.infinispan.Cache;
  * GetsCommand.
  * 
  * @author Galder Zamarreño
- * @since 4.0
+ * @since 4.1
  */
 public class GetsCommand extends GetCommand {
 

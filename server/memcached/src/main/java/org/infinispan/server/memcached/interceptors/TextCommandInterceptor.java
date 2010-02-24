@@ -30,7 +30,7 @@ import org.infinispan.server.memcached.commands.TextCommand;
  * TextCommandInterceptor.
  * 
  * @author Galder Zamarreño
- * @since 4.0
+ * @since 4.1
  */
 public interface TextCommandInterceptor extends CommandInterceptor, TextProtocolVisitor {
    Object invokeNextInterceptor(ChannelHandlerContext ctx, TextCommand command) throws Throwable;

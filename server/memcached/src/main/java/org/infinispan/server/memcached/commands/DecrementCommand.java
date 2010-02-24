@@ -34,7 +34,7 @@ import org.infinispan.util.logging.LogFactory;
  * DecrementCommand.
  * 
  * @author Galder Zamarreño
- * @since 4.0
+ * @since 4.1
  */
 public class DecrementCommand extends NumericCommand {
    private static final Log log = LogFactory.getLog(DecrementCommand.class);

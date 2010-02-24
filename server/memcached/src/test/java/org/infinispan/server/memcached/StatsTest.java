@@ -46,7 +46,7 @@ import static org.infinispan.server.memcached.test.MemcachedTestingUtil.*;
  * StatsTest.
  * 
  * @author Galder Zamarreño
- * @since 4.0
+ * @since 4.1
  */
 @Test(groups = "functional", testName = "server.memcached.StatsTest")
 public class StatsTest extends SingleCacheManagerTest {

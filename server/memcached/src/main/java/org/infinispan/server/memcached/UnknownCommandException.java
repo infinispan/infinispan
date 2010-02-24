@@ -28,7 +28,7 @@ import java.io.StreamCorruptedException;
  * UnknownCommandException.
  * 
  * @author Galder Zamarreño
- * @since 4.0
+ * @since 4.1
  */
 public class UnknownCommandException extends StreamCorruptedException {
 

@@ -30,7 +30,7 @@ import org.infinispan.server.core.InterceptorChain;
  * InterceptorChainFactory.
  * 
  * @author Galder Zamarreño
- * @since 4.0
+ * @since 4.1
  */
 public enum TextProtocolInterceptorChainFactory implements InterceptorChainFactory {
    STATS_ENABLED(true), NOT_STATS_ENABLED(false);

@@ -26,7 +26,7 @@ package org.infinispan.server.memcached;
  * TextProtocolUtil.
  * 
  * @author Galder Zamarreño
- * @since 4.0
+ * @since 4.1
  */
 public class TextProtocolUtil {
    public static final byte CR = 13;

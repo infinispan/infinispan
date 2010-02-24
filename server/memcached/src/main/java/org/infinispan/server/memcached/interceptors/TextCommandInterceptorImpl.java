@@ -30,7 +30,7 @@ import org.infinispan.server.memcached.commands.TextCommand;
  * TextCommandInterceptorImpl.
  * 
  * @author Galder Zamarreño
- * @since 4.0
+ * @since 4.1
  */
 public class TextCommandInterceptorImpl extends AbstractVisitor implements TextCommandInterceptor {
    private final TextCommandInterceptor next;

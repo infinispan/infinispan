@@ -33,7 +33,7 @@ import org.infinispan.server.memcached.interceptors.TextProtocolVisitor;
  * ReplaceCommand.
  * 
  * @author Galder Zamarreño
- * @since 4.0
+ * @since 4.1
  */
 public class ReplaceCommand extends SetCommand {
 

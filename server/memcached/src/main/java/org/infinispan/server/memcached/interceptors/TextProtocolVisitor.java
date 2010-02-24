@@ -43,7 +43,7 @@ import org.infinispan.server.memcached.commands.VersionCommand;
  * CommandInterceptor.
  * 
  * @author Galder Zamarreño
- * @since 4.0
+ * @since 4.1
  */
 public interface TextProtocolVisitor {
    Object visitSet(ChannelHandlerContext ctx, SetCommand command) throws Throwable;

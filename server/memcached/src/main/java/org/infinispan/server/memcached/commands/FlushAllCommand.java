@@ -39,7 +39,7 @@ import org.infinispan.server.memcached.interceptors.TextProtocolVisitor;
  * FlushAllCommand.
  * 
  * @author Galder Zamarreño
- * @since 4.0
+ * @since 4.1
  */
 public class FlushAllCommand implements TextCommand {
    final Cache cache;

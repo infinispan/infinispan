@@ -32,7 +32,7 @@ import org.infinispan.server.memcached.interceptors.TextProtocolVisitor;
  * AppendCommand.
  * 
  * @author Galder Zamarreño
- * @since 4.0
+ * @since 4.1
  */
 public class AppendCommand extends SetCommand {
 
