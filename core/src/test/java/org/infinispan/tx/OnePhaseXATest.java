@@ -18,6 +18,7 @@ import java.util.List;
 @Test(groups = "functional", testName = "tx.OnePhaseXATest", description = "See ISPN-156 for details.", enabled = false)
 public class OnePhaseXATest extends AbstractInfinispanTest {
    private List<Cache> caches;
+   private List<CacheManager> cacheManagers;
    public static final int CACHES_NUM = 2;
 
    public void testMultipleCaches() throws Exception {
@@ -44,12 +45,13 @@ public class OnePhaseXATest extends AbstractInfinispanTest {
    @BeforeTest
    public void setUp() throws Exception {
       caches = new ArrayList<Cache>();
+      cacheManagers = new ArrayList<CacheManager>();
       for (int i = 0; i < CACHES_NUM; i++) caches.add(getCache());
    }
 
    @AfterTest
    public void tearDown() {
-      if (caches != null) TestingUtil.killCaches(caches);
+      if (caches != null) TestingUtil.killCacheManagers(cacheManagers);
    }
 
    private Cache getCache() {
@@ -63,6 +65,7 @@ public class OnePhaseXATest extends AbstractInfinispanTest {
       c.setUseLockStriping(false);
       c.setSyncCommitPhase(true);
       CacheManager manager = TestCacheManagerFactory.createCacheManager(gc, c, true);
+      cacheManagers.add(manager);
       return manager.getCache("TestCache");
    }
 }

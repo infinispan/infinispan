@@ -1,4 +1,4 @@
-package org.infinispan.test.testng;
+package org.infinispan.test.fwk;
 
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;

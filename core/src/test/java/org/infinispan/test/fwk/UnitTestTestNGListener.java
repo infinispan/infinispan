@@ -1,4 +1,4 @@
-package org.infinispan.test.testng;
+package org.infinispan.test.fwk;
 
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -52,6 +52,7 @@ public class UnitTestTestNGListener implements ITestListener {
       printStatus();
    }
 
+
    public void onTestFailedButWithinSuccessPercentage(ITestResult arg0) {
    }
 
@@ -59,6 +60,7 @@ public class UnitTestTestNGListener implements ITestListener {
    }
 
    public void onFinish(ITestContext arg0) {
+      TestCacheManagerFactory.testFinished(arg0.getName());
    }
 
    private String getThreadId() {

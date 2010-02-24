@@ -46,7 +46,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    protected List<CacheManager> cacheManagers = new ArrayList<CacheManager>();
    private IdentityHashMap<Cache, ReplListener> listeners = new IdentityHashMap<Cache, ReplListener>();
 
-   @BeforeClass
+   @BeforeClass (alwaysRun = true)
    public void createBeforeClass() throws Throwable {
       if (cleanup == CleanupPhase.AFTER_TEST) callCreateCacheManagers();
    }
@@ -66,11 +66,11 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       if (cleanup == CleanupPhase.AFTER_METHOD) callCreateCacheManagers();
    }
 
-   @AfterClass
+   @AfterClass(alwaysRun = true)
    protected void destroy() {
       if (cleanup == CleanupPhase.AFTER_TEST) TestingUtil.killCacheManagers(cacheManagers);
-      cacheManagers.clear();       
-      listeners.clear();      
+      cacheManagers.clear();
+      listeners.clear();
    }
 
    @AfterMethod(alwaysRun=true)

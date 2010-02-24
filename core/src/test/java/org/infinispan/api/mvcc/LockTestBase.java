@@ -28,6 +28,7 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
    private Log log = LogFactory.getLog(LockTestBase.class);
    protected boolean repeatableRead = true;
    protected boolean lockParentForChildInsertRemove = false;
+   private CacheManager cm;
 
    protected class LockTestBaseTL {
       public Cache<String, String> cache;
@@ -45,7 +46,7 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
       Configuration defaultCfg = new Configuration();
       defaultCfg.setIsolationLevel(repeatableRead ? IsolationLevel.REPEATABLE_READ : IsolationLevel.READ_COMMITTED);
       defaultCfg.setLockAcquisitionTimeout(200); // 200 ms
-      CacheManager cm = TestCacheManagerFactory.createCacheManager(defaultCfg, true);
+      cm = TestCacheManagerFactory.createCacheManager(defaultCfg, true);
       tl.cache = cm.getCache();
       tl.lockManager = TestingUtil.extractComponentRegistry(tl.cache).getComponent(LockManager.class);
       tl.icc = TestingUtil.extractComponentRegistry(tl.cache).getComponent(InvocationContextContainer.class);
@@ -57,7 +58,7 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
    public void tearDown() {
       LockTestBaseTL tl = threadLocal.get();
       log.debug("**** - STARTING TEARDOWN - ****");
-      TestingUtil.killCaches(tl.cache);
+      TestingUtil.killCacheManagers(cm);
       threadLocal.set(null);
    }
 

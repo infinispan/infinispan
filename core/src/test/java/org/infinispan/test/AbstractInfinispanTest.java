@@ -25,6 +25,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterTest;
 
 /**
  * AbstractInfinispanTest is a superclass of all Infinispan tests. 
@@ -34,7 +35,7 @@ import org.testng.annotations.AfterClass;
  */
 public class AbstractInfinispanTest {
    
-   @AfterClass(alwaysRun=true)
+   @AfterTest(alwaysRun=true)
    protected void nullifyInstanceFields() {
       for(Class<?> current = this.getClass();current.getSuperclass() != null; current = current.getSuperclass()) {
          Field[] fields = current.getDeclaredFields();

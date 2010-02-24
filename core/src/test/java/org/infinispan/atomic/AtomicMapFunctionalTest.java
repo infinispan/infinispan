@@ -23,6 +23,7 @@ public class AtomicMapFunctionalTest extends AbstractInfinispanTest {
    private static final Log log = LogFactory.getLog(AtomicMapFunctionalTest.class);
    Cache<String, Object> cache;
    TransactionManager tm;
+   private CacheManager cm;
 
    @BeforeMethod
    @SuppressWarnings("unchecked")
@@ -30,14 +31,14 @@ public class AtomicMapFunctionalTest extends AbstractInfinispanTest {
       Configuration c = new Configuration();
       // these 2 need to be set to use the AtomicMapCache
       c.setInvocationBatchingEnabled(true);
-      CacheManager cm = TestCacheManagerFactory.createCacheManager(c, true);
+      cm = TestCacheManagerFactory.createCacheManager(c, true);
       cache = cm.getCache();
       tm = TestingUtil.getTransactionManager(cache);
    }
 
    @AfterMethod
    public void tearDown() {
-      TestingUtil.killCaches(cache);
+      TestingUtil.killCacheManagers(cm);
       cache = null;
       tm = null;
    }

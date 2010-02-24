@@ -25,6 +25,7 @@ import org.infinispan.Cache;
 import static org.infinispan.atomic.AtomicHashMapTestAssertions.assertIsEmpty;
 import static org.infinispan.atomic.AtomicHashMapTestAssertions.assertIsEmptyMap;
 import org.infinispan.config.Configuration;
+import org.infinispan.manager.CacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -42,18 +43,20 @@ public class APITest extends AbstractInfinispanTest {
 
    Cache<String, Object> cache;
    TransactionManager tm;
+   private CacheManager cacheManager;
 
    @BeforeTest
    public void setUp() {
       Configuration c = new Configuration();
       c.setInvocationBatchingEnabled(true);
-      cache = TestCacheManagerFactory.createCacheManager(c, true).getCache();
+      cacheManager = TestCacheManagerFactory.createCacheManager(c, true);
+      cache = cacheManager.getCache();
       tm = TestingUtil.getTransactionManager(cache);
    }
 
    @AfterTest
    public void tearDown() {
-      TestingUtil.killCaches(cache);
+      TestingUtil.killCacheManagers(cacheManager);
       cache =null;
       tm = null;
    }

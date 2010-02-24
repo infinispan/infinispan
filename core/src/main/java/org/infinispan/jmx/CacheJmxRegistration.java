@@ -95,7 +95,11 @@ public class CacheJmxRegistration extends AbstractJmxRegistration {
       Configuration config = cache.getConfiguration();
       if (config.isExposeJmxStatistics()) {
          // Only unregister the non cache MBean so that it can be restarted
-         unregisterMBeans(nonCacheComponents);
+         try {
+            unregisterMBeans(nonCacheComponents);
+         } catch (Exception e) {
+            log.warn("Problems un-registering MBeans", e);
+         }
          log.trace("MBeans were successfully unregistered from the mbean server.");
       }
 

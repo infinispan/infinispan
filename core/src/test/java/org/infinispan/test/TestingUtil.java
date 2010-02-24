@@ -390,14 +390,11 @@ public class TestingUtil {
       f.delete();
    }
 
-   public static void killCaches(Collection caches) {
-      if (caches != null) killCaches((Cache[]) caches.toArray(new Cache[]{}));
-   }
-
    public static void killCacheManagers(CacheManager... cacheManagers) {
       if (cacheManagers != null) {
          for (CacheManager cm : cacheManagers) {
-            if (cm != null) cm.stop();
+            if (cm != null) 
+               cm.stop();
          }
       }
    }

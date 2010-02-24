@@ -116,12 +116,18 @@ public class CacheMBeanTest extends SingleCacheManagerTest {
          assert false : "Failure expected, " + JMX_DOMAIN + " is a duplicate!";
       } catch (CacheException e) {
          assert e.getCause().getCause() instanceof JmxDomainConflictException;
+      } finally {
+         otherManager.stop();
       }
    }
 
    public void testMalformedCacheName(Method m) throws Exception {
       final String otherJmxDomain = JMX_DOMAIN + '.' + m.getName();
       CacheManager otherManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(otherJmxDomain);
-      otherManager.getCache("persistence.unit:unitName=#helloworld.MyRegion");
+      try {
+         otherManager.getCache("persistence.unit:unitName=#helloworld.MyRegion");
+      } finally {
+         otherManager.stop();
+      }
    }
 }

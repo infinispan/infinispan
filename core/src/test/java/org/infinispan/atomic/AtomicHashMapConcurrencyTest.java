@@ -26,6 +26,7 @@ public class AtomicHashMapConcurrencyTest extends AbstractInfinispanTest {
    public static final String KEY = "key";
    Cache<String, Object> cache;
    TransactionManager tm;
+   private CacheManager cm;
 
    enum Operation {
       PUT,
@@ -40,7 +41,7 @@ public class AtomicHashMapConcurrencyTest extends AbstractInfinispanTest {
       c.setLockAcquisitionTimeout(500);
       // these 2 need to be set to use the AtomicMapCache
       c.setInvocationBatchingEnabled(true);
-      CacheManager cm = TestCacheManagerFactory.createCacheManager(c, true);
+      cm = TestCacheManagerFactory.createCacheManager(c, true);
       cache = cm.getCache();
       tm = TestingUtil.getTransactionManager(cache);
    }
@@ -51,6 +52,7 @@ public class AtomicHashMapConcurrencyTest extends AbstractInfinispanTest {
          tm.rollback();
       } catch (Exception e) {
       }
+      TestingUtil.killCacheManagers(cm);
    }
 
    public void testConcurrentCreate() throws Exception {

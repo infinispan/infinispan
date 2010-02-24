@@ -14,6 +14,9 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -33,12 +36,18 @@ public class TestCacheManagerFactory {
    public static final String MARSHALLER = System.getProperties().getProperty("infinispan.marshaller.class");
    private static Log log = LogFactory.getLog(TestCacheManagerFactory.class);
 
+   private static ThreadLocal<PerThreadCacheManagers> perThreadCacheManagers = new ThreadLocal<PerThreadCacheManagers>() {
+      @Override
+      protected PerThreadCacheManagers initialValue() {
+         return new PerThreadCacheManagers();
+      }
+   };
+
    private static DefaultCacheManager newDefaultCacheManager(GlobalConfiguration gc, Configuration c, boolean keepJmxDomain) {
       if (!keepJmxDomain) {
          gc.setJmxDomain("infinispan" + jmxDomainPostfix.incrementAndGet());
       }
-      DefaultCacheManager defaultCacheManager = new DefaultCacheManager(gc, c);
-      return defaultCacheManager;
+      return newDefaultCacheManager(gc, c);
    }
 
    public static CacheManager fromXml(String xmlFile, boolean allowDupeDomains) throws IOException {
@@ -72,7 +81,7 @@ public class TestCacheManagerFactory {
 
       minimizeThreads(gc);
 
-      CacheManager cm = new DefaultCacheManager(gc, c, false);
+      CacheManager cm = newDefaultCacheManager(gc, c, false);
       for (Map.Entry<String, Configuration> e: named.entrySet()) cm.defineConfiguration(e.getKey(), e.getValue());
       cm.start();
       return cm;
@@ -246,6 +255,57 @@ public class TestCacheManagerFactory {
          } catch (ClassNotFoundException e) {
             // No-op, stick to GlobalConfiguration default.
          }
+      }
+   }
+
+   private static DefaultCacheManager newDefaultCacheManager(GlobalConfiguration gc, Configuration c) {
+      DefaultCacheManager defaultCacheManager = new DefaultCacheManager(gc, c, true);
+      PerThreadCacheManagers threadCacheManagers = perThreadCacheManagers.get();
+      String methodName = extractMethodName();
+      threadCacheManagers.add(methodName, defaultCacheManager);
+      return defaultCacheManager;
+   }
+
+   private static String extractMethodName() {
+      StackTraceElement[] stack = Thread.currentThread().getStackTrace();
+      if (stack.length == 0) return null;
+      for (int i = stack.length - 1; i > 0; i--)
+      {
+         StackTraceElement e = stack[i];
+         String className = e.getClassName();
+         if ((className.indexOf("org.infinispan") != -1) && className.indexOf("org.infinispan.test") < 0)
+            return e.toString();
+      }
+      return null;
+   }
+
+   static void testFinished(String testName) {
+      perThreadCacheManagers.get().checkManagersClosed(testName);
+   }
+
+   private static class PerThreadCacheManagers {
+      HashMap<String, CacheManager> cacheManagers = new HashMap<String, CacheManager>();
+
+      public void checkManagersClosed(String testName) {
+         for (String cmName : cacheManagers.keySet()) {
+            CacheManager cm = cacheManagers.get(cmName);
+            if (cm.getStatus().allowInvocations()) {
+               String thName = Thread.currentThread().getName();
+               String errorMessage = '\n' +
+                     "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n" +
+                     "!!!!!! (" + thName + ") Exiting because " + testName + " has NOT shut down all the cache managers it has started !!!!!!!\n" +
+                     "!!!!!! (" + thName + ") The still-running cacheManager was created here: " + cmName + " !!!!!!!\n" +
+                     "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
+               log.error(errorMessage);
+               System.err.println(errorMessage);
+               System.exit(9);
+            }
+         }
+         cacheManagers.clear();
+      }
+
+      public void add(String methodName, DefaultCacheManager cm) {
+         cacheManagers.put(methodName, cm);
       }
    }
 }

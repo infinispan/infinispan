@@ -65,7 +65,7 @@
    <properties>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
       <defaultTestGroup>functional,unit</defaultTestGroup>
-      <testNGListener>org.infinispan.test.testng.UnitTestTestNGListener</testNGListener>
+      <testNGListener>org.infinispan.test.fwk.UnitTestTestNGListener</testNGListener>
       <scala.version>2.7.7</scala.version>
    </properties>
 
@@ -410,7 +410,7 @@
       <profile>
          <id>debug-tests</id>
          <properties>
-            <testNGListener>org.infinispan.test.testng.DebuggingUnitTestNGListener</testNGListener>
+            <testNGListener>org.infinispan.test.fwk.DebuggingUnitTestNGListener</testNGListener>
             <protocol.stack>tcp</protocol.stack>
          </properties>
       </profile>
