@@ -21,6 +21,7 @@ except:
 from pythonTools import *
 
 modules = []
+multi_threaded= False ## Do not enable multi-threading for now; some weird bugs here!
 
 def getModules(directory):
     # look at the pom.xml file
@@ -223,6 +224,12 @@ def uploadJavadocs(base_dir, workingDir, version):
   print "  2) SSH to sourceforge (ssh -t SF_USERNAME,infinispan@shell.sourceforge.net create) and run '/home/groups/i/in/infinispan/install_apidocs.sh'"
   print ""    
 
+def do_task(target, args, async_processes):
+  if multi_threaded:
+    async_processes.append(Process(target = target, args = args))  
+  else:
+    target(*args)
+
 ### This is the starting place for this script.
 def release():
   require_settings_file()
@@ -274,16 +281,16 @@ def release():
     
   # Step 4: Check in to Maven2 repo
   print "Step 4: Checking in to Maven2 Repo (this can take a while, go get coffee)"
-  async_processes.append(Process(target = checkInMaven2Repo, args = (version, workingDir)))  
+  do_task(checkInMaven2Repo, (version, workingDir), async_processes)
   print "Step 4: Complete"
   
   # Step 5: Upload javadocs to FTP
   print "Step 5: Uploading Javadocs"  
-  async_processes.append(Process(target = uploadJavadocs, args = (base_dir, workingDir, version)))  
+  do_task(uploadJavadocs, (base_dir, workingDir, version), async_processes)
   print "Step 5: Complete"
   
   print "Step 6: Uploading to Sourceforge"
-  async_processes.append(Process(target = uploadArtifactsToSourceforge, args = (version)))    
+  do_task(uploadArtifactsToSourceforge, (version), async_processes)    
   print "Step 6: Complete"
   
   ## Wait for processes to finish
@@ -295,7 +302,6 @@ def release():
   
   # (future)
   # Step 6: Update www.infinispan.org
-  # Step 7; Upload to SF.net
   
   print "\n\n\nDone!  Now all you need to do is:"
   print "   1.  Update http://www.infinispan.org"
