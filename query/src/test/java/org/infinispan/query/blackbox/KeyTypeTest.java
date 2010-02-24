@@ -29,9 +29,11 @@ import org.infinispan.manager.CacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.QueryFactory;
 import org.infinispan.query.backend.QueryHelper;
+import org.infinispan.query.helper.TestQueryHelperFactory;
 import org.infinispan.query.test.CustomKey;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -56,34 +58,24 @@ public class KeyTypeTest extends SingleCacheManagerTest{
    QueryHelper qh;
    Person person1;
 
+   public KeyTypeTest() {
+      cleanup = CleanupPhase.AFTER_METHOD;
+   }
+
    @Override
    protected CacheManager createCacheManager() throws Exception {
       Configuration c = getDefaultClusteredConfig(LOCAL, true);
       c.setIndexingEnabled(true);
       c.setIndexLocalOnly(false);
-      return TestCacheManagerFactory.createCacheManager(c, true);
-   }
-
-   @BeforeMethod (alwaysRun = true)
-   public void setUp() throws Exception{
-      CacheManager manager = createCacheManager();
-      cache = manager.getCache();
-      qh = new QueryHelper(cache, new Properties(), Person.class);
+      cacheManager = TestCacheManagerFactory.createCacheManager(c, true);
+      cache = cacheManager.getCache();
+      qh = TestQueryHelperFactory.createTestQueryHelperInstance(cache, Person.class);
 
       person1 = new Person();
       person1.setName("Navin");
       person1.setBlurb("Owns a macbook");
       person1.setAge(20);
-
-
-   }
-
-   @AfterMethod(alwaysRun = true)
-   public void tearDown() {
-      if (cache != null) {
-         cache.clear();
-         cache.stop();
-      }
+      return cacheManager;
    }
 
    public void testPrimitiveAndStringKeys(){
@@ -131,6 +123,7 @@ public class KeyTypeTest extends SingleCacheManagerTest{
 
       Term term = new Term("blurb", "owns");
       CacheQuery cacheQuery = new QueryFactory(cache, qh).getQuery(new TermQuery(term));
-      assert cacheQuery.getResultSize() == 3;
+      int i;
+      assert (i = cacheQuery.getResultSize()) == 3 : "Expected 3, was " + i;
    }
 }
