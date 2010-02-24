@@ -114,7 +114,8 @@ public class ModuleProperties extends Properties {
          try {
             String lifecycleClassName = m.getValue().getLifecycleClassName();
             Class<?> loadClass = Util.loadClass(lifecycleClassName);
-            ModuleLifecycle ml = (ModuleLifecycle) Proxies.newCatchThrowableProxy((ModuleLifecycle) loadClass.newInstance());
+            Object proxy = Proxies.newCatchThrowableProxy((ModuleLifecycle) loadClass.newInstance());
+            ModuleLifecycle ml = (ModuleLifecycle) proxy;
             lifecycles.add(ml);
          } catch (Exception e) {
             log.warn("Module " + m.getKey() + " loaded, but could not be initialized ", e);
@@ -138,16 +139,19 @@ public class ModuleProperties extends Properties {
     protected void verify() {
         if (getName() == null)
             throw new ConfigurationException(
-                            "Module propertes does not specify module name. Module name should be specified using key "
+                            "Module properties does not specify module name. Module name should be specified using key "
                                             + MODULE_NAME_KEY);
-        if (getConfigurationClassName() == null)
-            throw new ConfigurationException(
-                            "Module propertes does not specify module configuration class name. Module configuration class name should be specified using key "
-                                            + MODULE_CONFIGURATION_CLASS);
-        
-        if (getLifecycleClassName() == null)
-            throw new ConfigurationException(
-                            "Module propertes does not specify module lifecycle class name. Module lifecycle class name should be specified using key "
-                                            + MODULE_LIFECYCLE);
+
+       // we should not *require* that every module supplies these...
+       
+//        if (getConfigurationClassName() == null)
+//            throw new ConfigurationException(
+//                            "Module properties does not specify module configuration class name. Module configuration class name should be specified using key "
+//                                            + MODULE_CONFIGURATION_CLASS);
+//
+//        if (getLifecycleClassName() == null)
+//            throw new ConfigurationException(
+//                            "Module properties does not specify module lifecycle class name. Module lifecycle class name should be specified using key "
+//                                            + MODULE_LIFECYCLE);
     }
 }

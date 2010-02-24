@@ -22,6 +22,8 @@
 package org.infinispan.util;
 
 import java.lang.reflect.Method;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -36,8 +38,17 @@ public class Proxies {
 
     public static Object newCatchThrowableProxy(Object obj) {
         return java.lang.reflect.Proxy.newProxyInstance(obj.getClass().getClassLoader(), 
-                        obj.getClass().getInterfaces(), new CatchThrowableProxy(obj));
+                        getInterfaces(obj.getClass()), new CatchThrowableProxy(obj));
     }
+
+   private static Class[] getInterfaces(Class clazz) {
+      Class[] interfaces = clazz.getInterfaces();
+      if (interfaces.length > 0) return interfaces;
+      Class superclass = clazz.getSuperclass();
+      if (!superclass.equals(Object.class))
+         return superclass.getInterfaces();
+      return new Class[]{};
+   }
     
    /**
     * CatchThrowableProxy is a wrapper around interface that does not allow any exception to be
