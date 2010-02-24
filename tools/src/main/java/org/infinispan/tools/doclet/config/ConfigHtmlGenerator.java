@@ -74,7 +74,7 @@ public class ConfigHtmlGenerator extends HtmlGenerator {
 
       StringBuilder sb = new StringBuilder();
       // index of components
-      sb.append("<h2>Infinispan configuration options</h2><br/>");
+      sb.append("<h2>Infinispan configuration options "  + Version.getMajorVersion() + " </h2><br/>");
       sb.append("<UL>");
 
       List<Class<?>> configBeans;
