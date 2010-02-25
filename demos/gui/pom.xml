@@ -5,12 +5,12 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-parent</artifactId>
-      <version>4.0.0.FINAL</version>
+      <version>4.0.1-SNAPSHOT</version>
       <relativePath>../../parent/pom.xml</relativePath>
    </parent>
 
    <artifactId>infinispan-gui-demo</artifactId>
-   <version>4.0.0.FINAL</version>
+   <version>4.0.1-SNAPSHOT</version>
    <name>Infinispan GUI Demo</name>
    <description>Infinispan - GUI Demo</description>
 

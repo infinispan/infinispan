@@ -4,7 +4,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-cachestore-parent</artifactId>
-      <version>4.0.0.FINAL</version>
+      <version>4.0.1-SNAPSHOT</version>
       <relativePath>../pom.xml</relativePath>
    </parent>
    <artifactId>infinispan-cachestore-jdbm</artifactId>

@@ -5,12 +5,12 @@
 	<parent>
 		<groupId>org.infinispan</groupId>
 		<artifactId>infinispan-parent</artifactId>
-		<version>4.0.0.FINAL</version>
+		<version>4.0.1-SNAPSHOT</version>
 		<relativePath>../../parent/pom.xml</relativePath>
 	</parent>
 	
 	<artifactId>infinispan-ec2-demo</artifactId>
-	<version>4.0.0.FINAL</version>
+	<version>4.0.1-SNAPSHOT</version>
 	<name>Infinispan EC2 Demo</name>
 	<description>Infinispan - EC2 Demo</description>
    <packaging>war</packaging>
