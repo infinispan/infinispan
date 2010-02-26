@@ -1,6 +1,9 @@
 package org.infinispan.loaders.cloud;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.HashSet;
@@ -11,6 +14,8 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import org.infinispan.Cache;
 import org.infinispan.config.ConfigurationException;
@@ -51,6 +56,7 @@ import com.google.common.collect.ImmutableSet;
  * @since 4.0
  */
 public class CloudCacheStore extends BucketBasedCacheStore {
+   private static final int COMPRESSION_COPY_BYTEARRAY_SIZE = 1024;
    private static final Log log = LogFactory.getLog(CloudCacheStore.class);
    private final ThreadLocal<List<Future<?>>> asyncCommandFutures = new ThreadLocal<List<Future<?>>>();
    private CloudCacheStoreConfig cfg;
@@ -112,7 +118,8 @@ public class CloudCacheStore extends BucketBasedCacheStore {
       containerName = getThisContainerName();
       try {
          if (constructInternalBlobstores) {
-            // add an executor as a constructor param to EnterpriseConfigurationModule, pass
+            // add an executor as a constructor param to
+            // EnterpriseConfigurationModule, pass
             // property overrides instead of Properties()
             ctx = new BlobStoreContextFactory().createContext(cfg.getCloudService(), cfg
                      .getIdentity(), cfg.getPassword(), ImmutableSet.of(
@@ -131,6 +138,7 @@ public class CloudCacheStore extends BucketBasedCacheStore {
       }
    }
 
+   @Override
    protected Set<InternalCacheEntry> loadAllLockSafe() throws CacheLoaderException {
       Set<InternalCacheEntry> result = new HashSet<InternalCacheEntry>();
 
@@ -143,6 +151,7 @@ public class CloudCacheStore extends BucketBasedCacheStore {
       return result;
    }
 
+   @Override
    protected void fromStreamLockSafe(ObjectInput objectInput) throws CacheLoaderException {
       String source;
       try {
@@ -153,10 +162,12 @@ public class CloudCacheStore extends BucketBasedCacheStore {
       if (containerName.equals(source)) {
          log.info("Attempt to load the same cloud bucket ({0}) ignored", source);
       } else {
-         // TODO implement stream handling. What's the JClouds API to "copy" one bucket to another?
+         // TODO implement stream handling. What's the JClouds API to "copy"
+         // one bucket to another?
       }
    }
 
+   @Override
    protected void toStreamLockSafe(ObjectOutput objectOutput) throws CacheLoaderException {
       try {
          objectOutput.writeObject(containerName);
@@ -165,13 +176,15 @@ public class CloudCacheStore extends BucketBasedCacheStore {
       }
    }
 
+   @Override
    protected void clearLockSafe() {
       List<Future<?>> futures = asyncCommandFutures.get();
       if (futures == null) {
          // is a sync call
          blobStore.clearContainer(containerName);
       } else {
-         // is an async call - invoke clear() on the container asynchronously and store the future
+         // is an async call - invoke clear() on the container asynchronously
+         // and store the future
          // in the 'futures' collection
          futures.add(asyncBlobStore.clearContainer(containerName));
       }
@@ -185,6 +198,7 @@ public class CloudCacheStore extends BucketBasedCacheStore {
       }
    }
 
+   @Override
    protected Bucket loadBucket(String hash) throws CacheLoaderException {
       return readFromBlob(blobStore.getBlob(containerName, encodeBucketName(hash)), hash);
    }
@@ -197,8 +211,10 @@ public class CloudCacheStore extends BucketBasedCacheStore {
       }
    }
 
+   @Override
    protected void purgeInternal() throws CacheLoaderException {
-      // TODO can expiry data be stored in a blob's metadata? More efficient purging that way. See
+      // TODO can expiry data be stored in a blob's metadata? More efficient
+      // purging that way. See
       // https://jira.jboss.org/jira/browse/ISPN-334
       if (!cfg.isLazyPurgingOnly()) {
          acquireGlobalLock(false);
@@ -223,6 +239,7 @@ public class CloudCacheStore extends BucketBasedCacheStore {
       }
    }
 
+   @Override
    protected void insertBucket(Bucket bucket) throws CacheLoaderException {
       Blob blob = blobStore.newBlob(encodeBucketName(bucket.getBucketName()));
       writeToBlob(blob, bucket);
@@ -232,7 +249,8 @@ public class CloudCacheStore extends BucketBasedCacheStore {
          // is a sync call
          blobStore.putBlob(containerName, blob);
       } else {
-         // is an async call - invoke clear() on the container asynchronously and store the future
+         // is an async call - invoke clear() on the container asynchronously
+         // and store the future
          // in the 'futures' collection
          futures.add(asyncBlobStore.putBlob(containerName, blob));
       }
@@ -250,10 +268,12 @@ public class CloudCacheStore extends BucketBasedCacheStore {
             CacheLoaderException exception = null;
             try {
                futures = asyncCommandFutures.get();
-               if (log.isTraceEnabled()) log.trace("Futures, in order: {0}", futures);
+               if (log.isTraceEnabled())
+                  log.trace("Futures, in order: {0}", futures);
                for (Future<?> f : futures) {
                   Object o = f.get();
-                  if (log.isTraceEnabled()) log.trace("Future {0} returned {1}", f, o);
+                  if (log.isTraceEnabled())
+                     log.trace("Future {0} returned {1}", f, o);
                }
             } catch (InterruptedException ie) {
                Thread.currentThread().interrupt();
@@ -269,13 +289,19 @@ public class CloudCacheStore extends BucketBasedCacheStore {
       }
    }
 
+   @Override
    protected void updateBucket(Bucket bucket) throws CacheLoaderException {
       insertBucket(bucket);
    }
 
    private void writeToBlob(Blob blob, Bucket bucket) throws CacheLoaderException {
+
       try {
-         blob.setPayload(marshaller.objectToByteBuffer(bucket));
+         final byte[] payloadBuffer = marshaller.objectToByteBuffer(bucket);
+         if (cfg.isCompress())
+            blob.setPayload(compress(payloadBuffer));
+         else
+            blob.setPayload(payloadBuffer);
       } catch (IOException e) {
          throw new CacheLoaderException(e);
       }
@@ -285,16 +311,44 @@ public class CloudCacheStore extends BucketBasedCacheStore {
       if (blob == null)
          return null;
       try {
-         Bucket bucket = (Bucket) marshaller.objectFromInputStream(blob.getContent());
+         Bucket bucket;
+         if (cfg.isCompress())
+            bucket = (Bucket) marshaller.objectFromInputStream(new GZIPInputStream(blob
+                     .getContent()));
+         else
+            bucket = (Bucket) marshaller.objectFromInputStream(blob.getContent());
+
          if (bucket != null)
             bucket.setBucketName(bucketName);
          return bucket;
-      } catch (Exception e) {
+      } catch (ClassNotFoundException e) {
          throw convertToCacheLoaderException("Unable to read blob", e);
+      } catch (IOException e) {
+         throw convertToCacheLoaderException("Class loading issue", e);
       }
    }
 
+   private byte[] compress(final byte[] payloadBuffer) throws IOException {
+      final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      InputStream input = new ByteArrayInputStream(payloadBuffer);
+      GZIPOutputStream output = new GZIPOutputStream(baos);
+      byte[] buf = new byte[COMPRESSION_COPY_BYTEARRAY_SIZE];
+
+      int bytesRead = input.read(buf);
+      while (bytesRead != -1) {
+         output.write(buf, 0, bytesRead);
+         bytesRead = input.read(buf);
+      }
+      input.close();
+      output.close();
+      return baos.toByteArray();
+   }
+
    private String encodeBucketName(String decodedName) {
-      return (decodedName.startsWith("-")) ? decodedName.replace('-', 'A') : decodedName;
+      final String name = (decodedName.startsWith("-")) ? decodedName.replace('-', 'A')
+               : decodedName;
+      if (cfg.isCompress())
+         return name + ".gz";
+      return name;
    }
 }
