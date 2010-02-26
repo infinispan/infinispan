@@ -31,4 +31,19 @@ package org.infinispan.server.core.transport;
 public interface ChannelBuffer {
    byte readByte();
    void readBytes(byte[] dst, int dstIndex, int length);
+   int readableBytes();
+   short readUnsignedByte();
+   ChannelBuffer readBytes(int length);
+   void resetReaderIndex();
+   int readerIndex();
+   void readBytes(byte[] dst);
+
+   void writeByte(byte value);
+   void writeBytes(byte[] src);
+   int writerIndex();
+
+   Object getUnderlyingChannelBuffer();
+
+   // TODO: Add read/write methods for reading and writing variable length numbers,
+   // TODO: that way abstracting VInt and VLong
 }

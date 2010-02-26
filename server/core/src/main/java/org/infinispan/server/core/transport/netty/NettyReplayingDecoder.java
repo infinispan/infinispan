@@ -38,6 +38,11 @@ import org.jboss.netty.handler.codec.replay.ReplayingDecoder;
 public class NettyReplayingDecoder<T extends Enum<T>> extends ReplayingDecoder<T> implements Decoder.Checkpointer<T> {
    final Decoder<T> decoder;
 
+   public NettyReplayingDecoder(Decoder<T> decoder) {
+      super(true);
+      this.decoder = decoder;
+   }
+
    public NettyReplayingDecoder(Decoder<T> decoder, T initialState) {
       super(initialState, true);
       this.decoder = decoder;
@@ -68,14 +73,14 @@ public class NettyReplayingDecoder<T extends Enum<T>> extends ReplayingDecoder<T
 //   }
 //
 //   @Override
-//   public Object decode(ChannelHandlerContext ctx, ChannelBuffer buffer, T state) throws Exception {
+//   public Object decode(ChannelHandlerContext ctx, ChannelBuffer nettyBuffer, T state) throws Exception {
 //      return decode(((NettyChannelHandlerContext) ctx).ctx, ((NettyChannelHandlerContext) ctx).ctx.getChannel(),
-//                    ((NettyChannelBuffer) buffer).buffer, state);
+//                    ((NettyChannelBuffer) nettyBuffer).nettyBuffer, state);
 //   }
 //
 //   @Override
 //   protected Object decode(org.jboss.netty.channel.ChannelHandlerContext ctx, org.jboss.netty.channel.Channel channel,
-//                           org.jboss.netty.buffer.ChannelBuffer buffer, T state) throws Exception {
+//                           org.jboss.netty.nettyBuffer.ChannelBuffer nettyBuffer, T state) throws Exception {
 //      return null;
 //   }
 //
@@ -83,7 +88,7 @@ public class NettyReplayingDecoder<T extends Enum<T>> extends ReplayingDecoder<T
 //      ReplayingDecoder<T> decoder;
 //
 //      @Override
-//      protected Object decode(org.jboss.netty.channel.ChannelHandlerContext ctx, org.jboss.netty.channel.Channel channel, org.jboss.netty.buffer.ChannelBuffer buffer, T state) throws Exception {
+//      protected Object decode(org.jboss.netty.channel.ChannelHandlerContext ctx, org.jboss.netty.channel.Channel channel, org.jboss.netty.nettyBuffer.ChannelBuffer nettyBuffer, T state) throws Exception {
 //         return null;  // TODO: Customise this generated block
 //      }
 //   }
