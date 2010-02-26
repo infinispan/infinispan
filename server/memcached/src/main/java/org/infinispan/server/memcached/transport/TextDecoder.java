@@ -33,7 +33,7 @@ import org.infinispan.server.core.transport.ChannelHandlerContext;
 import org.infinispan.server.core.transport.Decoder;
 import org.infinispan.server.core.transport.ExceptionEvent;
 import org.infinispan.server.memcached.Reply;
-import org.infinispan.server.memcached.UnknownCommandException;
+import org.infinispan.server.core.UnknownCommandException;
 import org.infinispan.server.memcached.commands.CommandFactory;
 import org.infinispan.server.memcached.commands.StorageCommand;
 import org.infinispan.server.memcached.commands.TextCommand;

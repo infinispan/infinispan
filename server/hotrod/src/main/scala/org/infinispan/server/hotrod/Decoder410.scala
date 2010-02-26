@@ -1,6 +1,7 @@
 package org.infinispan.server.hotrod
 
 import org.infinispan.server.core.transport.{ExceptionEvent, ChannelHandlerContext, ChannelBuffer, Decoder}
+import org.infinispan.server.core.UnknownCommandException
 
 /**
  * // TODO: Document this
@@ -30,7 +31,7 @@ class Decoder410 extends Decoder[NoState] {
                   (cache: Cache, command: StorageCommand) => cache.put(command)
                })
             }
-            case _ => throw new RuntimeException("Unknown command")// TODO: Changed to unknown command exception
+            case _ => throw new UnknownCommandException("Command " + op + " not known")
          }
       command
    }

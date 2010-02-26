@@ -24,7 +24,7 @@ package org.infinispan.server.memcached.commands;
 
 import java.io.IOException;
 
-import org.infinispan.server.memcached.UnknownCommandException;
+import org.infinispan.server.core.UnknownCommandException;
 
 /**
  * Command.
