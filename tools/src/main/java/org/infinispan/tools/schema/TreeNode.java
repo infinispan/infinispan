@@ -37,7 +37,6 @@ import com.sun.xml.xsom.XSComplexType;
  * @author Vladimir Blagojevic
  * @since 4.0
  */
-@SuppressWarnings("restriction")
 public class TreeNode implements Iterable<TreeNode>, Comparable<TreeNode> {
    private final String name;
    private TreeNode parent;

@@ -57,8 +57,8 @@ import com.sun.xml.xsom.visitor.XSVisitor;
  */
 public class XSOMSchemaTreeWalker implements XSVisitor {
    private XSSchema schema;
-   TreeNode root;
-   TreeNode currentNode;
+   private TreeNode root;
+   private TreeNode currentNode;
 
    public XSOMSchemaTreeWalker(XSSchema schema, String rootName) {
       super();
@@ -127,8 +127,7 @@ public class XSOMSchemaTreeWalker implements XSVisitor {
          }
 
          public void restrictionSimpleType(XSRestrictionSimpleType type) {
-            XSSimpleType baseType = type.getSimpleBaseType();
-            //System.out.println("Restriction " + type.getName() + " :" + baseType.getName());
+            //XSSimpleType baseType = type.getSimpleBaseType();
             Iterator<?> itr = type.iterateDeclaredFacets();
             while (itr.hasNext()) {
                facet((XSFacet) itr.next());

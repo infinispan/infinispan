@@ -26,14 +26,15 @@ import org.infinispan.tools.schema.TreeNode;
 
 /**
  * TreeWalker that generates XML pretty print of the configuration tree
- *
+ * 
  * @author Vladimir Blagojevic
  * @see ConfigDoclet
  * @since 4.0
  */
 public class XMLTreeOutputWalker extends AbstractTreeWalker {
-   
+
    private final StringBuilder sb;
+   private static final String IDENT = "  ";
 
    public XMLTreeOutputWalker(StringBuilder sb) {
       super();
@@ -41,27 +42,25 @@ public class XMLTreeOutputWalker extends AbstractTreeWalker {
    }
 
    public void visitNode(TreeNode treeNode) {
-      String ident = "";     
-      for(int i = 0; i<=treeNode.getDepth();i++)
-         ident += "  ";
-      
-      String parentName = treeNode.getParent().getName();
-      if(parentName.startsWith("namedCache")){
-         parentName = "default";
-      }
-      sb.append(ident + "&lt;<a href=\"" + "#ce_" + parentName
-               + "_" + treeNode.getName() + "\">" + treeNode.getName() + "</a>&gt;" + "\n");
+      String ident = "";
+      for (int i = 0; i <= treeNode.getDepth(); i++)
+         ident += IDENT;
+
+      sb.append(ident + "&lt;<a href=\"" + "#ce_" + treeNode.getParent().getName() + "_"
+               + treeNode.getName() + "\">" + treeNode.getName() + "</a>&gt;" + "\n");
 
    }
-   
-   public TreeNode findNode(TreeNode tn, String name, String parent){
+
+   public TreeNode findNode(TreeNode tn, String name, String parent) {
       TreeNode result = null;
-      if(tn.getName().equals(name) && tn.getParent() != null && tn.getParent().getName().equals(parent)){         
+      if (tn.getName().equals(name) && tn.getParent() != null
+               && tn.getParent().getName().equals(parent)) {
          result = tn;
       } else {
-         for (TreeNode child :tn.getChildren()){
-            result = findNode(child,name,parent);
-            if(result != null) break;
+         for (TreeNode child : tn.getChildren()) {
+            result = findNode(child, name, parent);
+            if (result != null)
+               break;
          }
       }
       return result;
