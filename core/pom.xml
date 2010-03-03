@@ -18,7 +18,7 @@
    <properties>
       <version.jboss.common.core>2.2.14.GA</version.jboss.common.core>
       <version.jboss.marshalling>1.2.0.GA</version.jboss.marshalling>
-      <version.jgroups>2.9.0.GA</version.jgroups>
+      <version.jgroups>2.10.0.Alpha1</version.jgroups>
       <version.jta>1.0.1.GA</version.jta>
       <version.org.jboss.naming>5.0.3.GA</version.org.jboss.naming>
       <version.rhq.pluginAnnotations>1.4.0.B01</version.rhq.pluginAnnotations>
