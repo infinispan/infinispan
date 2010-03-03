@@ -21,9 +21,8 @@ import org.infinispan.server.hotrod._
  * @since 4.1
  */
 trait Client {
-   private var channel: Channel = _
 
-   def connect(host: String, port: Int): Boolean = {
+   def connect(host: String, port: Int) = {
       // Set up.
       val factory = new NioClientSocketChannelFactory(Executors.newCachedThreadPool, Executors.newCachedThreadPool)
       val bootstrap: ClientBootstrap = new ClientBootstrap(factory)
@@ -33,16 +32,18 @@ trait Client {
       // Make a new connection.
       val connectFuture = bootstrap.connect(new InetSocketAddress(host, port))
       // Wait until the connection is made successfully.
-      channel = connectFuture.awaitUninterruptibly.getChannel
-      connectFuture.isSuccess
+      val ch = connectFuture.awaitUninterruptibly.getChannel
+      // Ideally, I'd store channel as a var in this trait. However, this causes issues with TestNG, see:
+      // http://thread.gmane.org/gmane.comp.lang.scala.user/24317
+      (connectFuture.isSuccess, ch)
    }
 
-   def put(cacheName: String, key: Array[Byte], lifespan: Int, maxIdle: Int, value: Array[Byte]): Byte = {
-      val writeFuture = channel.write(new Store(cacheName, key, lifespan, maxIdle, value))
+   def put(ch: Channel, cacheName: String, key: Array[Byte], lifespan: Int, maxIdle: Int, value: Array[Byte]): Byte = {
+      val writeFuture = ch.write(new Store(cacheName, key, lifespan, maxIdle, value))
       writeFuture.awaitUninterruptibly
       assertTrue(writeFuture.isSuccess)
       // Get the handler instance to retrieve the answer.
-      var handler = channel.getPipeline.getLast.asInstanceOf[ClientHandler]
+      var handler = ch.getPipeline.getLast.asInstanceOf[ClientHandler]
       handler.getResponse.status.id.byteValue
    }
 }
@@ -67,21 +68,21 @@ private object Encoder extends OneToOneEncoder {
       val ret =
          msg match {
             case s: Store => {
-               val buf = new NettyChannelBuffer(ChannelBuffers.dynamicBuffer)
-               buf.writeByte(0xA0.asInstanceOf[Byte]) // magic
-               buf.writeByte(41) // version
-               buf.writeByte(0x01) // opcode - put
-               VInt.write(buf, s.cacheName.length) // cache name length
-               buf.writeBytes(s.cacheName.getBytes()) // cache name
-               VLong.write(buf, 1) // message id
-               VInt.write(buf, 0) // flags
-               VInt.write(buf, s.key.length) // key length
-               buf.writeBytes(s.key) // key
-               VInt.write(buf, s.lifespan) // lifespan
-               VInt.write(buf, s.maxIdle) // maxIdle
-               VInt.write(buf, s.value.length) // value length
-               buf.writeBytes(s.value) // value
-               buf.getUnderlyingChannelBuffer
+               val buffer = new NettyChannelBuffer(ChannelBuffers.dynamicBuffer)
+               buffer.writeByte(0xA0.asInstanceOf[Byte]) // magic
+               buffer.writeByte(41) // version
+               buffer.writeByte(0x01) // opcode - put
+               buffer.writeUnsignedInt(s.cacheName.length) // cache name length
+               buffer.writeBytes(s.cacheName.getBytes()) // cache name
+               buffer.writeUnsignedLong(1) // message id
+               buffer.writeUnsignedInt(0) // flags
+               buffer.writeUnsignedInt(s.key.length) // key length
+               buffer.writeBytes(s.key) // key
+               buffer.writeUnsignedInt(s.lifespan) // lifespan
+               buffer.writeUnsignedInt(s.maxIdle) // maxIdle
+               buffer.writeUnsignedInt(s.value.length) // value length
+               buffer.writeBytes(s.value) // value
+               buffer.getUnderlyingChannelBuffer
             }
       }
       ret
@@ -95,7 +96,7 @@ private object Decoder extends ReplayingDecoder[NoState] with Logging {
       val buf = new NettyChannelBuffer(buffer)
       val magic = buf.readUnsignedByte
       val opCode = buf.readUnsignedByte
-      val id = VLong.read(buf)
+      val id = buf.readUnsignedLong
       val status = buf.readUnsignedByte
       new Response(OpCodes.apply(opCode), id, Status.apply(status))
    }

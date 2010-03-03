@@ -11,9 +11,9 @@ import org.testng.Assert._
  * Keep an eye on that for @Test and @AfterClass annotations
  * 
  * @author Galder Zamarreño
- * @since 4.0
+ * @since 4.1
  */
-@Test
+@Test(groups = Array("functional"), testName = "server.hotrod.FlagsTest")
 class FlagsTest {
 
    def testSingleFlag {

@@ -3,11 +3,15 @@ package org.infinispan.server.hotrod
 import org.infinispan.server.core.transport.ChannelBuffer
 
 /**
- * // TODO: Document this
+ * Reads and writes unsigned variable length long values. Even though it's deprecated, do not
+ * remove from source code for the moment because it's a good scala example and could be used
+ * as reference.
+ *
  * @author Galder Zamarreño
- * @since 4.0
+ * @since 4.1
+ * @deprecated Instead use ChannelBuffer.writeUnsignedLong and ChannelBuffer.readUnsignedLong
  */
-
+@deprecated("Instead use ChannelBuffer.writeUnsignedLong and ChannelBuffer.readUnsignedLong")
 object VLong {
 
    def write(out: ChannelBuffer, i: Long) {

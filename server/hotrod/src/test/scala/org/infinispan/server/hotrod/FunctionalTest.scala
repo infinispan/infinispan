@@ -33,13 +33,16 @@ class FunctionalTest extends SingleCacheManagerTest with Utils with Client {
    }
 
    def testPutBasic(m: Method) {
-      assertTrue(connect("127.0.0.1", server.port))
-      val status = put("__default", k(m) , 0, 0, v(m))
+      val result = connect("127.0.0.1", server.port)
+      assertTrue(result._1)
+      val ch = result._2
+      val status = put(ch, "__default", k(m) , 0, 0, v(m))
       assertTrue(status == 0, "Status should have been 0 but instead was: " + status)
    }
 
    @AfterClass(alwaysRun = true)
    override def destroyAfterClass {
+      super.destroyAfterClass
       log.debug("Test finished, close memcached server", null)
       server.stop
    }

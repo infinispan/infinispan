@@ -17,12 +17,12 @@ class Encoder410 extends Encoder {
       val buffer: ChannelBuffer =
          msg match {
             case r: Response => {
-               val buff = ctx.getChannelBuffers.dynamicBuffer
-               buff.writeByte(Magic.byteValue)
-               buff.writeByte(r.opCode.id.byteValue)
-               VLong.write(buff, r.id)
-               buff.writeByte(r.status.id.byteValue)
-               buff
+               val buffer = ctx.getChannelBuffers.dynamicBuffer
+               buffer.writeByte(Magic.byteValue)
+               buffer.writeByte(r.opCode.id.byteValue)
+               buffer.writeUnsignedLong(r.id)
+               buffer.writeByte(r.status.id.byteValue)
+               buffer
             }
       }
       buffer

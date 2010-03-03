@@ -28,7 +28,7 @@ import org.infinispan.server.core.transport.ChannelBuffer;
  * NettyChannelBuffer.
  * 
  * @author Galder Zamarreño
- * @since 4.0
+ * @since 4.1
  */
 public class NettyChannelBuffer implements ChannelBuffer /*, org.jboss.netty.nettyBuffer.ChannelBuffer*/ {
    private final org.jboss.netty.buffer.ChannelBuffer nettyBuffer;
@@ -41,7 +41,47 @@ public class NettyChannelBuffer implements ChannelBuffer /*, org.jboss.netty.net
    public org.jboss.netty.buffer.ChannelBuffer getUnderlyingChannelBuffer() {
       return nettyBuffer;
    }
-   
+
+   @Override
+   public int readUnsignedInt() {
+      byte b = readByte();
+      int i = b & 0x7F;
+      for (int shift = 7; (b & 0x80) != 0; shift += 7) {
+         b = readByte();
+         i |= (b & 0x7FL) << shift;
+      }
+      return i;
+   }
+
+   @Override
+   public void writeUnsignedInt(int i) {
+      while ((i & ~0x7F) != 0) {
+         writeByte((byte) ((i & 0x7f) | 0x80));
+         i >>>= 7;
+      }
+      writeByte((byte) i);
+   }
+
+   @Override
+   public long readUnsignedLong() {
+      byte b = readByte();
+      long l = b & 0x7F;
+      for (int shift = 7; (b & 0x80) != 0; shift += 7) {
+         b = readByte();
+         l |= (b & 0x7FL) << shift;
+      }
+      return l;
+   }
+
+   @Override
+   public void writeUnsignedLong(long l) {
+      while ((l & ~0x7F) != 0) {
+         writeByte((byte) ((l & 0x7f) | 0x80));
+         l >>>= 7;
+      }
+      writeByte((byte) l);
+   }
+
    @Override
    public byte readByte() {
       return nettyBuffer.readByte();
@@ -305,25 +345,27 @@ public class NettyChannelBuffer implements ChannelBuffer /*, org.jboss.netty.net
 //      return nettyBuffer.readable();
 //   }
 //
-     @Override
-     public int readableBytes() {
-        return nettyBuffer.readableBytes();
-     }
-
+//     @Override
+//     public int readableBytes() {
+//        return nettyBuffer.readableBytes();
+//     }
+//
    @Override
    public int readerIndex() {
       return nettyBuffer.readerIndex();
    }
+
+//
 //
 //   @Override
 //   public void readerIndex(int readerIndex) {
 //      nettyBuffer.readerIndex(readerIndex);
 //   }
 //
-     @Override
-     public void resetReaderIndex() {
-        nettyBuffer.resetReaderIndex();
-     }
+//     @Override
+//     public void resetReaderIndex() {
+//        nettyBuffer.resetReaderIndex();
+//     }
 //
 //   @Override
 //   public void resetWriterIndex() {

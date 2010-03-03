@@ -12,10 +12,10 @@ import org.testng.Assert._
  * Keep an eye on that for @Test and @AfterClass annotations
  *  
  * @author Galder Zamarreño
- * @since 4.0
+ * @since 4.1
  */
 
-@Test
+@Test(groups = Array("functional"), testName = "server.hotrod.VariableLengthTest")
 class VariableLengthTest {
 
    def test2pow7minus1 {
@@ -93,17 +93,21 @@ class VariableLengthTest {
    private def writeReadInt(num: Int, expected: Int) {
       val buffer = new NettyChannelBuffer(ChannelBuffers.directBuffer(1024))
       assert(buffer.writerIndex == 0)
-      VInt.write(buffer, num)
+//      VInt.write(buffer, num)
+      buffer.writeUnsignedInt(num)
       assertEquals(buffer.writerIndex, expected)
-      assertEquals(VInt.read(buffer), num)
+//      assertEquals(VInt.read(buffer), num)
+      assertEquals(buffer.readUnsignedInt, num)
    }
 
    private def writeReadLong(num: Long, expected: Int) {
       val buffer = new NettyChannelBuffer(ChannelBuffers.directBuffer(1024))
       assert(buffer.writerIndex == 0)
-      VLong.write(buffer, num)
+//      VLong.write(buffer, num)
+      buffer.writeUnsignedLong(num)
       assertEquals(buffer.writerIndex, expected)
-      assertEquals(VLong.read(buffer), num)
+//      assertEquals(VLong.read(buffer), num)
+      assertEquals(buffer.readUnsignedLong, num)
    }
 
 //   def testEquals128Old() {
