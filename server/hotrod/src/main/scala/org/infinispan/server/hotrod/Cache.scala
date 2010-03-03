@@ -7,6 +7,6 @@ package org.infinispan.server.hotrod
  */
 
 abstract class Cache {
-   def put(c: StorageCommand): Reply.Value
-   def get(c: RetrievalCommand): Reply.Value
+   def put(c: StorageCommand): Response
+   def get(c: RetrievalCommand): Response
 }

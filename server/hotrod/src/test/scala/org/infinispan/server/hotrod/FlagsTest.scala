@@ -63,7 +63,7 @@ class FlagsTest {
 //   }
 
    private def flag(bitFlags: Int)(size: Int)(p: Set[Flag] => Boolean) {
-      var flags = Flags.extractFlags(bitFlags)
+      val flags = Flags.extractFlags(bitFlags)
       assertEquals(flags.size, size)
       assertTrue(p(flags))
    }

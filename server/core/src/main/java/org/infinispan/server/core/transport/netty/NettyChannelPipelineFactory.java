@@ -24,9 +24,11 @@ package org.infinispan.server.core.transport.netty;
 
 import static org.jboss.netty.channel.Channels.pipeline;
 
+import org.jboss.netty.channel.ChannelDownstreamHandler;
 import org.jboss.netty.channel.ChannelHandler;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
+import org.jboss.netty.channel.ChannelUpstreamHandler;
 
 /**
  * NettyChannelPipelineFactory.
@@ -35,20 +37,30 @@ import org.jboss.netty.channel.ChannelPipelineFactory;
  * @since 4.0
  */
 public class NettyChannelPipelineFactory implements ChannelPipelineFactory {
-   private final ChannelHandler decoder;
+   private final ChannelUpstreamHandler decoder;
+   private final ChannelDownstreamHandler encoder;
    private final ChannelHandler handler;
 
-   public NettyChannelPipelineFactory(ChannelHandler decoder, ChannelHandler handler) {
+   public NettyChannelPipelineFactory(ChannelUpstreamHandler decoder, ChannelDownstreamHandler encoder, ChannelHandler handler) {
       this.decoder = decoder;
       this.handler = handler;
+      this.encoder = encoder;
    }
 
    @Override
    public ChannelPipeline getPipeline() throws Exception {
       // Create a default pipeline implementation.
       ChannelPipeline pipeline = pipeline();
-      pipeline.addLast("decoder", decoder);
-      pipeline.addLast("handler", handler);
+      if (decoder != null) {
+         pipeline.addLast("decoder", decoder);
+      }
+      if (encoder != null) {
+         pipeline.addLast("encoder", encoder);
+      }
+      if (handler != null) {
+         pipeline.addLast("handler", handler);
+      }
+
       return pipeline;
    }
 

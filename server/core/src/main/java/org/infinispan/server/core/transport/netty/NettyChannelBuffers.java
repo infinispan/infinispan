@@ -48,6 +48,11 @@ public enum NettyChannelBuffers implements ChannelBuffers {
       return new NettyChannelBuffer(org.jboss.netty.buffer.ChannelBuffers.wrappedBuffer(nettyBuffers));
    }
 
+   @Override
+   public ChannelBuffer dynamicBuffer() {
+      return new NettyChannelBuffer(org.jboss.netty.buffer.ChannelBuffers.dynamicBuffer());
+   }
+
    public static NettyChannelBuffers getInstance() {
       return INSTANCE;
    }

@@ -1,9 +1,9 @@
 package org.infinispan.server.hotrod
 
 import org.infinispan.manager.CacheManager
-import org.infinispan.server.core.transport.netty.{NettyServer, NettyReplayingDecoder}
 import java.net.InetSocketAddress
 import org.infinispan.server.core.Server
+import org.infinispan.server.core.transport.netty.{NettyEncoder, NettyServer, NettyReplayingDecoder}
 
 /**
  * // TODO: Document this
@@ -19,13 +19,15 @@ class HotRodServer(val host: String,
 
    import HotRodServer._
 
-   private var server: Server = null
+   private var server: Server = _
 
    def start {
-      var decoder = new GlobalDecoder
+      val decoder = new GlobalDecoder
       val nettyDecoder = new NettyReplayingDecoder[NoState](decoder)
+      val encoder = new Encoder410
+      val nettyEncoder = new NettyEncoder(encoder)
       val commandHandler = new Handler(new CallerCache(manager))
-      server = new NettyServer(commandHandler, nettyDecoder, new InetSocketAddress(host, port),
+      server = new NettyServer(commandHandler, nettyDecoder, nettyEncoder, new InetSocketAddress(host, port),
                                masterThreads, workerThreads, "HotRod")
       server.start
       info("Started Hot Rod bound to {0}:{1}", host, port)

@@ -35,9 +35,10 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.ChannelDownstreamHandler;
 import org.jboss.netty.channel.ChannelFactory;
-import org.jboss.netty.channel.ChannelHandler;
 import org.jboss.netty.channel.ChannelPipelineFactory;
+import org.jboss.netty.channel.ChannelUpstreamHandler;
 import org.jboss.netty.channel.group.ChannelGroup;
 import org.jboss.netty.channel.group.ChannelGroupFuture;
 import org.jboss.netty.channel.group.DefaultChannelGroup;
@@ -45,6 +46,8 @@ import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 
 /**
  * NettyChannelFactory.
+ *
+ * // TODO: Make this class more generic and remove any memcached references
  * 
  * @author Galder Zamarreño
  * @since 4.0
@@ -59,8 +62,8 @@ public class NettyServer implements Server {
    final ExecutorService masterExecutor;
    final ExecutorService workerExecutor;
    
-   public NettyServer(CommandHandler commandHandler, ChannelHandler decoder, SocketAddress address,
-            int masterThreads, int workerThreads, String cacheName) {
+   public NettyServer(CommandHandler commandHandler, ChannelUpstreamHandler decoder, ChannelDownstreamHandler encoder, 
+            SocketAddress address, int masterThreads, int workerThreads, String cacheName) {
       ThreadFactory tf = new MemcachedThreadFactory(cacheName, ExecutorType.MASTER);
       if (masterThreads == 0) {
          log.debug("Configured unlimited threads for master thread pool");
@@ -80,7 +83,7 @@ public class NettyServer implements Server {
       }
 
       NettyChannelUpstreamHandler handler = new NettyChannelUpstreamHandler(commandHandler, acceptedChannels);
-      this.pipeline = new NettyChannelPipelineFactory(decoder, handler);
+      this.pipeline = new NettyChannelPipelineFactory(decoder, encoder, handler);
       this.address = address;
       if (workerThreads == 0) {
          factory = new NioServerSocketChannelFactory(masterExecutor, workerExecutor);

@@ -9,12 +9,17 @@ import org.infinispan.context.Flag
  */
 
 // val cache: Cache[Array[Byte], Array[Byte]]
-class StorageCommand(val cacheName: String, val key: Array[Byte], val lifespan: Int,
-                     val maxIdle: Int, val value: Array[Byte], val flags: Set[Flag])
-                    (val op: (Cache, StorageCommand) => Reply.Value)
+class StorageCommand(val cacheName: String,
+                     val id: Long,
+                     val key: Array[Byte],
+                     val lifespan: Int,
+                     val maxIdle: Int,
+                     val value: Array[Byte],
+                     val flags: Set[Flag])
+                    (val op: (Cache, StorageCommand) => Response)
 //{
 //
-////   def perform(op: StorageCommand => Reply.Value) {
+////   def perform(op: StorageCommand => Replies.Value) {
 ////      op(this)
 ////   }
 ////

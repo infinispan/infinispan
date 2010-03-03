@@ -11,13 +11,13 @@ import org.infinispan.{Cache => InfinispanCache}
 
 class CallerCache(val manager: CacheManager) extends Cache {
 
-   override def put(c: StorageCommand): Reply.Value = {
+   override def put(c: StorageCommand): Response = {
       val cache: InfinispanCache[Array[Byte], Array[Byte]] = manager.getCache(c.cacheName)
       cache.put(c.key, c.value)
-      Reply.Stored
+      new Response(OpCodes.PutResponse, c.id, Status.Success)
    }
 
-   override def get(c: RetrievalCommand): Reply.Value = {
+   override def get(c: RetrievalCommand): Response = {
       null
    }
 }

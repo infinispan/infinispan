@@ -8,5 +8,5 @@ package org.infinispan.server.hotrod
 
 @Deprecated
 trait Command {
-//   def perform(op: Unit => Reply)
+//   def perform(op: Unit => Replies)
 }

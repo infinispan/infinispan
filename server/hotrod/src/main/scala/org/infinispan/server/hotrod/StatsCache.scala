@@ -18,12 +18,12 @@ package org.infinispan.server.hotrod
 
 trait StatsCache extends Cache {
 
-   abstract override def put(c: StorageCommand): Reply.Value = {
+   abstract override def put(c: StorageCommand): Response = {
       // TODO: calculate stats if necessary
       super.put(c)
    }
 
-   abstract override def get(c: RetrievalCommand): Reply.Value = {
+   abstract override def get(c: RetrievalCommand): Response = {
       // TODO: calculate stats if necessary
       super.get(c)
    }

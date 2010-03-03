@@ -90,7 +90,8 @@ public class TextServer {
 
       TextCommandHandler commandHandler = new TextCommandHandler(cache, chain);
 
-      server = new NettyServer(commandHandler, nettyDecoder, new InetSocketAddress(host, port),
+      // No common encoder used, each command encodes its response, since there's no common ground for all.
+      server = new NettyServer(commandHandler, nettyDecoder, null, new InetSocketAddress(host, port),
                masterThreads, workerThreads, cache.getName());
       server.start();
       log.info("Started Memcached text server bound to {0}:{1}", host, port);

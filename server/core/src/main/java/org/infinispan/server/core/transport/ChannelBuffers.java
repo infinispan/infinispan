@@ -31,4 +31,5 @@ package org.infinispan.server.core.transport;
 public interface ChannelBuffers {
    ChannelBuffer wrappedBuffer(ChannelBuffer... buffers);
    ChannelBuffer wrappedBuffer(byte[] array);
+   ChannelBuffer dynamicBuffer();
 }

@@ -1,6 +1,7 @@
 package org.infinispan.server.hotrod
 
 import scala.collection.mutable.HashSet
+import scala.collection.immutable
 import org.infinispan.context.Flag
 
 /**
@@ -10,8 +11,6 @@ import org.infinispan.context.Flag
  */
 
 object Flags extends Enumeration {
-
-   type Flags = Value
 
    private val ZeroLockAcquisitionTimeout = Value(1, Flag.ZERO_LOCK_ACQUISITION_TIMEOUT.toString)
    private val CacheModeLocal = Value(1 << 1, Flag.CACHE_MODE_LOCAL.toString)
@@ -28,8 +27,8 @@ object Flags extends Enumeration {
 
    def extractFlags(bitFlags: Int): Set[Flag] = {
       val s = new HashSet[Flag]
-      Flags.filter(f => (bitFlags & f.id) > 0).foreach(f => s += Flag.valueOf(f.toString))
-      new scala.collection.immutable.HashSet ++ s
+      Flags.values.filter(f => (bitFlags & f.id) > 0).foreach(f => s += Flag.valueOf(f.toString))
+      new immutable.HashSet ++ s
    }
 
 }

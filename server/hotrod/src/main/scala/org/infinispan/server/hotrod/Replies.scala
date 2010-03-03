@@ -6,7 +6,7 @@ package org.infinispan.server.hotrod
  * @since 4.0
  */
 
-object Reply extends Enumeration {
+object Replies extends Enumeration {
    type Reply = Value
    val Stored = Value
 }

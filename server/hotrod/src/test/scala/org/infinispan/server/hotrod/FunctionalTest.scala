@@ -23,7 +23,7 @@ import org.testng.Assert._
  */
 @Test(groups = Array("functional"), testName = "server.hotrod.FunctionalTest")
 class FunctionalTest extends SingleCacheManagerTest with Utils with Client {
-   private var server: HotRodServer = null
+   private var server: HotRodServer = _
 
    override def createCacheManager: CacheManager = {
       val cacheManager = TestCacheManagerFactory.createLocalCacheManager
@@ -34,7 +34,8 @@ class FunctionalTest extends SingleCacheManagerTest with Utils with Client {
 
    def testPutBasic(m: Method) {
       assertTrue(connect("127.0.0.1", server.port))
-      assertTrue(put("__default", k(m) , 0, 0, v(m)))
+      val status = put("__default", k(m) , 0, 0, v(m))
+      assertTrue(status == 0, "Status should have been 0 but instead was: " + status)
    }
 
    @AfterClass(alwaysRun = true)

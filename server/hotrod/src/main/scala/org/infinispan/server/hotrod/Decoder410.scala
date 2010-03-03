@@ -14,8 +14,7 @@ class Decoder410 extends Decoder[NoState] {
 
    val Put = 0x01
 
-   @Override
-   def decode(ctx: ChannelHandlerContext, buffer: ChannelBuffer, state: NoState): StorageCommand = {
+   override def decode(ctx: ChannelHandlerContext, buffer: ChannelBuffer, state: NoState): StorageCommand = {
       val op = buffer.readUnsignedByte
       val cacheName = readString(buffer)
       val id = VLong.read(buffer)
@@ -27,7 +26,7 @@ class Decoder410 extends Decoder[NoState] {
                val lifespan = VInt.read(buffer)
                val maxIdle = VInt.read(buffer)
                val value = readByteArray(buffer)
-               new StorageCommand(cacheName, key, lifespan, maxIdle, value, flags)({
+               new StorageCommand(cacheName, id, key, lifespan, maxIdle, value, flags)({
                   (cache: Cache, command: StorageCommand) => cache.put(command)
                })
             }
@@ -36,8 +35,7 @@ class Decoder410 extends Decoder[NoState] {
       command
    }
 
-   @Override
-   def exceptionCaught(ctx: ChannelHandlerContext, e: ExceptionEvent) {
+   override def exceptionCaught(ctx: ChannelHandlerContext, e: ExceptionEvent) {
       error("Error", e.getCause)
    }
 

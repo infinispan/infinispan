@@ -1,7 +1,6 @@
 package org.infinispan.server.hotrod.test
 
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory
-import java.util.concurrent.Executors
 import org.jboss.netty.bootstrap.ClientBootstrap
 import java.net.InetSocketAddress
 import org.jboss.netty.handler.codec.oneone.OneToOneEncoder
@@ -9,7 +8,9 @@ import org.jboss.netty.channel._
 import org.jboss.netty.buffer.{ChannelBuffer, ChannelBuffers}
 import org.infinispan.server.core.transport.netty.NettyChannelBuffer
 import org.jboss.netty.handler.codec.replay.ReplayingDecoder
-import org.infinispan.server.hotrod.{Logging, NoState, VLong, VInt}
+import org.testng.Assert._
+import java.util.concurrent.{LinkedBlockingQueue, Executors}
+import org.infinispan.server.hotrod._
 
 /**
  * // TODO: Document this
@@ -20,7 +21,7 @@ import org.infinispan.server.hotrod.{Logging, NoState, VLong, VInt}
  * @since 4.1
  */
 trait Client {
-   private var channel: Channel = null
+   private var channel: Channel = _
 
    def connect(host: String, port: Int): Boolean = {
       // Set up.
@@ -33,17 +34,17 @@ trait Client {
       val connectFuture = bootstrap.connect(new InetSocketAddress(host, port))
       // Wait until the connection is made successfully.
       channel = connectFuture.awaitUninterruptibly.getChannel
-//      // Get the handler instance to retrieve the answer.
-//      var handler = channel.getPipeline.getLast.asInstanceOf[ClientHandler]
       connectFuture.isSuccess
    }
 
-   def put(cacheName: String, key: Array[Byte], lifespan: Int, maxIdle: Int, value: Array[Byte]): Boolean = {
+   def put(cacheName: String, key: Array[Byte], lifespan: Int, maxIdle: Int, value: Array[Byte]): Byte = {
       val writeFuture = channel.write(new Store(cacheName, key, lifespan, maxIdle, value))
       writeFuture.awaitUninterruptibly
-      writeFuture.isSuccess
+      assertTrue(writeFuture.isSuccess)
+      // Get the handler instance to retrieve the answer.
+      var handler = channel.getPipeline.getLast.asInstanceOf[ClientHandler]
+      handler.getResponse.status.id.byteValue
    }
-   
 }
 
 @ChannelPipelineCoverage("all")
@@ -53,7 +54,7 @@ private object ClientPipelineFactory extends ChannelPipelineFactory {
       val pipeline = Channels.pipeline
       pipeline.addLast("decoder", Decoder)
       pipeline.addLast("encoder", Encoder)
-//      pipeline.addLast("handler", new FactorialClientHandler(count))
+      pipeline.addLast("handler", new ClientHandler)
       pipeline
    }
 
@@ -90,8 +91,13 @@ private object Encoder extends OneToOneEncoder {
 
 private object Decoder extends ReplayingDecoder[NoState] with Logging {
 
-   override def decode(ctx: ChannelHandlerContext, ch: Channel, buffer: ChannelBuffer, state: NoState) = {
-      null
+   override def decode(ctx: ChannelHandlerContext, ch: Channel, buffer: ChannelBuffer, state: NoState): Object = {
+      val buf = new NettyChannelBuffer(buffer)
+      val magic = buf.readUnsignedByte
+      val opCode = buf.readUnsignedByte
+      val id = VLong.read(buf)
+      val status = buf.readUnsignedByte
+      new Response(OpCodes.apply(opCode), id, Status.apply(status))
    }
 
    override def exceptionCaught(ctx: ChannelHandlerContext, e: ExceptionEvent) {
@@ -99,21 +105,21 @@ private object Decoder extends ReplayingDecoder[NoState] with Logging {
    }
 }
 
-//private class ClientHandler(val command: Any) extends SimpleChannelUpstreamHandler {
-//
-//   override def channelConnected(ctx: ChannelHandlerContext, e: ChannelStateEvent) {
-//      sendCommand(e)
-//   }
-//
-//   override def channelInterestChanged(ctx: ChannelHandlerContext, e: ChannelStateEvent) {
-//      sendCommand(e)
-//   }
-//
-//   private def sendCommand(e: ChannelStateEvent) {
-//      var channel = e.getChannel
-//      channel.write(command)
-//   }
-//}
+@ChannelPipelineCoverage("one")
+private class ClientHandler extends SimpleChannelUpstreamHandler {
+
+   private val answer = new LinkedBlockingQueue[Response]; 
+
+   override def messageReceived(ctx: ChannelHandlerContext, e: MessageEvent) {
+      val offered = answer.offer(e.getMessage.asInstanceOf[Response])
+      assertTrue(offered)
+   }
+
+   def getResponse: Response = {
+      answer.take
+   }
+
+}
 
 private class Store(val cacheName: String, val key: Array[Byte],
                     val lifespan: Int, val maxIdle: Int,

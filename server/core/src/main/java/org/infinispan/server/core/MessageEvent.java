@@ -22,6 +22,8 @@
  */
 package org.infinispan.server.core;
 
+import org.infinispan.server.core.transport.Channel;
+
 import java.net.SocketAddress;
 
 /**
@@ -33,4 +35,5 @@ import java.net.SocketAddress;
 public interface MessageEvent {
    Object getMessage();
    SocketAddress getRemoteAddress();
+   Channel getChannel();
 }

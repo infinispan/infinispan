@@ -47,6 +47,6 @@ public class NettyChannelHandlerContext implements ChannelHandlerContext {
    }
 
    public ChannelBuffers getChannelBuffers() {
-      return NettyChannelBuffers.INSTANCE;
+      return NettyChannelBuffers.getInstance();
    }
 }
