@@ -32,6 +32,8 @@ import java.lang.annotation.Target;
  * Methods annotated with this annotation should accept a single parameter, a {@link
  * org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent} otherwise a {@link
  * org.infinispan.notifications.IncorrectListenerException} will be thrown when registering your listener.
+ *  <p/>
+ *  Locking: notification is performed WITH locks on the given key.
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani</a>
  * @see org.infinispan.notifications.Listener

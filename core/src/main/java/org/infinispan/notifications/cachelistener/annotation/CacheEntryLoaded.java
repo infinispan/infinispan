@@ -38,7 +38,8 @@ import java.lang.annotation.Target;
  * Methods annotated with this annotation should be public and take in a single parameter, a {@link
  * CacheEntryLoadedEvent} otherwise an {@link IncorrectListenerException} will be thrown when registering your cache
  * listener.
- *
+ * <p/>
+ * Locking: notification is performed WITH locks on the given key.
  * @author <a href="mailto:manik@jboss.org">Manik Surtani</a>
  * @see Listener
  * @since 4.0
