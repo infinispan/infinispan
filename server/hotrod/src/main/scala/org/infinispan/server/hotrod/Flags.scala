@@ -25,7 +25,7 @@ object Flags extends Enumeration {
    private val SkipRemoteLookup = Value(1 << 10, Flag.SKIP_REMOTE_LOOKUP.toString)
    private val PutForExternalRead = Value(1 << 11, Flag.PUT_FOR_EXTERNAL_READ.toString)
 
-   def extractFlags(bitFlags: Int): Set[Flag] = {
+   def extract(bitFlags: Int): Set[Flag] = {
       val s = new HashSet[Flag]
       Flags.values.filter(f => (bitFlags & f.id) > 0).foreach(f => s += Flag.valueOf(f.toString))
       new immutable.HashSet ++ s

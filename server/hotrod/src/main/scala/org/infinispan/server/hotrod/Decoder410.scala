@@ -2,6 +2,7 @@ package org.infinispan.server.hotrod
 
 import org.infinispan.server.core.transport.{ExceptionEvent, ChannelHandlerContext, ChannelBuffer, Decoder}
 import org.infinispan.server.core.UnknownCommandException
+import org.infinispan.server.hotrod.OpCodes._
 
 /**
  * // TODO: Document this
@@ -11,22 +12,26 @@ import org.infinispan.server.core.UnknownCommandException
 class Decoder410 extends Decoder[NoState] {
    import Decoder410._
 
-   val Put = 0x01
-
-   override def decode(ctx: ChannelHandlerContext, buffer: ChannelBuffer, state: NoState): StorageCommand = {
-      val op = buffer.readUnsignedByte
-      val cacheName = readString(buffer)
+   override def decode(ctx: ChannelHandlerContext, buffer: ChannelBuffer, state: NoState): Command = {
+      val op = OpCodes.apply(buffer.readUnsignedByte)
+      val cacheName = buffer.readString
       val id = buffer.readUnsignedLong
-      val flags = Flags.extractFlags(buffer.readUnsignedInt)
-      val command: StorageCommand =
-         op match {
-            case Put => {
-               val key = readByteArray(buffer)
+      val flags = Flags.extract(buffer.readUnsignedInt)
+      val command: Command =
+         op match {                                   
+            case PutRequest => {
+               val key = buffer.readRangedBytes
                val lifespan = buffer.readUnsignedInt
                val maxIdle = buffer.readUnsignedInt
-               val value = readByteArray(buffer)
+               val value = buffer.readRangedBytes
                new StorageCommand(cacheName, id, key, lifespan, maxIdle, value, flags)({
                   (cache: Cache, command: StorageCommand) => cache.put(command)
+               })
+            }
+            case GetRequest => {
+               val key = buffer.readRangedBytes
+               new RetrievalCommand(cacheName, id, key)({
+                  (cache: Cache, command: RetrievalCommand) => cache.get(command)
                })
             }
             case _ => throw new UnknownCommandException("Command " + op + " not known")
@@ -36,18 +41,6 @@ class Decoder410 extends Decoder[NoState] {
 
    override def exceptionCaught(ctx: ChannelHandlerContext, e: ExceptionEvent) {
       error("Error", e.getCause)
-   }
-
-   private def readString(buffer: ChannelBuffer): String = {
-      val array = new Array[Byte](buffer.readUnsignedInt)
-      buffer.readBytes(array)
-      new String(array, "UTF8")
-   }
-
-   private def readByteArray(buffer: ChannelBuffer): Array[Byte] = {
-      val array = new Array[Byte](buffer.readUnsignedInt)
-      buffer.readBytes(array)
-      array
    }
 
 }

@@ -24,6 +24,8 @@ package org.infinispan.server.core.transport.netty;
 
 import org.infinispan.server.core.transport.ChannelBuffer;
 
+import java.io.UnsupportedEncodingException;
+
 /**
  * NettyChannelBuffer.
  * 
@@ -262,8 +264,27 @@ public class NettyChannelBuffer implements ChannelBuffer /*, org.jboss.netty.net
    public void readBytes(byte[] dst) {
       nettyBuffer.readBytes(dst);
    }
-   
-//
+
+   @Override
+   public byte[] readRangedBytes() {
+      byte[] array = new byte[readUnsignedInt()];
+      readBytes(array);
+      return array;
+   }
+
+   @Override
+   public String readString() {
+      String ret = null;
+      try {
+         ret = new String(readRangedBytes(), "UTF8");
+      } catch (UnsupportedEncodingException e) {
+         throw new RuntimeException("Encoding not supported", e);
+      }
+      return ret;
+   }
+
+
+   //
 //   @Override
 //   public void readBytes(ByteBuffer dst) {
 //      nettyBuffer.readBytes(dst);
@@ -528,10 +549,18 @@ public class NettyChannelBuffer implements ChannelBuffer /*, org.jboss.netty.net
 //      nettyBuffer.writeBytes(src);
 //   }
 //
-     @Override
-     public void writeBytes(byte[] src) {
-        nettyBuffer.writeBytes(src);
-     }
+
+   @Override
+   public void writeBytes(byte[] src) {
+      nettyBuffer.writeBytes(src);
+   }
+
+   @Override
+   public void writeRangedBytes(byte[] src) {
+      writeUnsignedInt(src.length);
+      nettyBuffer.writeBytes(src);
+   }
+
 
 //
 //   @Override

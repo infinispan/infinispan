@@ -13,7 +13,8 @@ class Handler(val hotCache: CallerCache) extends CommandHandler {
 
    override def messageReceived(ctx: ChannelHandlerContext, e: MessageEvent) {
       e.getMessage match {
-         case c: StorageCommand => e.getChannel.write(c.op(hotCache, c))
+//         case c: StorageCommand => e.getChannel.write(c.op(hotCache, c))
+         case c: Command => e.getChannel.write(c.perform(hotCache))
       }
 
 

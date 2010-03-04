@@ -11,6 +11,8 @@ import org.jboss.netty.handler.codec.replay.ReplayingDecoder
 import org.testng.Assert._
 import java.util.concurrent.{LinkedBlockingQueue, Executors}
 import org.infinispan.server.hotrod._
+import org.infinispan.server.hotrod.OpCodes._
+import org.infinispan.server.hotrod.Status._
 
 /**
  * // TODO: Document this
@@ -22,7 +24,7 @@ import org.infinispan.server.hotrod._
  */
 trait Client {
 
-   def connect(host: String, port: Int) = {
+   def connect(host: String, port: Int): Channel = {
       // Set up.
       val factory = new NioClientSocketChannelFactory(Executors.newCachedThreadPool, Executors.newCachedThreadPool)
       val bootstrap: ClientBootstrap = new ClientBootstrap(factory)
@@ -35,17 +37,29 @@ trait Client {
       val ch = connectFuture.awaitUninterruptibly.getChannel
       // Ideally, I'd store channel as a var in this trait. However, this causes issues with TestNG, see:
       // http://thread.gmane.org/gmane.comp.lang.scala.user/24317
-      (connectFuture.isSuccess, ch)
+      assertTrue(connectFuture.isSuccess)
+      ch
    }
 
-   def put(ch: Channel, cacheName: String, key: Array[Byte], lifespan: Int, maxIdle: Int, value: Array[Byte]): Byte = {
-      val writeFuture = ch.write(new Store(cacheName, key, lifespan, maxIdle, value))
+   def put(ch: Channel, cacheName: String, key: Array[Byte], lifespan: Int, maxIdle: Int, value: Array[Byte]): Status = {
+      val writeFuture = ch.write(new Op(0x01, cacheName, key, lifespan, maxIdle, value))
       writeFuture.awaitUninterruptibly
       assertTrue(writeFuture.isSuccess)
       // Get the handler instance to retrieve the answer.
       var handler = ch.getPipeline.getLast.asInstanceOf[ClientHandler]
-      handler.getResponse.status.id.byteValue
+      handler.getResponse.status
    }
+
+   def get(ch: Channel, cacheName: String, key: Array[Byte]) = {
+      val writeFuture = ch.write(new Op(0x03, cacheName, key, 0, 0, null))
+      writeFuture.awaitUninterruptibly
+      assertTrue(writeFuture.isSuccess)
+      // Get the handler instance to retrieve the answer.
+      var handler = ch.getPipeline.getLast.asInstanceOf[ClientHandler]
+      val resp = handler.getResponse.asInstanceOf[RetrievalResponse]
+      (resp.status, resp.value)
+   }
+
 }
 
 @ChannelPipelineCoverage("all")
@@ -67,21 +81,20 @@ private object Encoder extends OneToOneEncoder {
    override def encode(ctx: ChannelHandlerContext, ch: Channel, msg: Any) = {
       val ret =
          msg match {
-            case s: Store => {
+            case op: Op => {
                val buffer = new NettyChannelBuffer(ChannelBuffers.dynamicBuffer)
                buffer.writeByte(0xA0.asInstanceOf[Byte]) // magic
                buffer.writeByte(41) // version
-               buffer.writeByte(0x01) // opcode - put
-               buffer.writeUnsignedInt(s.cacheName.length) // cache name length
-               buffer.writeBytes(s.cacheName.getBytes()) // cache name
+               buffer.writeByte(op.code) // opcode
+               buffer.writeRangedBytes(op.cacheName.getBytes()) // cache name length + cache name
                buffer.writeUnsignedLong(1) // message id
                buffer.writeUnsignedInt(0) // flags
-               buffer.writeUnsignedInt(s.key.length) // key length
-               buffer.writeBytes(s.key) // key
-               buffer.writeUnsignedInt(s.lifespan) // lifespan
-               buffer.writeUnsignedInt(s.maxIdle) // maxIdle
-               buffer.writeUnsignedInt(s.value.length) // value length
-               buffer.writeBytes(s.value) // value
+               buffer.writeRangedBytes(op.key) // key length + key
+               if (op.value != null) {
+                  buffer.writeUnsignedInt(op.lifespan) // lifespan
+                  buffer.writeUnsignedInt(op.maxIdle) // maxIdle
+                  buffer.writeRangedBytes(op.value) // value length + value
+               }
                buffer.getUnderlyingChannelBuffer
             }
       }
@@ -95,10 +108,23 @@ private object Decoder extends ReplayingDecoder[NoState] with Logging {
    override def decode(ctx: ChannelHandlerContext, ch: Channel, buffer: ChannelBuffer, state: NoState): Object = {
       val buf = new NettyChannelBuffer(buffer)
       val magic = buf.readUnsignedByte
-      val opCode = buf.readUnsignedByte
+      val opCode = OpCodes.apply(buf.readUnsignedByte)
       val id = buf.readUnsignedLong
-      val status = buf.readUnsignedByte
-      new Response(OpCodes.apply(opCode), id, Status.apply(status))
+      val status = Status.apply(buf.readUnsignedByte)
+      val resp: Response =
+         opCode match {
+            case PutResponse => new Response(opCode, id, status)
+            case GetResponse => {
+               val value = {
+                  status match {
+                     case Success => buf.readRangedBytes
+                     case _ => null
+                  }
+               }
+               new RetrievalResponse(opCode, id, status, value)
+            }
+         }
+      resp
    }
 
    override def exceptionCaught(ctx: ChannelHandlerContext, e: ExceptionEvent) {
@@ -122,6 +148,9 @@ private class ClientHandler extends SimpleChannelUpstreamHandler {
 
 }
 
-private class Store(val cacheName: String, val key: Array[Byte],
-                    val lifespan: Int, val maxIdle: Int,
-                    val value: Array[Byte])
+private class Op(val code: Byte,
+                 val cacheName: String,
+                 val key: Array[Byte],
+                 val lifespan: Int,
+                 val maxIdle: Int,
+                 val value: Array[Byte])

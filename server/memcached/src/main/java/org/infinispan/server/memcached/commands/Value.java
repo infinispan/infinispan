@@ -34,6 +34,7 @@ import java.util.Arrays;
  * @author Galder Zamarreño
  * @since 4.1
  */
+// TODO: Make it an Externalizer once submodules can extend the marshalling framework
 public class Value implements Externalizable {
    private int flags;
    private byte[] data;

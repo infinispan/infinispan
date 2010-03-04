@@ -14,6 +14,7 @@ class Encoder410 extends Encoder {
    private val Magic = 0xA1
 
    override def encode(ctx: ChannelHandlerContext, ch: Channel, msg: Object) = {
+      trace("Encode msg {0}", msg)
       val buffer: ChannelBuffer =
          msg match {
             case r: Response => {
@@ -24,6 +25,13 @@ class Encoder410 extends Encoder {
                buffer.writeByte(r.status.id.byteValue)
                buffer
             }
+      }
+      msg match {
+         case rr: RetrievalResponse => if (rr.status == Status.Success) buffer.writeRangedBytes(rr.value)
+         case _ => {
+            if (buffer == null)
+               throw new IllegalArgumentException("Response received is unknown: " + msg);
+         }
       }
       buffer
    }

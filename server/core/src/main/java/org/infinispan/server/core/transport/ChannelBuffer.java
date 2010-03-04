@@ -37,9 +37,20 @@ public interface ChannelBuffer {
    ChannelBuffer readBytes(int length);
    int readerIndex();
    void readBytes(byte[] dst);
+   byte[] readRangedBytes();
+
+   /**
+    * Reads length of String and then returns an UTF-8 formatted String of such length.
+    */
+   String readString();
 
    void writeByte(byte value);
    void writeBytes(byte[] src);
+
+   /**
+    * Writes the length of the byte array and transfers the specified source array's data to this buffer
+    */
+   void writeRangedBytes(byte[] src);
    void writeUnsignedInt(int i);
    void writeUnsignedLong(long l);
    int writerIndex();

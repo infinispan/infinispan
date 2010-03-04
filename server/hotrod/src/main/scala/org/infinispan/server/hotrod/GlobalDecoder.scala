@@ -26,7 +26,9 @@ class GlobalDecoder extends Decoder[NoState] {
             case Version410 => new Decoder410
             case _ => throw new StreamCorruptedException("Unknown version:" + version)
          }
-      decoder.decode(ctx, buffer, state)
+      val command = decoder.decode(ctx, buffer, state)
+      trace("Decoded msg {0}", command)
+      command
    }
 
    override def exceptionCaught(ctx: ChannelHandlerContext, e: ExceptionEvent) {
