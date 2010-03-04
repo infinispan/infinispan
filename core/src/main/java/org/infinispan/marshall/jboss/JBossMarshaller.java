@@ -109,6 +109,7 @@ public class JBossMarshaller extends AbstractMarshaller {
       configuration.setExceptionListener(new DebuggingExceptionListener());
       // ContextClassResolver provides same functionality as MarshalledValueInputStream
       configuration.setClassResolver(new ContextClassResolver());
+      configuration.setVersion(2);
    }
 
    public void stop() {
