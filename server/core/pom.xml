@@ -15,7 +15,8 @@
    <description>Infinispan server core module</description>
 
    <properties>
-      <version.netty>3.1.5.GA</version.netty>
+      <!--<version.netty>3.1.5.GA</version.netty>-->
+      <version.netty>3.2.0.BETA1</version.netty>      
       <version.gnu.getopt>1.0.13</version.gnu.getopt>
       <version.apache.log4j>1.2.15</version.apache.log4j>
    </properties>
