@@ -3,7 +3,7 @@ package org.infinispan.server.hotrod
 import org.infinispan.manager.CacheManager
 import java.net.InetSocketAddress
 import org.infinispan.server.core.Server
-import org.infinispan.server.core.transport.netty.{NettyEncoder, NettyServer, NettyReplayingDecoder}
+import org.infinispan.server.core.transport.netty.{NettyNoStateDecoder, NettyEncoder, NettyServer, NettyDecoder}
 
 /**
  * // TODO: Document this
@@ -23,7 +23,7 @@ class HotRodServer(val host: String,
 
    def start {
       val decoder = new GlobalDecoder
-      val nettyDecoder = new NettyReplayingDecoder[NoState](decoder)
+      val nettyDecoder = new NettyNoStateDecoder(decoder)      
       val encoder = new Encoder410
       val nettyEncoder = new NettyEncoder(encoder)
       val commandHandler = new Handler(new CallerCache(manager))

@@ -2,7 +2,6 @@ package org.infinispan.server.hotrod
 
 import org.infinispan.test.SingleCacheManagerTest
 import org.infinispan.test.fwk.TestCacheManagerFactory
-import org.infinispan.manager.CacheManager
 import org.testng.annotations.{AfterClass, Test}
 import java.lang.reflect.Method
 import test.{Client, Utils}
@@ -10,6 +9,8 @@ import org.testng.Assert._
 import org.infinispan.server.hotrod.Status._
 import java.util.Arrays
 import org.jboss.netty.channel.Channel
+import org.infinispan.manager.{DefaultCacheManager, CacheManager}
+import org.infinispan.{Cache => InfinispanCache}
 
 /**
  * TODO: Document
@@ -38,21 +39,48 @@ class FunctionalTest extends SingleCacheManagerTest with Utils with Client {
    }
 
    def testPutBasic(m: Method) {
-      val status = put(ch, "__default", k(m) , 0, 0, v(m))
+      val status = doPut(m)
       assertSuccess(status)
    }
 
+   def testPutOnDefaultCache(m: Method) {
+      val status = put(ch, DefaultCacheManager.DEFAULT_CACHE_NAME, k(m) , 0, 0, v(m))
+      assertSuccess(status)
+      val cache: InfinispanCache[Key, Value] = cacheManager.getCache[Key, Value]
+      assertTrue(Arrays.equals(cache.get(new Key(k(m))).v, v(m)));
+   }
+
+   def testPutWithLifespan(m: Method) {
+      val status = doPutWithLifespanMaxIdle(m, 1, 0)
+      assertSuccess(status)
+      Thread.sleep(1100)
+      val (getSt, actual) = doGet(m)
+      assertKeyDoesNotExist(getSt, actual)
+   }
+
+   def testPutWithMaxIdle(m: Method) {
+      val status = doPutWithLifespanMaxIdle(m, 0, 1)
+      assertSuccess(status)
+      Thread.sleep(1100)
+      val (getSt, actual) = doGet(m)
+      assertKeyDoesNotExist(getSt, actual)
+   }
+
    def testGetBasic(m: Method) {
-      val putSt = put(ch, "__default", k(m) , 0, 0, v(m))
+      val putSt = doPut(m)
       assertSuccess(putSt)
-      val (getSt, actual) = get(ch, "__default", k(m))
+      val (getSt, actual) = doGet(m)
       assertSuccess(getSt, v(m), actual)
    }
 
    def testGetDoesNotExist(m: Method) {
-      val (getSt, actual) = get(ch, "__default", k(m))
+      val (getSt, actual) = doGet(m)
       assertKeyDoesNotExist(getSt, actual)
    }
+
+//   def testGetWithWriteLock(m: Method) {
+//      // TODO
+//   }
 
    private def assertSuccess(status: Status.Status) {
       assertTrue(status == Success, "Status should have been 'Success' but instead was: " + status)
@@ -66,6 +94,18 @@ class FunctionalTest extends SingleCacheManagerTest with Utils with Client {
    private def assertKeyDoesNotExist(status: Status.Status, actual: Array[Byte]) {
       assertTrue(status == KeyDoesNotExist, "Status should have been 'KeyDoesNotExist' but instead was: " + status)
       assertNull(actual)
+   }
+
+   private def doPut(m: Method): Status = {
+      doPutWithLifespanMaxIdle(m, 0, 0)
+   }
+
+   private def doPutWithLifespanMaxIdle(m: Method, lifespan: Int, maxIdle: Int): Status = {
+      put(ch, "hotrod-cache", k(m) , lifespan, maxIdle, v(m))
+   }
+
+   private def doGet(m: Method) = {
+      get(ch, "hotrod-cache", k(m))
    }
 
    @AfterClass(alwaysRun = true)

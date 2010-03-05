@@ -35,15 +35,15 @@ import org.jboss.netty.handler.codec.replay.ReplayingDecoder;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class NettyReplayingDecoder<T extends Enum<T>> extends ReplayingDecoder<T> implements Decoder.Checkpointer<T> {
+public class NettyDecoder<T extends Enum<T>> extends ReplayingDecoder<T> implements Decoder.Checkpointer<T> {
    final Decoder<T> decoder;
 
-   public NettyReplayingDecoder(Decoder<T> decoder) {
+   public NettyDecoder(Decoder<T> decoder) {
       super(true);
       this.decoder = decoder;
    }
 
-   public NettyReplayingDecoder(Decoder<T> decoder, T initialState) {
+   public NettyDecoder(Decoder<T> decoder, T initialState) {
       super(initialState, true);
       this.decoder = decoder;
    }
@@ -68,7 +68,7 @@ public class NettyReplayingDecoder<T extends Enum<T>> extends ReplayingDecoder<T
 
    //   ReplayingDecoder<T> decoder;
 //
-//   public NettyReplayingDecoder(ReplayingDecoder<T> decoder) {
+//   public NettyDecoder(ReplayingDecoder<T> decoder) {
 //      this.decoder = decoder;
 //   }
 //

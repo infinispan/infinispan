@@ -13,6 +13,9 @@ import java.util.concurrent.{LinkedBlockingQueue, Executors}
 import org.infinispan.server.hotrod._
 import org.infinispan.server.hotrod.OpCodes._
 import org.infinispan.server.hotrod.Status._
+import java.util.concurrent.atomic.AtomicInteger
+import org.infinispan.server.core.transport.NoState
+import org.jboss.netty.channel.ChannelHandler.Sharable
 
 /**
  * // TODO: Document this
@@ -62,7 +65,7 @@ trait Client {
 
 }
 
-@ChannelPipelineCoverage("all")
+@Sharable
 private object ClientPipelineFactory extends ChannelPipelineFactory {
 
    override def getPipeline() = {
@@ -75,8 +78,10 @@ private object ClientPipelineFactory extends ChannelPipelineFactory {
 
 }
 
-@ChannelPipelineCoverage("all")
+@Sharable
 private object Encoder extends OneToOneEncoder {
+
+   private val idCounter: AtomicInteger = new AtomicInteger
 
    override def encode(ctx: ChannelHandlerContext, ch: Channel, msg: Any) = {
       val ret =
@@ -87,7 +92,7 @@ private object Encoder extends OneToOneEncoder {
                buffer.writeByte(41) // version
                buffer.writeByte(op.code) // opcode
                buffer.writeRangedBytes(op.cacheName.getBytes()) // cache name length + cache name
-               buffer.writeUnsignedLong(1) // message id
+               buffer.writeUnsignedLong(idCounter.incrementAndGet) // message id
                buffer.writeUnsignedInt(0) // flags
                buffer.writeRangedBytes(op.key) // key length + key
                if (op.value != null) {

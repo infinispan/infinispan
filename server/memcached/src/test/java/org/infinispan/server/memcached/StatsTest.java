@@ -65,6 +65,7 @@ public class StatsTest extends SingleCacheManagerTest {
 
    @AfterClass(alwaysRun=true)
    protected void destroyAfterClass() {
+      super.destroyAfterClass();
       server.stop();
    }
 

@@ -7,15 +7,6 @@ import org.infinispan.context.Flag
  * @author Galder Zamarreño
  * @since 4.1
  */
-//class StorageCommand(val cacheName: String,
-//                     val id: Long,
-//                     val key: Array[Byte],
-//                     val lifespan: Int,
-//                     val maxIdle: Int,
-//                     val value: Array[Byte],
-//                     val flags: Set[Flag])
-//                    (val op: (Cache, StorageCommand) => Response)
-
 class StorageCommand(override val cacheName: String,
                      override val id: Long,
                      val key: Array[Byte],
@@ -29,4 +20,15 @@ class StorageCommand(override val cacheName: String,
       op(cache, this)
    }
 
+   override def toString = {
+      new StringBuilder().append("StorageCommand").append("{")
+         .append("cacheName=").append(cacheName)
+         .append(", id=").append(id)
+         .append(", key=").append(key)
+         .append(", lifespan=").append(lifespan)
+         .append(", maxIdle=").append(maxIdle)
+         .append(", value=").append(value)
+         .append(", flags=").append(flags)
+         .append("}").toString
+   }
 }

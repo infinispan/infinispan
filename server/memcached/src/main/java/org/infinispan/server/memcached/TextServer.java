@@ -30,7 +30,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import org.infinispan.Cache;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.server.core.Server;
-import org.infinispan.server.core.transport.netty.NettyReplayingDecoder;
+import org.infinispan.server.core.transport.netty.NettyDecoder;
 import org.infinispan.server.core.transport.netty.NettyServer;
 import org.infinispan.server.memcached.transport.TextDecoder;
 import org.infinispan.server.core.InterceptorChain;
@@ -84,7 +84,7 @@ public class TextServer {
    public void start() throws Exception {
       InterceptorChain chain = TextProtocolInterceptorChainFactory.getInstance(cache).buildInterceptorChain();
       TextDecoder decoder = new TextDecoder(cache, chain, scheduler);
-      NettyReplayingDecoder nettyDecoder = new NettyReplayingDecoder<TextDecoder.State>(decoder,
+      NettyDecoder nettyDecoder = new NettyDecoder<TextDecoder.State>(decoder,
               TextDecoder.State.READ_COMMAND);
       decoder.setCheckpointer(nettyDecoder);
 

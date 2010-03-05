@@ -1,18 +1,18 @@
 package org.infinispan.server.hotrod
 
-import org.infinispan.server.core.transport.{ExceptionEvent, ChannelHandlerContext, ChannelBuffer, Decoder}
 import org.infinispan.server.core.UnknownCommandException
 import org.infinispan.server.hotrod.OpCodes._
+import org.infinispan.server.core.transport._
 
 /**
  * // TODO: Document this
  * @author Galder Zamarreño
  * @since 4.1
  */
-class Decoder410 extends Decoder[NoState] {
+class Decoder410 extends NoStateDecoder {
    import Decoder410._
 
-   override def decode(ctx: ChannelHandlerContext, buffer: ChannelBuffer, state: NoState): Command = {
+   override def decode(ctx: ChannelHandlerContext, buffer: ChannelBuffer): Command = {
       val op = OpCodes.apply(buffer.readUnsignedByte)
       val cacheName = buffer.readString
       val id = buffer.readUnsignedLong

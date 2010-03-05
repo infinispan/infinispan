@@ -69,6 +69,7 @@ public class FunctionalTest extends SingleCacheManagerTest {
 
    @AfterClass(alwaysRun=true)
    protected void destroyAfterClass() {
+      super.destroyAfterClass();
       log.debug("Test finished, close memcached server");
       server.stop();
    }

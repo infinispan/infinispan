@@ -21,13 +21,20 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.infinispan.server.hotrod;
+package org.infinispan.server.core.transport;
 
 /**
  * // TODO: Document this
  *
  * @author Galder Zamarreño
- * @since 4.0
  */
-public enum NoState {
+public abstract class NoStateDecoder implements Decoder<NoState> {
+
+   @Override
+   public Object decode(ChannelHandlerContext ctx, ChannelBuffer buffer, NoState state) throws Exception {
+      return decode(ctx, buffer);
+   }
+
+   public abstract Object decode(ChannelHandlerContext ctx, ChannelBuffer buffer) throws Exception; 
+
 }
