@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.server.core.CommandHandler;
-import org.infinispan.server.core.Server;
+import org.infinispan.server.core.transport.Server;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jboss.netty.bootstrap.ServerBootstrap;

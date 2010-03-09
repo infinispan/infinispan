@@ -2,8 +2,8 @@ package org.infinispan.server.hotrod
 
 import org.infinispan.manager.CacheManager
 import java.net.InetSocketAddress
-import org.infinispan.server.core.Server
 import org.infinispan.server.core.transport.netty.{NettyNoStateDecoder, NettyEncoder, NettyServer, NettyDecoder}
+import org.infinispan.server.core.transport.Server
 
 /**
  * // TODO: Document this

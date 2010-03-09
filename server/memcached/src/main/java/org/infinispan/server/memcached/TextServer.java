@@ -29,7 +29,7 @@ import java.util.concurrent.ScheduledExecutorService;
 
 import org.infinispan.Cache;
 import org.infinispan.manager.DefaultCacheManager;
-import org.infinispan.server.core.Server;
+import org.infinispan.server.core.transport.Server;
 import org.infinispan.server.core.transport.netty.NettyDecoder;
 import org.infinispan.server.core.transport.netty.NettyServer;
 import org.infinispan.server.memcached.transport.TextDecoder;

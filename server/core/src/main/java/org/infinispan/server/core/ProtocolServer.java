@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat, Inc. and/or its affiliates, and
+ * Copyright 2010, Red Hat, Inc. and/or its affiliates, and
  * individual contributors as indicated by the @author tags. See the
  * copyright.txt file in the distribution for a full listing of
  * individual contributors.
@@ -20,29 +20,18 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.server.memcached;
 
-import org.infinispan.server.core.ProtocolServer;
+package org.infinispan.server.core;
 
 /**
- * Main.
- * 
+ * // TODO: Document this
+ *
  * @author Galder Zamarreño
- * @since 4.1
  */
-public class Main implements ProtocolServer {
+public interface ProtocolServer {
 
-   private TextServer server;
+   void start(String host, int port, String configFile, int masterThreads, int workerThreads) throws Exception;
 
-   @Override
-   public void start(String host, int port, String configFile, int masterThreads, int workerThreads) throws Exception {
-      server = new TextServer(host, port, configFile, masterThreads, workerThreads);
-      server.start();
-   }
-
-   @Override
-   public void stop() {
-      server.stop();
-   }
+   void stop();
 
 }
