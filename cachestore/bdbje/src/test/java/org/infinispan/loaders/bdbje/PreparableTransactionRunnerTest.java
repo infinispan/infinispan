@@ -2,9 +2,9 @@ package org.infinispan.loaders.bdbje;
 
 import com.sleepycat.collections.CurrentTransaction;
 import com.sleepycat.collections.TransactionWorker;
-import com.sleepycat.je.DeadlockException;
 import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
+import com.sleepycat.je.LockTimeoutException;
 import com.sleepycat.je.Transaction;
 import com.sleepycat.je.TransactionConfig;
 import static org.easymock.EasyMock.expect;
@@ -52,22 +52,22 @@ public class PreparableTransactionRunnerTest {
    @Test
    public void testMoreDeadlocks() throws Exception {
       worker.doWork();
-      expectLastCall().andThrow(new DeadlockException());
+      expectLastCall().andThrow(new LockTimeoutException(null, null));
       transaction.abort();
       expect(env.beginTransaction(null, null)).andReturn(transaction);
       worker.doWork();
-      expectLastCall().andThrow(new DeadlockException());
+      expectLastCall().andThrow(new LockTimeoutException(null, null));
       transaction.abort();
       expect(env.beginTransaction(null, null)).andReturn(transaction);
       worker.doWork();
-      expectLastCall().andThrow(new DeadlockException());
+      expectLastCall().andThrow(new LockTimeoutException(null, null));
       transaction.abort();
       replayAll();
       runner = new PreparableTransactionRunner(env, 2, null);
       try {
          runner.prepare(worker);
          assert false : "should have gotten a deadlock exception";
-      } catch (DeadlockException e) {
+      } catch (LockTimeoutException e) {
 
       }
       verifyAll();
@@ -208,7 +208,7 @@ public class PreparableTransactionRunnerTest {
    public void testRethrowIfNotDeadLockDoesntThrowWhenGivenDeadlockException() throws Exception {
       replayAll();
       runner = new PreparableTransactionRunner(env);
-      runner.rethrowIfNotDeadLock(createNiceMock(DeadlockException.class));
+      runner.rethrowIfNotDeadLock(createNiceMock(LockTimeoutException.class));
    }
 
    public void testThrowableDuringAbort() throws Exception {

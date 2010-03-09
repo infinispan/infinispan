@@ -4,11 +4,12 @@ import com.sleepycat.collections.CurrentTransaction;
 import com.sleepycat.collections.TransactionRunner;
 import com.sleepycat.collections.TransactionWorker;
 import com.sleepycat.compat.DbCompat;
-import com.sleepycat.je.DeadlockException;
 import com.sleepycat.je.Environment;
+import com.sleepycat.je.LockConflictException;
 import com.sleepycat.je.Transaction;
 import com.sleepycat.je.TransactionConfig;
 import com.sleepycat.util.ExceptionUnwrapper;
+import org.infinispan.loaders.CacheLoaderException;
 
 /**
  * Adapted version of {@link TransactionRunner}, which allows us to prepare a transaction without committing it.<p/> The
@@ -59,8 +60,7 @@ public class PreparableTransactionRunner extends TransactionRunner {
             currentTries = abortOverflowingCurrentTriesOnError(txn, currentTries);
             caught = ExceptionUnwrapper.unwrapAny(caught);
             rethrowIfNotDeadLock(caught);
-            if (currentTries >= getMaxRetries())
-               throw (DeadlockException) caught;
+            if (currentTries >= getMaxRetries()) throw (LockConflictException) caught;
          }
       }
    }
@@ -82,7 +82,7 @@ public class PreparableTransactionRunner extends TransactionRunner {
    }
 
    void rethrowIfNotDeadLock(Throwable caught) throws Exception {
-      if (!(caught instanceof DeadlockException)) {
+      if (!(caught instanceof LockConflictException)) {
          if (caught instanceof Exception) {
             throw (Exception) caught;
          } else {

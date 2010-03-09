@@ -8,12 +8,15 @@ import com.sleepycat.collections.StoredMap;
 import com.sleepycat.collections.StoredSortedMap;
 import com.sleepycat.je.*;
 import com.sleepycat.util.ExceptionUnwrapper;
+import org.infinispan.CacheException;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.io.File;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Factory that assembles objects specific to the SleepyCat JE API.
@@ -54,8 +57,7 @@ public class BdbjeResourceFactory {
         EnvironmentConfig envConfig = new EnvironmentConfig();
         envConfig.setAllowCreate(true);
         envConfig.setTransactional(true);
-        /* lock timeout is in microseconds */
-        envConfig.setLockTimeout(config.getLockAcquistionTimeout() * 1000);
+        envConfig.setLockTimeout(config.getLockAcquistionTimeout(), TimeUnit.MILLISECONDS);
         if (trace) log.trace("opening or creating je environment at {0}", envLocation);
         Environment env = new Environment(envLocation, envConfig);
         log.debug("opened je environment at {0}", envLocation);
@@ -101,7 +103,7 @@ public class BdbjeResourceFactory {
                     storedEntryKeyBinding, storedEntryValueBinding, true);
         } catch (Exception caught) {
             caught = ExceptionUnwrapper.unwrap(caught);
-            throw new DatabaseException("error opening stored map", caught);
+            throw new CacheException("Error opening stored map", caught);
         }
     }
 
@@ -124,7 +126,7 @@ public class BdbjeResourceFactory {
                     expiryKeyBinding, expiryValueBinding, true);
         } catch (Exception caught) {
             caught = ExceptionUnwrapper.unwrap(caught);
-            throw new DatabaseException("error opening stored map", caught);
+            throw new CacheException("error opening stored map", caught);
         }
 
     }

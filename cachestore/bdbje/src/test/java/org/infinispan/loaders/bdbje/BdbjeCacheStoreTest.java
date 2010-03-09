@@ -190,7 +190,7 @@ public class BdbjeCacheStoreTest {
       start();
       cacheDb.close();
       expiryDb.close();
-      expectLastCall().andThrow(new DatabaseException());
+      expectLastCall().andThrow(new DatabaseException("Dummy"){});
       catalog.close();
       env.close();
       replayAll();
@@ -205,7 +205,7 @@ public class BdbjeCacheStoreTest {
       cacheDb.close();
       expiryDb.close();
       catalog.close();
-      expectLastCall().andThrow(new DatabaseException());
+      expectLastCall().andThrow(new DatabaseException("Dummy"){});
       env.close();
       replayAll();
       cs.start();
@@ -220,7 +220,7 @@ public class BdbjeCacheStoreTest {
       expiryDb.close();
       catalog.close();
       env.close();
-      expectLastCall().andThrow(new DatabaseException());
+      expectLastCall().andThrow(new DatabaseException("Dummy"){});
       replayAll();
       cs.start();
       cs.stop();
@@ -233,7 +233,7 @@ public class BdbjeCacheStoreTest {
       factory = new MockBdbjeResourceFactory(cfg) {
          @Override
          public StoredClassCatalog createStoredClassCatalog(Database catalogDb) throws DatabaseException {
-            throw new DatabaseException();
+            throw new DatabaseException("Dummy"){};
          }
       };
       start();
@@ -280,7 +280,7 @@ public class BdbjeCacheStoreTest {
 
    public  void testApplyModificationsThrowsOriginalDatabaseException() throws Exception {
       start();
-      DatabaseException ex = new DatabaseException();
+      DatabaseException ex = new DatabaseException("Dummy"){};
       runner.run(isA(TransactionWorker.class));
       expectLastCall().andThrow(new RuntimeExceptionWrapper(ex));
       replayAll();
@@ -299,7 +299,7 @@ public class BdbjeCacheStoreTest {
 
    public void testCommitThrowsOriginalDatabaseException() throws Exception {
       start();
-      DatabaseException ex = new DatabaseException();
+      DatabaseException ex = new DatabaseException("Dummy"){};
       com.sleepycat.je.Transaction txn = createMock(com.sleepycat.je.Transaction.class);
       expect(currentTransaction.beginTransaction(null)).andReturn(txn);
       runner.prepare(isA(TransactionWorker.class));
@@ -325,7 +325,7 @@ public class BdbjeCacheStoreTest {
 
    public void testPrepareThrowsOriginalDatabaseException() throws Exception {
       start();
-      DatabaseException ex = new DatabaseException();
+      DatabaseException ex = new DatabaseException("Dummy"){};
       runner.prepare(isA(TransactionWorker.class));
       expectLastCall().andThrow(new RuntimeExceptionWrapper(ex));
       replayAll();
