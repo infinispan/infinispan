@@ -63,12 +63,10 @@ class CacheLoaderConfigAdapter extends XmlAdapter<AbstractCacheStoreConfig, Cach
       String clClass = storeConfig.getCacheLoaderClassName();
       if (clClass == null || clClass.length()==0)
          throw new ConfigurationException("Missing 'class'  attribute for cache loader configuration");
-      
-      CacheLoader cl;
+
       CacheLoaderConfig clc;
       try {
-         cl = (CacheLoader) Util.getInstance(clClass);
-         clc = Util.getInstance(cl.getConfigurationClass());
+         clc = instantiateCacheLoaderConfig(clClass);
       } catch (Exception e) {
          throw new ConfigurationException("Unable to instantiate cache loader or configuration", e);
       }
@@ -89,4 +87,19 @@ class CacheLoaderConfigAdapter extends XmlAdapter<AbstractCacheStoreConfig, Cach
          csc.setAsyncStoreConfig(storeConfig.getAsyncStoreConfig());         
       }
       return clc;
-   }}
+   }
+
+   private CacheLoaderConfig instantiateCacheLoaderConfig(String cacheLoaderImpl) throws Exception {
+      // first see if the type is annotated
+      Class<? extends CacheLoaderConfig> clazz = Util.loadClass(cacheLoaderImpl);
+      Class<? extends CacheLoaderConfig> cacheLoaderConfigType;
+      CacheLoaderMetadata metadata = clazz.getAnnotation(CacheLoaderMetadata.class);
+      if (metadata == null) {
+         CacheLoader cl = (CacheLoader) Util.getInstance(clazz);
+         cacheLoaderConfigType = cl.getConfigurationClass();
+      } else {
+         cacheLoaderConfigType = metadata.configurationClass();
+      }
+      return Util.getInstance(cacheLoaderConfigType);
+   }
+}

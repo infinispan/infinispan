@@ -10,6 +10,7 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.loaders.AbstractCacheLoader;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.loaders.CacheLoaderMetadata;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.remoting.responses.ClusteredGetResponseValidityFilter;
 import org.infinispan.remoting.responses.Response;
@@ -32,6 +33,7 @@ import java.util.Set;
  *
  * @author Mircea.Markus@jboss.com
  */
+@CacheLoaderMetadata(configurationClass = ClusterCacheLoaderConfig.class)
 public class ClusterCacheLoader extends AbstractCacheLoader {
    private static Log log = LogFactory.getLog(ClusterCacheLoader.class);
 
@@ -64,7 +66,7 @@ public class ClusterCacheLoader extends AbstractCacheLoader {
 
    @SuppressWarnings(value = "unchecked")
    public Set<InternalCacheEntry> loadAll() throws CacheLoaderException {
-      return Collections.EMPTY_SET;
+      return Collections.emptySet();
    }
 
    public void start() throws CacheLoaderException {
@@ -76,7 +78,7 @@ public class ClusterCacheLoader extends AbstractCacheLoader {
    }
 
    public Class<? extends CacheLoaderConfig> getConfigurationClass() {
-      throw new IllegalStateException("TODO - please implement me!!!");
+      return ClusterCacheLoaderConfig.class;
    }
 
    private List<Response> doRemoteCall(ClusteredGetCommand clusteredGetCommand) throws CacheLoaderException {

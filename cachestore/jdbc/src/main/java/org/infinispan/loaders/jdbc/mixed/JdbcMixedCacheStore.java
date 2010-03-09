@@ -26,6 +26,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.AbstractCacheStore;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.loaders.CacheLoaderMetadata;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.jdbc.binary.JdbcBinaryCacheStore;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
@@ -62,6 +63,7 @@ import java.util.Set;
  * @see org.infinispan.loaders.jdbc.binary.JdbcBinaryCacheStore
  * @see org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore
  */
+@CacheLoaderMetadata(configurationClass = JdbcMixedCacheStoreConfig.class)
 public class JdbcMixedCacheStore extends AbstractCacheStore {
 
    private JdbcMixedCacheStoreConfig config;

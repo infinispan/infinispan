@@ -6,6 +6,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.io.ExposedByteArrayOutputStream;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.loaders.CacheLoaderMetadata;
 import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.loaders.bucket.BucketBasedCacheStore;
 import org.infinispan.marshall.Marshaller;
@@ -35,6 +36,7 @@ import java.util.Set;
  * 
  * @since 4.0
  */
+@CacheLoaderMetadata(configurationClass = FileCacheStoreConfig.class)
 public class FileCacheStore extends BucketBasedCacheStore {
 
    private static final Log log = LogFactory.getLog(FileCacheStore.class);

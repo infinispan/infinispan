@@ -151,5 +151,5 @@ public interface CacheStore extends CacheLoader {
    /**
     * Returns the configuration object associated to this cache store config.
     */
-   public CacheStoreConfig getCacheStoreConfig();
+   CacheStoreConfig getCacheStoreConfig();
 }

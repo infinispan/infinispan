@@ -27,6 +27,7 @@ import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.io.ByteBuffer;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.loaders.CacheLoaderMetadata;
 import org.infinispan.loaders.LockSupportCacheStore;
 import org.infinispan.loaders.jdbc.DataManipulationHelper;
 import org.infinispan.loaders.jdbc.JdbcUtil;
@@ -66,6 +67,7 @@ import java.util.Set;
  * @see Key2StringMapper
  * @see DefaultKey2StringMapper
  */
+@CacheLoaderMetadata(configurationClass = JdbcStringBasedCacheStoreConfig.class)
 public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
 
    private static Log log = LogFactory.getLog(JdbcStringBasedCacheStore.class);

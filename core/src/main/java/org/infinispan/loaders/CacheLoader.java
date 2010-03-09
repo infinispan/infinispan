@@ -54,10 +54,18 @@ public interface CacheLoader {
 
    public void stop() throws CacheLoaderException;
 
-
    /**
+    * This method is used by the configuration parser to get a hold of the CacheLoader implementation's corresponding
+    * {@link org.infinispan.loaders.CacheLoaderConfig} type. This is usually done by instantiating the CacheLoader
+    * and then calling this method.  This may result in 2 instances being created, however, since the instance
+    * created to get a hold of the configuration type is then discarded and another instance is created for actual
+    * use as a CacheLoader when the cache starts.
+    * <p />
+    * Since Infinispan 4.1, you can also annotate your CacheLoader implementation with {@link org.infinispan.loaders.CacheLoaderMetadata}
+    * and provide this information via the annotation, which will prevent unnecessary instances being created.
+    * <p />
     * @return the type of the {@link org.infinispan.loaders.CacheLoaderConfig} bean used to configure this
-    *         implementation of {@link org.infinispan.loaders.CacheLoader}
+    *         implementation of {@link org.infinispan.loaders.CacheLoader}.
     */
    Class<? extends CacheLoaderConfig> getConfigurationClass();
 }

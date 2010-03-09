@@ -11,6 +11,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.AbstractCacheStore;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.loaders.CacheLoaderMetadata;
 import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -49,8 +50,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p/>
  *
  * @author Adrian Cole
+ * @author Manik Surtani
  * @since 4.0
  */
+@CacheLoaderMetadata(configurationClass = BdbjeCacheStoreConfig.class)
 public class BdbjeCacheStore extends AbstractCacheStore {
 
     private static final Log log = LogFactory.getLog(BdbjeCacheStore.class);

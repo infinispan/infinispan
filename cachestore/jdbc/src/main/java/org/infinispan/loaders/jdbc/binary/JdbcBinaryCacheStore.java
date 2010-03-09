@@ -26,6 +26,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.io.ByteBuffer;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.loaders.CacheLoaderMetadata;
 import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.loaders.bucket.BucketBasedCacheStore;
 import org.infinispan.loaders.jdbc.DataManipulationHelper;
@@ -67,6 +68,7 @@ import java.util.Set;
  * @see JdbcBinaryCacheStoreConfig
  * @see org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore
  */
+@CacheLoaderMetadata(configurationClass = JdbcBinaryCacheStoreConfig.class)
 public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
 
    private static final Log log = LogFactory.getLog(JdbcBinaryCacheStore.class);

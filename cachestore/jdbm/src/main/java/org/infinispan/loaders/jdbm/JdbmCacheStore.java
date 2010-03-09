@@ -17,6 +17,7 @@ import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.loaders.AbstractCacheStore;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.loaders.CacheLoaderMetadata;
 import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
@@ -53,6 +54,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  * @author Galder Zamarreño
  */
 @ThreadSafe
+@CacheLoaderMetadata(configurationClass = JdbmCacheStoreConfig.class)
 public class JdbmCacheStore extends AbstractCacheStore {
 
    private static final Log log = LogFactory.getLog(JdbmCacheStore.class);
