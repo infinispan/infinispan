@@ -24,6 +24,7 @@ import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -31,6 +32,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
@@ -61,7 +63,7 @@ import java.util.Set;
  * @since 4.0
  */
 @Test(groups = "unit", enabled = true, testName = "loaders.bdbje.BdbjeLearningTest")
-public class BdbjeLearningTest {
+public class BdbjeLearningTest extends AbstractInfinispanTest {
    Environment env;
 
    private static final String CLASS_CATALOG = "java_class_catalog";
@@ -74,9 +76,9 @@ public class BdbjeLearningTest {
    private String tmpDirectory;
 
    @BeforeTest
-   @Parameters({"basedir"})
-   protected void setUpTempDir(String basedir) {
-      tmpDirectory = basedir + TestingUtil.TEST_PATH + File.separator + getClass().getSimpleName();
+   @Parameters("basedir")
+   protected void setUpTempDir(@Optional("/tmp") String basedir) {
+      tmpDirectory = TestingUtil.tmpDirectory(basedir, this);
    }
 
    @AfterTest

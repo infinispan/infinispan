@@ -4,12 +4,15 @@ import com.sleepycat.collections.CurrentTransaction;
 import com.sleepycat.collections.TransactionWorker;
 import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
+import com.sleepycat.je.LockConflictException;
 import com.sleepycat.je.LockTimeoutException;
 import com.sleepycat.je.Transaction;
 import com.sleepycat.je.TransactionConfig;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.expectLastCall;
 import static org.easymock.classextension.EasyMock.*;
+
+import com.sleepycat.je.txn.Locker;
 import org.infinispan.loaders.CacheLoaderException;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -51,16 +54,17 @@ public class PreparableTransactionRunnerTest {
 
    @Test
    public void testMoreDeadlocks() throws Exception {
+      Locker mockLocker = createNiceMock(Locker.class);
       worker.doWork();
-      expectLastCall().andThrow(new LockTimeoutException(null, null));
+      expectLastCall().andThrow(new LockTimeoutException(mockLocker, ""));
       transaction.abort();
       expect(env.beginTransaction(null, null)).andReturn(transaction);
       worker.doWork();
-      expectLastCall().andThrow(new LockTimeoutException(null, null));
+      expectLastCall().andThrow(new LockTimeoutException(mockLocker, ""));
       transaction.abort();
       expect(env.beginTransaction(null, null)).andReturn(transaction);
       worker.doWork();
-      expectLastCall().andThrow(new LockTimeoutException(null, null));
+      expectLastCall().andThrow(new LockTimeoutException(mockLocker, ""));
       transaction.abort();
       replayAll();
       runner = new PreparableTransactionRunner(env, 2, null);
