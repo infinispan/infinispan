@@ -9,8 +9,14 @@ import org.infinispan.loaders.BaseCacheStoreTest;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.marshall.Marshaller;
+import org.infinispan.test.TestingUtil;
+import org.jclouds.blobstore.BlobStore;
 import org.jclouds.blobstore.BlobStoreContext;
+import org.jclouds.blobstore.domain.Blob;
+import org.jclouds.blobstore.domain.PageSet;
+import org.jclouds.blobstore.domain.StorageMetadata;
 import org.jclouds.blobstore.integration.StubBlobStoreContextBuilder;
+import org.jgroups.protocols.TUNNEL;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeTest;
@@ -24,6 +30,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -196,7 +203,7 @@ public class CloudCacheStoreIntegrationTest extends BaseCacheStoreTest {
 
    @Override
    @Test (enabled = false, description = "Disabled until we can build the blobstore stub to retain state somewhere.")
-   public void testStopStartDoesntNukeValues() throws InterruptedException, CacheLoaderException {
+   public void testStopStartDoesNotNukeValues() throws InterruptedException, CacheLoaderException {
 
    }
 
@@ -248,5 +255,22 @@ public class CloudCacheStoreIntegrationTest extends BaseCacheStoreTest {
       expected.add("k3");
       for (InternalCacheEntry se : set) assert expected.remove(se.getKey());
       assert expected.isEmpty();
+   }
+
+   // TODO test that this passes before closing ISPN-334
+   public void testJCloudsMetadataTest() throws IOException {
+      String blobName = "myBlob";
+      String containerName = "myContainer";
+      BlobStore blobStore = ((CloudCacheStore) cs).blobStore;
+      Blob b = blobStore.newBlob(blobName);
+      b.setPayload("Hello world");
+      b.getMetadata().setUserMetadata(Collections.singletonMap("hello", "world"));
+      blobStore.putBlob(containerName, b);
+
+      b = blobStore.getBlob(containerName, blobName);
+      assert "world".equals(b.getMetadata().getUserMetadata().get("hello"));
+
+      PageSet<? extends StorageMetadata> ps = blobStore.list(containerName);
+      for (StorageMetadata sm: ps) assert "world".equals(sm.getUserMetadata().get("hello"));
    }
 }

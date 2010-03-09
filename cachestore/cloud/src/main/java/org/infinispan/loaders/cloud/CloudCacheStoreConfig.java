@@ -45,6 +45,7 @@ public class CloudCacheStoreConfig extends LockSupportCacheStoreConfig {
    private String proxyHost;
    private String proxyPort;
    private long requestTimeout = 10000;
+   // TODO Once ISPN-334 is closed, consider setting this to false by default.
    private boolean lazyPurgingOnly = true;
    private String cloudService;
    private int maxConnections = 10000;
