@@ -330,7 +330,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    public void setEvictionStrategy(String eStrategy){
       this.eviction.strategy = EvictionStrategy.valueOf(uc(eStrategy));
       if (this.eviction.strategy == null) {
-         log.warn("Unknown evictionStrategy  '" + eStrategy + "', using defaults.");
+         log.warn("Unknown evictionStrategy  '" + eStrategy + "'!  Using EvictionStrategy.NONE.");
          this.eviction.setStrategy(EvictionStrategy.NONE);
       }
    }
@@ -1267,8 +1267,8 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
        */
       protected Long wakeUpInterval=5000L;
 
-      /** @configRef desc="Eviction strategy. Available options are 'NONE', 'FIFO' and 'LRU'."*/
-      protected EvictionStrategy strategy=EvictionStrategy.NONE;
+      /** @configRef desc="Eviction strategy. Available options are 'UNORDERED', 'FIFO', 'LRU' and 'NONE' (to disable eviction)."*/
+      protected EvictionStrategy strategy=EvictionStrategy.UNORDERED;
 
       /** @configRef desc="Maximum number of entries in a cache instance.  -1 means no limit." */
       protected Integer maxEntries=-1;

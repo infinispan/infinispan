@@ -41,6 +41,7 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
    public <T> T construct(Class<T> componentType) {
       switch (configuration.getEvictionStrategy()) {
          case NONE:
+         case UNORDERED:
             return (T) new SimpleDataContainer(configuration.getConcurrencyLevel());
          case FIFO:
             return (T) new FIFOSimpleDataContainer(configuration.getConcurrencyLevel());
