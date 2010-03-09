@@ -1268,7 +1268,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       protected Long wakeUpInterval=5000L;
 
       /** @configRef desc="Eviction strategy. Available options are 'UNORDERED', 'FIFO', 'LRU' and 'NONE' (to disable eviction)."*/
-      protected EvictionStrategy strategy=EvictionStrategy.UNORDERED;
+      protected EvictionStrategy strategy=EvictionStrategy.NONE;
 
       /** @configRef desc="Maximum number of entries in a cache instance.  -1 means no limit." */
       protected Integer maxEntries=-1;
