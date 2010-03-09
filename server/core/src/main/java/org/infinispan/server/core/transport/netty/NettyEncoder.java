@@ -25,7 +25,7 @@ package org.infinispan.server.core.transport.netty;
 
 import org.infinispan.server.core.transport.ChannelBuffer;
 import org.infinispan.server.core.transport.Encoder;
-import org.jboss.netty.channel.ChannelPipelineCoverage;
+import org.jboss.netty.channel.ChannelHandler;
 import org.jboss.netty.handler.codec.oneone.OneToOneEncoder;
 
 /**
@@ -34,7 +34,7 @@ import org.jboss.netty.handler.codec.oneone.OneToOneEncoder;
  * @author Galder Zamarreño
  * @since 4.1
  */
-@ChannelPipelineCoverage("all")
+@ChannelHandler.Sharable
 public class NettyEncoder extends OneToOneEncoder {
    final Encoder encoder;
 

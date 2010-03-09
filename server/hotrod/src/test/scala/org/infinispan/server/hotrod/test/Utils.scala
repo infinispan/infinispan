@@ -21,6 +21,10 @@ trait Utils {
       new HotRodServer(host, UniquePortThreadLocal.get.intValue, manager, 0, 0)
    }
 
+   def createHotRodServer(manager: CacheManager, port: Int): HotRodServer = {
+      new HotRodServer(host, port, manager, 0, 0)
+   }
+
    def k(m: Method, prefix: String): Array[Byte] = {
       val bytes: Array[Byte] = (prefix + m.getName).getBytes
       trace("String {0} is converted to {1} bytes", prefix + m.getName, bytes)

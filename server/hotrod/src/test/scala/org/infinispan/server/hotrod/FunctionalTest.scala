@@ -1,6 +1,5 @@
 package org.infinispan.server.hotrod
 
-import org.infinispan.test.SingleCacheManagerTest
 import org.infinispan.test.fwk.TestCacheManagerFactory
 import org.testng.annotations.{AfterClass, Test}
 import java.lang.reflect.Method
@@ -10,7 +9,11 @@ import org.infinispan.server.hotrod.Status._
 import java.util.Arrays
 import org.jboss.netty.channel.Channel
 import org.infinispan.manager.{DefaultCacheManager, CacheManager}
-import org.infinispan.{Cache => InfinispanCache}
+import org.infinispan.context.Flag
+import org.infinispan.{AdvancedCache, Cache => InfinispanCache}
+import org.infinispan.test.{TestingUtil, SingleCacheManagerTest}
+import javax.transaction.TransactionManager
+import javax.transaction.{Status => TransactionStatus}
 
 /**
  * TODO: Document
@@ -27,20 +30,31 @@ import org.infinispan.{Cache => InfinispanCache}
  */
 @Test(groups = Array("functional"), testName = "server.hotrod.FunctionalTest")
 class FunctionalTest extends SingleCacheManagerTest with Utils with Client {
+   private val cacheName = "hotrod-cache"
    private var server: HotRodServer = _
    private var ch: Channel = _
+   private var advancedCache: AdvancedCache[Key, Value] = _
+//   private var tm: TransactionManager = _
 
    override def createCacheManager: CacheManager = {
-      val cacheManager = TestCacheManagerFactory.createLocalCacheManager
+      val cacheManager = TestCacheManagerFactory.createLocalCacheManager(true)
+      advancedCache = cacheManager.getCache[Key, Value](cacheName).getAdvancedCache
+//      tm = TestingUtil.getTransactionManager(advancedCache)
       server = createHotRodServer(cacheManager)
       server.start
       ch = connect("127.0.0.1", server.port)
       cacheManager
    }
 
+   @AfterClass(alwaysRun = true)
+   override def destroyAfterClass {
+      super.destroyAfterClass
+      log.debug("Test finished, close Hot Rod server", null)
+      server.stop
+   }
+
    def testPutBasic(m: Method) {
-      val status = doPut(m)
-      assertSuccess(status)
+      doPut(m)
    }
 
    def testPutOnDefaultCache(m: Method) {
@@ -51,24 +65,21 @@ class FunctionalTest extends SingleCacheManagerTest with Utils with Client {
    }
 
    def testPutWithLifespan(m: Method) {
-      val status = doPutWithLifespanMaxIdle(m, 1, 0)
-      assertSuccess(status)
+      doPutWithLifespanMaxIdle(m, 1, 0)
       Thread.sleep(1100)
       val (getSt, actual) = doGet(m)
       assertKeyDoesNotExist(getSt, actual)
    }
 
    def testPutWithMaxIdle(m: Method) {
-      val status = doPutWithLifespanMaxIdle(m, 0, 1)
-      assertSuccess(status)
+      doPutWithLifespanMaxIdle(m, 0, 1)
       Thread.sleep(1100)
       val (getSt, actual) = doGet(m)
       assertKeyDoesNotExist(getSt, actual)
    }
 
    def testGetBasic(m: Method) {
-      val putSt = doPut(m)
-      assertSuccess(putSt)
+      doPut(m)
       val (getSt, actual) = doGet(m)
       assertSuccess(getSt, v(m), actual)
    }
@@ -78,41 +89,59 @@ class FunctionalTest extends SingleCacheManagerTest with Utils with Client {
       assertKeyDoesNotExist(getSt, actual)
    }
 
-//   def testGetWithWriteLock(m: Method) {
-//      // TODO
+// Invalid test since starting transactions does not make sense
+// TODO: discuss flags with list
+// def testGetWithWriteLock(m: Method) {
+//      doPut(m)
+//      assertNotLocked(advancedCache, new Key(k(m)))
+//      tm.begin
+//      doGet(m, Set(Flag.FORCE_WRITE_LOCK))
+//      assertLocked(advancedCache, new Key(k(m)))
+//      tm.commit
+//      assertNotLocked(advancedCache, new Key(k(m)))
 //   }
 
-   private def assertSuccess(status: Status.Status) {
-      assertTrue(status == Success, "Status should have been 'Success' but instead was: " + status)
-   }
+//   private def transactional(op: Unit => Unit) {
+//      tm.begin
+//      try {
+//         op()
+//      } catch {
+//         case _ => tm.setRollbackOnly
+//      } finally {
+//         if (tm.getStatus == TransactionStatus.STATUS_ACTIVE) tm.commit
+//         else tm.rollback
+//      }
+//   }
 
-   private def assertSuccess(status: Status.Status, expected: Array[Byte], actual: Array[Byte]) {
-      assertSuccess(status)
-      assertTrue(Arrays.equals(expected, actual))
-   }
+//   private def assertSuccess(status: Status.Status) {
+//      assertTrue(status == Success, "Status should have been 'Success' but instead was: " + status)
+//   }
+//
+//   private def assertSuccess(status: Status.Status, expected: Array[Byte], actual: Array[Byte]) {
+//      assertSuccess(status)
+//      assertTrue(Arrays.equals(expected, actual))
+//   }
 
    private def assertKeyDoesNotExist(status: Status.Status, actual: Array[Byte]) {
       assertTrue(status == KeyDoesNotExist, "Status should have been 'KeyDoesNotExist' but instead was: " + status)
       assertNull(actual)
    }
 
-   private def doPut(m: Method): Status = {
+   private def doPut(m: Method) {
       doPutWithLifespanMaxIdle(m, 0, 0)
    }
 
-   private def doPutWithLifespanMaxIdle(m: Method, lifespan: Int, maxIdle: Int): Status = {
-      put(ch, "hotrod-cache", k(m) , lifespan, maxIdle, v(m))
+   private def doPutWithLifespanMaxIdle(m: Method, lifespan: Int, maxIdle: Int) {
+      val status = put(ch, cacheName, k(m) , lifespan, maxIdle, v(m))
+      assertSuccess(status)
    }
 
-   private def doGet(m: Method) = {
-      get(ch, "hotrod-cache", k(m))
+   private def doGet(m: Method): (Status.Status, Array[Byte]) = {
+      doGet(m, null)
    }
 
-   @AfterClass(alwaysRun = true)
-   override def destroyAfterClass {
-      super.destroyAfterClass
-      log.debug("Test finished, close memcached server", null)
-      server.stop
+   private def doGet(m: Method, flags: Set[Flag]): (Status.Status, Array[Byte]) = {
+      get(ch, cacheName, k(m), flags)
    }
 
 }

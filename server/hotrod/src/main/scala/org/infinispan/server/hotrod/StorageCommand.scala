@@ -13,8 +13,8 @@ class StorageCommand(override val cacheName: String,
                      val lifespan: Int,
                      val maxIdle: Int,
                      val value: Array[Byte],
-                     val flags: Set[Flag])
-                    (val op: (Cache, StorageCommand) => Response) extends Command(cacheName, id) {
+                     override val flags: Set[Flag])
+                    (val op: (Cache, StorageCommand) => Response) extends Command(cacheName, id, flags) {
 
    override def perform(cache: Cache): Response = {
       op(cache, this)

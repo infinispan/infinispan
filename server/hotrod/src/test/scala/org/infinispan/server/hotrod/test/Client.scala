@@ -16,6 +16,8 @@ import org.infinispan.server.hotrod.Status._
 import java.util.concurrent.atomic.AtomicInteger
 import org.infinispan.server.core.transport.NoState
 import org.jboss.netty.channel.ChannelHandler.Sharable
+import org.infinispan.context.Flag
+import java.util.Arrays
 
 /**
  * // TODO: Document this
@@ -44,8 +46,8 @@ trait Client {
       ch
    }
 
-   def put(ch: Channel, cacheName: String, key: Array[Byte], lifespan: Int, maxIdle: Int, value: Array[Byte]): Status = {
-      val writeFuture = ch.write(new Op(0x01, cacheName, key, lifespan, maxIdle, value))
+   def put(ch: Channel, name: String, k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte]): Status = {
+      val writeFuture = ch.write(new Op(0x01, name, k, lifespan, maxIdle, v, null))
       writeFuture.awaitUninterruptibly
       assertTrue(writeFuture.isSuccess)
       // Get the handler instance to retrieve the answer.
@@ -53,14 +55,31 @@ trait Client {
       handler.getResponse.status
    }
 
-   def get(ch: Channel, cacheName: String, key: Array[Byte]) = {
-      val writeFuture = ch.write(new Op(0x03, cacheName, key, 0, 0, null))
+//   def get(ch: Channel, name: String, key: Array[Byte]): (Status.Status, Array[Byte]) = {
+//      get(ch, name, key, null)
+//   }
+
+   def get(ch: Channel, name: String, k: Array[Byte], flags: Set[Flag]): (Status.Status, Array[Byte]) = {
+      val writeFuture = ch.write(new Op(0x03, name, k, 0, 0, null, flags))
       writeFuture.awaitUninterruptibly
       assertTrue(writeFuture.isSuccess)
       // Get the handler instance to retrieve the answer.
       var handler = ch.getPipeline.getLast.asInstanceOf[ClientHandler]
       val resp = handler.getResponse.asInstanceOf[RetrievalResponse]
       (resp.status, resp.value)
+   }
+
+   def assertSuccess(status: Status.Status): Boolean = {
+      val isSuccess = status == Success
+      assertTrue(isSuccess, "Status should have been 'Success' but instead was: " + status)
+      isSuccess
+   }
+
+   def assertSuccess(status: Status.Status, expected: Array[Byte], actual: Array[Byte]): Boolean = {
+      assertSuccess(status)
+      val isSuccess = Arrays.equals(expected, actual)
+      assertTrue(isSuccess)
+      isSuccess
    }
 
 }
@@ -93,7 +112,11 @@ private object Encoder extends OneToOneEncoder {
                buffer.writeByte(op.code) // opcode
                buffer.writeRangedBytes(op.cacheName.getBytes()) // cache name length + cache name
                buffer.writeUnsignedLong(idCounter.incrementAndGet) // message id
-               buffer.writeUnsignedInt(0) // flags
+               if (op.flags != null)
+                  buffer.writeUnsignedInt(Flags.fromContextFlags(op.flags)) // flags
+               else
+                  buffer.writeUnsignedInt(0) // flags
+
                buffer.writeRangedBytes(op.key) // key length + key
                if (op.value != null) {
                   buffer.writeUnsignedInt(op.lifespan) // lifespan
@@ -137,7 +160,6 @@ private object Decoder extends ReplayingDecoder[NoState] with Logging {
    }
 }
 
-@ChannelPipelineCoverage("one")
 private class ClientHandler extends SimpleChannelUpstreamHandler {
 
    private val answer = new LinkedBlockingQueue[Response]; 
@@ -158,4 +180,5 @@ private class Op(val code: Byte,
                  val key: Array[Byte],
                  val lifespan: Int,
                  val maxIdle: Int,
-                 val value: Array[Byte])
+                 val value: Array[Byte],
+                 val flags: Set[Flag])

@@ -16,7 +16,7 @@ class Decoder410 extends NoStateDecoder {
       val op = OpCodes.apply(buffer.readUnsignedByte)
       val cacheName = buffer.readString
       val id = buffer.readUnsignedLong
-      val flags = Flags.extract(buffer.readUnsignedInt)
+      val flags = Flags.toContextFlags(buffer.readUnsignedInt)
       val command: Command =
          op match {                                   
             case PutRequest => {
@@ -30,7 +30,7 @@ class Decoder410 extends NoStateDecoder {
             }
             case GetRequest => {
                val key = buffer.readRangedBytes
-               new RetrievalCommand(cacheName, id, key)({
+               new RetrievalCommand(cacheName, id, key, flags)({
                   (cache: Cache, command: RetrievalCommand) => cache.get(command)
                })
             }

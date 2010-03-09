@@ -1,8 +1,9 @@
 package org.infinispan.server.hotrod
 
-import org.infinispan.{Cache => InfinispanCache}
 import org.infinispan.manager.{DefaultCacheManager, CacheManager}
 import java.util.concurrent.TimeUnit
+import org.infinispan.context.Flag
+import org.infinispan.{AdvancedCache, Cache => InfinispanCache}
 
 /**
  * // TODO: Document this
@@ -15,7 +16,7 @@ class CallerCache(val manager: CacheManager) extends Cache {
    import CallerCache._
 
    override def put(c: StorageCommand): Response = {
-      val cache = getCache(c.cacheName)
+      val cache = getCache(c.cacheName, c.flags)
       val k = new Key(c.key)
       val v = new Value(c.value)
       (c.lifespan, c.maxIdle) match {
@@ -27,7 +28,7 @@ class CallerCache(val manager: CacheManager) extends Cache {
    }
 
    override def get(c: RetrievalCommand): Response = {
-      val cache = getCache(c.cacheName)
+      val cache = getCache(c.cacheName, c.flags)
       val value = cache.get(new Key(c.key))
       if (value != null)
          new RetrievalResponse(OpCodes.GetResponse, c.id, Status.Success, value.v)
@@ -35,12 +36,23 @@ class CallerCache(val manager: CacheManager) extends Cache {
          new RetrievalResponse(OpCodes.GetResponse, c.id, Status.KeyDoesNotExist, null)
    }
 
-   private def getCache(cacheName: String): InfinispanCache[Key, Value] = {
-      if (cacheName == DefaultCacheManager.DEFAULT_CACHE_NAME)
-         manager.getCache[Key, Value]
-      else
-         manager.getCache(cacheName)
+   private def getCache(cacheName: String, flags: Set[Flag]): InfinispanCache[Key, Value] = {
+      val isDefaultCache = cacheName == DefaultCacheManager.DEFAULT_CACHE_NAME
+      val isWithFlags = ! flags.isEmpty
+      (isDefaultCache, isWithFlags) match {
+         case (true, true) => getAdvancedCache.withFlags(flags.toSeq : _*)
+         case (true, false) => getAdvancedCache
+         case (false, true) => getAdvancedCache(cacheName).withFlags(flags.toSeq : _*)
+         case (false, false) => getAdvancedCache(cacheName)
+      }
    }
+
+   private def getAdvancedCache(): AdvancedCache[Key, Value] =
+      manager.getCache[Key, Value].getAdvancedCache
+   
+   private def getAdvancedCache(cacheName: String): AdvancedCache[Key, Value] =
+      manager.getCache[Key, Value](cacheName).getAdvancedCache
+
 
    /**
     * Transforms lifespan pass as seconds into milliseconds
@@ -60,6 +72,6 @@ class CallerCache(val manager: CacheManager) extends Cache {
    }
 }
 
-object CallerCache {
+object CallerCache extends Logging {
    private val SecondsInAMonth = 60 * 60 * 24 * 30
 }

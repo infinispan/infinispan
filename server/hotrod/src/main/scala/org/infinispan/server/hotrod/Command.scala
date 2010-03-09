@@ -1,5 +1,7 @@
 package org.infinispan.server.hotrod
 
+import org.infinispan.context.Flag
+   
 /**
  * // TODO: Document this
  * 
@@ -7,15 +9,9 @@ package org.infinispan.server.hotrod
  * @since 4.1
  */
 abstract class Command(val cacheName: String,
-                       val id: Long)
-//   type AnyCommand <: Command
-//
-{
-  def perform(cache: Cache): Response
+                       val id: Long,
+                       val flags: Set[Flag]) {
+
+   def perform(cache: Cache): Response
+   
 }
-//
-//}
-////{
-//////   type AnyCommand <: Command
-//////   def perform(op: Unit => Replies)
-////}

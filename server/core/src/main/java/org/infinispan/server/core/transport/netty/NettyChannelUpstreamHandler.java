@@ -25,7 +25,6 @@ package org.infinispan.server.core.transport.netty;
 import org.infinispan.CacheException;
 import org.infinispan.server.core.CommandHandler;
 import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.ChannelPipelineCoverage;
 import org.jboss.netty.channel.ChannelStateEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
@@ -37,7 +36,6 @@ import org.jboss.netty.channel.group.ChannelGroup;
  * @author Galder Zamarreño
  * @since 4.0
  */
-@ChannelPipelineCoverage("one")
 public class NettyChannelUpstreamHandler extends SimpleChannelUpstreamHandler {
    final CommandHandler handler;
    final ChannelGroup group;
