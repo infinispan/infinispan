@@ -25,6 +25,7 @@ import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 /**
@@ -69,6 +70,22 @@ public class FileCacheStore extends BucketBasedCacheStore {
             }
             result.addAll(bucket.getStoredEntries());
          }
+      }
+      return result;
+   }
+
+   protected Set<InternalCacheEntry> loadLockSafe(int max) throws CacheLoaderException {
+      Set<InternalCacheEntry> result = new HashSet<InternalCacheEntry>(max);
+      for (File bucketFile : root.listFiles()) {
+         Bucket bucket = loadBucket(bucketFile);
+         if (bucket != null) {
+            if (bucket.removeExpiredEntries()) {
+               updateBucket(bucket);
+            }
+            Iterator<? extends InternalCacheEntry> i = bucket.getStoredEntries().iterator();
+            while (result.size() < max && i.hasNext()) result.add(i.next());
+         }
+         if (result.size() >= max) break;
       }
       return result;
    }

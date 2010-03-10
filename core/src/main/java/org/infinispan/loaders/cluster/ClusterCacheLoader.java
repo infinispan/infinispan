@@ -27,6 +27,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static java.util.Collections.emptySet;
+
 /**
  * Cache loader that consults other members in the cluster for values. A <code>timeout</code> property is required, a
  * <code>long</code> that specifies in milliseconds how long to wait for results before returning a null.
@@ -66,7 +68,11 @@ public class ClusterCacheLoader extends AbstractCacheLoader {
 
    @SuppressWarnings(value = "unchecked")
    public Set<InternalCacheEntry> loadAll() throws CacheLoaderException {
-      return Collections.emptySet();
+      return emptySet();
+   }
+
+   public Set<InternalCacheEntry> load(int maxElems) throws CacheLoaderException {
+      return emptySet();
    }
 
    public void start() throws CacheLoaderException {

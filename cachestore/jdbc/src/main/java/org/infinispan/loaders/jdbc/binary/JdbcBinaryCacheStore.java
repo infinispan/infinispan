@@ -223,6 +223,11 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
       return dmHelper.loadAllSupport(false);
    }
 
+   @Override
+   protected Set<InternalCacheEntry> loadLockSafe(int maxEntries) throws CacheLoaderException {
+      return dmHelper.loadSome(maxEntries);
+   }
+
    protected void fromStreamLockSafe(ObjectInput objectInput) throws CacheLoaderException {
       dmHelper.fromStreamSupport(objectInput);
    }

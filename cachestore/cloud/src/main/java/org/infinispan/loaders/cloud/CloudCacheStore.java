@@ -32,6 +32,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -149,6 +150,20 @@ public class CloudCacheStore extends BucketBasedCacheStore {
          if (bucket.removeExpiredEntries())
             updateBucket(bucket);
          result.addAll(bucket.getStoredEntries());
+      }
+      return result;
+   }
+
+   @Override
+   protected Set<InternalCacheEntry> loadLockSafe(int maxEntries) throws CacheLoaderException {
+      Set<InternalCacheEntry> result = new HashSet<InternalCacheEntry>(maxEntries);
+
+      for (Map.Entry<String, Blob> entry : ctx.createBlobMap(containerName).entrySet()) {
+         Bucket bucket = readFromBlob(entry.getValue(), entry.getKey());
+         if (bucket.removeExpiredEntries()) updateBucket(bucket);
+         for (Iterator<? extends InternalCacheEntry> i = bucket.getStoredEntries().iterator(); i.hasNext() && result.size() < maxEntries;)
+            result.add(i.next());
+         if (result.size() >= maxEntries) break;
       }
       return result;
    }

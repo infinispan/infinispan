@@ -109,6 +109,21 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
       return s;
    }
 
+   public Set<InternalCacheEntry> load(int numEntries) throws CacheLoaderException {
+      if (numEntries < 0) return loadAll();
+      Set<InternalCacheEntry> s = new HashSet<InternalCacheEntry>(numEntries);
+      for (Iterator<InternalCacheEntry> i = store.values().iterator(); i.hasNext() && s.size() < numEntries;) {
+         InternalCacheEntry se = i.next();
+         if (se.isExpired()) {
+            log.debug("Key {0} exists, but has expired.  Entry is {1}", se.getKey(), se);
+            i.remove();
+         } else if (s.size() < numEntries) {
+            s.add(se);
+         }
+      }
+      return s;
+   }
+
    public Class<? extends CacheLoaderConfig> getConfigurationClass() {
       return Cfg.class;
    }

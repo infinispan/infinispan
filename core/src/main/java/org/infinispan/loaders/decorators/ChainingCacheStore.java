@@ -14,6 +14,7 @@ import org.infinispan.marshall.Marshaller;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -112,6 +113,19 @@ public class ChainingCacheStore implements CacheStore {
    public Set<InternalCacheEntry> loadAll() throws CacheLoaderException {
       Set<InternalCacheEntry> set = new HashSet<InternalCacheEntry>();
       for (CacheStore s : stores.keySet()) set.addAll(s.loadAll());
+      return set;
+   }
+
+   @Override
+   public Set<InternalCacheEntry> load(int numEntries) throws CacheLoaderException {
+      if (numEntries < 0) return loadAll();
+      Set<InternalCacheEntry> set = new HashSet<InternalCacheEntry>(numEntries);
+      for (CacheStore s: stores.keySet()) {
+         Set<InternalCacheEntry> localSet = s.load(numEntries);
+         Iterator<InternalCacheEntry> i = localSet.iterator();
+         while (set.size() < numEntries && i.hasNext()) set.add(i.next());
+         if (set.size() >= numEntries) break;
+      }
       return set;
    }
 

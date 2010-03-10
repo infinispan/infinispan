@@ -21,6 +21,8 @@
  */
 package org.infinispan.loaders.jdbc.stringbased;
 
+import org.easymock.EasyMock;
+import org.infinispan.Cache;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.loaders.CacheLoaderException;
@@ -62,7 +64,10 @@ public class JdbcStringBasedCacheStoreTest2 {
       config.setKey2StringMapperClass(PersonKey2StringMapper.class.getName());
       config.setPurgeSynchronously(true);
       cacheStore = new JdbcStringBasedCacheStore();
-      cacheStore.init(config, null, getMarshaller());
+      Cache<?, ?> mockCache = EasyMock.createNiceMock(Cache.class);
+      EasyMock.expect(mockCache.getName()).andReturn(getClass().getName()).anyTimes();
+      EasyMock.replay(mockCache);
+      cacheStore.init(config, mockCache, getMarshaller());
       cacheStore.start();
    }
 

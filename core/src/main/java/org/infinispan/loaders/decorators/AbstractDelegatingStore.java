@@ -90,6 +90,11 @@ public class AbstractDelegatingStore implements CacheStore {
       return delegate.loadAll();
    }
 
+   @Override
+   public Set<InternalCacheEntry> load(int numEntries) throws CacheLoaderException {
+      return delegate.load(numEntries);
+   }
+
    public boolean containsKey(Object key) throws CacheLoaderException {
       return delegate.containsKey(key);
    }

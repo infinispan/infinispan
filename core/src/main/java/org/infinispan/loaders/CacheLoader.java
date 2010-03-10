@@ -44,6 +44,15 @@ public interface CacheLoader {
    Set<InternalCacheEntry> loadAll() throws CacheLoaderException;
 
    /**
+    * Loads up to a specific number of entries.  There is no guarantee as to order of entries loaded.  The set returned
+    * would contain up to a maximum of <tt>numEntries</tt> entries, and no more.
+    * @param numEntries maximum number of entries to load
+    * @return a set of entries, which would contain between 0 and numEntries entries.
+    * @throws CacheLoaderException
+    */
+   Set<InternalCacheEntry> load(int numEntries) throws CacheLoaderException;
+
+   /**
     * @param key key to test
     * @return true if the key exists, false otherwise
     * @throws CacheLoaderException in the event of problems reading from source

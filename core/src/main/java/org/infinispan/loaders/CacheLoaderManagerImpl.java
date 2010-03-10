@@ -24,6 +24,7 @@ import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.Collections;
 import java.util.Set;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -120,7 +121,7 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
             if (log.isDebugEnabled()) start = System.currentTimeMillis();
             Set<InternalCacheEntry> state;
             try {
-               state = loader.loadAll();
+               state = loadState();
             } catch (CacheLoaderException e) {
                throw new CacheException("Unable to preload!", e);
             }
@@ -133,6 +134,24 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
             log.debug("Preloaded {0} keys in {1} milliseconds", state.size(), total);
          }
       }
+   }
+
+   private Set<InternalCacheEntry> loadState() throws CacheLoaderException {
+      int ne = -1;
+      if (configuration.getEvictionStrategy().isEnabled()) ne = configuration.getEvictionMaxEntries();
+      Set<InternalCacheEntry> state;
+      switch (ne) {
+         case -1:
+            state = loader.loadAll();
+            break;
+         case 0:
+            state = Collections.emptySet();
+            break;
+         default:
+            state = loader.load(ne);
+            break;
+      }
+      return state;
    }
 
    @Stop

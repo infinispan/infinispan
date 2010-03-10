@@ -12,7 +12,9 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.GlobalTransactionFactory;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
@@ -30,10 +32,10 @@ public class BdbjeCacheStoreIntegrationTest extends BaseCacheStoreTest {
    private String tmpDirectory;
    private GlobalTransactionFactory gts = new GlobalTransactionFactory();
 
-   @BeforeTest
+   @BeforeClass
    @Parameters({"basedir"})
-   protected void setUpTempDir(String basedir) {
-      tmpDirectory = basedir + TestingUtil.TEST_PATH + File.separator + getClass().getSimpleName();
+   protected void setUpTempDir(@Optional("/tmp") String basedir) {
+      tmpDirectory = TestingUtil.tmpDirectory(basedir, this);
    }
 
    @AfterClass

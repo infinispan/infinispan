@@ -21,6 +21,7 @@
  */
 package org.infinispan.loaders.jdbc;
 
+import org.infinispan.config.ConfigurationException;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.util.logging.Log;
@@ -31,6 +32,7 @@ import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
 import java.util.Locale;
 
 /**
@@ -76,6 +78,8 @@ public class TableManipulation implements Cloneable {
    private String deleteAllRows;
    private String selectExpiredRowsSql;
    private String deleteExpiredRowsSql;
+   private String loadSomeRowsSql;
+   public DatabaseType databaseType;
 
    public TableManipulation(String idColumnName, String idColumnType, String tableNamePrefix, String dataColumnName,
                             String dataColumnType, String timestampColumnName, String timestampColumnType) {
@@ -417,4 +421,94 @@ public class TableManipulation implements Cloneable {
       this.cacheName = cacheName;
       this.tableName = null;
    }
+
+   public String getLoadSomeRowsSql() {
+      if (loadSomeRowsSql == null) {
+         // this stuff is going to be database specific!!
+         // see http://stackoverflow.com/questions/595123/is-there-an-ansi-sql-alternative-to-the-mysql-limit-keyword
+
+         switch (getDatabaseType()) {
+            case ORACLE:
+               loadSomeRowsSql = "SELECT " + dataColumnName + "," + idColumnName + " FROM " + getTableName() + " LIMIT ?";
+               break;
+            case DB2:
+               loadSomeRowsSql = "SELECT " + dataColumnName + "," + idColumnName + " FROM " + getTableName() + " LIMIT ?";
+               break;
+            case INFORMIX:
+            case INTERBASE:
+            case FIREBIRD:
+               loadSomeRowsSql = "SELECT " + dataColumnName + "," + idColumnName + " FROM " + getTableName() + " LIMIT ?";
+               break;
+            case SQL_SERVER:
+            case ACCESS:
+               loadSomeRowsSql = "SELECT " + dataColumnName + "," + idColumnName + " FROM " + getTableName() + " LIMIT ?";
+               break;
+            default:
+               // the MySQL-style LIMIT clause
+               loadSomeRowsSql = "SELECT " + dataColumnName + "," + idColumnName + " FROM " + getTableName() + " LIMIT ?";
+               break;
+         }
+
+      }
+      return loadSomeRowsSql;
+   }
+
+   private DatabaseType getDatabaseType() {
+      if (databaseType == null) {
+         // need to guess from the database type!
+         try {
+            String dbProduct = connectionFactory.getConnection().getMetaData().getDatabaseProductName();
+            databaseType = guessDatabaseType(dbProduct);
+         } catch (Exception e) {
+            log.debug("Unable to guess database type from JDBC metadata.", e);
+         }
+         if (databaseType == null) log.info("Unable to detect database type using connection metadata.  Attempting to guess on driver name.");
+         try {
+            String dbProduct = connectionFactory.getConnection().getMetaData().getDriverName();
+            databaseType = guessDatabaseType(dbProduct);
+         } catch (Exception e) {
+            log.debug("Unable to guess database type from JDBC driver name.", e);
+         }
+
+         if (databaseType == null)
+            throw new ConfigurationException("Unable to detect database type from JDBC driver name or connection metadata.  Please provide this manually using the 'databaseType' property in your configuration.  Supported database type strings are " + Arrays.toString(DatabaseType.values()));
+         else
+            log.info("Guessing database type as '" + databaseType + "'.  If this is incorrect, please specify the correct type using the 'databaseType' property in your configuration.  Supported database type strings are " + Arrays.toString(DatabaseType.values()));
+      }
+      return databaseType;
+   }
+
+   private DatabaseType guessDatabaseType(String name) {
+      DatabaseType type = null;
+      if (name != null) {
+         if (name.toLowerCase().contains("mysql"))
+            type = DatabaseType.MYSQL;
+         else if (name.toLowerCase().contains("postgres"))
+            type = DatabaseType.POSTGRES;
+         else if (name.toLowerCase().contains("derby"))
+            type = DatabaseType.DERBY;
+         else if (name.toLowerCase().contains("hsql") || name.toLowerCase().contains("hypersonic"))
+            type = DatabaseType.HSQL;
+         else if (name.toLowerCase().contains("h2"))
+            type = DatabaseType.H2;
+         else if (name.toLowerCase().contains("sqlite"))
+            type = DatabaseType.SQLITE;
+         else if (name.toLowerCase().contains("db2"))
+            type = DatabaseType.DB2;
+         else if (name.toLowerCase().contains("informix"))
+            type = DatabaseType.INFORMIX;
+         else if (name.toLowerCase().contains("interbase"))
+            type = DatabaseType.INTERBASE;
+         else if (name.toLowerCase().contains("firebird"))
+            type = DatabaseType.FIREBIRD;
+         else if (name.toLowerCase().contains("sqlserver") || name.toLowerCase().contains("microsoft"))
+            type = DatabaseType.SQL_SERVER;
+         else if (name.toLowerCase().contains("access"))
+            type = DatabaseType.ACCESS;
+         else if (name.toLowerCase().contains("oracle"))
+            type = DatabaseType.ORACLE;
+      }
+      return type;
+   }
 }
+

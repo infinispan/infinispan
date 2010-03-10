@@ -176,6 +176,34 @@ public abstract class DataManipulationHelper {
       }
    }
 
+   public final Set<InternalCacheEntry> loadSome(int maxEntries) throws CacheLoaderException {
+      Connection conn = null;
+      PreparedStatement ps = null;
+      ResultSet rs = null;
+      try {
+         String sql = tableManipulation.getLoadSomeRowsSql();
+         if (log.isTraceEnabled()) log.trace("Running sql '" + sql);
+         conn = connectionFactory.getConnection();
+         ps = conn.prepareStatement(sql);
+         ps.setInt(1, maxEntries);
+         rs = ps.executeQuery();
+         rs.setFetchSize(tableManipulation.getFetchSize());
+         Set<InternalCacheEntry> result = new HashSet<InternalCacheEntry>(maxEntries);
+         while (rs.next()) {
+            loadAllProcess(rs, result);
+         }
+         return result;
+      } catch (SQLException e) {
+         String message = "SQL error while fetching all StoredEntries";
+         log.error(message, e);
+         throw new CacheLoaderException(message, e);
+      } finally {
+         JdbcUtil.safeClose(rs);
+         JdbcUtil.safeClose(ps);
+         connectionFactory.releaseConnection(conn);
+      }
+   }
+
    public abstract void loadAllProcess(ResultSet rs, Set<InternalCacheEntry> result) throws SQLException, CacheLoaderException;
 
    public abstract void toStreamProcess(ResultSet rs, InputStream is, ObjectOutput objectOutput) throws CacheLoaderException, SQLException, IOException;

@@ -220,6 +220,11 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
    }
 
    @Override
+   protected Set<InternalCacheEntry> loadLockSafe(int maxEntries) throws CacheLoaderException {
+      return dmHelper.loadSome(maxEntries);
+   }
+
+   @Override
    public void purgeInternal() throws CacheLoaderException {
       Connection conn = null;
       PreparedStatement ps = null;

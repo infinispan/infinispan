@@ -90,25 +90,31 @@ public abstract class LockSupportCacheStore extends AbstractCacheStore {
    }
 
    public final InternalCacheEntry load(Object key) throws CacheLoaderException {
-      if (trace) log.trace("load ({0})", key);
       String lockingKey = getLockFromKey(key);
       lockForReading(lockingKey);
       try {
          return loadLockSafe(key, lockingKey);
       } finally {
          unlock(lockingKey);
-         if (trace) log.trace("Exit load (" + key + ")");
       }
    }
 
    public final Set<InternalCacheEntry> loadAll() throws CacheLoaderException {
-      if (trace) log.trace("loadAll()");
       acquireGlobalLock(false);
       try {
          return loadAllLockSafe();
       } finally {
          releaseGlobalLock(false);
-         if (trace) log.trace("Exit loadAll()");
+      }
+   }
+
+   public final Set<InternalCacheEntry> load(int maxEntries) throws CacheLoaderException {
+      if (maxEntries < 0) return loadAll();
+      acquireGlobalLock(false);
+      try {
+         return loadLockSafe(maxEntries);
+      } finally {
+         releaseGlobalLock(false);
       }
    }
 
@@ -184,6 +190,8 @@ public abstract class LockSupportCacheStore extends AbstractCacheStore {
    protected abstract void clearLockSafe() throws CacheLoaderException;
 
    protected abstract Set<InternalCacheEntry> loadAllLockSafe() throws CacheLoaderException;
+
+   protected abstract Set<InternalCacheEntry> loadLockSafe(int maxEntries) throws CacheLoaderException;
 
    protected abstract void toStreamLockSafe(ObjectOutput oos) throws CacheLoaderException;
 

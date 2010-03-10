@@ -404,6 +404,22 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       assert expected.isEmpty();
    }
 
+   public void testPreloadWithMaxSize() throws CacheLoaderException {
+      cs.store(InternalEntryFactory.create("k1", "v1"));
+      cs.store(InternalEntryFactory.create("k2", "v2"));
+      cs.store(InternalEntryFactory.create("k3", "v3"));
+
+      Set<InternalCacheEntry> set = cs.load(2);
+
+      assert set.size() == 2;
+      Set expected = new HashSet();
+      expected.add("k1");
+      expected.add("k2");
+      expected.add("k3");
+      for (InternalCacheEntry se : set) assert expected.remove(se.getKey());
+      assert expected.size() == 1;
+   }
+
    public void testStoreAndRemoveAll() throws CacheLoaderException {
       cs.store(InternalEntryFactory.create("k1", "v1"));
       cs.store(InternalEntryFactory.create("k2", "v2"));

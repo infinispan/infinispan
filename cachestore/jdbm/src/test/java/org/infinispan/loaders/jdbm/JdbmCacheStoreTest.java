@@ -12,6 +12,7 @@ import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -23,11 +24,10 @@ public class JdbmCacheStoreTest extends BaseCacheStoreTest {
    private JdbmCacheStore fcs;
    private String tmpDirectory;
 
-   @BeforeTest
+   @BeforeClass
    @Parameters({"basedir"})
-   protected void setUpTempDir(@Optional(value = "/tmp")String basedir) {
-      tmpDirectory = basedir + File.separator +
-            TestingUtil.TEST_PATH + File.separator + getClass().getSimpleName();
+   protected void setUpTempDir(@Optional("/tmp") String basedir) {
+      tmpDirectory = TestingUtil.tmpDirectory(basedir, this);
    }
 
    @AfterClass

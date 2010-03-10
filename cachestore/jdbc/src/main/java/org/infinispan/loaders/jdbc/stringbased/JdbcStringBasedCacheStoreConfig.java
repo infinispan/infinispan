@@ -22,6 +22,7 @@
 package org.infinispan.loaders.jdbc.stringbased;
 
 import org.infinispan.loaders.LockSupportCacheStoreConfig;
+import org.infinispan.loaders.jdbc.DatabaseType;
 import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.infinispan.util.Util;
@@ -257,6 +258,21 @@ public class JdbcStringBasedCacheStoreConfig extends LockSupportCacheStoreConfig
    public int getBatchSize() {
       return this.tableManipulation.getBatchSize();
    }
+
+   public String getDatabaseType() {
+      return this.tableManipulation.databaseType == null ? "" : this.tableManipulation.databaseType.toString();
+   }
+
+   /**
+    * Sets the database dialect.  Valid types are reflected in the DatabaseType enum.  If unspecified, will attempt to
+    * "guess" appropriate dialect from the JDBC driver specified.
+    * @param dbType
+    */
+   public void setDatabaseType(String dbType) {
+      if (dbType != null)
+         this.tableManipulation.databaseType = DatabaseType.valueOf(dbType.toUpperCase().trim());
+   }
+
 
    @Override
    public JdbcStringBasedCacheStoreConfig clone() {

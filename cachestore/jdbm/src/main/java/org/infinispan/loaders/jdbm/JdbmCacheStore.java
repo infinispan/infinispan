@@ -130,7 +130,12 @@ public class JdbmCacheStore extends AbstractCacheStore {
 
    public InternalCacheEntry load(Object key) throws CacheLoaderException {
       try {
-         return unmarshall(tree.get(key), key);
+         InternalCacheEntry ice = unmarshall(tree.get(key), key);
+         if (ice != null && ice.isExpired()) {
+            remove(key);
+            return null;
+         }
+         return ice;
       } catch (IOException e) {
          throw new CacheLoaderException(e);
       } catch (ClassNotFoundException e) {
@@ -140,6 +145,11 @@ public class JdbmCacheStore extends AbstractCacheStore {
 
    public Set<InternalCacheEntry> loadAll() throws CacheLoaderException {
       return new BTreeSet();
+   }
+
+   @Override
+   public Set<InternalCacheEntry> load(int numEntries) throws CacheLoaderException {
+      return new BTreeSet(numEntries);
    }
 
    /**
@@ -436,6 +446,15 @@ public class JdbmCacheStore extends AbstractCacheStore {
 
    private final class BTreeSet extends AbstractSet<InternalCacheEntry> {
 
+      int maxSize = -1;
+
+      private BTreeSet(int maxSize) {
+         this.maxSize = maxSize;
+      }
+
+      private BTreeSet() {
+      }
+
       @Override
       public Iterator<InternalCacheEntry> iterator() {
          final FastIterator fi;
@@ -446,7 +465,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
          }
 
          return new Iterator<InternalCacheEntry>() {
-
+            int entriesReturned = 0;
             InternalCacheEntry current = null;
             boolean next = true;
 
@@ -465,6 +484,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
                      }
                   }
                }
+               if (next == true && entriesReturned >= maxSize && maxSize > -1) next = false;
                return next;
             }
 
@@ -472,6 +492,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
                if (!hasNext())
                   throw new NoSuchElementException();
                try {
+                  entriesReturned ++;
                   return current;
                } finally {
                   current = null;

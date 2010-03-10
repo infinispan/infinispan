@@ -23,6 +23,7 @@ package org.infinispan.loaders.jdbc.mixed;
 
 import org.infinispan.loaders.AbstractCacheStoreConfig;
 import org.infinispan.loaders.LockSupportCacheStoreConfig;
+import org.infinispan.loaders.jdbc.DatabaseType;
 import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.binary.JdbcBinaryCacheStoreConfig;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
@@ -262,6 +263,20 @@ public class JdbcMixedCacheStoreConfig extends AbstractCacheStoreConfig {
       testImmutability("tableManipulation");
       this.binaryTableManipulation.setBatchSize(batchSize);
       this.stringsTableManipulation.setBatchSize(batchSize);
+   }
+
+   public String getDatabaseType() {
+      return this.binaryTableManipulation.databaseType == null ? "" : this.binaryTableManipulation.databaseType.toString();
+   }
+
+   /**
+    * Sets the database dialect.  Valid types are reflected in the DatabaseType enum.  If unspecified, will attempt to
+    * "guess" appropriate dialect from the JDBC driver specified.
+    * @param dbType
+    */
+   public void setDatabaseType(String dbType) {
+      if (dbType != null)
+         this.binaryTableManipulation.databaseType = DatabaseType.valueOf(dbType.toUpperCase().trim());
    }
 
    @Override
