@@ -53,7 +53,7 @@ public class LocalCacheTest extends AbstractLocalQueryTest {
 
    @BeforeMethod
    public void setUp() throws Exception {
-      cache = createCacheManager().getCache();
+      cache = cacheManager.getCache();
 
       qh = TestQueryHelperFactory.createTestQueryHelperInstance(cache, Person.class);
 
