@@ -65,6 +65,17 @@ public class InvalidateL1Command extends InvalidateCommand {
    }
 
    @Override
+   public boolean shouldInvoke(InvocationContext ctx) {
+      if (ctx.isOriginLocal() || (forRehash && config.isL1OnRehash())) return true;
+      boolean invoke = false;
+      for (Object k: getKeys()) {
+         invoke = invoke || !dm.isLocal(k);
+         if (invoke) return true;
+      }
+      return invoke;
+   }
+
+   @Override
    public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
