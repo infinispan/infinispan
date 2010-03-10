@@ -46,7 +46,22 @@ public class NettyChannelHandlerContext implements ChannelHandlerContext {
       return ch;
    }
 
+   @Override
    public ChannelBuffers getChannelBuffers() {
       return NettyChannelBuffers.getInstance();
    }
+
+//   @Override
+//   public void sendDownstream(ChannelEvent e) {
+//      ctx.sendDownstream(((NettyChannelEvent)e).event);
+//   }
+//
+//   @Override
+//   public MessageEvent createMessageEvent(Object message) {
+//      org.jboss.netty.channel.Channel ch = ctx.getChannel();
+//      DownstreamMessageEvent event = new DownstreamMessageEvent(ch, Channels.future(ch), message, ch.getLocalAddress());
+//      return new NettyMessageEvent(event);
+//   }
+
+
 }

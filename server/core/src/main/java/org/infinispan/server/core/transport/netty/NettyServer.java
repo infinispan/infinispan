@@ -29,7 +29,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.infinispan.server.core.CommandHandler;
+import org.infinispan.server.core.transport.CommandHandler;
 import org.infinispan.server.core.transport.Server;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -62,7 +62,7 @@ public class NettyServer implements Server {
    final ExecutorService masterExecutor;
    final ExecutorService workerExecutor;
    
-   public NettyServer(CommandHandler commandHandler, ChannelUpstreamHandler decoder, ChannelDownstreamHandler encoder, 
+   public NettyServer(CommandHandler commandHandler, ChannelUpstreamHandler decoder, ChannelDownstreamHandler encoder,
             SocketAddress address, int masterThreads, int workerThreads, String cacheName) {
       ThreadFactory tf = new MemcachedThreadFactory(cacheName, ExecutorType.MASTER);
       if (masterThreads == 0) {

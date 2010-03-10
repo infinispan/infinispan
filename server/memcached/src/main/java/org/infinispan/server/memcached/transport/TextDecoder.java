@@ -24,8 +24,8 @@
 package org.infinispan.server.memcached.transport;
 
 import org.infinispan.Cache;
-import org.infinispan.server.core.Command;
-import org.infinispan.server.core.InterceptorChain;
+import org.infinispan.server.memcached.Command;
+import org.infinispan.server.memcached.InterceptorChain;
 import org.infinispan.server.core.transport.Channel;
 import org.infinispan.server.core.transport.ChannelBuffer;
 import org.infinispan.server.core.transport.ChannelBuffers;

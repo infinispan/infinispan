@@ -20,14 +20,19 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.server.core;
+package org.infinispan.server.memcached;
+
+import org.infinispan.server.core.transport.ChannelHandlerContext;
+
+import java.util.List;
 
 /**
- * InterceptorChainFactory.
+ * InterceptorChain.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-public interface InterceptorChainFactory {
-   InterceptorChain buildInterceptorChain();
+public interface InterceptorChain {
+   Object invoke(ChannelHandlerContext ctx, Command command) throws Throwable;
+   List<CommandInterceptor> getInterceptorsWhichExtend(Class<? extends CommandInterceptor> interceptorClass);
 }

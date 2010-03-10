@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat, Inc. and/or its affiliates, and
+ * Copyright 2010, Red Hat, Inc. and/or its affiliates, and
  * individual contributors as indicated by the @author tags. See the
  * copyright.txt file in the distribution for a full listing of
  * individual contributors.
@@ -20,19 +20,17 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.server.core;
+package org.infinispan.server.core.transport;
 
 import org.infinispan.server.core.transport.ChannelHandlerContext;
-
-import java.util.List;
+import org.infinispan.server.core.transport.MessageEvent;
 
 /**
- * InterceptorChain.
+ * CommandHandler.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-public interface InterceptorChain {
-   Object invoke(ChannelHandlerContext ctx, Command command) throws Throwable;
-   List<CommandInterceptor> getInterceptorsWhichExtend(Class<? extends CommandInterceptor> interceptorClass);
+public interface CommandHandler {
+   void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Throwable;
 }

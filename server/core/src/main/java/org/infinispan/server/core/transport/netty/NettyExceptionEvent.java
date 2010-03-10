@@ -23,6 +23,8 @@
 
 package org.infinispan.server.core.transport.netty;
 
+import org.infinispan.server.core.transport.Channel;
+import org.infinispan.server.core.transport.ChannelFuture;
 import org.infinispan.server.core.transport.ExceptionEvent;
 
 /**
@@ -31,15 +33,24 @@ import org.infinispan.server.core.transport.ExceptionEvent;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class NettyExceptionEvent implements ExceptionEvent {
-   final org.jboss.netty.channel.ExceptionEvent event;
+public class NettyExceptionEvent extends NettyChannelEvent implements ExceptionEvent {
 
    NettyExceptionEvent(org.jboss.netty.channel.ExceptionEvent event) {
-      this.event = event;
+      super(event);
    }
 
    @Override
    public Throwable getCause() {
-      return event.getCause();
+      return ((org.jboss.netty.channel.ExceptionEvent) event).getCause();
+   }
+
+   @Override
+   public Channel getChannel() {
+      return new NettyChannel(event.getChannel());
+   }
+
+   @Override
+   public ChannelFuture getFuture() {
+      return new NettyChannelFuture(event.getFuture());
    }
 }

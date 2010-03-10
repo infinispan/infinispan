@@ -62,6 +62,8 @@ public class Main {
    public static final int MASTER_THREADS_DEFAULT = 0;
    public static final int WORKER_THREADS_DEFAULT = 0;
 
+   private static String programName;
+
    /**
     * Server properties.  This object holds all of the required
     * information to get the server up and running. Use System
@@ -101,7 +103,11 @@ public class Main {
       String configFile = props.get(PROP_KEY_CACHE_CONFIG);
 
       String protocol = props.get(PROP_KEY_PROTOCOL);
-      Protocol p = protocol == null ? Protocol.HOTROD : Protocol.valueOf(protocol.toUpperCase());
+      if (protocol == null) {
+         System.err.println("ERROR: Please indicate protocol to run with -r parameter");
+         showAndExit();
+      }
+      Protocol p = Protocol.valueOf(protocol.toUpperCase());
       server = (ProtocolServer) Util.getInstance(p.clazz);
       addShutdownHook(new ShutdownHook(server)); // Make a shutdown hook
       server.start(host, port, configFile, masterThreads, workerThreads);
@@ -109,7 +115,7 @@ public class Main {
 
    private void processCommandLine(String[] args) throws Exception {
       // set this from a system property or default to jboss
-      String programName = System.getProperty("program.name", "InfinispanServer");
+      programName = System.getProperty("program.name", "startServer");
       // TODO: Since this memcached/hotrod implementation stores stuff as byte[], these could be implemented in the future:
       // -m <num>      max memory to use for items in megabytes (default: 64 MB)
       // -M            return error on memory exhausted (rather than removing items)
@@ -142,21 +148,7 @@ public class Main {
                break; // for completeness
             case 'h' :
                // show command line help
-               System.out.println("usage: " + programName + " [options]");
-               System.out.println();
-               System.out.println("options:");
-               System.out.println("    -h, --help                         Show this help message");
-               System.out.println("    -V, --version                      Show version information");
-               System.out.println("    --                                 Stop processing options");
-               System.out.println("    -p, --port=<num>                   TCP port number to listen on (default: 11211)");
-               System.out.println("    -l, --host=<host or ip>            Interface to listen on (default: 127.0.0.1, localhost)");
-               System.out.println("    -m, --master_threads=<num>         Number of threads accepting incoming connections (default: unlimited while resources are available)");
-               System.out.println("    -t, --work_threads=<num>           Number of threads processing incoming requests and sending responses (default: unlimited while resources are available)");
-               System.out.println("    -c, --cache_config=<filename>      Cache configuration file (default: creates cache with default values)");
-               System.out.println("    -r, --protocol=[memcached|hotrod]  Protocol to understand by the server. Choose one of the two options");
-               System.out.println("    -D<name>[=<value>]                 Set a system property");
-               System.out.println();
-               System.exit(0);
+               showAndExit();
                break; // for completeness
             case 'V' :
                Version.printFullVersionInformation();
@@ -222,7 +214,7 @@ public class Main {
       Future<Void> f = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
          @Override
          public Thread newThread(Runnable r) {
-            return new Thread(r, System.getProperty("program.name") + "-main");
+            return new Thread(r, "InfinispanServer-Main");
          }
       }).submit(worker);
 
@@ -234,13 +226,31 @@ public class Main {
     *
     * @param shutdownHook
     */
-   static void addShutdownHook(final Thread shutdownHook) {
+   private static void addShutdownHook(final Thread shutdownHook) {
       AccessController.doPrivileged(new PrivilegedAction<Void>() {
          public Void run() {
             Runtime.getRuntime().addShutdownHook(shutdownHook);
             return null;
          }
       });
+   }
+
+   private static void showAndExit() {
+      System.out.println("usage: " + programName + " [options]");
+      System.out.println();
+      System.out.println("options:");
+      System.out.println("    -h, --help                         Show this help message");
+      System.out.println("    -V, --version                      Show version information");
+      System.out.println("    --                                 Stop processing options");
+      System.out.println("    -p, --port=<num>                   TCP port number to listen on (default: 11211)");
+      System.out.println("    -l, --host=<host or ip>            Interface to listen on (default: 127.0.0.1, localhost)");
+      System.out.println("    -m, --master_threads=<num>         Number of threads accepting incoming connections (default: unlimited while resources are available)");
+      System.out.println("    -t, --work_threads=<num>           Number of threads processing incoming requests and sending responses (default: unlimited while resources are available)");
+      System.out.println("    -c, --cache_config=<filename>      Cache configuration file (default: creates cache with default values)");
+      System.out.println("    -r, --protocol=[memcached|hotrod]  Protocol to understand by the server. This is a mandatory option and you should choose one of the two options");
+      System.out.println("    -D<name>[=<value>]                 Set a system property");
+      System.out.println();
+      System.exit(0);
    }
 
    /**

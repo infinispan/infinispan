@@ -41,18 +41,16 @@ public class NettyChannel implements Channel {
    
    @Override
    public ChannelFuture disconnect() {
-      return new NettyChannelFuture(ch.disconnect(), this);
+      return new NettyChannelFuture(ch.disconnect());
    }
 
    @Override
    public ChannelFuture write(Object message) {
       if (message instanceof ChannelBuffer) {
          // If we get an Infinispan channel buffer abstraction, convert it to something netty can understand
-//         message = new NettyChannelBufferAdapter((NettyChannelBuffer) message);
          message = ((ChannelBuffer) message).getUnderlyingChannelBuffer();
-//         message = ((NettyChannelBuffer) message).nettyBuffer;
       }
-      return new NettyChannelFuture(ch.write(message), this);
+      return new NettyChannelFuture(ch.write(message));
    }
 
    @Override

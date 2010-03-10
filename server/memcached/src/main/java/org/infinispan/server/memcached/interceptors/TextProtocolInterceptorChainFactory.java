@@ -23,8 +23,8 @@
 package org.infinispan.server.memcached.interceptors;
 
 import org.infinispan.Cache;
-import org.infinispan.server.core.InterceptorChainFactory;
-import org.infinispan.server.core.InterceptorChain;
+import org.infinispan.server.memcached.InterceptorChain;
+import org.infinispan.server.memcached.InterceptorChainFactory;
 
 /**
  * InterceptorChainFactory.

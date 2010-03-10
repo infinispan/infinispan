@@ -31,11 +31,10 @@ import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 
 import org.infinispan.Cache;
+import org.infinispan.server.memcached.InterceptorChain;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jboss.util.NotImplementedException;
-
-import org.infinispan.server.core.InterceptorChain;
 
 /**
  * CommandFactory.

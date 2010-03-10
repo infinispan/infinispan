@@ -29,6 +29,6 @@ package org.infinispan.server.core.transport;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public interface ExceptionEvent {
+public interface ExceptionEvent extends ChannelEvent {
    Throwable getCause();
 }

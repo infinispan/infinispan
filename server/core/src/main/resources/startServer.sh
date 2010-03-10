@@ -19,16 +19,6 @@ then
    done
 fi
 
-CP=${CP}:${ISPN_HOME}/modules/core/infinispan-server-core.jar
-
-if [ -e ${ISPN_HOME}/modules/core/lib ]
-then
-   for JAR in ${ISPN_HOME}/modules/core/lib/*
-   do
-      CP=$CP:$JAR
-   done
-fi
-
 CP=${CP}:${ISPN_HOME}/modules/memcached/infinispan-server-memcached.jar
 
 if [ -e ${ISPN_HOME}/modules/memcached/lib ]

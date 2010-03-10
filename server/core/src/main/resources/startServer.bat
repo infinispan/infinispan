@@ -5,6 +5,7 @@ setlocal enabledelayedexpansion
 set LIB=
 for %%f in (..\lib\*.jar) do set LIB=!LIB!;%%f
 for %%f in (..\modules\memcached\lib\*.jar) do set LIB=!LIB!;%%f
+for %%f in (..\modules\hotrod\lib\*.jar) do set LIB=!LIB!;%%f
 rem echo libs: %LIB%
 
 set CP=%LIB%;..\infinispan-core.jar;..\modules\core\infinispan-server-memcached.jar;%CP%

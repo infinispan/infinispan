@@ -33,7 +33,7 @@ import org.infinispan.server.core.transport.Server;
 import org.infinispan.server.core.transport.netty.NettyDecoder;
 import org.infinispan.server.core.transport.netty.NettyServer;
 import org.infinispan.server.memcached.transport.TextDecoder;
-import org.infinispan.server.core.InterceptorChain;
+import org.infinispan.server.memcached.InterceptorChain;
 import org.infinispan.server.memcached.commands.TextCommandHandler;
 import org.infinispan.server.memcached.commands.Value;
 import org.infinispan.server.memcached.interceptors.TextProtocolInterceptorChainFactory;

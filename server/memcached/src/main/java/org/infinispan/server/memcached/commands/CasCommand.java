@@ -26,7 +26,7 @@ import java.io.IOException;
 
 import org.infinispan.Cache;
 import org.infinispan.server.core.transport.ChannelHandlerContext;
-import org.infinispan.server.core.Command;
+import org.infinispan.server.memcached.Command;
 import org.infinispan.server.memcached.Reply;
 import org.infinispan.server.memcached.interceptors.TextProtocolVisitor;
 

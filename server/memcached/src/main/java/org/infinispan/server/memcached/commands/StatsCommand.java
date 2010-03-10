@@ -32,7 +32,7 @@ import org.infinispan.Cache;
 import org.infinispan.server.core.transport.Channel;
 import org.infinispan.server.core.transport.ChannelBuffers;
 import org.infinispan.server.core.transport.ChannelHandlerContext;
-import org.infinispan.server.core.InterceptorChain;
+import org.infinispan.server.memcached.InterceptorChain;
 import org.infinispan.server.memcached.interceptors.TextProtocolVisitor;
 
 /**

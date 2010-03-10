@@ -20,32 +20,16 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.server.memcached.commands;
+package org.infinispan.server.memcached;
 
-import org.infinispan.Cache;
-import org.infinispan.server.core.transport.ChannelHandlerContext;
-import org.infinispan.server.core.transport.CommandHandler;
-import org.infinispan.server.core.transport.MessageEvent;
-import org.infinispan.server.memcached.InterceptorChain;
+import java.io.IOException;
 
 /**
- * TextProtocolServerHandler.
+ * TODO: This only deals with text based protocols, needs further thought. Will be looked into when implementing Hot Rod
  * 
  * @author Galder Zamarreño
- * @since 4.1
+ * @since 4.0
  */
-public class TextCommandHandler implements CommandHandler {
-   final Cache cache;
-   final InterceptorChain chain;
-
-   public TextCommandHandler(Cache cache, InterceptorChain chain) {
-      this.cache = cache;
-      this.chain = chain;
-   }
-
-   @Override
-   public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Throwable {
-      chain.invoke(ctx, (TextCommand) e.getMessage());
-   }
-
+public interface CommandFactory {
+   Command createCommand(String line) throws IOException;
 }

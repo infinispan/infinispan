@@ -146,9 +146,8 @@
             <include>org.infinispan:infinispan-tree</include>
             <include>org.infinispan:infinispan-query</include>
             <include>org.infinispan:infinispan-server-rest</include>
-            <include>org.infinispan:infinispan-server-core</include>            
             <include>org.infinispan:infinispan-server-memcached</include>
-            <include>org.infinispan:infinispan-server-hotrod</include>
+            <!-- include>org.infinispan:infinispan-server-hotrod</include -->
             <include>org.infinispan:infinispan-lucene-directory</include>
             <include>org.infinispan:infinispan-lucene-demo</include>
          </includes>
@@ -262,6 +261,83 @@
             </dependencySets>
          </binaries>
       </moduleSet>
+
+      <!-- For server-core module, only add scripts -->
+      <moduleSet>
+         <includeSubModules>false</includeSubModules>
+         <includes>
+            <include>org.infinispan:infinispan-server-core</include>
+         </includes>
+         <sources>
+            <includeModuleDirectory>false</includeModuleDirectory>
+
+            <fileSets>
+
+               <!-- Executable resources -->
+               <fileSet>
+                  <directory>src/main/resources</directory>
+                  <outputDirectory>bin</outputDirectory>
+                  <lineEnding>unix</lineEnding>
+                  <includes>
+                     <include>**/*.sh</include>
+                     <include>**/*.py</include>
+                     <include>**/*.rb</include>
+                  </includes>
+                  <fileMode>0777</fileMode>
+               </fileSet>
+
+               <fileSet>
+                  <directory>src/main/resources</directory>
+                  <outputDirectory>bin</outputDirectory>
+                  <lineEnding>dos</lineEnding>
+                  <includes>
+                     <include>**/*.cmd</include>
+                     <include>**/*.bat</include>
+                  </includes>
+                  <fileMode>0777</fileMode>
+               </fileSet>
+
+               <!-- EULAs and license files -->
+               <fileSet>
+                  <directory>src/main/release</directory>
+                  <outputDirectory></outputDirectory>
+                  <lineEnding>dos</lineEnding>
+                  <includes>
+                     <include>**/*.txt</include>
+                  </includes>
+               </fileSet>
+
+            </fileSets>
+
+         </sources>
+
+      </moduleSet>
+
+      <!-- REST server and ec2-demo module which are webapps -->
+      <moduleSet>
+         <includeSubModules>false</includeSubModules>
+         <includes>
+            <include>org.infinispan:infinispan-server-rest</include>
+            <include>org.infinispan:infinispan-ec2-demo</include>
+         </includes>
+
+         <binaries>
+            <outputDirectory>modules/${module.basedir.name}</outputDirectory>
+            <outputFileNameMapping>
+               ${module.artifactId}.${module.extension}
+            </outputFileNameMapping>
+            <unpack>false</unpack>
+            <dependencySets>
+               <dependencySet>
+                  <includes>
+                     <include>NONEXISTENT_DEPENDENCY*</include>
+                  </includes>
+                  <outputDirectory>modules/${module.basedir.name}</outputDirectory>
+               </dependencySet>
+            </dependencySets>
+         </binaries>
+      </moduleSet>
+
    </moduleSets>
 
    <fileSets>

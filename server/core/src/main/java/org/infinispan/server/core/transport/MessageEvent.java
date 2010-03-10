@@ -20,16 +20,20 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.server.core;
+package org.infinispan.server.core.transport;
 
-import java.io.IOException;
+import org.infinispan.server.core.transport.Channel;
+import org.infinispan.server.core.transport.ChannelEvent;
+
+import java.net.SocketAddress;
 
 /**
- * TODO: This only deals with text based protocols, needs further thought. Will be looked into when implementing Hot Rod
+ * MessageEvent.
  * 
  * @author Galder Zamarreño
  * @since 4.0
  */
-public interface CommandFactory {
-   Command createCommand(String line) throws IOException;
+public interface MessageEvent extends ChannelEvent {
+   Object getMessage();
+   SocketAddress getRemoteAddress();
 }

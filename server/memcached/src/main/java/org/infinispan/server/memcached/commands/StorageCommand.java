@@ -26,7 +26,7 @@ import java.io.IOException;
 import java.io.StreamCorruptedException;
 
 import org.infinispan.Cache;
-import org.infinispan.server.core.Command;
+import org.infinispan.server.memcached.Command;
 
 /**
  * StorageCommand.

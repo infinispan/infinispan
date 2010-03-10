@@ -31,4 +31,6 @@ package org.infinispan.server.core.transport;
 public interface ChannelHandlerContext {
    Channel getChannel();
    ChannelBuffers getChannelBuffers();
+//   void sendDownstream(ChannelEvent e);
+//   MessageEvent createMessageEvent(Object message);
 }

@@ -35,11 +35,9 @@ import org.infinispan.server.core.transport.ChannelFuture;
  */
 public class NettyChannelFuture implements ChannelFuture {
    final org.jboss.netty.channel.ChannelFuture future;
-   final Channel ch;
 
-   public NettyChannelFuture(org.jboss.netty.channel.ChannelFuture future, Channel ch) {
+   public NettyChannelFuture(org.jboss.netty.channel.ChannelFuture future) {
       this.future = future;
-      this.ch = ch;
    }
 
    @Override
@@ -76,7 +74,7 @@ public class NettyChannelFuture implements ChannelFuture {
 
    @Override
    public Channel getChannel() {
-      return ch;
+      return new NettyChannel(future.getChannel());
    }
 
    @Override

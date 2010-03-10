@@ -24,8 +24,7 @@ package org.infinispan.server.core.transport.netty;
 
 import java.net.SocketAddress;
 
-import org.infinispan.server.core.MessageEvent;
-import org.infinispan.server.core.transport.Channel;
+import org.infinispan.server.core.transport.MessageEvent;
 
 /**
  * NettyMessageEvent.
@@ -33,25 +32,20 @@ import org.infinispan.server.core.transport.Channel;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class NettyMessageEvent implements MessageEvent {
-   final org.jboss.netty.channel.MessageEvent event;
+public class NettyMessageEvent extends NettyChannelEvent implements MessageEvent {
 
    public NettyMessageEvent(org.jboss.netty.channel.MessageEvent event) {
-      this.event = event;
+      super(event);
    }
 
    @Override
-   public Object getMessage() {
-      return event.getMessage();
+   public Object getMessage() {               
+      return ((org.jboss.netty.channel.MessageEvent) event).getMessage();
    }
 
    @Override
    public SocketAddress getRemoteAddress() {
-      return event.getRemoteAddress();
+      return ((org.jboss.netty.channel.MessageEvent) event).getRemoteAddress();
    }
 
-   @Override
-   public Channel getChannel() {
-      return new NettyChannel(event.getChannel());
-   }
 }
