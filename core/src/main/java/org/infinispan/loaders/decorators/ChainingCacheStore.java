@@ -132,7 +132,7 @@ public class ChainingCacheStore implements CacheStore {
    @Override
    public Set<Object> loadAllKeys(Set<Object> keysToExclude) throws CacheLoaderException {
       Set<Object> set = new HashSet<Object>();
-      for (CacheStore s : stores.keySet()) set.add(s.loadAllKeys(keysToExclude));
+      for (CacheStore s : stores.keySet()) set.addAll(s.loadAllKeys(keysToExclude));
       return set;
    }
 
