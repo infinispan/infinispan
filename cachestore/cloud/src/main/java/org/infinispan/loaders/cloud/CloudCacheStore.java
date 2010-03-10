@@ -257,7 +257,7 @@ public class CloudCacheStore extends BucketBasedCacheStore {
    }
 
    @Override
-   protected void insertBucket(Bucket bucket) throws CacheLoaderException {
+   protected void updateBucket(Bucket bucket) throws CacheLoaderException {
       Blob blob = blobStore.newBlob(encodeBucketName(bucket.getBucketName()));
       writeToBlob(blob, bucket);
 
@@ -304,11 +304,6 @@ public class CloudCacheStore extends BucketBasedCacheStore {
       } finally {
          asyncCommandFutures.remove();
       }
-   }
-
-   @Override
-   protected void updateBucket(Bucket bucket) throws CacheLoaderException {
-      insertBucket(bucket);
    }
 
    private void writeToBlob(Blob blob, Bucket bucket) throws CacheLoaderException {

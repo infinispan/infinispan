@@ -95,11 +95,21 @@ public abstract class BucketBasedCacheStore extends LockSupportCacheStore {
     * @param bucket bucket to insert
     * @throws CacheLoaderException in case of problems with the store.
     */
-   protected abstract void insertBucket(Bucket bucket) throws CacheLoaderException;
+   protected void insertBucket(Bucket bucket) throws CacheLoaderException {
+      // the default behavior is to assume that updateBucket() will create a new bucket, so we just forward calls to
+      // updateBucket().
+      updateBucket(bucket);
+   }
 
    /**
     * Updates a bucket in the store with the Bucket passed in to the method.  This method assumes that the bucket
-    * already exists in the store.
+    * already exists in the store, however some implementations may choose to simply create a new bucket if the bucket
+    * does not exist.
+    * <p />
+    * The default behavior is that non-existent buckets are created on the fly.  If this is <i>not</i> the case in your
+    * implementation, then you would have to override {@link #insertBucket(Bucket)} as well so that it doesn't blindly
+    * forward calls to {@link #updateBucket(Bucket)}.
+    * <p />
     * @param bucket bucket to update.
     * @throws CacheLoaderException in case of problems with the store.
     */

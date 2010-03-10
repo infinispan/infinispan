@@ -213,10 +213,6 @@ public class FileCacheStore extends BucketBasedCacheStore {
       return bucket;
    }
 
-   protected void insertBucket(Bucket bucket) throws CacheLoaderException {
-      updateBucket(bucket);
-   }
-
    public void updateBucket(Bucket b) throws CacheLoaderException {
       File f = new File(root, b.getBucketName());
       if (f.exists()) {
