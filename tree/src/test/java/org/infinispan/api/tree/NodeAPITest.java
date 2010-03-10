@@ -2,6 +2,7 @@ package org.infinispan.api.tree;
 
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.tree.Fqn;
@@ -26,26 +27,22 @@ import java.util.Set;
  * @author <a href="mailto:manik AT jboss DOT org">Manik Surtani</a>
  */
 @Test(groups = "functional", testName = "api.tree.NodeAPITest")
-public class NodeAPITest {
+public class NodeAPITest extends SingleCacheManagerTest {
    static final Fqn A = Fqn.fromString("/a"), B = Fqn.fromString("/b"), C = Fqn.fromString("/c"), D = Fqn.fromString("/d");
    Fqn A_B = Fqn.fromRelativeFqn(A, B);
    Fqn A_C = Fqn.fromRelativeFqn(A, C);
    TransactionManager tm;
    TreeCache cache;
 
-   @BeforeMethod(alwaysRun = true)
-   public void setUp() throws Exception {
+   @Override
+   protected CacheManager createCacheManager() throws Exception {
       // start a single cache instance
-      Configuration c = new Configuration();
+      Configuration c = getDefaultStandaloneConfig(true);
       c.setInvocationBatchingEnabled(true);
       CacheManager cm = TestCacheManagerFactory.createCacheManager(c, true);
       cache = new TreeCacheImpl(cm.getCache());
       tm = TestingUtil.getTransactionManager(cache.getCache());
-   }
-
-   @AfterMethod
-   public void tearDown() {
-      TestingUtil.killCaches(cache.getCache());
+      return cm;
    }
 
    public void testAddingData() {

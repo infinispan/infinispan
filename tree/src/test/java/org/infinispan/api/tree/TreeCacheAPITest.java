@@ -5,6 +5,7 @@ import org.infinispan.atomic.AtomicMap;
 import org.infinispan.atomic.AtomicMapLookup;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransactionSetup;
@@ -31,13 +32,13 @@ import java.util.Map;
  */
 
 @Test(groups = "functional", testName = "api.tree.TreeCacheAPITest")
-public class TreeCacheAPITest {
+public class TreeCacheAPITest extends SingleCacheManagerTest {
    private TreeCache<String, String> cache;
    private TransactionManager tm;
    private Log log = LogFactory.getLog(TreeCacheAPITest.class);
 
-   @BeforeMethod(alwaysRun = true)
-   public void setUp() throws Exception {
+   @Override
+   protected CacheManager createCacheManager() throws Exception {
       // start a single cache instance
       Configuration c = new Configuration();
       c.setTransactionManagerLookupClass(TransactionSetup.getManagerLookup());
@@ -48,12 +49,7 @@ public class TreeCacheAPITest {
       cache = new TreeCacheImpl(flatcache);
 
       tm = TestingUtil.getTransactionManager(flatcache);
-   }
-
-   @AfterMethod(alwaysRun = true)
-   public void tearDown() {
-//      TestingUtil.killTreeCaches(cache);
-      cache = null;
+      return cm;
    }
 
    public void testConvenienceMethods() {
