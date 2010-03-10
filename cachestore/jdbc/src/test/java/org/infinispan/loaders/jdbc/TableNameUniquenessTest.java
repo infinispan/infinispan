@@ -31,6 +31,7 @@ import org.infinispan.loaders.jdbc.mixed.JdbcMixedCacheStore;
 import org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore;
 import org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStoreConfig;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -44,68 +45,85 @@ import java.sql.Connection;
  * @author Mircea.Markus@jboss.com
  */
 @Test(groups = "functional", testName = "loaders.jdbc.TableNameUniquenessTest")
-public class TableNameUniquenessTest {
+public class TableNameUniquenessTest extends AbstractInfinispanTest {
 
    public void testForJdbcStringBasedCacheStore() throws Exception {
-      CacheManager cm = TestCacheManagerFactory.fromXml("configs/string-based.xml");
-      Cache<String, String> first = cm.getCache("first");
-      Cache<String, String> second = cm.getCache("second");
+      CacheManager cm = null;
+      try {
+         cm = TestCacheManagerFactory.fromXml("configs/string-based.xml");
+         Cache<String, String> first = cm.getCache("first");
+         Cache<String, String> second = cm.getCache("second");
 
-      CacheLoaderConfig firstCacheLoaderConfig = first.getConfiguration().getCacheLoaderManagerConfig().getFirstCacheLoaderConfig();
-      assert firstCacheLoaderConfig != null;
-      CacheLoaderConfig secondCacheLoaderConfig = second.getConfiguration().getCacheLoaderManagerConfig().getFirstCacheLoaderConfig();
-      assert secondCacheLoaderConfig != null;
-      assert firstCacheLoaderConfig instanceof JdbcStringBasedCacheStoreConfig;
-      assert secondCacheLoaderConfig instanceof JdbcStringBasedCacheStoreConfig;
+         CacheLoaderConfig firstCacheLoaderConfig = first.getConfiguration().getCacheLoaderManagerConfig().getFirstCacheLoaderConfig();
+         assert firstCacheLoaderConfig != null;
+         CacheLoaderConfig secondCacheLoaderConfig = second.getConfiguration().getCacheLoaderManagerConfig().getFirstCacheLoaderConfig();
+         assert secondCacheLoaderConfig != null;
+         assert firstCacheLoaderConfig instanceof JdbcStringBasedCacheStoreConfig;
+         assert secondCacheLoaderConfig instanceof JdbcStringBasedCacheStoreConfig;
 
-      JdbcStringBasedCacheStore firstCs = (JdbcStringBasedCacheStore) TestingUtil.extractComponent(first, CacheLoaderManager.class).getCacheLoader();
-      JdbcStringBasedCacheStore secondCs = (JdbcStringBasedCacheStore) TestingUtil.extractComponent(second, CacheLoaderManager.class).getCacheLoader();
+         JdbcStringBasedCacheStore firstCs = (JdbcStringBasedCacheStore) TestingUtil.extractComponent(first, CacheLoaderManager.class).getCacheLoader();
+         JdbcStringBasedCacheStore secondCs = (JdbcStringBasedCacheStore) TestingUtil.extractComponent(second, CacheLoaderManager.class).getCacheLoader();
 
-      asserTableExistance(firstCs.getConnectionFactory().getConnection(), "ISPN_STRING_TABLE_second", "ISPN_STRING_TABLE_first", "ISPN_STRING_TABLE");
+         asserTableExistance(firstCs.getConnectionFactory().getConnection(), "ISPN_STRING_TABLE_second", "ISPN_STRING_TABLE_first", "ISPN_STRING_TABLE");
 
-      assertNoOverlapingState(first, second, firstCs, secondCs);
+         assertNoOverlapingState(first, second, firstCs, secondCs);
+      } finally {
+         TestingUtil.killCacheManagers(cm);
+      }
    }
 
    public void testForJdbcBinaryCacheStore() throws Exception {
-      CacheManager cm = TestCacheManagerFactory.fromXml("configs/binary.xml");
-      Cache<String, String> first = cm.getCache("first");
-      Cache<String, String> second = cm.getCache("second");
+      CacheManager cm = null;
+      try {
+         cm = TestCacheManagerFactory.fromXml("configs/binary.xml");
+         Cache<String, String> first = cm.getCache("first");
+         Cache<String, String> second = cm.getCache("second");
 
-      JdbcBinaryCacheStore firstCs = (JdbcBinaryCacheStore) TestingUtil.extractComponent(first, CacheLoaderManager.class).getCacheLoader();
-      JdbcBinaryCacheStore secondCs = (JdbcBinaryCacheStore) TestingUtil.extractComponent(second, CacheLoaderManager.class).getCacheLoader();
+         JdbcBinaryCacheStore firstCs = (JdbcBinaryCacheStore) TestingUtil.extractComponent(first, CacheLoaderManager.class).getCacheLoader();
+         JdbcBinaryCacheStore secondCs = (JdbcBinaryCacheStore) TestingUtil.extractComponent(second, CacheLoaderManager.class).getCacheLoader();
 
-      asserTableExistance(firstCs.getConnectionFactory().getConnection(), "ISPN_BUCKET_TABLE_second", "ISPN_BUCKET_TABLE_first", "IISPN_BUCKET_TABLE");
+         asserTableExistance(firstCs.getConnectionFactory().getConnection(), "ISPN_BUCKET_TABLE_second", "ISPN_BUCKET_TABLE_first", "IISPN_BUCKET_TABLE");
 
-      assertNoOverlapingState(first, second, firstCs, secondCs);
+         assertNoOverlapingState(first, second, firstCs, secondCs);
+      } finally {
+         TestingUtil.killCacheManagers(cm);
+      }
+
    }
 
    @SuppressWarnings("unchecked")
    public void testForMixedCacheStore() throws Exception {
-      CacheManager cm = TestCacheManagerFactory.fromXml("configs/mixed.xml");
-      Cache first = cm.getCache("first");
-      Cache second = cm.getCache("second");
+      CacheManager cm = null;
+      try {
+         cm = TestCacheManagerFactory.fromXml("configs/mixed.xml");
+         Cache first = cm.getCache("first");
+         Cache second = cm.getCache("second");
 
-      JdbcMixedCacheStore firstCs = (JdbcMixedCacheStore) TestingUtil.extractComponent(first, CacheLoaderManager.class).getCacheLoader();
-      JdbcMixedCacheStore secondCs = (JdbcMixedCacheStore) TestingUtil.extractComponent(second, CacheLoaderManager.class).getCacheLoader();
+         JdbcMixedCacheStore firstCs = (JdbcMixedCacheStore) TestingUtil.extractComponent(first, CacheLoaderManager.class).getCacheLoader();
+         JdbcMixedCacheStore secondCs = (JdbcMixedCacheStore) TestingUtil.extractComponent(second, CacheLoaderManager.class).getCacheLoader();
 
-      asserTableExistance(firstCs.getConnectionFactory().getConnection(), "ISPN_MIXED_STR_TABLE_second", "ISPN_MIXED_STR_TABLE_first", "ISPN_MIXED_STR_TABLE");
-      asserTableExistance(firstCs.getConnectionFactory().getConnection(), "ISPN_MIXED_BINARY_TABLE_second", "ISPN_MIXED_BINARY_TABLE_first", "ISPN_MIXED_BINARY_TABLE");
+         asserTableExistance(firstCs.getConnectionFactory().getConnection(), "ISPN_MIXED_STR_TABLE_second", "ISPN_MIXED_STR_TABLE_first", "ISPN_MIXED_STR_TABLE");
+         asserTableExistance(firstCs.getConnectionFactory().getConnection(), "ISPN_MIXED_BINARY_TABLE_second", "ISPN_MIXED_BINARY_TABLE_first", "ISPN_MIXED_BINARY_TABLE");
 
-      assertNoOverlapingState(first, second, firstCs, secondCs);
+         assertNoOverlapingState(first, second, firstCs, secondCs);
 
 
-      Person person1 = new Person(29, "Mircea");
-      Person person2 = new Person(29, "Manik");
+         Person person1 = new Person(29, "Mircea");
+         Person person2 = new Person(29, "Manik");
 
-      first.put("k", person1);
-      assert firstCs.containsKey("k");
-      assert !secondCs.containsKey("k");
-      assert first.get("k").equals(person1);
-      assert second.get("k") == null;
+         first.put("k", person1);
+         assert firstCs.containsKey("k");
+         assert !secondCs.containsKey("k");
+         assert first.get("k").equals(person1);
+         assert second.get("k") == null;
 
-      second.put("k2", person2);
-      assert second.get("k2").equals(person2);
-      assert first.get("k2") == null;
+         second.put("k2", person2);
+         assert second.get("k2").equals(person2);
+         assert first.get("k2") == null;
+      } finally {
+         TestingUtil.killCacheManagers(cm);
+      }
+
    }
 
 
