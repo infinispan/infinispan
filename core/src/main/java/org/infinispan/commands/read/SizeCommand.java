@@ -33,9 +33,8 @@ import org.infinispan.context.InvocationContext;
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @since 4.0
  */
-public class SizeCommand implements VisitableCommand, LocalCommand {
+public class SizeCommand extends AbstractLocalCommand implements VisitableCommand {
    private final DataContainer container;
-   private static final Object[] EMPTY_ARRAY = new Object[0];
 
    public SizeCommand(DataContainer container) {
       this.container = container;
@@ -47,18 +46,6 @@ public class SizeCommand implements VisitableCommand, LocalCommand {
 
    public Integer perform(InvocationContext ctx) throws Throwable {
       return container.size();
-   }
-
-   public byte getCommandId() {
-      return 0;  // no-op
-   }
-
-   public Object[] getParameters() {
-      return EMPTY_ARRAY;  // no-op
-   }
-
-   public void setParameters(int commandId, Object[] parameters) {
-      // no-op
    }
 
    @Override

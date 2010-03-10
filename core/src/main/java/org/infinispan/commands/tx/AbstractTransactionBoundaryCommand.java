@@ -94,6 +94,10 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
       cacheName = (String) args[1];
    }
 
+   public boolean shouldInvoke(InvocationContext ctx) {
+      return true;
+   }
+
    public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;

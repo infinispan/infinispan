@@ -36,9 +36,14 @@ public abstract class BaseRpcInvokingCommand extends BaseRpcCommand {
    protected final Object processVisitableCommand(ReplicableCommand cacheCommand) throws Throwable {
       if (cacheCommand instanceof VisitableCommand) {
          InvocationContext ctx = icc.createRemoteInvocationContext();
-         if (trace)
-            log.trace("Invoking command " + cacheCommand + ", with originLocal flag set to " + ctx.isOriginLocal() + ".");
-         return interceptorChain.invoke(ctx, (VisitableCommand) cacheCommand);
+         VisitableCommand vc = (VisitableCommand) cacheCommand;
+         if (vc.shouldInvoke(ctx)) {
+            if (trace) log.trace("Invoking command " + cacheCommand + ", with originLocal flag set to " + ctx.isOriginLocal() + ".");
+            return interceptorChain.invoke(ctx, vc);
+         } else {
+            if (trace) log.trace("Not invoking command " + cacheCommand + " since shouldInvoke() returned false with context " + ctx);
+            return null;
+         }
          // we only need to return values for a set of remote calls; not every call.
       } else {
          throw new RuntimeException("Do we still need to deal with non-visitable commands? (" + cacheCommand.getClass().getName() + ")");

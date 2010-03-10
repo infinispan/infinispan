@@ -84,6 +84,10 @@ public class ClearCommand implements WriteCommand {
       if (commandId != COMMAND_ID) throw new IllegalStateException("Invalid command id");
    }
 
+   public boolean shouldInvoke(InvocationContext ctx) {
+      return true;
+   }
+
    @Override
    public String toString() {
       return "ClearCommand";

@@ -36,9 +36,8 @@ import java.util.Set;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class KeySetCommand implements VisitableCommand, LocalCommand {
+public class KeySetCommand extends AbstractLocalCommand implements VisitableCommand {
    private final DataContainer container;
-   private static final Object[] EMPTY_ARRAY = new Object[0];
 
    public KeySetCommand(DataContainer container) {
       this.container = container;
@@ -52,23 +51,10 @@ public class KeySetCommand implements VisitableCommand, LocalCommand {
       return Immutables.immutableSetWrap(container.keySet());
    }
 
-   public byte getCommandId() {
-      return 0;  // no-op
-   }
-
-   public Object[] getParameters() {
-      return EMPTY_ARRAY;  // no-op
-   }
-
-   public void setParameters(int commandId, Object[] parameters) {
-      // no-op
-   }
-
    @Override
    public String toString() {
       return "KeySetCommand{" +
             "set=" + container.keySet() +
             '}';
    }
-
 }

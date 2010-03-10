@@ -36,7 +36,7 @@ import java.util.Collection;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class ValuesCommand implements VisitableCommand, LocalCommand {
+public class ValuesCommand extends AbstractLocalCommand implements VisitableCommand {
    private final DataContainer container;
    private static final Object[] EMPTY_ARRAY = new Object[0];
 
@@ -52,23 +52,10 @@ public class ValuesCommand implements VisitableCommand, LocalCommand {
       return Immutables.immutableCollectionWrap(container.values());
    }
 
-   public byte getCommandId() {
-      return 0;  // no-op
-   }
-
-   public Object[] getParameters() {
-      return EMPTY_ARRAY;  // no-op
-   }
-
-   public void setParameters(int commandId, Object[] parameters) {
-      // no-op
-   }
-
    @Override
    public String toString() {
       return "ValuesCommand{" +
             "values=" + container.values() +
             '}';
    }
-
 }

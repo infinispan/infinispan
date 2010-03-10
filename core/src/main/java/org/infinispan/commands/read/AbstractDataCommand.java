@@ -22,6 +22,7 @@
 package org.infinispan.commands.read;
 
 import org.infinispan.commands.DataCommand;
+import org.infinispan.context.InvocationContext;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -52,6 +53,10 @@ public abstract class AbstractDataCommand implements DataCommand {
 
    public Object[] getParameters() {
       return new Object[]{key};
+   }
+
+   public boolean shouldInvoke(InvocationContext ctx) {
+      return true;
    }
 
    public boolean equals(Object o) {

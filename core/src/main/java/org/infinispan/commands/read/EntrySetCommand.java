@@ -36,8 +36,7 @@ import java.util.Set;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class EntrySetCommand implements VisitableCommand, LocalCommand {
-   private static final Object[] EMPTY_ARRAY = new Object[0];
+public class EntrySetCommand extends AbstractLocalCommand implements VisitableCommand {   
    private final DataContainer container;
 
    public EntrySetCommand(DataContainer container) {
@@ -50,18 +49,6 @@ public class EntrySetCommand implements VisitableCommand, LocalCommand {
 
    public Set perform(InvocationContext ctx) throws Throwable {
       return Immutables.immutableSetWrap(container.entrySet());
-   }
-
-   public byte getCommandId() {
-      return 0;  // no-op
-   }
-
-   public Object[] getParameters() {
-      return EMPTY_ARRAY;  // no-op
-   }
-
-   public void setParameters(int commandId, Object[] parameters) {
-      // no-op
    }
 
    @Override

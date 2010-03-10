@@ -132,6 +132,10 @@ public class PutMapCommand implements WriteCommand {
             '}';
    }
 
+   public boolean shouldInvoke(InvocationContext ctx) {
+      return true;
+   }   
+
    public boolean isSuccessful() {
       return true;
    }

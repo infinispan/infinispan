@@ -40,4 +40,10 @@ public interface VisitableCommand extends ReplicableCommand {
     * @throws Throwable in the event of problems
     */
    Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable;
+
+   /**
+    * Used by the InboundInvocationHandler to determine whether the command should be invoked or not.
+    * @return true if the command should be invoked, false otherwise.
+    */
+   boolean shouldInvoke(InvocationContext ctx);   
 }
