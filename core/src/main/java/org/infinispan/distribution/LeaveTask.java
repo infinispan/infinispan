@@ -9,9 +9,11 @@ import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
+import org.infinispan.loaders.CacheLoader;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.ReadOnlyDataContainerBackedKeySet;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.NotifyingFutureImpl;
 import org.infinispan.util.concurrent.NotifyingNotifiableFuture;
@@ -71,7 +73,7 @@ public class LeaveTask extends RehashTask {
          CacheStore cs = dmi.getCacheStoreForRehashing();
          if (cs != null) {
             if (log.isTraceEnabled()) log.trace("Examining state in cache store");
-            for (InternalCacheEntry ice : cs.loadAll()) if (statemap.doesNotContainKey(ice.getKey())) statemap.addState(ice);
+            for (Object key: cs.loadAllKeys(new ReadOnlyDataContainerBackedKeySet(dataContainer))) statemap.addState(key, cs);
          }
 
          // push state.
@@ -198,6 +200,7 @@ abstract class StateMap<S> {
    ConsistentHash oldCH, newCH;
    int replCount;
    Map<Address, S> state = new HashMap<Address, S>();
+   protected static final Log log = LogFactory.getLog(LeaveTask.class);
 
    StateMap(List<Address> leavers, ConsistentHash oldCH, ConsistentHash newCH, int replCount) {
       this.leavers = leavers;
@@ -227,7 +230,24 @@ class InMemoryStateMap extends StateMap<Map<Object, InternalCacheValue>> {
     * @param payload an InternalCacheEntry to add to the state map
     */
    void addState(InternalCacheEntry payload) {
-      Object key = payload.getKey();
+      addState(payload, null, null);
+   }
+
+   /**
+    * Only add state to state map if old_owner_list for key contains a leaver, and the position of the leaver in the old
+    * owner list, retrieving the value from a cache loader
+    */
+   void addState(Object key, CacheLoader loader) {
+      addState(null, key, loader);
+   }
+
+
+   private void addState(InternalCacheEntry ice, Object k, CacheLoader loader) {
+      Object key = ice == null ? k : ice.getKey();
+      if (keysHandled.contains(key)) return;
+      
+      InternalCacheValue icv = null;
+      
       for (Address leaver : leavers) {
          List<Address> owners = oldCH.locate(key, replCount);
          int leaverIndex = owners.indexOf(leaver);
@@ -247,17 +267,26 @@ class InMemoryStateMap extends StateMap<Map<Object, InternalCacheValue>> {
                         s = new HashMap<Object, InternalCacheValue>();
                         state.put(no, s);
                      }
-                     s.put(key, payload.toInternalCacheValue());
+
+                     if (icv == null) {
+                        if (ice == null) {
+                           try {
+                              InternalCacheEntry payload = loader.load(key);
+                              if (payload != null) icv = payload.toInternalCacheValue();
+                           } catch (Exception e) {
+                              log.warn("Unable to load " + key + " from cache loader", e);
+                           }
+                        } else {
+                           icv = ice.toInternalCacheValue();
+                        }
+                     }
+                     s.put(key, icv);
                   }
                }
             }
          }
       }
       keysHandled.add(key);
-   }
-
-   boolean doesNotContainKey(Object key) {
-      return !keysHandled.contains(key);
    }
 }
 

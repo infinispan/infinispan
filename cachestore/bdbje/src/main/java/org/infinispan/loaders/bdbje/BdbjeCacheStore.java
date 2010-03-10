@@ -450,6 +450,17 @@ public class BdbjeCacheStore extends AbstractCacheStore {
       }
    }
 
+   @Override
+   public Set<Object> loadAllKeys(Set<Object> keysToExclude) throws CacheLoaderException {
+      try {
+         Set<Object> s = new HashSet<Object>();
+         for (Object o: cacheMap.keySet()) if (keysToExclude == null || !keysToExclude.contains(o)) s.add(o);
+         return s;
+      } catch (RuntimeException caught) {
+         throw convertToCacheLoaderException("error loading all entries", caught);
+      }
+   }
+
    /**
     * {@inheritDoc} This implementation reads the number of entries to load from the stream, then begins a transaction.
     * During that transaction, the cachestore is cleared and replaced with entries from the stream.  If there are any

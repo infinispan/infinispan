@@ -14,6 +14,7 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.AbstractSet;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -122,6 +123,15 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
          }
       }
       return s;
+   }
+
+   @Override
+   public Set<Object> loadAllKeys(Set<Object> keysToExclude) throws CacheLoaderException {
+      Set<Object> set = new HashSet<Object>();
+      for (Object key: store.keySet()) {
+         if (keysToExclude == null || !keysToExclude.contains(key)) set.add(key);
+      }
+      return set;
    }
 
    public Class<? extends CacheLoaderConfig> getConfigurationClass() {

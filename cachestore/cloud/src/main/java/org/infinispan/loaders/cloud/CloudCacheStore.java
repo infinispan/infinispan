@@ -142,30 +142,12 @@ public class CloudCacheStore extends BucketBasedCacheStore {
    }
 
    @Override
-   protected Set<InternalCacheEntry> loadAllLockSafe() throws CacheLoaderException {
-      Set<InternalCacheEntry> result = new HashSet<InternalCacheEntry>();
-
-      for (Map.Entry<String, Blob> entry : ctx.createBlobMap(containerName).entrySet()) {
-         Bucket bucket = readFromBlob(entry.getValue(), entry.getKey());
-         if (bucket.removeExpiredEntries())
-            updateBucket(bucket);
-         result.addAll(bucket.getStoredEntries());
-      }
-      return result;
-   }
-
-   @Override
-   protected Set<InternalCacheEntry> loadLockSafe(int maxEntries) throws CacheLoaderException {
-      Set<InternalCacheEntry> result = new HashSet<InternalCacheEntry>(maxEntries);
-
+   protected void loopOverBuckets(BucketHandler handler) throws CacheLoaderException {
       for (Map.Entry<String, Blob> entry : ctx.createBlobMap(containerName).entrySet()) {
          Bucket bucket = readFromBlob(entry.getValue(), entry.getKey());
          if (bucket.removeExpiredEntries()) updateBucket(bucket);
-         for (Iterator<? extends InternalCacheEntry> i = bucket.getStoredEntries().iterator(); i.hasNext() && result.size() < maxEntries;)
-            result.add(i.next());
-         if (result.size() >= maxEntries) break;
+         if (handler.handle(bucket)) break;
       }
-      return result;
    }
 
    @Override

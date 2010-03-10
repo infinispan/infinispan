@@ -80,6 +80,8 @@ public class TableManipulation implements Cloneable {
    private String deleteExpiredRowsSql;
    private String loadSomeRowsSql;
    public DatabaseType databaseType;
+   private String loadAllKeysBinarySql;
+   private String loadAllKeysStringSql;
 
    public TableManipulation(String idColumnName, String idColumnType, String tableNamePrefix, String dataColumnName,
                             String dataColumnType, String timestampColumnName, String timestampColumnType) {
@@ -429,28 +431,38 @@ public class TableManipulation implements Cloneable {
 
          switch (getDatabaseType()) {
             case ORACLE:
-               loadSomeRowsSql = "SELECT " + dataColumnName + "," + idColumnName + " FROM " + getTableName() + " LIMIT ?";
+               loadSomeRowsSql = String.format("SELECT %s, %s FROM (SELECT %s, %s FROM %s) WHERE ROWNUM <= ?", dataColumnName, idColumnName, dataColumnName, idColumnName, getTableName());
                break;
             case DB2:
-               loadSomeRowsSql = "SELECT " + dataColumnName + "," + idColumnName + " FROM " + getTableName() + " LIMIT ?";
+               loadSomeRowsSql = String.format("SELECT %s, %s FROM %s FETCH FIRST ? ROWS ONLY", dataColumnName, idColumnName, getTableName());
                break;
             case INFORMIX:
             case INTERBASE:
             case FIREBIRD:
-               loadSomeRowsSql = "SELECT " + dataColumnName + "," + idColumnName + " FROM " + getTableName() + " LIMIT ?";
+               loadSomeRowsSql = String.format("SELECT FIRST ? %s, %s FROM %s", dataColumnName, idColumnName, getTableName());
                break;
             case SQL_SERVER:
             case ACCESS:
-               loadSomeRowsSql = "SELECT " + dataColumnName + "," + idColumnName + " FROM " + getTableName() + " LIMIT ?";
+               loadSomeRowsSql = String.format("SELECT TOP ? %s, %s FROM %s", dataColumnName, idColumnName, getTableName());
                break;
             default:
                // the MySQL-style LIMIT clause
-               loadSomeRowsSql = "SELECT " + dataColumnName + "," + idColumnName + " FROM " + getTableName() + " LIMIT ?";
+               loadSomeRowsSql = String.format("SELECT %s, %s FROM %s LIMIT ?", dataColumnName, idColumnName, getTableName());
                break;
          }
 
       }
       return loadSomeRowsSql;
+   }
+
+   public String getLoadAllKeysBinarySql() {
+      if (loadAllKeysBinarySql == null) loadAllKeysBinarySql = String.format("SELECT %s FROM %s", dataColumnName, getTableName());
+      return loadAllKeysBinarySql;
+   }
+
+   public String getLoadAllKeysStringSql() {
+      if (loadAllKeysStringSql == null) loadAllKeysStringSql = String.format("SELECT %s FROM %s", idColumnName, getTableName());
+      return loadAllKeysStringSql;
    }
 
    private DatabaseType getDatabaseType() {

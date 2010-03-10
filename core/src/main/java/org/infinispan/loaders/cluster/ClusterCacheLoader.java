@@ -75,6 +75,11 @@ public class ClusterCacheLoader extends AbstractCacheLoader {
       return emptySet();
    }
 
+   @Override
+   public Set<Object> loadAllKeys(Set<Object> keysToExclude) throws CacheLoaderException {
+      return emptySet();
+   }
+
    public void start() throws CacheLoaderException {
       //nothing to do here
    }

@@ -20,6 +20,9 @@ import org.infinispan.marshall.Marshallable;
 import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.util.ReadOnlyDataContainerBackedKeySet;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.HashMap;
 import java.util.List;
@@ -58,6 +61,7 @@ public class RehashControlCommand extends BaseRpcCommand {
    List<WriteCommand> txLogCommands;
    List<PrepareCommand> pendingPrepares;
    CommandsFactory commandsFactory;
+   private static final Log log = LogFactory.getLog(RehashControlCommand.class);
 
    public RehashControlCommand() {
    }
@@ -142,13 +146,24 @@ public class RehashControlCommand extends BaseRpcCommand {
 
       CacheStore cacheStore = distributionManager.getCacheStoreForRehashing();
       if (cacheStore != null) {
-         for (InternalCacheEntry ice : cacheStore.loadAll()) {
-            Object k = ice.getKey();
-            if (!state.containsKey(k) && shouldAddToMap(k, oldCH, numCopies, self))
-               state.put(k, ice.toInternalCacheValue());
+         for (Object k: cacheStore.loadAllKeys(new ReadOnlyDataContainerBackedKeySet(dataContainer))) {
+            if (!state.containsKey(k) && shouldAddToMap(k, oldCH, numCopies, self)) {
+               InternalCacheValue v = loadValue(cacheStore, k);
+               if (v != null) state.put(k, v);
+            }
          }
       }
       return state;
+   }
+
+   private InternalCacheValue loadValue(CacheStore cs, Object k) {
+      try {
+         InternalCacheEntry ice = cs.load(k);
+         return ice == null ? null : ice.toInternalCacheValue();
+      } catch (CacheLoaderException cle) {
+         log.warn("Unable to load " + k + " from cache loader", cle);
+      }
+      return null;
    }
 
    final boolean shouldAddToMap(Object k, ConsistentHash oldCH, int numCopies, Address self) {

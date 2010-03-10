@@ -95,6 +95,11 @@ public class AbstractDelegatingStore implements CacheStore {
       return delegate.load(numEntries);
    }
 
+   @Override
+   public Set<Object> loadAllKeys(Set<Object> keysToExclude) throws CacheLoaderException {
+      return delegate.loadAllKeys(keysToExclude);
+   }
+
    public boolean containsKey(Object key) throws CacheLoaderException {
       return delegate.containsKey(key);
    }

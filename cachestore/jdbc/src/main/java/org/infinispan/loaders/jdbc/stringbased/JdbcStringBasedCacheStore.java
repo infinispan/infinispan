@@ -103,11 +103,22 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
       dmHelper = new DataManipulationHelper(connectionFactory, tableManipulation, marshaller) {
 
          @Override
+         protected String getLoadAllKeysSql() {
+            return tableManipulation.getLoadAllKeysStringSql();
+         }
+
+         @Override
          public void loadAllProcess(ResultSet rs, Set<InternalCacheEntry> result) throws SQLException, CacheLoaderException {
             InputStream inputStream = rs.getBinaryStream(1);
             InternalCacheValue icv = (InternalCacheValue) JdbcUtil.unmarshall(getMarshaller(), inputStream);
             Object key = rs.getObject(2);
             result.add(icv.toInternalCacheEntry(key));
+         }
+
+         @Override
+         public void loadAllKeysProcess(ResultSet rs, Set<Object> keys, Set<Object> keysToExclude) throws SQLException, CacheLoaderException {
+            Object k = rs.getObject(1);
+            if (includeKey(k, keysToExclude)) keys.add(k);
          }
 
          @Override
@@ -222,6 +233,11 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
    @Override
    protected Set<InternalCacheEntry> loadLockSafe(int maxEntries) throws CacheLoaderException {
       return dmHelper.loadSome(maxEntries);
+   }
+
+   @Override
+   protected Set<Object> loadAllKeysLockSafe(Set<Object> keysToExclude) throws CacheLoaderException {
+      return dmHelper.loadAllKeysSupport(keysToExclude);
    }
 
    @Override

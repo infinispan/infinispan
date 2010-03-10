@@ -2,7 +2,6 @@ package org.infinispan.loaders.file;
 
 import org.infinispan.Cache;
 import org.infinispan.config.ConfigurationException;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.io.ExposedByteArrayOutputStream;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
@@ -14,19 +13,7 @@ import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import java.io.*;
 
 /**
  * A filesystem-based implementation of a {@link org.infinispan.loaders.bucket.BucketBasedCacheStore}.  This file store
@@ -34,7 +21,6 @@ import java.util.Set;
  *
  * @author Manik Surtani
  * @author Mircea.Markus@jboss.com
- * 
  * @since 4.0
  */
 @CacheLoaderMetadata(configurationClass = FileCacheStoreConfig.class)
@@ -59,35 +45,12 @@ public class FileCacheStore extends BucketBasedCacheStore {
       super.init(config, cache, m);
       this.config = (FileCacheStoreConfig) config;
    }
-
-   protected Set<InternalCacheEntry> loadAllLockSafe() throws CacheLoaderException {
-      Set<InternalCacheEntry> result = new HashSet<InternalCacheEntry>();
+   
+   protected void loopOverBuckets(BucketHandler handler) throws CacheLoaderException {
       for (File bucketFile : root.listFiles()) {
          Bucket bucket = loadBucket(bucketFile);
-         if (bucket != null) {
-            if (bucket.removeExpiredEntries()) {
-               updateBucket(bucket);
-            }
-            result.addAll(bucket.getStoredEntries());
-         }
+         if (handler.handle(bucket)) break;
       }
-      return result;
-   }
-
-   protected Set<InternalCacheEntry> loadLockSafe(int max) throws CacheLoaderException {
-      Set<InternalCacheEntry> result = new HashSet<InternalCacheEntry>(max);
-      for (File bucketFile : root.listFiles()) {
-         Bucket bucket = loadBucket(bucketFile);
-         if (bucket != null) {
-            if (bucket.removeExpiredEntries()) {
-               updateBucket(bucket);
-            }
-            Iterator<? extends InternalCacheEntry> i = bucket.getStoredEntries().iterator();
-            while (result.size() < max && i.hasNext()) result.add(i.next());
-         }
-         if (result.size() >= max) break;
-      }
-      return result;
    }
 
    protected void fromStreamLockSafe(ObjectInput objectInput) throws CacheLoaderException {
@@ -173,7 +136,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
    @Override
    protected boolean supportsMultiThreadedPurge() {
       return true;
-   }   
+   }
 
    protected void purgeInternal() throws CacheLoaderException {
       if (trace) log.trace("purgeInternal()");

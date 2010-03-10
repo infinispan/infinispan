@@ -4,7 +4,6 @@ import jdbm.RecordManager;
 import jdbm.RecordManagerFactory;
 import jdbm.btree.BTree;
 import jdbm.helper.FastIterator;
-import jdbm.helper.Serializer;
 import jdbm.helper.Tuple;
 import jdbm.helper.TupleBrowser;
 import jdbm.htree.HTree;
@@ -33,6 +32,7 @@ import java.text.SimpleDateFormat;
 import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -88,7 +88,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
          locationStr = System.getProperty("java.io.tmpdir");
          config.setLocation(locationStr);
       }
-      
+
       expiryEntryQueue = new LinkedBlockingQueue<ExpiryEntry>(config.getExpiryQueueSize());
 
       // JBCACHE-1448 db name parsing fix courtesy of Ciro Cavani
@@ -150,6 +150,19 @@ public class JdbmCacheStore extends AbstractCacheStore {
    @Override
    public Set<InternalCacheEntry> load(int numEntries) throws CacheLoaderException {
       return new BTreeSet(numEntries);
+   }
+
+   @Override
+   public Set<Object> loadAllKeys(Set<Object> keysToExclude) throws CacheLoaderException {
+      try {
+         Set<Object> s = new HashSet<Object>();
+         FastIterator fi = tree.keys();
+         Object o;
+         while ((o = fi.next()) != null) if (keysToExclude == null || !keysToExclude.contains(o)) s.add(o);
+         return s;
+      } catch (IOException e) {
+         throw new CacheLoaderException(e);
+      }
    }
 
    /**
@@ -255,7 +268,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
       store0(entry);
       commit();
    }
-   
+
    private byte[] marshall(InternalCacheEntry entry) throws IOException {
       return getMarshaller().objectToByteBuffer(entry.toInternalCacheValue());
    }
@@ -264,7 +277,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
       if (o == null)
          return null;
       byte b[] = (byte[]) o;
-      InternalCacheValue v = (InternalCacheValue)getMarshaller().objectFromByteBuffer(b);
+      InternalCacheValue v = (InternalCacheValue) getMarshaller().objectFromByteBuffer(b);
       return v.toInternalCacheEntry(key);
    }
 
@@ -291,7 +304,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
       Long at = expiry;
       Object key = entry.getKey();
       if (trace) log.trace("at " + new SimpleDateFormat(DATE).format(new Date(at)) + " expire " + key);
-      
+
       try {
          expiryEntryQueue.put(new ExpiryEntry(at, key));
       } catch (InterruptedException e) {
@@ -311,7 +324,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
             getMarshaller().objectToObjectStream(entry, out);
             count++;
          }
-        getMarshaller().objectToObjectStream(null, out);
+         getMarshaller().objectToObjectStream(null, out);
          log.debug("wrote " + count + " entries");
       } catch (IOException e) {
          throw new CacheLoaderException(e);
@@ -356,7 +369,8 @@ public class JdbmCacheStore extends AbstractCacheStore {
    /**
     * Find all times less than current time. Build a list of keys for those times. Then purge those keys, assuming those
     * keys' expiry has not changed.
-    * @throws ClassNotFoundException 
+    *
+    * @throws ClassNotFoundException
     */
    private void purgeInternal0() throws Exception {
       // Drain queue and update expiry tree
@@ -492,7 +506,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
                if (!hasNext())
                   throw new NoSuchElementException();
                try {
-                  entriesReturned ++;
+                  entriesReturned++;
                   return current;
                } finally {
                   current = null;
@@ -516,11 +530,11 @@ public class JdbmCacheStore extends AbstractCacheStore {
          return size;
       }
    }
-   
+
    private static final class ExpiryEntry {
       private final Long expiry;
       private final Object key;
-      
+
       private ExpiryEntry(long expiry, Object key) {
          this.expiry = expiry;
          this.key = key;

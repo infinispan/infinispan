@@ -160,10 +160,36 @@ public abstract class DataManipulationHelper {
          if (filterExpired) ps.setLong(1, System.currentTimeMillis());
          rs = ps.executeQuery();
          rs.setFetchSize(tableManipulation.getFetchSize());
-         Set<InternalCacheEntry> result = new HashSet<InternalCacheEntry>();
+         Set<InternalCacheEntry> result = new HashSet<InternalCacheEntry>(tableManipulation.getFetchSize());
          while (rs.next()) {
             loadAllProcess(rs, result);
          }
+         return result;
+      } catch (SQLException e) {
+         String message = "SQL error while fetching all StoredEntries";
+         log.error(message, e);
+         throw new CacheLoaderException(message, e);
+      } finally {
+         JdbcUtil.safeClose(rs);
+         JdbcUtil.safeClose(ps);
+         connectionFactory.releaseConnection(conn);
+      }
+   }
+
+   public Set<Object> loadAllKeysSupport(Set<Object> keysToExclude) throws CacheLoaderException {
+      Connection conn = null;
+      PreparedStatement ps = null;
+      ResultSet rs = null;
+      try {
+
+         String sql = getLoadAllKeysSql();
+         if (log.isTraceEnabled()) log.trace("Running sql '" + sql);
+         conn = connectionFactory.getConnection();
+         ps = conn.prepareStatement(sql);
+         rs = ps.executeQuery();
+         rs.setFetchSize(tableManipulation.getFetchSize());
+         Set<Object> result = new HashSet<Object>(tableManipulation.getFetchSize());
+         while (rs.next()) loadAllKeysProcess(rs, result, keysToExclude);
          return result;
       } catch (SQLException e) {
          String message = "SQL error while fetching all StoredEntries";
@@ -204,15 +230,22 @@ public abstract class DataManipulationHelper {
       }
    }
 
-   public abstract void loadAllProcess(ResultSet rs, Set<InternalCacheEntry> result) throws SQLException, CacheLoaderException;
+   protected boolean includeKey(Object key, Set<Object> keysToExclude) {
+      return keysToExclude == null || !keysToExclude.contains(key);
+   }
 
-   public abstract void toStreamProcess(ResultSet rs, InputStream is, ObjectOutput objectOutput) throws CacheLoaderException, SQLException, IOException;
+   protected abstract String getLoadAllKeysSql();
 
-   public abstract boolean fromStreamProcess(Object objFromStream, PreparedStatement ps, ObjectInput objectInput) throws SQLException, CacheLoaderException, IOException, ClassNotFoundException;
+   protected abstract void loadAllProcess(ResultSet rs, Set<InternalCacheEntry> result) throws SQLException, CacheLoaderException;
+
+   protected abstract void loadAllKeysProcess(ResultSet rs, Set<Object> keys, Set<Object> keysToExclude) throws SQLException, CacheLoaderException;
+
+   protected abstract void toStreamProcess(ResultSet rs, InputStream is, ObjectOutput objectOutput) throws CacheLoaderException, SQLException, IOException;
+
+   protected abstract boolean fromStreamProcess(Object objFromStream, PreparedStatement ps, ObjectInput objectInput) throws SQLException, CacheLoaderException, IOException, ClassNotFoundException;
 
    public static void logAndThrow(Exception e, String message) throws CacheLoaderException {
       log.error(message, e);
       throw new CacheLoaderException(message, e);
    }
-   
 }

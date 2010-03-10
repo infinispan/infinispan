@@ -4,6 +4,11 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.LockSupportCacheStore;
 
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+
 /**
  * Base class for CacheStore implementations that combine entries into buckets when storing data.
  * <p/>
@@ -100,6 +105,79 @@ public abstract class BucketBasedCacheStore extends LockSupportCacheStore {
       // updateBucket().
       updateBucket(bucket);
    }
+
+   protected static interface BucketHandler {
+      /**
+       * Handles a bucket that is passed in.
+       * @param bucket bucket to handle.  Cannot be null.
+       * @return <tt>true</tt> if <i>no more buckets</i> should be passed in (enoiugh buckets have been handled).  <tt>false</tt> otherwise.
+       */
+      boolean handle(Bucket bucket) throws CacheLoaderException;
+   }
+
+   // ah for closures in Java ...
+   protected abstract class CollectionGeneratingBucketHandler<T> implements BucketHandler{
+      Set<T> generated = new HashSet<T>();
+      public abstract boolean consider(Collection<? extends InternalCacheEntry> entries);
+      public Set<T> generate() { return generated; }
+      public boolean handle(Bucket bucket) throws CacheLoaderException {
+         if (bucket != null) {
+            if (bucket.removeExpiredEntries()) updateBucket(bucket);
+            boolean enoughLooping = consider(bucket.getStoredEntries());
+            if (enoughLooping) return true;
+         }
+         return false;
+      }
+   }
+
+   protected Set<InternalCacheEntry> loadAllLockSafe() throws CacheLoaderException {
+      CollectionGeneratingBucketHandler<InternalCacheEntry> g = new CollectionGeneratingBucketHandler<InternalCacheEntry>() {
+         public boolean consider(Collection<? extends InternalCacheEntry> entries) {
+            generated.addAll(entries);
+            return false;
+         }
+      };
+
+      loopOverBuckets(g);
+      return g.generate();
+   }
+
+   protected Set<InternalCacheEntry> loadLockSafe(final int max) throws CacheLoaderException {
+      CollectionGeneratingBucketHandler<InternalCacheEntry> g = new CollectionGeneratingBucketHandler<InternalCacheEntry>() {
+         public boolean consider(Collection<? extends InternalCacheEntry> entries) {
+            for (Iterator<? extends InternalCacheEntry> i = entries.iterator(); i.hasNext() && generated.size() < max;) generated.add(i.next());
+            return generated.size() >= max;
+         }
+      };
+
+      loopOverBuckets(g);
+      return g.generate();
+   }
+
+   @Override
+   protected Set<Object> loadAllKeysLockSafe(final Set<Object> keysToExclude) throws CacheLoaderException {
+      CollectionGeneratingBucketHandler<Object> g = new CollectionGeneratingBucketHandler<Object>() {
+         public boolean consider(Collection<? extends InternalCacheEntry> entries) {
+            for (InternalCacheEntry ice: entries) if (keysToExclude == null || !keysToExclude.contains(ice.getKey())) generated.add(ice.getKey());
+            return false;
+         }
+      };
+
+      loopOverBuckets(g);
+      return g.generate();
+   }
+
+   /**
+    * A mechanism to loop over all buckets in the cache store.  Implementations should, very simply, loop over all
+    * available buckets, and for each deserialized bucket, pass it to the handler.
+    * <p />
+    * The implementation is expected to loop over <i>all</i> available buckets (in any order), until {@link org.infinispan.loaders.bucket.BucketBasedCacheStore.BucketHandler#handle(Bucket)}
+    * returns <tt>true</tt> or there are no more buckets available.
+    * <p />
+    * @param handler
+    * @throws CacheLoaderException
+    */
+   protected abstract void loopOverBuckets(BucketHandler handler) throws CacheLoaderException;
 
    /**
     * Updates a bucket in the store with the Bucket passed in to the method.  This method assumes that the bucket

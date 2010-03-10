@@ -30,11 +30,15 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+
+import static java.util.Collections.emptySet;
+import static java.util.Collections.singleton;
 
 /**
  * This is a base class containing various unit tests for each and every different CacheStore implementations. 
@@ -464,6 +468,26 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       assert !cs.containsKey("k1");
       assert !cs.containsKey("k2");
       assert !cs.containsKey("k3");
+   }
+
+   public void testLoadKeys() throws CacheLoaderException {
+      cs.store(InternalEntryFactory.create("k1", "v"));
+      cs.store(InternalEntryFactory.create("k2", "v"));
+      cs.store(InternalEntryFactory.create("k3", "v"));
+      cs.store(InternalEntryFactory.create("k4", "v"));
+      cs.store(InternalEntryFactory.create("k5", "v"));
+
+      Set<Object> s = cs.loadAllKeys(null);
+      assert s.size() == 5 : "Expected 5 keys, was " + s;
+
+      s = cs.loadAllKeys(emptySet());
+      assert s.size() == 5 : "Expected 5 keys, was " + s;
+
+      Set<Object> excl = Collections.<Object>singleton("k3");
+      s = cs.loadAllKeys(excl);
+      assert s.size() == 4 : "Expected 4 keys but was " + s;
+
+      assert !s.contains("k3");
    }
 
    public void testStreamingAPI() throws IOException, ClassNotFoundException, CacheLoaderException {

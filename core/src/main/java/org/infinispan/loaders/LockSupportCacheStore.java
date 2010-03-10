@@ -118,6 +118,16 @@ public abstract class LockSupportCacheStore extends AbstractCacheStore {
       }
    }
 
+   public Set<Object> loadAllKeys(Set<Object> keysToExclude) throws CacheLoaderException {
+      acquireGlobalLock(false);
+      try {
+         return loadAllKeysLockSafe(keysToExclude);
+      } finally {
+         releaseGlobalLock(false);
+      }
+   }
+
+
    public final void store(InternalCacheEntry ed) throws CacheLoaderException {
       if (trace) log.trace("store(" + ed + ")");
       if (ed == null) return;
@@ -192,6 +202,8 @@ public abstract class LockSupportCacheStore extends AbstractCacheStore {
    protected abstract Set<InternalCacheEntry> loadAllLockSafe() throws CacheLoaderException;
 
    protected abstract Set<InternalCacheEntry> loadLockSafe(int maxEntries) throws CacheLoaderException;
+
+   protected abstract Set<Object> loadAllKeysLockSafe(Set<Object> keysToExclude) throws CacheLoaderException;
 
    protected abstract void toStreamLockSafe(ObjectOutput oos) throws CacheLoaderException;
 

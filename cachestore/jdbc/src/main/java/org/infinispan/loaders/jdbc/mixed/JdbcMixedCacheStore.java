@@ -119,13 +119,21 @@ public class JdbcMixedCacheStore extends AbstractCacheStore {
    @Override
    public Set<InternalCacheEntry> load(int numEntries) throws CacheLoaderException {
       if (numEntries < 0) return loadAll();
-      Set<InternalCacheEntry> fromBuckets = binaryCacheStore.load(numEntries);
+      Set<InternalCacheEntry> set = stringBasedCacheStore.load(numEntries);
 
-      if (fromBuckets.size() < numEntries) {
-         Set<InternalCacheEntry> fromStrings = stringBasedCacheStore.load(numEntries - fromBuckets.size());
-         fromBuckets.addAll(fromStrings);
+      if (set.size() < numEntries) {
+         Set<InternalCacheEntry> otherSet = binaryCacheStore.load(numEntries - set.size());
+         set.addAll(otherSet);
       }
 
+      return set;
+   }
+
+   @Override
+   public Set<Object> loadAllKeys(Set<Object> keysToExclude) throws CacheLoaderException {
+      Set<Object> fromBuckets = binaryCacheStore.loadAllKeys(keysToExclude);
+      Set<Object> fromStrings = stringBasedCacheStore.loadAllKeys(keysToExclude);
+      fromBuckets.addAll(fromStrings);
       return fromBuckets;
    }
 

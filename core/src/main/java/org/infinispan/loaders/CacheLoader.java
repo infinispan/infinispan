@@ -53,6 +53,15 @@ public interface CacheLoader {
    Set<InternalCacheEntry> load(int numEntries) throws CacheLoaderException;
 
    /**
+    * Loads a set of all keys, excluding a filter set.
+    *
+    * @param keysToExclude a set of keys to exclude.  An empty set or null will indicate that all keys should be returned.
+    * @return A set containing keys of entries stored.  An empty set is returned if the loader is empty.   
+    * @throws CacheLoaderException
+    */
+   Set<Object> loadAllKeys(Set<Object> keysToExclude) throws CacheLoaderException;
+
+   /**
     * @param key key to test
     * @return true if the key exists, false otherwise
     * @throws CacheLoaderException in the event of problems reading from source
