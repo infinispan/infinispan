@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat, Inc. and/or its affiliates, and
+ * Copyright 2010, Red Hat, Inc. and/or its affiliates, and
  * individual contributors as indicated by the @author tags. See the
  * copyright.txt file in the distribution for a full listing of
  * individual contributors.
@@ -26,7 +26,7 @@ package org.infinispan.server.memcached;
  * InterceptorChainFactory.
  * 
  * @author Galder Zamarreño
- * @since 4.0
+ * @since 4.1
  */
 public interface InterceptorChainFactory {
    InterceptorChain buildInterceptorChain();
