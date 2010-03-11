@@ -226,7 +226,7 @@
                      <exclude>org.rhq.helpers:rhq-pluginAnnotations</exclude>
                      <exclude>org.infinispan:infinispan-core</exclude>
                      <exclude>org.infinispan:infinispan-server-rest</exclude>
-                     <exclude>org.infinispan:infinispan-ec2-demo</exclude>                     
+                     <!--<exclude>org.infinispan:infinispan-ec2-demo</exclude>                     -->
                   </excludes>
                   <useTransitiveDependencies>true</useTransitiveDependencies>
                   <useTransitiveFiltering>true</useTransitiveFiltering>
@@ -237,13 +237,30 @@
          </binaries>
       </moduleSet>
 
-      <!-- REST server and ec2-demo module which are webapps -->
+      <!-- REST server and ec2-demo webapps and ec2-demo application -->
       <moduleSet>
          <includeSubModules>false</includeSubModules>
          <includes>
             <include>org.infinispan:infinispan-server-rest</include>
             <include>org.infinispan:infinispan-ec2-demo</include>
          </includes>
+
+         <sources>
+            <includeModuleDirectory>false</includeModuleDirectory>
+            <fileSets>
+               <fileSet>
+                  <directory>target</directory>
+                  <outputDirectory>modules/${module.basedir.name}</outputDirectory>
+                  <includes>
+                     <include>*.jar</include>
+                  </includes>
+                  <excludes>
+                     <exclude>*tests.jar</exclude>
+                     <exclude>*sources.jar</exclude>
+                  </excludes>
+               </fileSet>
+            </fileSets>
+         </sources>
 
          <binaries>
             <outputDirectory>modules/${module.basedir.name}</outputDirectory>
@@ -311,31 +328,6 @@
 
          </sources>
 
-      </moduleSet>
-
-      <!-- REST server and ec2-demo module which are webapps -->
-      <moduleSet>
-         <includeSubModules>false</includeSubModules>
-         <includes>
-            <include>org.infinispan:infinispan-server-rest</include>
-            <include>org.infinispan:infinispan-ec2-demo</include>
-         </includes>
-
-         <binaries>
-            <outputDirectory>modules/${module.basedir.name}</outputDirectory>
-            <outputFileNameMapping>
-               ${module.artifactId}.${module.extension}
-            </outputFileNameMapping>
-            <unpack>false</unpack>
-            <dependencySets>
-               <dependencySet>
-                  <includes>
-                     <include>NONEXISTENT_DEPENDENCY*</include>
-                  </includes>
-                  <outputDirectory>modules/${module.basedir.name}</outputDirectory>
-               </dependencySet>
-            </dependencySets>
-         </binaries>
       </moduleSet>
 
    </moduleSets>

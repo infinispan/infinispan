@@ -32,7 +32,7 @@
       <module>server/rest</module>
       <module>server/core</module>
       <module>server/memcached</module>
-      <module>server/hotrod</module>
+      <!-- module>server/hotrod</module -->
       <module>jopr-plugin</module>
       <module>demos/gui</module>
       <module>demos/ec2</module>
