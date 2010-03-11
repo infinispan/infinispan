@@ -13,6 +13,8 @@ object OpCodes extends Enumeration {
    val PutResponse = Value(0x02)
    val GetRequest = Value(0x03)
    val GetResponse = Value(0x04)
+   val PutIfAbsentRequest = Value(0x05)
+   val PutIfAbsentResponse = Value(0x06)
 
    val ErrorResponse = Value(0x50)
 }

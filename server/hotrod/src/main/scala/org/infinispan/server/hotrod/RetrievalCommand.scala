@@ -10,7 +10,7 @@ import org.infinispan.context.Flag
 
 class RetrievalCommand(override val cacheName: String,
                        override val id: Long,
-                       val key: Array[Byte],
+                       val k: Key,
                        override val flags: Set[Flag])
                       (val op: (Cache, RetrievalCommand) => Response) extends Command(cacheName, id, flags) {
 

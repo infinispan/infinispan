@@ -8,6 +8,8 @@ import java.lang.reflect.Method
 import org.infinispan.manager.CacheManager
 import org.testng.annotations.{BeforeClass, AfterClass, Test}
 import org.infinispan.config.Configuration.CacheMode
+import org.infinispan.context.Flag
+import org.infinispan.server.hotrod.Status._
 
 /**
  * // TODO: Document this
@@ -40,12 +42,19 @@ class ClusterTest extends MultipleCacheManagersTest with Utils with Client {
       servers.foreach(_.stop)
    }
 
-   @Test
    def tesReplicatedPut(m: Method) {
       val putSt = put(channels.head, cacheName, k(m) , 0, 0, v(m))
-      assertSuccess(putSt)
+      assertStatus(putSt, Success)
       val (getSt, actual) = get(channels.tail.head, cacheName, k(m), null)
       assertSuccess(getSt, v(m), actual)
    }
 
+   def tesLocalOnlyPut(m: Method) {
+      val putSt = put(channels.head, cacheName, k(m) , 0, 0, v(m), Set(Flag.CACHE_MODE_LOCAL))
+       assertStatus(putSt, Success)
+      val (getSt, actual) = get(channels.tail.head, cacheName, k(m), null)
+      assertKeyDoesNotExist(getSt, actual)
+   }
+
+   // todo: test multiple flags
 }

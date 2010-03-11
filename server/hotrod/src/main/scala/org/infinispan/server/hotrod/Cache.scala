@@ -9,4 +9,5 @@ package org.infinispan.server.hotrod
 abstract class Cache {
    def put(c: StorageCommand): Response
    def get(c: RetrievalCommand): Response
+   def putIfAbsent(c: StorageCommand): Response
 }

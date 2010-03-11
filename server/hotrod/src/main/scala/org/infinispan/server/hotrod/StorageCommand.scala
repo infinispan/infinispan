@@ -9,10 +9,10 @@ import org.infinispan.context.Flag
  */
 class StorageCommand(override val cacheName: String,
                      override val id: Long,
-                     val key: Array[Byte],
+                     val k: Key,
                      val lifespan: Int,
                      val maxIdle: Int,
-                     val value: Array[Byte],
+                     val v: Value,
                      override val flags: Set[Flag])
                     (val op: (Cache, StorageCommand) => Response) extends Command(cacheName, id, flags) {
 
@@ -24,10 +24,10 @@ class StorageCommand(override val cacheName: String,
       new StringBuilder().append("StorageCommand").append("{")
          .append("cacheName=").append(cacheName)
          .append(", id=").append(id)
-         .append(", key=").append(key)
+         .append(", k=").append(k)
          .append(", lifespan=").append(lifespan)
          .append(", maxIdle=").append(maxIdle)
-         .append(", value=").append(value)
+         .append(", v=").append(v)
          .append(", flags=").append(flags)
          .append("}").toString
    }

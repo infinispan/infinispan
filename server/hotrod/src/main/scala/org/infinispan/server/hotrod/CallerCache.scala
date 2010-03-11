@@ -17,23 +17,35 @@ class CallerCache(val manager: CacheManager) extends Cache {
 
    override def put(c: StorageCommand): Response = {
       val cache = getCache(c.cacheName, c.flags)
-      val k = new Key(c.key)
-      val v = new Value(c.value)
       (c.lifespan, c.maxIdle) match {
-         case (0, 0) => cache.put(k, v)
-         case (x, 0) => cache.put(k, v, toMillis(c.lifespan), TimeUnit.MILLISECONDS)
-         case (x, y) => cache.put(k, v, toMillis(c.lifespan), TimeUnit.MILLISECONDS, c.maxIdle, TimeUnit.SECONDS)
+         case (0, 0) => cache.put(c.k, c.v)
+         case (x, 0) => cache.put(c.k, c.v, toMillis(c.lifespan), TimeUnit.MILLISECONDS)
+         case (x, y) => cache.put(c.k, c.v, toMillis(c.lifespan), TimeUnit.MILLISECONDS, c.maxIdle, TimeUnit.SECONDS)
       }
       new Response(c.id, OpCodes.PutResponse, Status.Success)
    }
 
    override def get(c: RetrievalCommand): Response = {
       val cache = getCache(c.cacheName, c.flags)
-      val value = cache.get(new Key(c.key))
+      val value = cache.get(c.k)
       if (value != null)
          new RetrievalResponse(c.id, OpCodes.GetResponse, Status.Success, value.v)
       else
          new RetrievalResponse(c.id, OpCodes.GetResponse, Status.KeyDoesNotExist, null)
+   }
+
+   override def putIfAbsent(c: StorageCommand): Response = {
+      val cache = getCache(c.cacheName, c.flags)
+      val prev =
+         (c.lifespan, c.maxIdle) match {
+            case (0, 0) => cache.putIfAbsent(c.k, c.v)
+            case (x, 0) => cache.putIfAbsent(c.k, c.v, toMillis(c.lifespan), TimeUnit.MILLISECONDS)
+            case (x, y) => cache.putIfAbsent(c.k, c.v, toMillis(c.lifespan), TimeUnit.MILLISECONDS, c.maxIdle, TimeUnit.SECONDS)
+         }
+      if (prev == null)
+         new Response(c.id, OpCodes.PutIfAbsentResponse, Status.Success)
+      else
+         new Response(c.id, OpCodes.PutIfAbsentResponse, Status.OperationNotExecuted)
    }
 
    private def getCache(cacheName: String, flags: Set[Flag]): InfinispanCache[Key, Value] = {

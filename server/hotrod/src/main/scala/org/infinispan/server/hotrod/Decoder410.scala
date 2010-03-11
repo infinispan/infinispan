@@ -18,18 +18,20 @@ class Decoder410 {
       val flags = Flags.toContextFlags(buffer.readUnsignedInt)
       val command: Command =
          op match {                                   
-            case PutRequest => {
-               val key = buffer.readRangedBytes
+            case PutRequest | PutIfAbsentRequest => {
+               val k = new Key(buffer.readRangedBytes)
                val lifespan = buffer.readUnsignedInt
                val maxIdle = buffer.readUnsignedInt
-               val value = buffer.readRangedBytes
-               new StorageCommand(cacheName, id, key, lifespan, maxIdle, value, flags)({
-                  (cache: Cache, command: StorageCommand) => cache.put(command)
-               })
+               val v = new Value(buffer.readRangedBytes)
+               val f = op match {
+                  case PutRequest => (cache: Cache, command: StorageCommand) => cache.put(command)
+                  case PutIfAbsentRequest => (cache: Cache, command: StorageCommand) => cache.putIfAbsent(command)
+               }
+               new StorageCommand(cacheName, id, k, lifespan, maxIdle, v, flags)(f)
             }
             case GetRequest => {
-               val key = buffer.readRangedBytes
-               new RetrievalCommand(cacheName, id, key, flags)({
+               val k =  new Key(buffer.readRangedBytes)
+               new RetrievalCommand(cacheName, id, k, flags)({
                   (cache: Cache, command: RetrievalCommand) => cache.get(command)
                })
             }

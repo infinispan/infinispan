@@ -27,5 +27,10 @@ trait StatsCache extends Cache {
       // TODO: calculate stats if necessary
       super.get(c)
    }
-   
+
+   abstract override def putIfAbsent(c: StorageCommand): Response = {
+      // TODO: calculate stats if necessary
+      super.putIfAbsent(c)
+   }
+
 }

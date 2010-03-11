@@ -47,11 +47,21 @@ trait Client {
    }
 
    def put(ch: Channel, name: String, k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte]): Status = {
-      put(ch, 0xA0, 0x01, name, k, lifespan, maxIdle, v)
+      put(ch, 0xA0, 0x01, name, k, lifespan, maxIdle, v, null)
    }
 
-   def put(ch: Channel, magic: Int, code: Byte, name: String, k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte]): Status = {
-      val writeFuture = ch.write(new Op(magic, code, name, k, lifespan, maxIdle, v, null))
+   def put(ch: Channel, name: String, k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte],
+           flags: Set[Flag]): Status = {
+      put(ch, 0xA0, 0x01, name, k, lifespan, maxIdle, v, flags)
+   }
+
+   def putIfAbsent(ch: Channel, name: String, k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte]): Status = {
+      put(ch, 0xA0, 0x05, name, k, lifespan, maxIdle, v, null)
+   }
+
+   def put(ch: Channel, magic: Int, code: Byte, name: String, k: Array[Byte], lifespan: Int, maxIdle: Int,
+           v: Array[Byte], flags: Set[Flag]): Status = {
+      val writeFuture = ch.write(new Op(magic, code, name, k, lifespan, maxIdle, v, flags))
       writeFuture.awaitUninterruptibly
       assertTrue(writeFuture.isSuccess)
       // Get the handler instance to retrieve the answer.
@@ -69,17 +79,23 @@ trait Client {
       (resp.status, resp.value)
    }
 
-   def assertSuccess(status: Status.Status): Boolean = {
-      val isSuccess = status == Success
-      assertTrue(isSuccess, "Status should have been 'Success' but instead was: " + status)
+   def assertStatus(status: Status.Status, expected: Status.Status): Boolean = {
+      val isSuccess = status == expected
+      assertTrue(isSuccess, "Status should have been '" + expected + "' but instead was: " + status)
       isSuccess
    }
 
    def assertSuccess(status: Status.Status, expected: Array[Byte], actual: Array[Byte]): Boolean = {
-      assertSuccess(status)
+      assertStatus(status, Success)
       val isSuccess = Arrays.equals(expected, actual)
       assertTrue(isSuccess)
       isSuccess
+   }
+
+   def assertKeyDoesNotExist(status: Status.Status, actual: Array[Byte]): Boolean = {
+      assertTrue(status == KeyDoesNotExist, "Status should have been 'KeyDoesNotExist' but instead was: " + status)
+      assertNull(actual)
+      status == KeyDoesNotExist
    }
 
 }
@@ -141,7 +157,7 @@ private object Decoder extends ReplayingDecoder[NoState] with Logging {
       val status = Status.apply(buf.readUnsignedByte)
       val resp: Response =
          opCode match {
-            case PutResponse => new Response(id, opCode, status)
+            case PutResponse | PutIfAbsentResponse => new Response(id, opCode, status)
             case GetResponse => {
                val value = {
                   status match {

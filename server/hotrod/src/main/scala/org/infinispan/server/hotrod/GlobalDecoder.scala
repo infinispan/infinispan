@@ -22,9 +22,8 @@ class GlobalDecoder extends NoStateDecoder {
       val magic = buffer.readUnsignedByte()
       if (magic != Magic) {
          if (!isError) {
-            // throw new StreamCorruptedException("Magic byte incorrect: " + magic)
-            val m = "Error reading magic byte or message id: " + magic
-            return new ErrorResponse(0, OpCodes.ErrorResponse, Status.InvalidMagicOrMsgId, m)
+            val t = new StreamCorruptedException("Error reading magic byte or message id: " + magic)
+            return createErrorResponse(0, Status.InvalidMagicOrMsgId, t) 
          } else {
             trace("Error happened previously, ignoring {0} byte until we find the magic number again", magic)
             return null // Keep trying to read until we find magic
@@ -63,10 +62,7 @@ class GlobalDecoder extends NoStateDecoder {
    }
 
    override def exceptionCaught(ctx: ChannelHandlerContext, e: ExceptionEvent) {
-//      val t = e.getCause
-//      val m = if (t.getMessage != null) t.getMessage else "" 
       error("Unexpected error", e.getCause)
-//      e.getChannel.write(new ErrorResponse(0, OpCodes.ErrorResponse, Status.InvalidMagicOrMsgId, m))
    }
 
 }

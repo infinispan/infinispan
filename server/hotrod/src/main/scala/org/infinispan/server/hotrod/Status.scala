@@ -10,6 +10,7 @@ object Status extends Enumeration {
    type Status = Value
 
    val Success = Value(0x00)
+   val OperationNotExecuted = Value(0x01)
    val KeyDoesNotExist = Value(0x02)
 
    val InvalidMagicOrMsgId = Value(0x81)

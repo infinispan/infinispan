@@ -52,15 +52,19 @@ class FunctionalTest extends SingleCacheManagerTest with Utils with Client {
    }
 
    def testUnknownCommand(m: Method) {
-      val status = put(ch, 0xA0, 0x77, cacheName, k(m) , 0, 0, v(m))
-      assertSuccess(status)
+      val status = put(ch, 0xA0, 0x77, cacheName, k(m) , 0, 0, v(m), null)
+      assertTrue(status == UnknownCommand,
+         "Status should have been 'UnknownCommand' but instead was: " + status)
    }
 
    def testUnknownMagic(m: Method) {
       doPut(m) // Do a put to make sure decoder gets back to reading properly
-      val status = put(ch, 0x66, 0x01, cacheName, k(m) , 0, 0, v(m))
-      assertSuccess(status)
+      val status = put(ch, 0x66, 0x01, cacheName, k(m) , 0, 0, v(m), null)
+      assertTrue(status == InvalidMagicOrMsgId,
+         "Status should have been 'InvalidMagicOrMsgId' but instead was: " + status)
    }
+
+   // todo: test other error conditions such as invalid version...etc
 
    def testPutBasic(m: Method) {
       doPut(m)
@@ -68,7 +72,7 @@ class FunctionalTest extends SingleCacheManagerTest with Utils with Client {
 
    def testPutOnDefaultCache(m: Method) {
       val status = put(ch, DefaultCacheManager.DEFAULT_CACHE_NAME, k(m) , 0, 0, v(m))
-      assertSuccess(status)
+      assertStatus(status, Success)
       val cache: InfinispanCache[Key, Value] = cacheManager.getCache[Key, Value]
       assertTrue(Arrays.equals(cache.get(new Key(k(m))).v, v(m)));
    }
@@ -96,6 +100,17 @@ class FunctionalTest extends SingleCacheManagerTest with Utils with Client {
    def testGetDoesNotExist(m: Method) {
       val (getSt, actual) = doGet(m)
       assertKeyDoesNotExist(getSt, actual)
+   }
+
+   def testPutIfAbsentNotExist(m: Method) {
+      val status = putIfAbsent(ch, cacheName, k(m) , 0, 0, v(m))
+      assertStatus(status, Success)
+   }
+
+   def testPutIfAbsentExist(m: Method) {
+      doPut(m)
+      val status = putIfAbsent(ch, cacheName, k(m) , 0, 0, v(m, "v2-"))
+      assertStatus(status, OperationNotExecuted)
    }
 
    
@@ -132,11 +147,11 @@ class FunctionalTest extends SingleCacheManagerTest with Utils with Client {
 //      assertSuccess(status)
 //      assertTrue(Arrays.equals(expected, actual))
 //   }
-
-   private def assertKeyDoesNotExist(status: Status.Status, actual: Array[Byte]) {
-      assertTrue(status == KeyDoesNotExist, "Status should have been 'KeyDoesNotExist' but instead was: " + status)
-      assertNull(actual)
-   }
+//
+//   private def assertKeyDoesNotExist(status: Status.Status, actual: Array[Byte]) {
+//      assertTrue(status == KeyDoesNotExist, "Status should have been 'KeyDoesNotExist' but instead was: " + status)
+//      assertNull(actual)
+//   }
 
    private def doPut(m: Method) {
       doPutWithLifespanMaxIdle(m, 0, 0)
@@ -144,7 +159,7 @@ class FunctionalTest extends SingleCacheManagerTest with Utils with Client {
 
    private def doPutWithLifespanMaxIdle(m: Method, lifespan: Int, maxIdle: Int) {
       val status = put(ch, cacheName, k(m) , lifespan, maxIdle, v(m))
-      assertSuccess(status)
+      assertStatus(status, Success)
    }
 
    private def doGet(m: Method): (Status.Status, Array[Byte]) = {
