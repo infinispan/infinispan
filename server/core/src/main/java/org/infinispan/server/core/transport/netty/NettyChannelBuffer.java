@@ -274,7 +274,7 @@ public class NettyChannelBuffer implements ChannelBuffer /*, org.jboss.netty.net
 
    @Override
    public String readString() {
-      String ret = null;
+      String ret;
       try {
          ret = new String(readRangedBytes(), "UTF8");
       } catch (UnsupportedEncodingException e) {
@@ -283,6 +283,9 @@ public class NettyChannelBuffer implements ChannelBuffer /*, org.jboss.netty.net
       return ret;
    }
 
+   public void writeString(String msg) {
+      writeRangedBytes(msg.getBytes());
+   }
 
    //
 //   @Override

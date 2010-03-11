@@ -55,6 +55,11 @@ public interface ChannelBuffer {
    void writeUnsignedLong(long l);
    int writerIndex();
 
+   /**
+    * Writes the length of the String followed by the String itself. This methods expects String not to be null. 
+    */
+   void writeString(String msg);
+
    Object getUnderlyingChannelBuffer();
 
 }

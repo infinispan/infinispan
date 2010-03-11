@@ -18,8 +18,8 @@ import org.infinispan.config.Configuration.CacheMode
 @Test(groups = Array("functional"), testName = "server.hotrod.ClusterTest")
 class ClusterTest extends MultipleCacheManagersTest with Utils with Client {
    private val cacheName = "hotRodReplSync"
-   private var servers: List[HotRodServer] = List()
-   private var channels: List[Channel] = List()
+   private[this] var servers: List[HotRodServer] = List()
+   private[this] var channels: List[Channel] = List()
 
    @Test(enabled=false) // Disable explicitly to avoid TestNG thinking this is a test!!
    override def createCacheManagers {
