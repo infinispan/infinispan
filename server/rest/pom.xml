@@ -55,6 +55,16 @@
 
    </build>
 
+   <properties>
+      <version.resteasy>1.2.1.GA</version.resteasy>
+      <version.jackson>1.4.1</version.jackson>
+      <version.xtream>1.3.1</version.xtream>
+      <version.javax.servlet>2.5</version.javax.servlet>
+      <version.jetty>6.1.15</version.jetty>
+      <version.commons.httpclient>3.1</version.commons.httpclient>
+      <version.slf4j>1.5.8</version.slf4j>      
+   </properties>
+
    <dependencies>
       <dependency>
          <groupId>org.scala-lang</groupId>
@@ -79,7 +89,7 @@
       <dependency>
          <groupId>org.jboss.resteasy</groupId>
          <artifactId>resteasy-jaxrs</artifactId>
-         <version>1.2.1.GA</version>
+         <version>${version.resteasy}</version>
          <exclusions>
             <exclusion>
                <groupId>org.slf4j</groupId>
@@ -91,19 +101,19 @@
       <dependency>
          <groupId>org.codehaus.jackson</groupId>
          <artifactId>jackson-mapper-asl</artifactId>
-         <version>1.4.1</version>
+         <version>${version.jackson}</version>
       </dependency>
 
       <dependency>
          <groupId>com.thoughtworks.xstream</groupId>
          <artifactId>xstream</artifactId>
-         <version>1.3.1</version>
+         <version>${version.xtream}</version>
       </dependency>
 
       <dependency>
          <groupId>javax.servlet</groupId>
          <artifactId>servlet-api</artifactId>
-         <version>2.5</version>
+         <version>${version.javax.servlet}</version>
          <scope>provided</scope>
       </dependency>
 
@@ -111,27 +121,33 @@
       <dependency>
          <groupId>org.mortbay.jetty</groupId>
          <artifactId>jetty-embedded</artifactId>
-         <version>6.1.15</version>
+         <version>${version.jetty}</version>
          <scope>test</scope>
       </dependency>
 
       <dependency>
          <groupId>commons-httpclient</groupId>
          <artifactId>commons-httpclient</artifactId>
-         <version>3.1</version>
+         <version>${version.commons.httpclient}</version>
          <scope>test</scope>
       </dependency>
 
       <dependency>
          <groupId>org.slf4j</groupId>
          <artifactId>slf4j-simple</artifactId>
-         <version>1.5.8</version>
+         <version>${version.slf4j}</version>
          <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>org.slf4j</groupId>
          <artifactId>slf4j-api</artifactId>
-         <version>1.5.8</version>
+         <version>${version.slf4j}</version>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.slf4j</groupId>
+         <artifactId>slf4j-log4j12</artifactId>
+         <version>${version.slf4j}</version>
          <scope>test</scope>
       </dependency>
    </dependencies>
