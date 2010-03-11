@@ -9,7 +9,6 @@ import org.jboss.netty.buffer.{ChannelBuffer, ChannelBuffers}
 import org.infinispan.server.core.transport.netty.NettyChannelBuffer
 import org.jboss.netty.handler.codec.replay.ReplayingDecoder
 import org.testng.Assert._
-import java.util.concurrent.{LinkedBlockingQueue, Executors}
 import org.infinispan.server.hotrod._
 import org.infinispan.server.hotrod.OpCodes._
 import org.infinispan.server.hotrod.Status._
@@ -18,6 +17,7 @@ import org.infinispan.server.core.transport.NoState
 import org.jboss.netty.channel.ChannelHandler.Sharable
 import org.infinispan.context.Flag
 import java.util.Arrays
+import java.util.concurrent.{TimeUnit, LinkedBlockingQueue, Executors}
 
 /**
  * // TODO: Document this
@@ -47,7 +47,11 @@ trait Client {
    }
 
    def put(ch: Channel, name: String, k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte]): Status = {
-      val writeFuture = ch.write(new Op(0x01, name, k, lifespan, maxIdle, v, null))
+      put(ch, 0xA0, 0x01, name, k, lifespan, maxIdle, v)
+   }
+
+   def put(ch: Channel, magic: Int, code: Byte, name: String, k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte]): Status = {
+      val writeFuture = ch.write(new Op(magic, code, name, k, lifespan, maxIdle, v, null))
       writeFuture.awaitUninterruptibly
       assertTrue(writeFuture.isSuccess)
       // Get the handler instance to retrieve the answer.
@@ -55,12 +59,8 @@ trait Client {
       handler.getResponse.status
    }
 
-//   def get(ch: Channel, name: String, key: Array[Byte]): (Status.Status, Array[Byte]) = {
-//      get(ch, name, key, null)
-//   }
-
    def get(ch: Channel, name: String, k: Array[Byte], flags: Set[Flag]): (Status.Status, Array[Byte]) = {
-      val writeFuture = ch.write(new Op(0x03, name, k, 0, 0, null, flags))
+      val writeFuture = ch.write(new Op(0xA0, 0x03, name, k, 0, 0, null, flags))
       writeFuture.awaitUninterruptibly
       assertTrue(writeFuture.isSuccess)
       // Get the handler instance to retrieve the answer.
@@ -107,11 +107,11 @@ private object Encoder extends OneToOneEncoder {
          msg match {
             case op: Op => {
                val buffer = new NettyChannelBuffer(ChannelBuffers.dynamicBuffer)
-               buffer.writeByte(0xA0.asInstanceOf[Byte]) // magic
+               buffer.writeByte(op.magic.asInstanceOf[Byte]) // magic
+               buffer.writeUnsignedLong(idCounter.incrementAndGet) // message id
                buffer.writeByte(41) // version
                buffer.writeByte(op.code) // opcode
                buffer.writeRangedBytes(op.cacheName.getBytes()) // cache name length + cache name
-               buffer.writeUnsignedLong(idCounter.incrementAndGet) // message id
                if (op.flags != null)
                   buffer.writeUnsignedInt(Flags.fromContextFlags(op.flags)) // flags
                else
@@ -136,12 +136,12 @@ private object Decoder extends ReplayingDecoder[NoState] with Logging {
    override def decode(ctx: ChannelHandlerContext, ch: Channel, buffer: ChannelBuffer, state: NoState): Object = {
       val buf = new NettyChannelBuffer(buffer)
       val magic = buf.readUnsignedByte
-      val opCode = OpCodes.apply(buf.readUnsignedByte)
       val id = buf.readUnsignedLong
+      val opCode = OpCodes.apply(buf.readUnsignedByte)
       val status = Status.apply(buf.readUnsignedByte)
       val resp: Response =
          opCode match {
-            case PutResponse => new Response(opCode, id, status)
+            case PutResponse => new Response(id, opCode, status)
             case GetResponse => {
                val value = {
                   status match {
@@ -149,8 +149,9 @@ private object Decoder extends ReplayingDecoder[NoState] with Logging {
                      case _ => null
                   }
                }
-               new RetrievalResponse(opCode, id, status, value)
+               new RetrievalResponse(id, opCode, status, value)
             }
+            case ErrorResponse => new ErrorResponse(id, opCode, status, buf.readString)
          }
       resp
    }
@@ -170,12 +171,13 @@ private class ClientHandler extends SimpleChannelUpstreamHandler {
    }
 
    def getResponse: Response = {
-      answer.take
+      answer.poll(60, TimeUnit.SECONDS)
    }
 
 }
 
-private class Op(val code: Byte,
+private class Op(val magic: Int,
+                 val code: Byte,
                  val cacheName: String,
                  val key: Array[Byte],
                  val lifespan: Int,

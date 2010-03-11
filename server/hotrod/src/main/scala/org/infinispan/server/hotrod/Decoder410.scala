@@ -9,13 +9,12 @@ import org.infinispan.server.core.transport._
  * @author Galder Zamarreño
  * @since 4.1
  */
-class Decoder410 extends NoStateDecoder {
+class Decoder410 {
    import Decoder410._
 
-   override def decode(ctx: ChannelHandlerContext, buffer: ChannelBuffer): Command = {
-      val op = OpCodes.apply(buffer.readUnsignedByte)
+   def decode(ctx: ChannelHandlerContext, buffer: ChannelBuffer, id: Long): Command = {
+      val op = getOpCode(buffer)
       val cacheName = buffer.readString
-      val id = buffer.readUnsignedLong
       val flags = Flags.toContextFlags(buffer.readUnsignedInt)
       val command: Command =
          op match {                                   
@@ -39,9 +38,29 @@ class Decoder410 extends NoStateDecoder {
       command
    }
 
-   override def exceptionCaught(ctx: ChannelHandlerContext, e: ExceptionEvent) {
-      error("Error", e.getCause)
+   private def getOpCode(buffer: ChannelBuffer): OpCodes.OpCode = {
+      val op: Int = buffer.readUnsignedByte
+      try {
+         OpCodes.apply(op)
+      } catch {
+         case n: NoSuchElementException =>
+            throw new UnknownCommandException("Operation code not valid: 0x" + op.toHexString + " (" + op + ")")
+      }
    }
+
+//   override def exceptionCaught(ctx: ChannelHandlerContext, e: ExceptionEvent) {
+//      // no-op, handled by parent decoder
+////      val t = e.getCause
+////      error("Error", t)
+////      ctx.sendDownstream(e)
+////      val ch = ctx.getChannel
+////      val buffers = ctx.getChannelBuffers
+////      t match {
+////         case u: UnknownCommandException =>
+////      }
+//
+//
+//   }
 
 }
 

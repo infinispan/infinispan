@@ -1,7 +1,6 @@
 package org.infinispan.server.hotrod
 
-import org.infinispan.server.core.transport.ChannelHandlerContext
-import org.infinispan.server.core.{MessageEvent, CommandHandler}
+import org.infinispan.server.core.transport.{CommandHandler, MessageEvent, ChannelHandlerContext}
 
 /**
  * // TODO: Document this
@@ -15,6 +14,7 @@ class Handler(val hotCache: CallerCache) extends CommandHandler {
       e.getMessage match {
 //         case c: StorageCommand => e.getChannel.write(c.op(hotCache, c))
          case c: Command => e.getChannel.write(c.perform(hotCache))
+         case er: ErrorResponse => e.getChannel.write(er) 
       }
 
 

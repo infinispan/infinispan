@@ -15,25 +15,33 @@ class Encoder410 extends Encoder {
 
    override def encode(ctx: ChannelHandlerContext, ch: Channel, msg: Object) = {
       trace("Encode msg {0}", msg)
-      val buffer: ChannelBuffer =
-         msg match {
-            case r: Response => {
-               val buffer = ctx.getChannelBuffers.dynamicBuffer
-               buffer.writeByte(Magic.byteValue)
-               buffer.writeByte(r.opCode.id.byteValue)
-               buffer.writeUnsignedLong(r.id)
-               buffer.writeByte(r.status.id.byteValue)
-               buffer
-            }
-      }
-      msg match {
-         case rr: RetrievalResponse => if (rr.status == Status.Success) buffer.writeRangedBytes(rr.value)
-         case _ => {
-            if (buffer == null)
-               throw new IllegalArgumentException("Response received is unknown: " + msg);
+//      try {
+         val buffer: ChannelBuffer =
+            msg match {
+               case r: Response => {
+                  val buffer = ctx.getChannelBuffers.dynamicBuffer
+                  buffer.writeByte(Magic.byteValue)
+                  buffer.writeUnsignedLong(r.id)
+                  buffer.writeByte(r.opCode.id.byteValue)
+                  buffer.writeByte(r.status.id.byteValue)
+                  buffer
+               }
          }
-      }
-      buffer
+         msg match {
+            case rr: RetrievalResponse => if (rr.status == Status.Success) buffer.writeRangedBytes(rr.value)
+            case er: ErrorResponse => buffer.writeString(er.msg)
+            case _ => {
+               if (buffer == null)
+                  throw new IllegalArgumentException("Response received is unknown: " + msg);
+            }
+         }
+         buffer
+//      } catch {
+//         case t: Throwable => {
+//            val buffer = ctx.getChannelBuffers.dynamicBuffer
+//            buffer.writeByte(Magic.byteValue)
+//         }
+//      }
    }
    
 }

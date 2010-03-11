@@ -42,6 +42,6 @@ trait Utils {
 object Utils extends Logging
 
 object UniquePortThreadLocal extends ThreadLocal[Int] {
-   private val uniqueAddr = new AtomicInteger(21212)   
+   private val uniqueAddr = new AtomicInteger(11311)   
    override def initialValue: Int = uniqueAddr.getAndAdd(100)
 }

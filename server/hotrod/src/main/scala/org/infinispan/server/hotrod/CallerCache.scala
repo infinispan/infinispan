@@ -24,16 +24,16 @@ class CallerCache(val manager: CacheManager) extends Cache {
          case (x, 0) => cache.put(k, v, toMillis(c.lifespan), TimeUnit.MILLISECONDS)
          case (x, y) => cache.put(k, v, toMillis(c.lifespan), TimeUnit.MILLISECONDS, c.maxIdle, TimeUnit.SECONDS)
       }
-      new Response(OpCodes.PutResponse, c.id, Status.Success)
+      new Response(c.id, OpCodes.PutResponse, Status.Success)
    }
 
    override def get(c: RetrievalCommand): Response = {
       val cache = getCache(c.cacheName, c.flags)
       val value = cache.get(new Key(c.key))
       if (value != null)
-         new RetrievalResponse(OpCodes.GetResponse, c.id, Status.Success, value.v)
+         new RetrievalResponse(c.id, OpCodes.GetResponse, Status.Success, value.v)
       else
-         new RetrievalResponse(OpCodes.GetResponse, c.id, Status.KeyDoesNotExist, null)
+         new RetrievalResponse(c.id, OpCodes.GetResponse, Status.KeyDoesNotExist, null)
    }
 
    private def getCache(cacheName: String, flags: Set[Flag]): InfinispanCache[Key, Value] = {

@@ -11,9 +11,7 @@ import org.jboss.netty.channel.Channel
 import org.infinispan.manager.{DefaultCacheManager, CacheManager}
 import org.infinispan.context.Flag
 import org.infinispan.{AdvancedCache, Cache => InfinispanCache}
-import org.infinispan.test.{TestingUtil, SingleCacheManagerTest}
-import javax.transaction.TransactionManager
-import javax.transaction.{Status => TransactionStatus}
+import org.infinispan.test.{SingleCacheManagerTest}
 
 /**
  * TODO: Document
@@ -53,6 +51,17 @@ class FunctionalTest extends SingleCacheManagerTest with Utils with Client {
       server.stop
    }
 
+   def testUnknownCommand(m: Method) {
+      val status = put(ch, 0xA0, 0x77, cacheName, k(m) , 0, 0, v(m))
+      assertSuccess(status)
+   }
+
+   def testUnknownMagic(m: Method) {
+      doPut(m) // Do a put to make sure decoder gets back to reading properly
+      val status = put(ch, 0x66, 0x01, cacheName, k(m) , 0, 0, v(m))
+      assertSuccess(status)
+   }
+
    def testPutBasic(m: Method) {
       doPut(m)
    }
@@ -88,6 +97,8 @@ class FunctionalTest extends SingleCacheManagerTest with Utils with Client {
       val (getSt, actual) = doGet(m)
       assertKeyDoesNotExist(getSt, actual)
    }
+
+   
 
 // Invalid test since starting transactions does not make sense
 // TODO: discuss flags with list

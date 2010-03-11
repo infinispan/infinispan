@@ -6,14 +6,14 @@ package org.infinispan.server.hotrod
  * @since 4.1
  */
 
-class Response(val opCode: OpCodes.OpCode,
-               val id: Long,
+class Response(val id: Long,
+               val opCode: OpCodes.OpCode,
                val status: Status.Status) {
 
    override def toString = {
       new StringBuilder().append("Response").append("{")
-         .append("opCode=").append(opCode)
-         .append(", id=").append(id)
+         .append("id=").append(id)
+         .append(", opCode=").append(opCode)
          .append(", status=").append(status)
          .append("}").toString
    }
