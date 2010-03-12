@@ -39,6 +39,12 @@ def require_settings_file():
     f = open(settings_file)
   except IOError as ioe:
     print "User-specific environment settings file %s is missing!  Cannot proceed!" % settings_file
+    print "Please create a file called %s with the following lines:" % settings_file
+    print '''
+      svn_base = https://svn.jboss.org/repos/infinispan
+      local_tags_dir = /PATH/TO/infinispan/tags
+      local_mvn_repo_dir = /PATH/TO/maven2/org/infinispan
+    '''
     sys.exit(3)
   finally:
     if f:
@@ -135,5 +141,17 @@ def get_version_major_minor(full_version):
   pattern = get_version_pattern()
   matcher = pattern.match(full_version)
   return matcher.group(1)
+
+def assert_python_minimum_version(major, minor):
+  e = re.compile('([0-9])\.([0-9])\.([0-9]).*')
+  m = e.match(sys.version)
+  major_ok = int(m.group(1)) == major
+  minor_ok = int(m.group(2)) >= minor
+  if not (minor_ok and major_ok):
+    print "This script requires Python >= %s.%s.0.  You have %s" % (major, minor, sys.version)
+    sys.exit(3)
+  
+    
+  
 
   

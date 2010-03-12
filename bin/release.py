@@ -236,6 +236,7 @@ def do_task(target, args, async_processes):
 
 ### This is the starting place for this script.
 def release():
+  assert_python_minimum_version(2, 5)
   require_settings_file()
   
   missing_keys = []
