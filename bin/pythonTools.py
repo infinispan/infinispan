@@ -127,3 +127,13 @@ def maven_build_distribution():
   subprocess.check_call(["mvn", "install", "-Pjmxdoc", "-Dmaven.test.skip.exec=true"])
   subprocess.check_call(["mvn", "install", "-Pconfigdoc", "-Dmaven.test.skip.exec=true"])
   subprocess.check_call(["mvn", "deploy", "-Pdistribution", "-Dmaven.test.skip.exec=true"])
+
+def get_version_pattern(): 
+  return re.compile("^([4-9]\.[0-9])\.[0-9]\.(Final|(ALPHA|BETA|CR)[1-9][0-9]?)$", re.IGNORECASE)
+
+def get_version_major_minor(full_version):
+  pattern = get_version_pattern()
+  matcher = pattern.match(full_version)
+  return matcher.group(1)
+
+  

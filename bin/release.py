@@ -51,8 +51,8 @@ def helpAndExit():
     '''
     sys.exit(0)
 
-def validateVersion(version):
-  versionPattern = re.compile("^[4-9]\.[0-9]\.[0-9]\.(Final|(ALPHA|BETA|CR)[1-9][0-9]?)$", re.IGNORECASE)
+def validateVersion(version):  
+  versionPattern = get_version_pattern()
   if versionPattern.match(version):
     return version.strip().upper()
   else:
@@ -207,13 +207,17 @@ def uploadArtifactsToSourceforge(version):
   shutil.rmtree(".tmp", ignore_errors = True)  
 
 def uploadJavadocs(base_dir, workingDir, version):
+  version_short = get_version_major_minor(version)
+  
   os.chdir("%s/target/distribution" % workingDir)
   ## Grab the distribution archive and un-arch it
   subprocess.check_call(["unzip", "infinispan-%s-all.zip" % version])
   os.chdir("infinispan-%s/doc" % version)
   ## "Fix" the docs to use the appropriate analytics tracker ID
   subprocess.check_call(["%s/bin/updateTracker.sh" % workingDir])
-  subprocess.check_call(["tar", "zcf", "%s/apidocs-%s.tar.gz" % (base_dir, version), "apidocs"])
+  os.mkdir(version_short)
+  os.rename("apidocs", "%s/apidocs" % version_short)
+  subprocess.check_call(["tar", "zcf", "%s/apidocs-%s.tar.gz" % (base_dir, version), version_short])
   ## Upload to sourceforge
   os.chdir(base_dir)
   subprocess.check_call(["scp", "apidocs-%s.tar.gz" % version, "sourceforge_frs:"])
