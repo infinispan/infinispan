@@ -281,16 +281,16 @@ def release():
     
   # Step 4: Check in to Maven2 repo
   print "Step 4: Checking in to Maven2 Repo (this can take a while, go get coffee)"
-  do_task(checkInMaven2Repo, (version, workingDir), async_processes)
+  do_task(checkInMaven2Repo, [version, workingDir], async_processes)
   print "Step 4: Complete"
   
   # Step 5: Upload javadocs to FTP
   print "Step 5: Uploading Javadocs"  
-  do_task(uploadJavadocs, (base_dir, workingDir, version), async_processes)
+  do_task(uploadJavadocs, [base_dir, workingDir, version], async_processes)
   print "Step 5: Complete"
   
   print "Step 6: Uploading to Sourceforge"
-  do_task(uploadArtifactsToSourceforge, (version), async_processes)    
+  do_task(uploadArtifactsToSourceforge, [version], async_processes)    
   print "Step 6: Complete"
   
   ## Wait for processes to finish
