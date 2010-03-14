@@ -23,6 +23,10 @@ package org.infinispan.lucene.locking;
 
 import java.io.IOException;
 
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.store.Lock;
+import org.apache.lucene.store.LockFactory;
+import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.lucene.CacheTestSupport;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -42,15 +46,14 @@ public class LockManagerFunctionalTest extends MultipleCacheManagersTest {
       createClusteredCaches(2, "lucene", replSync);
    }
    
-   @SuppressWarnings("unchecked")
    public void testLuceneIndexLocking() throws IOException {
       final String commonIndexName = "myIndex";
-      TransactionalLockFactory lockManagerA = new TransactionalLockFactory(cache(0, "lucene"), commonIndexName);
-      TransactionalLockFactory lockManagerB = new TransactionalLockFactory(cache(1, "lucene"), commonIndexName);
-      TransactionalLockFactory isolatedLockManager = new TransactionalLockFactory(cache(0, "lucene"), "anotherIndex");
-      TransactionalSharedLuceneLock luceneLockA = lockManagerA.makeLock(TransactionalLockFactory.DEF_LOCK_NAME);
-      TransactionalSharedLuceneLock luceneLockB = lockManagerB.makeLock(TransactionalLockFactory.DEF_LOCK_NAME);
-      TransactionalSharedLuceneLock anotherLock = isolatedLockManager.makeLock(TransactionalLockFactory.DEF_LOCK_NAME);
+      LockFactory lockManagerA = makeLockFactory(cache(0,"lucene"), commonIndexName);
+      LockFactory lockManagerB = makeLockFactory(cache(1, "lucene"), commonIndexName);
+      LockFactory isolatedLockManager = makeLockFactory(cache(0, "lucene"), "anotherIndex");
+      Lock luceneLockA = lockManagerA.makeLock(IndexWriter.WRITE_LOCK_NAME);
+      Lock luceneLockB = lockManagerB.makeLock(IndexWriter.WRITE_LOCK_NAME);
+      Lock anotherLock = isolatedLockManager.makeLock(IndexWriter.WRITE_LOCK_NAME);
       
       assert luceneLockA.obtain();
       assert luceneLockB.isLocked();
@@ -60,8 +63,12 @@ public class LockManagerFunctionalTest extends MultipleCacheManagersTest {
       luceneLockA.release();
       assert ! luceneLockB.isLocked();
       assert luceneLockB.obtain();
-      lockManagerA.clearLock(TransactionalLockFactory.DEF_LOCK_NAME);
+      lockManagerA.clearLock(IndexWriter.WRITE_LOCK_NAME);
       assert ! luceneLockB.isLocked();
+   }
+
+   protected LockFactory makeLockFactory(Cache cache, String commonIndexName) {
+      return new BaseLockFactory(cache, commonIndexName);
    }
 
 }

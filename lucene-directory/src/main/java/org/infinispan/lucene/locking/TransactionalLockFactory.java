@@ -56,7 +56,7 @@ import java.io.IOException;
 public class TransactionalLockFactory extends LockFactory {
 
    private static final Log log = LogFactory.getLog(TransactionalLockFactory.class);
-   static final String DEF_LOCK_NAME = IndexWriter.WRITE_LOCK_NAME;
+   private static final String DEF_LOCK_NAME = IndexWriter.WRITE_LOCK_NAME;
 
    private final Cache<CacheKey, Object> cache;
    private final String indexName;
