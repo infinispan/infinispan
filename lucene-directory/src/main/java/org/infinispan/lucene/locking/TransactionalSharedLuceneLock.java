@@ -38,14 +38,17 @@ import org.infinispan.util.logging.LogFactory;
 
 /**
  * Inter-IndexWriter Lucene index lock based on Infinispan.
+ * There are pros and cons about using this implementation, please see javadoc on
+ * the factory class <code>org.infinispan.lucene.locking.TransactionalLockFactory</code>
  * 
  * @since 4.0
  * @author Sanne Grinovero
+ * @see org.infinispan.lucene.locking.TransactionalLockFactory
  * @see org.apache.lucene.store.Lock
  */
-class SharedLuceneLock extends Lock {
+class TransactionalSharedLuceneLock extends Lock {
 
-   private static final Log log = LogFactory.getLog(SharedLuceneLock.class);
+   private static final Log log = LogFactory.getLog(TransactionalSharedLuceneLock.class);
    private static final Flag[] lockFlags = new Flag[]{Flag.SKIP_CACHE_STORE};
 
    private final AdvancedCache<CacheKey, Object> cache;
@@ -54,7 +57,7 @@ class SharedLuceneLock extends Lock {
    private final TransactionManager tm;
    private final FileCacheKey keyOfLock;
 
-   SharedLuceneLock(Cache<CacheKey, Object> cache, String indexName, String lockName, TransactionManager tm) {
+   TransactionalSharedLuceneLock(Cache<CacheKey, Object> cache, String indexName, String lockName, TransactionManager tm) {
       this.cache = cache.getAdvancedCache();
       this.lockName = lockName;
       this.indexName = indexName;
@@ -169,8 +172,8 @@ class SharedLuceneLock extends Lock {
    }
 
    /**
-    * FIXME Comment this
-    * 
+    * Will clear the lock, eventually suspending a running transaction to make sure the
+    * release is immediately taking effect.
     */
    public void clearLockSuspending() {
       Transaction tx = null;

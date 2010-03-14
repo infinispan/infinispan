@@ -34,25 +34,36 @@ import javax.transaction.TransactionManager;
 import java.io.IOException;
 
 /**
- * Factory for locks obtained in <code>InfinispanDirectory</code>
+ * <p>Factory for locks obtained in <code>InfinispanDirectory</code>,
+ * this factory produces instances of <code>TransactionalSharedLuceneLock</code>.</p>
+ * <p>Usually Lucene acquires the lock when creating an IndexWriter and releases it
+ * when closing it; this is open-close is mapped to transactions as begin-commit,
+ * so all changes are going to be effective at IndexWriter close and could need
+ * much memory until it's committed.
+ * The advantage is that a transaction rollback will be able to undo all changes
+ * applied to the index.</p>
+ * <p>Using a TransactionalSharedLuceneLock is not compatible with Lucene's
+ * default MergeScheduler: use an in-thread implementation like SerialMergeScheduler
+ * <code>iwriter.setMergeScheduler( new SerialMergeScheduler() );</code></p>
  * 
  * @since 4.0
  * @author Sanne Grinovero
  * @author Lukasz Moren
  * @see org.infinispan.lucene.InfinispanDirectory
- * @see org.infinispan.lucene.locking.SharedLuceneLock
+ * @see org.infinispan.lucene.locking.TransactionalSharedLuceneLock
+ * @see org.apache.lucene.index.SerialMergeScheduler
  */
-public class LuceneLockFactory extends LockFactory {
+public class TransactionalLockFactory extends LockFactory {
 
-   private static final Log log = LogFactory.getLog(LuceneLockFactory.class);
+   private static final Log log = LogFactory.getLog(TransactionalLockFactory.class);
    static final String DEF_LOCK_NAME = IndexWriter.WRITE_LOCK_NAME;
 
    private final Cache<CacheKey, Object> cache;
    private final String indexName;
    private final TransactionManager tm;
-   private final SharedLuceneLock defLock;
+   private final TransactionalSharedLuceneLock defLock;
 
-   public LuceneLockFactory(Cache<CacheKey, Object> cache, String indexName) {
+   public TransactionalLockFactory(Cache<CacheKey, Object> cache, String indexName) {
       this.cache = cache;
       this.indexName = indexName;
       tm = cache.getAdvancedCache().getTransactionManager();
@@ -67,14 +78,14 @@ public class LuceneLockFactory extends LockFactory {
             throw new CacheException("Failed looking up TransactionManager: the cache is not running");
          }
       }
-      defLock = new SharedLuceneLock(cache, indexName, DEF_LOCK_NAME, tm);
+      defLock = new TransactionalSharedLuceneLock(cache, indexName, DEF_LOCK_NAME, tm);
    }
 
    /**
     * {@inheritDoc}
     */
-   public SharedLuceneLock makeLock(String lockName) {
-      SharedLuceneLock lock;
+   public TransactionalSharedLuceneLock makeLock(String lockName) {
+      TransactionalSharedLuceneLock lock;
       //It appears Lucene always uses the same name so we give locks
       //having this name a special treatment:
       if (DEF_LOCK_NAME.equals(lockName)) {
@@ -82,7 +93,7 @@ public class LuceneLockFactory extends LockFactory {
       }
       else {
          // this branch is never taken with current Lucene version.
-         lock = new SharedLuceneLock(cache, indexName, lockName, tm);
+         lock = new TransactionalSharedLuceneLock(cache, indexName, lockName, tm);
       }
       if (log.isTraceEnabled()) {
          log.trace("Lock prepared, not acquired: {0} for index {1}", lockName, indexName);
@@ -99,7 +110,7 @@ public class LuceneLockFactory extends LockFactory {
          defLock.clearLockSuspending();
       }
       else {
-         new SharedLuceneLock(cache, indexName, lockName, tm).clearLockSuspending();
+         new TransactionalSharedLuceneLock(cache, indexName, lockName, tm).clearLockSuspending();
       }
       if (log.isTraceEnabled()) {
          log.trace("Removed lock: {0} for index {1}", lockName, indexName);

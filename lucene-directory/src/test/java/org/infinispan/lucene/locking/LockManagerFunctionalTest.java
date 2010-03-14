@@ -45,12 +45,12 @@ public class LockManagerFunctionalTest extends MultipleCacheManagersTest {
    @SuppressWarnings("unchecked")
    public void testLuceneIndexLocking() throws IOException {
       final String commonIndexName = "myIndex";
-      LuceneLockFactory lockManagerA = new LuceneLockFactory(cache(0, "lucene"), commonIndexName);
-      LuceneLockFactory lockManagerB = new LuceneLockFactory(cache(1, "lucene"), commonIndexName);
-      LuceneLockFactory isolatedLockManager = new LuceneLockFactory(cache(0, "lucene"), "anotherIndex");
-      SharedLuceneLock luceneLockA = lockManagerA.makeLock(LuceneLockFactory.DEF_LOCK_NAME);
-      SharedLuceneLock luceneLockB = lockManagerB.makeLock(LuceneLockFactory.DEF_LOCK_NAME);
-      SharedLuceneLock anotherLock = isolatedLockManager.makeLock(LuceneLockFactory.DEF_LOCK_NAME);
+      TransactionalLockFactory lockManagerA = new TransactionalLockFactory(cache(0, "lucene"), commonIndexName);
+      TransactionalLockFactory lockManagerB = new TransactionalLockFactory(cache(1, "lucene"), commonIndexName);
+      TransactionalLockFactory isolatedLockManager = new TransactionalLockFactory(cache(0, "lucene"), "anotherIndex");
+      TransactionalSharedLuceneLock luceneLockA = lockManagerA.makeLock(TransactionalLockFactory.DEF_LOCK_NAME);
+      TransactionalSharedLuceneLock luceneLockB = lockManagerB.makeLock(TransactionalLockFactory.DEF_LOCK_NAME);
+      TransactionalSharedLuceneLock anotherLock = isolatedLockManager.makeLock(TransactionalLockFactory.DEF_LOCK_NAME);
       
       assert luceneLockA.obtain();
       assert luceneLockB.isLocked();
@@ -60,7 +60,7 @@ public class LockManagerFunctionalTest extends MultipleCacheManagersTest {
       luceneLockA.release();
       assert ! luceneLockB.isLocked();
       assert luceneLockB.obtain();
-      lockManagerA.clearLock(LuceneLockFactory.DEF_LOCK_NAME);
+      lockManagerA.clearLock(TransactionalLockFactory.DEF_LOCK_NAME);
       assert ! luceneLockB.isLocked();
    }
 

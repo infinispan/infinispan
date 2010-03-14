@@ -92,8 +92,7 @@ public abstract class CacheTestSupport {
       // this is a write
       IndexWriter writer = null;
       try {
-         writer = new IndexWriter(d, LuceneSettings.analyzer, IndexWriter.MaxFieldLength.UNLIMITED);
-         writer.setMergeScheduler(new SerialMergeScheduler());
+         writer = LuceneSettings.openWriter(d);
          log.info("IndexWriter was constructed");
 
          Document doc = new Document();
