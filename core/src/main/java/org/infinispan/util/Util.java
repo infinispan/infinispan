@@ -244,5 +244,19 @@ public final class Util {
          }
       }
       return value.toString();
-   }    
+   }
+
+   public static String printArray(byte[] array, boolean withHash) {
+      StringBuilder sb = new StringBuilder();
+      sb.append("ByteArray{size=").append(array.length);
+      if (withHash)
+         sb.append(", hashCode=").append(Integer.toHexString(array.hashCode()));
+
+      sb.append(", array=[");
+      for (int i = 0; i < 10; i++)
+         sb.append(array[i]).append(", ");
+      sb.append("..]}");
+
+      return sb.toString();
+   }
 }

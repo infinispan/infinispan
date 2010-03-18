@@ -27,6 +27,7 @@ import org.infinispan.io.ExposedByteArrayOutputStream;
 import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.Util;
 
 import java.io.IOException;
 import java.io.NotSerializableException;
@@ -207,11 +208,11 @@ public class MarshalledValue {
    @Override
    public String toString() {
       StringBuilder sb = new StringBuilder()
-         .append("MarshalledValue(")
-         .append("instance=").append(instance != null ? instance.toString() : "<undeserialized>")
-         .append("; cachedHashCode=").append(cachedHashCode)
-         .append("; serialized=").append(raw != null)
-         .append(")@").append(Integer.toHexString(System.identityHashCode(this)));
+         .append("MarshalledValue{")
+         .append("instance=").append(instance != null ? instance.toString() : "<serialized>")
+         .append(", serialized=").append(raw != null ?  Util.printArray(raw, false) : "false")
+         .append(", cachedHashCode=").append(cachedHashCode)
+         .append("}@").append(Integer.toHexString(System.identityHashCode(this)));
       return sb.toString();
    }
 
