@@ -163,6 +163,11 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    //   SETTERS - MAKE SURE ALL SETTERS PERFORM testImmutability()!!!
    // ------------------------------------------------------------------------------------------------------------
 
+   /**
+    *
+    * will be removed, please use {@link org.infinispan.manager.CacheManager#getGlobalConfiguration()}
+    */
+   @Deprecated
    public GlobalConfiguration getGlobalConfiguration() {
       return globalConfiguration;
    }
