@@ -20,8 +20,8 @@ except:
   
 from pythonTools import *
 
+multi_threaded = 'multi_threaded' in settings and "true" == settings['multi_threaded'].strip().lower()
 modules = []
-multi_threaded= False ## Do not enable multi-threading for now; some weird bugs here!
 
 def getModules(directory):
     # look at the pom.xml file

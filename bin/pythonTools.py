@@ -3,6 +3,7 @@ import fnmatch
 import re
 import subprocess
 import sys
+import readline
 
 settings_file = '%s/.infinispan_dev_settings' % os.getenv('HOME')
 
@@ -32,18 +33,50 @@ def get_settings():
 
 settings = get_settings()
 
-def require_settings_file():
+def input_with_default(msg, default):
+  i = raw_input("%s [%s]: " % (msg, default))
+  if i.strip() == "":
+    i = default
+  return i
+
+def handle_release_virgin():
+  """This sounds dirty!"""
+  print """
+    It appears that this is the first time you are using this script.  I need to ask you a few questions before
+    we can proceed.  Default values are in brackets, just hitting ENTER will accept the default value.
+    
+    Lets get started!
+    """
+  s = {}  
+  s["svn_base"] = input_with_default("Base Subversion URL to use", "https://svn.jboss.org/repos/infinispan") 
+  s["local_tags_dir"] = input_with_default("Local tags directory to use", "%s/Code/infinispan/tags" % os.getenv("HOME"))
+  s["local_mvn_repo_dir"] = input_with_default("Local checkout of Maven2 repo", "%s/Code/maven2/org/infinispan" % os.getenv("HOME"))
+  s["multi_threaded"] = input_with_default("Enable multithreaded (EXPERIMENTAL!)", "False")
+  
+  f = open(settings_file, "w")
+  try:
+    for e in s.keys():
+      f.write("  %s = %s \n" % (e, s[e]))
+  finally:
+    f.close()
+    
+def require_settings_file(recursive = False):
   """Tests whether the settings file exists, and if not exits with an error message."""
   f = None
   try:
     f = open(settings_file)
   except IOError as ioe:
+    if not recursive:
+      handle_release_virgin()
+      require_settings_file(True)
+    else:
     print "User-specific environment settings file %s is missing!  Cannot proceed!" % settings_file
     print "Please create a file called %s with the following lines:" % settings_file
     print '''
-      svn_base = https://svn.jboss.org/repos/infinispan
-      local_tags_dir = /PATH/TO/infinispan/tags
-      local_mvn_repo_dir = /PATH/TO/maven2/org/infinispan
+       svn_base = https://svn.jboss.org/repos/infinispan
+       local_tags_dir = /PATH/TO/infinispan/tags
+       local_mvn_repo_dir = /PATH/TO/maven2/org/infinispan
+       multi_threaded = False
     '''
     sys.exit(3)
   finally:
