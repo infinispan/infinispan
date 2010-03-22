@@ -32,19 +32,19 @@ def getModules(directory):
     mods = tree.findall(".//{%s}module" % maven_pom_xml_namespace)
     for m in mods:
         modules.append(m.text)
-    
+
 def helpAndExit():
     print '''
         Welcome to the Infinispan Release Script.
-
+        
         Usage:
-
+        
             $ bin/release.py <version>
-
+            
         E.g.,
-
+        
             $ bin/release.py 4.1.1.BETA1
-
+            
         Please ensure you have edited bin/release.py to suit your ennvironment.
         There are configurable variables at the start of this file that is
         specific to your environment.
@@ -98,7 +98,7 @@ def patch(pomFile, version):
   tags.append(getParentVersionTag(tree))
   tags.append(getProjectVersionTag(tree))
   tags.append(getPropertiesVersionTag(tree))
-
+  
   for tag in tags:
     if tag != None:
       print "%s is %s.  Setting to %s" % (str(tag), tag.text, version)
@@ -110,21 +110,20 @@ def patch(pomFile, version):
     writePom(tree, pomFile)
   else:
     print "File doesn't need updating; nothing replaced!"
-   
+
 def get_poms_to_patch(workingDir):
   getModules(workingDir)
   print 'Available modules are ' + str(modules)
   pomsToPatch = [workingDir + "/pom.xml"]
   for m in modules:
     pomsToPatch.append(workingDir + "/" + m + "/pom.xml")
-
     # Look for additional POMs that are not directly referenced!
   for additionalPom in GlobDirectoryWalker(workingDir, 'pom.xml'):
     if additionalPom not in pomsToPatch:
       pomsToPatch.append(additionalPom)
       
   return pomsToPatch
- 
+
 def updateVersions(version, workingDir, trunkDir, test = False):
   if test:
     shutil.copytree(trunkDir, workingDir)
@@ -165,7 +164,7 @@ def updateVersions(version, workingDir, trunkDir, test = False):
     # Now make sure this goes back into SVN.
     checkInMessage = "Infinispan Release Script: Updated version numbers"
     client.checkin(workingDir, checkInMessage)
-  
+
 def buildAndTest(workingDir):
   os.chdir(workingDir)
   maven_build_distribution()
@@ -201,12 +200,13 @@ def checkInMaven2Repo(version, workingDir):
 def uploadArtifactsToSourceforge(version):
   os.mkdir(".tmp")
   os.chdir(".tmp")
-  do_not_copy = shutil.ignore_patterns('*.xml', '*.sha1', '*.md5')
+  do_not_copy = shutil.ignore_patterns('*.xml', '*.sha1', '*.md5', '*.pom')
   shutil.copytree("%s/infinispan/%s" % (settings[local_mvn_repo_dir_key], version), "%s" % version, ignore = do_not_copy)
   subprocess.check_call(["scp", "-r", version, "sourceforge_frs:/home/frs/project/i/in/infinispan/infinispan"])
   shutil.rmtree(".tmp", ignore_errors = True)  
 
 def uploadJavadocs(base_dir, workingDir, version):
+  """Javadocs get rsync'ed to filemgmt.jboss.org, in the docs_htdocs/infinispan directory"""
   version_short = get_version_major_minor(version)
   
   os.chdir("%s/target/distribution" % workingDir)
@@ -217,16 +217,28 @@ def uploadJavadocs(base_dir, workingDir, version):
   subprocess.check_call(["%s/bin/updateTracker.sh" % workingDir])
   os.mkdir(version_short)
   os.rename("apidocs", "%s/apidocs" % version_short)
-  subprocess.check_call(["tar", "zcf", "%s/apidocs-%s.tar.gz" % (base_dir, version), version_short])
+  
+  ## rsync this stuff to filemgmt.jboss.org
+  subprocess.check_call(["rsync", "-rv", "--protocol=28", version_short, "infinispan@filemgmt.jboss.org:/docs_htdocs/infinispan"])
+  
+  # subprocess.check_call(["tar", "zcf", "%s/apidocs-%s.tar.gz" % (base_dir, version), version_short])
   ## Upload to sourceforge
-  os.chdir(base_dir)
-  subprocess.check_call(["scp", "apidocs-%s.tar.gz" % version, "sourceforge_frs:"])
-  print "API docs are in %s/apidocs-%s.tar.gz" % (base_dir, version)
-  print "They have also been uploaded to Sourceforge."
-  print "MANUAL STEPS:"
-  print "  1) Email archive to helpdesk@redhat.com"
-  print "  2) SSH to sourceforge (ssh -t SF_USERNAME,infinispan@shell.sourceforge.net create) and run '/home/groups/i/in/infinispan/install_apidocs.sh'"
-  print ""    
+  # os.chdir(base_dir)
+  # subprocess.check_call(["scp", "apidocs-%s.tar.gz" % version, "sourceforge_frs:"])  
+  # print """
+  #   API docs are in %s/apidocs-%s.tar.gz 
+  #   They have also been uploaded to Sourceforge.
+  #   
+  #   MANUAL STEP:
+  #     1) SSH to sourceforge (ssh -t SF_USERNAME,infinispan@shell.sourceforge.net create) and run '/home/groups/i/in/infinispan/install_apidocs.sh'
+  #     """ % (base_dir, version)
+
+def uploadSchema(base_dir, workingDir, version):
+  """Schema gets rsync'ed to filemgmt.jboss.org, in the docs_htdocs/infinispan/schemas directory"""
+  os.chdir("%s/target/distribution/infinispan-%s/etc/schema" % (workingDir, version))
+  
+  ## rsync this stuff to filemgmt.jboss.org
+  subprocess.check_call(["rsync", "-rv", "--protocol=28", ".", "infinispan@filemgmt.jboss.org:/docs_htdocs/infinispan/schemas"])
 
 def do_task(target, args, async_processes):
   if multi_threaded:
@@ -248,7 +260,7 @@ def release():
   if len(missing_keys) > 0:
     print "Entries %s are missing in configuration file %s!  Cannot proceed!" % (missing_keys, settings_file)
     sys.exit(2)
-
+    
   # We start by determining whether the version passed in is a valid one
   if len(sys.argv) < 2:
     helpAndExit()
@@ -298,6 +310,10 @@ def release():
   do_task(uploadArtifactsToSourceforge, [version], async_processes)    
   print "Step 6: Complete"
   
+  print "Step 7: Uploading to configuration XML schema"
+  do_task(uploadSchema, [base_dir, workingDir, version], async_processes)    
+  print "Step 7: Complete"
+  
   ## Wait for processes to finish
   for p in async_processes:
     p.start()
@@ -305,15 +321,7 @@ def release():
   for p in async_processes:
     p.join()
   
-  # (future)
-  # Step 6: Update www.infinispan.org
-  
-  print "\n\n\nDone!  Now all you need to do is:"
-  print "   1.  Update http://www.infinispan.org"
-  print "   2.  Update wiki pages with relevant information and links to docs, etc"
-  print "   3.  Log in to the Sourceforge project admin page and mark the -bin.ZIP package as the default download for all platforms."
-  print "   4.  Log in to JIRA and update the version info, mark %s as released on date %s, etc." % (version, date.today().isoformat())
-
+  print "\n\n\nDone!  Now all you need to do is the remaining post-release tasks as outlined in https://docspace.corp.redhat.com/docs/DOC-28594"
 
 if __name__ == "__main__":
   release()
