@@ -253,7 +253,8 @@ public final class Util {
          sb.append(", hashCode=").append(Integer.toHexString(array.hashCode()));
 
       sb.append(", array=[");
-      for (int i = 0; i < 10; i++)
+      int length = array.length < 10 ? array.length : 10; 
+      for (int i = 0; i < length; i++)
          sb.append(array[i]).append(", ");
       sb.append("..]}");
 
