@@ -18,6 +18,7 @@
       <version.netty>3.2.0.BETA1</version.netty>      
       <version.gnu.getopt>1.0.13</version.gnu.getopt>
       <version.apache.log4j>1.2.15</version.apache.log4j>
+      <version.scala>2.8.0.Beta1</version.scala>
    </properties>
 
    <dependencies>
@@ -39,6 +40,49 @@
          <version>${version.apache.log4j}</version>
          <scope>test</scope>
       </dependency>
+
+      <dependency>
+         <groupId>org.scala-lang</groupId>
+         <artifactId>scala-library</artifactId>
+         <version>${version.scala}</version>
+      </dependency>
+      
    </dependencies>
 
+   <build>
+      <finalName>infinispan</finalName>
+      <sourceDirectory>src/main/scala</sourceDirectory>
+      <testSourceDirectory>src/test/scala</testSourceDirectory>
+
+      <plugins>
+         <plugin>
+            <groupId>org.scala-tools</groupId>
+            <artifactId>maven-scala-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>compile</id>
+                  <goals>
+                     <goal>compile</goal>
+                  </goals>
+                  <phase>compile</phase>
+               </execution>
+               <execution>
+                  <id>test-compile</id>
+                  <goals>
+                     <goal>testCompile</goal>
+                  </goals>
+                  <phase>test-compile</phase>
+               </execution>
+               <execution>
+                  <phase>process-resources</phase>
+                  <goals>
+                     <goal>compile</goal>
+                  </goals>
+               </execution>
+            </executions>
+         </plugin>
+      </plugins>
+
+   </build>
+   
 </project>

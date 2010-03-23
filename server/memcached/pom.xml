@@ -33,6 +33,42 @@
       </dependency>
    </dependencies>
 
+      <build>
+      <finalName>infinispan</finalName>
+      <sourceDirectory>src/main/scala</sourceDirectory>
+      <testSourceDirectory>src/test/scala</testSourceDirectory>
+
+      <plugins>
+         <plugin>
+            <groupId>org.scala-tools</groupId>
+            <artifactId>maven-scala-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>compile</id>
+                  <goals>
+                     <goal>compile</goal>
+                  </goals>
+                  <phase>compile</phase>
+               </execution>
+               <execution>
+                  <id>test-compile</id>
+                  <goals>
+                     <goal>testCompile</goal>
+                  </goals>
+                  <phase>test-compile</phase>
+               </execution>
+               <execution>
+                  <phase>process-resources</phase>
+                  <goals>
+                     <goal>compile</goal>
+                  </goals>
+               </execution>
+            </executions>
+         </plugin>
+      </plugins>
+
+   </build>
+   
   <repositories>
     <repository>
       <id>spy</id>
