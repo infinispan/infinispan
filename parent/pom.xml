@@ -66,7 +66,6 @@
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
       <defaultTestGroup>functional,unit</defaultTestGroup>
       <testNGListener>org.infinispan.test.fwk.UnitTestTestNGListener</testNGListener>
-      <scala.version>2.7.7</scala.version>
    </properties>
 
    <dependencies>
