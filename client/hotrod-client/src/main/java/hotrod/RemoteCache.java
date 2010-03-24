@@ -21,14 +21,14 @@ import java.util.concurrent.TimeUnit;
  * <b>Concurrency</b>: implementors of this interface will support multi-threaded access, similar to the way {@link
  * org.infinispan.Cache} supports it.
  * <p/>
- * <b>Return values</b>: previous existing values for certain {@link java.util.Map} operations are not being returned,
- * but null will always be returned instead. E.g. {@link java.util.Map#put(Object, Object)} returns the previous value
- * associated to the supplied key. In case of RemoteCache, this will always return null.
+ * <b>Return values</b>: previousLY existing values for certain {@link java.util.Map} operations are not returned,
+ * null is returned instead. E.g. {@link java.util.Map#put(Object, Object)} returns the previous value
+ * associated to the supplied key. In case of RemoteCache, this returns null.
  * <p/>
- * <b>Synthetic operations</b>: Certain aggregate operations are being implemented based on other Hot Rod operations.
+ * <b>Synthetic operations</b>: aggregate operations are being implemented based on other Hot Rod operations.
  * E.g. all the {@link java.util.Map#putAll(java.util.Map)} is implemented through multiple individual puts. This means
  * that the these operations are not atomic and that they are costly, e.g. as the number of network round-trips is not
- * one, but the size of the added map. All these synthetic operations are documented as such and should be used
+ * one, but the size of the added map. All these synthetic operations are documented as such.
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
