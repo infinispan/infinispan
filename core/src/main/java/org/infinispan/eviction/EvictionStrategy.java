@@ -10,7 +10,8 @@ public enum EvictionStrategy {
    NONE,
    UNORDERED,
    FIFO,
-   LRU;
+   LRU,
+   LIRS;
    
    public boolean isEnabled() {
       return this != NONE;

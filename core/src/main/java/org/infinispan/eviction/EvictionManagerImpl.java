@@ -17,6 +17,7 @@ import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -28,7 +29,7 @@ import static org.infinispan.context.Flag.FAIL_SILENTLY;
 public class EvictionManagerImpl implements EvictionManager {
    private static final Log log = LogFactory.getLog(EvictionManagerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
-   ScheduledFuture evictionTask;
+   ScheduledFuture <?> evictionTask;
 
    // components to be injected
    ScheduledExecutorService executor;
@@ -108,28 +109,23 @@ public class EvictionManagerImpl implements EvictionManager {
       }
 
       // finally iterate through data container if too big
-      int dcsz = dataContainer.size();
-      if (dcsz > maxEntries) {
+      Set<InternalCacheEntry> evictionCandidates = dataContainer.getEvictionCandidates();
+      if(!evictionCandidates.isEmpty()) {      
          AdvancedCache<Object, Object> ac = cache.getAdvancedCache();
          if (trace) {
-            log.trace("Data container is larger than maxEntries, size is {0}.  Evicting...", dcsz);
+            log.trace("Evicting data container entries");
             start = System.currentTimeMillis();
-         }
-         for (InternalCacheEntry ice : dataContainer) {
-            Object k = ice.getKey();
-            try {
-               dcsz = dataContainer.size();
-               if (dcsz > maxEntries) {
+         } 
+         for (InternalCacheEntry entry : evictionCandidates) {
+            Object k = entry.getKey();
+            try {                
                   if (trace) log.trace("Attempting to evict key [{0}]", k);
                   ac.withFlags(FAIL_SILENTLY).evict(k);
-               } else {
-                  if (trace) log.trace("Evicted enough entries");
-                  break;
                }
-            } catch (Exception e) {
+            catch (Exception e) {
                log.warn("Caught exception when iterating through data container.  Current entry is under key [{0}]", e, k);
             }
-         }
+         }               
          if (trace)
             log.trace("Eviction process completed in {0}", Util.prettyPrintTime(System.currentTimeMillis() - start));
       } else {

@@ -1,19 +1,31 @@
 package org.infinispan.container;
 
-import net.jcip.annotations.ThreadSafe;
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.InternalEntryFactory;
-import org.infinispan.util.Immutables;
-
 import java.util.AbstractCollection;
 import java.util.AbstractSet;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import net.jcip.annotations.ThreadSafe;
+
+import org.infinispan.Cache;
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.eviction.EvictionThreadPolicy;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.util.Immutables;
+import org.infinispan.util.concurrent.BoundedConcurrentHashMap;
+import org.infinispan.util.concurrent.BoundedConcurrentHashMap.Eviction;
+import org.infinispan.util.concurrent.BoundedConcurrentHashMap.EvictionListener;
 
 /**
  * Simple data container that does not order entries for eviction, implemented using two ConcurrentHashMaps, one for
@@ -25,24 +37,89 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * @author Manik Surtani
  * @author Galder Zamarreño
+ * @author Vladimir Blagojevic
  * @since 4.0
  */
 @ThreadSafe
-public class SimpleDataContainer implements DataContainer {
+public class DefaultDataContainer implements DataContainer {
    final ConcurrentMap<Object, InternalCacheEntry> immortalEntries;
    final ConcurrentMap<Object, InternalCacheEntry> mortalEntries;
    final AtomicInteger numEntries = new AtomicInteger(0);
    final InternalEntryFactory entryFactory;
+   final DefaultEvictionListener evictionListener; 
+   protected Cache<Object, Object> cache;
 
 
-   public SimpleDataContainer(int concurrencyLevel) {
+   protected DefaultDataContainer(int concurrencyLevel) {
       this(concurrencyLevel, false, false);
    }
 
-   SimpleDataContainer(int concurrencyLevel, boolean recordCreation, boolean recordLastUsed) {
+   protected DefaultDataContainer(int concurrencyLevel, boolean recordCreation, boolean recordLastUsed) {
       immortalEntries = new ConcurrentHashMap<Object, InternalCacheEntry>(128, 0.75f, concurrencyLevel);
       mortalEntries = new ConcurrentHashMap<Object, InternalCacheEntry>(64, 0.75f, concurrencyLevel);
       entryFactory = new InternalEntryFactory(recordCreation, recordLastUsed);
+      evictionListener = null;
+   }
+   
+   protected DefaultDataContainer(int concurrencyLevel, int maxEntries, EvictionStrategy strategy, EvictionThreadPolicy policy,
+            boolean recordCreation, boolean recordLastUsed) {
+      
+      // translate eviction policy and strategy
+      switch (policy) {
+         case DEFAULT:
+            evictionListener = new DefaultEvictionListener();
+            break;
+         case PIGGYBACK:
+            evictionListener = new PiggybackEvictionListener();
+            break;
+         default:
+            throw new IllegalArgumentException("No such eviction thread policy " + strategy);
+      }
+      
+      Eviction eviction;
+      switch (strategy) {
+         case FIFO:
+         case LRU:
+            eviction = Eviction.LRU;            
+            break;
+         case LIRS:
+            eviction = Eviction.LIRS;            
+            break;
+         default:
+            throw new IllegalArgumentException("No such eviction strategy " + strategy);
+      }
+      immortalEntries = new BoundedConcurrentHashMap<Object, InternalCacheEntry>(maxEntries,concurrencyLevel, eviction, evictionListener);
+      mortalEntries = new ConcurrentHashMap<Object, InternalCacheEntry>(64, 0.75f, concurrencyLevel);
+      entryFactory = new InternalEntryFactory(recordCreation, recordLastUsed);
+   }
+   
+   @Inject
+   public void initialize(Cache<Object, Object> cache) {      
+      this.cache = cache;    
+   }
+   
+   public static DataContainer boundedDataContainer(int concurrencyLevel, int maxEntries, EvictionStrategy strategy, EvictionThreadPolicy policy) {
+      return new DefaultDataContainer(concurrencyLevel, maxEntries, strategy,policy, false, false) {
+
+         @Override
+         public int size() {
+            return immortalEntries.size() + mortalEntries.size();
+         }
+
+         @Override
+         public Set<InternalCacheEntry> getEvictionCandidates() {
+            return evictionListener.getEvicted();
+         }
+      };
+   }
+   
+   public static DataContainer unBoundedDataContainer(int concurrencyLevel) {
+      return new DefaultDataContainer(concurrencyLevel) ;
+   }
+   
+   @Override
+   public Set<InternalCacheEntry> getEvictionCandidates() {
+      return Collections.emptySet();
    }
 
    public InternalCacheEntry peek(Object key) {
@@ -160,6 +237,33 @@ public class SimpleDataContainer implements DataContainer {
 
    public Iterator<InternalCacheEntry> iterator() {
       return new EntryIterator(immortalEntries.values().iterator(), mortalEntries.values().iterator());
+   }
+   
+   private class DefaultEvictionListener implements EvictionListener<Object, InternalCacheEntry>{
+      final List <InternalCacheEntry> evicted = Collections.synchronizedList(new LinkedList<InternalCacheEntry>());
+
+      @Override
+      public void evicted(Object key, InternalCacheEntry value) {
+         evicted.add(value);
+      }   
+      
+      public Set<InternalCacheEntry> getEvicted() {
+         synchronized (evicted) {
+            return new HashSet<InternalCacheEntry>(evicted);
+         } 
+      }
+   }
+   
+   private class PiggybackEvictionListener extends  DefaultEvictionListener{
+      
+      @Override
+      public void evicted(Object key, InternalCacheEntry value) {
+         cache.getAdvancedCache().evict(key);
+      }  
+      
+      public Set<InternalCacheEntry> getEvicted() {
+         return Collections.emptySet();
+      }
    }
 
    private class KeySet extends AbstractSet<Object> {

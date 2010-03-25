@@ -9,6 +9,7 @@ import org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior;
 import org.infinispan.config.InfinispanConfiguration;
 import org.infinispan.distribution.DefaultConsistentHash;
 import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.loaders.file.FileCacheStoreConfig;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -190,6 +191,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert c.getEvictionStrategy().equals(EvictionStrategy.FIFO);
       assert c.getExpirationLifespan() == 60000;
       assert c.getExpirationMaxIdle() == 1000;
+      assert c.getEvictionThreadPolicy() == EvictionThreadPolicy.PIGGYBACK;
 
       c = namedCaches.get("withDeadlockDetection");
       assert c.isEnableDeadlockDetection();

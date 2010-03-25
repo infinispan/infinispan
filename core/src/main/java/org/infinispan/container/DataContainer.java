@@ -21,19 +21,20 @@
  */
 package org.infinispan.container;
 
+import java.util.Collection;
+import java.util.Set;
+
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-
-import java.util.Collection;
-import java.util.Set;
 
 /**
  * The main internal data structure which stores entries
  *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @author Galder Zamarreño
+ * @author Vladimir Blagojevic
  * @since 4.0
  */
 @Scope(Scopes.NAMED_CACHE)
@@ -126,4 +127,13 @@ public interface DataContainer extends Iterable<InternalCacheEntry> {
     * Purges entries that have passed their expiry time
     */
    void purgeExpired();
+   
+   
+   /**
+    * Returns a set of eviction candidates. Containers not supporting eviction should return an
+    * empty set.
+    * 
+    * @return a set of entries that should be evicted from this container.
+    */
+   Set<InternalCacheEntry> getEvictionCandidates();
 }

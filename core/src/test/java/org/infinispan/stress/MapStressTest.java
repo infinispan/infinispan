@@ -8,12 +8,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
+import org.infinispan.util.concurrent.BoundedConcurrentHashMap;
+import org.infinispan.util.concurrent.BoundedConcurrentHashMap.Eviction;
+
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import org.infinispan.util.concurrent.BufferedConcurrentHashMap;
-import org.infinispan.util.concurrent.BufferedConcurrentHashMap.Eviction;
+
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -52,15 +53,15 @@ public class MapStressTest {
     }
     
     public void testConcurrentHashMap() throws Exception {
-        doTest(new ConcurrentHashMap<Integer, Integer>(MAP_CAPACITY, MAP_LOAD_FACTOR, CONCURRENCY));
+        doTest(new BoundedConcurrentHashMap<Integer, Integer>(MAP_CAPACITY, CONCURRENCY));
     }
    
     public void testBufferedConcurrentHashMapLRU() throws Exception {
-        doTest(new BufferedConcurrentHashMap<Integer, Integer>(MAP_CAPACITY, MAP_LOAD_FACTOR, CONCURRENCY, Eviction.LRU));
+        doTest(new BoundedConcurrentHashMap<Integer, Integer>(MAP_CAPACITY, CONCURRENCY, Eviction.LRU));
     }
     
     public void testBufferedConcurrentHashMapLIRS() throws Exception {
-        doTest(new BufferedConcurrentHashMap<Integer, Integer>(MAP_CAPACITY, MAP_LOAD_FACTOR, CONCURRENCY, Eviction.LIRS));
+        doTest(new BoundedConcurrentHashMap<Integer, Integer>(MAP_CAPACITY, CONCURRENCY, Eviction.LIRS));
     }
 
     public void testHashMap() throws Exception {

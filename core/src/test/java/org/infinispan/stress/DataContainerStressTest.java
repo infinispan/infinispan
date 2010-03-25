@@ -33,7 +33,7 @@ public class DataContainerStressTest {
    private static final Random R = new Random();
 
    public void testSimpleDataContainer() throws InterruptedException {
-      doTest(new SimpleDataContainer(5000));
+      doTest(DefaultDataContainer.unBoundedDataContainer(5000));
    }
 
    public void testFIFODataContainer() throws InterruptedException {

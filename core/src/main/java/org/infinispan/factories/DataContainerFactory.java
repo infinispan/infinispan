@@ -23,32 +23,40 @@ package org.infinispan.factories;
 
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.container.DataContainer;
-import org.infinispan.container.FIFOSimpleDataContainer;
-import org.infinispan.container.LRUSimpleDataContainer;
-import org.infinispan.container.SimpleDataContainer;
+import org.infinispan.container.DefaultDataContainer;
+import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 
 /**
  * Constructs the data container
- *
+ * 
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
+ * @author Vladimir Blagojevic
  * @since 4.0
  */
 @DefaultFactoryFor(classes = DataContainer.class)
-public class DataContainerFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
+public class DataContainerFactory extends AbstractNamedCacheComponentFactory implements
+         AutoInstantiableFactory {
 
    @SuppressWarnings("unchecked")
    public <T> T construct(Class<T> componentType) {
-      switch (configuration.getEvictionStrategy()) {
+      EvictionStrategy st = configuration.getEvictionStrategy();
+      int level = configuration.getConcurrencyLevel();
+     
+      switch (st) {
          case NONE:
          case UNORDERED:
-            return (T) new SimpleDataContainer(configuration.getConcurrencyLevel());
-         case FIFO:
-            return (T) new FIFOSimpleDataContainer(configuration.getConcurrencyLevel());
+            return (T) DefaultDataContainer.unBoundedDataContainer(level);
          case LRU:
-            return (T) new LRUSimpleDataContainer(configuration.getConcurrencyLevel());
+         case FIFO:
+         case LIRS:
+            int maxEntries = configuration.getEvictionMaxEntries();
+            EvictionThreadPolicy policy = configuration.getEvictionThreadPolicy();
+            return (T) DefaultDataContainer.boundedDataContainer(level, maxEntries, st, policy);
          default:
-            throw new ConfigurationException("Unknown eviction strategy " + configuration.getEvictionStrategy());
+            throw new ConfigurationException("Unknown eviction strategy "
+                     + configuration.getEvictionStrategy());
       }
    }
 }

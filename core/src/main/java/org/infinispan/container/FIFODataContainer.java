@@ -8,6 +8,7 @@ import org.infinispan.util.Immutables;
 import java.util.AbstractCollection;
 import java.util.AbstractSet;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
@@ -38,6 +39,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * @since 4.0
  */
 @ThreadSafe
+@Deprecated
 public class FIFODataContainer implements DataContainer {
 
    InternalEntryFactory entryFactory = new InternalEntryFactory(false, false);
@@ -859,5 +861,10 @@ public class FIFODataContainer implements DataContainer {
 
    public Iterator<InternalCacheEntry> iterator() {
       return new EntryIterator();
+   }
+
+   @Override
+   public Set<InternalCacheEntry> getEvictionCandidates() {
+      return Collections.emptySet();
    }
 }

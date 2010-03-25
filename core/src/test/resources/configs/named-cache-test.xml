@@ -129,7 +129,7 @@
          Eviction configuration.  WakeupInterval defines how often the eviction thread runs, in milliseconds.  0 means
          the eviction thread will never run.  A separate executor is used for eviction in each cache.
       -->
-      <eviction wakeUpInterval="500" maxEntries="5000" strategy="FIFO"/>
+      <eviction wakeUpInterval="500" maxEntries="5000"  threadPolicy="PIGGYBACK" strategy="FIFO"/>
       <expiration lifespan="60000" maxIdle="1000"/>
    </namedCache>
 

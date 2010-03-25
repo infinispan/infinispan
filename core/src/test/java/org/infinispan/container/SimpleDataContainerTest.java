@@ -30,7 +30,7 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
    }
 
    protected DataContainer createContainer() {
-      return new SimpleDataContainer(16);
+      return new DefaultDataContainer(16);
    }
 
    public void testExpiredData() throws InterruptedException {

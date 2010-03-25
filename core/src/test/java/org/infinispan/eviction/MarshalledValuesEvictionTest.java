@@ -35,17 +35,21 @@ import org.infinispan.marshall.Marshaller;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.jgroups.util.Util;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "eviction.MarshalledValuesEvictionTest")
 public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
+   
+   private static final int CACHE_SIZE=128;
+
 
    @Override
    protected CacheManager createCacheManager() throws Exception {
       Configuration cfg = new Configuration();
       cfg.setEvictionStrategy(EvictionStrategy.FIFO);
       cfg.setEvictionWakeUpInterval(100);
-      cfg.setEvictionMaxEntries(1); // 1 max entries
+      cfg.setEvictionMaxEntries(CACHE_SIZE); // CACHE_SIZE max entries
       cfg.setUseLockStriping(false); // to minimise chances of deadlock in the unit test
       cfg.setUseLazyDeserialization(true);
       CacheManager cm = TestCacheManagerFactory.createCacheManager(cfg);
@@ -57,43 +61,46 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
    }
    
    public void testEvictCustomKeyValue() {
-      MarshalledValueTest.Pojo p1 = new MarshalledValueTest.Pojo();
-      p1.i = 64;
-      MarshalledValueTest.Pojo p2 = new MarshalledValueTest.Pojo();
-      p2.i = 24;
-      MarshalledValueTest.Pojo p3 = new MarshalledValueTest.Pojo();
-      p3.i = 97;
-      MarshalledValueTest.Pojo p4 = new MarshalledValueTest.Pojo();
-      p4.i = 35;
+      for (int i = 0; i<CACHE_SIZE*2;i++) {
+         MarshalledValueTest.Pojo p1 = new MarshalledValueTest.Pojo();
+         p1.i = (int)Util.random(2000);
+         MarshalledValueTest.Pojo p2 = new MarshalledValueTest.Pojo();
+         p2.i = 24;
+         cache.put(p1, p2);         
+      }   
 
-      cache.put(p1, p2);
-      cache.put(p3, p4);
-
-      // wait for the cache size to drop to 1, up to a specified amount of time.
-      long giveupTime = System.currentTimeMillis() + (1000 * 60); // 1 mins?
-      while (cache.getAdvancedCache().getDataContainer().size() > 1 && System.currentTimeMillis() < giveupTime) {
+      // wait for the cache size to drop to CACHE_SIZE, up to a specified amount of time.
+      long giveupTime = System.currentTimeMillis() + (1000 * 10); // 10 sec
+      while (cache.getAdvancedCache().getDataContainer().size() > CACHE_SIZE && System.currentTimeMillis() < giveupTime) {
          TestingUtil.sleepThread(100);
       }
       
+      assert cache.getAdvancedCache().getDataContainer().size() <= CACHE_SIZE : "Expected 1, was " + cache.size(); 
+
+      //let eviction manager kick in
+      Util.sleep(3000);
       MockMarshalledValueInterceptor interceptor = (MockMarshalledValueInterceptor) TestingUtil.findInterceptor(cache, MarshalledValueInterceptor.class);
       assert !interceptor.marshalledValueCreated;
    }
 
    public void testEvictPrimitiveKeyCustomValue() {
-      MarshalledValueTest.Pojo p1 = new MarshalledValueTest.Pojo();
-      p1.i = 51;
-      MarshalledValueTest.Pojo p2 = new MarshalledValueTest.Pojo();
-      p2.i = 78;
+      for (int i = 0; i<CACHE_SIZE*2;i++) {
+         MarshalledValueTest.Pojo p1 = new MarshalledValueTest.Pojo();
+         p1.i = (int)Util.random(2000);
+         MarshalledValueTest.Pojo p2 = new MarshalledValueTest.Pojo();
+         p2.i = 24;
+         cache.put(p1, p2);         
+      }
 
-      cache.put("key-isoprene", p1);
-      cache.put("key-hexastyle", p2);
-
-      // wait for the cache size to drop to 1, up to a specified amount of time.
-      long giveupTime = System.currentTimeMillis() + (1000 * 60); // 1 mins?
-      while (cache.getAdvancedCache().getDataContainer().size() > 1 && System.currentTimeMillis() < giveupTime) {
+      // wait for the cache size to drop to CACHE_SIZE, up to a specified amount of time.
+      long giveupTime = System.currentTimeMillis() + (1000 * 10); // 10 sec
+      while (cache.getAdvancedCache().getDataContainer().size() > CACHE_SIZE && System.currentTimeMillis() < giveupTime) {
          TestingUtil.sleepThread(100);
       }
       
+      assert cache.getAdvancedCache().getDataContainer().size() <= CACHE_SIZE : "Expected 1, was " + cache.size(); 
+      //let eviction manager kick in
+      Util.sleep(3000);      
       MockMarshalledValueInterceptor interceptor = (MockMarshalledValueInterceptor) TestingUtil.findInterceptor(cache, MarshalledValueInterceptor.class);
       assert !interceptor.marshalledValueCreated;
    }

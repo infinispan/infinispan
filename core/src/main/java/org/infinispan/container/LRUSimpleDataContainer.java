@@ -6,7 +6,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import java.util.Comparator;
 
 /**
- * Based on the same techniques outlined in the {@link SimpleDataContainer}, this implementation always forces the
+ * Based on the same techniques outlined in the {@link DefaultDataContainer}, this implementation always forces the
  * collection of last used timestamps for entries.  This means that {@link org.infinispan.container.entries.ImmortalCacheEntry}
  * and {@link org.infinispan.container.entries.MortalCacheEntry} are never used, since only {@link org.infinispan.container.entries.TransientCacheEntry}
  * and {@link org.infinispan.container.entries.TransientMortalCacheEntry} instances capture timestamps.
@@ -24,6 +24,7 @@ import java.util.Comparator;
  * @since 4.0
  */
 @ThreadSafe
+@Deprecated
 public class LRUSimpleDataContainer extends FIFOSimpleDataContainer {
    public LRUSimpleDataContainer(int concurrencyLevel) {
       super(concurrencyLevel, false, true, new LRUComparator(DEFAULT_TIMESTAMP_GRANULARITY));

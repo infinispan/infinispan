@@ -13,6 +13,8 @@ import java.util.concurrent.CountDownLatch;
 @Test(groups = "functional", testName = "eviction.BaseEvictionFunctionalTest")
 public abstract class BaseEvictionFunctionalTest extends SingleCacheManagerTest {
    
+   private static final int CACHE_SIZE=128;
+   
    protected BaseEvictionFunctionalTest() {
       cleanup = CleanupPhase.AFTER_METHOD;
    }
@@ -23,7 +25,7 @@ public abstract class BaseEvictionFunctionalTest extends SingleCacheManagerTest 
       Configuration cfg = new Configuration();
       cfg.setEvictionStrategy(getEvictionStrategy());
       cfg.setEvictionWakeUpInterval(100);
-      cfg.setEvictionMaxEntries(1); // 1 max entries
+      cfg.setEvictionMaxEntries(128); // 1 max entries
       cfg.setUseLockStriping(false); // to minimise chances of deadlock in the unit test
       CacheManager cm = TestCacheManagerFactory.createCacheManager(cfg);
       cache = cm.getCache();
@@ -46,14 +48,14 @@ public abstract class BaseEvictionFunctionalTest extends SingleCacheManagerTest 
       for (Writer writer : w) writer.running = false;
       for (Writer writer : w) writer.join();
 
-      // wait for the cache size to drop to 1, up to a specified amount of time.
-      long giveUpTime = System.currentTimeMillis() + (1000 * 60); // 1 min?
+      // wait for the cache size to drop to CACHE_SIZE, up to a specified amount of time.
+      long giveUpTime = System.currentTimeMillis() + (1000 * 10); // 10 sec
       while (cache.getAdvancedCache().getDataContainer().size() > 1 && System.currentTimeMillis() < giveUpTime) {
-//         System.out.println("Cache size is " + cache.size() + " and time diff is " + (giveUpTime - System.currentTimeMillis()));
+         //System.out.println("Cache size is " + cache.size() + " and time diff is " + (giveUpTime - System.currentTimeMillis()));
          Thread.sleep(100);
       }
 
-      assert cache.getAdvancedCache().getDataContainer().size() == 1 : "Expected 1, was " + cache.size(); // this is what we expect the cache to be pruned to      
+      assert cache.getAdvancedCache().getDataContainer().size() <= CACHE_SIZE : "Expected 1, was " + cache.size(); // this is what we expect the cache to be pruned to      
    }
 
    private class Writer extends Thread {

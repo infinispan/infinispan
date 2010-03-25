@@ -20,6 +20,7 @@ import org.infinispan.container.entries.InternalEntryFactory;
  * @since 4.0
  */
 @ThreadSafe
+@Deprecated
 public class LRUDataContainer extends FIFODataContainer {
 
    public LRUDataContainer(int concurrencyLevel) {

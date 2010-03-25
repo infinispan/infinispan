@@ -9,7 +9,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 
 /**
- * Based on the same techniques outlined in the {@link SimpleDataContainer}, this implementation always forces the
+ * Based on the same techniques outlined in the {@link DefaultDataContainer}, this implementation always forces the
  * collection of creation timestamps for entries.  This means that {@link org.infinispan.container.entries.ImmortalCacheEntry}
  * and {@link org.infinispan.container.entries.TransientCacheEntry} are never used, since only {@link org.infinispan.container.entries.MortalCacheEntry}
  * and {@link org.infinispan.container.entries.TransientMortalCacheEntry} instances capture timestamps.
@@ -26,8 +26,9 @@ import java.util.Iterator;
  * @author Manik Surtani
  * @since 4.0
  */
+@Deprecated
 @ThreadSafe
-public class FIFOSimpleDataContainer extends SimpleDataContainer {
+public class FIFOSimpleDataContainer extends DefaultDataContainer {
    // This is to facilitate faster sorting.  DO we really care about millisecond accuracy when ordering the collection?
    final static int DEFAULT_TIMESTAMP_GRANULARITY = 1000;
 

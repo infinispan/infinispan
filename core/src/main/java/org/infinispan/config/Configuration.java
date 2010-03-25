@@ -23,6 +23,7 @@ package org.infinispan.config;
 
 import org.infinispan.distribution.DefaultConsistentHash;
 import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
@@ -339,7 +340,23 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
          this.eviction.setStrategy(EvictionStrategy.NONE);
       }
    }
-
+   
+   public EvictionThreadPolicy getEvictionThreadPolicy() {
+      return eviction.threadPolicy;
+   }
+   
+   public void setEvictionThreadPolicy(EvictionThreadPolicy policy) {
+      this.eviction.setThreadPolicy(policy);
+   }
+   
+   public void setEvictionThreadPolicy(String policy){
+      this.eviction.threadPolicy = EvictionThreadPolicy.valueOf(uc(policy));
+      if (this.eviction.threadPolicy == null) {
+         log.warn("Unknown thread eviction policy  '" + policy + "'!  Using EvictionThreadPolicy.DEFAULT");
+         this.eviction.setThreadPolicy(EvictionThreadPolicy.DEFAULT);
+      }
+   }
+  
    public int getEvictionMaxEntries() {
       return eviction.maxEntries;
    }
@@ -893,7 +910,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       /** @configRef desc="Concurrency level for lock containers. Adjust this value according to the number of concurrent 
        *             threads interating with Infinispan.  Similar to the concurrencyLevel tuning parameter seen in
        *             the JDK's ConcurrentHashMap."*/
-      protected Integer concurrencyLevel = 512;
+      protected Integer concurrencyLevel = 32;
 
       @XmlAttribute
       public void setLockAcquisitionTimeout(Long lockAcquisitionTimeout) {
@@ -1277,6 +1294,9 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
       /** @configRef desc="Maximum number of entries in a cache instance.  -1 means no limit." */
       protected Integer maxEntries=-1;
+      
+      /** @configRef desc="Threading policy for eviction." */
+      protected EvictionThreadPolicy threadPolicy=EvictionThreadPolicy.DEFAULT;
 
       @XmlAttribute
       public void setWakeUpInterval(Long wakeUpInterval) {
@@ -1292,6 +1312,12 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       public void setStrategy(EvictionStrategy strategy) {
          testImmutability("strategy");
          this.strategy = strategy;
+      }
+      
+      @XmlAttribute
+      public void setThreadPolicy(EvictionThreadPolicy threadPolicy) {
+         testImmutability("threadPolicy");
+         this.threadPolicy = threadPolicy;
       }
 
       @XmlAttribute
@@ -1309,6 +1335,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
          if (maxEntries != null ? !maxEntries.equals(that.maxEntries) : that.maxEntries != null) return false;
          if (strategy != that.strategy) return false;
+         if (threadPolicy != that.threadPolicy) return false;
          if (wakeUpInterval != null ? !wakeUpInterval.equals(that.wakeUpInterval) : that.wakeUpInterval != null)
             return false;
 
@@ -1319,6 +1346,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       public int hashCode() {
          int result = wakeUpInterval != null ? wakeUpInterval.hashCode() : 0;
          result = 31 * result + (strategy != null ? strategy.hashCode() : 0);
+         result = 31 * result + (threadPolicy != null ? threadPolicy.hashCode() : 0);
          result = 31 * result + (maxEntries != null ? maxEntries.hashCode() : 0);
          return result;
       }
