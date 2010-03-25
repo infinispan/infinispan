@@ -8,5 +8,4 @@ package org.infinispan.server.core.transport
 
 abstract class ChannelHandlerContext {
    def getChannel: Channel
-   def getChannelBuffers: ChannelBuffers
 }

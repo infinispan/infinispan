@@ -3,6 +3,7 @@ package org.infinispan.server.hotrod
 import org.infinispan.server.core.Logging
 import org.infinispan.server.core.transport.{ChannelBuffer, ChannelHandlerContext, Channel, Encoder}
 import OperationStatus._
+import org.infinispan.server.core.transport.ChannelBuffers._
 
 /**
  * // TODO: Document this
@@ -17,7 +18,7 @@ class HotRodEncoder extends Encoder {
       trace("Encode msg {0}", msg)
       val buffer: ChannelBuffer = msg match {
          case s: StatsResponse => {
-            val buffer = ctx.getChannelBuffers.dynamicBuffer
+            val buffer = dynamicBuffer
             writeHeader(buffer, s)
             buffer.writeUnsignedInt(s.stats.size)
             for ((key, value) <- s.stats) {
@@ -26,7 +27,7 @@ class HotRodEncoder extends Encoder {
             }
             buffer
          }
-         case r: Response => writeHeader(ctx.getChannelBuffers.dynamicBuffer, r)
+         case r: Response => writeHeader(dynamicBuffer, r)
       }
       msg match {
          case g: GetWithVersionResponse => {

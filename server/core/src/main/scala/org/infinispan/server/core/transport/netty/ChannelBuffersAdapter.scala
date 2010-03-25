@@ -1,8 +1,7 @@
 package org.infinispan.server.core.transport.netty
 
-import org.infinispan.server.core.transport.{ChannelBuffer, ChannelBuffers}
+import org.infinispan.server.core.transport.{ChannelBuffer}
 import org.jboss.netty.buffer.{ChannelBuffers => NettyChannelBuffers}
-import org.jboss.netty.buffer.{ChannelBuffer => NettyChannelBuffer}
 
 /**
  * // TODO: Document this
@@ -10,13 +9,13 @@ import org.jboss.netty.buffer.{ChannelBuffer => NettyChannelBuffer}
  * @since
  */
 
-object ChannelBuffersAdapter extends ChannelBuffers {
+object ChannelBuffersAdapter {
 
-   override def wrappedBuffer(array: Array[Byte]*): ChannelBuffer = {
+   def wrappedBuffer(array: Array[Byte]*): ChannelBuffer = {
       new ChannelBufferAdapter(NettyChannelBuffers.wrappedBuffer(array : _*));
    }
    
-   override def dynamicBuffer(): ChannelBuffer = {
+   def dynamicBuffer(): ChannelBuffer = {
       new ChannelBufferAdapter(NettyChannelBuffers.dynamicBuffer());
    }
 

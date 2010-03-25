@@ -66,36 +66,38 @@ class HotRodDecoder(cacheManager: CacheManager) extends AbstractProtocolDecoder[
       else cacheManager.getCache(header.cacheName)
    }
 
-   override def readKey(header: HotRodHeader, buffer: ChannelBuffer): CacheKey = header.decoder.readKey(buffer)
+   override def readKey(h: HotRodHeader, b: ChannelBuffer): CacheKey =
+      h.decoder.readKey(b)
 
-   override def readKeys(header: HotRodHeader, buffer: ChannelBuffer): Array[CacheKey] =
-      header.decoder.readKeys(buffer)
+   override def readKeys(h: HotRodHeader, b: ChannelBuffer): Array[CacheKey] =
+      h.decoder.readKeys(b)
 
-   override def readParameters(header: HotRodHeader, buffer: ChannelBuffer): Option[RequestParameters] =
-      header.decoder.readParameters(header, buffer)
+   override def readParameters(h: HotRodHeader, b: ChannelBuffer): Option[RequestParameters] =
+      h.decoder.readParameters(h, b)
 
-   override def createValue(header: HotRodHeader, params: RequestParameters, nextVersion: Long): CacheValue =
-      header.decoder.createValue(params, nextVersion)
+   override def createValue(h: HotRodHeader, p: RequestParameters, nextVersion: Long): CacheValue =
+      h.decoder.createValue(p, nextVersion)
 
-   override def createSuccessResponse(header: HotRodHeader): AnyRef = header.decoder.createSuccessResponse(header)
+   override def createSuccessResponse(h: HotRodHeader, p: Option[RequestParameters]): AnyRef =
+      h.decoder.createSuccessResponse(h)
 
-   override def createNotExecutedResponse(header: HotRodHeader): AnyRef = header.decoder.createNotExecutedResponse(header)
+   override def createNotExecutedResponse(h: HotRodHeader, p: Option[RequestParameters]): AnyRef =
+      h.decoder.createNotExecutedResponse(h)
 
-   override def createNotExistResponse(header: HotRodHeader): AnyRef = header.decoder.createNotExistResponse(header)
+   override def createNotExistResponse(h: HotRodHeader, p: Option[RequestParameters]): AnyRef =
+      h.decoder.createNotExistResponse(h)
 
-   override def createGetResponse(header: HotRodHeader, buffers: ChannelBuffers,
-                                k: CacheKey, v: CacheValue): AnyRef =
-      header.decoder.createGetResponse(header.messageId, v, header.op)
+   override def createGetResponse(h: HotRodHeader, k: CacheKey, v: CacheValue): AnyRef =
+      h.decoder.createGetResponse(h.messageId, v, h.op)
 
-   override def createMultiGetResponse(header: HotRodHeader, buffers: ChannelBuffers,
-                                       pairs: Map[CacheKey, CacheValue]): AnyRef = null // Unsupported
+   override def createMultiGetResponse(h: HotRodHeader, pairs: Map[CacheKey, CacheValue]): AnyRef =
+      null // Unsupported
 
-   override def handleCustomRequest(header: HotRodHeader, ctx: ChannelHandlerContext,
-                                    buffer: ChannelBuffer, cache: Cache[CacheKey, CacheValue]): AnyRef =
-      header.decoder.handleCustomRequest(header, buffer, cache)
+   override def handleCustomRequest(h: HotRodHeader, b: ChannelBuffer, cache: Cache[CacheKey, CacheValue]): AnyRef =
+      h.decoder.handleCustomRequest(h, b, cache)
 
-   override def createStatsResponse(header: HotRodHeader, buffers: ChannelBuffers, stats: Stats): AnyRef =
-      header.decoder.createStatsResponse(header, stats)
+   override def createStatsResponse(h: HotRodHeader, stats: Stats): AnyRef =
+      h.decoder.createStatsResponse(h, stats)
 
    override def createErrorResponse(t: Throwable): AnyRef = {
       t match {

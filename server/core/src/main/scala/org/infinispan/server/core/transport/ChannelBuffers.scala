@@ -1,14 +1,21 @@
 package org.infinispan.server.core.transport
 
+import netty.ChannelBuffersAdapter
+
 /**
  * // TODO: Document this
  * @author Galder Zamarreño
  * @since
  */
 
-abstract class ChannelBuffers {
-//   def wrappedBuffer(buffers: ChannelBuffer*): ChannelBuffer
-//   def wrappedBuffer(buffer: ChannelBuffer): ChannelBuffer
-   def wrappedBuffer(array: Array[Byte]*): ChannelBuffer
-   def dynamicBuffer(): ChannelBuffer
+object ChannelBuffers {
+   
+   def wrappedBuffer(array: Array[Byte]*): ChannelBuffer = {
+      ChannelBuffersAdapter.wrappedBuffer(array : _*)
+   }
+
+   def dynamicBuffer(): ChannelBuffer = {
+      ChannelBuffersAdapter.dynamicBuffer
+   }
+
 }

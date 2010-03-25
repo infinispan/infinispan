@@ -130,7 +130,7 @@ trait Client {
    }
 
    def stats(ch: Channel, name: String): Map[String, String] = {
-      val writeFuture = ch.write(new Op(0xA0, 0x15, name, null, 0, 0, null, 0, 0))
+      val writeFuture = ch.write(new StatsOp(0xA0, 0x15, name, null))
       writeFuture.awaitUninterruptibly
       assertTrue(writeFuture.isSuccess)
       // Get the handler instance to retrieve the answer.
@@ -138,6 +138,16 @@ trait Client {
       val resp = handler.getResponse.asInstanceOf[StatsResponse]
       resp.stats
    }
+
+//   def stats(ch: Channel, name: String, statName: String): Map[String, String] = {
+//      val writeFuture = ch.write(new StatsOp(0xA0, 0x15, name, statName))
+//      writeFuture.awaitUninterruptibly
+//      assertTrue(writeFuture.isSuccess)
+//      // Get the handler instance to retrieve the answer.
+//      var handler = ch.getPipeline.getLast.asInstanceOf[ClientHandler]
+//      val resp = handler.getResponse.asInstanceOf[StatsResponse]
+//      resp.stats
+//   }
 
    def ping(ch: Channel, name: String): OperationStatus = {
       put(ch, 0xA0, 0x17, name, null, 0, 0, null, 0, 0)
@@ -206,6 +216,9 @@ private object Encoder extends OneToOneEncoder {
                      buffer.writeRangedBytes(op.value) // value length + value
                   }
                }
+//               else if (op.code != 0x15) {
+//                  buffer.writeString(op.asInstanceOf[StatsOp].statName)
+//               }
                buffer.getUnderlyingChannelBuffer
             }
       }
@@ -288,3 +301,8 @@ private class Op(val magic: Int,
                  val value: Array[Byte],
                  val flags: Int,
                  val version: Long)
+
+private class StatsOp(override val magic: Int,
+                 override val code: Byte,
+                 override val cacheName: String,
+                 val statName: String) extends Op(magic, code, cacheName, null, 0, 0, null, 0, 0)

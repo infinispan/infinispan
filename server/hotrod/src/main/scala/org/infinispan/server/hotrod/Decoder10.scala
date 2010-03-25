@@ -55,7 +55,7 @@ class Decoder10(cacheManager: CacheManager) extends AbstractVersionedDecoder {
             case _ => -1
          }
          val data = buffer.readRangedBytes
-         Some(new RequestParameters(data, lifespan, maxIdle, version, false))
+         Some(new RequestParameters(data, lifespan, maxIdle, version))
       } else {
          None
       }

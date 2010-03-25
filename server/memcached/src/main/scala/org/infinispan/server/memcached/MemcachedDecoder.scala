@@ -13,6 +13,7 @@ import org.infinispan.server.core.transport.{Channel, ChannelBuffers, ChannelHan
 import org.infinispan.server.core._
 import org.infinispan.{AdvancedCache, Version, CacheException, Cache}
 import collection.mutable.ListBuffer
+import org.infinispan.server.core.transport.ChannelBuffers._
 
 /**
  * // TODO: Document this
@@ -47,22 +48,20 @@ class MemcachedDecoder(cacheManager: CacheManager) extends AbstractProtocolDecod
       new RequestHeader(op.get)
    }
 
-   override def readKey(header: RequestHeader, buffer: ChannelBuffer): String = {
-      readElement(buffer)
-   }
+   override def readKey(h: RequestHeader, b: ChannelBuffer): String = readElement(b)
 
-   override def readKeys(header: RequestHeader, buffer: ChannelBuffer): Array[String] = {
-      val line = readLine(buffer)
+   override def readKeys(h: RequestHeader, b: ChannelBuffer): Array[String] = {
+      val line = readLine(b)
       line.trim.split(" +")
    }
 
-   override def readParameters(header: RequestHeader, buffer: ChannelBuffer): Option[MemcachedParameters] = {
-      val line = readLine(buffer)
+   override def readParameters(h: RequestHeader, b: ChannelBuffer): Option[MemcachedParameters] = {
+      val line = readLine(b)
       if (!line.isEmpty) {
          trace("Operation parameters: {0}", line)
          val args = line.trim.split(" +")
          var index = 0
-         header.op match {
+         h.op match {
             case RemoveRequest => {
                val delayedDeleteTime = parseDelayedDeleteTime(index, args)
                val noReply = if (delayedDeleteTime == -1) parseNoReply(index, args) else false
@@ -87,7 +86,7 @@ class MemcachedDecoder(cacheManager: CacheManager) extends AbstractProtocolDecod
                }
                index += 1
                val length = getLength(args(index))
-               val streamVersion = header.op match {
+               val streamVersion = h.op match {
                   case ReplaceIfUnmodifiedRequest => {
                      index += 1
                      getVersion(args(index))
@@ -97,8 +96,8 @@ class MemcachedDecoder(cacheManager: CacheManager) extends AbstractProtocolDecod
                index += 1
                val noReply = parseNoReply(index, args)
                val data = new Array[Byte](length)
-               buffer.readBytes(data, 0, data.length)
-               readLine(buffer) // read the rest of line to clear CRLF after value Byte[]
+               b.readBytes(data, 0, data.length)
+               readLine(b) // read the rest of line to clear CRLF after value Byte[]
                Some(new MemcachedParameters(data, lifespan, -1, streamVersion, noReply, flags, "", 0))
             }
          }
@@ -107,8 +106,8 @@ class MemcachedDecoder(cacheManager: CacheManager) extends AbstractProtocolDecod
       }
    }
 
-   override def createValue(header: SuitableHeader, params: MemcachedParameters, nextVersion: Long): MemcachedValue = {
-      new MemcachedValue(params.data, nextVersion, params.flags)
+   override def createValue(h: SuitableHeader, p: MemcachedParameters, nextVersion: Long): MemcachedValue = {
+      new MemcachedValue(p.data, nextVersion, p.flags)
    }
 
    private def getFlags(flags: String): Int = {
@@ -153,21 +152,18 @@ class MemcachedDecoder(cacheManager: CacheManager) extends AbstractProtocolDecod
       else 0
    }
 
-   override def getCache(header: RequestHeader): Cache[String, MemcachedValue] = cache
+   override def getCache(h: RequestHeader): Cache[String, MemcachedValue] = cache
 
    protected def createCache: Cache[String, MemcachedValue] = cacheManager.getCache[String, MemcachedValue]
 
-   override def handleCustomRequest(header: RequestHeader, ctx: ChannelHandlerContext,
-                                    buffer: ChannelBuffer, cache: Cache[String, MemcachedValue]): AnyRef = {
-      val ch = ctx.getChannel
-      val buffers = ctx.getChannelBuffers
-      header.op match {
+   override def handleCustomRequest(h: RequestHeader, b: ChannelBuffer, cache: Cache[String, MemcachedValue]): AnyRef = {
+      h.op match {
          case AppendRequest | PrependRequest => {
-            val k = readKey(header, buffer)
-            val params = readParameters(header, buffer)
+            val k = readKey(h, b)
+            val params = readParameters(h, b)
             val prev = cache.get(k)
             if (prev != null) {
-               val concatenated = header.op match {
+               val concatenated = h.op match {
                   case AppendRequest => concat(prev.data, params.get.data);
                   case PrependRequest => concat(params.get.data, prev.data);
                }
@@ -182,13 +178,13 @@ class MemcachedDecoder(cacheManager: CacheManager) extends AbstractProtocolDecod
             }
          }
          case IncrementRequest | DecrementRequest => {
-            val k = readKey(header, buffer)
-            val params = readParameters(header, buffer)
+            val k = readKey(h, b)
+            val params = readParameters(h, b)
             val prev = cache.get(k)
             if (prev != null) {
                val prevCounter = new String(prev.data)
                val newCounter =
-                  header.op match {
+                  h.op match {
                      case IncrementRequest => prevCounter.toLong + params.get.delta.toLong
                      case DecrementRequest => {
                         val candidateCounter = prevCounter.toLong - params.get.delta.toLong
@@ -198,19 +194,19 @@ class MemcachedDecoder(cacheManager: CacheManager) extends AbstractProtocolDecod
                val next = createValue(newCounter.toString.getBytes, generateVersion(cache), params.get.flags)
                var replaced = cache.replace(k, prev, next)
                if (replaced) {
-                  if (isStatsEnabled) if (header.op == IncrementRequest) incrHits.incrementAndGet() else decrHits.incrementAndGet
+                  if (isStatsEnabled) if (h.op == IncrementRequest) incrHits.incrementAndGet() else decrHits.incrementAndGet
                   if (!params.get.noReply) new String(next.data) + CRLF else null
                } else {
                   // If there's a concurrent modification on this key, the spec does not say what to do, so treat it as exceptional
                   throw new CacheException("Value modified since we retrieved from the cache, old value was " + prevCounter)
                }
             } else {
-               if (isStatsEnabled) if (header.op == IncrementRequest) incrMisses.incrementAndGet() else decrMisses.incrementAndGet
+               if (isStatsEnabled) if (h.op == IncrementRequest) incrMisses.incrementAndGet() else decrMisses.incrementAndGet
                if (!params.get.noReply) NOT_FOUND else null
             }
          }
          case FlushAllRequest => {
-            val params = readParameters(header, buffer)
+            val params = readParameters(h, b)
             val flushFunction = (cache: AdvancedCache[String, MemcachedValue]) => cache.withFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_CACHE_STORE).clear
             val flushDelay = if (params == None) 0 else params.get.flushDelay
             if (flushDelay == 0)
@@ -223,60 +219,63 @@ class MemcachedDecoder(cacheManager: CacheManager) extends AbstractProtocolDecod
       }
    }
 
-//   override def createPutResponse(header: RequestHeader): AnyRef = STORED
-
-   override def createSuccessResponse(header: RequestHeader): AnyRef = {
+   override def createSuccessResponse(h: RequestHeader, params: Option[MemcachedParameters]): AnyRef = {
       if (isStatsEnabled) {
-         header.op match {
+         h.op match {
             case ReplaceIfUnmodifiedRequest => replaceIfUnmodifiedHits.incrementAndGet
             case _ => // No-op
          }
       }
-      header.op match {
-         case RemoveRequest => DELETED
-         case _ => STORED
-      }
+      if (params == None || !params.get.noReply) {
+         h.op match {
+            case RemoveRequest => DELETED
+            case _ => STORED
+         }
+      } else null
    }
 
-   override def createNotExecutedResponse(header: RequestHeader): AnyRef = {
+   override def createNotExecutedResponse(h: RequestHeader, params: Option[MemcachedParameters]): AnyRef = {
       if (isStatsEnabled) {
-         header.op match {
+         h.op match {
             case ReplaceIfUnmodifiedRequest => replaceIfUnmodifiedBadval.incrementAndGet
             case _ => // No-op
          }
       }
-      header.op match {
-         case ReplaceIfUnmodifiedRequest => EXISTS
-         case _ => NOT_STORED
-      }
+      if (params == None || !params.get.noReply) {
+         h.op match {
+            case ReplaceIfUnmodifiedRequest => EXISTS
+            case _ => NOT_STORED
+         }
+      } else null
    }
 
-   override def createNotExistResponse(header: SuitableHeader): AnyRef = {
+   override def createNotExistResponse(h: SuitableHeader, params: Option[MemcachedParameters]): AnyRef = {
       if (isStatsEnabled) {
-         header.op match {
+         h.op match {
             case ReplaceIfUnmodifiedRequest => replaceIfUnmodifiedMisses.incrementAndGet
             case _ => // No-op
          }
-      }      
-      NOT_FOUND
+      }
+      if (params == None || !params.get.noReply)
+         NOT_FOUND
+      else
+         null
    }
 
-   override def createGetResponse(header: RequestHeader, buffers: ChannelBuffers,
-                                  k: String, v: MemcachedValue): AnyRef = {
+   override def createGetResponse(h: RequestHeader, k: String, v: MemcachedValue): AnyRef = {
       if (v != null)
-         List(buildGetResponse(header.op, buffers, k, v), buffers.wrappedBuffer(END))
+         List(buildGetResponse(h.op, k, v), wrappedBuffer(END))
       else
          END
    }
 
-   override def createMultiGetResponse(header: RequestHeader, buffers: ChannelBuffers,
-                                       pairs: Map[String, MemcachedValue]): AnyRef = {
+   override def createMultiGetResponse(h: RequestHeader, pairs: Map[String, MemcachedValue]): AnyRef = {
       val elements = new ListBuffer[ChannelBuffer]
-      header.op match {
+      h.op match {
          case GetRequest | GetWithVersionRequest => {
             for ((k, v) <- pairs)
-               elements += buildGetResponse(header.op, buffers, k, v)
-            elements += buffers.wrappedBuffer("END\r\n".getBytes)
+               elements += buildGetResponse(h.op, k, v)
+            elements += wrappedBuffer("END\r\n".getBytes)
          }
       }
       elements.toList
@@ -302,52 +301,52 @@ class MemcachedDecoder(cacheManager: CacheManager) extends AbstractProtocolDecod
       }
    }
 
-   def createStatsResponse(header: RequestHeader, buffers: ChannelBuffers, stats: Stats): AnyRef = {
+   def createStatsResponse(header: RequestHeader, stats: Stats): AnyRef = {
       var sb = new StringBuilder
       List[ChannelBuffer] (
-         buildStat("pid", 0, sb, buffers),
-         buildStat("uptime", stats.getTimeSinceStart, sb, buffers),
-         buildStat("uptime", stats.getTimeSinceStart, sb, buffers),
-         buildStat("time", TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis), sb, buffers),
-         buildStat("version", cache.getVersion, sb, buffers),
-         buildStat("pointer_size", 0, sb, buffers), // Unsupported
-         buildStat("rusage_user", 0, sb, buffers), // Unsupported
-         buildStat("rusage_system", 0, sb, buffers), // Unsupported
-         buildStat("curr_items", stats.getCurrentNumberOfEntries, sb, buffers),
-         buildStat("total_items", stats.getTotalNumberOfEntries, sb, buffers),
-         buildStat("bytes", 0, sb, buffers), // Unsupported
-         buildStat("curr_connections", 0, sb, buffers), // TODO: Through netty?
-         buildStat("total_connections", 0, sb, buffers), // TODO: Through netty?
-         buildStat("connection_structures", 0, sb, buffers), // Unsupported
-         buildStat("cmd_get", stats.getRetrievals, sb, buffers),
-         buildStat("cmd_set", stats.getStores, sb, buffers),
-         buildStat("get_hits", stats.getHits, sb, buffers),
-         buildStat("get_misses", stats.getMisses, sb, buffers),
-         buildStat("delete_misses", stats.getRemoveMisses, sb, buffers),
-         buildStat("delete_hits", stats.getRemoveHits, sb, buffers),
-         buildStat("incr_misses", incrMisses, sb, buffers),
-         buildStat("incr_hits", incrHits, sb, buffers),
-         buildStat("decr_misses", decrMisses, sb, buffers),
-         buildStat("decr_hits", decrHits, sb, buffers),
-         buildStat("cas_misses", replaceIfUnmodifiedMisses, sb, buffers),
-         buildStat("cas_hits", replaceIfUnmodifiedHits, sb, buffers),
-         buildStat("cas_badval", replaceIfUnmodifiedBadval, sb, buffers),
-         buildStat("auth_cmds", 0, sb, buffers), // Unsupported
-         buildStat("auth_errors", 0, sb, buffers), // Unsupported
+         buildStat("pid", 0, sb),
+         buildStat("uptime", stats.getTimeSinceStart, sb),
+         buildStat("uptime", stats.getTimeSinceStart, sb),
+         buildStat("time", TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis), sb),
+         buildStat("version", cache.getVersion, sb),
+         buildStat("pointer_size", 0, sb), // Unsupported
+         buildStat("rusage_user", 0, sb), // Unsupported
+         buildStat("rusage_system", 0, sb), // Unsupported
+         buildStat("curr_items", stats.getCurrentNumberOfEntries, sb),
+         buildStat("total_items", stats.getTotalNumberOfEntries, sb),
+         buildStat("bytes", 0, sb), // Unsupported
+         buildStat("curr_connections", 0, sb), // TODO: Through netty?
+         buildStat("total_connections", 0, sb), // TODO: Through netty?
+         buildStat("connection_structures", 0, sb), // Unsupported
+         buildStat("cmd_get", stats.getRetrievals, sb),
+         buildStat("cmd_set", stats.getStores, sb),
+         buildStat("get_hits", stats.getHits, sb),
+         buildStat("get_misses", stats.getMisses, sb),
+         buildStat("delete_misses", stats.getRemoveMisses, sb),
+         buildStat("delete_hits", stats.getRemoveHits, sb),
+         buildStat("incr_misses", incrMisses, sb),
+         buildStat("incr_hits", incrHits, sb),
+         buildStat("decr_misses", decrMisses, sb),
+         buildStat("decr_hits", decrHits, sb),
+         buildStat("cas_misses", replaceIfUnmodifiedMisses, sb),
+         buildStat("cas_hits", replaceIfUnmodifiedHits, sb),
+         buildStat("cas_badval", replaceIfUnmodifiedBadval, sb),
+         buildStat("auth_cmds", 0, sb), // Unsupported
+         buildStat("auth_errors", 0, sb), // Unsupported
          //TODO: Evictions are measure by evict calls, but not by nodes are that are expired after the entry's lifespan has expired.
-         buildStat("evictions", stats.getEvictions, sb, buffers),
-         buildStat("bytes_read", 0, sb, buffers), // TODO: Through netty?
-         buildStat("bytes_written", 0, sb, buffers), // TODO: Through netty?
-         buildStat("limit_maxbytes", 0, sb, buffers), // Unsupported
-         buildStat("threads", 0, sb, buffers), // TODO: Through netty?
-         buildStat("conn_yields", 0, sb, buffers), // Unsupported
-         buffers.wrappedBuffer(END)
+         buildStat("evictions", stats.getEvictions, sb),
+         buildStat("bytes_read", 0, sb), // TODO: Through netty?
+         buildStat("bytes_written", 0, sb), // TODO: Through netty?
+         buildStat("limit_maxbytes", 0, sb), // Unsupported
+         buildStat("threads", 0, sb), // TODO: Through netty?
+         buildStat("conn_yields", 0, sb), // Unsupported
+         wrappedBuffer(END)
       )
    }
 
-   private def buildStat(stat: String, value: Any, sb: StringBuilder, buffers: ChannelBuffers): ChannelBuffer = {
+   private def buildStat(stat: String, value: Any, sb: StringBuilder): ChannelBuffer = {
       sb.append("STAT").append(' ').append(stat).append(' ').append(value).append(CRLF)
-      val buffer = buffers.wrappedBuffer(sb.toString.getBytes)
+      val buffer = wrappedBuffer(sb.toString.getBytes)
       sb.setLength(0)
       buffer
    }
@@ -365,10 +364,9 @@ class MemcachedDecoder(cacheManager: CacheManager) extends AbstractProtocolDecod
       new MemcachedValue(data, nextVersion, flags)
    }   
 
-   private def buildGetResponse(op: Enumeration#Value, buffers: ChannelBuffers,
-                                k: String, v: MemcachedValue): ChannelBuffer = {
+   private def buildGetResponse(op: Enumeration#Value, k: String, v: MemcachedValue): ChannelBuffer = {
       val header = buildGetResponseHeader(k, v, op)
-      buffers.wrappedBuffer(header.getBytes, v.data, CRLFBytes)
+      wrappedBuffer(header.getBytes, v.data, CRLFBytes)
    }
 
    private def buildGetResponseHeader(k: String, v: MemcachedValue, op: Enumeration#Value): String = {
@@ -384,8 +382,8 @@ class MemcachedDecoder(cacheManager: CacheManager) extends AbstractProtocolDecod
 
 class MemcachedParameters(override val data: Array[Byte], override val lifespan: Int,
                           override val maxIdle: Int, override val streamVersion: Long,
-                          override val noReply: Boolean, val flags: Int, val delta: String,
-                          val flushDelay: Int) extends RequestParameters(data, lifespan, maxIdle, streamVersion, noReply)
+                          val noReply: Boolean, val flags: Int, val delta: String,
+                          val flushDelay: Int) extends RequestParameters(data, lifespan, maxIdle, streamVersion)
 
 private class DelayedFlushAll(cache: Cache[String, MemcachedValue],
                               flushFunction: AdvancedCache[String, MemcachedValue] => Unit) extends Runnable {
