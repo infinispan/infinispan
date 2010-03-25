@@ -1,16 +1,16 @@
 package org.infinispan.server.hotrod
 
 import org.testng.annotations.Test
-import org.infinispan.server.core.transport.netty.NettyChannelBuffer
 import org.jboss.netty.buffer.{ChannelBuffers}
 import org.testng.Assert._
+import org.infinispan.server.core.transport.netty.{ChannelBufferAdapter}
 
 /**
  * Appears that optional parameters in annotations result in compiler errors:
  * https://lampsvn.epfl.ch/trac/scala/ticket/1810
  *
  * Keep an eye on that for @Test and @AfterClass annotations
- *  
+ *
  * @author Galder Zamarreño
  * @since 4.1
  */
@@ -91,7 +91,7 @@ class VariableLengthTest {
 //   }
 
    private def writeReadInt(num: Int, expected: Int) {
-      val buffer = new NettyChannelBuffer(ChannelBuffers.directBuffer(1024))
+      val buffer = new ChannelBufferAdapter(ChannelBuffers.directBuffer(1024))
       assert(buffer.writerIndex == 0)
 //      VInt.write(buffer, num)
       buffer.writeUnsignedInt(num)
@@ -101,7 +101,7 @@ class VariableLengthTest {
    }
 
    private def writeReadLong(num: Long, expected: Int) {
-      val buffer = new NettyChannelBuffer(ChannelBuffers.directBuffer(1024))
+      val buffer = new ChannelBufferAdapter(ChannelBuffers.directBuffer(1024))
       assert(buffer.writerIndex == 0)
 //      VLong.write(buffer, num)
       buffer.writeUnsignedLong(num)

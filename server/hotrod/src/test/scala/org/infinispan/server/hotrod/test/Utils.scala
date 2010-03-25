@@ -3,7 +3,8 @@ package org.infinispan.server.hotrod.test
 import java.util.concurrent.atomic.AtomicInteger
 import org.infinispan.manager.CacheManager
 import java.lang.reflect.Method
-import org.infinispan.server.hotrod.{Logging, HotRodServer}
+import org.infinispan.server.hotrod.{HotRodServer}
+import org.infinispan.server.core.Logging
 
 /**
  * // TODO: Document this
@@ -17,12 +18,13 @@ trait Utils {
 
    def host = "127.0.0.1"
 
-   def createHotRodServer(manager: CacheManager): HotRodServer = {
-      new HotRodServer(host, UniquePortThreadLocal.get.intValue, manager, 0, 0)
-   }
+   def startHotRodServer(manager: CacheManager): HotRodServer =
+      startHotRodServer(manager, UniquePortThreadLocal.get.intValue)
 
-   def createHotRodServer(manager: CacheManager, port: Int): HotRodServer = {
-      new HotRodServer(host, port, manager, 0, 0)
+   def startHotRodServer(manager: CacheManager, port: Int): HotRodServer = {
+      val server = new HotRodServer
+      server.start(host, port, manager, 0, 0)
+      server
    }
 
    def k(m: Method, prefix: String): Array[Byte] = {
@@ -42,6 +44,6 @@ trait Utils {
 object Utils extends Logging
 
 object UniquePortThreadLocal extends ThreadLocal[Int] {
-   private val uniqueAddr = new AtomicInteger(11311)   
+   private val uniqueAddr = new AtomicInteger(11311)
    override def initialValue: Int = uniqueAddr.getAndAdd(100)
 }

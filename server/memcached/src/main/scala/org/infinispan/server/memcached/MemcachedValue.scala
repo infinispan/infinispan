@@ -1,6 +1,6 @@
 package org.infinispan.server.memcached
 
-import org.infinispan.server.core.Value
+import org.infinispan.server.core.CacheValue
 import org.infinispan.util.Util
 import java.io.{ObjectOutput, ObjectInput}
 
@@ -10,20 +10,20 @@ import java.io.{ObjectOutput, ObjectInput}
  * @since
  */
 // TODO: Make it a hardcoded Externalizer
-class MemcachedValue(override val v: Array[Byte], override val version: Long, val flags: Int)
-      extends Value(v, version) {
+class MemcachedValue(override val data: Array[Byte], override val version: Long, val flags: Int)
+      extends CacheValue(data, version) {
 
    override def toString = {
       new StringBuilder().append("MemcachedValue").append("{")
-         .append("v=").append(Util.printArray(v, false))
+         .append("data=").append(Util.printArray(data, false))
          .append(", version=").append(version)
          .append(", flags=").append(flags)
          .append("}").toString
    }
 
 //   override def readExternal(in: ObjectInput) {
-////      v = new Array[Byte](in.read())
-////      in.read(v)
+////      data = new Array[Byte](in.read())
+////      in.read(data)
 ////      version = in.readLong
 //      super.readExternal(in)
 //      flags = in.readInt
@@ -31,8 +31,8 @@ class MemcachedValue(override val v: Array[Byte], override val version: Long, va
 //
 //   override def writeExternal(out: ObjectOutput) {
 //      super.writeExternal(out)
-////      out.write(v.length)
-////      out.write(v)
+////      out.write(data.length)
+////      out.write(data)
 ////      out.writeLong(version)
 //      out.writeInt(flags)
 //   }

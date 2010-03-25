@@ -9,7 +9,7 @@ package org.infinispan.server.core.transport
 abstract class ChannelBuffer {
    def readByte: Byte
    def readBytes(dst: Array[Byte], dstIndex: Int, length: Int)
-   def readUnsignedByte: Float
+   def readUnsignedByte: Short
    def readUnsignedInt: Int
    def readUnsignedLong: Long
    def readBytes(length: Int): ChannelBuffer
@@ -22,6 +22,7 @@ abstract class ChannelBuffer {
     * Reads length of String and then returns an UTF-8 formatted String of such length.
     */
    def readString: String
+   def readLong: Long
    def writeByte(value: Byte)
    def writeBytes(src: Array[Byte])
 
@@ -37,6 +38,7 @@ abstract class ChannelBuffer {
     * Writes the length of the String followed by the String itself. This methods expects String not to be null.
     */
    def writeString(msg: String)
+   def writeLong(l: Long)
 
    def getUnderlyingChannelBuffer: AnyRef
 }

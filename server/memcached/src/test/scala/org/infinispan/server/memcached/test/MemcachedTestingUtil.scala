@@ -47,9 +47,8 @@ trait MemcachedTestingUtil {
       return new MemcachedClient(d, Arrays.asList(new InetSocketAddress(host, port)))
    }
 
-   def startMemcachedTextServer(cacheManager: CacheManager): MemcachedServer = {
+   def startMemcachedTextServer(cacheManager: CacheManager): MemcachedServer =
       startMemcachedTextServer(cacheManager, UniquePortThreadLocal.get.intValue)
-   }
 
    def startMemcachedTextServer(cacheManager: CacheManager, port: Int): MemcachedServer = {
       val server = new MemcachedServer

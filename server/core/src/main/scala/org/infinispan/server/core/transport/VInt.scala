@@ -1,6 +1,4 @@
-package org.infinispan.server.hotrod
-
-import org.infinispan.server.core.transport.ChannelBuffer
+package org.infinispan.server.core.transport
 
 /**
  * Reads and writes unsigned variable length integer values. Even though it's deprecated, do not
@@ -9,9 +7,7 @@ import org.infinispan.server.core.transport.ChannelBuffer
  *
  * @author Galder Zamarreño
  * @since 4.1
- * @deprecated Instead use ChannelBuffer.writeUnsignedInt and ChannelBuffer.readUnsignedInt
  */
-@deprecated("Instead use ChannelBuffer.writeUnsignedInt and ChannelBuffer.readUnsignedInt")
 object VInt {
 
    def write(out: ChannelBuffer, i: Int) {
