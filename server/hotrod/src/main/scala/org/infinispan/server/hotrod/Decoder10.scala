@@ -2,15 +2,14 @@ package org.infinispan.server.hotrod
 
 import org.infinispan.server.core.Operation._
 import HotRodOperation._
-import OperationResponse._
 import OperationStatus._
 import org.infinispan.manager.CacheManager
 import org.infinispan.server.core.transport.{ChannelBuffer}
-import org.infinispan.server.core.{UnknownOperationException, RequestParameters, Logging, CacheValue}
 import org.infinispan.Cache
+import org.infinispan.stats.Stats
+import org.infinispan.server.core._
 import collection.mutable
 import collection.immutable
-import org.infinispan.stats.Stats
 
 /**
  * // TODO: Document this
@@ -19,12 +18,14 @@ import org.infinispan.stats.Stats
  */
 
 class Decoder10(cacheManager: CacheManager) extends AbstractVersionedDecoder {
-
+   import RequestResolver._
+   import ResponseResolver._
+   import OperationResponse._
    type SuitableHeader = HotRodHeader
 
    override def readHeader(buffer: ChannelBuffer, messageId: Long): HotRodHeader = {
       val streamOp = buffer.readUnsignedByte
-      val op = OperationResolver.resolve(streamOp)
+      val op = toRequest(streamOp)
       if (op == None) {
          throw new UnknownOperationException("Unknown operation: " + streamOp);
       }
@@ -60,11 +61,19 @@ class Decoder10(cacheManager: CacheManager) extends AbstractVersionedDecoder {
       }
    }
 
-   override def createValue(params: RequestParameters, nextVersion: Long): CacheValue = new CacheValue(params.data, nextVersion)
+   override def createValue(params: RequestParameters, nextVersion: Long): CacheValue =
+      new CacheValue(params.data, nextVersion)
 
-   override def sendPutResponse(messageId: Long): AnyRef = new Response(messageId, PutResponse, Success)
+   override def createSuccessResponse(header: HotRodHeader): AnyRef =
+      new Response(header.messageId, toResponse(header.op), Success)
 
-   override def sendGetResponse(messageId: Long, v: CacheValue, op: Enumeration#Value): AnyRef = {
+   override def createNotExecutedResponse(header: HotRodHeader): AnyRef =
+      new Response(header.messageId, toResponse(header.op), OperationNotExecuted)
+
+   override def createNotExistResponse(header: HotRodHeader): AnyRef =
+      new Response(header.messageId, toResponse(header.op), KeyDoesNotExist)   
+
+   override def createGetResponse(messageId: Long, v: CacheValue, op: Enumeration#Value): AnyRef = {
       if (v != null && op == GetRequest)
          new GetResponse(messageId, GetResponse, Success, Some(v.data))
       else if (v != null && op == GetWithVersionRequest)
@@ -73,37 +82,6 @@ class Decoder10(cacheManager: CacheManager) extends AbstractVersionedDecoder {
          new GetResponse(messageId, GetResponse, KeyDoesNotExist, None)
       else
          new GetWithVersionResponse(messageId, GetWithVersionResponse, KeyDoesNotExist, None, 0)
-   }
-
-   override def sendPutIfAbsentResponse(messageId: Long, prev: CacheValue): AnyRef = {
-      if (prev == null)
-         new Response(messageId, PutIfAbsentResponse, Success)
-      else
-         new Response(messageId, PutIfAbsentResponse, OperationNotExecuted)
-   }
-
-   def sendReplaceResponse(messageId: Long, prev: CacheValue): AnyRef = {
-      if (prev != null)
-         new Response(messageId, ReplaceResponse, Success)
-      else
-         new Response(messageId, ReplaceResponse, OperationNotExecuted)
-   }
-
-   override def sendReplaceIfUnmodifiedResponse(messageId: Long, v: Option[CacheValue],
-                                                prev: Option[CacheValue]): AnyRef = {
-      if (v != None && prev != None)
-         new Response(messageId, ReplaceIfUnmodifiedResponse, Success)
-      else if (v == None && prev != None)
-         new Response(messageId, ReplaceIfUnmodifiedResponse, OperationNotExecuted)
-      else
-         new Response(messageId, ReplaceIfUnmodifiedResponse, KeyDoesNotExist)
-   }
-
-   override def sendRemoveResponse(messageId: Long, prev: CacheValue): AnyRef = {
-      if (prev != null)
-         new Response(messageId, ReplaceResponse, Success)
-      else
-         new Response(messageId, ReplaceResponse, KeyDoesNotExist)
    }
 
    override def handleCustomRequest(header: HotRodHeader, buffer: ChannelBuffer, cache: Cache[CacheKey, CacheValue]): AnyRef = {
@@ -142,26 +120,25 @@ class Decoder10(cacheManager: CacheManager) extends AbstractVersionedDecoder {
       }
    }
 
-   override def sendStatsResponse(header: HotRodHeader, stats: Stats): AnyRef = {
-      null
-//      val cacheStats = cache.getAdvancedCache.getStats
-//      val stats = mutable.Map[String, String]
-//      stats += ("timeSinceStart", cacheStats.getTimeSinceStart)
-//      stats += ("currentNumberOfEntries", cacheStats.getCurrentNumberOfEntries)
-//      stats += ("totalNumberOfEntries", cacheStats.getTotalNumberOfEntries)
-//      stats += ("stores", cacheStats.getStores)
-//      stats += ("retrievals", cacheStats.getRetrievals)
-//      stats += ("hits", cacheStats.getHits)
-//      stats += ("misses", cacheStats.getMisses)
-//      stats += ("removeHits", cacheStats.getRemoveHits)
-//      stats += ("removeMisses", cacheStats.getRemoveMisses)
-//      stats += ("evictions", cacheStats.getEvictions)
-//      new StatsResponse(header.messageId, immutable.Map ++ stats)
+   override def createStatsResponse(header: HotRodHeader, cacheStats: Stats): AnyRef = {
+      val stats = mutable.Map.empty[String, String]
+      stats += ("timeSinceStart" -> cacheStats.getTimeSinceStart.toString)
+      stats += ("currentNumberOfEntries" -> cacheStats.getCurrentNumberOfEntries.toString)
+      stats += ("totalNumberOfEntries" -> cacheStats.getTotalNumberOfEntries.toString)
+      stats += ("stores" -> cacheStats.getStores.toString)
+      stats += ("retrievals" -> cacheStats.getRetrievals.toString)
+      stats += ("hits" -> cacheStats.getHits.toString)
+      stats += ("misses" -> cacheStats.getMisses.toString)
+      stats += ("removeHits" -> cacheStats.getRemoveHits.toString)
+      stats += ("removeMisses" -> cacheStats.getRemoveMisses.toString)
+      stats += ("evictions" -> cacheStats.getEvictions.toString)
+      new StatsResponse(header.messageId, immutable.Map[String, String]() ++ stats)
    }
+
 }
 
-object OperationResolver extends Logging {
-   private val operations = Map[Int, Enumeration#Value](
+object RequestResolver extends Logging {
+   private val requests = Map[Int, Enumeration#Value](
       0x01 -> PutRequest,
       0x03 -> GetRequest,
       0x05 -> PutIfAbsentRequest,
@@ -176,8 +153,8 @@ object OperationResolver extends Logging {
       0x17 -> PingRequest 
    )
 
-   def resolve(streamOp: Short): Option[Enumeration#Value] = {
-      val op = operations.get(streamOp)
+   def toRequest(streamOp: Short): Option[Enumeration#Value] = {
+      val op = requests.get(streamOp)
       if (op == None)
          trace("Operation code: {0} was unmatched", streamOp)
       else
@@ -185,4 +162,43 @@ object OperationResolver extends Logging {
       op
    }
 
+}
+
+object OperationResponse extends Enumeration {
+   type OperationResponse = Enumeration#Value
+   val PutResponse = Value(0x02)
+   val GetResponse = Value(0x04)
+   val PutIfAbsentResponse = Value(0x06)
+   val ReplaceResponse = Value(0x08)
+   val ReplaceIfUnmodifiedResponse = Value(0x0A)
+   val RemoveResponse = Value(0x0C)
+   val RemoveIfUnmodifiedResponse = Value(0x0E)
+   val ContainsKeyResponse = Value(0x10)
+   val GetWithVersionResponse = Value(0x12)
+   val ClearResponse = Value(0x14)
+   val StatsResponse = Value(0x16)
+   val PingResponse = Value(0x18)
+   val ErrorResponse = Value(0x50)
+}
+
+object ResponseResolver {
+   import OperationResponse._
+   private val responses = Map[Enumeration#Value, OperationResponse](
+      PutRequest -> PutResponse,
+      GetRequest -> GetResponse,
+      PutIfAbsentRequest -> PutIfAbsentResponse,
+      ReplaceRequest -> ReplaceResponse,
+      ReplaceIfUnmodifiedRequest -> ReplaceIfUnmodifiedResponse,
+      RemoveRequest -> RemoveResponse,
+      RemoveIfUnmodifiedRequest -> RemoveIfUnmodifiedResponse,
+      ContainsKeyRequest -> ContainsKeyResponse,
+      GetWithVersionRequest -> GetWithVersionResponse,
+      ClearRequest -> ClearResponse,
+      StatsRequest -> StatsResponse,
+      PingRequest -> PingResponse
+   )
+
+   def toResponse(request: Enumeration#Value): OperationResponse = {
+      responses.get(request).get
+   }
 }

@@ -2,7 +2,7 @@ package org.infinispan.server.hotrod
 
 import org.infinispan.server.core.RequestParameters
 import org.infinispan.server.core.CacheValue
-import org.infinispan.server.core.transport.{ChannelBuffers, Channel, ChannelBuffer}
+import org.infinispan.server.core.transport.{ChannelBuffer}
 import org.infinispan.Cache
 import org.infinispan.stats.Stats
 
@@ -23,20 +23,16 @@ abstract class AbstractVersionedDecoder {
 
    def createValue(params: RequestParameters, nextVersion: Long): CacheValue
 
-   def sendPutResponse(messageId: Long): AnyRef
+   def createSuccessResponse(header: HotRodHeader): AnyRef
 
-   def sendGetResponse(messageId: Long, v: CacheValue, op: Enumeration#Value): AnyRef
+   def createNotExecutedResponse(header: HotRodHeader): AnyRef
 
-   def sendPutIfAbsentResponse(messageId: Long, prev: CacheValue): AnyRef
+   def createNotExistResponse(header: HotRodHeader): AnyRef
 
-   def sendReplaceResponse(messageId: Long, prev: CacheValue): AnyRef
-
-   def sendReplaceIfUnmodifiedResponse(messageId: Long, v: Option[CacheValue], prev: Option[CacheValue]): AnyRef
-
-   def sendRemoveResponse(messageId: Long, prev: CacheValue): AnyRef
+   def createGetResponse(messageId: Long, v: CacheValue, op: Enumeration#Value): AnyRef
 
    def handleCustomRequest(header: HotRodHeader, buffer: ChannelBuffer, cache: Cache[CacheKey, CacheValue]): AnyRef
 
-   def sendStatsResponse(header: HotRodHeader, stats: Stats): AnyRef
+   def createStatsResponse(header: HotRodHeader, stats: Stats): AnyRef
 
 }

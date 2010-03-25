@@ -4,10 +4,8 @@ import org.infinispan.Cache
 import org.infinispan.stats.Stats
 import java.io.StreamCorruptedException
 import org.infinispan.server.core._
-import OperationStatus._
-import HotRodOperation._
-import ProtocolFlag._
 import transport._
+import OperationStatus._
 import org.infinispan.manager.{DefaultCacheManager, CacheManager}
 
 /**
@@ -22,6 +20,7 @@ class HotRodDecoder(cacheManager: CacheManager) extends AbstractProtocolDecoder[
    type SuitableHeader = HotRodHeader
    type SuitableParameters = RequestParameters
 
+   // TODO: Ask trustin whether this needs to be a volatile or not, depends on how decoders are shared
    @volatile private var isError = false
 
    override def readHeader(buffer: ChannelBuffer): HotRodHeader = {
@@ -78,43 +77,28 @@ class HotRodDecoder(cacheManager: CacheManager) extends AbstractProtocolDecoder[
    override def createValue(header: HotRodHeader, params: RequestParameters, nextVersion: Long): CacheValue =
       header.decoder.createValue(params, nextVersion)
 
-   override def sendPutResponse(header: HotRodHeader, ch: Channel, buffers: ChannelBuffers): AnyRef =
-      header.decoder.sendPutResponse(header.messageId)
+   override def createSuccessResponse(header: HotRodHeader): AnyRef = header.decoder.createSuccessResponse(header)
 
-   override def sendGetResponse(header: HotRodHeader, ch: Channel, buffers: ChannelBuffers,
+   override def createNotExecutedResponse(header: HotRodHeader): AnyRef = header.decoder.createNotExecutedResponse(header)
+
+   override def createNotExistResponse(header: HotRodHeader): AnyRef = header.decoder.createNotExistResponse(header)
+
+   override def createGetResponse(header: HotRodHeader, buffers: ChannelBuffers,
                                 k: CacheKey, v: CacheValue): AnyRef =
-      header.decoder.sendGetResponse(header.messageId, v, header.op)
+      header.decoder.createGetResponse(header.messageId, v, header.op)
 
-   override def sendPutIfAbsentResponse(header: HotRodHeader, ch: Channel, buffers: ChannelBuffers,
-                                        prev: CacheValue): AnyRef =
-      header.decoder.sendPutIfAbsentResponse(header.messageId, prev)
-
-   override def sendReplaceResponse(header: HotRodHeader, ch: Channel, buffers: ChannelBuffers,
-                                    prev: CacheValue): AnyRef =
-      header.decoder.sendReplaceResponse(header.messageId, prev)
-
-   override def sendReplaceIfUnmodifiedResponse(header: HotRodHeader, ch: Channel, buffers: ChannelBuffers,
-                                                v: Option[CacheValue], prev: Option[CacheValue]): AnyRef =
-      header.decoder.sendReplaceIfUnmodifiedResponse(header.messageId, v, prev)
-
-   override def sendRemoveResponse(header: HotRodHeader, ch: Channel, buffers: ChannelBuffers,
-                                   prev: CacheValue): AnyRef =
-      header.decoder.sendRemoveResponse(header.messageId, prev)
-
-   override def sendMultiGetResponse(header: HotRodHeader, ctx: ChannelHandlerContext,
-                                     pairs: Map[CacheKey, CacheValue]): AnyRef = null // Unsupported
+   override def createMultiGetResponse(header: HotRodHeader, buffers: ChannelBuffers,
+                                       pairs: Map[CacheKey, CacheValue]): AnyRef = null // Unsupported
 
    override def handleCustomRequest(header: HotRodHeader, ctx: ChannelHandlerContext,
                                     buffer: ChannelBuffer, cache: Cache[CacheKey, CacheValue]): AnyRef =
       header.decoder.handleCustomRequest(header, buffer, cache)
 
-   override def sendResponse(header: HotRodHeader, ctx: ChannelHandlerContext, stats: Stats): AnyRef =
-      header.decoder.sendStatsResponse(header, stats)
+   override def createStatsResponse(header: HotRodHeader, buffers: ChannelBuffers, stats: Stats): AnyRef =
+      header.decoder.createStatsResponse(header, stats)
 
-   override def sendResponse(ctx: ChannelHandlerContext, t: Throwable): AnyRef = {
-      val ch = ctx.getChannel
-      val buffers = ctx.getChannelBuffers
-      val errorResponse = t match {
+   override def createErrorResponse(t: Throwable): AnyRef = {
+      t match {
          case se: ServerException => {
             val messageId = se.header.asInstanceOf[HotRodHeader].messageId
             se.getCause match {
@@ -122,12 +106,10 @@ class HotRodDecoder(cacheManager: CacheManager) extends AbstractProtocolDecoder[
                case uoe: UnknownOperationException => new ErrorResponse(messageId, UnknownOperation, uoe.toString)
                case uve: UnknownVersionException => new ErrorResponse(messageId, UnknownVersion, uve.toString)
                // TODO add more cases
-               case e: Exception => new ErrorResponse(messageId, ServerError, e.toString)  
+               case e: Exception => new ErrorResponse(messageId, ServerError, e.toString)
             }
          }
       }
-      ch.write(errorResponse)
-      null
    }
 
    override def start {}

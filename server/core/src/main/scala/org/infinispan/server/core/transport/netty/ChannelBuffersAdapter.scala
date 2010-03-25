@@ -12,20 +12,6 @@ import org.jboss.netty.buffer.{ChannelBuffer => NettyChannelBuffer}
 
 object ChannelBuffersAdapter extends ChannelBuffers {
 
-//   override def wrappedBuffer(buffer: ChannelBuffer): ChannelBuffer = {
-////      val nettyBuffers = new Array[NettyChannelBuffer](buffers.length)
-////      val nettyBuffers = buffers.map(_.getUnderlyingChannelBuffer) : _*
-////      for (buffer <- buffers) {
-////         nettyBuffers + buffer.getUnderlyingChannelBuffer
-////      }
-//      val nettyBuffer = buffer.getUnderlyingChannelBuffer.asInstanceOf[NettyChannelBuffer]
-//      new ChannelBufferAdapter(NettyChannelBuffers.wrappedBuffer(nettyBuffer))
-//   }
-
-//   override def wrappedBuffer(array: Array[Byte]): ChannelBuffer = {
-//      new ChannelBufferAdapter(NettyChannelBuffers.wrappedBuffer(array));
-//   }
-
    override def wrappedBuffer(array: Array[Byte]*): ChannelBuffer = {
       new ChannelBufferAdapter(NettyChannelBuffers.wrappedBuffer(array : _*));
    }

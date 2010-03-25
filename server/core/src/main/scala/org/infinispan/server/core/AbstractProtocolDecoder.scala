@@ -38,64 +38,18 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue] extends Decoder {
                val k = readKey(header, buffer)
                val params = readParameters(header, buffer)
                header.op match {
-                  case PutRequest => {
-                     putInCache(header, k, params.get, cache)
-                     sendResponse(header, ctx, None, None, params, None)
-                  }
-                  case PutIfAbsentRequest => {
-                     val prev = cache.get(k)
-                     if (prev == null) putIfAbsentInCache(header, k, params.get, cache) // Generate new version only if key not present
-                     sendResponse(header, ctx, None, None, params, Some(prev))
-                  }
-                  case ReplaceRequest => {
-                     val prev = cache.get(k)
-                     if (prev != null) replaceInCache(header, k, params.get, cache) // Generate new version only if key present
-                     sendResponse(header, ctx, None, None, params, Some(prev))
-                  }
-                  case ReplaceIfUnmodifiedRequest => {
-                     val prev = cache.get(k)
-                     if (prev != null) {
-                        if (prev.version == params.get.streamVersion) {
-                           // Generate new version only if key present and version has not changed, otherwise it's wasteful
-                           val v = createValue(header, params.get, generateVersion(cache))
-                           val replaced = cache.replace(k, prev, v);
-                           if (replaced)
-                              sendResponse(header, ctx, None, Some(v), params, Some(prev))
-                           else
-                              sendResponse(header, ctx, None, None, params, Some(prev))
-                        } else {
-                           sendResponse(header, ctx, None, None, params, Some(prev))
-                        }
-                     } else {
-                        sendResponse(header, ctx, None, None, params, None)
-                     }
-                  }
-                  case RemoveRequest => {
-                     val prev = cache.remove(k)
-                     sendResponse(header, ctx, None, None, params, Some(prev))
-                  }
+                  case PutRequest => put(header, k, params.get, cache)
+                  case PutIfAbsentRequest => putIfAbsent(header, k, params.get, cache)
+                  case ReplaceRequest => replace(header, k, params.get, cache)
+                  case ReplaceIfUnmodifiedRequest => replaceIfUmodified(header, k, params.get, cache)
+                  case RemoveRequest => remove(header, k, params, cache)
                }
             }
-            case GetRequest | GetWithVersionRequest => {
-               val keys = readKeys(header, buffer)
-               if (keys.length > 1) {
-                  val map = new HashMap[K,V]()
-                  for (k <- keys) {
-                     val v = cache.get(k)
-                     if (v != null)
-                        map += (k -> v)
-                  }
-                  sendMultiGetResponse(header, ctx, new immutable.HashMap ++ map)
-               } else {
-                  sendResponse(header, ctx, Some(keys.head), Some(cache.get(keys.head)), None, None)
-               }
-            }
-            case StatsRequest => sendResponse(header, ctx, cache.getAdvancedCache.getStats)
+            case GetRequest | GetWithVersionRequest => get(header, buffer, ctx.getChannelBuffers, cache)
+            case StatsRequest => createStatsResponse(header, ctx.getChannelBuffers, cache.getAdvancedCache.getStats)
             case _ => handleCustomRequest(header, ctx, buffer, cache)
          }
-         // TODO: to avoid checking for null, make all send* methods return something, even the memcached ones,
-         // they could send back a buffer whereas hotrod would send back pojos.
-         if (ret != null) ctx.getChannel.write(ret)
+         writeResponse(ctx.getChannel, ctx.getChannelBuffers, ret)
          null
       } catch {
          case se: ServerException => throw se
@@ -104,82 +58,154 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue] extends Decoder {
       }
    }
 
-   private def putInCache(header: SuitableHeader, k: K, params: SuitableParameters, cache: Cache[K, V]): V = {
+   private def writeResponse(ch: Channel, buffers: ChannelBuffers, response: AnyRef) {
+      if (response != null) {
+         response match {
+            case l: List[ChannelBuffer] => l.foreach(ch.write(_))
+            case a: Array[Byte] => ch.write(buffers.wrappedBuffer(a))
+            case sb: StringBuilder => ch.write(buffers.wrappedBuffer(sb.toString.getBytes))
+            case s: String => ch.write(buffers.wrappedBuffer(s.getBytes))
+            case _ => ch.write(response)
+         }
+      }
+   }
+
+   private def put(header: SuitableHeader, k: K, params: SuitableParameters, cache: Cache[K, V]): AnyRef = {
       val v = createValue(header, params, generateVersion(cache))
       cache.put(k, v, toMillis(params.lifespan), DefaultTimeUnit, toMillis(params.maxIdle), DefaultTimeUnit)
+      if (!params.noReply) createSuccessResponse(header) else null
    }
 
-   private def putIfAbsentInCache(header: SuitableHeader, k: K, params: SuitableParameters, cache: Cache[K, V]): V = {
-      val v = createValue(header, params, generateVersion(cache))
-      cache.putIfAbsent(k, v, toMillis(params.lifespan), DefaultTimeUnit, toMillis(params.maxIdle), DefaultTimeUnit)
+   private def putIfAbsent(header: SuitableHeader, k: K, params: SuitableParameters, cache: Cache[K, V]): AnyRef = {
+      val prev = cache.get(k)
+      if (prev == null) { // Generate new version only if key not present      
+         val v = createValue(header, params, generateVersion(cache))
+         cache.putIfAbsent(k, v, toMillis(params.lifespan), DefaultTimeUnit, toMillis(params.maxIdle), DefaultTimeUnit)
+      }
+      if (!params.noReply && prev == null)
+         createSuccessResponse(header)
+      else if (!params.noReply && prev != null)
+         createNotExecutedResponse(header)
+      else
+         null
    }
 
-   private def replaceInCache(header: SuitableHeader, k: K, params: SuitableParameters, cache: Cache[K, V]): V = {
-      val v = createValue(header, params, generateVersion(cache))
-      cache.replace(k, v, toMillis(params.lifespan), DefaultTimeUnit, toMillis(params.maxIdle), DefaultTimeUnit)
+   private def replace(header: SuitableHeader, k: K, params: SuitableParameters, cache: Cache[K, V]): AnyRef = {
+      val prev = cache.get(k)
+      if (prev != null) { // Generate new version only if key present
+         val v = createValue(header, params, generateVersion(cache))
+         cache.replace(k, v, toMillis(params.lifespan), DefaultTimeUnit, toMillis(params.maxIdle), DefaultTimeUnit)
+      }
+      if (!params.noReply && prev != null)
+         createSuccessResponse(header)
+      else if (!params.noReply && prev == null)
+         createNotExecutedResponse(header)
+      else
+         null
+   }
+
+   private def replaceIfUmodified(header: SuitableHeader, k: K, params: SuitableParameters, cache: Cache[K, V]): AnyRef = {
+      val prev = cache.get(k)
+      if (prev != null) {
+         if (prev.version == params.streamVersion) {
+            // Generate new version only if key present and version has not changed, otherwise it's wasteful
+            val v = createValue(header, params, generateVersion(cache))
+            val replaced = cache.replace(k, prev, v);
+            if (!params.noReply && replaced)
+               createSuccessResponse(header)
+            else if (!params.noReply)
+               createNotExecutedResponse(header)
+            else
+               null
+         } else if (!params.noReply) {
+            createNotExecutedResponse(header)
+         } else {
+            null
+         }
+      } else if(!params.noReply) {
+         createNotExistResponse(header)
+      } else {
+         null
+      }
+   }
+
+   private def remove(header: SuitableHeader, k: K, params: Option[SuitableParameters], cache: Cache[K, V]): AnyRef = {
+      val prev = cache.remove(k)
+      if ((params == None || !params.get.noReply) && prev != null)
+         createSuccessResponse(header)
+      else if ((params == None || !params.get.noReply) && prev == null)
+         createNotExistResponse(header)
+      else
+         null
+   }
+
+   private def get(header: SuitableHeader, buffer: ChannelBuffer, buffers: ChannelBuffers, cache: Cache[K, V]): AnyRef = {
+      val keys = readKeys(header, buffer)
+      if (keys.length > 1) {
+         val map = new HashMap[K,V]()
+         for (k <- keys) {
+            val v = cache.get(k)
+            if (v != null)
+               map += (k -> v)
+         }
+         createMultiGetResponse(header, buffers, new immutable.HashMap ++ map)
+      } else {
+         createGetResponse(header, buffers, keys.head, cache.get(keys.head))
+      }
    }
 
    override def exceptionCaught(ctx: ChannelHandlerContext, e: ExceptionEvent) {
       error("Exception reported", e.getCause)
-      sendResponse(ctx, e.getCause)
-   }
-
-   def readHeader(buffer: ChannelBuffer): SuitableHeader
-
-   def getCache(header: SuitableHeader): Cache[K, V]
-
-   // todo: probably remove in favour of readKeys
-   def readKey(header: SuitableHeader, buffer: ChannelBuffer): K
-
-   def readKeys(header: SuitableHeader, buffer: ChannelBuffer): Array[K]
-
-   def readParameters(header: SuitableHeader, buffer: ChannelBuffer): Option[SuitableParameters]
-
-   def createValue(header: SuitableHeader, params: SuitableParameters, nextVersion: Long): V 
-
-   def sendResponse(header: SuitableHeader, ctx: ChannelHandlerContext, k: Option[K], v: Option[V],
-                    params: Option[SuitableParameters], prev: Option[V]): AnyRef = {
-      val buffers = ctx.getChannelBuffers
       val ch = ctx.getChannel
-      if (params == None || !params.get.noReply) {
-         // TODO consolidate this event further since both hotrod and memcached end up writing to a channel something,
-         // this methods here could just simply create the responses and let the common framework write them
-         val ret = header.op match {
-            case PutRequest => sendPutResponse(header, ch, buffers)
-            case GetRequest | GetWithVersionRequest => sendGetResponse(header, ch, buffers, k.get, v.get)
-            case PutIfAbsentRequest => sendPutIfAbsentResponse(header, ch, buffers, prev.get)
-            case ReplaceRequest => sendReplaceResponse(header, ch, buffers, prev.get)
-            case ReplaceIfUnmodifiedRequest => sendReplaceIfUnmodifiedResponse(header, ch, buffers, v, prev)
-            case RemoveRequest => sendRemoveResponse(header, ch, buffers, prev.get)
-//            case _ => sendCustomResponse(header, ch, buffers, v, prev)
+      val buffers = ctx.getChannelBuffers
+      val errorResponse = createErrorResponse(e.getCause)
+      if (errorResponse != null) {
+         errorResponse match {
+            case a: Array[Byte] => ch.write(buffers.wrappedBuffer(a))
+            case sb: StringBuilder => ch.write(buffers.wrappedBuffer(sb.toString.getBytes))
+            case _ => ch.write(errorResponse)
          }
-         ret
-      } else null
+      }
    }
 
-   def sendPutResponse(header: SuitableHeader, ch: Channel, buffers: ChannelBuffers): AnyRef
+   protected def readHeader(buffer: ChannelBuffer): SuitableHeader
 
-   def sendGetResponse(header: SuitableHeader, ch: Channel, buffers: ChannelBuffers, k: K, v: V): AnyRef
+   protected def getCache(header: SuitableHeader): Cache[K, V]
 
-   def sendPutIfAbsentResponse(header: SuitableHeader, ch: Channel, buffers: ChannelBuffers, prev: V): AnyRef
+   protected def readKey(header: SuitableHeader, buffer: ChannelBuffer): K
 
-   def sendReplaceResponse(header: SuitableHeader, ch: Channel, buffers: ChannelBuffers, prev: V): AnyRef
+   protected def readKeys(header: SuitableHeader, buffer: ChannelBuffer): Array[K]
 
-   def sendReplaceIfUnmodifiedResponse(header: SuitableHeader, ch: Channel, buffers: ChannelBuffers,
-                                       v: Option[V], prev: Option[V]): AnyRef
+   protected def readParameters(header: SuitableHeader, buffer: ChannelBuffer): Option[SuitableParameters]
 
-   def sendRemoveResponse(header: SuitableHeader, ch: Channel, buffers: ChannelBuffers, prev: V): AnyRef
+   protected def createValue(header: SuitableHeader, params: SuitableParameters, nextVersion: Long): V
 
-   def sendMultiGetResponse(header: SuitableHeader, ctx: ChannelHandlerContext, pairs: Map[K, V]): AnyRef
+   protected def createSuccessResponse(header: SuitableHeader): AnyRef
+
+   protected def createNotExecutedResponse(header: SuitableHeader): AnyRef
+
+   protected def createNotExistResponse(header: SuitableHeader): AnyRef
+
+   protected def createGetResponse(header: SuitableHeader, buffers: ChannelBuffers, k: K, v: V): AnyRef
+
+   protected def createMultiGetResponse(header: SuitableHeader, buffers: ChannelBuffers, pairs: Map[K, V]): AnyRef
    
-//   def sendCustomResponse(header: SuitableHeader, ch: Channel, buffers: ChannelBuffers, v: Option[V], prev: Option[V]): AnyRef
+   protected def createErrorResponse(t: Throwable): AnyRef
 
-   def sendResponse(ctx: ChannelHandlerContext, t: Throwable): AnyRef
+   protected def createStatsResponse(header: SuitableHeader, buffers: ChannelBuffers, stats: Stats): AnyRef
 
-   def sendResponse(header: SuitableHeader, ctx: ChannelHandlerContext, stats: Stats): AnyRef
-
-   def handleCustomRequest(header: SuitableHeader, ctx: ChannelHandlerContext,
+   protected def handleCustomRequest(header: SuitableHeader, ctx: ChannelHandlerContext,
                            buffer: ChannelBuffer, cache: Cache[K, V]): AnyRef
+
+   protected def generateVersion(cache: Cache[K, V]): Long = {
+      val rpcManager = cache.getAdvancedCache.getRpcManager
+      if (rpcManager != null) {
+         val transport = rpcManager.getTransport
+         newVersion(Some(transport.getAddress), Some(transport.getMembers), transport.getViewId)
+      } else {
+         newVersion(None, None, 0)
+      }
+   }
 
    /**
     * Transforms lifespan pass as seconds into milliseconds
@@ -198,16 +224,6 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue] extends Decoder {
       else TimeUnit.SECONDS.toMillis(lifespan)
    }
 
-   protected def generateVersion(cache: Cache[K, V]): Long = {
-      val rpcManager = cache.getAdvancedCache.getRpcManager
-      if (rpcManager != null) {
-         val transport = rpcManager.getTransport
-         newVersion(Some(transport.getAddress), Some(transport.getMembers), transport.getViewId)
-      } else {
-         newVersion(None, None, 0)
-      }
-   }
-
 }
 
 object AbstractProtocolDecoder extends Logging {
@@ -217,6 +233,7 @@ object AbstractProtocolDecoder extends Logging {
 
 class RequestHeader(val op: Enumeration#Value)
 
+// TODO: NoReply could possibly be passed to subclass specific to memcached and make create* implementations use it
 class RequestParameters(val data: Array[Byte], val lifespan: Int, val maxIdle: Int, val streamVersion: Long, val noReply: Boolean)
 
 class UnknownOperationException(reason: String) extends StreamCorruptedException(reason)

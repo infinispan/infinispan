@@ -65,14 +65,6 @@ class NettyTransport(decoder: ChannelUpstreamHandler, encoder: ChannelDownstream
       var future = serverChannels.unbind().awaitUninterruptibly();
       if (!future.isCompleteSuccess()) {
          warn("Server channel group did not completely unbind");
-//         val iter = future.getGroup().iterator
-//         while (iter.hasNext) {
-//            val ch = iter.next
-//            if (ch.isBound()) {
-//               warn("{0} is still bound to {1}", ch, ch.getRemoteAddress());
-//            }
-//         }
-
          for (ch <- asIterator(future.getGroup().iterator)) {
             if (ch.isBound()) {
                warn("{0} is still bound to {1}", ch, ch.getRemoteAddress());
@@ -80,34 +72,17 @@ class NettyTransport(decoder: ChannelUpstreamHandler, encoder: ChannelDownstream
          }
       }
 
-      // TODO remove workaround when inteating Netty 3.2.x - https://jira.jboss.org/jira/browse/NETTY-256
-      masterExecutor.shutdown();
-      try {
-         masterExecutor.awaitTermination(30, TimeUnit.SECONDS);
-      } catch {
-         case ie: InterruptedException => ie.printStackTrace();
-      }
-
       workerExecutor.shutdown();
       serverChannels.close().awaitUninterruptibly();
       future = acceptedChannels.close().awaitUninterruptibly();
       if (!future.isCompleteSuccess()) {
          warn("Channel group did not completely close");
-//         val iter = future.getGroup().iterator
-//         while (iter.hasNext) {
-//            val ch = iter.next
-//            if (ch.isBound()) {
-//               warn(ch + " is still connected to " + ch.getRemoteAddress());
-//            }
-//         }
-         
          for (ch <- asIterator(future.getGroup().iterator)) {
             if (ch.isBound()) {
                warn(ch + " is still connected to " + ch.getRemoteAddress());
             }
          }
       }
-//      debug("Channel group completely closed");
       debug("Channel group completely closed, release external resources");
       factory.releaseExternalResources();
    }

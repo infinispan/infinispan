@@ -19,6 +19,8 @@ import java.util.Arrays
 import java.util.concurrent.{TimeUnit, LinkedBlockingQueue, Executors}
 import org.infinispan.server.core.transport.netty.{ChannelBufferAdapter}
 import org.infinispan.server.core.Logging
+import collection.mutable
+import collection.immutable
 
 /**
  * // TODO: Document this
@@ -125,24 +127,21 @@ trait Client {
 
    def clear(ch: Channel, name: String): OperationStatus = {
       put(ch, 0xA0, 0x13, name, null, 0, 0, null, 0, 0)
-//      val writeFuture = ch.write(new Op(0xA0, , name, null, 0, 0, null, 0, 0))
-//      writeFuture.awaitUninterruptibly
-//      assertTrue(writeFuture.isSuccess)
-//      // Get the handler instance to retrieve the answer.
-//      var handler = ch.getPipeline.getLast.asInstanceOf[ClientHandler]
-//      handler.getResponse.status
+   }
+
+   def stats(ch: Channel, name: String): Map[String, String] = {
+      val writeFuture = ch.write(new Op(0xA0, 0x15, name, null, 0, 0, null, 0, 0))
+      writeFuture.awaitUninterruptibly
+      assertTrue(writeFuture.isSuccess)
+      // Get the handler instance to retrieve the answer.
+      var handler = ch.getPipeline.getLast.asInstanceOf[ClientHandler]
+      val resp = handler.getResponse.asInstanceOf[StatsResponse]
+      resp.stats
    }
 
    def ping(ch: Channel, name: String): OperationStatus = {
       put(ch, 0xA0, 0x17, name, null, 0, 0, null, 0, 0)
-//      val writeFuture = ch.write(new Op(0xA0, 0x13, name, null, 0, 0, null, 0, 0))
-//      writeFuture.awaitUninterruptibly
-//      assertTrue(writeFuture.isSuccess)
-//      // Get the handler instance to retrieve the answer.
-//      var handler = ch.getPipeline.getLast.asInstanceOf[ClientHandler]
-//      handler.getResponse.status
    }
-
 
    def assertStatus(status: OperationStatus, expected: OperationStatus): Boolean = {
       val isSuccess = status == expected
@@ -196,7 +195,7 @@ private object Encoder extends OneToOneEncoder {
                buffer.writeUnsignedInt(op.flags) // flags
                buffer.writeByte(0) // client intelligence
                buffer.writeUnsignedInt(0) // topology id
-               if (op.code != 0x13 && op.code != 0x17) { // if it's a key based op... 
+               if (op.code != 0x13 && op.code != 0x15 && op.code != 0x17) { // if it's a key based op... 
                   buffer.writeRangedBytes(op.key) // key length + key
                   if (op.value != null) {
                      buffer.writeUnsignedInt(op.lifespan) // lifespan
@@ -227,9 +226,14 @@ private object Decoder extends ReplayingDecoder[NoState] with Logging {
       val topologyChangeMarker = buf.readUnsignedByte
       val resp: Response =
          opCode match {
-//            case StatsResponse => {
-//               // TODO!!! Wait for outcome of mail
-//            }
+            case StatsResponse => {
+               val size = buf.readUnsignedInt
+               val stats = mutable.Map.empty[String, String]
+               for (i <- 1 to size) {
+                  stats += (buf.readString -> buf.readString)
+               }
+               new StatsResponse(id, immutable.Map[String, String]() ++ stats)
+            }
             case PutResponse | PutIfAbsentResponse | ReplaceResponse | ReplaceIfUnmodifiedResponse
                  | RemoveResponse | RemoveIfUnmodifiedResponse | ContainsKeyResponse | ClearResponse | PingResponse =>
                new Response(id, opCode, status)

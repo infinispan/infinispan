@@ -12,6 +12,7 @@ import org.infinispan.stats.Stats
 import org.infinispan.server.core.transport.{Channel, ChannelBuffers, ChannelHandlerContext, ChannelBuffer}
 import org.infinispan.server.core._
 import org.infinispan.{AdvancedCache, Version, CacheException, Cache}
+import collection.mutable.ListBuffer
 
 /**
  * // TODO: Document this
@@ -20,7 +21,7 @@ import org.infinispan.{AdvancedCache, Version, CacheException, Cache}
  */
 
 class MemcachedDecoder(cacheManager: CacheManager) extends AbstractProtocolDecoder[String, MemcachedValue] with TextProtocolUtil {
-   import MemcachedDecoder._
+   import RequestResolver._
 
    type SuitableParameters = MemcachedParameters
    type SuitableHeader = RequestHeader
@@ -38,20 +39,7 @@ class MemcachedDecoder(cacheManager: CacheManager) extends AbstractProtocolDecod
 
    override def readHeader(buffer: ChannelBuffer): RequestHeader = {
       val streamOp = readElement(buffer)
-//      val op = {
-//         try {
-//            MemcachedOperation.withName(streamOp)
-//         }
-//         catch {
-//            case nsee: NoSuchElementException => {
-//               val line = readLine(buffer) // Read rest of line to clear the operation
-//               throw new UnknownOperationException("Unknown operation: " + streamOp);
-//            }
-//         }
-//      }
-//      val op = MemcachedOperation.withName(streamOp)
-
-      val op = OperationResolver.resolve(streamOp)
+      val op = toRequest(streamOp)
       if (op == None) {
          val line = readLine(buffer) // Read rest of line to clear the operation
          throw new UnknownOperationException("Unknown operation: " + streamOp);
@@ -186,11 +174,11 @@ class MemcachedDecoder(cacheManager: CacheManager) extends AbstractProtocolDecod
                val next = createValue(concatenated, generateVersion(cache), params.get.flags)
                val replaced = cache.replace(k, prev, next);
                if (replaced)
-                  if (!params.get.noReply) sendReplaceResponse(header, ch, buffers, prev) else null
+                  if (!params.get.noReply) STORED else null
                else // If there's a concurrent modification on this key, treat it as we couldn't replace it
-                  if (!params.get.noReply) sendReplaceResponse(header, ch, buffers, null) else null
+                  if (!params.get.noReply) NOT_STORED else null
             } else {
-               if (!params.get.noReply) sendReplaceResponse(header, ch, buffers, null) else null
+               if (!params.get.noReply) NOT_STORED else null
             }
          }
          case IncrementRequest | DecrementRequest => {
@@ -211,14 +199,14 @@ class MemcachedDecoder(cacheManager: CacheManager) extends AbstractProtocolDecod
                var replaced = cache.replace(k, prev, next)
                if (replaced) {
                   if (isStatsEnabled) if (header.op == IncrementRequest) incrHits.incrementAndGet() else decrHits.incrementAndGet
-                  if (!params.get.noReply) ch.write(buffers.wrappedBuffer((new String(next.data) + CRLF).getBytes))
+                  if (!params.get.noReply) new String(next.data) + CRLF else null
                } else {
                   // If there's a concurrent modification on this key, the spec does not say what to do, so treat it as exceptional
                   throw new CacheException("Value modified since we retrieved from the cache, old value was " + prevCounter)
                }
             } else {
                if (isStatsEnabled) if (header.op == IncrementRequest) incrMisses.incrementAndGet() else decrMisses.incrementAndGet
-               if (!params.get.noReply) ch.write(buffers.wrappedBuffer("NOT_FOUND\r\n".getBytes))
+               if (!params.get.noReply) NOT_FOUND else null
             }
          }
          case FlushAllRequest => {
@@ -229,189 +217,139 @@ class MemcachedDecoder(cacheManager: CacheManager) extends AbstractProtocolDecod
                flushFunction(cache.getAdvancedCache)
             else
                scheduler.schedule(new DelayedFlushAll(cache, flushFunction), flushDelay, TimeUnit.SECONDS)
-            if (params == None || !params.get.noReply) ch.write(buffers.wrappedBuffer("OK\r\n".getBytes))
+            if (params == None || !params.get.noReply) OK else null
          }
-         case VersionRequest => {
-            val sb = new StringBuilder
-            sb.append("VERSION ").append(Version.version).append(CRLF)
-            ch.write(buffers.wrappedBuffer(sb.toString.getBytes))
+         case VersionRequest => new StringBuilder().append("VERSION ").append(Version.version).append(CRLF)
+      }
+   }
+
+//   override def createPutResponse(header: RequestHeader): AnyRef = STORED
+
+   override def createSuccessResponse(header: RequestHeader): AnyRef = {
+      if (isStatsEnabled) {
+         header.op match {
+            case ReplaceIfUnmodifiedRequest => replaceIfUnmodifiedHits.incrementAndGet
+            case _ => // No-op
          }
       }
-      null
+      header.op match {
+         case RemoveRequest => DELETED
+         case _ => STORED
+      }
    }
 
-   override def sendPutResponse(header: RequestHeader, ch: Channel, buffers: ChannelBuffers): AnyRef = {
-      ch.write(buffers.wrappedBuffer("STORED\r\n".getBytes))
-      null
+   override def createNotExecutedResponse(header: RequestHeader): AnyRef = {
+      if (isStatsEnabled) {
+         header.op match {
+            case ReplaceIfUnmodifiedRequest => replaceIfUnmodifiedBadval.incrementAndGet
+            case _ => // No-op
+         }
+      }
+      header.op match {
+         case ReplaceIfUnmodifiedRequest => EXISTS
+         case _ => NOT_STORED
+      }
    }
 
-   override def sendGetResponse(header: RequestHeader, ch: Channel, buffers: ChannelBuffers,
-                                k: String, v: MemcachedValue): AnyRef = {
+   override def createNotExistResponse(header: SuitableHeader): AnyRef = {
+      if (isStatsEnabled) {
+         header.op match {
+            case ReplaceIfUnmodifiedRequest => replaceIfUnmodifiedMisses.incrementAndGet
+            case _ => // No-op
+         }
+      }      
+      NOT_FOUND
+   }
+
+   override def createGetResponse(header: RequestHeader, buffers: ChannelBuffers,
+                                  k: String, v: MemcachedValue): AnyRef = {
       if (v != null)
-         ch.write(buildGetResponse(header.op, buffers, k, v))
-      ch.write(buffers.wrappedBuffer("END\r\n".getBytes))
-      null
-   }
-
-   override def sendPutIfAbsentResponse(header: RequestHeader, ch: Channel, buffers: ChannelBuffers,
-                                        prev: MemcachedValue): AnyRef = {
-      if (prev == null)
-         ch.write(buffers.wrappedBuffer("STORED\r\n".getBytes))
+         List(buildGetResponse(header.op, buffers, k, v), buffers.wrappedBuffer(END))
       else
-         ch.write(buffers.wrappedBuffer("NOT_STORED\r\n".getBytes))
-      null
+         END
    }
 
-   override def sendReplaceResponse(header: RequestHeader, ch: Channel, buffers: ChannelBuffers,
-                                    prev: MemcachedValue): AnyRef = {
-      if (prev == null)
-         ch.write(buffers.wrappedBuffer("NOT_STORED\r\n".getBytes))
-      else
-         ch.write(buffers.wrappedBuffer("STORED\r\n".getBytes))
-      null
-   }
-
-   override def sendReplaceIfUnmodifiedResponse(header: RequestHeader, ch: Channel, buffers: ChannelBuffers,
-                                                v: Option[MemcachedValue], prev: Option[MemcachedValue]): AnyRef = {
-      if (v != None && prev != None) {
-         if (isStatsEnabled) replaceIfUnmodifiedHits.incrementAndGet
-         ch.write(buffers.wrappedBuffer("STORED\r\n".getBytes))
-      } else if (v == None && prev != None) {
-         if (isStatsEnabled) replaceIfUnmodifiedBadval.incrementAndGet
-         ch.write(buffers.wrappedBuffer("EXISTS\r\n".getBytes))
-      } else {
-         if (isStatsEnabled) replaceIfUnmodifiedMisses.incrementAndGet
-         ch.write(buffers.wrappedBuffer("NOT_FOUND\r\n".getBytes))
-      }
-      null
-   }
-
-   override def sendRemoveResponse(header: RequestHeader, ch: Channel, buffers: ChannelBuffers,
-                                   prev: MemcachedValue): AnyRef = {
-      if (prev == null)
-         ch.write(buffers.wrappedBuffer("NOT_FOUND\r\n".getBytes))
-      else
-         ch.write(buffers.wrappedBuffer("DELETED\r\n".getBytes))
-      null
-   }
-
-   override def sendMultiGetResponse(header: RequestHeader, ctx: ChannelHandlerContext,
-                                     pairs: Map[String, MemcachedValue]): AnyRef = {
-      val buffers = ctx.getChannelBuffers
-      val ch = ctx.getChannel
+   override def createMultiGetResponse(header: RequestHeader, buffers: ChannelBuffers,
+                                       pairs: Map[String, MemcachedValue]): AnyRef = {
+      val elements = new ListBuffer[ChannelBuffer]
       header.op match {
          case GetRequest | GetWithVersionRequest => {
             for ((k, v) <- pairs)
-               ch.write(buildGetResponse(header.op, buffers, k, v))
-            ch.write(buffers.wrappedBuffer("END\r\n".getBytes))
+               elements += buildGetResponse(header.op, buffers, k, v)
+            elements += buffers.wrappedBuffer("END\r\n".getBytes)
          }
       }
-      null
+      elements.toList
    }
-   
-//   override def sendCustomResponse(header: RequestHeader, ch: Channel, buffers: ChannelBuffers,
-//                                   v: Option[MemcachedValue], prev: Option[MemcachedValue]): AnyRef = {
-//      header.op match {
-//         case AppendRequest | PrependRequest => {
-//            sendReplaceResponse(header, ch, buffers, prev.get)
-//         }
-//         case IncrementRequest | DecrementRequest => {
-//            if (prev.get == null) {
-//               if (isStatsEnabled) if (header.op == IncrementRequest) incrMisses.incrementAndGet() else decrMisses.incrementAndGet
-//               ch.write(buffers.wrappedBuffer("NOT_FOUND\r\n".getBytes))
-//            } else {
-//               if (isStatsEnabled) if (header.op == IncrementRequest) incrHits.incrementAndGet() else decrHits.incrementAndGet
-//               ch.write(buffers.wrappedBuffer((new String(v.get.data) + CRLF).getBytes))
-//            }
-//         }
-//         case FlushAllRequest => {
-//            ch.write(buffers.wrappedBuffer("OK\r\n".getBytes))
-//         }
-//         case VersionRequest => {
-//            val sb = new StringBuilder
-//            sb.append("VERSION ").append(Version.version).append(CRLF)
-//            ch.write(buffers.wrappedBuffer(sb.toString.getBytes))
-//         }
-//      }
-//      null
-//   }
 
-   override def sendResponse(ctx: ChannelHandlerContext, t: Throwable): AnyRef = {
-      val ch = ctx.getChannel
-      val buffers = ctx.getChannelBuffers
+   override def createErrorResponse(t: Throwable): AnyRef = {
       val sb = new StringBuilder
       t match {
          case se: ServerException => {
             se.getCause match {
-               case uoe: UnknownOperationException => ch.write(buffers.wrappedBuffer("ERROR\r\n".getBytes))
-               case cce: ClosedChannelException => // no-op, only log
+               case uoe: UnknownOperationException => ERROR
+               case cce: ClosedChannelException => null// no-op, only log
                case _ => {
                   t match {
                      case ioe: IOException => sb.append("CLIENT_ERROR ")
                      case _ => sb.append("SERVER_ERROR ")
                   }
                   sb.append(t).append(CRLF)
-                  ch.write(buffers.wrappedBuffer(sb.toString.getBytes))
                }
             }
          }
-         case _ => {
-            sb.append("SERVER_ERROR ").append(t).append(CRLF)
-            ch.write(buffers.wrappedBuffer(sb.toString.getBytes))
-         }
+         case _ => sb.append("SERVER_ERROR ").append(t).append(CRLF)
       }
-      null
    }
 
-   def sendResponse(header: RequestHeader, ctx: ChannelHandlerContext, stats: Stats): AnyRef = {
-      var buffers = ctx.getChannelBuffers
-      var ch = ctx.getChannel
+   def createStatsResponse(header: RequestHeader, buffers: ChannelBuffers, stats: Stats): AnyRef = {
       var sb = new StringBuilder
-
-      writeStat("pid", 0, sb, buffers, ch) // Unsupported
-      writeStat("uptime", stats.getTimeSinceStart, sb, buffers, ch)
-      writeStat("time", TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis), sb, buffers, ch)
-      writeStat("version", cache.getVersion, sb, buffers, ch)
-      writeStat("pointer_size", 0, sb, buffers, ch) // Unsupported
-      writeStat("rusage_user", 0, sb, buffers, ch) // Unsupported
-      writeStat("rusage_system", 0, sb, buffers, ch) // Unsupported
-      writeStat("curr_items", stats.getCurrentNumberOfEntries, sb, buffers, ch)
-      writeStat("total_items", stats.getTotalNumberOfEntries, sb, buffers, ch)
-      writeStat("bytes", 0, sb, buffers, ch) // Unsupported
-      writeStat("curr_connections", 0, sb, buffers, ch) // TODO: Through netty?
-      writeStat("total_connections", 0, sb, buffers, ch) // TODO: Through netty?
-      writeStat("connection_structures", 0, sb, buffers, ch) // Unsupported
-      writeStat("cmd_get", stats.getRetrievals, sb, buffers, ch)
-      writeStat("cmd_set", stats.getStores, sb, buffers, ch)
-      writeStat("get_hits", stats.getHits, sb, buffers, ch)
-      writeStat("get_misses", stats.getMisses, sb, buffers, ch)
-      writeStat("delete_misses", stats.getRemoveMisses, sb, buffers, ch)
-      writeStat("delete_hits", stats.getRemoveHits, sb, buffers, ch)
-      writeStat("incr_misses", incrMisses, sb, buffers, ch)
-      writeStat("incr_hits", incrHits, sb, buffers, ch)
-      writeStat("decr_misses", decrMisses, sb, buffers, ch)
-      writeStat("decr_hits", decrHits, sb, buffers, ch)
-      writeStat("cas_misses", replaceIfUnmodifiedMisses, sb, buffers, ch)
-      writeStat("cas_hits", replaceIfUnmodifiedHits, sb, buffers, ch)
-      writeStat("cas_badval", replaceIfUnmodifiedBadval, sb, buffers, ch)
-      writeStat("auth_cmds", 0, sb, buffers, ch) // Unsupported
-      writeStat("auth_errors", 0, sb, buffers, ch) // Unsupported
-      //TODO: Evictions are measure by evict calls, but not by nodes are that are expired after the entry's lifespan has expired.
-      writeStat("evictions", stats.getEvictions, sb, buffers, ch)
-      writeStat("bytes_read", 0, sb, buffers, ch) // TODO: Through netty?
-      writeStat("bytes_written", 0, sb, buffers, ch) // TODO: Through netty?
-      writeStat("limit_maxbytes", 0, sb, buffers, ch) // Unsupported
-      writeStat("threads", 0, sb, buffers, ch) // TODO: Through netty?
-      writeStat("conn_yields", 0, sb, buffers, ch) // Unsupported
-
-      ch.write(buffers.wrappedBuffer("END\r\n".getBytes))
-      null
+      List[ChannelBuffer] (
+         buildStat("pid", 0, sb, buffers),
+         buildStat("uptime", stats.getTimeSinceStart, sb, buffers),
+         buildStat("uptime", stats.getTimeSinceStart, sb, buffers),
+         buildStat("time", TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis), sb, buffers),
+         buildStat("version", cache.getVersion, sb, buffers),
+         buildStat("pointer_size", 0, sb, buffers), // Unsupported
+         buildStat("rusage_user", 0, sb, buffers), // Unsupported
+         buildStat("rusage_system", 0, sb, buffers), // Unsupported
+         buildStat("curr_items", stats.getCurrentNumberOfEntries, sb, buffers),
+         buildStat("total_items", stats.getTotalNumberOfEntries, sb, buffers),
+         buildStat("bytes", 0, sb, buffers), // Unsupported
+         buildStat("curr_connections", 0, sb, buffers), // TODO: Through netty?
+         buildStat("total_connections", 0, sb, buffers), // TODO: Through netty?
+         buildStat("connection_structures", 0, sb, buffers), // Unsupported
+         buildStat("cmd_get", stats.getRetrievals, sb, buffers),
+         buildStat("cmd_set", stats.getStores, sb, buffers),
+         buildStat("get_hits", stats.getHits, sb, buffers),
+         buildStat("get_misses", stats.getMisses, sb, buffers),
+         buildStat("delete_misses", stats.getRemoveMisses, sb, buffers),
+         buildStat("delete_hits", stats.getRemoveHits, sb, buffers),
+         buildStat("incr_misses", incrMisses, sb, buffers),
+         buildStat("incr_hits", incrHits, sb, buffers),
+         buildStat("decr_misses", decrMisses, sb, buffers),
+         buildStat("decr_hits", decrHits, sb, buffers),
+         buildStat("cas_misses", replaceIfUnmodifiedMisses, sb, buffers),
+         buildStat("cas_hits", replaceIfUnmodifiedHits, sb, buffers),
+         buildStat("cas_badval", replaceIfUnmodifiedBadval, sb, buffers),
+         buildStat("auth_cmds", 0, sb, buffers), // Unsupported
+         buildStat("auth_errors", 0, sb, buffers), // Unsupported
+         //TODO: Evictions are measure by evict calls, but not by nodes are that are expired after the entry's lifespan has expired.
+         buildStat("evictions", stats.getEvictions, sb, buffers),
+         buildStat("bytes_read", 0, sb, buffers), // TODO: Through netty?
+         buildStat("bytes_written", 0, sb, buffers), // TODO: Through netty?
+         buildStat("limit_maxbytes", 0, sb, buffers), // Unsupported
+         buildStat("threads", 0, sb, buffers), // TODO: Through netty?
+         buildStat("conn_yields", 0, sb, buffers), // Unsupported
+         buffers.wrappedBuffer(END)
+      )
    }
 
-   private def writeStat(stat: String, value: Any, sb: StringBuilder, buffers: ChannelBuffers, ch: Channel) {
+   private def buildStat(stat: String, value: Any, sb: StringBuilder, buffers: ChannelBuffers): ChannelBuffer = {
       sb.append("STAT").append(' ').append(stat).append(' ').append(value).append(CRLF)
-      ch.write(buffers.wrappedBuffer(sb.toString.getBytes))
+      val buffer = buffers.wrappedBuffer(sb.toString.getBytes)
       sb.setLength(0)
+      buffer
    }
 
    override def start {
@@ -430,7 +368,7 @@ class MemcachedDecoder(cacheManager: CacheManager) extends AbstractProtocolDecod
    private def buildGetResponse(op: Enumeration#Value, buffers: ChannelBuffers,
                                 k: String, v: MemcachedValue): ChannelBuffer = {
       val header = buildGetResponseHeader(k, v, op)
-      buffers.wrappedBuffer(header.getBytes, v.data, CRLF.getBytes)
+      buffers.wrappedBuffer(header.getBytes, v.data, CRLFBytes)
    }
 
    private def buildGetResponseHeader(k: String, v: MemcachedValue, op: Enumeration#Value): String = {
@@ -444,31 +382,38 @@ class MemcachedDecoder(cacheManager: CacheManager) extends AbstractProtocolDecod
 
 }
 
-object MemcachedDecoder extends Logging
-
 class MemcachedParameters(override val data: Array[Byte], override val lifespan: Int,
                           override val maxIdle: Int, override val streamVersion: Long,
                           override val noReply: Boolean, val flags: Int, val delta: String,
                           val flushDelay: Int) extends RequestParameters(data, lifespan, maxIdle, streamVersion, noReply)
 
-//object MemcachedOperation extends Enumeration(10) {
-//   val PutRequest = new Value("set")
-//   val PutIfAbsentRequest = new Value("add")
-//   val ReplaceRequest = new Value("replace")
-//   val ReplaceIfUnmodifiedRequest = new Value("cas")
-//   val AppendRequest = new Value("append")
-//   val PrependRequest = new Value("prepend")
-//   val GetRequest = new Value("get")
-//   val GetWithVersionRequest = new Value("gets")
-//   val DeleteRequest = new Value("delete")
-//   val IncrementRequest = new Value("incr")
-//   val DecrementRequest = new Value("decr")
-//   val FlushAllRequest = new Value("flush_all")
-//   val VersionRequest = new Value("version")
-//   val StatsRequest = new Value("stats")
-//}
-
 private class DelayedFlushAll(cache: Cache[String, MemcachedValue],
                               flushFunction: AdvancedCache[String, MemcachedValue] => Unit) extends Runnable {
    override def run() = flushFunction(cache.getAdvancedCache)
 }
+
+private object RequestResolver extends Logging {
+   private val operations = Map[String, Enumeration#Value](
+      "set" -> PutRequest,
+      "add" -> PutIfAbsentRequest,
+      "replace" -> ReplaceRequest,
+      "cas" -> ReplaceIfUnmodifiedRequest,
+      "append" -> AppendRequest,
+      "prepend" -> PrependRequest,
+      "get" -> GetRequest,
+      "gets" -> GetWithVersionRequest,
+      "delete" -> RemoveRequest,
+      "incr" -> IncrementRequest,
+      "decr" -> DecrementRequest,
+      "flush_all" -> FlushAllRequest,
+      "version" -> VersionRequest,
+      "stats" -> StatsRequest
+   )
+
+   def toRequest(commandName: String): Option[Enumeration#Value] = {
+      trace("Operation: {0}", commandName)
+      val op = operations.get(commandName)
+      op
+   }
+}
+

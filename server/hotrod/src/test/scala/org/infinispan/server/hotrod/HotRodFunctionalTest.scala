@@ -8,8 +8,7 @@ import org.testng.Assert._
 import java.util.Arrays
 import org.jboss.netty.channel.Channel
 import org.infinispan.manager.{DefaultCacheManager, CacheManager}
-import org.infinispan.context.Flag
-import org.infinispan.{AdvancedCache, Cache => InfinispanCache}
+import org.infinispan.{AdvancedCache}
 import org.infinispan.test.{SingleCacheManagerTest}
 import org.infinispan.server.core.CacheValue
 import org.infinispan.server.hotrod.OperationStatus._
@@ -27,7 +26,7 @@ import org.infinispan.server.hotrod.OperationStatus._
  * @author Galder Zamarreño
  * @since 4.1
  */
-@Test(groups = Array("functional"), testName = "server.hotrod.FunctionalTest")
+@Test(groups = Array("functional"), testName = "server.hotrod.HotRodFunctionalTest")
 class HotRodFunctionalTest extends SingleCacheManagerTest with Utils with Client {
    private val cacheName = "hotrod-cache"
    private var server: HotRodServer = _
@@ -74,6 +73,11 @@ class HotRodFunctionalTest extends SingleCacheManagerTest with Utils with Client
       doPutWithLifespanMaxIdle(m, 0, 0)
    }
 
+   private def doPutWithLifespanMaxIdle(m: Method, lifespan: Int, maxIdle: Int) {
+      val status = put(ch, cacheName, k(m) , lifespan, maxIdle, v(m))
+      assertStatus(status, Success)
+   }
+
    def testPutOnDefaultCache(m: Method) {
       val status = put(ch, DefaultCacheManager.DEFAULT_CACHE_NAME, k(m) , 0, 0, v(m))
       assertStatus(status, Success)
@@ -94,11 +98,6 @@ class HotRodFunctionalTest extends SingleCacheManagerTest with Utils with Client
       Thread.sleep(1100)
       val (getSt, actual) = doGet(m)
       assertKeyDoesNotExist(getSt, actual)
-   }
-
-   private def doPutWithLifespanMaxIdle(m: Method, lifespan: Int, maxIdle: Int) {
-      val status = put(ch, cacheName, k(m) , lifespan, maxIdle, v(m))
-      assertStatus(status, Success)
    }
 
    def testGetBasic(m: Method) {
@@ -299,6 +298,20 @@ class HotRodFunctionalTest extends SingleCacheManagerTest with Utils with Client
          val status = containsKey(ch, cacheName, key, 0)
          assertStatus(status, KeyDoesNotExist)
       }
+   }
+
+   def testStatsDisabled(m: Method) {
+      val s = stats(ch, cacheName)
+      assertEquals(s.get("timeSinceStart").get, "-1")
+      assertEquals(s.get("currentNumberOfEntries").get, "-1")
+      assertEquals(s.get("totalNumberOfEntries").get, "-1")
+      assertEquals(s.get("stores").get, "-1")
+      assertEquals(s.get("retrievals").get, "-1")
+      assertEquals(s.get("hits").get, "-1")
+      assertEquals(s.get("misses").get, "-1")
+      assertEquals(s.get("removeHits").get, "-1")
+      assertEquals(s.get("removeMisses").get, "-1")
+      assertEquals(s.get("evictions").get, "-1")
    }
 
    def testPing(m: Method) {

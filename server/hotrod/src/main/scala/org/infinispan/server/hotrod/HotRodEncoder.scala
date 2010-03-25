@@ -16,15 +16,17 @@ class HotRodEncoder extends Encoder {
    override def encode(ctx: ChannelHandlerContext, channel: Channel, msg: AnyRef): AnyRef = {
       trace("Encode msg {0}", msg)
       val buffer: ChannelBuffer = msg match {
+         case s: StatsResponse => {
+            val buffer = ctx.getChannelBuffers.dynamicBuffer
+            writeHeader(buffer, s)
+            buffer.writeUnsignedInt(s.stats.size)
+            for ((key, value) <- s.stats) {
+               buffer.writeString(key)
+               buffer.writeString(value)
+            }
+            buffer
+         }
          case r: Response => writeHeader(ctx.getChannelBuffers.dynamicBuffer, r)
-//         case s: StatsResponse => {
-//            val buffer = ctx.getChannelBuffers.dynamicBuffer
-//            for ((key, value) <- s.stats) {
-//               writeHeader(buffer, s)
-//               buffer.writeString(key)
-//               buffer.writeString(value)
-//            }
-//         }
       }
       msg match {
          case g: GetWithVersionResponse => {

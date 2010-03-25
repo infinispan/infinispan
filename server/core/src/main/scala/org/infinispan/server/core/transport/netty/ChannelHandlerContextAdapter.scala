@@ -13,6 +13,7 @@ class ChannelHandlerContextAdapter(val ctx: NettyChannelHandlerContext) extends 
    
    override def getChannel: Channel = new ChannelAdapter(ctx.getChannel)
 
+   // TODO: Remove this from here and make it available via an object, this would clean up unnecessary params 
    override def getChannelBuffers: ChannelBuffers = ChannelBuffersAdapter
    
 }

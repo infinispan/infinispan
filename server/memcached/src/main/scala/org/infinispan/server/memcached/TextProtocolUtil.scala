@@ -11,6 +11,16 @@ import org.infinispan.server.core.transport.ChannelBuffer
 trait TextProtocolUtil {
 
    final val CRLF = "\r\n"
+   final val CRLFBytes = "\r\n".getBytes
+   final val END = "END\r\n".getBytes
+   final val DELETED = "DELETED\r\n".getBytes
+   final val NOT_FOUND = "NOT_FOUND\r\n".getBytes
+   final val EXISTS = "EXISTS\r\n".getBytes
+   final val STORED = "STORED\r\n".getBytes
+   final val NOT_STORED = "NOT_STORED\r\n".getBytes
+   final val OK = "OK\r\n".getBytes
+   final val ERROR = "ERROR\r\n".getBytes
+
    final val CR = 13
    final val LF = 10
 
