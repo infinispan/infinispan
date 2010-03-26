@@ -9,6 +9,7 @@ import java.io.{Serializable, ObjectOutput, ObjectInput, Externalizable}
  * @since
  */
 // TODO: Make it a hardcoded Externalizer
+// TODO: maybe convert to scala case class -> whenever u create java beans, maybe create case classes
 class CacheValue(val data: Array[Byte], val version: Long) extends Serializable {
 
    override def toString = {

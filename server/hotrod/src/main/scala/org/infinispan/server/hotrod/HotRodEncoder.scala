@@ -17,6 +17,7 @@ class HotRodEncoder extends Encoder {
    override def encode(ctx: ChannelHandlerContext, channel: Channel, msg: AnyRef): AnyRef = {
       trace("Encode msg {0}", msg)
       val buffer: ChannelBuffer = msg match {
+         // TODO: move stats response down
          case s: StatsResponse => {
             val buffer = dynamicBuffer
             writeHeader(buffer, s)
@@ -48,7 +49,7 @@ class HotRodEncoder extends Encoder {
       buffer.writeUnsignedLong(r.messageId)
       buffer.writeByte(r.operation.id.byteValue)
       buffer.writeByte(r.status.id.byteValue)
-      buffer.writeByte(0) // topology change marker
+      buffer.writeByte(0) // TODO: topology change marker, implemented later
       buffer
    }
    

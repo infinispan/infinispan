@@ -12,6 +12,7 @@ import org.infinispan.server.core.Logging
  * @since 4.1
  */
 
+// TODO: convert to object so that mircea can use it
 trait Utils {
 
    import Utils._
