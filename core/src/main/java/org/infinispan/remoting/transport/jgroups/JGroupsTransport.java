@@ -236,7 +236,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
 
             try {
                JGroupsChannelLookup lookup = (JGroupsChannelLookup) Util.getInstance(channelLookupClassName);
-               channel = lookup.getJGroupsChannel();
+               channel = lookup.getJGroupsChannel(props);
                startChannel = lookup.shouldStartAndConnect();
                stopChannel = lookup.shouldStopAndDisconnect();
             } catch (ClassCastException e) {

@@ -54,7 +54,7 @@ public class ChannelLookupTest extends AbstractInfinispanTest {
             EasyMock.replay(mockChannel, a, ps);           
         }
 
-        public Channel getJGroupsChannel() {
+        public Channel getJGroupsChannel(Properties p) {
             return mockChannel;
         }
 
