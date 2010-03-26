@@ -41,24 +41,26 @@ class Decoder10(cacheManager: CacheManager) extends AbstractVersionedDecoder {
    override def readKeys(buffer: ChannelBuffer): Array[CacheKey] = Array(new CacheKey(buffer.readRangedBytes))
 
    override def readParameters(header: HotRodHeader, buffer: ChannelBuffer): Option[RequestParameters] = {
-      if (header.op != RemoveRequest) {
-         val lifespan = {
-            val streamLifespan = buffer.readUnsignedInt
-            if (streamLifespan <= 0) -1 else streamLifespan
+      header.op match {
+         case RemoveRequest => None
+         case RemoveIfUnmodifiedRequest => Some(new RequestParameters(null, -1, -1, buffer.readLong))
+         case ReplaceIfUnmodifiedRequest => {
+            val lifespan = readLifespanOrMaxIdle(buffer)
+            val maxIdle = readLifespanOrMaxIdle(buffer)
+            val version = buffer.readLong
+            Some(new RequestParameters(buffer.readRangedBytes, lifespan, maxIdle, version))
          }
-         val maxIdle = {
-            val streamMaxIdle = buffer.readUnsignedInt
-            if (streamMaxIdle <= 0) -1 else streamMaxIdle
+         case _ => {
+            val lifespan = readLifespanOrMaxIdle(buffer)
+            val maxIdle = readLifespanOrMaxIdle(buffer)
+            Some(new RequestParameters(buffer.readRangedBytes, lifespan, maxIdle, -1))
          }
-         val version = header.op match {
-            case ReplaceIfUnmodifiedRequest | RemoveIfUnmodifiedRequest => buffer.readLong
-            case _ => -1
-         }
-         val data = buffer.readRangedBytes
-         Some(new RequestParameters(data, lifespan, maxIdle, version))
-      } else {
-         None
       }
+   }
+
+   private def readLifespanOrMaxIdle(buffer: ChannelBuffer): Int = {
+      val stream = buffer.readUnsignedInt
+      if (stream <= 0) -1 else stream
    }
 
    override def createValue(params: RequestParameters, nextVersion: Long): CacheValue =
@@ -131,7 +133,6 @@ class Decoder10(cacheManager: CacheManager) extends AbstractVersionedDecoder {
       stats += ("misses" -> cacheStats.getMisses.toString)
       stats += ("removeHits" -> cacheStats.getRemoveHits.toString)
       stats += ("removeMisses" -> cacheStats.getRemoveMisses.toString)
-      stats += ("evictions" -> cacheStats.getEvictions.toString)
       new StatsResponse(header.messageId, immutable.Map[String, String]() ++ stats)
    }
 

@@ -2,11 +2,12 @@ package org.infinispan.server.hotrod
 
 import org.infinispan.Cache
 import org.infinispan.stats.Stats
-import java.io.StreamCorruptedException
 import org.infinispan.server.core._
 import transport._
 import OperationStatus._
 import org.infinispan.manager.{DefaultCacheManager, CacheManager}
+import java.io.{IOException, StreamCorruptedException}
+import org.infinispan.util.concurrent.TimeoutException
 
 /**
  * // TODO: Document this
@@ -104,10 +105,11 @@ class HotRodDecoder(cacheManager: CacheManager) extends AbstractProtocolDecoder[
          case se: ServerException => {
             val messageId = se.header.asInstanceOf[HotRodHeader].messageId
             se.getCause match {
-               case imie: InvalidMagicIdException => new ErrorResponse(0, InvalidMagicOrMsgId, imie.toString)
-               case uoe: UnknownOperationException => new ErrorResponse(messageId, UnknownOperation, uoe.toString)
-               case uve: UnknownVersionException => new ErrorResponse(messageId, UnknownVersion, uve.toString)
-               // TODO add more cases
+               case i: InvalidMagicIdException => new ErrorResponse(0, InvalidMagicOrMsgId, i.toString)
+               case u: UnknownOperationException => new ErrorResponse(messageId, UnknownOperation, u.toString)
+               case u: UnknownVersionException => new ErrorResponse(messageId, UnknownVersion, u.toString)
+               case i: IOException => new ErrorResponse(messageId, ParseError, i.toString)
+               case t: TimeoutException => new ErrorResponse(messageId, OperationTimedOut, t.toString)
                case e: Exception => new ErrorResponse(messageId, ServerError, e.toString)
             }
          }

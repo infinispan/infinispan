@@ -1,27 +1,27 @@
 package org.infinispan.server.hotrod
 
-import test.{Utils, Client}
+import test.HotRodClient
+import test.HotRodTestingUtil._
 import org.infinispan.test.SingleCacheManagerTest
 import org.testng.annotations.{AfterClass, Test}
 import org.infinispan.test.fwk.TestCacheManagerFactory
 import org.infinispan.server.core.CacheValue
 import org.infinispan.AdvancedCache
-import org.jboss.netty.channel.Channel
 import java.lang.reflect.Method
 import org.testng.Assert._
 import org.infinispan.server.hotrod.OperationStatus._
-import org.infinispan.manager.{DefaultCacheManager, CacheManager}
+import org.infinispan.manager.CacheManager
 
 /**
  * // TODO: Document this
  * @author Galder Zamarreño
- * @since
+ * @since 4.1
  */
 @Test(groups = Array("functional"), testName = "server.hotrod.FunctionalTest")
-class HotRodStatsTest extends SingleCacheManagerTest with Utils with Client {
+class HotRodStatsTest extends SingleCacheManagerTest {
    private val cacheName = "hotrod-cache"
    private var server: HotRodServer = _
-   private var ch: Channel = _
+   private var client: HotRodClient = _
    private var advancedCache: AdvancedCache[CacheKey, CacheValue] = _
    private var jmxDomain = classOf[HotRodStatsTest].getSimpleName
 
@@ -29,7 +29,7 @@ class HotRodStatsTest extends SingleCacheManagerTest with Utils with Client {
       val cacheManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(jmxDomain)
       advancedCache = cacheManager.getCache[CacheKey, CacheValue](cacheName).getAdvancedCache
       server = startHotRodServer(cacheManager)
-      ch = connect("127.0.0.1", server.getPort)
+      client = new HotRodClient("127.0.0.1", server.getPort, cacheName)
       cacheManager
    }
 
@@ -37,12 +37,12 @@ class HotRodStatsTest extends SingleCacheManagerTest with Utils with Client {
    override def destroyAfterClass {
       super.destroyAfterClass
       log.debug("Test finished, close client and Hot Rod server", null)
-      ch.disconnect
+      client.stop
       server.stop
    }
 
    def testStats(m: Method) {
-      var s = stats(ch, cacheName)
+      var s = client.stats
       assertTrue(s.get("timeSinceStart") != 0)
       assertEquals(s.get("currentNumberOfEntries").get, "0")
       assertEquals(s.get("totalNumberOfEntries").get, "0")
@@ -52,37 +52,18 @@ class HotRodStatsTest extends SingleCacheManagerTest with Utils with Client {
       assertEquals(s.get("misses").get, "0")
       assertEquals(s.get("removeHits").get, "0")
       assertEquals(s.get("removeMisses").get, "0")
-      assertEquals(s.get("evictions").get, "0")
 
-      doPut(m)
-      s = stats(ch, cacheName)
+      client.assertPut(m)
+      s = client.stats
       assertEquals(s.get("currentNumberOfEntries").get, "1")
       assertEquals(s.get("totalNumberOfEntries").get, "1")
       assertEquals(s.get("stores").get, "1")
-      val (getSt, actual) = doGet(m)
+      val (getSt, actual) = client.assertGet(m)
       assertSuccess(getSt, v(m), actual)
-      s = stats(ch, cacheName)
+      s = client.stats
       assertEquals(s.get("hits").get, "1")
       assertEquals(s.get("misses").get, "0")
       assertEquals(s.get("retrievals").get, "1")
    }
 
-   // TODO: shared this private between tests by making client trait and object instead
-   private def doPut(m: Method) {
-      doPutWithLifespanMaxIdle(m, 0, 0)
-   }
-
-   private def doPutWithLifespanMaxIdle(m: Method, lifespan: Int, maxIdle: Int) {
-      val status = put(ch, cacheName, k(m) , lifespan, maxIdle, v(m))
-      assertStatus(status, Success)
-   }
-
-   private def doGet(m: Method): (OperationStatus, Array[Byte]) = {
-      doGet(m, 0)
-   }
-
-   private def doGet(m: Method, flags: Int): (OperationStatus, Array[Byte]) = {
-      get(ch, cacheName, k(m), flags)
-   }
-   
 }

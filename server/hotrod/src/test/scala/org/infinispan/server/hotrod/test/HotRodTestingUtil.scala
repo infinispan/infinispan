@@ -5,6 +5,9 @@ import org.infinispan.manager.CacheManager
 import java.lang.reflect.Method
 import org.infinispan.server.hotrod.{HotRodServer}
 import org.infinispan.server.core.Logging
+import java.util.Arrays
+import org.infinispan.server.hotrod.OperationStatus._
+import org.testng.Assert._
 
 /**
  * // TODO: Document this
@@ -13,9 +16,9 @@ import org.infinispan.server.core.Logging
  */
 
 // TODO: convert to object so that mircea can use it
-trait Utils {
+object HotRodTestingUtil extends Logging {
 
-   import Utils._
+   import HotRodTestingUtil._
 
    def host = "127.0.0.1"
 
@@ -40,9 +43,26 @@ trait Utils {
 
    def v(m: Method): Array[Byte] = v(m, "v-")
 
-}
+   def assertStatus(status: OperationStatus, expected: OperationStatus): Boolean = {
+      val isSuccess = status == expected
+      assertTrue(isSuccess, "Status should have been '" + expected + "' but instead was: " + status)
+      isSuccess
+   }
 
-object Utils extends Logging
+   def assertSuccess(status: OperationStatus, expected: Array[Byte], actual: Array[Byte]): Boolean = {
+      assertStatus(status, Success)
+      val isSuccess = Arrays.equals(expected, actual)
+      assertTrue(isSuccess)
+      isSuccess
+   }
+
+   def assertKeyDoesNotExist(status: OperationStatus, actual: Array[Byte]): Boolean = {
+      assertTrue(status == KeyDoesNotExist, "Status should have been 'KeyDoesNotExist' but instead was: " + status)
+      assertNull(actual)
+      status == KeyDoesNotExist
+   }
+   
+} 
 
 object UniquePortThreadLocal extends ThreadLocal[Int] {
    private val uniqueAddr = new AtomicInteger(11311)

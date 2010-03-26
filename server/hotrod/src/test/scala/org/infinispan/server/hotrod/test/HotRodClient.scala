@@ -15,26 +15,27 @@ import org.infinispan.server.hotrod.OperationResponse._
 import java.util.concurrent.atomic.AtomicInteger
 import org.infinispan.server.core.transport.NoState
 import org.jboss.netty.channel.ChannelHandler.Sharable
-import java.util.Arrays
 import java.util.concurrent.{TimeUnit, LinkedBlockingQueue, Executors}
 import org.infinispan.server.core.transport.netty.{ChannelBufferAdapter}
 import org.infinispan.server.core.Logging
 import collection.mutable
 import collection.immutable
+import java.lang.reflect.Method
+import test.HotRodTestingUtil._
 
 /**
- * // TODO: Document this
+ * A very simply Hot Rod client for testing purpouses
  *
- * // TODO: Transform to Netty independent code
- * // TODO: maybe make it an object to be able to cache stuff without testng complaining
+ * Reasons why this should not really be a trait:
+ * Storing var instances in a trait cause issues with TestNG, see:
+ *   http://thread.gmane.org/gmane.comp.lang.scala.user/24317
  *
  * @author Galder Zamarreño
  * @since 4.1
  */
-trait Client {
+class HotRodClient(host: String, port: Int, defaultCacheName: String) {
 
-   def connect(host: String, port: Int): Channel = {
-      // Set up.
+   private lazy val ch: Channel = {
       val factory = new NioClientSocketChannelFactory(Executors.newCachedThreadPool, Executors.newCachedThreadPool)
       val bootstrap: ClientBootstrap = new ClientBootstrap(factory)
       bootstrap.setPipelineFactory(ClientPipelineFactory)
@@ -44,70 +45,71 @@ trait Client {
       val connectFuture = bootstrap.connect(new InetSocketAddress(host, port))
       // Wait until the connection is made successfully.
       val ch = connectFuture.awaitUninterruptibly.getChannel
-      // Ideally, I'd store channel as a var in this trait. However, this causes issues with TestNG, see:
-      // http://thread.gmane.org/gmane.comp.lang.scala.user/24317
       assertTrue(connectFuture.isSuccess)
       ch
    }
+   
+   def stop = ch.disconnect
 
-   def put(ch: Channel, name: String, k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte]): OperationStatus = {
-      put(ch, 0xA0, 0x01, name, k, lifespan, maxIdle, v, 0, 0)
+   def put(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte]): OperationStatus =
+      execute(0xA0, 0x01, defaultCacheName, k, lifespan, maxIdle, v, 0, 0)
+
+   def assertPut(m: Method) {
+      val status = put(k(m) , 0, 0, v(m))
+      assertStatus(status, Success)
    }
 
-   def put(ch: Channel, name: String, k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte],
-           flags: Int): OperationStatus = {
-      put(ch, 0xA0, 0x01, name, k, lifespan, maxIdle, v, flags, 0)
+   def assertPut(m: Method, lifespan: Int, maxIdle: Int) {
+      val status = put(k(m) , lifespan, maxIdle, v(m))
+      assertStatus(status, Success)
    }
 
-   def putIfAbsent(ch: Channel, name: String, k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte]): OperationStatus = {
-      put(ch, 0xA0, 0x05, name, k, lifespan, maxIdle, v, 0, 0)
-   }
+   def put(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte], flags: Int): OperationStatus =
+      execute(0xA0, 0x01, defaultCacheName, k, lifespan, maxIdle, v, flags, 0)
 
-   def replace(ch: Channel, name: String, k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte]): OperationStatus = {
-      put(ch, 0xA0, 0x07, name, k, lifespan, maxIdle, v, 0, 0)
-   }
+   def putIfAbsent(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte]): OperationStatus =
+      execute(0xA0, 0x05, defaultCacheName, k, lifespan, maxIdle, v, 0, 0)
 
-   def replaceIfUnmodified(ch: Channel, name: String, k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte],
-                           version: Long): OperationStatus = {
-      put(ch, 0xA0, 0x09, name, k, lifespan, maxIdle, v, 0, version)
-   }
+   def replace(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte]): OperationStatus =
+      execute(0xA0, 0x07, defaultCacheName, k, lifespan, maxIdle, v, 0, 0)
 
-   def removeIfUnmodified(ch: Channel, name: String, k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte],
-                           version: Long): OperationStatus = {
-      put(ch, 0xA0, 0x0D, name, k, lifespan, maxIdle, v, 0, version)
-   }
+   def replaceIfUnmodified(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte], version: Long): OperationStatus =
+      execute(0xA0, 0x09, defaultCacheName, k, lifespan, maxIdle, v, 0, version)
 
-   // TODO: change name of this method since it's more polivalent than just a put
-   def put(ch: Channel, magic: Int, code: Byte, name: String, k: Array[Byte], lifespan: Int, maxIdle: Int,
-           v: Array[Byte], flags: Int, version: Long): OperationStatus = {
+   def removeIfUnmodified(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte], version: Long): OperationStatus =
+      execute(0xA0, 0x0D, defaultCacheName, k, lifespan, maxIdle, v, 0, version)
+
+   def execute(magic: Int, code: Byte, name: String, k: Array[Byte], lifespan: Int, maxIdle: Int,
+               v: Array[Byte], flags: Int, version: Long): OperationStatus = {
       val writeFuture = ch.write(new Op(magic, code, name, k, lifespan, maxIdle, v, flags, version))
       writeFuture.awaitUninterruptibly
       assertTrue(writeFuture.isSuccess)
-      // Get the handler instance to retrieve the answer.
       var handler = ch.getPipeline.getLast.asInstanceOf[ClientHandler]
       handler.getResponse.status
    }
 
-   def get(ch: Channel, name: String, k: Array[Byte], flags: Int): (OperationStatus, Array[Byte]) = {
-      val (getSt, actual, version) = get(ch, 0x03, name, k, 0)
+   def get(k: Array[Byte], flags: Int): (OperationStatus, Array[Byte]) = {
+      val (getSt, actual, version) = get(0x03, k, 0)
       (getSt, actual)
    }
 
-   def containsKey(ch: Channel, name: String, k: Array[Byte], flags: Int): OperationStatus = {
-      val (containsKeySt, actual, version) = get(ch, 0x0F, name, k, 0)
+   def assertGet(m: Method): (OperationStatus, Array[Byte]) = assertGet(m, 0)
+
+   def assertGet(m: Method, flags: Int): (OperationStatus, Array[Byte]) = get(k(m), flags)   
+
+   def containsKey(k: Array[Byte], flags: Int): OperationStatus = {
+      val (containsKeySt, actual, version) = get(0x0F, k, 0)
       containsKeySt
    }
 
-   def getWithVersion(ch: Channel, name: String, k: Array[Byte], flags: Int): (OperationStatus, Array[Byte], Long) = {
-      get(ch, 0x11, name, k, 0)
-   }
+   def getWithVersion(k: Array[Byte], flags: Int): (OperationStatus, Array[Byte], Long) =
+      get(0x11, k, 0)
 
-   def remove(ch: Channel, name: String, k: Array[Byte], flags: Int): OperationStatus = {
-      put(ch, 0xA0, 0x0B, name, k, 0, 0, null, 0, 0)
-   }
+   def remove(k: Array[Byte], flags: Int): OperationStatus =
+      execute(0xA0, 0x0B, defaultCacheName, k, 0, 0, null, 0, 0)
 
-   def get(ch: Channel, code: Byte, name: String, k: Array[Byte], flags: Int): (OperationStatus, Array[Byte], Long) = {
-      val writeFuture = ch.write(new Op(0xA0, code, name, k, 0, 0, null, flags, 0))
+   def get(code: Byte, k: Array[Byte], flags: Int): (OperationStatus, Array[Byte], Long) = {
+      val writeFuture = ch.write(new Op(0xA0, code, defaultCacheName, k, 0, 0, null, flags, 0))
       writeFuture.awaitUninterruptibly
       assertTrue(writeFuture.isSuccess)
       // Get the handler instance to retrieve the answer.
@@ -125,12 +127,10 @@ trait Client {
       }
    }
 
-   def clear(ch: Channel, name: String): OperationStatus = {
-      put(ch, 0xA0, 0x13, name, null, 0, 0, null, 0, 0)
-   }
+   def clear: OperationStatus = execute(0xA0, 0x13, defaultCacheName, null, 0, 0, null, 0, 0)
 
-   def stats(ch: Channel, name: String): Map[String, String] = {
-      val writeFuture = ch.write(new StatsOp(0xA0, 0x15, name, null))
+   def stats: Map[String, String] = {
+      val writeFuture = ch.write(new StatsOp(0xA0, 0x15, defaultCacheName, null))
       writeFuture.awaitUninterruptibly
       assertTrue(writeFuture.isSuccess)
       // Get the handler instance to retrieve the answer.
@@ -139,38 +139,7 @@ trait Client {
       resp.stats
    }
 
-//   def stats(ch: Channel, name: String, statName: String): Map[String, String] = {
-//      val writeFuture = ch.write(new StatsOp(0xA0, 0x15, name, statName))
-//      writeFuture.awaitUninterruptibly
-//      assertTrue(writeFuture.isSuccess)
-//      // Get the handler instance to retrieve the answer.
-//      var handler = ch.getPipeline.getLast.asInstanceOf[ClientHandler]
-//      val resp = handler.getResponse.asInstanceOf[StatsResponse]
-//      resp.stats
-//   }
-
-   def ping(ch: Channel, name: String): OperationStatus = {
-      put(ch, 0xA0, 0x17, name, null, 0, 0, null, 0, 0)
-   }
-
-   def assertStatus(status: OperationStatus, expected: OperationStatus): Boolean = {
-      val isSuccess = status == expected
-      assertTrue(isSuccess, "Status should have been '" + expected + "' but instead was: " + status)
-      isSuccess
-   }
-
-   def assertSuccess(status: OperationStatus, expected: Array[Byte], actual: Array[Byte]): Boolean = {
-      assertStatus(status, Success)
-      val isSuccess = Arrays.equals(expected, actual)
-      assertTrue(isSuccess)
-      isSuccess
-   }
-
-   def assertKeyDoesNotExist(status: OperationStatus, actual: Array[Byte]): Boolean = {
-      assertTrue(status == KeyDoesNotExist, "Status should have been 'KeyDoesNotExist' but instead was: " + status)
-      assertNull(actual)
-      status == KeyDoesNotExist
-   }
+   def ping: OperationStatus = execute(0xA0, 0x17, defaultCacheName, null, 0, 0, null, 0, 0)
 
 }
 
@@ -208,17 +177,18 @@ private object Encoder extends OneToOneEncoder {
                if (op.code != 0x13 && op.code != 0x15 && op.code != 0x17) { // if it's a key based op... 
                   buffer.writeRangedBytes(op.key) // key length + key
                   if (op.value != null) {
-                     buffer.writeUnsignedInt(op.lifespan) // lifespan
-                     buffer.writeUnsignedInt(op.maxIdle) // maxIdle
+                     if (op.code != 0x0D) { // If it's not removeIfUnmodified...
+                        buffer.writeUnsignedInt(op.lifespan) // lifespan
+                        buffer.writeUnsignedInt(op.maxIdle) // maxIdle
+                     }
                      if (op.code == 0x09 || op.code == 0x0D) {
                         buffer.writeLong(op.version)
                      }
-                     buffer.writeRangedBytes(op.value) // value length + value
+                     if (op.code != 0x0D) { // If it's not removeIfUnmodified...
+                        buffer.writeRangedBytes(op.value) // value length + value
+                     }
                   }
                }
-//               else if (op.code != 0x15) {
-//                  buffer.writeString(op.asInstanceOf[StatsOp].statName)
-//               }
                buffer.getUnderlyingChannelBuffer
             }
       }
