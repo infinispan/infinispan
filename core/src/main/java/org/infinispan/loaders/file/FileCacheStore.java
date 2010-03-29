@@ -112,8 +112,8 @@ public class FileCacheStore extends BucketBasedCacheStore {
                   objectOutput.write(buffer, 0, bytesRead);
                }
             } finally {
-               Util.closeStream(bis);
-               Util.closeStream(fileInStream);
+               Util.close(bis);
+               Util.close(fileInStream);
             }
          }
       } catch (IOException e) {

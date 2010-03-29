@@ -56,7 +56,12 @@ public class TestObjectStreamMarshaller extends AbstractMarshaller {
    }
 
    public void finishObjectInput(ObjectInput oi) {
-      Util.closeInput(oi);
+      if (oi != null) {
+         try {
+            oi.close();
+         } catch (IOException e) {
+         }
+      }
    }
 
    public ByteBuffer objectToBuffer(Object o) throws IOException {

@@ -173,7 +173,7 @@ public class ConfigFilesConvertor {
          convertor.parse(is, fos, "xslt/ehcache1x2infinispan4x.xslt");
       } finally {
          Util.flushAndCloseStream(fos);
-         Util.closeStream(is);
+         Util.close(is);
       }
    }
 
@@ -222,7 +222,7 @@ public class ConfigFilesConvertor {
          convertor = new ConfigFilesConvertor();
          convertor.parse(is, fos, "xslt/jgroupsFileGen.xslt");
       } finally {
-         Util.closeStream(is);
+         Util.close(is);
          Util.flushAndCloseStream(fos);
       }
 
@@ -256,7 +256,7 @@ public class ConfigFilesConvertor {
          converter.parse(is, fos, "xslt/ehcache1x2infinispan4x.xslt");
       } finally {
          Util.flushAndCloseStream(fos);
-         Util.closeStream(is);
+         Util.close(is);
       }
    }
 

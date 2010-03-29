@@ -21,6 +21,7 @@
  */
 package org.infinispan.util;
 
+import java.io.Closeable;
 import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -184,21 +185,11 @@ public final class Util {
       return nf.format(toPrint) + " hours";
    }
 
-   public static void closeStream(InputStream i) {
-      if (i == null) return;
+   public static void close(Closeable cl) {
+      if (cl == null) return;
       try {
-         i.close();
+         cl.close();
       } catch (Exception e) {
-
-      }
-   }
-
-   public static void closeInput(ObjectInput i) {
-      if (i == null) return;
-      try {
-         i.close();
-      } catch (Exception e) {
-
       }
    }
 
@@ -260,4 +251,14 @@ public final class Util {
 
       return sb.toString();
    }
+
+   public static String padString(String s, int minWidth) {
+      if (s.length() < minWidth) {
+         StringBuilder sb = new StringBuilder(s);
+         while (sb.length() < minWidth) sb.append(" ");
+         return sb.toString();
+      }
+      return s;
+   }
+
 }
