@@ -8,10 +8,13 @@ import org.jgroups.util.Util;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.Externalizable;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -330,7 +333,7 @@ public class GridFile extends File {
    }
 
 
-   public static class Metadata implements Streamable {
+   public static class Metadata implements Externalizable {
       public static final byte FILE = 1 << 0;
       public static final byte DIR = 1 << 1;
 
@@ -388,26 +391,28 @@ public class GridFile extends File {
          return sb.toString();
       }
 
-      public void writeTo(DataOutputStream out) throws IOException {
-         out.writeInt(length);
-         out.writeLong(modification_time);
-         out.writeInt(chunk_size);
-         out.writeByte(flags);
-      }
-
-      public void readFrom(DataInputStream in) throws IOException, IllegalAccessException, InstantiationException {
-         length = in.readInt();
-         modification_time = in.readLong();
-         chunk_size = in.readInt();
-         flags = in.readByte();
-      }
-
       private String getType() {
          if (Util.isFlagSet(flags, FILE))
             return "file";
          if (Util.isFlagSet(flags, DIR))
             return "dir";
          return "n/a";
+      }
+
+      @Override
+      public void writeExternal(ObjectOutput out) throws IOException {
+         out.writeInt(length);
+         out.writeLong(modification_time);
+         out.writeInt(chunk_size);
+         out.writeByte(flags);
+      }
+
+      @Override
+      public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+         length = in.readInt();
+         modification_time = in.readLong();
+         chunk_size = in.readInt();
+         flags = in.readByte();
       }
    }
 }
