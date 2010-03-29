@@ -1,6 +1,6 @@
 package org.infinispan.client.hotrod;
 
-import hotrod.impl.transport.VHelper;
+import org.infinispan.client.hotrod.impl.transport.VHelper;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
