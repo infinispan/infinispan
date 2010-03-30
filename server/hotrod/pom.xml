@@ -14,21 +14,11 @@
    <name>Infinispan Server Hotrod Module</name>
    <description>Infinispan server hotrod  module</description>
 
-   <properties>
-      <version.scala>2.8.0.Beta1</version.scala>
-   </properties>
-
    <dependencies>
        <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-server-core</artifactId>
          <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-         <groupId>org.scala-lang</groupId>
-         <artifactId>scala-library</artifactId>
-         <version>${version.scala}</version>
       </dependency>
    </dependencies>
 

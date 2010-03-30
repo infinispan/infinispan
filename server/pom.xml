@@ -9,9 +9,14 @@
       <version>4.1.0-SNAPSHOT</version>
       <relativePath>../parent/pom.xml</relativePath>
    </parent>
+   
    <artifactId>infinispan-server-parent</artifactId>
    <name>Parent pom for server modules</name>
    <packaging>pom</packaging>
+
+   <properties>
+      <version.scala>2.8.0.Beta1</version.scala>
+   </properties>
 
    <modules>
       <module>core</module>
@@ -25,6 +30,12 @@
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-core</artifactId>
          <version>${project.version}</version>
+      </dependency>
+      
+      <dependency>
+         <groupId>org.scala-lang</groupId>
+         <artifactId>scala-library</artifactId>
+         <version>${version.scala}</version>
       </dependency>
 
       <dependency>

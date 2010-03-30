@@ -4,9 +4,9 @@
 
    <parent>
       <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-parent</artifactId>
+      <artifactId>infinispan-server-parent</artifactId>
       <version>4.1.0-SNAPSHOT</version>
-      <relativePath>../../parent/pom.xml</relativePath>
+      <relativePath>../pom.xml</relativePath>
    </parent>
 
    <artifactId>infinispan-server-rest</artifactId>
@@ -63,31 +63,10 @@
       <version.jetty>6.1.15</version.jetty>
       <version.commons.httpclient>3.1</version.commons.httpclient>
       <version.slf4j>1.5.8</version.slf4j>
-      <!-- TODO: Find out why on earth when this is set to 2.7.7, memcached and hotrod modules that depend on 2.8.0.Beta1, receive 2.7.7 library on assembly!!! -->
-      <version.scala>2.8.0.Beta1</version.scala>
+      <!-- TODO: Find out why on earth when scala version is set to 2.7.7 here, memcached and hotrod modules that depend on 2.8.0.Beta1, receive 2.7.7 library on assembly!!! -->
    </properties>
 
    <dependencies>
-      <dependency>
-         <groupId>org.scala-lang</groupId>
-         <artifactId>scala-library</artifactId>
-         <version>${version.scala}</version>
-      </dependency>
-
-      <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-core</artifactId>
-         <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-core</artifactId>
-         <version>${project.version}</version>
-         <type>test-jar</type>
-         <scope>test</scope>
-      </dependency>
-
       <dependency>
          <groupId>org.jboss.resteasy</groupId>
          <artifactId>resteasy-jaxrs</artifactId>
