@@ -2,15 +2,16 @@ package org.infinispan.server.core
 
 import org.infinispan.util.Util
 import java.io.{Serializable, ObjectOutput, ObjectInput, Externalizable}
+import org.infinispan.marshall.{Externalizer, Ids, Marshallable}
 
 /**
  * // TODO: Document this
  * @author Galder Zamarreño
  * @since
  */
-// TODO: Make it a hardcoded Externalizer
-// TODO: maybe convert to scala case class -> whenever u create java beans, maybe create case classes
-class CacheValue(val data: Array[Byte], val version: Long) extends Serializable {
+// TODO: putting Ids.SERVER_CACHE_VALUE fails compilation in 2.8
+@Marshallable(externalizer = classOf[CacheValueExternalizer], id = 55)
+class CacheValue(val data: Array[Byte], val version: Long) {
 
    override def toString = {
       new StringBuilder().append("CacheValue").append("{")
@@ -19,15 +20,20 @@ class CacheValue(val data: Array[Byte], val version: Long) extends Serializable 
          .append("}").toString
    }
 
-//   override def readExternal(in: ObjectInput) {
-//      data = new Array[Byte](in.read())
-//      in.read(data)
-//      version = in.readLong
-//   }
-//
-//   override def writeExternal(out: ObjectOutput) {
-//      out.write(data.length)
-//      out.write(data)
-//      out.writeLong(version)
-//   }
+}
+
+private class CacheValueExternalizer extends Externalizer {
+   override def writeObject(output: ObjectOutput, obj: AnyRef) {
+      val cacheValue = obj.asInstanceOf[CacheValue]
+      output.write(cacheValue.data.length)
+      output.write(cacheValue.data)
+      output.writeLong(cacheValue.version)
+   }
+
+   override def readObject(input: ObjectInput): AnyRef = {
+      val data = new Array[Byte](input.read())
+      input.read(data)
+      val version = input.readLong
+      new CacheValue(data, version)
+   }
 }

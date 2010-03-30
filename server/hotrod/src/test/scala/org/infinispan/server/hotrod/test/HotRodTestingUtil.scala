@@ -14,8 +14,6 @@ import org.testng.Assert._
  * @author Galder Zamarreño
  * @since 4.1
  */
-
-// TODO: convert to object so that mircea can use it
 object HotRodTestingUtil extends Logging {
 
    import HotRodTestingUtil._

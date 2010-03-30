@@ -203,3 +203,9 @@ object ResponseResolver {
       responses.get(request).get
    }
 }
+
+object ProtocolFlag extends Enumeration {
+   type ProtocolFlag = Enumeration#Value
+   val NoFlag = Value(0)
+   val ForceReturnPreviousValue = Value(1)
+}

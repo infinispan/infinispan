@@ -12,6 +12,7 @@ import org.infinispan.server.core.VersionGenerator._
 import java.io.StreamCorruptedException
 import transport._
 import transport.ChannelBuffers._
+import org.infinispan.util.Util
 
 /**
  * // TODO: Document this
@@ -220,10 +221,24 @@ object AbstractProtocolDecoder extends Logging {
    private val DefaultTimeUnit = TimeUnit.MILLISECONDS 
 }
 
-class RequestHeader(val op: Enumeration#Value)
+class RequestHeader(val op: Enumeration#Value) {
+   override def toString = {
+      new StringBuilder().append("RequestHeader").append("{")
+         .append("op=").append(op)
+         .append("}").toString
+   }
+}
 
-// TODO: NoReply could possibly be passed to subclass specific to memcached and make create* implementations use it
-class RequestParameters(val data: Array[Byte], val lifespan: Int, val maxIdle: Int, val streamVersion: Long)
+class RequestParameters(val data: Array[Byte], val lifespan: Int, val maxIdle: Int, val streamVersion: Long) {
+   override def toString = {
+      new StringBuilder().append("RequestParameters").append("{")
+         .append("data=").append(Util.printArray(data, true))
+         .append(", lifespan=").append(lifespan)
+         .append(", maxIdle=").append(maxIdle)
+         .append(", streamVersion=").append(streamVersion)
+         .append("}").toString
+   }
+}
 
 class UnknownOperationException(reason: String) extends StreamCorruptedException(reason)
 

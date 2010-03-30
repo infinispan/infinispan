@@ -17,20 +17,16 @@ class HotRodEncoder extends Encoder {
    override def encode(ctx: ChannelHandlerContext, channel: Channel, msg: AnyRef): AnyRef = {
       trace("Encode msg {0}", msg)
       val buffer: ChannelBuffer = msg match {
-         // TODO: move stats response down
+         case r: Response => writeHeader(r)
+      }
+      msg match {
          case s: StatsResponse => {
-            val buffer = dynamicBuffer
-            writeHeader(buffer, s)
             buffer.writeUnsignedInt(s.stats.size)
             for ((key, value) <- s.stats) {
                buffer.writeString(key)
                buffer.writeString(value)
             }
-            buffer
          }
-         case r: Response => writeHeader(dynamicBuffer, r)
-      }
-      msg match {
          case g: GetWithVersionResponse => {
             if (g.status == Success) {
                buffer.writeLong(g.version)
@@ -44,7 +40,8 @@ class HotRodEncoder extends Encoder {
       buffer
    }
 
-   private def writeHeader(buffer: ChannelBuffer, r: Response): ChannelBuffer = {
+   private def writeHeader(r: Response): ChannelBuffer = {
+      val buffer = dynamicBuffer
       buffer.writeByte(Magic.byteValue)
       buffer.writeUnsignedLong(r.messageId)
       buffer.writeByte(r.operation.id.byteValue)

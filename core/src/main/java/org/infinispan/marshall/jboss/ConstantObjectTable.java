@@ -168,6 +168,10 @@ public class ConstantObjectTable implements ObjectTable {
       MARSHALLABLES.add(ClearOperation.class.getName());
       MARSHALLABLES.add(DefaultConsistentHash.class.getName());
       MARSHALLABLES.add(UnionConsistentHash.class.getName());
+
+      MARSHALLABLES.add("org.infinispan.server.core.CacheValue");
+      MARSHALLABLES.add("org.infinispan.server.memcached.MemcachedValue");
+      MARSHALLABLES.add("org.infinispan.server.hotrod.CacheKey");
    }
 
    /**

@@ -8,6 +8,8 @@ import OperationStatus._
 import org.infinispan.manager.{DefaultCacheManager, CacheManager}
 import java.io.{IOException, StreamCorruptedException}
 import org.infinispan.util.concurrent.TimeoutException
+import org.infinispan.server.hotrod.ProtocolFlag._
+import org.infinispan.server.hotrod.OperationResponse._
 
 /**
  * // TODO: Document this
@@ -129,3 +131,26 @@ object HotRodDecoder extends Logging {
 class UnknownVersionException(reason: String) extends StreamCorruptedException(reason)
 
 class InvalidMagicIdException(reason: String) extends StreamCorruptedException(reason)
+
+class HotRodHeader(override val op: Enumeration#Value, val messageId: Long, val cacheName: String,
+                   val flag: ProtocolFlag, val clientIntelligence: Short, val topologyId: Int,
+                   val decoder: AbstractVersionedDecoder) extends RequestHeader(op) {
+   override def toString = {
+      new StringBuilder().append("HotRodHeader").append("{")
+         .append("op=").append(op)
+         .append(", messageId=").append(messageId)
+         .append(", cacheName=").append(cacheName)
+         .append(", flag=").append(flag)
+         .append(", clientIntelligence=").append(clientIntelligence)
+         .append(", topologyId=").append(topologyId)
+         .append("}").toString
+   }
+}
+
+class ErrorHeader(override val messageId: Long) extends HotRodHeader(ErrorResponse, messageId, "", NoFlag, 0, 0, null) {
+   override def toString = {
+      new StringBuilder().append("ErrorHeader").append("{")
+         .append("messageId=").append(messageId)
+         .append("}").toString
+   }
+}

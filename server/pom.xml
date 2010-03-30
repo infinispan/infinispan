@@ -13,6 +13,13 @@
    <name>Parent pom for server modules</name>
    <packaging>pom</packaging>
 
+   <modules>
+      <module>core</module>
+      <module>rest</module>
+      <module>memcached</module>
+      <module>hotrod</module>
+   </modules>
+
    <dependencies>
       <dependency>
          <groupId>${project.groupId}</groupId>

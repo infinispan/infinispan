@@ -57,7 +57,7 @@ class HotRodFunctionalTest extends SingleCacheManagerTest {
 
    def testUnknownMagic(m: Method) {
       client.assertPut(m) // Do a put to make sure decoder gets back to reading properly
-      val status = client.execute(0x66, 0x01, cacheName, k(m) , 0, 0, v(m), 0, 0)
+      val status = client.executeWithBadMagic(0x66, 0x01, cacheName, k(m) , 0, 0, v(m), 0, 0)
       assertTrue(status == InvalidMagicOrMsgId,
          "Status should have been 'InvalidMagicOrMsgId' but instead was: " + status)
    }

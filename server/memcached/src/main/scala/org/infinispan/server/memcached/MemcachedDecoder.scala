@@ -14,6 +14,7 @@ import org.infinispan.server.core._
 import org.infinispan.{AdvancedCache, Version, CacheException, Cache}
 import collection.mutable.ListBuffer
 import org.infinispan.server.core.transport.ChannelBuffers._
+import org.infinispan.util.Util
 
 /**
  * // TODO: Document this
@@ -383,7 +384,20 @@ class MemcachedDecoder(cacheManager: CacheManager) extends AbstractProtocolDecod
 class MemcachedParameters(override val data: Array[Byte], override val lifespan: Int,
                           override val maxIdle: Int, override val streamVersion: Long,
                           val noReply: Boolean, val flags: Int, val delta: String,
-                          val flushDelay: Int) extends RequestParameters(data, lifespan, maxIdle, streamVersion)
+                          val flushDelay: Int) extends RequestParameters(data, lifespan, maxIdle, streamVersion) {
+   override def toString = {
+      new StringBuilder().append("MemcachedParameters").append("{")
+         .append("data=").append(Util.printArray(data, true))
+         .append(", lifespan=").append(lifespan)
+         .append(", maxIdle=").append(maxIdle)
+         .append(", streamVersion=").append(streamVersion)
+         .append(", noReply=").append(noReply)
+         .append(", flags=").append(flags)
+         .append(", delta=").append(delta)
+         .append(", flushDelay=").append(flushDelay)
+         .append("}").toString
+   }   
+}
 
 private class DelayedFlushAll(cache: Cache[String, MemcachedValue],
                               flushFunction: AdvancedCache[String, MemcachedValue] => Unit) extends Runnable {
