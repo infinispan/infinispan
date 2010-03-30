@@ -21,6 +21,7 @@ class Decoder10(cacheManager: CacheManager) extends AbstractVersionedDecoder {
    import RequestResolver._
    import ResponseResolver._
    import OperationResponse._
+   import ProtocolFlag._
    type SuitableHeader = HotRodHeader
 
    override def readHeader(buffer: ChannelBuffer, messageId: Long): HotRodHeader = {
@@ -66,14 +67,21 @@ class Decoder10(cacheManager: CacheManager) extends AbstractVersionedDecoder {
    override def createValue(params: RequestParameters, nextVersion: Long): CacheValue =
       new CacheValue(params.data, nextVersion)
 
-   override def createSuccessResponse(header: HotRodHeader): AnyRef =
-      new Response(header.messageId, toResponse(header.op), Success)
+   override def createSuccessResponse(header: HotRodHeader, prev: CacheValue): AnyRef =
+      createResponse(header, toResponse(header.op), Success, prev)
 
-   override def createNotExecutedResponse(header: HotRodHeader): AnyRef =
-      new Response(header.messageId, toResponse(header.op), OperationNotExecuted)
+   override def createNotExecutedResponse(header: HotRodHeader, prev: CacheValue): AnyRef =
+      createResponse(header, toResponse(header.op), OperationNotExecuted, prev)
 
    override def createNotExistResponse(header: HotRodHeader): AnyRef =
-      new Response(header.messageId, toResponse(header.op), KeyDoesNotExist)   
+      createResponse(header, toResponse(header.op), KeyDoesNotExist, null)
+
+   private def createResponse(h: HotRodHeader, op: OperationResponse, st: OperationStatus, prev: CacheValue): AnyRef = {
+      if (h.flag == ForceReturnPreviousValue)
+         new ResponseWithPrevious(h.messageId, op, st, if (prev == null) None else Some(prev.data))
+      else
+         new Response(h.messageId, op, st)
+   }
 
    override def createGetResponse(messageId: Long, v: CacheValue, op: Enumeration#Value): AnyRef = {
       if (v != null && op == GetRequest)
@@ -97,14 +105,18 @@ class Decoder10(cacheManager: CacheManager) extends AbstractVersionedDecoder {
                if (prev.version == params.get.streamVersion) {
                   val removed = cache.remove(k, prev);
                   if (removed)
-                     new Response(messageId, RemoveIfUnmodifiedResponse, Success)
+                     // new Response(messageId, RemoveIfUnmodifiedResponse, Success)
+                     createResponse(header, RemoveIfUnmodifiedResponse, Success, prev)
                   else
-                     new Response(messageId, RemoveIfUnmodifiedResponse, OperationNotExecuted)
+                     // new Response(messageId, RemoveIfUnmodifiedResponse, OperationNotExecuted)
+                     createResponse(header, RemoveIfUnmodifiedResponse, OperationNotExecuted, prev)
                } else {
-                  new Response(messageId, RemoveIfUnmodifiedResponse, OperationNotExecuted)
+                  // new Response(messageId, RemoveIfUnmodifiedResponse, OperationNotExecuted)
+                  createResponse(header, RemoveIfUnmodifiedResponse, OperationNotExecuted, prev)
                }
             } else {
-               new Response(messageId, RemoveIfUnmodifiedResponse, KeyDoesNotExist)
+               // new Response(messageId, RemoveIfUnmodifiedResponse, KeyDoesNotExist)
+               createResponse(header, RemoveIfUnmodifiedResponse, KeyDoesNotExist, prev)
             }
          }
          case ContainsKeyRequest => {

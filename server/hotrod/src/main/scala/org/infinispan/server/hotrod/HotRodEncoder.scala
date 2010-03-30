@@ -20,6 +20,12 @@ class HotRodEncoder extends Encoder {
          case r: Response => writeHeader(r)
       }
       msg match {
+         case r: ResponseWithPrevious => {
+            if (r.previous == None)
+               buffer.writeUnsignedInt(0)
+            else
+               buffer.writeRangedBytes(r.previous.get)
+         }
          case s: StatsResponse => {
             buffer.writeUnsignedInt(s.stats.size)
             for ((key, value) <- s.stats) {

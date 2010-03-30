@@ -53,7 +53,7 @@ class HotRodClient(host: String, port: Int, defaultCacheName: String) {
    def stop = ch.disconnect
 
    def put(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte]): OperationStatus =
-      execute(0xA0, 0x01, defaultCacheName, k, lifespan, maxIdle, v, 0, 0)
+      execute(0xA0, 0x01, defaultCacheName, k, lifespan, maxIdle, v, 0)
 
    def assertPut(m: Method) {
       val status = put(k(m) , 0, 0, v(m))
@@ -65,39 +65,71 @@ class HotRodClient(host: String, port: Int, defaultCacheName: String) {
       assertStatus(status, Success)
    }
 
-   def put(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte], flags: Int): OperationStatus =
-      execute(0xA0, 0x01, defaultCacheName, k, lifespan, maxIdle, v, flags, 0)
+   def put(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte], flags: Int): (OperationStatus, Array[Byte]) =
+      execute(0xA0, 0x01, defaultCacheName, k, lifespan, maxIdle, v, 0, flags)
 
    def putIfAbsent(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte]): OperationStatus =
-      execute(0xA0, 0x05, defaultCacheName, k, lifespan, maxIdle, v, 0, 0)
+      execute(0xA0, 0x05, defaultCacheName, k, lifespan, maxIdle, v, 0)
 
+   def putIfAbsent(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte], flags: Int): (OperationStatus, Array[Byte]) =
+      execute(0xA0, 0x05, defaultCacheName, k, lifespan, maxIdle, v, 0, flags)
+   
    def replace(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte]): OperationStatus =
-      execute(0xA0, 0x07, defaultCacheName, k, lifespan, maxIdle, v, 0, 0)
+      execute(0xA0, 0x07, defaultCacheName, k, lifespan, maxIdle, v, 0)
+
+   def replace(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte], flags: Int): (OperationStatus, Array[Byte]) =
+      execute(0xA0, 0x07, defaultCacheName, k, lifespan, maxIdle, v, 0, flags)   
 
    def replaceIfUnmodified(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte], version: Long): OperationStatus =
-      execute(0xA0, 0x09, defaultCacheName, k, lifespan, maxIdle, v, 0, version)
+      execute(0xA0, 0x09, defaultCacheName, k, lifespan, maxIdle, v, version)
+
+   def replaceIfUnmodified(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte], version: Long, flags: Int): (OperationStatus, Array[Byte]) =
+      execute(0xA0, 0x09, defaultCacheName, k, lifespan, maxIdle, v, version, flags)
+
+   def remove(k: Array[Byte]): OperationStatus =
+      execute(0xA0, 0x0B, defaultCacheName, k, 0, 0, null, 0)
+
+   def remove(k: Array[Byte], flags: Int): (OperationStatus, Array[Byte]) =
+      execute(0xA0, 0x0B, defaultCacheName, k, 0, 0, null, 0, flags)
 
    def removeIfUnmodified(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte], version: Long): OperationStatus =
-      execute(0xA0, 0x0D, defaultCacheName, k, lifespan, maxIdle, v, 0, version)
+      execute(0xA0, 0x0D, defaultCacheName, k, lifespan, maxIdle, v, version)
+
+   def removeIfUnmodified(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte], version: Long, flags: Int): (OperationStatus, Array[Byte]) =
+      execute(0xA0, 0x0D, defaultCacheName, k, lifespan, maxIdle, v, version, flags)
 
    def execute(magic: Int, code: Byte, name: String, k: Array[Byte], lifespan: Int, maxIdle: Int,
-               v: Array[Byte], flags: Int, version: Long): OperationStatus = {
-      val op = new Op(magic, code, name, k, lifespan, maxIdle, v, flags, version)
-      val writeFuture = ch.write(op)
-      writeFuture.awaitUninterruptibly
-      assertTrue(writeFuture.isSuccess)
-      var handler = ch.getPipeline.getLast.asInstanceOf[ClientHandler]
-      handler.getResponse(op.id).status
+               v: Array[Byte], version: Long): OperationStatus = {
+      val op = new Op(magic, code, name, k, lifespan, maxIdle, v, 0, version)
+      execute(op, op.id)._1
    }
 
    def executeWithBadMagic(magic: Int, code: Byte, name: String, k: Array[Byte], lifespan: Int, maxIdle: Int,
-                           v: Array[Byte], flags: Int, version: Long): OperationStatus = {
+                           v: Array[Byte], version: Long): OperationStatus = {
+      val op = new Op(magic, code, name, k, lifespan, maxIdle, v, 0, version)
+      execute(op, 0)._1
+   }
+
+   def execute(magic: Int, code: Byte, name: String, k: Array[Byte], lifespan: Int, maxIdle: Int,
+               v: Array[Byte], version: Long, flags: Int): (OperationStatus, Array[Byte]) = {
       val op = new Op(magic, code, name, k, lifespan, maxIdle, v, flags, version)
+      execute(op, op.id)
+   }
+
+   private def execute(op: Op, expectedResponseMessageId: Long): (OperationStatus, Array[Byte]) = {
       val writeFuture = ch.write(op)
       writeFuture.awaitUninterruptibly
       assertTrue(writeFuture.isSuccess)
       var handler = ch.getPipeline.getLast.asInstanceOf[ClientHandler]
-      handler.getResponse(0).status
+      if (op.flags == 1) {
+         val respWithPrevious = handler.getResponse(expectedResponseMessageId).asInstanceOf[ResponseWithPrevious]
+         if (respWithPrevious.previous == None)
+            (respWithPrevious.status, Array())
+         else
+            (respWithPrevious.status, respWithPrevious.previous.get)
+      } else {
+         (handler.getResponse(expectedResponseMessageId).status, null)
+      }       
    }
 
    def get(k: Array[Byte], flags: Int): (OperationStatus, Array[Byte]) = {
@@ -117,10 +149,7 @@ class HotRodClient(host: String, port: Int, defaultCacheName: String) {
    def getWithVersion(k: Array[Byte], flags: Int): (OperationStatus, Array[Byte], Long) =
       get(0x11, k, 0)
 
-   def remove(k: Array[Byte], flags: Int): OperationStatus =
-      execute(0xA0, 0x0B, defaultCacheName, k, 0, 0, null, 0, 0)
-
-   def get(code: Byte, k: Array[Byte], flags: Int): (OperationStatus, Array[Byte], Long) = {
+   private def get(code: Byte, k: Array[Byte], flags: Int): (OperationStatus, Array[Byte], Long) = {
       val op = new Op(0xA0, code, defaultCacheName, k, 0, 0, null, flags, 0)
       val writeFuture = ch.write(op)
       writeFuture.awaitUninterruptibly
@@ -140,7 +169,7 @@ class HotRodClient(host: String, port: Int, defaultCacheName: String) {
       }
    }
 
-   def clear: OperationStatus = execute(0xA0, 0x13, defaultCacheName, null, 0, 0, null, 0, 0)
+   def clear: OperationStatus = execute(0xA0, 0x13, defaultCacheName, null, 0, 0, null, 0)
 
    def stats: Map[String, String] = {
       val op = new StatsOp(0xA0, 0x15, defaultCacheName, null)
@@ -153,7 +182,7 @@ class HotRodClient(host: String, port: Int, defaultCacheName: String) {
       resp.stats
    }
 
-   def ping: OperationStatus = execute(0xA0, 0x17, defaultCacheName, null, 0, 0, null, 0, 0)
+   def ping: OperationStatus = execute(0xA0, 0x17, defaultCacheName, null, 0, 0, null, 0)
 
 }
 
@@ -172,11 +201,13 @@ private object ClientPipelineFactory extends ChannelPipelineFactory {
 
 @Sharable
 private object Encoder extends OneToOneEncoder {
+   val idToOp = new ConcurrentHashMap[Long, Op] 
 
    override def encode(ctx: ChannelHandlerContext, ch: Channel, msg: Any) = {
       val ret =
          msg match {
             case op: Op => {
+               idToOp.put(op.id, op)
                val buffer = new ChannelBufferAdapter(ChannelBuffers.dynamicBuffer)
                buffer.writeByte(op.magic.asInstanceOf[Byte]) // magic
                buffer.writeUnsignedLong(op.id) // message id
@@ -214,6 +245,7 @@ object HotRodClient {
 }
 
 private object Decoder extends ReplayingDecoder[NoState] with Logging {
+   import Encoder._
 
    override def decode(ctx: ChannelHandlerContext, ch: Channel, buffer: ChannelBuffer, state: NoState): Object = {
       val buf = new ChannelBufferAdapter(buffer)
@@ -233,8 +265,20 @@ private object Decoder extends ReplayingDecoder[NoState] with Logging {
                new StatsResponse(id, immutable.Map[String, String]() ++ stats)
             }
             case PutResponse | PutIfAbsentResponse | ReplaceResponse | ReplaceIfUnmodifiedResponse
-                 | RemoveResponse | RemoveIfUnmodifiedResponse | ContainsKeyResponse | ClearResponse | PingResponse =>
-               new Response(id, opCode, status)
+                 | RemoveResponse | RemoveIfUnmodifiedResponse => {
+               val op = idToOp.get(id)
+               if (op.flags == 1) {
+                  val length = buf.readUnsignedInt
+                  if (length == 0) {
+                     new ResponseWithPrevious(id, opCode, status, None)
+                  } else {
+                     val previous = new Array[Byte](length)
+                     buf.readBytes(previous)
+                     new ResponseWithPrevious(id, opCode, status, Some(previous))
+                  }
+               } else new Response(id, opCode, status)
+            }
+            case ContainsKeyResponse | ClearResponse | PingResponse => new Response(id, opCode, status)
             case GetWithVersionResponse  => {
                if (status == Success) {
                   val version = buf.readLong

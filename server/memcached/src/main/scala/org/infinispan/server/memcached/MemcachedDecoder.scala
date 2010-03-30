@@ -220,7 +220,7 @@ class MemcachedDecoder(cacheManager: CacheManager) extends AbstractProtocolDecod
       }
    }
 
-   override def createSuccessResponse(h: RequestHeader, params: Option[MemcachedParameters]): AnyRef = {
+   override def createSuccessResponse(h: RequestHeader, params: Option[MemcachedParameters], prev: MemcachedValue): AnyRef = {
       if (isStatsEnabled) {
          h.op match {
             case ReplaceIfUnmodifiedRequest => replaceIfUnmodifiedHits.incrementAndGet
@@ -235,7 +235,7 @@ class MemcachedDecoder(cacheManager: CacheManager) extends AbstractProtocolDecod
       } else null
    }
 
-   override def createNotExecutedResponse(h: RequestHeader, params: Option[MemcachedParameters]): AnyRef = {
+   override def createNotExecutedResponse(h: RequestHeader, params: Option[MemcachedParameters], prev: MemcachedValue): AnyRef = {
       if (isStatsEnabled) {
          h.op match {
             case ReplaceIfUnmodifiedRequest => replaceIfUnmodifiedBadval.incrementAndGet

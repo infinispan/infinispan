@@ -19,6 +19,19 @@ class Response(val messageId: Long, val operation: OperationResponse, val status
    }
 }
 
+class ResponseWithPrevious(override val messageId: Long, override val operation: OperationResponse,
+                                override val status: OperationStatus, val previous: Option[Array[Byte]])
+      extends Response(messageId, operation, status) {
+   override def toString = {
+      new StringBuilder().append("ResponseWithPrevious").append("{")
+         .append("messageId=").append(messageId)
+         .append(", operation=").append(operation)
+         .append(", status=").append(status)
+         .append(", previous=").append(if (previous == None) "null" else Util.printArray(previous.get, true))
+         .append("}").toString
+   }
+}
+
 class GetResponse(override val messageId: Long, override val operation: OperationResponse,
                   override val status: OperationStatus, val data: Option[Array[Byte]])
       extends Response(messageId, operation, status) {

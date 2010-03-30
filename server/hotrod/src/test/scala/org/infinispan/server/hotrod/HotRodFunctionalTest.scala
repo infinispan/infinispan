@@ -50,27 +50,26 @@ class HotRodFunctionalTest extends SingleCacheManagerTest {
    }
 
    def testUnknownCommand(m: Method) {
-      val status = client.execute(0xA0, 0x77, cacheName, k(m) , 0, 0, v(m), 0, 0)
+      val status = client.execute(0xA0, 0x77, cacheName, k(m) , 0, 0, v(m), 0)
       assertTrue(status == UnknownOperation,
          "Status should have been 'UnknownOperation' but instead was: " + status)
    }
 
    def testUnknownMagic(m: Method) {
       client.assertPut(m) // Do a put to make sure decoder gets back to reading properly
-      val status = client.executeWithBadMagic(0x66, 0x01, cacheName, k(m) , 0, 0, v(m), 0, 0)
+      val status = client.executeWithBadMagic(0x66, 0x01, cacheName, k(m) , 0, 0, v(m), 0)
       assertTrue(status == InvalidMagicOrMsgId,
          "Status should have been 'InvalidMagicOrMsgId' but instead was: " + status)
    }
 
    // todo: test other error conditions such as invalid version...etc
-   // todo: add test for force return value operation
 
    def testPutBasic(m: Method) {
       client.assertPut(m)
    }
 
    def testPutOnDefaultCache(m: Method) {
-      val status = client.execute(0xA0, 0x01, DefaultCacheManager.DEFAULT_CACHE_NAME, k(m), 0, 0, v(m), 0, 0)
+      val status = client.execute(0xA0, 0x01, DefaultCacheManager.DEFAULT_CACHE_NAME, k(m), 0, 0, v(m), 0)
       assertStatus(status, Success)
       val cache = cacheManager.getCache[CacheKey, CacheValue]
       val value = cache.get(new CacheKey(k(m)))
@@ -89,6 +88,13 @@ class HotRodFunctionalTest extends SingleCacheManagerTest {
       Thread.sleep(1100)
       val (getSt, actual) = client.assertGet(m)
       assertKeyDoesNotExist(getSt, actual)
+   }
+
+   def testPutWithPreviousValue(m: Method) {
+      val (status, previous) = client.put(k(m) , 0, 0, v(m), 1)
+      assertSuccess(status, Array(), previous)
+      val (status2, previous2) = client.put(k(m) , 0, 0, v(m, "v2-"), 1)
+      assertSuccess(status2, v(m), previous2)
    }
 
    def testGetBasic(m: Method) {
@@ -129,6 +135,14 @@ class HotRodFunctionalTest extends SingleCacheManagerTest {
       assertKeyDoesNotExist(getSt, actual)
    }
 
+   def testPutIfAbsentWithPreviousValue(m: Method) {
+      val (status, previous) = client.putIfAbsent(k(m) , 0, 0, v(m), 1)
+      assertSuccess(status, Array(), previous)
+      val (status2, previous2) = client.putIfAbsent(k(m) , 0, 0, v(m, "v2-"), 1)
+      assertStatus(status2, OperationNotExecuted)
+      assertTrue(Arrays.equals(v(m), previous2))
+   }
+
    def testReplaceBasic(m: Method) {
       client.assertPut(m)
       val status = client.replace(k(m), 0, 0, v(m, "v1-"))
@@ -158,6 +172,16 @@ class HotRodFunctionalTest extends SingleCacheManagerTest {
       Thread.sleep(1100)
       val (getSt, actual) = client.assertGet(m)
       assertKeyDoesNotExist(getSt, actual)
+   }
+
+   def testReplaceWithPreviousValue(m: Method) {
+      val (status, previous) = client.replace(k(m) , 0, 0, v(m), 1)
+      assertStatus(status, OperationNotExecuted)
+      assertEquals(previous.length, 0)
+      val (status2, previous2) = client.put(k(m) , 0, 0, v(m, "v2-"), 1)
+      assertSuccess(status2, Array(), previous2)
+      val (status3, previous3) = client.replace(k(m) , 0, 0, v(m, "v3-"), 1)
+      assertSuccess(status3, v(m, "v2-"), previous3)
    }
 
    def testGetWithVersionBasic(m: Method) {
@@ -208,17 +232,42 @@ class HotRodFunctionalTest extends SingleCacheManagerTest {
       assertStatus(status, Success)
    }
 
+   def testReplaceIfUnmodifiedWithPreviousValue(m: Method) {
+      val (status, previous) = client.replaceIfUnmodified(k(m) , 0, 0, v(m), 999, 1)
+      assertStatus(status, KeyDoesNotExist)
+      assertEquals(previous.length, 0)
+      client.assertPut(m)
+      val (getSt, actual, version) = client.getWithVersion(k(m), 0)
+      assertSuccess(getSt, v(m), actual)
+      assertTrue(version != 0)
+      val (status2, previous2)  = client.replaceIfUnmodified(k(m), 0, 0, v(m, "v2-"), 888, 1)
+      assertStatus(status2, OperationNotExecuted)
+      assertTrue(Arrays.equals(v(m), previous2))
+      val (status3, previous3)  = client.replaceIfUnmodified(k(m), 0, 0, v(m, "v3-"), version, 1)
+      assertStatus(status3, Success)
+      assertTrue(Arrays.equals(v(m), previous3))
+   }
+
    def testRemoveBasic(m: Method) {
       client.assertPut(m)
-      val status = client.remove(k(m), 0)
+      val status = client.remove(k(m))
       assertStatus(status, Success)
       val (getSt, actual) = client.assertGet(m)
       assertKeyDoesNotExist(getSt, actual)
    }
 
    def testRemoveDoesNotExist(m: Method) {
-      val status = client.remove(k(m), 0)
+      val status = client.remove(k(m))
       assertStatus(status, KeyDoesNotExist)
+   }
+
+   def testRemoveWithPreviousValue(m: Method) {
+      val (status, previous) = client.remove(k(m), 1)
+      assertStatus(status, KeyDoesNotExist)
+      assertEquals(previous.length, 0)
+      client.assertPut(m)
+      val (status2, previous2) = client.remove(k(m), 1)
+      assertSuccess(status2, v(m), previous2)
    }
 
    def testRemoveIfUnmodifiedBasic(m: Method) {
@@ -258,6 +307,22 @@ class HotRodFunctionalTest extends SingleCacheManagerTest {
       assertStatus(status, OperationNotExecuted)
       status = client.removeIfUnmodified(k(m), 0, 0, v(m, "v2-"), version2)
       assertStatus(status, Success)
+   }
+
+   def testRemoveIfUmodifiedWithPreviousValue(m: Method) {
+      val (status, previous) = client.removeIfUnmodified(k(m) , 0, 0, v(m), 999, 1)
+      assertStatus(status, KeyDoesNotExist)
+      assertEquals(previous.length, 0)
+      client.assertPut(m)
+      val (getSt, actual, version) = client.getWithVersion(k(m), 0)
+      assertSuccess(getSt, v(m), actual)
+      assertTrue(version != 0)
+      val (status2, previous2)  = client.removeIfUnmodified(k(m), 0, 0, v(m, "v2-"), 888, 1)
+      assertStatus(status2, OperationNotExecuted)
+      assertTrue(Arrays.equals(v(m), previous2))
+      val (status3, previous3)  = client.removeIfUnmodified(k(m), 0, 0, v(m, "v3-"), version, 1)
+      assertStatus(status3, Success)
+      assertTrue(Arrays.equals(v(m), previous3))
    }
 
    def testContainsKeyBasic(m: Method) {

@@ -81,11 +81,11 @@ class HotRodDecoder(cacheManager: CacheManager) extends AbstractProtocolDecoder[
    override def createValue(h: HotRodHeader, p: RequestParameters, nextVersion: Long): CacheValue =
       h.decoder.createValue(p, nextVersion)
 
-   override def createSuccessResponse(h: HotRodHeader, p: Option[RequestParameters]): AnyRef =
-      h.decoder.createSuccessResponse(h)
+   override def createSuccessResponse(h: HotRodHeader, p: Option[RequestParameters], prev: CacheValue): AnyRef =
+      h.decoder.createSuccessResponse(h, prev)
 
-   override def createNotExecutedResponse(h: HotRodHeader, p: Option[RequestParameters]): AnyRef =
-      h.decoder.createNotExecutedResponse(h)
+   override def createNotExecutedResponse(h: HotRodHeader, p: Option[RequestParameters], prev: CacheValue): AnyRef =
+      h.decoder.createNotExecutedResponse(h, prev)
 
    override def createNotExistResponse(h: HotRodHeader, p: Option[RequestParameters]): AnyRef =
       h.decoder.createNotExistResponse(h)

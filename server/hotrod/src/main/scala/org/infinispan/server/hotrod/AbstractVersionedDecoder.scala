@@ -23,9 +23,9 @@ abstract class AbstractVersionedDecoder {
 
    def createValue(params: RequestParameters, nextVersion: Long): CacheValue
 
-   def createSuccessResponse(header: HotRodHeader): AnyRef
+   def createSuccessResponse(header: HotRodHeader, prev: CacheValue): AnyRef
 
-   def createNotExecutedResponse(header: HotRodHeader): AnyRef
+   def createNotExecutedResponse(header: HotRodHeader, prev: CacheValue): AnyRef
 
    def createNotExistResponse(header: HotRodHeader): AnyRef
 

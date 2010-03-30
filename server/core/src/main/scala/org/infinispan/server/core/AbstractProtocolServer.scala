@@ -30,6 +30,8 @@ abstract class AbstractProtocolServer extends ProtocolServer {
       decoder = getDecoder(cacheManager)
       decoder.start
       encoder = getEncoder
+      // TODO: add an IdleStateHandler so that idle connections are detected, this could help on malformed data
+      // TODO: ... requests such as when the lenght of data is bigger than the expected data itself.
       val nettyDecoder = if (decoder != null) new DecoderAdapter(decoder) else null
       val nettyEncoder = if (encoder != null) new EncoderAdapter(encoder) else null
       val address =  new InetSocketAddress(host, port)

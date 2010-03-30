@@ -75,8 +75,8 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue] extends Decoder {
    private def put(header: SuitableHeader, k: K, params: Option[SuitableParameters], cache: Cache[K, V]): AnyRef = {
       val p = params.get
       val v = createValue(header, p, generateVersion(cache))
-      cache.put(k, v, toMillis(p.lifespan), DefaultTimeUnit, toMillis(p.maxIdle), DefaultTimeUnit)
-      createSuccessResponse(header, params)
+      val prev = cache.put(k, v, toMillis(p.lifespan), DefaultTimeUnit, toMillis(p.maxIdle), DefaultTimeUnit)
+      createSuccessResponse(header, params, prev)
    }
 
    private def putIfAbsent(header: SuitableHeader, k: K, params: Option[SuitableParameters], cache: Cache[K, V]): AnyRef = {
@@ -87,9 +87,9 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue] extends Decoder {
          cache.putIfAbsent(k, v, toMillis(p.lifespan), DefaultTimeUnit, toMillis(p.maxIdle), DefaultTimeUnit)
       }
       if (prev == null)
-         createSuccessResponse(header, params)
+         createSuccessResponse(header, params, prev)
       else
-         createNotExecutedResponse(header, params)
+         createNotExecutedResponse(header, params, prev)
    }
 
    private def replace(header: SuitableHeader, k: K, params: Option[SuitableParameters], cache: Cache[K, V]): AnyRef = {
@@ -100,9 +100,9 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue] extends Decoder {
          cache.replace(k, v, toMillis(p.lifespan), DefaultTimeUnit, toMillis(p.maxIdle), DefaultTimeUnit)
       }
       if (prev != null)
-         createSuccessResponse(header, params)
+         createSuccessResponse(header, params, prev)
       else
-         createNotExecutedResponse(header, params)
+         createNotExecutedResponse(header, params, prev)
    }
 
    private def replaceIfUmodified(header: SuitableHeader, k: K, params: Option[SuitableParameters], cache: Cache[K, V]): AnyRef = {
@@ -114,11 +114,11 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue] extends Decoder {
             val v = createValue(header, p, generateVersion(cache))
             val replaced = cache.replace(k, prev, v);
             if (replaced)
-               createSuccessResponse(header, params)
+               createSuccessResponse(header, params, prev)
             else
-               createNotExecutedResponse(header, params)
+               createNotExecutedResponse(header, params, prev)
          } else {
-            createNotExecutedResponse(header, params)
+            createNotExecutedResponse(header, params, prev)
          }            
       } else createNotExistResponse(header, params)
    }
@@ -126,7 +126,7 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue] extends Decoder {
    private def remove(header: SuitableHeader, k: K, params: Option[SuitableParameters], cache: Cache[K, V]): AnyRef = {
       val prev = cache.remove(k)
       if (prev != null)
-         createSuccessResponse(header, params)
+         createSuccessResponse(header, params, prev)
       else
          createNotExistResponse(header, params)
    }
@@ -171,9 +171,9 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue] extends Decoder {
 
    protected def createValue(h: SuitableHeader, p: SuitableParameters, nextVersion: Long): V
 
-   protected def createSuccessResponse(h: SuitableHeader, params: Option[SuitableParameters]): AnyRef
+   protected def createSuccessResponse(h: SuitableHeader, params: Option[SuitableParameters], prev: V): AnyRef
 
-   protected def createNotExecutedResponse(h: SuitableHeader, params: Option[SuitableParameters]): AnyRef
+   protected def createNotExecutedResponse(h: SuitableHeader, params: Option[SuitableParameters], prev: V): AnyRef
 
    protected def createNotExistResponse(h: SuitableHeader, params: Option[SuitableParameters]): AnyRef
 
