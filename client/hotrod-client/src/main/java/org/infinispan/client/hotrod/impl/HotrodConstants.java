@@ -29,6 +29,8 @@ public interface HotrodConstants {
    public static final byte STATS_REQUEST = 0x19;
    public static final byte QUIT_REQUEST = 0x1B;
    public static final byte EVENT_REGISTRATION_REQUEST = 0x1D;
+   public static final byte PING_REQUEST = 0x17;
+
 
    //responses
    public static final byte PUT_RESPONSE = 0x02;
@@ -47,6 +49,7 @@ public interface HotrodConstants {
    public static final byte QUIT_RESPONSE = 0x1C;
    public static final byte EVENT_REGISTRATION_RESPONSE = 0x1E;
    public static final byte ERROR_RESPONSE = 0x50;
+   public static final byte PING_RESPONSE = 0x18;
 
    //response status
    public static final byte NO_ERROR_STATUS = 0x00;

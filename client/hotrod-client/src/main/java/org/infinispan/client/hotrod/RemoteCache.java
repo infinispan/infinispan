@@ -339,6 +339,13 @@ public interface RemoteCache<K, V> extends Cache<K, V> {
    void putAll(Map<? extends K, ? extends V> m);
 
    /**
+    * Returns true if the remote cluster can be reached, false otherwise.
+    */
+   boolean ping();
+
+   public ServerStatistics stats();
+
+   /**
     * Besides the key and value, also contains an version. To be used in versioned operations, e.g. {@link RemoteCache#remove(Object, long)}.
     */
    public static interface VersionedValue<V> {

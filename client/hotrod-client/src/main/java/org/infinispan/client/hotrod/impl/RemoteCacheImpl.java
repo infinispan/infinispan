@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.impl;
 
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.ServerStatistics;
 import org.infinispan.client.hotrod.Version;
 import org.infinispan.util.concurrent.NotifyingFuture;
 
@@ -30,8 +31,8 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K,V> {
 
    @Override
    public boolean remove(K key, long version) {
-      HotrodOperations.VersionedOperationResponse response = operations.removeIfUnmodified(obj2bytes(key), version, flags());
-      return response.isUpdated();
+      VersionedOperationResponse response = operations.removeIfUnmodified(obj2bytes(key), version, flags());
+      return response.getCode().isUpdated();
    }
 
    @Override
@@ -41,8 +42,8 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K,V> {
 
    @Override
    public boolean replace(K key, V newValue, long version, int lifespanSeconds, int maxIdleTimeSeconds) {
-      HotrodOperations.VersionedOperationResponse response = operations.replaceIfUnmodified(obj2bytes(key), obj2bytes(newValue), lifespanSeconds, maxIdleTimeSeconds, version, flags());
-      return response.isUpdated();
+      VersionedOperationResponse response = operations.replaceIfUnmodified(obj2bytes(key), obj2bytes(newValue), lifespanSeconds, maxIdleTimeSeconds, version, flags());
+      return response.getCode().isUpdated();
    }
 
    @Override
@@ -66,6 +67,16 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K,V> {
    @Override
    public NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
       return null;  // TODO: Customise this generated block
+   }
+
+   @Override
+   public ServerStatistics stats() {
+      Map<String, Number> statsMap = operations.stats();
+      ServerStatisticsImpl stats = new ServerStatisticsImpl();
+      for (Map.Entry<String, Number> entry : statsMap.entrySet()) {
+         stats.addStats(entry.getKey(), entry.getValue());
+      }
+      return stats;
    }
 
    @Override
@@ -148,6 +159,11 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K,V> {
    @Override
    public void clear() {
       operations.clear(flags());
+   }
+
+   @Override
+   public boolean ping() {
+      return operations.ping();
    }
 
    @Override

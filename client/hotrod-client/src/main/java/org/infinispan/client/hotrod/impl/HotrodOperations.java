@@ -16,19 +16,6 @@ import java.util.Map;
  */
 public interface HotrodOperations {
 
-   public enum VersionedOperationResponse {
-      SUCCESS(true), NO_SUCH_KEY(false), MODIFIED_KEY(false);
-      private boolean isModified;
-
-      VersionedOperationResponse(boolean modified) {
-         isModified = modified;
-      }
-
-      public boolean isUpdated() {
-         return isModified;
-      }
-   }
-
    public byte[] get(byte[] key, Flag... flags);
 
    public byte[] remove(byte[] key, Flag... flags);
@@ -74,9 +61,7 @@ public interface HotrodOperations {
 
    public void clear(Flag... flags);
 
-   public Map<String, String> stats();
-
-   public String stats(String paramName);
+   public Map<String, Number> stats();
 
    public boolean ping();
 }

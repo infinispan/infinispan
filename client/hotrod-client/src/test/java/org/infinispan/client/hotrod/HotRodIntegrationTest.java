@@ -24,7 +24,7 @@ import static junit.framework.Assert.assertEquals;
  * @author mmarkus
  * @since 4.1
  */
-@Test (testName = "client.hotrod.HotRodClientIntegrationTest", groups = "functional", enabled = true) 
+@Test (testName = "client.hotrod.HotRodClientIntegrationTest", groups = "functional") 
 public class HotRodIntegrationTest extends SingleCacheManagerTest {
 
    private static final String CACHE_NAME = "replSync";
@@ -49,17 +49,22 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
       //pass the config file to the cache
       hotrodServer = HotRodTestingUtil.startHotRodServer(cacheManager);
       
-      remoteCacheManager = new RemoteCacheManager();
+      remoteCacheManager = getRemoteCacheManager();
       defaultRemote = remoteCacheManager.getCache();
       remoteCache = remoteCacheManager.getCache(CACHE_NAME);
       return cacheManager;
    }
 
+   protected RemoteCacheManager getRemoteCacheManager() {
+      return new RemoteCacheManager();
+   }
 
 
-   @AfterClass (enabled = false)
+   @AfterClass (enabled = true)
    public void testDestroyRemoteCacheFactory() {
+      assert remoteCache.ping();
       hotrodServer.stop();
+      assert !remoteCache.ping();
 //      try {
 //         remoteCache.get("aKey");
 //         assert false;
@@ -199,9 +204,9 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
       remoteCache.put("aKey", "aValue");
       remoteCache.put("aKey2", "aValue");
       remoteCache.clear();
-      assert cache.isEmpty();
       assert !remoteCache.containsKey("aKey");
       assert !remoteCache.containsKey("aKey2");
+      assert cache.isEmpty();
    }
 
    public void testStats() {

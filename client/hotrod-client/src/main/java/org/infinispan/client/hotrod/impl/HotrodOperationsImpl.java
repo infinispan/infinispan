@@ -4,7 +4,11 @@ import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
 import org.infinispan.client.hotrod.exceptions.TimeoutException;
+import org.infinispan.client.hotrod.impl.transport.TransportException;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -15,6 +19,8 @@ import java.util.concurrent.atomic.AtomicLong;
  * @since 4.1
  */
 public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
+
+   private static Log log = LogFactory.getLog(HotrodOperationsImpl.class);
 
    private final byte[] cacheNameBytes;
    private static final AtomicLong MSG_ID = new AtomicLong();
@@ -37,7 +43,7 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
             return transport.readByteArray();
          }
       } finally {
-         transport.release();
+         releaseTransport(transport);
       }
       throw new IllegalStateException("We should not reach here!");
    }
@@ -52,7 +58,7 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
             return returnPossiblePrevValue(transport, flags);
          }
       } finally {
-         transport.release();
+         releaseTransport(transport);
       }
       throw new IllegalStateException("We should not reach here!");
    }
@@ -67,7 +73,7 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
             return true;
          }
       } finally {
-         transport.release();
+         releaseTransport(transport);
       }
       throw new IllegalStateException("We should not reach here!");
    }
@@ -85,7 +91,7 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
             return new BinaryVersionedValue(version, value);
          }
       } finally {
-         transport.release();
+         releaseTransport(transport);
       }
       throw new IllegalStateException("We should not reach here!");
    }
@@ -100,7 +106,7 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
          }
          return returnPossiblePrevValue(transport, flags);
       } finally {
-         transport.release();
+         releaseTransport(transport);
       }
    }
 
@@ -114,57 +120,124 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
             return null;
          }
       } finally {
-         transport.release();
+         releaseTransport(transport);
       }
       throw new IllegalStateException("We should not reach here!");
    }
 
    public byte[] replace(byte[] key, byte[] value, int lifespan, int maxIdle, Flag... flags) {
-      return null;
+      Transport transport = getTransport();
+      try {
+         short status = sendPutOperation(key, value, transport, REPLACE_REQUEST, REPLACE_RESPONSE, lifespan, maxIdle, flags);
+         if (status == NO_ERROR_STATUS) {
+            return returnPossiblePrevValue(transport, flags);
+         } else if (status == NOT_PUT_REMOVED_REPLACED_STATUS) {
+            return null;
+         }
+      } finally {
+         releaseTransport(transport);
+      }
+      throw new IllegalStateException("We should not reach here!");
    }
 
+   /**
+    * request : [header][key length][key][lifespan][max idle][entry_version][value length][value] response: If
+    * ForceReturnPreviousValue has been passed, this responses will contain previous [value length][value] for that key.
+    * If the key does not exist or previous was null, value length would be 0. Otherwise, if no ForceReturnPreviousValue
+    * was sent, the response would be empty.
+    */
    public VersionedOperationResponse replaceIfUnmodified(byte[] key, byte[] value, int lifespan, int maxIdle, long version, Flag... flags) {
-      return null;  // TODO: Customise this generated block
+      Transport transport = getTransport();
+      try {
+         // 1) write header
+         long messageId = writeHeader(transport, REPLACE_IF_UNMODIFIED_REQUEST, flags);
+
+         //2) write message body
+         transport.writeByteArray(key);
+         transport.writeVInt(lifespan);
+         transport.writeVInt(maxIdle);
+         transport.writeVLong(version);
+         transport.writeByteArray(value);
+         return returnVersionedOperationResponse(transport, messageId, flags);
+      } finally {
+         releaseTransport(transport);
+      }
    }
 
+   /**
+    * Request: [header][key length][key][entry_version]
+    */
    public VersionedOperationResponse removeIfUnmodified(byte[] key, long version, Flag... flags) {
-      return null;  // TODO: Customise this generated block
+      Transport transport = getTransport();
+      try {
+         // 1) write header
+         long messageId = writeHeader(transport, REMOVE_IF_UNMODIFIED_REQUEST, flags);
+
+         //2) write message body
+         transport.writeByteArray(key);
+         transport.writeVLong(version);
+
+         //process response and return
+         return returnVersionedOperationResponse(transport, messageId, flags);
+
+      } finally {
+         releaseTransport(transport);
+      }
    }
 
    public void clear(Flag... flags) {
-      // TODO: Customise this generated block
+      Transport transport = getTransport();
+      try {
+         // 1) write header
+         long messageId = writeHeader(transport, CLEAR_REQUEST, flags);
+         readHeaderAndValidate(transport, messageId, CLEAR_RESPONSE);
+      } finally {
+         releaseTransport(transport);
+      }
    }
 
-   public Map<String, String> stats() {
-      return null;  // TODO: Customise this generated block
-   }
-
-   public String stats(String paramName) {
-      return null;  // TODO: Customise this generated block
+   public Map<String, Number> stats() {
+      Transport transport = getTransport();
+      try {
+         // 1) write header
+         long messageId = writeHeader(transport, STATS_REQUEST);
+         readHeaderAndValidate(transport, messageId, CLEAR_RESPONSE);
+         int nrOfStats = transport.readVInt();
+         Map<String, Number> result = new HashMap<String, Number>();
+         for (int i = 0; i < nrOfStats; i++) {
+            String statName = transport.readString();
+            Long statValue = transport.readVLong();
+            result.put(statName, statValue);
+         }
+         return result;
+      } finally {
+         releaseTransport(transport);
+      }
    }
 
    public Transport getTransport() {
       return transportFactory.getTransport();
    }
 
-   private short sendKeyOperation(byte[] key, Transport transport, byte opCode, Flag[] flags, byte opRespCode) {
-      // 1) write [header][key length][key]
-      long messageId = writeHeader(transport, opCode, flags);
-      transport.writeByteArray(key);
-      transport.flush();
-
-      // 2) now read the header
-      short status = readHeaderAndValidate(transport, messageId, opCode, opRespCode);
-
-      // 3) process possible error messages
-      checkForErrorsInResponseStatus(status, messageId, transport);
-
-      return status;
-   }
-
    @Override
    public boolean ping() {
-      return false;  // TODO: Customise this generated block
+      Transport transport = null;
+      try {
+         transport = getTransport();
+         // 1) write header
+         long messageId = writeHeader(transport, PING_REQUEST);
+         short respStatus = readHeaderAndValidate(transport, messageId, HotrodConstants.PING_RESPONSE);
+         if (respStatus == NO_ERROR_STATUS) {
+            return true;
+         }
+         throw new IllegalStateException("Unknown response status: " + Integer.toHexString(respStatus));
+      } catch (TransportException te) {
+         log.trace("Exception while ping", te);
+         return false;
+      }
+      finally {
+         releaseTransport(transport);
+      }
    }
 
    //[header][key length][key][lifespan][max idle][value length][value]
@@ -181,11 +254,9 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
       transport.flush();
 
       // 3) now read header
-      short status = readHeaderAndValidate(transport, messageId, opCode, opRespCode);
-      checkForErrorsInResponseStatus(status, messageId, transport);
 
       //return status (not error status for sure)
-      return status;
+      return readHeaderAndValidate(transport, messageId, opRespCode);
    }
 
    /*
@@ -214,7 +285,7 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
    /**
     * Magic	| Message Id | Op code | Status | Topology Change Marker
     */
-   private short readHeaderAndValidate(Transport transport, long messageId, short opCode, short opRespCode) {
+   private short readHeaderAndValidate(Transport transport, long messageId, short opRespCode) {
       short magic = transport.readByte();
       if (magic != RESPONSE_MAGIC) {
          throw new InvalidResponseException("Invalid magic number. Expected " + Integer.toHexString(RESPONSE_MAGIC) + " and received " + Integer.toHexString(magic));
@@ -229,11 +300,12 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
             checkForErrorsInResponseStatus(transport.readByte(), messageId, transport);
             throw new IllegalStateException("Error expected! (i.e. exception in the prev statement)");
          }
-         throw new InvalidResponseException("Invalid response operation. Expected " + Integer.toHexString(opCode) + " and received " + Integer.toHexString(receivedOpCode));
+         throw new InvalidResponseException("Invalid response operation. Expected " + Integer.toHexString(opRespCode) + " and received " + Integer.toHexString(receivedOpCode));
       }
       short status = transport.readByte();
       transport.readByte(); //todo - this will be changed once we support smarter than basic clients
-      return status; 
+      checkForErrorsInResponseStatus(status, messageId, transport);
+      return status;
    }
 
    private void checkForErrorsInResponseStatus(short status, long messageId, Transport transport) {
@@ -267,7 +339,41 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
       return false;
    }
 
+   private short sendKeyOperation(byte[] key, Transport transport, byte opCode, Flag[] flags, byte opRespCode) {
+      // 1) write [header][key length][key]
+      long messageId = writeHeader(transport, opCode, flags);
+      transport.writeByteArray(key);
+      transport.flush();
+
+      // 2) now read the header
+      return readHeaderAndValidate(transport, messageId, opRespCode);
+   }
+
    private byte[] returnPossiblePrevValue(Transport transport, Flag[] flags) {
       return hasForceReturn(flags) ? transport.readByteArray() : null;
+   }
+
+   private void releaseTransport(Transport transport) {
+      if (transport != null)
+         transport.release();
+   }
+
+   private VersionedOperationResponse returnVersionedOperationResponse(Transport transport, long messageId, Flag[] flags) {
+      //3) ...
+      short respStatus = readHeaderAndValidate(transport, messageId, REPLACE_IF_UNMODIFIED_RESPONSE);
+
+      //4 ...
+      VersionedOperationResponse.RspCode code;
+      if (respStatus == NO_ERROR_STATUS) {
+         code = VersionedOperationResponse.RspCode.SUCCESS;
+      } else if (respStatus == NOT_PUT_REMOVED_REPLACED_STATUS) {
+         code = VersionedOperationResponse.RspCode.MODIFIED_KEY;
+      } else if (respStatus == KEY_DOES_NOT_EXIST_STATUS) {
+         code = VersionedOperationResponse.RspCode.NO_SUCH_KEY;
+      } else {
+         throw new IllegalStateException("Unknown response status: " + Integer.toHexString(respStatus));
+      }
+      byte[] prevValue = returnPossiblePrevValue(transport, flags);
+      return new VersionedOperationResponse(prevValue, code);
    }
 }
