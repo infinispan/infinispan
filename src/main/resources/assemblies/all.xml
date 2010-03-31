@@ -147,7 +147,8 @@
             <include>org.infinispan:infinispan-query</include>
             <include>org.infinispan:infinispan-server-rest</include>
             <include>org.infinispan:infinispan-server-memcached</include>
-            <!-- include>org.infinispan:infinispan-server-hotrod</include -->
+            <include>org.infinispan:infinispan-server-hotrod</include>
+            <include>org.infinispan:infinispan-client-hotrod</include>
             <include>org.infinispan:infinispan-lucene-directory</include>
             <include>org.infinispan:infinispan-lucene-demo</include>
          </includes>
@@ -226,7 +227,8 @@
                      <exclude>org.rhq.helpers:rhq-pluginAnnotations</exclude>
                      <exclude>org.infinispan:infinispan-core</exclude>
                      <exclude>org.infinispan:infinispan-server-rest</exclude>
-                     <!--<exclude>org.infinispan:infinispan-ec2-demo</exclude>                     -->
+                     <exclude>org.infinispan:infinispan-ec2-demo</exclude>
+                     <exclude>org.infinispan:infinispan-gridfs-webdav</exclude>
                   </excludes>
                   <useTransitiveDependencies>true</useTransitiveDependencies>
                   <useTransitiveFiltering>true</useTransitiveFiltering>
@@ -243,6 +245,7 @@
          <includes>
             <include>org.infinispan:infinispan-server-rest</include>
             <include>org.infinispan:infinispan-ec2-demo</include>
+            <include>org.infinispan:infinispan-gridfs-webdav</include>
          </includes>
 
          <sources>
