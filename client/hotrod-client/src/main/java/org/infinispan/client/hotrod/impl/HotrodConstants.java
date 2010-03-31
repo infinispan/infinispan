@@ -1,7 +1,5 @@
 package org.infinispan.client.hotrod.impl;
 
-import java.util.EnumMap;
-
 /**
  * // TODO: Document this
  *

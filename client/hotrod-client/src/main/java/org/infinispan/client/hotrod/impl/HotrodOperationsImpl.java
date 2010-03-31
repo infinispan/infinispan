@@ -34,7 +34,7 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
             return null;
          }
          if (status == NO_ERROR_STATUS) {
-            return readValue(transport);
+            return transport.readByteArray();
          }
       } finally {
          transport.release();
@@ -81,7 +81,7 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
          }
          if (status == NO_ERROR_STATUS) {
             long version = transport.readVLong();
-            byte[] value = readValue(transport);
+            byte[] value = transport.readByteArray();
             return new BinaryVersionedValue(version, value);
          }
       } finally {
@@ -150,7 +150,7 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
    private short sendKeyOperation(byte[] key, Transport transport, byte opCode, Flag[] flags, byte opRespCode) {
       // 1) write [header][key length][key]
       long messageId = writeHeader(transport, opCode, flags);
-      transport.writeBytesArray(key);
+      transport.writeByteArray(key);
       transport.flush();
 
       // 2) now read the header
@@ -174,10 +174,10 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
       long messageId = writeHeader(transport, opCode, flags);
 
       // 2) write key and value
-      transport.writeBytesArray(key);
+      transport.writeByteArray(key);
       transport.writeVInt(lifespan);
       transport.writeVInt(maxIdle);
-      transport.writeBytesArray(value);
+      transport.writeByteArray(value);
       transport.flush();
 
       // 3) now read header
@@ -193,12 +193,12 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
     */
 
    private long writeHeader(Transport transport, short operationCode, Flag... flags) {
-      transport.appendUnsignedByte(REQUEST_MAGIC);
+      transport.writeByte(REQUEST_MAGIC);
       long messageId = MSG_ID.incrementAndGet();
       transport.writeVLong(messageId);
       transport.writeByte(HOTROD_VERSION);
       transport.writeByte(operationCode);
-      transport.writeBytesArray(cacheNameBytes);
+      transport.writeByteArray(cacheNameBytes);
       int flagInt = 0;
       if (flags != null) {
          for (Flag flag : flags) {
@@ -259,15 +259,6 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
       }
    }
 
-   /**
-    * Reads the length og the byte array and then the byte array from the transport.
-    */
-   private byte[] readValue(Transport transport) {
-      int responseLength = transport.readVInt();
-      byte[] result = new byte[responseLength];
-      return transport.readByteArray(result);
-   }
-
    private boolean hasForceReturn(Flag[] flags) {
       if (flags == null) return false;
       for (Flag flag : flags) {
@@ -277,6 +268,6 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
    }
 
    private byte[] returnPossiblePrevValue(Transport transport, Flag[] flags) {
-      return hasForceReturn(flags) ? readValue(transport) : null;
+      return hasForceReturn(flags) ? transport.readByteArray() : null;
    }
 }

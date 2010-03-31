@@ -7,7 +7,7 @@ package org.infinispan.client.hotrod;
  * @since 4.1
  */
 public enum Flag {
-   FORCE_RETURN_VALUE(0x0800);
+   FORCE_RETURN_VALUE(0x0001);
 
    private int flagInt;
 

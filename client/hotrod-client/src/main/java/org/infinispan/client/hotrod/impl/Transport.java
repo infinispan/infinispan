@@ -8,14 +8,9 @@ package org.infinispan.client.hotrod.impl;
  */
 public interface Transport {
 
-   public void writeBytesArray(byte... toAppend);
+   public void writeByteArray(byte[] toAppend);
 
    public void writeByte(short toWrite);
-
-   /**
-    * Treats the tailing byte as an unsigned byte.
-    */
-   public void appendUnsignedByte(short requestMagic);
 
    public void writeVInt(int length);
 
@@ -33,9 +28,8 @@ public interface Transport {
 
    /**
     * reads an vint which is size; then an array having that size.
-    * @param bufferToFill
     */
-   public byte[] readByteArray(byte[] bufferToFill);
+   public byte[] readByteArray();
 
    String readString();
 }

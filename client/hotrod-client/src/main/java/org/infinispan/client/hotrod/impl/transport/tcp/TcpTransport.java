@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.impl.transport.tcp;
 
+import org.infinispan.client.hotrod.impl.AbstractTransport;
 import org.infinispan.client.hotrod.impl.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportException;
 import org.infinispan.client.hotrod.impl.transport.VHelper;
@@ -14,21 +15,13 @@ import java.util.logging.Logger;
  * @author mmarkus
  * @since 4.1
  */
-public class TcpTransport implements Transport {
+public class TcpTransport extends AbstractTransport {
 
    public static final Logger log = Logger.getLogger(TcpTransport.class.getName());
 
    private String host;
    private int port;
    private Socket socket;
-
-   public void appendUnsignedByte(short requestMagic) {
-      try {
-         socket.getOutputStream().write(requestMagic);
-      } catch (IOException e) {
-         throw new TransportException(e);
-      }
-   }
 
    public void writeVInt(int length) {
       try {
@@ -75,9 +68,8 @@ public class TcpTransport implements Transport {
       }
    }
 
-   public void writeBytesArray(byte... toAppend) {
+   protected void writeBuffer(byte[] toAppend) {
       try {
-         writeVInt(toAppend.length);
          socket.getOutputStream().write(toAppend);
       } catch (IOException e) {
          throw new TransportException("Problems writing data to stream", e);
@@ -122,7 +114,7 @@ public class TcpTransport implements Transport {
       }
    }
 
-   public byte[] readByteArray(byte[] bufferToFill) {
+   protected void readBuffer(byte[] bufferToFill)  {
       int size;
       try {
          size = socket.getInputStream().read(bufferToFill);
@@ -135,13 +127,5 @@ public class TcpTransport implements Transport {
       if (size != bufferToFill.length) {
          throw new TransportException("Expected " + bufferToFill.length + " bytes but only could read " + size + " bytes!");
       }
-      return bufferToFill;
-   }
-
-   @Override
-   public String readString() {
-      long strLength = readVLong();
-      byte[] strContent = readByteArray(new byte[(int)strLength]);
-      return new String(strContent);//todo take care of encoding here
    }
 }
