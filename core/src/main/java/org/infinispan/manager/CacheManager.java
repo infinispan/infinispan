@@ -59,7 +59,7 @@ import java.util.Set;
  */
 @Scope(Scopes.GLOBAL)
 @SurvivesRestarts
-public interface CacheManager extends Lifecycle, Listenable {
+public interface CacheManager extends Lifecycle, Listenable, CacheContainer {
    /**
     * Defines a named cache's configuration using the following algorithm:
     * <p/>
@@ -105,37 +105,6 @@ public interface CacheManager extends Lifecycle, Listenable {
     * @return a cloned configuration instance
     */
    Configuration defineConfiguration(String cacheName, String templateCacheName, Configuration configurationOverride);
-
-   /**
-    * Retrieves the default cache associated with this cache manager.
-    * <p/>
-    * As such, this method is always guaranteed to return the default cache.
-    * <p />
-    * <b>NB:</b> Shared caches are supported (and in fact encouraged) but if they are used it's the users responsibility to
-    * ensure that <i>at least one</i> but <i>only one</i> caller calls stop() on the cache, and it does so with the awareness
-    * that others may be using the cache.
-    *
-    * @return the default cache.
-    */
-   <K, V> Cache<K, V> getCache();
-
-   /**
-    * Retrieves a named cache from the system.  If the cache has been previously created with the same name, the running
-    * cache instance is returned.  Otherwise, this method attempts to create the cache first.
-    * <p/>
-    * When creating a new cache, this method will use the configuration passed in to the CacheManager on construction,
-    * as a template, and then optionally apply any overrides previously defined for the named cache using the {@link
-    * #defineConfiguration(String, Configuration)} or {@link #defineConfiguration(String, String, Configuration)}
-    * methods, or declared in the configuration file.
-    * <p />
-    * <b>NB:</b> Shared caches are supported (and in fact encouraged) but if they are used it's the users responsibility to
-    * ensure that <i>at least one</i> but <i>only one</i> caller calls stop() on the cache, and it does so with the awareness
-    * that others may be using the cache.
-    *
-    * @param cacheName name of cache to retrieve
-    * @return a cache instance identified by cacheName
-    */
-   <K, V> Cache<K, V> getCache(String cacheName);
 
    /**
     * @return the name of the cluster.  Null if running in local mode.
