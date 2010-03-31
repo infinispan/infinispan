@@ -5,9 +5,8 @@ import netty.ChannelBuffersAdapter
 /**
  * // TODO: Document this
  * @author Galder Zamarreño
- * @since
+ * @since 4.1
  */
-
 object ChannelBuffers {
    
    def wrappedBuffer(array: Array[Byte]*): ChannelBuffer = {

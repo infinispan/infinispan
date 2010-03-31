@@ -6,9 +6,8 @@ import org.infinispan.server.core.transport.{ChannelBuffers, Channel, ChannelHan
 /**
  * // TODO: Document this
  * @author Galder Zamarreño
- * @since
+ * @since 4.1
  */
-
 class ChannelHandlerContextAdapter(val ctx: NettyChannelHandlerContext) extends ChannelHandlerContext {
    
    override def getChannel: Channel = new ChannelAdapter(ctx.getChannel)

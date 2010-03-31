@@ -6,9 +6,8 @@ import org.jboss.netty.buffer.{ChannelBuffers => NettyChannelBuffers}
 /**
  * // TODO: Document this
  * @author Galder Zamarreño
- * @since
+ * @since 4.1
  */
-
 object ChannelBuffersAdapter {
 
    def wrappedBuffer(array: Array[Byte]*): ChannelBuffer = {

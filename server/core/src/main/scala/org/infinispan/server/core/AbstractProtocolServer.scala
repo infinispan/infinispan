@@ -8,9 +8,8 @@ import org.infinispan.manager.{DefaultCacheManager, CacheManager}
 /**
  * // TODO: Document this
  * @author Galder Zamarreño
- * @since
+ * @since 4.1
  */
-
 abstract class AbstractProtocolServer extends ProtocolServer {
    private var host: String = _
    private var port: Int = _

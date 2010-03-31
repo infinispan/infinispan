@@ -14,9 +14,8 @@ import org.infinispan.manager.{CacheManager, DefaultCacheManager}
 /**
  * // TODO: Document this
  * @author Galder Zamarreño
- * @since
+ * @since 4.1
  */
-
 object Main extends Logging {
    
    val PROP_KEY_PORT = "infinispan.server.port"

@@ -14,9 +14,8 @@ import scala.collection.JavaConversions._
 /**
  * // TODO: Document this
  * @author Galder Zamarreño
- * @since
+ * @since 4.1
  */
-
 class NettyTransport(decoder: ChannelUpstreamHandler, encoder: ChannelDownstreamHandler,
                   address: SocketAddress, masterThreads: Int, workerThreads: Int, cacheName: String) extends Transport {
    import NettyTransport._

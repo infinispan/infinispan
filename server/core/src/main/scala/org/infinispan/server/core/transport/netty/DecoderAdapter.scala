@@ -8,9 +8,8 @@ import org.infinispan.server.core.transport._;
 /**
  * // TODO: Document this
  * @author Galder Zamarreño
- * @since
+ * @since 4.1
  */
-
 class DecoderAdapter(decoder: Decoder) extends ReplayingDecoder[NoState](true) {
 
    override def decode(nCtx: NettyChannelHandlerContext, channel: NettyChannel,

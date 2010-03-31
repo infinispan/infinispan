@@ -23,7 +23,6 @@ class HotRodDecoder(cacheManager: CacheManager) extends AbstractProtocolDecoder[
    type SuitableHeader = HotRodHeader
    type SuitableParameters = RequestParameters
 
-   // TODO: Ask trustin whether this needs to be a volatile or not, depends on how decoders are shared
    @volatile private var isError = false
 
    override def readHeader(buffer: ChannelBuffer): HotRodHeader = {

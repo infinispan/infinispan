@@ -8,9 +8,8 @@ import org.infinispan.server.core.VersionGenerator._
 /**
  * // TODO: Document this
  * @author Galder Zamarreño
- * @since
+ * @since 4.1
  */
-
 @Test(groups = Array("functional"), testName = "server.core.VersionGeneratorTest")
 class VersionGeneratorTest {
 

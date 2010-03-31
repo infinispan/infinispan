@@ -6,9 +6,8 @@ import org.infinispan.server.core.transport.{VLong, VInt, ChannelBuffer}
 /**
  * // TODO: Document this
  * @author Galder Zamarreño
- * @since
+ * @since 4.1
  */
-
 class ChannelBufferAdapter(val buffer: NettyChannelBuffer) extends ChannelBuffer {
    
    override def readByte: Byte = buffer.readByte

@@ -7,9 +7,8 @@ import java.util.concurrent.TimeUnit
 /**
  * // TODO: Document this
  * @author Galder Zamarreño
- * @since
+ * @since 4.1
  */
-
 class ChannelFutureAdapter(val future: NettyChannelFuture) extends ChannelFuture {
    
    override def getChannel: Channel = new ChannelAdapter(future.getChannel())

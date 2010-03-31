@@ -7,7 +7,7 @@ import org.infinispan.marshall.{Externalizer, Ids, Marshallable}
 /**
  * // TODO: Document this
  * @author Galder Zamarreño
- * @since
+ * @since 4.1
  */
 // TODO: putting Ids.SERVER_CACHE_VALUE fails compilation in 2.8
 @Marshallable(externalizer = classOf[CacheValueExternalizer], id = 55)

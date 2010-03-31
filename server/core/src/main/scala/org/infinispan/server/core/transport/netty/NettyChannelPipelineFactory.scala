@@ -5,9 +5,8 @@ import org.jboss.netty.channel._
 /**
  * // TODO: Document this
  * @author Galder Zamarreño
- * @since
+ * @since 4.1
  */
-
 class NettyChannelPipelineFactory(decoder: ChannelUpstreamHandler, encoder: ChannelDownstreamHandler)
       extends ChannelPipelineFactory {
 

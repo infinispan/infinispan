@@ -17,9 +17,8 @@ import org.infinispan.util.Util
 /**
  * // TODO: Document this
  * @author Galder Zamarreño
- * @since
+ * @since 4.1
  */
-
 abstract class AbstractProtocolDecoder[K, V <: CacheValue] extends Decoder {
    import AbstractProtocolDecoder._
 

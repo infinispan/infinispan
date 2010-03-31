@@ -5,9 +5,8 @@ import java.util.concurrent.TimeUnit
 /**
  * // TODO: Document this
  * @author Galder Zamarreño
- * @since
+ * @since 4.1
  */
-
 abstract class ChannelFuture {
    def getChannel: Channel
    def isDone: Boolean

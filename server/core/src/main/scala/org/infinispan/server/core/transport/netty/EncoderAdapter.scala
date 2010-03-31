@@ -9,9 +9,8 @@ import org.infinispan.server.core.transport.{ChannelBuffer, Encoder}
 /**
  * // TODO: Document this
  * @author Galder Zamarreño
- * @since
+ * @since 4.1
  */
-
 @ChannelHandler.Sharable
 class EncoderAdapter(encoder: Encoder) extends OneToOneEncoder {
 

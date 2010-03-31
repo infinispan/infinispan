@@ -7,9 +7,8 @@ import java.util.concurrent.atomic.AtomicInteger
 /**
  * // TODO: Document this
  * @author Galder Zamarreño
- * @since
+ * @since 4.1
  */
-
 object VersionGenerator {
 
    private val versionCounter = new AtomicInteger

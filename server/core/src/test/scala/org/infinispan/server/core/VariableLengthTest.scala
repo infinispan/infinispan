@@ -14,7 +14,6 @@ import org.infinispan.server.core.transport.netty.{ChannelBufferAdapter}
  * @author Galder Zamarreño
  * @since 4.1
  */
-
 @Test(groups = Array("functional"), testName = "server.hotrod.VariableLengthTest")
 class VariableLengthTest {
 

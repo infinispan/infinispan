@@ -5,9 +5,8 @@ import java.net.SocketAddress
 /**
  * // TODO: Document this
  * @author Galder Zamarreño
- * @since
+ * @since 4.1
  */
-
 abstract class Transport {
 
    def start
