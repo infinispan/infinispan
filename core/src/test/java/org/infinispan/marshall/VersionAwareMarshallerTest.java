@@ -81,6 +81,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.io.Serializable;
 import java.util.*;
 
 @Test(groups = "functional", testName = "marshall.VersionAwareMarshallerTest")
@@ -463,6 +464,19 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       }
       
    }
+
+   public void testMarshallingSerializableSubclass() throws Exception {
+      Child1 child1Obj = new Child1(1234, "1234");
+      byte[] bytes = marshaller.objectToByteBuffer(child1Obj);
+      marshaller.objectFromByteBuffer(bytes);
+   }
+
+   public void testMarshallingNestedSerializableSubclass() throws Exception {
+      Child1 child1Obj = new Child1(1234, "1234");
+      Child2 child2Obj = new Child2(2345, "2345", child1Obj);
+      byte[] bytes = marshaller.objectToByteBuffer(child2Obj);
+      marshaller.objectFromByteBuffer(bytes);
+   }
    
    protected void marshallAndAssertEquality(Object writeObj) throws Exception {
       byte[] bytes = marshaller.objectToByteBuffer(writeObj);
@@ -506,5 +520,41 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
          b = in.readBoolean();
          deserializationCount++;
       }
+   }
+
+   static class Parent implements Serializable {
+       private String id;
+       private Child1 child1Obj;
+
+       public Parent(String id, Child1 child1Obj) {
+           this.id = id;
+           this.child1Obj = child1Obj;
+       }
+
+       public String getId() {
+           return id;
+       }
+       public Child1 getChild1Obj() {
+           return child1Obj;
+       }
+   }
+
+   static class Child1 extends Parent {
+       private int someInt;
+
+       public Child1(int someInt, String parentStr) {
+           super(parentStr, null);
+           this.someInt = someInt;
+       }
+
+   }
+
+   static class Child2 extends Parent {
+       private int someInt;
+
+       public Child2(int someInt, String parentStr, Child1 child1Obj) {
+           super(parentStr, child1Obj);
+           this.someInt = someInt;
+       }
    }
 }
