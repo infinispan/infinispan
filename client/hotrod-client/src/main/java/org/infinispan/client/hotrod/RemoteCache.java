@@ -353,5 +353,5 @@ public interface RemoteCache<K, V> extends Cache<K, V> {
       public V getValue();
    }
 
-   RemoteCache withFlags(Flag... flags);
+   RemoteCache<K,V> withFlags(Flag... flags);
 }

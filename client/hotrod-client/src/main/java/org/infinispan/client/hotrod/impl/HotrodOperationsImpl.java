@@ -117,11 +117,9 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
       Transport transport = getTransport();
       try {
          short status = sendPutOperation(key, value, transport, PUT_IF_ABSENT_REQUEST, PUT_IF_ABSENT_RESPONSE, lifespan, maxIdle, flags);
-         if (status == NO_ERROR_STATUS) {
+         if (status == NO_ERROR_STATUS || status == NOT_PUT_REMOVED_REPLACED_STATUS) {
             return returnPossiblePrevValue(transport, flags);
-         } else if (status == NOT_PUT_REMOVED_REPLACED_STATUS) {
-            return null;
-         }
+         } 
       } finally {
          releaseTransport(transport);
       }
@@ -274,8 +272,6 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
       transport.writeByte(operationCode);
       transport.writeArray(cacheNameBytes);
 
-
-
       int flagInt = 0;
       if (flags != null) {
          for (Flag flag : flags) {
@@ -286,7 +282,7 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
       transport.writeByte(clientIntelligence);
       transport.writeVInt(0);//this will be changed once smarter clients are supported
       if (log.isTraceEnabled()) {
-         log.trace("wrote header for message " + messageId + ". Operation code: " + operationCode);
+         log.trace("wrote header for message " + messageId + ". Operation code: " + operationCode + ". Flags: " + Integer.toHexString(flagInt));
       }
       return messageId;
    }

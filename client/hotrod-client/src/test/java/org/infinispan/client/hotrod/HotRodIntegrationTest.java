@@ -131,7 +131,6 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
 
    private static Log log = LogFactory.getLog(HotRodIntegrationTest.class);
 
-   @Test (invocationCount = 10)
    public void testGetVersionedCacheEntry() {
       assert null == remoteCache.getVersioned("aKey");
       remoteCache.put("aKey", "aValue");
