@@ -128,6 +128,9 @@ public class RemoteCacheManager implements CacheContainer, Lifecycle {
          hotrodMarshaller = SerializationMarshaller.class.getName();
          log.info("'marshaller' not specified, using " + hotrodMarshaller);
       }
+      if (props.get("force-return-value") != null) {
+         throw new RuntimeException("force-return-value is not supported in Alpha1");
+      }
       started = true;
    }
 
