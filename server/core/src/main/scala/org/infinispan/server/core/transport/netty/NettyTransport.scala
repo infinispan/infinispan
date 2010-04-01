@@ -40,17 +40,22 @@ class NettyTransport(decoder: ChannelUpstreamHandler, encoder: ChannelDownstream
          Executors.newFixedThreadPool(masterThreads, tf)
       }
    }
-   lazy val workerExecutor = {
+   //todo investigate the actual reason why multiple threads do not work
+   lazy val workerExecutor =  {
       val tf = new NamedThreadFactory(cacheName + '-' + "Worker")
-      if (workerThreads == 0) {
-         debug("Configured unlimited threads for worker thread pool")
-         Executors.newCachedThreadPool(tf)
-      }
-      else {
-         debug("Configured {0} threads for worker thread pool", workerThreads)
-         Executors.newFixedThreadPool(workerThreads, tf)
-      }      
+      Executors.newSingleThreadExecutor(tf)
    }
+//   lazy val workerExecutor = {
+//      val tf = new NamedThreadFactory(cacheName + '-' + "Worker")
+//      if (workerThreads == 0) {
+//         debug("Configured unlimited threads for worker thread pool")
+//         Executors.newCachedThreadPool(tf)
+//      }
+//      else {
+//         debug("Configured {0} threads for worker thread pool", workerThreads)
+//         Executors.newFixedThreadPool(workerThreads, tf)
+//      }
+//   }
 
    override def start {
       val bootstrap = new ServerBootstrap(factory);
