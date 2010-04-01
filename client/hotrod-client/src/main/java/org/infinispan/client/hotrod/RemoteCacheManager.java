@@ -10,6 +10,7 @@ import org.infinispan.client.hotrod.impl.TransportFactory;
 import org.infinispan.lifecycle.Lifecycle;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.util.Util;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -123,9 +124,8 @@ public class RemoteCacheManager implements CacheContainer, Lifecycle {
    }
 
    private Object newInstance(String clazz) {
-      ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
       try {
-         return ((Class<?>) contextClassLoader.loadClass(clazz)).newInstance();
+         return Util.getInstance(clazz);
       } catch (Exception e) {
          throw new HotRodClientException("Could not instantiate class: " + clazz, e);
       }
