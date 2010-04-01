@@ -37,7 +37,6 @@ public class ForceReturnValueTest extends SingleCacheManagerTest {
 
    @Override
    protected CacheManager createCacheManager() throws Exception {
-      Configuration standaloneConfig = getDefaultStandaloneConfig(false);
       cacheManager = TestCacheManagerFactory.createLocalCacheManager();
       cache = cacheManager.getCache();
       hotrodServer = HotRodTestingUtil.startHotRodServer(cacheManager);
