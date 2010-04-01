@@ -1,7 +1,6 @@
 package org.infinispan.client.hotrod.impl.transport.netty;
 
 import org.infinispan.client.hotrod.impl.AbstractTransport;
-import org.infinispan.client.hotrod.impl.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportException;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.Channel;
@@ -50,7 +49,7 @@ public class NettyTransport extends AbstractTransport {
    }
 
    @Override
-   protected void writeBuffer(byte[] toAppend) {
+   protected void writeBytes(byte[] toAppend) {
       channel.write(toAppend);
    }
 
@@ -100,7 +99,9 @@ public class NettyTransport extends AbstractTransport {
    }
 
    @Override
-   protected void readBuffer(byte[] bufferToFill) {
-      decoder.fillBuffer(bufferToFill);
+   public byte[] readByteArray(int size) {
+      byte[] bytes = new byte[size];
+      decoder.fillBuffer(bytes);
+      return bytes;
    }
 }

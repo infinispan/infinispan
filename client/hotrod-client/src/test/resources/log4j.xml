@@ -8,7 +8,7 @@
 
    <!-- A time/date based rolling appender -->
    <appender name="FILE" class="org.apache.log4j.DailyRollingFileAppender">
-      <param name="File" value="jdbc_cache_store.log"/>
+      <param name="File" value="hotrod_client.log"/>
       <param name="Append" value="false"/>
 
       <!-- Rollover at midnight each day -->
@@ -49,6 +49,10 @@
    </category>
 
    <category name="org.infinispan.server.hotrod">
+      <priority value="TRACE"/>
+   </category>
+
+   <category name="org.infinispan.client.hotrod">
       <priority value="TRACE"/>
    </category>
 

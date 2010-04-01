@@ -1,9 +1,5 @@
 package org.infinispan.client.hotrod.impl;
 
-import org.infinispan.client.hotrod.impl.transport.TransportException;
-
-import java.io.IOException;
-
 /**
  * // TODO: Document this
  *
@@ -12,25 +8,41 @@ import java.io.IOException;
  */
 public abstract class AbstractTransport implements Transport {
 
-   public byte[] readByteArray() {
-         int responseLength = readVInt();
-         byte[] bufferToFill = new byte[responseLength];
-         readBuffer(bufferToFill);
-         return bufferToFill;
+   public byte[] readArray() {
+      int responseLength = readVInt();
+      return readByteArray(responseLength);
    }
 
    @Override
    public String readString() {
-      byte[] strContent = readByteArray();
+      byte[] strContent = readArray();
       return new String(strContent);//todo take care of encoding here
    }
 
-   protected abstract void readBuffer(byte[] bufferToFill);
-
-   public void writeByteArray(byte[] toAppend) {
-      writeVInt(toAppend.length);
-      writeBuffer(toAppend);
+   @Override
+   public long readLong() {
+      byte[] longBytes = readByteArray(8);
+      long result = 0;
+      for (int i = 0; i < 8; i++) {
+         result <<= 8;
+         result ^= (long) longBytes[i] & 0xFF;
+      }
+      return result;
    }
 
-   protected abstract void writeBuffer(byte[] toAppend);
+   @Override
+   public void writeLong(long longValue) {
+      byte[] b = new byte[8];
+      for (int i = 0; i < 8; i++) {
+         b[7 - i] = (byte) (longValue >>> (i * 8));
+      }
+      writeBytes(b);
+   }
+
+   public void writeArray(byte[] toAppend) {
+      writeVInt(toAppend.length);
+      writeBytes(toAppend);
+   }
+
+   protected abstract void writeBytes(byte[] toAppend);
 }

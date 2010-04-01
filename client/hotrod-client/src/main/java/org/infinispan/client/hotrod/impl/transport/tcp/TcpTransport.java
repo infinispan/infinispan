@@ -1,7 +1,6 @@
 package org.infinispan.client.hotrod.impl.transport.tcp;
 
 import org.infinispan.client.hotrod.impl.AbstractTransport;
-import org.infinispan.client.hotrod.impl.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportException;
 import org.infinispan.client.hotrod.impl.transport.VHelper;
 
@@ -68,7 +67,7 @@ public class TcpTransport extends AbstractTransport {
       }
    }
 
-   protected void writeBuffer(byte[] toAppend) {
+   protected void writeBytes(byte[] toAppend) {
       try {
          socket.getOutputStream().write(toAppend);
       } catch (IOException e) {
@@ -114,18 +113,19 @@ public class TcpTransport extends AbstractTransport {
       }
    }
 
-   protected void readBuffer(byte[] bufferToFill)  {
-      int size;
+   public byte[] readByteArray(int size)  {
+      byte[] bytes = new byte[size];
       try {
-         size = socket.getInputStream().read(bufferToFill);
+         size = socket.getInputStream().read(bytes);
       } catch (IOException e) {
          throw new TransportException(e);
       }
       if (size == -1) {
          throw new RuntimeException("End of stream reached!");
       }
-      if (size != bufferToFill.length) {
-         throw new TransportException("Expected " + bufferToFill.length + " bytes but only could read " + size + " bytes!");
+      if (size != bytes.length) {
+         throw new TransportException("Expected " + bytes.length + " bytes but only could read " + size + " bytes!");
       }
+      return bytes;
    }
 }

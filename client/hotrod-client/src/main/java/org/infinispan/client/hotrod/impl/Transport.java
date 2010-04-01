@@ -8,7 +8,7 @@ package org.infinispan.client.hotrod.impl;
  */
 public interface Transport {
 
-   public void writeByteArray(byte[] toAppend);
+   public void writeArray(byte[] toAppend);
 
    public void writeByte(short toWrite);
 
@@ -29,7 +29,13 @@ public interface Transport {
    /**
     * reads an vint which is size; then an array having that size.
     */
-   public byte[] readByteArray();
+   public byte[] readArray();
 
    String readString();
+
+   byte[] readByteArray(int size);
+
+   long readLong();
+
+   void writeLong(long longValue);
 }

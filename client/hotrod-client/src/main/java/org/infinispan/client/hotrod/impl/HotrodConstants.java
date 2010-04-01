@@ -22,13 +22,9 @@ public interface HotrodConstants {
    public static final byte REMOVE_REQUEST = 0x0B;
    public static final byte REMOVE_IF_UNMODIFIED_REQUEST = 0x0D;
    public static final byte CONTAINS_KEY_REQUEST = 0x0F;
-   public static final byte PUT_FOR_EXTERNAL_READ_REQUEST = 0x11;
-   public static final byte GET_WITH_CAS_REQUEST = 0x13;
-   public static final byte EVICT_REQUEST = 0x15;
-   public static final byte CLEAR_REQUEST = 0x17;
-   public static final byte STATS_REQUEST = 0x19;
-   public static final byte QUIT_REQUEST = 0x1B;
-   public static final byte EVENT_REGISTRATION_REQUEST = 0x1D;
+   public static final byte GET_WITH_VERSION = 0x11;
+   public static final byte CLEAR_REQUEST = 0x13;
+   public static final byte STATS_REQUEST = 0x15;
    public static final byte PING_REQUEST = 0x17;
 
 
@@ -41,15 +37,11 @@ public interface HotrodConstants {
    public static final byte REMOVE_RESPONSE = 0x0C;
    public static final byte REMOVE_IF_UNMODIFIED_RESPONSE = 0x0E;
    public static final byte CONTAINS_KEY_RESPONSE = 0x10;
-   public static final byte PUT_FOR_EXTERNAL_READ_RESPONSE = 0x12;
-   public static final byte GET_WITH_CAS_RESPONSE = 0x14;
-   public static final byte EVICT_RESPONSE = 0x16;
-   public static final byte CLEAR_RESPONSE = 0x18;
-   public static final byte STATS_RESPONSE = 0x1A;
-   public static final byte QUIT_RESPONSE = 0x1C;
-   public static final byte EVENT_REGISTRATION_RESPONSE = 0x1E;
-   public static final byte ERROR_RESPONSE = 0x50;
+   public static final byte GET_WITH_VERSION_RESPONSE = 0x12;
+   public static final byte CLEAR_RESPONSE = 0x14;
+   public static final byte STATS_RESPONSE = 0x16;
    public static final byte PING_RESPONSE = 0x18;
+   public static final byte ERROR_RESPONSE = 0x50;
 
    //response status
    public static final byte NO_ERROR_STATUS = 0x00;
