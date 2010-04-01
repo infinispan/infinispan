@@ -178,7 +178,7 @@ object Main extends Logging {
       println("    -h, --help                         Show this help message")
       println("    -V, --version                      Show version information")
       println("    --                                 Stop processing options")
-      println("    -p, --port=<num>                   TCP port number to listen on (default: 11211)")
+      println("    -p, --port=<num>                   TCP port number to listen on (default: 11211 for Memcached servers, 11311 for Hot Rod servers)")
       println("    -l, --host=<host or ip>            Interface to listen on (default: 127.0.0.1, localhost)")
       println("    -m, --master_threads=<num>         Number of threads accepting incoming connections (default: unlimited while resources are available)")
       println("    -t, --work_threads=<num>           Number of threads processing incoming requests and sending responses (default: unlimited while resources are available)")
