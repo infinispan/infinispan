@@ -4,6 +4,8 @@ import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -19,22 +21,39 @@ import org.testng.annotations.Test;
  */
 @Test
 public abstract class SingleCacheManagerTest extends AbstractCacheTest {
+
+   private static Log log = LogFactory.getLog(SingleCacheManagerTest.class);
+
    protected CacheManager cacheManager;
    protected Cache<Object, Object> cache;
 
    @BeforeClass()
    protected void createBeforeClass() throws Exception {
-      if (cleanup == CleanupPhase.AFTER_TEST) cacheManager = createCacheManager();
+      try {
+         if (cleanup == CleanupPhase.AFTER_TEST) cacheManager = createCacheManager();
+      } catch (Exception e) {
+         log.error("Unexpected!", e);
+         throw e;
+      }
    }
 
    @BeforeMethod
    protected void createBeforeMethod() throws Exception {
-      if (cleanup == CleanupPhase.AFTER_METHOD) cacheManager = createCacheManager();
+      try {
+         if (cleanup == CleanupPhase.AFTER_METHOD) cacheManager = createCacheManager();
+      } catch (Exception e) {
+         log.error("Unexpected!", e);
+         throw e;
+      }
    }
    
    @AfterClass(alwaysRun=true)
    protected void destroyAfterClass() {
-      if (cleanup == CleanupPhase.AFTER_TEST) TestingUtil.killCacheManagers(cacheManager);
+      try {
+         if (cleanup == CleanupPhase.AFTER_TEST) TestingUtil.killCacheManagers(cacheManager);
+      } catch (Exception e) {
+         log.error("Unexpected!", e);
+      }
    }
 
    @AfterMethod(alwaysRun=true)
