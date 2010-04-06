@@ -11,8 +11,9 @@ import java.util.Properties;
  * @author Mircea.Marku127.0.0.1:11311;127.0.0.2:11411s@jboss.com
  * @since 4.1
  */
-@Test(testName = "hotrod.NettyHotRodIntegrationTest", groups = "functional")
+@Test(testName = "hotrod.NettyHotRodIntegrationTest", groups = "functional", enabled = false)
 public class NettyHotRodIntegrationTest extends HotRodIntegrationTest {
+   
    @Override
    protected RemoteCacheManager getRemoteCacheManager() {
       Properties props = new Properties();

@@ -50,7 +50,7 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
 
       //pass the config file to the cache
       hotrodServer = HotRodTestingUtil.startHotRodServer(cacheManager);
-      
+
       remoteCacheManager = getRemoteCacheManager();
       defaultRemote = remoteCacheManager.getCache();
       remoteCache = remoteCacheManager.getCache(CACHE_NAME);
@@ -62,7 +62,7 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
    }
 
 
-   @AfterClass (enabled = true)
+   @AfterClass 
    public void testDestroyRemoteCacheFactory() {
       assert remoteCache.ping();
       hotrodServer.stop();
