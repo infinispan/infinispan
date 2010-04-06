@@ -1,11 +1,11 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<?xml version='1.0' encoding='UTF-8'?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
    <modelVersion>4.0.0</modelVersion>
 
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-server-parent</artifactId>
-      <version>4.1.0-SNAPSHOT</version>
+      <version>4.1.0.ALPHA2</version>
       <relativePath>../pom.xml</relativePath>
    </parent>
 
@@ -63,7 +63,7 @@
       <version.jetty>6.1.15</version.jetty>
       <version.commons.httpclient>3.1</version.commons.httpclient>
       <version.slf4j>1.5.8</version.slf4j>
-      <!-- TODO: Find out why on earth when scala version is set to 2.7.7 here, memcached and hotrod modules that depend on 2.8.0.Beta1, receive 2.7.7 library on assembly!!! -->
+      
    </properties>
 
    <dependencies>
@@ -98,7 +98,7 @@
          <scope>provided</scope>
       </dependency>
 
-      <!-- and now for unit and integration tests -->
+      
       <dependency>
          <groupId>org.mortbay.jetty</groupId>
          <artifactId>jetty-embedded</artifactId>
