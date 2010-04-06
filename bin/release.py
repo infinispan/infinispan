@@ -190,6 +190,7 @@ def checkInMaven2Repo(version, workingDir):
     mod_dir = settings[local_mvn_repo_dir_key] + "/" + getModuleName(p)
     if not is_in_svn(mod_dir):
       newmodules.append(mod_dir)
+  print "New modules added in this release: %s" % newmodules
   if len(newmodules) > 0:
     client.add(newmodules)
   client.add(moduleNames)
