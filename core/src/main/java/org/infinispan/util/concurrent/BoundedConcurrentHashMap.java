@@ -1138,6 +1138,10 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
         if (capacity < 0 || concurrencyLevel <= 0)
             throw new IllegalArgumentException();
         
+        // minimum two elements per segment
+        if (capacity < (concurrencyLevel * 2))
+            throw new IllegalArgumentException("Maximum capacity has to be at least twice the concurrencyLevel");
+        
         if (evictionStrategy == null || evictionListener == null)
             throw new IllegalArgumentException();
 
