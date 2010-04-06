@@ -22,8 +22,6 @@ import org.testng.annotations.Test;
 @Test
 public abstract class SingleCacheManagerTest extends AbstractCacheTest {
 
-   private static Log log = LogFactory.getLog(SingleCacheManagerTest.class);
-
    protected CacheManager cacheManager;
    protected Cache<Object, Object> cache;
 
