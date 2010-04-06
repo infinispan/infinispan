@@ -10,7 +10,7 @@ import java.io.{ObjectInput, ObjectOutput}
  * @author Galder Zamarreño
  * @since
  */
-// TODO: putting Ids.HOTROD_CACHE_KEY fails compilation in 2.8
+// TODO: putting Ids.HOTROD_CACHE_KEY fails compilation in 2.8 - https://lampsvn.epfl.ch/trac/scala/ticket/2764
 @Marshallable(externalizer = classOf[CacheKeyExternalizer], id = 57)
 final class CacheKey(val data: Array[Byte]) {
 

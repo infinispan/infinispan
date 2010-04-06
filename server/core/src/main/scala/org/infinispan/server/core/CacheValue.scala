@@ -9,7 +9,7 @@ import org.infinispan.marshall.{Externalizer, Ids, Marshallable}
  * @author Galder Zamarreño
  * @since 4.1
  */
-// TODO: putting Ids.SERVER_CACHE_VALUE fails compilation in 2.8
+// TODO: putting Ids.SERVER_CACHE_VALUE fails compilation in 2.8 - https://lampsvn.epfl.ch/trac/scala/ticket/2764
 @Marshallable(externalizer = classOf[CacheValueExternalizer], id = 55)
 class CacheValue(val data: Array[Byte], val version: Long) {
 

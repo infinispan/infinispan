@@ -10,7 +10,7 @@ import org.infinispan.marshall.{Marshallable, Externalizer}
  * @author Galder Zamarreño
  * @since
  */
-// TODO: putting Ids.MEMCACHED_CACHE_VALUE fails compilation in 2.8
+// TODO: putting Ids.MEMCACHED_CACHE_VALUE fails compilation in 2.8 - https://lampsvn.epfl.ch/trac/scala/ticket/2764
 @Marshallable(externalizer = classOf[MemcachedValueExternalizer], id = 56)
 class MemcachedValue(override val data: Array[Byte], override val version: Long, val flags: Int)
       extends CacheValue(data, version) {
