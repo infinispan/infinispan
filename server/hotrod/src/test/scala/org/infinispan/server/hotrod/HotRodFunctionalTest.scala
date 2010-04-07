@@ -1,15 +1,12 @@
 package org.infinispan.server.hotrod
 
 import org.infinispan.test.fwk.TestCacheManagerFactory
-import org.testng.annotations.{AfterClass, Test}
+import org.testng.annotations.Test
 import java.lang.reflect.Method
-import test.HotRodClient
 import test.HotRodTestingUtil._
 import org.testng.Assert._
 import java.util.Arrays
 import org.infinispan.manager.{DefaultCacheManager, CacheManager}
-import org.infinispan.{AdvancedCache}
-import org.infinispan.test.{SingleCacheManagerTest}
 import org.infinispan.server.core.CacheValue
 import org.infinispan.server.hotrod.OperationStatus._
 
@@ -27,28 +24,10 @@ import org.infinispan.server.hotrod.OperationStatus._
  * @since 4.1
  */
 @Test(groups = Array("functional"), testName = "server.hotrod.HotRodFunctionalTest")
-class HotRodFunctionalTest extends SingleCacheManagerTest {
-   private val cacheName = "hotrod-cache"
-   private var server: HotRodServer = _
-   private var client: HotRodClient = _
-   private var advancedCache: AdvancedCache[CacheKey, CacheValue] = _
+class HotRodFunctionalTest extends HotRodSingleNodeTest {
 
-   override def createCacheManager: CacheManager = {
-      val cacheManager = TestCacheManagerFactory.createLocalCacheManager(true)
-      advancedCache = cacheManager.getCache[CacheKey, CacheValue](cacheName).getAdvancedCache
-      server = startHotRodServer(cacheManager)
-      client = new HotRodClient("127.0.0.1", server.getPort, cacheName)
-      cacheManager
-   }
-
-   @AfterClass(alwaysRun = true)
-   override def destroyAfterClass {
-      super.destroyAfterClass
-      log.debug("Test finished, close client and Hot Rod server", null)
-      client.stop
-      server.stop
-   }
-
+   override def createTestCacheManager: CacheManager = TestCacheManagerFactory.createLocalCacheManager(true)
+   
    def testUnknownCommand(m: Method) {
       val status = client.execute(0xA0, 0x77, cacheName, k(m) , 0, 0, v(m), 0)
       assertTrue(status == UnknownOperation,

@@ -4,6 +4,8 @@ import java.lang.reflect.Method
 import java.util.concurrent.{Callable, Executors, Future, CyclicBarrier}
 import test.HotRodClient
 import org.testng.annotations.Test
+import org.infinispan.test.fwk.TestCacheManagerFactory
+import org.infinispan.manager.CacheManager
 
 /**
  * // TODO: Document this
@@ -13,6 +15,8 @@ import org.testng.annotations.Test
 @Test(groups = Array("functional"), testName = "server.hotrod.HotRodConcurrentTest")
 class HotRodConcurrentTest extends HotRodSingleNodeTest {
 
+   override def createTestCacheManager: CacheManager = TestCacheManagerFactory.createLocalCacheManager(true)
+   
    def testConcurrentPutRequests(m: Method) {
       val numClients = 10
       val numOpsPerClient = 100
@@ -22,7 +26,6 @@ class HotRodConcurrentTest extends HotRodSingleNodeTest {
       var operators: List[Operator] = List()
       try {
          for (i <- 0 until numClients) {
-            // todo: add test with different client instances
             val operator = new Operator(barrier, m, i, numOpsPerClient)
             operators = operator :: operators
             val future = executorService.submit(operator)
@@ -41,7 +44,7 @@ class HotRodConcurrentTest extends HotRodSingleNodeTest {
 
    class Operator(barrier: CyclicBarrier, m: Method, clientId: Int, numOpsPerClient: Int) extends Callable[Unit] {
 
-      private lazy val client = new HotRodClient("127.0.0.1", getServer.getPort, cacheName)
+      private lazy val client = new HotRodClient("127.0.0.1", server.getPort, cacheName)
 
       def call {
          log.debug("Wait for all executions paths to be ready to perform calls", null)
