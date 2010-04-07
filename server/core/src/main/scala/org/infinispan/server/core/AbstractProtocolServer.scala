@@ -10,7 +10,7 @@ import org.infinispan.manager.CacheManager
  * @author Galder Zamarreño
  * @since 4.1
  */
-abstract class AbstractProtocolServer extends ProtocolServer {
+abstract class AbstractProtocolServer(threadNamePrefix: String) extends ProtocolServer {
    private var host: String = _
    private var port: Int = _
    private var masterThreads: Int = _
@@ -32,8 +32,7 @@ abstract class AbstractProtocolServer extends ProtocolServer {
       // TODO: ... requests such as when the lenght of data is bigger than the expected data itself.
       val nettyEncoder = if (encoder != null) new EncoderAdapter(encoder) else null
       val address =  new InetSocketAddress(host, port)
-      // TODO change cache name 'default' to something more meaningful and dependent of protocol
-      transport = new NettyTransport(this, nettyEncoder, address, masterThreads, workerThreads, "default")
+      transport = new NettyTransport(this, nettyEncoder, address, masterThreads, workerThreads, threadNamePrefix)
       transport.start
    }
 

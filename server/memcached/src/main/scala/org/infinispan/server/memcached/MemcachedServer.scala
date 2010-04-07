@@ -11,7 +11,7 @@ import java.util.concurrent.{Executors, ScheduledExecutorService}
  * @since
  */
 
-class MemcachedServer extends AbstractProtocolServer {
+class MemcachedServer extends AbstractProtocolServer("Memcached") {
 
    protected lazy val scheduler = Executors.newScheduledThreadPool(1)
 

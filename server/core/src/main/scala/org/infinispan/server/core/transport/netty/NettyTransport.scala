@@ -11,6 +11,7 @@ import org.infinispan.server.core.transport.Transport
 import scala.collection.JavaConversions._
 import org.infinispan.manager.CacheManager
 import org.infinispan.server.core.{ProtocolServer, Logging}
+import org.jboss.netty.util.{ThreadNameDeterminer, ThreadRenamingRunnable}
 
 /**
  * // TODO: Document this
@@ -19,11 +20,11 @@ import org.infinispan.server.core.{ProtocolServer, Logging}
  */
 class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
                   address: SocketAddress, masterThreads: Int, workerThreads: Int,
-                  cacheName: String) extends Transport {
+                  threadNamePrefix: String) extends Transport {
    import NettyTransport._
 
-   val serverChannels = new DefaultChannelGroup(cacheName + "-channels")
-   val acceptedChannels = new DefaultChannelGroup(cacheName + "-accepted")
+   val serverChannels = new DefaultChannelGroup(threadNamePrefix + "-Channels")
+   val acceptedChannels = new DefaultChannelGroup(threadNamePrefix + "-Accepted")
    val pipeline = new NettyChannelPipelineFactory(server, encoder)
    val factory = {
       if (workerThreads == 0)
@@ -33,29 +34,34 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
    }
    
    lazy val masterExecutor = {
-      val tf = new NamedThreadFactory(cacheName + '-' + "Master")
       if (masterThreads == 0) {
          debug("Configured unlimited threads for master thread pool")
-         Executors.newCachedThreadPool(tf)
+         Executors.newCachedThreadPool
       } else {
          debug("Configured {0} threads for master thread pool", masterThreads)
-         Executors.newFixedThreadPool(masterThreads, tf)
+         Executors.newFixedThreadPool(masterThreads)
       }
    }
 
    lazy val workerExecutor = {
-      val tf = new NamedThreadFactory(cacheName + '-' + "Worker")
       if (workerThreads == 0) {
          debug("Configured unlimited threads for worker thread pool")
-         Executors.newCachedThreadPool(tf)
+         Executors.newCachedThreadPool
       }
       else {
          debug("Configured {0} threads for worker thread pool", workerThreads)
-         Executors.newFixedThreadPool(workerThreads, tf)
+         Executors.newFixedThreadPool(masterThreads)
       }
    }
 
    override def start {
+      ThreadRenamingRunnable.setThreadNameDeterminer(new ThreadNameDeterminer {
+         override def determineThreadName(currentThreadName: String, proposedThreadName: String): String = {
+            val index = proposedThreadName.findIndexOf(_ == '#')
+            val typeInFix = if (proposedThreadName.contains("boss")) "Master-" else "Worker-"
+            threadNamePrefix + typeInFix + proposedThreadName.substring(index + 1, proposedThreadName.length)
+         }
+      })
       val bootstrap = new ServerBootstrap(factory);
       bootstrap.setPipelineFactory(pipeline);
       val ch = bootstrap.bind(address);

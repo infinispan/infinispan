@@ -10,7 +10,7 @@ import org.infinispan.server.core.transport.{Decoder, Encoder}
  * @since 4.1
  */
 
-class HotRodServer extends AbstractProtocolServer {
+class HotRodServer extends AbstractProtocolServer("HotRod") {
 
    override def getEncoder: Encoder = new HotRodEncoder
 
