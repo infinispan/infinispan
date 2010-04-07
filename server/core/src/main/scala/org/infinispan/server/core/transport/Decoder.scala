@@ -11,4 +11,5 @@ abstract class Decoder {
    
    def exceptionCaught(ctx: ChannelHandlerContext, e: ExceptionEvent)
 
+   def decodeLast(ctx: ChannelHandlerContext, buffer: ChannelBuffer): AnyRef
 }

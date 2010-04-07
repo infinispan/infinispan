@@ -4,7 +4,6 @@ import org.jboss.netty.handler.codec.replay.ReplayingDecoder
 import org.jboss.netty.channel.{ExceptionEvent => NettyExceptionEvent, ChannelHandlerContext => NettyChannelHandlerContext, Channel => NettyChannel}
 import org.jboss.netty.buffer.{ChannelBuffer => NettyChannelBuffer}
 import org.infinispan.server.core.transport._
-import org.infinispan.server.core.Logging;
 
 /**
  * // TODO: Document this
@@ -15,13 +14,16 @@ class DecoderAdapter(decoder: Decoder) extends ReplayingDecoder[NoState](true) {
 
    override def decode(nCtx: NettyChannelHandlerContext, channel: NettyChannel,
                        nBuffer: NettyChannelBuffer, passedState: NoState): AnyRef = {
-      val ctx = new ChannelHandlerContextAdapter(nCtx);
-      val buffer = new ChannelBufferAdapter(nBuffer);
-      decoder.decode(ctx, buffer);
+      decoder.decode(new ChannelHandlerContextAdapter(nCtx), new ChannelBufferAdapter(nBuffer))
    }
 
    override def exceptionCaught(ctx: NettyChannelHandlerContext, e: NettyExceptionEvent) {
       decoder.exceptionCaught(new ChannelHandlerContextAdapter(ctx), new ExceptionEventAdapter(e));
+   }
+
+   override def decodeLast(nCtx: NettyChannelHandlerContext, channel: NettyChannel,
+                  nBuffer: NettyChannelBuffer, passedState: NoState): AnyRef = {
+      decoder.decodeLast(new ChannelHandlerContextAdapter(nCtx), new ChannelBufferAdapter(nBuffer));
    }
 
 }

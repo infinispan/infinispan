@@ -24,13 +24,7 @@ trait TextProtocolUtil {
    final val CR = 13
    final val LF = 10
 
-   // TODO: maybe convert to recursive
-   def readElement(buffer: ChannelBuffer): String = {
-      if (buffer.readableBytes > 0)
-         readElement(buffer, new StringBuilder())
-      else
-         ""
-   }
+   def readElement(buffer: ChannelBuffer): String = readElement(buffer, new StringBuilder())
 
    private def readElement(buffer: ChannelBuffer, sb: StringBuilder): String = {
       var next = buffer.readByte 

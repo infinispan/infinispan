@@ -250,10 +250,6 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[NoState] wi
    override def decode(ctx: ChannelHandlerContext, ch: Channel, buffer: ChannelBuffer, state: NoState): Object = {
       trace("Decode response from server")
       val buf = new ChannelBufferAdapter(buffer)
-      if (buf.readableBytes < 1) {
-         trace("No bytes to decode")
-         return null
-      }
       val magic = buf.readUnsignedByte
       val id = buf.readUnsignedLong
       val opCode = OperationResponse.apply(buf.readUnsignedByte)

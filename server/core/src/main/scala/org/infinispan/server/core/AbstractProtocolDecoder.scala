@@ -28,10 +28,6 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue] extends Decoder {
    private val versionCounter = new AtomicInteger
 
    override def decode(ctx: ChannelHandlerContext, buffer: ChannelBuffer): AnyRef = {
-      if (buffer.readableBytes < 1) {
-         trace("No bytes to decode")
-         return null
-      }
       val header = readHeader(buffer)
       if (header == null) return null // Something went wrong reading the header, so get more bytes 
       try {
@@ -60,6 +56,8 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue] extends Decoder {
          case t: Throwable => throw t
       }
    }
+
+   def decodeLast(ctx: ChannelHandlerContext, buffer: ChannelBuffer): AnyRef = null // no-op
 
    private def writeResponse(ch: Channel, response: AnyRef) {
       if (response != null) {
