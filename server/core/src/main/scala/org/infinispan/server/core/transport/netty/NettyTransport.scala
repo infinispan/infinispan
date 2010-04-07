@@ -8,21 +8,23 @@ import org.jboss.netty.channel.{ChannelUpstreamHandler, ChannelDownstreamHandler
 import org.jboss.netty.bootstrap.ServerBootstrap
 import java.util.concurrent.{TimeUnit, Executors, ThreadFactory, ExecutorService}
 import org.infinispan.server.core.transport.Transport
-import org.infinispan.server.core.Logging
 import scala.collection.JavaConversions._
+import org.infinispan.manager.CacheManager
+import org.infinispan.server.core.{ProtocolServer, Logging}
 
 /**
  * // TODO: Document this
  * @author Galder Zamarreño
  * @since 4.1
  */
-class NettyTransport(decoder: ChannelUpstreamHandler, encoder: ChannelDownstreamHandler,
-                  address: SocketAddress, masterThreads: Int, workerThreads: Int, cacheName: String) extends Transport {
+class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
+                  address: SocketAddress, masterThreads: Int, workerThreads: Int,
+                  cacheName: String) extends Transport {
    import NettyTransport._
 
    val serverChannels = new DefaultChannelGroup(cacheName + "-channels")
    val acceptedChannels = new DefaultChannelGroup(cacheName + "-accepted")
-   val pipeline = new NettyChannelPipelineFactory(decoder, encoder)
+   val pipeline = new NettyChannelPipelineFactory(server, encoder)
    val factory = {
       if (workerThreads == 0)
          new NioServerSocketChannelFactory(masterExecutor, workerExecutor)
@@ -40,22 +42,18 @@ class NettyTransport(decoder: ChannelUpstreamHandler, encoder: ChannelDownstream
          Executors.newFixedThreadPool(masterThreads, tf)
       }
    }
-   //todo investigate the actual reason why multiple threads do not work
-   lazy val workerExecutor =  {
+
+   lazy val workerExecutor = {
       val tf = new NamedThreadFactory(cacheName + '-' + "Worker")
-      Executors.newSingleThreadExecutor(tf)
+      if (workerThreads == 0) {
+         debug("Configured unlimited threads for worker thread pool")
+         Executors.newCachedThreadPool(tf)
+      }
+      else {
+         debug("Configured {0} threads for worker thread pool", workerThreads)
+         Executors.newFixedThreadPool(workerThreads, tf)
+      }
    }
-//   lazy val workerExecutor = {
-//      val tf = new NamedThreadFactory(cacheName + '-' + "Worker")
-//      if (workerThreads == 0) {
-//         debug("Configured unlimited threads for worker thread pool")
-//         Executors.newCachedThreadPool(tf)
-//      }
-//      else {
-//         debug("Configured {0} threads for worker thread pool", workerThreads)
-//         Executors.newFixedThreadPool(workerThreads, tf)
-//      }
-//   }
 
    override def start {
       val bootstrap = new ServerBootstrap(factory);

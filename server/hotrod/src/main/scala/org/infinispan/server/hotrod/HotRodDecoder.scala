@@ -10,6 +10,7 @@ import java.io.{IOException, StreamCorruptedException}
 import org.infinispan.util.concurrent.TimeoutException
 import org.infinispan.server.hotrod.ProtocolFlag._
 import org.infinispan.server.hotrod.OperationResponse._
+import java.nio.channels.ClosedChannelException
 
 /**
  * // TODO: Document this
@@ -114,12 +115,11 @@ class HotRodDecoder(cacheManager: CacheManager) extends AbstractProtocolDecoder[
                case e: Exception => new ErrorResponse(messageId, ServerError, e.toString)
             }
          }
+         case c: ClosedChannelException => null
+         case t: Throwable => new ErrorResponse(0, ServerError, t.toString)
       }
    }
 
-   override def start {}
-
-   override def stop {}
 }
 
 object HotRodDecoder extends Logging {

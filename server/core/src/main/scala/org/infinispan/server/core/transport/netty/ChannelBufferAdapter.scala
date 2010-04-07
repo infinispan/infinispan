@@ -2,13 +2,14 @@ package org.infinispan.server.core.transport.netty
 
 import org.jboss.netty.buffer.{ChannelBuffer => NettyChannelBuffer}
 import org.infinispan.server.core.transport.{VLong, VInt, ChannelBuffer}
+import org.infinispan.server.core.Logging
 
 /**
  * // TODO: Document this
  * @author Galder Zamarreño
  * @since 4.1
  */
-class ChannelBufferAdapter(val buffer: NettyChannelBuffer) extends ChannelBuffer {
+class ChannelBufferAdapter(buffer: NettyChannelBuffer) extends ChannelBuffer {
    
    override def readByte: Byte = buffer.readByte
    override def readBytes(dst: Array[Byte], dstIndex: Int, length: Int) = buffer.readBytes(dst, dstIndex, length)
@@ -53,3 +54,5 @@ class ChannelBufferAdapter(val buffer: NettyChannelBuffer) extends ChannelBuffer
    override def getUnderlyingChannelBuffer: AnyRef = buffer
 
 }
+
+object ChannelBufferAdapter extends Logging

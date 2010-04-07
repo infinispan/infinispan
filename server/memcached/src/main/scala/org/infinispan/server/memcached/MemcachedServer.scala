@@ -3,6 +3,7 @@ package org.infinispan.server.memcached
 import org.infinispan.server.core.AbstractProtocolServer
 import org.infinispan.server.core.transport.{Decoder, Encoder}
 import org.infinispan.manager.CacheManager
+import java.util.concurrent.{Executors, ScheduledExecutorService}
 
 /**
  * // TODO: Document this
@@ -12,8 +13,14 @@ import org.infinispan.manager.CacheManager
 
 class MemcachedServer extends AbstractProtocolServer {
 
-   protected override def getEncoder: Encoder = null
+   protected lazy val scheduler = Executors.newScheduledThreadPool(1)
 
-   protected override def getDecoder(cacheManager: CacheManager): Decoder = new MemcachedDecoder(cacheManager)
+   override def getEncoder: Encoder = null
 
+   override def getDecoder: Decoder = new MemcachedDecoder(getCacheManager, scheduler)
+
+   override def stop {
+      super.stop
+      scheduler.shutdown
+   }
 }

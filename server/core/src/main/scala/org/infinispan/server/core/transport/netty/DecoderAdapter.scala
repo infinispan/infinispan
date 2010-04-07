@@ -3,7 +3,8 @@ package org.infinispan.server.core.transport.netty
 import org.jboss.netty.handler.codec.replay.ReplayingDecoder
 import org.jboss.netty.channel.{ExceptionEvent => NettyExceptionEvent, ChannelHandlerContext => NettyChannelHandlerContext, Channel => NettyChannel}
 import org.jboss.netty.buffer.{ChannelBuffer => NettyChannelBuffer}
-import org.infinispan.server.core.transport._;
+import org.infinispan.server.core.transport._
+import org.infinispan.server.core.Logging;
 
 /**
  * // TODO: Document this

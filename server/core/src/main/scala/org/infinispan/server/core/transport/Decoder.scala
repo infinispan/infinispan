@@ -11,8 +11,4 @@ abstract class Decoder {
    
    def exceptionCaught(ctx: ChannelHandlerContext, e: ExceptionEvent)
 
-   def start
-
-   def stop
-   
 }

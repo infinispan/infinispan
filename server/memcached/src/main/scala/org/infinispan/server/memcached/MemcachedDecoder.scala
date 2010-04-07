@@ -4,12 +4,12 @@ import org.infinispan.manager.{CacheManager}
 import org.infinispan.server.core.Operation._
 import org.infinispan.server.memcached.MemcachedOperation._
 import org.infinispan.context.Flag
-import java.util.concurrent.{TimeUnit, Executors, ScheduledExecutorService}
+import java.util.concurrent.{TimeUnit, ScheduledExecutorService}
 import java.io.{IOException, EOFException, StreamCorruptedException}
 import java.nio.channels.ClosedChannelException
 import java.util.concurrent.atomic.AtomicLong
 import org.infinispan.stats.Stats
-import org.infinispan.server.core.transport.{Channel, ChannelBuffers, ChannelHandlerContext, ChannelBuffer}
+import org.infinispan.server.core.transport.ChannelBuffer
 import org.infinispan.server.core._
 import org.infinispan.{AdvancedCache, Version, CacheException, Cache}
 import collection.mutable.ListBuffer
@@ -22,14 +22,14 @@ import org.infinispan.util.Util
  * @since
  */
 
-class MemcachedDecoder(cacheManager: CacheManager) extends AbstractProtocolDecoder[String, MemcachedValue] with TextProtocolUtil {
+class MemcachedDecoder(cacheManager: CacheManager, scheduler: ScheduledExecutorService)
+      extends AbstractProtocolDecoder[String, MemcachedValue] with TextProtocolUtil {
    import RequestResolver._
 
    type SuitableParameters = MemcachedParameters
    type SuitableHeader = RequestHeader
 
-   private var scheduler: ScheduledExecutorService = _
-   private var cache: Cache[String, MemcachedValue] = _
+   private lazy val cache = createCache
    private lazy val isStatsEnabled = cache.getConfiguration.isExposeJmxStatistics
    private final val incrMisses = new AtomicLong(0)
    private final val incrHits = new AtomicLong(0)
@@ -352,14 +352,14 @@ class MemcachedDecoder(cacheManager: CacheManager) extends AbstractProtocolDecod
       buffer
    }
 
-   override def start {
-      scheduler = Executors.newScheduledThreadPool(1)
-      cache = createCache
-   }
-
-   override def stop {
-      scheduler.shutdown
-   }
+//   override def start {
+//      scheduler = Executors.newScheduledThreadPool(1)
+//      cache = createCache
+//   }
+//
+//   override def stop {
+//      scheduler.shutdown
+//   }
 
    private def createValue(data: Array[Byte], nextVersion: Long, flags: Int): MemcachedValue = {
       new MemcachedValue(data, nextVersion, flags)
