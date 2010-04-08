@@ -26,7 +26,7 @@ import static junit.framework.Assert.assertEquals;
  * @author mmarkus
  * @since 4.1
  */
-@Test (testName = "client.hotrod.HotRodClientIntegrationTest", groups = "functional") 
+@Test (testName = "client.hotrod.HotRodClientIntegrationTest", groups = "functional", enabled = false, description = "TODO To be re-enabled when we have a multithreaded HotRod server impl") 
 public class HotRodIntegrationTest extends SingleCacheManagerTest {
 
    private static final String CACHE_NAME = "replSync";

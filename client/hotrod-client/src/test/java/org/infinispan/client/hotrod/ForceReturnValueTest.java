@@ -25,7 +25,7 @@ import static junit.framework.Assert.assertEquals;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-@Test(testName = "client.hotrod.ForceReturnValueTest", groups = "functional", enabled = false)
+@Test(testName = "client.hotrod.ForceReturnValueTest", groups = "functional", enabled = false, description = "TODO To be re-enabled when we have a multithreaded HotRod server impl")
 public class ForceReturnValueTest extends SingleCacheManagerTest {
    private Cache cache;
 

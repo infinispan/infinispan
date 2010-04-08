@@ -14,7 +14,7 @@ import java.util.Arrays;
  * @author mmarkus
  * @since 4.1
  */
-@Test(testName = "client.hotrod.VHelperTest", groups = "unit, functional")
+@Test(testName = "client.hotrod.VHelperTest", groups = "unit, functional", enabled = false, description = "TODO To be re-enabled when we have a multithreaded HotRod server impl")
 public class VHelperTest {
 
    public void testString2Byte() {

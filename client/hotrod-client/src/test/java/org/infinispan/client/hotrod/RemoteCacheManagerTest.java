@@ -16,7 +16,7 @@ import java.util.Properties;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-@Test(testName = "client.hotrod.RemoteCacheManagerTest", groups = "functional")
+@Test(testName = "client.hotrod.RemoteCacheManagerTest", groups = "functional", enabled = false, description = "TODO To be re-enabled when we have a multithreaded HotRod server impl")
 public class RemoteCacheManagerTest extends SingleCacheManagerTest {
 
    CacheManager cacheManager = null;

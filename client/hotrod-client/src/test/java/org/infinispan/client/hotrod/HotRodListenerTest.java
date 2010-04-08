@@ -8,6 +8,6 @@ import org.testng.annotations.Test;
  * @author mmarkus
  * @since 4.1
  */
-@Test (testName = "client.hotrod.HotRodListenerTest", groups = "functional")
+@Test (testName = "client.hotrod.HotRodListenerTest", groups = "functional", enabled = false, description = "TODO To be re-enabled when we have a multithreaded HotRod server impl")
 public class HotRodListenerTest {
 }
