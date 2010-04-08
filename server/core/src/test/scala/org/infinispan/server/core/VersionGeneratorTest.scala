@@ -14,12 +14,17 @@ import org.infinispan.server.core.VersionGenerator._
 class VersionGeneratorTest {
 
    def testGenerateVersion {
+      resetCounter
       val addr1 = new TestAddress(1)
       val addr2 = new TestAddress(2)
       val addr3 = new TestAddress(1)
       val members = List(addr1, addr2, addr3)
-      assertEquals(newVersion(Some(addr2), Some(members), 1), 0x1000200000001L)
+      RankCalculator.calculateRank(addr2, members, 1)
+      assertEquals(newVersion(true), 0x1000200000001L)
+      assertEquals(newVersion(true), 0x1000200000002L)
+      assertEquals(newVersion(true), 0x1000200000003L)
    }
+
 }
 
 class TestAddress(val addressNum: Int) extends Address {

@@ -287,17 +287,18 @@ class MemcachedDecoder(cacheManager: CacheManager, scheduler: ScheduledExecutorS
       t match {
          case se: ServerException => {
             se.getCause match {
-               case uoe: UnknownOperationException => ERROR
-               case cce: ClosedChannelException => null// no-op, only log
+               case u: UnknownOperationException => ERROR
+               case c: ClosedChannelException => null // no-op, only log
                case _ => {
                   t match {
-                     case ioe: IOException => sb.append("CLIENT_ERROR ")
+                     case i: IOException => sb.append("CLIENT_ERROR ")
                      case _ => sb.append("SERVER_ERROR ")
                   }
                   sb.append(t).append(CRLF)
                }
             }
          }
+         case c: ClosedChannelException => null // no-op, only log
          case _ => sb.append("SERVER_ERROR ").append(t).append(CRLF)
       }
    }

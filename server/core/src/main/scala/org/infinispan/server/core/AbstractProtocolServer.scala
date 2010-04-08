@@ -4,6 +4,7 @@ import java.net.InetSocketAddress
 import transport.netty.{EncoderAdapter, NettyTransport}
 import transport.{Decoder, Encoder, Transport}
 import org.infinispan.manager.CacheManager
+import org.infinispan.server.core.VersionGenerator._
 
 /**
  * // TODO: Document this
@@ -27,6 +28,7 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
       this.workerThreads = workerThreads
       this.cacheManager = cacheManager
 
+      cacheManager.addListener(getRankCalculatorListener)
       encoder = getEncoder
       // TODO: add an IdleStateHandler so that idle connections are detected, this could help on malformed data
       // TODO: ... requests such as when the lenght of data is bigger than the expected data itself.

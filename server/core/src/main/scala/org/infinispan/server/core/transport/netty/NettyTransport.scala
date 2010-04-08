@@ -1,15 +1,14 @@
 package org.infinispan.server.core.transport.netty
 
 import java.net.SocketAddress
-import org.jboss.netty.channel.group.{DefaultChannelGroup, ChannelGroup}
+import org.jboss.netty.channel.group.DefaultChannelGroup
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory
 import java.util.concurrent.atomic.AtomicInteger
-import org.jboss.netty.channel.{ChannelUpstreamHandler, ChannelDownstreamHandler, ChannelFactory, ChannelPipelineFactory}
+import org.jboss.netty.channel.ChannelDownstreamHandler
 import org.jboss.netty.bootstrap.ServerBootstrap
-import java.util.concurrent.{TimeUnit, Executors, ThreadFactory, ExecutorService}
+import java.util.concurrent.{Executors, ThreadFactory}
 import org.infinispan.server.core.transport.Transport
 import scala.collection.JavaConversions._
-import org.infinispan.manager.CacheManager
 import org.infinispan.server.core.{ProtocolServer, Logging}
 import org.jboss.netty.util.{ThreadNameDeterminer, ThreadRenamingRunnable}
 

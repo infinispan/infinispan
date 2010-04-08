@@ -190,12 +190,7 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue] extends Decoder {
 
    protected def generateVersion(cache: Cache[K, V]): Long = {
       val rpcManager = cache.getAdvancedCache.getRpcManager
-      if (rpcManager != null) {
-         val transport = rpcManager.getTransport
-         newVersion(Some(transport.getAddress), Some(transport.getMembers), transport.getViewId)
-      } else {
-         newVersion(None, None, 0)
-      }
+      newVersion(rpcManager != null)
    }
 
    /**

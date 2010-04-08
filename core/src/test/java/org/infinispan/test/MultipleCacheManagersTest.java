@@ -56,7 +56,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
          createCacheManagers();
       } catch (Throwable th) {
          th.printStackTrace();
-         log.error("Error in test setup: " + th);
+         log.error("Error in test setup: ", th);
          throw th;
       }
    }

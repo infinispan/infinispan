@@ -22,8 +22,12 @@ class HotRodReplicationTest extends MultipleCacheManagersTest {
 
    @Test(enabled=false) // Disable explicitly to avoid TestNG thinking this is a test!!
    override def createCacheManagers {
-      var replSync = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC)
-      createClusteredCaches(2, cacheName, replSync)
+      var config = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC)
+      config.setFetchInMemoryState(true)
+      for (i <- 0 until 2) {
+         val cm = addClusterEnabledCacheManager()
+         cm.defineConfiguration(cacheName, config)
+      }
       servers = startHotRodServer(cacheManagers.get(0)) :: servers
       servers = startHotRodServer(cacheManagers.get(1), servers.head.getPort + 50) :: servers
       servers.foreach {s =>

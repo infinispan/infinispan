@@ -11,6 +11,8 @@ import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
+import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifierImpl;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -58,6 +60,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          registerComponent(cacheManager, CacheManager.class);
          registerComponent(configuration, GlobalConfiguration.class);
          registerComponent(new CacheManagerJmxRegistration(), CacheManagerJmxRegistration.class);
+         registerComponent(new CacheManagerNotifierImpl(), CacheManagerNotifier.class);
       }
       catch (Exception e) {
          throw new CacheException("Unable to construct a GlobalComponentRegistry!", e);
