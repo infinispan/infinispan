@@ -70,15 +70,15 @@ def require_settings_file(recursive = False):
       handle_release_virgin()
       require_settings_file(True)
     else:
-    print "User-specific environment settings file %s is missing!  Cannot proceed!" % settings_file
-    print "Please create a file called %s with the following lines:" % settings_file
-    print '''
+      print "User-specific environment settings file %s is missing!  Cannot proceed!" % settings_file
+      print "Please create a file called %s with the following lines:" % settings_file
+      print '''
        svn_base = https://svn.jboss.org/repos/infinispan
        local_tags_dir = /PATH/TO/infinispan/tags
        local_mvn_repo_dir = /PATH/TO/maven2/org/infinispan
        multi_threaded = False
-    '''
-    sys.exit(3)
+      '''
+      sys.exit(3)
   finally:
     if f:
       f.close()
