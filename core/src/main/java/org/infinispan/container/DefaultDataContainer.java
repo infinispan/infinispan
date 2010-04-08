@@ -88,7 +88,7 @@ public class DefaultDataContainer implements DataContainer {
          default:
             throw new IllegalArgumentException("No such eviction strategy " + strategy);
       }
-      immortalEntries = new BoundedConcurrentHashMap<Object, InternalCacheEntry>(maxEntries,concurrencyLevel, eviction, evictionListener);
+      immortalEntries = new BoundedConcurrentHashMap<Object, InternalCacheEntry>(maxEntries, concurrencyLevel, eviction, evictionListener);
       mortalEntries = new ConcurrentHashMap<Object, InternalCacheEntry>(64, 0.75f, concurrencyLevel);
       entryFactory = new InternalEntryFactory(recordCreation, recordLastUsed);
    }
