@@ -42,7 +42,7 @@ import java.util.Map;
  * @author Galder Zamarreño
  * @since 4.0
  */
-@Test(groups = "functional", testName = "distribution.DistSyncCacheStoreNotSharedTest" , enabled = false)
+@Test(groups = "functional", testName = "distribution.DistSyncCacheStoreNotSharedTest")
 public class DistSyncCacheStoreNotSharedTest extends BaseDistCacheStoreTest {
    private static final Log log = LogFactory.getLog(DistSyncCacheStoreNotSharedTest.class);
 

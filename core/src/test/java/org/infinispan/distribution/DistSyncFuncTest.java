@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-@Test(groups = "functional", testName = "distribution.DistSyncFuncTest", enabled = false)
+@Test(groups = "functional", testName = "distribution.DistSyncFuncTest")
 public class DistSyncFuncTest extends BaseDistFunctionalTest {
 
    public DistSyncFuncTest() {
