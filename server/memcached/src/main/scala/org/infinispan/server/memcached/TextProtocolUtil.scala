@@ -10,19 +10,19 @@ import org.infinispan.server.core.transport.ChannelBuffer
 // todo: refactor name once old code has been removed?
 trait TextProtocolUtil {
 
-   final val CRLF = "\r\n"
-   final val CRLFBytes = "\r\n".getBytes
-   final val END = "END\r\n".getBytes
-   final val DELETED = "DELETED\r\n".getBytes
-   final val NOT_FOUND = "NOT_FOUND\r\n".getBytes
-   final val EXISTS = "EXISTS\r\n".getBytes
-   final val STORED = "STORED\r\n".getBytes
-   final val NOT_STORED = "NOT_STORED\r\n".getBytes
-   final val OK = "OK\r\n".getBytes
-   final val ERROR = "ERROR\r\n".getBytes
+   val CRLF = "\r\n"
+   val CRLFBytes = "\r\n".getBytes
+   val END = "END\r\n".getBytes
+   val DELETED = "DELETED\r\n".getBytes
+   val NOT_FOUND = "NOT_FOUND\r\n".getBytes
+   val EXISTS = "EXISTS\r\n".getBytes
+   val STORED = "STORED\r\n".getBytes
+   val NOT_STORED = "NOT_STORED\r\n".getBytes
+   val OK = "OK\r\n".getBytes
+   val ERROR = "ERROR\r\n".getBytes
 
-   final val CR = 13
-   final val LF = 10
+   val CR = 13
+   val LF = 10
 
    def readElement(buffer: ChannelBuffer): String = readElement(buffer, new StringBuilder())
 
