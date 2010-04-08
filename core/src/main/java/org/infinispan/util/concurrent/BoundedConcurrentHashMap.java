@@ -1137,9 +1137,12 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
                     Eviction evictionStrategy, EvictionListener<K, V> evictionListener) {
         if (capacity < 0 || concurrencyLevel <= 0)
             throw new IllegalArgumentException();
-        
+
+        concurrencyLevel = Math.min(capacity / 2, concurrencyLevel); // concurrencyLevel cannot be > capacity/2
+        concurrencyLevel = Math.max(concurrencyLevel, 1); // concurrencyLevel cannot be less than 1
+       
         // minimum two elements per segment
-        if (capacity < (concurrencyLevel * 2))
+        if (capacity < (concurrencyLevel * 2) && capacity != 1)
             throw new IllegalArgumentException("Maximum capacity has to be at least twice the concurrencyLevel");
         
         if (evictionStrategy == null || evictionListener == null)
