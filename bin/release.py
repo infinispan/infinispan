@@ -201,7 +201,7 @@ def checkInMaven2Repo(version, workingDir):
 def uploadArtifactsToSourceforge(version):
   os.mkdir(".tmp")
   os.chdir(".tmp")
-  do_not_copy = shutil.ignore_patterns('*.xml', '*.sha1', '*.md5', '*.pom')
+  do_not_copy = shutil.ignore_patterns('*.xml', '*.sha1', '*.md5', '*.pom', '.svn')
   shutil.copytree("%s/infinispan/%s" % (settings[local_mvn_repo_dir_key], version), "%s" % version, ignore = do_not_copy)
   subprocess.check_call(["scp", "-r", version, "sourceforge_frs:/home/frs/project/i/in/infinispan/infinispan"])
   shutil.rmtree(".tmp", ignore_errors = True)  
