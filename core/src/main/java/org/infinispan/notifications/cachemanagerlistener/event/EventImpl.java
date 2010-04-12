@@ -19,6 +19,7 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
    List<Address> newMembers, oldMembers;
    Address localAddress;
    int viewId;
+   private boolean needsToRejoin;
 
    public EventImpl() {
    }
@@ -96,13 +97,12 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
 
       EventImpl event = (EventImpl) o;
 
+      if (needsToRejoin != event.needsToRejoin) return false;
       if (viewId != event.viewId) return false;
       if (cacheName != null ? !cacheName.equals(event.cacheName) : event.cacheName != null) return false;
       if (localAddress != null ? !localAddress.equals(event.localAddress) : event.localAddress != null) return false;
-      if (newMembers != null ? !newMembers.equals(event.newMembers) : event.newMembers != null)
-         return false;
-      if (oldMembers != null ? !oldMembers.equals(event.oldMembers) : event.oldMembers != null)
-         return false;
+      if (newMembers != null ? !newMembers.equals(event.newMembers) : event.newMembers != null) return false;
+      if (oldMembers != null ? !oldMembers.equals(event.oldMembers) : event.oldMembers != null) return false;
       if (type != event.type) return false;
 
       return true;
@@ -116,18 +116,27 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
       result = 31 * result + (oldMembers != null ? oldMembers.hashCode() : 0);
       result = 31 * result + (localAddress != null ? localAddress.hashCode() : 0);
       result = 31 * result + viewId;
+      result = 31 * result + (needsToRejoin ? 1 : 0);
       return result;
    }
 
    @Override
    public String toString() {
       return "EventImpl{" +
-            "cacheName='" + cacheName + '\'' +
-            ", type=" + type +
-            ", newMembers=" + newMembers +
-            ", oldMembers=" + oldMembers +
-            ", localAddress=" + localAddress +
-            ", viewId=" + viewId +
-            '}';
+              "type=" + type +
+              ", newMembers=" + newMembers +
+              ", oldMembers=" + oldMembers +
+              ", localAddress=" + localAddress +
+              ", viewId=" + viewId +
+              ", needsToRejoin=" + needsToRejoin +
+              '}';
+   }
+
+   public void setNeedsToRejoin(boolean needsToRejoin) {
+      this.needsToRejoin = needsToRejoin;
+   }
+
+   public boolean isNeedsToRejoin() {
+      return needsToRejoin;
    }
 }

@@ -13,7 +13,9 @@ import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
+
 import static org.infinispan.distribution.ConsistentHashHelper.createConsistentHash;
+
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -36,6 +38,7 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.MembershipArithmetic;
 import org.infinispan.util.Util;
+import org.infinispan.util.concurrent.ReclosableLatch;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.rhq.helpers.pluginAnnotations.agent.DataType;
@@ -97,7 +100,7 @@ public class DistributionManagerImpl implements DistributionManager {
    volatile boolean rehashInProgress = false;
    volatile Address joiner;
    static final AtomicReferenceFieldUpdater<DistributionManagerImpl, Address> JOINER_CAS =
-         AtomicReferenceFieldUpdater.newUpdater(DistributionManagerImpl.class, Address.class, "joiner");
+           AtomicReferenceFieldUpdater.newUpdater(DistributionManagerImpl.class, Address.class, "joiner");
    private DataContainer dataContainer;
    private InterceptorChain interceptorChain;
    private InvocationContextContainer icc;
@@ -106,7 +109,7 @@ public class DistributionManagerImpl implements DistributionManager {
    volatile boolean joinComplete = false;
    final List<Address> leavers = new CopyOnWriteArrayList<Address>();
    volatile Future<Void> leaveTaskFuture;
-   final CountDownLatch startLatch = new CountDownLatch(1);
+   final ReclosableLatch startLatch = new ReclosableLatch(false);
 
    @Inject
    public void init(Configuration configuration, RpcManager rpcManager, CacheManagerNotifier notifier, CommandsFactory cf,
@@ -123,20 +126,26 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    // needs to be AFTER the RpcManager
+
    @Start(priority = 20)
    public void start() throws Exception {
       replCount = configuration.getNumOwners();
-      consistentHash = createConsistentHash(configuration, rpcManager.getTransport().getMembers());
-      self = rpcManager.getTransport().getAddress();
       listener = new ViewChangeListener();
       notifier.addListener(listener);
+      join();
+   }
+
+   private void join() throws Exception {
+      startLatch.close();
+      consistentHash = createConsistentHash(configuration, rpcManager.getTransport().getMembers());
+      self = rpcManager.getTransport().getAddress();
       if (rpcManager.getTransport().getMembers().size() > 1) {
          JoinTask joinTask = new JoinTask(rpcManager, cf, configuration, transactionLogger, dataContainer, this);
          rehashExecutor.submit(joinTask);
       } else {
          joinComplete = true;
       }
-      startLatch.countDown();
+      startLatch.open();
    }
 
    @Stop(priority = 20)
@@ -214,7 +223,7 @@ public class DistributionManagerImpl implements DistributionManager {
       if (consistentHash == null) {
          Map<Object, List<Address>> m = new HashMap<Object, List<Address>>(keys.size());
          List<Address> selfList = Collections.singletonList(self);
-         for (Object k: keys) m.put(k, selfList);
+         for (Object k : keys) m.put(k, selfList);
          return m;
       }
       return consistentHash.locateAll(keys, replCount);
@@ -230,7 +239,7 @@ public class DistributionManagerImpl implements DistributionManager {
 
       ResponseFilter filter = new ClusteredGetResponseValidityFilter(locate(key));
       List<Response> responses = rpcManager.invokeRemotely(locate(key), get, ResponseMode.SYNCHRONOUS,
-                                                           configuration.getSyncReplTimeout(), false, filter);
+              configuration.getSyncReplTimeout(), false, filter);
 
       if (!responses.isEmpty()) {
          for (Response r : responses) {
@@ -268,7 +277,8 @@ public class DistributionManagerImpl implements DistributionManager {
          if (trace) log.trace("Allowing {0} to join", joiner);
          return new LinkedList<Address>(consistentHash.getCaches());
       } else {
-         if (trace) log.trace("Not allowing {0} to join since there is a join already in progress {1}", joiner, this.joiner);
+         if (trace)
+            log.trace("Not allowing {0} to join since there is a join already in progress {1}", joiner, this.joiner);
          return null;
       }
    }
@@ -328,12 +338,21 @@ public class DistributionManagerImpl implements DistributionManager {
       public void handleViewChange(ViewChangedEvent e) {
          boolean started = false;
          // how long do we wait for a startup?
-         try {
-            started = startLatch.await(2, TimeUnit.MINUTES);
-            if (started) rehash(e.getNewMembers(), e.getOldMembers());
-            else log.warn("DistributionManager not started after waiting up to 2 minutes!  Not rehashing!");
-         } catch (InterruptedException ie) {
-            log.warn("View change interrupted; not rehashing!");
+         if (e.isNeedsToRejoin()) {
+            try {
+               join();
+            } catch (Exception e1) {
+               log.fatal("Unable to recover from a partition merge!", e1);
+            }
+         } else {
+
+            try {
+               started = startLatch.await(2, TimeUnit.MINUTES);
+               if (started) rehash(e.getNewMembers(), e.getOldMembers());
+               else log.warn("DistributionManager not started after waiting up to 2 minutes!  Not rehashing!");
+            } catch (InterruptedException ie) {
+               log.warn("View change interrupted; not rehashing!");
+            }
          }
       }
    }

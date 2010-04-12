@@ -51,6 +51,7 @@ import org.jgroups.Event;
 import org.jgroups.ExtendedMembershipListener;
 import org.jgroups.ExtendedMessageListener;
 import org.jgroups.JChannel;
+import org.jgroups.MergeView;
 import org.jgroups.Message;
 import org.jgroups.View;
 import org.jgroups.blocks.GroupRequest;
@@ -492,12 +493,29 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
 
          // now notify listeners - *after* updating the coordinator. - JBCACHE-662
          if (needNotification && notifier != null) {
-            notifier.notifyViewChange(members, oldMembers, getAddress(), (int) newView.getVid().getId());
+            notifier.notifyViewChange(members, oldMembers, getAddress(), (int) newView.getVid().getId(), needsToRejoin(newView));
          }
 
          // Wake up any threads that are waiting to know about who the coordinator is
          membersListLock.notifyAll();
       }
+   }
+
+   private boolean needsToRejoin(View v) {
+      if (v instanceof MergeView) {
+         MergeView mv = (MergeView) v;
+         org.jgroups.Address coord = v.getMembers().get(0);
+         View winningPartition = null;
+         for (View p: mv.getSubgroups()) {
+            if (p.getMembers().get(0).equals(coord)) {
+               winningPartition = p;
+               break;
+            }
+         }
+
+         if (!winningPartition.containsMember(channel.getAddress())) return true;
+      }
+      return false;
    }
 
    public void suspect(org.jgroups.Address suspected_mbr) {

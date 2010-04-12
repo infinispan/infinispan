@@ -55,7 +55,7 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl implements Ca
       this.cacheManager = cacheManager;
    }
 
-   public void notifyViewChange(List<Address> members, List<Address> oldMembers, Address myAddress, int viewId) {
+   public void notifyViewChange(List<Address> members, List<Address> oldMembers, Address myAddress, int viewId, boolean needsToRejoin) {
       if (!viewChangedListeners.isEmpty()) {
          EventImpl e = new EventImpl();
          e.setLocalAddress(myAddress);
@@ -63,6 +63,7 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl implements Ca
          e.setNewMembers(members);
          e.setOldMembers(oldMembers);
          e.setCacheManager(cacheManager);
+         e.setNeedsToRejoin(needsToRejoin);
          e.setType(Event.Type.VIEW_CHANGED);
          for (ListenerInvocation listener : viewChangedListeners) listener.invoke(e);
       }

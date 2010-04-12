@@ -9,7 +9,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.xa.TransactionTable;
 import org.infinispan.transaction.xa.TransactionTable.StaleTransactionCleanup;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
@@ -46,7 +45,7 @@ public class CacheManagerNotifierTest extends AbstractInfinispanTest {
       CacheManagerNotifier mockNotifier = createMock(CacheManagerNotifier.class);
       CacheManagerNotifier origNotifier = TestingUtil.replaceComponent(cm1, CacheManagerNotifier.class, mockNotifier, true);
       try {
-         mockNotifier.notifyViewChange(isA(List.class), isA(List.class), eq(myAddress), anyInt());
+         mockNotifier.notifyViewChange(isA(List.class), isA(List.class), eq(myAddress), anyInt(), false);
          replay(mockNotifier);
          // start a second cache.
          Cache c2 = cm2.getCache("cache");

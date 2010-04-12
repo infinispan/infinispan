@@ -16,6 +16,8 @@ import org.infinispan.test.fwk.JGroupsConfigBuilder;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.jgroups.Channel;
 import org.jgroups.protocols.DISCARD;
+import org.jgroups.protocols.TP;
+import org.jgroups.stack.ProtocolStack;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
@@ -36,32 +38,21 @@ public class RehashAfterPartitionMergeTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration c = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC);
-      c.setLockAcquisitionTimeout(1000);
+      caches = createClusteredCaches(2, "test", getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC));
 
-      GlobalConfiguration gc = GlobalConfiguration.getClusteredDefault();      
-      amendMarshaller(gc);
-      minimizeThreads(gc);
-      Properties newTransportProps = new Properties();
-      String jgc = JGroupsConfigBuilder.getJGroupsConfig();
-      String discardString = "):DISCARD(use_gui=false";
-      String newString = jgc.substring(0, jgc.indexOf("):")) + discardString + jgc.substring(jgc.indexOf("):"));
-      newTransportProps.put(CONFIGURATION_STRING, newString);
-      gc.setTransportProperties(newTransportProps);
-      CacheManager cm1 = TestCacheManagerFactory.createCacheManager(gc, c, true, false, true);
-      CacheManager cm2 = TestCacheManagerFactory.createCacheManager(gc, c, true, false, true);
-      registerCacheManager(cm1, cm2);
-      c1 = cm1.getCache();
-      c2 = cm2.getCache();
-      caches = Arrays.asList(c1, c2);
+      c1 = caches.get(0);
+      c2 = caches.get(1);
       d1 = getDiscardForCache(c1);
       d2 = getDiscardForCache(c2);
    }
 
-   private DISCARD getDiscardForCache(Cache<?, ?> c) {
+   private DISCARD getDiscardForCache(Cache<?, ?> c) throws Exception {
       JGroupsTransport jgt = (JGroupsTransport) TestingUtil.extractComponent(c, Transport.class);
       Channel ch = jgt.getChannel();
-      return (DISCARD) ch.getProtocolStack().findProtocol(DISCARD.class);
+      ProtocolStack ps = ch.getProtocolStack();
+      DISCARD discard = new DISCARD();
+      ps.insertProtocol(discard, ProtocolStack.ABOVE, TP.class);
+      return discard;
    }
 
    public void testCachePartition() {
