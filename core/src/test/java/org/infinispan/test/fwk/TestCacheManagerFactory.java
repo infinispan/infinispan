@@ -196,9 +196,13 @@ public class TestCacheManagerFactory {
    }
 
    private static CacheManager createCacheManager(GlobalConfiguration configuration, Configuration defaultCfg, boolean transactional, boolean keepJmxDomainName) {
+      return createCacheManager(configuration, defaultCfg, transactional, keepJmxDomainName, false);
+   }
+
+   public static CacheManager createCacheManager(GlobalConfiguration configuration, Configuration defaultCfg, boolean transactional, boolean keepJmxDomainName, boolean dontFixTransport) {
       minimizeThreads(configuration);
       amendMarshaller(configuration);
-      amendTransport(configuration);
+      if (!dontFixTransport) amendTransport(configuration);
       if (transactional) amendJTA(defaultCfg);
       return newDefaultCacheManager(configuration, defaultCfg, keepJmxDomainName);
    }
@@ -241,13 +245,13 @@ public class TestCacheManagerFactory {
       }
    }
 
-   private static void minimizeThreads(GlobalConfiguration gc) {
+   public static void minimizeThreads(GlobalConfiguration gc) {
       Properties p = new Properties();
       p.setProperty("maxThreads", "1");
       gc.setAsyncTransportExecutorProperties(p);
    }
 
-   private static void amendMarshaller(GlobalConfiguration configuration) {
+   public static void amendMarshaller(GlobalConfiguration configuration) {
       if (MARSHALLER != null) {
          try {
             Util.loadClass(MARSHALLER);
