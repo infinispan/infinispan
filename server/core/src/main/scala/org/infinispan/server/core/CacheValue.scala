@@ -32,7 +32,7 @@ private class CacheValueExternalizer extends Externalizer {
 
    override def readObject(input: ObjectInput): AnyRef = {
       val data = new Array[Byte](input.read())
-      input.read(data)
+      input.readFully(data)
       val version = input.readLong
       new CacheValue(data, version)
    }

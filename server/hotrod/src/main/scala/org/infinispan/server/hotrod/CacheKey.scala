@@ -4,6 +4,7 @@ import org.infinispan.util.Util
 import java.util.Arrays
 import org.infinispan.marshall.{Externalizer, Marshallable}
 import java.io.{ObjectInput, ObjectOutput}
+import org.infinispan.server.core.Logging
 
 /**
  * // TODO: Document this
@@ -42,7 +43,7 @@ private class CacheKeyExternalizer extends Externalizer {
 
    override def readObject(input: ObjectInput): AnyRef = {
       val data = new Array[Byte](input.read())
-      input.read(data)
+      input.readFully(data)
       new CacheKey(data)
    }
 }

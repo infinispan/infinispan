@@ -43,14 +43,14 @@ class HotRodReplicationTest extends MultipleCacheManagersTest {
       servers.foreach(_.stop)
    }
 
-   def tesReplicatedPut(m: Method) {
+   def testReplicatedPut(m: Method) {
       val putSt = clients.head.put(k(m) , 0, 0, v(m))
       assertStatus(putSt, Success)
       val (getSt, actual) = clients.tail.head.get(k(m), 0)
       assertSuccess(getSt, v(m), actual)
    }
 
-   def tesReplicatedPutIfAbsent(m: Method) {
+   def testReplicatedPutIfAbsent(m: Method) {
       val (getSt, actual) = clients.head.assertGet(m)
       assertKeyDoesNotExist(getSt, actual)
       val (getSt2, actual2) = clients.tail.head.assertGet(m)
