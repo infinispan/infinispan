@@ -80,6 +80,23 @@ public class RemoteCacheManager implements CacheContainer, Lifecycle {
    }
 
    /**
+    * Creates a remote cache manager aware of the hotrod server listening at host:port.
+    * @param start weather or not to start the RemoteCacheManager.
+    */
+   public RemoteCacheManager(String host, int port, boolean start) {
+      props = new Properties();
+      props.put(TransportFactory.CONF_HOTROD_SERVERS, host + ":" + port);
+      if (start) start();
+   }
+
+   /**
+    * Same as {@link #RemoteCacheManager(String, int)} with start=true.
+    */
+   public RemoteCacheManager(String host, int port) {
+      this(host, port, true);
+   }
+
+   /**
     * Same as {@link #RemoteCacheManager(java.util.Properties)}, but it will try to lookup the config properties in
     * supplied URL.
     *

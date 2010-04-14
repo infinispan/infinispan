@@ -57,7 +57,9 @@ public interface ServerStatistics {
     */
    public static final String REMOVE_MISSES = "removeMisses";
 
-   public Map<String, Number> getStatsMap();
+   public Map<String, String> getStatsMap();
 
-   public Number getStats(String statsName);
+   public String getStatistic(String statsName);
+
+   public Integer getIntStatistic(String statsName);
 }

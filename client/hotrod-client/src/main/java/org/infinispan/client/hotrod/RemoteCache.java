@@ -67,7 +67,7 @@ public interface RemoteCache<K, V> extends Cache<K, V> {
     * Lat call (remove) will make sure that the entry will only be removed if it hasn't been changed in between.
     *
     * @return true if the entry has been removed
-    * @see org.infinispan.client.hotrod.RemoteCache.VersionedValue
+    * @see VersionedValue
     * @see #getVersioned(Object)
     */
    boolean remove(K key, long version);
@@ -83,7 +83,7 @@ public interface RemoteCache<K, V> extends Cache<K, V> {
     *
     * @return true if the method has been replaced
     * @see #getVersioned(Object)
-    * @see org.infinispan.client.hotrod.RemoteCache.VersionedValue
+    * @see VersionedValue
     */
    boolean replace(K key, V newValue, long version);
 
@@ -114,7 +114,7 @@ public interface RemoteCache<K, V> extends Cache<K, V> {
 
 
    /**
-    * Returns the {@link org.infinispan.client.hotrod.RemoteCache.VersionedValue} associated to the supplied key param, or null if it doesn't exist.
+    * Returns the {@link VersionedValue} associated to the supplied key param, or null if it doesn't exist.
     */
    VersionedValue getVersioned(K key);
 
@@ -344,14 +344,6 @@ public interface RemoteCache<K, V> extends Cache<K, V> {
    boolean ping();
 
    public ServerStatistics stats();
-
-   /**
-    * Besides the key and value, also contains an version. To be used in versioned operations, e.g. {@link RemoteCache#remove(Object, long)}.
-    */
-   public static interface VersionedValue<V> {
-      public long getVersion();
-      public V getValue();
-   }
 
    RemoteCache<K,V> withFlags(Flag... flags);
 }

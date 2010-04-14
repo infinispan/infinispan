@@ -1,5 +1,8 @@
 package org.infinispan.client.hotrod.impl;
 
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
 /**
  * // TODO: Document this
  *
@@ -7,6 +10,8 @@ package org.infinispan.client.hotrod.impl;
  * @since 4.1
  */
 public abstract class AbstractTransport implements Transport {
+
+   private static Log log = LogFactory.getLog(AbstractTransport.class);
 
    public byte[] readArray() {
       int responseLength = readVInt();
@@ -16,7 +21,11 @@ public abstract class AbstractTransport implements Transport {
    @Override
    public String readString() {
       byte[] strContent = readArray();
-      return new String(strContent);//todo take care of encoding here
+      String readString = new String(strContent);
+      if (log.isTraceEnabled()) {
+         log.trace("Read string is: " + readString);
+      }
+      return readString;//todo take care of encoding here
    }
 
    @Override

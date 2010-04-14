@@ -1,6 +1,6 @@
 package org.infinispan.client.hotrod.impl;
 
-import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.VersionedValue;
 
 /**
  * // TODO: Document this
@@ -8,7 +8,7 @@ import org.infinispan.client.hotrod.RemoteCache;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public class VersionedValueImpl<V> implements RemoteCache.VersionedValue<V> {
+public class VersionedValueImpl<V> implements VersionedValue<V> {
 
    private long version;
 
@@ -27,5 +27,13 @@ public class VersionedValueImpl<V> implements RemoteCache.VersionedValue<V> {
    @Override
    public V getValue() {
       return value;
+   }
+
+   @Override
+   public String toString() {
+      return "VersionedValueImpl{" +
+            "version=" + version +
+            ", value=" + value +
+            '}';
    }
 }

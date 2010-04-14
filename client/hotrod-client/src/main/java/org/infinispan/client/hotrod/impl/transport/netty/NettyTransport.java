@@ -2,6 +2,8 @@ package org.infinispan.client.hotrod.impl.transport.netty;
 
 import org.infinispan.client.hotrod.impl.AbstractTransport;
 import org.infinispan.client.hotrod.impl.transport.TransportException;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFuture;
@@ -17,6 +19,8 @@ import java.util.concurrent.Executors;
  * @since 4.1
  */
 public class NettyTransport extends AbstractTransport {
+
+   private static Log log = LogFactory.getLog(NettyTransport.class);
 
    private InetSocketAddress serverAddress;
    private Channel channel;
@@ -44,7 +48,7 @@ public class NettyTransport extends AbstractTransport {
       channel = future.awaitUninterruptibly().getChannel();
       if (!future.isSuccess()) {
          bootstrap.releaseExternalResources();
-         throw new TransportException("Coukd not create netty transport", future.getCause());
+         throw new TransportException("Could not create netty transport", future.getCause());
       }
    }
 
@@ -95,7 +99,8 @@ public class NettyTransport extends AbstractTransport {
 
    @Override
    public void release() {
-      // TODO: Customise this generated block
+      log.trace("About to close the channel: " + channel);
+      channel.close();
    }
 
    @Override

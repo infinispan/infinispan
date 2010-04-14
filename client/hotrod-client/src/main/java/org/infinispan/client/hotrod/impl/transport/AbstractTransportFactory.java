@@ -21,12 +21,17 @@ public abstract class AbstractTransportFactory implements TransportFactory {
    protected int serverPort;
 
    public void init(Properties props) {
-      String servers = props.getProperty("hotrod-servers");
+      String servers = props.getProperty(CONF_HOTROD_SERVERS);
       if (servers == null) {
-         servers = "127.0.0.1:11311";
-         log.info("'hotrod-servers' property not found, defaulting to " + servers);
+         servers = System.getProperty(OVERRIDE_HOTROD_SERVERS);
+         if (servers != null) {
+            log.info("Overwriting default server properties (-D" + OVERRIDE_HOTROD_SERVERS + ") with " + servers);
+         } else {
+            servers = "127.0.0.1:11311";
+         }
+         log.info("'hotrod-servers' property not specified in config, using " + servers);
       }
-      StringTokenizer tokenizer = new StringTokenizer(servers,";");
+      StringTokenizer tokenizer = new StringTokenizer(servers, ";");
       String server = tokenizer.nextToken();
       String[] serverDef = tokenizeServer(server);
       serverHost = serverDef[0];
@@ -35,6 +40,6 @@ public abstract class AbstractTransportFactory implements TransportFactory {
 
    private String[] tokenizeServer(String server) {
       StringTokenizer t = new StringTokenizer(server, ":");
-      return new String[] {t.nextToken(), t.nextToken()};
+      return new String[]{t.nextToken(), t.nextToken()};
    }
 }

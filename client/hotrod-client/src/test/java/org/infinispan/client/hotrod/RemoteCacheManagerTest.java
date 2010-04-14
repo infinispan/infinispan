@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod;
 
+import org.infinispan.client.hotrod.impl.transport.AbstractTransportFactory;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -16,18 +17,18 @@ import java.util.Properties;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-@Test(testName = "client.hotrod.RemoteCacheManagerTest", groups = "functional", enabled = false, description = "TODO To be re-enabled when we have a multithreaded HotRod server impl")
+@Test(testName = "client.hotrod.RemoteCacheManagerTest", groups = "functional" )
 public class RemoteCacheManagerTest extends SingleCacheManagerTest {
 
    CacheManager cacheManager = null;
    HotRodServer hotrodServer = null;
-
+   private String prevValue;
 
    @Override
    protected CacheManager createCacheManager() throws Exception {
       cacheManager = TestCacheManagerFactory.createLocalCacheManager();
-      hotrodServer = new HotRodServer();
-      hotrodServer.start("127.0.0.1", 11311, cacheManager, 0, 0);
+      hotrodServer = HotRodServerStarter.startHotRodServer(cacheManager);
+      prevValue = System.setProperty(AbstractTransportFactory.OVERRIDE_HOTROD_SERVERS, "localhost:" + hotrodServer.getPort());
       return cacheManager;
    }
 
@@ -35,12 +36,16 @@ public class RemoteCacheManagerTest extends SingleCacheManagerTest {
    public void release() {
       if (hotrodServer != null) hotrodServer.stop();
       if (cacheManager != null) cacheManager.stop();
+      if (prevValue != null) {
+         System.setProperty(AbstractTransportFactory.OVERRIDE_HOTROD_SERVERS, prevValue);
+      } else {
+         System.getProperties().remove(AbstractTransportFactory.OVERRIDE_HOTROD_SERVERS);
+      }
    }
 
    public void testNoArgConstructor() {
       RemoteCacheManager remoteCacheManager = new RemoteCacheManager();
       assert remoteCacheManager.isStarted();
-      assertWorks(remoteCacheManager);
       remoteCacheManager.stop();
    }
 
@@ -48,7 +53,6 @@ public class RemoteCacheManagerTest extends SingleCacheManagerTest {
       RemoteCacheManager remoteCacheManager = new RemoteCacheManager(false);
       assert !remoteCacheManager.isStarted();
       remoteCacheManager.start();
-      assertWorks(remoteCacheManager);
       remoteCacheManager.stop();
    }
 

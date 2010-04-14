@@ -61,7 +61,7 @@ public interface HotrodOperations {
 
    public void clear(Flag... flags);
 
-   public Map<String, Number> stats();
+   public Map<String, String> stats();
 
    public boolean ping();
 }

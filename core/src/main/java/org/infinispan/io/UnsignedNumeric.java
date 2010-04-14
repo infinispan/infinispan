@@ -1,8 +1,10 @@
 package org.infinispan.io;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.io.OutputStream;
 
 /**
  * Helper to read and write unsigned numerics
@@ -24,6 +26,16 @@ public class UnsignedNumeric {
       }
       return i;
    }
+   
+   public static int readUnsignedInt(InputStream in) throws IOException {
+      int b = in.read();
+      int i = b & 0x7F;
+      for (int shift = 7; (b & 0x80) != 0; shift += 7) {
+         b = in.read();
+         i |= (b & 0x7FL) << shift;
+      }
+      return i;
+   }
 
    /**
     * Writes an int in a variable-length format.  Writes between one and five bytes.  Smaller values take fewer bytes.
@@ -37,6 +49,14 @@ public class UnsignedNumeric {
          i >>>= 7;
       }
       out.writeByte((byte) i);
+   }
+
+   public static void writeUnsignedInt(OutputStream out, int i) throws IOException {
+      while ((i & ~0x7F) != 0) {
+         out.write((byte) ((i & 0x7f) | 0x80));
+         i >>>= 7;
+      }
+      out.write((byte) i);
    }
 
 
@@ -54,6 +74,16 @@ public class UnsignedNumeric {
       return i;
    }
 
+   public static long readUnsignedLong(InputStream in) throws IOException {
+      int b = in.read();
+      long i = b & 0x7F;
+      for (int shift = 7; (b & 0x80) != 0; shift += 7) {
+         b = in.read();
+         i |= (b & 0x7FL) << shift;
+      }
+      return i;
+   }
+
    /**
     * Writes an int in a variable-length format.  Writes between one and nine bytes.  Smaller values take fewer bytes.
     * Negative numbers are not supported.
@@ -66,6 +96,14 @@ public class UnsignedNumeric {
          i >>>= 7;
       }
       out.writeByte((byte) i);
+   }
+
+   public static void writeUnsignedLong(OutputStream out, long i) throws IOException {
+      while ((i & ~0x7F) != 0) {
+         out.write((byte) ((i & 0x7f) | 0x80));
+         i >>>= 7;
+      }
+      out.write((byte) i);
    }
 
      /**

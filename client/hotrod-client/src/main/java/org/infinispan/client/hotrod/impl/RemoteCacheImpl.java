@@ -4,6 +4,7 @@ import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.ServerStatistics;
 import org.infinispan.client.hotrod.Version;
+import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.util.concurrent.NotifyingFuture;
 
 import java.util.Map;
@@ -71,9 +72,9 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K,V> {
 
    @Override
    public ServerStatistics stats() {
-      Map<String, Number> statsMap = operations.stats();
+      Map<String, String> statsMap = operations.stats();
       ServerStatisticsImpl stats = new ServerStatisticsImpl();
-      for (Map.Entry<String, Number> entry : statsMap.entrySet()) {
+      for (Map.Entry<String, String> entry : statsMap.entrySet()) {
          stats.addStats(entry.getKey(), entry.getValue());
       }
       return stats;

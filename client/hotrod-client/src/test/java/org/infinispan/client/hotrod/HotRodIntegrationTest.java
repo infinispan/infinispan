@@ -16,8 +16,11 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
+import java.util.Properties;
 
 import static junit.framework.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
 
 
 /**
@@ -26,8 +29,10 @@ import static junit.framework.Assert.assertEquals;
  * @author mmarkus
  * @since 4.1
  */
-@Test (testName = "client.hotrod.HotRodClientIntegrationTest", groups = "functional", enabled = false, description = "TODO To be re-enabled when we have a multithreaded HotRod server impl") 
+@Test (testName = "client.hotrod.HotRodClientIntegrationTest", groups = "functional" )
 public class HotRodIntegrationTest extends SingleCacheManagerTest {
+
+   private static Log log = LogFactory.getLog(HotRodIntegrationTest.class);
 
    private static final String CACHE_NAME = "replSync";
    private Cache cache;
@@ -37,7 +42,7 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
    RemoteCache remoteCache;
    private RemoteCacheManager remoteCacheManager;
 
-   private HotRodServer hotrodServer;
+   protected HotRodServer hotrodServer;
 
    @Override
    protected CacheManager createCacheManager() throws Exception {
@@ -49,7 +54,8 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
 
 
       //pass the config file to the cache
-      hotrodServer = HotRodTestingUtil.startHotRodServer(cacheManager);
+      hotrodServer = HotRodServerStarter.startHotRodServer(cacheManager);
+      log.info("Started server on port: " + hotrodServer.getPort());
 
       remoteCacheManager = getRemoteCacheManager();
       defaultRemote = remoteCacheManager.getCache();
@@ -58,7 +64,9 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
    }
 
    protected RemoteCacheManager getRemoteCacheManager() {
-      return new RemoteCacheManager();
+      Properties config = new Properties();
+      config.put("hotrod-servers", "127.0.0.1:" + hotrodServer.getPort());
+      return new RemoteCacheManager(config);
    }
 
 
@@ -129,20 +137,19 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
       assert remoteCache.containsKey("aKey");
    }
 
-   private static Log log = LogFactory.getLog(HotRodIntegrationTest.class);
-
    public void testGetVersionedCacheEntry() {
-      assert null == remoteCache.getVersioned("aKey");
+      VersionedValue value = remoteCache.getVersioned("aKey");
+      assertNull(remoteCache.getVersioned("aKey"), "expected null but received: " + value);
       remoteCache.put("aKey", "aValue");
       assert remoteCache.get("aKey").equals("aValue");
-      RemoteCache.VersionedValue valueBinary = remoteCache.getVersioned("aKey");
+      VersionedValue valueBinary = remoteCache.getVersioned("aKey");
       assert valueBinary != null;
       assertEquals(valueBinary.getValue(), "aValue");
       log.info("Version is: " + valueBinary.getVersion());
 
       //now put the same value
       remoteCache.put("aKey", "aValue");
-      RemoteCache.VersionedValue entry2 = remoteCache.getVersioned("aKey");
+      VersionedValue entry2 = remoteCache.getVersioned("aKey");
       assertEquals(entry2.getValue(), "aValue");
 
       assert entry2.getVersion() != valueBinary.getVersion();
@@ -150,7 +157,7 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
 
       //now put a different value
       remoteCache.put("aKey", "anotherValue");
-      RemoteCache.VersionedValue entry3 = remoteCache.getVersioned("aKey");
+      VersionedValue entry3 = remoteCache.getVersioned("aKey");
       assertEquals(entry3.getValue(), "anotherValue");
       assert entry3.getVersion() != entry2.getVersion();
       assert !entry3.equals(entry2);
@@ -168,10 +175,10 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
       
 
       remoteCache.put("aKey", "aValue");
-      RemoteCache.VersionedValue valueBinary = remoteCache.getVersioned("aKey");
+      VersionedValue valueBinary = remoteCache.getVersioned("aKey");
       assert remoteCache.replace("aKey", "aNewValue", valueBinary.getVersion());
 
-      RemoteCache.VersionedValue entry2 = remoteCache.getVersioned("aKey");
+      VersionedValue entry2 = remoteCache.getVersioned("aKey");
       assert entry2.getVersion() != valueBinary.getVersion();
       assertEquals(entry2.getValue(), "aNewValue");
 
@@ -182,13 +189,13 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
       assert !remoteCache.remove("aKey", 12321212l);
 
       remoteCache.put("aKey", "aValue");
-      RemoteCache.VersionedValue valueBinary = remoteCache.getVersioned("aKey");
+      VersionedValue valueBinary = remoteCache.getVersioned("aKey");
       assert remoteCache.remove("aKey", valueBinary.getVersion());
       assert !cache.containsKey("aKey");
 
       remoteCache.put("aKey", "aNewValue");
 
-      RemoteCache.VersionedValue entry2 = remoteCache.getVersioned("aKey");
+      VersionedValue entry2 = remoteCache.getVersioned("aKey");
       assert entry2.getVersion() != valueBinary.getVersion();
       assertEquals(entry2.getValue(), "aNewValue");
 
@@ -198,9 +205,9 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
    public void testPutIfAbsent() {
       remoteCache.put("aKey", "aValue");
       assert null == remoteCache.putIfAbsent("aKey", "anotherValue");
-      assert remoteCache.get("aKey").equals("aValue");
+      assertEquals(remoteCache.get("aKey"),"aValue");
 
-      assert remoteCache.get("aKey").equals("aValue");
+      assertEquals(remoteCache.get("aKey"),"aValue");
       assert remoteCache.containsKey("aKey");
 
       assert true : remoteCache.replace("aKey", "anotherValue");

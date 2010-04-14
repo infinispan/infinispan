@@ -3,10 +3,14 @@ package org.infinispan.client.hotrod.impl.transport.tcp;
 import org.infinispan.client.hotrod.impl.AbstractTransport;
 import org.infinispan.client.hotrod.impl.transport.TransportException;
 import org.infinispan.client.hotrod.impl.transport.VHelper;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.util.logging.Logger;
+import java.net.SocketAddress;
+import java.nio.channels.SocketChannel;
 
 /**
  * // TODO: Document this
@@ -16,7 +20,7 @@ import java.util.logging.Logger;
  */
 public class TcpTransport extends AbstractTransport {
 
-   public static final Logger log = Logger.getLogger(TcpTransport.class.getName());
+   private static Log log = LogFactory.getLog(TcpTransport.class);
 
    private String host;
    private int port;
@@ -61,7 +65,8 @@ public class TcpTransport extends AbstractTransport {
 
    public void connect() {
       try {
-         socket = new Socket(host, port);
+         SocketChannel socketChannel = SocketChannel.open(new InetSocketAddress(host, port));
+         socket = socketChannel.socket();
       } catch (IOException e) {
          throw new TransportException("Problems establishing initial connection", e);
       }
@@ -109,23 +114,35 @@ public class TcpTransport extends AbstractTransport {
       try {
          socket.close();
       } catch (IOException e) {
-         log.warning("Issues closing socket:" + e.getMessage());
+         log.warn("Issues closing socket:" + e.getMessage());
       }
    }
 
-   public byte[] readByteArray(int size)  {
-      byte[] bytes = new byte[size];
-      try {
-         size = socket.getInputStream().read(bytes);
-      } catch (IOException e) {
-         throw new TransportException(e);
-      }
-      if (size == -1) {
-         throw new RuntimeException("End of stream reached!");
-      }
-      if (size != bytes.length) {
-         throw new TransportException("Expected " + bytes.length + " bytes but only could read " + size + " bytes!");
-      }
-      return bytes;
+   public byte[] readByteArray(final int size) {
+      byte[] result = new byte[size];
+      boolean done = false;
+      int offset = 0;
+      do {
+         int read;
+         try {
+            int len = size - offset;
+            if (log.isTraceEnabled()) {
+               log.trace("Offset: " + offset + ", len=" + len + ", size=" + size);
+            }
+            read = socket.getInputStream().read(result, offset, len);
+         } catch (IOException e) {
+            throw new TransportException(e);
+         }
+         if (read == -1) {
+            throw new RuntimeException("End of stream reached!");
+         }
+         if (read + offset == size) {
+            done = true;
+         } else {
+            offset += read;
+            if (offset > result.length) throw new IllegalStateException("Assertion!");
+         }
+      } while (!done);
+      return result;
    }
 }

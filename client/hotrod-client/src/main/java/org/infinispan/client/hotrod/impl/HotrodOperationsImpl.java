@@ -197,17 +197,18 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
       }
    }
 
-   public Map<String, Number> stats() {
+   public Map<String, String> stats() {
       Transport transport = getTransport();
       try {
          // 1) write header
          long messageId = writeHeader(transport, STATS_REQUEST);
          readHeaderAndValidate(transport, messageId, STATS_RESPONSE);
          int nrOfStats = transport.readVInt();
-         Map<String, Number> result = new HashMap<String, Number>();
+         
+         Map<String, String> result = new HashMap<String, String>();
          for (int i = 0; i < nrOfStats; i++) {
             String statName = transport.readString();
-            Long statValue = transport.readVLong();
+            String statValue = transport.readString();
             result.put(statName, statValue);
          }
          return result;

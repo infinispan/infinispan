@@ -2,6 +2,8 @@ package org.infinispan.client.hotrod.impl.transport.netty;
 
 import org.infinispan.client.hotrod.impl.Transport;
 import org.infinispan.client.hotrod.impl.transport.AbstractTransportFactory;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.net.InetSocketAddress;
 import java.util.Properties;
@@ -13,6 +15,9 @@ import java.util.Properties;
  * @since 4.1
  */
 public class NettyTransportFactory extends AbstractTransportFactory {
+
+   private static Log log = LogFactory.getLog(NettyTransportFactory.class);
+
    private InetSocketAddress serverAddr;
 
    @Override
@@ -23,6 +28,7 @@ public class NettyTransportFactory extends AbstractTransportFactory {
 
    @Override
    public Transport getTransport() {
+      log.info("Connecting to server on: " + serverAddr);
       return new NettyTransport(serverAddr);
    }
 
