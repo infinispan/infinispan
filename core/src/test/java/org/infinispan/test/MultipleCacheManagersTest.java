@@ -89,6 +89,12 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       }
    }
 
+   /**
+    * Reason: after a tm.commit is run, multiple tests assert that the new value (as within the committing transaction)
+    * is present on a remote cache (i.e. not on the cache on which tx originated). If we don't use sync commit,
+    * than this (i.e. actual commit of the tx on the remote cache) might happen after the tm.commit() returns,
+    * and result in an intermittent failure for the assertion
+    */
    protected void assertSupportedConfig() {
       for (CacheManager cm : cacheManagers) {
          for (Cache cache : TestingUtil.getRunningCaches(cm)) {
