@@ -29,6 +29,7 @@ import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.text.NumberFormat;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -41,6 +42,9 @@ import java.util.concurrent.TimeUnit;
  * @since 4.0
  */
 public final class Util {
+
+   private static final boolean isArraysDebug = Boolean.getBoolean("infinispan.arrays.debug");
+
    /**
     * Loads the specified class using this class's classloader, or, if it is <code>null</code> (i.e. this class was
     * loaded by the bootstrap classloader), the system classloader. <p/> If loadtime instrumentation via
@@ -243,11 +247,17 @@ public final class Util {
       if (withHash)
          sb.append(", hashCode=").append(Integer.toHexString(array.hashCode()));
 
-      sb.append(", array=[");
-      int length = array.length < 10 ? array.length : 10; 
-      for (int i = 0; i < length; i++)
-         sb.append(array[i]).append(", ");
-      sb.append("..]}");
+      sb.append(", array=");
+      if (isArraysDebug) {
+         sb.append(Arrays.toString(array));
+      } else {
+         sb.append("[");
+         int length = array.length < 10 ? array.length : 10;
+         for (int i = 0; i < length; i++)
+            sb.append(array[i]).append(", ");
+         sb.append("..]");
+      }
+      sb.append("}");
 
       return sb.toString();
    }
