@@ -28,14 +28,13 @@ import java.util.List;
 import java.util.ArrayList;
 
 import org.apache.lucene.store.Directory;
-import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
+
 import org.infinispan.Cache;
-import org.infinispan.lucene.testutils.LuceneSettings;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -61,6 +60,7 @@ public class InfinispanDirectoryStressTest {
       CacheManager cacheManager = CacheTestSupport.createTestCacheManager();
       Cache<CacheKey, Object> cache = cacheManager.getCache();
       Directory directory = new InfinispanDirectory(cache, "indexName");
+      CacheTestSupport.initializeDirectory(directory);
       File document = CacheTestSupport.createDummyDocToIndex("document.lucene", 10000);
 
       for (int i = 0; i < OPERATIONS; i++) {
@@ -84,10 +84,7 @@ public class InfinispanDirectoryStressTest {
       List<InfinispanDirectoryThread> threads = new ArrayList<InfinispanDirectoryThread>();
       Cache<CacheKey, Object> cache = CacheTestSupport.createTestCacheManager().getCache();
       Directory directory1 = new InfinispanDirectory(cache, "indexName");
-
-      IndexWriter.MaxFieldLength fieldLength = new IndexWriter.MaxFieldLength(IndexWriter.DEFAULT_MAX_FIELD_LENGTH);
-      IndexWriter iw = new IndexWriter(directory1, LuceneSettings.analyzer, true, fieldLength);
-      iw.close();
+      CacheTestSupport.initializeDirectory(directory1);
 
       // second cache joins after index creation: tests proper configuration
       Cache<CacheKey, Object> cache2 = CacheTestSupport.createTestCacheManager().getCache(); // dummy cache, to force replication

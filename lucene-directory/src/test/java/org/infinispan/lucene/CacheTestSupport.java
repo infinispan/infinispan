@@ -26,7 +26,6 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriter.MaxFieldLength;
-import org.apache.lucene.index.SerialMergeScheduler;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.TermQuery;
@@ -48,6 +47,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Random;
 
+/**
+ * Contains general utilities used by other tests
+ */
 public abstract class CacheTestSupport {
 
    private static final Log log = LogFactory.getLog(CacheTestSupport.class);
@@ -75,9 +77,11 @@ public abstract class CacheTestSupport {
    protected static File createDummyDocToIndex(String fileName, int sz) throws Exception {
       File dummyDocToIndex = new File(fileName);
       if (dummyDocToIndex.exists()) {
-         dummyDocToIndex.delete();
+         boolean deleted = dummyDocToIndex.delete();
+         assert deleted;
       }
-      dummyDocToIndex.createNewFile();
+      boolean newFileCreated = dummyDocToIndex.createNewFile();
+      assert newFileCreated;
       Random r = new Random();
       FileWriter fw = new FileWriter(dummyDocToIndex);
       for (int i = 0; i < sz; i++) {
