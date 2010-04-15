@@ -25,7 +25,7 @@ public class TcpTransportFactory implements TransportFactory {
 
    private static Log log = LogFactory.getLog(TcpTransportFactory.class);
 
-   private GenericKeyedObjectPool connectionPool;
+   private volatile GenericKeyedObjectPool connectionPool;
    private PropsKeyedObjectPoolFactory poolFactory;
    private RequestBalancingStrategy balancer;
    private Collection<InetSocketAddress> servers;
