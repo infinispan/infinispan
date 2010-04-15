@@ -72,41 +72,10 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
 
    @AfterClass 
    public void testDestroyRemoteCacheFactory() {
-      assert remoteCache.ping();
+      remoteCacheManager.stop();
+//      assert remoteCache.ping();
       hotrodServer.stop();
-      assert !remoteCache.ping();
-//      try {
-//         remoteCache.get("aKey");
-//         assert false;
-//      } catch (ClientDisconnectedException e) {}
-//      try {
-//         remoteCache.clear();
-//         assert false;
-//      } catch (ClientDisconnectedException e) {}
-//      try {
-//         remoteCache.put("aKey", "aValue");
-//         assert false;
-//      } catch (ClientDisconnectedException e) {}
-//      try {
-//         remoteCache.putIfAbsent("aKey", "aValue");
-//         assert false;
-//      } catch (ClientDisconnectedException e) {}
-//      try {
-//         remoteCache.remove("aKey", 0);
-//         assert false;
-//      } catch (ClientDisconnectedException e) {}
-//      try {
-//         remoteCache.remove("aKey");
-//         assert false;
-//      } catch (ClientDisconnectedException e) {}
-//      try {
-//         remoteCache.replace("aKey", "aNewValue");
-//         assert false;
-//      } catch (ClientDisconnectedException e) {}
-//      try {
-//         remoteCache.replace("aKey", "aNewValue");
-//         assert false;
-//      } catch (ClientDisconnectedException e) {}
+//      assert !remoteCache.ping();
    }
 
    public void testPut() {
@@ -125,7 +94,7 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
       assertCacheContains(cache, "aKey", "aValue");
 
       assert remoteCache.get("aKey").equals("aValue");
-      
+
       assert null == remoteCache.remove("aKey");
       assertCacheContains(cache, "aKey", null);
       assert !remoteCache.containsKey("aKey");
@@ -172,7 +141,7 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
 
    public void testReplaceIfUnmodified() {
       assert null == remoteCache.replace("aKey", "aValue");
-      
+
 
       remoteCache.put("aKey", "aValue");
       VersionedValue valueBinary = remoteCache.getVersioned("aKey");
@@ -222,10 +191,6 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
       assert cache.isEmpty();
    }
 
-   public void testStats() {
-      //todo implement
-   }
-
    private void assertCacheContains(Cache cache, String key, String value) {
       SerializationMarshaller marshaller = new SerializationMarshaller();
       byte[] keyBytes = marshaller.marshallObject(key);
@@ -237,10 +202,5 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
       } else {
          assert Arrays.equals(valueBytes, cacheValue.data());
       }
-   }
-
-   private Object get(Cache cache, String s) {
-
-      return new String((byte[])cache.get(s));
    }
 }

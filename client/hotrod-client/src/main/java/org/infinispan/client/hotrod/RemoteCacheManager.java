@@ -17,8 +17,12 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetSocketAddress;
 import java.net.URL;
+import java.util.HashSet;
 import java.util.Properties;
+import java.util.Set;
+import java.util.StringTokenizer;
 
 /**
  * // TODO: Document this
@@ -30,10 +34,16 @@ public class RemoteCacheManager implements CacheContainer, Lifecycle {
 
    private static Log log = LogFactory.getLog(RemoteCacheManager.class);
 
+   public static final String HOTROD_CLIENT_PROPERTIES = "hotrod-client.properties";
+
+   public static final String CONF_HOTROD_SERVERS = "hotrod-servers";
+
+   public static final String OVERRIDE_HOTROD_SERVERS = "infinispan.hotrod-client.servers-default";
+
+
    private Properties props;
    private TransportFactory transportFactory;
    private String hotrodMarshaller;
-   private static final String HOTROD_CLIENT_PROPERTIES = "hotrod-client.properties";
    private boolean started = false;
 
 
@@ -139,7 +149,7 @@ public class RemoteCacheManager implements CacheContainer, Lifecycle {
          log.info("'transport-factory' factory not specified, using " + factory);
       }
       transportFactory = (TransportFactory) VHelper.newInstance(factory);
-      transportFactory.init(props);
+      transportFactory.start(props, getStaticConfiguredServers(props));
       hotrodMarshaller = props.getProperty("marshaller");
       if (hotrodMarshaller == null) {
          hotrodMarshaller = SerializationMarshaller.class.getName();
@@ -175,4 +185,36 @@ public class RemoteCacheManager implements CacheContainer, Lifecycle {
       HotrodOperations hotrodOperations = new HotrodOperationsImpl(cacheName, transportFactory);
       return new RemoteCacheImpl<K, V>(hotrodOperations, marshaller, cacheName);
    }
+
+   private Set<InetSocketAddress> getStaticConfiguredServers(Properties props) {
+      Set<InetSocketAddress> serverAddresses = new HashSet<InetSocketAddress>();
+      String servers = props.getProperty(CONF_HOTROD_SERVERS);
+      if (servers == null) {
+         servers = System.getProperty(OVERRIDE_HOTROD_SERVERS);
+         if (servers != null) {
+            log.info("Overwriting default server properties (-D" + OVERRIDE_HOTROD_SERVERS + ") with " + servers);
+         } else {
+            servers = "127.0.0.1:11311";
+         }
+         log.info("'hotrod-servers' property not specified in config, using " + servers);
+      }
+      StringTokenizer tokenizer = new StringTokenizer(servers, ";");
+      while (tokenizer.hasMoreTokens()) {
+         String server = tokenizer.nextToken();
+         String[] serverDef = tokenizeServer(server);
+         String serverHost = serverDef[0];
+         int serverPort = Integer.parseInt(serverDef[1]);
+         serverAddresses.add(new InetSocketAddress(serverHost, serverPort));
+      }
+      if (serverAddresses.isEmpty()) {
+         throw new IllegalStateException("No hot-rod servers specified!");
+      }
+      return serverAddresses;
+   }
+
+   private String[] tokenizeServer(String server) {
+      StringTokenizer t = new StringTokenizer(server, ":");
+      return new String[]{t.nextToken(), t.nextToken()};
+   }  
+
 }

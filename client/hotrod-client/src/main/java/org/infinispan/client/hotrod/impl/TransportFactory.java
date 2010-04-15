@@ -1,6 +1,9 @@
 package org.infinispan.client.hotrod.impl;
 
+import java.net.InetSocketAddress;
+import java.util.Collection;
 import java.util.Properties;
+import java.util.Set;
 
 /**
  * // TODO: Document this
@@ -12,15 +15,13 @@ public interface TransportFactory {
 
    public static final String CONF_HOTROD_SERVERS = "hotrod-servers";
 
-   public static final String CONF_TCP_CONNECTION_POOL = "tcp-connection-pool";
-
-   public static final String OVERRIDE_HOTROD_SERVERS = "infinispan.hotrod-client.servers-default";
-
    public Transport getTransport();
 
    public void releaseTransport(Transport transport);
 
-   void init(Properties props);
+   void start(Properties props, Collection<InetSocketAddress> staticConfiguredServers);
+
+   void updateServers(Collection<InetSocketAddress> newServers);
 
    void destroy();
 }

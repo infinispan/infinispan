@@ -9,7 +9,6 @@ import org.infinispan.util.logging.LogFactory;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.net.SocketAddress;
 import java.nio.channels.SocketChannel;
 
 /**
@@ -23,6 +22,7 @@ public class TcpTransport extends AbstractTransport {
    private static Log log = LogFactory.getLog(TcpTransport.class);
 
    private Socket socket;
+   private InetSocketAddress serverAddress;
 
    public void writeVInt(int vInt) {
       try {
@@ -68,8 +68,16 @@ public class TcpTransport extends AbstractTransport {
       }
    }
 
-   public TcpTransport(Socket socket) {
-      this.socket = socket;
+   public TcpTransport(InetSocketAddress serverAddress) {
+      this.serverAddress = serverAddress;
+      try {
+         SocketChannel socketChannel = SocketChannel.open(serverAddress);
+         socket = socketChannel.socket();
+      } catch (IOException e) {
+         String message = "Could not connect to server: " + serverAddress;
+         log.error(message, e);
+         throw new TransportException(message, e);
+      }
    }
 
    protected void writeBytes(byte[] toAppend) {
@@ -156,8 +164,47 @@ public class TcpTransport extends AbstractTransport {
       }
       return result;
    }
+   
+   public InetSocketAddress getServerAddress() {
+     return serverAddress;
+   }
 
-   public Socket getSocket() {
-      return socket;
+   @Override
+   public String toString() {
+      return "TcpTransport{" +
+            "socket=" + socket +
+            ", serverAddress=" + serverAddress +
+            "} " + super.toString();
+   }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      TcpTransport that = (TcpTransport) o;
+
+      if (serverAddress != null ? !serverAddress.equals(that.serverAddress) : that.serverAddress != null) return false;
+      if (socket != null ? !socket.equals(that.socket) : that.socket != null) return false;
+
+      return true;
+   }
+
+   @Override
+   public int hashCode() {
+      int result = socket != null ? socket.hashCode() : 0;
+      result = 31 * result + (serverAddress != null ? serverAddress.hashCode() : 0);
+      return result;
+   }
+
+   public void destroy() {
+      try {
+         socket.close();
+         if (log.isTraceEnabled()) {
+            log.trace("Successfully closed socket: " + socket);
+         }
+      } catch (IOException e) {
+         log.warn("Issues closing transport: " + this, e);
+      }
    }
 }

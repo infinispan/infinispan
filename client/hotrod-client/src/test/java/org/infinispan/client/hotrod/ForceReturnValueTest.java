@@ -53,9 +53,8 @@ public class ForceReturnValueTest extends SingleCacheManagerTest {
 
    @AfterClass(enabled = true)
    public void testDestroyRemoteCacheFactory() {
-      assert remoteCache.ping();
+      remoteCacheManager.stop();
       hotrodServer.stop();
-      assert !remoteCache.ping();
    }
 
    public void testPut() {

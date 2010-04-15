@@ -56,10 +56,6 @@
       <priority value="TRACE"/>
    </category>
 
-   <category name="org.infinispan">
-      <priority value="INFO"/>
-   </category>
-
    <category name="com.mchange">
       <priority value="TRACE"/>
    </category>

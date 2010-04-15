@@ -1,6 +1,5 @@
 package org.infinispan.client.hotrod;
 
-import org.infinispan.client.hotrod.impl.transport.AbstractTransportFactory;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -28,18 +27,18 @@ public class RemoteCacheManagerTest extends SingleCacheManagerTest {
    protected CacheManager createCacheManager() throws Exception {
       cacheManager = TestCacheManagerFactory.createLocalCacheManager();
       hotrodServer = HotRodServerStarter.startHotRodServer(cacheManager);
-      prevValue = System.setProperty(AbstractTransportFactory.OVERRIDE_HOTROD_SERVERS, "localhost:" + hotrodServer.getPort());
+      prevValue = System.setProperty(RemoteCacheManager.OVERRIDE_HOTROD_SERVERS, "localhost:" + hotrodServer.getPort());
       return cacheManager;
    }
 
    @AfterTest(alwaysRun = true)
    public void release() {
-      if (hotrodServer != null) hotrodServer.stop();
       if (cacheManager != null) cacheManager.stop();
+      if (hotrodServer != null) hotrodServer.stop();
       if (prevValue != null) {
-         System.setProperty(AbstractTransportFactory.OVERRIDE_HOTROD_SERVERS, prevValue);
+         System.setProperty(RemoteCacheManager.OVERRIDE_HOTROD_SERVERS, prevValue);
       } else {
-         System.getProperties().remove(AbstractTransportFactory.OVERRIDE_HOTROD_SERVERS);
+         System.getProperties().remove(RemoteCacheManager.OVERRIDE_HOTROD_SERVERS);
       }
    }
 

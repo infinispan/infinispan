@@ -1,11 +1,12 @@
 package org.infinispan.client.hotrod.impl.transport.netty;
 
 import org.infinispan.client.hotrod.impl.Transport;
-import org.infinispan.client.hotrod.impl.transport.AbstractTransportFactory;
+import org.infinispan.client.hotrod.impl.TransportFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.net.InetSocketAddress;
+import java.util.Collection;
 import java.util.Properties;
 
 /**
@@ -14,16 +15,22 @@ import java.util.Properties;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public class NettyTransportFactory extends AbstractTransportFactory {
+public class NettyTransportFactory implements TransportFactory {
 
    private static Log log = LogFactory.getLog(NettyTransportFactory.class);
 
    private InetSocketAddress serverAddr;
+   private Collection<InetSocketAddress> serverAddresses;
 
    @Override
-   public void init(Properties props) {
-      super.init(props);
-      serverAddr = super.serverAddresses.iterator().next();
+   public void start(Properties props, Collection<InetSocketAddress> staticConfiguredServers) {
+      this.serverAddresses = staticConfiguredServers;
+      serverAddr = serverAddresses.iterator().next();
+   }
+
+   @Override
+   public void updateServers(Collection<InetSocketAddress> newServers) {
+      throw new IllegalStateException();
    }
 
    @Override
@@ -34,7 +41,7 @@ public class NettyTransportFactory extends AbstractTransportFactory {
 
    @Override
    public void destroy() {
-      // TODO: Customise this generated block
+      //nothing to do here as this no pooling is available
    }
 
    @Override

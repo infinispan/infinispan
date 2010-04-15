@@ -41,8 +41,8 @@ public class HotrodStatisticsTest {
    @AfterMethod
    void tearDown() {
       TestingUtil.killCacheManagers(cacheManager);
-      hotrodServer.stop();
       rcm.stop();
+      hotrodServer.stop();
    }
 
    public void testAllStatsArePresent() {

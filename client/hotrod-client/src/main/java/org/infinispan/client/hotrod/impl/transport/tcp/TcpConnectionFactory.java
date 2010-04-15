@@ -1,15 +1,10 @@
 package org.infinispan.client.hotrod.impl.transport.tcp;
 
 import org.apache.commons.pool.BaseKeyedPoolableObjectFactory;
-import org.apache.commons.pool.BasePoolableObjectFactory;
-import org.apache.commons.pool.KeyedPoolableObjectFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.nio.channels.SocketChannel;
 
 /**
  * // TODO: Document this
@@ -24,23 +19,18 @@ public class TcpConnectionFactory extends BaseKeyedPoolableObjectFactory {
    @Override
    public Object makeObject(Object key) throws Exception {
       InetSocketAddress serverAddress = (InetSocketAddress) key;
+      TcpTransport tcpTransport = new TcpTransport(serverAddress);
       if (log.isTraceEnabled()) {
-         log.trace("Creating connection to server: " + serverAddress);
+         log.trace("Created tcp transport: " + tcpTransport);
       }
-      try {
-         SocketChannel socketChannel = SocketChannel.open(serverAddress);
-         return socketChannel.socket();
-      } catch (IOException e) {
-         log.warn("Could not create connection to " + serverAddress, e);
-         throw e;
-      }
+      return tcpTransport;
    }
 
    @Override
    public boolean validateObject(Object key, Object obj) {
-      Socket socket = (Socket) obj;
+      TcpTransport transport = (TcpTransport) obj;
       if (log.isTraceEnabled()) {
-         log.trace("About to validate(ping) connection to server " + key + ". socket is " + socket);
+         log.trace("About to validate(ping) connection to server " + key + ". TcpTransport is " + transport);
       }
       //todo implement
       return true;
@@ -48,14 +38,7 @@ public class TcpConnectionFactory extends BaseKeyedPoolableObjectFactory {
 
    @Override
    public void destroyObject(Object key, Object obj) throws Exception {
-      Socket socket = (Socket) obj;
-      if (log.isTraceEnabled()) {
-         log.trace("About to destroy socket " + socket);
-      }
-      try {
-         socket.close();
-      } catch (IOException e) {
-         log.warn("Issues closing the socket: " + socket, e);
-      }
+      TcpTransport transport = (TcpTransport) obj;
+      transport.destroy();
    }
 }
