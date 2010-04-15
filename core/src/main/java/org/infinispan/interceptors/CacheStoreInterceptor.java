@@ -21,6 +21,14 @@
  */
 package org.infinispan.interceptors;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
+
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -56,14 +64,6 @@ import org.infinispan.util.logging.LogFactory;
 import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
 import org.rhq.helpers.pluginAnnotations.agent.Metric;
 import org.rhq.helpers.pluginAnnotations.agent.Operation;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Writes modifications back to the store on the way out: stores modifications back through the CacheLoader, either
@@ -237,7 +237,8 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
          throw new Exception("transactionContext for transaction " + gtx + " not found in transaction table");
       }
       List<WriteCommand> modifications = transactionContext.getModifications();
-      if (modifications.isEmpty()) {
+
+      if (transactionContext.hasModifications()) {
          if (trace) log.trace("Transaction has not logged any modifications!");
          return;
       }
@@ -307,6 +308,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       }
    }
 
+   @Override
    @ManagedOperation(description = "Resets statistics gathered by this component")
    @Operation(displayName = "Reset statistics")
    public void resetStatistics() {
