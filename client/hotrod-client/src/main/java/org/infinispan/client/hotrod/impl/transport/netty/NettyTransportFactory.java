@@ -23,7 +23,7 @@ public class NettyTransportFactory extends AbstractTransportFactory {
    @Override
    public void init(Properties props) {
       super.init(props);
-      serverAddr = new InetSocketAddress(serverHost, serverPort);
+      serverAddr = super.serverAddresses.iterator().next();
    }
 
    @Override
@@ -35,5 +35,10 @@ public class NettyTransportFactory extends AbstractTransportFactory {
    @Override
    public void destroy() {
       // TODO: Customise this generated block
+   }
+
+   @Override
+   public void releaseTransport(Transport transport) {
+      transport.release();
    }
 }

@@ -12,7 +12,7 @@ public interface Transport {
 
    public void writeByte(short toWrite);
 
-   public void writeVInt(int length);
+   public void writeVInt(int vint);
 
    public void writeVLong(long l);
 

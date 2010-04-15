@@ -7,11 +7,11 @@ import org.infinispan.client.hotrod.impl.HotrodMarshaller;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.SerializationMarshaller;
 import org.infinispan.client.hotrod.impl.TransportFactory;
+import org.infinispan.client.hotrod.impl.transport.VHelper;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.lifecycle.Lifecycle;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.DefaultCacheManager;
-import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -138,7 +138,7 @@ public class RemoteCacheManager implements CacheContainer, Lifecycle {
          factory = TcpTransportFactory.class.getName();
          log.info("'transport-factory' factory not specified, using " + factory);
       }
-      transportFactory = (TransportFactory) newInstance(factory);
+      transportFactory = (TransportFactory) VHelper.newInstance(factory);
       transportFactory.init(props);
       hotrodMarshaller = props.getProperty("marshaller");
       if (hotrodMarshaller == null) {
@@ -170,16 +170,8 @@ public class RemoteCacheManager implements CacheContainer, Lifecycle {
       }
    }
 
-   private Object newInstance(String clazz) {
-      try {
-         return Util.getInstance(clazz);
-      } catch (Exception e) {
-         throw new HotRodClientException("Could not instantiate class: " + clazz, e);
-      }
-   }
-
    private <K, V> RemoteCache<K, V> createRemoteCache(String cacheName) {
-      HotrodMarshaller marshaller = (HotrodMarshaller) newInstance(hotrodMarshaller);
+      HotrodMarshaller marshaller = (HotrodMarshaller) VHelper.newInstance(hotrodMarshaller);
       HotrodOperations hotrodOperations = new HotrodOperationsImpl(cacheName, transportFactory);
       return new RemoteCacheImpl<K, V>(hotrodOperations, marshaller, cacheName);
    }

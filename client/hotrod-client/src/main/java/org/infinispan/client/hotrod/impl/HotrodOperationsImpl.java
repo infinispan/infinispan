@@ -33,7 +33,7 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
    }
 
    public byte[] get(byte[] key, Flag[] flags) {
-      Transport transport = getTransport();
+      Transport transport = transportFactory.getTransport();
       try {
          short status = sendKeyOperation(key, transport, GET_REQUEST, flags, GET_RESPONSE);
          if (status == KEY_DOES_NOT_EXIST_STATUS) {
@@ -49,7 +49,7 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
    }
 
    public byte[] remove(byte[] key, Flag[] flags) {
-      Transport transport = getTransport();
+      Transport transport = transportFactory.getTransport();
       try {
          short status = sendKeyOperation(key, transport, REMOVE_REQUEST, flags, REMOVE_RESPONSE);
          if (status == KEY_DOES_NOT_EXIST_STATUS) {
@@ -64,7 +64,7 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
    }
 
    public boolean containsKey(byte[] key, Flag... flags) {
-      Transport transport = getTransport();
+      Transport transport = transportFactory.getTransport();
       try {
          short status = sendKeyOperation(key, transport, CONTAINS_KEY_REQUEST, flags, CONTAINS_KEY_RESPONSE);
          if (status == KEY_DOES_NOT_EXIST_STATUS) {
@@ -79,7 +79,7 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
    }
 
    public BinaryVersionedValue getWithVersion(byte[] key, Flag... flags) {
-      Transport transport = getTransport();
+      Transport transport = transportFactory.getTransport();
       try {
          short status = sendKeyOperation(key, transport, GET_WITH_VERSION, flags, GET_WITH_VERSION_RESPONSE);
          if (status == KEY_DOES_NOT_EXIST_STATUS) {
@@ -101,7 +101,7 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
 
 
    public byte[] put(byte[] key, byte[] value, int lifespan, int maxIdle, Flag... flags) {
-      Transport transport = getTransport();
+      Transport transport = transportFactory.getTransport();
       try {
          short status = sendPutOperation(key, value, transport, PUT_REQUEST, PUT_RESPONSE, lifespan, maxIdle, flags);
          if (status != NO_ERROR_STATUS) {
@@ -114,7 +114,7 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
    }
 
    public byte[] putIfAbsent(byte[] key, byte[] value, int lifespan, int maxIdle, Flag... flags) {
-      Transport transport = getTransport();
+      Transport transport = transportFactory.getTransport();
       try {
          short status = sendPutOperation(key, value, transport, PUT_IF_ABSENT_REQUEST, PUT_IF_ABSENT_RESPONSE, lifespan, maxIdle, flags);
          if (status == NO_ERROR_STATUS || status == NOT_PUT_REMOVED_REPLACED_STATUS) {
@@ -127,7 +127,7 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
    }
 
    public byte[] replace(byte[] key, byte[] value, int lifespan, int maxIdle, Flag... flags) {
-      Transport transport = getTransport();
+      Transport transport = transportFactory.getTransport();
       try {
          short status = sendPutOperation(key, value, transport, REPLACE_REQUEST, REPLACE_RESPONSE, lifespan, maxIdle, flags);
          if (status == NO_ERROR_STATUS) {
@@ -148,7 +148,7 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
     * was sent, the response would be empty.
     */
    public VersionedOperationResponse replaceIfUnmodified(byte[] key, byte[] value, int lifespan, int maxIdle, long version, Flag... flags) {
-      Transport transport = getTransport();
+      Transport transport = transportFactory.getTransport();
       try {
          // 1) write header
          long messageId = writeHeader(transport, REPLACE_IF_UNMODIFIED_REQUEST, flags);
@@ -169,7 +169,7 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
     * Request: [header][key length][key][entry_version]
     */
    public VersionedOperationResponse removeIfUnmodified(byte[] key, long version, Flag... flags) {
-      Transport transport = getTransport();
+      Transport transport = transportFactory.getTransport();
       try {
          // 1) write header
          long messageId = writeHeader(transport, REMOVE_IF_UNMODIFIED_REQUEST, flags);
@@ -187,7 +187,7 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
    }
 
    public void clear(Flag... flags) {
-      Transport transport = getTransport();
+      Transport transport = transportFactory.getTransport();
       try {
          // 1) write header
          long messageId = writeHeader(transport, CLEAR_REQUEST, flags);
@@ -198,7 +198,7 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
    }
 
    public Map<String, String> stats() {
-      Transport transport = getTransport();
+      Transport transport = transportFactory.getTransport();
       try {
          // 1) write header
          long messageId = writeHeader(transport, STATS_REQUEST);
@@ -217,15 +217,11 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
       }
    }
 
-   public Transport getTransport() {
-      return transportFactory.getTransport();
-   }
-
    @Override
    public boolean ping() {
       Transport transport = null;
       try {
-         transport = getTransport();
+         transport = transportFactory.getTransport();
          // 1) write header
          long messageId = writeHeader(transport, PING_REQUEST);
          short respStatus = readHeaderAndValidate(transport, messageId, HotrodConstants.PING_RESPONSE);
@@ -264,7 +260,6 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
    /*
     * Magic	| MessageId	| Version | Opcode | CacheNameLength | CacheName | Flags | Client Intelligence | Topology Id
     */
-
    private long writeHeader(Transport transport, short operationCode, Flag... flags) {
       transport.writeByte(REQUEST_MAGIC);
       long messageId = MSG_ID.incrementAndGet();
@@ -319,7 +314,7 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
          log.trace("Received operation code is: " + receivedOpCode);
       }
       short status = transport.readByte();
-      transport.readByte(); //todo - this will be changed once we support smarter than basic clients
+      transport.readByte(); //todo - this is the topology change status, and it will be changed once we support smarter than basic clients
       checkForErrorsInResponseStatus(status, messageId, transport);
       return status;
    }
@@ -382,7 +377,7 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
 
    private void releaseTransport(Transport transport) {
       if (transport != null)
-         transport.release();
+        transportFactory.releaseTransport(transport);
    }
 
    private VersionedOperationResponse returnVersionedOperationResponse(Transport transport, long messageId, byte response, Flag[] flags) {

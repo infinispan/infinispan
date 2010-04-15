@@ -4,7 +4,11 @@ import org.infinispan.client.hotrod.impl.TransportFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.net.InetSocketAddress;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 import java.util.StringTokenizer;
 
 /**
@@ -17,8 +21,7 @@ public abstract class AbstractTransportFactory implements TransportFactory {
 
    private static Log log = LogFactory.getLog(AbstractTransportFactory.class);
 
-   protected String serverHost;
-   protected int serverPort;
+   protected Set<InetSocketAddress> serverAddresses = new HashSet<InetSocketAddress>();
 
    public void init(Properties props) {
       String servers = props.getProperty(CONF_HOTROD_SERVERS);
@@ -32,10 +35,16 @@ public abstract class AbstractTransportFactory implements TransportFactory {
          log.info("'hotrod-servers' property not specified in config, using " + servers);
       }
       StringTokenizer tokenizer = new StringTokenizer(servers, ";");
-      String server = tokenizer.nextToken();
-      String[] serverDef = tokenizeServer(server);
-      serverHost = serverDef[0];
-      serverPort = Integer.parseInt(serverDef[1]);
+      while (tokenizer.hasMoreTokens()) {
+         String server = tokenizer.nextToken();
+         String[] serverDef = tokenizeServer(server);
+         String serverHost = serverDef[0];
+         int serverPort = Integer.parseInt(serverDef[1]);
+         serverAddresses.add(new InetSocketAddress(serverHost, serverPort));
+      }
+      if (serverAddresses.isEmpty()) {
+         throw new IllegalStateException("No hot-rod servers specified!");
+      }
    }
 
    private String[] tokenizeServer(String server) {

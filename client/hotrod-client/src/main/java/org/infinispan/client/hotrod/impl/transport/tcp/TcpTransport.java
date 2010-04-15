@@ -22,13 +22,14 @@ public class TcpTransport extends AbstractTransport {
 
    private static Log log = LogFactory.getLog(TcpTransport.class);
 
-   private String host;
-   private int port;
    private Socket socket;
 
-   public void writeVInt(int length) {
+   public void writeVInt(int vInt) {
       try {
-         VHelper.writeVInt(length, socket.getOutputStream());
+         VHelper.writeVInt(vInt, socket.getOutputStream());
+         if (log.isTraceEnabled())
+            log.trace("VInt wrote " + vInt);
+         
       } catch (IOException e) {
          throw new TransportException(e);
       }
@@ -37,6 +38,9 @@ public class TcpTransport extends AbstractTransport {
    public void writeVLong(long l) {
       try {
          VHelper.writeVLong(l, socket.getOutputStream());
+         if (log.isTraceEnabled())
+            log.trace("VLong wrote " + l);        
+
       } catch (IOException e) {
          throw new TransportException(e);
       }
@@ -44,7 +48,10 @@ public class TcpTransport extends AbstractTransport {
 
    public long readVLong() {
       try {
-         return VHelper.readVLong(socket.getInputStream());
+         long result = VHelper.readVLong(socket.getInputStream());
+         if (log.isTraceEnabled())
+            log.trace("VLong read " + result);
+         return result;
       } catch (IOException e) {
          throw new TransportException(e);
       }
@@ -52,29 +59,24 @@ public class TcpTransport extends AbstractTransport {
 
    public int readVInt() {
       try {
-         return VHelper.readVInt(socket.getInputStream());
+         int result = VHelper.readVInt(socket.getInputStream());
+         if (log.isTraceEnabled())
+            log.trace("VInt read " + result);
+         return result;
       } catch (IOException e) {
          throw new TransportException(e);
       }
    }
 
-   public TcpTransport(String host, int port) {
-      this.host = host;
-      this.port = port;
-   }
-
-   public void connect() {
-      try {
-         SocketChannel socketChannel = SocketChannel.open(new InetSocketAddress(host, port));
-         socket = socketChannel.socket();
-      } catch (IOException e) {
-         throw new TransportException("Problems establishing initial connection", e);
-      }
+   public TcpTransport(Socket socket) {
+      this.socket = socket;
    }
 
    protected void writeBytes(byte[] toAppend) {
       try {
          socket.getOutputStream().write(toAppend);
+         if (log.isTraceEnabled())
+            log.trace("Wrote " + toAppend.length + " bytes");
       } catch (IOException e) {
          throw new TransportException("Problems writing data to stream", e);
       }
@@ -84,6 +86,9 @@ public class TcpTransport extends AbstractTransport {
    public void writeByte(short toWrite) {
       try {
          socket.getOutputStream().write(toWrite);
+         if (log.isTraceEnabled())
+            log.trace("Wrote byte " + toWrite);
+
       } catch (IOException e) {
          throw new TransportException("Problems writing data to stream", e);
       }
@@ -92,6 +97,9 @@ public class TcpTransport extends AbstractTransport {
    public void flush() {
       try {
          socket.getOutputStream().flush();
+         if (log.isTraceEnabled())
+            log.trace("Flushed socket: " + socket);
+
       } catch (IOException e) {
          throw new TransportException(e);
       }
@@ -143,6 +151,13 @@ public class TcpTransport extends AbstractTransport {
             if (offset > result.length) throw new IllegalStateException("Assertion!");
          }
       } while (!done);
+      if (log.isTraceEnabled()) {
+         log.trace("Successfully read array with size: " + size);
+      }
       return result;
+   }
+
+   public Socket getSocket() {
+      return socket;
    }
 }

@@ -1,6 +1,8 @@
 package org.infinispan.client.hotrod.impl.transport;
 
+import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.io.UnsignedNumeric;
+import org.infinispan.util.Util;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,6 +45,14 @@ public class VHelper {
          UnsignedNumeric.writeUnsignedLong(os, toWrite);
       } catch (IOException e) {
          throw new TransportException(e);
+      }
+   }
+
+   public static Object newInstance(String clazz) {
+      try {
+         return Util.getInstance(clazz);
+      } catch (Exception e) {
+         throw new HotRodClientException("Could not instantiate class: " + clazz, e);
       }
    }
 }
