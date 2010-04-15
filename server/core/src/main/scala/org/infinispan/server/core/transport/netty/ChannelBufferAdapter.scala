@@ -16,6 +16,7 @@ class ChannelBufferAdapter(buffer: NettyChannelBuffer) extends ChannelBuffer {
    override def readUnsignedByte: Short = buffer.readUnsignedByte
    override def readUnsignedInt: Int = VInt.read(this)
    override def readUnsignedLong: Long = VLong.read(this)
+   override def readUnsignedShort: Int = buffer.readUnsignedShort
    override def readBytes(length: Int): ChannelBuffer = new ChannelBufferAdapter(buffer.readBytes(length))
    override def readerIndex: Int = readerIndex
    override def readBytes(dst: Array[Byte]) = buffer.readBytes(dst) 
@@ -43,6 +44,7 @@ class ChannelBufferAdapter(buffer: NettyChannelBuffer) extends ChannelBuffer {
    }
    override def writeUnsignedInt(i: Int) = VInt.write(this, i)
    override def writeUnsignedLong(l: Long) = VLong.write(this, l)
+   override def writeUnsignedShort(i: Int) = buffer.writeShort(i)
    override def writerIndex: Int = buffer.writerIndex
 
    /**

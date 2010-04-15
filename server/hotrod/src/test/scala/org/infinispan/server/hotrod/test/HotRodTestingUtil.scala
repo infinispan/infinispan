@@ -3,11 +3,12 @@ package org.infinispan.server.hotrod.test
 import java.util.concurrent.atomic.AtomicInteger
 import org.infinispan.manager.CacheManager
 import java.lang.reflect.Method
-import org.infinispan.server.hotrod.{HotRodServer}
 import org.infinispan.server.core.Logging
 import java.util.Arrays
 import org.infinispan.server.hotrod.OperationStatus._
 import org.testng.Assert._
+import org.infinispan.util.Util
+import org.infinispan.server.hotrod.{ResponseWithPrevious, GetWithVersionResponse, GetResponse, HotRodServer}
 
 /**
  * // TODO: Document this
@@ -24,14 +25,18 @@ object HotRodTestingUtil extends Logging {
       startHotRodServer(manager, UniquePortThreadLocal.get.intValue)
 
    def startHotRodServer(manager: CacheManager, port: Int): HotRodServer = {
-      val server = new HotRodServer
+      val server = new HotRodServer {
+         override protected def defineTopologyCacheConfig(cacheManager: CacheManager) {
+            // No-op since topology cache configuration comes defined by the test
+         }
+      }
       server.start(host, port, manager, 0, 0)
       server
    }
 
    def k(m: Method, prefix: String): Array[Byte] = {
       val bytes: Array[Byte] = (prefix + m.getName).getBytes
-      trace("String {0} is converted to {1} bytes", prefix + m.getName, bytes)
+      trace("String {0} is converted to {1} bytes", prefix + m.getName, Util.printArray(bytes, true))
       bytes
    }
 
@@ -47,19 +52,32 @@ object HotRodTestingUtil extends Logging {
       isSuccess
    }
 
-   def assertSuccess(status: OperationStatus, expected: Array[Byte], actual: Array[Byte]): Boolean = {
-      assertStatus(status, Success)
-      val isSuccess = Arrays.equals(expected, actual)
+   def assertSuccess(resp: GetResponse, expected: Array[Byte]): Boolean = {
+      assertStatus(resp.status, Success)
+      val isSuccess = Arrays.equals(expected, resp.data.get)
       assertTrue(isSuccess)
       isSuccess
    }
 
-   def assertKeyDoesNotExist(status: OperationStatus, actual: Array[Byte]): Boolean = {
+   def assertSuccess(resp: GetWithVersionResponse, expected: Array[Byte], expectedVersion: Int): Boolean = {
+      assertTrue(resp.version != expectedVersion)
+      assertSuccess(resp, expected)
+   }
+
+   def assertSuccess(resp: ResponseWithPrevious, expected: Array[Byte]): Boolean = {
+      assertStatus(resp.status, Success)
+      val isSuccess = Arrays.equals(expected, resp.previous.get)
+      assertTrue(isSuccess)
+      isSuccess
+   }
+
+   def assertKeyDoesNotExist(resp: GetResponse): Boolean = {
+      val status = resp.status
       assertTrue(status == KeyDoesNotExist, "Status should have been 'KeyDoesNotExist' but instead was: " + status)
-      assertNull(actual)
+      assertEquals(resp.data, None)
       status == KeyDoesNotExist
    }
-   
+
 } 
 
 object UniquePortThreadLocal extends ThreadLocal[Int] {

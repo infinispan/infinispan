@@ -16,6 +16,7 @@ import scala.collection.JavaConversions._
  */
 object VersionGenerator {
 
+   // TODO: Possibly seed version counter on capped System.currentTimeMillis, to avoid issues with clients holding to versions in between restarts
    private val versionCounter = new AtomicInteger
 
    private val versionPrefix = new AtomicLong

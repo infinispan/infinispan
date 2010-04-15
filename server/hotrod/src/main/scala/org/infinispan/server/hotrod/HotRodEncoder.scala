@@ -16,7 +16,7 @@ class HotRodEncoder extends Encoder {
 
    override def encode(ctx: ChannelHandlerContext, channel: Channel, msg: AnyRef): AnyRef = {
       trace("Encode msg {0}", msg)
-      val buffer: ChannelBuffer = msg match {
+      val buffer: ChannelBuffer = msg match { 
          case r: Response => writeHeader(r)
       }
       msg match {
@@ -52,7 +52,24 @@ class HotRodEncoder extends Encoder {
       buffer.writeUnsignedLong(r.messageId)
       buffer.writeByte(r.operation.id.byteValue)
       buffer.writeByte(r.status.id.byteValue)
-      buffer.writeByte(0) // TODO: topology change marker, implemented later
+      if (r.topologyResponse != None) {
+         buffer.writeByte(1) // Topology changed
+         r.topologyResponse.get match {
+            case t: TopologyAwareResponse => {
+               buffer.writeUnsignedInt(t.view.topologyId)
+               buffer.writeUnsignedInt(t.view.members.size)
+               t.view.members.foreach{address =>
+                  buffer.writeString(address.host)
+                  buffer.writeUnsignedShort(address.port)
+               }
+            }
+            case h: HashDistAwareResponse => {
+               // TODO: Implement reply to hash dist responses
+            }
+         }
+      } else {
+         buffer.writeByte(0) // No topology change
+      }
       buffer
    }
    

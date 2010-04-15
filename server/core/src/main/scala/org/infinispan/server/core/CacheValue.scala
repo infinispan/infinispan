@@ -1,8 +1,8 @@
 package org.infinispan.server.core
 
 import org.infinispan.util.Util
-import java.io.{Serializable, ObjectOutput, ObjectInput, Externalizable}
-import org.infinispan.marshall.{Externalizer, Ids, Marshallable}
+import java.io.{ObjectOutput, ObjectInput}
+import org.infinispan.marshall.Marshallable
 
 /**
  * // TODO: Document this
@@ -10,7 +10,7 @@ import org.infinispan.marshall.{Externalizer, Ids, Marshallable}
  * @since 4.1
  */
 // TODO: putting Ids.SERVER_CACHE_VALUE fails compilation in 2.8 - https://lampsvn.epfl.ch/trac/scala/ticket/2764
-@Marshallable(externalizer = classOf[CacheValueExternalizer], id = 55)
+@Marshallable(externalizer = classOf[CacheValue.Externalizer], id = 55)
 class CacheValue(val data: Array[Byte], val version: Long) {
 
    override def toString = {
@@ -22,18 +22,20 @@ class CacheValue(val data: Array[Byte], val version: Long) {
 
 }
 
-private class CacheValueExternalizer extends Externalizer {
-   override def writeObject(output: ObjectOutput, obj: AnyRef) {
-      val cacheValue = obj.asInstanceOf[CacheValue]
-      output.write(cacheValue.data.length)
-      output.write(cacheValue.data)
-      output.writeLong(cacheValue.version)
-   }
+object CacheValue {
+   class Externalizer extends org.infinispan.marshall.Externalizer {
+      override def writeObject(output: ObjectOutput, obj: AnyRef) {
+         val cacheValue = obj.asInstanceOf[CacheValue]
+         output.write(cacheValue.data.length)
+         output.write(cacheValue.data)
+         output.writeLong(cacheValue.version)
+      }
 
-   override def readObject(input: ObjectInput): AnyRef = {
-      val data = new Array[Byte](input.read())
-      input.readFully(data)
-      val version = input.readLong
-      new CacheValue(data, version)
+      override def readObject(input: ObjectInput): AnyRef = {
+         val data = new Array[Byte](input.read())
+         input.readFully(data)
+         val version = input.readLong
+         new CacheValue(data, version)
+      }
    }
 }

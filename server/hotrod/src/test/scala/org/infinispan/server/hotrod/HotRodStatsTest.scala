@@ -34,8 +34,7 @@ class HotRodStatsTest extends HotRodSingleNodeTest {
       assertEquals(s.get("currentNumberOfEntries").get, "1")
       assertEquals(s.get("totalNumberOfEntries").get, "1")
       assertEquals(s.get("stores").get, "1")
-      val (getSt, actual) = client.assertGet(m)
-      assertSuccess(getSt, v(m), actual)
+      assertSuccess(client.assertGet(m), v(m))
       s = client.stats
       assertEquals(s.get("hits").get, "1")
       assertEquals(s.get("misses").get, "0")

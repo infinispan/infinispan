@@ -3,7 +3,7 @@ package org.infinispan.server.memcached
 import org.infinispan.server.core.CacheValue
 import org.infinispan.util.Util
 import java.io.{ObjectOutput, ObjectInput}
-import org.infinispan.marshall.{Marshallable, Externalizer}
+import org.infinispan.marshall.Marshallable
 
 /**
  * // TODO: Document this
@@ -11,7 +11,7 @@ import org.infinispan.marshall.{Marshallable, Externalizer}
  * @since
  */
 // TODO: putting Ids.MEMCACHED_CACHE_VALUE fails compilation in 2.8 - https://lampsvn.epfl.ch/trac/scala/ticket/2764
-@Marshallable(externalizer = classOf[MemcachedValueExternalizer], id = 56)
+@Marshallable(externalizer = classOf[MemcachedValue.Externalizer], id = 56)
 class MemcachedValue(override val data: Array[Byte], override val version: Long, val flags: Int)
       extends CacheValue(data, version) {
 
@@ -25,20 +25,22 @@ class MemcachedValue(override val data: Array[Byte], override val version: Long,
 
 }
 
-private class MemcachedValueExternalizer extends Externalizer {
-   override def writeObject(output: ObjectOutput, obj: AnyRef) {
-      val cacheValue = obj.asInstanceOf[MemcachedValue]
-      output.write(cacheValue.data.length)
-      output.write(cacheValue.data)
-      output.writeLong(cacheValue.version)
-      output.writeInt(cacheValue.flags)
-   }
+object MemcachedValue {
+   class Externalizer extends org.infinispan.marshall.Externalizer {
+      override def writeObject(output: ObjectOutput, obj: AnyRef) {
+         val cacheValue = obj.asInstanceOf[MemcachedValue]
+         output.write(cacheValue.data.length)
+         output.write(cacheValue.data)
+         output.writeLong(cacheValue.version)
+         output.writeInt(cacheValue.flags)
+      }
 
-   override def readObject(input: ObjectInput): AnyRef = {
-      val data = new Array[Byte](input.read())
-      input.read(data)
-      val version = input.readLong
-      val flags = input.readInt
-      new MemcachedValue(data, version, flags)
+      override def readObject(input: ObjectInput): AnyRef = {
+         val data = new Array[Byte](input.read())
+         input.readFully(data)
+         val version = input.readLong
+         val flags = input.readInt
+         new MemcachedValue(data, version, flags)
+      }
    }
 }

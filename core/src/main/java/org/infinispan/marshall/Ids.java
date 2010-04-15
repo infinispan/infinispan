@@ -115,4 +115,7 @@ public interface Ids {
    static final byte SERVER_CACHE_VALUE = 55;
    static final byte MEMCACHED_CACHE_VALUE = 56;
    static final byte HOTROD_CACHE_KEY = 57;
+   static final byte TOPOLOGY_ADDRESS = 58;
+   static final byte TOPOLOGY_VIEW = 59;
+
 }

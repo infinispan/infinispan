@@ -2,9 +2,8 @@ package org.infinispan.server.hotrod
 
 import org.infinispan.util.Util
 import java.util.Arrays
-import org.infinispan.marshall.{Externalizer, Marshallable}
+import org.infinispan.marshall.Marshallable
 import java.io.{ObjectInput, ObjectOutput}
-import org.infinispan.server.core.Logging
 
 /**
  * // TODO: Document this
@@ -12,7 +11,7 @@ import org.infinispan.server.core.Logging
  * @since
  */
 // TODO: putting Ids.HOTROD_CACHE_KEY fails compilation in 2.8 - https://lampsvn.epfl.ch/trac/scala/ticket/2764
-@Marshallable(externalizer = classOf[CacheKeyExternalizer], id = 57)
+@Marshallable(externalizer = classOf[CacheKey.Externalizer], id = 57)
 final class CacheKey(val data: Array[Byte]) {
 
    override def equals(obj: Any) = {
@@ -34,16 +33,18 @@ final class CacheKey(val data: Array[Byte]) {
 
 }
 
-private class CacheKeyExternalizer extends Externalizer {
-   override def writeObject(output: ObjectOutput, obj: AnyRef) {
-      val cacheKey = obj.asInstanceOf[CacheKey]
-      output.write(cacheKey.data.length)
-      output.write(cacheKey.data)
-   }
+object CacheKey {
+   class Externalizer extends org.infinispan.marshall.Externalizer {      
+      override def writeObject(output: ObjectOutput, obj: AnyRef) {
+         val cacheKey = obj.asInstanceOf[CacheKey]
+         output.write(cacheKey.data.length)
+         output.write(cacheKey.data)
+      }
 
-   override def readObject(input: ObjectInput): AnyRef = {
-      val data = new Array[Byte](input.read())
-      input.readFully(data)
-      new CacheKey(data)
+      override def readObject(input: ObjectInput): AnyRef = {
+         val data = new Array[Byte](input.read())
+         input.readFully(data)
+         new CacheKey(data)
+      }
    }
 }

@@ -11,6 +11,7 @@ abstract class ChannelBuffer {
    def readUnsignedByte: Short
    def readUnsignedInt: Int
    def readUnsignedLong: Long
+   def readUnsignedShort: Int
    def readBytes(length: Int): ChannelBuffer
    def readerIndex: Int
    def readBytes(dst: Array[Byte]): Unit
@@ -31,6 +32,7 @@ abstract class ChannelBuffer {
    def writeRangedBytes(src: Array[Byte])
    def writeUnsignedInt(i: Int)
    def writeUnsignedLong(l: Long)
+   def writeUnsignedShort(i: Int)
    def writerIndex: Int
 
    /**

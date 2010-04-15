@@ -6,8 +6,7 @@ import org.infinispan.server.core._
 import transport._
 import OperationStatus._
 import org.infinispan.manager.{DefaultCacheManager, CacheManager}
-import java.io.{IOException, StreamCorruptedException}
-import org.infinispan.util.concurrent.TimeoutException
+import java.io.StreamCorruptedException
 import org.infinispan.server.hotrod.ProtocolFlag._
 import org.infinispan.server.hotrod.OperationResponse._
 import java.nio.channels.ClosedChannelException
@@ -24,7 +23,8 @@ class HotRodDecoder(cacheManager: CacheManager) extends AbstractProtocolDecoder[
    type SuitableHeader = HotRodHeader
    type SuitableParameters = RequestParameters
 
-   @volatile private var isError = false
+   private var isError = false
+   private var joined = false
 
    override def readHeader(buffer: ChannelBuffer): HotRodHeader = {
       try {
@@ -65,6 +65,7 @@ class HotRodDecoder(cacheManager: CacheManager) extends AbstractProtocolDecoder[
    }
 
    override def getCache(header: HotRodHeader): Cache[CacheKey, CacheValue] = {
+      // TODO: Document this in wiki
       if (header.cacheName == DefaultCacheManager.DEFAULT_CACHE_NAME) cacheManager.getCache[CacheKey, CacheValue]
       else cacheManager.getCache(header.cacheName)
    }
@@ -91,7 +92,7 @@ class HotRodDecoder(cacheManager: CacheManager) extends AbstractProtocolDecoder[
       h.decoder.createNotExistResponse(h)
 
    override def createGetResponse(h: HotRodHeader, k: CacheKey, v: CacheValue): AnyRef =
-      h.decoder.createGetResponse(h.messageId, v, h.op)
+      h.decoder.createGetResponse(h, v, h.op)
 
    override def createMultiGetResponse(h: HotRodHeader, pairs: Map[CacheKey, CacheValue]): AnyRef =
       null // Unsupported
@@ -105,18 +106,16 @@ class HotRodDecoder(cacheManager: CacheManager) extends AbstractProtocolDecoder[
    override def createErrorResponse(t: Throwable): AnyRef = {
       t match {
          case se: ServerException => {
-            val messageId = se.header.asInstanceOf[HotRodHeader].messageId
+            val h = se.header.asInstanceOf[HotRodHeader]
             se.getCause match {
-               case i: InvalidMagicIdException => new ErrorResponse(0, InvalidMagicOrMsgId, i.toString)
-               case u: UnknownOperationException => new ErrorResponse(messageId, UnknownOperation, u.toString)
-               case u: UnknownVersionException => new ErrorResponse(messageId, UnknownVersion, u.toString)
-               case i: IOException => new ErrorResponse(messageId, ParseError, i.toString)
-               case t: TimeoutException => new ErrorResponse(messageId, OperationTimedOut, t.toString)
-               case e: Exception => new ErrorResponse(messageId, ServerError, e.toString)
+               case i: InvalidMagicIdException => new ErrorResponse(0, InvalidMagicOrMsgId, None, i.toString)
+               case u: UnknownOperationException => new ErrorResponse(h.messageId, UnknownOperation, None, u.toString)
+               case u: UnknownVersionException => new ErrorResponse(h.messageId, UnknownVersion, None, u.toString)
+               case t: Throwable => h.decoder.createErrorResponse(h, t)
             }
          }
          case c: ClosedChannelException => null
-         case t: Throwable => new ErrorResponse(0, ServerError, t.toString)
+         case t: Throwable => new ErrorResponse(0, ServerError, None, t.toString)
       }
    }
 

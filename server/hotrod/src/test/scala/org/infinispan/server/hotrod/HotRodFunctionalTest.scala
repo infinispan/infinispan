@@ -29,15 +29,15 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
    override def createTestCacheManager: CacheManager = TestCacheManagerFactory.createLocalCacheManager(true)
    
    def testUnknownCommand(m: Method) {
-      val status = client.execute(0xA0, 0x77, cacheName, k(m) , 0, 0, v(m), 0)
-      assertTrue(status == UnknownOperation,
+      val status = client.execute(0xA0, 0x77, cacheName, k(m) , 0, 0, v(m), 0, 1, 0).status
+      assertEquals(status, UnknownOperation,
          "Status should have been 'UnknownOperation' but instead was: " + status)
    }
 
    def testUnknownMagic(m: Method) {
       client.assertPut(m) // Do a put to make sure decoder gets back to reading properly
-      val status = client.executeWithBadMagic(0x66, 0x01, cacheName, k(m) , 0, 0, v(m), 0)
-      assertTrue(status == InvalidMagicOrMsgId,
+      val status = client.executeWithBadMagic(0x66, 0x01, cacheName, k(m) , 0, 0, v(m), 0).status
+      assertEquals(status, InvalidMagicOrMsgId,
          "Status should have been 'InvalidMagicOrMsgId' but instead was: " + status)
    }
 
@@ -48,7 +48,7 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
    }
 
    def testPutOnDefaultCache(m: Method) {
-      val status = client.execute(0xA0, 0x01, DefaultCacheManager.DEFAULT_CACHE_NAME, k(m), 0, 0, v(m), 0)
+      val status = client.execute(0xA0, 0x01, DefaultCacheManager.DEFAULT_CACHE_NAME, k(m), 0, 0, v(m), 0, 1, 0).status
       assertStatus(status, Success)
       val cache = cacheManager.getCache[CacheKey, CacheValue]
       val value = cache.get(new CacheKey(k(m)))
@@ -58,280 +58,254 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
    def testPutWithLifespan(m: Method) {
       client.assertPut(m, 1, 0)
       Thread.sleep(1100)
-      val (getSt, actual) = client.assertGet(m)
-      assertKeyDoesNotExist(getSt, actual)
+      assertKeyDoesNotExist(client.assertGet(m))
    }
 
    def testPutWithMaxIdle(m: Method) {
       client.assertPut(m, 0, 1)
       Thread.sleep(1100)
-      val (getSt, actual) = client.assertGet(m)
-      assertKeyDoesNotExist(getSt, actual)
+      assertKeyDoesNotExist(client.assertGet(m))
    }
 
    def testPutWithPreviousValue(m: Method) {
-      val (status, previous) = client.put(k(m) , 0, 0, v(m), 1)
-      assertSuccess(status, Array(), previous)
-      val (status2, previous2) = client.put(k(m) , 0, 0, v(m, "v2-"), 1)
-      assertSuccess(status2, v(m), previous2)
+      var resp = client.put(k(m) , 0, 0, v(m), 1).asInstanceOf[ResponseWithPrevious]
+      assertStatus(resp.status, Success)
+      assertEquals(resp.previous, None)
+      resp = client.put(k(m) , 0, 0, v(m, "v2-"), 1).asInstanceOf[ResponseWithPrevious]
+      assertSuccess(resp, v(m))
    }
 
    def testGetBasic(m: Method) {
       client.assertPut(m)
-      val (getSt, actual) = client.assertGet(m)
-      assertSuccess(getSt, v(m), actual)
+      assertSuccess(client.assertGet(m), v(m))
    }
 
    def testGetDoesNotExist(m: Method) {
-      val (getSt, actual) = client.assertGet(m)
-      assertKeyDoesNotExist(getSt, actual)
+      assertKeyDoesNotExist(client.assertGet(m))
    }
 
    def testPutIfAbsentNotExist(m: Method) {
-      val status = client.putIfAbsent(k(m) , 0, 0, v(m))
+      val status = client.putIfAbsent(k(m) , 0, 0, v(m)).status
       assertStatus(status, Success)
    }
 
    def testPutIfAbsentExist(m: Method) {
       client.assertPut(m)
-      val status = client.putIfAbsent(k(m) , 0, 0, v(m, "v2-"))
+      val status = client.putIfAbsent(k(m) , 0, 0, v(m, "v2-")).status
       assertStatus(status, OperationNotExecuted)
    }
 
    def testPutIfAbsentWithLifespan(m: Method) {
-      val status = client.putIfAbsent(k(m) , 1, 0, v(m))
+      val status = client.putIfAbsent(k(m) , 1, 0, v(m)).status
       assertStatus(status, Success)
       Thread.sleep(1100)
-      val (getSt, actual) = client.assertGet(m)
-      assertKeyDoesNotExist(getSt, actual)
+      assertKeyDoesNotExist(client.assertGet(m))
    }
 
    def testPutIfAbsentWithMaxIdle(m: Method) {
-      val status = client.putIfAbsent(k(m) , 0, 1, v(m))
+      val status = client.putIfAbsent(k(m) , 0, 1, v(m)).status
       assertStatus(status, Success)
       Thread.sleep(1100)
-      val (getSt, actual) = client.assertGet(m)
-      assertKeyDoesNotExist(getSt, actual)
+      assertKeyDoesNotExist(client.assertGet(m))
    }
 
    def testPutIfAbsentWithPreviousValue(m: Method) {
-      val (status, previous) = client.putIfAbsent(k(m) , 0, 0, v(m), 1)
-      assertSuccess(status, Array(), previous)
-      val (status2, previous2) = client.putIfAbsent(k(m) , 0, 0, v(m, "v2-"), 1)
-      assertStatus(status2, OperationNotExecuted)
-      assertTrue(Arrays.equals(v(m), previous2))
+      var resp = client.putIfAbsent(k(m) , 0, 0, v(m), 1).asInstanceOf[ResponseWithPrevious]
+      assertStatus(resp.status, Success)
+      assertEquals(resp.previous, None)
+      resp = client.putIfAbsent(k(m) , 0, 0, v(m, "v2-"), 1).asInstanceOf[ResponseWithPrevious]
+      assertStatus(resp.status, OperationNotExecuted)
+      assertTrue(Arrays.equals(v(m), resp.previous.get))
    }
 
    def testReplaceBasic(m: Method) {
       client.assertPut(m)
-      val status = client.replace(k(m), 0, 0, v(m, "v1-"))
+      val status = client.replace(k(m), 0, 0, v(m, "v1-")).status
       assertStatus(status, Success)
-      val (getSt, actual) = client.assertGet(m)
-      assertSuccess(getSt, v(m, "v1-"), actual)
+      assertSuccess(client.assertGet(m), v(m, "v1-"))
    }
 
    def testNotReplaceIfNotPresent(m: Method) {
-      val status = client.replace(k(m), 0, 0, v(m))
+      val status = client.replace(k(m), 0, 0, v(m)).status
       assertStatus(status, OperationNotExecuted)
    }
 
    def testReplaceWithLifespan(m: Method) {
       client.assertPut(m)
-      val status = client.replace(k(m), 1, 0, v(m, "v1-"))
+      val status = client.replace(k(m), 1, 0, v(m, "v1-")).status
       assertStatus(status, Success)
       Thread.sleep(1100)
-      val (getSt, actual) = client.assertGet(m)
-      assertKeyDoesNotExist(getSt, actual)
+      assertKeyDoesNotExist(client.assertGet(m))
    }
 
    def testReplaceWithMaxIdle(m: Method) {
       client.assertPut(m)
-      val status = client.replace(k(m), 0, 1, v(m, "v1-"))
+      val status = client.replace(k(m), 0, 1, v(m, "v1-")).status
       assertStatus(status, Success)
       Thread.sleep(1100)
-      val (getSt, actual) = client.assertGet(m)
-      assertKeyDoesNotExist(getSt, actual)
+      assertKeyDoesNotExist(client.assertGet(m))
    }
 
    def testReplaceWithPreviousValue(m: Method) {
-      val (status, previous) = client.replace(k(m) , 0, 0, v(m), 1)
-      assertStatus(status, OperationNotExecuted)
-      assertEquals(previous.length, 0)
-      val (status2, previous2) = client.put(k(m) , 0, 0, v(m, "v2-"), 1)
-      assertSuccess(status2, Array(), previous2)
-      val (status3, previous3) = client.replace(k(m) , 0, 0, v(m, "v3-"), 1)
-      assertSuccess(status3, v(m, "v2-"), previous3)
+      var resp = client.replace(k(m) , 0, 0, v(m), 1).asInstanceOf[ResponseWithPrevious]
+      assertStatus(resp.status, OperationNotExecuted)
+      assertEquals(resp.previous, None)
+      resp = client.put(k(m) , 0, 0, v(m, "v2-"), 1).asInstanceOf[ResponseWithPrevious]
+      assertStatus(resp.status, Success)
+      assertEquals(resp.previous, None)
+      resp = client.replace(k(m) , 0, 0, v(m, "v3-"), 1).asInstanceOf[ResponseWithPrevious]
+      assertSuccess(resp, v(m, "v2-"))
    }
 
    def testGetWithVersionBasic(m: Method) {
       client.assertPut(m)
-      val (getSt, actual, version) = client.getWithVersion(k(m), 0)
-      assertSuccess(getSt, v(m), actual)
-      assertTrue(version != 0)
+      assertSuccess(client.getWithVersion(k(m), 0), v(m), 0)
    }
 
    def testGetWithVersionDoesNotExist(m: Method) {
-      val (getSt, actual, version) = client.getWithVersion(k(m), 0)
-      assertKeyDoesNotExist(getSt, actual)
-      assertTrue(version == 0)
+      val resp = client.getWithVersion(k(m), 0)
+      assertKeyDoesNotExist(resp)
+      assertTrue(resp.version == 0)
    }
 
    def testReplaceIfUnmodifiedBasic(m: Method) {
       client.assertPut(m)
-      val (getSt, actual, version) = client.getWithVersion(k(m), 0)
-      assertSuccess(getSt, v(m), actual)
-      assertTrue(version != 0)
-      val status = client.replaceIfUnmodified(k(m), 0, 0, v(m, "v1-"), version)
+      val resp = client.getWithVersion(k(m), 0)
+      assertSuccess(resp, v(m), 0)
+      val status = client.replaceIfUnmodified(k(m), 0, 0, v(m, "v1-"), resp.version).status
       assertStatus(status, Success)
    }
 
    def testReplaceIfUnmodifiedNotFound(m: Method) {
       client.assertPut(m)
-      val (getSt, actual, version) = client.getWithVersion(k(m), 0)
-      assertSuccess(getSt, v(m), actual)
-      assertTrue(version != 0)
-      val status = client.replaceIfUnmodified(k(m, "k1-"), 0, 0, v(m, "v1-"), version)
+      val resp = client.getWithVersion(k(m), 0)
+      assertSuccess(resp, v(m), 0)
+      val status = client.replaceIfUnmodified(k(m, "k1-"), 0, 0, v(m, "v1-"), resp.version).status
       assertStatus(status, KeyDoesNotExist)
    }
 
    def testReplaceIfUnmodifiedNotExecuted(m: Method) {
       client.assertPut(m)
-      val (getSt, actual, version) = client.getWithVersion(k(m), 0)
-      assertSuccess(getSt, v(m), actual)
-      assertTrue(version != 0)
-      var status = client.replaceIfUnmodified(k(m), 0, 0, v(m, "v1-"), version)
+      var resp = client.getWithVersion(k(m), 0)
+      assertSuccess(resp, v(m), 0)
+      var status = client.replaceIfUnmodified(k(m), 0, 0, v(m, "v1-"), resp.version).status
       assertStatus(status, Success)
-      val (getSt2, actual2, version2) = client.getWithVersion(k(m), 0)
-      assertSuccess(getSt2, v(m, "v1-"), actual2)
-      assertTrue(version2 != 0)
-      assertTrue(version != version2)
-      status = client.replaceIfUnmodified(k(m), 0, 0, v(m, "v2-"), version)
+      val resp2 = client.getWithVersion(k(m), 0)
+      assertSuccess(resp2, v(m, "v1-"), 0)
+      assertTrue(resp.version != resp2.version)
+      status = client.replaceIfUnmodified(k(m), 0, 0, v(m, "v2-"), resp.version).status
       assertStatus(status, OperationNotExecuted)
-      status = client.replaceIfUnmodified(k(m), 0, 0, v(m, "v2-"), version2)
+      status = client.replaceIfUnmodified(k(m), 0, 0, v(m, "v2-"), resp2.version).status
       assertStatus(status, Success)
    }
 
    def testReplaceIfUnmodifiedWithPreviousValue(m: Method) {
-      val (status, previous) = client.replaceIfUnmodified(k(m) , 0, 0, v(m), 999, 1)
-      assertStatus(status, KeyDoesNotExist)
-      assertEquals(previous.length, 0)
+      var resp = client.replaceIfUnmodified(k(m) , 0, 0, v(m), 999, 1).asInstanceOf[ResponseWithPrevious]
+      assertStatus(resp.status, KeyDoesNotExist)
+      assertEquals(resp.previous, None)
       client.assertPut(m)
-      val (getSt, actual, version) = client.getWithVersion(k(m), 0)
-      assertSuccess(getSt, v(m), actual)
-      assertTrue(version != 0)
-      val (status2, previous2)  = client.replaceIfUnmodified(k(m), 0, 0, v(m, "v2-"), 888, 1)
-      assertStatus(status2, OperationNotExecuted)
-      assertTrue(Arrays.equals(v(m), previous2))
-      val (status3, previous3)  = client.replaceIfUnmodified(k(m), 0, 0, v(m, "v3-"), version, 1)
-      assertStatus(status3, Success)
-      assertTrue(Arrays.equals(v(m), previous3))
+      val getResp = client.getWithVersion(k(m), 0)
+      assertSuccess(getResp, v(m), 0)
+      resp  = client.replaceIfUnmodified(k(m), 0, 0, v(m, "v2-"), 888, 1).asInstanceOf[ResponseWithPrevious]
+      assertStatus(resp.status, OperationNotExecuted)
+      assertTrue(Arrays.equals(v(m), resp.previous.get))
+      resp  = client.replaceIfUnmodified(k(m), 0, 0, v(m, "v3-"), getResp.version, 1).asInstanceOf[ResponseWithPrevious]
+      assertStatus(resp.status, Success)
+      assertTrue(Arrays.equals(v(m), resp.previous.get))
    }
 
    def testRemoveBasic(m: Method) {
       client.assertPut(m)
-      val status = client.remove(k(m))
+      val status = client.remove(k(m)).status
       assertStatus(status, Success)
-      val (getSt, actual) = client.assertGet(m)
-      assertKeyDoesNotExist(getSt, actual)
+      assertKeyDoesNotExist(client.assertGet(m))
    }
 
    def testRemoveDoesNotExist(m: Method) {
-      val status = client.remove(k(m))
+      val status = client.remove(k(m)).status
       assertStatus(status, KeyDoesNotExist)
    }
 
    def testRemoveWithPreviousValue(m: Method) {
-      val (status, previous) = client.remove(k(m), 1)
-      assertStatus(status, KeyDoesNotExist)
-      assertEquals(previous.length, 0)
+      var resp = client.remove(k(m), 1).asInstanceOf[ResponseWithPrevious]
+      assertStatus(resp.status, KeyDoesNotExist)
+      assertEquals(resp.previous, None)
       client.assertPut(m)
-      val (status2, previous2) = client.remove(k(m), 1)
-      assertSuccess(status2, v(m), previous2)
+      resp = client.remove(k(m), 1).asInstanceOf[ResponseWithPrevious]
+      assertSuccess(resp, v(m))
    }
 
    def testRemoveIfUnmodifiedBasic(m: Method) {
       client.assertPut(m)
-      val (getSt, actual, version) = client.getWithVersion(k(m), 0)
-      assertSuccess(getSt, v(m), actual)
-      assertTrue(version != 0)
-      val status = client.removeIfUnmodified(k(m), 0, 0, v(m, "v1-"), version)
+      val resp = client.getWithVersion(k(m), 0)
+      assertSuccess(resp, v(m), 0)
+      assertTrue(resp.version != 0)
+      val status = client.removeIfUnmodified(k(m), 0, 0, v(m, "v1-"), resp.version).status
       assertStatus(status, Success)
-      val (getSt2, actual2) = client.assertGet(m)
-      assertKeyDoesNotExist(getSt2, actual2)
+      assertKeyDoesNotExist(client.assertGet(m))
    }
 
    def testRemoveIfUnmodifiedNotFound(m: Method) {
       client.assertPut(m)
-      val (getSt, actual, version) = client.getWithVersion(k(m), 0)
-      assertSuccess(getSt, v(m), actual)
-      assertTrue(version != 0)
-      val status = client.removeIfUnmodified(k(m, "k1-"), 0, 0, v(m, "v1-"), version)
+      var resp = client.getWithVersion(k(m), 0)
+      assertSuccess(resp, v(m), 0)
+      val status = client.removeIfUnmodified(k(m, "k1-"), 0, 0, v(m, "v1-"), resp.version).status
       assertStatus(status, KeyDoesNotExist)
-      val (getSt2, actual2) = client.assertGet(m)
-      assertSuccess(getSt2, v(m), actual2)
+      assertSuccess(client.assertGet(m), v(m))
    }
 
    def testRemoveIfUnmodifiedNotExecuted(m: Method) {
       client.assertPut(m)
-      val (getSt, actual, version) = client.getWithVersion(k(m), 0)
-      assertSuccess(getSt, v(m), actual)
-      assertTrue(version != 0)
-      var status = client.replaceIfUnmodified(k(m), 0, 0, v(m, "v1-"), version)
+      val resp = client.getWithVersion(k(m), 0)
+      assertSuccess(resp, v(m), 0)
+      var status = client.replaceIfUnmodified(k(m), 0, 0, v(m, "v1-"), resp.version).status
       assertStatus(status, Success)
-      val (getSt2, actual2, version2) = client.getWithVersion(k(m), 0)
-      assertSuccess(getSt2, v(m, "v1-"), actual2)
-      assertTrue(version2 != 0)
-      assertTrue(version != version2)
-      status = client.removeIfUnmodified(k(m), 0, 0, v(m, "v2-"), version)
+      val resp2 = client.getWithVersion(k(m), 0)
+      assertSuccess(resp2, v(m, "v1-"), 0)
+      assertTrue(resp.version != resp2.version)
+      status = client.removeIfUnmodified(k(m), 0, 0, v(m, "v2-"), resp.version).status
       assertStatus(status, OperationNotExecuted)
-      status = client.removeIfUnmodified(k(m), 0, 0, v(m, "v2-"), version2)
+      status = client.removeIfUnmodified(k(m), 0, 0, v(m, "v2-"), resp2.version).status
       assertStatus(status, Success)
    }
 
    def testRemoveIfUmodifiedWithPreviousValue(m: Method) {
-      val (status, previous) = client.removeIfUnmodified(k(m) , 0, 0, v(m), 999, 1)
-      assertStatus(status, KeyDoesNotExist)
-      assertEquals(previous.length, 0)
+      var resp = client.removeIfUnmodified(k(m) , 0, 0, v(m), 999, 1).asInstanceOf[ResponseWithPrevious]
+      assertStatus(resp.status, KeyDoesNotExist)
+      assertEquals(resp.previous, None)
       client.assertPut(m)
-      val (getSt, actual, version) = client.getWithVersion(k(m), 0)
-      assertSuccess(getSt, v(m), actual)
-      assertTrue(version != 0)
-      val (status2, previous2)  = client.removeIfUnmodified(k(m), 0, 0, v(m, "v2-"), 888, 1)
-      assertStatus(status2, OperationNotExecuted)
-      assertTrue(Arrays.equals(v(m), previous2))
-      val (status3, previous3)  = client.removeIfUnmodified(k(m), 0, 0, v(m, "v3-"), version, 1)
-      assertStatus(status3, Success)
-      assertTrue(Arrays.equals(v(m), previous3))
+      val getResp = client.getWithVersion(k(m), 0)
+      assertSuccess(getResp, v(m), 0)
+      resp  = client.removeIfUnmodified(k(m), 0, 0, v(m, "v2-"), 888, 1).asInstanceOf[ResponseWithPrevious]
+      assertStatus(resp.status, OperationNotExecuted)
+      assertTrue(Arrays.equals(v(m), resp.previous.get))
+      resp = client.removeIfUnmodified(k(m), 0, 0, v(m, "v3-"), getResp.version, 1).asInstanceOf[ResponseWithPrevious]
+      assertStatus(resp.status, Success)
+      assertTrue(Arrays.equals(v(m), resp.previous.get))
    }
 
    def testContainsKeyBasic(m: Method) {
       client.assertPut(m)
-      val status = client.containsKey(k(m), 0)
-      assertStatus(status, Success)
+      assertStatus(client.containsKey(k(m), 0).status, Success)
    }
 
    def testContainsKeyDoesNotExist(m: Method) {
-      val status = client.containsKey(k(m), 0)
-      assertStatus(status, KeyDoesNotExist)
+      assertStatus(client.containsKey(k(m), 0).status, KeyDoesNotExist)
    }
 
    def testClear(m: Method) {
       for (i <- 1 to 5) {
          val key = k(m, "k" + i + "-");
          val value = v(m, "v" + i + "-");
-         var status = client.put(key , 0, 0, value)
-         assertStatus(status, Success)
-         status = client.containsKey(key, 0)
-         assertStatus(status, Success)
+         assertStatus(client.put(key , 0, 0, value).status, Success)
+         assertStatus(client.containsKey(key, 0).status, Success)
       }
 
-      val status = client.clear
-      assertStatus(status, Success)
+      assertStatus(client.clear.status, Success)
 
       for (i <- 1 to 5) {
          val key = k(m, "k" + i + "-")
-         val status = client.containsKey(key, 0)
-         assertStatus(status, KeyDoesNotExist)
+         assertStatus(client.containsKey(key, 0).status, KeyDoesNotExist)
       }
    }
 
@@ -349,8 +323,23 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
    }
 
    def testPing(m: Method) {
-      val status = client.ping
+      val status = client.ping.status
       assertStatus(status, Success)
    }
 
+   def testPingWithTopologyAwareClient(m: Method) {
+      var resp = client.ping
+      assertStatus(resp.status, Success)
+      assertEquals(resp.topologyResponse, None)
+      resp = client.ping(1, 0)
+      assertStatus(resp.status, Success)
+      assertEquals(resp.topologyResponse, None)
+      resp = client.ping(2, 0)
+      assertStatus(resp.status, Success)
+      assertEquals(resp.topologyResponse, None)
+      resp = client.ping(3, 0)
+      assertStatus(resp.status, Success)
+      assertEquals(resp.topologyResponse, None)
+   }
+   
 }

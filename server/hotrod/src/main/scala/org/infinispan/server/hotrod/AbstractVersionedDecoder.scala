@@ -29,10 +29,12 @@ abstract class AbstractVersionedDecoder {
 
    def createNotExistResponse(header: HotRodHeader): AnyRef
 
-   def createGetResponse(messageId: Long, v: CacheValue, op: Enumeration#Value): AnyRef
+   def createGetResponse(header: HotRodHeader, v: CacheValue, op: Enumeration#Value): AnyRef
 
    def handleCustomRequest(header: HotRodHeader, buffer: ChannelBuffer, cache: Cache[CacheKey, CacheValue]): AnyRef
 
    def createStatsResponse(header: HotRodHeader, stats: Stats): AnyRef
+
+   def createErrorResponse(header: HotRodHeader, t: Throwable): AnyRef
 
 }

@@ -172,6 +172,8 @@ public class ConstantObjectTable implements ObjectTable {
       MARSHALLABLES.add("org.infinispan.server.core.CacheValue");
       MARSHALLABLES.add("org.infinispan.server.memcached.MemcachedValue");
       MARSHALLABLES.add("org.infinispan.server.hotrod.CacheKey");
+      MARSHALLABLES.add("org.infinispan.server.hotrod.TopologyAddress");
+      MARSHALLABLES.add("org.infinispan.server.hotrod.TopologyView");
    }
 
    /**

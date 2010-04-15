@@ -10,6 +10,8 @@ import org.infinispan.stats.Stats
 import org.infinispan.server.core._
 import collection.mutable
 import collection.immutable
+import org.infinispan.util.concurrent.TimeoutException
+import java.io.IOException
 
 /**
  * // TODO: Document this
@@ -22,6 +24,7 @@ class Decoder10(cacheManager: CacheManager) extends AbstractVersionedDecoder {
    import ResponseResolver._
    import OperationResponse._
    import ProtocolFlag._
+   import HotRodServer._
    type SuitableHeader = HotRodHeader
 
    override def readHeader(buffer: ChannelBuffer, messageId: Long): HotRodHeader = {
@@ -77,64 +80,67 @@ class Decoder10(cacheManager: CacheManager) extends AbstractVersionedDecoder {
       createResponse(header, toResponse(header.op), KeyDoesNotExist, null)
 
    private def createResponse(h: HotRodHeader, op: OperationResponse, st: OperationStatus, prev: CacheValue): AnyRef = {
+      val topologyResponse = getTopologyResponse(h)
       if (h.flag == ForceReturnPreviousValue)
-         new ResponseWithPrevious(h.messageId, op, st, if (prev == null) None else Some(prev.data))
+         new ResponseWithPrevious(h.messageId, op, st, topologyResponse, if (prev == null) None else Some(prev.data))
       else
-         new Response(h.messageId, op, st)
+         new Response(h.messageId, op, st, topologyResponse)
    }
 
-   override def createGetResponse(messageId: Long, v: CacheValue, op: Enumeration#Value): AnyRef = {
+   override def createGetResponse(h: HotRodHeader, v: CacheValue, op: Enumeration#Value): AnyRef = {
+      val topologyResponse = getTopologyResponse(h)
       if (v != null && op == GetRequest)
-         new GetResponse(messageId, GetResponse, Success, Some(v.data))
+         new GetResponse(h.messageId, GetResponse, Success, topologyResponse, Some(v.data))
       else if (v != null && op == GetWithVersionRequest)
-         new GetWithVersionResponse(messageId, GetWithVersionResponse, Success, Some(v.data), v.version)
+         new GetWithVersionResponse(h.messageId, GetWithVersionResponse, Success, topologyResponse, Some(v.data), v.version)
       else if (op == GetRequest)
-         new GetResponse(messageId, GetResponse, KeyDoesNotExist, None)
+         new GetResponse(h.messageId, GetResponse, KeyDoesNotExist, topologyResponse, None)
       else
-         new GetWithVersionResponse(messageId, GetWithVersionResponse, KeyDoesNotExist, None, 0)
+         new GetWithVersionResponse(h.messageId, GetWithVersionResponse, KeyDoesNotExist, topologyResponse, None, 0)
    }
 
-   override def handleCustomRequest(header: HotRodHeader, buffer: ChannelBuffer, cache: Cache[CacheKey, CacheValue]): AnyRef = {
-      val messageId = header.messageId
-      header.op match {
+   override def handleCustomRequest(h: HotRodHeader, buffer: ChannelBuffer, cache: Cache[CacheKey, CacheValue]): AnyRef = {
+      val messageId = h.messageId
+      h.op match {
          case RemoveIfUnmodifiedRequest => {
             val k = readKey(buffer)
-            val params = readParameters(header, buffer)
+            val params = readParameters(h, buffer)
             val prev = cache.get(k)
             if (prev != null) {
                if (prev.version == params.get.streamVersion) {
                   val removed = cache.remove(k, prev);
                   if (removed)
-                     // new Response(messageId, RemoveIfUnmodifiedResponse, Success)
-                     createResponse(header, RemoveIfUnmodifiedResponse, Success, prev)
+                     createResponse(h, RemoveIfUnmodifiedResponse, Success, prev)
                   else
-                     // new Response(messageId, RemoveIfUnmodifiedResponse, OperationNotExecuted)
-                     createResponse(header, RemoveIfUnmodifiedResponse, OperationNotExecuted, prev)
+                     createResponse(h, RemoveIfUnmodifiedResponse, OperationNotExecuted, prev)
                } else {
-                  // new Response(messageId, RemoveIfUnmodifiedResponse, OperationNotExecuted)
-                  createResponse(header, RemoveIfUnmodifiedResponse, OperationNotExecuted, prev)
+                  createResponse(h, RemoveIfUnmodifiedResponse, OperationNotExecuted, prev)
                }
             } else {
-               // new Response(messageId, RemoveIfUnmodifiedResponse, KeyDoesNotExist)
-               createResponse(header, RemoveIfUnmodifiedResponse, KeyDoesNotExist, prev)
+               createResponse(h, RemoveIfUnmodifiedResponse, KeyDoesNotExist, prev)
             }
          }
          case ContainsKeyRequest => {
+            val topologyResponse = getTopologyResponse(h)
             val k = readKey(buffer)
             if (cache.containsKey(k))
-               new Response(messageId, ContainsKeyResponse, Success)
+               new Response(messageId, ContainsKeyResponse, Success, topologyResponse)
             else
-               new Response(messageId, ContainsKeyResponse, KeyDoesNotExist)
+               new Response(messageId, ContainsKeyResponse, KeyDoesNotExist, topologyResponse)
          }
          case ClearRequest => {
+            val topologyResponse = getTopologyResponse(h)
             cache.clear
-            new Response(messageId, ClearResponse, Success)
+            new Response(messageId, ClearResponse, Success, topologyResponse)
          }
-         case PingRequest => new Response(messageId, PingResponse, Success) 
+         case PingRequest => {
+            val topologyResponse = getTopologyResponse(h)
+            new Response(messageId, PingResponse, Success, topologyResponse) 
+         }
       }
    }
 
-   override def createStatsResponse(header: HotRodHeader, cacheStats: Stats): AnyRef = {
+   override def createStatsResponse(h: HotRodHeader, cacheStats: Stats): AnyRef = {
       val stats = mutable.Map.empty[String, String]
       stats += ("timeSinceStart" -> cacheStats.getTimeSinceStart.toString)
       stats += ("currentNumberOfEntries" -> cacheStats.getCurrentNumberOfEntries.toString)
@@ -145,7 +151,40 @@ class Decoder10(cacheManager: CacheManager) extends AbstractVersionedDecoder {
       stats += ("misses" -> cacheStats.getMisses.toString)
       stats += ("removeHits" -> cacheStats.getRemoveHits.toString)
       stats += ("removeMisses" -> cacheStats.getRemoveMisses.toString)
-      new StatsResponse(header.messageId, immutable.Map[String, String]() ++ stats)
+      val topologyResponse = getTopologyResponse(h)
+      new StatsResponse(h.messageId, immutable.Map[String, String]() ++ stats, topologyResponse)
+   }
+
+   override def createErrorResponse(h: HotRodHeader, t: Throwable): AnyRef = {
+      t match {
+         case i: IOException =>
+            new ErrorResponse(h.messageId, ParseError, getTopologyResponse(h), i.toString)
+         case t: TimeoutException =>
+            new ErrorResponse(h.messageId, OperationTimedOut, getTopologyResponse(h), t.toString)
+         case t: Throwable =>
+            new ErrorResponse(h.messageId, ServerError, getTopologyResponse(h), t.toString)
+      }
+   }
+
+   private def getTopologyResponse(h: HotRodHeader): Option[AbstractTopologyResponse] = {
+      // If clustered, set up a cache for topology information
+      if (cacheManager.getGlobalConfiguration.getTransportClass != null) {
+         val topologyCache: Cache[String, TopologyView] = cacheManager.getCache(TopologyCacheName)
+         h.clientIntelligence match {
+            case 2 | 3 => {
+               val currentTopologyView = topologyCache.get("view")
+               if (h.topologyId != currentTopologyView.topologyId) {
+                  if (h.clientIntelligence == 2) {
+                     Some(TopologyAwareResponse(TopologyView(currentTopologyView.topologyId, currentTopologyView.members)))
+                  } else { // Must be 3
+                     // TODO: Implement hash-distribution-aware reply
+                     None
+                  }
+               } else None
+            }
+            case 1 => None
+         }
+      } else None
    }
 
 }
