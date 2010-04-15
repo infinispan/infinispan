@@ -43,7 +43,18 @@ public class Proxies {
 
    private static Class[] getInterfaces(Class clazz) {
       Class[] interfaces = clazz.getInterfaces();
-      if (interfaces.length > 0) return interfaces;
+      if (interfaces.length > 0) {
+         Class superClass = clazz.getSuperclass();
+         if (superClass != null && superClass.getInterfaces().length > 0) {
+            Class[] superInterfaces = superClass.getInterfaces();
+            Class[] clazzes = new Class[interfaces.length + superInterfaces.length];
+            System.arraycopy(interfaces, 0, clazzes, 0, interfaces.length);
+            System.arraycopy(superInterfaces, 0, clazzes, interfaces.length, superInterfaces.length);
+            return clazzes;
+         } else {
+            return interfaces;
+         }
+      }
       Class superclass = clazz.getSuperclass();
       if (!superclass.equals(Object.class))
          return superclass.getInterfaces();
