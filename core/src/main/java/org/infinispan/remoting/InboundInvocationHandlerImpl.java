@@ -8,6 +8,8 @@ import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.manager.CacheManager;
+import org.infinispan.marshall.Marshaller;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.RequestIgnoredResponse;
 import org.infinispan.remoting.responses.Response;
@@ -18,6 +20,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.io.InputStream;
+import java.io.ObjectOutput;
 import java.io.OutputStream;
 
 /**
@@ -30,10 +33,12 @@ import java.io.OutputStream;
 public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
    GlobalComponentRegistry gcr;
    private static final Log log = LogFactory.getLog(InboundInvocationHandlerImpl.class);
+   private Marshaller marshaller;
 
    @Inject
-   public void inject(GlobalComponentRegistry gcr) {
+   public void inject(GlobalComponentRegistry gcr, Marshaller marshaller) {
       this.gcr = gcr;
+      this.marshaller = marshaller;
    }
 
    public Response handle(CacheRpcCommand cmd) throws Throwable {
@@ -74,17 +79,27 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
    }
 
    public void generateState(String cacheName, OutputStream o) throws StateTransferException {
-      getStateTransferManager(cacheName).generateState(o);
+      StateTransferManager manager = getStateTransferManager(cacheName);
+      if (manager == null) {
+         ObjectOutput oo = null;
+         try {
+            oo = marshaller.startObjectOutput(o, false);
+            // Not started yet, so send started flag false
+            marshaller.objectToObjectStream(false, oo);
+         } catch (Exception e) {
+            throw new StateTransferException(e);
+         } finally {
+            marshaller.finishObjectOutput(oo);
+         }
+      } else {
+         manager.generateState(o);
+      }
    }
 
    private StateTransferManager getStateTransferManager(String cacheName) throws StateTransferException {
       ComponentRegistry cr = gcr.getNamedComponentRegistry(cacheName);
-      if (cr == null) {
-         String msg = "Cache named " + cacheName + " does not exist on this cache manager!";
-         log.info(msg);
-         throw new StateTransferException(msg);
-      }
-
+      if (cr == null)
+         return null;
       return cr.getComponent(StateTransferManager.class);
    }
 }

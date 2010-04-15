@@ -199,7 +199,7 @@ public class JBossMarshaller extends AbstractMarshaller {
 
    public void finishObjectInput(ObjectInput oi) {
       try {
-         ((Unmarshaller) oi).finish();
+         if (oi != null) ((Unmarshaller) oi).finish();
       } catch (IOException e) {
       }
    }

@@ -152,6 +152,24 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       log.info("testInitialStateTransfer end - " + testCount);
    }
 
+   public void testInitialStateTransferCacheNotPresent() throws Exception {
+      testCount++;
+      log.info("testInitialStateTransferCacheNotPresent start - " + testCount);
+      Cache<Object, Object> cache1, cache2;
+      CacheManager cacheManager1 = createCacheManager();
+      cache1 = cacheManager1.getCache(cacheName);
+      writeInitialData(cache1);
+      cache2 = createCacheManager().getCache(cacheName);
+
+      // Pause to give caches time to see each other
+      TestingUtil.blockUntilViewsReceived(60000, cache1, cache2);
+      verifyInitialData(cache2);
+
+      cacheManager1.defineConfiguration("otherCache", config.clone());
+      cacheManager1.getCache("otherCache");
+      log.info("testInitialStateTransferCacheNotPresent end - " + testCount);
+   }
+
    public void testConcurrentStateTransfer() throws Exception {
       testCount++;
       log.info("testConcurrentStateTransfer start - " + testCount);

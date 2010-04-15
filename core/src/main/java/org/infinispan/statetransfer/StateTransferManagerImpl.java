@@ -145,6 +145,9 @@ public class StateTransferManagerImpl implements StateTransferManager {
                && (txLogActivated = transactionLog.activate());
          if (log.isDebugEnabled()) log.debug("Generating state.  Can provide? {0}", canProvideState);
          oo = marshaller.startObjectOutput(out, false);
+
+         // If we can generate state, we've started up 
+         marshaller.objectToObjectStream(true, oo);
          marshaller.objectToObjectStream(canProvideState, oo);
 
          if (canProvideState) {
@@ -300,19 +303,23 @@ public class StateTransferManagerImpl implements StateTransferManager {
       ObjectInput oi = null;
       try {
          oi = marshaller.startObjectInput(in, false);
-         boolean canProvideState = (Boolean) marshaller.objectFromObjectStream(oi);
-         if (canProvideState) {
-            assertDelimited(oi);
-            if (transientState) applyInMemoryState(oi);
-            assertDelimited(oi);
-            if (persistentState) applyPersistentState(oi);
-            assertDelimited(oi);
-            applyTransactionLog(oi);
-            if (log.isDebugEnabled()) log.debug("State applied, closing object stream");
-         } else {
-            String msg = "Provider cannot provide state!";
-            if (log.isDebugEnabled()) log.debug(msg);
-            throw new StateTransferException(msg);
+         // Started flag controls whether remote cache was started and hence provided state
+         boolean started = (Boolean) marshaller.objectFromObjectStream(oi);
+         if (started) {
+            boolean canProvideState = (Boolean) marshaller.objectFromObjectStream(oi);
+            if (canProvideState) {
+               assertDelimited(oi);
+               if (transientState) applyInMemoryState(oi);
+               assertDelimited(oi);
+               if (persistentState) applyPersistentState(oi);
+               assertDelimited(oi);
+               applyTransactionLog(oi);
+               if (log.isDebugEnabled()) log.debug("State applied, closing object stream");
+            } else {
+               String msg = "Provider cannot provide state!";
+               if (log.isDebugEnabled()) log.debug(msg);
+               throw new StateTransferException(msg);
+            }
          }
       } catch (StateTransferException ste) {
          throw ste;
