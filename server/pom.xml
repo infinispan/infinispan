@@ -15,7 +15,7 @@
    <packaging>pom</packaging>
 
    <properties>
-      <version.scala>2.8.0.Beta1</version.scala>
+      <version.scala>2.8.0.RC1</version.scala>
    </properties>
 
    <modules>
