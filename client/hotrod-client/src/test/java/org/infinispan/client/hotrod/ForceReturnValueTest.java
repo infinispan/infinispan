@@ -1,6 +1,5 @@
 package org.infinispan.client.hotrod;
 
-import org.infinispan.Cache;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -29,13 +28,9 @@ public class ForceReturnValueTest extends SingleCacheManagerTest {
       cache = cacheManager.getCache();
       hotrodServer = HotRodServerStarter.startHotRodServer(cacheManager);
 
-      remoteCacheManager = getRemoteCacheManager();
+      remoteCacheManager = new RemoteCacheManager("localhost",hotrodServer.getPort());
       remoteCache = remoteCacheManager.getCache();
       return cacheManager;
-   }
-
-   protected RemoteCacheManager getRemoteCacheManager() {
-      return new RemoteCacheManager();
    }
 
 
