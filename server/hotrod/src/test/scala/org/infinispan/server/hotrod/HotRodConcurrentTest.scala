@@ -15,8 +15,6 @@ import org.infinispan.manager.CacheManager
 @Test(groups = Array("functional"), testName = "server.hotrod.HotRodConcurrentTest")
 class HotRodConcurrentTest extends HotRodSingleNodeTest {
 
-   override def createTestCacheManager: CacheManager = TestCacheManagerFactory.createLocalCacheManager(true)
-   
    def testConcurrentPutRequests(m: Method) {
       val numClients = 10
       val numOpsPerClient = 100

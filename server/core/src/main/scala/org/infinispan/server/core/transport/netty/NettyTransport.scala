@@ -22,17 +22,17 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
                   threadNamePrefix: String) extends Transport {
    import NettyTransport._
 
-   val serverChannels = new DefaultChannelGroup(threadNamePrefix + "-Channels")
+   private val serverChannels = new DefaultChannelGroup(threadNamePrefix + "-Channels")
    val acceptedChannels = new DefaultChannelGroup(threadNamePrefix + "-Accepted")
-   val pipeline = new NettyChannelPipelineFactory(server, encoder)
-   val factory = {
+   private val pipeline = new NettyChannelPipelineFactory(server, encoder, this)
+   private val factory = {
       if (workerThreads == 0)
          new NioServerSocketChannelFactory(masterExecutor, workerExecutor)
       else
          new NioServerSocketChannelFactory(masterExecutor, workerExecutor, workerThreads)
    }
    
-   lazy val masterExecutor = {
+   private lazy val masterExecutor = {
       if (masterThreads == 0) {
          debug("Configured unlimited threads for master thread pool")
          Executors.newCachedThreadPool
@@ -42,7 +42,7 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
       }
    }
 
-   lazy val workerExecutor = {
+   private lazy val workerExecutor = {
       if (workerThreads == 0) {
          debug("Configured unlimited threads for worker thread pool")
          Executors.newCachedThreadPool

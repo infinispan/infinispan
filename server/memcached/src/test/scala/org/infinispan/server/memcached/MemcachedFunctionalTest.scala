@@ -1,15 +1,12 @@
 package org.infinispan.server.memcached
 
-import org.infinispan.test.fwk.TestCacheManagerFactory
 import org.infinispan.manager.CacheManager
-import test.MemcachedTestingUtil
 import java.lang.reflect.Method
 import java.util.concurrent.TimeUnit
 import org.testng.Assert._
-import org.testng.annotations.{AfterClass, Test}
-import net.spy.memcached.{CASResponse, MemcachedClient}
-import org.infinispan.test.{TestingUtil, SingleCacheManagerTest}
-import java.net.SocketAddress
+import org.testng.annotations.Test
+import net.spy.memcached.CASResponse
+import org.infinispan.test.TestingUtil
 import org.infinispan.Version
 
 /**
@@ -17,26 +14,8 @@ import org.infinispan.Version
  * @author Galder Zamarreño
  * @since
  */
-@Test(groups = Array("functional"), testName = "server.memcached.FunctionalTest")
-class MemcachedFunctionalTest extends SingleCacheManagerTest with MemcachedTestingUtil {
-   private var client: MemcachedClient = _
-   private var server: MemcachedServer = _
-   private val timeout: Int = 60
-
-   override def createCacheManager: CacheManager = {
-      cacheManager = TestCacheManagerFactory.createLocalCacheManager
-      server = startMemcachedTextServer(cacheManager)
-      client = createMemcachedClient(60000, server.getPort)
-      return cacheManager
-   }
-
-   @AfterClass(alwaysRun = true)
-   override def destroyAfterClass {
-      super.destroyAfterClass
-      log.debug("Test finished, close memcached server", null)
-      client.shutdown
-      server.stop
-   }
+@Test(groups = Array("functional"), testName = "server.memcached.MemcachedFunctionalTest")
+class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
 
    def testSetBasic(m: Method) {
       val f = client.set(k(m), 0, v(m))

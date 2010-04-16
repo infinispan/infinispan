@@ -7,6 +7,8 @@ import org.infinispan.AdvancedCache
 import org.infinispan.manager.CacheManager
 import test.HotRodTestingUtil._
 import org.testng.annotations.AfterClass
+import org.jboss.netty.channel.ChannelFuture
+import org.infinispan.test.fwk.TestCacheManagerFactory
 
 /**
  * // TODO: Document this
@@ -28,20 +30,21 @@ abstract class HotRodSingleNodeTest extends SingleCacheManagerTest {
       cacheManager
    }
 
-   def createTestCacheManager: CacheManager 
+   protected def createTestCacheManager: CacheManager = TestCacheManagerFactory.createLocalCacheManager(true) 
 
    @AfterClass(alwaysRun = true)
    override def destroyAfterClass {
       log.debug("Test finished, close cache, client and Hot Rod server", null)
       super.destroyAfterClass
-      hotRodClient.stop
+      shutdownClient
       hotRodServer.stop
    }
 
-   def server = hotRodServer
+   protected def server = hotRodServer
 
-   def client = hotRodClient
+   protected def client = hotRodClient
 
-   def jmxDomain = hotRodJmxDomain
+   protected def jmxDomain = hotRodJmxDomain
 
+   protected def shutdownClient: ChannelFuture = hotRodClient.stop
 }

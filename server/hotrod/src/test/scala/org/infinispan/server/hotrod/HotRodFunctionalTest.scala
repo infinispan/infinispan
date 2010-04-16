@@ -26,8 +26,6 @@ import org.infinispan.server.hotrod.OperationStatus._
 @Test(groups = Array("functional"), testName = "server.hotrod.HotRodFunctionalTest")
 class HotRodFunctionalTest extends HotRodSingleNodeTest {
 
-   override def createTestCacheManager: CacheManager = TestCacheManagerFactory.createLocalCacheManager(true)
-   
    def testUnknownCommand(m: Method) {
       val status = client.execute(0xA0, 0x77, cacheName, k(m) , 0, 0, v(m), 0, 1, 0).status
       assertEquals(status, UnknownOperation,

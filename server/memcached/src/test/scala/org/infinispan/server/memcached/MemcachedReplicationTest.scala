@@ -15,7 +15,7 @@ import net.spy.memcached.{CASResponse, MemcachedClient}
  * @since
  */
 
-@Test(groups = Array("functional"), testName = "server.memcached.MemcachedClusterTest")
+@Test(groups = Array("functional"), testName = "server.memcached.MemcachedReplicationTest")
 class MemcachedReplicationTest extends MultipleCacheManagersTest with MemcachedTestingUtil {
    private val cacheName = "MemcachedReplSync"
    private[this] var servers: List[MemcachedServer] = List()

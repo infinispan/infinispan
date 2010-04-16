@@ -8,12 +8,12 @@ import org.infinispan.server.core.ProtocolServer
  * @author Galder Zamarreño
  * @since 4.1
  */
-class NettyChannelPipelineFactory(server: ProtocolServer, encoder: ChannelDownstreamHandler)
+class NettyChannelPipelineFactory(server: ProtocolServer, encoder: ChannelDownstreamHandler, transport: NettyTransport)
       extends ChannelPipelineFactory {
 
    override def getPipeline: ChannelPipeline = {
       val pipeline = Channels.pipeline
-      pipeline.addLast("decoder", new DecoderAdapter(server.getDecoder))
+      pipeline.addLast("decoder", new DecoderAdapter(server.getDecoder, transport))
       if (encoder != null)
          pipeline.addLast("encoder", encoder)
       return pipeline;
