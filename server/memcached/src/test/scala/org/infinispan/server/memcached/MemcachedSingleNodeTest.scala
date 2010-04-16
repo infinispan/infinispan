@@ -3,9 +3,9 @@ package org.infinispan.server.memcached
 import test.MemcachedTestingUtil
 import org.infinispan.test.SingleCacheManagerTest
 import org.infinispan.manager.CacheManager
-import org.testng.annotations.AfterClass
 import org.infinispan.test.fwk.TestCacheManagerFactory
 import net.spy.memcached.MemcachedClient
+import org.testng.annotations.{Test, AfterClass}
 
 /**
  * // TODO: Document this
@@ -40,5 +40,6 @@ abstract class MemcachedSingleNodeTest extends SingleCacheManagerTest with Memca
 
    protected def server: MemcachedServer = memcachedServer
 
+   @Test(enabled = false) // Disable explicitly to avoid TestNG thinking this is a test!!
    protected def shutdownClient = memcachedClient.shutdown
 }
