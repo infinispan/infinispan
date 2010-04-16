@@ -107,6 +107,23 @@ public class RemoteCacheManager implements CacheContainer, Lifecycle {
    }
 
    /**
+    * The given string should have the following structure: "host1:port2;host:port2...". Every host:port defines a
+    * server.
+    */
+   public RemoteCacheManager(String servers, boolean start) {
+      props = new Properties();
+      props.put(TransportFactory.CONF_HOTROD_SERVERS, servers);
+      if (start) start();
+   }
+
+   /**
+    * Same as {@link #RemoteCacheManager(String, boolean)}, with start=true.
+    */
+   public RemoteCacheManager(String servers) {
+      this(servers, true);
+   }
+
+   /**
     * Same as {@link #RemoteCacheManager(java.util.Properties)}, but it will try to lookup the config properties in
     * supplied URL.
     *
@@ -149,7 +166,8 @@ public class RemoteCacheManager implements CacheContainer, Lifecycle {
          log.info("'transport-factory' factory not specified, using " + factory);
       }
       transportFactory = (TransportFactory) VHelper.newInstance(factory);
-      transportFactory.start(props, getStaticConfiguredServers(props));
+      String servers = props.getProperty(CONF_HOTROD_SERVERS);
+      transportFactory.start(props, getStaticConfiguredServers(servers));
       hotrodMarshaller = props.getProperty("marshaller");
       if (hotrodMarshaller == null) {
          hotrodMarshaller = SerializationMarshaller.class.getName();
@@ -183,12 +201,11 @@ public class RemoteCacheManager implements CacheContainer, Lifecycle {
    private <K, V> RemoteCache<K, V> createRemoteCache(String cacheName) {
       HotrodMarshaller marshaller = (HotrodMarshaller) VHelper.newInstance(hotrodMarshaller);
       HotrodOperations hotrodOperations = new HotrodOperationsImpl(cacheName, transportFactory);
-      return new RemoteCacheImpl<K, V>(hotrodOperations, marshaller, cacheName);
+      return new RemoteCacheImpl<K, V>(hotrodOperations, marshaller, cacheName, this);
    }
 
-   private Set<InetSocketAddress> getStaticConfiguredServers(Properties props) {
+   private Set<InetSocketAddress> getStaticConfiguredServers(String servers) {
       Set<InetSocketAddress> serverAddresses = new HashSet<InetSocketAddress>();
-      String servers = props.getProperty(CONF_HOTROD_SERVERS);
       if (servers == null) {
          servers = System.getProperty(OVERRIDE_HOTROD_SERVERS);
          if (servers != null) {

@@ -2,9 +2,11 @@ package org.infinispan.client.hotrod.impl;
 
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.ServerStatistics;
 import org.infinispan.client.hotrod.Version;
 import org.infinispan.client.hotrod.VersionedValue;
+import org.infinispan.manager.CacheManager;
 import org.infinispan.util.concurrent.NotifyingFuture;
 
 import java.util.Map;
@@ -22,13 +24,20 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K,V> {
    private HotrodOperations operations;
    private HotrodMarshaller marshaller;
    private String name;
+   private RemoteCacheManager remoteCacheManager;
 
 
-   public RemoteCacheImpl(HotrodOperations operations, HotrodMarshaller marshaller, String name) {
+   public RemoteCacheImpl(HotrodOperations operations, HotrodMarshaller marshaller, String name, RemoteCacheManager rcm) {
       this.operations = operations;
       this.marshaller = marshaller;
       this.name = name;
+      this.remoteCacheManager = rcm;
    }
+
+   public RemoteCacheManager getRemoteCacheManager() {
+      return remoteCacheManager;
+   }
+
 
    @Override
    public boolean remove(K key, long version) {

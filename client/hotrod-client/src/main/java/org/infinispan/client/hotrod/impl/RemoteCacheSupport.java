@@ -38,7 +38,7 @@ public abstract class RemoteCacheSupport<K,V> extends CacheSupport<K,V> implemen
 
    @Override
    public CacheManager getCacheManager() {
-      throw new UnsupportedOperationException();
+      throw new UnsupportedOperationException("Use getRemoteCacheManager() instead.");
    }
 
    @Override

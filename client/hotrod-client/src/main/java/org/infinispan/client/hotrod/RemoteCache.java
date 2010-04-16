@@ -346,4 +346,9 @@ public interface RemoteCache<K, V> extends Cache<K, V> {
    public ServerStatistics stats();
 
    RemoteCache<K,V> withFlags(Flag... flags);
+
+   /**
+    * Returns the {@link org.infinispan.client.hotrod.RemoteCacheManager} that created this cache.
+    */
+   public RemoteCacheManager getRemoteCacheManager();
 }

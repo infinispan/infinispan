@@ -1,23 +1,12 @@
 package org.infinispan.client.hotrod;
 
 import org.infinispan.Cache;
-import org.infinispan.client.hotrod.impl.SerializationMarshaller;
-import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
-import org.infinispan.server.core.CacheValue;
-import org.infinispan.server.hotrod.CacheKey;
 import org.infinispan.server.hotrod.HotRodServer;
-import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
-
-import java.util.Arrays;
-
-import static junit.framework.Assert.assertEquals;
 
 /**
  * // TODO: Document this
@@ -25,9 +14,8 @@ import static junit.framework.Assert.assertEquals;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-@Test(testName = "client.hotrod.ForceReturnValueTest", groups = "functional", enabled = false, description = "TODO To be re-enabled when we have a multithreaded HotRod server impl")
+@Test(testName = "client.hotrod.ForceReturnValueTest", groups = "functional")
 public class ForceReturnValueTest extends SingleCacheManagerTest {
-   private Cache cache;
 
    RemoteCache remoteCache;
    

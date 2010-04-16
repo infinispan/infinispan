@@ -13,20 +13,13 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @since 4.1
  */
 public class HotRodServerStarter {
-   private static ThreadLocal<Integer> ports = new ThreadLocal<Integer>() {
 
-      /**
-       * This needs to be different than the one used in the server tests in order to make sure that there's no clash.
-       */
-      private AtomicInteger uniquePort = new AtomicInteger(11312);
-
-      @Override
-      protected Integer initialValue() {
-         return uniquePort.addAndGet(100);
-      }
-   };
+   /**
+    * This needs to be different than the one used in the server tests in order to make sure that there's no clash.
+    */
+   private static final AtomicInteger uniquePort = new AtomicInteger(11312);
 
    public static HotRodServer startHotRodServer(CacheManager cacheManager) {
-      return HotRodTestingUtil.startHotRodServer(cacheManager, ports.get());
+      return HotRodTestingUtil.startHotRodServer(cacheManager, uniquePort.incrementAndGet());
    }
 }

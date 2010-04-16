@@ -174,7 +174,7 @@ public class TcpTransport extends AbstractTransport {
       return "TcpTransport{" +
             "socket=" + socket +
             ", serverAddress=" + serverAddress +
-            "} " + super.toString();
+            "} ";
    }
 
    @Override

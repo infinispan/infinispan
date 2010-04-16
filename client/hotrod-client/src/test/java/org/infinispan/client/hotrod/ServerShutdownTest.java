@@ -18,7 +18,6 @@ import static junit.framework.Assert.assertEquals;
 @Test(testName = "client.hotrod.ServerShutdownTest", groups = "functional")
 public class ServerShutdownTest {
 
-   @Test(enabled = false)
    public void testServerShutdownWithConnectedClient() {
       CacheManager cacheManager = TestCacheManagerFactory.createLocalCacheManager();
       HotRodServer hotrodServer = HotRodServerStarter.startHotRodServer(cacheManager);
