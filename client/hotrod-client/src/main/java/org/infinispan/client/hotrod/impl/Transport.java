@@ -1,11 +1,14 @@
 package org.infinispan.client.hotrod.impl;
 
+import net.jcip.annotations.NotThreadSafe;
+
 /**
  * // TODO: Document this
  *
  * @author mmarkus
  * @since 4.1
  */
+@NotThreadSafe
 public interface Transport {
 
    public void writeArray(byte[] toAppend);
@@ -38,4 +41,6 @@ public interface Transport {
    long readLong();
 
    void writeLong(long longValue);
+
+   int readUnsignedShort();
 }

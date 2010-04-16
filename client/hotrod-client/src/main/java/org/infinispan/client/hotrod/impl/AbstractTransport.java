@@ -30,11 +30,12 @@ public abstract class AbstractTransport implements Transport {
 
    @Override
    public long readLong() {
+      //todo - optimize this not to create the longBytes on every call, but reuse it/cache it as class is NOT thread safe
       byte[] longBytes = readByteArray(8);
       long result = 0;
-      for (int i = 0; i < 8; i++) {
+      for (byte longByte : longBytes) {
          result <<= 8;
-         result ^= (long) longBytes[i] & 0xFF;
+         result ^= (long) longByte & 0xFF;
       }
       return result;
    }
@@ -46,6 +47,17 @@ public abstract class AbstractTransport implements Transport {
          b[7 - i] = (byte) (longValue >>> (i * 8));
       }
       writeBytes(b);
+   }
+
+   @Override
+   public int readUnsignedShort() {
+      byte[] shortBytes = readByteArray(2);
+      int result = 0;
+      for (byte longByte : shortBytes) {
+         result <<= 8;
+         result ^= (long) longByte & 0xFF;
+      }
+      return result;
    }
 
    public void writeArray(byte[] toAppend) {

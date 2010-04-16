@@ -26,7 +26,7 @@ public class RemoteCacheManagerTest extends SingleCacheManagerTest {
    @Override
    protected CacheManager createCacheManager() throws Exception {
       cacheManager = TestCacheManagerFactory.createLocalCacheManager();
-      hotrodServer = HotRodServerStarter.startHotRodServer(cacheManager);
+      hotrodServer = TestHelper.startHotRodServer(cacheManager);
       prevValue = System.setProperty(RemoteCacheManager.OVERRIDE_HOTROD_SERVERS, "localhost:" + hotrodServer.getPort());
       return cacheManager;
    }

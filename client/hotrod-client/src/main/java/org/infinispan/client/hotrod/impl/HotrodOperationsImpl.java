@@ -8,8 +8,12 @@ import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -24,8 +28,9 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
 
    private final byte[] cacheNameBytes;
    private static final AtomicLong MSG_ID = new AtomicLong();
+   private static final AtomicInteger TOPOLOGY_ID = new AtomicInteger();
    private TransportFactory transportFactory;
-   private byte clientIntelligence;
+   private byte clientIntelligence = CLIENT_INTELLIGENCE_TOPOLOGY_AWARE;
 
    public HotrodOperationsImpl(String cacheName, TransportFactory transportFactory) {
       cacheNameBytes = cacheName.getBytes(); //todo add charset here
@@ -276,7 +281,7 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
       }
       transport.writeVInt(flagInt);
       transport.writeByte(clientIntelligence);
-      transport.writeVInt(0);//this will be changed once smarter clients are supported
+      transport.writeVInt(TOPOLOGY_ID.get());
       if (log.isTraceEnabled()) {
          log.trace("wrote header for message " + messageId + ". Operation code: " + operationCode + ". Flags: " + Integer.toHexString(flagInt));
       }
@@ -314,8 +319,23 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
          log.trace("Received operation code is: " + receivedOpCode);
       }
       short status = transport.readByte();
-      transport.readByte(); //todo - this is the topology change status, and it will be changed once we support smarter than basic clients
       checkForErrorsInResponseStatus(status, messageId, transport);
+      short topologyChangeByte = transport.readByte();
+      if (topologyChangeByte == 1) {
+         int newTopology = transport.readVInt();
+         TOPOLOGY_ID.set(newTopology);
+         int clusterSize = transport.readVInt();
+         List<InetSocketAddress> hotRodServers = new ArrayList<InetSocketAddress>(clusterSize);
+         for (int i = 0; i < clusterSize; i++) {
+            String host = transport.readString();
+            int port = transport.readUnsignedShort();
+            hotRodServers.add(new InetSocketAddress(host, port));
+         }
+         if (log.isInfoEnabled()) {
+            log.info("Received topology change response. New cluster size = " + clusterSize +", new topology id = " + newTopology  + ", new topology " + hotRodServers);
+         }
+         transportFactory.updateServers(hotRodServers);
+      }
       return status;
    }
 

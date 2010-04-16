@@ -32,7 +32,7 @@ public class HotrodStatisticsTest {
    protected void setup() throws Exception {
       cacheManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(getClass().getSimpleName());
 
-      hotrodServer = HotRodServerStarter.startHotRodServer(cacheManager);
+      hotrodServer = TestHelper.startHotRodServer(cacheManager);
       startTime = System.currentTimeMillis();
       rcm = new RemoteCacheManager("localhost", hotrodServer.getPort());
       remoteCache = rcm.getCache();

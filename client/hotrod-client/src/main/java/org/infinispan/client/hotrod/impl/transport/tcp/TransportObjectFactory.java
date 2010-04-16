@@ -12,9 +12,9 @@ import java.net.InetSocketAddress;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public class TcpConnectionFactory extends BaseKeyedPoolableObjectFactory {
+public class TransportObjectFactory extends BaseKeyedPoolableObjectFactory {
 
-   private static Log log = LogFactory.getLog(TcpConnectionFactory.class);
+   private static Log log = LogFactory.getLog(TransportObjectFactory.class);
 
    @Override
    public Object makeObject(Object key) throws Exception {
@@ -40,5 +40,21 @@ public class TcpConnectionFactory extends BaseKeyedPoolableObjectFactory {
    public void destroyObject(Object key, Object obj) throws Exception {
       TcpTransport transport = (TcpTransport) obj;
       transport.destroy();
+   }
+
+   @Override
+   public void activateObject(Object key, Object obj) throws Exception {
+      super.activateObject(key, obj);
+      if (log.isTraceEnabled()) {
+         log.trace("Fetching from pool:" + obj);
+      }
+   }
+
+   @Override
+   public void passivateObject(Object key, Object obj) throws Exception {
+      super.passivateObject(key, obj);
+      if (log.isTraceEnabled()) {
+         log.trace("Returning to pool:" + obj);
+      }
    }
 }

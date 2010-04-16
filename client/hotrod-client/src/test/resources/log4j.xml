@@ -56,6 +56,10 @@
       <priority value="TRACE"/>
    </category>
 
+   <category name="org.infinispan.client.hotrod.impl.transport.tcp.TcpTransport">
+      <priority value="WARN"/>
+   </category>
+
    <category name="com.mchange">
       <priority value="TRACE"/>
    </category>

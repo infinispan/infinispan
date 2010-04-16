@@ -7,7 +7,6 @@ import org.infinispan.manager.CacheManager;
 import org.infinispan.server.core.CacheValue;
 import org.infinispan.server.hotrod.CacheKey;
 import org.infinispan.server.hotrod.HotRodServer;
-import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.Log;
@@ -54,7 +53,7 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
 
 
       //pass the config file to the cache
-      hotrodServer = HotRodServerStarter.startHotRodServer(cacheManager);
+      hotrodServer = TestHelper.startHotRodServer(cacheManager);
       log.info("Started server on port: " + hotrodServer.getPort());
 
       remoteCacheManager = getRemoteCacheManager();

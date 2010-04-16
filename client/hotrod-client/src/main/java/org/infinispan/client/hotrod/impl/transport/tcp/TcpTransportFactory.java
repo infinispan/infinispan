@@ -39,7 +39,7 @@ public class TcpTransportFactory implements TransportFactory {
       servers = staticConfiguredServers;
       String balancerClass = props.getProperty("requestBalancingStrategy", RoundRobinBalancingStrategy.class.getName());
       balancer = (RequestBalancingStrategy) VHelper.newInstance(balancerClass);
-      PropsKeyedObjectPoolFactory poolFactory = new PropsKeyedObjectPoolFactory(new TcpConnectionFactory(), props);
+      PropsKeyedObjectPoolFactory poolFactory = new PropsKeyedObjectPoolFactory(new TransportObjectFactory(), props);
       connectionPool = (GenericKeyedObjectPool) poolFactory.createPool();
       balancer.setServers(servers);
    }
@@ -63,6 +63,8 @@ public class TcpTransportFactory implements TransportFactory {
          String message = "Could not fetch transport";
          log.error(message, e);
          throw new TransportException(message, e);
+      } finally {
+         logConnectionInfo(server);
       }
    }
 
@@ -73,6 +75,8 @@ public class TcpTransportFactory implements TransportFactory {
          connectionPool.returnObject(tcpTransport.getServerAddress(), tcpTransport);
       } catch (Exception e) {
          log.warn("Could not release connection: " + tcpTransport, e);
+      } finally {
+         logConnectionInfo(tcpTransport.getServerAddress());
       }
    }
 
@@ -83,19 +87,25 @@ public class TcpTransportFactory implements TransportFactory {
          addedServers.removeAll(servers);
          Set<InetSocketAddress> failedServers = new HashSet<InetSocketAddress>(servers);
          failedServers.removeAll(newServers);
-         if (failedServers.isEmpty() || newServers.isEmpty()) {
+         if (log.isTraceEnabled()) {
+            log.trace("Current list: " + servers);
+            log.trace("New list: " + newServers);
+            log.trace("Added servers: " + addedServers);
+            log.trace("Removed servers: " + failedServers);
+         }
+         if (failedServers.isEmpty() && newServers.isEmpty()) {
             log.info("Same list of servers, not changing the pool");
             return;
          }
 
          //1. first add new servers. For servers that went down, the returned transport will fail for now
          for (InetSocketAddress server : newServers) {
+            log.info("New server added(" + server + "), adding to the pool.");
             try {
                connectionPool.addObject(server);
             } catch (Exception e) {
                log.warn("Failed adding new server " + server, e);
             }
-            log.info("New server added(" + server + "), adding to the pool.");
          }
 
          //2. now set the server list to the active list of servers. All the active servers (potentially together with some
@@ -111,7 +121,17 @@ public class TcpTransportFactory implements TransportFactory {
          }
 
          servers.clear();
-         servers.addAll(addedServers);
+         servers.addAll(newServers);
+      }
+   }
+
+   public Collection<InetSocketAddress> getServers() {
+      return servers;
+   }
+
+   private void logConnectionInfo(InetSocketAddress server) {
+      if (log.isTraceEnabled()) {
+         log.trace("For server " + server + ": active = " + connectionPool.getNumActive(server) + "; idle = " + connectionPool.getNumIdle(server));
       }
    }
 }

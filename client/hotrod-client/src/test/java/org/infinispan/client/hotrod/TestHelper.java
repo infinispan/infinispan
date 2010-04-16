@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public class HotRodServerStarter {
+public class TestHelper {
 
    /**
     * This needs to be different than the one used in the server tests in order to make sure that there's no clash.
@@ -21,5 +21,13 @@ public class HotRodServerStarter {
 
    public static HotRodServer startHotRodServer(CacheManager cacheManager) {
       return HotRodTestingUtil.startHotRodServer(cacheManager, uniquePort.incrementAndGet());
+   }
+
+   public static String getServersString(HotRodServer... servers) {
+      StringBuilder builder = new StringBuilder();
+      for (HotRodServer server : servers) {
+         builder.append("localhost").append(':').append(server.getPort()).append(";");
+      }
+      return builder.toString();
    }
 }

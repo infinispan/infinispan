@@ -26,7 +26,7 @@ public class ForceReturnValueTest extends SingleCacheManagerTest {
    protected CacheManager createCacheManager() throws Exception {
       cacheManager = TestCacheManagerFactory.createLocalCacheManager();
       cache = cacheManager.getCache();
-      hotrodServer = HotRodServerStarter.startHotRodServer(cacheManager);
+      hotrodServer = TestHelper.startHotRodServer(cacheManager);
 
       remoteCacheManager = new RemoteCacheManager("localhost",hotrodServer.getPort());
       remoteCache = remoteCacheManager.getCache();
