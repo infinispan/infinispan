@@ -1,21 +1,22 @@
 package org.infinispan.client.hotrod.impl.transport.tcp;
 
 import org.apache.commons.pool.impl.GenericKeyedObjectPool;
+import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.Transport;
 import org.infinispan.client.hotrod.impl.TransportFactory;
-import org.infinispan.client.hotrod.impl.transport.TransportException;
 import org.infinispan.client.hotrod.impl.transport.VHelper;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
 
 /**
  * // TODO: Document this
- *
+ * <p/>
  * todo - all methods but start and start can be called from multiple threads, add proper sync
  *
  * @author Mircea.Markus@jboss.com
@@ -23,19 +24,22 @@ import java.util.Set;
  */
 public class TcpTransportFactory implements TransportFactory {
 
-   private static Log log = LogFactory.getLog(TcpTransportFactory.class);
+   private static final Log log = LogFactory.getLog(TcpTransportFactory.class);
 
+   /**
+    * These are declared volatile as the thread that calls {@link #start(java.util.Properties, java.util.Collection)}
+    * might(and likely will) be different from the thread that calls {@link #getTransport()} or other methods
+    */
    private volatile GenericKeyedObjectPool connectionPool;
-   private PropsKeyedObjectPoolFactory poolFactory;
-   private RequestBalancingStrategy balancer;
-   private Collection<InetSocketAddress> servers;
+   private volatile RequestBalancingStrategy balancer;
+   private volatile Collection<InetSocketAddress> servers;
 
    @Override
    public void start(Properties props, Collection<InetSocketAddress> staticConfiguredServers) {
       servers = staticConfiguredServers;
       String balancerClass = props.getProperty("requestBalancingStrategy", RoundRobinBalancingStrategy.class.getName());
       balancer = (RequestBalancingStrategy) VHelper.newInstance(balancerClass);
-      poolFactory = new PropsKeyedObjectPoolFactory(new TcpConnectionFactory(), props);
+      PropsKeyedObjectPoolFactory poolFactory = new PropsKeyedObjectPoolFactory(new TcpConnectionFactory(), props);
       connectionPool = (GenericKeyedObjectPool) poolFactory.createPool();
       balancer.setServers(servers);
    }
@@ -68,34 +72,46 @@ public class TcpTransportFactory implements TransportFactory {
       try {
          connectionPool.returnObject(tcpTransport.getServerAddress(), tcpTransport);
       } catch (Exception e) {
-         log.warn("Could not release connection: " + tcpTransport,e);
+         log.warn("Could not release connection: " + tcpTransport, e);
       }
    }
 
    @Override
    public void updateServers(Collection<InetSocketAddress> newServers) {
-      if (newServers.containsAll(servers) && servers.containsAll(newServers)) {
-         log.info("Same list of servers, not changing the pool");
-         return;
-      }
-      for (InetSocketAddress server : newServers) {
-         if (!servers.contains(server)) {
-            log.info("New server added(" + server + "), adding to the pool.");
+      synchronized (this) {//only one updateServers at a time. 
+         Set<InetSocketAddress> addedServers = new HashSet<InetSocketAddress>(newServers);
+         addedServers.removeAll(servers);
+         Set<InetSocketAddress> failedServers = new HashSet<InetSocketAddress>(servers);
+         failedServers.removeAll(newServers);
+         if (failedServers.isEmpty() || newServers.isEmpty()) {
+            log.info("Same list of servers, not changing the pool");
+            return;
+         }
+
+         //1. first add new servers. For servers that went down, the returned transport will fail for now
+         for (InetSocketAddress server : newServers) {
             try {
                connectionPool.addObject(server);
             } catch (Exception e) {
-               log.warn("Failed adding server " + server, e);
+               log.warn("Failed adding new server " + server, e);
             }
+            log.info("New server added(" + server + "), adding to the pool.");
          }
-      }
-      for (InetSocketAddress server : servers) {
-         if (!newServers.contains(server)) {
+
+         //2. now set the server list to the active list of servers. All the active servers (potentially together with some
+         // failed servers) are in the pool now. But after this, the pool won't be asked for connections to failed servers,
+         // as the balancer will only know about the active servers
+         balancer.setServers(newServers);
+
+
+         //3. Now just remove failed servers
+         for (InetSocketAddress server : failedServers) {
             log.info("Server not in cluster anymore(" + server + "), removing from the pool.");
             connectionPool.clear(server);
          }
-      }
-      servers.clear();
-      servers.addAll(newServers);
-   }
 
+         servers.clear();
+         servers.addAll(addedServers);
+      }
+   }
 }

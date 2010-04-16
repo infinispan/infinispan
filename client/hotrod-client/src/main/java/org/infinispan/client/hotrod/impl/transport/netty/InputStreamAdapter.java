@@ -1,6 +1,6 @@
 package org.infinispan.client.hotrod.impl.transport.netty;
 
-import org.infinispan.client.hotrod.impl.transport.TransportException;
+import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.jboss.netty.buffer.ChannelBuffer;
 
 import java.io.IOException;

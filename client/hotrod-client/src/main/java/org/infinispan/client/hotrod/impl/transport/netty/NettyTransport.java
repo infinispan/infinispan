@@ -1,7 +1,7 @@
 package org.infinispan.client.hotrod.impl.transport.netty;
 
+import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.AbstractTransport;
-import org.infinispan.client.hotrod.impl.transport.TransportException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jboss.netty.bootstrap.ClientBootstrap;

@@ -1,8 +1,7 @@
 package org.infinispan.client.hotrod.impl.transport.netty;
 
-import org.infinispan.client.hotrod.impl.transport.TransportException;
+import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.transport.VHelper;
-import org.infinispan.io.ExposedByteArrayOutputStream;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;

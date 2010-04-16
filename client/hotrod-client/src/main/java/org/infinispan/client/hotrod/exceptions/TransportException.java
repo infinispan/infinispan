@@ -1,4 +1,4 @@
-package org.infinispan.client.hotrod.impl.transport;
+package org.infinispan.client.hotrod.exceptions;
 
 import org.infinispan.client.hotrod.exceptions.HotRodException;
 

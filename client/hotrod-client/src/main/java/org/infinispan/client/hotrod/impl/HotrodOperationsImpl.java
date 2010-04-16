@@ -4,7 +4,7 @@ import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
 import org.infinispan.client.hotrod.exceptions.TimeoutException;
-import org.infinispan.client.hotrod.impl.transport.TransportException;
+import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

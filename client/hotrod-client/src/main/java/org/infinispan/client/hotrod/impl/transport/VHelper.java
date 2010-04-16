@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod.impl.transport;
 
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.util.Util;
 
