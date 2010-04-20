@@ -66,6 +66,10 @@
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
       <defaultTestGroup>functional,unit</defaultTestGroup>
       <testNGListener>org.infinispan.test.fwk.UnitTestTestNGListener</testNGListener>
+      <jboss.releases.repo.url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2/
+      </jboss.releases.repo.url>
+      <jboss.snapshots.repo.url>https://repository.jboss.org/nexus/content/repositories/snapshots/
+      </jboss.snapshots.repo.url>
    </properties>
 
    <dependencies>
@@ -328,10 +332,10 @@
          <id>scala-tools.org</id>
          <name>Scala-tools Maven2 Repository</name>
          <url>http://scala-tools.org/repo-releases</url>
-          <snapshots>
+         <snapshots>
             <enabled>true</enabled>
             <updatePolicy>never</updatePolicy>
-          </snapshots>
+         </snapshots>
       </repository>
    </repositories>
 
@@ -361,18 +365,16 @@
 
    <distributionManagement>
       <repository>
-         <!-- Copy the dist to the local checkout of the JBoss maven2 repo ${maven.repository.root} -->
-         <!-- It is anticipated that ${maven.repository.root} be set in user's settings.xml -->
-         <id>repository.jboss.org</id>
-         <url>file://${maven.repository.root}</url>
+         <id>jboss-releases</id>
+         <name>JBoss Release Repository</name>
+         <url>${jboss.releases.repo.url}</url>
       </repository>
       <snapshotRepository>
-         <id>snapshots.jboss.org</id>
+         <id>jboss-snapshots</id>
          <name>JBoss Snapshot Repository</name>
-         <url>dav:https://snapshots.jboss.org/maven2</url>
+         <url>${jboss.snapshots.repo.url}</url>
       </snapshotRepository>
    </distributionManagement>
-
 
    <profiles>
       <profile>
