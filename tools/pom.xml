@@ -15,14 +15,6 @@
    <name>Infinispan Tools</name>
    <description>Infinispan - Tools for project</description>
 
-	<!-- needed for XSOM -->
-	<repositories>
-      <repository>
-         <id>download.java.net</id>
-         <url>http://download.java.net/maven/2</url>
-      </repository>
-   </repositories>
-
    <properties>
       <version.rhq.plugingen>1.4.0.B01</version.rhq.plugingen>
       <version.xsom>20081112</version.xsom>

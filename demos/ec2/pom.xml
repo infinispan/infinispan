@@ -13,12 +13,6 @@
    <name>Infinispan EC2 Demo</name>
    <description>Infinispan - EC2 Demo</description>
    <packaging>war</packaging>
-   <repositories>
-      <repository>
-         <id>codehaus.m2.snapshots</id>
-         <url>http://snapshots.repository.codehaus.org</url>
-      </repository>
-   </repositories>
    <dependencies>
       <dependency>
          <groupId>${project.groupId}</groupId>

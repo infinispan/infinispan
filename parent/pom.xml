@@ -44,7 +44,12 @@
          </notifier>
       </notifiers>
    </ciManagement>
-
+   <developers>
+      <developer>
+         <id>placeholder</id>
+         <name>See http://www.infinispan.org for a complete list of contributors</name>            
+      </developer>
+   </developers>
    <mailingLists>
       <mailingList>
          <name>Infinispan Commit Notificatons</name>
@@ -66,10 +71,8 @@
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
       <defaultTestGroup>functional,unit</defaultTestGroup>
       <testNGListener>org.infinispan.test.fwk.UnitTestTestNGListener</testNGListener>
-      <jboss.releases.repo.url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2/
-      </jboss.releases.repo.url>
-      <jboss.snapshots.repo.url>https://repository.jboss.org/nexus/content/repositories/snapshots/
-      </jboss.snapshots.repo.url>
+      <jboss.releases.repo.url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2/</jboss.releases.repo.url>
+      <jboss.snapshots.repo.url>https://repository.jboss.org/nexus/content/repositories/snapshots/</jboss.snapshots.repo.url>
    </properties>
 
    <dependencies>
@@ -317,51 +320,6 @@
          </plugin>
       </plugins>
    </reporting>
-
-   <repositories>
-      <!-- basic JBoss repository -->
-      <repository>
-         <id>repository.jboss.org</id>
-         <url>http://repository.jboss.org/maven2</url>
-      </repository>
-      <repository>
-         <id>snapshots.jboss.org</id>
-         <url>http://snapshots.jboss.org/maven2</url>
-      </repository>
-      <repository>
-         <id>scala-tools.org</id>
-         <name>Scala-tools Maven2 Repository</name>
-         <url>http://scala-tools.org/repo-releases</url>
-         <snapshots>
-            <enabled>true</enabled>
-            <updatePolicy>never</updatePolicy>
-         </snapshots>
-      </repository>
-   </repositories>
-
-   <pluginRepositories>
-      <pluginRepository>
-         <id>Main Maven Repo</id>
-         <url>http://repo1.maven.org/maven2/</url>
-      </pluginRepository>
-      <pluginRepository>
-         <id>snapshots.repository.codehaus.org</id>
-         <url>http://snapshots.repository.codehaus.org</url>
-      </pluginRepository>
-      <pluginRepository>
-         <id>repository.jboss.org</id>
-         <url>http://repository.jboss.org/maven2</url>
-      </pluginRepository>
-      <pluginRepository>
-         <id>snapshots.jboss.org</id>
-         <url>http://snapshots.jboss.org/maven2</url>
-      </pluginRepository>
-      <pluginRepository>
-         <id>scala-tools.org</id>
-         <name>Scala-tools Maven2 Repository</name>
-         <url>http://scala-tools.org/repo-releases</url>
-      </pluginRepository>
-   </pluginRepositories>
 
    <distributionManagement>
       <repository>
