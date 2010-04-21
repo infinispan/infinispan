@@ -22,8 +22,8 @@ class HotRodServer extends AbstractProtocolServer("HotRod") {
 
    override def getDecoder: Decoder = new HotRodDecoder(getCacheManager)
 
-   override def start(host: String, port: Int, cacheManager: CacheManager, masterThreads: Int, workerThreads: Int) {
-      super.start(host, port, cacheManager, masterThreads, workerThreads)
+   override def start(host: String, port: Int, cacheManager: CacheManager, masterThreads: Int, workerThreads: Int, idleTimeout: Int) {
+      super.start(host, port, cacheManager, masterThreads, workerThreads, idleTimeout)
       // If clustered, set up a cache for topology information
       if (cacheManager.getGlobalConfiguration.getTransportClass != null) {
          defineTopologyCacheConfig(cacheManager)

@@ -18,10 +18,8 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
    private var workerThreads: Int = _
    private var transport: Transport = _
    private var cacheManager: CacheManager = _
-   private var decoder: Decoder = _
-   private var encoder: Encoder = _
 
-   override def start(host: String, port: Int, cacheManager: CacheManager, masterThreads: Int, workerThreads: Int) {
+   override def start(host: String, port: Int, cacheManager: CacheManager, masterThreads: Int, workerThreads: Int, idleTimeout: Int) {
       this.host = host
       this.port = port
       this.masterThreads = masterThreads
@@ -29,12 +27,10 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
       this.cacheManager = cacheManager
 
       cacheManager.addListener(getRankCalculatorListener)
-      encoder = getEncoder
-      // TODO: add an IdleStateHandler so that idle connections are detected, this could help on malformed data
-      // TODO: ... requests such as when the lenght of data is bigger than the expected data itself.
-      val nettyEncoder = if (encoder != null) new EncoderAdapter(encoder) else null
       val address =  new InetSocketAddress(host, port)
-      transport = new NettyTransport(this, nettyEncoder, address, masterThreads, workerThreads, threadNamePrefix)
+      val encoder = getEncoder
+      val nettyEncoder = if (encoder != null) new EncoderAdapter(encoder) else null
+      transport = new NettyTransport(this, nettyEncoder, address, masterThreads, workerThreads, idleTimeout, threadNamePrefix)
       transport.start
    }
 

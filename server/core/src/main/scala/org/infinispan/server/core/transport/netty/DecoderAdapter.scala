@@ -28,6 +28,7 @@ class DecoderAdapter(decoder: Decoder, transport: NettyTransport) extends Replay
 
    override def channelOpen(ctx: NettyChannelHandlerContext, e: ChannelStateEvent) {
       transport.acceptedChannels.add(e.getChannel)
+      super.channelOpen(ctx, e)
    }
 
 }

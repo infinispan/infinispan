@@ -11,7 +11,6 @@ import org.infinispan.server.core.transport.{ChannelBuffer, Encoder}
  * @author Galder Zamarreño
  * @since 4.1
  */
-@ChannelHandler.Sharable
 class EncoderAdapter(encoder: Encoder) extends OneToOneEncoder {
 
    protected override def encode(nCtx: NettyChannelHandlerContext, ch: NettyChannel, msg: AnyRef): AnyRef = {

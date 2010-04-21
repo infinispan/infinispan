@@ -16,7 +16,7 @@ import org.testng.annotations.{AfterMethod, AfterClass, Test}
  * @since
  */
 
-@Test(groups = Array("functional"), testName = "server.hotrod.ClusterTest")
+@Test(groups = Array("functional"), testName = "server.hotrod.HotRodReplicationTest")
 class HotRodReplicationTest extends MultipleCacheManagersTest {
 
    import HotRodServer._
@@ -27,25 +27,15 @@ class HotRodReplicationTest extends MultipleCacheManagersTest {
 
    @Test(enabled=false) // Disable explicitly to avoid TestNG thinking this is a test!!
    override def createCacheManagers {
-      val config = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC)
-      config.setFetchInMemoryState(true)
-
-      val topologyCacheConfig = new Configuration
-      topologyCacheConfig.setCacheMode(CacheMode.REPL_SYNC)
-      topologyCacheConfig.setSyncReplTimeout(10000) // Milliseconds
-      topologyCacheConfig.setFetchInMemoryState(true) // State transfer required
-      topologyCacheConfig.setSyncCommitPhase(true) // Only for testing, so that asserts work fine.
-      topologyCacheConfig.setSyncRollbackPhase(true) // Only for testing, so that asserts work fine.
-
       for (i <- 0 until 2) {
          val cm = addClusterEnabledCacheManager()
-         cm.defineConfiguration(cacheName, config)
-         cm.defineConfiguration(TopologyCacheName, topologyCacheConfig)
+         cm.defineConfiguration(cacheName, createCacheConfig)
+         cm.defineConfiguration(TopologyCacheName, createTopologyCacheConfig)
       }
-      servers = startHotRodServer(cacheManagers.get(0)) :: servers
-      servers = startHotRodServer(cacheManagers.get(1), servers.head.getPort + 50) :: servers
+      servers = servers ::: List(startHotRodServer(cacheManagers.get(0))) 
+      servers = servers ::: List(startHotRodServer(cacheManagers.get(1), servers.head.getPort + 50))
       servers.foreach {s =>
-         clients = new HotRodClient("127.0.0.1", s.getPort, cacheName) :: clients
+         clients = new HotRodClient("127.0.0.1", s.getPort, cacheName, 60) :: clients
       }
    }
 
@@ -60,6 +50,22 @@ class HotRodReplicationTest extends MultipleCacheManagersTest {
    @AfterMethod(alwaysRun=true)
    override def clearContent() {
       // Do not clear cache between methods so that topology cache does not get cleared
+   }
+
+   private def createCacheConfig: Configuration = {
+      val config = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC)
+      config.setFetchInMemoryState(true)
+      config
+   }
+
+   private def createTopologyCacheConfig: Configuration = {
+      val topologyCacheConfig = new Configuration
+      topologyCacheConfig.setCacheMode(CacheMode.REPL_SYNC)
+      topologyCacheConfig.setSyncReplTimeout(10000) // Milliseconds
+      topologyCacheConfig.setFetchInMemoryState(true) // State transfer required
+      topologyCacheConfig.setSyncCommitPhase(true) // Only for testing, so that asserts work fine.
+      topologyCacheConfig.setSyncRollbackPhase(true) // Only for testing, so that asserts work fine.
+      topologyCacheConfig
    }
 
    def testReplicatedPut(m: Method) {
@@ -112,8 +118,8 @@ class HotRodReplicationTest extends MultipleCacheManagersTest {
    private def assertTopologyReceived(topologyResp: AbstractTopologyResponse) {
       assertEquals(topologyResp.view.topologyId, 2)
       assertEquals(topologyResp.view.members.size, 2)
-      assertEquals(topologyResp.view.members.head, TopologyAddress("127.0.0.1", 11311, 0))
-      assertEquals(topologyResp.view.members.tail.head, TopologyAddress("127.0.0.1", 11361, 0))
+      assertEquals(topologyResp.view.members.head, TopologyAddress("127.0.0.1", servers.head.getPort, 0))
+      assertEquals(topologyResp.view.members.tail.head, TopologyAddress("127.0.0.1", servers.tail.head.getPort, 0))
    }
 
    def testReplicatedPutWithTopologyAwareClient(m: Method) {
@@ -131,6 +137,23 @@ class HotRodReplicationTest extends MultipleCacheManagersTest {
       assertStatus(resp.status, Success)
       assertEquals(resp.topologyResponse, None)
       assertSuccess(clients.tail.head.get(k(m), 0), v(m, "v3-"))
+
+      val cm = addClusterEnabledCacheManager()
+      cm.defineConfiguration(cacheName, createCacheConfig)
+      cm.defineConfiguration(TopologyCacheName, createTopologyCacheConfig)
+      servers = servers ::: List(startHotRodServer(cacheManagers.get(2), servers.tail.head.getPort + 25)) 
+
+      resp = clients.head.put(k(m) , 0, 0, v(m, "v4-"), 2, 2)
+      assertStatus(resp.status, Success)
+      assertEquals(resp.topologyResponse.get.view.topologyId, 3)
+      assertEquals(resp.topologyResponse.get.view.members.size, 3)
+      assertEquals(resp.topologyResponse.get.view.members.head, TopologyAddress("127.0.0.1", servers.head.getPort, 0))
+      assertEquals(resp.topologyResponse.get.view.members.tail.head, TopologyAddress("127.0.0.1", servers.tail.head.getPort, 0))
+      assertEquals(resp.topologyResponse.get.view.members.tail.tail.head, TopologyAddress("127.0.0.1", servers.tail.tail.head.getPort, 0))
+      assertSuccess(clients.tail.head.get(k(m), 0), v(m, "v4-"))
+
+//      // TODO: Add stopping a server
+//      servers.tail.tail.head.stop
    }
 
 }

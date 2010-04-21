@@ -25,12 +25,14 @@ abstract class HotRodSingleNodeTest extends SingleCacheManagerTest {
    override def createCacheManager: CacheManager = {
       val cacheManager = createTestCacheManager
       advancedCache = cacheManager.getCache[CacheKey, CacheValue](cacheName).getAdvancedCache
-      hotRodServer = startHotRodServer(cacheManager)
-      hotRodClient = new HotRodClient("127.0.0.1", hotRodServer.getPort, cacheName)
+      hotRodServer = createStartHotRodServer(cacheManager)
+      hotRodClient = connectClient
       cacheManager
    }
 
-   protected def createTestCacheManager: CacheManager = TestCacheManagerFactory.createLocalCacheManager(true) 
+   protected def createTestCacheManager: CacheManager = TestCacheManagerFactory.createLocalCacheManager(true)
+
+   protected def createStartHotRodServer(cacheManager: CacheManager) = startHotRodServer(cacheManager)
 
    @AfterClass(alwaysRun = true)
    override def destroyAfterClass {
@@ -47,4 +49,6 @@ abstract class HotRodSingleNodeTest extends SingleCacheManagerTest {
    protected def jmxDomain = hotRodJmxDomain
 
    protected def shutdownClient: ChannelFuture = hotRodClient.stop
+
+   protected def connectClient: HotRodClient = new HotRodClient("127.0.0.1", hotRodServer.getPort, cacheName, 60)
 }

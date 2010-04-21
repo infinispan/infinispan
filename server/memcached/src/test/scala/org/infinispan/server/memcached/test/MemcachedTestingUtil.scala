@@ -38,7 +38,7 @@ trait MemcachedTestingUtil {
 
    def startMemcachedTextServer(cacheManager: CacheManager, port: Int): MemcachedServer = {
       val server = new MemcachedServer
-      server.start(host, port, cacheManager, 0, 0)
+      server.start(host, port, cacheManager, 0, 0, 0)
       server
    }
 
@@ -54,7 +54,7 @@ trait MemcachedTestingUtil {
             }
          }
       }
-      server.start(host, port, cacheManager, 0, 0)
+      server.start(host, port, cacheManager, 0, 0, 0)
       server
    }
    

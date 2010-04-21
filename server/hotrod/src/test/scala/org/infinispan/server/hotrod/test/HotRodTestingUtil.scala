@@ -24,13 +24,16 @@ object HotRodTestingUtil extends Logging {
    def startHotRodServer(manager: CacheManager): HotRodServer =
       startHotRodServer(manager, UniquePortThreadLocal.get.intValue)
 
-   def startHotRodServer(manager: CacheManager, port: Int): HotRodServer = {
+   def startHotRodServer(manager: CacheManager, port: Int): HotRodServer =
+      startHotRodServer(manager, port, 0)
+
+   def startHotRodServer(manager: CacheManager, port: Int, idleTimeout: Int): HotRodServer = {
       val server = new HotRodServer {
          override protected def defineTopologyCacheConfig(cacheManager: CacheManager) {
             // No-op since topology cache configuration comes defined by the test
          }
       }
-      server.start(host, port, manager, 0, 0)
+      server.start(host, port, manager, 0, 0, idleTimeout)
       server
    }
 

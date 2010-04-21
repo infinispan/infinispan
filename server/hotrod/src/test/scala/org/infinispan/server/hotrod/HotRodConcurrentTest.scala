@@ -4,8 +4,6 @@ import java.lang.reflect.Method
 import java.util.concurrent.{Callable, Executors, Future, CyclicBarrier}
 import test.HotRodClient
 import org.testng.annotations.Test
-import org.infinispan.test.fwk.TestCacheManagerFactory
-import org.infinispan.manager.CacheManager
 
 /**
  * // TODO: Document this
@@ -42,9 +40,9 @@ class HotRodConcurrentTest extends HotRodSingleNodeTest {
 
    class Operator(barrier: CyclicBarrier, m: Method, clientId: Int, numOpsPerClient: Int) extends Callable[Unit] {
 
-      private lazy val client = new HotRodClient("127.0.0.1", server.getPort, cacheName)
+      private lazy val client = new HotRodClient("127.0.0.1", server.getPort, cacheName, 60)
 
-      def call {
+      override def call {
          log.debug("Wait for all executions paths to be ready to perform calls", null)
          barrier.await
          try {

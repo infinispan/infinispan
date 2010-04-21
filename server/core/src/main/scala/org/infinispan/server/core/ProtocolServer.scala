@@ -9,7 +9,7 @@ import transport.{Decoder, Encoder}
  * @since 4.1
  */
 trait ProtocolServer {
-   def start(host: String, port: Int, cacheManager: CacheManager, masterThreads: Int, workerThreads: Int)
+   def start(host: String, port: Int, cacheManager: CacheManager, masterThreads: Int, workerThreads: Int, idleTimeout: Int)
    def stop
    def getEncoder: Encoder
    def getDecoder: Decoder

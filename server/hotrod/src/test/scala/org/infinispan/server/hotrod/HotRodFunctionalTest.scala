@@ -1,12 +1,11 @@
 package org.infinispan.server.hotrod
 
-import org.infinispan.test.fwk.TestCacheManagerFactory
 import org.testng.annotations.Test
 import java.lang.reflect.Method
 import test.HotRodTestingUtil._
 import org.testng.Assert._
 import java.util.Arrays
-import org.infinispan.manager.{DefaultCacheManager, CacheManager}
+import org.infinispan.manager.DefaultCacheManager
 import org.infinispan.server.core.CacheValue
 import org.infinispan.server.hotrod.OperationStatus._
 

@@ -10,7 +10,7 @@ import java.util.concurrent.{Executors, ThreadFactory}
 import org.infinispan.server.core.transport.Transport
 import scala.collection.JavaConversions._
 import org.infinispan.server.core.{ProtocolServer, Logging}
-import org.jboss.netty.util.{ThreadNameDeterminer, ThreadRenamingRunnable}
+import org.jboss.netty.util.{HashedWheelTimer, ThreadNameDeterminer, ThreadRenamingRunnable}
 
 /**
  * // TODO: Document this
@@ -18,13 +18,13 @@ import org.jboss.netty.util.{ThreadNameDeterminer, ThreadRenamingRunnable}
  * @since 4.1
  */
 class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
-                  address: SocketAddress, masterThreads: Int, workerThreads: Int,
-                  threadNamePrefix: String) extends Transport {
+                     address: SocketAddress, masterThreads: Int, workerThreads: Int,
+                     idleTimeout: Int, threadNamePrefix: String) extends Transport {
    import NettyTransport._
 
    private val serverChannels = new DefaultChannelGroup(threadNamePrefix + "-Channels")
    val acceptedChannels = new DefaultChannelGroup(threadNamePrefix + "-Accepted")
-   private val pipeline = new NettyChannelPipelineFactory(server, encoder, this)
+   private val pipeline = new NettyChannelPipelineFactory(server, encoder, this, idleTimeout)
    private val factory = {
       if (workerThreads == 0)
          new NioServerSocketChannelFactory(masterExecutor, workerExecutor)
@@ -90,6 +90,7 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
             }
          }
       }
+      pipeline.stop
       debug("Channel group completely closed, release external resources");
       factory.releaseExternalResources();
    }

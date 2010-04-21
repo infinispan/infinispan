@@ -33,13 +33,13 @@ import org.infinispan.test.TestingUtil
  * @author Galder Zamarreño
  * @since 4.1
  */
-class HotRodClient(host: String, port: Int, defaultCacheName: String) {
+class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeoutSeconds: Int) {
    val idToOp = new ConcurrentHashMap[Long, Op]    
 
    private lazy val ch: Channel = {
       val factory = new NioClientSocketChannelFactory(Executors.newCachedThreadPool, Executors.newCachedThreadPool)
       val bootstrap: ClientBootstrap = new ClientBootstrap(factory)
-      bootstrap.setPipelineFactory(new ClientPipelineFactory(this))
+      bootstrap.setPipelineFactory(new ClientPipelineFactory(this, rspTimeoutSeconds))
       bootstrap.setOption("tcpNoDelay", true)
       bootstrap.setOption("keepAlive", true)
       // Make a new connection.
@@ -61,6 +61,14 @@ class HotRodClient(host: String, port: Int, defaultCacheName: String) {
    def assertPut(m: Method) {
       val status = put(k(m) , 0, 0, v(m)).status
       assertStatus(status, Success)
+   }
+
+   def assertPutFail(m: Method) {
+      val op = new Op(0xA0, 0x01, defaultCacheName, k(m), 0, 0, v(m), 0, 1 , 0, 0)
+      idToOp.put(op.id, op)
+      val future = ch.write(op)
+      future.awaitUninterruptibly
+      assertFalse(future.isSuccess)
    }
 
    def assertPut(m: Method, kPrefix: String, vPrefix: String) {
@@ -116,6 +124,12 @@ class HotRodClient(host: String, port: Int, defaultCacheName: String) {
                            v: Array[Byte], version: Long): ErrorResponse = {
       val op = new Op(magic, code, name, k, lifespan, maxIdle, v, 0, version, 1, 0)
       execute(op, 0).asInstanceOf[ErrorResponse]
+   }
+
+   def executePartial(magic: Int, code: Byte, name: String, k: Array[Byte], lifespan: Int, maxIdle: Int,
+                      v: Array[Byte], version: Long): ErrorResponse = {
+      val op = new PartialOp(magic, code, name, k, lifespan, maxIdle, v, 0, version, 1, 0)
+      execute(op, op.id).asInstanceOf[ErrorResponse]
    }
 
    def execute(magic: Int, code: Byte, name: String, k: Array[Byte], lifespan: Int, maxIdle: Int,
@@ -182,13 +196,13 @@ class HotRodClient(host: String, port: Int, defaultCacheName: String) {
 
 }
 
-private class ClientPipelineFactory(client: HotRodClient) extends ChannelPipelineFactory {
+private class ClientPipelineFactory(client: HotRodClient, rspTimeoutSeconds: Int) extends ChannelPipelineFactory {
 
    override def getPipeline = {
       val pipeline = Channels.pipeline
       pipeline.addLast("decoder", new Decoder(client))
       pipeline.addLast("encoder", new Encoder)
-      pipeline.addLast("handler", new ClientHandler)
+      pipeline.addLast("handler", new ClientHandler(rspTimeoutSeconds))
       pipeline
    }
 
@@ -199,6 +213,14 @@ private class Encoder extends OneToOneEncoder {
    override def encode(ctx: ChannelHandlerContext, ch: Channel, msg: Any) = {
       trace("Encode {0} so that it's sent to the server", msg)
       msg match {
+         case partial: PartialOp => {
+            val buffer = new ChannelBufferAdapter(ChannelBuffers.dynamicBuffer)
+            buffer.writeByte(partial.magic.asInstanceOf[Byte]) // magic
+            buffer.writeUnsignedLong(partial.id) // message id
+            buffer.writeByte(10) // version
+            buffer.writeByte(partial.code) // opcode
+            buffer.getUnderlyingChannelBuffer
+         }
          case op: Op => {
             val buffer = new ChannelBufferAdapter(ChannelBuffers.dynamicBuffer)
             buffer.writeByte(op.magic.asInstanceOf[Byte]) // magic
@@ -317,7 +339,7 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[NoState] wi
    }
 }
 
-private class ClientHandler extends SimpleChannelUpstreamHandler {
+private class ClientHandler(rspTimeoutSeconds: Int) extends SimpleChannelUpstreamHandler {
 
    private val responses = new ConcurrentHashMap[Long, Response]
 
@@ -338,7 +360,7 @@ private class ClientHandler extends SimpleChannelUpstreamHandler {
             i += 1
          }
       }
-      while (v == null && i < 10000)
+      while (v == null && i < (rspTimeoutSeconds * 10))
       v
    }
 
@@ -356,6 +378,20 @@ case class Op(val magic: Int,
                  val clientIntelligence: Byte,
                  val topologyId: Int) {
    lazy val id = HotRodClient.idCounter.incrementAndGet
+}
+
+class PartialOp(override val magic: Int,
+                override val code: Byte,
+                override val cacheName: String,
+                override val key: Array[Byte],
+                override val lifespan: Int,
+                override val maxIdle: Int,
+                override val value: Array[Byte],
+                override val flags: Int,
+                override val version: Long,
+                override val clientIntelligence: Byte,
+                override val topologyId: Int)
+      extends Op(magic, code, cacheName, key, lifespan, maxIdle, value, flags, version, clientIntelligence, topologyId) {
 }
 
 class StatsOp(override val magic: Int,

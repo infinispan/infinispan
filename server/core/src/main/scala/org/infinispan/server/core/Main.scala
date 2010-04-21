@@ -24,10 +24,12 @@ object Main extends Logging {
    val PROP_KEY_WORKER_THREADS = "infinispan.server.worker.threads"
    val PROP_KEY_CACHE_CONFIG = "infinispan.server.cache.config"
    val PROP_KEY_PROTOCOL = "infinispan.server.protocol"
+   val PROP_KEY_IDLE_TIMEOUT = "infinispan.server.idle.timeout"
    val PORT_DEFAULT = 11211
    val HOST_DEFAULT = "127.0.0.1"
    val MASTER_THREADS_DEFAULT = 0
    val WORKER_THREADS_DEFAULT = 0
+   val IDLE_TIMEOUT_DEFAULT = 60
 
    /**
     * Server properties.  This object holds all of the required
@@ -36,7 +38,7 @@ object Main extends Logging {
     */
    private val props: mutable.Map[String, String] = {
       // Set default properties
-      val properties = new HashMap[String, String]()
+      val properties = new HashMap[String, String]
       val sysProps = System.getProperties
       for (property <- asIterator(sysProps.iterator))
          properties.put(property._1, property._2)
@@ -47,50 +49,53 @@ object Main extends Logging {
    private var server: ProtocolServer = _
 
    def main(args: Array[String]) {
-       info("Start main with args: {0}", args.mkString(", "))
-       var worker = new Callable[Void] {
-          override def call = {
-             try {
-                boot(args)
-             }
-             catch {
-                case e: Exception => {
-                   System.err.println("Failed to boot JBoss:")
-                   e.printStackTrace
-                   throw e
-                }
-             }
-             null
-          }
-       }
-       var f = Executors.newSingleThreadScheduledExecutor(new ThreadFactory {
-          override def newThread(r: Runnable): Thread = {
-             // TODO Maybe create thread names based on the protocol run
-             return new Thread(r, "InfinispanServer-Main")
-          }
-       }).submit(worker)
-       f.get
-    }
+      info("Start main with args: {0}", args.mkString(", "))
+      var worker = new Callable[Void] {
+         override def call = {
+            try {
+               boot(args)
+            }
+            catch {
+               case e: Exception => {
+                  System.err.println("Failed to boot JBoss:")
+                  e.printStackTrace
+                  throw e
+               }
+            }
+            null
+         }
+      }
+      var f = Executors.newSingleThreadScheduledExecutor(new ThreadFactory {
+         override def newThread(r: Runnable): Thread = {
+            // TODO Maybe create thread names based on the protocol run
+            return new Thread(r, "InfinispanServer-Main")
+         }
+      }).submit(worker)
+      f.get
+   }
 
-    def boot(args: Array[String]) {
+   def boot(args: Array[String]) {
       // First process the command line to pickup custom props/settings
       processCommandLine(args)
 
       val host = if (props.get(PROP_KEY_HOST) == None) HOST_DEFAULT else props.get(PROP_KEY_HOST).get
       val masterThreads = if (props.get(PROP_KEY_MASTER_THREADS) == None) MASTER_THREADS_DEFAULT else props.get(PROP_KEY_MASTER_THREADS).get.toInt
-      if (masterThreads < 0) {
+      if (masterThreads < 0)
          throw new IllegalArgumentException("Master threads can't be lower than 0: " + masterThreads)
-      }
+
       val workerThreads = if (props.get(PROP_KEY_WORKER_THREADS) == None) WORKER_THREADS_DEFAULT else props.get(PROP_KEY_WORKER_THREADS).get.toInt
-      if (workerThreads < 0) {
+      if (workerThreads < 0)
          throw new IllegalArgumentException("Worker threads can't be lower than 0: " + masterThreads)
-      }
+
       val configFile = props.get(PROP_KEY_CACHE_CONFIG)
       var protocol = props.get(PROP_KEY_PROTOCOL)
       if (protocol == None) {
          System.err.println("ERROR: Please indicate protocol to run with -r parameter")
          showAndExit
       }
+      val idleTimeout = if (props.get(PROP_KEY_IDLE_TIMEOUT) == None) IDLE_TIMEOUT_DEFAULT else props.get(PROP_KEY_IDLE_TIMEOUT).get.toInt
+      if (idleTimeout < 0)
+         throw new IllegalArgumentException("Idle timeout can't be lower than 0: " + idleTimeout)
 
       // TODO: move class name and protocol number to a resource file under the corresponding project
       val clazz = protocol.get match {
@@ -111,7 +116,7 @@ object Main extends Logging {
       var server = Util.getInstance(clazz).asInstanceOf[ProtocolServer]
       val cacheManager = if (configFile == None) new DefaultCacheManager else new DefaultCacheManager(configFile.get)
       addShutdownHook(new ShutdownHook(server, cacheManager))
-      server.start(host, port, cacheManager, masterThreads, workerThreads)
+      server.start(host, port, cacheManager, masterThreads, workerThreads, idleTimeout)
    }
 
    private def processCommandLine(args: Array[String]) {
@@ -125,7 +130,8 @@ object Main extends Logging {
          new LongOpt("master_threads", LongOpt.REQUIRED_ARGUMENT, null, 'm'),
          new LongOpt("worker_threads", LongOpt.REQUIRED_ARGUMENT, null, 't'),
          new LongOpt("cache_config", LongOpt.REQUIRED_ARGUMENT, null, 'c'),
-         new LongOpt("protocol", LongOpt.REQUIRED_ARGUMENT, null, 'r'))
+         new LongOpt("protocol", LongOpt.REQUIRED_ARGUMENT, null, 'r'),
+         new LongOpt("idle_timeout", LongOpt.REQUIRED_ARGUMENT, null, 'i'))
       var getopt = new Getopt(programName, args, sopts, lopts)
       var code: Int = 0
       while ((({code = getopt.getopt; code})) != -1) {
@@ -143,6 +149,7 @@ object Main extends Logging {
             case 't' => props.put(PROP_KEY_WORKER_THREADS, getopt.getOptarg)
             case 'c' => props.put(PROP_KEY_CACHE_CONFIG, getopt.getOptarg)
             case 'r' => props.put(PROP_KEY_PROTOCOL, getopt.getOptarg)
+            case 'i' => props.put(PROP_KEY_IDLE_TIMEOUT, getopt.getOptarg)
             case 'D' => {
                val arg = getopt.getOptarg
                var name = ""
@@ -184,6 +191,7 @@ object Main extends Logging {
       println("    -t, --work_threads=<num>           Number of threads processing incoming requests and sending responses (default: unlimited while resources are available)")
       println("    -c, --cache_config=<filename>      Cache configuration file (default: creates cache with default values)")
       println("    -r, --protocol=[memcached|hotrod]  Protocol to understand by the server. This is a mandatory option and you should choose one of the two options")
+      println("    -i, --idle_timeout=<num>           Idle read timeout used to detect stale connections (default: 60 seconds). If no new messages have been read within this time, the server disconnects the channel. Passing 0 means disabling idle timeout.")
       println("    -D<name>[=<value>]                 Set a system property")
       println
       System.exit(0)
