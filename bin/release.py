@@ -174,35 +174,12 @@ def getModuleName(pomFile):
   tree.parse(pomFile)
   return tree.findtext("./{%s}artifactId" % maven_pom_xml_namespace)
 
-def checkInMaven2Repo(version, workingDir):
-  os.chdir(settings[local_mvn_repo_dir_key])
-  client = get_svn_conn()
-  poms = [workingDir + "/pom.xml"]
-  for m in modules:
-    poms.append(workingDir + "/" + m + "/pom.xml")
-  moduleNames=[]
-  for p in poms:
-    moduleNames.append(settings[local_mvn_repo_dir_key] + "/" + getModuleName(p) + "/" + version)
-    
-  # See if any of the modules are new and need to be added as well.
-  newmodules = []
-  for m in modules:
-    mod_dir = settings[local_mvn_repo_dir_key] + "/" + getModuleName(p)
-    if not is_in_svn(mod_dir):
-      newmodules.append(mod_dir)
-  print "New modules added in this release: %s" % newmodules
-  if len(newmodules) > 0:
-    client.add(newmodules)
-  client.add(moduleNames)
-  for mn in moduleNames:
-    checkInMessage = "Infinispan Release Script: Releasing module " + mn + " version " + version + " to public Maven2 repo"
-    client.checkin(mn, checkInMessage)
 
 def uploadArtifactsToSourceforge(version):
   os.mkdir(".tmp")
   os.chdir(".tmp")
   do_not_copy = shutil.ignore_patterns('*.xml', '*.sha1', '*.md5', '*.pom', '.svn')
-  shutil.copytree("%s/infinispan/%s" % (settings[local_mvn_repo_dir_key], version), "%s" % version, ignore = do_not_copy)
+  shutil.copytree("%s/%s/target/distribution" % (settings[local_tags_dir_key], version), version, ignore = do_not_copy)
   subprocess.check_call(["scp", "-r", version, "sourceforge_frs:/home/frs/project/i/in/infinispan/infinispan"])
   shutil.rmtree(".tmp", ignore_errors = True)  
 
@@ -253,7 +230,7 @@ def release():
   require_settings_file()
   
   missing_keys = []
-  expected_keys = [svn_base_key, local_tags_dir_key, local_mvn_repo_dir_key]
+  expected_keys = [svn_base_key, local_tags_dir_key]
   for expected_key in expected_keys:
     if expected_key not in settings:
       missing_keys.append(expected_key)
@@ -266,11 +243,6 @@ def release():
   if len(sys.argv) < 2:
     helpAndExit()
   
-  ### Ensure that the maven repo root is in SVN
-  if not is_in_svn(settings[local_mvn_repo_dir_key]):
-    print "Your 'local_mvn_repo_dir' - %s - is not in Subversion so cannot be checked in!  Cannot proceed!" % settings[local_mvn_repo_dir_key]
-    sys.exit(3)
-      
   base_dir = os.getcwd()
   version = validateVersion(sys.argv[1])
   print "Releasing Infinispan version " + version
@@ -297,23 +269,18 @@ def release():
   
   async_processes = []
     
-  # Step 4: Check in to Maven2 repo
-  print "Step 4: Checking in to Maven2 Repo (this can take a while, go get coffee)"
-  do_task(checkInMaven2Repo, [version, workingDir], async_processes)
+  # Step 4: Upload javadocs to FTP
+  print "Step 4: Uploading Javadocs"  
+  do_task(uploadJavadocs, [base_dir, workingDir, version], async_processes)
   print "Step 4: Complete"
   
-  # Step 5: Upload javadocs to FTP
-  print "Step 5: Uploading Javadocs"  
-  do_task(uploadJavadocs, [base_dir, workingDir, version], async_processes)
+  print "Step 5: Uploading to Sourceforge"
+  do_task(uploadArtifactsToSourceforge, [version], async_processes)    
   print "Step 5: Complete"
   
-  print "Step 6: Uploading to Sourceforge"
-  do_task(uploadArtifactsToSourceforge, [version], async_processes)    
-  print "Step 6: Complete"
-  
-  print "Step 7: Uploading to configuration XML schema"
+  print "Step 6: Uploading to configuration XML schema"
   do_task(uploadSchema, [base_dir, workingDir, version], async_processes)    
-  print "Step 7: Complete"
+  print "Step 6: Complete"
   
   ## Wait for processes to finish
   for p in async_processes:

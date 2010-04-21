@@ -50,7 +50,6 @@ def handle_release_virgin():
   s = {}  
   s["svn_base"] = input_with_default("Base Subversion URL to use", "https://svn.jboss.org/repos/infinispan") 
   s["local_tags_dir"] = input_with_default("Local tags directory to use", "%s/Code/infinispan/tags" % os.getenv("HOME"))
-  s["local_mvn_repo_dir"] = input_with_default("Local checkout of Maven2 repo", "%s/Code/maven2/org/infinispan" % os.getenv("HOME"))
   s["multi_threaded"] = input_with_default("Enable multithreaded (EXPERIMENTAL!)", "False")
   
   f = open(settings_file, "w")
