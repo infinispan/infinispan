@@ -15,7 +15,7 @@
    <description>Infinispan server core module</description>
 
    <properties>
-      <version.netty>3.2.0.BETA1</version.netty>      
+      <version.netty>3.2.0.BETA1</version.netty>
       <version.gnu.getopt>1.0.13</version.gnu.getopt>
       <version.apache.log4j>1.2.15</version.apache.log4j>
    </properties>
@@ -31,13 +31,6 @@
          <groupId>gnu-getopt</groupId>
          <artifactId>getopt</artifactId>
          <version>${version.gnu.getopt}</version>
-       </dependency>
-
-      <dependency>
-         <groupId>apache-log4j</groupId>
-         <artifactId>log4j</artifactId>
-         <version>${version.apache.log4j}</version>
-         <scope>test</scope>
       </dependency>
    </dependencies>
 
@@ -76,5 +69,5 @@
       </plugins>
 
    </build>
-   
+
 </project>
