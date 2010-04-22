@@ -32,7 +32,7 @@ import net.jcip.annotations.Immutable;
 @Immutable
 public class Version {
    public static final String version = "4.1.0.SNAPSHOT";
-   public static final String codename = "Starobrno";
+   public static final String codename = "Radegast";
    public static final String projectName = "Infinispan";
    static final byte[] version_id = {'0', '4', '1', '0', 'S'};
    private static final int MAJOR_SHIFT = 11;
