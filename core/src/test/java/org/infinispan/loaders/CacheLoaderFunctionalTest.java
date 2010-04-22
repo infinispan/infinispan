@@ -103,6 +103,29 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       assertNotInCacheAndStore(cache, store, keys);
    }
 
+   private void assertInStoreNotInCache(Object... keys) throws CacheLoaderException {
+      assertInStoreNotInCache(cache, store, keys);
+   }
+
+   private void assertInStoreNotInCache(Cache cache, CacheStore store, Object... keys) throws CacheLoaderException {
+      for (Object key : keys) {
+         assert !cache.getAdvancedCache().getDataContainer().containsKey(key) : "Cache should not contain key " + key;
+         assert store.containsKey(key) : "Store should contain key " + key;
+      }
+   }
+
+   private void assertInCacheAndNotInStore(Object... keys) throws CacheLoaderException {
+      assertInCacheAndNotInStore(cache, store, keys);
+   }
+
+   private void assertInCacheAndNotInStore(Cache cache, CacheStore store, Object... keys) throws CacheLoaderException {
+      for (Object key : keys) {
+         assert cache.getAdvancedCache().getDataContainer().containsKey(key) : "Cache should not contain key " + key;
+         assert !store.containsKey(key) : "Store should contain key " + key;
+      }
+   }
+
+
    public void testStoreAndRetrieve() throws CacheLoaderException {
       assertNotInCacheAndStore("k1", "k2", "k3", "k4", "k5", "k6", "k7");
 
@@ -378,5 +401,26 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
 
       assert "v1".equals(cache.remove("k1"));
       assert "v2".equals(cache.remove("k2"));
+   }
+
+   public void testLoadingToMemory() throws CacheLoaderException {
+      assertNotInCacheAndStore("k1", "k2");
+      store.store(InternalEntryFactory.create("k1", "v1"));
+      store.store(InternalEntryFactory.create("k2", "v2"));
+
+      assertInStoreNotInCache("k1", "k2");
+
+      assert "v1".equals(cache.get("k1"));
+      assert "v2".equals(cache.get("k2"));
+
+      assertInCacheAndStore("k1", "v1");
+      assertInCacheAndStore("k2", "v2");
+
+      store.remove("k1");
+      store.remove("k2");
+
+      assertInCacheAndNotInStore("k1", "k2");
+      assert "v1".equals(cache.get("k1"));
+      assert "v2".equals(cache.get("k2"));
    }
 }
