@@ -238,7 +238,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
       }
       List<WriteCommand> modifications = transactionContext.getModifications();
 
-      if (transactionContext.hasModifications()) {
+      if (!transactionContext.hasModifications()) {
          if (trace) log.trace("Transaction has not logged any modifications!");
          return;
       }
