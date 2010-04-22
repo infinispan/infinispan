@@ -139,7 +139,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
 
          // Reuse the lock and create a new entry for loading
          MVCCEntry n = entryFactory.wrapEntryForWriting(ctx, key, true, false, keyLocked, false);
-         putLoadedEntryInContainer(ctx, key, n, loaded);
+         recordLoadedEntry(ctx, key, n, loaded);
          return true;
       } else {
          return true;
@@ -147,9 +147,20 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    }
 
    /**
-    * Puts a loaded cache entry into the data container.
+    * This method records a loaded entry, performing the following steps:
+    * <ol>
+    * <li>Increments counters for reporting via JMX</li>
+    * <li>updates the 'entry' reference (an entry in the current thread's InvocationContext) with the contents of
+    * 'loadedEntry' (freshly loaded from the CacheStore) so that the loaded details will be flushed to the DataContainer
+    * when the call returns (in the LockingInterceptor, when locks are released)</li>
+    * <li>Notifies listeners</li>
+    * </ol>
+    * @param ctx the current invocation's context
+    * @param key key to record
+    * @param entry the appropriately locked entry in the caller's context
+    * @param loadedEntry the internal entry loaded from the cache store. 
     */
-   private MVCCEntry putLoadedEntryInContainer(InvocationContext ctx, Object key, MVCCEntry entry, InternalCacheEntry loadedEntry) throws Exception {
+   private MVCCEntry recordLoadedEntry(InvocationContext ctx, Object key, MVCCEntry entry, InternalCacheEntry loadedEntry) throws Exception {
       boolean entryExists = (loadedEntry != null);
       if (log.isTraceEnabled()) log.trace("Entry exists in loader? " + entryExists);
 
