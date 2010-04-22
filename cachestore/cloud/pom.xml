@@ -102,6 +102,22 @@
       </plugins>
    </build>
 
+   <repositories>
+      <repository>
+         <id>jclouds</id>
+         <url>http://jclouds.googlecode.com/svn/repo</url>
+         <snapshots>
+            <enabled>false</enabled>
+         </snapshots>
+      </repository>
+      <repository>
+         <id>jclouds-snapshots</id>
+         <url>http://jclouds.rimuhosting.com/maven2/snapshots</url>
+         <snapshots>
+            <enabled>true</enabled>
+         </snapshots>
+      </repository>
+   </repositories>
    <profiles>
       <profile>
          <id>integration</id>

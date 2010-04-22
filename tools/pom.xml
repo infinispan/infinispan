@@ -57,6 +57,14 @@
       </dependency>
    </dependencies>
 
+   <!-- needed for XSOM -->
+   <repositories>
+      <repository>
+         <id>download.java.net</id>
+         <url>http://download.java.net/maven/2</url>
+      </repository>
+   </repositories>
+
    <profiles>
       <profile>
          <id>default-tools.jar</id>
