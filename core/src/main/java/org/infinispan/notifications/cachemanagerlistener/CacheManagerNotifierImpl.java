@@ -1,5 +1,6 @@
 package org.infinispan.notifications.cachemanagerlistener;
 
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.notifications.AbstractListenerImpl;
@@ -51,6 +52,7 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl implements Ca
       listenersMap.put(ViewChanged.class, viewChangedListeners);
    }
 
+   @Inject
    public void injectCacheManager(CacheManager cacheManager) {
       this.cacheManager = cacheManager;
    }
