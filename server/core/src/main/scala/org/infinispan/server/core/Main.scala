@@ -183,15 +183,27 @@ object Main extends Logging {
       println
       println("options:")
       println("    -h, --help                         Show this help message")
+      println
       println("    -V, --version                      Show version information")
+      println
       println("    --                                 Stop processing options")
+      println
       println("    -p, --port=<num>                   TCP port number to listen on (default: 11211 for Memcached servers, 11311 for Hot Rod servers)")
+      println
       println("    -l, --host=<host or ip>            Interface to listen on (default: 127.0.0.1, localhost)")
+      println
       println("    -m, --master_threads=<num>         Number of threads accepting incoming connections (default: unlimited while resources are available)")
+      println
       println("    -t, --work_threads=<num>           Number of threads processing incoming requests and sending responses (default: unlimited while resources are available)")
+      println
       println("    -c, --cache_config=<filename>      Cache configuration file (default: creates cache with default values)")
+      println
       println("    -r, --protocol=[memcached|hotrod]  Protocol to understand by the server. This is a mandatory option and you should choose one of the two options")
-      println("    -i, --idle_timeout=<num>           Idle read timeout used to detect stale connections (default: 60 seconds). If no new messages have been read within this time, the server disconnects the channel. Passing 0 means disabling idle timeout.")
+      println
+      println("    -i, --idle_timeout=<num>           Idle read timeout, in seconds, used to detect stale connections (default: 60 seconds).")
+      println("                                       If no new messages have been read within this time, the server disconnects the channel.")
+      println("                                       Passing 0 disables idle timeout.")
+      println
       println("    -D<name>[=<value>]                 Set a system property")
       println
       System.exit(0)
