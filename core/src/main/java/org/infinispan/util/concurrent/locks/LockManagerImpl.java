@@ -61,6 +61,7 @@ public class LockManagerImpl implements LockManager {
    private InvocationContextContainer invocationContextContainer;
    private static final Log log = LogFactory.getLog(LockManagerImpl.class);
    protected static final boolean trace = log.isTraceEnabled();
+   private static final String ANOTHER_THREAD = "(another thread)";
 
    @Inject
    public void injectDependencies(Configuration configuration, TransactionManager transactionManager, InvocationContextContainer invocationContextContainer) {
@@ -133,8 +134,8 @@ public class LockManagerImpl implements LockManager {
          if (l instanceof OwnableReentrantLock) {
             return ((OwnableReentrantLock) l).getOwner();
          } else {
-            // cannot determine owner.
-            return null;
+            // cannot determine owner, JDK Reentrant locks only provide best-effort guesses.
+            return ANOTHER_THREAD;
          }
       } else return null;
    }
