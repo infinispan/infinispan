@@ -277,7 +277,7 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[NoState] wi
                for (i <- 0 until numberClusterMembers) {
                   val host = buf.readString
                   val port = buf.readUnsignedShort
-                  viewArray(i) = TopologyAddress(host, port, 0)
+                  viewArray(i) = TopologyAddress(host, port, 0, null)
                }
                Some(TopologyAwareResponse(TopologyView(topologyId, viewArray.toList)))
             } else if (op.clientIntelligence == 3) {

@@ -2,7 +2,7 @@ package org.infinispan.server.core
 
 import java.net.InetSocketAddress
 import transport.netty.{EncoderAdapter, NettyTransport}
-import transport.{Decoder, Encoder, Transport}
+import transport.Transport
 import org.infinispan.manager.CacheManager
 import org.infinispan.server.core.VersionGenerator._
 
@@ -40,6 +40,8 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
    }
 
    def getCacheManager = cacheManager
+
+   def getHost = host
 
    def getPort = port
 

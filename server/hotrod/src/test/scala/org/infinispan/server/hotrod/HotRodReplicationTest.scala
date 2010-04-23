@@ -1,6 +1,5 @@
 package org.infinispan.server.hotrod
 
-import org.infinispan.test.MultipleCacheManagersTest
 import org.infinispan.config.Configuration
 import java.lang.reflect.Method
 import test.HotRodClient
@@ -9,6 +8,7 @@ import org.infinispan.server.hotrod.OperationStatus._
 import org.infinispan.config.Configuration.CacheMode
 import org.testng.Assert._
 import org.testng.annotations.{AfterMethod, AfterClass, Test}
+import org.infinispan.test.{TestingUtil, MultipleCacheManagersTest}
 
 /**
  * // TODO: Document this
@@ -41,10 +41,10 @@ class HotRodReplicationTest extends MultipleCacheManagersTest {
 
    @AfterClass(alwaysRun = true)
    override def destroy {
-      super.destroy
       log.debug("Test finished, close Hot Rod server", null)
       clients.foreach(_.stop)
       servers.foreach(_.stop)
+      super.destroy // Stop the caches last so that at stoppage time topology cache can be updated properly
    }
 
    @AfterMethod(alwaysRun=true)
@@ -118,11 +118,11 @@ class HotRodReplicationTest extends MultipleCacheManagersTest {
    private def assertTopologyReceived(topologyResp: AbstractTopologyResponse) {
       assertEquals(topologyResp.view.topologyId, 2)
       assertEquals(topologyResp.view.members.size, 2)
-      assertEquals(topologyResp.view.members.head, TopologyAddress("127.0.0.1", servers.head.getPort, 0))
-      assertEquals(topologyResp.view.members.tail.head, TopologyAddress("127.0.0.1", servers.tail.head.getPort, 0))
+      assertAddressEquals(topologyResp.view.members.head, servers.head.getAddress)
+      assertAddressEquals(topologyResp.view.members.tail.head, servers.tail.head.getAddress)
    }
 
-   def testReplicatedPutWithTopologyAwareClient(m: Method) {
+   def testReplicatedPutWithTopologyChanges(m: Method) {
       var resp = clients.head.put(k(m) , 0, 0, v(m), 1, 0)
       assertStatus(resp.status, Success)
       assertEquals(resp.topologyResponse, None)
@@ -138,22 +138,65 @@ class HotRodReplicationTest extends MultipleCacheManagersTest {
       assertEquals(resp.topologyResponse, None)
       assertSuccess(clients.tail.head.get(k(m), 0), v(m, "v3-"))
 
-      val cm = addClusterEnabledCacheManager()
+      var cm = addClusterEnabledCacheManager()
       cm.defineConfiguration(cacheName, createCacheConfig)
       cm.defineConfiguration(TopologyCacheName, createTopologyCacheConfig)
-      servers = servers ::: List(startHotRodServer(cacheManagers.get(2), servers.tail.head.getPort + 25)) 
+      val newServer = startHotRodServer(cm, servers.tail.head.getPort + 25)
+      servers = servers ::: List(newServer)
 
       resp = clients.head.put(k(m) , 0, 0, v(m, "v4-"), 2, 2)
       assertStatus(resp.status, Success)
       assertEquals(resp.topologyResponse.get.view.topologyId, 3)
       assertEquals(resp.topologyResponse.get.view.members.size, 3)
-      assertEquals(resp.topologyResponse.get.view.members.head, TopologyAddress("127.0.0.1", servers.head.getPort, 0))
-      assertEquals(resp.topologyResponse.get.view.members.tail.head, TopologyAddress("127.0.0.1", servers.tail.head.getPort, 0))
-      assertEquals(resp.topologyResponse.get.view.members.tail.tail.head, TopologyAddress("127.0.0.1", servers.tail.tail.head.getPort, 0))
+      assertAddressEquals(resp.topologyResponse.get.view.members.head, servers.head.getAddress)
+      assertAddressEquals(resp.topologyResponse.get.view.members.tail.head, servers.tail.head.getAddress)
+      assertAddressEquals(resp.topologyResponse.get.view.members.tail.tail.head, servers.tail.tail.head.getAddress)
       assertSuccess(clients.tail.head.get(k(m), 0), v(m, "v4-"))
 
-//      // TODO: Add stopping a server
-//      servers.tail.tail.head.stop
+      servers.tail.tail.head.stop
+      servers = servers.filterNot(_ == newServer)
+      cm.stop
+
+      resp = clients.head.put(k(m) , 0, 0, v(m, "v5-"), 2, 3)
+      assertStatus(resp.status, Success)
+      assertEquals(resp.topologyResponse.get.view.topologyId, 4)
+      assertEquals(resp.topologyResponse.get.view.members.size, 2)
+      assertAddressEquals(resp.topologyResponse.get.view.members.head, servers.head.getAddress)
+      assertAddressEquals(resp.topologyResponse.get.view.members.tail.head, servers.tail.head.getAddress)
+      assertSuccess(clients.tail.head.get(k(m), 0), v(m, "v5-"))
+
+      cm = addClusterEnabledCacheManager()
+      cm.defineConfiguration(cacheName, createCacheConfig)
+      cm.defineConfiguration(TopologyCacheName, createTopologyCacheConfig)
+      val crashingServer = startCrashingHotRodServer(cm, servers.tail.head.getPort + 11)
+      servers = servers ::: List(crashingServer)
+
+      resp = clients.head.put(k(m) , 0, 0, v(m, "v6-"), 2, 4)
+      assertStatus(resp.status, Success)
+      assertEquals(resp.topologyResponse.get.view.topologyId, 5)
+      assertEquals(resp.topologyResponse.get.view.members.size, 3)
+      assertAddressEquals(resp.topologyResponse.get.view.members.head, servers.head.getAddress)
+      assertAddressEquals(resp.topologyResponse.get.view.members.tail.head, servers.tail.head.getAddress)
+      assertAddressEquals(resp.topologyResponse.get.view.members.tail.tail.head, servers.tail.tail.head.getAddress)
+      assertSuccess(clients.tail.head.get(k(m), 0), v(m, "v6-"))
+
+      crashingServer.stop
+      servers = servers.filterNot(_ == crashingServer)
+      cm.stop
+      TestingUtil.blockUntilViewsReceived(10000, true, manager(0), manager(1))
+
+      resp = clients.head.put(k(m) , 0, 0, v(m, "v7-"), 2, 5)
+      assertStatus(resp.status, Success)
+      assertEquals(resp.topologyResponse.get.view.topologyId, 6)
+      assertEquals(resp.topologyResponse.get.view.members.size, 2)
+      assertAddressEquals(resp.topologyResponse.get.view.members.head, servers.head.getAddress)
+      assertAddressEquals(resp.topologyResponse.get.view.members.tail.head, servers.tail.head.getAddress)
+      assertSuccess(clients.tail.head.get(k(m), 0), v(m, "v7-"))
    }
 
+   private def assertAddressEquals(actual: TopologyAddress, expected: TopologyAddress) {
+      assertEquals(actual.host, expected.host)
+      assertEquals(actual.port, expected.port)
+      assertEquals(actual.hostHashCode, expected.hostHashCode)
+   }
 }

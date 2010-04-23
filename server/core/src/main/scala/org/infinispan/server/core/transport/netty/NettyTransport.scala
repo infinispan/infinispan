@@ -10,7 +10,7 @@ import java.util.concurrent.{Executors, ThreadFactory}
 import org.infinispan.server.core.transport.Transport
 import scala.collection.JavaConversions._
 import org.infinispan.server.core.{ProtocolServer, Logging}
-import org.jboss.netty.util.{HashedWheelTimer, ThreadNameDeterminer, ThreadRenamingRunnable}
+import org.jboss.netty.util.{ThreadNameDeterminer, ThreadRenamingRunnable}
 
 /**
  * // TODO: Document this
@@ -98,13 +98,3 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
 }
 
 object NettyTransport extends Logging
-
-private class NamedThreadFactory(val name: String) extends ThreadFactory {
-   val threadCounter = new AtomicInteger
-
-   override def newThread(r: Runnable): Thread = {
-      var t = new Thread(r, System.getProperty("program.name") + "-" + name + '-' + threadCounter.incrementAndGet)
-      t.setDaemon(true)
-      t
-   }
-}

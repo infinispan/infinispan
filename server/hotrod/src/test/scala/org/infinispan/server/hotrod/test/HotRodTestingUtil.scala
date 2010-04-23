@@ -37,6 +37,21 @@ object HotRodTestingUtil extends Logging {
       server
    }
 
+   def startCrashingHotRodServer(manager: CacheManager, port: Int): HotRodServer = {
+      val server = new HotRodServer {
+         override protected def defineTopologyCacheConfig(cacheManager: CacheManager) {
+            // No-op since topology cache configuration comes defined by the test
+         }
+
+         override protected def removeSelfFromTopologyView {
+            // Empty to emulate a member that's crashed/unresponsive and has not executed removal,
+            // but has been evicted from JGroups cluster.
+         }
+      }
+      server.start(host, port, manager, 0, 0, 0)
+      server
+   }
+
    def k(m: Method, prefix: String): Array[Byte] = {
       val bytes: Array[Byte] = (prefix + m.getName).getBytes
       trace("String {0} is converted to {1} bytes", prefix + m.getName, Util.printArray(bytes, true))
