@@ -3,10 +3,9 @@ package org.infinispan.server.core.transport.netty
 import java.net.SocketAddress
 import org.jboss.netty.channel.group.DefaultChannelGroup
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory
-import java.util.concurrent.atomic.AtomicInteger
 import org.jboss.netty.channel.ChannelDownstreamHandler
 import org.jboss.netty.bootstrap.ServerBootstrap
-import java.util.concurrent.{Executors, ThreadFactory}
+import java.util.concurrent.Executors
 import org.infinispan.server.core.transport.Transport
 import scala.collection.JavaConversions._
 import org.infinispan.server.core.{ProtocolServer, Logging}

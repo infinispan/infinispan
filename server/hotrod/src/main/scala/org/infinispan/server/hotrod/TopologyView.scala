@@ -10,6 +10,8 @@ import java.io.{ObjectInput, ObjectOutput}
  */
 @Marshallable(externalizer = classOf[TopologyView.Externalizer], id = 59)
 case class TopologyView(val topologyId: Int, val members: List[TopologyAddress])
+// TODO: TopologyView could maintain a Map[Address, TopologyAddress] rather than pushing Address into each TopologyAddress.
+// TODO: That would make crash detection more efficient at the expense of some extra space. 
 
 object TopologyView {
    class Externalizer extends org.infinispan.marshall.Externalizer {

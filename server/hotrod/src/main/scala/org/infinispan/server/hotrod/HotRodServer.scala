@@ -24,6 +24,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") {
    import HotRodServer._
    private var isClustered: Boolean = _
    private var address: TopologyAddress = _
+   private var topologyCache: Cache[String, TopologyView] = _
 
    def getAddress: TopologyAddress = address
 
@@ -41,9 +42,9 @@ class HotRodServer extends AbstractProtocolServer("HotRod") {
 
    private def addSelfToTopologyView(host: String, port: Int, cacheManager: CacheManager) {
       defineTopologyCacheConfig(cacheManager)
-      val topologyCache: Cache[String, TopologyView] = cacheManager.getCache(TopologyCacheName)
-      cacheManager.addListener(new CrashedMemberDetectorListener)
+      topologyCache = cacheManager.getCache(TopologyCacheName)
       address = TopologyAddress(host, port, 0, cacheManager.getAddress)
+      cacheManager.addListener(new CrashedMemberDetectorListener)
       val currentView = topologyCache.get("view")
       // TODO: If distribution configured, add hashcode of this address
       if (currentView != null) {
@@ -75,7 +76,6 @@ class HotRodServer extends AbstractProtocolServer("HotRod") {
 
    protected def removeSelfFromTopologyView {
       // Graceful shutdown, remove this node as member and install new view
-      val topologyCache: Cache[String, TopologyView] = getCacheManager.getCache(TopologyCacheName)
       val currentView = topologyCache.get("view")
       // TODO: If distribution configured, add hashcode of this address
       val newMembers = currentView.members.filterNot(_ == address)
@@ -124,25 +124,24 @@ class HotRodServer extends AbstractProtocolServer("HotRod") {
                      val oldMembers = e.getOldMembers
                      // Someone left the cluster, verify whether it did it gracefully or crashed.
                      if (oldMembers.size > newMembers.size) {
-                        val topologyCache: Cache[String, TopologyView] = getCacheManager.getCache(TopologyCacheName)
+                        val newMembersList = asBuffer(newMembers).toList
+                        val oldMembersList = asBuffer(oldMembers).toList
+                        val goneMembers = oldMembersList -- newMembersList
                         val currentView = topologyCache.get("view")
-                        var newTopologyMembers = currentView.members
-                        for (oldMember <- asIterator(oldMembers.iterator)) {
-                           // If old member is not amongst the new ones, check whether it's still in the topology cache
-                           if (!newMembers.contains(oldMember)) {
-                              trace("Old member {0} is not in new view {1}, did it crash?", oldMember, newMembers)
-                              // If old memmber is in topology, it means that it had an abnormal ending
-                              val (isCrashed, crashedTopologyMember) = isOldMemberInTopology(oldMember, currentView)
-                              if (isCrashed) {
-                                 trace("Old member {0} with topology address {1} is still present in Hot Rod topology " +
-                                       "{2}, so must have crashed.", oldMember, crashedTopologyMember, currentView)
-                                 newTopologyMembers = newTopologyMembers.filterNot(_ == crashedTopologyMember)
-                                 trace("After removal, new Hot Rod topology is {0}", newTopologyMembers)
-                              }
+                        var tmpMembers = currentView.members
+                        for (goneMember <- goneMembers) {
+                           trace("Old member {0} is not in new view {1}, did it crash?", goneMember, newMembers)
+                           // If old memmber is in topology, it means that it had an abnormal ending
+                           val (isCrashed, crashedTopologyMember) = isOldMemberInTopology(goneMember, currentView)
+                           if (isCrashed) {
+                              trace("Old member {0} with topology address {1} is still present in Hot Rod topology " +
+                                    "{2}, so must have crashed.", goneMember, crashedTopologyMember, currentView)
+                              tmpMembers = tmpMembers.filterNot(_ == crashedTopologyMember)
+                              trace("After removal, new Hot Rod topology is {0}", tmpMembers)
                            }
                         }
-                        if (newTopologyMembers.size < currentView.members.size) {
-                           val newView = TopologyView(currentView.topologyId + 1, newTopologyMembers)
+                        if (tmpMembers.size < currentView.members.size) {
+                           val newView = TopologyView(currentView.topologyId + 1, tmpMembers)
                            val replaced = topologyCache.replace("view", currentView, newView)
                            if (!replaced) {
                               // TODO: How to deal with concurrent failures at this point?
