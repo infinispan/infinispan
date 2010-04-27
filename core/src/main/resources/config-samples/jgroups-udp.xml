@@ -9,7 +9,7 @@
          ucast_send_buf_size="640000"
          mcast_recv_buf_size="25000000"
          mcast_send_buf_size="640000"
-         loopback="false"
+         loopback="true"
          discard_incompatible_packets="true"
          max_bundle_size="64000"
          max_bundle_timeout="30"
