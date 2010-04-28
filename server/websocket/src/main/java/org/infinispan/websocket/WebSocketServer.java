@@ -1,0 +1,188 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2006, JBoss Inc., and individual contributors as indicated
+ * by the @authors tag. See the copyright.txt in the distribution for a
+ * full listing of individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
+package org.infinispan.websocket;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.StringWriter;
+import java.net.InetSocketAddress;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+
+import org.infinispan.Cache;
+import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.websocket.handlers.GetHandler;
+import org.infinispan.websocket.handlers.NotifyHandler;
+import org.infinispan.websocket.handlers.PutHandler;
+import org.infinispan.websocket.handlers.RemoveHandler;
+import org.jboss.netty.bootstrap.ServerBootstrap;
+import org.jboss.netty.channel.ChannelPipeline;
+import org.jboss.netty.channel.ChannelPipelineFactory;
+import org.jboss.netty.channel.Channels;
+import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
+import org.jboss.netty.handler.codec.http.HttpChunkAggregator;
+import org.jboss.netty.handler.codec.http.HttpRequestDecoder;
+import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
+
+/**
+ * An HTTP server which serves Web Socket requests on an Infinispan cacheManager.
+ * <p/>
+ * Websocket specific code lifted from Netty WebSocket Server example.
+ */
+public class WebSocketServer {
+
+	public static final String ORG_INFINISPAN_WS_HOST = "org.infinispan.ws.host";
+	public static final String ORG_INFINISPAN_WS_PORT = "org.infinispan.ws.port";
+	public static final String ORG_INFINISPAN_WS_CACHE_CONFIG_FILE = "org.infinispan.ws.cache.config-file";
+	public static final String ORG_INFINISPAN_WS_CACHE_CONFIG_FILE_DEFAULT = "./infinispan.xml";
+	public static final String INFINISPAN_WS_JS_FILENAME = "infinispan-ws.js";
+	
+	private static String javascript;
+
+	public WebSocketServer(InetSocketAddress bindAddress, InputStream cacheConfigStream) throws IOException {
+		if(cacheConfigStream == null) {
+			throw new IllegalArgumentException("null 'cacheConfigStream' in constructor call.");
+		}
+		if(bindAddress == null) {
+			throw new IllegalArgumentException("null 'bindAddress' in constructor call.");
+		}
+		
+		try {
+			CacheManager manager = new DefaultCacheManager(cacheConfigStream);
+	
+	        // Configure the server.
+	        ServerBootstrap bootstrap = new ServerBootstrap(
+	                new NioServerSocketChannelFactory(
+	                        Executors.newCachedThreadPool(),
+	                        Executors.newCachedThreadPool()));
+	
+	        // Set up the event pipeline factory.
+	        bootstrap.setPipelineFactory(new WebSocketServerPipelineFactory(manager));
+	
+	        // Bind and start to accept incoming connections.
+	        bootstrap.bind(bindAddress);
+		} finally {
+			cacheConfigStream.close();
+		}
+	}
+	
+    public static void main(String[] args) throws Exception {
+    	String host = System.getProperty(ORG_INFINISPAN_WS_HOST);
+    	String portConfig = System.getProperty(ORG_INFINISPAN_WS_PORT, "61999").trim();
+    	File cacheConfigFile = new File(System.getProperty(ORG_INFINISPAN_WS_CACHE_CONFIG_FILE, ORG_INFINISPAN_WS_CACHE_CONFIG_FILE_DEFAULT).trim());
+    	int port;
+    	
+    	try {
+    		port = Integer.parseInt(portConfig);
+    	} catch(NumberFormatException e) {
+    		throw new IllegalArgumentException("Invalid WebSocket port address '" + portConfig + "'.  Must be a valid integer.");
+    	}
+    	
+    	if(!cacheConfigFile.exists()) {
+    		throw new IllegalArgumentException("Infinispan configuration file '" + cacheConfigFile.getAbsolutePath() + "' is not available.");
+    	}
+    	if(!cacheConfigFile.isFile()) {
+    		throw new IllegalArgumentException("Infinispan configuration file '" + cacheConfigFile.getAbsolutePath() + "' is not a readable file.");
+    	}
+    	
+    	InetSocketAddress inetAddress;
+		if(host != null) {
+    		inetAddress = new InetSocketAddress(host, port);
+    	} else {
+    		inetAddress = new InetSocketAddress(port);
+    	}
+        
+		new WebSocketServer(inetAddress, new FileInputStream(cacheConfigFile));
+		
+        System.out.println("Infinispan Websocket Server listening on address '" + inetAddress + "'. Using Cache configuration '" + cacheConfigFile.getAbsolutePath() + "'.");
+        System.out.println("Infinispan Websocket Server started.");
+    }
+    
+    private static class WebSocketServerPipelineFactory implements ChannelPipelineFactory {
+
+		private CacheManager cacheManager;
+		private Map<String, OpHandler> operationHandlers;
+		private Map<String, Cache> startedCaches = new ConcurrentHashMap<String, Cache>();
+
+		public WebSocketServerPipelineFactory(CacheManager cacheManager) {
+			this.cacheManager = cacheManager;
+
+			operationHandlers = new HashMap<String, OpHandler>();
+			operationHandlers.put("put", new PutHandler());
+			operationHandlers.put("get", new GetHandler());
+			operationHandlers.put("remove", new RemoveHandler());
+			NotifyHandler notifyHandler = new NotifyHandler();
+			operationHandlers.put("notify", notifyHandler);
+			operationHandlers.put("unnotify", notifyHandler);
+		}
+
+		public ChannelPipeline getPipeline() throws Exception {
+            // Create a default pipeline implementation.
+            ChannelPipeline pipeline = Channels.pipeline();
+            
+            pipeline.addLast("decoder", new HttpRequestDecoder());
+            pipeline.addLast("aggregator", new HttpChunkAggregator(65536));
+            pipeline.addLast("encoder", new HttpResponseEncoder());
+            pipeline.addLast("handler", new WebSocketServerHandler(cacheManager, operationHandlers, startedCaches));
+            
+            return pipeline;
+        }
+    }
+    
+    public static String getJavascript() {
+    	if(javascript != null) {
+    		return javascript;
+    	}
+    	
+		BufferedReader scriptReader = new BufferedReader(new InputStreamReader(WebSocketServer.class.getResourceAsStream(INFINISPAN_WS_JS_FILENAME)));
+		
+		try {
+			StringWriter writer = new StringWriter();
+			
+			String line = scriptReader.readLine();
+			while(line != null) {
+				writer.write(line);
+				writer.write('\n');
+				line = scriptReader.readLine();
+			}
+
+			javascript = writer.toString();
+			
+			return javascript;
+		} catch (IOException e) {
+			throw new IllegalStateException("Unexpected exception while sending Websockets script to client.", e);
+		} finally {
+			try {
+				scriptReader.close();
+			} catch (IOException e) {
+				throw new IllegalStateException("Unexpected exception while closing Websockets script to client.", e);
+			}
+		}
+    }
+}
