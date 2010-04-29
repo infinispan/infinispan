@@ -75,6 +75,8 @@ public class CloudCacheStoreFunctionalIntegrationTest extends BaseCacheStoreFunc
       cfg.setProxyPort(proxyPort);
       cfg.setSecure(isSecure);
       cfg.setMaxConnections(maxConnections);
+      // TODO remove compress = false once ISPN-409 is closed.
+      cfg.setCompress(false);
       cfg.setPurgeSynchronously(true); // for more accurate unit testing
       return cfg;
    }

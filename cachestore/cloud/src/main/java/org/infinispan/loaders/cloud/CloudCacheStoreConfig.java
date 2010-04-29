@@ -52,7 +52,7 @@ public class CloudCacheStoreConfig extends LockSupportCacheStoreConfig {
    private boolean secure = true;
    private boolean compress = true;
 
-   private final String cloudServiceLocation = "DEFAULT";
+   private String cloudServiceLocation = "DEFAULT";
    private static final long serialVersionUID = -9011054600279256849L;
 
    public CloudCacheStoreConfig() {
@@ -219,5 +219,9 @@ public class CloudCacheStoreConfig extends LockSupportCacheStoreConfig {
 
    public String getCloudServiceLocation() {
       return cloudServiceLocation;
+   }
+
+   public void setCloudServiceLocation(String loc) {
+      this.cloudServiceLocation = loc;
    }
 }

@@ -10,7 +10,8 @@ import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.marshall.Marshaller;
 import org.jclouds.blobstore.BlobStoreContext;
-import org.jclouds.blobstore.integration.StubBlobStoreContextBuilder;
+import org.jclouds.blobstore.BlobStoreContextBuilder;
+import org.jclouds.blobstore.TransientBlobStoreContextBuilder;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -25,7 +26,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.infinispan.loaders.cloud.StubCloudServiceBuilder.buildCloudCacheStoreWithStubCloudService;
 import static org.testng.Assert.assertEquals;
 
 @Test(groups = "unit", testName = "loaders.cloud.CloudCacheStoreTest")
@@ -35,14 +35,31 @@ public class CloudCacheStoreTest extends BaseCacheStoreTest {
    private static final String cs2Bucket = "Bucket2";
    protected CacheStore cs2;
 
+   private CacheStore buildCloudCacheStoreWithStubCloudService(String bucketName) throws CacheLoaderException {
+      CloudCacheStore cs = new CloudCacheStore();
+      CloudCacheStoreConfig cfg = new CloudCacheStoreConfig();
+      cfg.setBucketPrefix(bucketName);
+      cfg.setCloudService("transient");
+      cfg.setIdentity("unit-test-stub");
+      cfg.setPassword("unit-test-stub");
+      cfg.setProxyHost("unit-test-stub");
+      cfg.setProxyPort("unit-test-stub");
+
+      // TODO remove compress = false once ISPN-409 is closed.
+      cfg.setCompress(false);
+      cfg.setPurgeSynchronously(true); // for more accurate unit testing
+      cs.init(cfg, new CacheDelegate("aName"), getMarshaller());
+      return cs;
+   }
+
    protected CacheStore createCacheStore() throws Exception {
-      CacheStore store = buildCloudCacheStoreWithStubCloudService(csBucket, getMarshaller());
+      CacheStore store = buildCloudCacheStoreWithStubCloudService(csBucket);
       store.start();
       return store;
    }
 
    protected CacheStore createAnotherCacheStore() throws Exception {
-      CacheStore store = buildCloudCacheStoreWithStubCloudService(cs2Bucket, getMarshaller());
+      CacheStore store = buildCloudCacheStoreWithStubCloudService(cs2Bucket);
       store.start();
       return store;
    }

@@ -15,7 +15,7 @@ import org.jclouds.blobstore.BlobStoreContext;
 import org.jclouds.blobstore.domain.Blob;
 import org.jclouds.blobstore.domain.PageSet;
 import org.jclouds.blobstore.domain.StorageMetadata;
-import org.jclouds.blobstore.integration.StubBlobStoreContextBuilder;
+import org.jclouds.blobstore.options.ListContainerOptions;
 import org.jgroups.protocols.TUNNEL;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -87,12 +87,15 @@ public class CloudCacheStoreIntegrationTest extends BaseCacheStoreTest {
       CloudCacheStoreConfig cfg = new CloudCacheStoreConfig();
       cfg.setBucketPrefix(bucket);
       cfg.setCloudService(service);
+      cfg.setCloudServiceLocation("Some-Gibberish");
       cfg.setIdentity(accessKey);
       cfg.setPassword(secretKey);
       cfg.setProxyHost(proxyHost);
       cfg.setProxyPort(proxyPort);
       cfg.setSecure(isSecure);
       cfg.setMaxConnections(maxConnections);
+      // TODO remove compress = false once ISPN-409 is closed.
+      cfg.setCompress(false);
       cfg.setPurgeSynchronously(true); // for more accurate unit testing
       cs.init(cfg, new CacheDelegate("aName"), getMarshaller());
       cs.start();
@@ -269,8 +272,8 @@ public class CloudCacheStoreIntegrationTest extends BaseCacheStoreTest {
 
       b = blobStore.getBlob(containerName, blobName);
       assert "world".equals(b.getMetadata().getUserMetadata().get("hello"));
-
-      PageSet<? extends StorageMetadata> ps = blobStore.list(containerName);
+      
+      PageSet<? extends StorageMetadata> ps = blobStore.list(containerName, ListContainerOptions.Builder.withDetails());
       for (StorageMetadata sm: ps) assert "world".equals(sm.getUserMetadata().get("hello"));
    }
 }

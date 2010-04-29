@@ -37,6 +37,8 @@ import org.jclouds.blobstore.BlobStoreContextFactory;
 import org.jclouds.blobstore.domain.Blob;
 import org.jclouds.blobstore.domain.PageSet;
 import org.jclouds.blobstore.domain.StorageMetadata;
+import org.jclouds.blobstore.options.ListContainerOptions;
+import org.jclouds.domain.Location;
 import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
 import org.jclouds.logging.log4j.config.Log4JLoggingModule;
 
@@ -52,7 +54,7 @@ import com.google.common.collect.ImmutableSet;
  * This file store stores stuff in the following format:
  * <tt>http://{cloud-storage-provider}/{bucket}/{bucket_number}.bucket</tt>
  * <p/>
- * 
+ *
  * @author Manik Surtani
  * @author Adrian Cole
  * @since 4.0
@@ -78,7 +80,7 @@ public class CloudCacheStore extends BucketBasedCacheStore {
 
    private String getThisContainerName() {
       return cfg.getBucketPrefix() + "-"
-               + cache.getName().toLowerCase().replace("_", "").replace(".", "");
+              + cache.getName().toLowerCase().replace("_", "").replace(".", "");
    }
 
    @Override
@@ -88,14 +90,14 @@ public class CloudCacheStore extends BucketBasedCacheStore {
 
    @Override
    public void init(CacheLoaderConfig cfg, Cache<?, ?> cache, Marshaller m)
-            throws CacheLoaderException {
+           throws CacheLoaderException {
       this.cfg = (CloudCacheStoreConfig) cfg;
       init(cfg, cache, m, null, null, null, true);
    }
 
    public void init(CacheLoaderConfig cfg, Cache<?, ?> cache, Marshaller m, BlobStoreContext ctx,
-            BlobStore blobStore, AsyncBlobStore asyncBlobStore, boolean constructInternalBlobstores)
-            throws CacheLoaderException {
+                    BlobStore blobStore, AsyncBlobStore asyncBlobStore, boolean constructInternalBlobstores)
+           throws CacheLoaderException {
       super.init(cfg, cache, m);
       this.cfg = (CloudCacheStoreConfig) cfg;
       this.cache = cache;
@@ -126,16 +128,28 @@ public class CloudCacheStore extends BucketBasedCacheStore {
             // EnterpriseConfigurationModule, pass
             // property overrides instead of Properties()
             ctx = new BlobStoreContextFactory().createContext(cfg.getCloudService(), cfg
-                     .getIdentity(), cfg.getPassword(), ImmutableSet.of(
-                     new EnterpriseConfigurationModule(), new Log4JLoggingModule()),
-                     new Properties());
+                    .getIdentity(), cfg.getPassword(), ImmutableSet.of(
+                    new EnterpriseConfigurationModule(), new Log4JLoggingModule()),
+                    new Properties());
             blobStore = ctx.getBlobStore();
             asyncBlobStore = ctx.getAsyncBlobStore();
          }
 
          // the "location" is not currently used.
-         if (!blobStore.containerExists(containerName))
-            blobStore.createContainerInLocation(cfg.getCloudServiceLocation(), containerName);
+         if (!blobStore.containerExists(containerName)) {
+            Location chosenLoc = null;
+            if (cfg.getCloudServiceLocation() != null && cfg.getCloudServiceLocation().trim().length() > 0) {
+               Map<String, ? extends Location> availableLocations = blobStore.getLocations();
+               String loc = cfg.getCloudServiceLocation().trim().toLowerCase();
+               chosenLoc = availableLocations.get(loc);
+               if (chosenLoc == null) {
+                  log.warn(
+                     String.format("Unable to use configured Cloud Service Location [%s].  Available locations for Cloud Service [%s] are %s",
+                     loc, cfg.getCloudService(), availableLocations.keySet()));
+               }
+            }
+            blobStore.createContainerInLocation(chosenLoc, containerName);
+         }
          pollFutures = !cfg.getAsyncStoreConfig().isEnabled();
       } catch (IOException ioe) {
          throw new CacheLoaderException("Unable to create context", ioe);
@@ -206,9 +220,8 @@ public class CloudCacheStore extends BucketBasedCacheStore {
 
    private void purge() throws CacheLoaderException {
       long currentTime = System.currentTimeMillis();
-      PageSet<? extends StorageMetadata> ps = blobStore.list(containerName);
+      PageSet<? extends StorageMetadata> ps = blobStore.list(containerName, ListContainerOptions.Builder.withDetails());
 
-      // TODO do we need to scroll through the PageSet?
       for (StorageMetadata sm : ps) {
          long lastExpirableEntry = readLastExpirableEntryFromMetadata(sm.getUserMetadata());
          if (lastExpirableEntry < currentTime)
@@ -278,7 +291,7 @@ public class CloudCacheStore extends BucketBasedCacheStore {
 
    @Override
    public void applyModifications(List<? extends Modification> modifications)
-            throws CacheLoaderException {
+           throws CacheLoaderException {
       List<Future<?>> futures = new LinkedList<Future<?>>();
       asyncCommandFutures.set(futures);
 
@@ -299,7 +312,7 @@ public class CloudCacheStore extends BucketBasedCacheStore {
                Thread.currentThread().interrupt();
             } catch (ExecutionException ee) {
                exception = convertToCacheLoaderException("Caught exception in async process", ee
-                        .getCause());
+                       .getCause());
             }
             if (exception != null)
                throw exception;
@@ -329,7 +342,7 @@ public class CloudCacheStore extends BucketBasedCacheStore {
             blob.setPayload(payloadBuffer);
          if (earliestExpiryTime > -1) {
             Map<String, String> md = Collections.singletonMap(EARLIEST_EXPIRY_TIME, String
-                     .valueOf(earliestExpiryTime));
+                    .valueOf(earliestExpiryTime));
             blob.getMetadata().setUserMetadata(md);
          }
 
@@ -359,10 +372,10 @@ public class CloudCacheStore extends BucketBasedCacheStore {
                final byte[] byteArray2 = bos2.toByteArray();
 
                log.debug("Decompressed " + bucketName + " from " + byteArray.length + " -> "
-                        + byteArray2.length);
+                       + byteArray2.length);
 
                bucket = (Bucket) marshaller.objectFromInputStream(new ByteArrayInputStream(
-                        byteArray2));
+                       byteArray2));
             } finally {
                is.close();
                bis.close();
@@ -398,7 +411,7 @@ public class CloudCacheStore extends BucketBasedCacheStore {
 
    private String encodeBucketName(String decodedName) {
       final String name = (decodedName.startsWith("-")) ? decodedName.replace('-', 'A')
-               : decodedName;
+              : decodedName;
       if (cfg.isCompress())
          return name + ".bz2";
       return name;
