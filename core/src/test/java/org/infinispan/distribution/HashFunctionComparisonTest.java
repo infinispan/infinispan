@@ -62,25 +62,48 @@ public class HashFunctionComparisonTest {
    private String greatestDist(SortedMap<Integer, Address> pos, int hashSpace) {
       // calc distances between entries 0 and n - 1 first.
       int largest = 0;
-      int lastPos = 0;
+      int lastPos = lastEntry(pos).getKey();
       int firstPos = -1;
       for (int currentPos: pos.keySet()) {
          if (firstPos == -1) firstPos = currentPos;
-         largest = Math.max(largest, currentPos - lastPos);
+         largest = Math.max(largest, Math.abs(currentPos - lastPos));
          lastPos = currentPos;
       }
 
-      // now for the difference between the last and first entries
-      largest = Math.max(largest, hashSpace - lastPos + firstPos);
       return String.valueOf(largest);
    }
 
    private String smallestDist(SortedMap<Integer, Address> pos, int hashSpace) {
-      return null; // TODO
+      // calc distances between entries 0 and n - 1 first.
+      int smallest = Integer.MAX_VALUE;
+      int lastPos = lastEntry(pos).getKey();
+      int firstPos = -1;
+      for (int currentPos: pos.keySet()) {
+         if (firstPos == -1) firstPos = currentPos;
+         smallest = Math.min(smallest, Math.abs(currentPos - lastPos));
+         lastPos = currentPos;
+      }
+      return String.valueOf(smallest);
    }
 
    private String meanDist(SortedMap<Integer, Address> pos, int hashSpace) {
-      return null; // TODO
+      // calc distances between entries 0 and n - 1 first.
+      int totalDist = 0;
+      int lastPos = lastEntry(pos).getKey();
+      int firstPos = -1;
+      for (int currentPos: pos.keySet()) {
+         if (firstPos == -1) firstPos = currentPos;         
+         totalDist += Math.abs(currentPos - lastPos);
+         lastPos = currentPos;
+      }
+
+      return String.valueOf(totalDist / pos.size());
+   }
+
+   private Map.Entry<Integer, Address> lastEntry(SortedMap<Integer, Address> m) {
+      Map.Entry<Integer, Address> last = null;
+      for (Map.Entry<Integer, Address> e: m.entrySet()) last = e;
+      return last;
    }
 
 
