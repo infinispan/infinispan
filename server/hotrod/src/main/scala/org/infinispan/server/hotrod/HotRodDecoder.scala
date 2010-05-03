@@ -108,14 +108,14 @@ class HotRodDecoder(cacheManager: CacheManager) extends AbstractProtocolDecoder[
          case se: ServerException => {
             val h = se.header.asInstanceOf[HotRodHeader]
             se.getCause match {
-               case i: InvalidMagicIdException => new ErrorResponse(0, InvalidMagicOrMsgId, None, i.toString)
-               case u: UnknownOperationException => new ErrorResponse(h.messageId, UnknownOperation, None, u.toString)
-               case u: UnknownVersionException => new ErrorResponse(h.messageId, UnknownVersion, None, u.toString)
+               case i: InvalidMagicIdException => new ErrorResponse(0, "", 1, InvalidMagicOrMsgId, None, i.toString)
+               case u: UnknownOperationException => new ErrorResponse(h.messageId, "", 1, UnknownOperation, None, u.toString)
+               case u: UnknownVersionException => new ErrorResponse(h.messageId, "", 1, UnknownVersion, None, u.toString)
                case t: Throwable => h.decoder.createErrorResponse(h, t)
             }
          }
          case c: ClosedChannelException => null
-         case t: Throwable => new ErrorResponse(0, ServerError, None, t.toString)
+         case t: Throwable => new ErrorResponse(0, "", 1, ServerError, None, t.toString)
       }
    }
 
@@ -131,7 +131,7 @@ class UnknownVersionException(reason: String) extends StreamCorruptedException(r
 class InvalidMagicIdException(reason: String) extends StreamCorruptedException(reason)
 
 class HotRodHeader(override val op: Enumeration#Value, val messageId: Long, val cacheName: String,
-                   val flag: ProtocolFlag, val clientIntelligence: Short, val topologyId: Int,
+                   val flag: ProtocolFlag, val clientIntel: Short, val topologyId: Int,
                    val decoder: AbstractVersionedDecoder) extends RequestHeader(op) {
    override def toString = {
       new StringBuilder().append("HotRodHeader").append("{")
@@ -139,7 +139,7 @@ class HotRodHeader(override val op: Enumeration#Value, val messageId: Long, val 
          .append(", messageId=").append(messageId)
          .append(", cacheName=").append(cacheName)
          .append(", flag=").append(flag)
-         .append(", clientIntelligence=").append(clientIntelligence)
+         .append(", clientIntelligence=").append(clientIntel)
          .append(", topologyId=").append(topologyId)
          .append("}").toString
    }

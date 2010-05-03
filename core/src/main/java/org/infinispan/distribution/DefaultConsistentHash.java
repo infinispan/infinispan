@@ -3,12 +3,16 @@ package org.infinispan.distribution;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.Marshallable;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -20,6 +24,8 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
    // make sure all threads see the current list
    ArrayList<Address> addresses;
    SortedMap<Integer, Address> positions;
+   // TODO: Maybe address and addressToHashIds can be combined in a LinkedHashMap?
+   Map<Address, Integer> addressToHashIds;
 
    final static int HASH_SPACE = 10240; // no more than 10k nodes?
 
@@ -43,12 +49,17 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
       addresses.trimToSize();
 
       positions = new TreeMap<Integer, Address>();
+      addressToHashIds = new HashMap<Address, Integer>();
 
       for (Address a : addresses) {
          int positionIndex = Math.abs(hash(a.hashCode())) % HASH_SPACE;
          // this is deterministic since the address list is ordered and the order is consistent across the grid
          while (positions.containsKey(positionIndex)) positionIndex = positionIndex + 1 % HASH_SPACE;
          positions.put(positionIndex, a);
+         // If address appears several times, take the lowest value to guarantee that
+         // at least the initial value and subsequent +1 values would end up in the same node
+         if (!addressToHashIds.containsKey(a))
+            addressToHashIds.put(a, positionIndex);
       }
 
       addresses.clear();
@@ -150,6 +161,20 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
    public boolean isAdjacent(Address a1, Address a2) {
       int distance = getDistance(a1, a2);
       return distance == 1 || distance == addresses.size() - 1;
+   }
+
+   @Override
+   public int getHashId(Address a) {
+      Integer hashId = addressToHashIds.get(a);
+      if (hashId == null)
+         return -1;
+      else
+         return hashId.intValue();
+   }
+
+   @Override
+   public int getHashSpace() {
+      return HASH_SPACE;
    }
 
    @Override

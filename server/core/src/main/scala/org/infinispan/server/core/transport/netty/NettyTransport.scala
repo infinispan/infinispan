@@ -56,8 +56,15 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
       ThreadRenamingRunnable.setThreadNameDeterminer(new ThreadNameDeterminer {
          override def determineThreadName(currentThreadName: String, proposedThreadName: String): String = {
             val index = proposedThreadName.findIndexOf(_ == '#')
-            val typeInFix = if (proposedThreadName.contains("boss")) "Master-" else "Worker-"
-            threadNamePrefix + typeInFix + proposedThreadName.substring(index + 1, proposedThreadName.length)
+            val typeInFix =
+               if (proposedThreadName contains "server worker") "ServerWorker-"
+               else if (proposedThreadName contains "server boss") "ServerMaster-"
+               else if (proposedThreadName contains "client worker") "ClientWorker-"
+               else "ClientMaster-"
+            val name = threadNamePrefix + typeInFix + proposedThreadName.substring(index + 1, proposedThreadName.length)
+            trace("Thread name will be {0}, with current thread name being {1} and proposed name being '{2}'",
+               name, currentThread, proposedThreadName)
+            name
          }
       })
       val bootstrap = new ServerBootstrap(factory);

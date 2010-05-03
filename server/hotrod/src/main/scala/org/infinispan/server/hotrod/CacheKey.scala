@@ -4,6 +4,7 @@ import org.infinispan.util.Util
 import java.util.Arrays
 import org.infinispan.marshall.Marshallable
 import java.io.{ObjectInput, ObjectOutput}
+import org.infinispan.server.core.Logging
 
 /**
  * // TODO: Document this
@@ -23,7 +24,9 @@ final class CacheKey(val data: Array[Byte]) {
       }
    }
 
-   override def hashCode: Int = 41 + Arrays.hashCode(data)
+   override def hashCode: Int = {
+      41 + Arrays.hashCode(data)
+   }
 
    override def toString = {
       new StringBuilder().append("CacheKey").append("{")
@@ -33,8 +36,8 @@ final class CacheKey(val data: Array[Byte]) {
 
 }
 
-object CacheKey {
-   class Externalizer extends org.infinispan.marshall.Externalizer {      
+object CacheKey extends Logging {
+   class Externalizer extends org.infinispan.marshall.Externalizer {
       override def writeObject(output: ObjectOutput, obj: AnyRef) {
          val cacheKey = obj.asInstanceOf[CacheKey]
          output.write(cacheKey.data.length)

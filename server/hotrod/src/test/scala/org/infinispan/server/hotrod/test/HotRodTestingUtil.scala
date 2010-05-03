@@ -8,7 +8,7 @@ import java.util.Arrays
 import org.infinispan.server.hotrod.OperationStatus._
 import org.testng.Assert._
 import org.infinispan.util.Util
-import org.infinispan.server.hotrod.{ResponseWithPrevious, GetWithVersionResponse, GetResponse, HotRodServer}
+import org.infinispan.server.hotrod._
 
 /**
  * // TODO: Document this
@@ -72,9 +72,10 @@ object HotRodTestingUtil extends Logging {
 
    def assertSuccess(resp: GetResponse, expected: Array[Byte]): Boolean = {
       assertStatus(resp.status, Success)
-      val isSuccess = Arrays.equals(expected, resp.data.get)
-      assertTrue(isSuccess)
-      isSuccess
+      val isArrayEquals = Arrays.equals(expected, resp.data.get)
+      assertTrue(isArrayEquals, "Retrieved data should have contained " + Util.printArray(expected, true)
+            + " (" + new String(expected) + "), but instead we received " + Util.printArray(resp.data.get, true) + " (" +  new String(resp.data.get) +")")
+      isArrayEquals
    }
 
    def assertSuccess(resp: GetWithVersionResponse, expected: Array[Byte], expectedVersion: Int): Boolean = {
@@ -96,6 +97,46 @@ object HotRodTestingUtil extends Logging {
       status == KeyDoesNotExist
    }
 
+   def assertTopologyReceived(topoResp: AbstractTopologyResponse, servers: List[HotRodServer]) {
+      assertEquals(topoResp.view.topologyId, 2)
+      assertEquals(topoResp.view.members.size, 2)
+      assertAddressEquals(topoResp.view.members.head, servers.head.getAddress)
+      assertAddressEquals(topoResp.view.members.tail.head, servers.tail.head.getAddress)
+   }
+
+   def assertAddressEquals(actual: TopologyAddress, expected: TopologyAddress) {
+      assertEquals(actual.host, expected.host)
+      assertEquals(actual.port, expected.port)
+   }
+
+   def assertHashTopologyReceived(topoResp: AbstractTopologyResponse, servers: List[HotRodServer], hashIds: List[Map[String, Int]]) {
+      val hashTopologyResp = topoResp.asInstanceOf[HashDistAwareResponse]
+      assertEquals(hashTopologyResp.view.topologyId, 2)
+      assertEquals(hashTopologyResp.view.members.size, 2)
+      assertAddressEquals(hashTopologyResp.view.members.head, servers.head.getAddress, hashIds.head)
+      assertAddressEquals(hashTopologyResp.view.members.tail.head, servers.tail.head.getAddress, hashIds.tail.head)
+      assertEquals(hashTopologyResp.numOwners, 2)
+      assertEquals(hashTopologyResp.hashFunction, 1)
+      assertEquals(hashTopologyResp.hashSpace, 10240)
+   }
+
+   def assertNoHashTopologyReceived(topoResp: AbstractTopologyResponse, servers: List[HotRodServer], hashIds: List[Map[String, Int]]) {
+      val hashTopologyResp = topoResp.asInstanceOf[HashDistAwareResponse]
+      assertEquals(hashTopologyResp.view.topologyId, 2)
+      assertEquals(hashTopologyResp.view.members.size, 2)
+      assertAddressEquals(hashTopologyResp.view.members.head, servers.head.getAddress, hashIds.head)
+      assertAddressEquals(hashTopologyResp.view.members.tail.head, servers.tail.head.getAddress, hashIds.tail.head)
+      assertEquals(hashTopologyResp.numOwners, 0)
+      assertEquals(hashTopologyResp.hashFunction, 0)
+      assertEquals(hashTopologyResp.hashSpace, 0)
+   }
+
+   def assertAddressEquals(actual: TopologyAddress, expected: TopologyAddress, expectedHashIds: Map[String, Int]) {
+      assertEquals(actual.host, expected.host)
+      assertEquals(actual.port, expected.port)
+      assertEquals(actual.hashIds, expectedHashIds)
+   }
+   
 } 
 
 object UniquePortThreadLocal extends ThreadLocal[Int] {
