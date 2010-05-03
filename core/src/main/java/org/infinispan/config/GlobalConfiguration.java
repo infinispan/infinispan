@@ -593,7 +593,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
        * @configRef desc="Fully qualified name of a class that represents a network transport.  Must implement
        * org.infinispan.remoting.transport.Transport"
        */
-      protected String transportClass = null; // this defaults to a non-clustered cache.
+      protected String transportClass = null; // The default constructor sets default to JGroupsTransport
 
       /**
        * @configRef desc="Name of the current node.  This is a friendly name to make logs, etc. make more sense.

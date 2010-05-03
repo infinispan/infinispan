@@ -241,6 +241,7 @@ public class RpcManagerImpl implements RpcManager {
    }
 
    public final void invokeRemotelyInFuture(final Collection<Address> recipients, final ReplicableCommand rpc, final boolean usePriorityQueue, final NotifyingNotifiableFuture<Object> l, final long timeout) {
+      if (trace) log.trace("{0} invoking in future call {1} to recipient list {2}", t.getAddress(), rpc, recipients); 
       Callable<Object> c = new Callable<Object>() {
          public Object call() {
             invokeRemotely(recipients, rpc, true, usePriorityQueue, timeout);
