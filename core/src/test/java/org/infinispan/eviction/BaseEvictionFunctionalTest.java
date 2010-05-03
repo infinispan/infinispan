@@ -1,14 +1,13 @@
 package org.infinispan.eviction;
 
-import org.infinispan.Cache;
+import java.util.Random;
+import java.util.concurrent.CountDownLatch;
+
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.util.Random;
-import java.util.concurrent.CountDownLatch;
 
 @Test(groups = "functional", testName = "eviction.BaseEvictionFunctionalTest")
 public abstract class BaseEvictionFunctionalTest extends SingleCacheManagerTest {
@@ -25,8 +24,8 @@ public abstract class BaseEvictionFunctionalTest extends SingleCacheManagerTest 
       Configuration cfg = new Configuration();
       cfg.setEvictionStrategy(getEvictionStrategy());
       cfg.setEvictionWakeUpInterval(100);
-      cfg.setEvictionMaxEntries(128); // 1 max entries
-      cfg.setUseLockStriping(false); // to minimise chances of deadlock in the unit test
+      cfg.setEvictionMaxEntries(128); // 128 max entries
+      cfg.setUseLockStriping(false); // to minimize chances of deadlock in the unit test
       CacheManager cm = TestCacheManagerFactory.createCacheManager(cfg);
       cache = cm.getCache();
       return cm;

@@ -79,6 +79,7 @@ public class DefaultDataContainer implements DataContainer {
       Eviction eviction;
       switch (strategy) {
          case FIFO:
+         case UNORDERED:   
          case LRU:
             eviction = Eviction.LRU;            
             break;
@@ -248,9 +249,15 @@ public class DefaultDataContainer implements DataContainer {
       }   
       
       public Set<InternalCacheEntry> getEvicted() {
+         Set<InternalCacheEntry> result = Collections.emptySet();
          synchronized (evicted) {
-            return new HashSet<InternalCacheEntry>(evicted);
-         } 
+            try {
+               result = new HashSet<InternalCacheEntry>(evicted);
+            } finally {
+               evicted.clear();
+            }
+         }
+         return result;
       }
    }
    

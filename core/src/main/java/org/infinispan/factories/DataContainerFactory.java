@@ -45,9 +45,9 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
       int level = configuration.getConcurrencyLevel();
      
       switch (st) {
-         case NONE:
-         case UNORDERED:
+         case NONE:         
             return (T) DefaultDataContainer.unBoundedDataContainer(level);
+         case UNORDERED:   
          case LRU:
          case FIFO:
          case LIRS:
