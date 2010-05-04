@@ -356,20 +356,17 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       m.put("k1", "v3");
       assert m.size() == 1;
       byte[] bytes = marshaller.objectToByteBuffer(m);
-      AtomicHashMapDelta d = (AtomicHashMapDelta) marshaller.objectFromByteBuffer(bytes);
-      assert d.getChangeLogSize() == 3;
-      AtomicHashMap<String, String> merged = new AtomicHashMap<String, String>();
-      merged = (AtomicHashMap) d.merge(merged);
-      for (Map.Entry<String, String> entry : merged.entrySet()) {
+      m = (AtomicHashMap<String, String>) marshaller.objectFromByteBuffer(bytes);
+      for (Map.Entry<String, String> entry : m.entrySet()) {
          assert m.get(entry.getKey()).equals(entry.getValue());
       }
-      assert merged.size() == 1;
+      assert m.size() == 1;
       
       m = new AtomicHashMap();
       assert m.isEmpty();
       bytes = marshaller.objectToByteBuffer(m);
-      NullDelta nulld = (NullDelta) marshaller.objectFromByteBuffer(bytes);
-      assert nulld == NullDelta.INSTANCE;
+      m = (AtomicHashMap<String, String>) marshaller.objectFromByteBuffer(bytes);
+      assert m.isEmpty();
       
       m = new AtomicHashMap<String, String>();
       m.initForWriting();
@@ -379,14 +376,11 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       m.remove("k1");
       assert m.size() == 2;
       bytes = marshaller.objectToByteBuffer(m);
-      d = (AtomicHashMapDelta) marshaller.objectFromByteBuffer(bytes);
-      assert d.getChangeLogSize() == 4;
-      merged = new AtomicHashMap<String, String>();
-      merged = (AtomicHashMap) d.merge(merged);
-      for (Map.Entry<String, String> entry : merged.entrySet()) {
+      m = (AtomicHashMap<String, String>) marshaller.objectFromByteBuffer(bytes);
+      for (Map.Entry<String, String> entry : m.entrySet()) {
          assert m.get(entry.getKey()).equals(entry.getValue());
       }
-      assert merged.size() == 2;
+      assert m.size() == 2;
       
       m = new AtomicHashMap<String, String>();
       m.initForWriting();
@@ -396,14 +390,11 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       m.clear();
       assert m.isEmpty();
       bytes = marshaller.objectToByteBuffer(m);
-      d = (AtomicHashMapDelta) marshaller.objectFromByteBuffer(bytes);
-      assert d.getChangeLogSize() == 4;
-      merged = new AtomicHashMap<String, String>();
-      merged = (AtomicHashMap) d.merge(merged);
-      for (Map.Entry<String, String> entry : merged.entrySet()) {
+      m = (AtomicHashMap<String, String>) marshaller.objectFromByteBuffer(bytes);
+      for (Map.Entry<String, String> entry : m.entrySet()) {
          assert m.get(entry.getKey()).equals(entry.getValue());
       }
-      assert merged.isEmpty();
+      assert m.isEmpty();
    }
    
    public void testMarshallObjectThatContainsACustomReadObjectMethod() throws Exception {

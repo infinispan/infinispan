@@ -56,7 +56,7 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
 
    /**
     * Construction only allowed through this factory method.  This factory is intended for use internally by the
-    * CacheDelegate.  User code should use {@link org.infinispan.atomic.AtomicMapCache#getAtomicMap(Object)}.
+    * CacheDelegate.  User code should use {@link org.infinispan.atomic.AtomicMapLookup#getAtomicMap(Cache, Object)}.
     */
    public static AtomicHashMap newInstance(Cache cache, Object cacheKey) {
       AtomicHashMap value = new AtomicHashMap();
@@ -192,11 +192,14 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
    public static class Externalizer implements org.infinispan.marshall.Externalizer {
       public void writeObject(ObjectOutput output, Object subject) throws IOException {
          DeltaAware dw = (DeltaAware) subject;
-         output.writeObject(dw.delta());      
+         output.writeObject(dw.delta());
       }
 
       public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return input.readObject();
+         Delta d = (Delta) input.readObject();
+         DeltaAware dw = new AtomicHashMap(); 
+         dw = d.merge(dw);
+         return dw;
       }
    }
 }

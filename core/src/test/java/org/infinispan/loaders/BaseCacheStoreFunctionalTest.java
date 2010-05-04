@@ -22,6 +22,8 @@
 package org.infinispan.loaders;
 
 import org.infinispan.Cache;
+import org.infinispan.atomic.AtomicMap;
+import org.infinispan.atomic.AtomicMapLookup;
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
@@ -35,6 +37,8 @@ import org.infinispan.util.Util;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.transaction.TransactionManager;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
@@ -122,6 +126,47 @@ public abstract class BaseCacheStoreFunctionalTest extends AbstractInfinispanTes
          TestingUtil.killCacheManagers(local);
       }
    }
+
+   public void testRestoreAtomicMap(Method m) {
+      Configuration cfg = new Configuration();
+      cfg.getCacheLoaderManagerConfig().addCacheLoaderConfig(csConfig);
+      CacheManager localCacheManager = TestCacheManagerFactory.createCacheManager(cfg, true);
+      try {
+         Cache<String, Object> cache = localCacheManager.getCache();
+         AtomicMap<String, String> map = AtomicMapLookup.getAtomicMap(cache, m.getName());
+         map.put("a", "b");
+
+         //evict from memory
+         cache.evict(m.getName());
+
+         // now re-retrieve the map
+         assert AtomicMapLookup.getAtomicMap(cache, m.getName()).get("a").equals("b");
+      } finally {
+         TestingUtil.killCacheManagers(localCacheManager);
+      }
+   }
+
+//   public void testRestoreTransactionalAtomicMap(Method m) throws Exception{
+//      Configuration cfg = new Configuration();
+//      cfg.getCacheLoaderManagerConfig().addCacheLoaderConfig(csConfig);
+//      CacheManager localCacheManager = TestCacheManagerFactory.createCacheManager(cfg, true);
+//      try {
+//         Cache<String, Object> cache = localCacheManager.getCache();
+//         TransactionManager tm = cache.getAdvancedCache().getTransactionManager();
+//         tm.begin();
+//         final AtomicMap<String, String> map = AtomicMapLookup.getAtomicMap(cache, m.getName());
+//         map.put("a", "b");
+//         tm.commit();
+//
+//         //evict from memory
+//         cache.evict(m.getName());
+//
+//         // now re-retrieve the map and make sure we see the diffs
+//         assert AtomicMapLookup.getAtomicMap(cache, m.getName()).get("a").equals("b");
+//      } finally {
+//         TestingUtil.killCacheManagers(localCacheManager);
+//      }
+//   }
 
    private void assertCacheEntry(Cache cache, String key, String value, long lifespanMillis, long maxIdleMillis) {
       DataContainer dc = cache.getAdvancedCache().getDataContainer();
