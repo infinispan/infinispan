@@ -29,6 +29,8 @@ import static org.infinispan.context.Flag.FORCE_SYNCHRONOUS;
  */
 public class GridFile extends File {
    private static final long serialVersionUID = -6729548421029004260L;
+   private static final char SEPARATOR_CHAR = '/';
+   private static final String SEPARATOR = "" + SEPARATOR_CHAR;
    private final AdvancedCache<String, Metadata> metadataCache;
    private final GridFilesystem fs;
    private final String name;
@@ -66,11 +68,21 @@ public class GridFile extends File {
       return name;
    }
 
+   /**
+    * Returns path of this file. To avoid issues arising from file separator differences between different
+    * operative systems, the path returned always uses Unix-like path separator, '/' character. Any client
+    * code calling this method should bear that if disecting the path.
+    *
+    * @return String containing path of file.
+    */
    @Override
    public String getPath() {
       String my_path = super.getPath();
-      if (my_path != null && my_path.endsWith(File.separator)) {
-         int index = my_path.lastIndexOf(File.separator);
+      // Regardless of platform, always use the same separator char, otherwise
+      // keys might not be found when transfering metadata between different OS
+      my_path = my_path.replace('\\', SEPARATOR_CHAR);
+      if (my_path != null && my_path.endsWith(SEPARATOR)) {
+         int index = my_path.lastIndexOf(SEPARATOR);
          if (index != -1)
             my_path = my_path.substring(0, index);
       }
@@ -281,7 +293,7 @@ public class GridFile extends File {
     * @return
     */
    protected boolean checkParentDirs(String path, boolean create_if_absent) throws IOException {
-      String[] components = Util.components(path, File.separator);
+      String[] components = Util.components(path, SEPARATOR);
       if (components == null)
          return false;
       if (components.length == 1) // no parent directories to create, e.g. "data.txt"
@@ -292,11 +304,11 @@ public class GridFile extends File {
 
       for (int i = 0; i < components.length - 1; i++) {
          String tmp = components[i];
-         if (!tmp.equals(File.separator)) {
+         if (!tmp.equals(SEPARATOR)) {
             if (first)
                first = false;
             else
-               sb.append(File.separator);
+               sb.append(SEPARATOR);
          }
          sb.append(tmp);
          String comp = sb.toString();
