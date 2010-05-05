@@ -14,6 +14,8 @@ import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Maps;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream;
 import org.infinispan.Cache;
@@ -135,17 +137,21 @@ public class CloudCacheStore extends BucketBasedCacheStore {
             asyncBlobStore = ctx.getAsyncBlobStore();
          }
 
-         // the "location" is not currently used.
          if (!blobStore.containerExists(containerName)) {
             Location chosenLoc = null;
             if (cfg.getCloudServiceLocation() != null && cfg.getCloudServiceLocation().trim().length() > 0) {
-               Map<String, ? extends Location> availableLocations = blobStore.getLocations();
+               Map<String, ? extends Location> idToLocation = Maps.uniqueIndex(blobStore.listAssignableLocations(), new Function<Location, String>() {
+                  @Override
+                  public String apply(Location input) {
+                     return input.getId();
+                  }
+               });
                String loc = cfg.getCloudServiceLocation().trim().toLowerCase();
-               chosenLoc = availableLocations.get(loc);
+               chosenLoc = idToLocation.get(loc);
                if (chosenLoc == null) {
                   log.warn(
                      String.format("Unable to use configured Cloud Service Location [%s].  Available locations for Cloud Service [%s] are %s",
-                     loc, cfg.getCloudService(), availableLocations.keySet()));
+                     loc, cfg.getCloudService(), idToLocation.keySet()));
                }
             }
             blobStore.createContainerInLocation(chosenLoc, containerName);
