@@ -11,7 +11,7 @@ import org.infinispan.remoting.transport.Address
  * could potentially be configured with a different hash algorithm, a topology address also contains per cache hash id.
  * 
  * @author Galder Zamarreño
- * @since // TODO
+ * @since 4.1
  */
 @Marshallable(externalizer = classOf[TopologyAddress.Externalizer], id = 58)
 case class TopologyAddress(val host: String, val port: Int, val hashIds: Map[String, Int], val clusterAddress: Address)

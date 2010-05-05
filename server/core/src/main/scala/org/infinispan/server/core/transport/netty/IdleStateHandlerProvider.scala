@@ -5,7 +5,7 @@ import org.jboss.netty.channel.{ChannelHandlerContext => NettyChannelHandlerCont
 /**
  * // TODO: Document this
  * @author Galder Zamarreño
- * @since // TODO
+ * @since 4.1
  */
 class IdleStateHandlerProvider extends IdleStateAwareChannelHandler {
 

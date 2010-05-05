@@ -16,7 +16,7 @@ import org.infinispan.test.TestingUtil
 /**
  * // TODO: Document this
  * @author Galder Zamarreño
- * @since // TODO
+ * @since 4.1
  */
 @Test(groups = Array("functional"), testName = "server.hotrod.HotRodDistributionTest")
 class HotRodDistributionTest extends HotRodMultiNodeTest {

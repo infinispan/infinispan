@@ -10,7 +10,7 @@ import org.testng.annotations.{Test, AfterClass}
 /**
  * // TODO: Document this
  * @author Galder Zamarreño
- * @since // TODO
+ * @since 4.1
  */
 abstract class MemcachedSingleNodeTest extends SingleCacheManagerTest with MemcachedTestingUtil {
    private var memcachedClient: MemcachedClient = _

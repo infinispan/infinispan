@@ -13,7 +13,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory
 /**
  * // TODO: Document this
  * @author Galder Zamarreño
- * @since // TODO
+ * @since 4.1
  */
 abstract class HotRodSingleNodeTest extends SingleCacheManagerTest {
    val cacheName = "HotRodCache"

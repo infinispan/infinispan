@@ -11,7 +11,7 @@ import org.testng.Assert._
 /**
  * // TODO: Document this
  * @author Galder Zamarreño
- * @since // TODO
+ * @since 4.1
  */
 abstract class HotRodMultiNodeTest extends MultipleCacheManagersTest {
    import HotRodServer._

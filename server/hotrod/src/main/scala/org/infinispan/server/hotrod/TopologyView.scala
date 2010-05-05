@@ -6,7 +6,7 @@ import java.io.{ObjectInput, ObjectOutput}
 /**
  * // TODO: Document this
  * @author Galder Zamarreño
- * @since // TODO
+ * @since 4.1
  */
 @Marshallable(externalizer = classOf[TopologyView.Externalizer], id = 59)
 case class TopologyView(val topologyId: Int, val members: List[TopologyAddress])

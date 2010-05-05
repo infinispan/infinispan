@@ -25,7 +25,7 @@ import java.lang.reflect.Method;
  * // TODO: Document this
  *
  * @author Galder Zamarreño
- * @since // TODO
+ * @since 4.1
  */
 @Test(groups = "unit", testName = "loaders.file.ClusterFileCacheStoreFunctionalTest")
 public class ClusterFileCacheStoreFunctionalTest extends MultipleCacheManagersTest {

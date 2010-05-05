@@ -100,6 +100,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Logging {
       cacheManager.defineConfiguration(TopologyCacheName, topologyCacheConfig)
    }
 
+   // TODO: Change to sync false rather than creating your own callable and firing it 
    @Listener
    private class CrashedMemberDetectorListener {
 

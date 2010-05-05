@@ -8,7 +8,7 @@ import org.testng.Assert._
 /**
  * // TODO: Document this
  * @author Galder Zamarreño
- * @since // TODO
+ * @since 4.1
  */
 @Test(groups = Array("functional"), testName = "server.memcached.MemcachedShutdownTest")
 class MemcachedShutdownTest extends MemcachedSingleNodeTest {
