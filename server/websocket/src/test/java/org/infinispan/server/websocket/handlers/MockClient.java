@@ -19,14 +19,14 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.websocket.handlers;
+package org.infinispan.server.websocket.handlers;
 
 import org.infinispan.Cache;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.server.websocket.OpHandler;
 import org.infinispan.websocket.MockChannel;
 import org.infinispan.websocket.MockChannelHandlerContext;
-import org.infinispan.websocket.OpHandler;
 import org.json.JSONException;
 import org.json.JSONObject;
 

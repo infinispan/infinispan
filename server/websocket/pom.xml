@@ -13,15 +13,20 @@
    <name>Infinispan WebSocket Server</name>
    <description>WebSocket interface for Infinispan</description>
 
-	<dependencies>
-		
-		<dependency>
-			<groupId>org.jboss.netty</groupId>
-			<artifactId>netty</artifactId>
-			<version>3.2.0.BETA1</version>
-			<scope>compile</scope>
-		</dependency>
-		
-	</dependencies>
+   <dependencies>
+
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-server-core</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.json</groupId>
+         <artifactId>json</artifactId>
+         <version>20090211</version>
+      </dependency>
+
+   </dependencies>
 
 </project>

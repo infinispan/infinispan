@@ -19,24 +19,36 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.websocket.handlers;
+package org.infinispan.server.websocket.handlers;
 
 import org.infinispan.Cache;
-import org.infinispan.websocket.OpHandler;
+import org.infinispan.server.websocket.OpHandler;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * Cache "remove" operation handler.
+ * Cache "get" operation handler.
  * 
  * @author <a href="mailto:tom.fennelly@gmail.com">tom.fennelly@gmail.com</a>
  */
-public class RemoveHandler implements OpHandler {
+public class PutHandler implements OpHandler {
 
 	public void handleOp(JSONObject opPayload, Cache<Object, Object> cache, ChannelHandlerContext ctx) throws JSONException {
 		String key = (String) opPayload.get(OpHandler.KEY);
-		
-		cache.remove(key);
+		String value = (String) opPayload.get(OpHandler.VALUE);
+		String mimeType = (String) opPayload.get(OpHandler.MIME);
+
+		if(mimeType.equals("application/json")) {
+			// Decode the payload to a JSON string...
+			
+			// TODO:  Need some way to populate the JSON object string to an Object graph.
+			// Something plugable... allowing JAXB, Smooks etc
+			
+			throw new UnsupportedOperationException("Complex object graphs not yet supported!! Cannot cache value:\n" + value);
+		} else {
+			// Put the raw value into the cache...
+			cache.put(key, value);
+		}
 	}
 }

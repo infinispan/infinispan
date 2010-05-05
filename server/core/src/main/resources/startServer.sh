@@ -39,6 +39,17 @@ then
    done
 fi
 
+CP=${CP}:${ISPN_HOME}/modules/websocket/infinispan-server-websocket.jar
+
+if [ -e ${ISPN_HOME}/modules/websocket/lib ]
+then
+   for JAR in ${ISPN_HOME}/modules/websocket/lib/*
+   do
+      CP=$CP:$JAR
+   done
+fi
+
+
 JVM_PARAMS="${JVM_PARAMS} -Dbind.address=127.0.0.1 -Djava.net.preferIPv4Stack=true  -Dlog4j.configuration=file:${ISPN_HOME}/etc/log4j.xml"
 
 # Sample JPDA settings for remote socket debuging

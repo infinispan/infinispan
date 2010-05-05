@@ -19,32 +19,25 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.websocket;
+package org.infinispan.server.websocket.handlers;
 
 import org.infinispan.Cache;
+import org.infinispan.server.websocket.ChannelUtils;
+import org.infinispan.server.websocket.OpHandler;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * Websocket cache operation handler.
+ * Cache "get" operation handler.
  * 
  * @author <a href="mailto:tom.fennelly@gmail.com">tom.fennelly@gmail.com</a>
  */
-public interface OpHandler {
-	
-	public static final String OP_CODE = "opCode";
-	public static final String CACHE_NAME = "cacheName";
-	public static final String KEY = "key";
-	public static final String VALUE = "value";
-	public static final String MIME = "mime";
+public class GetHandler implements OpHandler {
 
-	/**
-	 * Handle a websocket channel operation.
-	 * 
-	 * @param opPayload Operation payload.
-	 * @param cache The target cache.
-	 * @param ctx The Netty websocket channel handler.
-	 */
-	void handleOp(JSONObject opPayload, Cache<Object, Object> cache, ChannelHandlerContext ctx) throws JSONException;
+	public void handleOp(JSONObject opPayload, Cache<Object, Object> cache, ChannelHandlerContext ctx) throws JSONException {
+		String key = (String) opPayload.get(OpHandler.KEY);
+		
+		ChannelUtils.pushCacheValue(key, cache, ctx);
+	}
 }

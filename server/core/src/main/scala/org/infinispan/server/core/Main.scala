@@ -101,12 +101,14 @@ object Main extends Logging {
       val clazz = protocol.get match {
          case "memcached" => "org.infinispan.server.memcached.MemcachedServer"
          case "hotrod" => "org.infinispan.server.hotrod.HotRodServer"
+         case "websocket" => "org.infinispan.server.websocket.WebSocketServer"
       }
       val port = {
          if (props.get(PROP_KEY_PORT) == None) {
             protocol.get match {
                case "memcached" => 11211
                case "hotrod" => 11311
+               case "websocket" => 8181
             }
          } else {
             props.get(PROP_KEY_PORT).get.toInt
@@ -188,7 +190,7 @@ object Main extends Logging {
       println
       println("    --                                 Stop processing options")
       println
-      println("    -p, --port=<num>                   TCP port number to listen on (default: 11211 for Memcached servers, 11311 for Hot Rod servers)")
+      println("    -p, --port=<num>                   TCP port number to listen on (default: 11211 for Memcached, 11311 for Hot Rod and 8181 for WebSocket server)")
       println
       println("    -l, --host=<host or ip>            Interface to listen on (default: 127.0.0.1, localhost)")
       println
@@ -198,7 +200,8 @@ object Main extends Logging {
       println
       println("    -c, --cache_config=<filename>      Cache configuration file (default: creates cache with default values)")
       println
-      println("    -r, --protocol=[memcached|hotrod]  Protocol to understand by the server. This is a mandatory option and you should choose one of the two options")
+      println("    -r, --protocol=                    Protocol to understand by the server. This is a mandatory option and you should choose one of the two options")
+      println("          [memcached|hotrod|websocket]")
       println
       println("    -i, --idle_timeout=<num>           Idle read timeout, in seconds, used to detect stale connections (default: 60 seconds).")
       println("                                       If no new messages have been read within this time, the server disconnects the channel.")

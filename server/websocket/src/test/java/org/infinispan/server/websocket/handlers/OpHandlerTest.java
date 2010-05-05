@@ -19,10 +19,10 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.websocket.handlers;
+package org.infinispan.server.websocket.handlers;
 
+import org.infinispan.server.websocket.OpHandler;
 import org.infinispan.websocket.MockChannel;
-import org.infinispan.websocket.OpHandler;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.testng.annotations.Test;
@@ -32,10 +32,9 @@ import org.testng.Assert;
  * 
  * @author <a href="mailto:tom.fennelly@gmail.com">tom.fennelly@gmail.com</a>
  */
-@Test
+@Test (testName = "websocket.handlers.OpHandlerTest", groups = "unit")
 public class OpHandlerTest {
 	
-	@Test
 	public void test() throws JSONException {
 		MockChannel mockChannel = new MockChannel();
 		MockClient firstCacheClient = new MockClient("firstCache", mockChannel);

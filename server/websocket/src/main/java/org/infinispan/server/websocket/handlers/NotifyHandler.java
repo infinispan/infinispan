@@ -19,16 +19,16 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.websocket.handlers;
+package org.infinispan.server.websocket.handlers;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.infinispan.Cache;
-import org.infinispan.websocket.CacheListener;
-import org.infinispan.websocket.ChannelUtils;
-import org.infinispan.websocket.OpHandler;
-import org.infinispan.websocket.CacheListener.ChannelNotifyParams;
+import org.infinispan.server.websocket.CacheListener;
+import org.infinispan.server.websocket.ChannelUtils;
+import org.infinispan.server.websocket.OpHandler;
+import org.infinispan.server.websocket.CacheListener.ChannelNotifyParams;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.json.JSONException;
 import org.json.JSONObject;

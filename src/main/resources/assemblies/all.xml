@@ -148,6 +148,7 @@
             <include>org.infinispan:infinispan-server-rest</include>
             <include>org.infinispan:infinispan-server-memcached</include>
             <include>org.infinispan:infinispan-server-hotrod</include>
+            <include>org.infinispan:infinispan-server-websocket</include>
             <include>org.infinispan:infinispan-client-hotrod</include>
             <include>org.infinispan:infinispan-lucene-directory</include>
             <include>org.infinispan:infinispan-lucene-demo</include>
@@ -182,6 +183,15 @@
                      <include>**/*.rb</include>
                   </includes>
                   <fileMode>0777</fileMode>
+               </fileSet>
+
+               <fileSet>
+                  <directory>src/main/distribution</directory>
+                  <outputDirectory>etc</outputDirectory>
+                  <lineEnding>unix</lineEnding>
+                  <includes>
+                     <include>**/*.html</include>
+                  </includes>
                </fileSet>
 
                <fileSet>

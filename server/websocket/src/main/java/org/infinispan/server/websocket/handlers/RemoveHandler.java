@@ -19,25 +19,24 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.infinispan.websocket.handlers;
+package org.infinispan.server.websocket.handlers;
 
 import org.infinispan.Cache;
-import org.infinispan.websocket.ChannelUtils;
-import org.infinispan.websocket.OpHandler;
+import org.infinispan.server.websocket.OpHandler;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * Cache "get" operation handler.
+ * Cache "remove" operation handler.
  * 
  * @author <a href="mailto:tom.fennelly@gmail.com">tom.fennelly@gmail.com</a>
  */
-public class GetHandler implements OpHandler {
+public class RemoveHandler implements OpHandler {
 
 	public void handleOp(JSONObject opPayload, Cache<Object, Object> cache, ChannelHandlerContext ctx) throws JSONException {
 		String key = (String) opPayload.get(OpHandler.KEY);
 		
-		ChannelUtils.pushCacheValue(key, cache, ctx);
+		cache.remove(key);
 	}
 }
