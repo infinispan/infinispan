@@ -58,15 +58,16 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
     * Construction only allowed through this factory method.  This factory is intended for use internally by the
     * CacheDelegate.  User code should use {@link org.infinispan.atomic.AtomicMapLookup#getAtomicMap(Cache, Object)}.
     */
-   public static AtomicHashMap newInstance(Cache cache, Object cacheKey) {
-      AtomicHashMap value = new AtomicHashMap();
-      Object oldValue = cache.putIfAbsent(cacheKey, value);
-      if (oldValue != null) value = (AtomicHashMap) oldValue;
-      return value;
+   public static AtomicHashMap newInstance() {
+      return new AtomicHashMap();
    }
 
-   public AtomicHashMap() {
+   AtomicHashMap() {
       delegate = new FastCopyHashMap<K, V>();
+   }
+
+   private AtomicHashMap(FastCopyHashMap<K, V> delegate) {
+      this.delegate = delegate;
    }
 
    public AtomicHashMap(boolean isCopy) {
@@ -191,15 +192,13 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
    
    public static class Externalizer implements org.infinispan.marshall.Externalizer {
       public void writeObject(ObjectOutput output, Object subject) throws IOException {
-         DeltaAware dw = (DeltaAware) subject;
-         output.writeObject(dw.delta());
+         AtomicHashMap map = (AtomicHashMap) subject;
+         output.writeObject(map.delegate);
       }
 
       public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         Delta d = (Delta) input.readObject();
-         DeltaAware dw = new AtomicHashMap(); 
-         dw = d.merge(dw);
-         return dw;
+         FastCopyHashMap delegate = (FastCopyHashMap) input.readObject();
+         return new AtomicHashMap(delegate);
       }
    }
 }

@@ -21,7 +21,7 @@ public class AtomicMapLookup {
    @SuppressWarnings("unchecked")
    public static <MK, K, V> AtomicMap<K, V> getAtomicMap(Cache<?, ?> cache, MK key) {
       Object value = cache.get(key);
-      if (value == null) value = AtomicHashMap.newInstance(cache, key);
+      if (value == null) value = AtomicHashMap.newInstance();
       AtomicHashMap<K, V> castValue = (AtomicHashMap<K, V>) value;
       return castValue.getProxy(cache, key, cache.getAdvancedCache().getBatchContainer(), cache.getAdvancedCache().getInvocationContextContainer());
    }

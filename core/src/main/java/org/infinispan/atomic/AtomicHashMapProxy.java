@@ -32,6 +32,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -93,35 +94,43 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
    // readers
 
    public Set<K> keySet() {
-      return getDeltaMapForRead().keySet();
+      AtomicHashMap<K, V> map = getDeltaMapForRead();
+      return map == null ? Collections.EMPTY_SET : map.keySet();
    }
 
    public Collection<V> values() {
-      return getDeltaMapForRead().values();
+      AtomicHashMap<K, V> map = getDeltaMapForRead();
+      return map == null ? Collections.EMPTY_SET : map.values();
    }
 
    public Set<Entry<K, V>> entrySet() {
-      return getDeltaMapForRead().entrySet();
+      AtomicHashMap<K, V> map = getDeltaMapForRead();
+      return map == null ? Collections.EMPTY_SET : map.entrySet();
    }
 
    public int size() {
-      return getDeltaMapForRead().size();
+      AtomicHashMap<K, V> map = getDeltaMapForRead();
+      return map == null ? 0 : map.size();
    }
 
    public boolean isEmpty() {
-      return getDeltaMapForRead().isEmpty();
+      AtomicHashMap<K, V> map = getDeltaMapForRead();
+      return map == null ? true : map.isEmpty();
    }
 
    public boolean containsKey(Object key) {
-      return getDeltaMapForRead().containsKey(key);
+      AtomicHashMap<K, V> map = getDeltaMapForRead();
+      return map == null ? false : map.containsKey(key);
    }
 
    public boolean containsValue(Object value) {
-      return getDeltaMapForRead().containsValue(value);
+      AtomicHashMap<K, V> map = getDeltaMapForRead();
+      return map == null ? false : map.containsValue(value);
    }
 
    public V get(Object key) {
-      return getDeltaMapForRead().get(key);
+      AtomicHashMap<K, V> map = getDeltaMapForRead();
+      return map == null ? null : map.get(key);
    }
 
    // writers

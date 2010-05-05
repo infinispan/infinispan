@@ -146,27 +146,27 @@ public abstract class BaseCacheStoreFunctionalTest extends AbstractInfinispanTes
       }
    }
 
-//   public void testRestoreTransactionalAtomicMap(Method m) throws Exception{
-//      Configuration cfg = new Configuration();
-//      cfg.getCacheLoaderManagerConfig().addCacheLoaderConfig(csConfig);
-//      CacheManager localCacheManager = TestCacheManagerFactory.createCacheManager(cfg, true);
-//      try {
-//         Cache<String, Object> cache = localCacheManager.getCache();
-//         TransactionManager tm = cache.getAdvancedCache().getTransactionManager();
-//         tm.begin();
-//         final AtomicMap<String, String> map = AtomicMapLookup.getAtomicMap(cache, m.getName());
-//         map.put("a", "b");
-//         tm.commit();
-//
-//         //evict from memory
-//         cache.evict(m.getName());
-//
-//         // now re-retrieve the map and make sure we see the diffs
-//         assert AtomicMapLookup.getAtomicMap(cache, m.getName()).get("a").equals("b");
-//      } finally {
-//         TestingUtil.killCacheManagers(localCacheManager);
-//      }
-//   }
+   public void testRestoreTransactionalAtomicMap(Method m) throws Exception {
+      Configuration cfg = new Configuration();
+      cfg.getCacheLoaderManagerConfig().addCacheLoaderConfig(csConfig);
+      CacheManager localCacheManager = TestCacheManagerFactory.createCacheManager(cfg, true);
+      try {
+         Cache<String, Object> cache = localCacheManager.getCache();
+         TransactionManager tm = cache.getAdvancedCache().getTransactionManager();
+         tm.begin();
+         final AtomicMap<String, String> map = AtomicMapLookup.getAtomicMap(cache, m.getName());
+         map.put("a", "b");
+         tm.commit();
+
+         //evict from memory
+         cache.evict(m.getName());
+
+         // now re-retrieve the map and make sure we see the diffs
+         assert AtomicMapLookup.getAtomicMap(cache, m.getName()).get("a").equals("b");
+      } finally {
+         TestingUtil.killCacheManagers(localCacheManager);
+      }
+   }
 
    private void assertCacheEntry(Cache cache, String key, String value, long lifespanMillis, long maxIdleMillis) {
       DataContainer dc = cache.getAdvancedCache().getDataContainer();

@@ -23,10 +23,7 @@
 package org.infinispan.marshall;
 
 import org.infinispan.atomic.AtomicHashMap;
-import org.infinispan.atomic.AtomicHashMapDelta;
-import org.infinispan.atomic.NullDelta;
 import org.infinispan.commands.RemoteCommandsFactory;
-import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.control.StateTransferControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
@@ -349,7 +346,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    }
 
    public void testAtomicHashMap() throws Exception {
-      AtomicHashMap<String, String> m = new AtomicHashMap<String, String>();
+      AtomicHashMap<String, String> m = AtomicHashMap.newInstance();
       m.initForWriting();
       m.put("k1", "v1");
       m.put("k1", "v2");
@@ -362,13 +359,13 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       }
       assert m.size() == 1;
       
-      m = new AtomicHashMap();
+      m = AtomicHashMap.newInstance();
       assert m.isEmpty();
       bytes = marshaller.objectToByteBuffer(m);
       m = (AtomicHashMap<String, String>) marshaller.objectFromByteBuffer(bytes);
       assert m.isEmpty();
       
-      m = new AtomicHashMap<String, String>();
+      m = AtomicHashMap.newInstance();
       m.initForWriting();
       m.put("k1", "v1");
       m.put("k2", "v2");
@@ -382,7 +379,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       }
       assert m.size() == 2;
       
-      m = new AtomicHashMap<String, String>();
+      m = AtomicHashMap.newInstance();
       m.initForWriting();
       m.put("k5", "v1");
       m.put("k5", "v2");

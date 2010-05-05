@@ -21,6 +21,7 @@
  */
 package org.infinispan.marshall.exts;
 
+import org.infinispan.atomic.DeltaAware;
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.marshall.Externalizer;
@@ -51,7 +52,14 @@ public class ReplicableCommandExternalizer implements Externalizer {
 
       UnsignedNumeric.writeUnsignedInt(output,numArgs);
       for (int i = 0; i < numArgs; i++) {
-         output.writeObject(args[i]);
+         Object arg = args[i];
+         if (arg instanceof DeltaAware) {
+            // Only write deltas so that replication can be more efficient
+            DeltaAware dw = (DeltaAware) arg;
+            output.writeObject(dw.delta());
+         } else {
+            output.writeObject(arg);
+         }
       }
    }
 
@@ -61,6 +69,9 @@ public class ReplicableCommandExternalizer implements Externalizer {
       Object[] args = null;
       if (numArgs > 0) {
          args = new Object[numArgs];
+         // For DeltaAware instances, nothing special to be done here.
+         // Do not merge here since the cache contents are required.
+         // Instead, merge in PutKeyValueCommand.perform
          for (int i = 0; i < numArgs; i++) args[i] = input.readObject();
       }
       return cmdFactory.fromStream((byte) methodId, args);
