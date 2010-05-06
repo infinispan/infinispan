@@ -13,6 +13,13 @@
    <name>Parent pom for cachestore modules</name>
    <packaging>pom</packaging>
 
+   <modules>
+      <module>bdbje</module>
+      <module>jdbm</module>
+      <module>jdbc</module>
+      <module>cloud</module>
+   </modules>
+
 
    <dependencies>
       <dependency>

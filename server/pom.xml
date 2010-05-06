@@ -23,6 +23,7 @@
       <module>rest</module>
       <module>memcached</module>
       <module>hotrod</module>
+      <module>websocket</module>
    </modules>
 
    <dependencies>
