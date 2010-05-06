@@ -1502,7 +1502,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       /** The serialVersionUID */
       private static final long serialVersionUID = 752218766840948822L;
 
-      /** @configRef name="class",desc="Fully qualified name of class providing consistent hash algorithm" */
+      /** @configRef name="class", desc="Fully qualified name of class providing consistent hash algorithm" */
       protected String consistentHashClass = DefaultConsistentHash.class.getName();
 
       /** @configRef desc="Number of cluster-wide replicas for each cache entry." */
@@ -1520,7 +1520,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
       @XmlAttribute(name="class")
       public void setConsistentHashClass(String consistentHashClass) {
-         testImmutability("class");
+         testImmutability("consistentHashClass");
          this.consistentHashClass = consistentHashClass;
       }
 

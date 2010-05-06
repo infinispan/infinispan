@@ -201,7 +201,7 @@ public class ReflectionUtil {
     */
    public static Object getValue(Object instance, String fieldName) {
       Field f = findFieldRecursively(instance.getClass(), fieldName);
-      if (f == null) throw new CacheException("Could not find field named: " + fieldName + " on instance :" + instance);
+      if (f == null) throw new CacheException("Could not find field named '" + fieldName + "' on instance " + instance);
       try {
          f.setAccessible(true);
          return f.get(instance);
