@@ -30,16 +30,11 @@ import java.lang.reflect.Method;
 @Test(groups = "unit", testName = "loaders.file.ClusterFileCacheStoreFunctionalTest")
 public class ClusterFileCacheStoreFunctionalTest extends MultipleCacheManagersTest {
 
-   private String tmpDirectory;
+   // createCacheManager executes before any @BeforeClass defined in the class, so simply use standard tmp folder.
+   private String tmpDirectory = TestingUtil.tmpDirectory("/tmp", this);
 
    private Cache cache1, cache2;
    
-   @BeforeClass
-   @Parameters({"basedir"})
-   protected void setUpTempDir(@Optional(value = "/tmp") String basedir) {
-      tmpDirectory = TestingUtil.tmpDirectory(basedir, this);
-   }
-
    @AfterClass(alwaysRun = true)
    protected void clearTempDir() {
       TestingUtil.recursiveFileRemove(tmpDirectory);
