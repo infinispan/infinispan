@@ -1,9 +1,13 @@
 package org.infinispan.client.hotrod;
 
+import org.infinispan.Cache;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
+import org.infinispan.config.Configuration;
+import org.infinispan.manager.CacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 import java.net.InetSocketAddress;
@@ -33,10 +37,27 @@ public class TopologyChangeTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      addClusterEnabledCacheManager();
-      addClusterEnabledCacheManager();
+      Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC);
+      CacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(config);
+      CacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(config);
+      registerCacheManager(cm1);
+      registerCacheManager(cm2);
+
       hotRodServer1 = TestHelper.startHotRodServer(manager(0));
       hotRodServer2 = TestHelper.startHotRodServer(manager(1));
+
+      manager(0).getCache();
+      manager(1).getCache();
+
+      TestingUtil.blockUntilViewReceived(manager(0).getCache(), 2, 10000);
+      TestingUtil.blockUntilViewReceived(manager(1).getCache(), 2, 10000);
+
+
+      manager(0).getCache().put("k","v");
+      manager(0).getCache().get("k").equals("v");
+      manager(1).getCache().get("k").equals("v");
+
+      log.info("Local replication test passed!");
 
       //Important: this only connects to one of the two servers!
       remoteCacheManager = new RemoteCacheManager("localhost", hotRodServer2.getPort());
