@@ -9,6 +9,8 @@ import org.infinispan.server.hotrod.OperationStatus._
 import org.testng.Assert._
 import org.infinispan.util.Util
 import org.infinispan.server.hotrod._
+import org.infinispan.config.Configuration.CacheMode
+import org.infinispan.config.Configuration
 
 /**
  * // TODO: Document this
@@ -29,8 +31,9 @@ object HotRodTestingUtil extends Logging {
 
    def startHotRodServer(manager: CacheManager, port: Int, idleTimeout: Int): HotRodServer = {
       val server = new HotRodServer {
+         import HotRodServer._
          override protected def defineTopologyCacheConfig(cacheManager: CacheManager) {
-            // No-op since topology cache configuration comes defined by the test
+            cacheManager.defineConfiguration(TopologyCacheName, createTopologyCacheConfig)
          }
       }
       server.start(host, port, manager, 0, 0, idleTimeout)
@@ -39,8 +42,9 @@ object HotRodTestingUtil extends Logging {
 
    def startCrashingHotRodServer(manager: CacheManager, port: Int): HotRodServer = {
       val server = new HotRodServer {
+         import HotRodServer._
          override protected def defineTopologyCacheConfig(cacheManager: CacheManager) {
-            // No-op since topology cache configuration comes defined by the test
+            cacheManager.defineConfiguration(TopologyCacheName, createTopologyCacheConfig)
          }
 
          override protected def removeSelfFromTopologyView {
@@ -135,6 +139,16 @@ object HotRodTestingUtil extends Logging {
       assertEquals(actual.host, expected.host)
       assertEquals(actual.port, expected.port)
       assertEquals(actual.hashIds, expectedHashIds)
+   }
+
+   private def createTopologyCacheConfig: Configuration = {
+      val topologyCacheConfig = new Configuration
+      topologyCacheConfig.setCacheMode(CacheMode.REPL_SYNC)
+      topologyCacheConfig.setSyncReplTimeout(10000) // Milliseconds
+      topologyCacheConfig.setFetchInMemoryState(true) // State transfer required
+      topologyCacheConfig.setSyncCommitPhase(true) // Only for testing, so that asserts work fine.
+      topologyCacheConfig.setSyncRollbackPhase(true) // Only for testing, so that asserts work fine.
+      topologyCacheConfig
    }
    
 } 

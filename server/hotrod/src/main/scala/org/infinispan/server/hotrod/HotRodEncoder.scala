@@ -75,6 +75,7 @@ class HotRodEncoder(cacheManager: CacheManager) extends Encoder {
    }
 
    private def writeTopologyHeader(t: TopologyAwareResponse, buffer: ChannelBuffer) {
+      trace("Write topology change response header {0}", t)
       buffer.writeUnsignedInt(t.view.topologyId)
       buffer.writeUnsignedInt(t.view.members.size)
       t.view.members.foreach{address =>
@@ -85,6 +86,7 @@ class HotRodEncoder(cacheManager: CacheManager) extends Encoder {
 
    // TODO: Spec values when client intel is 3 but cache is not configured with distribution
    private def writeHashTopologyHeader(t: TopologyAwareResponse, buffer: ChannelBuffer) {
+      trace("Return topology change response header in spite of having a hash aware client {0}", t)
       buffer.writeUnsignedInt(t.view.topologyId)
       buffer.writeUnsignedShort(0) // Num key owners
       buffer.writeByte(0) // Hash function
@@ -98,6 +100,7 @@ class HotRodEncoder(cacheManager: CacheManager) extends Encoder {
    }
 
    private def writeHashTopologyHeader(h: HashDistAwareResponse, buffer: ChannelBuffer, r: Response) {
+      trace("Write hash distribution change response header {0}", h)
       buffer.writeUnsignedInt(h.view.topologyId)
       buffer.writeUnsignedShort(h.numOwners) // Num key owners
       buffer.writeByte(h.hashFunction) // Hash function

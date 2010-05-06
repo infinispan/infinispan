@@ -9,7 +9,6 @@ import test.HotRodClient
 import test.HotRodTestingUtil._
 import org.testng.Assert._
 import collection.mutable.ListBuffer
-import org.infinispan.server.core.Logging
 import org.infinispan.distribution.UnionConsistentHash
 import org.infinispan.test.TestingUtil
 
@@ -56,7 +55,6 @@ class HotRodDistributionTest extends HotRodMultiNodeTest {
 
       var cm = addClusterEnabledCacheManager()
       cm.defineConfiguration(cacheName, createCacheConfig)
-      cm.defineConfiguration(TopologyCacheName, createTopologyCacheConfig)
       val newServer = startHotRodServer(cm, servers.tail.head.getPort + 25)
       val newClient = new HotRodClient("127.0.0.1", newServer.getPort, cacheName, 60)
       try {

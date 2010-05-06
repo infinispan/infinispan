@@ -17,8 +17,6 @@ import org.infinispan.test.TestingUtil
 @Test(groups = Array("functional"), testName = "server.hotrod.HotRodReplicationTest")
 class HotRodReplicationTest extends HotRodMultiNodeTest {
 
-   import HotRodServer._
-
    override protected def cacheName: String = "hotRodReplSync"
 
    override protected def createCacheConfig: Configuration = {
@@ -92,7 +90,6 @@ class HotRodReplicationTest extends HotRodMultiNodeTest {
 
       var cm = addClusterEnabledCacheManager()
       cm.defineConfiguration(cacheName, createCacheConfig)
-      cm.defineConfiguration(TopologyCacheName, createTopologyCacheConfig)
       val newServer = startHotRodServer(cm, servers.tail.head.getPort + 25)
 
       try {
@@ -119,7 +116,6 @@ class HotRodReplicationTest extends HotRodMultiNodeTest {
 
       cm = addClusterEnabledCacheManager()
       cm.defineConfiguration(cacheName, createCacheConfig)
-      cm.defineConfiguration(TopologyCacheName, createTopologyCacheConfig)
       val crashingServer = startCrashingHotRodServer(cm, servers.tail.head.getPort + 11)
 
       try {

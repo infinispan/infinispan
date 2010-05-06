@@ -6,7 +6,6 @@ import org.testng.annotations.{AfterMethod, AfterClass, Test}
 import test.HotRodClient
 import test.HotRodTestingUtil._
 import org.infinispan.config.Configuration.CacheMode
-import org.testng.Assert._
 
 /**
  * // TODO: Document this
@@ -23,7 +22,6 @@ abstract class HotRodMultiNodeTest extends MultipleCacheManagersTest {
       for (i <- 0 until 2) {
          val cm = addClusterEnabledCacheManager()
          cm.defineConfiguration(cacheName, createCacheConfig)
-         cm.defineConfiguration(TopologyCacheName, createTopologyCacheConfig)
       }
       hotRodServers = hotRodServers ::: List(startHotRodServer(cacheManagers.get(0)))
       hotRodServers = hotRodServers ::: List(startHotRodServer(cacheManagers.get(1), hotRodServers.head.getPort + 50))
@@ -52,15 +50,5 @@ abstract class HotRodMultiNodeTest extends MultipleCacheManagersTest {
    protected def cacheName: String
 
    protected def createCacheConfig: Configuration
-
-   protected def createTopologyCacheConfig: Configuration = {
-      val topologyCacheConfig = new Configuration
-      topologyCacheConfig.setCacheMode(CacheMode.REPL_SYNC)
-      topologyCacheConfig.setSyncReplTimeout(10000) // Milliseconds
-      topologyCacheConfig.setFetchInMemoryState(true) // State transfer required
-      topologyCacheConfig.setSyncCommitPhase(true) // Only for testing, so that asserts work fine.
-      topologyCacheConfig.setSyncRollbackPhase(true) // Only for testing, so that asserts work fine.
-      topologyCacheConfig
-   }
 
 }
