@@ -1,6 +1,6 @@
 package org.infinispan.client.hotrod.impl.transport.tcp;
 
-import org.infinispan.client.hotrod.impl.AbstractTransport;
+import org.infinispan.client.hotrod.impl.transport.AbstractTransport;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.transport.VHelper;
 import org.infinispan.util.logging.Log;

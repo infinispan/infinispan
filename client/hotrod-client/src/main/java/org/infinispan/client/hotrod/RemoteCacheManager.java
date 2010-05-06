@@ -1,14 +1,16 @@
 package org.infinispan.client.hotrod;
 
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory;
 import org.infinispan.client.hotrod.impl.HotrodOperations;
 import org.infinispan.client.hotrod.impl.HotrodOperationsImpl;
 import org.infinispan.client.hotrod.impl.HotrodMarshaller;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.SerializationMarshaller;
-import org.infinispan.client.hotrod.impl.TransportFactory;
+import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.impl.transport.VHelper;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
+import org.infinispan.executors.ExecutorFactory;
 import org.infinispan.lifecycle.Lifecycle;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.DefaultCacheManager;
@@ -23,6 +25,7 @@ import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.concurrent.ExecutorService;
 
 /**
  * // TODO: Document this
@@ -45,6 +48,8 @@ public class RemoteCacheManager implements CacheContainer, Lifecycle {
    private TransportFactory transportFactory;
    private String hotrodMarshaller;
    private boolean started = false;
+   private boolean forceReturnValueDefault = false;
+   private ExecutorService asyncExecutorService;
 
 
    /**
@@ -151,11 +156,18 @@ public class RemoteCacheManager implements CacheContainer, Lifecycle {
 
 
    public <K, V> RemoteCache<K, V> getCache(String cacheName) {
-      return createRemoteCache(cacheName);
+      return this.getCache(cacheName, forceReturnValueDefault);
+   }
+
+   public <K, V> RemoteCache<K, V> getCache(String cacheName, boolean forceReturnValue) {
+      return createRemoteCache(cacheName, forceReturnValue);
    }
 
    public <K, V> RemoteCache<K, V> getCache() {
-      return createRemoteCache(DefaultCacheManager.DEFAULT_CACHE_NAME);
+      return this.getCache(forceReturnValueDefault);
+   }
+   public <K, V> RemoteCache<K, V> getCache(boolean forceReturnValue) {
+      return createRemoteCache(DefaultCacheManager.DEFAULT_CACHE_NAME, forceReturnValue);
    }
 
    @Override
@@ -169,12 +181,21 @@ public class RemoteCacheManager implements CacheContainer, Lifecycle {
       String servers = props.getProperty(CONF_HOTROD_SERVERS);
       transportFactory.start(props, getStaticConfiguredServers(servers));
       hotrodMarshaller = props.getProperty("marshaller");
+
+      String asyncExecutorClass = DefaultAsyncExecutorFactory.class.getName();
+      if (props.contains("asyn-executor-factory")) {
+         asyncExecutorClass = props.getProperty("asyn-executor-factory");
+      }
+      ExecutorFactory executorFactory = (ExecutorFactory) VHelper.newInstance(asyncExecutorClass);
+      asyncExecutorService = executorFactory.getExecutor(props);
+      
+
       if (hotrodMarshaller == null) {
          hotrodMarshaller = SerializationMarshaller.class.getName();
          log.info("'marshaller' not specified, using " + hotrodMarshaller);
       }
       if (props.get("force-return-value") != null && props.get("force-return-value").equals("true")) {
-         throw new RuntimeException("force-return-value is not supported in Alpha1");
+          forceReturnValueDefault = true;
       }
       started = true;
    }
@@ -198,10 +219,10 @@ public class RemoteCacheManager implements CacheContainer, Lifecycle {
       }
    }
 
-   private <K, V> RemoteCache<K, V> createRemoteCache(String cacheName) {
+   private <K, V> RemoteCache<K, V> createRemoteCache(String cacheName, boolean forceReturnValue) {
       HotrodMarshaller marshaller = (HotrodMarshaller) VHelper.newInstance(hotrodMarshaller);
       HotrodOperations hotrodOperations = new HotrodOperationsImpl(cacheName, transportFactory);
-      return new RemoteCacheImpl<K, V>(hotrodOperations, marshaller, cacheName, this);
+      return new RemoteCacheImpl<K, V>(hotrodOperations, marshaller, cacheName, this, asyncExecutorService, forceReturnValue);
    }
 
    private Set<InetSocketAddress> getStaticConfiguredServers(String servers) {

@@ -22,18 +22,18 @@ public abstract class RemoteCacheSupport<K,V> extends CacheSupport<K,V> implemen
 
 
    @Override
-   public NotifyingFuture<Boolean> replaceAsync(K key, V newValue, long version) {
-      return replaceAsync(key, newValue, version, 0);
+   public NotifyingFuture<Boolean> replaceWithVersionAsync(K key, V newValue, long version) {
+      return replaceWithVersionAsync(key, newValue, version, 0);
    }
 
    @Override
-   public NotifyingFuture<Boolean> replaceAsync(K key, V newValue, long version, int lifespanSeconds) {
-      return replaceAsync(key, newValue, version, 0, 0);
+   public NotifyingFuture<Boolean> replaceWithVersionAsync(K key, V newValue, long version, int lifespanSeconds) {
+      return replaceWithVersionAsync(key, newValue, version, 0, 0);
    }
 
    @Override
-   public boolean replace(K key, V newValue, long version) {
-      return replace(key, newValue, version, 0);
+   public boolean replaceWithVersion(K key, V newValue, long version) {
+      return replaceWithVersion(key, newValue, version, 0);
    }
 
    @Override
@@ -42,8 +42,8 @@ public abstract class RemoteCacheSupport<K,V> extends CacheSupport<K,V> implemen
    }
 
    @Override
-   public boolean replace(K key, V newValue, long version, int lifespanSeconds) {
-      return replace(key, newValue, version, lifespanSeconds, 0);
+   public boolean replaceWithVersion(K key, V newValue, long version, int lifespanSeconds) {
+      return replaceWithVersion(key, newValue, version, lifespanSeconds, 0);
    }
 
    @Override

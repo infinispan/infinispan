@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod;
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.config.Configuration;
+import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -30,6 +31,7 @@ public class TopologyChangeTest extends MultipleCacheManagersTest {
    RemoteCache remoteCache;
    private RemoteCacheManager remoteCacheManager;
    private TcpTransportFactory tcpConnectionFactory;
+   private Configuration config;
 
    @Override
    protected void assertSupportedConfig() {      
@@ -37,7 +39,7 @@ public class TopologyChangeTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC);
+      config = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC);
       CacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(config);
       CacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(config);
       registerCacheManager(cm1);
@@ -50,7 +52,8 @@ public class TopologyChangeTest extends MultipleCacheManagersTest {
       manager(1).getCache();
 
       TestingUtil.blockUntilViewReceived(manager(0).getCache(), 2, 10000);
-      TestingUtil.blockUntilViewReceived(manager(1).getCache(), 2, 10000);
+      TestingUtil.blockUntilCacheStatusAchieved(manager(0).getCache(), ComponentStatus.RUNNING, 10000);
+      TestingUtil.blockUntilCacheStatusAchieved(manager(1).getCache(), ComponentStatus.RUNNING, 10000);
 
 
       manager(0).getCache().put("k","v");
@@ -75,10 +78,16 @@ public class TopologyChangeTest extends MultipleCacheManagersTest {
 
    @Test(dependsOnMethods = "testTwoMembers")
    public void testAddNewServer() {
-      addClusterEnabledCacheManager();
-      manager(2).getCache();
-      TestingUtil.blockUntilViewsReceived(10000, true, manager(0), manager(1), manager(2));
+      CacheManager cm3 = TestCacheManagerFactory.createClusteredCacheManager(config);
+      registerCacheManager(cm3);
       hotRodServer3 = TestHelper.startHotRodServer(manager(2));
+      manager(2).getCache();
+
+      TestingUtil.blockUntilViewsReceived(10000, true, manager(0), manager(1), manager(2));
+      TestingUtil.blockUntilCacheStatusAchieved(manager(0).getCache(), ComponentStatus.RUNNING, 10000);
+      TestingUtil.blockUntilCacheStatusAchieved(manager(1).getCache(), ComponentStatus.RUNNING, 10000);
+      TestingUtil.blockUntilCacheStatusAchieved(manager(2).getCache(), ComponentStatus.RUNNING, 10000);
+
       expectTopologyChange(new InetSocketAddress("localhost",hotRodServer3.getPort()), true);
       assertEquals(3, tcpConnectionFactory.getServers().size());
    }
@@ -87,6 +96,10 @@ public class TopologyChangeTest extends MultipleCacheManagersTest {
    public void testDropServer() {
       manager(2).stop();
       TestingUtil.blockUntilViewsReceived(10000, true, manager(0), manager(1));
+      TestingUtil.blockUntilViewsReceived(10000, true, manager(0), manager(1), manager(2));
+      TestingUtil.blockUntilCacheStatusAchieved(manager(0).getCache(), ComponentStatus.RUNNING, 10000);
+      TestingUtil.blockUntilCacheStatusAchieved(manager(1).getCache(), ComponentStatus.RUNNING, 10000);
+      
       InetSocketAddress server3Address = new InetSocketAddress("localhost", hotRodServer3.getPort());
       hotRodServer3.stop();
       expectTopologyChange(server3Address, false);
@@ -96,7 +109,8 @@ public class TopologyChangeTest extends MultipleCacheManagersTest {
    private void expectTopologyChange(InetSocketAddress server1Address, boolean added) {
       for (int i = 0; i < 10; i++) {
          try {
-            remoteCache.put("k" + i, "v" + i);
+//            remoteCache.put("k" + i, "v" + i);
+            remoteCache.ping();
          } catch (Exception e) {
             if (added) {
                throw new IllegalStateException(e);

@@ -116,13 +116,7 @@ public class TestCacheManagerFactory {
     * Creates an cache manager that does support clustering.
     */
    public static CacheManager createClusteredCacheManager() {
-      GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
-      amendMarshaller(globalConfiguration);
-      minimizeThreads(globalConfiguration);
-      Properties newTransportProps = new Properties();
-      newTransportProps.put(JGroupsTransport.CONFIGURATION_STRING, JGroupsConfigBuilder.getJGroupsConfig());
-      globalConfiguration.setTransportProperties(newTransportProps);
-      return newDefaultCacheManager(globalConfiguration, new Configuration(), false);
+      return createClusteredCacheManager(new Configuration());
    }
 
    /**

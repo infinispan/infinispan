@@ -62,55 +62,55 @@ public interface RemoteCache<K, V> extends Cache<K, V> {
     * <pre>
     * VersionedEntry ve = remoteCache.getVersioned(key);
     * //some processing
-    * remoteCache.remove(key, ve.getVersion();
+    * remoteCache.removeWithVersion(key, ve.getVersion();
     * </pre>
-    * Lat call (remove) will make sure that the entry will only be removed if it hasn't been changed in between.
+    * Lat call (removeWithVersion) will make sure that the entry will only be removed if it hasn't been changed in between.
     *
     * @return true if the entry has been removed
     * @see VersionedValue
     * @see #getVersioned(Object)
     */
-   boolean remove(K key, long version);
+   boolean removeWithVersion(K key, long version);
 
    /**
     * @see #remove(Object, Object)
     */
-   NotifyingFuture<Boolean> removeAsync(Object key, long version);
+   NotifyingFuture<Boolean> removeWithVersionAsync(K key, long version);
 
    /**
-    * Removes the given value only if its version matches the supplied version. See {@link #remove(Object, long)} for a
+    * Removes the given value only if its version matches the supplied version. See {@link #removeWithVersion(Object, long)} for a
     * sample usage.
     *
     * @return true if the method has been replaced
     * @see #getVersioned(Object)
     * @see VersionedValue
     */
-   boolean replace(K key, V newValue, long version);
+   boolean replaceWithVersion(K key, V newValue, long version);
 
    /**
-    * @see #replace(Object, Object, long)
+    * @see #replaceWithVersion(Object, Object, long)
     */
-   boolean replace(K key, V newValue, long version, int lifespanSeconds);
+   boolean replaceWithVersion(K key, V newValue, long version, int lifespanSeconds);
 
    /**
-    * @see #replace(Object, Object, long)
+    * @see #replaceWithVersion(Object, Object, long)
     */
-   boolean replace(K key, V newValue, long version, int lifespanSeconds, int maxIdleTimeSeconds);
+   boolean replaceWithVersion(K key, V newValue, long version, int lifespanSeconds, int maxIdleTimeSeconds);
 
    /**
-    * @see #replace(Object, Object, long)
+    * @see #replaceWithVersion(Object, Object, long)
     */
-   NotifyingFuture<Boolean> replaceAsync(K key, V newValue, long version);
+   NotifyingFuture<Boolean> replaceWithVersionAsync(K key, V newValue, long version);
 
    /**
-    * @see #replace(Object, Object, long)
+    * @see #replaceWithVersion(Object, Object, long)
     */
-   NotifyingFuture<Boolean> replaceAsync(K key, V newValue, long version, int lifespanSeconds);
+   NotifyingFuture<Boolean> replaceWithVersionAsync(K key, V newValue, long version, int lifespanSeconds);
 
    /**
-    * @see #replace(Object, Object, long)
+    * @see #replaceWithVersion(Object, Object, long)
     */
-   NotifyingFuture<Boolean> replaceAsync(K key, V newValue, long version, int lifespanSeconds, int maxIdleSeconds);
+   NotifyingFuture<Boolean> replaceWithVersionAsync(K key, V newValue, long version, int lifespanSeconds, int maxIdleSeconds);
 
 
    /**
@@ -202,7 +202,7 @@ public interface RemoteCache<K, V> extends Cache<K, V> {
    void endBatch(boolean successful);
 
    /**
-    * This operation is not supported. Consider using {@link #remove(Object, long)} instead.
+    * This operation is not supported. Consider using {@link #removeWithVersion(Object, long)} instead.
     *
     * @throws UnsupportedOperationException
     */
@@ -210,7 +210,7 @@ public interface RemoteCache<K, V> extends Cache<K, V> {
    boolean remove(Object key, Object value);
 
    /**
-    * This operation is not supported. Consider using {@link #removeAsync(Object, long)} instead.
+    * This operation is not supported. Consider using {@link #removeWithVersionAsync(Object, long)} instead.
     *
     * @throws UnsupportedOperationException
     */
@@ -218,7 +218,7 @@ public interface RemoteCache<K, V> extends Cache<K, V> {
    NotifyingFuture<Boolean> removeAsync(Object key, Object value);
 
    /**
-    * This operation is not supported. Consider using {@link #replace(Object, Object, long)} instead.
+    * This operation is not supported. Consider using {@link #replaceWithVersion(Object, Object, long)} instead.
     *
     * @throws UnsupportedOperationException
     */
@@ -242,7 +242,7 @@ public interface RemoteCache<K, V> extends Cache<K, V> {
    boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit);
 
    /**
-    * This operation is not supported. Consider using {@link #replaceAsync(Object, Object, long)} instead.
+    * This operation is not supported. Consider using {@link #replaceWithVersionAsync(Object, Object, long)} instead.
     *
     * @throws UnsupportedOperationException
     */

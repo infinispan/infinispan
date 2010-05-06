@@ -2,8 +2,10 @@ package org.infinispan.client.hotrod.impl.transport.tcp;
 
 import org.apache.commons.pool.impl.GenericKeyedObjectPool;
 import org.infinispan.client.hotrod.exceptions.TransportException;
-import org.infinispan.client.hotrod.impl.Transport;
-import org.infinispan.client.hotrod.impl.TransportFactory;
+import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
+import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashFactory;
+import org.infinispan.client.hotrod.impl.transport.Transport;
+import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.impl.transport.VHelper;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -11,6 +13,7 @@ import org.infinispan.util.logging.LogFactory;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Properties;
 import java.util.Set;
 
@@ -33,9 +36,12 @@ public class TcpTransportFactory implements TransportFactory {
    private volatile GenericKeyedObjectPool connectionPool;
    private volatile RequestBalancingStrategy balancer;
    private volatile Collection<InetSocketAddress> servers;
+   private volatile ConsistentHash consistentHash;
+   private final ConsistentHashFactory hashFactory = new ConsistentHashFactory();
 
    @Override
    public void start(Properties props, Collection<InetSocketAddress> staticConfiguredServers) {
+      hashFactory.init(props);
       servers = staticConfiguredServers;
       String balancerClass = props.getProperty("requestBalancingStrategy", RoundRobinBalancingStrategy.class.getName());
       balancer = (RequestBalancingStrategy) VHelper.newInstance(balancerClass);
@@ -55,17 +61,36 @@ public class TcpTransportFactory implements TransportFactory {
    }
 
    @Override
+   public void updateHashFunction(LinkedHashMap<InetSocketAddress,Integer> servers2HashCode, int numKeyOwners, short hashFunctionVersion, int hashSpace) {
+      ConsistentHash hash = hashFactory.newConsistentHash(hashFunctionVersion);
+      if (hash == null) {
+         log.warn("No hash function configured for version: " + hashFunctionVersion);
+      } else {
+         hash.init(servers2HashCode, numKeyOwners, hashSpace);
+      }
+      consistentHash = hash;
+   }
+
+   @Override
    public Transport getTransport() {
       InetSocketAddress server = balancer.nextServer();
-      try {
-         return (Transport) connectionPool.borrowObject(server);
-      } catch (Exception e) {
-         String message = "Could not fetch transport";
-         log.error(message, e);
-         throw new TransportException(message, e);
-      } finally {
-         logConnectionInfo(server);
+      return borrowTransportFromPool(server);
+   }
+
+   public Transport getTransport(byte[] key) {
+      InetSocketAddress server;
+      if (consistentHash != null) {
+         server = consistentHash.getServer(key);
+         if (log.isTraceEnabled()) {
+            log.trace("Using consistent hash for determining the server: " + server);
+         }
+      } else {
+         server = balancer.nextServer();
+         if (log.isTraceEnabled()) {
+            log.trace("Using the balancer for determining the server: " + server);
+         }
       }
+      return borrowTransportFromPool(server);
    }
 
    @Override
@@ -132,6 +157,18 @@ public class TcpTransportFactory implements TransportFactory {
    private void logConnectionInfo(InetSocketAddress server) {
       if (log.isTraceEnabled()) {
          log.trace("For server " + server + ": active = " + connectionPool.getNumActive(server) + "; idle = " + connectionPool.getNumIdle(server));
+      }
+   }
+
+   private Transport borrowTransportFromPool(InetSocketAddress server) {
+      try {
+         return (Transport) connectionPool.borrowObject(server);
+      } catch (Exception e) {
+         String message = "Could not fetch transport";
+         log.error(message, e);
+         throw new TransportException(message, e);
+      } finally {
+         logConnectionInfo(server);
       }
    }
 }

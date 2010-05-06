@@ -6,59 +6,88 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.ServerStatistics;
 import org.infinispan.client.hotrod.Version;
 import org.infinispan.client.hotrod.VersionedValue;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.client.hotrod.impl.async.NotifyingFutureImpl;
 import org.infinispan.util.concurrent.NotifyingFuture;
 
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
  * // TODO: Document this
+ * //todo - consider the return values
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K,V> {
+public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
+
+   private static final Flag[] FORCE_RETURN_VALUE = {Flag.FORCE_RETURN_VALUE};
 
    private ThreadLocal<Flag[]> flagsMap = new ThreadLocal<Flag[]>();
    private HotrodOperations operations;
    private HotrodMarshaller marshaller;
    private String name;
    private RemoteCacheManager remoteCacheManager;
+   private final ExecutorService executorService;
+   private final boolean forceReturnValue;
 
 
-   public RemoteCacheImpl(HotrodOperations operations, HotrodMarshaller marshaller, String name, RemoteCacheManager rcm) {
+   public RemoteCacheImpl(HotrodOperations operations, HotrodMarshaller marshaller, String name, RemoteCacheManager rcm, ExecutorService executorService, boolean forceReturnValue) {
       this.operations = operations;
       this.marshaller = marshaller;
       this.name = name;
       this.remoteCacheManager = rcm;
+      this.executorService = executorService;
+      this.forceReturnValue = forceReturnValue;
    }
 
    public RemoteCacheManager getRemoteCacheManager() {
       return remoteCacheManager;
    }
 
-
    @Override
-   public boolean remove(K key, long version) {
+   public boolean removeWithVersion(K key, long version) {
       VersionedOperationResponse response = operations.removeIfUnmodified(obj2bytes(key), version, flags());
       return response.getCode().isUpdated();
    }
 
    @Override
-   public NotifyingFuture<Boolean> removeAsync(Object key, long version) {
-      return null;  // TODO: Customise this generated block
+   public NotifyingFuture<Boolean> removeWithVersionAsync(final K key, final long version) {
+      final NotifyingFutureImpl<Boolean> result = new NotifyingFutureImpl<Boolean>();
+      Future future = executorService.submit(new Callable() {
+         @Override
+         public Object call() throws Exception {
+            boolean removed = removeWithVersion(key, version);
+            result.notifyFutureCompletion();
+            return removed;
+         }
+      });
+      result.setExecuting(future);
+      return result;
    }
 
    @Override
-   public boolean replace(K key, V newValue, long version, int lifespanSeconds, int maxIdleTimeSeconds) {
+   public boolean replaceWithVersion(K key, V newValue, long version, int lifespanSeconds, int maxIdleTimeSeconds) {
       VersionedOperationResponse response = operations.replaceIfUnmodified(obj2bytes(key), obj2bytes(newValue), lifespanSeconds, maxIdleTimeSeconds, version, flags());
       return response.getCode().isUpdated();
    }
 
    @Override
-   public NotifyingFuture<Boolean> replaceAsync(K key, V newValue, long version, int lifespanSeconds, int maxIdleSeconds) {
-      return null;  // TODO: Customise this generated block
+   public NotifyingFuture<Boolean> replaceWithVersionAsync(final K key, final V newValue, final long version, final int lifespanSeconds, final int maxIdleSeconds) {
+      final NotifyingFutureImpl<Boolean> result = new NotifyingFutureImpl<Boolean>();
+      Future future = executorService.submit(new Callable() {
+         @Override
+         public Object call() throws Exception {
+            boolean removed = replaceWithVersion(key, newValue, version, lifespanSeconds, maxIdleSeconds);
+            result.notifyFutureCompletion();
+            return removed;
+         }
+      });
+      result.setExecuting(future);
+      return result;
    }
 
    @Override
@@ -75,8 +104,19 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K,V> {
    }
 
    @Override
-   public NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return null;  // TODO: Customise this generated block
+   public NotifyingFuture<Void> putAllAsync(final Map<? extends K, ? extends V> data, final long lifespan, final TimeUnit lifespanUnit, final long maxIdle, final TimeUnit maxIdleUnit) {
+      final NotifyingFutureImpl<Void> result = new NotifyingFutureImpl<Void>();
+      Future future = executorService.submit(new Callable() {
+         @Override
+         public Object call() throws Exception {
+            putAll(data, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+            result.notifyFutureCompletion();
+            return null;
+         }
+      });
+      result.setExecuting(future);
+      return result;
+
    }
 
    @Override
@@ -96,7 +136,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K,V> {
 
    @Override
    public String getVersion() {
-      return Version.getProtocolVersion();  
+      return Version.getProtocolVersion();
    }
 
    @Override
@@ -125,28 +165,78 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K,V> {
    }
 
    @Override
-   public NotifyingFuture<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return null;  // TODO: Customise this generated block
+   public NotifyingFuture<V> putAsync(final K key, final V value, final long lifespan, final TimeUnit lifespanUnit, final long maxIdle, final TimeUnit maxIdleUnit) {
+      final NotifyingFutureImpl<V> result = new NotifyingFutureImpl<V>();
+      Future future = executorService.submit(new Callable() {
+         @Override
+         public Object call() throws Exception {
+            V prevValue = put(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+            result.notifyFutureCompletion();
+            return prevValue;
+         }
+      });
+      result.setExecuting(future);
+      return result;
    }
 
    @Override
    public NotifyingFuture<Void> clearAsync() {
-      return null;  // TODO: Customise this generated block
+      final NotifyingFutureImpl<Void> result = new NotifyingFutureImpl<Void>();
+      Future future = executorService.submit(new Callable() {
+         @Override
+         public Object call() throws Exception {
+            clear();
+            result.notifyFutureCompletion();
+            return null;
+         }
+      });
+      result.setExecuting(future);
+      return result;
    }
 
    @Override
-   public NotifyingFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return null;  // TODO: Customise this generated block
+   public NotifyingFuture<V> putIfAbsentAsync(final K key,final V value,final long lifespan,final TimeUnit lifespanUnit,final long maxIdle,final TimeUnit maxIdleUnit) {
+      final NotifyingFutureImpl<V> result = new NotifyingFutureImpl<V>();
+      Future future = executorService.submit(new Callable() {
+         @Override
+         public Object call() throws Exception {
+            V prevValue = putIfAbsent(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+            result.notifyFutureCompletion();
+            return prevValue;
+         }
+      });
+      result.setExecuting(future);
+      return result;
    }
 
    @Override
-   public NotifyingFuture<V> removeAsync(Object key) {
-      return null;  // TODO: Customise this generated block
+   public NotifyingFuture<V> removeAsync(final Object key) {
+      final NotifyingFutureImpl<V> result = new NotifyingFutureImpl<V>();
+      Future future = executorService.submit(new Callable() {
+         @Override
+         public Object call() throws Exception {
+            V toReturn = remove(key);
+            result.notifyFutureCompletion();
+            return toReturn;
+         }
+      });
+      result.setExecuting(future);
+      return result;      
    }
 
    @Override
-   public NotifyingFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return null;  // TODO: Customise this generated block
+   public NotifyingFuture<V> replaceAsync(final K key,final V value,final long lifespan,final TimeUnit lifespanUnit,final long maxIdle,final TimeUnit maxIdleUnit) {
+      final NotifyingFutureImpl<V> result = new NotifyingFutureImpl<V>();
+      Future future = executorService.submit(new Callable() {
+         @Override
+         public Object call() throws Exception {
+            V v = replace(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+            result.notifyFutureCompletion();
+            return v;
+         }
+      });
+      result.setExecuting(future);
+      return result;
    }
 
    @Override
@@ -196,6 +286,9 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K,V> {
    private Flag[] flags() {
       Flag[] flags = this.flagsMap.get();
       this.flagsMap.remove();
+      if (flags == null && forceReturnValue) {
+         return FORCE_RETURN_VALUE;
+      }
       return flags;
    }
 
@@ -217,8 +310,8 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K,V> {
       return new VersionedValueImpl<V>(value.getVersion(), valueObj);
    }
 
-   private int toSeconds(long durration, TimeUnit timeUnit) {
+   private int toSeconds(long duration, TimeUnit timeUnit) {
       //todo make sure this can pe enveloped on an int
-      return (int) timeUnit.toSeconds(durration);
+      return (int) timeUnit.toSeconds(duration);
    }
 }

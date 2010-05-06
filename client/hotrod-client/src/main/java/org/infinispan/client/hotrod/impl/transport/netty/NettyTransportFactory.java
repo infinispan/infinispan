@@ -1,12 +1,13 @@
 package org.infinispan.client.hotrod.impl.transport.netty;
 
-import org.infinispan.client.hotrod.impl.Transport;
-import org.infinispan.client.hotrod.impl.TransportFactory;
+import org.infinispan.client.hotrod.impl.transport.Transport;
+import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.Properties;
 
 /**
@@ -47,5 +48,15 @@ public class NettyTransportFactory implements TransportFactory {
    @Override
    public void releaseTransport(Transport transport) {
       transport.release();
+   }
+
+   @Override
+   public void updateHashFunction(LinkedHashMap<InetSocketAddress,Integer> servers2HashCode, int numKeyOwners, short hashFunctionVersion, int hashSpace) {
+      // TODO: Customise this generated block
+   }
+
+   @Override
+   public Transport getTransport(byte[] key) {
+      return getTransport();  // TODO: Customise this generated block
    }
 }

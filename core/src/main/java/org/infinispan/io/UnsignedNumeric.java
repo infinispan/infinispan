@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.OutputStream;
+import java.nio.Buffer;
 
 /**
  * Helper to read and write unsigned numerics
@@ -36,6 +37,16 @@ public class UnsignedNumeric {
       }
       return i;
    }
+   
+   public static int readUnsignedInt(java.nio.ByteBuffer in) throws IOException {
+      int b = in.get();
+      int i = b & 0x7F;
+      for (int shift = 7; (b & 0x80) != 0; shift += 7) {
+         b = in.get();
+         i |= (b & 0x7FL) << shift;
+      }
+      return i;
+   }
 
    /**
     * Writes an int in a variable-length format.  Writes between one and five bytes.  Smaller values take fewer bytes.
@@ -57,6 +68,14 @@ public class UnsignedNumeric {
          i >>>= 7;
       }
       out.write((byte) i);
+   }
+   
+   public static void writeUnsignedInt(java.nio.ByteBuffer out, int i) throws IOException {
+      while ((i & ~0x7F) != 0) {
+         out.put((byte) ((i & 0x7f) | 0x80));
+         i >>>= 7;
+      }
+      out.put((byte) i);
    }
 
 
@@ -83,6 +102,15 @@ public class UnsignedNumeric {
       }
       return i;
    }
+   public static long readUnsignedLong(java.nio.ByteBuffer in) throws IOException {
+      int b = in.get();
+      long i = b & 0x7F;
+      for (int shift = 7; (b & 0x80) != 0; shift += 7) {
+         b = in.get();
+         i |= (b & 0x7FL) << shift;
+      }
+      return i;
+   }
 
    /**
     * Writes an int in a variable-length format.  Writes between one and nine bytes.  Smaller values take fewer bytes.
@@ -104,6 +132,14 @@ public class UnsignedNumeric {
          i >>>= 7;
       }
       out.write((byte) i);
+   }
+
+   public static void writeUnsignedLong(java.nio.ByteBuffer out, long i) throws IOException {
+      while ((i & ~0x7F) != 0) {
+         out.put((byte) ((i & 0x7f) | 0x80));
+         i >>>= 7;
+      }
+      out.put((byte) i);
    }
 
      /**

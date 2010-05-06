@@ -1,9 +1,10 @@
-package org.infinispan.client.hotrod.impl;
+package org.infinispan.client.hotrod.impl.transport;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 
 /**
  * // TODO: Document this
@@ -24,4 +25,8 @@ public interface TransportFactory {
    void updateServers(Collection<InetSocketAddress> newServers);
 
    void destroy();
+
+   void updateHashFunction(LinkedHashMap<InetSocketAddress,Integer> servers2HashCode, int numKeyOwners, short hashFunctionVersion, int hashSpace);
+
+   Transport getTransport(byte[] key);
 }

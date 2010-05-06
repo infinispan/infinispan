@@ -1,4 +1,4 @@
-package org.infinispan.client.hotrod.impl;
+package org.infinispan.client.hotrod.impl.transport;
 
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -58,6 +58,17 @@ public abstract class AbstractTransport implements Transport {
          result ^= (long) longByte & 0xFF;
       }
       return result;
+   }
+
+   @Override
+   public int read4ByteInt() {
+      byte[] b = readByteArray(4);
+      int value = 0;
+      for (int i = 0; i < 4; i++) {
+         int shift = (4 - 1 - i) * 8;
+         value += (b[i] & 0x000000FF) << shift;
+      }
+      return value;
    }
 
    public void writeArray(byte[] toAppend) {

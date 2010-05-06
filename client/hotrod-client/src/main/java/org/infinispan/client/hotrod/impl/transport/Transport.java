@@ -1,4 +1,4 @@
-package org.infinispan.client.hotrod.impl;
+package org.infinispan.client.hotrod.impl.transport;
 
 import net.jcip.annotations.NotThreadSafe;
 
@@ -43,4 +43,6 @@ public interface Transport {
    void writeLong(long longValue);
 
    int readUnsignedShort();
+
+   int read4ByteInt();
 }

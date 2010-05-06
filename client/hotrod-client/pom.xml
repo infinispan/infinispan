@@ -11,6 +11,7 @@
    </parent>
    <properties>
       <version.netty>3.2.0.BETA1</version.netty>
+      <version.scala>2.8.0.RC1</version.scala>
    </properties>
 
 
@@ -59,6 +60,13 @@
          <groupId>commons-pool</groupId>
          <artifactId>commons-pool</artifactId>
          <version>1.5.4</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.scala-lang</groupId>
+         <artifactId>scala-library</artifactId>
+         <version>${version.scala}</version>
+         <scope>test</scope>
       </dependency>
 
    </dependencies>

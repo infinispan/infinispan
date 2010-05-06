@@ -19,7 +19,6 @@ import java.util.Properties;
 
 import static junit.framework.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
 
 
 /**
@@ -144,21 +143,21 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
 
       remoteCache.put("aKey", "aValue");
       VersionedValue valueBinary = remoteCache.getVersioned("aKey");
-      assert remoteCache.replace("aKey", "aNewValue", valueBinary.getVersion());
+      assert remoteCache.replaceWithVersion("aKey", "aNewValue", valueBinary.getVersion());
 
       VersionedValue entry2 = remoteCache.getVersioned("aKey");
       assert entry2.getVersion() != valueBinary.getVersion();
       assertEquals(entry2.getValue(), "aNewValue");
 
-      assert !remoteCache.replace("aKey", "aNewValue", valueBinary.getVersion());
+      assert !remoteCache.replaceWithVersion("aKey", "aNewValue", valueBinary.getVersion());
    }
 
    public void testRemoveIfUnmodified() {
-      assert !remoteCache.remove("aKey", 12321212l);
+      assert !remoteCache.removeWithVersion("aKey", 12321212l);
 
       remoteCache.put("aKey", "aValue");
       VersionedValue valueBinary = remoteCache.getVersioned("aKey");
-      assert remoteCache.remove("aKey", valueBinary.getVersion());
+      assert remoteCache.removeWithVersion("aKey", valueBinary.getVersion());
       assert !cache.containsKey("aKey");
 
       remoteCache.put("aKey", "aNewValue");
@@ -167,7 +166,7 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
       assert entry2.getVersion() != valueBinary.getVersion();
       assertEquals(entry2.getValue(), "aNewValue");
 
-      assert  !remoteCache.remove("aKey", valueBinary.getVersion());
+      assert  !remoteCache.removeWithVersion("aKey", valueBinary.getVersion());
    }
 
    public void testPutIfAbsent() {
@@ -199,7 +198,7 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
       if (value == null) {
          assert cacheValue == null : "Expected null value but received: " + cacheValue;
       } else {
-         assert Arrays.equals(valueBytes, cacheValue.data());
+         assert Arrays.equals(valueBytes, (byte[])cacheValue.data());
       }
    }
 }
