@@ -109,8 +109,8 @@ public class TopologyChangeTest extends MultipleCacheManagersTest {
    private void expectTopologyChange(InetSocketAddress server1Address, boolean added) {
       for (int i = 0; i < 10; i++) {
          try {
-//            remoteCache.put("k" + i, "v" + i);
-            remoteCache.ping();
+            remoteCache.put("k" + i, "v" + i);
+//            remoteCache.ping();
          } catch (Exception e) {
             if (added) {
                throw new IllegalStateException(e);
