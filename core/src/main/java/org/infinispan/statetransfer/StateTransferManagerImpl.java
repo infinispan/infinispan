@@ -309,6 +309,8 @@ public class StateTransferManagerImpl implements StateTransferManager {
             boolean canProvideState = (Boolean) marshaller.objectFromObjectStream(oi);
             if (canProvideState) {
                assertDelimited(oi);
+               // First clear the cache store!!
+               if (cs != null) cs.clear();
                if (transientState) applyInMemoryState(oi);
                assertDelimited(oi);
                if (persistentState) applyPersistentState(oi);

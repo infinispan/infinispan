@@ -166,8 +166,6 @@ public abstract class LockSupportCacheStore extends AbstractCacheStore {
    public final void fromStream(ObjectInput objectInput) throws CacheLoaderException {
       try {
          acquireGlobalLock(true);
-         // first clear all local state
-         clear();
          fromStreamLockSafe(objectInput);
       } finally {
          releaseGlobalLock(true);

@@ -41,7 +41,6 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
    public void fromStream(ObjectInput ois) throws CacheLoaderException {
       try {
          int numEntries = (Integer) marshaller.objectFromObjectStream(ois);
-         store.clear();
          for (int i = 0; i < numEntries; i++) {
             InternalCacheEntry e = (InternalCacheEntry) marshaller.objectFromObjectStream(ois);
             if (trace) log.trace("Store {0} from stream in dummy store@{1}", e, Integer.toHexString(System.identityHashCode(store)));

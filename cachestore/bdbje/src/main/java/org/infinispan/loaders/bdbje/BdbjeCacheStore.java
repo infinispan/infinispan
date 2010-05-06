@@ -421,6 +421,7 @@ public class BdbjeCacheStore extends AbstractCacheStore {
    public void clear() throws CacheLoaderException {
       try {
          cacheMap.clear();
+         expiryMap.clear();
       } catch (RuntimeException caught) {
          throw convertToCacheLoaderException("error clearing store", caught);
       }
@@ -472,8 +473,6 @@ public class BdbjeCacheStore extends AbstractCacheStore {
    public void fromStream(ObjectInput ois) throws CacheLoaderException {
       try {
          currentTransaction.beginTransaction(null);
-         cacheMap.clear();
-         expiryMap.clear();
          for (Database db : new Database[]{cacheDb, expiryDb}) {
             long recordCount = ois.readLong();
             log.debug("clearing and reading {0} records from stream", recordCount);
