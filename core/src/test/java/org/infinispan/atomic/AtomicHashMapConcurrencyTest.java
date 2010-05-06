@@ -57,8 +57,7 @@ public class AtomicHashMapConcurrencyTest extends AbstractInfinispanTest {
 
    public void testConcurrentCreate() throws Exception {
       tm.begin();
-      AtomicMap<String, String> map = AtomicMapLookup.getAtomicMap(cache, KEY);
-      map.put("blah", "blah");
+      AtomicMapLookup.getAtomicMap(cache, KEY);
       OtherThread ot = new OtherThread();
       ot.start();
       Object response = ot.response.take();
@@ -78,7 +77,6 @@ public class AtomicHashMapConcurrencyTest extends AbstractInfinispanTest {
 
    public void testReadAfterTxStarted() throws Exception {
       AtomicMap<Integer, String> atomicMap = AtomicMapLookup.getAtomicMap(cache, KEY);
-      cache.putIfAbsent(KEY, AtomicHashMap.newInstance());
       atomicMap.put(1, "existing");
       tm.begin();
       atomicMap.put(1, "newVal");
@@ -109,7 +107,6 @@ public class AtomicHashMapConcurrencyTest extends AbstractInfinispanTest {
          try {
             tm.begin();
             AtomicMap<Integer, String> atomicMap = AtomicMapLookup.getAtomicMap(cache, KEY);
-            if (cache.get(KEY) == null) cache.putIfAbsent(KEY, AtomicHashMap.newInstance());
             boolean notCommited = true;
             while (notCommited) {
                Operation op = toExecute.take();

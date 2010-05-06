@@ -58,11 +58,14 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
     * Construction only allowed through this factory method.  This factory is intended for use internally by the
     * CacheDelegate.  User code should use {@link org.infinispan.atomic.AtomicMapLookup#getAtomicMap(Cache, Object)}.
     */
-   public static AtomicHashMap newInstance() {
-      return new AtomicHashMap();
+   public static AtomicHashMap newInstance(Cache cache, Object cacheKey) {
+      AtomicHashMap value = new AtomicHashMap();
+      Object oldValue = cache.putIfAbsent(cacheKey, value);
+      if (oldValue != null) value = (AtomicHashMap) oldValue;
+      return value;
    }
 
-   AtomicHashMap() {
+   public AtomicHashMap() {
       delegate = new FastCopyHashMap<K, V>();
    }
 

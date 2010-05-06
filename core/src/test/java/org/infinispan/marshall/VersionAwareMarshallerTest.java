@@ -346,7 +346,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
    }
 
    public void testAtomicHashMap() throws Exception {
-      AtomicHashMap<String, String> m = AtomicHashMap.newInstance();
+      AtomicHashMap<String, String> m = new AtomicHashMap<String, String>();
       m.initForWriting();
       m.put("k1", "v1");
       m.put("k1", "v2");
@@ -359,13 +359,13 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       }
       assert m.size() == 1;
       
-      m = AtomicHashMap.newInstance();
+      m = new AtomicHashMap<String, String>();
       assert m.isEmpty();
       bytes = marshaller.objectToByteBuffer(m);
       m = (AtomicHashMap<String, String>) marshaller.objectFromByteBuffer(bytes);
       assert m.isEmpty();
       
-      m = AtomicHashMap.newInstance();
+      m = new AtomicHashMap<String, String>();
       m.initForWriting();
       m.put("k1", "v1");
       m.put("k2", "v2");
@@ -379,7 +379,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       }
       assert m.size() == 2;
       
-      m = AtomicHashMap.newInstance();
+      m = new AtomicHashMap<String, String>();
       m.initForWriting();
       m.put("k5", "v1");
       m.put("k5", "v2");
