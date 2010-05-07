@@ -18,14 +18,6 @@
       <version.scala>2.8.0.RC1</version.scala>
    </properties>
 
-   <modules>
-      <module>core</module>
-      <module>rest</module>
-      <module>memcached</module>
-      <module>hotrod</module>
-      <module>websocket</module>
-   </modules>
-
    <dependencies>
       <dependency>
          <groupId>${project.groupId}</groupId>
