@@ -94,7 +94,7 @@ class HotRodEncoder(cacheManager: CacheManager) extends Encoder {
       t.view.members.foreach{address =>
          buffer.writeString(address.host)
          buffer.writeUnsignedShort(address.port)
-         buffer.writeUnsignedInt(0) // Address' hash id
+         buffer.writeInt(0) // Address' hash id
       }
    }
 
@@ -115,16 +115,16 @@ class HotRodEncoder(cacheManager: CacheManager) extends Encoder {
          val cachedHashId = address.hashIds.get(r.cacheName)
          val hashId = consistentHash.getHashId(address.clusterAddress)
          val newAddress =
-             // If distinct or not present, cached hash id needs updating
-             if (cachedHashId == None || cachedHashId.get != hashId) {
-                if (!hashIdUpdateRequired) hashIdUpdateRequired = true
-                val newHashIds = address.hashIds + (r.cacheName -> hashId)
-                address.copy(hashIds = newHashIds)
-             } else {
-                address
-             }
+            // If distinct or not present, cached hash id needs updating
+            if (cachedHashId == None || cachedHashId.get != hashId) {
+               if (!hashIdUpdateRequired) hashIdUpdateRequired = true
+               val newHashIds = address.hashIds + (r.cacheName -> hashId)
+               address.copy(hashIds = newHashIds)
+            } else {
+               address
+            }
          updateMembers += newAddress
-         buffer.writeUnsignedInt(hashId) // Address' hash id
+         buffer.writeInt(hashId) // Address' hash id
       }
       // At least a hash id had to be updated in the view. Take the view copy and distribute it around the cluster
       if (hashIdUpdateRequired) {

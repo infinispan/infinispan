@@ -23,6 +23,7 @@ abstract class ChannelBuffer {
     */
    def readString: String
    def readLong: Long
+   def readInt: Int
    def writeByte(value: Byte)
    def writeBytes(src: Array[Byte])
 
@@ -40,6 +41,7 @@ abstract class ChannelBuffer {
     */
    def writeString(msg: String)
    def writeLong(l: Long)
+   def writeInt(i: Int)
 
    def getUnderlyingChannelBuffer: AnyRef
 }

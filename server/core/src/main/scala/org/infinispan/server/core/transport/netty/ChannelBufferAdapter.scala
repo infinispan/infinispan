@@ -32,6 +32,7 @@ class ChannelBufferAdapter(buffer: NettyChannelBuffer) extends ChannelBuffer {
     */
    override def readString: String = new String(readRangedBytes, "UTF8")
    override def readLong: Long = buffer.readLong
+   override def readInt: Int = buffer.readInt
    override def writeByte(value: Byte) = buffer.writeByte(value)
    override def writeBytes(src: Array[Byte]) = buffer.writeBytes(src)
 
@@ -52,6 +53,7 @@ class ChannelBufferAdapter(buffer: NettyChannelBuffer) extends ChannelBuffer {
     */
    override def writeString(msg: String) = writeRangedBytes(msg.getBytes())
    override def writeLong(l: Long) = buffer.writeLong(l)
+   override def writeInt(i: Int) = buffer.writeInt(i)
 
    override def getUnderlyingChannelBuffer: AnyRef = buffer
 

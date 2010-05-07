@@ -290,7 +290,7 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[NoState] wi
                for (i <- 0 until numberClusterMembers) {
                   val host = buf.readString
                   val port = buf.readUnsignedShort
-                  val hashId = buf.readUnsignedInt
+                  val hashId = buf.readInt
                   viewArray(i) = TopologyAddress(host, port, Map(op.cacheName -> hashId), null)
                }
                Some(HashDistAwareResponse(TopologyView(topologyId, viewArray.toList), numOwners, hashFunction, hashSpace))
