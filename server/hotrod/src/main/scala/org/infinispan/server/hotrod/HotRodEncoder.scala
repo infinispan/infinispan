@@ -84,9 +84,8 @@ class HotRodEncoder(cacheManager: CacheManager) extends Encoder {
       }
    }
 
-   // TODO: Spec values when client intel is 3 but cache is not configured with distribution
    private def writeHashTopologyHeader(t: TopologyAwareResponse, buffer: ChannelBuffer) {
-      trace("Return topology change response header in spite of having a hash aware client {0}", t)
+      trace("Return limited hash distribution aware header in spite of having a hash aware client {0}", t)
       buffer.writeUnsignedInt(t.view.topologyId)
       buffer.writeUnsignedShort(0) // Num key owners
       buffer.writeByte(0) // Hash function
