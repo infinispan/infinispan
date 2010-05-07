@@ -3,6 +3,7 @@ package org.infinispan.distribution;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.Marshallable;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.hash.MurmurHash2;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -13,10 +14,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
 import static java.lang.Math.min;
+import static org.infinispan.util.hash.MurmurHash2.hash;
 
 @Marshallable(externalizer = DefaultConsistentHash.Externalizer.class, id = Ids.DEFAULT_CONSISTENT_HASH)
 public class DefaultConsistentHash extends AbstractConsistentHash {
@@ -29,18 +32,6 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
 
    final static int HASH_SPACE = 10240; // no more than 10k nodes?
 
-   private int hash(Object o) {
-      // Borrowed from Sun's JDK, a bit spreader to help normalize distribution.
-      // Uses a variant of single-word Wang/Jenkins hash.
-      int h = o.hashCode();
-      h += (h << 15) ^ 0xffffcd7d;
-      h ^= (h >>> 10);
-      h += (h << 3);
-      h ^= (h >>> 6);
-      h += (h << 2) + (h << 14);
-      return h ^ (h >>> 16);
-   }
-
    public void setCaches(List<Address> caches) {
 
       addresses = new ArrayList<Address>(caches);
@@ -52,7 +43,7 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
       addressToHashIds = new HashMap<Address, Integer>();
 
       for (Address a : addresses) {
-         int positionIndex = Math.abs(hash(a.hashCode())) % HASH_SPACE;
+         int positionIndex = Math.abs(hash(a)) % HASH_SPACE;
          // this is deterministic since the address list is ordered and the order is consistent across the grid
          while (positions.containsKey(positionIndex)) positionIndex = positionIndex + 1 % HASH_SPACE;
          positions.put(positionIndex, a);
@@ -72,7 +63,7 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
    }
 
    public List<Address> locate(Object key, int replCount) {
-      int keyHashCode = hash(key.hashCode());
+      int keyHashCode = hash(key);
       if (keyHashCode == Integer.MIN_VALUE) keyHashCode += 1;
       int hash = Math.abs(keyHashCode);
       int numCopiesToFind = min(replCount, addresses.size());
@@ -109,7 +100,7 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
    @Override
    public boolean isKeyLocalToAddress(Address target, Object key, int replCount) {
       // more efficient impl
-      int keyHashCode = hash(key.hashCode());
+      int keyHashCode = hash(key);
       if (keyHashCode == Integer.MIN_VALUE) keyHashCode += 1;
       int hash = Math.abs(keyHashCode);
       int numCopiesToFind = min(replCount, addresses.size());
@@ -216,8 +207,8 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
    @Override
    public String toString() {
       return "DefaultConsistentHash{" +
-            "addresses =" + positions +
-            ", hash space =" + HASH_SPACE +
-            '}';
+              "addresses =" + positions +
+              ", hash space =" + HASH_SPACE +
+              '}';
    }
 }

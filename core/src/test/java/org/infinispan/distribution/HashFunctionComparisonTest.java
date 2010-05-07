@@ -4,6 +4,7 @@ import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
 import org.infinispan.profiling.testinternals.Generator;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Util;
+import org.infinispan.util.hash.MurmurHash2;
 import org.testng.annotations.Test;
 
 import java.text.NumberFormat;
@@ -281,49 +282,12 @@ class SuperFastHash extends HashFunction {
 
 class MurmurHash extends HashFunction {
 
-   int m = 0x5bd1e995;
-   int r = 24;
-   int h = new Random().nextInt() ^ 1024;
-
-
    public String functionName() {
       return "MurmurHash2 (neutral)";
    }
 
    @Override
    public int hash(byte[] payload) {
-      int len = payload.length;
-      int offset = 0;
-      while (len >= 4) {
-         int k = payload[offset];
-         k |= payload[offset + 1] << 8;
-         k |= payload[offset + 2] << 16;
-         k |= payload[offset + 3] << 24;
-
-         k *= m;
-         k ^= k >> r;
-         k *= m;
-         h *= m;
-         h ^= k;
-
-         len -= 4;
-         offset += 4;
-      }
-
-      switch (len) {
-         case 3:
-            h ^= payload[offset + 2] << 16;
-         case 2:
-            h ^= payload[offset + 1] << 8;
-         case 1:
-            h ^= payload[offset];
-            h *= m;
-      }
-
-      h ^= h >> 13;
-      h *= m;
-      h ^= h >> 15;
-
-      return h;
+      return MurmurHash2.hash(payload);
    }
 }
