@@ -351,7 +351,6 @@ public class BdbjeCacheStoreTest {
       expect(ois.readLong()).andReturn((long) 1);
       com.sleepycat.je.Transaction txn = createMock(com.sleepycat.je.Transaction.class);
       expect(currentTransaction.beginTransaction(null)).andReturn(txn);
-      cacheMap.clear();
       Cursor cursor = createMock(Cursor.class);
       expect(cacheDb.openCursor(txn, null)).andReturn(cursor);
       IOException ex = new IOException();
