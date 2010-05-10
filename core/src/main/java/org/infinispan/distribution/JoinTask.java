@@ -114,7 +114,11 @@ public class JoinTask extends RehashTask {
             throw new CacheException("Unable to retrieve old consistent hash from coordinator even after several attempts at sleeping and retrying!");
 
          // 2.  new CH instance
-         chNew = createConsistentHash(configuration, chOld.getCaches(), self);
+         if (chOld.getCaches().contains(self))
+            chNew = chOld;
+         else
+            chNew = createConsistentHash(configuration, chOld.getCaches(), self);
+         
          dmi.setConsistentHash(chNew);
 
          if (configuration.isRehashEnabled()) {
