@@ -47,6 +47,7 @@ public class SampleConfigFilesCorrectnessTest {
 
    public void testConfigWarnings() throws Exception {
       for (String aConfFile : getConfigFileNames()) {
+         System.out.println("Analysing " + aConfFile);
          CacheManager dcm = TestCacheManagerFactory.fromXml(getRootFolder() + "/" + aConfFile, true);
          try {
             dcm.getCache();
