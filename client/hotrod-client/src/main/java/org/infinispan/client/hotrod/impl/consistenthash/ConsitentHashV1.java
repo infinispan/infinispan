@@ -4,11 +4,11 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.SortedMap;
+import java.util.TreeMap;
+
+import static org.infinispan.util.hash.MurmurHash2.hash;
 
 /**
  * // TODO: Document this
@@ -20,29 +20,40 @@ public class ConsitentHashV1 implements ConsistentHash {
 
    private static Log log = LogFactory.getLog(ConsitentHashV1.class);
    
-   private volatile Map<InetSocketAddress, Integer> servers2HashCode;
-
-   private volatile int numKeyOwners;
+   private final SortedMap<Integer, InetSocketAddress> positions = new TreeMap<Integer, InetSocketAddress>();
 
    private volatile int hashSpace;
 
-   private Random random = new Random();
-   List<InetSocketAddress> addresses = new ArrayList<InetSocketAddress>();
-
    @Override
    public void init(LinkedHashMap<InetSocketAddress,Integer> servers2HashCode, int numKeyOwners, int hashSpace) {
-      this.servers2HashCode = servers2HashCode;
-      this.numKeyOwners = numKeyOwners;
+      for (InetSocketAddress addr :servers2HashCode.keySet()) {
+         positions.put(servers2HashCode.get(addr), addr);
+      }
+      if (log.isTraceEnabled())
+         log.trace("Positions are: " + positions);
       this.hashSpace = hashSpace;
-      addresses.addAll(servers2HashCode.keySet());
    }
 
    @Override
    public InetSocketAddress getServer(byte[] key) {
-      InetSocketAddress addr = addresses.get(random.nextInt(addresses.size()));
+      int keyHashCode = hash(key);
+      if (keyHashCode == Integer.MIN_VALUE) keyHashCode += 1;
+      int hash = Math.abs(keyHashCode);
+
+      SortedMap<Integer, InetSocketAddress> candidates = positions.tailMap(hash % hashSpace);
       if (log.isTraceEnabled()) {
-         log.trace("Randomly returning an address: " + addr);
+         log.trace("Found possible candidates: " + candidates);
       }
-      return addr;
+      if (candidates.isEmpty()) {
+         InetSocketAddress socketAddress = positions.get(positions.firstKey());
+         if (log.isTraceEnabled()) {
+            log.trace("Over the wheel, returning first member: " + socketAddress);
+         }
+         return socketAddress;
+      } else {
+         InetSocketAddress socketAddress = candidates.get(candidates.firstKey());
+         log.trace("Found candidate: " + socketAddress);
+         return socketAddress;
+      }
    }
 }

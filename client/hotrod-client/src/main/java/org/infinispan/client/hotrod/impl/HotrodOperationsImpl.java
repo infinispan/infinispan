@@ -363,7 +363,12 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
          log.info("New topology: " + servers2HashCode);
       }
       transportFactory.updateServers(servers2HashCode.keySet());
-      transportFactory.updateHashFunction(servers2HashCode, numKeyOwners, hashFunctionVersion, hashSpace);
+      if (hashFunctionVersion == 0) {
+         if (log.isTraceEnabled())
+            log.trace("Not using a consistent hash function (hash function version == 0).");
+      } else {
+         transportFactory.updateHashFunction(servers2HashCode, numKeyOwners, hashFunctionVersion, hashSpace);
+      }
    }
 
    private void checkForErrorsInResponseStatus(short status, long messageId, Transport transport) {

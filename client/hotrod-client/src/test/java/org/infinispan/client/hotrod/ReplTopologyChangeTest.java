@@ -9,6 +9,7 @@ import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import java.net.InetSocketAddress;
@@ -22,7 +23,7 @@ import static org.testng.AssertJUnit.assertEquals;
  * @since 4.1
  */
 @Test (testName = "client.hotrod.MultipleCacheManagersTest", groups = "functional")
-public class TopologyChangeTest extends MultipleCacheManagersTest {
+public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
 
    HotRodServer hotRodServer1;
    HotRodServer hotRodServer2;
@@ -37,9 +38,14 @@ public class TopologyChangeTest extends MultipleCacheManagersTest {
    protected void assertSupportedConfig() {      
    }
 
+   @AfterMethod
+   @Override
+   protected void clearContent() throws Throwable {      
+   }
+
    @Override
    protected void createCacheManagers() throws Throwable {
-      config = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC);
+      config = getDefaultClusteredConfig(getCacheMode());
       CacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(config);
       CacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(config);
       registerCacheManager(cm1);
@@ -69,6 +75,10 @@ public class TopologyChangeTest extends MultipleCacheManagersTest {
       tcpConnectionFactory = (TcpTransportFactory) TestingUtil.extractField(remoteCacheManager, "transportFactory");
    }
 
+   protected Configuration.CacheMode getCacheMode() {
+      return Configuration.CacheMode.REPL_SYNC;
+   }
+
 
    public void testTwoMembers() {
       InetSocketAddress server1Address = new InetSocketAddress("localhost", hotRodServer1.getPort());
@@ -94,14 +104,13 @@ public class TopologyChangeTest extends MultipleCacheManagersTest {
 
    @Test(dependsOnMethods = "testAddNewServer")
    public void testDropServer() {
+      hotRodServer3.stop();
       manager(2).stop();
       TestingUtil.blockUntilViewsReceived(10000, true, manager(0), manager(1));
-      TestingUtil.blockUntilViewsReceived(10000, true, manager(0), manager(1), manager(2));
       TestingUtil.blockUntilCacheStatusAchieved(manager(0).getCache(), ComponentStatus.RUNNING, 10000);
       TestingUtil.blockUntilCacheStatusAchieved(manager(1).getCache(), ComponentStatus.RUNNING, 10000);
-      
+
       InetSocketAddress server3Address = new InetSocketAddress("localhost", hotRodServer3.getPort());
-      hotRodServer3.stop();
       expectTopologyChange(server3Address, false);
       assertEquals(2, tcpConnectionFactory.getServers().size());
    }
@@ -110,7 +119,6 @@ public class TopologyChangeTest extends MultipleCacheManagersTest {
       for (int i = 0; i < 10; i++) {
          try {
             remoteCache.put("k" + i, "v" + i);
-//            remoteCache.ping();
          } catch (Exception e) {
             if (added) {
                throw new IllegalStateException(e);
