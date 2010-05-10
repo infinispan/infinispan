@@ -353,7 +353,7 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
          if (log.isTraceEnabled()) {
             log.trace("Server read:" + host + ":" + port);
          }
-         int hashCode = transport.readVInt();
+         int hashCode = transport.read4ByteInt();
          servers2HashCode.put(new InetSocketAddress(host, port), hashCode);
          if (log.isTraceEnabled()) {
             log.trace("Hash code is: " + hashCode);
