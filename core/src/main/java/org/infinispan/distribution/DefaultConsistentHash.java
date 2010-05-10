@@ -49,6 +49,7 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
          positions.put(positionIndex, a);
          // If address appears several times, take the lowest value to guarantee that
          // at least the initial value and subsequent +1 values would end up in the same node
+         // TODO: Remove this check since https://jira.jboss.org/jira/browse/ISPN-428 contains a proper fix for this
          if (!addressToHashIds.containsKey(a))
             addressToHashIds.put(a, positionIndex);
       }
@@ -193,6 +194,7 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
          DefaultConsistentHash dch = (DefaultConsistentHash) subject;
          output.writeObject(dch.addresses);
          output.writeObject(dch.positions);
+         output.writeObject(dch.addressToHashIds);
       }
 
       @SuppressWarnings("unchecked")
@@ -200,6 +202,7 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
          DefaultConsistentHash dch = new DefaultConsistentHash();
          dch.addresses = (ArrayList<Address>) unmarshaller.readObject();
          dch.positions = (SortedMap<Integer, Address>) unmarshaller.readObject();
+         dch.addressToHashIds = (Map<Address, Integer>) unmarshaller.readObject();
          return dch;
       }
    }
