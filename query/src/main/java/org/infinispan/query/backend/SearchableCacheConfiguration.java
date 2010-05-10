@@ -24,6 +24,7 @@ package org.infinispan.query.backend;
 
 import org.hibernate.annotations.common.reflection.ReflectionManager;
 import org.hibernate.search.cfg.SearchConfiguration;
+import org.hibernate.search.cfg.SearchMapping;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -77,17 +78,9 @@ public class SearchableCacheConfiguration implements SearchConfiguration {
       return null;
    }
 
-
-   //TODO: Will have to be uncommented when dependency is changed to HS 3.2
-
-//   public SearchMapping getProgrammaticMapping() {
-//
-//      // Documentation on interface says "returns the programmatic configuration or null".
-//      // Since I don't have this parameter set on my implementation, I will just return this
-//      // as a null.
-//
-//      return null;
-//   }
-
-
+   @Override
+   public SearchMapping getProgrammaticMapping() {
+      // TODO What does Hibernate Search expect here?
+      return null;
+   }
 }
