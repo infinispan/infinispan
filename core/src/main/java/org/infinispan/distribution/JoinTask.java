@@ -24,14 +24,20 @@ import java.util.Map;
 import java.util.Random;
 
 /**
- * 5.  JoinTask: This is a PULL based rehash.  JoinTask is kicked off on the JOINER. 5.1.  Obtain OLD_CH from
- * coordinator (using GetConsistentHashCommand) 5.2.  Generate TEMP_CH (which is a union of OLD_CH and NEW_CH) 5.3.
- * Broadcast TEMP_CH across the cluster (using InstallConsistentHashCommand) 5.4.  Log all incoming writes/txs and
- * respond with a positive ack. 5.5.  Ignore incoming reads, forcing callers to check next owner of data. 5.6.  Ping
- * each node in OLD_CH's view and ask for state (PullStateCommand) 5.7.  Apply state received from 5.6. 5.8.  Drain tx
- * log and apply, stop logging writes once drained. 5.9.  Reverse 5.5. 5.10. Broadcast NEW_CH so this is applied (using
- * InstallConsistentHashCommand) 5.11. Loop through data container and unicast invalidations for keys that "could" exist
- * on OLD_CH and not in NEW_CH
+ * 5.  JoinTask: This is a PULL based rehash.  JoinTask is kicked off on the JOINER.
+ * <ul>
+ * <li>5.1.  Obtain OLD_CH from coordinator (using GetConsistentHashCommand) <li>
+ * <li>5.2.  Generate TEMP_CH (which is a union of OLD_CH and NEW_CH)</li>
+ * <li>5.3.  Broadcast TEMP_CH across the cluster (using InstallConsistentHashCommand)</li>
+ * <li>5.4.  Log all incoming writes/txs and respond with a positive ack.</li>
+ * <li>5.5.  Ignore incoming reads, forcing callers to check next owner of data.</li>
+ * <li>5.6.  Ping each node in OLD_CH's view and ask for state (PullStateCommand)</li>
+ * <li>5.7.  Apply state received from 5.6.</li>
+ * <li>5.8.  Drain tx log and apply, stop logging writes once drained.</li>
+ * <li>5.9.  Reverse 5.5.</li>
+ * <li>5.10. Broadcast NEW_CH so this is applied (using InstallConsistentHashCommand)</li>
+ * <li>5.11. Loop through data container and unicast invalidations for keys that "could" exist on OLD_CH and not in NEW_CH</li>
+ * <ul>
  *
  * @author Manik Surtani
  * @since 4.0
@@ -110,7 +116,7 @@ public class JoinTask extends RehashTask {
          // 2.  new CH instance
          chNew = createConsistentHash(configuration, chOld.getCaches(), self);
          dmi.setConsistentHash(chNew);
-         
+
          if (configuration.isRehashEnabled()) {
             // 3.  Enable TX logging
             transactionLogger.enable();
@@ -141,7 +147,7 @@ public class JoinTask extends RehashTask {
          unlocked = true;
 
          if (!configuration.isRehashEnabled()) {
-            rpcManager.broadcastRpcCommand(cf.buildRehashControlCommand(JOIN_REHASH_START, self), true, true);            
+            rpcManager.broadcastRpcCommand(cf.buildRehashControlCommand(JOIN_REHASH_START, self), true, true);
          }
          // 10.
          rpcManager.broadcastRpcCommand(cf.buildRehashControlCommand(JOIN_REHASH_END, self), true, true);
@@ -176,7 +182,7 @@ public class JoinTask extends RehashTask {
     * The algorithm essentially works like this.  Given a list of all Addresses in the system (ordered by their positions
     * in the new consistent hash wheel), locate where the current address (self, the joiner) is, on this list.  Addresses
     * from (replCount - 1) positions behind self, and 1 position ahead of self would be sending state.
-    * <p /> 
+    * <p />
     * @param replCount
     * @return
     */
