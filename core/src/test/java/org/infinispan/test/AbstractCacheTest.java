@@ -46,11 +46,11 @@ public class AbstractCacheTest extends AbstractInfinispanTest {
     * make sure that an commit message will be dispatched in the same test method it was triggered and it will not
     * interfere with further log messages.  This is a non-transactional configuration.
     */
-   protected Configuration getDefaultClusteredConfig(Configuration.CacheMode mode) {
+   public static Configuration getDefaultClusteredConfig(Configuration.CacheMode mode) {
       return getDefaultClusteredConfig(mode, false);
    }
 
-   protected Configuration getDefaultClusteredConfig(Configuration.CacheMode mode, boolean transactional) {
+   public static Configuration getDefaultClusteredConfig(Configuration.CacheMode mode, boolean transactional) {
       Configuration configuration = TestCacheManagerFactory.getDefaultConfiguration(transactional);
       configuration.setCacheMode(mode);
       configuration.setSyncCommitPhase(true);
