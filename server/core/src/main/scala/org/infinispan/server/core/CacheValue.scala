@@ -3,6 +3,7 @@ package org.infinispan.server.core
 import org.infinispan.util.Util
 import java.io.{ObjectOutput, ObjectInput}
 import org.infinispan.marshall.Marshallable
+import java.util.Arrays
 
 /**
  * // TODO: Document this
@@ -20,19 +21,32 @@ class CacheValue(val data: Array[Byte], val version: Long) {
          .append("}").toString
    }
 
+   override def equals(obj: Any) = {
+      obj match {
+         // Apparenlty this is the way arrays should be compared for equality of contents, see:
+         // http://old.nabble.com/-scala--Array-equality-td23149094.html
+         case k: CacheValue => Arrays.equals(k.data, this.data) && k.version == this.version
+         case _ => false
+      }
+   }
+
+   override def hashCode: Int = {
+      41 + Arrays.hashCode(data)
+   }
+   
 }
 
 object CacheValue {
    class Externalizer extends org.infinispan.marshall.Externalizer {
       override def writeObject(output: ObjectOutput, obj: AnyRef) {
          val cacheValue = obj.asInstanceOf[CacheValue]
-         output.write(cacheValue.data.length)
+         output.writeInt(cacheValue.data.length)
          output.write(cacheValue.data)
          output.writeLong(cacheValue.version)
       }
 
       override def readObject(input: ObjectInput): AnyRef = {
-         val data = new Array[Byte](input.read())
+         val data = new Array[Byte](input.readInt())
          input.readFully(data)
          val version = input.readLong
          new CacheValue(data, version)

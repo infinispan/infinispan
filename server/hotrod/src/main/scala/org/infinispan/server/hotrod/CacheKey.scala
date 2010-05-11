@@ -40,12 +40,12 @@ object CacheKey extends Logging {
    class Externalizer extends org.infinispan.marshall.Externalizer {
       override def writeObject(output: ObjectOutput, obj: AnyRef) {
          val cacheKey = obj.asInstanceOf[CacheKey]
-         output.write(cacheKey.data.length)
+         output.writeInt(cacheKey.data.length)
          output.write(cacheKey.data)
       }
 
       override def readObject(input: ObjectInput): AnyRef = {
-         val data = new Array[Byte](input.read())
+         val data = new Array[Byte](input.readInt())
          input.readFully(data)
          new CacheKey(data)
       }
