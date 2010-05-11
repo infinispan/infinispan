@@ -49,6 +49,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
 
    private ExecutorService buildAndConfigureExecutorService(String factoryName, Properties p, String componentName) throws Exception {
       Properties props = new Properties(p); // defensive copy
+      if (p != null && !p.isEmpty()) props.putAll(p);
       ExecutorFactory f = (ExecutorFactory) Util.getInstance(factoryName);
       setComponentName(componentName, props);
       setDefaultThreads(KnownComponentNames.getDefaultThreads(componentName), props);
