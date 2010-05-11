@@ -58,6 +58,7 @@ public class TestingUtil {
          "      xsi:schemaLocation=\"urn:infinispan:config:4.0 http://www.infinispan.org/schemas/infinispan-config-4.0.xsd\"\n" +
          "      xmlns=\"urn:infinispan:config:4.0\">";
    public static final String INFINISPAN_END_TAG="</infinispan>";
+   public static final String INFINISPAN_START_TAG_NO_SCHEMA="<infinispan>";
 
 
    /**

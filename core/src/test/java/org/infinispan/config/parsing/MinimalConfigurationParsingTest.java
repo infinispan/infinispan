@@ -1,5 +1,6 @@
-package org.infinispan.config;
+package org.infinispan.config.parsing;
 
+import org.infinispan.config.InfinispanConfiguration;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
@@ -9,25 +10,26 @@ import java.io.InputStream;
 
 import static org.infinispan.test.TestingUtil.INFINISPAN_END_TAG;
 import static org.infinispan.test.TestingUtil.INFINISPAN_START_TAG;
+import static org.infinispan.test.TestingUtil.INFINISPAN_START_TAG_NO_SCHEMA;
 
 @Test(groups = "unit", testName = "config.MinimalConfigurationParsingTest")
 public class MinimalConfigurationParsingTest {
    public void testGlobalAndDefaultSection() throws IOException {
-      String xml =  INFINISPAN_START_TAG +
-            "    <global />\n" +
-            "    <default>\n" +
+      String xml = INFINISPAN_START_TAG +
+              "    <global />\n" +
+              "    <default>\n" +
             "        <locking concurrencyLevel=\"10000\" isolationLevel=\"READ_COMMITTED\" />\n" +
-            "    </default>\n" +
-            INFINISPAN_END_TAG;
+              "    </default>\n" +
+              INFINISPAN_END_TAG;
       testXml(xml);
    }
 
    public void testNoGlobalSection() throws IOException {
       String xml = INFINISPAN_START_TAG +
-            "    <default>\n" +
+              "    <default>\n" +
             "        <locking concurrencyLevel=\"10000\" isolationLevel=\"READ_COMMITTED\" />\n" +
-            "    </default>\n" +
-            INFINISPAN_END_TAG;
+              "    </default>\n" +
+              INFINISPAN_END_TAG;
       testXml(xml);
    }
 
@@ -40,6 +42,11 @@ public class MinimalConfigurationParsingTest {
 
    public void testNoSections() throws IOException {
       String xml = INFINISPAN_START_TAG + INFINISPAN_END_TAG;
+      testXml(xml);
+   }
+
+   public void testNoSchema() throws IOException {
+      String xml = INFINISPAN_START_TAG_NO_SCHEMA + INFINISPAN_END_TAG;
       testXml(xml);
    }
 

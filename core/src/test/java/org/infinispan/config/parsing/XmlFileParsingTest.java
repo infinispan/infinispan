@@ -22,6 +22,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 
+import static org.infinispan.test.TestingUtil.INFINISPAN_END_TAG;
+import static org.infinispan.test.TestingUtil.INFINISPAN_START_TAG;
+import static org.infinispan.test.TestingUtil.INFINISPAN_START_TAG_NO_SCHEMA;
+
 @Test(groups = "unit", testName = "config.parsing.XmlFileParsingTest")
 public class XmlFileParsingTest extends AbstractInfinispanTest {
 
@@ -42,7 +46,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
    }
 
    public void testNoNamedCaches() throws Exception {
-      String config = TestingUtil.INFINISPAN_START_TAG +
+      String config = INFINISPAN_START_TAG +
             "   <global>\n" +
             "      <transport clusterName=\"demoCluster\"/>\n" +
             "   </global>\n" +
@@ -65,6 +69,21 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       Map<String, Configuration> named = c.parseNamedConfigurations();
       assert named != null;
       assert named.isEmpty();
+   }
+
+
+   public void testNoSchemaWithStuff() throws IOException {
+      String xml = INFINISPAN_START_TAG_NO_SCHEMA +
+              "    <default>\n" +
+              "        <locking concurrencyLevel=\"10000\" isolationLevel=\"REPEATABLE_READ\" />\n" +
+              "    </default>\n" +
+              INFINISPAN_END_TAG;
+      InputStream is = new ByteArrayInputStream(xml.getBytes());
+      InfinispanConfiguration c = InfinispanConfiguration.newInfinispanConfiguration(is);
+      GlobalConfiguration gc = c.parseGlobalConfiguration();
+      Configuration def = c.parseDefaultConfiguration();
+      assert def.getConcurrencyLevel() == 10000;
+      assert def.getIsolationLevel() == IsolationLevel.REPEATABLE_READ;
    }
 
 
