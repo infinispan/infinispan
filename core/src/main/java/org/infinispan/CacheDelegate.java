@@ -63,6 +63,7 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.stats.Stats;
 import org.infinispan.stats.StatsImpl;
+import org.infinispan.util.concurrent.AbstractInProcessNotifyingFuture;
 import org.infinispan.util.concurrent.FutureListener;
 import org.infinispan.util.concurrent.NotifyingFuture;
 import org.infinispan.util.logging.Log;
@@ -457,31 +458,10 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
       if (retval instanceof NotifyingFuture) {
          return (NotifyingFuture<X>) retval;
       } else {
-         return new NotifyingFuture<X>() {
-            public boolean cancel(boolean mayInterruptIfRunning) {
-               return true;
-            }
-
-            public boolean isCancelled() {
-               return false;
-            }
-
-            public boolean isDone() {
-               return true;
-            }
-
+         return new AbstractInProcessNotifyingFuture<X>() {
             @SuppressWarnings("unchecked")
             public X get() throws InterruptedException, ExecutionException {
                return (X) retval;
-            }
-
-            public X get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-               return get();
-            }
-
-            public NotifyingFuture<X> attachListener(FutureListener<X> futureListener) {
-               futureListener.futureDone(this);
-               return this;
             }
          };
       }
