@@ -30,7 +30,7 @@ public class HotrodStatisticsTest {
 
    @BeforeMethod
    protected void setup() throws Exception {
-      cacheManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(getClass().getSimpleName(), true);
+      cacheManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(getClass().getSimpleName());
 
       hotrodServer = TestHelper.startHotRodServer(cacheManager);
       startTime = System.currentTimeMillis();

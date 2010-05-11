@@ -138,7 +138,7 @@ public class CSAIntegrationTest extends MultipleCacheManagersTest {
       addCacheMgmtInterceptor(manager(2).getCache(CACHE_NAME));
 
       List<byte[]> keys = new ArrayList<byte[]>();
-      for (int i = 0; i < 100; i++) {
+      for (int i = 0; i < 500; i++) {
          System.out.println("i = " + i);
          byte[] key = generateKey(i);
          keys.add(key);
