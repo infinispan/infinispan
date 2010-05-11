@@ -31,8 +31,9 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
 
    /**
     * This is overridden by subclasses.  Could typically be a JOIN or LEAVE event.
+    * @param offline
     */
-   abstract void performRehashEvent();
+   abstract void performRehashEvent(boolean offline);
 
    /**
     * Blocks until a rehash completes.
@@ -66,7 +67,7 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
       List<MagicKey> keys = init();
 
       log.info("Invoking rehash event");
-      performRehashEvent();
+      performRehashEvent(false);
 
       waitForRehashCompletion();
       log.info("Rehash complete");
@@ -114,7 +115,7 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
       th.start();
 
       log.info("Invoking rehash event");
-      performRehashEvent();
+      performRehashEvent(true);
       l.countDown();
       th.join();
 
@@ -162,7 +163,7 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest {
       latch.countDown();
 
       log.info("Invoking rehash event");
-      performRehashEvent();
+      performRehashEvent(false);
 
       for (Updater u : updaters) u.complete();
       for (Updater u : updaters) u.join();

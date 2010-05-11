@@ -9,7 +9,7 @@ import org.testng.annotations.Test;
 public class SingleLeaveTest extends RehashLeaveTestBase {
    Address leaverAddress;
 
-   void performRehashEvent() {
+   void performRehashEvent(boolean offline) {
       // cause a node to LEAVE.  Typically this is c4.
       leaverAddress = addressOf(c4);
       CacheManager cm4 = c4.getCacheManager();

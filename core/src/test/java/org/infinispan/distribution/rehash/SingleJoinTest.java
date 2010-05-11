@@ -11,7 +11,7 @@ public class SingleJoinTest extends RehashTestBase {
    CacheManager joinerManager;
    Cache<Object, String> joiner;
 
-   void performRehashEvent() {
+   void performRehashEvent(boolean offline) {
       joinerManager = addClusterEnabledCacheManager();
       joinerManager.defineConfiguration(cacheName, configuration);
       joiner = joinerManager.getCache(cacheName);

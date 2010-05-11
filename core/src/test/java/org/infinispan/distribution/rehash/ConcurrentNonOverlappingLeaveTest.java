@@ -11,7 +11,7 @@ import java.util.Arrays;
 public class ConcurrentNonOverlappingLeaveTest extends RehashLeaveTestBase {
    Address l1, l2;
 
-   void performRehashEvent() {
+   void performRehashEvent(boolean offline) {
       l1 = addressOf(c2);
       l2 = addressOf(c4);
 

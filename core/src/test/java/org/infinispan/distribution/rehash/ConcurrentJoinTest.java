@@ -8,6 +8,7 @@ import org.testng.annotations.Test;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 @Test(groups = "functional", testName = "distribution.rehash.ConcurrentJoinTest")
@@ -18,15 +19,26 @@ public class ConcurrentJoinTest extends RehashTestBase {
 
    final int numJoiners = 4;
 
-   void performRehashEvent() {
-      joinerManagers = new ArrayList<CacheManager>(numJoiners);
-      joiners = new ArrayList<Cache<Object, String>>(numJoiners);
-      for (int i = 0; i < numJoiners; i++) {
-         CacheManager joinerManager = addClusterEnabledCacheManager();
-         joinerManager.defineConfiguration(cacheName, configuration);
-         Cache<Object, String> joiner = joinerManager.getCache(cacheName);
-         joinerManagers.add(joinerManager);
-         joiners.add(joiner);
+   void performRehashEvent(boolean offline) {
+      Runnable runnable = new Runnable() {
+         public void run() {
+
+            joinerManagers = new ArrayList<CacheManager>(numJoiners);
+            joiners = new ArrayList<Cache<Object, String>>(numJoiners);
+            for (int i = 0; i < numJoiners; i++) {
+               CacheManager joinerManager = addClusterEnabledCacheManager();
+               joinerManager.defineConfiguration(cacheName, configuration);
+               Cache<Object, String> joiner = joinerManager.getCache(cacheName);
+               joinerManagers.add(joinerManager);
+               joiners.add(joiner);
+            }
+         }
+      };
+
+      if (offline) {
+         new Thread(runnable).start();
+      } else {
+         runnable.run();
       }
    }
 
