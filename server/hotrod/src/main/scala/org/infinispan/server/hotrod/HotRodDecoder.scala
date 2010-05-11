@@ -64,7 +64,6 @@ class HotRodDecoder(cacheManager: CacheManager) extends AbstractProtocolDecoder[
    }
 
    override def getCache(header: HotRodHeader): Cache[CacheKey, CacheValue] = {
-      // TODO: Document DefaultCacheManager.DEFAULT_CACHE_NAME usage in wiki
       val cacheName = header.cacheName
       if (cacheName != DefaultCacheManager.DEFAULT_CACHE_NAME && !cacheManager.getCacheNames.contains(cacheName))
          throw new CacheNotFoundException("Cache with name '" + cacheName + "' not found amongst the configured caches")

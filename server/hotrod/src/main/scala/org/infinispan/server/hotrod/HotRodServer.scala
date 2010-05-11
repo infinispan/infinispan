@@ -103,19 +103,8 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Logging {
       cacheManager.defineConfiguration(TopologyCacheName, topologyCacheConfig)
    }
 
-   // TODO: Change to sync false rather than creating your own callable and firing it 
-   @Listener
+   @Listener(sync = false) // Use a separate thread to avoid blocking the view handler thread
    private class CrashedMemberDetectorListener {
-
-      private val executor = Executors.newCachedThreadPool(new ThreadFactory(){
-         val threadCounter = new AtomicInteger
-
-         override def newThread(r: Runnable): Thread = {
-            var t = new Thread(r, "CrashedMemberDetectorThread-" + threadCounter.incrementAndGet)
-            t.setDaemon(true)
-            t
-         }
-      })
 
       @ViewChanged
       def handleViewChange(e: ViewChangedEvent) {
@@ -123,23 +112,6 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Logging {
          // Only the coordinator can potentially make modifications related to crashed members.
          // This is to avoid all nodes trying to make the same modification which would be wasteful and lead to deadlocks.
          if (cacheManager.isCoordinator) {
-            // Use a separate thread to avoid blocking the view handler thread
-            executor.submit(new CrashedMemberDetectorCallable(e));
-         }
-      }
-
-      private def isOldMemberInTopology(oldMember: Address, view: TopologyView): (Boolean, TopologyAddress) = {
-         // TODO: If members was stored as a map, this would be more efficient
-         for (member <- view.members) {
-            if (member.clusterAddress == oldMember) {
-               return (true, member)
-            }
-         }
-         (false, null)
-      }
-
-      private class CrashedMemberDetectorCallable(e: ViewChangedEvent) extends Callable[Void] {
-         override def call = {
             try {
                val newMembers = e.getNewMembers
                val oldMembers = e.getOldMembers
@@ -174,9 +146,19 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Logging {
             } catch {
                case t: Throwable => error("Error detecting crashed member", t)
             }
-            null
          }
       }
+
+      private def isOldMemberInTopology(oldMember: Address, view: TopologyView): (Boolean, TopologyAddress) = {
+         // TODO: If members was stored as a map, this would be more efficient
+         for (member <- view.members) {
+            if (member.clusterAddress == oldMember) {
+               return (true, member)
+            }
+         }
+         (false, null)
+      }
+
    }
 
 }
