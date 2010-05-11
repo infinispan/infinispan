@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod;
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.config.Configuration;
+import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -60,7 +61,6 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
       TestingUtil.blockUntilViewReceived(manager(0).getCache(), 2, 10000);
       TestingUtil.blockUntilCacheStatusAchieved(manager(0).getCache(), ComponentStatus.RUNNING, 10000);
       TestingUtil.blockUntilCacheStatusAchieved(manager(1).getCache(), ComponentStatus.RUNNING, 10000);
-
 
       manager(0).getCache().put("k","v");
       manager(0).getCache().get("k").equals("v");

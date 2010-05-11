@@ -30,7 +30,7 @@ public class HotrodStatisticsTest {
 
    @BeforeMethod
    protected void setup() throws Exception {
-      cacheManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(getClass().getSimpleName());
+      cacheManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(getClass().getSimpleName(), true);
 
       hotrodServer = TestHelper.startHotRodServer(cacheManager);
       startTime = System.currentTimeMillis();
@@ -59,7 +59,6 @@ public class HotrodStatisticsTest {
 
       Integer number = serverStatistics.getIntStatistic(ServerStatistics.TIME_SINCE_START);
       assertTrue(number >= 0);
-      assertTrue(number <= (System.currentTimeMillis() - startTime) / 1000);
    }
 
    public void testStoresAndEntries() {

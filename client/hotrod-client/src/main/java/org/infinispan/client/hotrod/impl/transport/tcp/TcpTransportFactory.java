@@ -171,4 +171,8 @@ public class TcpTransportFactory implements TransportFactory {
          logConnectionInfo(server);
       }
    }
+
+   public ConsistentHash getConsistentHash() {
+      return consistentHash;
+   }
 }
