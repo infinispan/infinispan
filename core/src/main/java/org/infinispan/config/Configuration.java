@@ -317,10 +317,16 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       setCacheMode(cacheMode);
    }
 
+   /**
+    * Eviction thread wake up interval, in milliseconds.
+    */
    public long getEvictionWakeUpInterval() {
       return eviction.wakeUpInterval;
    }
 
+   /**
+    * Eviction thread wake up interval, in milliseconds.
+    */
    public void setEvictionWakeUpInterval(long evictionWakeUpInterval) {
       this.eviction.setWakeUpInterval(evictionWakeUpInterval);
    }
@@ -365,18 +371,30 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       this.eviction.setMaxEntries(evictionMaxEntries);
    }
 
+   /**
+    * Expiration lifespan, in milliseconds
+    */
    public long getExpirationLifespan() {
       return expiration.lifespan;
    }
 
+   /**
+    * Expiration lifespan, in milliseconds
+    */
    public void setExpirationLifespan(long expirationLifespan) {
       this.expiration.setLifespan(expirationLifespan);
    }
 
+   /**
+    * Expiration max idle time, in milliseconds
+    */
    public long getExpirationMaxIdle() {
       return expiration.maxIdle;
    }
 
+   /**
+    * Expiration max idle time, in milliseconds
+    */      
    public void setExpirationMaxIdle(long expirationMaxIdle) {
       this.expiration.setMaxIdle(expirationMaxIdle);
    }
@@ -1225,12 +1243,12 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       /** The serialVersionUID */
       private static final long serialVersionUID = 5757161438110848530L;
 
-      /** @configRef desc="Maximum lifespan of a cache entry, after which the entry is expired cluster-wide.  -1 means the entries never expire.
+      /** @configRef desc="Maximum lifespan of a cache entry, after which the entry is expired cluster-wide, in milliseconds.  -1 means the entries never expire.
        *                   <br /><br />Note that this can be overriden on a per-entry bassi by using the Cache API."
        */
       protected Long lifespan=-1L;
 
-      /** @configRef desc="Maximum idle time a cache entry will be maintained in the cache. If the idle time 
+      /** @configRef desc="Maximum idle time a cache entry will be maintained in the cache, in milliseconds. If the idle time
        *             is exceeded, the entry will be expired cluster-wide.  -1 means the entries never expire.
        *             <br /><br />Note that this can be overriden on a per-entry bassi by using the Cache API."
        */
@@ -1284,7 +1302,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       /** The serialVersionUID */
       private static final long serialVersionUID = -1248563712058858791L;
 
-      /** @configRef desc="Interval between subsequent eviction runs. If you wish to disable the periodic eviction process
+      /** @configRef desc="Interval between subsequent eviction runs, in milliseconds. If you wish to disable the periodic eviction process
        *             altogether, set wakeupInterval to -1."
        */
       protected Long wakeUpInterval=5000L;
