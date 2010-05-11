@@ -24,6 +24,7 @@ abstract class HotRodSingleNodeTest extends SingleCacheManagerTest {
    
    override def createCacheManager: CacheManager = {
       val cacheManager = createTestCacheManager
+      cacheManager.defineConfiguration(cacheName, cacheManager.getDefaultConfiguration)
       advancedCache = cacheManager.getCache[CacheKey, CacheValue](cacheName).getAdvancedCache
       hotRodServer = createStartHotRodServer(cacheManager)
       hotRodClient = connectClient

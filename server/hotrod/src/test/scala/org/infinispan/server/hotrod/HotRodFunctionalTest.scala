@@ -52,6 +52,11 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
       assertTrue(Arrays.equals(value.data, v(m)));
    }
 
+//   def testPutOnUndefinedCache(m: Method) {
+//      val status = client.execute(0xA0, 0x01, "boomooo", k(m), 0, 0, v(m), 0, 1, 0).status
+//      assertEquals(status, ServerError, "Status should have been 'ServerError' but instead was: " + status)
+//   }
+
    def testPutWithLifespan(m: Method) {
       client.assertPut(m, 1, 0)
       Thread.sleep(1100)
@@ -294,7 +299,7 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
       for (i <- 1 to 5) {
          val key = k(m, "k" + i + "-");
          val value = v(m, "v" + i + "-");
-         assertStatus(client.put(key , 0, 0, value).status, Success)
+         assertStatus(client.put(key, 0, 0, value).status, Success)
          assertStatus(client.containsKey(key, 0).status, Success)
       }
 

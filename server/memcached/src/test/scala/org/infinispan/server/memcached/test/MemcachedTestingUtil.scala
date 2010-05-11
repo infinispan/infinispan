@@ -12,9 +12,8 @@ import org.infinispan.server.memcached.{MemcachedDecoder, MemcachedValue, Memcac
 /**
  * // TODO: Document this
  * @author Galder Zamarreño
- * @since
+ * @since 4.1
  */
-
 trait MemcachedTestingUtil {
    def host = "127.0.0.1"
 
@@ -48,11 +47,10 @@ trait MemcachedTestingUtil {
 
    def startMemcachedTextServer(cacheManager: CacheManager, port: Int, cacheName: String): MemcachedServer = {
       val server = new MemcachedServer {
-         override def getDecoder: Decoder = {
-            new MemcachedDecoder(getCacheManager, scheduler) {
-               override def createCache = getCacheManager.getCache[String, MemcachedValue](cacheName)
-            }
-         }
+         override def getDecoder: Decoder =
+            new MemcachedDecoder(getCacheManager.getCache[String, MemcachedValue](cacheName), scheduler)
+
+         override def startDefaultCache = getCacheManager.getCache(cacheName)
       }
       server.start(host, port, cacheManager, 0, 0, 0)
       server

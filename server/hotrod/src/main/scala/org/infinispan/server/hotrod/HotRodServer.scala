@@ -19,7 +19,6 @@ import java.util.concurrent.atomic.AtomicInteger
  * @author Galder Zamarreño
  * @since 4.1
  */
-
 class HotRodServer extends AbstractProtocolServer("HotRod") with Logging {
    import HotRodServer._
    private var isClustered: Boolean = _
@@ -34,6 +33,10 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Logging {
 
    override def start(host: String, port: Int, cacheManager: CacheManager, masterThreads: Int, workerThreads: Int, idleTimeout: Int) {
       super.start(host, port, cacheManager, masterThreads, workerThreads, idleTimeout)
+      // Start defined caches to avoid issues with lazily started caches
+      for (cacheName <- asIterator(cacheManager.getCacheNames.iterator))
+         cacheManager.getCache(cacheName)
+
       isClustered = cacheManager.getGlobalConfiguration.getTransportClass != null
       // If clustered, set up a cache for topology information
       if (isClustered)

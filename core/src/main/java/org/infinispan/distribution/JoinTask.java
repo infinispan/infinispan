@@ -73,6 +73,7 @@ public class JoinTask extends RehashTask {
 
    protected void performRehash() throws Exception {
       long start = System.currentTimeMillis();
+      boolean trace = log.isTraceEnabled();
       if (log.isDebugEnabled()) log.debug("Commencing");
       boolean unlocked = false;
       try {
@@ -85,7 +86,7 @@ public class JoinTask extends RehashTask {
          Random rand = new Random();
          long giveupTime = System.currentTimeMillis() + maxWaitTime;
          do {
-            if (log.isTraceEnabled()) log.trace("Requesting old consistent hash from coordinator");
+            if (trace) log.trace("Requesting old consistent hash from coordinator");
             List<Response> resp;
             List<Address> addresses;
             try {
@@ -103,7 +104,7 @@ public class JoinTask extends RehashTask {
             if (addresses == null) {
                long time = rand.nextInt((int) (maxSleepTime - minSleepTime) / 10);
                time = (time * 10) + minSleepTime;
-               if (log.isTraceEnabled()) log.trace("Sleeping for {0}", Util.prettyPrintTime(time));
+               if (trace) log.trace("Sleeping for {0}", Util.prettyPrintTime(time));
                Thread.sleep(time); // sleep for a while and retry
             } else {
                chOld = createConsistentHash(configuration, addresses);
@@ -147,6 +148,8 @@ public class JoinTask extends RehashTask {
 
             // 8.  Drain logs
             dmi.drainLocalTransactionLog();
+         } else {
+            if (trace) log.trace("Rehash not enabled, so not pulling state.");
          }
          unlocked = true;
 
@@ -163,7 +166,7 @@ public class JoinTask extends RehashTask {
             invalidateInvalidHolders(chOld, chNew);
          }
 
-         if (log.isInfoEnabled())
+         if (trace)
             log.info("{0} completed join in {1}!", self, Util.prettyPrintTime(System.currentTimeMillis() - start));
       } catch (Exception e) {
          log.error("Caught exception!", e);

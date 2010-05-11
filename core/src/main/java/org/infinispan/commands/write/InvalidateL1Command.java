@@ -9,6 +9,10 @@ import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.Marshallable;
 import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
+import java.util.Arrays;
 
 /**
  * Invalidates an entry in a L1 cache (used with DIST mode)
@@ -19,6 +23,7 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 @Marshallable(externalizer = ReplicableCommandExternalizer.class, id = Ids.INVALIDATE_L1_COMMAND)
 public class InvalidateL1Command extends InvalidateCommand {
    public static final int COMMAND_ID = 7;
+   private static final Log log = LogFactory.getLog(InvalidateL1Command.class);
    private DistributionManager dm;
    private DataContainer dataContainer;
    private Configuration config;
@@ -53,8 +58,10 @@ public class InvalidateL1Command extends InvalidateCommand {
       if (forRehash && config.isL1OnRehash()) {
          for (Object k : getKeys()) {
             InternalCacheEntry ice = dataContainer.get(k);
-            if (ice != null)
+            if (ice != null) {
+               if (log.isTraceEnabled()) log.trace("Not removing, instead putting entry into L1.");
                dataContainer.put(k, ice.getValue(), config.getL1Lifespan(), config.getExpirationMaxIdle());
+            }
          }
       } else {
          for (Object k : getKeys()) {
@@ -121,4 +128,13 @@ public class InvalidateL1Command extends InvalidateCommand {
       result = 31 * result + (forRehash ? 1 : 0);
       return result;
    }
+
+   @Override
+   public String toString() {
+      return getClass().getSimpleName() + "{" +
+            "keys=" + Arrays.toString(keys) +
+            ", forRehash=" + forRehash +
+            '}';
+   }
+
 }

@@ -1,6 +1,5 @@
 package org.infinispan.server.hotrod
 
-import org.infinispan.Cache
 import org.infinispan.stats.Stats
 import org.infinispan.server.core._
 import transport._
@@ -10,13 +9,13 @@ import java.io.StreamCorruptedException
 import org.infinispan.server.hotrod.ProtocolFlag._
 import org.infinispan.server.hotrod.OperationResponse._
 import java.nio.channels.ClosedChannelException
+import org.infinispan.{CacheException, Cache}
 
 /**
  * // TODO: Document this
  * @author Galder Zamarreño
- * @since
+ * @since 4.1
  */
-
 class HotRodDecoder(cacheManager: CacheManager) extends AbstractProtocolDecoder[CacheKey, CacheValue] {
    import HotRodDecoder._
    
@@ -65,9 +64,13 @@ class HotRodDecoder(cacheManager: CacheManager) extends AbstractProtocolDecoder[
    }
 
    override def getCache(header: HotRodHeader): Cache[CacheKey, CacheValue] = {
-      // TODO: Document this in wiki
-      if (header.cacheName == DefaultCacheManager.DEFAULT_CACHE_NAME) cacheManager.getCache[CacheKey, CacheValue]
-      else cacheManager.getCache(header.cacheName)
+      // TODO: Document DefaultCacheManager.DEFAULT_CACHE_NAME usage in wiki
+      val cacheName = header.cacheName
+      if (cacheName != DefaultCacheManager.DEFAULT_CACHE_NAME && !cacheManager.getCacheNames.contains(cacheName))
+         throw new CacheNotFoundException("Cache with name '" + cacheName + "' not found amongst the configured caches")
+      
+      if (cacheName == DefaultCacheManager.DEFAULT_CACHE_NAME) cacheManager.getCache[CacheKey, CacheValue]
+      else cacheManager.getCache(cacheName)
    }
 
    override def readKey(h: HotRodHeader, b: ChannelBuffer): CacheKey =
@@ -152,3 +155,5 @@ class ErrorHeader(override val messageId: Long) extends HotRodHeader(ErrorRespon
          .append("}").toString
    }
 }
+
+class CacheNotFoundException(msg: String) extends CacheException(msg)

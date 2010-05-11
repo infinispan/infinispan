@@ -8,16 +8,15 @@ import java.util.concurrent.{Executors, ScheduledExecutorService}
 /**
  * // TODO: Document this
  * @author Galder Zamarreño
- * @since
+ * @since 4.1
  */
-
 class MemcachedServer extends AbstractProtocolServer("Memcached") {
 
    protected lazy val scheduler = Executors.newScheduledThreadPool(1)
 
    override def getEncoder: Encoder = null
 
-   override def getDecoder: Decoder = new MemcachedDecoder(getCacheManager, scheduler)
+   override def getDecoder: Decoder = new MemcachedDecoder(getCacheManager.getCache[String, MemcachedValue], scheduler)
 
    override def stop {
       super.stop

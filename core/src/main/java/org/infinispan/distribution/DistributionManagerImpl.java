@@ -37,6 +37,7 @@ import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.MembershipArithmetic;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.ReclosableLatch;
 import org.infinispan.util.logging.Log;
@@ -107,6 +108,7 @@ public class DistributionManagerImpl implements DistributionManager {
    @ManagedAttribute(description = "If true, the node has successfully joined the grid and is considered to hold state.  If false, the join process is still in progress.")
    @Metric(displayName = "Is join completed?", dataType = DataType.TRAIT)
    volatile boolean joinComplete = false;
+   Future<Void> joinFuture;
    final List<Address> leavers = new CopyOnWriteArrayList<Address>();
    volatile Future<Void> leaveTaskFuture;
    final ReclosableLatch startLatch = new ReclosableLatch(false);
@@ -135,13 +137,22 @@ public class DistributionManagerImpl implements DistributionManager {
       join();
    }
 
+   // To avoid blocking other components' start process, wait last, if necessary, for join to complete.
+   @Start(priority = 1000)
+   public void waitForJoinToComplete() throws Exception {
+      if (joinFuture != null)
+         joinFuture.get();
+   }
+
    private void join() throws Exception {
       startLatch.close();
-      consistentHash = createConsistentHash(configuration, rpcManager.getTransport().getMembers());
-      self = rpcManager.getTransport().getAddress();
-      if (rpcManager.getTransport().getMembers().size() > 1) {
+      Transport t = rpcManager.getTransport();
+      List<Address> members = t.getMembers();
+      consistentHash = createConsistentHash(configuration, members);
+      self = t.getAddress();
+      if (members.size() > 1 && !t.getCoordinator().equals(self)) {
          JoinTask joinTask = new JoinTask(rpcManager, cf, configuration, transactionLogger, dataContainer, this);
-         rehashExecutor.submit(joinTask);
+         joinFuture = rehashExecutor.submit(joinTask);
       } else {
          joinComplete = true;
       }
@@ -278,7 +289,7 @@ public class DistributionManagerImpl implements DistributionManager {
          return new LinkedList<Address>(consistentHash.getCaches());
       } else {
          if (trace)
-            log.trace("Not allowing {0} to join since there is a join already in progress {1}", joiner, this.joiner);
+            log.trace("Not alowing {0} to join since there is a join already in progress {1}", joiner, this.joiner);
          return null;
       }
    }
@@ -321,6 +332,7 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    public void applyState(ConsistentHash consistentHash, Map<Object, InternalCacheValue> state) {
+      if (trace) log.trace("Apply state with " + state);
       for (Map.Entry<Object, InternalCacheValue> e : state.entrySet()) {
          if (consistentHash.locate(e.getKey(), configuration.getNumOwners()).contains(self)) {
             InternalCacheValue v = e.getValue();

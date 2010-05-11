@@ -7,13 +7,13 @@ import org.infinispan.server.hotrod.OperationStatus._
 import org.testng.Assert._
 import org.testng.annotations.Test
 import org.infinispan.test.TestingUtil
+import org.infinispan.test.AbstractCacheTest._
 
 /**
  * // TODO: Document this
  * @author Galder Zamarreño
- * @since
+ * @since 4.1
  */
-
 @Test(groups = Array("functional"), testName = "server.hotrod.HotRodReplicationTest")
 class HotRodReplicationTest extends HotRodMultiNodeTest {
 

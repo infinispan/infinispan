@@ -26,7 +26,10 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
       this.workerThreads = workerThreads
       this.cacheManager = cacheManager
 
+      // Register rank calculator before starting any cache so that we can capture all view changes
       cacheManager.addListener(getRankCalculatorListener)
+      // Start default cache
+      startDefaultCache
       val address =  new InetSocketAddress(host, port)
       val encoder = getEncoder
       val nettyEncoder = if (encoder != null) new EncoderAdapter(encoder) else null
@@ -45,4 +48,5 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
 
    def getPort = port
 
+   def startDefaultCache = cacheManager.getCache
 }

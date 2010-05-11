@@ -8,13 +8,13 @@ import org.testng.annotations.{AfterClass, Test}
 import java.util.concurrent.TimeUnit
 import java.lang.reflect.Method
 import net.spy.memcached.{CASResponse, MemcachedClient}
+import org.infinispan.test.AbstractCacheTest._
 
 /**
  * // TODO: Document this
  * @author Galder Zamarreño
- * @since
+ * @since 4.1
  */
-
 @Test(groups = Array("functional"), testName = "server.memcached.MemcachedReplicationTest")
 class MemcachedReplicationTest extends MultipleCacheManagersTest with MemcachedTestingUtil {
    private val cacheName = "MemcachedReplSync"

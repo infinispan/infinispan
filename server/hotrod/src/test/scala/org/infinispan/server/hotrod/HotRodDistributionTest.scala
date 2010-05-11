@@ -11,6 +11,7 @@ import org.testng.Assert._
 import collection.mutable.ListBuffer
 import org.infinispan.distribution.UnionConsistentHash
 import org.infinispan.test.TestingUtil
+import org.infinispan.test.AbstractCacheTest._
 
 /**
  * // TODO: Document this
@@ -19,8 +20,6 @@ import org.infinispan.test.TestingUtil
  */
 @Test(groups = Array("functional"), testName = "server.hotrod.HotRodDistributionTest")
 class HotRodDistributionTest extends HotRodMultiNodeTest {
-
-   import HotRodServer._
 
    override protected def cacheName: String = "hotRodDistSync"
 

@@ -19,17 +19,15 @@ import org.infinispan.util.Util
 /**
  * // TODO: Document this
  * @author Galder Zamarreño
- * @since
+ * @since 4.1
  */
-
-class MemcachedDecoder(cacheManager: CacheManager, scheduler: ScheduledExecutorService)
+class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: ScheduledExecutorService)
       extends AbstractProtocolDecoder[String, MemcachedValue] with TextProtocolUtil {
    import RequestResolver._
 
    type SuitableParameters = MemcachedParameters
    type SuitableHeader = RequestHeader
 
-   private lazy val cache = createCache
    private lazy val isStatsEnabled = cache.getConfiguration.isExposeJmxStatistics
    private final val incrMisses = new AtomicLong(0)
    private final val incrHits = new AtomicLong(0)
@@ -154,8 +152,6 @@ class MemcachedDecoder(cacheManager: CacheManager, scheduler: ScheduledExecutorS
    }
 
    override def getCache(h: RequestHeader): Cache[String, MemcachedValue] = cache
-
-   protected def createCache: Cache[String, MemcachedValue] = cacheManager.getCache[String, MemcachedValue]
 
    override def handleCustomRequest(h: RequestHeader, b: ChannelBuffer, cache: Cache[String, MemcachedValue]): AnyRef = {
       h.op match {
