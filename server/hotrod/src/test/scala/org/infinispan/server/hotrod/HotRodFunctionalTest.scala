@@ -55,7 +55,6 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
    def testPutOnUndefinedCache(m: Method) {
       var status = client.execute(0xA0, 0x01, "boomooo", k(m), 0, 0, v(m), 0, 1, 0).status
       assertEquals(status, ServerError, "Status should have been 'ServerError' but instead was: " + status)
-      status = client.executeExpectBadMagic(0xA0, 0x01, cacheName, k(m) , 0, 0, v(m), 0).status
       client.assertPut(m)
    }
 

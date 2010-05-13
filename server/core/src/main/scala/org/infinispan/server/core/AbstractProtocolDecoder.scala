@@ -31,11 +31,11 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue] extends Decoder {
       val header = readHeader(buffer)
       if (header == null) return null // Something went wrong reading the header, so get more bytes 
       try {
-         val cache = getCache(header)
          val ret = header.op match {
             case PutRequest | PutIfAbsentRequest | ReplaceRequest | ReplaceIfUnmodifiedRequest | RemoveRequest => {
                val k = readKey(header, buffer)
                val params = readParameters(header, buffer)
+               val cache = getCache(header)
                header.op match {
                   case PutRequest => put(header, k, params, cache)
                   case PutIfAbsentRequest => putIfAbsent(header, k, params, cache)
@@ -44,9 +44,9 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue] extends Decoder {
                   case RemoveRequest => remove(header, k, params, cache)
                }
             }
-            case GetRequest | GetWithVersionRequest => get(header, buffer, cache)
-            case StatsRequest => createStatsResponse(header, cache.getAdvancedCache.getStats)
-            case _ => handleCustomRequest(header, buffer, cache)
+            case GetRequest | GetWithVersionRequest => get(header, buffer, getCache(header))
+            case StatsRequest => createStatsResponse(header, getCache(header).getAdvancedCache.getStats)
+            case _ => handleCustomRequest(header, buffer, getCache(header))
          }
          writeResponse(ctx.getChannel, ret)
          null
@@ -74,6 +74,7 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue] extends Decoder {
 
    private def put(header: SuitableHeader, k: K, params: Option[SuitableParameters], cache: Cache[K, V]): AnyRef = {
       val p = params.get
+      val cache = getCache(header)
       val v = createValue(header, p, generateVersion(cache))
       val prev = cache.put(k, v, toMillis(p.lifespan), DefaultTimeUnit, toMillis(p.maxIdle), DefaultTimeUnit)
       createSuccessResponse(header, params, prev)
