@@ -20,8 +20,9 @@ except:
   
 from pythonTools import *
 
-multi_threaded = 'multi_threaded' in settings and "true" == settings['multi_threaded'].strip().lower()
 modules = []
+uploader = None
+svn_conn = None
 
 def getModules(directory):
     # look at the pom.xml file
@@ -60,8 +61,7 @@ def validateVersion(version):
     helpAndExit()
 
 def tagInSubversion(version, newVersion):
-  sc = get_svn_conn()
-  sc.tag("%s/trunk" % settings[svn_base_key], newVersion, version)
+  svn_conn.tag("%s/trunk" % settings[svn_base_key], newVersion, version)
 
 def getProjectVersionTag(tree):
   return tree.find("./{%s}version" % (maven_pom_xml_namespace))
@@ -83,13 +83,15 @@ def writePom(tree, pomFile):
   finally:
     in_f.close()
     out_f.close()        
-  print " ... updated %s" % pomFile
+  if settings['verbose']:
+    print " ... updated %s" % pomFile
 
 def patch(pomFile, version):
   ## Updates the version in a POM file
   ## We need to locate //project/parent/version, //project/version and //project/properties/project-version
   ## And replace the contents of these with the new version
-  print "Patching %s" % pomFile
+  if settings['verbose']:
+    print "Patching %s" % pomFile
   tree = ElementTree()
   tree.parse(pomFile)    
   need_to_write = False
@@ -101,7 +103,8 @@ def patch(pomFile, version):
   
   for tag in tags:
     if tag != None:
-      print "%s is %s.  Setting to %s" % (str(tag), tag.text, version)
+      if settings['verbose']:
+        print "%s is %s.  Setting to %s" % (str(tag), tag.text, version)
       tag.text=version
       need_to_write = True
     
@@ -109,7 +112,8 @@ def patch(pomFile, version):
     # write to file again!
     writePom(tree, pomFile)
   else:
-    print "File doesn't need updating; nothing replaced!"
+    if settings['verbose']:
+      print "File doesn't need updating; nothing replaced!"
 
 def get_poms_to_patch(workingDir):
   getModules(workingDir)
@@ -124,12 +128,8 @@ def get_poms_to_patch(workingDir):
       
   return pomsToPatch
 
-def updateVersions(version, workingDir, trunkDir, test = False):
-  if test:
-    shutil.copytree(trunkDir, workingDir)
-  else:
-    client = get_svn_conn()
-    client.checkout(settings[svn_base_key] + "/tags/" + version, workingDir)
+def updateVersions(version, workingDir, trunkDir):
+  svn_conn.checkout(settings[svn_base_key] + "/tags/" + version, workingDir)
     
   pomsToPatch = get_poms_to_patch(workingDir)
     
@@ -160,10 +160,9 @@ def updateVersions(version, workingDir, trunkDir, test = False):
     
   os.rename(version_java+".tmp", version_java)
   
-  if not test:
-    # Now make sure this goes back into SVN.
-    checkInMessage = "Infinispan Release Script: Updated version numbers"
-    client.checkin(workingDir, checkInMessage)
+  # Now make sure this goes back into SVN.
+  checkInMessage = "Infinispan Release Script: Updated version numbers"
+  svn_conn.checkin(workingDir, checkInMessage)
 
 def buildAndTest(workingDir):
   os.chdir(workingDir)
@@ -176,68 +175,61 @@ def getModuleName(pomFile):
 
 
 def uploadArtifactsToSourceforge(version):
+  shutil.rmtree(".tmp", ignore_errors = True)  
   os.mkdir(".tmp")
+  os.mkdir(".tmp/%s" % version)
   os.chdir(".tmp")
-  do_not_copy = shutil.ignore_patterns('*.xml', '*.sha1', '*.md5', '*.pom', '.svn')
-  shutil.copytree("%s/%s/target/distribution" % (settings[local_tags_dir_key], version), version, ignore = do_not_copy)
-  subprocess.check_call(["scp", "-r", version, "sourceforge_frs:/home/frs/project/i/in/infinispan/infinispan"])
+  dist_dir = "%s/%s/target/distribution" % (settings[local_tags_dir_key], version)
+  print "Copying from %s to %s" % (dist_dir, version)
+  for item in os.listdir(dist_dir):
+    full_name = "%s/%s" % (dist_dir, item)
+    if item.strip().lower().endswith(".zip") and os.path.isfile(full_name):      
+      shutil.copy2(full_name, version)
+  uploader.upload_scp(version, "sourceforge_frs:/home/frs/project/i/in/infinispan/infinispan")
   shutil.rmtree(".tmp", ignore_errors = True)  
 
-def uploadJavadocs(base_dir, workingDir, version):
+def unzip_archive(workingDir, version):
+  os.chdir("%s/target/distribution" % workingDir)
+  ## Grab the distribution archive and un-arch it
+  shutil.rmtree("infinispan-%s" % version, ignore_errors = True)
+  if settings['verbose']:
+    subprocess.check_call(["unzip", "infinispan-%s-all.zip" % version])
+  else:
+    subprocess.check_call(["unzip", "-q", "infinispan-%s-all.zip" % version])
+
+def uploadJavadocs(workingDir, version):
   """Javadocs get rsync'ed to filemgmt.jboss.org, in the docs_htdocs/infinispan directory"""
   version_short = get_version_major_minor(version)
   
-  os.chdir("%s/target/distribution" % workingDir)
-  ## Grab the distribution archive and un-arch it
-  subprocess.check_call(["unzip", "infinispan-%s-all.zip" % version])
-  os.chdir("infinispan-%s/doc" % version)
+  os.chdir("%s/target/distribution/infinispan-%s/doc" % (workingDir, version))
   ## "Fix" the docs to use the appropriate analytics tracker ID
   subprocess.check_call(["%s/bin/updateTracker.sh" % workingDir])
   os.mkdir(version_short)
   os.rename("apidocs", "%s/apidocs" % version_short)
   
   ## rsync this stuff to filemgmt.jboss.org
-  subprocess.check_call(["rsync", "-rv", "--protocol=28", version_short, "infinispan@filemgmt.jboss.org:/docs_htdocs/infinispan"])
-  
-  # subprocess.check_call(["tar", "zcf", "%s/apidocs-%s.tar.gz" % (base_dir, version), version_short])
-  ## Upload to sourceforge
-  # os.chdir(base_dir)
-  # subprocess.check_call(["scp", "apidocs-%s.tar.gz" % version, "sourceforge_frs:"])  
-  # print """
-  #   API docs are in %s/apidocs-%s.tar.gz 
-  #   They have also been uploaded to Sourceforge.
-  #   
-  #   MANUAL STEP:
-  #     1) SSH to sourceforge (ssh -t SF_USERNAME,infinispan@shell.sourceforge.net create) and run '/home/groups/i/in/infinispan/install_apidocs.sh'
-  #     """ % (base_dir, version)
+  uploader.upload_rsync(version_short, "infinispan@filemgmt.jboss.org:/docs_htdocs/infinispan", flags = ['-rv', '--protocol=28'])
 
-def uploadSchema(base_dir, workingDir, version):
+def uploadSchema(workingDir, version):
   """Schema gets rsync'ed to filemgmt.jboss.org, in the docs_htdocs/infinispan/schemas directory"""
   os.chdir("%s/target/distribution/infinispan-%s/etc/schema" % (workingDir, version))
   
   ## rsync this stuff to filemgmt.jboss.org
-  subprocess.check_call(["rsync", "-rv", "--protocol=28", ".", "infinispan@filemgmt.jboss.org:/docs_htdocs/infinispan/schemas"])
+  uploader.upload_rsync('.', "infinispan@filemgmt.jboss.org:/docs_htdocs/infinispan/schemas", ['-rv', '--protocol=28'])
 
 def do_task(target, args, async_processes):
-  if multi_threaded:
+  if settings['multi_threaded']:
     async_processes.append(Process(target = target, args = args))  
   else:
     target(*args)
 
 ### This is the starting place for this script.
 def release():
+  global settings
+  global uploader
+  global svn_conn
   assert_python_minimum_version(2, 5)
   require_settings_file()
-  
-  missing_keys = []
-  expected_keys = [svn_base_key, local_tags_dir_key]
-  for expected_key in expected_keys:
-    if expected_key not in settings:
-      missing_keys.append(expected_key)
-  
-  if len(missing_keys) > 0:
-    print "Entries %s are missing in configuration file %s!  Cannot proceed!" % (missing_keys, settings_file)
-    sys.exit(2)
     
   # We start by determining whether the version passed in is a valid one
   if len(sys.argv) < 2:
@@ -247,6 +239,17 @@ def release():
   version = validateVersion(sys.argv[1])
   print "Releasing Infinispan version " + version
   print "Please stand by!"
+  
+  ## Set up network interactive tools
+  if settings['dry_run']:
+    # Use stubs
+    print "*** This is a DRY RUN.  No changes will be committed.  Used to test this release script only. ***"
+    print "Your settings are %s" % settings
+    uploader = DryRunUploader()
+    svn_conn = DryRunSvnConn()
+  else:
+    uploader = Uploader()
+    svn_conn= SvnConn()
   
   ## Release order:
   # Step 1: Tag in SVN
@@ -268,10 +271,13 @@ def release():
   print "Step 3: Complete"
   
   async_processes = []
+  
+  ##Unzip the newly built archive now
+  unzip_archive(workingDir, version)
     
   # Step 4: Upload javadocs to FTP
   print "Step 4: Uploading Javadocs"  
-  do_task(uploadJavadocs, [base_dir, workingDir, version], async_processes)
+  do_task(uploadJavadocs, [workingDir, version], async_processes)
   print "Step 4: Complete"
   
   print "Step 5: Uploading to Sourceforge"
@@ -279,7 +285,7 @@ def release():
   print "Step 5: Complete"
   
   print "Step 6: Uploading to configuration XML schema"
-  do_task(uploadSchema, [base_dir, workingDir, version], async_processes)    
+  do_task(uploadSchema, [workingDir, version], async_processes)    
   print "Step 6: Complete"
   
   ## Wait for processes to finish
