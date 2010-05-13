@@ -121,7 +121,7 @@ class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeout
       execute(op, op.id)
    }
 
-   def executeWithBadMagic(magic: Int, code: Byte, name: String, k: Array[Byte], lifespan: Int, maxIdle: Int,
+   def executeExpectBadMagic(magic: Int, code: Byte, name: String, k: Array[Byte], lifespan: Int, maxIdle: Int,
                            v: Array[Byte], version: Long): ErrorResponse = {
       val op = new Op(magic, code, name, k, lifespan, maxIdle, v, 0, version, 1, 0)
       execute(op, 0).asInstanceOf[ErrorResponse]

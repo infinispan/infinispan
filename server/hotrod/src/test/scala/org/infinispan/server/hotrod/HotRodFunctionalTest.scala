@@ -33,7 +33,7 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
 
    def testUnknownMagic(m: Method) {
       client.assertPut(m) // Do a put to make sure decoder gets back to reading properly
-      val status = client.executeWithBadMagic(0x66, 0x01, cacheName, k(m) , 0, 0, v(m), 0).status
+      val status = client.executeExpectBadMagic(0x66, 0x01, cacheName, k(m) , 0, 0, v(m), 0).status
       assertEquals(status, InvalidMagicOrMsgId,
          "Status should have been 'InvalidMagicOrMsgId' but instead was: " + status)
    }
@@ -52,10 +52,12 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
       assertTrue(Arrays.equals(value.data, v(m)));
    }
 
-//   def testPutOnUndefinedCache(m: Method) {
-//      val status = client.execute(0xA0, 0x01, "boomooo", k(m), 0, 0, v(m), 0, 1, 0).status
-//      assertEquals(status, ServerError, "Status should have been 'ServerError' but instead was: " + status)
-//   }
+   def testPutOnUndefinedCache(m: Method) {
+      var status = client.execute(0xA0, 0x01, "boomooo", k(m), 0, 0, v(m), 0, 1, 0).status
+      assertEquals(status, ServerError, "Status should have been 'ServerError' but instead was: " + status)
+      status = client.executeExpectBadMagic(0xA0, 0x01, cacheName, k(m) , 0, 0, v(m), 0).status
+      client.assertPut(m)
+   }
 
    def testPutWithLifespan(m: Method) {
       client.assertPut(m, 1, 0)
