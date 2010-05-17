@@ -52,6 +52,10 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
          case FIFO:
          case LIRS:
             int maxEntries = configuration.getEvictionMaxEntries();
+            //handle case when < 0 value signifies unbounded container 
+            if(maxEntries < 0) {
+                return (T) DefaultDataContainer.unBoundedDataContainer(level);
+            }
             EvictionThreadPolicy policy = configuration.getEvictionThreadPolicy();
             return (T) DefaultDataContainer.boundedDataContainer(level, maxEntries, st, policy);
          default:
