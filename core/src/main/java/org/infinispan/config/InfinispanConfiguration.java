@@ -31,7 +31,6 @@ import org.jboss.util.StringPropertyReplacer;
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLFilter;
 import org.xml.sax.XMLReader;
-import org.xml.sax.helpers.XMLFilterImpl;
 import org.xml.sax.helpers.XMLReaderFactory;
 
 import javax.xml.bind.JAXBContext;
@@ -136,7 +135,7 @@ public class InfinispanConfiguration implements XmlConfigurationParser {
                                                                     String schemaFileName, ConfigurationBeanVisitor cbv) throws IOException {
 
       InputStream inputStream = configFileName != null ? findInputStream(configFileName) : null;
-      InputStream schemaIS = schemaFileName != null ? findInputStream(schemaFileName) : null;
+      InputStream schemaIS = schemaFileName != null ? findSchemaInputStream(schemaFileName) : null;
       return newInfinispanConfiguration(inputStream, schemaIS, cbv);
    }
 
@@ -266,21 +265,49 @@ public class InfinispanConfiguration implements XmlConfigurationParser {
    }
 
    public static InputStream findSchemaInputStream() {
-      boolean validating = !skipSchemaValidation();
-      if (!validating)
-         return null;
-
-      FileLookup fileLookup = new FileLookup();
-      InputStream is = fileLookup.lookupFile(schemaPath());
-      if (is != null)
-         return is;
-      try {
-         is = new URL(schemaURL()).openStream();
-         return is;
-      } catch (Exception e) {
-      }
-      return null;
+      return findSchemaInputStream(null);
    }
+   
+    public static InputStream findSchemaInputStream(String localPathToSchema) {
+        boolean validating = !skipSchemaValidation();
+        if (!validating)
+            return null;
+
+        //1. resolve given path
+        FileLookup fileLookup = new FileLookup();
+        InputStream is = null;
+        if (localPathToSchema != null) {
+            is = fileLookup.lookupFile(localPathToSchema);
+            if (is != null) {
+                log.debug("Using schema " + localPathToSchema);
+                return is;
+            }
+            log.debug("Could not find schema on path " + localPathToSchema + ", resolving "
+                            + SCHEMA_SYSTEM_PROPERTY + " to " + schemaPath());
+        }
+
+        //2. resolve local schema path in infinispan distro
+        is = fileLookup.lookupFile(schemaPath());
+        if (is != null) {
+            log.debug("Using schema " + schemaPath());
+            return is;
+        }
+        log.debug("Could not find schema on path " + schemaPath() + ", resolving "
+                        + SCHEMA_URL_SYSTEM_PROPERTY + " to " + schemaURL());
+        
+        //3. resolve URL
+        try {
+            is = new URL(schemaURL()).openStream();
+            log.debug("Using schema " + schemaURL());
+            return is;
+        } catch (Exception e) {
+        }
+        
+        log.warn("Infinispan schema could not be resolved locally nor fetched from URL. Local path="
+                        + localPathToSchema + ", schemaPath=" + schemaPath() + ",schemaURL="
+                        + schemaURL());
+        return null;
+    }
 
    public static String resolveSchemaPath() {
       boolean validating = !skipSchemaValidation();
@@ -297,14 +324,7 @@ public class InfinispanConfiguration implements XmlConfigurationParser {
       return System.getProperty(SCHEMA_URL_SYSTEM_PROPERTY, DEFAULT_SCHEMA_URL);
    }
 
-   /**
-    * Should never called. Construct InfinispanConfiguration with constructor other than no-arg constructor
-    * <p/>
-    * Needed for reflection
-    */
-   public InfinispanConfiguration() {
-      super();
-   }
+   private InfinispanConfiguration() {}
 
    public void accept(ConfigurationBeanVisitor v) {
       if (v != null) {
