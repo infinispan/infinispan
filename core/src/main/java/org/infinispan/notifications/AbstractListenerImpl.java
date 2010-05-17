@@ -175,11 +175,8 @@ public abstract class AbstractListenerImpl {
                   method.invoke(target, event);
                }
                catch (InvocationTargetException exception) {
-                  Throwable cause = exception.getCause();
-                  if (cause != null)
-                     throw new CacheException("Caught exception invoking method " + method + " on listener instance " + target, cause);
-                  else
-                     throw new CacheException("Caught exception invoking method " + method + " on listener instance " + target, exception);
+                  Throwable cause = getRealException(exception);
+                  throw new CacheException("Caught exception invoking method " + method + " on listener instance " + target, cause);
                }
                catch (IllegalAccessException exception) {
                   getLog().warn("Unable to invoke method " + method + " on Object instance " + target + " - removing this target object from list of listeners!", exception);
@@ -194,4 +191,14 @@ public abstract class AbstractListenerImpl {
             asyncProcessor.execute(r);
       }
    }
+
+   private Throwable getRealException(Throwable re) {
+      if (re.getCause() == null) return re;
+      Throwable cause = re.getCause();
+      if (cause instanceof CacheException || cause instanceof RuntimeException)
+         return getRealException(cause);
+      else
+         return re;
+   }
+
 }

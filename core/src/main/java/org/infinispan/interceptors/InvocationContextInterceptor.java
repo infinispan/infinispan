@@ -22,6 +22,7 @@
 package org.infinispan.interceptors;
 
 
+import org.infinispan.CacheException;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -57,7 +58,6 @@ public class InvocationContextInterceptor extends CommandInterceptor {
          return invokeNextInterceptor(ctx, command);
       }
       catch (Throwable th) {
-
          // make sure we release locks for all keys locked in this invocation!
          for (Object key: ctx.getKeysAddedInCurrentInvocation()) {
             if (ctx.hasLockedKey(key)) {
@@ -77,6 +77,7 @@ public class InvocationContextInterceptor extends CommandInterceptor {
             return null;
          } else {
             log.error("Execution error: ", th);
+
             throw th;
          }
       } finally {

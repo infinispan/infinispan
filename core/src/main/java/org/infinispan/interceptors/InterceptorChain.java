@@ -69,12 +69,14 @@ public class InterceptorChain {
 
    /**
     * Ensures that the interceptor of type passed in isn't already added
+    *
     * @param clazz type of interceptor to check for
     */
    private void assertNotAdded(Class<? extends CommandInterceptor> clazz) {
       CommandInterceptor next = firstInChain;
       while (next != null) {
-         if (next.getClass().equals(clazz)) throw new ConfigurationException("Detected interceptor of type [" + clazz.getName() + "] being added to the interceptor chain more than once!");
+         if (next.getClass().equals(clazz))
+            throw new ConfigurationException("Detected interceptor of type [" + clazz.getName() + "] being added to the interceptor chain more than once!");
          next = next.getNext();
       }
    }
@@ -221,11 +223,11 @@ public class InterceptorChain {
       }
       return false;
    }
-   
+
    /**
     * Replaces an existing interceptor of the given type in the interceptor chain with a new interceptor instance passed as parameter.
-    * 
-    * @param replacingInterceptor the interceptor to add to the interceptor chain
+    *
+    * @param replacingInterceptor        the interceptor to add to the interceptor chain
     * @param toBeReplacedInterceptorType the type of interceptor that should be swapped with the new one
     * @return true if the interceptor was replaced
     */
@@ -267,14 +269,13 @@ public class InterceptorChain {
    public Object invoke(InvocationContext ctx, VisitableCommand command) {
       try {
          return command.acceptVisitor(ctx, firstInChain);
-      }
-      catch (CacheException e) {
+      } catch (CacheException e) {
+         if (e.getCause() instanceof InterruptedException)
+            Thread.currentThread().interrupt();
          throw e;
-      }
-      catch (RuntimeException e) {
+      } catch (RuntimeException e) {
          throw e;
-      }
-      catch (Throwable t) {
+      } catch (Throwable t) {
          throw new CacheException(t);
       }
    }
@@ -282,6 +283,7 @@ public class InterceptorChain {
    /**
     * @return the first interceptor in the chain.
     */
+
    public CommandInterceptor getFirstInChain() {
       return firstInChain;
    }

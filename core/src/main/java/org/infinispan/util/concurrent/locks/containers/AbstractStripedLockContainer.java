@@ -84,6 +84,9 @@ public abstract class AbstractStripedLockContainer implements LockContainer {
       boolean locked = false;
       try {
          locked = lock.tryLock(timeout, unit);
+      } catch (InterruptedException ie) {
+         safeRelease(lock);
+         throw ie;
       } catch (Throwable th) {
          safeRelease(lock);
          locked = false;

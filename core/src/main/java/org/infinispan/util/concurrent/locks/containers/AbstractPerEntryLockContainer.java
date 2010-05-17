@@ -49,6 +49,9 @@ public abstract class AbstractPerEntryLockContainer implements LockContainer {
          boolean locked = false;
          try {
             locked = lock.tryLock(timeout, unit);
+         } catch (InterruptedException ie) {
+            safeRelease(lock);
+            throw ie;
          } catch (Throwable th) {
             safeRelease(lock);
             locked = false;
