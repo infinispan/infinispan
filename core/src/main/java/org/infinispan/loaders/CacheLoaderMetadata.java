@@ -1,7 +1,5 @@
 package org.infinispan.loaders;
 
-import sun.security.krb5.internal.crypto.EType;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
