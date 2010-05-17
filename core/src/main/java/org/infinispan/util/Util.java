@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
 
 /**
  * General utility methods used throughout the JBC code base.
@@ -271,4 +272,19 @@ public final class Util {
       return s;
    }
 
+   /**
+    * Releases a lock and swallows any IllegalMonitorStateExceptions - so it is safe to call this method even if the
+    * lock is not locked, or not locked by the current thread.
+    *
+    * @param toRelease lock to release
+    */
+   public static final void safeRelease(Lock toRelease) {
+      if (toRelease != null) {
+         try {
+            toRelease.unlock();
+         } catch (IllegalMonitorStateException imse) {
+            // Perhaps the caller hadn't acquired the lock after all.
+         }
+      }
+   }
 }

@@ -1,9 +1,13 @@
 package org.infinispan.util.concurrent.locks.containers;
 
+import org.infinispan.util.Util;
+
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
+
+import static org.infinispan.util.Util.safeRelease;
 
 /**
  * An abstract lock container that creates and maintains a new lock per entry
@@ -42,12 +46,19 @@ public abstract class AbstractPerEntryLockContainer implements LockContainer {
    public Lock acquireLock(Object key, long timeout, TimeUnit unit) throws InterruptedException {
       while (true) {
          Lock lock = getLock(key);
-         if (lock.tryLock(timeout, unit)) {
+         boolean locked = false;
+         try {
+            locked = lock.tryLock(timeout, unit);
+         } catch (Throwable th) {
+            safeRelease(lock);
+            locked = false;
+         }
+         if (locked) {
             // lock acquired.  Now check if it is the *correct* lock!
             Lock existingLock = locks.putIfAbsent(key, lock);
             if (existingLock != null && existingLock != lock) {
                // we have the wrong lock!  Unlock and retry.
-               lock.unlock();
+               safeRelease(lock);
             } else {
                // we got the right lock.
                return lock;
