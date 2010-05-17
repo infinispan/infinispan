@@ -173,11 +173,6 @@ public class TransactionXaAdapter implements CacheTransaction, XAResource {
       return true;
    }
 
-   public void putLookedUpEntries(Map<Object, CacheEntry> entries) {
-      initLookedUpEntries();
-      lookedUpEntries.putAll(entries);
-   }
-
    public CacheEntry lookupEntry(Object key) {
       if (lookedUpEntries == null) return null;
       return lookedUpEntries.get(key);

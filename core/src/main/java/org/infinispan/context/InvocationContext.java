@@ -21,6 +21,9 @@
  */
 package org.infinispan.context;
 
+import java.util.Collections;
+import java.util.Set;
+
 /**
  * A context that contains information pertaining to a given invocation.  These contexts typically have the lifespan of
  * a single invocation.
@@ -55,6 +58,13 @@ public interface InvocationContext extends EntryLookup, FlagContainer, Cloneable
 
    void setUseFutureReturnType(boolean useFutureReturnType);
 
-   public InvocationContext clone();
+   InvocationContext clone();
 
+   /**
+    * Retrieves a set of keys added to the context within the scope of the current ivocation up to the current point
+    * in time.  This is usually all of the keys added to the context, unless transactions are used in which case it is
+    * a subset of all the keys added to the context.
+    * @return a Set of keys, which may be an empty set.
+    */
+   Set<Object> getKeysAddedInCurrentInvocation();
 }

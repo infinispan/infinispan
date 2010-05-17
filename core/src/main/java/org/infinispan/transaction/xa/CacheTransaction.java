@@ -32,8 +32,6 @@ public interface CacheTransaction {
 
    public void putLookedUpEntry(Object key, CacheEntry e);
 
-   public void putLookedUpEntries(Map<Object, CacheEntry> lookedUpEntries);
-
    public void removeLookedUpEntry(Object key);
 
    public void clearLookedUpEntries();

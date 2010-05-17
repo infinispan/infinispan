@@ -62,10 +62,6 @@ public class RemoteTransaction implements CacheTransaction, Cloneable {
       lookedUpEntries.put(key, e);
    }
 
-   public void putLookedUpEntries(Map<Object, CacheEntry> lookedUpEntries) {
-      lookedUpEntries.putAll(lookedUpEntries);
-   }
-
    public void removeLookedUpEntry(Object key) {
       lookedUpEntries.remove(key);
    }

@@ -25,13 +25,22 @@ package org.infinispan.interceptors;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.util.concurrent.locks.LockManager;
 
 public class InvocationContextInterceptor extends CommandInterceptor {
+
+   LockManager lockManager;
 
    @Override
    public Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
       return handleAll(ctx, command);
+   }
+
+   @Inject
+   public void injectLockManager(LockManager lockManager) {
+      this.lockManager = lockManager;
    }
 
    private Object handleAll(InvocationContext ctx, VisitableCommand command) throws Throwable {
@@ -48,6 +57,21 @@ public class InvocationContextInterceptor extends CommandInterceptor {
          return invokeNextInterceptor(ctx, command);
       }
       catch (Throwable th) {
+
+         // make sure we release locks for all keys locked in this invocation!
+         for (Object key: ctx.getKeysAddedInCurrentInvocation()) {
+            if (ctx.hasLockedKey(key)) {
+               if (suppressExceptions) {
+                  if (log.isDebugEnabled()) log.debug("Caught exception, Releasing lock on key " + key + " acquired during the current invocation!");
+               } else {
+                  if (log.isInfoEnabled()) log.info("Caught exception, Releasing lock on key " + key + " acquired during the current invocation!");
+               }
+               // unlock key!
+               lockManager.unlock(key);
+               ctx.removeLookedUpEntry(key);
+            }
+         }
+
          if (suppressExceptions) {
             log.trace("Exception while executing code, failing silently...", th);
             return null;
