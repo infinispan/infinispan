@@ -44,7 +44,6 @@ public class CacheManagerStoppedTest extends SingleCacheManagerTest {
    public void testGetCacheOperations() {
       assert remoteCacheManager.getCache() != null;
       assert remoteCacheManager.getCache(CACHE_NAME) != null;
-      cache().ping();
       cache().put("k", "v");
       assert cache().get("k").equals("v");      
    }
@@ -116,11 +115,6 @@ public class CacheManagerStoppedTest extends SingleCacheManagerTest {
    @Test(expectedExceptions = RemoteCacheManagerNotStartedException.class, dependsOnMethods = "testStopCacheManager")
    public void testVersionedRemoveAsync() {
       cache().removeWithVersionAsync("key", 12312321l);
-   }
-
-   @Test(expectedExceptions = RemoteCacheManagerNotStartedException.class, dependsOnMethods = "testStopCacheManager")
-   public void testPing() {
-      cache().ping();
    }
 
    private RemoteCache<Object, Object> cache() {

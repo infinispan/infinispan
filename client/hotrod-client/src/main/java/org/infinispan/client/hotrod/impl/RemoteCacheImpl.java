@@ -287,12 +287,6 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    }
 
    @Override
-   public boolean ping() {
-      assertRemoteCacheManagerIsStarted();
-      return operations.ping();
-   }
-
-   @Override
    public void start() {
       if (log.isInfoEnabled()) {
          log.info("Start called, nothing to do here(" + getName() + ")");

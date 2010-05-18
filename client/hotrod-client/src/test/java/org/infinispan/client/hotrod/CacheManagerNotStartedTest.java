@@ -107,11 +107,6 @@ public class CacheManagerNotStartedTest extends SingleCacheManagerTest {
       cache().removeWithVersionAsync("key", 12312321l);
    }
 
-   @Test(expectedExceptions = RemoteCacheManagerNotStartedException.class)
-   public void testPing() {
-      cache().ping();
-   }
-
    private RemoteCache<Object, Object> cache() {
       return remoteCacheManager.getCache();
    }

@@ -338,11 +338,6 @@ public interface RemoteCache<K, V> extends Cache<K, V> {
    @Override
    void putAll(Map<? extends K, ? extends V> m);
 
-   /**
-    * Returns true if the remote cluster can be reached, false otherwise.
-    */
-   boolean ping();
-
    public ServerStatistics stats();
 
    RemoteCache<K,V> withFlags(Flag... flags);

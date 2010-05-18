@@ -98,7 +98,6 @@ public class RemoteCacheManagerTest extends SingleCacheManagerTest {
 
    private void assertWorks(RemoteCacheManager remoteCacheManager) {
       RemoteCache<Object, Object> cache = remoteCacheManager.getCache();
-      assert cache.ping();
       cache.put("aKey", "aValue");
       assert cache.get("aKey").equals("aValue");
    }

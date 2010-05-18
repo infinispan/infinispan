@@ -234,7 +234,7 @@ public class HotRodOperationsImpl implements HotRodOperations, HotRodConstants {
          }
          throw new IllegalStateException("Unknown response status: " + Integer.toHexString(respStatus));
       } catch (TransportException te) {
-         log.trace("Exception while ping", te);
+         log.trace("Exception while adsdsa", te);
          return false;
       }
       finally {

@@ -71,9 +71,7 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
    @AfterClass 
    public void testDestroyRemoteCacheFactory() {
       remoteCacheManager.stop();
-//      assert remoteCache.ping();
       hotrodServer.stop();
-//      assert !remoteCache.ping();
    }
 
    public void testPut() {
