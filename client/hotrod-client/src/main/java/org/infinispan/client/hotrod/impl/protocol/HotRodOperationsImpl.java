@@ -5,7 +5,7 @@ import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.BinaryVersionedValue;
 import org.infinispan.client.hotrod.impl.VersionedOperationResponse;
-import org.infinispan.client.hotrod.impl.protocol.HotrodConstants;
+import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.util.logging.Log;
@@ -20,15 +20,15 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
+public class HotRodOperationsImpl implements HotRodOperations, HotRodConstants {
 
-   private static Log log = LogFactory.getLog(HotrodOperationsImpl.class);
+   private static Log log = LogFactory.getLog(HotRodOperationsImpl.class);
 
    private final String cacheName;
    private TransportFactory transportFactory;
    private final AtomicInteger topologyId;
 
-   public HotrodOperationsImpl(String cacheName, TransportFactory transportFactory, AtomicInteger topologyId) {
+   public HotRodOperationsImpl(String cacheName, TransportFactory transportFactory, AtomicInteger topologyId) {
       this.cacheName = cacheName; //todo add charset here
       this.transportFactory = transportFactory;
       this.topologyId = topologyId;
@@ -228,7 +228,7 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
          transport = transportFactory.getTransport();
          // 1) write header
          long messageId = HotRodOperationsHelper.writeHeader(transport, PING_REQUEST, cacheName, topologyId);
-         short respStatus = HotRodOperationsHelper.readHeaderAndValidate(transport, messageId, HotrodConstants.PING_RESPONSE, topologyId);
+         short respStatus = HotRodOperationsHelper.readHeaderAndValidate(transport, messageId, HotRodConstants.PING_RESPONSE, topologyId);
          if (respStatus == NO_ERROR_STATUS) {
             return true;
          }

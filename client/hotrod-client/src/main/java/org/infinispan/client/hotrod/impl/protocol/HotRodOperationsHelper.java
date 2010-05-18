@@ -4,7 +4,7 @@ import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
 import org.infinispan.client.hotrod.exceptions.HotRodTimeoutException;
-import org.infinispan.client.hotrod.impl.protocol.HotrodConstants;
+import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -21,15 +21,15 @@ import java.util.concurrent.atomic.AtomicLong;
  * @since 4.1
  */
 public class HotRodOperationsHelper {
-   static Log log = LogFactory.getLog(HotrodOperationsImpl.class);
+   static Log log = LogFactory.getLog(HotRodOperationsImpl.class);
    static final AtomicLong MSG_ID = new AtomicLong();
-   final static byte CLIENT_INTELLIGENCE = HotrodConstants.CLIENT_INTELLIGENCE_HASH_DISTRIBUTION_AWARE;
+   final static byte CLIENT_INTELLIGENCE = HotRodConstants.CLIENT_INTELLIGENCE_HASH_DISTRIBUTION_AWARE;
 
    public static long writeHeader(Transport transport, short operationCode, String cacheName, AtomicInteger topologyId, Flag... flags) {
-      transport.writeByte(HotrodConstants.REQUEST_MAGIC);
+      transport.writeByte(HotRodConstants.REQUEST_MAGIC);
       long messageId = MSG_ID.incrementAndGet();
       transport.writeVLong(messageId);
-      transport.writeByte(HotrodConstants.HOTROD_VERSION);
+      transport.writeByte(HotRodConstants.HOTROD_VERSION);
       transport.writeByte(operationCode);
       transport.writeArray(cacheName.getBytes());
 
@@ -53,8 +53,8 @@ public class HotRodOperationsHelper {
     */
    public static short readHeaderAndValidate(Transport transport, long messageId, short opRespCode, AtomicInteger topologyId) {
       short magic = transport.readByte();
-      if (magic != HotrodConstants.RESPONSE_MAGIC) {
-         String message = "Invalid magic number. Expected " + Integer.toHexString(HotrodConstants.RESPONSE_MAGIC) + " and received " + Integer.toHexString(magic);
+      if (magic != HotRodConstants.RESPONSE_MAGIC) {
+         String message = "Invalid magic number. Expected " + Integer.toHexString(HotRodConstants.RESPONSE_MAGIC) + " and received " + Integer.toHexString(magic);
          log.error(message);
          throw new InvalidResponseException(message);
       }
@@ -69,7 +69,7 @@ public class HotRodOperationsHelper {
       }
       short receivedOpCode = transport.readByte();
       if (receivedOpCode != opRespCode) {
-         if (receivedOpCode == HotrodConstants.ERROR_RESPONSE) {
+         if (receivedOpCode == HotRodConstants.ERROR_RESPONSE) {
             checkForErrorsInResponseStatus(transport.readByte(), messageId, transport);
             throw new IllegalStateException("Error expected! (i.e. exception in the prev statement)");
          }
@@ -131,26 +131,26 @@ public class HotRodOperationsHelper {
          log.trace("Received operation status: " + status);
       }
       switch ((int) status) {
-         case HotrodConstants.INVALID_MAGIC_OR_MESSAGE_ID_STATUS:
-         case HotrodConstants.REQUEST_PARSING_ERROR_STATUS:
-         case HotrodConstants.UNKNOWN_COMMAND_STATUS:
-         case HotrodConstants.SERVER_ERROR_STATUS:
-         case HotrodConstants.UNKNOWN_VERSION_STATUS: {
+         case HotRodConstants.INVALID_MAGIC_OR_MESSAGE_ID_STATUS:
+         case HotRodConstants.REQUEST_PARSING_ERROR_STATUS:
+         case HotRodConstants.UNKNOWN_COMMAND_STATUS:
+         case HotRodConstants.SERVER_ERROR_STATUS:
+         case HotRodConstants.UNKNOWN_VERSION_STATUS: {
             String msgFromServer = transport.readString();
             if (log.isWarnEnabled()) {
                log.warn("Error status received from the server:" + msgFromServer + " for message id " + messageId);
             }
             throw new HotRodClientException(msgFromServer, messageId, status);
          }
-         case HotrodConstants.COMMAND_TIMEOUT_STATUS: {
+         case HotRodConstants.COMMAND_TIMEOUT_STATUS: {
             if (log.isTraceEnabled()) {
                log.trace("timeout message received from the server");
             }
             throw new HotRodTimeoutException();
          }
-         case HotrodConstants.NO_ERROR_STATUS:
-         case HotrodConstants.KEY_DOES_NOT_EXIST_STATUS:
-         case HotrodConstants.NOT_PUT_REMOVED_REPLACED_STATUS: {
+         case HotRodConstants.NO_ERROR_STATUS:
+         case HotRodConstants.KEY_DOES_NOT_EXIST_STATUS:
+         case HotRodConstants.NOT_PUT_REMOVED_REPLACED_STATUS: {
             //don't do anything, these are correct responses
             break;
          }

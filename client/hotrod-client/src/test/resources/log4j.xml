@@ -45,7 +45,7 @@
    <!-- ================ -->
 
    <category name="org.infinispan">
-      <priority value="INFO"/>
+      <priority value="TRACE"/>
    </category>
 
    <category name="org.infinispan.server.hotrod">

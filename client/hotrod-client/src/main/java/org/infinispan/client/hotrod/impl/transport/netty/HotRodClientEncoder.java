@@ -14,7 +14,7 @@ import static org.jboss.netty.buffer.ChannelBuffers.*;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public class HotrodClientEncoder extends OneToOneEncoder {
+public class HotRodClientEncoder extends OneToOneEncoder {
 
    private OutputStreamAdapter osa = new OutputStreamAdapter();
 

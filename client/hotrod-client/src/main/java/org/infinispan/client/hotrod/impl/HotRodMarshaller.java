@@ -6,7 +6,7 @@ package org.infinispan.client.hotrod.impl;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public interface HotrodMarshaller {
+public interface HotRodMarshaller {
 
    byte[] marshallObject(Object toMarshall);
 

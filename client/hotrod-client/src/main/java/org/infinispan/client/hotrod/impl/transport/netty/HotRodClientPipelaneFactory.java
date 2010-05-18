@@ -6,21 +6,18 @@ import org.jboss.netty.channel.ChannelEvent;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.channel.DefaultChannelPipeline;
-import org.jboss.netty.handler.codec.http.HttpRequestEncoder;
-import org.jboss.netty.handler.codec.http.HttpResponseDecoder;
-import static org.jboss.netty.channel.Channels.*;
 
 /**
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public class HotrodClientPipelaneFactory implements ChannelPipelineFactory {
+public class HotRodClientPipelaneFactory implements ChannelPipelineFactory {
 
-   private static Log log = LogFactory.getLog(HotrodClientPipelaneFactory.class);
+   private static Log log = LogFactory.getLog(HotRodClientPipelaneFactory.class);
 
-   private HotrodClientDecoder decoder;
+   private HotRodClientDecoder decoder;
 
-   public HotrodClientPipelaneFactory(HotrodClientDecoder decoder) {
+   public HotRodClientPipelaneFactory(HotRodClientDecoder decoder) {
       this.decoder = decoder;
    }
 
@@ -34,7 +31,7 @@ public class HotrodClientPipelaneFactory implements ChannelPipelineFactory {
          }
       };
       pipeline.addLast("decoder", decoder);
-      pipeline.addLast("encoder", new HotrodClientEncoder());
+      pipeline.addLast("encoder", new HotRodClientEncoder());
       return pipeline;
    }
 }

@@ -1,10 +1,10 @@
 package org.infinispan.client.hotrod;
 
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.client.hotrod.impl.HotRodMarshaller;
 import org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory;
-import org.infinispan.client.hotrod.impl.protocol.HotrodOperations;
-import org.infinispan.client.hotrod.impl.protocol.HotrodOperationsImpl;
-import org.infinispan.client.hotrod.impl.HotrodMarshaller;
+import org.infinispan.client.hotrod.impl.protocol.HotRodOperations;
+import org.infinispan.client.hotrod.impl.protocol.HotRodOperationsImpl;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.SerializationMarshaller;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
@@ -331,9 +331,9 @@ public class RemoteCacheManager implements CacheContainer, Lifecycle {
    }
 
    private <K, V> void startRemoteCache(RemoteCacheImpl<K, V> result) {
-      HotrodMarshaller marshaller = (HotrodMarshaller) VHelper.newInstance(hotrodMarshaller);
-      HotrodOperations hotrodOperations = new HotrodOperationsImpl(result.getName(), transportFactory, topologyId);
-      result.init(hotrodOperations, marshaller, asyncExecutorService);
+      HotRodMarshaller marshaller = (HotRodMarshaller) VHelper.newInstance(hotrodMarshaller);
+      HotRodOperations hotRodOperations = new HotRodOperationsImpl(result.getName(), transportFactory, topologyId);
+      result.init(hotRodOperations, marshaller, asyncExecutorService);
    }
 
    private Set<InetSocketAddress> getStaticConfiguredServers(String servers) {

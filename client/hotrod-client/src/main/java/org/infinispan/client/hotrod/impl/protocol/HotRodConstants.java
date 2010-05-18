@@ -6,7 +6,7 @@ package org.infinispan.client.hotrod.impl.protocol;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public interface HotrodConstants {
+public interface HotRodConstants {
 
    public static final short REQUEST_MAGIC = 0xA0;
    public static final short RESPONSE_MAGIC = 0xA1;

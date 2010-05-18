@@ -17,7 +17,7 @@ import java.util.Arrays;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public class SerializationMarshaller implements HotrodMarshaller {
+public class SerializationMarshaller implements HotRodMarshaller {
 
    private static Log log = LogFactory.getLog(SerializationMarshaller.class);
 

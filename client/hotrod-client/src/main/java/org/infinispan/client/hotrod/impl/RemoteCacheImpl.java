@@ -8,7 +8,7 @@ import org.infinispan.client.hotrod.Version;
 import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.client.hotrod.exceptions.RemoteCacheManagerNotStartedException;
 import org.infinispan.client.hotrod.impl.async.NotifyingFutureImpl;
-import org.infinispan.client.hotrod.impl.protocol.HotrodOperations;
+import org.infinispan.client.hotrod.impl.protocol.HotRodOperations;
 import org.infinispan.util.concurrent.NotifyingFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -30,8 +30,8 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    private static final Flag[] FORCE_RETURN_VALUE = {Flag.FORCE_RETURN_VALUE};
 
    private ThreadLocal<Flag[]> flagsMap = new ThreadLocal<Flag[]>();
-   private HotrodOperations operations;
-   private HotrodMarshaller marshaller;
+   private HotRodOperations operations;
+   private HotRodMarshaller marshaller;
    private final String name;
    private final RemoteCacheManager remoteCacheManager;
    private volatile ExecutorService executorService;
@@ -43,7 +43,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       this.remoteCacheManager = rcm;
    }
 
-   public void init(HotrodOperations operations, HotrodMarshaller marshaller, ExecutorService executorService) {
+   public void init(HotRodOperations operations, HotRodMarshaller marshaller, ExecutorService executorService) {
       this.operations = operations;
       this.marshaller = marshaller;
       this.executorService = executorService;

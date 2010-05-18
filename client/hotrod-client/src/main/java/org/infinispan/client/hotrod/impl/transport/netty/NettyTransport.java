@@ -25,7 +25,7 @@ public class NettyTransport extends AbstractTransport {
    private Channel channel;
    private ChannelFuture lastWrite;
 
-   private HotrodClientDecoder decoder = new HotrodClientDecoder();
+   private HotRodClientDecoder decoder = new HotRodClientDecoder();
 
    public NettyTransport(InetSocketAddress serverAddress, TransportFactory transportFactory) {
       super(transportFactory);
@@ -39,7 +39,7 @@ public class NettyTransport extends AbstractTransport {
             new NioClientSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool()));
 
       // Set up the event pipeline factory.
-      bootstrap.setPipelineFactory(new HotrodClientPipelaneFactory(decoder));
+      bootstrap.setPipelineFactory(new HotRodClientPipelaneFactory(decoder));
 
       // Start the connection attempt.
       ChannelFuture future = bootstrap.connect(serverAddress);

@@ -15,7 +15,7 @@ import java.util.Map;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public interface HotrodOperations {
+public interface HotRodOperations {
 
    public byte[] get(byte[] key, Flag... flags);
 

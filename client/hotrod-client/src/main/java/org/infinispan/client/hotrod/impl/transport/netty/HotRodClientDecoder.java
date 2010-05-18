@@ -12,7 +12,7 @@ import org.jboss.netty.handler.codec.frame.FrameDecoder;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public class HotrodClientDecoder extends FrameDecoder {
+public class HotRodClientDecoder extends FrameDecoder {
 
    private final ChannelBuffer buffer = ChannelBuffers.dynamicBuffer();
    private final InputStreamAdapter isa = new InputStreamAdapter(buffer);

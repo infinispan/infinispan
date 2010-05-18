@@ -1,8 +1,8 @@
 package org.infinispan.client.hotrod.impl.transport.tcp;
 
 import org.apache.commons.pool.BaseKeyedPoolableObjectFactory;
+import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.protocol.HotRodOperationsHelper;
-import org.infinispan.client.hotrod.impl.protocol.HotrodConstants;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -45,9 +45,9 @@ public class TransportObjectFactory extends BaseKeyedPoolableObjectFactory {
          if (log.isTraceEnabled()) {
             log.trace("About to validate(ping) connection to server " + key + ". TcpTransport is " + transport);
          }
-         long messageId = HotRodOperationsHelper.writeHeader(transport, HotrodConstants.PING_REQUEST, DefaultCacheManager.DEFAULT_CACHE_NAME, topologyId);
-         short respStatus = HotRodOperationsHelper.readHeaderAndValidate(transport, messageId, HotrodConstants.PING_RESPONSE, topologyId);
-         if (respStatus == HotrodConstants.NO_ERROR_STATUS) {
+         long messageId = HotRodOperationsHelper.writeHeader(transport, HotRodConstants.PING_REQUEST, DefaultCacheManager.DEFAULT_CACHE_NAME, topologyId);
+         short respStatus = HotRodOperationsHelper.readHeaderAndValidate(transport, messageId, HotRodConstants.PING_RESPONSE, topologyId);
+         if (respStatus == HotRodConstants.NO_ERROR_STATUS) {
             if (log.isTraceEnabled())
                log.trace("Successfully validated transport: " + transport);
             return true;
