@@ -20,7 +20,7 @@ import static org.testng.AssertJUnit.assertTrue;
  * @since 4.1
  */
 @Test(groups = "functional", testName = "client.hotrod.HotrodStatisticsTest")
-public class HotrodStatisticsTest {
+public class HotRodStatisticsTest {
 
    private HotRodServer hotrodServer;
    private CacheManager cacheManager;
