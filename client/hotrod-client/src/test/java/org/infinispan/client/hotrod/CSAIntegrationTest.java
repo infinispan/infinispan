@@ -64,7 +64,7 @@ public class CSAIntegrationTest extends MultipleCacheManagersTest {
       cm3.defineConfiguration(CACHE_NAME, config);
 
       hotRodServer1 = TestHelper.startHotRodServer(manager(0));
-      hotRodServer2 = TestHelper.startHotRodServer(manager(1));
+         hotRodServer2 = TestHelper.startHotRodServer(manager(1));
       hotRodServer3 = TestHelper.startHotRodServer(manager(2));
 
       assert manager(0).getCache(CACHE_NAME) != null;
@@ -139,7 +139,6 @@ public class CSAIntegrationTest extends MultipleCacheManagersTest {
 
       List<byte[]> keys = new ArrayList<byte[]>();
       for (int i = 0; i < 500; i++) {
-         System.out.println("i = " + i);
          byte[] key = generateKey(i);
          keys.add(key);
          remoteCache.put(new String(key), "value");

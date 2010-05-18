@@ -88,6 +88,14 @@ public class RemoteCacheManagerTest extends SingleCacheManagerTest {
       remoteCacheManager.stop();
    }
 
+   public void testStringAndBooleanConstructor() {
+      RemoteCacheManager remoteCacheManager = new RemoteCacheManager("localhost:"+hotrodServer.getPort(), false);
+      assert !remoteCacheManager.isStarted();
+      remoteCacheManager.start();
+      assertWorks(remoteCacheManager);
+      remoteCacheManager.stop();
+   }   
+
    private void assertWorks(RemoteCacheManager remoteCacheManager) {
       RemoteCache<Object, Object> cache = remoteCacheManager.getCache();
       assert cache.ping();

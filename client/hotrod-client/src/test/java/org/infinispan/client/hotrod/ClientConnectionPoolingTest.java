@@ -151,7 +151,7 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
       for (int i = 0; i < 10; i++) {
          log.trace("Active for server " + hrServ1Addr + " are:" + connectionPool.getNumActive(hrServ1Addr));
          log.trace("Active for server " + hrServ2Addr + " are:" + connectionPool.getNumActive(hrServ2Addr));
-         if (connectionPool.getNumActive(hrServ1Addr) == 1 && connectionPool.getNumActive(hrServ1Addr) == 1) break;
+         if (connectionPool.getNumActive(hrServ1Addr) == 1 && connectionPool.getNumActive(hrServ2Addr) == 1) break;
          Thread.sleep(1000);
       }
       log.info("Connection pool is " + connectionPool);
@@ -165,7 +165,7 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
       for (int i = 0; i < 10; i++) {
          log.trace("Active for server " + hrServ1Addr + " are:" + connectionPool.getNumActive(hrServ1Addr));
          log.trace("Active for server " + hrServ2Addr + " are:" + connectionPool.getNumActive(hrServ2Addr));
-         if (connectionPool.getNumActive(hrServ1Addr) == 2 && connectionPool.getNumActive(hrServ1Addr) == 2) break;
+         if (connectionPool.getNumActive(hrServ1Addr) == 2 && connectionPool.getNumActive(hrServ2Addr) == 2) break;
          Thread.sleep(1000);
       }
       assertEquals(0, connectionPool.getNumIdle(hrServ1Addr));

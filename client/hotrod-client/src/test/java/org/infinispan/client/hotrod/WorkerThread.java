@@ -31,7 +31,7 @@ public class WorkerThread extends Thread {
    volatile String value;
 
    public WorkerThread(RemoteCache<String, String> remoteCache) {
-      super("WorkerThread-" + WORKER_INDEX.getAndDecrement());
+      super("WorkerThread-" + WORKER_INDEX.getAndIncrement());
       this.remoteCache = remoteCache;
       start();
    }
@@ -88,7 +88,7 @@ public class WorkerThread extends Thread {
       this.key = key;
       this.value = value;
       try {
-         trace("::put::send contains: " + send.peek());
+         trace("::putAsync::send contains: " + send.peek());
          send.put(PUT_ASYNC);
       } catch (InterruptedException e) {
          throw new IllegalStateException(e);

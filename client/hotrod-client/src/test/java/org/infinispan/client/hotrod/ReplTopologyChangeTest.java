@@ -23,7 +23,7 @@ import static org.testng.AssertJUnit.assertEquals;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-@Test (testName = "client.hotrod.MultipleCacheManagersTest", groups = "functional")
+@Test(testName = "client.hotrod.ReplTopologyChangeTest", groups = "functional")
 public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
 
    HotRodServer hotRodServer1;
@@ -36,12 +36,12 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
    private Configuration config;
 
    @Override
-   protected void assertSupportedConfig() {      
+   protected void assertSupportedConfig() {
    }
 
    @AfterMethod
    @Override
-   protected void clearContent() throws Throwable {      
+   protected void clearContent() throws Throwable {
    }
 
    @Override
@@ -62,7 +62,7 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
       TestingUtil.blockUntilCacheStatusAchieved(manager(0).getCache(), ComponentStatus.RUNNING, 10000);
       TestingUtil.blockUntilCacheStatusAchieved(manager(1).getCache(), ComponentStatus.RUNNING, 10000);
 
-      manager(0).getCache().put("k","v");
+      manager(0).getCache().put("k", "v");
       manager(0).getCache().get("k").equals("v");
       manager(1).getCache().get("k").equals("v");
 
@@ -98,8 +98,14 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
       TestingUtil.blockUntilCacheStatusAchieved(manager(1).getCache(), ComponentStatus.RUNNING, 10000);
       TestingUtil.blockUntilCacheStatusAchieved(manager(2).getCache(), ComponentStatus.RUNNING, 10000);
 
-      expectTopologyChange(new InetSocketAddress("localhost",hotRodServer3.getPort()), true);
-      assertEquals(3, tcpConnectionFactory.getServers().size());
+      try {
+         expectTopologyChange(new InetSocketAddress("localhost", hotRodServer3.getPort()), true);
+         assertEquals(3, tcpConnectionFactory.getServers().size());
+      } finally {
+         log.info("Members are: " + manager(0).getCache().getAdvancedCache().getRpcManager().getTransport().getMembers());
+         log.info("Members are: " + manager(1).getCache().getAdvancedCache().getRpcManager().getTransport().getMembers());
+         log.info("Members are: " + manager(2).getCache().getAdvancedCache().getRpcManager().getTransport().getMembers());
+      }
    }
 
    @Test(dependsOnMethods = "testAddNewServer")
@@ -111,8 +117,14 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
       TestingUtil.blockUntilCacheStatusAchieved(manager(1).getCache(), ComponentStatus.RUNNING, 10000);
 
       InetSocketAddress server3Address = new InetSocketAddress("localhost", hotRodServer3.getPort());
-      expectTopologyChange(server3Address, false);
-      assertEquals(2, tcpConnectionFactory.getServers().size());
+      try {
+         expectTopologyChange(server3Address, false);
+         assertEquals(2, tcpConnectionFactory.getServers().size());
+      } finally {
+         log.info("Members are: " + manager(0).getCache().getAdvancedCache().getRpcManager().getTransport().getMembers());
+         log.info("Members are: " + manager(1).getCache().getAdvancedCache().getRpcManager().getTransport().getMembers());
+         log.info("Members are: " + manager(2).getCache().getAdvancedCache().getRpcManager().getTransport().getMembers());
+      }
    }
 
    private void expectTopologyChange(InetSocketAddress server1Address, boolean added) {
