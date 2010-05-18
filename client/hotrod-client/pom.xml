@@ -54,6 +54,7 @@
          <groupId>org.jboss.netty</groupId>
          <artifactId>netty</artifactId>
          <version>${version.netty}</version>
+         <scope>compile</scope>
       </dependency>
 
       <dependency>
