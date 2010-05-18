@@ -3,8 +3,6 @@ package org.infinispan.client.hotrod.impl;
 import org.infinispan.client.hotrod.VersionedValue;
 
 /**
- * // TODO: Document this
- *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */

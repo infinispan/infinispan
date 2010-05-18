@@ -1,8 +1,6 @@
 package org.infinispan.client.hotrod.impl;
 
 /**
-* // TODO: Document this
-*
 * @author Mircea.Markus@jboss.com
 * @since 4.1
 */

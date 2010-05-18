@@ -1,7 +1,7 @@
 package org.infinispan.client.hotrod.impl;
 
 /**
- * // TODO: Document this
+ * Used for un/marshalling objects sent between hotrod client and server (hotrod is a binary protocol). 
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.1

@@ -13,7 +13,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
- * // TODO: Document this
+ * Purpose: keep all delegating and unsupported methods in one place -> readability.
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.1

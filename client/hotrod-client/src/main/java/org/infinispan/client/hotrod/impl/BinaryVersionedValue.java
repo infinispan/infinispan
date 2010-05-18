@@ -3,9 +3,7 @@ package org.infinispan.client.hotrod.impl;
 import java.util.Arrays;
 
 /**
-* // TODO: Document this
-*
-* @author mmarkus
+* @author Mircea.Markus@jboss.com
 * @since 4.1
 */
 public class BinaryVersionedValue {

@@ -9,8 +9,6 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * // TODO: Document this
- *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */

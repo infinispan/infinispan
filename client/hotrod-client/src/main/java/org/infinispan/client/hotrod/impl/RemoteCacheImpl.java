@@ -6,8 +6,12 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.ServerStatistics;
 import org.infinispan.client.hotrod.Version;
 import org.infinispan.client.hotrod.VersionedValue;
+import org.infinispan.client.hotrod.exceptions.RemoteCacheManagerNotStartedException;
 import org.infinispan.client.hotrod.impl.async.NotifyingFutureImpl;
+import org.infinispan.client.hotrod.impl.protocol.HotrodOperations;
 import org.infinispan.util.concurrent.NotifyingFuture;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -16,32 +20,33 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
- * // TODO: Document this
- * //todo - consider the return values
- *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
 public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
+
+   private static Log log = LogFactory.getLog(RemoteCacheImpl.class);
 
    private static final Flag[] FORCE_RETURN_VALUE = {Flag.FORCE_RETURN_VALUE};
 
    private ThreadLocal<Flag[]> flagsMap = new ThreadLocal<Flag[]>();
    private HotrodOperations operations;
    private HotrodMarshaller marshaller;
-   private String name;
-   private RemoteCacheManager remoteCacheManager;
-   private final ExecutorService executorService;
-   private final boolean forceReturnValue;
+   private final String name;
+   private final RemoteCacheManager remoteCacheManager;
+   private volatile ExecutorService executorService;
+   private volatile boolean forceReturnValue;
 
+   public RemoteCacheImpl(RemoteCacheManager rcm, String name, boolean forceReturnValue) {
+      this.name = name;
+      this.forceReturnValue = forceReturnValue;
+      this.remoteCacheManager = rcm;
+   }
 
-   public RemoteCacheImpl(HotrodOperations operations, HotrodMarshaller marshaller, String name, RemoteCacheManager rcm, ExecutorService executorService, boolean forceReturnValue) {
+   public void init(HotrodOperations operations, HotrodMarshaller marshaller, ExecutorService executorService) {
       this.operations = operations;
       this.marshaller = marshaller;
-      this.name = name;
-      this.remoteCacheManager = rcm;
       this.executorService = executorService;
-      this.forceReturnValue = forceReturnValue;
    }
 
    public RemoteCacheManager getRemoteCacheManager() {
@@ -50,12 +55,14 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
 
    @Override
    public boolean removeWithVersion(K key, long version) {
+      assertRemoteCacheManagerIsStarted();
       VersionedOperationResponse response = operations.removeIfUnmodified(obj2bytes(key), version, flags());
       return response.getCode().isUpdated();
    }
 
    @Override
    public NotifyingFuture<Boolean> removeWithVersionAsync(final K key, final long version) {
+      assertRemoteCacheManagerIsStarted();
       final NotifyingFutureImpl<Boolean> result = new NotifyingFutureImpl<Boolean>();
       Future future = executorService.submit(new Callable() {
          @Override
@@ -71,12 +78,14 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
 
    @Override
    public boolean replaceWithVersion(K key, V newValue, long version, int lifespanSeconds, int maxIdleTimeSeconds) {
+      assertRemoteCacheManagerIsStarted();
       VersionedOperationResponse response = operations.replaceIfUnmodified(obj2bytes(key), obj2bytes(newValue), lifespanSeconds, maxIdleTimeSeconds, version, flags());
       return response.getCode().isUpdated();
    }
 
    @Override
    public NotifyingFuture<Boolean> replaceWithVersionAsync(final K key, final V newValue, final long version, final int lifespanSeconds, final int maxIdleSeconds) {
+      assertRemoteCacheManagerIsStarted();
       final NotifyingFutureImpl<Boolean> result = new NotifyingFutureImpl<Boolean>();
       Future future = executorService.submit(new Callable() {
          @Override
@@ -92,12 +101,14 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
 
    @Override
    public VersionedValue<V> getVersioned(K key) {
+      assertRemoteCacheManagerIsStarted();
       BinaryVersionedValue value = operations.getWithVersion(obj2bytes(key), flags());
       return binary2VersionedValue(value);
    }
 
    @Override
    public void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      assertRemoteCacheManagerIsStarted();
       for (Entry<? extends K, ? extends V> entry : map.entrySet()) {
          put(entry.getKey(), entry.getValue(), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
       }
@@ -105,6 +116,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
 
    @Override
    public NotifyingFuture<Void> putAllAsync(final Map<? extends K, ? extends V> data, final long lifespan, final TimeUnit lifespanUnit, final long maxIdle, final TimeUnit maxIdleUnit) {
+      assertRemoteCacheManagerIsStarted();
       final NotifyingFutureImpl<Void> result = new NotifyingFutureImpl<Void>();
       Future future = executorService.submit(new Callable() {
          @Override
@@ -121,6 +133,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
 
    @Override
    public ServerStatistics stats() {
+      assertRemoteCacheManagerIsStarted();
       Map<String, String> statsMap = operations.stats();
       ServerStatisticsImpl stats = new ServerStatisticsImpl();
       for (Map.Entry<String, String> entry : statsMap.entrySet()) {
@@ -141,6 +154,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
 
    @Override
    public V put(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      assertRemoteCacheManagerIsStarted();
       int lifespanSecs = toSeconds(lifespan, lifespanUnit);
       int maxIdleSecs = toSeconds(maxIdleTime, maxIdleTimeUnit);
       byte[] result = operations.put(obj2bytes(key), obj2bytes(value), lifespanSecs, maxIdleSecs, flags());
@@ -150,6 +164,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
 
    @Override
    public V putIfAbsent(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      assertRemoteCacheManagerIsStarted();
       int lifespanSecs = toSeconds(lifespan, lifespanUnit);
       int maxIdleSecs = toSeconds(maxIdleTime, maxIdleTimeUnit);
       byte[] bytes = operations.putIfAbsent(obj2bytes(key), obj2bytes(value), lifespanSecs, maxIdleSecs, flags());
@@ -158,6 +173,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
 
    @Override
    public V replace(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      assertRemoteCacheManagerIsStarted();
       int lifespanSecs = toSeconds(lifespan, lifespanUnit);
       int maxIdleSecs = toSeconds(maxIdleTime, maxIdleTimeUnit);
       byte[] bytes = operations.replace(obj2bytes(key), obj2bytes(value), lifespanSecs, maxIdleSecs, flags());
@@ -166,6 +182,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
 
    @Override
    public NotifyingFuture<V> putAsync(final K key, final V value, final long lifespan, final TimeUnit lifespanUnit, final long maxIdle, final TimeUnit maxIdleUnit) {
+      assertRemoteCacheManagerIsStarted();
       final NotifyingFutureImpl<V> result = new NotifyingFutureImpl<V>();
       Future future = executorService.submit(new Callable() {
          @Override
@@ -181,6 +198,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
 
    @Override
    public NotifyingFuture<Void> clearAsync() {
+      assertRemoteCacheManagerIsStarted();
       final NotifyingFutureImpl<Void> result = new NotifyingFutureImpl<Void>();
       Future future = executorService.submit(new Callable() {
          @Override
@@ -196,6 +214,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
 
    @Override
    public NotifyingFuture<V> putIfAbsentAsync(final K key,final V value,final long lifespan,final TimeUnit lifespanUnit,final long maxIdle,final TimeUnit maxIdleUnit) {
+      assertRemoteCacheManagerIsStarted();
       final NotifyingFutureImpl<V> result = new NotifyingFutureImpl<V>();
       Future future = executorService.submit(new Callable() {
          @Override
@@ -211,6 +230,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
 
    @Override
    public NotifyingFuture<V> removeAsync(final Object key) {
+      assertRemoteCacheManagerIsStarted();
       final NotifyingFutureImpl<V> result = new NotifyingFutureImpl<V>();
       Future future = executorService.submit(new Callable() {
          @Override
@@ -226,6 +246,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
 
    @Override
    public NotifyingFuture<V> replaceAsync(final K key,final V value,final long lifespan,final TimeUnit lifespanUnit,final long maxIdle,final TimeUnit maxIdleUnit) {
+      assertRemoteCacheManagerIsStarted();
       final NotifyingFutureImpl<V> result = new NotifyingFutureImpl<V>();
       Future future = executorService.submit(new Callable() {
          @Override
@@ -241,39 +262,48 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
 
    @Override
    public boolean containsKey(Object key) {
+      assertRemoteCacheManagerIsStarted();
       return operations.containsKey(obj2bytes(key), flags());
    }
 
    @Override
    public V get(Object key) {
+      assertRemoteCacheManagerIsStarted();
       byte[] bytes = operations.get(obj2bytes(key), flags());
       return (V) bytes2obj(bytes);
    }
 
    @Override
    public V remove(Object key) {
+      assertRemoteCacheManagerIsStarted();
       byte[] existingValue = operations.remove(obj2bytes(key), flags());
       return (V) bytes2obj(existingValue);
    }
 
    @Override
    public void clear() {
+      assertRemoteCacheManagerIsStarted();
       operations.clear(flags());
    }
 
    @Override
    public boolean ping() {
+      assertRemoteCacheManagerIsStarted();
       return operations.ping();
    }
 
    @Override
    public void start() {
-      // TODO: Customise this generated block
+      if (log.isInfoEnabled()) {
+         log.info("Start called, nothing to do here(" + getName() + ")");
+      }
    }
 
    @Override
    public void stop() {
-      // TODO: Customise this generated block
+      if (log.isInfoEnabled()) {
+         log.info("Stop called, nothing to do here(" + getName() + ")");
+      }
    }
 
 
@@ -313,5 +343,15 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    private int toSeconds(long duration, TimeUnit timeUnit) {
       //todo make sure this can pe enveloped on an int
       return (int) timeUnit.toSeconds(duration);
+   }
+
+   private void assertRemoteCacheManagerIsStarted() {
+      if (!remoteCacheManager.isStarted()) {
+         String message = "Cannot perform operations on a cache associated with an unstarted RemoteCacheManager. Use RemoteCacheManager.start before using the remote cache.";
+         if (log.isInfoEnabled()) {
+            log.info(message);
+         }
+         throw new RemoteCacheManagerNotStartedException(message);
+      }
    }
 }

@@ -12,7 +12,7 @@ import java.io.ObjectOutputStream;
 import java.util.Arrays;
 
 /**
- * // TODO: Document this
+ * Default marshaller implementation based on object serialization.
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
