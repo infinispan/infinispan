@@ -44,6 +44,10 @@ import java.util.concurrent.CountDownLatch;
 public class InvocationContextTest extends MultipleCacheManagersTest {
    private static final Log log = LogFactory.getLog(InvocationContextTest.class);
 
+   public InvocationContextTest() {
+      cleanup = CleanupPhase.AFTER_METHOD;
+   }
+
    @Override
    protected void createCacheManagers() throws Throwable {
       Configuration cfg = TestCacheManagerFactory.getDefaultConfiguration(true);
