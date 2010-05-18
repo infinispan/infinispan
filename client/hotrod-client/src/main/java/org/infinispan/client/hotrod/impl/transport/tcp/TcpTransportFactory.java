@@ -42,7 +42,7 @@ public class TcpTransportFactory implements TransportFactory {
    public void start(Properties props, Collection<InetSocketAddress> staticConfiguredServers, AtomicInteger topologyId) {
       hashFactory.init(props);
       servers = staticConfiguredServers;
-      String balancerClass = props.getProperty("requestBalancingStrategy", RoundRobinBalancingStrategy.class.getName());
+      String balancerClass = props.getProperty("request-balancing-strategy", RoundRobinBalancingStrategy.class.getName());
       balancer = (RequestBalancingStrategy) VHelper.newInstance(balancerClass);
       PropsKeyedObjectPoolFactory poolFactory = new PropsKeyedObjectPoolFactory(new TransportObjectFactory(this, topologyId), props);
       connectionPool = (GenericKeyedObjectPool) poolFactory.createPool();

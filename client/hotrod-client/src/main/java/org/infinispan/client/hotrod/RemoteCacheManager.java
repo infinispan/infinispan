@@ -55,6 +55,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  *  At least one host:port must be specified.
  *  </li>
  *  <li>
+ *  request-balancing-strategy - for replicated (vs distributed) hotrod server clusters, the client balances requests to the
+ *  servers according to this strategy. Defaults to {@link org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy}
+ *  </li>
+ *  <li>
  * force-return-value - weather ot not to implicitelly {@link org.infinispan.client.hotrod.Flag#FORCE_RETURN_VALUE} for all calls.
  * Defaults to false.
  * </li>

@@ -56,6 +56,6 @@ public class NettyTransportFactory implements TransportFactory {
 
    @Override
    public Transport getTransport(byte[] key) {
-      return getTransport();  // TODO: Customise this generated block
+      return getTransport();
    }
 }
