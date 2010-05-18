@@ -1,9 +1,9 @@
-package org.infinispan.client.hotrod.impl;
+package org.infinispan.client.hotrod.impl.protocol;
 
 /**
- * // TODO: Document this
+ * Defines constants defined by Hotrod specifications.
  *
- * @author mmarkus
+ * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
 public interface HotrodConstants {

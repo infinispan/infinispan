@@ -13,9 +13,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * // TODO: Document this
- *
- * todo - this can be called from several threads, synchronize!
+ * Round-robin implementation for {@link org.infinispan.client.hotrod.impl.transport.tcp.RequestBalancingStrategy}.
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
@@ -30,7 +28,7 @@ public class RoundRobinBalancingStrategy implements RequestBalancingStrategy {
    private final Lock writeLock = readWriteLock.writeLock();
    private final AtomicInteger index = new AtomicInteger(0);
 
-   private InetSocketAddress[] servers;
+   private volatile InetSocketAddress[] servers;
 
    @Override
    public void setServers(Collection<InetSocketAddress> servers) {
@@ -56,7 +54,7 @@ public class RoundRobinBalancingStrategy implements RequestBalancingStrategy {
          int pos = index.getAndIncrement() % servers.length;
          InetSocketAddress server = servers[pos];
          if (log.isTraceEnabled()) {
-            log.trace("Retuning server: " + server);
+            log.trace("Returning server: " + server);
          }
          return server;
       } finally {

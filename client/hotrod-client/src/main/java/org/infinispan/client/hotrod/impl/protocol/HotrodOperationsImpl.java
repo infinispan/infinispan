@@ -1,42 +1,37 @@
-package org.infinispan.client.hotrod.impl;
+package org.infinispan.client.hotrod.impl.protocol;
 
 import org.infinispan.client.hotrod.Flag;
-import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
-import org.infinispan.client.hotrod.exceptions.TimeoutException;
 import org.infinispan.client.hotrod.exceptions.TransportException;
+import org.infinispan.client.hotrod.impl.BinaryVersionedValue;
+import org.infinispan.client.hotrod.impl.VersionedOperationResponse;
+import org.infinispan.client.hotrod.impl.protocol.HotrodConstants;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * // TODO: Document this
- *
- * @author mmarkus
+ * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
 public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
 
    private static Log log = LogFactory.getLog(HotrodOperationsImpl.class);
 
-   private final byte[] cacheNameBytes;
-   private static final AtomicLong MSG_ID = new AtomicLong();
-   private static final AtomicInteger TOPOLOGY_ID = new AtomicInteger();
+   private final String cacheName;
    private TransportFactory transportFactory;
-   private byte clientIntelligence = CLIENT_INTELLIGENCE_HASH_DISTRIBUTION_AWARE;
+   private final AtomicInteger topologyId;
 
-   public HotrodOperationsImpl(String cacheName, TransportFactory transportFactory) {
-      cacheNameBytes = cacheName.getBytes(); //todo add charset here
+   public HotrodOperationsImpl(String cacheName, TransportFactory transportFactory, AtomicInteger topologyId) {
+      this.cacheName = cacheName; //todo add charset here
       this.transportFactory = transportFactory;
+      this.topologyId = topologyId;
    }
 
    public byte[] get(byte[] key, Flag[] flags) {
@@ -160,7 +155,7 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
       Transport transport = transportFactory.getTransport(key);
       try {
          // 1) write header
-         long messageId = writeHeader(transport, REPLACE_IF_UNMODIFIED_REQUEST, flags);
+         long messageId = HotRodOperationsHelper.writeHeader(transport, REPLACE_IF_UNMODIFIED_REQUEST, cacheName, topologyId, flags);
 
          //2) write message body
          transport.writeArray(key);
@@ -181,7 +176,7 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
       Transport transport = transportFactory.getTransport(key);
       try {
          // 1) write header
-         long messageId = writeHeader(transport, REMOVE_IF_UNMODIFIED_REQUEST, flags);
+         long messageId = HotRodOperationsHelper.writeHeader(transport, REMOVE_IF_UNMODIFIED_REQUEST, cacheName, topologyId, flags);
 
          //2) write message body
          transport.writeArray(key);
@@ -199,8 +194,8 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
       Transport transport = transportFactory.getTransport();
       try {
          // 1) write header
-         long messageId = writeHeader(transport, CLEAR_REQUEST, flags);
-         readHeaderAndValidate(transport, messageId, CLEAR_RESPONSE);
+         long messageId = HotRodOperationsHelper.writeHeader(transport, CLEAR_REQUEST, cacheName, topologyId, flags);
+         HotRodOperationsHelper.readHeaderAndValidate(transport, messageId, CLEAR_RESPONSE, topologyId);
       } finally {
          releaseTransport(transport);
       }
@@ -210,8 +205,8 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
       Transport transport = transportFactory.getTransport();
       try {
          // 1) write header
-         long messageId = writeHeader(transport, STATS_REQUEST);
-         readHeaderAndValidate(transport, messageId, STATS_RESPONSE);
+         long messageId = HotRodOperationsHelper.writeHeader(transport, STATS_REQUEST, cacheName, topologyId);
+         HotRodOperationsHelper.readHeaderAndValidate(transport, messageId, STATS_RESPONSE, topologyId);
          int nrOfStats = transport.readVInt();
 
          Map<String, String> result = new HashMap<String, String>();
@@ -232,8 +227,8 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
       try {
          transport = transportFactory.getTransport();
          // 1) write header
-         long messageId = writeHeader(transport, PING_REQUEST);
-         short respStatus = readHeaderAndValidate(transport, messageId, HotrodConstants.PING_RESPONSE);
+         long messageId = HotRodOperationsHelper.writeHeader(transport, PING_REQUEST, cacheName, topologyId);
+         short respStatus = HotRodOperationsHelper.readHeaderAndValidate(transport, messageId, HotrodConstants.PING_RESPONSE, topologyId);
          if (respStatus == NO_ERROR_STATUS) {
             return true;
          }
@@ -251,7 +246,7 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
 
    private short sendPutOperation(byte[] key, byte[] value, Transport transport, short opCode, byte opRespCode, int lifespan, int maxIdle, Flag[] flags) {
       // 1) write header
-      long messageId = writeHeader(transport, opCode, flags);
+      long messageId = HotRodOperationsHelper.writeHeader(transport, opCode, cacheName, topologyId, flags);
 
       // 2) write key and value
       transport.writeArray(key);
@@ -263,147 +258,12 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
       // 3) now read header
 
       //return status (not error status for sure)
-      return readHeaderAndValidate(transport, messageId, opRespCode);
+      return HotRodOperationsHelper.readHeaderAndValidate(transport, messageId, opRespCode, topologyId);
    }
 
    /*
     * Magic	| MessageId	| Version | Opcode | CacheNameLength | CacheName | Flags | Client Intelligence | Topology Id
     */
-
-   private long writeHeader(Transport transport, short operationCode, Flag... flags) {
-      transport.writeByte(REQUEST_MAGIC);
-      long messageId = MSG_ID.incrementAndGet();
-      transport.writeVLong(messageId);
-      transport.writeByte(HOTROD_VERSION);
-      transport.writeByte(operationCode);
-      transport.writeArray(cacheNameBytes);
-
-      int flagInt = 0;
-      if (flags != null) {
-         for (Flag flag : flags) {
-            flagInt = flag.getFlagInt() | flagInt;
-         }
-      }
-      transport.writeVInt(flagInt);
-      transport.writeByte(clientIntelligence);
-      transport.writeVInt(TOPOLOGY_ID.get());
-      if (log.isTraceEnabled()) {
-         log.trace("wrote header for message " + messageId + ". Operation code: " + operationCode + ". Flags: " + Integer.toHexString(flagInt));
-      }
-      return messageId;
-   }
-
-   /**
-    * Magic	| Message Id | Op code | Status | Topology Change Marker
-    */
-   private short readHeaderAndValidate(Transport transport, long messageId, short opRespCode) {
-      short magic = transport.readByte();
-      if (magic != RESPONSE_MAGIC) {
-         String message = "Invalid magic number. Expected " + Integer.toHexString(RESPONSE_MAGIC) + " and received " + Integer.toHexString(magic);
-         log.error(message);
-         throw new InvalidResponseException(message);
-      }
-      long receivedMessageId = transport.readVLong();
-      if (receivedMessageId != messageId) {
-         String message = "Invalid message id. Expected " + Long.toHexString(messageId) + " and received " + Long.toHexString(receivedMessageId);
-         log.error(message);
-         throw new InvalidResponseException(message);
-      }
-      if (log.isTraceEnabled()) {
-         log.trace("Received response for message id: " + receivedMessageId);
-      }
-      short receivedOpCode = transport.readByte();
-      if (receivedOpCode != opRespCode) {
-         if (receivedOpCode == ERROR_RESPONSE) {
-            checkForErrorsInResponseStatus(transport.readByte(), messageId, transport);
-            throw new IllegalStateException("Error expected! (i.e. exception in the prev statement)");
-         }
-         throw new InvalidResponseException("Invalid response operation. Expected " + Integer.toHexString(opRespCode) + " and received " + Integer.toHexString(receivedOpCode));
-      }
-      if (log.isTraceEnabled()) {
-         log.trace("Received operation code is: " + receivedOpCode);
-      }
-      short status = transport.readByte();
-      checkForErrorsInResponseStatus(status, messageId, transport);
-      short topologyChangeByte = transport.readByte();
-      if (topologyChangeByte == 1) {
-         readNewTopologyAndHash(transport);
-      }
-      return status;
-   }
-
-   private void readNewTopologyAndHash(Transport transport) {
-      int newTopologyId = transport.readVInt();
-      TOPOLOGY_ID.set(newTopologyId);
-      int numKeyOwners = transport.readUnsignedShort();
-      short hashFunctionVersion = transport.readByte();
-      int hashSpace = transport.readVInt();
-      int clusterSize = transport.readVInt();
-
-      if (log.isTraceEnabled()) {
-         log.trace("Topology change request: newTopologyId=" + newTopologyId + ", numKeyOwners=" + numKeyOwners +
-               ", hashFunctionVersion=" + hashFunctionVersion + ", hashSpaceSize=" + hashSpace + ", clusterSize=" + clusterSize);
-      }
-
-      LinkedHashMap<InetSocketAddress, Integer> servers2HashCode = new LinkedHashMap<InetSocketAddress, Integer>();
-
-      for (int i = 0; i < clusterSize; i++) {
-         String host = transport.readString();
-         int port = transport.readUnsignedShort();
-         if (log.isTraceEnabled()) {
-            log.trace("Server read:" + host + ":" + port);
-         }
-         int hashCode = transport.read4ByteInt();
-         servers2HashCode.put(new InetSocketAddress(host, port), hashCode);
-         if (log.isTraceEnabled()) {
-            log.trace("Hash code is: " + hashCode);
-         }
-      }
-      if (log.isInfoEnabled()) {
-         log.info("New topology: " + servers2HashCode);
-      }
-      transportFactory.updateServers(servers2HashCode.keySet());
-      if (hashFunctionVersion == 0) {
-         if (log.isTraceEnabled())
-            log.trace("Not using a consistent hash function (hash function version == 0).");
-      } else {
-         transportFactory.updateHashFunction(servers2HashCode, numKeyOwners, hashFunctionVersion, hashSpace);
-      }
-   }
-
-   private void checkForErrorsInResponseStatus(short status, long messageId, Transport transport) {
-      if (log.isTraceEnabled()) {
-         log.trace("Received operation status: " + status);
-      }
-      switch ((int) status) {
-         case INVALID_MAGIC_OR_MESSAGE_ID_STATUS:
-         case REQUEST_PARSING_ERROR_STATUS:
-         case UNKNOWN_COMMAND_STATUS:
-         case SERVER_ERROR_STATUS:
-         case UNKNOWN_VERSION_STATUS: {
-            String msgFromServer = transport.readString();
-            if (log.isWarnEnabled()) {
-               log.warn("Error status received from the server:" + msgFromServer + " for message id " + messageId);
-            }
-            throw new HotRodClientException(msgFromServer, messageId, status);
-         }
-         case COMMAND_TIMEOUT_STATUS: {
-            if (log.isTraceEnabled()) {
-               log.trace("timeout message received from the server");
-            }
-            throw new TimeoutException();
-         }
-         case NO_ERROR_STATUS:
-         case KEY_DOES_NOT_EXIST_STATUS:
-         case NOT_PUT_REMOVED_REPLACED_STATUS: {
-            //don't do anything, these are correct responses
-            break;
-         }
-         default: {
-            throw new IllegalStateException("Unknown status: " + Integer.toHexString(status));
-         }
-      }
-   }
 
    private boolean hasForceReturn(Flag[] flags) {
       if (flags == null) return false;
@@ -415,12 +275,12 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
 
    private short sendKeyOperation(byte[] key, Transport transport, byte opCode, Flag[] flags, byte opRespCode) {
       // 1) write [header][key length][key]
-      long messageId = writeHeader(transport, opCode, flags);
+      long messageId = HotRodOperationsHelper.writeHeader(transport, opCode, cacheName, topologyId, flags);
       transport.writeArray(key);
       transport.flush();
 
       // 2) now read the header
-      return readHeaderAndValidate(transport, messageId, opRespCode);
+      return HotRodOperationsHelper.readHeaderAndValidate(transport, messageId, opRespCode, topologyId);
    }
 
    private byte[] returnPossiblePrevValue(Transport transport, Flag[] flags) {
@@ -441,7 +301,7 @@ public class HotrodOperationsImpl implements HotrodOperations, HotrodConstants {
 
    private VersionedOperationResponse returnVersionedOperationResponse(Transport transport, long messageId, byte response, Flag[] flags) {
       //3) ...
-      short respStatus = readHeaderAndValidate(transport, messageId, response);
+      short respStatus = HotRodOperationsHelper.readHeaderAndValidate(transport, messageId, response, topologyId);
 
       //4 ...
       VersionedOperationResponse.RspCode code;

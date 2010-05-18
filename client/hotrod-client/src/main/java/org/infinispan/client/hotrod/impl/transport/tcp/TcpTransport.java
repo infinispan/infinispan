@@ -1,7 +1,9 @@
 package org.infinispan.client.hotrod.impl.transport.tcp;
 
+import net.jcip.annotations.ThreadSafe;
 import org.infinispan.client.hotrod.impl.transport.AbstractTransport;
 import org.infinispan.client.hotrod.exceptions.TransportException;
+import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.impl.transport.VHelper;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -12,17 +14,31 @@ import java.net.Socket;
 import java.nio.channels.SocketChannel;
 
 /**
- * // TODO: Document this
+ * Transport implementation based on TCP.
  *
- * @author mmarkus
+ * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
+@ThreadSafe
 public class TcpTransport extends AbstractTransport {
 
    private static Log log = LogFactory.getLog(TcpTransport.class);
 
-   private Socket socket;
-   private InetSocketAddress serverAddress;
+   private final Socket socket;
+   private final InetSocketAddress serverAddress;
+
+   public TcpTransport(InetSocketAddress serverAddress, TransportFactory transportFactory) {
+      super(transportFactory);
+      this.serverAddress = serverAddress;
+      try {
+         SocketChannel socketChannel = SocketChannel.open(serverAddress);
+         socket = socketChannel.socket();
+      } catch (IOException e) {
+         String message = "Could not connect to server: " + serverAddress;
+         log.error(message, e);
+         throw new TransportException(message, e);
+      }
+   }
 
    public void writeVInt(int vInt) {
       try {
@@ -65,18 +81,6 @@ public class TcpTransport extends AbstractTransport {
          return result;
       } catch (IOException e) {
          throw new TransportException(e);
-      }
-   }
-
-   public TcpTransport(InetSocketAddress serverAddress) {
-      this.serverAddress = serverAddress;
-      try {
-         SocketChannel socketChannel = SocketChannel.open(serverAddress);
-         socket = socketChannel.socket();
-      } catch (IOException e) {
-         String message = "Could not connect to server: " + serverAddress;
-         log.error(message, e);
-         throw new TransportException(message, e);
       }
    }
 

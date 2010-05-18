@@ -1,15 +1,14 @@
 package org.infinispan.client.hotrod.impl.transport;
 
-import net.jcip.annotations.NotThreadSafe;
-
 /**
- * // TODO: Document this
+ * Transport abstraction.
  *
- * @author mmarkus
+ * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-@NotThreadSafe
 public interface Transport {
+
+   public TransportFactory getTransportFactory();
 
    public void writeArray(byte[] toAppend);
 

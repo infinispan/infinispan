@@ -6,8 +6,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 /**
- * // TODO: Document this
- *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */

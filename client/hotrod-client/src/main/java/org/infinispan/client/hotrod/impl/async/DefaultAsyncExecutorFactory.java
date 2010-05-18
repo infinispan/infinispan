@@ -4,16 +4,19 @@ import org.infinispan.executors.ExecutorFactory;
 
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * // TODO: Document this
+ * Default implementation for {@link org.infinispan.executors.ExecutorFactory} based on an {@link ThreadPoolExecutor}.
+ * Accepts following configuration parameters:
+ * <ul>
+ *  <li> - default-executor-factory.poolSize = the fixed size fo the pool</li>
+ *  <li> - default-executor-factory.queueSize = The size of the {@link LinkedBlockingQueue} backing up the executor</li>
+ * </ul>
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.1

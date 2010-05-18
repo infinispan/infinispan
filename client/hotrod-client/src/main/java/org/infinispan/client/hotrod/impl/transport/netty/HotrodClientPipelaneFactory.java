@@ -11,8 +11,6 @@ import org.jboss.netty.handler.codec.http.HttpResponseDecoder;
 import static org.jboss.netty.channel.Channels.*;
 
 /**
- * // TODO: Document this
- *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */

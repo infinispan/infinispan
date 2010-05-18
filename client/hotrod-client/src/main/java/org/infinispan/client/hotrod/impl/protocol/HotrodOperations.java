@@ -1,17 +1,18 @@
-package org.infinispan.client.hotrod.impl;
+package org.infinispan.client.hotrod.impl.protocol;
 
 
 import org.infinispan.client.hotrod.Flag;
+import org.infinispan.client.hotrod.impl.BinaryVersionedValue;
+import org.infinispan.client.hotrod.impl.VersionedOperationResponse;
 
 import java.util.Map;
 
 /**
- * // TODO: Document this
+ * Defines the hotrod operations as described in the protocol spec: http://community.jboss.org/wiki/HotRodProtocol
  *
- * - TODO - add timeout support
  * - TODO - enforce encoding and add such tests
  *
- * @author mmarkus
+ * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
 public interface HotrodOperations {

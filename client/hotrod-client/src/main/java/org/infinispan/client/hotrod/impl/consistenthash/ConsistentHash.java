@@ -5,7 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * // TODO: Document this
+ * Abstraction for the used consistent hash.
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.1

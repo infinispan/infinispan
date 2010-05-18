@@ -5,9 +5,10 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * // TODO: Document this
+ * Transport factory for building and managing {@link org.infinispan.client.hotrod.impl.transport.Transport} objects.
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
@@ -20,7 +21,7 @@ public interface TransportFactory {
 
    public void releaseTransport(Transport transport);
 
-   void start(Properties props, Collection<InetSocketAddress> staticConfiguredServers);
+   void start(Properties props, Collection<InetSocketAddress> staticConfiguredServers, AtomicInteger topologyId);
 
    void updateServers(Collection<InetSocketAddress> newServers);
 

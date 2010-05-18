@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * // TODO: Document this
+ * Notifying future implementation for async calls.
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.1

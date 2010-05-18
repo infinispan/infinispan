@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.impl.transport.netty;
 
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.transport.AbstractTransport;
+import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jboss.netty.bootstrap.ClientBootstrap;
@@ -13,8 +14,6 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
 
 /**
- * // TODO: Document this
- *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
@@ -28,7 +27,8 @@ public class NettyTransport extends AbstractTransport {
 
    private HotrodClientDecoder decoder = new HotrodClientDecoder();
 
-   public NettyTransport(InetSocketAddress serverAddress) {
+   public NettyTransport(InetSocketAddress serverAddress, TransportFactory transportFactory) {
+      super(transportFactory);
       this.serverAddress = serverAddress;
       init();
    }

@@ -9,10 +9,9 @@ import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * // TODO: Document this
- *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
@@ -24,7 +23,7 @@ public class NettyTransportFactory implements TransportFactory {
    private Collection<InetSocketAddress> serverAddresses;
 
    @Override
-   public void start(Properties props, Collection<InetSocketAddress> staticConfiguredServers) {
+   public void start(Properties props, Collection<InetSocketAddress> staticConfiguredServers, AtomicInteger topologyId) {
       this.serverAddresses = staticConfiguredServers;
       serverAddr = serverAddresses.iterator().next();
    }
@@ -37,7 +36,7 @@ public class NettyTransportFactory implements TransportFactory {
    @Override
    public Transport getTransport() {
       log.info("Connecting to server on: " + serverAddr);
-      return new NettyTransport(serverAddr);
+      return new NettyTransport(serverAddr, this);
    }
 
    @Override

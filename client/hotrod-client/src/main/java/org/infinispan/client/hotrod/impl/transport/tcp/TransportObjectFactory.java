@@ -1,39 +1,66 @@
 package org.infinispan.client.hotrod.impl.transport.tcp;
 
 import org.apache.commons.pool.BaseKeyedPoolableObjectFactory;
+import org.infinispan.client.hotrod.impl.protocol.HotRodOperationsHelper;
+import org.infinispan.client.hotrod.impl.protocol.HotrodConstants;
+import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.net.InetSocketAddress;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * // TODO: Document this
- *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
 public class TransportObjectFactory extends BaseKeyedPoolableObjectFactory {
 
-   private static Log log = LogFactory.getLog(TransportObjectFactory.class);
+   private static final Log log = LogFactory.getLog(TransportObjectFactory.class);
+   private final TcpTransportFactory tcpTransportFactory;
+   private final AtomicInteger topologyId;
+
+   public TransportObjectFactory(TcpTransportFactory tcpTransportFactory, AtomicInteger topologyId) {
+      this.tcpTransportFactory = tcpTransportFactory;
+      this.topologyId = topologyId;
+   }
 
    @Override
    public Object makeObject(Object key) throws Exception {
       InetSocketAddress serverAddress = (InetSocketAddress) key;
-      TcpTransport tcpTransport = new TcpTransport(serverAddress);
+      TcpTransport tcpTransport = new TcpTransport(serverAddress, tcpTransportFactory);
       if (log.isTraceEnabled()) {
          log.trace("Created tcp transport: " + tcpTransport);
       }
       return tcpTransport;
    }
 
+   /**
+    * This will be called by the test thread when testWhileIdle==true.
+    */
    @Override
    public boolean validateObject(Object key, Object obj) {
       TcpTransport transport = (TcpTransport) obj;
-      if (log.isTraceEnabled()) {
-         log.trace("About to validate(ping) connection to server " + key + ". TcpTransport is " + transport);
+      try {
+         if (log.isTraceEnabled()) {
+            log.trace("About to validate(ping) connection to server " + key + ". TcpTransport is " + transport);
+         }
+         long messageId = HotRodOperationsHelper.writeHeader(transport, HotrodConstants.PING_REQUEST, DefaultCacheManager.DEFAULT_CACHE_NAME, topologyId);
+         short respStatus = HotRodOperationsHelper.readHeaderAndValidate(transport, messageId, HotrodConstants.PING_RESPONSE, topologyId);
+         if (respStatus == HotrodConstants.NO_ERROR_STATUS) {
+            if (log.isTraceEnabled())
+               log.trace("Successfully validated transport: " + transport);
+            return true;
+         } else {
+            if (log.isTraceEnabled())
+               log.trace("Unknown response status: " + respStatus);
+            return false;
+         }
+      } catch (Exception e) {
+         if (log.isTraceEnabled())
+            log.trace("Failed to validate transport: " + transport, e);
+         return false;
       }
-      //todo implement
-      return true;
    }
 
    @Override

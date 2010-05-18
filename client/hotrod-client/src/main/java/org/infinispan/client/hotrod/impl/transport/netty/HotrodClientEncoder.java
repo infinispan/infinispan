@@ -11,8 +11,6 @@ import org.jboss.netty.handler.codec.oneone.OneToOneEncoder;
 import static org.jboss.netty.buffer.ChannelBuffers.*;
 
 /**
- * // TODO: Document this
- *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */

@@ -11,14 +11,14 @@ import java.util.TreeMap;
 import static org.infinispan.util.hash.MurmurHash2.hash;
 
 /**
- * // TODO: Document this
+ * Version one consistent hash function based on {@link org.infinispan.util.hash.MurmurHash2};
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public class ConsitentHashV1 implements ConsistentHash {
+public class ConsistentHashV1 implements ConsistentHash {
 
-   private static Log log = LogFactory.getLog(ConsitentHashV1.class);
+   private static Log log = LogFactory.getLog(ConsistentHashV1.class);
    
    private final SortedMap<Integer, InetSocketAddress> positions = new TreeMap<Integer, InetSocketAddress>();
 

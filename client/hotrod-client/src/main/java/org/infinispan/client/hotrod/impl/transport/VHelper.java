@@ -10,9 +10,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 /**
- * // TODO: Document this
+ * Helper for handling v-operations.
  *
- * @author mmarkus
+ * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
 public class VHelper {

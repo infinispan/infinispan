@@ -3,8 +3,10 @@ package org.infinispan.client.hotrod.impl.transport;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.nio.charset.Charset;
+
 /**
- * // TODO: Document this
+ * Support class for transport implementations.
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
@@ -12,6 +14,14 @@ import org.infinispan.util.logging.LogFactory;
 public abstract class AbstractTransport implements Transport {
 
    private static Log log = LogFactory.getLog(AbstractTransport.class);
+
+   private static final Charset CHARSET = Charset.forName("UTF-8");
+   
+   private final TransportFactory transportFactory;
+
+   protected AbstractTransport(TransportFactory transportFactory) {
+      this.transportFactory = transportFactory;
+   }
 
    public byte[] readArray() {
       int responseLength = readVInt();
@@ -21,16 +31,15 @@ public abstract class AbstractTransport implements Transport {
    @Override
    public String readString() {
       byte[] strContent = readArray();
-      String readString = new String(strContent);
+      String readString = new String(strContent, CHARSET);
       if (log.isTraceEnabled()) {
          log.trace("Read string is: " + readString);
       }
-      return readString;//todo take care of encoding here
+      return readString;
    }
 
    @Override
    public long readLong() {
-      //todo - optimize this not to create the longBytes on every call, but reuse it/cache it as class is NOT thread safe
       byte[] longBytes = readByteArray(8);
       long result = 0;
       for (byte longByte : longBytes) {
@@ -69,6 +78,11 @@ public abstract class AbstractTransport implements Transport {
          value += (b[i] & 0x000000FF) << shift;
       }
       return value;
+   }
+
+   @Override
+   public TransportFactory getTransportFactory() {
+      return transportFactory;
    }
 
    public void writeArray(byte[] toAppend) {

@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.impl.transport.tcp;
 
+import net.jcip.annotations.ThreadSafe;
 import org.apache.commons.pool.impl.GenericKeyedObjectPool;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
@@ -16,22 +17,20 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * // TODO: Document this
- * <p/>
- * todo - all methods but start and start can be called from multiple threads, add proper sync
- *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
+@ThreadSafe
 public class TcpTransportFactory implements TransportFactory {
 
    private static final Log log = LogFactory.getLog(TcpTransportFactory.class);
 
    /**
-    * These are declared volatile as the thread that calls {@link #start(java.util.Properties, java.util.Collection)}
-    * might(and likely will) be different from the thread that calls {@link #getTransport()} or other methods
+    * These are declared volatile as the thread that calls {@link org.infinispan.client.hotrod.impl.transport.TransportFactory#start(java.util.Properties, java.util.Collection, java.util.concurrent.atomic.AtomicInteger)}
+    * might(and likely will) be different from the thread(s) that calls {@link #getTransport()} or other methods
     */
    private volatile GenericKeyedObjectPool connectionPool;
    private volatile RequestBalancingStrategy balancer;
@@ -40,12 +39,12 @@ public class TcpTransportFactory implements TransportFactory {
    private final ConsistentHashFactory hashFactory = new ConsistentHashFactory();
 
    @Override
-   public void start(Properties props, Collection<InetSocketAddress> staticConfiguredServers) {
+   public void start(Properties props, Collection<InetSocketAddress> staticConfiguredServers, AtomicInteger topologyId) {
       hashFactory.init(props);
       servers = staticConfiguredServers;
       String balancerClass = props.getProperty("requestBalancingStrategy", RoundRobinBalancingStrategy.class.getName());
       balancer = (RequestBalancingStrategy) VHelper.newInstance(balancerClass);
-      PropsKeyedObjectPoolFactory poolFactory = new PropsKeyedObjectPoolFactory(new TransportObjectFactory(), props);
+      PropsKeyedObjectPoolFactory poolFactory = new PropsKeyedObjectPoolFactory(new TransportObjectFactory(this, topologyId), props);
       connectionPool = (GenericKeyedObjectPool) poolFactory.createPool();
       balancer.setServers(servers);
    }
