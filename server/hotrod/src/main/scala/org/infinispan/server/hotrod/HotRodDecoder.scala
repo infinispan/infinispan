@@ -18,6 +18,7 @@ import org.infinispan.{CacheException, Cache}
  */
 class HotRodDecoder(cacheManager: CacheManager) extends AbstractProtocolDecoder[CacheKey, CacheValue] {
    import HotRodDecoder._
+   import HotRodServer.TopologyCacheName
    
    type SuitableHeader = HotRodHeader
    type SuitableParameters = RequestParameters
@@ -65,6 +66,9 @@ class HotRodDecoder(cacheManager: CacheManager) extends AbstractProtocolDecoder[
 
    override def getCache(header: HotRodHeader): Cache[CacheKey, CacheValue] = {
       val cacheName = header.cacheName
+      if (cacheName == TopologyCacheName)
+         throw new CacheException("Remote requests are not allowed to topology cache. Do no send remote requests to cache " + TopologyCacheName)
+
       if (cacheName != DefaultCacheManager.DEFAULT_CACHE_NAME && !cacheManager.getCacheNames.contains(cacheName))
          throw new CacheNotFoundException("Cache with name '" + cacheName + "' not found amongst the configured caches")
       

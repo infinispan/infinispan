@@ -25,6 +25,8 @@ import org.infinispan.server.hotrod.OperationStatus._
 @Test(groups = Array("functional"), testName = "server.hotrod.HotRodFunctionalTest")
 class HotRodFunctionalTest extends HotRodSingleNodeTest {
 
+   import HotRodServer.TopologyCacheName
+
    def testUnknownCommand(m: Method) {
       val status = client.execute(0xA0, 0x77, cacheName, k(m) , 0, 0, v(m), 0, 1, 0).status
       assertEquals(status, UnknownOperation,
@@ -53,8 +55,16 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
    }
 
    def testPutOnUndefinedCache(m: Method) {
-      var status = client.execute(0xA0, 0x01, "boomooo", k(m), 0, 0, v(m), 0, 1, 0).status
-      assertEquals(status, ServerError, "Status should have been 'ServerError' but instead was: " + status)
+      var resp = client.execute(0xA0, 0x01, "boomooo", k(m), 0, 0, v(m), 0, 1, 0).asInstanceOf[ErrorResponse]
+      assertTrue(resp.msg.contains("CacheNotFoundException"))
+      assertEquals(resp.status, ServerError, "Status should have been 'ServerError' but instead was: " + resp.status)
+      client.assertPut(m)
+   }
+
+   def testPutOnTopologyCache(m: Method) {
+      val resp = client.execute(0xA0, 0x01, TopologyCacheName, k(m), 0, 0, v(m), 0, 1, 0).asInstanceOf[ErrorResponse]
+      assertTrue(resp.msg.contains("Remote requests are not allowed to topology cache."))
+      assertEquals(resp.status, ServerError, "Status should have been 'ServerError' but instead was: " + resp.status)
       client.assertPut(m)
    }
 
