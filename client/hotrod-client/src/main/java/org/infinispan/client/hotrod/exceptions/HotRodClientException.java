@@ -1,16 +1,25 @@
 package org.infinispan.client.hotrod.exceptions;
 
-import org.infinispan.client.hotrod.exceptions.HotRodException;
-
 /**
- * // TODO: Document this
+ * Base class for exceptions reported by the hot rod client.
  *
- * @author mmarkus
+ * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public class HotRodClientException extends HotRodException {
+public class HotRodClientException extends RuntimeException {
    private long messageId;
    private int errorStatusCode;
+
+   public HotRodClientException() {
+   }
+
+   public HotRodClientException(String message) {
+      super(message);
+   }
+
+   public HotRodClientException(Throwable cause) {
+      super(cause);
+   }
 
    public HotRodClientException(String message, Throwable cause) {
       super(message, cause);

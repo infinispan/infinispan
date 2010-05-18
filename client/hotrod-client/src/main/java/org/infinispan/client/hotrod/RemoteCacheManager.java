@@ -2,8 +2,8 @@ package org.infinispan.client.hotrod;
 
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory;
-import org.infinispan.client.hotrod.impl.HotrodOperations;
-import org.infinispan.client.hotrod.impl.HotrodOperationsImpl;
+import org.infinispan.client.hotrod.impl.protocol.HotrodOperations;
+import org.infinispan.client.hotrod.impl.protocol.HotrodOperationsImpl;
 import org.infinispan.client.hotrod.impl.HotrodMarshaller;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.SerializationMarshaller;
@@ -21,16 +21,103 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * // TODO: Document this
+ * Factory for {@link org.infinispan.client.hotrod.RemoteCache}s. <p/> <p> <b>Lifecycle:</b> </p> In order to be able to
+ * use an {@link org.infinispan.client.hotrod.RemoteCache}, the {@link org.infinispan.client.hotrod.RemoteCacheManager}
+ * must be started first: beside other things, this instantiates connections to Hotrod server(s). Starting the {@link
+ * org.infinispan.client.hotrod.RemoteCacheManager} can be done either at creation by passing start==true to constructor
+ * or by using a constructor that does that for you (see C-tor documentation); or after construction by calling {@link
+ * #start()}.
+ * <p/>
+ * This is an "expensive" object, as it manages a set of persistent TCP connections to the hotrod servers. It is recommended
+ * to only have one instance of this per JVM, and to cache it between calls to the server (i.e. remoteCache
+ * operations).
+ * <p/>
+ * {@link #stop()} needs to be called explicitly in order to release all the resources (e.g. threads, TCP connections).
+ * <p/>
+ * <p/>
+ * <b>Configuration:</b>
+ * <p>
+ *  The cache manager is configured through a {@link java.util.Properties} object passed to the C-tor (there are also
+ *  "simplified" C-tors that rely on default values). Bellow is the list of supported configuration elements:
+ * <ul>
+ *  <li>
+ *  hotrod-servers - the initial list of hotrod servers to connect to, specified in the following format: host1:port1;host2:port2...
+ *  At least one host:port must be specified.
+ *  </li>
+ *  <li>
+ * force-return-value - weather ot not to implicitelly {@link org.infinispan.client.hotrod.Flag#FORCE_RETURN_VALUE} for all calls.
+ * Defaults to false.
+ * </li>
+ * <br/>
+ * <i>bellow is connection pooling config</i>:
+ * <p/>
+ *  <li>maxActive - controls the maximum number of connections per server that are allocated (checked out to client threads, or idle in
+ * the pool) at one time. When non-positive, there is no limit to the number of connections per server. When maxActive
+ * is reached, the connection pool for that server is said to be exhausted. The default setting for this parameter is
+ * 2.</li>
+ * <li>maxTotal - sets a global limit on the number persistent connections that can be in circulation within the combined set of
+ * servers. When non-positive, there is no limit to the total number of persistent connections in circulation. When
+ * maxTotal is exceeded, all connections pools are exhausted. The default setting for this parameter is -1 (no limit).
+ * </li>
  *
- * @author mmarkus
+ * <li>maxIdle - controls the maximum number of idle persistent connections, per server, at any time. When negative, there is no limit
+ * to the number of connections that may be idle per server. The default setting for this parameter is 2.</li>
+ *
+ * <li>
+ *   whenExhaustedAction - specifies what happens when asking for a connection from a server's pool, and that pool is exhausted. Possible values:
+ *   <ul>
+ *     <li> 0 - an exception will be thrown to the calling user</li>
+ *     <li> 1 - the caller will block (invoke waits until a new or idle connections is available.
+ *     <li> 2 - a new persistent connection will be created and and returned (essentially making maxActive meaningless.) </li>
+ *   </ul>
+ *   The default whenExhaustedAction setting is 1.
+ * </li>
+ *
+ * <li>
+ * Optionally, one may configure the pool to examine and possibly evict connections as they sit idle in the pool and to
+ * ensure that a minimum number of idle connections is maintained for each server. This is performed by an "idle connection
+ * eviction" thread, which runs asynchronously. The idle object evictor does not lock the pool
+ * throughout its execution.  The idle connection eviction thread may be configured using the following attributes:
+ * <ul>
+ *  <li>timeBetweenEvictionRunsMillis - indicates how long the eviction thread should sleep before "runs" of examining idle
+ *  connections. When non-positive, no eviction thread will be launched. The default setting for this parameter is
+ *  300000(5 minutes) </li>
+ *   <li> minEvictableIdleTimeMillis - specifies the minimum amount of time that an connection may sit idle in the pool before it
+ *   is eligible for eviction due to idle time. When non-positive, no connection will be dropped from the pool due to
+ *   idle time alone. This setting has no effect unless timeBetweenEvictionRunsMillis > 0. The default setting for this
+ *   parameter is 1800000(30 minutes). </li>
+ *   <li> testWhileIdle - indicates whether or not idle connections should be validated by sending an TCP packet to the server,
+ *   during idle connection eviction runs.  Connections that fail to validate will be dropped from the pool. This setting
+ *   has no effect unless timeBetweenEvictionRunsMillis > 0.  The default setting for this parameter is true.
+ *   </li>
+ *   <li>minIdle - sets a target value for the minimum number of idle connections (per server) that should always be available.
+ *   If this parameter is set to a positive number and timeBetweenEvictionRunsMillis > 0, each time the idle connection
+ *   eviction thread runs, it will try to create enough idle instances so that there will be minIdle idle instances
+ *   available for each server.  The default setting for this parameter is 0. </li>
+ * </ul>
+ * </li>
+ * <li>
+ * async-executor-factory - the ExecutorFactory that will hold the thread pool used for async calls. It must implement
+ * {@link org.infinispan.executors.ExecutorFactory}. If not specified, defaults to {@link DefaultAsyncExecutorFactory} </li>
+ * <li>default-executor-factory.poolSize - used as a configuration for {@link DefaultAsyncExecutorFactory}, and defined the number
+ * of threads to keep in the pool. If not specified defaults to 1. </li>
+ * <li> default-executor-factory.queueSize - queue to use for holding async requests before they are executed. Defaults
+ * to 100000</li>
+ * <li>
+ * consistent-hash.[version] - see {@link org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashFactory}
+ * <ul>
+ *
+ * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
 public class RemoteCacheManager implements CacheContainer, Lifecycle {
@@ -50,6 +137,8 @@ public class RemoteCacheManager implements CacheContainer, Lifecycle {
    private boolean started = false;
    private boolean forceReturnValueDefault = false;
    private ExecutorService asyncExecutorService;
+   private final Map<String, RemoteCacheImpl> cacheName2RemoteCache = new HashMap<String, RemoteCacheImpl>();
+   private AtomicInteger topologyId = new AtomicInteger();
 
 
    /**
@@ -96,6 +185,7 @@ public class RemoteCacheManager implements CacheContainer, Lifecycle {
 
    /**
     * Creates a remote cache manager aware of the hotrod server listening at host:port.
+    *
     * @param start weather or not to start the RemoteCacheManager.
     */
    public RemoteCacheManager(String host, int port, boolean start) {
@@ -105,7 +195,7 @@ public class RemoteCacheManager implements CacheContainer, Lifecycle {
    }
 
    /**
-    * Same as {@link #RemoteCacheManager(String, int)} with start=true.
+    * Same as {@link #RemoteCacheManager(String, int, boolean)} with start=true.
     */
    public RemoteCacheManager(String host, int port) {
       this(host, port, true);
@@ -156,7 +246,7 @@ public class RemoteCacheManager implements CacheContainer, Lifecycle {
 
 
    public <K, V> RemoteCache<K, V> getCache(String cacheName) {
-      return this.getCache(cacheName, forceReturnValueDefault);
+      return getCache(cacheName, forceReturnValueDefault);
    }
 
    public <K, V> RemoteCache<K, V> getCache(String cacheName, boolean forceReturnValue) {
@@ -164,8 +254,9 @@ public class RemoteCacheManager implements CacheContainer, Lifecycle {
    }
 
    public <K, V> RemoteCache<K, V> getCache() {
-      return this.getCache(forceReturnValueDefault);
+      return getCache(forceReturnValueDefault);
    }
+
    public <K, V> RemoteCache<K, V> getCache(boolean forceReturnValue) {
       return createRemoteCache(DefaultCacheManager.DEFAULT_CACHE_NAME, forceReturnValue);
    }
@@ -179,7 +270,7 @@ public class RemoteCacheManager implements CacheContainer, Lifecycle {
       }
       transportFactory = (TransportFactory) VHelper.newInstance(factory);
       String servers = props.getProperty(CONF_HOTROD_SERVERS);
-      transportFactory.start(props, getStaticConfiguredServers(servers));
+      transportFactory.start(props, getStaticConfiguredServers(servers), topologyId);
       hotrodMarshaller = props.getProperty("marshaller");
 
       String asyncExecutorClass = DefaultAsyncExecutorFactory.class.getName();
@@ -188,14 +279,19 @@ public class RemoteCacheManager implements CacheContainer, Lifecycle {
       }
       ExecutorFactory executorFactory = (ExecutorFactory) VHelper.newInstance(asyncExecutorClass);
       asyncExecutorService = executorFactory.getExecutor(props);
-      
+
 
       if (hotrodMarshaller == null) {
          hotrodMarshaller = SerializationMarshaller.class.getName();
          log.info("'marshaller' not specified, using " + hotrodMarshaller);
       }
       if (props.get("force-return-value") != null && props.get("force-return-value").equals("true")) {
-          forceReturnValueDefault = true;
+         forceReturnValueDefault = true;
+      }
+      synchronized (cacheName2RemoteCache) {
+         for (RemoteCacheImpl remoteCache : cacheName2RemoteCache.values()) {
+            startRemoteCache(remoteCache);
+         }
       }
       started = true;
    }
@@ -215,14 +311,29 @@ public class RemoteCacheManager implements CacheContainer, Lifecycle {
       try {
          props.load(stream);
       } catch (IOException e) {
-         throw new HotRodClientException("Issues configuring from client hotrod-client.properties",e);
+         throw new HotRodClientException("Issues configuring from client hotrod-client.properties", e);
       }
    }
 
    private <K, V> RemoteCache<K, V> createRemoteCache(String cacheName, boolean forceReturnValue) {
+      synchronized (cacheName2RemoteCache) {
+         if (!cacheName2RemoteCache.containsKey(cacheName)) {
+            RemoteCacheImpl<K, V> result = new RemoteCacheImpl<K, V>(this, cacheName, forceReturnValue);
+            if (isStarted()) {
+               startRemoteCache(result);
+            }
+            cacheName2RemoteCache.put(cacheName, result);
+            return result;
+         } else {
+            return cacheName2RemoteCache.get(cacheName);
+         }
+      }
+   }
+
+   private <K, V> void startRemoteCache(RemoteCacheImpl<K, V> result) {
       HotrodMarshaller marshaller = (HotrodMarshaller) VHelper.newInstance(hotrodMarshaller);
-      HotrodOperations hotrodOperations = new HotrodOperationsImpl(cacheName, transportFactory);
-      return new RemoteCacheImpl<K, V>(hotrodOperations, marshaller, cacheName, this, asyncExecutorService, forceReturnValue);
+      HotrodOperations hotrodOperations = new HotrodOperationsImpl(result.getName(), transportFactory, topologyId);
+      result.init(hotrodOperations, marshaller, asyncExecutorService);
    }
 
    private Set<InetSocketAddress> getStaticConfiguredServers(String servers) {
@@ -253,6 +364,6 @@ public class RemoteCacheManager implements CacheContainer, Lifecycle {
    private String[] tokenizeServer(String server) {
       StringTokenizer t = new StringTokenizer(server, ":");
       return new String[]{t.nextToken(), t.nextToken()};
-   }  
+   }
 
 }

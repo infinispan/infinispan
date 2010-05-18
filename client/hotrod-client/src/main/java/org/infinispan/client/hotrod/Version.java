@@ -1,7 +1,7 @@
 package org.infinispan.client.hotrod;
 
 /**
- * // TODO: Document this
+ * Defines client and protocol version.
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.1

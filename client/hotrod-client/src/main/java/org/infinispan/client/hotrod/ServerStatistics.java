@@ -3,7 +3,8 @@ package org.infinispan.client.hotrod;
 import java.util.Map;
 
 /**
- * // TODO: Document this
+ * Defines the possible list of statistics defined by the hotrod server.
+ * Can be obtained through {@link RemoteCache#stats()}
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.1

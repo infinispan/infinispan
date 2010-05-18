@@ -1,14 +1,13 @@
 package org.infinispan.client.hotrod.exceptions;
 
-import org.infinispan.client.hotrod.exceptions.HotRodException;
-
 /**
- * // TODO: Document this
+ * Indicates a communication exception with the hotrod server: e.g. TCP connection is broken while reading a response
+ * from the server.
  *
- * @author mmarkus
+ * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public class TransportException extends HotRodException {
+public class TransportException extends HotRodClientException {
    public TransportException() {
    }
 

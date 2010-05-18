@@ -1,14 +1,12 @@
 package org.infinispan.client.hotrod.exceptions;
 
-import org.infinispan.client.hotrod.exceptions.HotRodException;
-
 /**
- * // TODO: Document this
+ * Signals an internal protocol error.
  *
- * @author mmarkus
+ * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public class InvalidResponseException extends HotRodException {
+public class InvalidResponseException extends HotRodClientException {
    public InvalidResponseException() {
    }
 
