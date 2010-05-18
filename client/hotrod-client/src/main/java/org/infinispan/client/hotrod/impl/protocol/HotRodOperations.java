@@ -10,8 +10,6 @@ import java.util.Map;
 /**
  * Defines the hotrod operations as described in the protocol spec: http://community.jboss.org/wiki/HotRodProtocol
  *
- * - TODO - enforce encoding and add such tests
- *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
@@ -64,5 +62,4 @@ public interface HotRodOperations {
 
    public Map<String, String> stats();
 
-   public boolean ping();
 }

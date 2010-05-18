@@ -8,8 +8,6 @@ import org.testng.annotations.Test;
 import static junit.framework.Assert.assertEquals;
 
 /**
- * // TODO: Document this
- *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */

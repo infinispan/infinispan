@@ -8,8 +8,6 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 /**
- * // TODO: Document this
- *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */

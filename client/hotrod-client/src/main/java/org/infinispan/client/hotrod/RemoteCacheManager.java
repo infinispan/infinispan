@@ -142,8 +142,7 @@ public class RemoteCacheManager implements CacheContainer, Lifecycle {
 
 
    /**
-    * Build a cache manager based on supplied given properties. TODO - add a list of all possible configuration
-    * parameters here
+    * Build a cache manager based on supplied properties.
     */
    public RemoteCacheManager(Properties props, boolean start) {
       this.props = props;

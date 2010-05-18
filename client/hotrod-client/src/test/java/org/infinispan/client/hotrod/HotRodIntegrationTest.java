@@ -22,8 +22,6 @@ import static org.testng.Assert.assertNull;
 
 
 /**
- * // TODO: Document this
- *
  * @author mmarkus
  * @since 4.1
  */

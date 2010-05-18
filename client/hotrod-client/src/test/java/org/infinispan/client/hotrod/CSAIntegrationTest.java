@@ -29,8 +29,6 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 
 /**
- * // TODO: Document this
- *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */

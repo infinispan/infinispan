@@ -2,9 +2,8 @@ package org.infinispan.client.hotrod.impl.protocol;
 
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
-import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
 import org.infinispan.client.hotrod.exceptions.HotRodTimeoutException;
-import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
+import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -31,7 +30,7 @@ public class HotRodOperationsHelper {
       transport.writeVLong(messageId);
       transport.writeByte(HotRodConstants.HOTROD_VERSION);
       transport.writeByte(operationCode);
-      transport.writeArray(cacheName.getBytes());
+      transport.writeString(cacheName);
 
       int flagInt = 0;
       if (flags != null) {

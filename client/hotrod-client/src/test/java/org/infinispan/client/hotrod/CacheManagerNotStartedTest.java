@@ -12,8 +12,6 @@ import org.testng.annotations.Test;
 import java.util.HashMap;
 
 /**
- * // TODO: Document this
- *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */

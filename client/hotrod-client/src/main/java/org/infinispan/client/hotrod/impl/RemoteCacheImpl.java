@@ -335,7 +335,6 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    }
 
    private int toSeconds(long duration, TimeUnit timeUnit) {
-      //todo make sure this can pe enveloped on an int
       return (int) timeUnit.toSeconds(duration);
    }
 

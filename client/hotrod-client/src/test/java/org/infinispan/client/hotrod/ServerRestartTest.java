@@ -13,8 +13,6 @@ import org.testng.annotations.Test;
 import java.util.Properties;
 
 /**
- * // TODO: Document this
- *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */

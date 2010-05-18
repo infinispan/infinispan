@@ -22,8 +22,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import static org.testng.AssertJUnit.assertEquals;
 
 /**
- * // TODO: Document this
- *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */

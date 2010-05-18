@@ -51,7 +51,7 @@ public class NettyTransportFactory implements TransportFactory {
 
    @Override
    public void updateHashFunction(LinkedHashMap<InetSocketAddress,Integer> servers2HashCode, int numKeyOwners, short hashFunctionVersion, int hashSpace) {
-      // TODO: Customise this generated block
+      throw new RuntimeException("Not implemented - go away!");
    }
 
    @Override

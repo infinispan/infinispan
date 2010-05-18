@@ -10,9 +10,6 @@ import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
 
 /**
- * // TODO: Document this
- *    - todo factorize code with CacheManagerNotStartedTest
- *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */

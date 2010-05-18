@@ -8,8 +8,6 @@ import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * // TODO: Document this
- *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */

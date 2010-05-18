@@ -9,8 +9,6 @@ import java.io.InputStream;
 import java.util.Arrays;
 
 /**
- * // TODO: Document this
- *
  * @author mmarkus
  * @since 4.1
  */

@@ -44,4 +44,6 @@ public interface Transport {
    int readUnsignedShort();
 
    int read4ByteInt();
+
+   void writeString(String string);
 }

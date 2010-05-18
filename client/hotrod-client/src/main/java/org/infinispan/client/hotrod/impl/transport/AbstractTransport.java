@@ -81,6 +81,11 @@ public abstract class AbstractTransport implements Transport {
    }
 
    @Override
+   public void writeString(String string) {
+      writeArray(string.getBytes(CHARSET));
+   }
+
+   @Override
    public TransportFactory getTransportFactory() {
       return transportFactory;
    }

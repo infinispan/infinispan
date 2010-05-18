@@ -2,7 +2,6 @@ package org.infinispan.client.hotrod.impl.protocol;
 
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
-import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.BinaryVersionedValue;
 import org.infinispan.client.hotrod.impl.VersionedOperationResponse;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
@@ -29,7 +28,7 @@ public class HotRodOperationsImpl implements HotRodOperations, HotRodConstants {
    private final AtomicInteger topologyId;
 
    public HotRodOperationsImpl(String cacheName, TransportFactory transportFactory, AtomicInteger topologyId) {
-      this.cacheName = cacheName; //todo add charset here
+      this.cacheName = cacheName;
       this.transportFactory = transportFactory;
       this.topologyId = topologyId;
    }
@@ -217,27 +216,6 @@ public class HotRodOperationsImpl implements HotRodOperations, HotRodConstants {
          }
          return result;
       } finally {
-         releaseTransport(transport);
-      }
-   }
-
-   @Override
-   public boolean ping() {
-      Transport transport = null;
-      try {
-         transport = transportFactory.getTransport();
-         // 1) write header
-         long messageId = HotRodOperationsHelper.writeHeader(transport, PING_REQUEST, cacheName, topologyId);
-         short respStatus = HotRodOperationsHelper.readHeaderAndValidate(transport, messageId, HotRodConstants.PING_RESPONSE, topologyId);
-         if (respStatus == NO_ERROR_STATUS) {
-            return true;
-         }
-         throw new IllegalStateException("Unknown response status: " + Integer.toHexString(respStatus));
-      } catch (TransportException te) {
-         log.trace("Exception while adsdsa", te);
-         return false;
-      }
-      finally {
          releaseTransport(transport);
       }
    }

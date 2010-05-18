@@ -14,8 +14,6 @@ import java.util.concurrent.Future;
 import static junit.framework.Assert.assertEquals;
 
 /**
- * // TODO: Document this
- *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
