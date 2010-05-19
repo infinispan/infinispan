@@ -8,13 +8,14 @@ import org.infinispan.server.hotrod.OperationStatus._
 import test.HotRodClient
 import test.HotRodTestingUtil._
 import org.testng.Assert._
-import collection.mutable.ListBuffer
-import org.infinispan.distribution.UnionConsistentHash
 import org.infinispan.test.TestingUtil
-import org.infinispan.test.AbstractCacheTest._
+import org.infinispan.distribution.UnionConsistentHash
+import collection.mutable.ListBuffer
 
 /**
- * // TODO: Document this
+ * Tests Hot Rod logic when interacting with distributed caches, particularly logic to do with
+ * hash-distribution-aware headers and how it behaves when cluster formation changes.
+ *
  * @author Galder Zamarreño
  * @since 4.1
  */
@@ -26,7 +27,12 @@ class HotRodDistributionTest extends HotRodMultiNodeTest {
    override protected def createCacheConfig: Configuration = getDefaultClusteredConfig(CacheMode.DIST_SYNC)
 
    def testDistributedPutWithTopologyChanges(m: Method) {
-      var resp = clients.head.put(k(m) , 0, 0, v(m), 1, 0)
+      var resp = clients.head.ping(3, 0)
+      assertStatus(resp.status, Success)
+      var expectedHashIds = generateExpectedHashIds
+      assertHashTopologyReceived(resp.topologyResponse.get, servers, expectedHashIds)
+
+      resp = clients.head.put(k(m) , 0, 0, v(m), 1, 0)
       assertStatus(resp.status, Success)
       assertEquals(resp.topologyResponse, None)
       assertSuccess(clients.tail.head.get(k(m), 0), v(m))
@@ -43,7 +49,7 @@ class HotRodDistributionTest extends HotRodMultiNodeTest {
 
       resp = clients.head.put(k(m) , 0, 0, v(m, "v4-"), 3, 0)
       assertStatus(resp.status, Success)
-      var expectedHashIds = generateExpectedHashIds
+      expectedHashIds = generateExpectedHashIds
       assertHashTopologyReceived(resp.topologyResponse.get, servers, expectedHashIds)
       assertSuccess(clients.tail.head.get(k(m), 0), v(m, "v4-"))
       resp = clients.tail.head.put(k(m) , 0, 0, v(m, "v5-"), 3, 1)

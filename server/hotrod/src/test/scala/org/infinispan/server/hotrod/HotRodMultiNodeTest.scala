@@ -5,15 +5,14 @@ import org.infinispan.config.Configuration
 import org.testng.annotations.{AfterMethod, AfterClass, Test}
 import test.HotRodClient
 import test.HotRodTestingUtil._
-import org.infinispan.config.Configuration.CacheMode
 
 /**
- * // TODO: Document this
+ * Base test class for multi node or clustered Hot Rod tests.
+ *
  * @author Galder Zamarreño
  * @since 4.1
  */
 abstract class HotRodMultiNodeTest extends MultipleCacheManagersTest {
-   import HotRodServer._
    private[this] var hotRodServers: List[HotRodServer] = List()
    private[this] var hotRodClients: List[HotRodClient] = List()
 
