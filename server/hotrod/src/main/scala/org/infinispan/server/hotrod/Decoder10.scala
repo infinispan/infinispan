@@ -12,14 +12,14 @@ import collection.mutable
 import collection.immutable
 import org.infinispan.util.concurrent.TimeoutException
 import java.io.IOException
-import org.infinispan.distribution.DefaultConsistentHash
+import org.infinispan.context.Flag.SKIP_REMOTE_LOOKUP
 
 /**
- * // TODO: Document this
+ * HotRod protocol decoder specific for specification version 1.0.
+ *
  * @author Galder Zamarreño
- * @since
+ * @since 4.1
  */
-
 class Decoder10(cacheManager: CacheManager) extends AbstractVersionedDecoder {
    import RequestResolver._
    import ResponseResolver._
@@ -137,7 +137,8 @@ class Decoder10(cacheManager: CacheManager) extends AbstractVersionedDecoder {
          }
          case ClearRequest => {
             val topologyResponse = getTopologyResponse(h)
-            cache.clear
+            // Get an optimised cache in case we can make the operation more efficient
+            getOptimizedCache(h, cache).clear
             new Response(h.messageId, h.cacheName, h.clientIntel, ClearResponse, Success, topologyResponse)
          }
          case PingRequest => {
@@ -197,6 +198,13 @@ class Decoder10(cacheManager: CacheManager) extends AbstractVersionedDecoder {
       } else None
    }
 
+   override def getOptimizedCache(h: HotRodHeader, c: Cache[CacheKey, CacheValue]): Cache[CacheKey, CacheValue] = {
+      if (c.getConfiguration.getCacheMode.isDistributed && h.flag == ForceReturnPreviousValue) {
+         c.getAdvancedCache.withFlags(SKIP_REMOTE_LOOKUP)
+      } else {
+         c
+      }
+   }
 }
 
 object RequestResolver extends Logging {

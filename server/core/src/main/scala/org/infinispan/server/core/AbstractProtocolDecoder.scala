@@ -72,20 +72,22 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue] extends Decoder {
       }
    }
 
-   private def put(header: SuitableHeader, k: K, params: Option[SuitableParameters], cache: Cache[K, V]): AnyRef = {
+   private def put(h: SuitableHeader, k: K, params: Option[SuitableParameters], c: Cache[K, V]): AnyRef = {
       val p = params.get
-      val cache = getCache(header)
-      val v = createValue(header, p, generateVersion(cache))
-      val prev = cache.put(k, v, toMillis(p.lifespan), DefaultTimeUnit, toMillis(p.maxIdle), DefaultTimeUnit)
-      createSuccessResponse(header, params, prev)
+      val v = createValue(h, p, generateVersion(c))
+      // Get an optimised cache in case we can make the operation more efficient
+      val prev = getOptimizedCache(h, c).put(k, v, toMillis(p.lifespan), DefaultTimeUnit, toMillis(p.maxIdle), DefaultTimeUnit)
+      createSuccessResponse(h, params, prev)
    }
 
-   private def putIfAbsent(header: SuitableHeader, k: K, params: Option[SuitableParameters], cache: Cache[K, V]): AnyRef = {
+   protected def getOptimizedCache(header: SuitableHeader, c: Cache[K, V]): Cache[K, V] = c
+
+   private def putIfAbsent(header: SuitableHeader, k: K, params: Option[SuitableParameters], c: Cache[K, V]): AnyRef = {
       val p = params.get
-      val prev = cache.get(k)
-      if (prev == null) { // Generate new version only if key not present      
-         val v = createValue(header, p, generateVersion(cache))
-         cache.putIfAbsent(k, v, toMillis(p.lifespan), DefaultTimeUnit, toMillis(p.maxIdle), DefaultTimeUnit)
+      var prev = c.get(k)
+      if (prev == null) { // Generate new version only if key not present
+         val v = createValue(header, p, generateVersion(c))
+         prev = c.putIfAbsent(k, v, toMillis(p.lifespan), DefaultTimeUnit, toMillis(p.maxIdle), DefaultTimeUnit)
       }
       if (prev == null)
          createSuccessResponse(header, params, prev)
@@ -93,12 +95,12 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue] extends Decoder {
          createNotExecutedResponse(header, params, prev)
    }
 
-   private def replace(header: SuitableHeader, k: K, params: Option[SuitableParameters], cache: Cache[K, V]): AnyRef = {
+   private def replace(header: SuitableHeader, k: K, params: Option[SuitableParameters], c: Cache[K, V]): AnyRef = {
       val p = params.get
-      val prev = cache.get(k)
+      var prev = c.get(k)
       if (prev != null) { // Generate new version only if key present
-         val v = createValue(header, p, generateVersion(cache))
-         cache.replace(k, v, toMillis(p.lifespan), DefaultTimeUnit, toMillis(p.maxIdle), DefaultTimeUnit)
+         val v = createValue(header, p, generateVersion(c))
+         prev = c.replace(k, v, toMillis(p.lifespan), DefaultTimeUnit, toMillis(p.maxIdle), DefaultTimeUnit)
       }
       if (prev != null)
          createSuccessResponse(header, params, prev)
@@ -106,14 +108,14 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue] extends Decoder {
          createNotExecutedResponse(header, params, prev)
    }
 
-   private def replaceIfUmodified(header: SuitableHeader, k: K, params: Option[SuitableParameters], cache: Cache[K, V]): AnyRef = {
+   private def replaceIfUmodified(header: SuitableHeader, k: K, params: Option[SuitableParameters], c: Cache[K, V]): AnyRef = {
       val p = params.get
-      val prev = cache.get(k)
+      val prev = c.get(k)
       if (prev != null) {
          if (prev.version == p.streamVersion) {
             // Generate new version only if key present and version has not changed, otherwise it's wasteful
-            val v = createValue(header, p, generateVersion(cache))
-            val replaced = cache.replace(k, prev, v);
+            val v = createValue(header, p, generateVersion(c))
+            val replaced = c.replace(k, prev, v);
             if (replaced)
                createSuccessResponse(header, params, prev)
             else
@@ -124,8 +126,8 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue] extends Decoder {
       } else createNotExistResponse(header, params)
    }
 
-   private def remove(header: SuitableHeader, k: K, params: Option[SuitableParameters], cache: Cache[K, V]): AnyRef = {
-      val prev = cache.remove(k)
+   private def remove(header: SuitableHeader, k: K, params: Option[SuitableParameters], c: Cache[K, V]): AnyRef = {
+      val prev = c.remove(k)
       if (prev != null)
          createSuccessResponse(header, params, prev)
       else

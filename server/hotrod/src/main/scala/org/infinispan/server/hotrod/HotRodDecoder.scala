@@ -67,11 +67,12 @@ class HotRodDecoder(cacheManager: CacheManager) extends AbstractProtocolDecoder[
    override def getCache(header: HotRodHeader): Cache[CacheKey, CacheValue] = {
       val cacheName = header.cacheName
       if (cacheName == TopologyCacheName)
-         throw new CacheException("Remote requests are not allowed to topology cache. Do no send remote requests to cache " + TopologyCacheName)
+         throw new CacheException("Remote requests are not allowed to topology cache. Do no send remote requests to cache "
+               + TopologyCacheName)
 
       if (cacheName != DefaultCacheManager.DEFAULT_CACHE_NAME && !cacheManager.getCacheNames.contains(cacheName))
          throw new CacheNotFoundException("Cache with name '" + cacheName + "' not found amongst the configured caches")
-      
+
       if (cacheName == DefaultCacheManager.DEFAULT_CACHE_NAME) cacheManager.getCache[CacheKey, CacheValue]
       else cacheManager.getCache(cacheName)
    }
@@ -125,6 +126,9 @@ class HotRodDecoder(cacheManager: CacheManager) extends AbstractProtocolDecoder[
       }
    }
 
+   override protected def getOptimizedCache(h: HotRodHeader, c: Cache[CacheKey, CacheValue]): Cache[CacheKey, CacheValue] = {
+      h.decoder.getOptimizedCache(h, c)
+   }
 }
 
 object HotRodDecoder extends Logging {

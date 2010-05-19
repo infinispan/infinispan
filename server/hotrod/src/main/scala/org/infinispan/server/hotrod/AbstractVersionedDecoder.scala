@@ -37,4 +37,5 @@ abstract class AbstractVersionedDecoder {
 
    def createErrorResponse(header: HotRodHeader, t: Throwable): AnyRef
 
+   def getOptimizedCache(h: HotRodHeader, c: Cache[CacheKey, CacheValue]): Cache[CacheKey, CacheValue]
 }
