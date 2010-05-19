@@ -11,6 +11,7 @@ import org.testng.Assert._
 import org.infinispan.test.TestingUtil
 import org.infinispan.distribution.UnionConsistentHash
 import collection.mutable.ListBuffer
+import org.infinispan.test.AbstractCacheTest._ // Do not remove, otherwise getDefaultClusteredConfig is not found
 
 /**
  * Tests Hot Rod logic when interacting with distributed caches, particularly logic to do with
