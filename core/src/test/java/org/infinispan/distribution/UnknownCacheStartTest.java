@@ -32,7 +32,7 @@ public class UnknownCacheStartTest extends AbstractInfinispanTest {
       killCacheManagers(cm1, cm2);
    }
 
-   @Test (timeOut = 5000)
+//   @Test (timeOut = 5000)
    public void testStartingUnknownCaches() throws Throwable {
       cm1 = createCacheManager(configuration);
 

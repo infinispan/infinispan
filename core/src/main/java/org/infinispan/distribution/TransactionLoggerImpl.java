@@ -5,6 +5,7 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -56,7 +57,7 @@ public class TransactionLoggerImpl implements TransactionLogger {
 
    public void unlockAndDisable() {
       enabled = false;
-      loggingLock.writeLock().unlock();
+      Util.safeRelease(loggingLock.writeLock());
       log.info("Stopping transaction logging");
    }
 

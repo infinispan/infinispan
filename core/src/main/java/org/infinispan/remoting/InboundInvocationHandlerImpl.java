@@ -1,5 +1,6 @@
 package org.infinispan.remoting;
 
+import org.infinispan.NamedCacheNotDefinedException;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.config.Configuration;
@@ -46,7 +47,8 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
       ComponentRegistry cr = gcr.getNamedComponentRegistry(cacheName);
       if (cr == null) {
          if (log.isInfoEnabled()) log.info("Cache named {0} does not exist on this cache manager!", cacheName);
-         return null;
+         return new ExceptionResponse(new NamedCacheNotDefinedException(cacheName));
+//         return null;
       }
 
       Configuration localConfig = cr.getComponent(Configuration.class);

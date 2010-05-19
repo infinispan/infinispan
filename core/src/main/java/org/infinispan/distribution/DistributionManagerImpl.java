@@ -58,6 +58,7 @@ import java.util.Set;
 import java.util.HashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -139,9 +140,17 @@ public class DistributionManagerImpl implements DistributionManager {
 
    // To avoid blocking other components' start process, wait last, if necessary, for join to complete.
    @Start(priority = 1000)
-   public void waitForJoinToComplete() throws Exception {
-      if (joinFuture != null)
-         joinFuture.get();
+   public void waitForJoinToComplete() throws Throwable {
+      if (joinFuture != null) {
+         try {
+            joinFuture.get();
+         } catch (InterruptedException e) {
+            throw e;
+         } catch (ExecutionException e) {
+            if (e.getCause() != null) throw e.getCause();
+            else throw e;
+         }
+      }
    }
 
    private void join() throws Exception {
