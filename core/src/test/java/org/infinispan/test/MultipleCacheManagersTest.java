@@ -126,6 +126,19 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       return cm;
    }
 
+   /**
+    * Creates a new cache manager, starts it, and adds it to the list of known cache managers on the current thread.
+    * Uses a default clustered cache manager global config.
+    *
+    * @param defaultConfig default cfg to use
+    * @return the new CacheManager
+    */
+   protected CacheManager addClusterEnabledCacheManager(Configuration defaultConfig) {
+      CacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(defaultConfig);
+      cacheManagers.add(cm);
+      return cm;
+   }
+
    protected void defineConfigurationOnAllManagers(String cacheName, Configuration c) {
       for (CacheManager cm : cacheManagers) {
          cm.defineConfiguration(cacheName, c);
@@ -138,6 +151,17 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
          CacheManager cm = addClusterEnabledCacheManager();
          cm.defineConfiguration(cacheName, c);
          Cache<K, V> cache = cm.getCache(cacheName);
+         caches.add(cache);
+      }
+      TestingUtil.blockUntilViewsReceived(10000, caches);
+      return caches;
+   }
+
+   protected <K, V> List<Cache<K, V>> createClusteredCaches(int numMembersInCluster, Configuration defaultConfig) {
+      List<Cache<K, V>> caches = new ArrayList<Cache<K, V>>(numMembersInCluster);
+      for (int i = 0; i < numMembersInCluster; i++) {
+         CacheManager cm = addClusterEnabledCacheManager(defaultConfig);
+         Cache<K, V> cache = cm.getCache();
          caches.add(cache);
       }
       TestingUtil.blockUntilViewsReceived(10000, caches);

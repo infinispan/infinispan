@@ -170,7 +170,11 @@ public class TestCacheManagerFactory {
    }
 
    public static CacheManager createCacheManager(Configuration defaultCacheConfig, boolean transactional) {
-      GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
+      GlobalConfiguration globalConfiguration;
+      if (defaultCacheConfig.getCacheMode().isClustered())
+         globalConfiguration = GlobalConfiguration.getClusteredDefault();
+      else
+         globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
       amendMarshaller(globalConfiguration);
       minimizeThreads(globalConfiguration);
       if (transactional) amendJTA(defaultCacheConfig);
