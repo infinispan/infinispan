@@ -12,7 +12,8 @@ import org.infinispan.Version
 import org.infinispan.manager.{CacheManager, DefaultCacheManager}
 
 /**
- * // TODO: Document this
+ * Main class for server startup.
+ *
  * @author Galder Zamarreño
  * @since 4.1
  */
@@ -94,8 +95,8 @@ object Main extends Logging {
          showAndExit
       }
       val idleTimeout = if (props.get(PROP_KEY_IDLE_TIMEOUT) == None) IDLE_TIMEOUT_DEFAULT else props.get(PROP_KEY_IDLE_TIMEOUT).get.toInt
-      if (idleTimeout < 0)
-         throw new IllegalArgumentException("Idle timeout can't be lower than 0: " + idleTimeout)
+      if (idleTimeout < -1)
+         throw new IllegalArgumentException("Idle timeout can't be lower than -1: " + idleTimeout)
 
       // TODO: move class name and protocol number to a resource file under the corresponding project
       val clazz = protocol.get match {
@@ -123,7 +124,7 @@ object Main extends Logging {
 
    private def processCommandLine(args: Array[String]) {
       programName = System.getProperty("program.name", "startServer")
-      var sopts = "-:hD:Vp:l:m:t:c:r:"
+      var sopts = "-:hD:Vp:l:m:t:c:r:i:"
       var lopts = Array(
          new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h'),
          new LongOpt("version", LongOpt.NO_ARGUMENT, null, 'V'),
@@ -200,12 +201,12 @@ object Main extends Logging {
       println
       println("    -c, --cache_config=<filename>      Cache configuration file (default: creates cache with default values)")
       println
-      println("    -r, --protocol=                    Protocol to understand by the server. This is a mandatory option and you should choose one of the two options")
+      println("    -r, --protocol=                    Protocol to understand by the server. This is a mandatory option and you should choose one of these options")
       println("          [memcached|hotrod|websocket]")
       println
       println("    -i, --idle_timeout=<num>           Idle read timeout, in seconds, used to detect stale connections (default: 60 seconds).")
       println("                                       If no new messages have been read within this time, the server disconnects the channel.")
-      println("                                       Passing 0 disables idle timeout.")
+      println("                                       Passing -1 disables idle timeout.")
       println
       println("    -D<name>[=<value>]                 Set a system property")
       println

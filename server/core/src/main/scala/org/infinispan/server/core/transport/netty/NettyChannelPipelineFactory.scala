@@ -7,7 +7,10 @@ import org.infinispan.server.core.transport.IdleStateHandlerProvider
 import org.jboss.netty.util.{HashedWheelTimer, Timer}
 
 /**
- * // TODO: Document this
+ * Pipeline factory for Netty based channels. For each pipeline created, a new decoder is created which means that
+ * each incoming connection deals with a unique decoder instance. Since the encoder does not maintain any state,
+ * a single encoder instance is shared by all incoming connections, if and only if, the protocol mandates an encoder.
+ *
  * @author Galder Zamarreño
  * @since 4.1
  */
@@ -22,7 +25,8 @@ class NettyChannelPipelineFactory(server: ProtocolServer, encoder: ChannelDownst
       pipeline.addLast("decoder", new DecoderAdapter(server.getDecoder, transport))
       if (encoder != null)
          pipeline.addLast("encoder", encoder)
-      if (idleTimeout != 0) {
+      // Idle timeout logic is disabled with -1 or 0 values
+      if (idleTimeout > 0) {
          timer = new HashedWheelTimer
          pipeline.addLast("idleHandler", new IdleStateHandler(timer, idleTimeout, 0, 0))
          pipeline.addLast("idleHandlerProvider", new IdleStateHandlerProvider)
