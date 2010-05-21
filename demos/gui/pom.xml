@@ -18,7 +18,7 @@
    <properties>
       <version.jgoodies.forms>1.0.5</version.jgoodies.forms>
       <version.com.intellij.forms_rt>6.0.5</version.com.intellij.forms_rt>
-      <version.apache.log4j>1.2.15</version.apache.log4j>
+      <version.apache.log4j>1.2.14</version.apache.log4j>
    </properties>
 
    <dependencies>
@@ -38,7 +38,7 @@
          <version>${version.com.intellij.forms_rt}</version>
       </dependency>
       <dependency>
-         <groupId>apache-log4j</groupId>
+         <groupId>log4j</groupId>
          <artifactId>log4j</artifactId>
          <version>${version.apache.log4j}</version>
       </dependency>
