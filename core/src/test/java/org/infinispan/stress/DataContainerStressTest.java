@@ -36,22 +36,6 @@ public class DataContainerStressTest {
       doTest(DefaultDataContainer.unBoundedDataContainer(5000));
    }
 
-   public void testFIFODataContainer() throws InterruptedException {
-      doTest(new FIFODataContainer(5000));
-   }
-
-   public void testLRUDataContainer() throws InterruptedException {
-      doTest(new LRUDataContainer(5000));
-   }
-
-   public void testLRUSimpleDataContainer() throws InterruptedException {
-      doTest(new LRUSimpleDataContainer(5000));
-   }
-
-   public void testFIFOSimpleDataContainer() throws InterruptedException {
-      doTest(new FIFOSimpleDataContainer(5000));
-   }
-
    private void doTest(final DataContainer dc) throws InterruptedException {
       doTest(dc, true);
       doTest(dc, false);

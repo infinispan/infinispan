@@ -51,18 +51,13 @@ public class DefaultDataContainer implements DataContainer {
 
 
    protected DefaultDataContainer(int concurrencyLevel) {
-      this(concurrencyLevel, false, false);
-   }
-
-   protected DefaultDataContainer(int concurrencyLevel, boolean recordCreation, boolean recordLastUsed) {
       immortalEntries = new ConcurrentHashMap<Object, InternalCacheEntry>(128, 0.75f, concurrencyLevel);
       mortalEntries = new ConcurrentHashMap<Object, InternalCacheEntry>(64, 0.75f, concurrencyLevel);
-      entryFactory = new InternalEntryFactory(recordCreation, recordLastUsed);
+      entryFactory = new InternalEntryFactory();
       evictionListener = null;
    }
    
-   protected DefaultDataContainer(int concurrencyLevel, int maxEntries, EvictionStrategy strategy, EvictionThreadPolicy policy,
-            boolean recordCreation, boolean recordLastUsed) {
+   protected DefaultDataContainer(int concurrencyLevel, int maxEntries, EvictionStrategy strategy, EvictionThreadPolicy policy) {
       
       // translate eviction policy and strategy
       switch (policy) {
@@ -91,7 +86,7 @@ public class DefaultDataContainer implements DataContainer {
       }
       immortalEntries = new BoundedConcurrentHashMap<Object, InternalCacheEntry>(maxEntries, concurrencyLevel, eviction, evictionListener);
       mortalEntries = new ConcurrentHashMap<Object, InternalCacheEntry>(64, 0.75f, concurrencyLevel);
-      entryFactory = new InternalEntryFactory(recordCreation, recordLastUsed);
+      entryFactory = new InternalEntryFactory();
    }
    
    @Inject
@@ -100,7 +95,7 @@ public class DefaultDataContainer implements DataContainer {
    }
    
    public static DataContainer boundedDataContainer(int concurrencyLevel, int maxEntries, EvictionStrategy strategy, EvictionThreadPolicy policy) {
-      return new DefaultDataContainer(concurrencyLevel, maxEntries, strategy,policy, false, false) {
+      return new DefaultDataContainer(concurrencyLevel, maxEntries, strategy,policy) {
 
          @Override
          public int size() {
