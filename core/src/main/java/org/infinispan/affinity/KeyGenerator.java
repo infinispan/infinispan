@@ -7,6 +7,6 @@ package org.infinispan.affinity;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public interface KeyProvider {
-   public Object getKey();
+public interface KeyGenerator<K> {
+   public K getKey();
 }

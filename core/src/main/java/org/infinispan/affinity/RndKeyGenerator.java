@@ -9,7 +9,7 @@ import java.util.Random;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public class RndKeyProvider implements KeyProvider {
+public class RndKeyGenerator implements KeyGenerator {
 
    public static final Random rnd = new Random();
 
