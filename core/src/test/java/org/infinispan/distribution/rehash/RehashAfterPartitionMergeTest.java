@@ -62,11 +62,11 @@ public class RehashAfterPartitionMergeTest extends MultipleCacheManagersTest {
       for (Cache<Object, Object> c: caches) {
          assert "value".equals(c.get("1"));
          assert "value".equals(c.get("2"));
-         assert c.getCacheManager().getMembers().size() == 2;
+         assert manager(c).getMembers().size() == 2;
       }
       AtomicInteger ai = new AtomicInteger(0);
-      c1.getCacheManager().addListener(new ViewChangeListener(ai));
-      c2.getCacheManager().addListener(new ViewChangeListener(ai));
+      manager(c1).addListener(new ViewChangeListener(ai));
+      manager(c2).addListener(new ViewChangeListener(ai));
 
       d1.setDiscardAll(true);
       d2.setDiscardAll(true);
@@ -75,7 +75,7 @@ public class RehashAfterPartitionMergeTest extends MultipleCacheManagersTest {
       while (ai.get() < 2) TestingUtil.sleepThread(500);
 
       // we should see a network partition
-      for (Cache<Object, Object> c: caches) assert c.getCacheManager().getMembers().size() == 1;
+      for (Cache<Object, Object> c: caches) assert manager(c).getMembers().size() == 1;
 
       c1.put("3", "value");
       c2.put("4", "value");
@@ -102,7 +102,7 @@ public class RehashAfterPartitionMergeTest extends MultipleCacheManagersTest {
       for (Cache<Object, Object> c: caches) {
          assert "value".equals(c.get("5"));
          assert "value".equals(c.get("6"));
-         assert c.getCacheManager().getMembers().size() == 2;
+         assert manager(c).getMembers().size() == 2;
       }      
    }
 

@@ -39,6 +39,7 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.LockObtainFailedException;
 import org.infinispan.Cache;
 import org.infinispan.lucene.testutils.ClusteredCacheFactory;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -152,7 +153,8 @@ public class DynamicClusterIndexStressTest {
    }
    
    private static String buildName(Cache cache) {
-      return Thread.currentThread().getName() +  "[" + cache.getCacheManager().getAddress().toString() + "]";
+      EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) cache.getCacheManager();
+      return Thread.currentThread().getName() +  "[" + cacheManager.getAddress().toString() + "]";
    }
 
    private class LuceneUserThread implements Runnable {

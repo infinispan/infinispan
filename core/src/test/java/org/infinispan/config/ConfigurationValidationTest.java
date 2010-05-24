@@ -21,8 +21,7 @@
  */
 package org.infinispan.config;
 
-import org.infinispan.manager.CacheManager;
-import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -50,11 +49,11 @@ public class ConfigurationValidationTest extends SingleCacheManagerTest {
 
 
    @Override
-   protected CacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfiguration gc = GlobalConfiguration.getNonClusteredDefault();
       Configuration config = new Configuration();
       config.setCacheMode(REPL_ASYNC);
-      CacheManager cm = TestCacheManagerFactory.createCacheManager(gc, config);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(gc, config);
       config = new Configuration();
       config.setCacheMode(LOCAL);
       cm.defineConfiguration("local", config);

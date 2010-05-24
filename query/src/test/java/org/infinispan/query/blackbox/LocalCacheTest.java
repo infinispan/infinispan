@@ -23,6 +23,7 @@ package org.infinispan.query.blackbox;
 
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.helper.TestQueryHelperFactory;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -42,7 +43,7 @@ public class LocalCacheTest extends AbstractLocalQueryTest {
       // no op, meant to be overridden
    }
 
-   protected CacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
       Configuration c = getDefaultClusteredConfig(LOCAL, true);
       c.setIndexingEnabled(true);
       c.setIndexLocalOnly(false);

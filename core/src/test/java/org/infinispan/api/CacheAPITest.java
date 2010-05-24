@@ -4,6 +4,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -27,12 +28,12 @@ import java.util.Set;
 @Test(groups = "functional")
 public abstract class CacheAPITest extends SingleCacheManagerTest {  
 
-   protected CacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
       // start a single cache instance
       Configuration c = getDefaultStandaloneConfig(true);
       c.setIsolationLevel(getIsolationLevel());
       c = addEviction(c);
-      CacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
       cm.defineConfiguration("test", c);
       cache = cm.getCache("test");
       return cm;
@@ -66,7 +67,7 @@ public abstract class CacheAPITest extends SingleCacheManagerTest {
    }
 
    public void testGetMembersInLocalMode() {
-      assert cache.getCacheManager().getAddress() == null : "Cache members should be null if running in LOCAL mode";
+      assert manager(cache).getAddress() == null : "Cache members should be null if running in LOCAL mode";
    }
 
    public void testConvenienceMethods() {

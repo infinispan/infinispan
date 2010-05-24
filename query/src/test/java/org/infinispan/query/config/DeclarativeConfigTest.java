@@ -22,7 +22,7 @@
 package org.infinispan.query.config;
 
 import org.apache.lucene.queryParser.ParseException;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.QueryFactory;
 import org.infinispan.query.backend.QueryHelper;
@@ -43,7 +43,7 @@ public class DeclarativeConfigTest extends SingleCacheManagerTest {
    QueryFactory qf;
 
    @Override
-   protected CacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
       String config = TestingUtil.INFINISPAN_START_TAG +
             "   <default>\n" +
             "      <indexing enabled=\"true\" indexLocalOnly=\"true\"/>\n" +

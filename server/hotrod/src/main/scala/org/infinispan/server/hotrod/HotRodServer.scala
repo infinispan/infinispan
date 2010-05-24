@@ -1,6 +1,5 @@
 package org.infinispan.server.hotrod
 
-import org.infinispan.manager.CacheManager
 import org.infinispan.server.core.transport.{Decoder, Encoder}
 import org.infinispan.server.core.{Logging, AbstractProtocolServer}
 import org.infinispan.config.Configuration
@@ -13,7 +12,8 @@ import java.util.concurrent.TimeUnit._
 import java.util.Random
 import org.infinispan.util.Util
 import org.infinispan.{CacheException, Cache}
-import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.Address
+import org.infinispan.manager.EmbeddedCacheManager;
 
 /**
  * // TODO: Document this
@@ -34,7 +34,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Logging {
 
    override def getDecoder: Decoder = new HotRodDecoder(getCacheManager)
 
-   override def start(host: String, port: Int, cacheManager: CacheManager, masterThreads: Int, workerThreads: Int, idleTimeout: Int) {
+   override def start(host: String, port: Int, cacheManager: EmbeddedCacheManager, masterThreads: Int, workerThreads: Int, idleTimeout: Int) {
       super.start(host, port, cacheManager, masterThreads, workerThreads, idleTimeout)
       // Start defined caches to avoid issues with lazily started caches
       for (cacheName <- asIterator(cacheManager.getCacheNames.iterator))
@@ -46,7 +46,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Logging {
          addSelfToTopologyView(host, port, cacheManager)
    }
 
-   private def addSelfToTopologyView(host: String, port: Int, cacheManager: CacheManager) {
+   private def addSelfToTopologyView(host: String, port: Int, cacheManager: EmbeddedCacheManager) {
       defineTopologyCacheConfig(cacheManager)
       topologyCache = cacheManager.getCache(TopologyCacheName)
       address = TopologyAddress(host, port, Map.empty, cacheManager.getAddress)
@@ -116,7 +116,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Logging {
       }
    }
 
-   protected def defineTopologyCacheConfig(cacheManager: CacheManager) {
+   protected def defineTopologyCacheConfig(cacheManager: EmbeddedCacheManager) {
       val topologyCacheConfig = new Configuration
       topologyCacheConfig.setCacheMode(CacheMode.REPL_SYNC)
       topologyCacheConfig.setSyncReplTimeout(10000) // Milliseconds

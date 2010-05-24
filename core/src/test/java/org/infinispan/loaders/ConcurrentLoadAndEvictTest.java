@@ -12,7 +12,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.CacheLoaderInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -38,7 +38,7 @@ import java.util.concurrent.TimeoutException;
 public class ConcurrentLoadAndEvictTest extends SingleCacheManagerTest {
    SlowDownInterceptor sdi;
 
-   protected CacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
       Configuration config = new Configuration();
       // we need a loader:
       CacheLoaderManagerConfig clmc = new CacheLoaderManagerConfig();

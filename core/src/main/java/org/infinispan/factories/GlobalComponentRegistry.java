@@ -10,7 +10,7 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.ModuleLifecycle;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifierImpl;
 import org.infinispan.util.logging.Log;
@@ -50,14 +50,14 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
     *
     * @param configuration configuration with which this is created
     */
-   public GlobalComponentRegistry(GlobalConfiguration configuration, CacheManager cacheManager) {
+   public GlobalComponentRegistry(GlobalConfiguration configuration, EmbeddedCacheManager cacheManager) {
       if (configuration == null) throw new NullPointerException("GlobalConfiguration cannot be null!");
       try {
          // this order is important ... 
          globalConfiguration = configuration;
          registerDefaultClassLoader(null);
          registerComponent(this, GlobalComponentRegistry.class);
-         registerComponent(cacheManager, CacheManager.class);
+         registerComponent(cacheManager, EmbeddedCacheManager.class);
          registerComponent(configuration, GlobalConfiguration.class);
          registerComponent(new CacheManagerJmxRegistration(), CacheManagerJmxRegistration.class);
          registerComponent(new CacheManagerNotifierImpl(), CacheManagerNotifier.class);

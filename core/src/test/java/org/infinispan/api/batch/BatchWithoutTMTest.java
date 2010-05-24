@@ -1,6 +1,7 @@
 package org.infinispan.api.batch;
 
 import org.infinispan.Cache;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
@@ -13,7 +14,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "api.batch.BatchWithoutTMTest")
 public class BatchWithoutTMTest extends AbstractBatchTest {
 
-   CacheManager cm;
+   EmbeddedCacheManager cm;
 
    @BeforeClass
    public void createCacheManager() {

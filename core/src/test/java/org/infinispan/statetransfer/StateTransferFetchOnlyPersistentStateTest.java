@@ -30,6 +30,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
@@ -46,7 +47,7 @@ public class StateTransferFetchOnlyPersistentStateTest extends MultipleCacheMana
    protected void createCacheManagers() throws Throwable {
       for (int i = 0; i < 2; i++) {
          Configuration cfg = createConfiguration(i + 1);
-         CacheManager cm = addClusterEnabledCacheManager();
+         EmbeddedCacheManager cm = addClusterEnabledCacheManager();
          cm.defineConfiguration("onlyFetchPersistent", cfg);
       }
    }

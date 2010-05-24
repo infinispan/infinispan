@@ -25,6 +25,7 @@ import org.infinispan.loaders.CacheLoader;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.concurrent.locks.LockManager;
@@ -151,7 +152,7 @@ public class TestingUtil {
 
    /**
     * Waits for the given memebrs to be removed from the cluster. The difference between this and {@link
-    * #blockUntilViewsReceived(long, org.infinispan.manager.CacheManager[])} methods(s) is that it does not barf if
+    * #blockUntilViewsReceived(long, org.infinispan.manager.CacheManager...)} methods(s) is that it does not barf if
     * more than expected memebers is in the cluster - this is because we expect to start with a grater number fo
     * memebers than we eventually expect. It will barf though, if the number of members is not the one expected but
     * only after the timeout expieres.
@@ -238,7 +239,8 @@ public class TestingUtil {
 
       while (System.currentTimeMillis() < failTime) {
          sleepThread(100);
-         if (isCacheViewComplete(cache.getCacheManager().getMembers(), cache.getCacheManager().getAddress(), groupSize, barfIfTooManyMembersInView)) {
+         EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) cache.getCacheManager();
+         if (isCacheViewComplete(cacheManager.getMembers(), cacheManager.getAddress(), groupSize, barfIfTooManyMembersInView)) {
             return;
          }
       }
@@ -247,7 +249,7 @@ public class TestingUtil {
    }
 
    /**
-    * Checks each cache to see if the number of elements in the array returned by {@link CacheManager#getMembers()}
+    * Checks each cache to see if the number of elements in the array returned by {@link EmbeddedCacheManager#getMembers()}
     * matches the size of the <code>caches</code> parameter.
     *
     * @param caches caches that should form a View
@@ -262,7 +264,8 @@ public class TestingUtil {
       int memberCount = caches.length;
 
       for (int i = 0; i < memberCount; i++) {
-         if (!isCacheViewComplete(caches[i].getCacheManager().getMembers(), caches[i].getCacheManager().getAddress(), memberCount, barfIfTooManyMembers)) {
+         EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) caches[i].getCacheManager();
+         if (!isCacheViewComplete(cacheManager.getMembers(), cacheManager.getAddress(), memberCount, barfIfTooManyMembers)) {
             return false;
          }
       }
@@ -275,7 +278,8 @@ public class TestingUtil {
       int memberCount = cacheManagers.length;
 
       for (int i = 0; i < memberCount; i++) {
-         if (!isCacheViewComplete(cacheManagers[i].getMembers(), cacheManagers[i].getAddress(), memberCount, barfIfTooManyMembers)) {
+         EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) cacheManagers[i];
+         if (!isCacheViewComplete(cacheManager.getMembers(), cacheManager.getAddress(), memberCount, barfIfTooManyMembers)) {
             return false;
          }
       }
@@ -319,7 +323,8 @@ public class TestingUtil {
     * @param memberCount
     */
    public static boolean isCacheViewComplete(Cache c, int memberCount) {
-      return isCacheViewComplete(c.getCacheManager().getMembers(), c.getCacheManager().getAddress(), memberCount, true);
+      EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) c.getCacheManager();
+      return isCacheViewComplete(cacheManager.getMembers(), cacheManager.getAddress(), memberCount, true);
    }
 
    public static boolean isCacheViewComplete(List members, Address address, int memberCount, boolean barfIfTooManyMembers) {
@@ -400,7 +405,7 @@ public class TestingUtil {
       }
    }
 
-   public static void killCacheManagers(Collection<CacheManager> cacheManagers) {
+   public static void killCacheManagers(Collection<? extends CacheManager> cacheManagers) {
       killCacheManagers(cacheManagers.toArray(new CacheManager[cacheManagers.size()]));
    }
    
@@ -410,7 +415,7 @@ public class TestingUtil {
          for (Cache cache : runningCaches) {
             clearRunningTx(cache);
          }
-         if (!cacheManager.getStatus().allowInvocations()) return;
+         if (!((EmbeddedCacheManager)cacheManager).getStatus().allowInvocations()) return;
          for (Cache cache : runningCaches) {
             removeInMemoryData(cache);
             clearCacheLoader(cache);
@@ -460,7 +465,7 @@ public class TestingUtil {
    }
    
    private static void removeInMemoryData(Cache cache) {
-      CacheManager mgr = cache.getCacheManager();
+      EmbeddedCacheManager mgr = (EmbeddedCacheManager) cache.getCacheManager();
       Address a = mgr.getAddress();
       String str;
       if (a == null)
@@ -655,7 +660,8 @@ public class TestingUtil {
          if (c == null) {
             System.out.println("  ** Cache " + count + " is null!");
          } else {
-            System.out.println("  ** Cache " + count + " is " + c.getCacheManager().getAddress());
+            EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) c.getCacheManager();
+            System.out.println("  ** Cache " + count + " is " + cacheManager.getAddress());
          }
          count++;
       }

@@ -1,6 +1,7 @@
 package org.infinispan.notifications.cachemanagerlistener.event;
 
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 
 import java.util.List;
@@ -14,7 +15,7 @@ import java.util.List;
 public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChangedEvent {
 
    String cacheName;
-   CacheManager cacheManager;
+   EmbeddedCacheManager cacheManager;
    Type type;
    List<Address> newMembers, oldMembers;
    Address localAddress;
@@ -24,7 +25,7 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
    public EventImpl() {
    }
 
-   public EventImpl(String cacheName, CacheManager cacheManager, Type type, List<Address> newMemberList, List<Address> oldMemberList, Address localAddress, int viewId) {
+   public EventImpl(String cacheName, EmbeddedCacheManager cacheManager, Type type, List<Address> newMemberList, List<Address> oldMemberList, Address localAddress, int viewId) {
       this.cacheName = cacheName;
       this.cacheManager = cacheManager;
       this.type = type;
@@ -42,11 +43,11 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
       this.cacheName = cacheName;
    }
 
-   public CacheManager getCacheManager() {
+   public EmbeddedCacheManager getCacheManager() {
       return cacheManager;
    }
 
-   public void setCacheManager(CacheManager cacheManager) {
+   public void setCacheManager(EmbeddedCacheManager cacheManager) {
       this.cacheManager = cacheManager;
    }
 

@@ -12,6 +12,7 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
@@ -44,9 +45,9 @@ public class TransactionTable {
    private static Log log = LogFactory.getLog(TransactionTable.class);
    private static boolean trace = log.isTraceEnabled();
 
-   private Map<Transaction, TransactionXaAdapter> localTransactions = new HashMap<Transaction, TransactionXaAdapter>();
+   private final Map<Transaction, TransactionXaAdapter> localTransactions = new HashMap<Transaction, TransactionXaAdapter>();
 
-   private Map<GlobalTransaction, RemoteTransaction> remoteTransactions = new HashMap<GlobalTransaction, RemoteTransaction>();
+   private final Map<GlobalTransaction, RemoteTransaction> remoteTransactions = new HashMap<GlobalTransaction, RemoteTransaction>();
 
    private CommandsFactory commandsFactory;
    private Configuration configuration;
@@ -56,12 +57,12 @@ public class TransactionTable {
    private RpcManager rpcManager;
    private GlobalTransactionFactory gtf;
    private ExecutorService lockBreakingService = Executors.newFixedThreadPool(1);
-   private CacheManager cm;
+   private EmbeddedCacheManager cm;
 
    @Inject
    public void initialize(CommandsFactory commandsFactory, RpcManager rpcManager, Configuration configuration,
                           InvocationContextContainer icc, InterceptorChain invoker, CacheNotifier notifier,
-                          GlobalTransactionFactory gtf, CacheManager cm) {
+                          GlobalTransactionFactory gtf, EmbeddedCacheManager cm) {
       this.commandsFactory = commandsFactory;
       this.rpcManager = rpcManager;
       this.configuration = configuration;

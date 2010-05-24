@@ -9,6 +9,7 @@ import org.infinispan.interceptors.CacheMgmtInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -54,9 +55,9 @@ public class CSAIntegrationTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.DIST_SYNC);
       config.setUnsafeUnreliableReturnValues(true);
-      CacheManager cm1 = addClusterEnabledCacheManager();
-      CacheManager cm2 = addClusterEnabledCacheManager();
-      CacheManager cm3 = addClusterEnabledCacheManager();
+      EmbeddedCacheManager cm1 = addClusterEnabledCacheManager();
+      EmbeddedCacheManager cm2 = addClusterEnabledCacheManager();
+      EmbeddedCacheManager cm3 = addClusterEnabledCacheManager();
       cm1.defineConfiguration(CACHE_NAME, config);
       cm2.defineConfiguration(CACHE_NAME, config);
       cm3.defineConfiguration(CACHE_NAME, config);

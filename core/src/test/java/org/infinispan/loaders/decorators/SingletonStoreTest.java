@@ -9,6 +9,7 @@ import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.ViewChangeListener;
@@ -34,7 +35,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class SingletonStoreTest extends MultipleCacheManagersTest {
    private static final Log log = LogFactory.getLog(SingletonStoreTest.class);
    private static final AtomicInteger storeCounter = new AtomicInteger(0);
-   private CacheManager cm0, cm1, cm2;
+   private EmbeddedCacheManager cm0, cm1, cm2;
 
    public SingletonStoreTest() {
       cleanup = CleanupPhase.AFTER_METHOD;

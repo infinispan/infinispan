@@ -5,9 +5,9 @@ import net.spy.memcached.{DefaultConnectionFactory, MemcachedClient}
 import java.util.Arrays
 import java.net.InetSocketAddress
 import java.util.concurrent.atomic.AtomicInteger
-import org.infinispan.manager.CacheManager
 import org.infinispan.server.core.transport.Decoder
 import org.infinispan.server.memcached.{MemcachedDecoder, MemcachedValue, MemcachedServer}
+import org.infinispan.manager.EmbeddedCacheManager
 
 /**
  * // TODO: Document this
@@ -32,20 +32,20 @@ trait MemcachedTestingUtil {
       return new MemcachedClient(d, Arrays.asList(new InetSocketAddress(host, port)))
    }
 
-   def startMemcachedTextServer(cacheManager: CacheManager): MemcachedServer =
+   def startMemcachedTextServer(cacheManager: EmbeddedCacheManager): MemcachedServer =
       startMemcachedTextServer(cacheManager, UniquePortThreadLocal.get.intValue)
 
-   def startMemcachedTextServer(cacheManager: CacheManager, port: Int): MemcachedServer = {
+   def startMemcachedTextServer(cacheManager: EmbeddedCacheManager, port: Int): MemcachedServer = {
       val server = new MemcachedServer
       server.start(host, port, cacheManager, 0, 0, 0)
       server
    }
 
-   def startMemcachedTextServer(cacheManager: CacheManager, cacheName: String): MemcachedServer = {
+   def startMemcachedTextServer(cacheManager: EmbeddedCacheManager, cacheName: String): MemcachedServer = {
       startMemcachedTextServer(cacheManager, UniquePortThreadLocal.get.intValue, cacheName)
    }
 
-   def startMemcachedTextServer(cacheManager: CacheManager, port: Int, cacheName: String): MemcachedServer = {
+   def startMemcachedTextServer(cacheManager: EmbeddedCacheManager, port: Int, cacheName: String): MemcachedServer = {
       val server = new MemcachedServer {
          override def getDecoder: Decoder =
             new MemcachedDecoder(getCacheManager.getCache[String, MemcachedValue](cacheName), scheduler)

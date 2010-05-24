@@ -5,7 +5,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -16,12 +16,13 @@ import org.infinispan.tree.TreeStructureSupport;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import static org.testng.AssertJUnit.*;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
+
+import static org.testng.AssertJUnit.*;
 
 /**
  * Excercises and tests the new move() api
@@ -46,8 +47,8 @@ public class NodeMoveAPITest extends SingleCacheManagerTest {
    TransactionManager tm;
    DataContainer dc;
 
-   protected CacheManager createCacheManager() throws Exception {
-      CacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
       Configuration c = new Configuration();
       c.setFetchInMemoryState(false);
       c.setInvocationBatchingEnabled(true);

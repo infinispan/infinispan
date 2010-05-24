@@ -5,7 +5,7 @@ import org.testng.annotations.Test
 import org.infinispan.test.fwk.TestCacheManagerFactory
 import java.lang.reflect.Method
 import org.testng.Assert._
-import org.infinispan.manager.CacheManager
+import org.infinispan.manager.EmbeddedCacheManager
 
 /**
  * // TODO: Document this
@@ -15,7 +15,7 @@ import org.infinispan.manager.CacheManager
 @Test(groups = Array("functional"), testName = "server.hotrod.FunctionalTest")
 class HotRodStatsTest extends HotRodSingleNodeTest {
 
-   override def createTestCacheManager: CacheManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(jmxDomain)
+   override def createTestCacheManager: EmbeddedCacheManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(jmxDomain)
 
    def testStats(m: Method) {
       var s = client.stats

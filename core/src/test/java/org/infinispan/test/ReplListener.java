@@ -8,6 +8,8 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -164,7 +166,8 @@ public class ReplListener {
          boolean successful = (expectAny && sawAtLeastOneInvocation) || (!expectAny && expectedCommands.isEmpty());
          info("Expect Any is " + expectAny + ", saw at least one? " + sawAtLeastOneInvocation + " Successful? " + successful + " Expected commands " + expectedCommands);
          if (!successful && !latch.await(time, unit)) {
-            assert false : "Waiting for more than " + time + " " + unit + " and following commands did not replicate: " + expectedCommands + " on cache [" + c.getCacheManager().getAddress() + "]";
+            EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) c.getCacheManager();
+            assert false : "Waiting for more than " + time + " " + unit + " and following commands did not replicate: " + expectedCommands + " on cache [" + cacheManager.getAddress() + "]";
          } else {
             info("Exiting wait for rpc with expected commands " + expectedCommands);
          }

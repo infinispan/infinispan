@@ -53,8 +53,8 @@ import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.manager.CacheManager;
 import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.MarshalledValue;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -64,7 +64,6 @@ import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.stats.Stats;
 import org.infinispan.stats.StatsImpl;
 import org.infinispan.util.concurrent.AbstractInProcessNotifyingFuture;
-import org.infinispan.util.concurrent.FutureListener;
 import org.infinispan.util.concurrent.NotifyingFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -84,9 +83,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.infinispan.context.Flag.*;
 
 /**
@@ -112,7 +109,7 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
    private EvictionManager evictionManager;
    private DataContainer dataContainer;
    private static final Log log = LogFactory.getLog(CacheDelegate.class);
-   private CacheManager cacheManager;
+   private EmbeddedCacheManager cacheManager;
    // this is never used here but should be injected - this is a hack to make sure the StateTransferManager is properly constructed if needed.
    private StateTransferManager stateTransferManager;
    // as above for ResponseGenerator
@@ -137,7 +134,7 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
                                   RpcManager rpcManager, DataContainer dataContainer,
                                   Marshaller marshaller, ResponseGenerator responseGenerator,
                                   DistributionManager distributionManager,
-                                  CacheManager cacheManager, StateTransferManager stateTransferManager) {
+                                  EmbeddedCacheManager cacheManager, StateTransferManager stateTransferManager) {
       this.commandsFactory = commandsFactory;
       this.invoker = interceptorChain;
       this.config = configuration;
@@ -399,7 +396,7 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
       return transactionManager;
    }
 
-   public CacheManager getCacheManager() {
+   public EmbeddedCacheManager getCacheManager() {
       return cacheManager;
    }
 

@@ -2,6 +2,8 @@ package org.infinispan.tx;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
+import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
@@ -46,7 +48,8 @@ public class StaleLockRecoveryTest extends MultipleCacheManagersTest {
 
       cacheManagers.get(0).stop();
 
-      assert c2.getCacheManager().getMembers().size() == 1;
+      EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) c2.getCacheManager();
+      assert cacheManager.getMembers().size() == 1;
 
       // may take a while from when the view change is seen through to when the lock is cleared
       TestingUtil.sleepThread(1000);

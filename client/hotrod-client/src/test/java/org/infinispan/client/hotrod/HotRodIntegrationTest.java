@@ -3,7 +3,7 @@ package org.infinispan.client.hotrod;
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.impl.SerializationMarshaller;
 import org.infinispan.config.Configuration;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.CacheValue;
 import org.infinispan.server.hotrod.CacheKey;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -41,7 +41,7 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
    protected HotRodServer hotrodServer;
 
    @Override
-   protected CacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
       Configuration standaloneConfig = getDefaultStandaloneConfig(false);
       cacheManager = TestCacheManagerFactory.createLocalCacheManager();
       cacheManager.defineConfiguration(CACHE_NAME, standaloneConfig);

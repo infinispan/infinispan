@@ -8,8 +8,6 @@ import java.util.concurrent.TimeUnit;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
- * // TODO: Document this
- *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */

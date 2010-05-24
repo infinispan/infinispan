@@ -8,6 +8,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -18,7 +19,7 @@ import java.util.Properties;
  * @author noconnor@redhat.com
  */
 public class CacheBuilder {
-	private CacheManager cache_manager;
+	private EmbeddedCacheManager cache_manager;
 	private static final Log myLogger = LogFactory.getLog(CacheBuilder.class);
 
 	public CacheBuilder(String inConfigFile) throws IOException {
@@ -55,7 +56,7 @@ public class CacheBuilder {
 		//Runtime.getRuntime().addShutdownHook(shutdownHook);
 	}
 
-	public CacheManager getCacheManager() {
+	public EmbeddedCacheManager getCacheManager() {
 		return this.cache_manager;
 	}
 

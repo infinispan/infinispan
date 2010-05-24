@@ -3,7 +3,9 @@ package org.infinispan.demo;
 import org.infinispan.Cache;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.manager.CacheManager;
 import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryEvicted;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
@@ -338,8 +340,9 @@ public class InfinispanDemo {
 
                CacheListener cl = new CacheListener();
                cache.addListener(cl);
-               cache.getCacheManager().addListener(cl);
-               updateClusterTable(cache.getCacheManager().getMembers());
+               EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) cache.getCacheManager();
+               cacheManager.addListener(cl);
+               updateClusterTable(cacheManager.getMembers());
 
                lifespanSpinner.setValue(cache.getConfiguration().getExpirationLifespan());
                maxIdleSpinner.setValue(cache.getConfiguration().getExpirationMaxIdle());
@@ -393,13 +396,15 @@ public class InfinispanDemo {
    }
 
    private String getLocalAddress() {
-      Address a = cache.getCacheManager().getAddress();
+      EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) cache.getCacheManager();
+      Address a = cacheManager.getAddress();
       if (a == null) return "(LOCAL mode)";
       else return a.toString();
    }
 
    private String getClusterSize() {
-      List<Address> members = cache.getCacheManager().getMembers();
+      EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) cache.getCacheManager();
+      List<Address> members = cacheManager.getMembers();
       return members == null || members.isEmpty() ? "N/A" : "" + members.size();
    }
 
@@ -476,7 +481,8 @@ public class InfinispanDemo {
                String extraInfo = "Member";
                // if this is the first member then this is the coordinator
                if (memberStates.isEmpty()) extraInfo += " (coord)";
-               if (a.equals(cache.getCacheManager().getAddress()))
+               EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) cache.getCacheManager();
+               if (a.equals(cacheManager.getAddress()))
                   extraInfo += " (me)";
 
                memberStates.add(extraInfo);

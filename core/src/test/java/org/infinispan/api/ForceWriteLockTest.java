@@ -6,6 +6,7 @@ import org.infinispan.container.entries.ReadCommittedEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -21,8 +22,8 @@ public class ForceWriteLockTest extends SingleCacheManagerTest {
    private TransactionManager tm;
    private AdvancedCache advancedCache;
 
-   protected CacheManager createCacheManager() throws Exception {
-      CacheManager cacheManager = TestCacheManagerFactory.createLocalCacheManager(true);
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createLocalCacheManager(true);
       advancedCache = cacheManager.getCache().getAdvancedCache();
       tm = TestingUtil.getTransactionManager(advancedCache);
       return cacheManager;

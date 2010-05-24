@@ -4,6 +4,7 @@ import java.lang.reflect.Method;
 
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -28,7 +29,7 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
    private MBeanServer server;
    private ObjectName name;
 
-   protected CacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
       cacheManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(JMX_DOMAIN, true, false);
       name = new ObjectName(JMX_DOMAIN + ":cache-name=[global],jmx-resource=CacheManager");
       server = PerThreadMBeanServerLookup.getThreadMBeanServer();

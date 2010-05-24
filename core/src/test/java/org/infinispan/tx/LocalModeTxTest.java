@@ -21,7 +21,7 @@
  */
 package org.infinispan.tx;
 
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -33,8 +33,8 @@ import javax.transaction.TransactionManager;
 @Test(groups = "functional", testName = "tx.LocalModeTxTest")
 public class LocalModeTxTest extends SingleCacheManagerTest {
 
-   protected CacheManager createCacheManager() {
-      CacheManager cm = TestCacheManagerFactory.createLocalCacheManager(true);
+   protected EmbeddedCacheManager createCacheManager() {
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager(true);
       cache = cm.getCache();
       return cm;
    }

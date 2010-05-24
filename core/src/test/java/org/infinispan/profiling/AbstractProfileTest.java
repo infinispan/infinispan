@@ -3,7 +3,7 @@ package org.infinispan.profiling;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.executors.ExecutorFactory;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
@@ -54,7 +54,7 @@ public abstract class AbstractProfileTest extends SingleCacheManagerTest {
       return cfg;
    }
 
-   protected CacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfiguration gc = GlobalConfiguration.getClusteredDefault();
       gc.setAsyncTransportExecutorFactoryClass(WTE.class.getName());
       cacheManager = TestCacheManagerFactory.createCacheManager(gc);

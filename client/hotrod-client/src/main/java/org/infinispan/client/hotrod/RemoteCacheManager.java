@@ -11,8 +11,7 @@ import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.impl.transport.VHelper;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.executors.ExecutorFactory;
-import org.infinispan.lifecycle.Lifecycle;
-import org.infinispan.manager.CacheContainer;
+import org.infinispan.manager.CacheManager;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -124,7 +123,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public class RemoteCacheManager implements CacheContainer, Lifecycle {
+public class RemoteCacheManager implements CacheManager {
 
    private static Log log = LogFactory.getLog(RemoteCacheManager.class);
 

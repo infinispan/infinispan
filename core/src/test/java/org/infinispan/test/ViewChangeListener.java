@@ -2,6 +2,7 @@ package org.infinispan.test;
 
 import org.infinispan.Cache;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
@@ -19,10 +20,10 @@ public class ViewChangeListener {
    final CountDownLatch latch = new CountDownLatch(1);
 
    public ViewChangeListener(Cache c) {
-      this(c.getCacheManager());
+      this((EmbeddedCacheManager) c.getCacheManager());
    }
 
-   public ViewChangeListener(CacheManager cm) {
+   public ViewChangeListener(EmbeddedCacheManager cm) {
       this.cm = cm;
       cm.addListener(this);
    }

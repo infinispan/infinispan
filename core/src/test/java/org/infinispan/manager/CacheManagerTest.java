@@ -17,7 +17,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "manager.CacheManagerTest")
 public class CacheManagerTest extends AbstractInfinispanTest {
    public void testDefaultCache() {
-      CacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
 
       try {
          assert cm.getCache().getStatus() == ComponentStatus.RUNNING;
@@ -35,8 +35,17 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       }
    }
 
+   public void testUnstartedCachemanager() {
+      DefaultCacheManager dcm = new DefaultCacheManager(false);
+      assert dcm.getStatus().equals(ComponentStatus.INSTANTIATED);
+      assert !dcm.getStatus().allowInvocations();
+      Cache<Object, Object> cache = dcm.getCache();
+      cache.put("k","v");
+      assert cache.get("k").equals("v");
+   }
+
    public void testClashingNames() {
-      CacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
       try {
          Configuration c = new Configuration();
          Configuration firstDef = cm.defineConfiguration("aCache", c);
@@ -69,7 +78,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
    }
 
    public void testDefiningConfigurationValidation() {
-      CacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
       try {
          cm.defineConfiguration("cache1", null);
          assert false : "Should fail";
@@ -99,7 +108,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
    }
 
    public void testDefiningConfigurationWithTemplateName() {
-      CacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
 
       Configuration c = new Configuration();
       c.setIsolationLevel(IsolationLevel.NONE);
@@ -129,7 +138,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
    }
 
    public void testDefiningConfigurationOverridingBooleans() {
-      CacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
       Configuration c = new Configuration();
       c.setUseLazyDeserialization(true);
       Configuration lazy = cm.defineConfiguration("lazyDeserialization", c);

@@ -8,6 +8,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -43,8 +44,8 @@ public class ClusterFileCacheStoreFunctionalTest extends MultipleCacheManagersTe
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      CacheManager cacheManager1 = TestCacheManagerFactory.createCacheManager(GlobalConfiguration.getClusteredDefault(), new Configuration(), true);
-      CacheManager cacheManager2 = TestCacheManagerFactory.createCacheManager(GlobalConfiguration.getClusteredDefault(), new Configuration(), true);
+      EmbeddedCacheManager cacheManager1 = TestCacheManagerFactory.createCacheManager(GlobalConfiguration.getClusteredDefault(), new Configuration(), true);
+      EmbeddedCacheManager cacheManager2 = TestCacheManagerFactory.createCacheManager(GlobalConfiguration.getClusteredDefault(), new Configuration(), true);
       registerCacheManager(cacheManager1, cacheManager2);
 
       Configuration config1 = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);

@@ -3,6 +3,7 @@ package org.infinispan.tx;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -14,8 +15,8 @@ import javax.transaction.TransactionManager;
 @Test(groups = "functional", sequential = true, testName = "tx.TransactionsSpanningCaches")
 public class TransactionsSpanningCaches extends SingleCacheManagerTest {
 
-   protected CacheManager createCacheManager() throws Exception {
-      CacheManager cm = TestCacheManagerFactory.createCacheManager(new Configuration(), true);
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(new Configuration(), true);
       cm.defineConfiguration("c1", cm.getCache().getConfiguration());
       cm.defineConfiguration("c2", cm.getCache().getConfiguration());
       return cm;

@@ -5,6 +5,7 @@ import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.distribution.ConsistentHash;
 import org.infinispan.distribution.ConsistentHashHelper;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.testng.annotations.Test;
 
@@ -22,7 +23,7 @@ import java.util.List;
 @Test(groups = "functional", testName = "distribution.rehash.WorkDuringJoinTest", enabled = false)
 public class WorkDuringJoinTest extends BaseDistFunctionalTest {
 
-   CacheManager joinerManager;
+   EmbeddedCacheManager joinerManager;
    Cache<Object, String> joiner;
 
    public WorkDuringJoinTest() {
@@ -46,7 +47,7 @@ public class WorkDuringJoinTest extends BaseDistFunctionalTest {
       joinerManager = addClusterEnabledCacheManager();
       joinerManager.defineConfiguration(cacheName, configuration);
       joiner = joinerManager.getCache(cacheName);
-      return joiner.getCacheManager().getAddress();
+      return manager(joiner).getAddress();
    }
 
    public void testJoinAndGet() throws ClassNotFoundException, InstantiationException, IllegalAccessException {

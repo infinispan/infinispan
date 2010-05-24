@@ -24,7 +24,7 @@ import javax.transaction.TransactionManager;
  */
 @Test(groups = "functional", testName = "manager.CacheManagerComponentRegistryTest")
 public class CacheManagerComponentRegistryTest extends AbstractInfinispanTest {
-   CacheManager cm;
+   EmbeddedCacheManager cm;
 
    @AfterMethod(alwaysRun = true)
    public void tearDown() {

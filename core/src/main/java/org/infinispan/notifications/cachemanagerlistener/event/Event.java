@@ -1,6 +1,6 @@
 package org.infinispan.notifications.cachemanagerlistener.event;
 
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 
 /**
  * Common characteristics of events that occur on a cache manager
@@ -13,7 +13,7 @@ public interface Event {
       CACHE_STARTED, CACHE_STOPPED, VIEW_CHANGED
    }
 
-   CacheManager getCacheManager();
+   EmbeddedCacheManager getCacheManager();
 
    Type getType();
 }

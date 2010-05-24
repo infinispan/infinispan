@@ -3,6 +3,7 @@ package org.infinispan.distribution;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -20,7 +21,7 @@ import static org.infinispan.test.fwk.TestCacheManagerFactory.createCacheManager
 public class UnknownCacheStartTest extends AbstractInfinispanTest {
 
    Configuration configuration;
-   CacheManager cm1, cm2;
+   EmbeddedCacheManager cm1, cm2;
 
    @BeforeTest
    public void setUp() {

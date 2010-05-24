@@ -9,6 +9,7 @@ import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MortalCacheEntry;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -66,7 +67,10 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       if (INIT_CLUSTER_SIZE > 3) c4 = caches.get(3);
 
       cacheAddresses = new ArrayList<Address>(INIT_CLUSTER_SIZE);
-      for (Cache cache : caches) cacheAddresses.add(cache.getCacheManager().getAddress());
+      for (Cache cache : caches) {
+         EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) cache.getCacheManager();
+         cacheAddresses.add(cacheManager.getAddress());
+      }
 
       RehashWaiter.waitForInitRehashToComplete(caches.toArray(new Cache[INIT_CLUSTER_SIZE]));
 
@@ -119,7 +123,8 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
       
       for (Address a : ch.getCaches()) {
          for (Cache<Object, String> c : caches) {
-            if (a.equals(c.getCacheManager().getAddress())) {
+            EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) c.getCacheManager();
+            if (a.equals(cacheManager.getAddress())) {
                reordered.add(c);
                break;
             }
@@ -159,7 +164,8 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
    }
 
    protected static Address addressOf(Cache<?, ?> cache) {
-      return cache.getCacheManager().getAddress();
+      EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) cache.getCacheManager();
+      return cacheManager.getAddress();
    }
 
    protected Cache<Object, String> getFirstNonOwner(String key) {

@@ -1,7 +1,6 @@
 package org.infinispan.client.hotrod;
 
-import org.infinispan.Cache;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -28,7 +27,7 @@ public class ServerRestartTest extends SingleCacheManagerTest {
 
 
    @Override
-   protected CacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
       cacheManager = TestCacheManagerFactory.createLocalCacheManager();
       cacheManager.getCache();
 

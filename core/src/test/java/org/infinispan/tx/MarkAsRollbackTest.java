@@ -2,6 +2,7 @@ package org.infinispan.tx;
 
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -13,8 +14,8 @@ import javax.transaction.TransactionManager;
 @Test(groups = "functional", testName = "tx.MarkAsRollbackTest")
 public class MarkAsRollbackTest extends SingleCacheManagerTest {
 
-   protected CacheManager createCacheManager() throws Exception {
-      CacheManager cm = TestCacheManagerFactory.createCacheManager(new Configuration(), true);
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(new Configuration(), true);
       cache = cm.getCache();
       return cm;
    }

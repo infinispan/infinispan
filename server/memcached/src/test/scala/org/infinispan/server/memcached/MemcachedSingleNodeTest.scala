@@ -2,10 +2,10 @@ package org.infinispan.server.memcached
 
 import test.MemcachedTestingUtil
 import org.infinispan.test.SingleCacheManagerTest
-import org.infinispan.manager.CacheManager
 import org.infinispan.test.fwk.TestCacheManagerFactory
 import net.spy.memcached.MemcachedClient
 import org.testng.annotations.{Test, AfterClass}
+import org.infinispan.manager.EmbeddedCacheManager
 
 /**
  * // TODO: Document this
@@ -17,14 +17,14 @@ abstract class MemcachedSingleNodeTest extends SingleCacheManagerTest with Memca
    private var memcachedServer: MemcachedServer = _
    private val operationTimeout: Int = 60
 
-   override def createCacheManager: CacheManager = {
+   override def createCacheManager: EmbeddedCacheManager = {
       cacheManager = createTestCacheManager
       memcachedServer = startMemcachedTextServer(cacheManager)
       memcachedClient = createMemcachedClient(60000, server.getPort)
       return cacheManager
    }
 
-   protected def createTestCacheManager: CacheManager = TestCacheManagerFactory.createLocalCacheManager
+   protected def createTestCacheManager: EmbeddedCacheManager = TestCacheManagerFactory.createLocalCacheManager
 
    @AfterClass(alwaysRun = true)
    override def destroyAfterClass {

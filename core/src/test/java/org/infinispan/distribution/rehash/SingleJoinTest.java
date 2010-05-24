@@ -2,13 +2,14 @@ package org.infinispan.distribution.rehash;
 
 import org.infinispan.Cache;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.testng.annotations.Test;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 @Test(groups = "functional", testName = "distribution.rehash.SingleJoinTest")
 public class SingleJoinTest extends RehashTestBase {
-   CacheManager joinerManager;
+   EmbeddedCacheManager joinerManager;
    Cache<Object, String> joiner;
 
    void performRehashEvent(boolean offline) {

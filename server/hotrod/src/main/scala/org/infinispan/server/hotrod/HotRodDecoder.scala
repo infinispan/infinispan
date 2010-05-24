@@ -4,7 +4,7 @@ import org.infinispan.stats.Stats
 import org.infinispan.server.core._
 import transport._
 import OperationStatus._
-import org.infinispan.manager.{DefaultCacheManager, CacheManager}
+import org.infinispan.manager.{DefaultCacheManager, EmbeddedCacheManager}
 import java.io.StreamCorruptedException
 import org.infinispan.server.hotrod.ProtocolFlag._
 import org.infinispan.server.hotrod.OperationResponse._
@@ -16,7 +16,7 @@ import org.infinispan.{CacheException, Cache}
  * @author Galder Zamarreño
  * @since 4.1
  */
-class HotRodDecoder(cacheManager: CacheManager) extends AbstractProtocolDecoder[CacheKey, CacheValue] {
+class HotRodDecoder(cacheManager: EmbeddedCacheManager) extends AbstractProtocolDecoder[CacheKey, CacheValue] {
    import HotRodDecoder._
    import HotRodServer.TopologyCacheName
    

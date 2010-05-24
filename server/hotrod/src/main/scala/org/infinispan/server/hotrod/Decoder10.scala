@@ -3,7 +3,6 @@ package org.infinispan.server.hotrod
 import org.infinispan.server.core.Operation._
 import HotRodOperation._
 import OperationStatus._
-import org.infinispan.manager.CacheManager
 import org.infinispan.server.core.transport.{ChannelBuffer}
 import org.infinispan.Cache
 import org.infinispan.stats.Stats
@@ -13,6 +12,7 @@ import collection.immutable
 import org.infinispan.util.concurrent.TimeoutException
 import java.io.IOException
 import org.infinispan.context.Flag.SKIP_REMOTE_LOOKUP
+import org.infinispan.manager.EmbeddedCacheManager
 
 /**
  * HotRod protocol decoder specific for specification version 1.0.
@@ -20,7 +20,7 @@ import org.infinispan.context.Flag.SKIP_REMOTE_LOOKUP
  * @author Galder Zamarreño
  * @since 4.1
  */
-class Decoder10(cacheManager: CacheManager) extends AbstractVersionedDecoder {
+class Decoder10(cacheManager: EmbeddedCacheManager) extends AbstractVersionedDecoder {
    import RequestResolver._
    import ResponseResolver._
    import OperationResponse._

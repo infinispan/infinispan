@@ -8,6 +8,7 @@ import org.infinispan.loaders.cluster.ClusterCacheLoaderConfig;
 import org.infinispan.loaders.decorators.ChainingCacheStore;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -21,8 +22,8 @@ import org.testng.annotations.Test;
 public class ClusterCacheLoaderTest extends MultipleCacheManagersTest {
 
    protected void createCacheManagers() throws Throwable {
-      CacheManager cacheManager1 = TestCacheManagerFactory.createClusteredCacheManager();
-      CacheManager cacheManager2 = TestCacheManagerFactory.createClusteredCacheManager();
+      EmbeddedCacheManager cacheManager1 = TestCacheManagerFactory.createClusteredCacheManager();
+      EmbeddedCacheManager cacheManager2 = TestCacheManagerFactory.createClusteredCacheManager();
       registerCacheManager(cacheManager1, cacheManager2);
 
       Configuration config1 = getDefaultClusteredConfig(Configuration.CacheMode.INVALIDATION_SYNC);

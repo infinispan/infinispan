@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod;
 
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -15,7 +16,7 @@ import static junit.framework.Assert.assertEquals;
 public class ServerShutdownTest {
 
    public void testServerShutdownWithConnectedClient() {
-      CacheManager cacheManager = TestCacheManagerFactory.createLocalCacheManager();
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createLocalCacheManager();
       HotRodServer hotrodServer = TestHelper.startHotRodServer(cacheManager);
       RemoteCacheManager remoteCacheManager = new RemoteCacheManager("localhost", hotrodServer.getPort());
       RemoteCache remoteCache = remoteCacheManager.getCache();
@@ -29,7 +30,7 @@ public class ServerShutdownTest {
    }
 
    public void testServerShutdownWithoutConnectedClient() {
-      CacheManager cacheManager = TestCacheManagerFactory.createLocalCacheManager();
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createLocalCacheManager();
       HotRodServer hotrodServer = TestHelper.startHotRodServer(cacheManager);
       RemoteCacheManager remoteCacheManager = new RemoteCacheManager("localhost", hotrodServer.getPort());
       RemoteCache remoteCache = remoteCacheManager.getCache();

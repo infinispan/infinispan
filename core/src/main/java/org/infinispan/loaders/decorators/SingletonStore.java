@@ -7,6 +7,7 @@ import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStarted;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
@@ -53,7 +54,7 @@ public class SingletonStore extends AbstractDelegatingStore {
    private static final Log log = LogFactory.getLog(SingletonStore.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   CacheManager cacheManager;
+   EmbeddedCacheManager cacheManager;
    Cache cache;
    SingletonStoreConfig config;
 
@@ -88,7 +89,7 @@ public class SingletonStore extends AbstractDelegatingStore {
 
    public SingletonStore(CacheStore delegate, Cache cache, SingletonStoreConfig config) {
       super(delegate);
-      this.cacheManager = cache == null ? null : cache.getCacheManager();
+      this.cacheManager = cache == null ? null : (EmbeddedCacheManager)cache.getCacheManager();
       this.cache = cache;
       this.config = config;
 

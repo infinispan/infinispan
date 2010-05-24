@@ -26,6 +26,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.eviction.MarshalledValuesEvictionTest.MockMarshalledValueInterceptor;
 import org.infinispan.interceptors.MarshalledValueInterceptor;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.MarshalledValueTest;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -37,11 +38,11 @@ import org.testng.annotations.Test;
 public class MarshalledValuesManualEvictionTest extends SingleCacheManagerTest {
 
    @Override
-   protected CacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
       Configuration cfg = new Configuration();
       cfg.setUseLockStriping(false); // to minimise chances of deadlock in the unit test
       cfg.setUseLazyDeserialization(true);
-      CacheManager cm = TestCacheManagerFactory.createCacheManager(cfg);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(cfg);
       cache = cm.getCache();
       Marshaller marshaller = TestingUtil.extractComponent(cache, Marshaller.class);
       MockMarshalledValueInterceptor interceptor = new MockMarshalledValueInterceptor(marshaller);

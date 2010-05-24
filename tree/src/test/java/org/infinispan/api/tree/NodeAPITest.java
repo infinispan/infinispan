@@ -2,6 +2,7 @@ package org.infinispan.api.tree;
 
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -35,11 +36,11 @@ public class NodeAPITest extends SingleCacheManagerTest {
    TreeCache cache;
 
    @Override
-   protected CacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
       // start a single cache instance
       Configuration c = getDefaultStandaloneConfig(true);
       c.setInvocationBatchingEnabled(true);
-      CacheManager cm = TestCacheManagerFactory.createCacheManager(c, true);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(c, true);
       cache = new TreeCacheImpl(cm.getCache());
       tm = TestingUtil.getTransactionManager(cache.getCache());
       return cm;

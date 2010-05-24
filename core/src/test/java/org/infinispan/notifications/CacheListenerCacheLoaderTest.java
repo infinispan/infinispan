@@ -5,6 +5,7 @@ import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryActivated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryLoaded;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryPassivated;
@@ -23,7 +24,7 @@ import java.util.List;
 @Test(groups = "functional", testName = "notifications.CacheListenerCacheLoaderTest")
 public class CacheListenerCacheLoaderTest extends AbstractInfinispanTest {
 
-   CacheManager cm;
+   EmbeddedCacheManager cm;
 
    @BeforeMethod
    public void setUp() {

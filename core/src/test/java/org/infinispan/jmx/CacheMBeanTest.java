@@ -32,6 +32,7 @@ import org.infinispan.CacheException;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheManager;
 import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.Log;
@@ -45,7 +46,7 @@ public class CacheMBeanTest extends SingleCacheManagerTest {
    private MBeanServer server;
 
    @Override
-   protected CacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
       cacheManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(JMX_DOMAIN);
       server = PerThreadMBeanServerLookup.getThreadMBeanServer();
       return cacheManager;

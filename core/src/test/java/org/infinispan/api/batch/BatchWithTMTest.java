@@ -3,6 +3,7 @@ package org.infinispan.api.batch;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransactionSetup;
@@ -16,7 +17,7 @@ import javax.transaction.TransactionManager;
 @Test(groups = {"functional", "transaction"}, testName = "api.batch.BatchWithTMTest")
 public class BatchWithTMTest extends AbstractBatchTest {
 
-   CacheManager cm;
+   EmbeddedCacheManager cm;
 
    @BeforeClass
    public void createCacheManager() {

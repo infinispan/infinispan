@@ -1,7 +1,7 @@
 package org.infinispan.client.hotrod;
 
 import org.infinispan.config.Configuration;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 
@@ -18,7 +18,7 @@ public class TestHelper {
     */
    private static final AtomicInteger uniquePort = new AtomicInteger(11312);
 
-   public static HotRodServer startHotRodServer(CacheManager cacheManager) {
+   public static HotRodServer startHotRodServer(EmbeddedCacheManager cacheManager) {
       return HotRodTestingUtil.startHotRodServer(cacheManager, uniquePort.incrementAndGet());
    }
 

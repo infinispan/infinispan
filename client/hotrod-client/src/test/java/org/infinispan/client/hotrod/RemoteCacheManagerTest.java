@@ -1,6 +1,6 @@
 package org.infinispan.client.hotrod;
 
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -17,12 +17,12 @@ import java.util.Properties;
 @Test(testName = "client.hotrod.RemoteCacheManagerTest", groups = "functional" )
 public class RemoteCacheManagerTest extends SingleCacheManagerTest {
 
-   CacheManager cacheManager = null;
+   EmbeddedCacheManager cacheManager = null;
    HotRodServer hotrodServer = null;
    private String prevValue;
 
    @Override
-   protected CacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
       cacheManager = TestCacheManagerFactory.createLocalCacheManager();
       hotrodServer = TestHelper.startHotRodServer(cacheManager);
       prevValue = System.setProperty(RemoteCacheManager.OVERRIDE_HOTROD_SERVERS, "localhost:" + hotrodServer.getPort());

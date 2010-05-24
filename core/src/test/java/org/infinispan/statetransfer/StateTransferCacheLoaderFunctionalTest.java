@@ -7,6 +7,7 @@ import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
@@ -24,7 +25,7 @@ public class StateTransferCacheLoaderFunctionalTest extends StateTransferFunctio
    }
 
    @Override
-   protected CacheManager createCacheManager() {
+   protected EmbeddedCacheManager createCacheManager() {
       // increment the DIMCS store id
       CacheLoaderManagerConfig clmc = new CacheLoaderManagerConfig();
       CacheStoreConfig clc = new DummyInMemoryCacheStore.Cfg("store number " + id++);

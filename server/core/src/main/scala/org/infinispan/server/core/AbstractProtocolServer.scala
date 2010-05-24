@@ -3,8 +3,8 @@ package org.infinispan.server.core
 import java.net.InetSocketAddress
 import transport.netty.{EncoderAdapter, NettyTransport}
 import transport.Transport
-import org.infinispan.manager.CacheManager
 import org.infinispan.server.core.VersionGenerator._
+import org.infinispan.manager.{EmbeddedCacheManager, CacheManager}
 
 /**
  * // TODO: Document this
@@ -17,9 +17,9 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
    private var masterThreads: Int = _
    private var workerThreads: Int = _
    private var transport: Transport = _
-   private var cacheManager: CacheManager = _
+   private var cacheManager: EmbeddedCacheManager = _
 
-   override def start(host: String, port: Int, cacheManager: CacheManager, masterThreads: Int, workerThreads: Int, idleTimeout: Int) {
+   override def start(host: String, port: Int, cacheManager: EmbeddedCacheManager, masterThreads: Int, workerThreads: Int, idleTimeout: Int) {
       this.host = host
       this.port = port
       this.masterThreads = masterThreads

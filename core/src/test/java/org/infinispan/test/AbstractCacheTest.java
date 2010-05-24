@@ -3,6 +3,7 @@ package org.infinispan.test;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -71,5 +72,9 @@ public class AbstractCacheTest extends AbstractInfinispanTest {
    protected void assertLocked(Cache cache, Object key) {
       LockManager lockManager = TestingUtil.extractLockManager(cache);
       assert lockManager.isLocked(key) : "expected key '" + key + "' to be locked, but it is not";
+   }
+
+   public EmbeddedCacheManager manager(Cache c) {
+      return (EmbeddedCacheManager) c.getCacheManager();
    }
 }

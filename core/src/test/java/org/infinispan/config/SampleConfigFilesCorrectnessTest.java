@@ -5,6 +5,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.spi.LoggingEvent;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
@@ -48,7 +49,7 @@ public class SampleConfigFilesCorrectnessTest {
    public void testConfigWarnings() throws Exception {
       for (String aConfFile : getConfigFileNames()) {
          System.out.println("Analysing " + aConfFile);
-         CacheManager dcm = TestCacheManagerFactory.fromXml(getRootFolder() + "/" + aConfFile, true);
+         EmbeddedCacheManager dcm = TestCacheManagerFactory.fromXml(getRootFolder() + "/" + aConfFile, true);
          try {
             dcm.getCache();
             assert !appender.isFoundUnknownWarning();

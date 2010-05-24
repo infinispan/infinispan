@@ -2,7 +2,7 @@ package org.infinispan.jmx;
 
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -25,7 +25,7 @@ public class MvccLockManagerMBeanTest extends SingleCacheManagerTest {
    private MBeanServer threadMBeanServer;
    private static final String JMX_DOMAIN = "MvccLockManagerMBeanTest";
 
-   protected CacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
       globalConfiguration.setExposeGlobalJmxStatistics(true);
       globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());

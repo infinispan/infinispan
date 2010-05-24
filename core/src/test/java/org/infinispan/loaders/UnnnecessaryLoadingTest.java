@@ -6,7 +6,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.loaders.decorators.ChainingCacheStore;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -28,13 +28,13 @@ public class UnnnecessaryLoadingTest extends SingleCacheManagerTest {
    CacheStore store;
 
    @Override
-   protected CacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
       Configuration cfg = getDefaultStandaloneConfig(false);
       CacheLoaderManagerConfig clmc = new CacheLoaderManagerConfig();
       clmc.addCacheLoaderConfig(new CountingCacheStoreConfig());
       clmc.addCacheLoaderConfig(new DummyInMemoryCacheStore.Cfg());
       cfg.setCacheLoaderManagerConfig(clmc);
-      CacheManager cm = TestCacheManagerFactory.createCacheManager(cfg, true);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(cfg, true);
       cache = cm.getCache();
       store = TestingUtil.extractComponent(cache, CacheLoaderManager.class).getCacheStore();
       return cm;

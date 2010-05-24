@@ -1,7 +1,6 @@
 package org.infinispan.server.hotrod.test
 
 import java.util.concurrent.atomic.AtomicInteger
-import org.infinispan.manager.CacheManager
 import java.lang.reflect.Method
 import org.infinispan.server.core.Logging
 import java.util.Arrays
@@ -11,6 +10,7 @@ import org.infinispan.util.Util
 import org.infinispan.server.hotrod._
 import org.infinispan.config.Configuration.CacheMode
 import org.infinispan.config.Configuration
+import org.infinispan.manager.EmbeddedCacheManager
 
 /**
  * // TODO: Document this
@@ -23,16 +23,16 @@ object HotRodTestingUtil extends Logging {
 
    def host = "127.0.0.1"
 
-   def startHotRodServer(manager: CacheManager): HotRodServer =
+   def startHotRodServer(manager: EmbeddedCacheManager): HotRodServer =
       startHotRodServer(manager, UniquePortThreadLocal.get.intValue)
 
-   def startHotRodServer(manager: CacheManager, port: Int): HotRodServer =
+   def startHotRodServer(manager: EmbeddedCacheManager, port: Int): HotRodServer =
       startHotRodServer(manager, port, 0)
 
-   def startHotRodServer(manager: CacheManager, port: Int, idleTimeout: Int): HotRodServer = {
+   def startHotRodServer(manager: EmbeddedCacheManager, port: Int, idleTimeout: Int): HotRodServer = {
       val server = new HotRodServer {
          import HotRodServer._
-         override protected def defineTopologyCacheConfig(cacheManager: CacheManager) {
+         override protected def defineTopologyCacheConfig(cacheManager: EmbeddedCacheManager) {
             cacheManager.defineConfiguration(TopologyCacheName, createTopologyCacheConfig)
          }
       }
@@ -40,10 +40,10 @@ object HotRodTestingUtil extends Logging {
       server
    }
 
-   def startCrashingHotRodServer(manager: CacheManager, port: Int): HotRodServer = {
+   def startCrashingHotRodServer(manager: EmbeddedCacheManager, port: Int): HotRodServer = {
       val server = new HotRodServer {
          import HotRodServer._
-         override protected def defineTopologyCacheConfig(cacheManager: CacheManager) {
+         override protected def defineTopologyCacheConfig(cacheManager: EmbeddedCacheManager) {
             cacheManager.defineConfiguration(TopologyCacheName, createTopologyCacheConfig)
          }
 

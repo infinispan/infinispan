@@ -23,7 +23,7 @@ package org.infinispan.config;
 
 import java.lang.reflect.Method;
 
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -32,7 +32,7 @@ import org.testng.annotations.Test;
 public class ConfigurationCloneTest extends SingleCacheManagerTest {
 
    @Override
-   protected CacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
       return TestCacheManagerFactory.createLocalCacheManager();
    }
 

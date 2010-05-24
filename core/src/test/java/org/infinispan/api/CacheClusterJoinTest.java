@@ -4,6 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.Configuration.CacheMode;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
@@ -13,7 +14,7 @@ import java.util.List;
 @Test(groups = "functional", testName = "api.CacheClusterJoinTest")
 public class CacheClusterJoinTest extends MultipleCacheManagersTest {
    Cache cache1, cache2;
-   CacheManager cm1, cm2;
+   EmbeddedCacheManager cm1, cm2;
    Configuration cfg;
 
    public CacheClusterJoinTest() {

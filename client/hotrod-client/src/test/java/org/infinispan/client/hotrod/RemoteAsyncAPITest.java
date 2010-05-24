@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod;
 
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -24,8 +25,8 @@ public class RemoteAsyncAPITest extends SingleCacheManagerTest {
    private RemoteCache<String, String> c;
 
    @Override
-   protected CacheManager createCacheManager() throws Exception {
-      CacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
       cache = cm.getCache();
       hotrodServer = TestHelper.startHotRodServer(cm);
       Properties props = new Properties();

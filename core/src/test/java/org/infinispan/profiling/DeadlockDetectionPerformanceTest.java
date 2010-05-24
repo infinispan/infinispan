@@ -3,6 +3,7 @@ package org.infinispan.profiling;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -123,7 +124,7 @@ public class DeadlockDetectionPerformanceTest extends AbstractInfinispanTest {
    }
 
    private void runDistributedTest() throws Exception {
-      CacheManager cm = null;
+      EmbeddedCacheManager cm = null;
       List<CacheManager> managers = new ArrayList<CacheManager>();
       try {
          CountDownLatch startLatch = new CountDownLatch(1);
@@ -149,7 +150,7 @@ public class DeadlockDetectionPerformanceTest extends AbstractInfinispanTest {
    }
 
    private void runLocalTest() throws Exception {
-      CacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
       try {
          Configuration configuration = getConfiguration();
          cm.defineConfiguration("test", configuration);

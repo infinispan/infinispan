@@ -6,6 +6,7 @@ import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -61,8 +62,8 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
       c2 = TestCacheManagerFactory.createLocalCacheManager().getCache();
       registerCacheManager(c1.getCacheManager(), c2.getCacheManager());
 
-      hotRodServer1 = TestHelper.startHotRodServer(c1.getCacheManager());
-      hotRodServer2 = TestHelper.startHotRodServer(c2.getCacheManager());
+      hotRodServer1 = TestHelper.startHotRodServer((EmbeddedCacheManager) c1.getCacheManager());
+      hotRodServer2 = TestHelper.startHotRodServer((EmbeddedCacheManager) c2.getCacheManager());
 
       String servers = TestHelper.getServersString(hotRodServer1, hotRodServer2);
       Properties hotrodClientConf = new Properties();

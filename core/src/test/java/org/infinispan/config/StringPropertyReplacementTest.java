@@ -1,6 +1,6 @@
 package org.infinispan.config;
 
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -19,7 +19,7 @@ import java.util.Properties;
 public class StringPropertyReplacementTest extends SingleCacheManagerTest {
 
 
-   protected CacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
       System.setProperty("test.property.asyncListenerMaxThreads","2");
       System.setProperty("test.property.IsolationLevel","READ_COMMITTED");
       System.setProperty("test.property.writeSkewCheck","true");

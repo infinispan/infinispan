@@ -7,7 +7,7 @@ import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -30,7 +30,7 @@ public class CacheLoaderAndCacheStoreInterceptorMBeanTest extends SingleCacheMan
    private CacheStore cacheStore;
    private static final String JMX_DOMAIN = CacheLoaderAndCacheStoreInterceptorMBeanTest.class.getName();
 
-   protected CacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
       globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
       globalConfiguration.setJmxDomain(JMX_DOMAIN);

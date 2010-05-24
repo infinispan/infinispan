@@ -34,6 +34,7 @@ import java.util.concurrent.Executors;
 
 import org.infinispan.Cache;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.AbstractProtocolServer;
 import org.infinispan.server.websocket.handlers.GetHandler;
 import org.infinispan.server.websocket.handlers.NotifyHandler;
@@ -76,7 +77,7 @@ public class WebSocketServer extends AbstractProtocolServer {
    }
 
    @Override
-   public void start(String host, int port, CacheManager cacheManager, int masterThreads, int workerThreads,
+   public void start(String host, int port, EmbeddedCacheManager cacheManager, int masterThreads, int workerThreads,
                      int idleTimeout) {
       InetSocketAddress address = new InetSocketAddress(host, port);
 

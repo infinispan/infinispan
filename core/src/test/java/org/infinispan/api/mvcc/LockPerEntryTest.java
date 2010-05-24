@@ -2,7 +2,7 @@ package org.infinispan.api.mvcc;
 
 import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -17,7 +17,7 @@ import java.util.concurrent.CountDownLatch;
 @Test(groups = "functional", sequential = true, testName = "api.mvcc.LockPerEntryTest")
 public class LockPerEntryTest extends SingleCacheManagerTest {   
 
-   protected CacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
       Configuration cfg = new Configuration();
       cfg.setUseLockStriping(false);
       return TestCacheManagerFactory.createCacheManager(cfg);

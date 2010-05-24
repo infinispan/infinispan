@@ -5,6 +5,7 @@ import org.infinispan.atomic.AtomicMap;
 import org.infinispan.atomic.AtomicMapLookup;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -38,12 +39,12 @@ public class TreeCacheAPITest extends SingleCacheManagerTest {
    private Log log = LogFactory.getLog(TreeCacheAPITest.class);
 
    @Override
-   protected CacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
       // start a single cache instance
       Configuration c = new Configuration();
       c.setTransactionManagerLookupClass(TransactionSetup.getManagerLookup());
       c.setInvocationBatchingEnabled(true);
-      CacheManager cm = TestCacheManagerFactory.createCacheManager(c);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(c);
 
       Cache flatcache = cm.getCache();
       cache = new TreeCacheImpl(flatcache);
@@ -164,7 +165,7 @@ public class TreeCacheAPITest extends SingleCacheManagerTest {
    }
 
    public void testRpcManagerElements() {
-      assertEquals("CacheMode.LOCAL cache has no address", null, cache.getCache().getCacheManager().getAddress());
-      assertEquals("CacheMode.LOCAL cache has no members list", null, cache.getCache().getCacheManager().getMembers());
+      assertEquals("CacheMode.LOCAL cache has no address", null, manager(cache.getCache()).getAddress());
+      assertEquals("CacheMode.LOCAL cache has no members list", null, manager(cache.getCache()).getMembers());
    }
 }

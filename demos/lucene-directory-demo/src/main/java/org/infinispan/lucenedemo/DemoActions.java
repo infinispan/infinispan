@@ -42,6 +42,8 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 import org.infinispan.lucene.InfinispanDirectory;
+import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -133,7 +135,8 @@ public class DemoActions {
     * Returns a list of Addresses of all members in the cluster 
     */
    public List<Address> listAllMembers() {
-      return index.getCache().getCacheManager().getMembers();
+      EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) index.getCache().getCacheManager();
+      return cacheManager.getMembers();
    }
 
 }

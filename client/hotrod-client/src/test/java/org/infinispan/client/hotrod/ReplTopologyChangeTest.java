@@ -26,7 +26,7 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
 
    HotRodServer hotRodServer1;
    HotRodServer hotRodServer2;
-   HotRodServer hotRodServer3;
+   HotRodServer hotRodServer3 ;
 
    RemoteCache remoteCache;
    private RemoteCacheManager remoteCacheManager;

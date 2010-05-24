@@ -2,6 +2,7 @@ package org.infinispan.distribution.rehash;
 
 import org.infinispan.Cache;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
@@ -14,7 +15,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 @Test(groups = "functional", testName = "distribution.rehash.ConcurrentJoinTest")
 public class ConcurrentJoinTest extends RehashTestBase {
 
-   List<CacheManager> joinerManagers;
+   List<EmbeddedCacheManager> joinerManagers;
    List<Cache<Object, String>> joiners;
 
    final int numJoiners = 4;
@@ -23,10 +24,10 @@ public class ConcurrentJoinTest extends RehashTestBase {
       Runnable runnable = new Runnable() {
          public void run() {
 
-            joinerManagers = new ArrayList<CacheManager>(numJoiners);
+            joinerManagers = new ArrayList<EmbeddedCacheManager>(numJoiners);
             joiners = new ArrayList<Cache<Object, String>>(numJoiners);
             for (int i = 0; i < numJoiners; i++) {
-               CacheManager joinerManager = addClusterEnabledCacheManager();
+               EmbeddedCacheManager joinerManager = addClusterEnabledCacheManager();
                joinerManager.defineConfiguration(cacheName, configuration);
                Cache<Object, String> joiner = joinerManager.getCache(cacheName);
                joinerManagers.add(joinerManager);

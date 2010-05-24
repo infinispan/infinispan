@@ -4,6 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
@@ -34,7 +35,7 @@ public class RehashCompletedOnJoinTest extends BaseDistFunctionalTest {
       for (Cache<Object, String> c : caches) c.put(keys.get(i++), "v" + i);
       log.info("Initialized with keys {0}", keys);
       
-      CacheManager joinerManager = addClusterEnabledCacheManager();
+      EmbeddedCacheManager joinerManager = addClusterEnabledCacheManager();
       joinerManager.defineConfiguration(cacheName, configuration);
       Cache joiner = joinerManager.getCache(cacheName);
       DistributionManager dmi = joiner.getAdvancedCache().getDistributionManager();

@@ -5,6 +5,7 @@ import static org.easymock.EasyMock.*;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
@@ -23,8 +24,8 @@ import java.util.concurrent.CyclicBarrier;
 
 @Test(groups = "unit", testName = "notifications.cachemanagerlistener.CacheManagerNotifierTest")
 public class CacheManagerNotifierTest extends AbstractInfinispanTest {
-   CacheManager cm1;
-   CacheManager cm2;
+   EmbeddedCacheManager cm1;
+   EmbeddedCacheManager cm2;
 
    @AfterMethod
    public void tearDown() {
@@ -88,7 +89,7 @@ public class CacheManagerNotifierTest extends AbstractInfinispanTest {
    }
 
    public void testViewChange() throws Exception {
-      CacheManager cmA = TestCacheManagerFactory.createClusteredCacheManager();
+      EmbeddedCacheManager cmA = TestCacheManagerFactory.createClusteredCacheManager();
       cmA.getCache();
       CyclicBarrier barrier = new CyclicBarrier(2);
       GetCacheManagerCheckListener listener = new GetCacheManagerCheckListener(barrier);

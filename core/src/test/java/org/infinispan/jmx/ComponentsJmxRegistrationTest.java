@@ -6,6 +6,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.factories.AbstractComponentRegistry;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -49,7 +50,7 @@ public class ComponentsJmxRegistrationTest extends AbstractInfinispanTest {
    }
 
    public void testRegisterLocalCache() throws Exception {
-      CacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
       cacheManagers.add(cm);
       cm.start();
       Configuration configuration = config();
@@ -76,7 +77,7 @@ public class ComponentsJmxRegistrationTest extends AbstractInfinispanTest {
    public void testRegisterReplicatedCache() throws Exception {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
       globalConfiguration.setAllowDuplicateDomains(true);
-      CacheManager cm = TestCacheManagerFactory.createCacheManager(globalConfiguration);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(globalConfiguration);
       cacheManagers.add(cm);
       cm.start();
       Configuration configurationOverride = config();
@@ -97,7 +98,7 @@ public class ComponentsJmxRegistrationTest extends AbstractInfinispanTest {
    public void testLocalAndReplicatedCache() throws Exception {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
       globalConfiguration.setAllowDuplicateDomains(true);
-      CacheManager cm = TestCacheManagerFactory.createCacheManager(globalConfiguration);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(globalConfiguration);
       cacheManagers.add(cm);
       cm.start();
       Configuration replicated = config();

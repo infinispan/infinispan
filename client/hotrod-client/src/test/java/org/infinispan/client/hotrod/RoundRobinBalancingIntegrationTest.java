@@ -4,6 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -53,9 +54,9 @@ public class RoundRobinBalancingIntegrationTest extends MultipleCacheManagersTes
       c3 = TestCacheManagerFactory.createLocalCacheManager().getCache();
       registerCacheManager(c1.getCacheManager(), c2.getCacheManager(), c3.getCacheManager());
 
-      hotRodServer1 = TestHelper.startHotRodServer(c1.getCacheManager());
-      hotRodServer2 = TestHelper.startHotRodServer(c2.getCacheManager());
-      hotRodServer3 = TestHelper.startHotRodServer(c3.getCacheManager());
+      hotRodServer1 = TestHelper.startHotRodServer((EmbeddedCacheManager) c1.getCacheManager());
+      hotRodServer2 = TestHelper.startHotRodServer((EmbeddedCacheManager) c2.getCacheManager());
+      hotRodServer3 = TestHelper.startHotRodServer((EmbeddedCacheManager) c3.getCacheManager());
 
       log.trace("Server 1 port: " + hotRodServer1.getPort());
       log.trace("Server 2 port: " + hotRodServer2.getPort());
@@ -102,7 +103,7 @@ public class RoundRobinBalancingIntegrationTest extends MultipleCacheManagersTes
    @Test(dependsOnMethods = "testRoundRubinLoadBalancing")
    public void testAddNewHotrodServer() {
       c4 = TestCacheManagerFactory.createLocalCacheManager().getCache();
-      hotRodServer4 = TestHelper.startHotRodServer(c4.getCacheManager());
+      hotRodServer4 = TestHelper.startHotRodServer((EmbeddedCacheManager) c4.getCacheManager());
       registerCacheManager(c4.getCacheManager());
 
       List<InetSocketAddress> serverAddresses = new ArrayList<InetSocketAddress>();

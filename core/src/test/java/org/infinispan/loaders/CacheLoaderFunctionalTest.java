@@ -10,6 +10,7 @@ import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -35,7 +36,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
    CacheStore store;
    TransactionManager tm;
    Configuration cfg;
-   CacheManager cm;
+   EmbeddedCacheManager cm;
    long lifespan = 6000000; // very large lifespan so nothing actually expires
 
    @BeforeTest

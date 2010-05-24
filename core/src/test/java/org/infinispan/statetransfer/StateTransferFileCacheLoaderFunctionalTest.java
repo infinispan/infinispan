@@ -34,6 +34,7 @@ import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.loaders.file.FileCacheStoreConfig;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.logging.Log;
@@ -111,7 +112,7 @@ public class StateTransferFileCacheLoaderFunctionalTest extends MultipleCacheMan
       clmc.setShared(sharedCacheLoader.get());
       config.setCacheLoaderManagerConfig(clmc);
 
-      CacheManager cm = addClusterEnabledCacheManager();
+      EmbeddedCacheManager cm = addClusterEnabledCacheManager();
       cm.defineConfiguration(cacheName, config.clone());
       return cm;
    }

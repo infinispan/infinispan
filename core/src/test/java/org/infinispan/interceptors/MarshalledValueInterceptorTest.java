@@ -1,6 +1,7 @@
 package org.infinispan.interceptors;
 
 import org.infinispan.Cache;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
@@ -23,7 +24,7 @@ import java.util.Map;
  */
 @Test(groups = "functional", testName = "interceptors.MarshalledValueInterceptorTest")
 public class MarshalledValueInterceptorTest extends AbstractInfinispanTest {
-   CacheManager cm;
+   EmbeddedCacheManager cm;
 
    @BeforeTest
    public void setUp() {

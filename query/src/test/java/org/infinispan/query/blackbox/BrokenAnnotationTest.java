@@ -22,7 +22,7 @@
 package org.infinispan.query.blackbox;
 
 import org.infinispan.Cache;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.helper.TestQueryHelperFactory;
 import org.infinispan.query.test.BrokenDocumentId;
 import org.infinispan.query.test.BrokenProvided;
@@ -53,8 +53,8 @@ public class BrokenAnnotationTest extends SingleCacheManagerTest {
       TestQueryHelperFactory.createTestQueryHelperInstance(c, BrokenDocumentId.class);
    }
 
-   protected CacheManager createCacheManager() throws Exception {
-      CacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
       c = cm.getCache();
       return cm;
    }

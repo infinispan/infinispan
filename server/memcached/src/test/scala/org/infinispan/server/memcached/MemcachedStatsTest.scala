@@ -1,13 +1,13 @@
 package org.infinispan.server.memcached
 
 import org.testng.annotations.Test
-import org.infinispan.manager.CacheManager
 import org.infinispan.test.fwk.TestCacheManagerFactory
 import java.lang.reflect.Method
 import org.testng.Assert._
 import java.util.concurrent.TimeUnit
 import org.infinispan.Version
 import org.infinispan.test.TestingUtil
+import org.infinispan.manager.EmbeddedCacheManager
 
 /**
  * // TODO: Document this
@@ -18,7 +18,7 @@ import org.infinispan.test.TestingUtil
 class MemcachedStatsTest extends MemcachedSingleNodeTest {
    private var jmxDomain = classOf[MemcachedStatsTest].getSimpleName
 
-   override def createTestCacheManager: CacheManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(jmxDomain)
+   override def createTestCacheManager: EmbeddedCacheManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(jmxDomain)
 
    def testUnsupportedStats(m: Method) {
       val stats = getStats

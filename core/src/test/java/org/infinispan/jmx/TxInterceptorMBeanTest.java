@@ -4,6 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -29,9 +30,9 @@ public class TxInterceptorMBeanTest extends MultipleCacheManagersTest {
       globalConfiguration.setAllowDuplicateDomains(true);
       globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
       globalConfiguration.setJmxDomain("TxInterceptorMBeanTest");
-      CacheManager cacheManager1 = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(globalConfiguration);
+      EmbeddedCacheManager cacheManager1 = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(globalConfiguration);
       registerCacheManager(cacheManager1);
-      CacheManager cacheManager2 = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(globalConfiguration.clone());
+      EmbeddedCacheManager cacheManager2 = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(globalConfiguration.clone());
       registerCacheManager(cacheManager2);
 
       Configuration configuration = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);

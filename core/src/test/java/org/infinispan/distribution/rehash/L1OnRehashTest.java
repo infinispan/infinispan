@@ -1,6 +1,7 @@
 package org.infinispan.distribution.rehash;
 
 import org.infinispan.Cache;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.manager.CacheManager;
@@ -29,7 +30,7 @@ public class L1OnRehashTest extends BaseDistFunctionalTest {
       cleanup = CleanupPhase.AFTER_METHOD;
    }
 
-   CacheManager joinerManager;
+   EmbeddedCacheManager joinerManager;
    Cache<Object, String> joiner;
 
    void performRehashEvent() {

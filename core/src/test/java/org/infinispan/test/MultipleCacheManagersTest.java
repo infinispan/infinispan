@@ -3,6 +3,7 @@ package org.infinispan.test;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -12,6 +13,7 @@ import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.IdentityHashMap;
 import java.util.List;
 
@@ -43,7 +45,7 @@ import java.util.List;
 @Test
 public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
-   protected List<CacheManager> cacheManagers = new ArrayList<CacheManager>();
+   protected List<EmbeddedCacheManager> cacheManagers = new ArrayList<EmbeddedCacheManager>();
    private IdentityHashMap<Cache, ReplListener> listeners = new IdentityHashMap<Cache, ReplListener>();
 
    @BeforeClass (alwaysRun = true)
@@ -80,7 +82,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
          log.debug("*** Test method complete; clearing contents on all caches.");
          if (cacheManagers.isEmpty())
             throw new IllegalStateException("No caches registered! Use registerCacheManager(Cache... caches) do that!");
-         for (CacheManager cacheManager : cacheManagers) {
+         for (EmbeddedCacheManager cacheManager : cacheManagers) {
             TestingUtil.clearContent(cacheManager);
          }
       } else {
@@ -96,7 +98,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
     * and result in an intermittent failure for the assertion
     */
    protected void assertSupportedConfig() {
-      for (CacheManager cm : cacheManagers) {
+      for (EmbeddedCacheManager cm : cacheManagers) {
          for (Cache cache : TestingUtil.getRunningCaches(cm)) {
             Configuration config = cache.getConfiguration();
             try {
@@ -111,7 +113,9 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    final protected void registerCacheManager(CacheManager... cacheManagers) {
-      this.cacheManagers.addAll(Arrays.asList(cacheManagers));
+      for (CacheManager ecm : cacheManagers) {
+         this.cacheManagers.add((EmbeddedCacheManager) ecm);
+      }
    }
 
    /**
@@ -120,8 +124,8 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
     *
     * @return the new CacheManager
     */
-   protected CacheManager addClusterEnabledCacheManager() {
-      CacheManager cm = TestCacheManagerFactory.createClusteredCacheManager();
+   protected EmbeddedCacheManager addClusterEnabledCacheManager() {
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager();
       cacheManagers.add(cm);
       return cm;
    }
@@ -133,14 +137,14 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
     * @param defaultConfig default cfg to use
     * @return the new CacheManager
     */
-   protected CacheManager addClusterEnabledCacheManager(Configuration defaultConfig) {
-      CacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(defaultConfig);
+   protected EmbeddedCacheManager addClusterEnabledCacheManager(Configuration defaultConfig) {
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(defaultConfig);
       cacheManagers.add(cm);
       return cm;
    }
 
    protected void defineConfigurationOnAllManagers(String cacheName, Configuration c) {
-      for (CacheManager cm : cacheManagers) {
+      for (EmbeddedCacheManager cm : cacheManagers) {
          cm.defineConfiguration(cacheName, c);
       }
    }
@@ -148,7 +152,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    protected <K, V> List<Cache<K, V>> createClusteredCaches(int numMembersInCluster, String cacheName, Configuration c) {
       List<Cache<K, V>> caches = new ArrayList<Cache<K, V>>(numMembersInCluster);
       for (int i = 0; i < numMembersInCluster; i++) {
-         CacheManager cm = addClusterEnabledCacheManager();
+         EmbeddedCacheManager cm = addClusterEnabledCacheManager();
          cm.defineConfiguration(cacheName, c);
          Cache<K, V> cache = cm.getCache(cacheName);
          caches.add(cache);
@@ -160,7 +164,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    protected <K, V> List<Cache<K, V>> createClusteredCaches(int numMembersInCluster, Configuration defaultConfig) {
       List<Cache<K, V>> caches = new ArrayList<Cache<K, V>>(numMembersInCluster);
       for (int i = 0; i < numMembersInCluster; i++) {
-         CacheManager cm = addClusterEnabledCacheManager(defaultConfig);
+         EmbeddedCacheManager cm = addClusterEnabledCacheManager(defaultConfig);
          Cache<K, V> cache = cm.getCache();
          caches.add(cache);
       }
@@ -177,7 +181,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       return listener;
    }
 
-   public CacheManager manager(int i) {
+   public EmbeddedCacheManager manager(int i) {
       return cacheManagers.get(i);
    }
 
@@ -186,13 +190,13 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    protected void assertClusterSize(String message, int size) {
-      for (CacheManager cm : cacheManagers) {
+      for (EmbeddedCacheManager cm : cacheManagers) {
          assert cm.getMembers() != null && cm.getMembers().size() == size : message;
       }
    }
 
    protected void removeCacheFromCluster(String cacheName) {
-      for (CacheManager cm : cacheManagers) {
+      for (EmbeddedCacheManager cm : cacheManagers) {
          TestingUtil.killCaches(cm.getCache(cacheName));
       }
    }

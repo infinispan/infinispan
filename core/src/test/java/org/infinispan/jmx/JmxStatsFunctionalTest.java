@@ -3,6 +3,7 @@ package org.infinispan.jmx;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -29,7 +30,7 @@ public class JmxStatsFunctionalTest extends AbstractInfinispanTest {
 
    public static final String JMX_DOMAIN = JmxStatsFunctionalTest.class.getSimpleName();
    private MBeanServer server;
-   private CacheManager cm, cm2, cm3;
+   private EmbeddedCacheManager cm, cm2, cm3;
 
 
    @AfterMethod(alwaysRun = true)

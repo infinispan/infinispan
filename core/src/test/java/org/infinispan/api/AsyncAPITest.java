@@ -6,6 +6,7 @@ import java.util.concurrent.Future;
 
 import org.infinispan.Cache;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -14,8 +15,8 @@ import org.testng.annotations.Test;
 public class AsyncAPITest extends SingleCacheManagerTest {
    Cache<String, String> c;
 
-   protected CacheManager createCacheManager() throws Exception {
-      CacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
       c = cm.getCache();
       return cm;
    }

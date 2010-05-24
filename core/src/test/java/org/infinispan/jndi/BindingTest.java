@@ -36,6 +36,7 @@ import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.jboss.util.naming.NonSerializableFactory;
@@ -72,7 +73,7 @@ public class BindingTest extends SingleCacheManagerTest {
    }
 
    @Override
-   protected CacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
       Configuration configuration = new Configuration();
       cacheManager = TestCacheManagerFactory.createCacheManager(globalConfiguration, configuration);
@@ -86,7 +87,7 @@ public class BindingTest extends SingleCacheManagerTest {
       try {
          Context ctx2 = new InitialContext(props);
          try {
-            CacheManager cacheManager2 = (CacheManager) ctx2.lookup(jndiName);
+            EmbeddedCacheManager cacheManager2 = (EmbeddedCacheManager) ctx2.lookup(jndiName);
             assert cacheManager.getStatus() == cacheManager2.getStatus();
          } finally {
             ctx2.close();

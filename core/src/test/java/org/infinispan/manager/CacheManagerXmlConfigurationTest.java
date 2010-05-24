@@ -22,7 +22,7 @@ import static org.infinispan.test.TestingUtil.INFINISPAN_START_TAG;
  */
 @Test(groups = "functional", testName = "manager.CacheManagerXmlConfigurationTest")
 public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
-   CacheManager cm;
+   EmbeddedCacheManager cm;
 
    @AfterMethod
    public void tearDown() {

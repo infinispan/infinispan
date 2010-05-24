@@ -3,7 +3,7 @@ package org.infinispan.jmx;
 import org.infinispan.AdvancedCache;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
@@ -26,7 +26,7 @@ public class CacheMgmtInterceptorMBeanTest extends SingleCacheManagerTest {
    AdvancedCache advanced;
    private static final String JMX_DOMAIN = CacheMgmtInterceptorMBeanTest.class.getName();
 
-   protected CacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
       globalConfiguration.setExposeGlobalJmxStatistics(true);
       globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());

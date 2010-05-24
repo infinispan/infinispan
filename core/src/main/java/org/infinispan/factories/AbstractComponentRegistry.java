@@ -334,7 +334,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle, Cloneable 
       Map<Class, Class<? extends AbstractComponentFactory>> defaultFactoryMap = getDefaultFactoryMap();
       Class<? extends AbstractComponentFactory> cfClass = defaultFactoryMap.get(componentClass);
       if (cfClass == null)
-         throw new ConfigurationException("No registered default factory for component " + componentClass + " found! Debug stack: " + debugStack);
+         throw new ConfigurationException("No registered default factory for component '" + componentClass + "' found! Debug stack: " + debugStack);
       // a component factory is a component too!  See if one has been created and exists in the registry
       AbstractComponentFactory cf = getComponent(cfClass);
       if (cf == null) {

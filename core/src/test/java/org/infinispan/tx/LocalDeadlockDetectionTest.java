@@ -1,7 +1,7 @@
 package org.infinispan.tx;
 
 import org.infinispan.config.Configuration;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.PerCacheExecutorThread;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
@@ -30,7 +30,7 @@ public class LocalDeadlockDetectionTest extends SingleCacheManagerTest {
    private Object response1;
    private Object response2;
 
-   protected CacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
       cacheManager = TestCacheManagerFactory.createLocalCacheManager();
       Configuration configuration = getDefaultStandaloneConfig(true);
       configuration.setEnableDeadlockDetection(true);

@@ -2,7 +2,7 @@ package org.infinispan.notifications.cachemanagerlistener;
 
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Stop;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.AbstractListenerImpl;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStarted;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped;
@@ -44,7 +44,7 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl implements Ca
    final List<ListenerInvocation> cacheStoppedListeners = new CopyOnWriteArrayList<ListenerInvocation>();
    final List<ListenerInvocation> viewChangedListeners = new CopyOnWriteArrayList<ListenerInvocation>();
 
-   private CacheManager cacheManager;
+   private EmbeddedCacheManager cacheManager;
 
    public CacheManagerNotifierImpl() {
       listenersMap.put(CacheStarted.class, cacheStartedListeners);
@@ -53,7 +53,7 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl implements Ca
    }
 
    @Inject
-   public void injectCacheManager(CacheManager cacheManager) {
+   public void injectCacheManager(EmbeddedCacheManager cacheManager) {
       this.cacheManager = cacheManager;
    }
 

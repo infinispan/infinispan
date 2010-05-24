@@ -3,6 +3,7 @@ package org.infinispan.statetransfer;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.data.Address;
@@ -53,8 +54,8 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       config.setUseLockStriping(false); // reduces the odd chance of a key collision and deadlock
    }
 
-   protected CacheManager createCacheManager() {
-      CacheManager cm = addClusterEnabledCacheManager();
+   protected EmbeddedCacheManager createCacheManager() {
+      EmbeddedCacheManager cm = addClusterEnabledCacheManager();
       cm.defineConfiguration(cacheName, config.clone());
       return cm;
    }
@@ -156,7 +157,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       testCount++;
       log.info("testInitialStateTransferCacheNotPresent start - " + testCount);
       Cache<Object, Object> cache1, cache2;
-      CacheManager cacheManager1 = createCacheManager();
+      EmbeddedCacheManager cacheManager1 = createCacheManager();
       cache1 = cacheManager1.getCache(cacheName);
       writeInitialData(cache1);
       cache2 = createCacheManager().getCache(cacheName);

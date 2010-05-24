@@ -26,7 +26,7 @@ import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.ProvidedId;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.QueryFactory;
 import org.infinispan.query.backend.QueryHelper;
@@ -40,13 +40,13 @@ import java.util.Properties;
 
 @Test(groups = "functional", testName = "query.tx.TransactionalQueryTest")
 public class TransactionalQueryTest extends SingleCacheManagerTest {
-   protected CacheManager m_cacheManager;
+   protected EmbeddedCacheManager m_cacheManager;
    private QueryHelper m_queryHelper;
    private Cache<String, Session> m_cache;
    private TransactionManager m_transactionManager;
 
    @Override
-   protected CacheManager createCacheManager() throws Exception {
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
       Configuration c = getDefaultStandaloneConfig(true);
       c.setIndexingEnabled(true);
       c.setIndexLocalOnly(true);

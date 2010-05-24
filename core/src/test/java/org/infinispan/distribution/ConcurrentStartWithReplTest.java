@@ -5,6 +5,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -115,8 +116,8 @@ public class ConcurrentStartWithReplTest extends AbstractInfinispanTest {
    }
 
    private void doTest(boolean inOrder, boolean nonBlockingStartupForDist) throws ExecutionException, InterruptedException {
-      CacheManager cm1 = TestCacheManagerFactory.createCacheManager(GlobalConfiguration.getClusteredDefault());
-      CacheManager cm2 = TestCacheManagerFactory.createCacheManager(GlobalConfiguration.getClusteredDefault());
+      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createCacheManager(GlobalConfiguration.getClusteredDefault());
+      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createCacheManager(GlobalConfiguration.getClusteredDefault());
       try {
          cm1.defineConfiguration("r", replCfg);
          cm1.defineConfiguration("d", distCfg);

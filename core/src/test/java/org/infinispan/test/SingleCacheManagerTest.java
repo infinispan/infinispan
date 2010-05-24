@@ -3,6 +3,7 @@ package org.infinispan.test;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -22,7 +23,7 @@ import org.testng.annotations.Test;
 @Test
 public abstract class SingleCacheManagerTest extends AbstractCacheTest {
 
-   protected CacheManager cacheManager;
+   protected EmbeddedCacheManager cacheManager;
    protected Cache<Object, Object> cache;
 
    @BeforeClass()
@@ -68,5 +69,5 @@ public abstract class SingleCacheManagerTest extends AbstractCacheTest {
       return TestCacheManagerFactory.getDefaultConfiguration(transactional);
    }
 
-   protected abstract CacheManager createCacheManager() throws Exception;
+   protected abstract EmbeddedCacheManager createCacheManager() throws Exception;
 }

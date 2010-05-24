@@ -128,7 +128,7 @@ class Server(@Context request: Request, @HeaderParam("performAsync") useAsync: B
  * Just wrap a single instance of the Infinispan cache manager. 
  */
 object ManagerInstance {
-   var instance: CacheManager = null
+   var instance: EmbeddedCacheManager = null
    def getCache(name: String) = {
       instance.getCache(name).asInstanceOf[Cache[String, Any]]
    }

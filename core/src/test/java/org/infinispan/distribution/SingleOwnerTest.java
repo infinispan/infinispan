@@ -26,6 +26,8 @@ package org.infinispan.distribution;
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.config.Configuration;
+import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
@@ -65,7 +67,10 @@ public class SingleOwnerTest extends BaseDistFunctionalTest {
       c2 = caches.get(1);
 
       cacheAddresses = new ArrayList<Address>(2);
-      for (Cache cache : caches) cacheAddresses.add(cache.getCacheManager().getAddress());
+      for (Cache cache : caches) {
+         EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) cache.getCacheManager();
+         cacheAddresses.add(cacheManager.getAddress());
+      }
 
       RehashWaiter.waitForInitRehashToComplete(c1, c2);
    }

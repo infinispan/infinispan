@@ -30,6 +30,7 @@ import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -67,7 +68,7 @@ public abstract class BaseCacheStoreFunctionalTest extends AbstractInfinispanTes
    }
 
    public void testTwoCachesSameCacheStore() {
-      CacheManager localCacheManager = TestCacheManagerFactory.createLocalCacheManager();
+      EmbeddedCacheManager localCacheManager = TestCacheManagerFactory.createLocalCacheManager();
       try {
          GlobalConfiguration configuration = localCacheManager.getGlobalConfiguration();
          CacheLoaderManagerConfig clmConfig = new CacheLoaderManagerConfig();

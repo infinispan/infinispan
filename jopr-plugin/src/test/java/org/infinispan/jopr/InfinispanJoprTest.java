@@ -21,8 +21,8 @@ package org.infinispan.jopr;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.manager.CacheManager;
 import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 
 /**
  * Standalone cache for infinispan testing
@@ -39,7 +39,7 @@ public class InfinispanJoprTest {
       // org.infinispan:cache-name=[global],jmx-resource=CacheManager
       myGlobalConfig.setJmxDomain("org.infinispan");
       myGlobalConfig.setExposeGlobalJmxStatistics(true);
-      CacheManager manager = new DefaultCacheManager(myGlobalConfig);
+      EmbeddedCacheManager manager = new DefaultCacheManager(myGlobalConfig);
 
       // org.infinispan:cache-name=myCustomcache(local),jmx-resource=CacheMgmgtInterceptor
       // org.infinispan:cache-name=myCustomcache(local),jmx-resource=MvccLockManager
