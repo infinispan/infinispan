@@ -13,7 +13,7 @@ public class AtomicHashMapTestAssertions extends AbstractInfinispanTest {
       assert !map.containsKey("blah");
    }
 
-   public static void assertIsEmptyMap(Cache<?, ?> cache, Object key) {
+   public static <K> void assertIsEmptyMap(Cache<K, ?> cache, K key) {
       assertIsEmpty(AtomicMapLookup.getAtomicMap(cache, key));
    }
 }
