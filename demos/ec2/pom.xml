@@ -49,11 +49,16 @@
          <groupId>javax.servlet</groupId>
          <artifactId>jstl</artifactId>
          <version>1.2</version>
+         <scope>provided</scope>
       </dependency>
    </dependencies>
 
    <build>
       <plugins>
+      		<plugin>
+				<artifactId>maven-war-plugin</artifactId>
+				<version>2.1-beta-1</version>
+			</plugin>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-jar-plugin</artifactId>
@@ -65,6 +70,9 @@
                      <mainClass>org.infinispan.ec2demo.InfinispanFluDemo</mainClass>
                   </manifest>
                </archive>
+               <excludes>
+					<exclude>**/*.dat.gz</exclude>
+				</excludes>
             </configuration>
             <executions>
                <execution>
