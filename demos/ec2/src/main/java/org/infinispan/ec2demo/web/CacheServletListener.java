@@ -34,7 +34,7 @@ public class CacheServletListener implements ServletContextListener {
 		System.out.println("in CacheServletListener");
 		try {
 			this.context = arg0.getServletContext();
-			String x = arg0.getServletContext().getInitParameter("jgroups_file");
+			String x = arg0.getServletContext().getInitParameter("InfinispanConfigFile");
 			currCacheBuilder =  new CacheBuilder(x);
 			System.out.println("in CacheServletListener...starting cache");
 			currCacheBuilder.getCacheManager().start();
