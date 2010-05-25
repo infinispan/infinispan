@@ -1,76 +1,67 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<infinispan
-      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="urn:infinispan:config:4.0 http://www.infinispan.org/schemas/infinispan-config-4.0.xsd"
-      xmlns="urn:infinispan:config:4.0">
+<infinispan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="urn:infinispan:config:4.0 http://www.infinispan.org/schemas/infinispan-config-4.0.xsd"
+	xmlns="urn:infinispan:config:4.0">
 
 	<global>
-		<asyncListenerExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
+		<asyncListenerExecutor
+			factory="org.infinispan.executors.DefaultExecutorFactory">
 			<properties>
 				<property name="maxThreads" value="15" />
 				<property name="threadNamePrefix" value="AsyncListenerThread" />
 			</properties>
 		</asyncListenerExecutor>
-		<asyncTransportExecutor factory="org.infinispan.executors.DefaultExecutorFactory">
+		<asyncTransportExecutor
+			factory="org.infinispan.executors.DefaultExecutorFactory">
 			<properties>
 				<property name="maxThreads" value="25" />
 				<property name="threadNamePrefix" value="AsyncSerializationThread" />
 			</properties>
 		</asyncTransportExecutor>
-		<evictionScheduledExecutor factory="org.infinispan.executors.DefaultScheduledExecutorFactory">
+		<evictionScheduledExecutor
+			factory="org.infinispan.executors.DefaultScheduledExecutorFactory">
 			<properties>
 				<property name="threadNamePrefix" value="EvictionThread" />
 			</properties>
 		</evictionScheduledExecutor>
-		<replicationQueueScheduledExecutor factory="org.infinispan.executors.DefaultScheduledExecutorFactory">
+		<replicationQueueScheduledExecutor
+			factory="org.infinispan.executors.DefaultScheduledExecutorFactory">
 			<properties>
 				<property name="threadNamePrefix" value="ReplicationQueueThread" />
 			</properties>
 		</replicationQueueScheduledExecutor>
 		<globalJmxStatistics enabled="true" jmxDomain="infinispan" />
 
-		<transport transportClass="org.infinispan.remoting.transport.jgroups.JGroupsTransport" />
-		<transport clusterName="infinispan-cluster" distributedSyncTimeout="50000">
+		<transport clusterName="infinispan-cluster"
+			distributedSyncTimeout="50000"
+			transportClass="org.infinispan.remoting.transport.jgroups.JGroupsTransport">
 			<properties>
-				<property name="configurationFile" value="jgroups-s3_ping-aws.xml" />
+				<property name="configurationFile" value="${CFGPath}/jgroups-s3_ping-aws.xml" />
 			</properties>
 		</transport>
-		<serialization marshallerClass="org.infinispan.marshall.VersionAwareMarshaller" version="1.0" />
+		<serialization marshallerClass="org.infinispan.marshall.VersionAwareMarshaller"
+			version="1.0" />
 		<shutdown hookBehavior="DEFAULT" />
 	</global>
 
 	<!-- *************************** -->
 	<!-- Default "template" settings -->
 	<!-- *************************** -->
-	<!-- this is used as a "template" configuration for all caches in the system. -->
 	<default>
-		<!-- <locking isolationLevel="REPEATABLE_READ" lockAcquisitionTimeout="20000" writeSkewCheck="false"
-			concurrencyLevel="500" />
-		<transaction transactionManagerLookupClass="org.infinispan.transaction.lookup.GenericTransactionManagerLookup"
-			syncRollbackPhase="false" syncCommitPhase="false" useEagerLocking="false" />
-		<jmxStatistics enabled="true" />
-		<lazyDeserialization enabled="false" />
-		<unsafe unreliableReturnValues="true" />
 		<invocationBatching enabled="true" />
-					<l1 enabled="true" lifespan="600000" />
-		-->
 		<clustering mode="distribution">
 			<sync replTimeout="200000" />
-			<stateRetrieval timeout="20000" fetchInMemoryState="false" />
-			<hash numOwners="3" rehashWait="60000" rehashRpcTimeout="600000" />
-
+			<hash numOwners="2" rehashWait="60000" rehashRpcTimeout="600000" />
 		</clustering>
 	</default>
 
 	<!-- ************************************** -->
 	<!-- Individually configured "named" caches -->
 	<!-- ************************************** -->
-	<!-- <namedCache name="InfluenzaCache">
+	<namedCache name="InfluenzaCache">
 		<unsafe unreliableReturnValues="true" />
-		<invocationBatching enabled="true" />
 		<clustering mode="distribution">
 			<sync replTimeout="200000" />
-			<stateRetrieval timeout="20000" fetchInMemoryState="false" />
 			<hash numOwners="2" rehashWait="60000" rehashRpcTimeout="600000" />
 			<l1 enabled="true" lifespan="600000" />
 		</clustering>
@@ -78,10 +69,8 @@
 
 	<namedCache name="NucleotideCache">
 		<unsafe unreliableReturnValues="true" />
-		<invocationBatching enabled="true" />
 		<clustering mode="distribution">
 			<sync replTimeout="20000" />
-			<stateRetrieval timeout="20000" fetchInMemoryState="false" />
 			<hash numOwners="2" rehashWait="120000" rehashRpcTimeout="600000" />
 			<l1 enabled="true" lifespan="600000" />
 		</clustering>
@@ -89,12 +78,10 @@
 
 	<namedCache name="ProteinCache">
 		<unsafe unreliableReturnValues="true" />
-		<invocationBatching enabled="true" />
 		<clustering mode="distribution">
 			<sync replTimeout="20000" />
-			<stateRetrieval timeout="200000" fetchInMemoryState="false" />
 			<hash numOwners="2" rehashWait="60000" rehashRpcTimeout="600000" />
 			<l1 enabled="true" lifespan="600000" />
 		</clustering>
-	</namedCache>-->
+	</namedCache>
 </infinispan>
