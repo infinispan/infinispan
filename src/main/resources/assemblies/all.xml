@@ -159,8 +159,18 @@
             <fileSets>
 
                <!-- resources -->
+               <!-- Handles the binary data for the EC2 demo -->
                <fileSet>
                   <directory>src/main/resources</directory>
+                  <outputDirectory>etc</outputDirectory>
+                  <lineEnding>keep</lineEnding>
+                  <includes>
+                     <include>**/*.dat.gz</include>
+                  </includes>
+               </fileSet>
+               
+               <fileSet>
+                  <directory>src/main/resources/</directory>
                   <outputDirectory>etc</outputDirectory>
                   <lineEnding>unix</lineEnding>
                   <excludes>
@@ -169,6 +179,7 @@
                      <exclude>**/*.cmd</exclude>
                      <exclude>**/*.py</exclude>
                      <exclude>**/*.rb</exclude>
+                     <exclude>**/*.dat.gz</exclude>
                   </excludes>
                </fileSet>
 
