@@ -12,8 +12,8 @@
    </welcome-file-list>
 
    <context-param>
-      <param-name>jgroups_file</param-name>
-      <param-value>jgroups-s3_ping-aws.xml</param-value>
+      <param-name>InfinispanConfigFile</param-name>
+      <param-value>etc/config-samples/ec2-demo/infinispan-ec2-config.xml</param-value>
    </context-param>
 
    <servlet>
@@ -25,10 +25,5 @@
    <servlet-mapping>
       <servlet-name>CacheSearchServlet</servlet-name>
       <url-pattern>/CacheSearchServlet</url-pattern>
-   </servlet-mapping>
-
-   <taglib>
-      <taglib-uri>http://java.sun.com/jstl/core</taglib-uri>
-      <taglib-location>/WEB-INF/c.tld</taglib-location>
-   </taglib>         
+   </servlet-mapping>        
 </web-app>
