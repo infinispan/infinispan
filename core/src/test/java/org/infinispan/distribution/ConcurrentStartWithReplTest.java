@@ -63,7 +63,7 @@ public class ConcurrentStartWithReplTest extends AbstractInfinispanTest {
 
    }
 
-   @Test(timeOut = 30000)
+   @Test(timeOut = 30000, enabled = false, description = "This will probably always be an unsupported sequence of startup, in a single thread.")
    public void testSequence2() throws ExecutionException, InterruptedException {
       /*
 

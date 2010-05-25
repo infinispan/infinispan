@@ -10,18 +10,19 @@ public class NamedCacheNotFoundException extends Exception {
 
    private static final long serialVersionUID = 5937213470732655993L;
 
-   public NamedCacheNotFoundException() {
+   public NamedCacheNotFoundException(String cacheName) {
+      super("Cache: " + cacheName);
    }
 
-   public NamedCacheNotFoundException(String message) {
-      super(message);
+   public NamedCacheNotFoundException(String cacheName, String message) {
+      super(message + " Cache: " + cacheName);
    }
 
-   public NamedCacheNotFoundException(String message, Throwable cause) {
-      super(message, cause);
+   public NamedCacheNotFoundException(String cacheName, String message, Throwable cause) {
+      super(message + " Cache: " + cacheName, cause);
    }
 
-   public NamedCacheNotFoundException(Throwable cause) {
-      super(cause);
+   public NamedCacheNotFoundException(String cacheName, Throwable cause) {
+      super("Cache: " + cacheName, cause);
    }
 }

@@ -231,6 +231,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       log.info("testSTWithThirdWritingTxCache end - " + testCount);
    }
 
+   @Test (timeOut = 120000)
    public void testSTWithWritingNonTxThread() throws Exception {
       testCount++;
       log.info("testSTWithWritingNonTxThread start - " + testCount);
@@ -238,6 +239,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       log.info("testSTWithWritingNonTxThread end - " + testCount);
    }
 
+   @Test (timeOut = 120000)
    public void testSTWithWritingTxThread() throws Exception {
       testCount++;
       log.info("testSTWithWritingTxThread start - " + testCount);

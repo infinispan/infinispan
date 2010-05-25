@@ -8,8 +8,10 @@ package org.infinispan.replication;
 
 import static org.easymock.EasyMock.*;
 import org.infinispan.Cache;
+import org.infinispan.CacheException;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.config.Configuration;
+import org.infinispan.manager.NamedCacheNotFoundException;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -92,6 +94,7 @@ public class SyncReplTest extends MultipleCacheManagersTest {
       }
    }
 
+   @Test (expectedExceptions = CacheException.class)
    public void testReplicateToNonExistentCache() {
       Cache cache1 = cache(0, "replSync");
       Cache cache2 = cache(1, "replSync");
