@@ -56,7 +56,7 @@
    </build>
 
    <properties>
-      <version.resteasy>1.2.1.GA</version.resteasy>
+      <version.resteasy>2.0-beta-2</version.resteasy>
       <version.jackson>1.4.1</version.jackson>
       <version.xtream>1.3.1</version.xtream>
       <version.javax.servlet>2.5</version.javax.servlet>
@@ -70,12 +70,6 @@
          <groupId>org.jboss.resteasy</groupId>
          <artifactId>resteasy-jaxrs</artifactId>
          <version>${version.resteasy}</version>
-         <exclusions>
-            <exclusion>
-               <groupId>org.slf4j</groupId>
-               <artifactId>slf4j-simple</artifactId>
-            </exclusion>
-         </exclusions>
       </dependency>
 
       <dependency>
@@ -112,18 +106,6 @@
          <scope>test</scope>
       </dependency>
 
-      <dependency>
-         <groupId>org.slf4j</groupId>
-         <artifactId>slf4j-simple</artifactId>
-         <version>${version.slf4j}</version>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.slf4j</groupId>
-         <artifactId>slf4j-api</artifactId>
-         <version>${version.slf4j}</version>
-         <scope>test</scope>
-      </dependency>
       <dependency>
          <groupId>org.slf4j</groupId>
          <artifactId>slf4j-log4j12</artifactId>
