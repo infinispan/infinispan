@@ -32,7 +32,7 @@ public class InfinispanFluDemo {
 	public static void main(String[] args) throws JSAPException {
 		SimpleJSAP jsap = new SimpleJSAP("InfinispanFluDemo", "Parse the Influenze data and store in cache ",
 				new Parameter[] {
-						new FlaggedOption("InfinispanCfg", JSAP.STRING_PARSER, null, JSAP.NOT_REQUIRED, 'c',
+						new FlaggedOption("InfinispanCfg", JSAP.STRING_PARSER, null, JSAP.REQUIRED, 'c',
 								JSAP.NO_LONGFLAG, "Location of Infinispan config file"),
 						new FlaggedOption("ifile", JSAP.STRING_PARSER, null, JSAP.NOT_REQUIRED, 'i', JSAP.NO_LONGFLAG,
 								"Location of influenza.dat"),
