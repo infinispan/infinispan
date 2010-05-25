@@ -21,15 +21,11 @@ done
 
 CP=${ISPN_HOME}/infinispan-core.jar:$CP
 
-JVM_PARAMS="${JVM_PARAMS} -Djava.net.preferIPv4Stack=true -Dlog4j.configuration=file:${ISPN_HOME}/etc/log4j.xml"
-JVM_PARAMS="${JVM_PARAMS} -DEC2Demo-jgroups-config=${ISPN_HOME}/etc/config-samples/ec2-demo/jgroups-s3_ping-aws.xml"
+JVM_PARAMS="-Xmx512m ${JVM_PARAMS} -Djava.net.preferIPv4Stack=true -Dlog4j.configuration=file:${ISPN_HOME}/etc/log4j.xml"
+JVM_PARAMS="${JVM_PARAMS} -DCFGPath=${ISPN_HOME}/etc/config-samples/ec2-demo/"
 
-# Sample JPDA settings for remote socket debuging
-#JVM_PARAMS="$JVM_PARAMS -Xrunjdwp:transport=dt_socket,address=8686,server=y,suspend=n"
-
-#Load protein file => -p   e.g. -p /opt/influenza-data-files/influenza_aa.dat
-#Load nucleotide file => -n  e.g. -n /opt/influenza-data-files/influenza_na.dat
-#Load Influenze virus file => -i    e.g. -i /opt/influenza-data-files/influenza.dat
+DEMO_ARGS=" -c ${ISPN_HOME}/etc/config-samples/ec2-demo/infinispan-ec2-config.xml"
 DEMO_ARGS="${DEMO_ARGS} -r "
 DEMO_ARGS="${DEMO_ARGS} -i ${ISPN_HOME}/etc/Amazon-TestData/influenza.dat"
+
 java -cp ${CP} ${JVM_PARAMS} org.infinispan.ec2demo.InfinispanFluDemo ${DEMO_ARGS}
