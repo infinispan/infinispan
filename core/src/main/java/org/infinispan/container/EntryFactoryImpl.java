@@ -79,7 +79,7 @@ public class EntryFactoryImpl implements EntryFactory {
       CacheEntry cacheEntry;
       if (ctx.hasFlag(Flag.FORCE_WRITE_LOCK)) {
          if (trace) log.trace("Forcing lock on reading");
-         return wrapEntryForWriting(ctx, key, false, false, false, false);
+         return wrapEntryForWriting(ctx, key, false, false, false, false, false);
       } else if ((cacheEntry = ctx.lookupEntry(key)) == null) {
          if (trace) log.trace("Key {0} is not in context, fetching from container.", key);
          // simple implementation.  Peek the entry, wrap it, put wrapped entry in the context.
@@ -102,15 +102,15 @@ public class EntryFactoryImpl implements EntryFactory {
       }
    }
 
-   public final MVCCEntry wrapEntryForWriting(InvocationContext ctx, Object key, boolean createIfAbsent, boolean forceLockIfAbsent, boolean alreadyLocked, boolean forRemoval) throws InterruptedException {
-      return wrapEntryForWriting(ctx, key, null, createIfAbsent, forceLockIfAbsent, alreadyLocked, forRemoval);
+   public final MVCCEntry wrapEntryForWriting(InvocationContext ctx, Object key, boolean createIfAbsent, boolean forceLockIfAbsent, boolean alreadyLocked, boolean forRemoval, boolean undeleteIfNeeded) throws InterruptedException {
+      return wrapEntryForWriting(ctx, key, null, createIfAbsent, forceLockIfAbsent, alreadyLocked, forRemoval, undeleteIfNeeded);
    }
 
-   public MVCCEntry wrapEntryForWriting(InvocationContext ctx, InternalCacheEntry entry, boolean createIfAbsent, boolean forceLockIfAbsent, boolean alreadyLocked, boolean forRemoval) throws InterruptedException {
-      return wrapEntryForWriting(ctx, entry.getKey(), entry, createIfAbsent, forceLockIfAbsent, alreadyLocked, forRemoval);
+   public MVCCEntry wrapEntryForWriting(InvocationContext ctx, InternalCacheEntry entry, boolean createIfAbsent, boolean forceLockIfAbsent, boolean alreadyLocked, boolean forRemoval, boolean undeleteIfNeeded) throws InterruptedException {
+      return wrapEntryForWriting(ctx, entry.getKey(), entry, createIfAbsent, forceLockIfAbsent, alreadyLocked, forRemoval, undeleteIfNeeded);
    }
 
-   private MVCCEntry wrapEntryForWriting(InvocationContext ctx, Object key, InternalCacheEntry entry, boolean createIfAbsent, boolean forceLockIfAbsent, boolean alreadyLocked, boolean forRemoval) throws InterruptedException {
+   private MVCCEntry wrapEntryForWriting(InvocationContext ctx, Object key, InternalCacheEntry entry, boolean createIfAbsent, boolean forceLockIfAbsent, boolean alreadyLocked, boolean forRemoval, boolean undeleteIfNeeded) throws InterruptedException {
       CacheEntry cacheEntry = ctx.lookupEntry(key);
       MVCCEntry mvccEntry = null;
       if (createIfAbsent && cacheEntry != null && cacheEntry.isNull()) cacheEntry = null;
@@ -133,7 +133,7 @@ public class EntryFactoryImpl implements EntryFactory {
             mvccEntry.copyForUpdate(container, writeSkewCheck);
          }
 
-         if (cacheEntry.isRemoved() && createIfAbsent) {
+         if (cacheEntry.isRemoved() && createIfAbsent && undeleteIfNeeded) {
             if (trace) log.trace("Entry is deleted in current scope.  Need to un-delete.");
             if (mvccEntry != cacheEntry) mvccEntry = (MVCCEntry) cacheEntry;
             mvccEntry.setRemoved(false);

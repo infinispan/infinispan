@@ -143,7 +143,7 @@ public class LockingInterceptor extends CommandInterceptor {
                //if even one key is unlocked we need to invoke this lock command cluster wide... 
                shouldInvokeOnCluster = true;
             }
-            entryFactory.wrapEntryForWriting(ctx, key, true, false, false, false);
+            entryFactory.wrapEntryForWriting(ctx, key, true, false, false, false, false);
          }
          if (shouldInvokeOnCluster || c.isExplicit())
             return invokeNextInterceptor(ctx, c);
@@ -165,7 +165,7 @@ public class LockingInterceptor extends CommandInterceptor {
       try {
          // get a snapshot of all keys in the data container
          for (InternalCacheEntry entry : dataContainer.entrySet())
-            entryFactory.wrapEntryForWriting(ctx, entry, false, false, false, false);
+            entryFactory.wrapEntryForWriting(ctx, entry, false, false, false, false, false);
          return invokeNextInterceptor(ctx, command);
       } finally {
          doAfterCall(ctx);
@@ -183,7 +183,7 @@ public class LockingInterceptor extends CommandInterceptor {
    public Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) throws Throwable {
       try {
          if (command.getKeys() != null) {
-            for (Object key : command.getKeys()) entryFactory.wrapEntryForWriting(ctx, key, false, true, false, false);
+            for (Object key : command.getKeys()) entryFactory.wrapEntryForWriting(ctx, key, false, true, false, false, false);
          }
          return invokeNextInterceptor(ctx, command);
       } finally {
@@ -194,7 +194,7 @@ public class LockingInterceptor extends CommandInterceptor {
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       try {
-         entryFactory.wrapEntryForWriting(ctx, command.getKey(), true, false, false, false);
+         entryFactory.wrapEntryForWriting(ctx, command.getKey(), true, false, false, false, !command.isPutIfAbsent());
          return invokeNextInterceptor(ctx, command);
       } finally {
          doAfterCall(ctx);
@@ -205,7 +205,7 @@ public class LockingInterceptor extends CommandInterceptor {
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       try {
          for (Object key : command.getMap().keySet()) {
-            entryFactory.wrapEntryForWriting(ctx, key, true, false, false, false);
+            entryFactory.wrapEntryForWriting(ctx, key, true, false, false, false, true);
          }
          return invokeNextInterceptor(ctx, command);
       }
@@ -217,7 +217,7 @@ public class LockingInterceptor extends CommandInterceptor {
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       try {
-         entryFactory.wrapEntryForWriting(ctx, command.getKey(), false, true, false, true);
+         entryFactory.wrapEntryForWriting(ctx, command.getKey(), false, true, false, true, false);
          return invokeNextInterceptor(ctx, command);
       }
       finally {
@@ -228,7 +228,7 @@ public class LockingInterceptor extends CommandInterceptor {
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       try {
-         entryFactory.wrapEntryForWriting(ctx, command.getKey(), false, true, false, false);
+         entryFactory.wrapEntryForWriting(ctx, command.getKey(), false, true, false, false, false);
          return invokeNextInterceptor(ctx, command);
       }
       finally {

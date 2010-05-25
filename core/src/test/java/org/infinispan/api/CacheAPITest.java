@@ -467,7 +467,6 @@ public abstract class CacheAPITest extends SingleCacheManagerTest {
       assert cache.putIfAbsent(key, new_value) == null;
       TestingUtil.getTransactionManager(cache).rollback();
 
-      assert cache.get(key).equals(new_value);
-
+      assert cache.get(key).equals(old_value);
    }
 }

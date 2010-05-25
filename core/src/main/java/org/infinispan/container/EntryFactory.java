@@ -64,10 +64,11 @@ public interface EntryFactory {
     * @param forceLockIfAbsent forces a lock even if the entry is absent
     * @param alreadyLocked if true, this hint prevents the method from acquiring any locks and the existence and ownership of the lock is presumed.
     * @param forRemoval if true, this hint informs this method that the lock is being acquired for removal.
+    * @param undeleteIfNeeded if true, if the entry is found in the current scope (perhaps a transaction) and is deleteed, it will be undeleted.  If false, it will be considered deleted.
     * @return an MVCCEntry instance
     * @throws InterruptedException when things go wrong, usually trying to acquire a lock
     */
-   MVCCEntry wrapEntryForWriting(InvocationContext ctx, Object key, boolean createIfAbsent, boolean forceLockIfAbsent, boolean alreadyLocked, boolean forRemoval) throws InterruptedException;
+   MVCCEntry wrapEntryForWriting(InvocationContext ctx, Object key, boolean createIfAbsent, boolean forceLockIfAbsent, boolean alreadyLocked, boolean forRemoval, boolean undeleteIfNeeded) throws InterruptedException;
 
    /**
     * Wraps an entry for writing.  This would typically acquire write locks if necessary, and place the wrapped
@@ -79,10 +80,10 @@ public interface EntryFactory {
     * @param forceLockIfAbsent forces a lock even if the entry is absent
     * @param alreadyLocked if true, this hint prevents the method from acquiring any locks and the existence and ownership of the lock is presumed.
     * @param forRemoval if true, this hint informs this method that the lock is being acquired for removal.
-    * @return an MVCCEntry instance
+* @param undeleteIfNeeded if true, if the entry is found in the current scope (perhaps a transaction) and is deleteed, it will be undeleted.  If false, it will be considered deleted.    * @return an MVCCEntry instance
     * @throws InterruptedException when things go wrong, usually trying to acquire a lock
     */
-   MVCCEntry wrapEntryForWriting(InvocationContext ctx, InternalCacheEntry entry, boolean createIfAbsent, boolean forceLockIfAbsent, boolean alreadyLocked, boolean forRemoval) throws InterruptedException;
+   MVCCEntry wrapEntryForWriting(InvocationContext ctx, InternalCacheEntry entry, boolean createIfAbsent, boolean forceLockIfAbsent, boolean alreadyLocked, boolean forRemoval, boolean undeleteIfNeeded) throws InterruptedException;
 
    /**
     * Wraps an entry for reading.  Usually this is just a raw {@link CacheEntry} but certain combinations of isolation

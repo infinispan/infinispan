@@ -80,7 +80,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
       Object o;
       MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
       Object entryValue = e.getValue();
-      if (entryValue != null && putIfAbsent) {
+      if (entryValue != null && putIfAbsent && !e.isRemoved()) {
          successful = false;
          return entryValue;
       } else {
@@ -97,6 +97,11 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand {
             e.setMaxIdle(maxIdleTimeMillis);
          } else {
             o = e.setValue(value);
+            if (e.isRemoved()) {
+               e.setRemoved(false);
+               e.setValid(true);
+               o = null;
+            }
             e.setLifespan(lifespanMillis);
             e.setMaxIdle(maxIdleTimeMillis);
          }

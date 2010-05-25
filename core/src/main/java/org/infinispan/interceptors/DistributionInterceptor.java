@@ -135,7 +135,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
             if (trace) log.trace("Caching remotely retrieved entry for key {0} in L1", key);
             long lifespan = ice.getLifespan() < 0 ? configuration.getL1Lifespan() : Math.min(ice.getLifespan(), configuration.getL1Lifespan());
             PutKeyValueCommand put = cf.buildPutKeyValueCommand(ice.getKey(), ice.getValue(), lifespan, -1);
-            entryFactory.wrapEntryForWriting(ctx, key, true, false, ctx.hasLockedKey(key), false);
+            entryFactory.wrapEntryForWriting(ctx, key, true, false, ctx.hasLockedKey(key), false, false);
             invokeNextInterceptor(ctx, put);
          } else {
             if (trace) log.trace("Not caching remotely retrieved entry for key {0} in L1", key);
