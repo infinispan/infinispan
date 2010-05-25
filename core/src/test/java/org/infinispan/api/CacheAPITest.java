@@ -12,6 +12,8 @@ import org.infinispan.util.ObjectDuplicator;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
+import javax.transaction.NotSupportedException;
+import javax.transaction.SystemException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -26,7 +28,7 @@ import java.util.Set;
  * @author <a href="mailto:manik@jboss.org">Manik Surtani</a>
  */
 @Test(groups = "functional")
-public abstract class CacheAPITest extends SingleCacheManagerTest {  
+public abstract class CacheAPITest extends SingleCacheManagerTest {
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       // start a single cache instance
@@ -40,7 +42,7 @@ public abstract class CacheAPITest extends SingleCacheManagerTest {
    }
 
    protected abstract IsolationLevel getIsolationLevel();
-   
+
    protected Configuration addEviction(Configuration cfg) {
       return cfg; // No eviction by default
    }
@@ -448,9 +450,24 @@ public abstract class CacheAPITest extends SingleCacheManagerTest {
       for (int i = 0; i < 10; i++) {
          cache.put(i, "value" + i);
       }
-      
+
       cache.clear();
-      
+
       assert cache.isEmpty();
+   }
+
+   public void testPutIfAbsentAfterRemoveInTx() throws SystemException, NotSupportedException {
+      String key = "key_1", old_value = "old_value", new_value = "new_value";
+      cache.put(key, old_value);
+      assert cache.get(key).equals(old_value);
+
+      TestingUtil.getTransactionManager(cache).begin();
+      assert cache.remove(key).equals(old_value);
+      assert cache.get(key) == null;
+      assert cache.putIfAbsent(key, new_value) == null;
+      TestingUtil.getTransactionManager(cache).rollback();
+
+      assert cache.get(key).equals(new_value);
+
    }
 }

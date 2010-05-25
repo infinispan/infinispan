@@ -42,6 +42,8 @@ import javax.transaction.TransactionManager;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -55,6 +57,7 @@ public abstract class BaseCacheStoreFunctionalTest extends AbstractInfinispanTes
    protected abstract CacheStoreConfig createCacheStoreConfig() throws Exception;
 
    protected CacheStoreConfig csConfig;
+   protected Set<String> cacheNames = new HashSet<String>();
 
    @BeforeMethod
    public void setUp() throws Exception {
@@ -76,6 +79,8 @@ public abstract class BaseCacheStoreFunctionalTest extends AbstractInfinispanTes
          localCacheManager.getDefaultConfiguration().setCacheLoaderManagerConfig(clmConfig);
          localCacheManager.defineConfiguration("first", new Configuration());
          localCacheManager.defineConfiguration("second", new Configuration());
+         cacheNames.add("first");
+         cacheNames.add("second");
 
          Cache first = localCacheManager.getCache("first");
          Cache second = localCacheManager.getCache("second");
@@ -106,6 +111,7 @@ public abstract class BaseCacheStoreFunctionalTest extends AbstractInfinispanTes
       CacheManager local = TestCacheManagerFactory.createCacheManager(cfg);
       try {
          Cache<String, String> cache = local.getCache();
+         cacheNames.add(cache.getName());
          cache.start();
 
          assert cache.getConfiguration().getCacheLoaderManagerConfig().isPreload();
@@ -134,6 +140,7 @@ public abstract class BaseCacheStoreFunctionalTest extends AbstractInfinispanTes
       CacheManager localCacheManager = TestCacheManagerFactory.createCacheManager(cfg, true);
       try {
          Cache<String, Object> cache = localCacheManager.getCache();
+         cacheNames.add(cache.getName());
          AtomicMap<String, String> map = AtomicMapLookup.getAtomicMap(cache, m.getName());
          map.put("a", "b");
 
@@ -153,6 +160,7 @@ public abstract class BaseCacheStoreFunctionalTest extends AbstractInfinispanTes
       CacheManager localCacheManager = TestCacheManagerFactory.createCacheManager(cfg, true);
       try {
          Cache<String, Object> cache = localCacheManager.getCache();
+         cacheNames.add(cache.getName());
          TransactionManager tm = cache.getAdvancedCache().getTransactionManager();
          tm.begin();
          final AtomicMap<String, String> map = AtomicMapLookup.getAtomicMap(cache, m.getName());

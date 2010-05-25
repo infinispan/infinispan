@@ -21,8 +21,11 @@
  */
 package org.infinispan.loaders.cloud;
 
+import org.easymock.EasyMock;
+import org.infinispan.Cache;
 import org.infinispan.loaders.BaseCacheStoreFunctionalTest;
 import org.infinispan.loaders.CacheStoreConfig;
+import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -61,6 +64,24 @@ public class CloudCacheStoreFunctionalIntegrationTest extends BaseCacheStoreFunc
       csBucket = (System.getProperty("user.name") + "." + this.getClass().getSimpleName()).toLowerCase().replace('.', '-'); // azure limitation on no periods
       csBucket = csBucket.length() > 32 ? csBucket.substring(0, 32): csBucket;//azure limitation on length
       System.out.printf("accessKey: %1$s, bucket: %2$s%n", accessKey, csBucket);
+   }
+
+   @AfterTest
+   private void nukeBuckets() throws Exception {
+      for (String name: cacheNames) {
+         // use JClouds to nuke the buckets
+         CloudCacheStore ccs = new CloudCacheStore();
+         Cache c = EasyMock.createNiceMock(Cache.class);
+         EasyMock.expect(c.getName()).andReturn(name).anyTimes();
+         EasyMock.replay(c);
+         ccs.init(createCacheStoreConfig(), c, null);
+         ccs.start();
+         System.out.println("**** Nuking container " + ccs.containerName);
+         ccs.blobStore.clearContainer(ccs.containerName);
+         ccs.blobStore.deleteContainer(ccs.containerName);
+         ccs.stop();
+      }
+      cacheNames.clear();
    }
 
 

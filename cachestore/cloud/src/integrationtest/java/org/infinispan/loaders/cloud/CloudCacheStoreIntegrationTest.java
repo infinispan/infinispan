@@ -33,6 +33,7 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static org.testng.Assert.assertEquals;
 
@@ -68,7 +69,7 @@ public class CloudCacheStoreIntegrationTest extends BaseCacheStoreTest {
          secretKey = "dummy";
       }
       csBucket = (System.getProperty("user.name")
-            + "." + this.getClass().getSimpleName()).toLowerCase();
+              + "-" + this.getClass().getSimpleName()).toLowerCase();
       System.out.printf("accessKey: %1$s, bucket: %2$s%n", accessKey, csBucket);
 
       cs2Bucket = csBucket + "2";
@@ -139,7 +140,7 @@ public class CloudCacheStoreIntegrationTest extends BaseCacheStoreTest {
 
    @SuppressWarnings("unchecked")
    @Override
-   @Test (enabled = false, description = "Disabled until JClouds gains a proper streaming API")
+   @Test(enabled = false, description = "Disabled until JClouds gains a proper streaming API")
    public void testStreamingAPI() throws IOException, ClassNotFoundException, CacheLoaderException {
       cs.store(InternalEntryFactory.create("k1", "v1", -1, -1));
       cs.store(InternalEntryFactory.create("k2", "v2", -1, -1));
@@ -174,8 +175,10 @@ public class CloudCacheStoreIntegrationTest extends BaseCacheStoreTest {
       assert expected.isEmpty();
    }
 
-   @Test (enabled = false, description = "Much too slow to run this on a live cloud setup")
-   @Override public void testConcurrency() throws Exception {}
+   @Test(enabled = false, description = "Much too slow to run this on a live cloud setup")
+   @Override
+   public void testConcurrency() throws Exception {
+   }
 
    public void testNegativeHashCodes() throws CacheLoaderException {
       ObjectWithNegativeHashcode objectWithNegativeHashcode = new ObjectWithNegativeHashcode();
@@ -204,14 +207,14 @@ public class CloudCacheStoreIntegrationTest extends BaseCacheStoreTest {
    }
 
    @Override
-   @Test (enabled = false, description = "Disabled until we can build the blobstore stub to retain state somewhere.")
+   @Test(enabled = false, description = "Disabled until we can build the blobstore stub to retain state somewhere.")
    public void testStopStartDoesNotNukeValues() throws InterruptedException, CacheLoaderException {
 
    }
 
    @SuppressWarnings("unchecked")
    @Override
-   @Test (enabled = false, description = "Disabled until JClouds gains a proper streaming API")
+   @Test(enabled = false, description = "Disabled until JClouds gains a proper streaming API")
    public void testStreamingAPIReusingStreams() throws IOException, ClassNotFoundException, CacheLoaderException {
       cs.store(InternalEntryFactory.create("k1", "v1", -1, -1));
       cs.store(InternalEntryFactory.create("k2", "v2", -1, -1));
@@ -259,11 +262,20 @@ public class CloudCacheStoreIntegrationTest extends BaseCacheStoreTest {
       assert expected.isEmpty();
    }
 
-   // TODO test that this passes before closing ISPN-334
    public void testJCloudsMetadataTest() throws IOException {
       String blobName = "myBlob";
-      String containerName = "myContainer";
+      String containerName = (csBucket + "MetadataTest").toLowerCase();
       BlobStore blobStore = ((CloudCacheStore) cs).blobStore;
+
+      try {
+         blobStore.deleteContainer(containerName);
+         TestingUtil.sleepThread(2000);
+      } catch (Exception e) {
+      }
+
+      blobStore.createContainerInLocation(null, containerName);
+      TestingUtil.sleepThread(2000);
+
       Blob b = blobStore.newBlob(blobName);
       b.setPayload("Hello world");
       b.getMetadata().setUserMetadata(Collections.singletonMap("hello", "world"));
@@ -271,8 +283,8 @@ public class CloudCacheStoreIntegrationTest extends BaseCacheStoreTest {
 
       b = blobStore.getBlob(containerName, blobName);
       assert "world".equals(b.getMetadata().getUserMetadata().get("hello"));
-      
+
       PageSet<? extends StorageMetadata> ps = blobStore.list(containerName, ListContainerOptions.Builder.withDetails());
-      for (StorageMetadata sm: ps) assert "world".equals(sm.getUserMetadata().get("hello"));
+      for (StorageMetadata sm : ps) assert "world".equals(sm.getUserMetadata().get("hello"));
    }
 }
