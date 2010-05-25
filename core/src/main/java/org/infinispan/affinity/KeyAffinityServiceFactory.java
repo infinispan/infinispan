@@ -2,7 +2,10 @@ package org.infinispan.affinity;
 
 import org.infinispan.Cache;
 import org.infinispan.executors.ExecutorFactory;
+import org.infinispan.remoting.transport.Address;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -45,6 +48,24 @@ public class KeyAffinityServiceFactory {
       return newKeyAffinityService(cache, ex, new RndKeyGenerator(), keyBufferSize);
    }
    
+   /**
+    * Same as {@link #newKeyAffinityService(org.infinispan.Cache,org.infinispan.executors.ExecutorFactory,
+    * KeyGenerator ,int)} with the an {@link RndKeyGenerator}.
+    */
+   public static <K,V> KeyAffinityService newKeyAffinityService(Cache<K,V> cache, Collection<Address> forAddresses, ExecutorFactory ex, int keyBufferSize) {
+      return newKeyAffinityService(cache, ex, new RndKeyGenerator(), keyBufferSize);
+   }
+   
+   /**
+    * Same as {@link #newKeyAffinityService(org.infinispan.Cache,org.infinispan.executors.ExecutorFactory,
+    * KeyGenerator ,int)} with the an {@link RndKeyGenerator}.
+    */
+   public static <K,V> KeyAffinityService newLocalKeyAffinityService(Cache<K,V> cache, ExecutorFactory ex, int keyBufferSize) {
+      Address localAddress = cache.getAdvancedCache().getRpcManager().getTransport().getAddress();
+      Collection<Address> forAddresses = Collections.singletonList(localAddress);
+      return newKeyAffinityService(cache, ex, new RndKeyGenerator(), keyBufferSize);
+   }
+
    /**
     * Same as {@link #newKeyAffinityService(org.infinispan.Cache,org.infinispan.executors.ExecutorFactory,
     * KeyGenerator ,int)} with the an {@link RndKeyGenerator} and an

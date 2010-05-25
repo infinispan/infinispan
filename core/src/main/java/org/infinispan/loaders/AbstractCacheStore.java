@@ -25,24 +25,22 @@ import java.util.concurrent.atomic.AtomicInteger;
  * An abstract {@link org.infinispan.loaders.CacheStore} that holds common implementations for some methods
  *
  * @author Manik Surtani
+ * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
 public abstract class AbstractCacheStore extends AbstractCacheLoader implements CacheStore {
 
-   private Map<GlobalTransaction, List<? extends Modification>> transactions;
    private static Log log = LogFactory.getLog(AbstractCacheStore.class);
+
+   private Map<GlobalTransaction, List<? extends Modification>> transactions;
    private AbstractCacheStoreConfig config;
    protected ExecutorService purgerService;
-   protected Marshaller marshaller;
-   protected Cache cache;
    private static final AtomicInteger THREAD_COUNTER = new AtomicInteger(0);
    protected boolean multiThreadedPurge = false;
 
    public void init(CacheLoaderConfig config, Cache<?, ?> cache, Marshaller m) throws CacheLoaderException{
+      super.init(config, cache, m);
       this.config = (AbstractCacheStoreConfig) config;
-      this.marshaller = m;
-      if (config == null) throw new IllegalStateException("Null config!!!");
-      this.cache = cache;
    }
 
    protected final int getConcurrencyLevel() {

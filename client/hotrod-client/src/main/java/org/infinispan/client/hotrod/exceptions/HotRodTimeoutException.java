@@ -6,5 +6,5 @@ package org.infinispan.client.hotrod.exceptions;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public class HotRodTimeoutException extends RuntimeException {
+public class HotRodTimeoutException extends HotRodClientException {
 }

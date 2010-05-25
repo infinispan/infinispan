@@ -1,7 +1,7 @@
 package org.infinispan.client.hotrod;
 
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
-import org.infinispan.client.hotrod.impl.HotRodMarshaller;
+import org.infinispan.client.hotrod.HotRodMarshaller;
 import org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory;
 import org.infinispan.client.hotrod.impl.protocol.HotRodOperations;
 import org.infinispan.client.hotrod.impl.protocol.HotRodOperationsImpl;
@@ -136,13 +136,36 @@ public class RemoteCacheManager implements CacheManager {
 
    private Properties props;
    private TransportFactory transportFactory;
-   private String hotrodMarshaller;
+   private HotRodMarshaller hotRodMarshaller;
    private boolean started = false;
    private boolean forceReturnValueDefault = false;
    private ExecutorService asyncExecutorService;
    private final Map<String, RemoteCacheImpl> cacheName2RemoteCache = new HashMap<String, RemoteCacheImpl>();
    private AtomicInteger topologyId = new AtomicInteger();
 
+
+   /**
+    * Builds a remote cache manager that relies on the provided {@link org.infinispan.client.hotrod.HotRodMarshaller} for marshalling
+    * keys and values to be send over to the remote infinispan cluster.
+    * @param hotRodMarshaller marshaller implementatin to be used
+    * @param props other properties
+    * @param start weather or not to start the manager on return from the constructor.
+    */
+   public RemoteCacheManager(HotRodMarshaller hotRodMarshaller, Properties props, boolean start) {
+      this(props);
+      this.hotRodMarshaller = hotRodMarshaller;
+      if (log.isTraceEnabled()) {
+         log.trace("Using explicitly set marshaller: " + hotRodMarshaller);
+      }
+      if (start) start();
+   }
+
+   /**
+    * Same as {@link org.infinispan.client.hotrod.RemoteCacheManager#RemoteCacheManager(HotRodMarshaller, java.util.Properties, boolean)} with start = true.
+    */
+   public RemoteCacheManager(HotRodMarshaller hotRodMarshaller, Properties props) {
+      this(hotRodMarshaller, props, false);
+   }
 
    /**
     * Build a cache manager based on supplied properties.
@@ -273,7 +296,14 @@ public class RemoteCacheManager implements CacheManager {
       transportFactory = (TransportFactory) VHelper.newInstance(factory);
       String servers = props.getProperty(CONF_HOTROD_SERVERS);
       transportFactory.start(props, getStaticConfiguredServers(servers), topologyId);
-      hotrodMarshaller = props.getProperty("marshaller");
+      if (hotRodMarshaller == null) {
+         String hotrodMarshallerClass = props.getProperty("marshaller");
+         if (hotrodMarshallerClass == null) {
+            hotrodMarshallerClass = SerializationMarshaller.class.getName();
+            log.info("'marshaller' not specified, using " + hotrodMarshallerClass);
+         }
+         hotRodMarshaller = (HotRodMarshaller) VHelper.newInstance(hotrodMarshallerClass); 
+      }
 
       String asyncExecutorClass = DefaultAsyncExecutorFactory.class.getName();
       if (props.contains("asyn-executor-factory")) {
@@ -283,10 +313,6 @@ public class RemoteCacheManager implements CacheManager {
       asyncExecutorService = executorFactory.getExecutor(props);
 
 
-      if (hotrodMarshaller == null) {
-         hotrodMarshaller = SerializationMarshaller.class.getName();
-         log.info("'marshaller' not specified, using " + hotrodMarshaller);
-      }
       if (props.get("force-return-value") != null && props.get("force-return-value").equals("true")) {
          forceReturnValueDefault = true;
       }
@@ -333,9 +359,8 @@ public class RemoteCacheManager implements CacheManager {
    }
 
    private <K, V> void startRemoteCache(RemoteCacheImpl<K, V> result) {
-      HotRodMarshaller marshaller = (HotRodMarshaller) VHelper.newInstance(hotrodMarshaller);
       HotRodOperations hotRodOperations = new HotRodOperationsImpl(result.getName(), transportFactory, topologyId);
-      result.init(hotRodOperations, marshaller, asyncExecutorService);
+      result.init(hotRodOperations, hotRodMarshaller, asyncExecutorService);
    }
 
    private Set<InetSocketAddress> getStaticConfiguredServers(String servers) {

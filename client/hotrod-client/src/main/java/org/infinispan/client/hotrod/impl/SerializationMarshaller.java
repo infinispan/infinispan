@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.impl;
 
+import org.infinispan.client.hotrod.HotRodMarshaller;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
