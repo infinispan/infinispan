@@ -290,11 +290,11 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    public RehashControlCommand buildRehashControlCommand(RehashControlCommand.Type type, Address sender) {
-      return buildRehashControlCommand(type, sender, null, null);
+      return buildRehashControlCommand(type, sender, null, null, null, null);
    }
 
    public RehashControlCommand buildRehashControlCommand(Address sender, Map<Object, InternalCacheValue> state) {
-      return buildRehashControlCommand(PUSH_STATE, sender, state, null);
+      return buildRehashControlCommand(PUSH_STATE, sender, state, null, null,  null);
    }
 
    public RehashControlCommand buildRehashControlCommandTxLog(Address sender, List<WriteCommand> commands) {
@@ -303,10 +303,11 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    public RehashControlCommand buildRehashControlCommandTxLogPendingPrepares(Address sender, List<PrepareCommand> commands) {
       return new RehashControlCommand(cacheName, DRAIN_TX_PREPARES, sender, null, commands, this);
+   }  
+   
+   public RehashControlCommand buildRehashControlCommand(RehashControlCommand.Type type,
+            Address sender, Map<Object, InternalCacheValue> state, ConsistentHash oldCH,
+            ConsistentHash newCH, List<Address> leavers) {
+      return new RehashControlCommand(cacheName, type, sender, state, oldCH, newCH, leavers, this);
    }
-
-   public RehashControlCommand buildRehashControlCommand(RehashControlCommand.Type type, Address sender, Map<Object, InternalCacheValue> state, ConsistentHash consistentHash) {
-      return new RehashControlCommand(cacheName, type, sender, state, consistentHash, this);
-   }
-
 }

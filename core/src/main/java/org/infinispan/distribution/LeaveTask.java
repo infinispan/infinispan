@@ -45,9 +45,10 @@ public class LeaveTask extends RehashTask {
    private final List<Address> leaversHandled;
 
 
-   protected LeaveTask(DistributionManagerImpl dmi, RpcManager rpcManager, Configuration configuration, List<Address> leavers,
-                       TransactionLogger transactionLogger, CommandsFactory cf, DataContainer dataContainer) {
-      super(dmi, rpcManager, configuration, transactionLogger, cf, dataContainer);
+   protected LeaveTask(DistributionManagerImpl dmi, RpcManager rpcManager,
+            Configuration configuration, List<Address> leavers, CommandsFactory cf,
+            DataContainer dataContainer) {
+      super(dmi, rpcManager, configuration, cf, dataContainer);
       this.leavers = leavers;
       this.leaversHandled = new LinkedList<Address>(leavers);
       this.self = rpcManager.getTransport().getAddress();
@@ -115,6 +116,7 @@ public class LeaveTask extends RehashTask {
 
       List<WriteCommand> c;
       int i = 0;
+      TransactionLogger transactionLogger = dmi.getTransactionLogger();
       while (transactionLogger.shouldDrainWithoutLock()) {
          if (trace) log.trace("Processing transaction log, iteration {0}", i++);
          c = transactionLogger.drain();

@@ -57,7 +57,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.HashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -160,7 +159,7 @@ public class DistributionManagerImpl implements DistributionManager {
       consistentHash = createConsistentHash(configuration, members);
       self = t.getAddress();
       if (members.size() > 1 && !t.getCoordinator().equals(self)) {
-         JoinTask joinTask = new JoinTask(rpcManager, cf, configuration, transactionLogger, dataContainer, this);
+         JoinTask joinTask = new JoinTask(rpcManager, cf, configuration, dataContainer, this);
          joinFuture = rehashExecutor.submit(joinTask);
       } else {
          joinComplete = true;
@@ -189,6 +188,8 @@ public class DistributionManagerImpl implements DistributionManager {
 
          boolean willReceiveLeaverState = willReceiveLeaverState(leaver);
          boolean willSendLeaverState = willSendLeaverState(leaver);
+         List<Address> stateProviders = holdersOfLeaversState(newMembers, leaver);
+        
          try {
             if (!(consistentHash instanceof UnionConsistentHash)) oldConsistentHash = consistentHash;
             else oldConsistentHash = ((UnionConsistentHash) consistentHash).newCH;
@@ -196,23 +197,21 @@ public class DistributionManagerImpl implements DistributionManager {
          } catch (Exception e) {
             log.fatal("Unable to process leaver!!", e);
             throw new CacheException(e);
-         }
+         }       
 
          if (willReceiveLeaverState || willSendLeaverState) {
-            log.info("Starting transaction logging!");
+            log.info("I {0} am participating in rehash", rpcManager.getTransport().getAddress());
             transactionLogger.enable();
-         }
 
-         if (willSendLeaverState) {
-            if (leaveTaskFuture != null && (!leaveTaskFuture.isCancelled() || !leaveTaskFuture.isDone())) {
+            if (leaveTaskFuture != null
+                     && (!leaveTaskFuture.isCancelled() || !leaveTaskFuture.isDone())) {
                leaveTaskFuture.cancel(true);
             }
 
             leavers.add(leaver);
-            LeaveTask task = new LeaveTask(this, rpcManager, configuration, leavers, transactionLogger, cf, dataContainer);
+            InvertedLeaveTask task = new InvertedLeaveTask(this, rpcManager, configuration, cf,
+                     dataContainer, leavers, stateProviders, willReceiveLeaverState);
             leaveTaskFuture = rehashExecutor.submit(task);
-
-            log.info("Need to rehash");
          } else {
             log.info("Not in same subspace, so ignoring leave event");
          }
@@ -223,6 +222,18 @@ public class DistributionManagerImpl implements DistributionManager {
       ConsistentHash ch = consistentHash instanceof UnionConsistentHash ? oldConsistentHash : consistentHash;
       return ch.isAdjacent(leaver, self);
    }
+   
+    List<Address> holdersOfLeaversState(List<Address> members, Address leaver) {
+        ConsistentHash ch = consistentHash instanceof UnionConsistentHash ? oldConsistentHash: consistentHash;
+        Set<Address> holders = new HashSet<Address>();
+        for (Address address : members) {
+           
+            if (ch.isAdjacent(leaver, address)) {
+                holders.add(address);
+            }
+        }
+        return new ArrayList<Address>(holders);
+    }
 
    boolean willReceiveLeaverState(Address leaver) {
       ConsistentHash ch = consistentHash instanceof UnionConsistentHash ? oldConsistentHash : consistentHash;

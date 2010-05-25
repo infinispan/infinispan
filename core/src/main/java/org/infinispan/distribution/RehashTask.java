@@ -33,17 +33,15 @@ public abstract class RehashTask implements Callable<Void> {
 
    DistributionManagerImpl dmi;
    RpcManager rpcManager;
-   Configuration configuration;
-   TransactionLogger transactionLogger;
+   Configuration configuration;   
    CommandsFactory cf;
    DataContainer dataContainer;
 
-   protected RehashTask(DistributionManagerImpl dmi, RpcManager rpcManager, Configuration configuration,
-                        TransactionLogger transactionLogger, CommandsFactory cf, DataContainer dataContainer) {
+   protected RehashTask(DistributionManagerImpl dmi, RpcManager rpcManager,
+            Configuration configuration, CommandsFactory cf, DataContainer dataContainer) {
       this.dmi = dmi;
       this.rpcManager = rpcManager;
       this.configuration = configuration;
-      this.transactionLogger = transactionLogger;
       this.cf = cf;
       this.dataContainer = dataContainer;
    }
@@ -66,7 +64,7 @@ public abstract class RehashTask implements Callable<Void> {
       return Collections.singleton(rpcManager.getTransport().getCoordinator());
    }
 
-   protected void invalidateInvalidHolders(ConsistentHash chOld, ConsistentHash chNew) throws ExecutionException, InterruptedException {
+   protected void invalidateInvalidHolders(List<Address> doNotInvalidate, ConsistentHash chOld, ConsistentHash chNew) throws ExecutionException, InterruptedException {
       if (getLog().isDebugEnabled()) getLog().debug("Invalidating entries that have migrated across");
       Map<Address, Set<Object>> invalidations = new HashMap<Address, Set<Object>>();
       for (Object key : dataContainer.keySet()) {
@@ -81,6 +79,7 @@ public abstract class RehashTask implements Callable<Void> {
          }
       }
 
+      invalidations.keySet().removeAll(doNotInvalidate);
       Set<Future> futures = new HashSet<Future>();
 
       for (Map.Entry<Address, Set<Object>> e : invalidations.entrySet()) {
@@ -91,6 +90,10 @@ public abstract class RehashTask implements Callable<Void> {
       }
 
       for (Future f : futures) f.get();
+   }
+   protected void invalidateInvalidHolders(ConsistentHash chOld, ConsistentHash chNew) throws ExecutionException, InterruptedException {
+      List<Address> none = Collections.emptyList();
+      invalidateInvalidHolders(none, chOld, chNew);
    }
 
    protected Collection<Address> getInvalidHolders(Object key, ConsistentHash chOld, ConsistentHash chNew) {

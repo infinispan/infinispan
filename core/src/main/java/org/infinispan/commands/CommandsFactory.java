@@ -279,14 +279,20 @@ public interface CommandsFactory {
     */
    RehashControlCommand buildRehashControlCommandTxLogPendingPrepares(Address sender, List<PrepareCommand> state);
 
+
    /**
-    * A more generic version of this factory method that allows the setting of various fields.
-    *
-    * @param subtype type of RehashControlCommand
-    * @param sender sender's Address
-    * @param state state to push
-    * @param consistentHash consistent hash to deliver
-    * @return a RehashControlCommand
+    * Builds a RehashControlCommand for coordinating a rehash event. This particular variation of RehashControlCommand
+    * coordinates rehashing of nodes when a node join or leaves
+    * 
+    * @param subtype
+    * @param sender
+    * @param state
+    * @param oldCH
+    * @param leaversHandled
+    * @param newCH
+    * @return
     */
-   RehashControlCommand buildRehashControlCommand(RehashControlCommand.Type subtype, Address sender, Map<Object, InternalCacheValue> state, ConsistentHash consistentHash);
+   RehashControlCommand buildRehashControlCommand(RehashControlCommand.Type subtype,
+            Address sender, Map<Object, InternalCacheValue> state, ConsistentHash oldCH,
+            ConsistentHash newCH, List<Address> leaversHandled);
 }

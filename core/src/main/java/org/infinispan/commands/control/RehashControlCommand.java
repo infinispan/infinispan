@@ -45,13 +45,15 @@ public class RehashControlCommand extends BaseRpcCommand {
    public static final int COMMAND_ID = 17;
 
    public enum Type {
-      JOIN_REQ, JOIN_REHASH_START, JOIN_REHASH_END, JOIN_COMPLETE, JOIN_ABORT, PULL_STATE, PUSH_STATE, DRAIN_TX, DRAIN_TX_PREPARES
+      JOIN_REQ, JOIN_REHASH_START, JOIN_REHASH_END, JOIN_COMPLETE, JOIN_ABORT, PULL_STATE_JOIN, PULL_STATE_LEAVE, PUSH_STATE, DRAIN_TX, DRAIN_TX_PREPARES
    }
 
    Type type;
    Address sender;
    Map<Object, InternalCacheValue> state;
-   ConsistentHash consistentHash;
+   ConsistentHash oldCH;
+   List<Address> nodesLeft;
+   ConsistentHash newCH;
 
    // cache components
    DistributionManager distributionManager;
@@ -67,13 +69,15 @@ public class RehashControlCommand extends BaseRpcCommand {
    }
 
 
-   public RehashControlCommand(String cacheName, Type type, Address sender, Map<Object, InternalCacheValue> state,
-                               ConsistentHash consistentHash, CommandsFactory commandsFactory) {
+   public RehashControlCommand(String cacheName, Type type, Address sender, Map<Object, InternalCacheValue> state,ConsistentHash oldConsistentHash,
+                                ConsistentHash consistentHash, List<Address> leavers, CommandsFactory commandsFactory) {
       super(cacheName);
       this.type = type;
       this.sender = sender;
       this.state = state;
-      this.consistentHash = consistentHash;
+      this.oldCH = oldConsistentHash;
+      this.newCH = consistentHash;
+      this.nodesLeft = leavers;
       this.commandsFactory = commandsFactory;
    }
 
@@ -119,8 +123,10 @@ public class RehashControlCommand extends BaseRpcCommand {
          case JOIN_COMPLETE:
             distributionManager.notifyJoinComplete(sender);
             return null;
-         case PULL_STATE:
-            return pullState();
+         case PULL_STATE_JOIN:
+            return pullStateForJoin();             
+         case PULL_STATE_LEAVE:
+             return pullStateForLeave();    
          case PUSH_STATE:
             return pushState();
          case DRAIN_TX:
@@ -133,28 +139,67 @@ public class RehashControlCommand extends BaseRpcCommand {
       throw new CacheException("Unknown rehash control command type " + type);
    }
 
-   public Map<Object, InternalCacheValue> pullState() throws CacheLoaderException {
-      Address self = transport.getAddress();
-      ConsistentHash oldCH = distributionManager.getConsistentHash();
-      int numCopies = configuration.getNumOwners();
-
+   public Map<Object, InternalCacheValue> pullStateForJoin() throws CacheLoaderException {           
+      
       Map<Object, InternalCacheValue> state = new HashMap<Object, InternalCacheValue>();
       for (InternalCacheEntry ice : dataContainer) {
          Object k = ice.getKey();
-         if (shouldAddToMap(k, oldCH, numCopies, self)) state.put(k, ice.toInternalCacheValue());
+         if (shouldTransferOwnershipToJoinNode(k)) {            
+             state.put(k, ice.toInternalCacheValue());
+         }
       }
 
       CacheStore cacheStore = distributionManager.getCacheStoreForRehashing();
       if (cacheStore != null) {
          for (Object k: cacheStore.loadAllKeys(new ReadOnlyDataContainerBackedKeySet(dataContainer))) {
-            if (!state.containsKey(k) && shouldAddToMap(k, oldCH, numCopies, self)) {
-               InternalCacheValue v = loadValue(cacheStore, k);
+            if (!state.containsKey(k) && shouldTransferOwnershipToJoinNode(k)) {                
+               InternalCacheValue v = loadValue(cacheStore, k);               
                if (v != null) state.put(k, v);
             }
          }
       }
       return state;
    }
+   
+   public Map<Object, InternalCacheValue> pullStateForLeave() throws CacheLoaderException {
+     
+      Map<Object, InternalCacheValue> state = new HashMap<Object, InternalCacheValue>();
+      for (InternalCacheEntry ice : dataContainer) {
+         Object k = ice.getKey();
+         if (shouldTransferOwnershipFromLeftNodes(k)) {
+            state.put(k, ice.toInternalCacheValue());
+         }
+      }
+
+      CacheStore cacheStore = distributionManager.getCacheStoreForRehashing();
+      if (cacheStore != null) {
+         for (Object k : cacheStore.loadAllKeys(new ReadOnlyDataContainerBackedKeySet(dataContainer))) {
+            if (!state.containsKey(k) && shouldTransferOwnershipFromLeftNodes(k)) {
+               InternalCacheValue v = loadValue(cacheStore, k);               
+               if (v != null)
+                  state.put(k, v);
+            }
+         }
+      }
+      return state;
+   }
+   
+   private boolean shouldTransferOwnershipFromLeftNodes(Object k) {      
+      Address self = transport.getAddress();      
+      int numCopies = configuration.getNumOwners();
+      
+      List<Address> oldList = oldCH.locate(k, numCopies);
+      boolean localToThisNode = oldList.indexOf(self) >= 0;
+      boolean senderIsNewOwner = newCH.isKeyLocalToAddress(sender, k, numCopies);
+      for (Address leftNodeAddress : nodesLeft) {
+         boolean localToLeftNode = oldList.indexOf(leftNodeAddress) >= 0;
+         if (localToLeftNode && senderIsNewOwner && localToThisNode) {
+            return true;
+         }
+      }
+      return false;
+   }
+      
 
    private InternalCacheValue loadValue(CacheStore cs, Object k) {
       try {
@@ -166,16 +211,17 @@ public class RehashControlCommand extends BaseRpcCommand {
       return null;
    }
 
-   final boolean shouldAddToMap(Object k, ConsistentHash oldCH, int numCopies, Address self) {
-      // if the current address is the current "owner" of this key (in old_ch), and the requestor is in the owner list
-      // in new_ch, then add this to the map.
+   final boolean shouldTransferOwnershipToJoinNode(Object k) {     
+      Address self = transport.getAddress();      
+      int numCopies = configuration.getNumOwners(); 
       List<Address> oldOwnerList = oldCH.locate(k, numCopies);
       if (!oldOwnerList.isEmpty() && self.equals(oldOwnerList.get(0))) {
-         List<Address> newOwnerList = consistentHash.locate(k, numCopies);
+         List<Address> newOwnerList = newCH.locate(k, numCopies);
          if (newOwnerList.contains(sender)) return true;
       }
       return false;
    }
+   
 
    public Object pushState() {
       distributionManager.applyReceivedState(state);
@@ -187,7 +233,7 @@ public class RehashControlCommand extends BaseRpcCommand {
    }
 
    public Object[] getParameters() {
-      return new Object[]{cacheName, (byte) type.ordinal(), sender, state, consistentHash, txLogCommands, pendingPrepares};
+      return new Object[]{cacheName, (byte) type.ordinal(), sender, state, oldCH, nodesLeft, newCH, txLogCommands, pendingPrepares};
    }
 
    @SuppressWarnings("unchecked")
@@ -197,7 +243,9 @@ public class RehashControlCommand extends BaseRpcCommand {
       type = Type.values()[(Byte) parameters[i++]];
       sender = (Address) parameters[i++];
       state = (Map<Object, InternalCacheValue>) parameters[i++];
-      consistentHash = (ConsistentHash) parameters[i++];
+      oldCH = (ConsistentHash) parameters[i++];
+      nodesLeft = (List<Address>) parameters[i++];
+      newCH = (ConsistentHash) parameters[i++];
       txLogCommands = (List<WriteCommand>) parameters[i++];
       pendingPrepares = (List<PrepareCommand>) parameters[i++];
    }
@@ -208,7 +256,9 @@ public class RehashControlCommand extends BaseRpcCommand {
             "type=" + type +
             ", sender=" + sender +
             ", state=" + state +
-            ", consistentHash=" + consistentHash +
+            ", oldConsistentHash=" + oldCH +
+            ", nodesLeft=" + nodesLeft +
+            ", consistentHash=" + newCH +
             ", txLogCommands=" + txLogCommands +
             ", pendingPrepares=" + pendingPrepares +
             '}';

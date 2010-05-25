@@ -45,15 +45,13 @@ import java.util.Random;
 public class JoinTask extends RehashTask {
 
    private static final Log log = LogFactory.getLog(JoinTask.class);
-   ConsistentHash chOld;
-   ConsistentHash chNew;
-   Address self;
+   private final Address self;
 
    public JoinTask(RpcManager rpcManager, CommandsFactory commandsFactory, Configuration conf,
-                   TransactionLogger transactionLogger, DataContainer dataContainer, DistributionManagerImpl dmi) {
-      super(dmi, rpcManager, conf, transactionLogger, commandsFactory, dataContainer);
+            DataContainer dataContainer, DistributionManagerImpl dmi) {
+      super(dmi, rpcManager, conf, commandsFactory, dataContainer);
       this.dataContainer = dataContainer;
-      self = rpcManager.getTransport().getAddress();
+      this.self = rpcManager.getTransport().getAddress();
    }
 
    @SuppressWarnings("unchecked")
@@ -75,44 +73,14 @@ public class JoinTask extends RehashTask {
       long start = System.currentTimeMillis();
       boolean trace = log.isTraceEnabled();
       if (log.isDebugEnabled()) log.debug("Commencing");
+      TransactionLogger transactionLogger = dmi.getTransactionLogger();
       boolean unlocked = false;
+      ConsistentHash chOld;
+      ConsistentHash chNew;
       try {
          dmi.joinComplete = false;
-         // 1.  Get chOld from coord.
-         // this happens in a loop to ensure we receive the correct CH and not a "union".
-         // TODO make at least *some* of these configurable!
-         long minSleepTime = 500, maxSleepTime = 2000; // sleep time between retries
-         int maxWaitTime = (int) configuration.getRehashRpcTimeout() * 10; // after which we give up!
-         Random rand = new Random();
-         long giveupTime = System.currentTimeMillis() + maxWaitTime;
-         do {
-            if (trace) log.trace("Requesting old consistent hash from coordinator");
-            List<Response> resp;
-            List<Address> addresses;
-            try {
-               resp = rpcManager.invokeRemotely(coordinator(), cf.buildRehashControlCommand(JOIN_REQ, self),
-                                                            SYNCHRONOUS, configuration.getRehashRpcTimeout(), true);
-               addresses = parseResponses(resp);
-               if (log.isDebugEnabled()) log.debug("Retrieved old consistent hash address list {0}", addresses);
-            } catch (TimeoutException te) {
-               // timed out waiting for responses; retry!
-               resp = null;
-               addresses = null;
-               if (log.isDebugEnabled()) log.debug("Timed out waiting for responses.");
-            }
-
-            if (addresses == null) {
-               long time = rand.nextInt((int) (maxSleepTime - minSleepTime) / 10);
-               time = (time * 10) + minSleepTime;
-               if (trace) log.trace("Sleeping for {0}", Util.prettyPrintTime(time));
-               Thread.sleep(time); // sleep for a while and retry
-            } else {
-               chOld = createConsistentHash(configuration, addresses);
-            }
-         } while (chOld == null && System.currentTimeMillis() < giveupTime);
-
-         if (chOld == null)
-            throw new CacheException("Unable to retrieve old consistent hash from coordinator even after several attempts at sleeping and retrying!");
+         // 1.  Get chOld from coord.         
+         chOld = retrieveOldCH(trace);
 
          // 2.  new CH instance
          if (chOld.getCaches().contains(self))
@@ -133,9 +101,10 @@ public class JoinTask extends RehashTask {
 
             // 6.  pull state from everyone.
             Address myAddress = rpcManager.getTransport().getAddress();
-            RehashControlCommand cmd = cf.buildRehashControlCommand(PULL_STATE, myAddress, null, chNew);
+            
+            RehashControlCommand cmd = cf.buildRehashControlCommand(PULL_STATE_JOIN, myAddress, null, chOld, chNew,null);
             // TODO I should be able to process state chunks from different nodes simultaneously!!
-            List<Address> addressesWhoMaySendStuff = getAddressesWhoMaySendStuff(configuration.getNumOwners());
+            List<Address> addressesWhoMaySendStuff = getAddressesWhoMaySendStuff(chNew, configuration.getNumOwners());
             List<Response> resps = rpcManager.invokeRemotely(addressesWhoMaySendStuff, cmd, SYNCHRONOUS, configuration.getRehashRpcTimeout(), true);
 
             // 7.  Apply state
@@ -177,6 +146,53 @@ public class JoinTask extends RehashTask {
       }
    }
 
+    private ConsistentHash retrieveOldCH(boolean trace) throws InterruptedException, IllegalAccessException,
+                    InstantiationException, ClassNotFoundException {
+        
+        // this happens in a loop to ensure we receive the correct CH and not a "union".
+        // TODO make at least *some* of these configurable!
+        ConsistentHash result = null;
+        long minSleepTime = 500, maxSleepTime = 2000; // sleep time between retries
+        int maxWaitTime = (int) configuration.getRehashRpcTimeout() * 10; // after which we give up!
+        Random rand = new Random();
+        long giveupTime = System.currentTimeMillis() + maxWaitTime;
+        do {
+            if (trace)
+                log.trace("Requesting old consistent hash from coordinator");
+            List<Response> resp;
+            List<Address> addresses;
+            try {
+                resp = rpcManager.invokeRemotely(coordinator(), cf.buildRehashControlCommand(
+                                JOIN_REQ, self), SYNCHRONOUS, configuration.getRehashRpcTimeout(),
+                                true);
+                addresses = parseResponses(resp);
+                if (log.isDebugEnabled())
+                    log.debug("Retrieved old consistent hash address list {0}", addresses);
+            } catch (TimeoutException te) {
+                // timed out waiting for responses; retry!
+                resp = null;
+                addresses = null;
+                if (log.isDebugEnabled())
+                    log.debug("Timed out waiting for responses.");
+            }
+
+            if (addresses == null) {
+                long time = rand.nextInt((int) (maxSleepTime - minSleepTime) / 10);
+                time = (time * 10) + minSleepTime;
+                if (trace)
+                    log.trace("Sleeping for {0}", Util.prettyPrintTime(time));
+                Thread.sleep(time); // sleep for a while and retry
+            } else {
+                result = createConsistentHash(configuration, addresses);
+            }
+        } while (result == null && System.currentTimeMillis() < giveupTime);
+
+        if (result == null)
+            throw new CacheException(
+                            "Unable to retrieve old consistent hash from coordinator even after several attempts at sleeping and retrying!");
+        return result;
+    }
+
    @Override
    protected Log getLog() {
       return log;
@@ -193,9 +209,9 @@ public class JoinTask extends RehashTask {
     * @param replCount
     * @return
     */
-   List<Address> getAddressesWhoMaySendStuff(int replCount) {
+   List<Address> getAddressesWhoMaySendStuff(ConsistentHash ch, int replCount) {
       List<Address> l = new LinkedList<Address>();
-      List<Address> caches = chNew.getCaches();
+      List<Address> caches = ch.getCaches();
       int selfIdx = caches.indexOf(self);
       if (selfIdx >= replCount - 1) {
          l.addAll(caches.subList(selfIdx - replCount + 1, selfIdx));
