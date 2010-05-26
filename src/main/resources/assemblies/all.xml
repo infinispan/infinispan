@@ -248,7 +248,6 @@
                      <exclude>org.rhq.helpers:rhq-pluginAnnotations</exclude>
                      <exclude>org.infinispan:infinispan-core</exclude>
                      <exclude>org.infinispan:infinispan-server-rest</exclude>
-                     <exclude>org.infinispan:infinispan-ec2-demo</exclude>
                      <exclude>org.infinispan:infinispan-gridfs-webdav</exclude>
                   </excludes>
                   <useTransitiveDependencies>true</useTransitiveDependencies>
@@ -265,8 +264,8 @@
          <includeSubModules>false</includeSubModules>
          <includes>
             <include>org.infinispan:infinispan-server-rest</include>
-            <include>org.infinispan:infinispan-ec2-demo</include>
             <include>org.infinispan:infinispan-gridfs-webdav</include>
+            <include>org.infinispan:infinispan-ec2-demoui</include>
          </includes>
 
          <sources>
