@@ -1,5 +1,6 @@
 package org.infinispan.affinity;
 
+import org.infinispan.lifecycle.Lifecycle;
 import org.infinispan.remoting.transport.Address;
 
 import java.util.concurrent.Executor;
@@ -31,7 +32,7 @@ import java.util.concurrent.Executor;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public interface KeyAffinityService<K> {
+public interface KeyAffinityService<K> extends Lifecycle {
 
    /**
     * Returns a key that will be distributed on the cluster node identified by address.
