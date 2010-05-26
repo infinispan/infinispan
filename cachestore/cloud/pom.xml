@@ -15,7 +15,7 @@
 
    <properties>
       <test.src.dir>src/test/java</test.src.dir>
-      <version.jclouds>1.0-beta-5</version.jclouds>
+      <version.jclouds>1.0-beta-6</version.jclouds>
    </properties>
 
    <dependencies>
