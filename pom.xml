@@ -40,6 +40,7 @@
       <module>jopr-plugin</module>
       <module>demos/gui</module>
       <module>demos/ec2</module>
+      <module>demos/ec2-ui</module>
       <module>demos/directory</module>
       <module>demos/lucene-directory-demo</module>
       <module>demos/gridfs-webdav</module>
