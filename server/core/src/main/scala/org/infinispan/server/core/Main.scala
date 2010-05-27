@@ -30,7 +30,7 @@ object Main extends Logging {
    val HOST_DEFAULT = "127.0.0.1"
    val MASTER_THREADS_DEFAULT = 0
    val WORKER_THREADS_DEFAULT = 0
-   val IDLE_TIMEOUT_DEFAULT = 60
+   val IDLE_TIMEOUT_DEFAULT = -1
 
    /**
     * Server properties.  This object holds all of the required
@@ -204,7 +204,7 @@ object Main extends Logging {
       println("    -r, --protocol=                    Protocol to understand by the server. This is a mandatory option and you should choose one of these options")
       println("          [memcached|hotrod|websocket]")
       println
-      println("    -i, --idle_timeout=<num>           Idle read timeout, in seconds, used to detect stale connections (default: 60 seconds).")
+      println("    -i, --idle_timeout=<num>           Idle read timeout, in seconds, used to detect stale connections (default: -1).")
       println("                                       If no new messages have been read within this time, the server disconnects the channel.")
       println("                                       Passing -1 disables idle timeout.")
       println
