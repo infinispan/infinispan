@@ -76,20 +76,24 @@ public class AtomicHashMapConcurrencyTest extends AbstractInfinispanTest {
    }
 
    public void testReadAfterTxStarted() throws Exception {
-      AtomicMap<Integer, String> atomicMap = AtomicMapLookup.getAtomicMap(cache, KEY);
-      atomicMap.put(1, "existing");
-      tm.begin();
-      atomicMap.put(1, "newVal");
       OtherThread ot = new OtherThread();
-      ot.start();
-      ot.toExecute.put(Operation.READ);
-      Object response = ot.response.take();
-      assert response.equals("existing");
-      tm.commit();
-      assert atomicMap.get(1).equals("newVal");
-      ot.toExecute.put(Operation.READ);
-      response = ot.response.take();
-      assert response.equals("newVal");
+      try {
+         AtomicMap<Integer, String> atomicMap = AtomicMapLookup.getAtomicMap(cache, KEY);
+         atomicMap.put(1, "existing");
+         tm.begin();
+         atomicMap.put(1, "newVal");
+         ot.start();
+         ot.toExecute.put(Operation.READ);
+         Object response = ot.response.take();
+         assert response.equals("existing");
+         tm.commit();
+         assert atomicMap.get(1).equals("newVal");
+         ot.toExecute.put(Operation.READ);
+         response = ot.response.take();
+         assert response.equals("newVal");
+      } finally {
+         ot.interrupt();
+      }
    }
 
    public class OtherThread extends Thread {
