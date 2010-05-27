@@ -80,9 +80,6 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager) extends AbstractProtocol
    override def readKey(h: HotRodHeader, b: ChannelBuffer): CacheKey =
       h.decoder.readKey(b)
 
-   override def readKeys(h: HotRodHeader, b: ChannelBuffer): Array[CacheKey] =
-      h.decoder.readKeys(b)
-
    override def readParameters(h: HotRodHeader, b: ChannelBuffer): Option[RequestParameters] =
       h.decoder.readParameters(h, b)
 

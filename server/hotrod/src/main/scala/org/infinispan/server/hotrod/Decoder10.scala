@@ -47,8 +47,6 @@ class Decoder10(cacheManager: EmbeddedCacheManager) extends AbstractVersionedDec
 
    override def readKey(buffer: ChannelBuffer): CacheKey = new CacheKey(buffer.readRangedBytes)
 
-   override def readKeys(buffer: ChannelBuffer): Array[CacheKey] = Array(new CacheKey(buffer.readRangedBytes))
-
    override def readParameters(header: HotRodHeader, buffer: ChannelBuffer): Option[RequestParameters] = {
       header.op match {
          case RemoveRequest => None

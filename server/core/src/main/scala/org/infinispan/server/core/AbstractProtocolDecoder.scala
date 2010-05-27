@@ -134,19 +134,9 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue] extends Decoder {
          createNotExistResponse(header, params)
    }
 
-   private def get(header: SuitableHeader, buffer: ChannelBuffer, cache: Cache[K, V]): AnyRef = {
-      val keys = readKeys(header, buffer)
-      if (keys.length > 1) {
-         val map = new HashMap[K,V]()
-         for (k <- keys) {
-            val v = cache.get(k)
-            if (v != null)
-               map += (k -> v)
-         }
-         createMultiGetResponse(header, new immutable.HashMap ++ map)
-      } else {
-         createGetResponse(header, keys.head, cache.get(keys.head))
-      }
+   protected def get(header: SuitableHeader, buffer: ChannelBuffer, cache: Cache[K, V]): AnyRef = {
+      val key = readKey(header, buffer)
+      createGetResponse(header, key, cache.get(key))
    }
 
    override def exceptionCaught(ctx: ChannelHandlerContext, e: ExceptionEvent) {
@@ -168,8 +158,6 @@ abstract class AbstractProtocolDecoder[K, V <: CacheValue] extends Decoder {
    protected def getCache(h: SuitableHeader): Cache[K, V]
 
    protected def readKey(h: SuitableHeader, b: ChannelBuffer): K
-
-   protected def readKeys(h: SuitableHeader, b: ChannelBuffer): Array[K]
 
    protected def readParameters(h: SuitableHeader, b: ChannelBuffer): Option[SuitableParameters]
 

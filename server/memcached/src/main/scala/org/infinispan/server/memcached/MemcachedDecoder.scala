@@ -12,9 +12,10 @@ import org.infinispan.stats.Stats
 import org.infinispan.server.core.transport.ChannelBuffer
 import org.infinispan.server.core._
 import org.infinispan.{AdvancedCache, Version, CacheException, Cache}
-import collection.mutable.ListBuffer
 import org.infinispan.server.core.transport.ChannelBuffers._
 import org.infinispan.util.Util
+import collection.mutable.{HashMap, ListBuffer}
+import scala.collection.immutable
 
 /**
  * // TODO: Document this
@@ -49,9 +50,24 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
 
    override def readKey(h: RequestHeader, b: ChannelBuffer): String = readElement(b)
 
-   override def readKeys(h: RequestHeader, b: ChannelBuffer): Array[String] = {
+   private def readKeys(h: RequestHeader, b: ChannelBuffer): Array[String] = {
       val line = readLine(b)
       line.trim.split(" +")
+   }
+
+   override protected def get(h: RequestHeader, buffer: ChannelBuffer, cache: Cache[String, MemcachedValue]): AnyRef = {
+      val keys = readKeys(h, buffer)
+      if (keys.length > 1) {
+         val map = new HashMap[String, MemcachedValue]()
+         for (k <- keys) {
+            val v = cache.get(k)
+            if (v != null)
+               map += (k -> v)
+         }
+         createMultiGetResponse(h, new immutable.HashMap ++ map)
+      } else {
+         createGetResponse(h, keys.head, cache.get(keys.head))
+      }
    }
 
    override def readParameters(h: RequestHeader, b: ChannelBuffer): Option[MemcachedParameters] = {

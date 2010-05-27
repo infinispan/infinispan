@@ -17,8 +17,6 @@ abstract class AbstractVersionedDecoder {
 
    def readKey(buffer: ChannelBuffer): CacheKey
 
-   def readKeys(buffer: ChannelBuffer): Array[CacheKey]
-
    def readParameters(header: HotRodHeader, buffer: ChannelBuffer): Option[RequestParameters]
 
    def createValue(params: RequestParameters, nextVersion: Long): CacheValue
