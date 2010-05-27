@@ -20,8 +20,11 @@ import org.testng.annotations.Test;
 import javax.transaction.TransactionManager;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import java.util.concurrent.locks.LockSupport;
@@ -40,13 +43,13 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
    protected boolean l1CacheEnabled = true;
    protected boolean l1OnRehash = false;
    protected boolean performRehashing = false;
-   protected static final int NUM_OWNERS = 2;
+   protected int numOwners = 2;
 
    protected void createCacheManagers() throws Throwable {
       cacheName = "dist";
       configuration = getDefaultClusteredConfig(sync ? Configuration.CacheMode.DIST_SYNC : Configuration.CacheMode.DIST_ASYNC, tx);
       configuration.setRehashEnabled(performRehashing);
-      configuration.setNumOwners(NUM_OWNERS);
+      configuration.setNumOwners(numOwners);
       if (!testRetVals) {
          configuration.setUnsafeUnreliableReturnValues(true);
          // we also need to use repeatable read for tests to work when we dont have reliable return values, since the
@@ -101,6 +104,12 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
                LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
             }
          }
+      }
+
+      public static void waitForInitRehashToComplete(Collection<Cache> caches) {
+         Set<Cache> cachesSet = new HashSet<Cache>();
+         cachesSet.addAll(caches);
+         waitForInitRehashToComplete(cachesSet.toArray(new Cache[cachesSet.size()]));
       }
    }
 

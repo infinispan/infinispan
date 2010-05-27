@@ -4,7 +4,6 @@ import org.infinispan.Cache;
 import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.distribution.ConsistentHash;
 import org.infinispan.distribution.ConsistentHashHelper;
-import org.infinispan.manager.CacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.testng.annotations.Test;
@@ -58,7 +57,7 @@ public class WorkDuringJoinTest extends BaseDistFunctionalTest {
       // which key should me mapped to the joiner?
       MagicKey keyToTest = null;
       for (MagicKey k: keys) {
-         if (chNew.isKeyLocalToAddress(joinerAddress, k, NUM_OWNERS)) {
+         if (chNew.isKeyLocalToAddress(joinerAddress, k, numOwners)) {
             keyToTest = k;
             break;
          }

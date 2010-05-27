@@ -38,6 +38,7 @@ public interface KeyAffinityService<K> extends Lifecycle {
     * Returns a key that will be distributed on the cluster node identified by address.
     * @param address identifying the cluster node.
     * @return a key object
+    * @throws IllegalStateException if the service has not been started or it is shutdown
     */
    K getKeyForAddress(Address address);
 
@@ -45,6 +46,12 @@ public interface KeyAffinityService<K> extends Lifecycle {
     * Returns a key that will be distributed on the same node as the supplied key.
     * @param otherKey the key for which we need a collocation
     * @return a key object
+    * @throws IllegalStateException if the service has not been started or it is shutdown
     */
    K getCollocatedKey(K otherKey);
+
+   /**
+    * Checks weather or not the service is started.
+    */
+   public boolean isStarted();
 }

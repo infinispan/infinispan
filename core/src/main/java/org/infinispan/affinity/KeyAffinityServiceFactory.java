@@ -33,7 +33,8 @@ public class KeyAffinityServiceFactory {
     * generating keys for it.
     *
     * @param cache         the distributed cache for which this service runs
-    * @param ex            used for running async key generation process.
+    * @param ex            used for running async key generation process. On service shutdown, the executor won't be
+    *                      stopped; i.e. it's user responsibility manage it's lifecycle.
     * @param keyGenerator  allows one to control how the generated keys look like.
     * @param keyBufferSize the number of generated keys per {@link org.infinispan.remoting.transport.Address}.
     * @param start         weather to start the service or not
@@ -75,11 +76,11 @@ public class KeyAffinityServiceFactory {
    public static <K, V> KeyAffinityService newLocalKeyAffinityService(Cache<K, V> cache, KeyGenerator keyGenerator, Executor ex, int keyBufferSize, boolean start) {
       Address localAddress = cache.getAdvancedCache().getRpcManager().getTransport().getAddress();
       Collection<Address> forAddresses = Collections.singletonList(localAddress);
-      return newKeyAffinityService(cache,forAddresses, keyGenerator, ex, keyBufferSize, start);
+      return newKeyAffinityService(cache, forAddresses, keyGenerator, ex, keyBufferSize, start);
    }
 
    /**
-    * Same as {@link #newLocalKeyAffinityService(org.infinispan.Cache, KeyGenerator, java.util.concurrent.Executor, int)} with start == true.
+    * Same as {@link #newLocalKeyAffinityService(org.infinispan.Cache, KeyGenerator, java.util.concurrent.Executor, int, boolean)} with start == true.
     */
    public static <K, V> KeyAffinityService newLocalKeyAffinityService(Cache<K, V> cache, KeyGenerator keyGenerator, Executor ex, int keyBufferSize) {
       return newLocalKeyAffinityService(cache, keyGenerator, ex, keyBufferSize, true);
