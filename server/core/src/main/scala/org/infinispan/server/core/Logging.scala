@@ -14,15 +14,19 @@ trait Logging {
 
    // params.map(_.asInstanceOf[AnyRef]) => returns a Seq[AnyRef]
    // the ': _*' part tells the compiler to pass it as varargs
-   def info(msg: => String, params: Any*) = if (log.isInfoEnabled) log.info(msg, params.map(_.asInstanceOf[AnyRef]) : _*)
+   def info(msg: => String, params: Any*) = log.info(msg, params.map(_.asInstanceOf[AnyRef]) : _*)
 
 //   def debug(msg: => String) = log.debug(msg, null)
 
-   def debug(msg: => String, params: Any*) = if (log.isDebugEnabled) log.debug(msg, params.map(_.asInstanceOf[AnyRef]) : _*)
+   def isDebugEnabled = log.isDebugEnabled
+
+   def debug(msg: => String, params: Any*) = log.debug(msg, params.map(_.asInstanceOf[AnyRef]) : _*)
 
 //   def trace(msg: => String) = log.trace(msg, null)
 
-   def trace(msg: => String, params: Any*) = if (log.isTraceEnabled) log.trace(msg, params.map(_.asInstanceOf[AnyRef]) : _*)
+   def isTraceEnabled = log.isTraceEnabled
+
+   def trace(msg: => String, params: Any*) = log.trace(msg, params.map(_.asInstanceOf[AnyRef]) : _*)
 
    def warn(msg: => String, params: Any*) = log.warn(msg, params.map(_.asInstanceOf[AnyRef]) : _*)
 

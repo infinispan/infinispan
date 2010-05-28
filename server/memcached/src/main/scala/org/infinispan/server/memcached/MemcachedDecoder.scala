@@ -73,7 +73,7 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
    override def readParameters(h: RequestHeader, b: ChannelBuffer): Option[MemcachedParameters] = {
       val line = readLine(b)
       if (!line.isEmpty) {
-         trace("Operation parameters: {0}", line)
+         if (isTraceEnabled) trace("Operation parameters: {0}", line)
          val args = line.trim.split(" +")
          var index = 0
          h.op match {
@@ -436,7 +436,7 @@ private object RequestResolver extends Logging {
    )
 
    def toRequest(commandName: String): Option[Enumeration#Value] = {
-      trace("Operation: {0}", commandName)
+      if (isTraceEnabled) trace("Operation: {0}", commandName)
       val op = operations.get(commandName)
       op
    }

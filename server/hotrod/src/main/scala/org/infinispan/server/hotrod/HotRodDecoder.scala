@@ -26,6 +26,8 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager) extends AbstractProtocol
    private var isError = false
    private var joined = false
 
+   private val isTrace = isTraceEnabled
+
    override def readHeader(buffer: ChannelBuffer): HotRodHeader = {
       try {
          val magic = buffer.readUnsignedByte
@@ -33,7 +35,7 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager) extends AbstractProtocol
             if (!isError) {               
                throw new InvalidMagicIdException("Error reading magic byte or message id: " + magic)
             } else {
-               trace("Error happened previously, ignoring {0} byte until we find the magic number again", magic)
+               if (isTrace) trace("Error happened previously, ignoring {0} byte until we find the magic number again", magic)
                return null // Keep trying to read until we find magic
             }
          }
@@ -53,7 +55,7 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager) extends AbstractProtocol
             case _ => throw new UnknownVersionException("Unknown version:" + version)
          }
          val header = decoder.readHeader(buffer, messageId)
-         trace("Decoded header {0}", header)
+         if (isTrace) trace("Decoded header {0}", header)
          isError = false
          header
       } catch {

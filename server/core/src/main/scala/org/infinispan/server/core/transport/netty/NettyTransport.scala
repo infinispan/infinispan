@@ -33,21 +33,21 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
    
    private lazy val masterExecutor = {
       if (masterThreads == 0) {
-         debug("Configured unlimited threads for master thread pool")
+         if (isDebugEnabled) debug("Configured unlimited threads for master thread pool")
          Executors.newCachedThreadPool
       } else {
-         debug("Configured {0} threads for master thread pool", masterThreads)
+         if (isDebugEnabled) debug("Configured {0} threads for master thread pool", masterThreads)
          Executors.newFixedThreadPool(masterThreads)
       }
    }
 
    private lazy val workerExecutor = {
       if (workerThreads == 0) {
-         debug("Configured unlimited threads for worker thread pool")
+         if (isDebugEnabled) debug("Configured unlimited threads for worker thread pool")
          Executors.newCachedThreadPool
       }
       else {
-         debug("Configured {0} threads for worker thread pool", workerThreads)
+         if (isDebugEnabled) debug("Configured {0} threads for worker thread pool", workerThreads)
          Executors.newFixedThreadPool(masterThreads)
       }
    }
@@ -62,8 +62,9 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
                else if (proposedThreadName contains "client worker") "ClientWorker-"
                else "ClientMaster-"
             val name = threadNamePrefix + typeInFix + proposedThreadName.substring(index + 1, proposedThreadName.length)
-            trace("Thread name will be {0}, with current thread name being {1} and proposed name being '{2}'",
-               name, currentThread, proposedThreadName)
+            if (isTraceEnabled)
+               trace("Thread name will be {0}, with current thread name being {1} and proposed name being '{2}'",
+                  name, currentThread, proposedThreadName)
             name
          }
       })
@@ -97,7 +98,7 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
          }
       }
       pipeline.stop
-      debug("Channel group completely closed, release external resources");
+      if (isDebugEnabled) debug("Channel group completely closed, release external resources");
       factory.releaseExternalResources();
    }
 

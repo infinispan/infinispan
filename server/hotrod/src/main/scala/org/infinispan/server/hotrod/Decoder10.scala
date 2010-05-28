@@ -224,9 +224,9 @@ object RequestResolver extends Logging {
    def toRequest(streamOp: Short): Option[Enumeration#Value] = {
       val op = requests.get(streamOp)
       if (op == None)
-         trace("Operation code: {0} was unmatched", streamOp)
+         if (isTraceEnabled) trace("Operation code: {0} was unmatched", streamOp)
       else
-         trace("Operation code: {0} has been matched to {1}", streamOp, op)
+         if (isTraceEnabled) trace("Operation code: {0} has been matched to {1}", streamOp, op)
       op
    }
 
