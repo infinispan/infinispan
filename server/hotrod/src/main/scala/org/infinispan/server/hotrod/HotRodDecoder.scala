@@ -10,6 +10,7 @@ import org.infinispan.server.hotrod.ProtocolFlag._
 import org.infinispan.server.hotrod.OperationResponse._
 import java.nio.channels.ClosedChannelException
 import org.infinispan.{CacheException, Cache}
+import collection.mutable.HashMap
 
 /**
  * // TODO: Document this
@@ -25,8 +26,8 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager) extends AbstractProtocol
 
    private var isError = false
    private var joined = false
-
    private val isTrace = isTraceEnabled
+   private var decoders = new HashMap[Short, AbstractVersionedDecoder]()
 
    override def readHeader(buffer: ChannelBuffer): HotRodHeader = {
       try {
@@ -50,10 +51,7 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager) extends AbstractProtocol
       
       try {
          val version = buffer.readUnsignedByte
-         val decoder = version match {
-            case Version10 => new Decoder10(cacheManager)
-            case _ => throw new UnknownVersionException("Unknown version:" + version)
-         }
+         val decoder = getDecoder(version)
          val header = decoder.readHeader(buffer, messageId)
          if (isTrace) trace("Decoded header {0}", header)
          isError = false
@@ -63,6 +61,20 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager) extends AbstractProtocol
             isError = true
             throw new ServerException(new ErrorHeader(messageId), e)
          }
+      }
+   }
+
+   private def getDecoder(version: Short): AbstractVersionedDecoder = {
+      var option = decoders.get(version)
+      if (option == None) {
+         val decoder = version match {
+            case Version10 => new Decoder10(cacheManager)
+            case _ => throw new UnknownVersionException("Unknown version:" + version)
+         }
+         decoders += (version -> decoder)
+         decoder
+      } else {
+         option.get
       }
    }
 
