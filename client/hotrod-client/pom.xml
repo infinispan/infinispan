@@ -10,7 +10,7 @@
       <relativePath>../../parent/pom.xml</relativePath>
    </parent>
    <properties>
-      <version.netty>3.2.0.CR1</version.netty>
+      <version.netty>3.2.0.Final</version.netty>
       <version.scala>2.8.0.RC1</version.scala>
    </properties>
 
