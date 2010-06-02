@@ -3,7 +3,6 @@ package org.infinispan.server.hotrod.test
 import java.util.concurrent.atomic.AtomicInteger
 import java.lang.reflect.Method
 import org.infinispan.server.core.Logging
-import java.util.Arrays
 import org.infinispan.server.hotrod.OperationStatus._
 import org.testng.Assert._
 import org.infinispan.util.Util
@@ -11,6 +10,8 @@ import org.infinispan.server.hotrod._
 import org.infinispan.config.Configuration.CacheMode
 import org.infinispan.config.Configuration
 import org.infinispan.manager.EmbeddedCacheManager
+import org.infinispan.server.core.Main._
+import java.util.{Properties, Arrays}
 
 /**
  * // TODO: Document this
@@ -36,8 +37,19 @@ object HotRodTestingUtil extends Logging {
             cacheManager.defineConfiguration(TopologyCacheName, createTopologyCacheConfig)
          }
       }
-      server.start(host, port, manager, 0, 0, idleTimeout)
+      server.start(getProperties(host, port, idleTimeout), manager)
       server
+   }
+
+   private def getProperties(host: String, port: Int, idleTimeout: Int): Properties = {
+      val properties = new Properties
+      properties.setProperty(PROP_KEY_HOST, host)
+      properties.setProperty(PROP_KEY_PORT, port.toString)
+      properties.setProperty(PROP_KEY_MASTER_THREADS, "0")
+      properties.setProperty(PROP_KEY_WORKER_THREADS, "0")
+      properties.setProperty(PROP_KEY_IDLE_TIMEOUT, idleTimeout.toString)
+      properties.setProperty(PROP_KEY_TCP_NO_DELAY, "true")
+      properties
    }
 
    def startCrashingHotRodServer(manager: EmbeddedCacheManager, port: Int): HotRodServer = {
@@ -52,7 +64,7 @@ object HotRodTestingUtil extends Logging {
             // but has been evicted from JGroups cluster.
          }
       }
-      server.start(host, port, manager, 0, 0, 0)
+      server.start(getProperties(host, port, 0), manager)
       server
    }
 

@@ -40,6 +40,7 @@ public class NettyTransport extends AbstractTransport {
 
       // Set up the event pipeline factory.
       bootstrap.setPipelineFactory(new HotRodClientPipelaneFactory(decoder));
+      bootstrap.setOption("tcpNoDelay", getTransportFactory().isTcpNoDelay());
 
       // Start the connection attempt.
       ChannelFuture future = bootstrap.connect(serverAddress);

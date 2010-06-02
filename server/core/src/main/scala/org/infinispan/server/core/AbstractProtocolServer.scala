@@ -4,7 +4,9 @@ import java.net.InetSocketAddress
 import transport.netty.{EncoderAdapter, NettyTransport}
 import transport.Transport
 import org.infinispan.server.core.VersionGenerator._
-import org.infinispan.manager.{EmbeddedCacheManager, CacheManager}
+import org.infinispan.manager.EmbeddedCacheManager
+import org.infinispan.server.core.Main._
+import java.util.Properties
 
 /**
  * // TODO: Document this
@@ -19,12 +21,14 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
    private var transport: Transport = _
    private var cacheManager: EmbeddedCacheManager = _
 
-   override def start(host: String, port: Int, cacheManager: EmbeddedCacheManager, masterThreads: Int, workerThreads: Int, idleTimeout: Int) {
-      this.host = host
-      this.port = port
-      this.masterThreads = masterThreads
-      this.workerThreads = workerThreads
+   override def start(properties: Properties, cacheManager: EmbeddedCacheManager) {
+      this.host = properties.getProperty(PROP_KEY_HOST)
+      this.port = properties.getProperty(PROP_KEY_PORT).toInt
+      this.masterThreads = properties.getProperty(PROP_KEY_MASTER_THREADS).toInt
+      this.workerThreads = properties.getProperty(PROP_KEY_WORKER_THREADS).toInt
       this.cacheManager = cacheManager
+      val idleTimeout = properties.getProperty(PROP_KEY_IDLE_TIMEOUT).toInt
+      val tcpNoDelay = properties.getProperty(PROP_KEY_TCP_NO_DELAY).toBoolean
 
       // Register rank calculator before starting any cache so that we can capture all view changes
       cacheManager.addListener(getRankCalculatorListener)
@@ -33,7 +37,8 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
       val address =  new InetSocketAddress(host, port)
       val encoder = getEncoder
       val nettyEncoder = if (encoder != null) new EncoderAdapter(encoder) else null
-      transport = new NettyTransport(this, nettyEncoder, address, masterThreads, workerThreads, idleTimeout, threadNamePrefix)
+      transport = new NettyTransport(this, nettyEncoder, address, masterThreads, workerThreads, idleTimeout,
+         threadNamePrefix, tcpNoDelay)
       transport.start
    }
 

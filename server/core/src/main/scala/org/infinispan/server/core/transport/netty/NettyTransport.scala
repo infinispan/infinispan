@@ -18,7 +18,7 @@ import org.jboss.netty.util.{ThreadNameDeterminer, ThreadRenamingRunnable}
  */
 class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
                      address: SocketAddress, masterThreads: Int, workerThreads: Int,
-                     idleTimeout: Int, threadNamePrefix: String) extends Transport {
+                     idleTimeout: Int, threadNamePrefix: String, tcpNoDelay: Boolean) extends Transport {
    import NettyTransport._
 
    private val serverChannels = new DefaultChannelGroup(threadNamePrefix + "-Channels")
@@ -70,6 +70,7 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
       })
       val bootstrap = new ServerBootstrap(factory);
       bootstrap.setPipelineFactory(pipeline);
+      bootstrap.setOption("child.tcpNoDelay", tcpNoDelay);
       val ch = bootstrap.bind(address);
       serverChannels.add(ch);
    }

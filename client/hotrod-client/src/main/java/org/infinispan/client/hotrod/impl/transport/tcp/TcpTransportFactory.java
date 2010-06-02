@@ -36,6 +36,7 @@ public class TcpTransportFactory implements TransportFactory {
    private volatile RequestBalancingStrategy balancer;
    private volatile Collection<InetSocketAddress> servers;
    private volatile ConsistentHash consistentHash;
+   private volatile boolean tcpNoDelay;
    private final ConsistentHashFactory hashFactory = new ConsistentHashFactory();
 
    @Override
@@ -44,6 +45,8 @@ public class TcpTransportFactory implements TransportFactory {
       servers = staticConfiguredServers;
       String balancerClass = props.getProperty("request-balancing-strategy", RoundRobinBalancingStrategy.class.getName());
       balancer = (RequestBalancingStrategy) VHelper.newInstance(balancerClass);
+      tcpNoDelay = Boolean.valueOf(props.getProperty("tcp-no-delay", "true"));
+      if (log.isDebugEnabled()) log.debug("TCP no delay flag value is: {0}", tcpNoDelay);
       PropsKeyedObjectPoolFactory poolFactory = new PropsKeyedObjectPoolFactory(new TransportObjectFactory(this, topologyId), props);
       connectionPool = (GenericKeyedObjectPool) poolFactory.createPool();
       balancer.setServers(servers);
@@ -173,5 +176,9 @@ public class TcpTransportFactory implements TransportFactory {
 
    public ConsistentHash getConsistentHash() {
       return consistentHash;
+   }
+
+   public boolean isTcpNoDelay() {
+      return tcpNoDelay;
    }
 }

@@ -9,11 +9,11 @@ import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent
 import scala.collection.JavaConversions._
 import java.util.concurrent.TimeUnit._
-import java.util.Random
 import org.infinispan.util.Util
 import org.infinispan.{CacheException, Cache}
 import org.infinispan.remoting.transport.Address
-import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager
+import java.util.{Properties, Random};
 
 /**
  * // TODO: Document this
@@ -34,8 +34,8 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Logging {
 
    override def getDecoder: Decoder = new HotRodDecoder(getCacheManager)
 
-   override def start(host: String, port: Int, cacheManager: EmbeddedCacheManager, masterThreads: Int, workerThreads: Int, idleTimeout: Int) {
-      super.start(host, port, cacheManager, masterThreads, workerThreads, idleTimeout)
+   override def start(properties: Properties, cacheManager: EmbeddedCacheManager) {
+      super.start(properties, cacheManager)
       // Start defined caches to avoid issues with lazily started caches
       for (cacheName <- asIterator(cacheManager.getCacheNames.iterator))
          cacheManager.getCache(cacheName)
@@ -43,7 +43,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Logging {
       isClustered = cacheManager.getGlobalConfiguration.getTransportClass != null
       // If clustered, set up a cache for topology information
       if (isClustered)
-         addSelfToTopologyView(host, port, cacheManager)
+         addSelfToTopologyView(getHost, getPort, cacheManager)
    }
 
    private def addSelfToTopologyView(host: String, port: Int, cacheManager: EmbeddedCacheManager) {
