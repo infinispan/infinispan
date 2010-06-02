@@ -2,12 +2,13 @@ package org.infinispan.server.memcached.test
 
 import java.lang.reflect.Method
 import net.spy.memcached.{DefaultConnectionFactory, MemcachedClient}
-import java.util.Arrays
 import java.net.InetSocketAddress
 import java.util.concurrent.atomic.AtomicInteger
 import org.infinispan.server.core.transport.Decoder
 import org.infinispan.server.memcached.{MemcachedDecoder, MemcachedValue, MemcachedServer}
 import org.infinispan.manager.EmbeddedCacheManager
+import java.util.{Properties, Arrays}
+import org.infinispan.server.core.Main._
 
 /**
  * // TODO: Document this
@@ -37,8 +38,19 @@ trait MemcachedTestingUtil {
 
    def startMemcachedTextServer(cacheManager: EmbeddedCacheManager, port: Int): MemcachedServer = {
       val server = new MemcachedServer
-      server.start(host, port, cacheManager, 0, 0, 0)
+      server.start(getProperties(host, port), cacheManager)
       server
+   }
+
+   private def getProperties(host: String, port: Int): Properties = {
+      val properties = new Properties
+      properties.setProperty(PROP_KEY_HOST, host)
+      properties.setProperty(PROP_KEY_PORT, port.toString)
+      properties.setProperty(PROP_KEY_MASTER_THREADS, "0")
+      properties.setProperty(PROP_KEY_WORKER_THREADS, "0")
+      properties.setProperty(PROP_KEY_IDLE_TIMEOUT, "0")
+      properties.setProperty(PROP_KEY_TCP_NO_DELAY, "true")
+      properties
    }
 
    def startMemcachedTextServer(cacheManager: EmbeddedCacheManager, cacheName: String): MemcachedServer = {
@@ -52,7 +64,7 @@ trait MemcachedTestingUtil {
 
          override def startDefaultCache = getCacheManager.getCache(cacheName)
       }
-      server.start(host, port, cacheManager, 0, 0, 0)
+      server.start(getProperties(host, port), cacheManager)
       server
    }
    

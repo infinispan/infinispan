@@ -1,8 +1,8 @@
 package org.infinispan.server.core
 
 import scala.collection.JavaConversions._
-import collection.mutable.HashMap
 import scala.collection.mutable
+import scala.collection.immutable
 import org.infinispan.util.Util
 import java.io.IOException
 import java.security.{PrivilegedAction, AccessController}
@@ -10,6 +10,7 @@ import java.util.concurrent.{ThreadFactory, ExecutionException, Callable, Execut
 import gnu.getopt.{Getopt, LongOpt}
 import org.infinispan.Version
 import org.infinispan.manager.{CacheManager, DefaultCacheManager}
+import java.util.Properties
 
 /**
  * Main class for server startup.
@@ -26,23 +27,27 @@ object Main extends Logging {
    val PROP_KEY_CACHE_CONFIG = "infinispan.server.cache.config"
    val PROP_KEY_PROTOCOL = "infinispan.server.protocol"
    val PROP_KEY_IDLE_TIMEOUT = "infinispan.server.idle.timeout"
+   val PROP_KEY_TCP_NO_DELAY = "infinispan.server.tcp.no.delay"
    val PORT_DEFAULT = 11211
    val HOST_DEFAULT = "127.0.0.1"
-   val MASTER_THREADS_DEFAULT = 0
-   val WORKER_THREADS_DEFAULT = 0
-   val IDLE_TIMEOUT_DEFAULT = -1
+   val MASTER_THREADS_DEFAULT = "0"
+   val WORKER_THREADS_DEFAULT = "0"
+   val IDLE_TIMEOUT_DEFAULT = "-1"
+   val TCP_NO_DELAY_DEFAULT = "true"
 
    /**
     * Server properties.  This object holds all of the required
     * information to get the server up and running. Use System
     * properties for defaults.
     */
-   private val props: mutable.Map[String, String] = {
+   private val props: Properties = {
       // Set default properties
-      val properties = new HashMap[String, String]
-      val sysProps = System.getProperties
-      for (property <- asIterator(sysProps.iterator))
-         properties.put(property._1, property._2)
+      val properties = new Properties(System.getProperties)
+      properties.setProperty(PROP_KEY_HOST, HOST_DEFAULT)
+      properties.setProperty(PROP_KEY_MASTER_THREADS, MASTER_THREADS_DEFAULT)
+      properties.setProperty(PROP_KEY_WORKER_THREADS, WORKER_THREADS_DEFAULT)
+      properties.setProperty(PROP_KEY_IDLE_TIMEOUT, IDLE_TIMEOUT_DEFAULT)
+      properties.setProperty(PROP_KEY_TCP_NO_DELAY, TCP_NO_DELAY_DEFAULT)
       properties
    }
    
@@ -79,52 +84,65 @@ object Main extends Logging {
       // First process the command line to pickup custom props/settings
       processCommandLine(args)
 
-      val host = if (props.get(PROP_KEY_HOST) == None) HOST_DEFAULT else props.get(PROP_KEY_HOST).get
-      val masterThreads = if (props.get(PROP_KEY_MASTER_THREADS) == None) MASTER_THREADS_DEFAULT else props.get(PROP_KEY_MASTER_THREADS).get.toInt
+      val properties = new Properties
+
+      val masterThreads = props.getProperty(PROP_KEY_MASTER_THREADS).toInt
       if (masterThreads < 0)
          throw new IllegalArgumentException("Master threads can't be lower than 0: " + masterThreads)
-
-      val workerThreads = if (props.get(PROP_KEY_WORKER_THREADS) == None) WORKER_THREADS_DEFAULT else props.get(PROP_KEY_WORKER_THREADS).get.toInt
+      
+      val workerThreads = props.getProperty(PROP_KEY_WORKER_THREADS).toInt
       if (workerThreads < 0)
          throw new IllegalArgumentException("Worker threads can't be lower than 0: " + masterThreads)
 
-      val configFile = props.get(PROP_KEY_CACHE_CONFIG)
-      var protocol = props.get(PROP_KEY_PROTOCOL)
-      if (protocol == None) {
+      var protocol = props.getProperty(PROP_KEY_PROTOCOL)
+      if (protocol == null) {
          System.err.println("ERROR: Please indicate protocol to run with -r parameter")
          showAndExit
       }
-      val idleTimeout = if (props.get(PROP_KEY_IDLE_TIMEOUT) == None) IDLE_TIMEOUT_DEFAULT else props.get(PROP_KEY_IDLE_TIMEOUT).get.toInt
+      
+      val idleTimeout = props.getProperty(PROP_KEY_IDLE_TIMEOUT).toInt
       if (idleTimeout < -1)
          throw new IllegalArgumentException("Idle timeout can't be lower than -1: " + idleTimeout)
 
+      val tcpNoDelay = props.getProperty(PROP_KEY_TCP_NO_DELAY)
+      try {
+         tcpNoDelay.toBoolean
+      } catch {
+         case n: NumberFormatException => {
+            throw new IllegalArgumentException("TCP no delay flag switch must be a boolean: " + tcpNoDelay)
+         }
+      }
+
       // TODO: move class name and protocol number to a resource file under the corresponding project
-      val clazz = protocol.get match {
+      val clazz = protocol match {
          case "memcached" => "org.infinispan.server.memcached.MemcachedServer"
          case "hotrod" => "org.infinispan.server.hotrod.HotRodServer"
          case "websocket" => "org.infinispan.server.websocket.WebSocketServer"
       }
+      val server = Util.getInstance(clazz).asInstanceOf[ProtocolServer]
+
       val port = {
-         if (props.get(PROP_KEY_PORT) == None) {
-            protocol.get match {
+         if (props.getProperty(PROP_KEY_PORT) == null) {
+            protocol match {
                case "memcached" => 11211
                case "hotrod" => 11311
                case "websocket" => 8181
             }
          } else {
-            props.get(PROP_KEY_PORT).get.toInt
+            props.getProperty(PROP_KEY_PORT).toInt
          }
       }
+      props.setProperty(PROP_KEY_PORT, port.toString)
 
-      var server = Util.getInstance(clazz).asInstanceOf[ProtocolServer]
-      val cacheManager = if (configFile == None) new DefaultCacheManager else new DefaultCacheManager(configFile.get)
+      val configFile = props.getProperty(PROP_KEY_CACHE_CONFIG)
+      val cacheManager = if (configFile == null) new DefaultCacheManager else new DefaultCacheManager(configFile)
       addShutdownHook(new ShutdownHook(server, cacheManager))
-      server.start(host, port, cacheManager, masterThreads, workerThreads, idleTimeout)
+      server.start(props, cacheManager)
    }
 
    private def processCommandLine(args: Array[String]) {
       programName = System.getProperty("program.name", "startServer")
-      var sopts = "-:hD:Vp:l:m:t:c:r:i:"
+      var sopts = "-:hD:Vp:l:m:t:c:r:i:n:"
       var lopts = Array(
          new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h'),
          new LongOpt("version", LongOpt.NO_ARGUMENT, null, 'V'),
@@ -134,7 +152,8 @@ object Main extends Logging {
          new LongOpt("worker_threads", LongOpt.REQUIRED_ARGUMENT, null, 't'),
          new LongOpt("cache_config", LongOpt.REQUIRED_ARGUMENT, null, 'c'),
          new LongOpt("protocol", LongOpt.REQUIRED_ARGUMENT, null, 'r'),
-         new LongOpt("idle_timeout", LongOpt.REQUIRED_ARGUMENT, null, 'i'))
+         new LongOpt("idle_timeout", LongOpt.REQUIRED_ARGUMENT, null, 'i'),
+         new LongOpt("tcp_no_delay", LongOpt.REQUIRED_ARGUMENT, null, 'n'))
       var getopt = new Getopt(programName, args, sopts, lopts)
       var code: Int = 0
       while ((({code = getopt.getopt; code})) != -1) {
@@ -146,13 +165,14 @@ object Main extends Logging {
                Version.printFullVersionInformation
                System.exit(0)
             }
-            case 'p' => props.put(PROP_KEY_PORT, getopt.getOptarg)
-            case 'l' => props.put(PROP_KEY_HOST, getopt.getOptarg)
-            case 'm' => props.put(PROP_KEY_MASTER_THREADS, getopt.getOptarg)
-            case 't' => props.put(PROP_KEY_WORKER_THREADS, getopt.getOptarg)
-            case 'c' => props.put(PROP_KEY_CACHE_CONFIG, getopt.getOptarg)
-            case 'r' => props.put(PROP_KEY_PROTOCOL, getopt.getOptarg)
-            case 'i' => props.put(PROP_KEY_IDLE_TIMEOUT, getopt.getOptarg)
+            case 'p' => props.setProperty(PROP_KEY_PORT, getopt.getOptarg)
+            case 'l' => props.setProperty(PROP_KEY_HOST, getopt.getOptarg)
+            case 'm' => props.setProperty(PROP_KEY_MASTER_THREADS, getopt.getOptarg)
+            case 't' => props.setProperty(PROP_KEY_WORKER_THREADS, getopt.getOptarg)
+            case 'c' => props.setProperty(PROP_KEY_CACHE_CONFIG, getopt.getOptarg)
+            case 'r' => props.setProperty(PROP_KEY_PROTOCOL, getopt.getOptarg)
+            case 'i' => props.setProperty(PROP_KEY_IDLE_TIMEOUT, getopt.getOptarg)
+            case 'n' => props.setProperty(PROP_KEY_TCP_NO_DELAY, getopt.getOptarg)
             case 'D' => {
                val arg = getopt.getOptarg
                var name = ""
@@ -207,6 +227,8 @@ object Main extends Logging {
       println("    -i, --idle_timeout=<num>           Idle read timeout, in seconds, used to detect stale connections (default: -1).")
       println("                                       If no new messages have been read within this time, the server disconnects the channel.")
       println("                                       Passing -1 disables idle timeout.")
+      println
+      println("    -n, --tcp_no_delay=[true|false]   TCP no delay flag switch (default: true).")
       println
       println("    -D<name>[=<value>]                 Set a system property")
       println

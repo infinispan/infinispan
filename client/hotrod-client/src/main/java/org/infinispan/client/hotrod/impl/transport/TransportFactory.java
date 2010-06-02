@@ -30,4 +30,6 @@ public interface TransportFactory {
    void updateHashFunction(LinkedHashMap<InetSocketAddress,Integer> servers2HashCode, int numKeyOwners, short hashFunctionVersion, int hashSpace);
 
    Transport getTransport(byte[] key);
+
+   boolean isTcpNoDelay();
 }

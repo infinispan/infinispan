@@ -21,11 +21,14 @@ public class NettyTransportFactory implements TransportFactory {
 
    private InetSocketAddress serverAddr;
    private Collection<InetSocketAddress> serverAddresses;
+   private boolean tcpNoDelay;
 
    @Override
    public void start(Properties props, Collection<InetSocketAddress> staticConfiguredServers, AtomicInteger topologyId) {
       this.serverAddresses = staticConfiguredServers;
       serverAddr = serverAddresses.iterator().next();
+      tcpNoDelay = Boolean.valueOf(props.getProperty("tcp-no-delay", "true"));
+      if (log.isDebugEnabled()) log.debug("TCP no delay flag value is: {0}", tcpNoDelay);
    }
 
    @Override
@@ -57,5 +60,10 @@ public class NettyTransportFactory implements TransportFactory {
    @Override
    public Transport getTransport(byte[] key) {
       return getTransport();
+   }
+
+   @Override
+   public boolean isTcpNoDelay() {
+      return tcpNoDelay;
    }
 }

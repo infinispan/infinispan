@@ -9,6 +9,8 @@ import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -56,7 +58,15 @@ public class ServerRestartTest extends SingleCacheManagerTest {
 
       int port = hotrodServer.getPort();
       hotrodServer.stop();
-      hotrodServer.start("localhost", port, cacheManager, 2, 2, 20000);
+
+      Properties properties = new Properties();
+      properties.setProperty("infinispan.server.host", "localhost");
+      properties.setProperty("infinispan.server.port", Integer.toString(port));
+      properties.setProperty("infinispan.server.master.threads", "2");
+      properties.setProperty("infinispan.server.worker.threads", "2");
+      properties.setProperty("infinispan.server.idle.timeout", "20000");
+      properties.setProperty("infinispan.server.tcp.no.delay", "true");
+      hotrodServer.start(properties, cacheManager);
 
       Thread.sleep(3000);
 

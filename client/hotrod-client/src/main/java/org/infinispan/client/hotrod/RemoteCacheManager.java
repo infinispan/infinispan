@@ -58,11 +58,14 @@ import java.util.concurrent.atomic.AtomicInteger;
  *  servers according to this strategy. Defaults to {@link org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy}
  *  </li>
  *  <li>
- * force-return-value - weather ot not to implicitelly {@link org.infinispan.client.hotrod.Flag#FORCE_RETURN_VALUE} for all calls.
+ * force-return-value - weather or not to implicitly {@link org.infinispan.client.hotrod.Flag#FORCE_RETURN_VALUE} for all calls.
  * Defaults to false.
  * </li>
+ *  <li>
+ * tcp-no-delay - TCP no delay flag switch. Defaults to true.
+ * </li>
  * <br/>
- * <i>bellow is connection pooling config</i>:
+ * <i>below is connection pooling config</i>:
  * <p/>
  *  <li>maxActive - controls the maximum number of connections per server that are allocated (checked out to client threads, or idle in
  * the pool) at one time. When non-positive, there is no limit to the number of connections per server. When maxActive
