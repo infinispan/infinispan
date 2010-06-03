@@ -4,9 +4,9 @@ import org.infinispan.server.core.Logging
 import org.infinispan.server.core.transport.{ChannelBuffer, ChannelHandlerContext, Channel, Encoder}
 import OperationStatus._
 import org.infinispan.server.core.transport.ChannelBuffers._
-import org.infinispan.manager.CacheManager
 import org.infinispan.Cache
 import collection.mutable.ListBuffer
+import org.infinispan.manager.EmbeddedCacheManager
 
 /**
  * // TODO: Document this
@@ -14,17 +14,20 @@ import collection.mutable.ListBuffer
  * @since
  */
 
-class HotRodEncoder(cacheManager: CacheManager) extends Encoder {
+class HotRodEncoder(cacheManager: EmbeddedCacheManager) extends Encoder {
    import HotRodEncoder._
    import HotRodServer._
-   private lazy val topologyCache: Cache[String, TopologyView] = cacheManager.getCache(TopologyCacheName)   
+
+   private lazy val isClustered: Boolean = cacheManager.getGlobalConfiguration.getTransportClass != null
+   private lazy val topologyCache: Cache[String, TopologyView] =
+      if (isClustered) cacheManager.getCache(TopologyCacheName) else null
 
    override def encode(ctx: ChannelHandlerContext, channel: Channel, msg: AnyRef): AnyRef = {
       val isTrace = isTraceEnabled
 
       if (isTrace) trace("Encode msg {0}", msg)
       val buffer: ChannelBuffer = msg match { 
-         case r: Response => writeHeader(r, isTrace)
+         case r: Response => writeHeader(r, isTrace, getTopologyResponse(r))
       }
       msg match {
          case r: ResponseWithPrevious => {
@@ -53,15 +56,39 @@ class HotRodEncoder(cacheManager: CacheManager) extends Encoder {
       buffer
    }
 
-   private def writeHeader(r: Response, isTrace: Boolean): ChannelBuffer = {
+   private def getTopologyResponse(r: Response): AbstractTopologyResponse = {
+      // If clustered, set up a cache for topology information
+      if (isClustered) {
+         r.clientIntel match {
+            case 2 | 3 => {
+               val currentTopologyView = topologyCache.get("view")
+               if (r.topologyId != currentTopologyView.topologyId) {
+                  val cache = cacheManager.getCache(r.cacheName)
+                  val config = cache.getConfiguration
+                  if (r.clientIntel == 2 || !config.getCacheMode.isDistributed) {
+                     TopologyAwareResponse(TopologyView(currentTopologyView.topologyId, currentTopologyView.members))
+                  } else { // Must be 3 and distributed
+                     // TODO: Retrieve hash function when we have specified functions
+                     val hashSpace = cache.getAdvancedCache.getDistributionManager.getConsistentHash.getHashSpace
+                     HashDistAwareResponse(TopologyView(currentTopologyView.topologyId, currentTopologyView.members),
+                           config.getNumOwners, 1, hashSpace)
+                  }
+               } else null
+            }
+            case 1 => null
+         }
+      } else null
+   }
+
+   private def writeHeader(r: Response, isTrace: Boolean, topologyResp: AbstractTopologyResponse): ChannelBuffer = {
       val buffer = dynamicBuffer
       buffer.writeByte(Magic.byteValue)
       buffer.writeUnsignedLong(r.messageId)
       buffer.writeByte(r.operation.id.byteValue)
       buffer.writeByte(r.status.id.byteValue)
-      if (r.topologyResponse != None) {
+      if (topologyResp != null) {
          buffer.writeByte(1) // Topology changed
-         r.topologyResponse.get match {
+         topologyResp match {
             case t: TopologyAwareResponse => {
                if (r.clientIntel == 2)
                   writeTopologyHeader(t, buffer, isTrace)

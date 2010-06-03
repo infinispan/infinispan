@@ -86,7 +86,7 @@ object HotRodTestingUtil extends Logging {
       isSuccess
    }
 
-   def assertSuccess(resp: GetResponse, expected: Array[Byte]): Boolean = {
+   def assertSuccess(resp: TestGetResponse, expected: Array[Byte]): Boolean = {
       assertStatus(resp.status, Success)
       val isArrayEquals = Arrays.equals(expected, resp.data.get)
       assertTrue(isArrayEquals, "Retrieved data should have contained " + Util.printArray(expected, true)
@@ -94,19 +94,19 @@ object HotRodTestingUtil extends Logging {
       isArrayEquals
    }
 
-   def assertSuccess(resp: GetWithVersionResponse, expected: Array[Byte], expectedVersion: Int): Boolean = {
+   def assertSuccess(resp: TestGetWithVersionResponse, expected: Array[Byte], expectedVersion: Int): Boolean = {
       assertTrue(resp.version != expectedVersion)
       assertSuccess(resp, expected)
    }
 
-   def assertSuccess(resp: ResponseWithPrevious, expected: Array[Byte]): Boolean = {
+   def assertSuccess(resp: TestResponseWithPrevious, expected: Array[Byte]): Boolean = {
       assertStatus(resp.status, Success)
       val isSuccess = Arrays.equals(expected, resp.previous.get)
       assertTrue(isSuccess)
       isSuccess
    }
 
-   def assertKeyDoesNotExist(resp: GetResponse): Boolean = {
+   def assertKeyDoesNotExist(resp: TestGetResponse): Boolean = {
       val status = resp.status
       assertTrue(status == KeyDoesNotExist, "Status should have been 'KeyDoesNotExist' but instead was: " + status)
       assertEquals(resp.data, None)

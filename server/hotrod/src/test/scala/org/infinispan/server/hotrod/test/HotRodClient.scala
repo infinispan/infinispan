@@ -53,10 +53,10 @@ class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeout
    
    def stop = ch.disconnect
 
-   def put(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte]): Response =
+   def put(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte]): TestResponse =
       execute(0xA0, 0x01, defaultCacheName, k, lifespan, maxIdle, v, 0, 1 ,0)
 
-   def put(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte], clientIntelligence: Byte, topologyId: Int): Response =
+   def put(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte], clientIntelligence: Byte, topologyId: Int): TestResponse =
       execute(0xA0, 0x01, defaultCacheName, k, lifespan, maxIdle, v, 0, clientIntelligence, topologyId)
 
    def assertPut(m: Method) {
@@ -82,64 +82,64 @@ class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeout
       assertStatus(status, Success)
    }
 
-   def put(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte], flags: Int): Response =
+   def put(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte], flags: Int): TestResponse =
       execute(0xA0, 0x01, defaultCacheName, k, lifespan, maxIdle, v, 0, flags)
 
-   def putIfAbsent(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte]): Response =
+   def putIfAbsent(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte]): TestResponse =
       execute(0xA0, 0x05, defaultCacheName, k, lifespan, maxIdle, v, 0, 1 ,0)
 
-   def putIfAbsent(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte], flags: Int): Response =
+   def putIfAbsent(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte], flags: Int): TestResponse =
       execute(0xA0, 0x05, defaultCacheName, k, lifespan, maxIdle, v, 0, flags)
    
-   def replace(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte]): Response =
+   def replace(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte]): TestResponse =
       execute(0xA0, 0x07, defaultCacheName, k, lifespan, maxIdle, v, 0, 1 ,0)
 
-   def replace(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte], flags: Int): Response =
+   def replace(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte], flags: Int): TestResponse =
       execute(0xA0, 0x07, defaultCacheName, k, lifespan, maxIdle, v, 0, flags)   
 
-   def replaceIfUnmodified(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte], version: Long): Response =
+   def replaceIfUnmodified(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte], version: Long): TestResponse =
       execute(0xA0, 0x09, defaultCacheName, k, lifespan, maxIdle, v, version, 1 ,0)
 
-   def replaceIfUnmodified(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte], version: Long, flags: Int): Response =
+   def replaceIfUnmodified(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte], version: Long, flags: Int): TestResponse =
       execute(0xA0, 0x09, defaultCacheName, k, lifespan, maxIdle, v, version, flags)
 
-   def remove(k: Array[Byte]): Response =
+   def remove(k: Array[Byte]): TestResponse =
       execute(0xA0, 0x0B, defaultCacheName, k, 0, 0, null, 0, 1 ,0)
 
-   def remove(k: Array[Byte], flags: Int): Response =
+   def remove(k: Array[Byte], flags: Int): TestResponse =
       execute(0xA0, 0x0B, defaultCacheName, k, 0, 0, null, 0, flags)
 
-   def removeIfUnmodified(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte], version: Long): Response =
+   def removeIfUnmodified(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte], version: Long): TestResponse =
       execute(0xA0, 0x0D, defaultCacheName, k, lifespan, maxIdle, v, version, 1 ,0)
 
-   def removeIfUnmodified(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte], version: Long, flags: Int): Response =
+   def removeIfUnmodified(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte], version: Long, flags: Int): TestResponse =
       execute(0xA0, 0x0D, defaultCacheName, k, lifespan, maxIdle, v, version, flags)
 
    def execute(magic: Int, code: Byte, name: String, k: Array[Byte], lifespan: Int, maxIdle: Int,
-               v: Array[Byte], version: Long, clientIntelligence: Byte, topologyId: Int): Response = {
+               v: Array[Byte], version: Long, clientIntelligence: Byte, topologyId: Int): TestResponse = {
       val op = new Op(magic, code, name, k, lifespan, maxIdle, v, 0, version, clientIntelligence, topologyId)
       execute(op, op.id)
    }
 
    def executeExpectBadMagic(magic: Int, code: Byte, name: String, k: Array[Byte], lifespan: Int, maxIdle: Int,
-                           v: Array[Byte], version: Long): ErrorResponse = {
+                           v: Array[Byte], version: Long): TestErrorResponse = {
       val op = new Op(magic, code, name, k, lifespan, maxIdle, v, 0, version, 1, 0)
-      execute(op, 0).asInstanceOf[ErrorResponse]
+      execute(op, 0).asInstanceOf[TestErrorResponse]
    }
 
    def executePartial(magic: Int, code: Byte, name: String, k: Array[Byte], lifespan: Int, maxIdle: Int,
-                      v: Array[Byte], version: Long): ErrorResponse = {
+                      v: Array[Byte], version: Long): TestErrorResponse = {
       val op = new PartialOp(magic, code, name, k, lifespan, maxIdle, v, 0, version, 1, 0)
-      execute(op, op.id).asInstanceOf[ErrorResponse]
+      execute(op, op.id).asInstanceOf[TestErrorResponse]
    }
 
    def execute(magic: Int, code: Byte, name: String, k: Array[Byte], lifespan: Int, maxIdle: Int,
-               v: Array[Byte], version: Long, flags: Int): Response = {
+               v: Array[Byte], version: Long, flags: Int): TestResponse = {
       val op = new Op(magic, code, name, k, lifespan, maxIdle, v, flags, version, 1, 0)
       execute(op, op.id)
    }
 
-   private def execute(op: Op, expectedResponseMessageId: Long): Response = {
+   private def execute(op: Op, expectedResponseMessageId: Long): TestResponse = {
       writeOp(op)
       var handler = ch.getPipeline.getLast.asInstanceOf[ClientHandler]
       handler.getResponse(expectedResponseMessageId)
@@ -152,22 +152,22 @@ class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeout
       assertTrue(future.isSuccess)
    }
 
-   def get(k: Array[Byte], flags: Int): GetResponse = {
-      get(0x03, k, 0).asInstanceOf[GetResponse]
+   def get(k: Array[Byte], flags: Int): TestGetResponse = {
+      get(0x03, k, 0).asInstanceOf[TestGetResponse]
    }
 
-   def assertGet(m: Method): GetResponse = assertGet(m, 0)
+   def assertGet(m: Method): TestGetResponse = assertGet(m, 0)
 
-   def assertGet(m: Method, flags: Int): GetResponse = get(k(m), flags)
+   def assertGet(m: Method, flags: Int): TestGetResponse = get(k(m), flags)
 
-   def containsKey(k: Array[Byte], flags: Int): Response = {
+   def containsKey(k: Array[Byte], flags: Int): TestResponse = {
       get(0x0F, k, 0)
    }
 
-   def getWithVersion(k: Array[Byte], flags: Int): GetWithVersionResponse =
-      get(0x11, k, 0).asInstanceOf[GetWithVersionResponse]
+   def getWithVersion(k: Array[Byte], flags: Int): TestGetWithVersionResponse =
+      get(0x11, k, 0).asInstanceOf[TestGetWithVersionResponse]
 
-   private def get(code: Byte, k: Array[Byte], flags: Int): Response = {
+   private def get(code: Byte, k: Array[Byte], flags: Int): TestResponse = {
       val op = new Op(0xA0, code, defaultCacheName, k, 0, 0, null, flags, 0, 1, 0)
       val writeFuture = writeOp(op)
       // Get the handler instance to retrieve the answer.
@@ -179,20 +179,20 @@ class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeout
       }
    }
 
-   def clear: Response = execute(0xA0, 0x13, defaultCacheName, null, 0, 0, null, 0, 1 ,0)
+   def clear: TestResponse = execute(0xA0, 0x13, defaultCacheName, null, 0, 0, null, 0, 1 ,0)
 
    def stats: Map[String, String] = {
       val op = new StatsOp(0xA0, 0x15, defaultCacheName, 1, 0, null)
       val writeFuture = writeOp(op)
       // Get the handler instance to retrieve the answer.
       var handler = ch.getPipeline.getLast.asInstanceOf[ClientHandler]
-      val resp = handler.getResponse(op.id).asInstanceOf[StatsResponse]
+      val resp = handler.getResponse(op.id).asInstanceOf[TestStatsResponse]
       resp.stats
    }
 
-   def ping: Response = execute(0xA0, 0x17, defaultCacheName, null, 0, 0, null, 0, 1 ,0)
+   def ping: TestResponse = execute(0xA0, 0x17, defaultCacheName, null, 0, 0, null, 0, 1 ,0)
 
-   def ping(clientIntelligence: Byte, topologyId: Int): Response =
+   def ping(clientIntelligence: Byte, topologyId: Int): TestResponse =
       execute(0xA0, 0x17, defaultCacheName, null, 0, 0, null, 0, clientIntelligence, topologyId)
 
 }
@@ -307,50 +307,49 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[NoState] wi
             for (i <- 1 to size) {
                stats += (buf.readString -> buf.readString)
             }
-            new StatsResponse(id, op.cacheName, op.clientIntel, immutable.Map[String, String]() ++ stats, 
-               topologyChangeResponse)
+            new TestStatsResponse(id, op.cacheName, op.clientIntel, immutable.Map[String, String]() ++ stats, op.topologyId, topologyChangeResponse)
          }
          case PutResponse | PutIfAbsentResponse | ReplaceResponse | ReplaceIfUnmodifiedResponse
               | RemoveResponse | RemoveIfUnmodifiedResponse => {
             if (op.flags == 1) {
                val length = buf.readUnsignedInt
                if (length == 0) {
-                  new ResponseWithPrevious(id, op.cacheName, op.clientIntel, opCode, status,
-                     topologyChangeResponse, None)
+                  new TestResponseWithPrevious(id, op.cacheName, op.clientIntel, opCode, status,
+                     op.topologyId, None, topologyChangeResponse)
                } else {
                   val previous = new Array[Byte](length)
                   buf.readBytes(previous)
-                  new ResponseWithPrevious(id, op.cacheName, op.clientIntel, opCode, status,
-                     topologyChangeResponse, Some(previous))
+                  new TestResponseWithPrevious(id, op.cacheName, op.clientIntel, opCode, status,
+                     op.topologyId, Some(previous), topologyChangeResponse)
                }
-            } else new Response(id, op.cacheName, op.clientIntel, opCode, status, topologyChangeResponse)
+            } else new TestResponse(id, op.cacheName, op.clientIntel, opCode, status, op.topologyId, topologyChangeResponse)
          }
          case ContainsKeyResponse | ClearResponse | PingResponse =>
-            new Response(id, op.cacheName, op.clientIntel, opCode, status, topologyChangeResponse)
+            new TestResponse(id, op.cacheName, op.clientIntel, opCode, status, op.topologyId, topologyChangeResponse)
          case GetWithVersionResponse  => {
             if (status == Success) {
                val version = buf.readLong
                val data = Some(buf.readRangedBytes)
-               new GetWithVersionResponse(id, op.cacheName, op.clientIntel, opCode, status,
-                  topologyChangeResponse, data, version)
+               new TestGetWithVersionResponse(id, op.cacheName, op.clientIntel, opCode, status,
+                  op.topologyId, data, version, topologyChangeResponse)
             } else{
-               new GetWithVersionResponse(id, op.cacheName, op.clientIntel, opCode, status,
-                  topologyChangeResponse, None, 0)
+               new TestGetWithVersionResponse(id, op.cacheName, op.clientIntel, opCode, status,
+                  op.topologyId, None, 0, topologyChangeResponse)
             }
          }
          case GetResponse => {
             if (status == Success) {
                val data = Some(buf.readRangedBytes)
-               new GetResponse(id, op.cacheName, op.clientIntel, opCode, status, topologyChangeResponse, data)
+               new TestGetResponse(id, op.cacheName, op.clientIntel, opCode, status, op.topologyId, data, topologyChangeResponse)
             } else{
-               new GetResponse(id, op.cacheName, op.clientIntel, opCode, status, topologyChangeResponse, None)
+               new TestGetResponse(id, op.cacheName, op.clientIntel, opCode, status, op.topologyId, None, topologyChangeResponse)
             }
          }
          case ErrorResponse => {
             if (op == null)
-               new ErrorResponse(id, "", 0, status, topologyChangeResponse, buf.readString)
+               new TestErrorResponse(id, "", 0, status, 0, buf.readString, topologyChangeResponse)
             else
-               new ErrorResponse(id, op.cacheName, op.clientIntel, status, topologyChangeResponse, buf.readString)
+               new TestErrorResponse(id, op.cacheName, op.clientIntel, status, op.topologyId, buf.readString, topologyChangeResponse)
          }
 
       }
@@ -365,18 +364,18 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[NoState] wi
 
 private class ClientHandler(rspTimeoutSeconds: Int) extends SimpleChannelUpstreamHandler {
 
-   private val responses = new ConcurrentHashMap[Long, Response]
+   private val responses = new ConcurrentHashMap[Long, TestResponse]
 
    override def messageReceived(ctx: ChannelHandlerContext, e: MessageEvent) {
-      val resp = e.getMessage.asInstanceOf[Response]
+      val resp = e.getMessage.asInstanceOf[TestResponse]
       trace("Put {0} in responses", resp)
       responses.put(resp.messageId, resp)
    }
 
-   def getResponse(messageId: Long): Response = {
+   def getResponse(messageId: Long): TestResponse = {
       // TODO: Very very primitive way of waiting for a response. Convert to a Future
       var i = 0;
-      var v: Response = null;
+      var v: TestResponse = null;
       do {
          v = responses.get(messageId)
          if (v == null) {
@@ -441,3 +440,42 @@ class StatsOp(override val magic: Int,
               override val clientIntel: Byte,
               override val topologyId: Int,
               val statName: String) extends Op(magic, code, cacheName, null, 0, 0, null, 0, 0, clientIntel, topologyId)
+
+class TestResponse(override val messageId: Long, override val cacheName: String,
+                   override val clientIntel: Short, override val operation: OperationResponse,
+                   override val status: OperationStatus,
+                   override val topologyId: Int,
+                   val topologyResponse: Option[AbstractTopologyResponse])
+      extends Response(messageId, cacheName, clientIntel, operation, status, topologyId)
+
+class TestResponseWithPrevious(override val messageId: Long, override val cacheName: String,
+                           override val clientIntel: Short, override val operation: OperationResponse,
+                           override val status: OperationStatus,
+                           override val topologyId: Int, val previous: Option[Array[Byte]],
+                           override val topologyResponse: Option[AbstractTopologyResponse])
+      extends TestResponse(messageId, cacheName, clientIntel, operation, status, topologyId, topologyResponse)
+
+class TestGetResponse(override val messageId: Long, override val cacheName: String, override val clientIntel: Short,
+                  override val operation: OperationResponse, override val status: OperationStatus,
+                  override val topologyId: Int, val data: Option[Array[Byte]],
+                  override val topologyResponse: Option[AbstractTopologyResponse])
+      extends TestResponse(messageId, cacheName, clientIntel, operation, status, topologyId, topologyResponse)
+
+class TestGetWithVersionResponse(override val messageId: Long, override val cacheName: String,
+                             override val clientIntel: Short, override val operation: OperationResponse,
+                             override val status: OperationStatus,
+                             override val topologyId: Int,
+                             override val data: Option[Array[Byte]], val version: Long,
+                             override val topologyResponse: Option[AbstractTopologyResponse])
+      extends TestGetResponse(messageId, cacheName, clientIntel, operation, status, topologyId, data, topologyResponse)
+
+class TestErrorResponse(override val messageId: Long, override val cacheName: String,
+                    override val clientIntel: Short, override val status: OperationStatus,
+                    override val topologyId: Int, val msg: String,
+                    override val topologyResponse: Option[AbstractTopologyResponse])
+      extends TestResponse(messageId, cacheName, clientIntel, ErrorResponse, status, topologyId, topologyResponse)
+
+class TestStatsResponse(override val messageId: Long, override val cacheName: String,
+                        override val clientIntel: Short, val stats: Map[String, String],
+                        override val topologyId: Int, override val topologyResponse: Option[AbstractTopologyResponse])
+      extends TestResponse(messageId, cacheName, clientIntel, StatsResponse, Success, topologyId, topologyResponse)
