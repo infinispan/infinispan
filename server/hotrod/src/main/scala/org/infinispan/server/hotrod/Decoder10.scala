@@ -12,7 +12,6 @@ import collection.immutable
 import org.infinispan.util.concurrent.TimeoutException
 import java.io.IOException
 import org.infinispan.context.Flag.SKIP_REMOTE_LOOKUP
-import org.infinispan.manager.EmbeddedCacheManager
 
 /**
  * HotRod protocol decoder specific for specification version 1.0.
@@ -20,29 +19,38 @@ import org.infinispan.manager.EmbeddedCacheManager
  * @author Galder Zamarreño
  * @since 4.1
  */
-class Decoder10(cacheManager: EmbeddedCacheManager) extends AbstractVersionedDecoder {
-   import RequestResolver._
-   import ResponseResolver._
+object Decoder10 extends AbstractVersionedDecoder with Logging {
    import OperationResponse._
    import ProtocolFlag._
-   import HotRodServer._
    type SuitableHeader = HotRodHeader
-
-   private lazy val isClustered: Boolean = cacheManager.getGlobalConfiguration.getTransportClass != null
-   private lazy val topologyCache: Cache[String, TopologyView] =
-      if (isClustered) cacheManager.getCache(TopologyCacheName) else null
 
    override def readHeader(buffer: ChannelBuffer, messageId: Long): HotRodHeader = {
       val streamOp = buffer.readUnsignedByte
-      val op = toRequest(streamOp)
-      if (op == None) {
-         throw new UnknownOperationException("Unknown operation: " + streamOp);
+      val op = streamOp match {
+         case 0x01 => PutRequest
+         case 0x03 => GetRequest
+         case 0x05 => PutIfAbsentRequest
+         case 0x07 => ReplaceRequest
+         case 0x09 => ReplaceIfUnmodifiedRequest
+         case 0x0B => RemoveRequest
+         case 0x0D => RemoveIfUnmodifiedRequest
+         case 0x0F => ContainsKeyRequest
+         case 0x11 => GetWithVersionRequest
+         case 0x13 => ClearRequest
+         case 0x15 => StatsRequest
+         case 0x17 => PingRequest
+         case _ => throw new UnknownOperationException("Unknown operation: " + streamOp)
       }
+      if (isTraceEnabled) trace("Operation code: {0} has been matched to {1}", streamOp, op)
+      
       val cacheName = buffer.readString
-      val flag = ProtocolFlag.apply(buffer.readUnsignedInt)
+      val flag = buffer.readUnsignedInt match {
+         case 0 => NoFlag
+         case 1 => ForceReturnPreviousValue
+      }
       val clientIntelligence = buffer.readUnsignedByte
       val topologyId = buffer.readUnsignedInt
-      new HotRodHeader(op.get, messageId, cacheName, flag, clientIntelligence, topologyId, this)
+      new HotRodHeader(op, messageId, cacheName, flag, clientIntelligence, topologyId, this)
    }
 
    override def readKey(buffer: ChannelBuffer): CacheKey = new CacheKey(buffer.readRangedBytes)
@@ -83,26 +91,24 @@ class Decoder10(cacheManager: EmbeddedCacheManager) extends AbstractVersionedDec
       createResponse(header, toResponse(header.op), KeyDoesNotExist, null)
 
    private def createResponse(h: HotRodHeader, op: OperationResponse, st: OperationStatus, prev: CacheValue): AnyRef = {
-      val topologyResponse = getTopologyResponse(h)
       if (h.flag == ForceReturnPreviousValue)
-         new ResponseWithPrevious(h.messageId, h.cacheName, h.clientIntel, op, st, topologyResponse,
+         new ResponseWithPrevious(h.messageId, h.cacheName, h.clientIntel, op, st, h.topologyId,
             if (prev == null) None else Some(prev.data))
       else
-         new Response(h.messageId, h.cacheName, h.clientIntel, op, st, topologyResponse)
+         new Response(h.messageId, h.cacheName, h.clientIntel, op, st, h.topologyId)
    }
 
    override def createGetResponse(h: HotRodHeader, v: CacheValue, op: Enumeration#Value): AnyRef = {
-      val topologyResponse = getTopologyResponse(h)
       if (v != null && op == GetRequest)
-         new GetResponse(h.messageId, h.cacheName, h.clientIntel, GetResponse, Success, topologyResponse, Some(v.data))
+         new GetResponse(h.messageId, h.cacheName, h.clientIntel, GetResponse, Success, h.topologyId, Some(v.data))
       else if (v != null && op == GetWithVersionRequest)
          new GetWithVersionResponse(h.messageId, h.cacheName, h.clientIntel, GetWithVersionResponse, Success,
-            topologyResponse, Some(v.data), v.version)
+            h.topologyId, Some(v.data), v.version)
       else if (op == GetRequest)
-         new GetResponse(h.messageId, h.cacheName, h.clientIntel, GetResponse, KeyDoesNotExist, topologyResponse, None)
+         new GetResponse(h.messageId, h.cacheName, h.clientIntel, GetResponse, KeyDoesNotExist, h.topologyId, None)
       else
          new GetWithVersionResponse(h.messageId, h.cacheName, h.clientIntel, GetWithVersionResponse, KeyDoesNotExist,
-            topologyResponse, None, 0)
+            h.topologyId, None, 0)
    }
 
    override def handleCustomRequest(h: HotRodHeader, buffer: ChannelBuffer, cache: Cache[CacheKey, CacheValue]): AnyRef = {
@@ -126,23 +132,18 @@ class Decoder10(cacheManager: EmbeddedCacheManager) extends AbstractVersionedDec
             }
          }
          case ContainsKeyRequest => {
-            val topologyResponse = getTopologyResponse(h)
             val k = readKey(buffer)
             if (cache.containsKey(k))
-               new Response(h.messageId, h.cacheName, h.clientIntel, ContainsKeyResponse, Success, topologyResponse)
+               new Response(h.messageId, h.cacheName, h.clientIntel, ContainsKeyResponse, Success, h.topologyId)
             else
-               new Response(h.messageId, h.cacheName, h.clientIntel, ContainsKeyResponse, KeyDoesNotExist, topologyResponse)
+               new Response(h.messageId, h.cacheName, h.clientIntel, ContainsKeyResponse, KeyDoesNotExist, h.topologyId)
          }
          case ClearRequest => {
-            val topologyResponse = getTopologyResponse(h)
             // Get an optimised cache in case we can make the operation more efficient
             getOptimizedCache(h, cache).clear
-            new Response(h.messageId, h.cacheName, h.clientIntel, ClearResponse, Success, topologyResponse)
+            new Response(h.messageId, h.cacheName, h.clientIntel, ClearResponse, Success, h.topologyId)
          }
-         case PingRequest => {
-            val topologyResponse = getTopologyResponse(h)
-            new Response(h.messageId, h.cacheName, h.clientIntel, PingResponse, Success, topologyResponse)
-         }
+         case PingRequest => new Response(h.messageId, h.cacheName, h.clientIntel, PingResponse, Success, h.topologyId)
       }
    }
 
@@ -157,43 +158,18 @@ class Decoder10(cacheManager: EmbeddedCacheManager) extends AbstractVersionedDec
       stats += ("misses" -> cacheStats.getMisses.toString)
       stats += ("removeHits" -> cacheStats.getRemoveHits.toString)
       stats += ("removeMisses" -> cacheStats.getRemoveMisses.toString)
-      val topologyResponse = getTopologyResponse(h)
-      new StatsResponse(h.messageId, h.cacheName, h.clientIntel, immutable.Map[String, String]() ++ stats, topologyResponse)
+      new StatsResponse(h.messageId, h.cacheName, h.clientIntel, immutable.Map[String, String]() ++ stats, h.topologyId)
    }
 
    override def createErrorResponse(h: HotRodHeader, t: Throwable): AnyRef = {
       t match {
          case i: IOException =>
-            new ErrorResponse(h.messageId, h.cacheName, h.clientIntel, ParseError, getTopologyResponse(h), i.toString)
+            new ErrorResponse(h.messageId, h.cacheName, h.clientIntel, ParseError, h.topologyId, i.toString)
          case t: TimeoutException =>
-            new ErrorResponse(h.messageId, h.cacheName, h.clientIntel, OperationTimedOut, getTopologyResponse(h), t.toString)
+            new ErrorResponse(h.messageId, h.cacheName, h.clientIntel, OperationTimedOut, h.topologyId, t.toString)
          case t: Throwable =>
-            new ErrorResponse(h.messageId, h.cacheName, h.clientIntel, ServerError, getTopologyResponse(h), t.toString)
+            new ErrorResponse(h.messageId, h.cacheName, h.clientIntel, ServerError, h.topologyId, t.toString)
       }
-   }
-
-   private def getTopologyResponse(h: HotRodHeader): Option[AbstractTopologyResponse] = {
-      // If clustered, set up a cache for topology information
-      if (isClustered) {
-         h.clientIntel match {
-            case 2 | 3 => {
-               val currentTopologyView = topologyCache.get("view")
-               if (h.topologyId != currentTopologyView.topologyId) {
-                  val cache = cacheManager.getCache(h.cacheName)
-                  val config = cache.getConfiguration
-                  if (h.clientIntel == 2 || !config.getCacheMode.isDistributed) {
-                     Some(TopologyAwareResponse(TopologyView(currentTopologyView.topologyId, currentTopologyView.members)))
-                  } else { // Must be 3 and distributed
-                     // TODO: Retrieve hash function when we have specified functions
-                     val hashSpace = cache.getAdvancedCache.getDistributionManager.getConsistentHash.getHashSpace
-                     Some(HashDistAwareResponse(TopologyView(currentTopologyView.topologyId, currentTopologyView.members),
-                           config.getNumOwners, 1, hashSpace))
-                  }
-               } else None
-            }
-            case 1 => None
-         }
-      } else None
    }
 
    override def getOptimizedCache(h: HotRodHeader, c: Cache[CacheKey, CacheValue]): Cache[CacheKey, CacheValue] = {
@@ -203,31 +179,22 @@ class Decoder10(cacheManager: EmbeddedCacheManager) extends AbstractVersionedDec
          c
       }
    }
-}
 
-object RequestResolver extends Logging {
-   private val requests = Map[Int, Enumeration#Value](
-      0x01 -> PutRequest,
-      0x03 -> GetRequest,
-      0x05 -> PutIfAbsentRequest,
-      0x07 -> ReplaceRequest,
-      0x09 -> ReplaceIfUnmodifiedRequest,
-      0x0B -> RemoveRequest,
-      0x0D -> RemoveIfUnmodifiedRequest,
-      0x0F -> ContainsKeyRequest,
-      0x11 -> GetWithVersionRequest,
-      0x13 -> ClearRequest,
-      0x15 -> StatsRequest,
-      0x17 -> PingRequest 
-   )
-
-   def toRequest(streamOp: Short): Option[Enumeration#Value] = {
-      val op = requests.get(streamOp)
-      if (op == None)
-         if (isTraceEnabled) trace("Operation code: {0} was unmatched", streamOp)
-      else
-         if (isTraceEnabled) trace("Operation code: {0} has been matched to {1}", streamOp, op)
-      op
+   def toResponse(request: Enumeration#Value): OperationResponse = {
+      request match {
+         case PutRequest => PutResponse
+         case GetRequest => GetResponse
+         case PutIfAbsentRequest => PutIfAbsentResponse
+         case ReplaceRequest => ReplaceResponse
+         case ReplaceIfUnmodifiedRequest => ReplaceIfUnmodifiedResponse
+         case RemoveRequest => RemoveResponse
+         case RemoveIfUnmodifiedRequest => RemoveIfUnmodifiedResponse
+         case ContainsKeyRequest => ContainsKeyResponse
+         case GetWithVersionRequest => GetWithVersionResponse
+         case ClearRequest => ClearResponse
+         case StatsRequest => StatsResponse
+         case PingRequest => PingResponse
+      }
    }
 
 }
@@ -249,30 +216,8 @@ object OperationResponse extends Enumeration {
    val ErrorResponse = Value(0x50)
 }
 
-object ResponseResolver {
-   import OperationResponse._
-   private val responses = Map[Enumeration#Value, OperationResponse](
-      PutRequest -> PutResponse,
-      GetRequest -> GetResponse,
-      PutIfAbsentRequest -> PutIfAbsentResponse,
-      ReplaceRequest -> ReplaceResponse,
-      ReplaceIfUnmodifiedRequest -> ReplaceIfUnmodifiedResponse,
-      RemoveRequest -> RemoveResponse,
-      RemoveIfUnmodifiedRequest -> RemoveIfUnmodifiedResponse,
-      ContainsKeyRequest -> ContainsKeyResponse,
-      GetWithVersionRequest -> GetWithVersionResponse,
-      ClearRequest -> ClearResponse,
-      StatsRequest -> StatsResponse,
-      PingRequest -> PingResponse
-   )
-
-   def toResponse(request: Enumeration#Value): OperationResponse = {
-      responses.get(request).get
-   }
-}
-
 object ProtocolFlag extends Enumeration {
    type ProtocolFlag = Enumeration#Value
-   val NoFlag = Value(0)
-   val ForceReturnPreviousValue = Value(1)
+   val NoFlag = Value
+   val ForceReturnPreviousValue = Value
 }
