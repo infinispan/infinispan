@@ -28,6 +28,7 @@ import java.io.StringWriter;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -77,8 +78,12 @@ public class WebSocketServer extends AbstractProtocolServer {
    }
 
    @Override
-   public void start(String host, int port, EmbeddedCacheManager cacheManager, int masterThreads, int workerThreads,
-                     int idleTimeout) {
+   public void start(Properties properties, EmbeddedCacheManager cacheManager) {
+      String host = properties.getProperty("infinispan.server.host");
+      int port = Integer.parseInt(properties.getProperty("infinispan.server.port"));
+      int masterThreads = Integer.parseInt(properties.getProperty("infinispan.server.master.threads"));
+      int workerThreads = Integer.parseInt(properties.getProperty("infinispan.server.worker.threads"));
+
       InetSocketAddress address = new InetSocketAddress(host, port);
 
       Executor masterExecutor =
@@ -88,7 +93,7 @@ public class WebSocketServer extends AbstractProtocolServer {
       Executor workerExecutor =
          workerThreads == 0 ?
             Executors.newCachedThreadPool():
-            Executors.newFixedThreadPool(masterThreads);
+            Executors.newFixedThreadPool(workerThreads);
 
       NioServerSocketChannelFactory factory =
          workerThreads == 0 ?
