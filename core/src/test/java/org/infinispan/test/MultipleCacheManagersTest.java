@@ -202,6 +202,13 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    }
 
    /**
+    * Returns the default cache from that manager.
+    */
+   protected Cache cache(int index) {
+      return manager(index).getCache();
+   }
+
+   /**
     * Create the cache managers you need for your test.  Note that the cache managers you create *must* be created using
     * {@link #addClusterEnabledCacheManager()}
     */
