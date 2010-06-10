@@ -251,7 +251,7 @@ object Main extends Logging {
       println
       println("    -s, --send_buf_size=<num>          Send buffer size (default: as defined by the OS).")
       println
-      println("    -e, --recv_buf_size=<>             Receive buffer size (default: as defined by the OS).")
+      println("    -e, --recv_buf_size=<num>          Receive buffer size (default: as defined by the OS).")
       println
       println("    -D<name>[=<value>]                 Set a system property")
       println
