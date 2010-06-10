@@ -82,7 +82,11 @@ public abstract class AbstractTransport implements Transport {
 
    @Override
    public void writeString(String string) {
-      writeArray(string.getBytes(CHARSET));
+      if (!string.isEmpty()) {
+         writeArray(string.getBytes(CHARSET));
+      } else {
+         writeVInt(0);         
+      }
    }
 
    @Override

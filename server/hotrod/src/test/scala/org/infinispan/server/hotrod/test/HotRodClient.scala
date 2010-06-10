@@ -228,7 +228,11 @@ private class Encoder extends OneToOneEncoder {
             buffer.writeUnsignedLong(op.id) // message id
             buffer.writeByte(10) // version
             buffer.writeByte(op.code) // opcode
-            buffer.writeRangedBytes(op.cacheName.getBytes()) // cache name length + cache name
+            if (!op.cacheName.isEmpty) {
+               buffer.writeRangedBytes(op.cacheName.getBytes()) // cache name length + cache name
+            } else {
+               buffer.writeUnsignedInt(0) // Zero length
+            }
             buffer.writeUnsignedInt(op.flags) // flags
             buffer.writeByte(op.clientIntel) // client intelligence
             buffer.writeUnsignedInt(op.topologyId) // topology id
