@@ -49,7 +49,7 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
    }
 
    def testPutOnDefaultCache(m: Method) {
-      val status = client.execute(0xA0, 0x01, DefaultCacheManager.DEFAULT_CACHE_NAME, k(m), 0, 0, v(m), 0, 1, 0).status
+      val status = client.execute(0xA0, 0x01, "", k(m), 0, 0, v(m), 0, 1, 0).status
       assertStatus(status, Success)
       val cache = cacheManager.getCache[ByteArrayKey, CacheValue]
       val value = cache.get(new ByteArrayKey(k(m)))

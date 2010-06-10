@@ -21,16 +21,29 @@ class ChannelBufferAdapter(buffer: NettyChannelBuffer) extends ChannelBuffer {
    override def readerIndex: Int = readerIndex
    override def readBytes(dst: Array[Byte]) = buffer.readBytes(dst) 
    override def readRangedBytes: Array[Byte] = {
-      val array = new Array[Byte](readUnsignedInt)
-      readBytes(array)
-      array;
+      val length = readUnsignedInt
+      if (length > 0) {
+         val array = new Array[Byte](length)
+         readBytes(array)
+         array;
+      } else {
+         Array[Byte]()
+      }
    }
    override def readableBytes = buffer.writerIndex - buffer.readerIndex
 
    /**
     * Reads length of String and then returns an UTF-8 formatted String of such length.
+    * If the length is 0, an empty String is returned.
     */
-   override def readString: String = new String(readRangedBytes, "UTF8")
+   override def readString: String = {
+      val bytes = readRangedBytes
+      if (!bytes.isEmpty) {
+         new String(bytes, "UTF8")
+      } else {
+         ""
+      }
+   }
    override def readLong: Long = buffer.readLong
    override def readInt: Int = buffer.readInt
    override def writeByte(value: Byte) = buffer.writeByte(value)

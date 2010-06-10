@@ -286,7 +286,7 @@ public class RemoteCacheManager implements CacheManager {
    }
 
    public <K, V> RemoteCache<K, V> getCache(boolean forceReturnValue) {
-      return createRemoteCache(DefaultCacheManager.DEFAULT_CACHE_NAME, forceReturnValue);
+      return createRemoteCache("", forceReturnValue);
    }
 
    @Override

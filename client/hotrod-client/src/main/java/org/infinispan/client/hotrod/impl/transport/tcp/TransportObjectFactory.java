@@ -45,7 +45,7 @@ public class TransportObjectFactory extends BaseKeyedPoolableObjectFactory {
          if (log.isTraceEnabled()) {
             log.trace("About to validate(ping) connection to server " + key + ". TcpTransport is " + transport);
          }
-         long messageId = HotRodOperationsHelper.writeHeader(transport, HotRodConstants.PING_REQUEST, DefaultCacheManager.DEFAULT_CACHE_NAME, topologyId);
+         long messageId = HotRodOperationsHelper.writeHeader(transport, HotRodConstants.PING_REQUEST, "", topologyId);
          short respStatus = HotRodOperationsHelper.readHeaderAndValidate(transport, messageId, HotRodConstants.PING_RESPONSE, topologyId);
          if (respStatus == HotRodConstants.NO_ERROR_STATUS) {
             if (log.isTraceEnabled())

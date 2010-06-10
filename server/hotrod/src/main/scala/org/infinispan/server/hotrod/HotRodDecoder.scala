@@ -72,10 +72,10 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager) extends AbstractProtocol
          throw new CacheException("Remote requests are not allowed to topology cache. Do no send remote requests to cache "
                + TopologyCacheName)
 
-      if (cacheName != DefaultCacheManager.DEFAULT_CACHE_NAME && !cacheManager.getCacheNames.contains(cacheName))
+      if (!cacheName.isEmpty && !cacheManager.getCacheNames.contains(cacheName))
          throw new CacheNotFoundException("Cache with name '" + cacheName + "' not found amongst the configured caches")
 
-      if (cacheName == DefaultCacheManager.DEFAULT_CACHE_NAME) cacheManager.getCache[ByteArrayKey, CacheValue]
+      if (cacheName.isEmpty) cacheManager.getCache[ByteArrayKey, CacheValue]
       else cacheManager.getCache(cacheName)
    }
 
