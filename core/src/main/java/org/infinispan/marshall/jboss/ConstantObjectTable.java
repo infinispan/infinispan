@@ -74,6 +74,7 @@ import org.infinispan.remoting.responses.UnsureResponse;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.transaction.xa.DeadlockDetectingGlobalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.ByteArrayKey;
 import org.infinispan.util.FastCopyHashMap;
 import org.infinispan.util.ReflectionUtil;
 import org.infinispan.util.Util;
@@ -171,9 +172,10 @@ public class ConstantObjectTable implements ObjectTable {
 
       MARSHALLABLES.add("org.infinispan.server.core.CacheValue");
       MARSHALLABLES.add("org.infinispan.server.memcached.MemcachedValue");
-      MARSHALLABLES.add("org.infinispan.server.hotrod.CacheKey");
+      MARSHALLABLES.add(ByteArrayKey.class.getName());
       MARSHALLABLES.add("org.infinispan.server.hotrod.TopologyAddress");
       MARSHALLABLES.add("org.infinispan.server.hotrod.TopologyView");
+
    }
 
    /**

@@ -1,5 +1,7 @@
 package org.infinispan.util.hash;
 
+import org.infinispan.util.ByteArrayKey;
+
 import java.util.Random;
 
 /**
@@ -88,6 +90,8 @@ public class MurmurHash2 {
          return hash((byte[]) o);
       else if (o instanceof String)
          return hash(((String) o).getBytes());
+      else if (o instanceof ByteArrayKey)
+         return hash(((ByteArrayKey) o).getData());
       else
          return hash(o.hashCode());
    }

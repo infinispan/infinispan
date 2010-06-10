@@ -9,6 +9,7 @@ import org.testng.annotations.AfterClass
 import org.jboss.netty.channel.ChannelFuture
 import org.infinispan.test.fwk.TestCacheManagerFactory
 import org.infinispan.manager.EmbeddedCacheManager
+import org.infinispan.util.ByteArrayKey
 
 /**
  * // TODO: Document this
@@ -19,13 +20,13 @@ abstract class HotRodSingleNodeTest extends SingleCacheManagerTest {
    val cacheName = "HotRodCache"
    private var hotRodServer: HotRodServer = _
    private var hotRodClient: HotRodClient = _
-   private var advancedCache: AdvancedCache[CacheKey, CacheValue] = _
+   private var advancedCache: AdvancedCache[ByteArrayKey, CacheValue] = _
    private var hotRodJmxDomain = getClass.getSimpleName
    
    override def createCacheManager: EmbeddedCacheManager = {
       val cacheManager = createTestCacheManager
       cacheManager.defineConfiguration(cacheName, cacheManager.getDefaultConfiguration)
-      advancedCache = cacheManager.getCache[CacheKey, CacheValue](cacheName).getAdvancedCache
+      advancedCache = cacheManager.getCache[ByteArrayKey, CacheValue](cacheName).getAdvancedCache
       hotRodServer = createStartHotRodServer(cacheManager)
       hotRodClient = connectClient
       cacheManager

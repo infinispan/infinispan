@@ -5,6 +5,7 @@ import java.util.Arrays
 import org.infinispan.marshall.Marshallable
 import java.io.{ObjectInput, ObjectOutput}
 import org.infinispan.server.core.Logging
+import org.infinispan.util.hash.MurmurHash2
 
 /**
  * // TODO: Document this
@@ -26,6 +27,7 @@ final class CacheKey(val data: Array[Byte]) {
 
    override def hashCode: Int = {
       41 + Arrays.hashCode(data)
+//      MurmurHash2.hash(data)
    }
 
    override def toString = {

@@ -5,6 +5,7 @@ import org.infinispan.server.core.CacheValue
 import org.infinispan.server.core.transport.{ChannelBuffer}
 import org.infinispan.Cache
 import org.infinispan.stats.Stats
+import org.infinispan.util.ByteArrayKey
 
 /**
  * // TODO: Document this
@@ -15,7 +16,7 @@ abstract class AbstractVersionedDecoder {
 
    def readHeader(buffer: ChannelBuffer, messageId: Long): HotRodHeader
 
-   def readKey(buffer: ChannelBuffer): CacheKey
+   def readKey(buffer: ChannelBuffer): ByteArrayKey
 
    def readParameters(header: HotRodHeader, buffer: ChannelBuffer): Option[RequestParameters]
 
@@ -29,11 +30,11 @@ abstract class AbstractVersionedDecoder {
 
    def createGetResponse(header: HotRodHeader, v: CacheValue, op: Enumeration#Value): AnyRef
 
-   def handleCustomRequest(header: HotRodHeader, buffer: ChannelBuffer, cache: Cache[CacheKey, CacheValue]): AnyRef
+   def handleCustomRequest(header: HotRodHeader, buffer: ChannelBuffer, cache: Cache[ByteArrayKey, CacheValue]): AnyRef
 
    def createStatsResponse(header: HotRodHeader, stats: Stats): AnyRef
 
    def createErrorResponse(header: HotRodHeader, t: Throwable): AnyRef
 
-   def getOptimizedCache(h: HotRodHeader, c: Cache[CacheKey, CacheValue]): Cache[CacheKey, CacheValue]
+   def getOptimizedCache(h: HotRodHeader, c: Cache[ByteArrayKey, CacheValue]): Cache[ByteArrayKey, CacheValue]
 }

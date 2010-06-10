@@ -12,6 +12,7 @@ import collection.immutable
 import org.infinispan.util.concurrent.TimeoutException
 import java.io.IOException
 import org.infinispan.context.Flag.SKIP_REMOTE_LOOKUP
+import org.infinispan.util.ByteArrayKey
 
 /**
  * HotRod protocol decoder specific for specification version 1.0.
@@ -53,7 +54,7 @@ object Decoder10 extends AbstractVersionedDecoder with Logging {
       new HotRodHeader(op, messageId, cacheName, flag, clientIntelligence, topologyId, this)
    }
 
-   override def readKey(buffer: ChannelBuffer): CacheKey = new CacheKey(buffer.readRangedBytes)
+   override def readKey(buffer: ChannelBuffer): ByteArrayKey = new ByteArrayKey(buffer.readRangedBytes)
 
    override def readParameters(header: HotRodHeader, buffer: ChannelBuffer): Option[RequestParameters] = {
       header.op match {
@@ -111,7 +112,7 @@ object Decoder10 extends AbstractVersionedDecoder with Logging {
             h.topologyId, None, 0)
    }
 
-   override def handleCustomRequest(h: HotRodHeader, buffer: ChannelBuffer, cache: Cache[CacheKey, CacheValue]): AnyRef = {
+   override def handleCustomRequest(h: HotRodHeader, buffer: ChannelBuffer, cache: Cache[ByteArrayKey, CacheValue]): AnyRef = {
       h.op match {
          case RemoveIfUnmodifiedRequest => {
             val k = readKey(buffer)
@@ -172,7 +173,7 @@ object Decoder10 extends AbstractVersionedDecoder with Logging {
       }
    }
 
-   override def getOptimizedCache(h: HotRodHeader, c: Cache[CacheKey, CacheValue]): Cache[CacheKey, CacheValue] = {
+   override def getOptimizedCache(h: HotRodHeader, c: Cache[ByteArrayKey, CacheValue]): Cache[ByteArrayKey, CacheValue] = {
       if (c.getConfiguration.getCacheMode.isDistributed && h.flag == ForceReturnPreviousValue) {
          c.getAdvancedCache.withFlags(SKIP_REMOTE_LOOKUP)
       } else {
