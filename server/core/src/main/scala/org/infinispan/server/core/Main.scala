@@ -22,18 +22,22 @@ object Main extends Logging {
    
    val PROP_KEY_PORT = "infinispan.server.port"
    val PROP_KEY_HOST = "infinispan.server.host"
-   val PROP_KEY_MASTER_THREADS = "infinispan.server.master.threads"
-   val PROP_KEY_WORKER_THREADS = "infinispan.server.worker.threads"
-   val PROP_KEY_CACHE_CONFIG = "infinispan.server.cache.config"
+   val PROP_KEY_MASTER_THREADS = "infinispan.server.master_threads"
+   val PROP_KEY_WORKER_THREADS = "infinispan.server.worker_threads"
+   val PROP_KEY_CACHE_CONFIG = "infinispan.server.cache_config"
    val PROP_KEY_PROTOCOL = "infinispan.server.protocol"
-   val PROP_KEY_IDLE_TIMEOUT = "infinispan.server.idle.timeout"
-   val PROP_KEY_TCP_NO_DELAY = "infinispan.server.tcp.no.delay"
+   val PROP_KEY_IDLE_TIMEOUT = "infinispan.server.idle_timeout"
+   val PROP_KEY_TCP_NO_DELAY = "infinispan.server.tcp_no_delay"
+   val PROP_KEY_SEND_BUF_SIZE = "infinispan.server.send_buf_size"
+   val PROP_KEY_RECV_BUF_SIZE = "infinispan.server.recv_buf_size"
    val PORT_DEFAULT = 11211
    val HOST_DEFAULT = "127.0.0.1"
    val MASTER_THREADS_DEFAULT = "0"
    val WORKER_THREADS_DEFAULT = "0"
    val IDLE_TIMEOUT_DEFAULT = "-1"
    val TCP_NO_DELAY_DEFAULT = "true"
+   val SEND_BUF_SIZE_DEFAULT = "0"
+   val RECV_BUF_SIZE_DEFAULT = "0"
 
    /**
     * Server properties.  This object holds all of the required
@@ -48,6 +52,8 @@ object Main extends Logging {
       properties.setProperty(PROP_KEY_WORKER_THREADS, WORKER_THREADS_DEFAULT)
       properties.setProperty(PROP_KEY_IDLE_TIMEOUT, IDLE_TIMEOUT_DEFAULT)
       properties.setProperty(PROP_KEY_TCP_NO_DELAY, TCP_NO_DELAY_DEFAULT)
+      properties.setProperty(PROP_KEY_SEND_BUF_SIZE, SEND_BUF_SIZE_DEFAULT)
+      properties.setProperty(PROP_KEY_RECV_BUF_SIZE, RECV_BUF_SIZE_DEFAULT)
       properties
    }
    
@@ -113,6 +119,16 @@ object Main extends Logging {
          }
       }
 
+      val sendBufSize = props.getProperty(PROP_KEY_SEND_BUF_SIZE).toInt
+      if (sendBufSize < 0) {
+         throw new IllegalArgumentException("Send buffer size can't be lower than 0: " + sendBufSize)
+      }
+
+      val recvBufSize = props.getProperty(PROP_KEY_SEND_BUF_SIZE).toInt
+      if (recvBufSize < 0) {
+         throw new IllegalArgumentException("Send buffer size can't be lower than 0: " + sendBufSize)
+      }
+
       // TODO: move class name and protocol number to a resource file under the corresponding project
       val clazz = protocol match {
          case "memcached" => "org.infinispan.server.memcached.MemcachedServer"
@@ -142,7 +158,7 @@ object Main extends Logging {
 
    private def processCommandLine(args: Array[String]) {
       programName = System.getProperty("program.name", "startServer")
-      var sopts = "-:hD:Vp:l:m:t:c:r:i:n:"
+      var sopts = "-:hD:Vp:l:m:t:c:r:i:n:s:e:"
       var lopts = Array(
          new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h'),
          new LongOpt("version", LongOpt.NO_ARGUMENT, null, 'V'),
@@ -153,7 +169,10 @@ object Main extends Logging {
          new LongOpt("cache_config", LongOpt.REQUIRED_ARGUMENT, null, 'c'),
          new LongOpt("protocol", LongOpt.REQUIRED_ARGUMENT, null, 'r'),
          new LongOpt("idle_timeout", LongOpt.REQUIRED_ARGUMENT, null, 'i'),
-         new LongOpt("tcp_no_delay", LongOpt.REQUIRED_ARGUMENT, null, 'n'))
+         new LongOpt("tcp_no_delay", LongOpt.REQUIRED_ARGUMENT, null, 'n'),
+         new LongOpt("send_buf_size", LongOpt.REQUIRED_ARGUMENT, null, 's'),
+         new LongOpt("recv_buf_size", LongOpt.REQUIRED_ARGUMENT, null, 'e')
+         )
       var getopt = new Getopt(programName, args, sopts, lopts)
       var code: Int = 0
       while ((({code = getopt.getopt; code})) != -1) {
@@ -228,7 +247,11 @@ object Main extends Logging {
       println("                                       If no new messages have been read within this time, the server disconnects the channel.")
       println("                                       Passing -1 disables idle timeout.")
       println
-      println("    -n, --tcp_no_delay=[true|false]   TCP no delay flag switch (default: true).")
+      println("    -n, --tcp_no_delay=[true|false]    TCP no delay flag switch (default: true).")
+      println
+      println("    -s, --send_buf_size=<num>          Send buffer size (default: as defined by the OS).")
+      println
+      println("    -e, --recv_buf_size=<>             Receive buffer size (default: as defined by the OS).")
       println
       println("    -D<name>[=<value>]                 Set a system property")
       println

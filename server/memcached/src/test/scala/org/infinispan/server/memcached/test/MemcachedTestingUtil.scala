@@ -46,10 +46,6 @@ trait MemcachedTestingUtil {
       val properties = new Properties
       properties.setProperty(PROP_KEY_HOST, host)
       properties.setProperty(PROP_KEY_PORT, port.toString)
-      properties.setProperty(PROP_KEY_MASTER_THREADS, "0")
-      properties.setProperty(PROP_KEY_WORKER_THREADS, "0")
-      properties.setProperty(PROP_KEY_IDLE_TIMEOUT, "0")
-      properties.setProperty(PROP_KEY_TCP_NO_DELAY, "true")
       properties
    }
 

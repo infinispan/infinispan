@@ -62,10 +62,12 @@ public class ServerRestartTest extends SingleCacheManagerTest {
       Properties properties = new Properties();
       properties.setProperty("infinispan.server.host", "localhost");
       properties.setProperty("infinispan.server.port", Integer.toString(port));
-      properties.setProperty("infinispan.server.master.threads", "2");
-      properties.setProperty("infinispan.server.worker.threads", "2");
-      properties.setProperty("infinispan.server.idle.timeout", "20000");
-      properties.setProperty("infinispan.server.tcp.no.delay", "true");
+      properties.setProperty("infinispan.server.master_threads", "2");
+      properties.setProperty("infinispan.server.worker_threads", "2");
+      properties.setProperty("infinispan.server.idle_timeout", "20000");
+      properties.setProperty("infinispan.server.tcp_no_delay", "true");
+      properties.setProperty("infinispan.server.send_buf_size", "15000");
+      properties.setProperty("infinispan.server.recv_buf_size", "25000");
       hotrodServer.start(properties, cacheManager);
 
       Thread.sleep(3000);
