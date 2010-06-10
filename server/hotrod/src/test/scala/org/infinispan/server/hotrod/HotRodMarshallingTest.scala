@@ -4,6 +4,7 @@ import org.testng.annotations.Test
 import org.testng.Assert._
 import org.infinispan.commands.remote.ClusteredGetCommand
 import org.infinispan.server.core.AbstractMarshallingTest
+import org.infinispan.util.ByteArrayKey
 
 /**
  * // TODO: Document this
@@ -14,14 +15,14 @@ import org.infinispan.server.core.AbstractMarshallingTest
 class HotRodMarshallingTest extends AbstractMarshallingTest {
 
    def testMarshallingBigByteArrayKey {
-      val cacheKey = new CacheKey(getBigByteArray)      
+      val cacheKey = new ByteArrayKey(getBigByteArray)      
       val bytes = marshaller.objectToByteBuffer(cacheKey)
-      val readKey = marshaller.objectFromByteBuffer(bytes).asInstanceOf[CacheKey]
+      val readKey = marshaller.objectFromByteBuffer(bytes).asInstanceOf[ByteArrayKey]
       assertEquals(readKey, cacheKey)
    }
 
    def testMarshallingCommandWithBigByteArrayKey {
-      val cacheKey = new CacheKey(getBigByteArray)
+      val cacheKey = new ByteArrayKey(getBigByteArray)
       val command = new ClusteredGetCommand(cacheKey, "mycache")
       val bytes = marshaller.objectToByteBuffer(command)
       val readCommand = marshaller.objectFromByteBuffer(bytes).asInstanceOf[ClusteredGetCommand]

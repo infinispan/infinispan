@@ -10,13 +10,14 @@ import org.infinispan.server.hotrod.ProtocolFlag._
 import org.infinispan.server.hotrod.OperationResponse._
 import java.nio.channels.ClosedChannelException
 import org.infinispan.{CacheException, Cache}
+import org.infinispan.util.ByteArrayKey
 
 /**
  * // TODO: Document this
  * @author Galder Zamarreño
  * @since 4.1
  */
-class HotRodDecoder(cacheManager: EmbeddedCacheManager) extends AbstractProtocolDecoder[CacheKey, CacheValue] {
+class HotRodDecoder(cacheManager: EmbeddedCacheManager) extends AbstractProtocolDecoder[ByteArrayKey, CacheValue] {
    import HotRodDecoder._
    import HotRodServer.TopologyCacheName
    
@@ -65,7 +66,7 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager) extends AbstractProtocol
       }
    }
 
-   override def getCache(header: HotRodHeader): Cache[CacheKey, CacheValue] = {
+   override def getCache(header: HotRodHeader): Cache[ByteArrayKey, CacheValue] = {
       val cacheName = header.cacheName
       if (cacheName == TopologyCacheName)
          throw new CacheException("Remote requests are not allowed to topology cache. Do no send remote requests to cache "
@@ -74,11 +75,11 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager) extends AbstractProtocol
       if (cacheName != DefaultCacheManager.DEFAULT_CACHE_NAME && !cacheManager.getCacheNames.contains(cacheName))
          throw new CacheNotFoundException("Cache with name '" + cacheName + "' not found amongst the configured caches")
 
-      if (cacheName == DefaultCacheManager.DEFAULT_CACHE_NAME) cacheManager.getCache[CacheKey, CacheValue]
+      if (cacheName == DefaultCacheManager.DEFAULT_CACHE_NAME) cacheManager.getCache[ByteArrayKey, CacheValue]
       else cacheManager.getCache(cacheName)
    }
 
-   override def readKey(h: HotRodHeader, b: ChannelBuffer): CacheKey =
+   override def readKey(h: HotRodHeader, b: ChannelBuffer): ByteArrayKey =
       h.decoder.readKey(b)
 
    override def readParameters(h: HotRodHeader, b: ChannelBuffer): Option[RequestParameters] =
@@ -96,13 +97,13 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager) extends AbstractProtocol
    override def createNotExistResponse(h: HotRodHeader, p: Option[RequestParameters]): AnyRef =
       h.decoder.createNotExistResponse(h)
 
-   override def createGetResponse(h: HotRodHeader, k: CacheKey, v: CacheValue): AnyRef =
+   override def createGetResponse(h: HotRodHeader, k: ByteArrayKey, v: CacheValue): AnyRef =
       h.decoder.createGetResponse(h, v, h.op)
 
-   override def createMultiGetResponse(h: HotRodHeader, pairs: Map[CacheKey, CacheValue]): AnyRef =
+   override def createMultiGetResponse(h: HotRodHeader, pairs: Map[ByteArrayKey, CacheValue]): AnyRef =
       null // Unsupported
 
-   override def handleCustomRequest(h: HotRodHeader, b: ChannelBuffer, cache: Cache[CacheKey, CacheValue]): AnyRef =
+   override def handleCustomRequest(h: HotRodHeader, b: ChannelBuffer, cache: Cache[ByteArrayKey, CacheValue]): AnyRef =
       h.decoder.handleCustomRequest(h, b, cache)
 
    override def createStatsResponse(h: HotRodHeader, stats: Stats): AnyRef =
@@ -124,7 +125,7 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager) extends AbstractProtocol
       }
    }
 
-   override protected def getOptimizedCache(h: HotRodHeader, c: Cache[CacheKey, CacheValue]): Cache[CacheKey, CacheValue] = {
+   override protected def getOptimizedCache(h: HotRodHeader, c: Cache[ByteArrayKey, CacheValue]): Cache[ByteArrayKey, CacheValue] = {
       h.decoder.getOptimizedCache(h, c)
    }
 }

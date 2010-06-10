@@ -9,6 +9,7 @@ import org.infinispan.manager.DefaultCacheManager
 import org.infinispan.server.core.CacheValue
 import org.infinispan.server.hotrod.OperationStatus._
 import org.infinispan.server.hotrod.test._
+import org.infinispan.util.ByteArrayKey
 
 /**
  * Hot Rod server functional test.
@@ -50,8 +51,8 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
    def testPutOnDefaultCache(m: Method) {
       val status = client.execute(0xA0, 0x01, DefaultCacheManager.DEFAULT_CACHE_NAME, k(m), 0, 0, v(m), 0, 1, 0).status
       assertStatus(status, Success)
-      val cache = cacheManager.getCache[CacheKey, CacheValue]
-      val value = cache.get(new CacheKey(k(m)))
+      val cache = cacheManager.getCache[ByteArrayKey, CacheValue]
+      val value = cache.get(new ByteArrayKey(k(m)))
       assertTrue(Arrays.equals(value.data, v(m)));
    }
 

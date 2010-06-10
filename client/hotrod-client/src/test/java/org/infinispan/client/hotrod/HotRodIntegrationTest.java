@@ -5,10 +5,10 @@ import org.infinispan.client.hotrod.impl.SerializationMarshaller;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.CacheValue;
-import org.infinispan.server.hotrod.CacheKey;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.ByteArrayKey;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterClass;
@@ -189,7 +189,7 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
       SerializationMarshaller marshaller = new SerializationMarshaller();
       byte[] keyBytes = marshaller.marshallObject(key);
       byte[] valueBytes = marshaller.marshallObject(value);
-      CacheKey cacheKey = new CacheKey(keyBytes);
+      ByteArrayKey cacheKey = new ByteArrayKey(keyBytes);
       CacheValue cacheValue = (CacheValue) cache.get(cacheKey);
       if (value == null) {
          assert cacheValue == null : "Expected null value but received: " + cacheValue;
