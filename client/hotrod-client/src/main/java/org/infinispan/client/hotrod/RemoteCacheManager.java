@@ -187,7 +187,8 @@ public class RemoteCacheManager implements CacheManager {
 
    /**
     * Same as {@link #RemoteCacheManager(java.util.Properties)}, but it will try to lookup the config properties in the
-    * classpath, in a file named <tt>hotrod-client.properties</tt>.
+    * classpath, in a file named <tt>hotrod-client.properties</tt>. If no properties can be found in the classpath, the
+    * server tries to connect to "127.0.0.1:11311" in start.
     *
     * @param start weather or not to start the RemoteCacheManager
     * @throws HotRodClientException if such a file cannot be found in the classpath
