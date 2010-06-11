@@ -3,7 +3,7 @@ package org.infinispan.jmx;
 import java.lang.reflect.Method;
 
 import org.infinispan.config.Configuration;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -79,12 +79,12 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
    
    public void testJmxRegistrationAtStartupAndStop(Method method) throws Exception {
       final String otherJmxDomain = JMX_DOMAIN + '.' + method.getName();
-      CacheManager otherManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(otherJmxDomain, true, false);
+      CacheContainer otherContainer = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(otherJmxDomain, true, false);
       ObjectName otherName = new ObjectName(otherJmxDomain + ":cache-name=[global],jmx-resource=CacheManager");
       try {
          assert server.getAttribute(otherName, "CreatedCacheCount").equals("0");
       } finally {
-         otherManager.stop();
+         otherContainer.stop();
       }
       
       try {

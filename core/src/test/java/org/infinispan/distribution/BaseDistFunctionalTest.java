@@ -8,7 +8,7 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MortalCacheEntry;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -120,7 +120,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
    private void reorderBasedOnCHPositions() {
       // wait for all joiners to join
       List<Cache> clist = new ArrayList<Cache>(cacheManagers.size());
-      for (CacheManager cm : cacheManagers) clist.add(cm.getCache(cacheName));
+      for (CacheContainer cm : cacheManagers) clist.add(cm.getCache(cacheName));
       assert clist.size() == INIT_CLUSTER_SIZE;
       waitForJoinTasksToComplete(SECONDS.toMillis(480), clist.toArray(new Cache[clist.size()]));
 

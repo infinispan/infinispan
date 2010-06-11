@@ -8,7 +8,6 @@ import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.manager.CacheManager;
 import org.infinispan.manager.NamedCacheNotFoundException;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.remoting.responses.ExceptionResponse;

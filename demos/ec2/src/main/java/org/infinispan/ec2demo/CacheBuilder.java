@@ -5,7 +5,7 @@ package org.infinispan.ec2demo;
 
 import java.io.IOException;
 
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.util.logging.Log;
@@ -38,13 +38,13 @@ public class CacheBuilder {
 }
 
 class ShutdownHook extends Thread {
-	private CacheManager currCache;
+	private CacheContainer currCache;
 
 	/**
-	 * @param cache_manager
+	 * @param cache_container
 	 */
-	public ShutdownHook(CacheManager cache_manager) {
-		currCache = cache_manager;
+	public ShutdownHook(CacheContainer cache_container) {
+		currCache = cache_container;
 	}
 
 	public void run() {

@@ -6,7 +6,7 @@ import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -59,7 +59,7 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
       globalConfiguration.setAllowDuplicateDomains(true);
       globalConfiguration.setJmxDomain(JMX_DOMAIN);
       globalConfiguration.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
-      CacheManager cacheManager1 = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(globalConfiguration);
+      CacheContainer cacheManager1 = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(globalConfiguration);
       cacheManager1.start();
 
       GlobalConfiguration globalConfiguration2 = GlobalConfiguration.getClusteredDefault();
@@ -67,7 +67,7 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
       globalConfiguration2.setMBeanServerLookup(PerThreadMBeanServerLookup.class.getName());
       globalConfiguration2.setJmxDomain(JMX_DOMAIN);
       globalConfiguration2.setAllowDuplicateDomains(true);
-      CacheManager cacheManager2 = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(globalConfiguration2);
+      CacheContainer cacheManager2 = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(globalConfiguration2);
       cacheManager2.start();
 
       registerCacheManager(cacheManager1, cacheManager2);

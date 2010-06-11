@@ -32,7 +32,7 @@ import net.jcip.annotations.ThreadSafe;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.lucene.CacheKey;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 
@@ -108,8 +108,8 @@ public class ClusteredCacheFactory {
          while (true) {
             try {
                Configuration configuration = requests.take();
-               CacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(configuration);
-               Cache<CacheKey, Object> cache = cacheManager.getCache();
+               CacheContainer cacheContainer = TestCacheManagerFactory.createClusteredCacheManager(configuration);
+               Cache<CacheKey, Object> cache = cacheContainer.getCache();
                results.put(cache);
             } catch (InterruptedException e) {
                return;

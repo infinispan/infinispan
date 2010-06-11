@@ -24,9 +24,8 @@ package org.infinispan.test.fwk;
 import java.util.Set;
 
 import org.infinispan.config.Configuration;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.ConcurrentHashSet;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -56,7 +55,7 @@ public class DebuggingUnitTestNGListener extends UnitTestTestNGListener {
    }
    
    private void checkCleanedUp(ITestContext testCxt) {
-      CacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(new Configuration());
+      CacheContainer cm = TestCacheManagerFactory.createClusteredCacheManager(new Configuration());
       try {
          cm.start();
          try {

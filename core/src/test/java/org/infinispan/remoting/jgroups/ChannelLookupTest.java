@@ -3,7 +3,7 @@ package org.infinispan.remoting.jgroups;
 import org.easymock.classextension.EasyMock;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsChannelLookup;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
@@ -22,7 +22,7 @@ import java.util.Properties;
 @Test(testName = "remoting.jgroups.ChannelLookupTest", groups = "functional")
 public class ChannelLookupTest extends AbstractInfinispanTest {
     public void channelLookupTest() {
-        CacheManager cm = null;
+        CacheContainer cm = null;
         try {
             GlobalConfiguration gc = GlobalConfiguration.getClusteredDefault();
             Properties p = new Properties();

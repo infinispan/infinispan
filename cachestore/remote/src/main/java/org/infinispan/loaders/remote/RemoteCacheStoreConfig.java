@@ -17,7 +17,7 @@ import java.util.Properties;
  * <li>HotRodClientPropertiesFile-the file that contains the configuration of hotrod client. See <a href="http://community.jboss.org/wiki/JavaHotRodclient">Hotrod Java Client</a>
  *     for more details on the hotrod client. 
  * <li>remoteCacheName-the name of the remote cache in the remote infinispan cluster, to which to connect to</li>
- * <li>UseDefaultRemoteCache-if set to true, the default remote cache will be used, as obtained by {@link org.infinispan.manager.CacheManager#getCache()}.
+ * <li>UseDefaultRemoteCache-if set to true, the default remote cache will be used, as obtained by {@link org.infinispan.manager.CacheContainer#getCache()}.
  * </ul>
  *
  * @author Mircea.Markus@jboss.com

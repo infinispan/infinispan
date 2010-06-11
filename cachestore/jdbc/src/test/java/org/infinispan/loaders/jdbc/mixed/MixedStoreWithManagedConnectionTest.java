@@ -30,7 +30,7 @@ import org.infinispan.loaders.jdbc.ManagedConnectionFactoryTest;
 import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.infinispan.loaders.jdbc.connectionfactory.ManagedConnectionFactory;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
@@ -60,7 +60,7 @@ public class MixedStoreWithManagedConnectionTest extends ManagedConnectionFactor
 
 
    public void testLoadFromFile() throws Exception {
-      CacheManager cm = null;
+      CacheContainer cm = null;
       try {
          cm = TestCacheManagerFactory.fromXml("configs/managed/mixed-managed-connection-factory.xml");
          Cache<String, String> first = cm.getCache("first");

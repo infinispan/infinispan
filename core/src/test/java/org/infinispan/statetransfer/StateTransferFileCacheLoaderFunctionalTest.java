@@ -33,7 +33,7 @@ import org.infinispan.Cache;
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.loaders.file.FileCacheStoreConfig;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -100,7 +100,7 @@ public class StateTransferFileCacheLoaderFunctionalTest extends MultipleCacheMan
       config.setUseLockStriping(false); // reduces the odd chance of a key collision and deadlock
    }
 
-   protected CacheManager createCacheManager(String tmpDirectory) {
+   protected CacheContainer createCacheManager(String tmpDirectory) {
       // increment the DIMCS store id
       FileCacheStoreConfig cfg = new FileCacheStoreConfig();
       cfg.setLocation(tmpDirectory);
@@ -118,7 +118,7 @@ public class StateTransferFileCacheLoaderFunctionalTest extends MultipleCacheMan
    }
 
    public void testSharedLoader() throws Exception {
-      CacheManager cm1 = null, cm2 = null;
+      CacheContainer cm1 = null, cm2 = null;
       try {
          sharedCacheLoader.set(true);
          cm1 = createCacheManager(tmpDirectory1);
@@ -148,7 +148,7 @@ public class StateTransferFileCacheLoaderFunctionalTest extends MultipleCacheMan
    public void testInitialStateTransfer() throws Exception {
       testCount++;
       log.info("testInitialStateTransfer start - " + testCount);
-      CacheManager cm1 = null, cm2 = null;
+      CacheContainer cm1 = null, cm2 = null;
       try {
          Cache<Object, Object> cache1, cache2;
          cm1 = createCacheManager(tmpDirectory1);
@@ -172,7 +172,7 @@ public class StateTransferFileCacheLoaderFunctionalTest extends MultipleCacheMan
    public void testInitialStateTransferInDifferentThread(Method m) throws Exception {
       testCount++;
       log.info(m.getName() + " start - " + testCount);
-      CacheManager cm1 = null, cm2 = null, cm30 = null;
+      CacheContainer cm1 = null, cm2 = null, cm30 = null;
       try {
          Cache<Object, Object> cache1 = null, cache2 = null, cache3 = null;
          cm1 = createCacheManager(tmpDirectory1);
@@ -188,7 +188,7 @@ public class StateTransferFileCacheLoaderFunctionalTest extends MultipleCacheMan
          TestingUtil.blockUntilViewsReceived(60000, cache1, cache2);
          verifyInitialData(cache2);
 
-         final CacheManager cm3 = createCacheManager(tmpDirectory3);
+         final CacheContainer cm3 = createCacheManager(tmpDirectory3);
 
          cm30 = cm3;
 
@@ -220,7 +220,7 @@ public class StateTransferFileCacheLoaderFunctionalTest extends MultipleCacheMan
    public void testConcurrentStateTransfer() throws Exception {
       testCount++;
       log.info("testConcurrentStateTransfer start - " + testCount);
-      CacheManager cm1 = null, cm2 = null, cm30 = null, cm40 = null;
+      CacheContainer cm1 = null, cm2 = null, cm30 = null, cm40 = null;
       try {
          Cache<Object, Object> cache1 = null, cache2 = null, cache3 = null, cache4 = null;
          cm1 = createCacheManager(tmpDirectory1);
@@ -236,8 +236,8 @@ public class StateTransferFileCacheLoaderFunctionalTest extends MultipleCacheMan
          TestingUtil.blockUntilViewsReceived(60000, cache1, cache2);
          verifyInitialData(cache2);
 
-         final CacheManager cm3 = createCacheManager(tmpDirectory3);
-         final CacheManager cm4 = createCacheManager(tmpDirectory4);
+         final CacheContainer cm3 = createCacheManager(tmpDirectory3);
+         final CacheContainer cm4 = createCacheManager(tmpDirectory4);
 
          cm30 = cm3;
          cm40 = cm4;

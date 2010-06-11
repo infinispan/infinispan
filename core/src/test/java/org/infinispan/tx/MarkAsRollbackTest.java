@@ -1,7 +1,6 @@
 package org.infinispan.tx;
 
 import org.infinispan.config.Configuration;
-import org.infinispan.manager.CacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;

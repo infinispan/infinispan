@@ -32,7 +32,7 @@ import java.io.StringWriter;
 import java.util.Map;
 
 import org.infinispan.Cache;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.ChannelFuture;
@@ -64,13 +64,13 @@ import org.json.JSONObject;
 public class WebSocketServerHandler extends SimpleChannelUpstreamHandler {
 
 	private static final String INFINISPAN_WS_JS_FILENAME = "infinispan-ws.js";
-	private CacheManager cacheManager;
+	private CacheContainer cacheContainer;
 	private Map<String, OpHandler> operationHandlers;
 	private boolean connectionUpgraded;
 	private Map<String, Cache> startedCaches;
 
-	public WebSocketServerHandler(CacheManager cacheManager, Map<String, OpHandler> operationHandlers, Map<String, Cache> startedCaches) {
-		this.cacheManager = cacheManager;		
+	public WebSocketServerHandler(CacheContainer cacheContainer, Map<String, OpHandler> operationHandlers, Map<String, Cache> startedCaches) {
+		this.cacheContainer = cacheContainer;
 		this.operationHandlers = operationHandlers;
 		this.startedCaches = startedCaches;
 	}
@@ -160,9 +160,9 @@ public class WebSocketServerHandler extends SimpleChannelUpstreamHandler {
 				cache = startedCaches.get(key);
 				if(cache == null) {
 					if(cacheName != null) {
-						cache = cacheManager.getCache(key);
+						cache = cacheContainer.getCache(key);
 					} else {
-						cache = cacheManager.getCache();
+						cache = cacheContainer.getCache();
 					}
 					startedCaches.put(key, cache);
 					cache.start();

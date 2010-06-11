@@ -35,7 +35,7 @@ import javax.naming.StringRefAddr;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -83,7 +83,7 @@ public class BindingTest extends SingleCacheManagerTest {
    public void testBindCacheManagerToJndi() throws Exception {
       Context ctx = new InitialContext(props);
       String jndiName = "java:CacheManager";
-      bind(jndiName, cacheManager, CacheManager.class, ctx);
+      bind(jndiName, cacheManager, CacheContainer.class, ctx);
       try {
          Context ctx2 = new InitialContext(props);
          try {

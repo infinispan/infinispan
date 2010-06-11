@@ -34,7 +34,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 import org.infinispan.Cache;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.AbstractProtocolServer;
 import org.infinispan.server.websocket.handlers.GetHandler;
@@ -117,12 +117,12 @@ public class WebSocketServer extends AbstractProtocolServer {
 
    private static class WebSocketServerPipelineFactory implements ChannelPipelineFactory {
 
-      private CacheManager cacheManager;
+      private CacheContainer cacheContainer;
       private Map<String, OpHandler> operationHandlers;
       private Map<String, Cache> startedCaches = new ConcurrentHashMap<String, Cache>();
 
-      public WebSocketServerPipelineFactory(CacheManager cacheManager) {
-         this.cacheManager = cacheManager;
+      public WebSocketServerPipelineFactory(CacheContainer cacheContainer) {
+         this.cacheContainer = cacheContainer;
 
          operationHandlers = new HashMap<String, OpHandler>();
          operationHandlers.put("put", new PutHandler());
@@ -140,7 +140,7 @@ public class WebSocketServer extends AbstractProtocolServer {
          pipeline.addLast("decoder", new HttpRequestDecoder());
          pipeline.addLast("aggregator", new HttpChunkAggregator(65536));
          pipeline.addLast("encoder", new HttpResponseEncoder());
-         pipeline.addLast("handler", new WebSocketServerHandler(cacheManager, operationHandlers, startedCaches));
+         pipeline.addLast("handler", new WebSocketServerHandler(cacheContainer, operationHandlers, startedCaches));
 
          return pipeline;
       }

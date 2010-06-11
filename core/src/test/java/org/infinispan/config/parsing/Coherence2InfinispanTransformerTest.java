@@ -1,7 +1,7 @@
 package org.infinispan.config.parsing;
 
 import org.infinispan.Cache;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -10,7 +10,6 @@ import org.testng.annotations.Test;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 
 /**
  * //todo re-enable test as it makes the suite hang
@@ -34,7 +33,7 @@ public class Coherence2InfinispanTransformerTest extends AbstractInfinispanTest 
     */
    private void testAllFile(String coherenceFileName) throws Exception {
       ClassLoader existingCl = Thread.currentThread().getContextClassLoader();
-      CacheManager dcm = null;
+      CacheContainer dcm = null;
       Cache<Object, Object> sampleDistributedCache2 = null;
       try {
          ClassLoader delegatingCl = new Jbc2InfinispanTransformerTest.TestClassLoader(existingCl);

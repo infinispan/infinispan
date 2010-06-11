@@ -36,7 +36,7 @@ import java.util.Set;
  */
 @Scope(Scopes.GLOBAL)
 @SurvivesRestarts
-public interface EmbeddedCacheManager extends CacheManager, Listenable {
+public interface EmbeddedCacheManager extends CacheContainer, Listenable {
 
    /**
     * Defines a named cache's configuration using the following algorithm:

@@ -1,7 +1,6 @@
 package org.infinispan.client.hotrod;
 
 import org.infinispan.Cache;
-import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransport;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.config.Configuration;
@@ -10,7 +9,7 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.interceptors.CacheMgmtInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -49,7 +48,7 @@ public class CSAIntegrationTest extends MultipleCacheManagersTest {
    private RemoteCache<Object, Object> remoteCache;
    private TcpTransportFactory tcpConnectionFactory;
    private static final String CACHE_NAME = "distributedCache";
-   Map<InetSocketAddress, CacheManager> hrServ2CacheManager = new HashMap<InetSocketAddress, CacheManager>();
+   Map<InetSocketAddress, CacheContainer> hrServ2CacheManager = new HashMap<InetSocketAddress, CacheContainer>();
 
    private static Log log = LogFactory.getLog(CSAIntegrationTest.class);
 
@@ -122,7 +121,7 @@ public class CSAIntegrationTest extends MultipleCacheManagersTest {
 
    @Test(dependsOnMethods = "testCorrectSetup")
    public void testHashFunctionReturnsSameValues() {
-      Map<InetSocketAddress, CacheManager> add2Cm = new HashMap<InetSocketAddress, CacheManager>();
+      Map<InetSocketAddress, CacheContainer> add2Cm = new HashMap<InetSocketAddress, CacheContainer>();
       add2Cm.put(new InetSocketAddress(hotRodServer1.getHost(), hotRodServer1.getPort()), manager(0));
       add2Cm.put(new InetSocketAddress(hotRodServer2.getHost(), hotRodServer2.getPort()), manager(1));
       add2Cm.put(new InetSocketAddress(hotRodServer3.getHost(), hotRodServer3.getPort()), manager(2));
@@ -131,9 +130,9 @@ public class CSAIntegrationTest extends MultipleCacheManagersTest {
          byte[] key = generateKey(i);
          TcpTransport transport = (TcpTransport) tcpConnectionFactory.getTransport(key);
          InetSocketAddress serverAddress = transport.getServerAddress();
-         CacheManager cacheManager = add2Cm.get(serverAddress);
-         assertNotNull("For server address " + serverAddress + " found " + cacheManager + ". Map is: " + add2Cm, cacheManager);
-         DistributionManager distributionManager = cacheManager.getCache(CACHE_NAME).getAdvancedCache().getDistributionManager();
+         CacheContainer cacheContainer = add2Cm.get(serverAddress);
+         assertNotNull("For server address " + serverAddress + " found " + cacheContainer + ". Map is: " + add2Cm, cacheContainer);
+         DistributionManager distributionManager = cacheContainer.getCache(CACHE_NAME).getAdvancedCache().getDistributionManager();
          assert distributionManager.isLocal(key);
          tcpConnectionFactory.releaseTransport(transport);
       }
@@ -179,11 +178,11 @@ public class CSAIntegrationTest extends MultipleCacheManagersTest {
    }
 
    private void assertOnlyServerHit(InetSocketAddress serverAddress) {
-      CacheManager cacheManager = hrServ2CacheManager.get(serverAddress);
-      CacheMgmtInterceptor interceptor = getCacheMgmtInterceptor(cacheManager.getCache(CACHE_NAME));
+      CacheContainer cacheContainer = hrServ2CacheManager.get(serverAddress);
+      CacheMgmtInterceptor interceptor = getCacheMgmtInterceptor(cacheContainer.getCache(CACHE_NAME));
       assert interceptor.getHits() == 1;
-      for (CacheManager cm : hrServ2CacheManager.values()) {
-         if (cm != cacheManager) {
+      for (CacheContainer cm : hrServ2CacheManager.values()) {
+         if (cm != cacheContainer) {
             interceptor = getCacheMgmtInterceptor(cm.getCache(CACHE_NAME));
             assert interceptor.getHits() == 0;
          }
@@ -198,8 +197,8 @@ public class CSAIntegrationTest extends MultipleCacheManagersTest {
    }
    
    private void assertCacheContainsKey(InetSocketAddress serverAddress, byte[] keyBytes) {
-      CacheManager cacheManager = hrServ2CacheManager.get(serverAddress);
-      Cache<Object, Object> cache = cacheManager.getCache(CACHE_NAME);
+      CacheContainer cacheContainer = hrServ2CacheManager.get(serverAddress);
+      Cache<Object, Object> cache = cacheContainer.getCache(CACHE_NAME);
       DataContainer dataContainer = cache.getAdvancedCache().getDataContainer();
       assert dataContainer.keySet().contains(new ByteArrayKey(keyBytes));
    }

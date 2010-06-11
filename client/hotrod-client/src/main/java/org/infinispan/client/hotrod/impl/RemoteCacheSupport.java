@@ -5,7 +5,7 @@ import org.infinispan.CacheSupport;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.config.Configuration;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.util.concurrent.NotifyingFuture;
 
 import java.util.Collection;
@@ -37,7 +37,7 @@ public abstract class RemoteCacheSupport<K,V> extends CacheSupport<K,V> implemen
    }
 
    @Override
-   public CacheManager getCacheManager() {
+   public CacheContainer getCacheManager() {
       throw new UnsupportedOperationException("Use getRemoteCacheManager() instead.");
    }
 

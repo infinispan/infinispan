@@ -25,7 +25,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.Lifecycle;
 import org.infinispan.loaders.CacheStore;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.notifications.Listenable;
 import org.infinispan.util.concurrent.NotifyingFuture;
@@ -82,12 +82,12 @@ import java.util.concurrent.TimeUnit;
  * Also, the use of async operations when within a transaction return your local value only, as expected.  A
  * NotifyingFuture is still returned though for API consistency.
  * <p/>
- * <h3>Constructing a Cache</h3> An instance of the Cache is usually obtained by using a {@link CacheManager}.
+ * <h3>Constructing a Cache</h3> An instance of the Cache is usually obtained by using a {@link org.infinispan.manager.CacheContainer}.
  * <pre>
  *   CacheManager cm = new DefaultCacheManager(); // optionally pass in a default configuration
  *   Cache c = cm.getCache();
  * </pre>
- * See the {@link CacheManager} interface for more details on providing specific configurations, using multiple caches
+ * See the {@link org.infinispan.manager.CacheContainer} interface for more details on providing specific configurations, using multiple caches
  * in the same JVM, etc.
  * <p/>
  * Please see the <a href="http://www.jboss.org/infinispan/docs">Infinispan documentation</a> and/or the <a
@@ -97,7 +97,7 @@ import java.util.concurrent.TimeUnit;
  * @author Mircea.Markus@jboss.com
  * @author Manik Surtani
  * @author Galder Zamarreño
- * @see CacheManager
+ * @see org.infinispan.manager.CacheContainer
  * @see DefaultCacheManager
  * @see <a href="http://www.jboss.org/infinispan/docs">Infinispan documentation</a>
  * @see <a href="http://www.jboss.org/community/wiki/5minutetutorialonInfinispan">5 Minute Usage Tutorial</a>
@@ -183,7 +183,7 @@ public interface Cache<K, V> extends ConcurrentMap<K, V>, Lifecycle, Listenable 
     *
     * @return a cache manager
     */
-   CacheManager getCacheManager();
+   CacheContainer getCacheManager();
 
    /**
     * An overloaded form of {@link #put(Object, Object)}, which takes in lifespan parameters.

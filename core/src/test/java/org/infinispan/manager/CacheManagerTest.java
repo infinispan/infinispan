@@ -57,7 +57,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
    }
 
    public void testStartAndStop() {
-      CacheManager cm = TestCacheManagerFactory.createLocalCacheManager();
+      CacheContainer cm = TestCacheManagerFactory.createLocalCacheManager();
       try {
          Cache c1 = cm.getCache("cache1");
          Cache c2 = cm.getCache("cache2");

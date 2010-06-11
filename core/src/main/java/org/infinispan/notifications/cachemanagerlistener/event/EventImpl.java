@@ -1,6 +1,5 @@
 package org.infinispan.notifications.cachemanagerlistener.event;
 
-import org.infinispan.manager.CacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 

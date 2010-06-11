@@ -33,7 +33,7 @@ import org.infinispan.lucene.CacheKey;
 import org.infinispan.lucene.CacheTestSupport;
 import org.infinispan.lucene.InfinispanDirectory;
 import org.infinispan.lucene.testutils.ClusteredCacheFactory;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -75,13 +75,13 @@ public class PerformanceCompareStressTest {
    
    @Test
    public void profileInfinispanLocalDirectory() throws InterruptedException, IOException {
-      CacheManager cacheManager = CacheTestSupport.createLocalCacheManager();
+      CacheContainer cacheContainer = CacheTestSupport.createLocalCacheManager();
       try {
-         Cache<CacheKey, Object> cache = cacheManager.getCache();
+         Cache<CacheKey, Object> cache = cacheContainer.getCache();
          InfinispanDirectory dir = new InfinispanDirectory(cache, "iname");
          testDirectory(dir, "InfinispanLocal");
       } finally {
-         cacheManager.stop();
+         cacheContainer.stop();
       }
    }
    

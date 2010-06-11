@@ -5,7 +5,7 @@ import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -31,7 +31,7 @@ public class PassivationFunctionalTest extends AbstractInfinispanTest {
    CacheStore store;
    TransactionManager tm;
    Configuration cfg;
-   CacheManager cm;
+   CacheContainer cm;
    long lifespan = 6000000; // very large lifespan so nothing actually expires
 
    @BeforeTest

@@ -26,10 +26,9 @@ import org.infinispan.atomic.AtomicMap;
 import org.infinispan.atomic.AtomicMapLookup;
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -40,7 +39,6 @@ import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
 import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -107,7 +105,7 @@ public abstract class BaseCacheStoreFunctionalTest extends AbstractInfinispanTes
       cacheLoaders.addCacheLoaderConfig(csConfig);
       Configuration cfg = TestCacheManagerFactory.getDefaultConfiguration(false);
       cfg.setCacheLoaderManagerConfig(cacheLoaders);
-      CacheManager local = TestCacheManagerFactory.createCacheManager(cfg);
+      CacheContainer local = TestCacheManagerFactory.createCacheManager(cfg);
       try {
          Cache<String, String> cache = local.getCache();
          cacheNames.add(cache.getName());
@@ -136,9 +134,9 @@ public abstract class BaseCacheStoreFunctionalTest extends AbstractInfinispanTes
    public void testRestoreAtomicMap(Method m) {
       Configuration cfg = new Configuration();
       cfg.getCacheLoaderManagerConfig().addCacheLoaderConfig(csConfig);
-      CacheManager localCacheManager = TestCacheManagerFactory.createCacheManager(cfg, true);
+      CacheContainer localCacheContainer = TestCacheManagerFactory.createCacheManager(cfg, true);
       try {
-         Cache<String, Object> cache = localCacheManager.getCache();
+         Cache<String, Object> cache = localCacheContainer.getCache();
          cacheNames.add(cache.getName());
          AtomicMap<String, String> map = AtomicMapLookup.getAtomicMap(cache, m.getName());
          map.put("a", "b");
@@ -149,16 +147,16 @@ public abstract class BaseCacheStoreFunctionalTest extends AbstractInfinispanTes
          // now re-retrieve the map
          assert AtomicMapLookup.getAtomicMap(cache, m.getName()).get("a").equals("b");
       } finally {
-         TestingUtil.killCacheManagers(localCacheManager);
+         TestingUtil.killCacheManagers(localCacheContainer);
       }
    }
 
    public void testRestoreTransactionalAtomicMap(Method m) throws Exception {
       Configuration cfg = new Configuration();
       cfg.getCacheLoaderManagerConfig().addCacheLoaderConfig(csConfig);
-      CacheManager localCacheManager = TestCacheManagerFactory.createCacheManager(cfg, true);
+      CacheContainer localCacheContainer = TestCacheManagerFactory.createCacheManager(cfg, true);
       try {
-         Cache<String, Object> cache = localCacheManager.getCache();
+         Cache<String, Object> cache = localCacheContainer.getCache();
          cacheNames.add(cache.getName());
          TransactionManager tm = cache.getAdvancedCache().getTransactionManager();
          tm.begin();
@@ -172,7 +170,7 @@ public abstract class BaseCacheStoreFunctionalTest extends AbstractInfinispanTes
          // now re-retrieve the map and make sure we see the diffs
          assert AtomicMapLookup.getAtomicMap(cache, m.getName()).get("a").equals("b");
       } finally {
-         TestingUtil.killCacheManagers(localCacheManager);
+         TestingUtil.killCacheManagers(localCacheContainer);
       }
    }
 

@@ -1,7 +1,6 @@
 package org.infinispan.client.hotrod;
 
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
-import org.infinispan.client.hotrod.HotRodMarshaller;
 import org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory;
 import org.infinispan.client.hotrod.impl.protocol.HotRodOperations;
 import org.infinispan.client.hotrod.impl.protocol.HotRodOperationsImpl;
@@ -11,8 +10,7 @@ import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.impl.transport.VHelper;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.executors.ExecutorFactory;
-import org.infinispan.manager.CacheManager;
-import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -126,7 +124,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public class RemoteCacheManager implements CacheManager {
+public class RemoteCacheManager implements CacheContainer {
 
    private static Log log = LogFactory.getLog(RemoteCacheManager.class);
 

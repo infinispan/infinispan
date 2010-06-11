@@ -23,7 +23,7 @@ package org.infinispan.stress;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -70,7 +70,7 @@ public class PutIfAbsentStressTest {
     * Testing putIfAbsent's behaviour on a Local cache.
     */
    protected void testonInfinispanLocal() throws Exception {
-      CacheManager cm = TestCacheManagerFactory.createLocalCacheManager(false);
+      CacheContainer cm = TestCacheManagerFactory.createLocalCacheManager(false);
       ConcurrentMap<String, String> map = cm.getCache();
       try {
          testConcurrentLocking(map);
@@ -101,13 +101,13 @@ public class PutIfAbsentStressTest {
     * Adapter to run the test on any configuration
     */
    private void testConcurrentLockingOnMultipleManagers(Configuration cfg) throws IOException, InterruptedException {
-      List<CacheManager> cacheManagers = new ArrayList<CacheManager>(NODES_NUM);
+      List<CacheContainer> cacheContainers = new ArrayList<CacheContainer>(NODES_NUM);
       List<Cache<String, String>> caches = new ArrayList<Cache<String, String>>();
       List<ConcurrentMap<String, String>> maps = new ArrayList<ConcurrentMap<String, String>>(NODES_NUM
                * THREAD_PER_NODE);
       for (int nodeNum = 0; nodeNum < NODES_NUM; nodeNum++) {
-         CacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(cfg);
-         cacheManagers.add(cm);
+         CacheContainer cm = TestCacheManagerFactory.createClusteredCacheManager(cfg);
+         cacheContainers.add(cm);
          Cache<String, String> cache = cm.getCache();
          caches.add(cache);
          for (int threadNum = 0; threadNum < THREAD_PER_NODE; threadNum++) {
@@ -118,7 +118,7 @@ public class PutIfAbsentStressTest {
       try {
          testConcurrentLocking(maps);
       } finally {
-         for (CacheManager cm : cacheManagers) {
+         for (CacheContainer cm : cacheContainers) {
             try {
                TestingUtil.killCacheManagers(cm);
             } catch (Exception e) {

@@ -2,7 +2,7 @@ package org.infinispan.jmx;
 
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -171,13 +171,13 @@ public class JmxStatsFunctionalTest extends AbstractInfinispanTest {
 
       server = PerThreadMBeanServerLookup.getThreadMBeanServer();
       globalConfiguration2.setAllowDuplicateDomains(true);
-      CacheManager duplicateAllowedManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(globalConfiguration2);
+      CacheContainer duplicateAllowedContainer = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(globalConfiguration2);
       try {
          final String duplicateName = jmxDomain + "2";
          ObjectName duplicateObjectName = new ObjectName(duplicateName + ":cache-name=[global],jmx-resource=CacheManager");
          server.getAttribute(duplicateObjectName, "CreatedCacheCount").equals("0");
       } finally {
-         duplicateAllowedManager.stop();
+         duplicateAllowedContainer.stop();
       }
    }
 

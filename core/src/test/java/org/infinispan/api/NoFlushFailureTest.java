@@ -1,7 +1,7 @@
 package org.infinispan.api;
 
 import org.infinispan.config.ConfigurationException;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -13,7 +13,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "api.NoFlushFailureTest")
 public class NoFlushFailureTest {
 
-   CacheManager cm1;
+   CacheContainer cm1;
    private static final String FILE = "configs/no-flush.xml";
 
    @Test (expectedExceptions = ConfigurationException.class)

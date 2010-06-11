@@ -1,7 +1,7 @@
 package org.infinispan.test;
 
 import org.infinispan.Cache;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Listener
 public class ViewChangeListener {
-   CacheManager cm;
+   CacheContainer cm;
    final CountDownLatch latch = new CountDownLatch(1);
 
    public ViewChangeListener(Cache c) {

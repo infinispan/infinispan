@@ -22,7 +22,6 @@
 package org.infinispan.query.blackbox;
 
 import org.infinispan.config.Configuration;
-import org.infinispan.manager.CacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.helper.TestQueryHelperFactory;
 import org.infinispan.query.test.Person;

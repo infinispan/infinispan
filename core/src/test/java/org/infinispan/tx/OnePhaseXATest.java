@@ -3,7 +3,7 @@ package org.infinispan.tx;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -18,7 +18,7 @@ import java.util.List;
 @Test(groups = "functional", testName = "tx.OnePhaseXATest", description = "See ISPN-156 for details.", enabled = false)
 public class OnePhaseXATest extends AbstractInfinispanTest {
    private List<Cache> caches;
-   private List<CacheManager> cacheManagers;
+   private List<CacheContainer> cacheContainers;
    public static final int CACHES_NUM = 2;
 
    public void testMultipleCaches() throws Exception {
@@ -45,13 +45,13 @@ public class OnePhaseXATest extends AbstractInfinispanTest {
    @BeforeTest
    public void setUp() throws Exception {
       caches = new ArrayList<Cache>();
-      cacheManagers = new ArrayList<CacheManager>();
+      cacheContainers = new ArrayList<CacheContainer>();
       for (int i = 0; i < CACHES_NUM; i++) caches.add(getCache());
    }
 
    @AfterTest
    public void tearDown() {
-      if (caches != null) TestingUtil.killCacheManagers(cacheManagers);
+      if (caches != null) TestingUtil.killCacheManagers(cacheContainers);
    }
 
    private Cache getCache() {
@@ -64,8 +64,8 @@ public class OnePhaseXATest extends AbstractInfinispanTest {
       c.setLockAcquisitionTimeout(60000);
       c.setUseLockStriping(false);
       c.setSyncCommitPhase(true);
-      CacheManager manager = TestCacheManagerFactory.createCacheManager(gc, c, true);
-      cacheManagers.add(manager);
-      return manager.getCache("TestCache");
+      CacheContainer container = TestCacheManagerFactory.createCacheManager(gc, c, true);
+      cacheContainers.add(container);
+      return container.getCache("TestCache");
    }
 }

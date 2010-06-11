@@ -26,7 +26,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.lucene.CacheKey;
 import org.infinispan.lucene.InfinispanDirectory;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
@@ -46,16 +46,16 @@ public class DirectoryFactory {
 
    public static final String CACHE_NAME_FOR_INDEXES = "LuceneIndex";
 
-   private static CacheManager manager = null;
+   private static CacheContainer container = null;
    private static final Map<String, InfinispanDirectory> directories = new HashMap<String, InfinispanDirectory>();
 
    private static Cache<CacheKey, Object> buildCacheForIndexes() {
       return getCacheManager().getCache(CACHE_NAME_FOR_INDEXES);
    }
 
-   public static synchronized CacheManager getCacheManager() {
-      if (manager != null)
-         return manager;
+   public static synchronized CacheContainer getCacheManager() {
+      if (container != null)
+         return container;
       GlobalConfiguration gc = GlobalConfiguration.getClusteredDefault();
       gc.setClusterName("infinispan-lucene-demo-cluster");
       gc.setTransportClass(JGroupsTransport.class.getName());
@@ -69,8 +69,8 @@ public class DirectoryFactory {
       config.setL1CacheEnabled(true);
       config.setInvocationBatchingEnabled(true);
       config.setL1Lifespan(6000000);
-      manager = new DefaultCacheManager(gc, config, false);
-      return manager;
+      container = new DefaultCacheManager(gc, config, false);
+      return container;
    }
 
    public static synchronized InfinispanDirectory getIndex(String indexName) {
@@ -83,8 +83,8 @@ public class DirectoryFactory {
    }
    
    public static synchronized void close() {
-      if (manager!=null) {
-         manager.stop();
+      if (container !=null) {
+         container.stop();
       }
    }
 

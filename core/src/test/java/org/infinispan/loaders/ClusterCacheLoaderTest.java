@@ -7,7 +7,6 @@ import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.loaders.cluster.ClusterCacheLoaderConfig;
 import org.infinispan.loaders.decorators.ChainingCacheStore;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
-import org.infinispan.manager.CacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;

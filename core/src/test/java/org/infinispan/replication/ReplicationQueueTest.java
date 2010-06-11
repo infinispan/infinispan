@@ -5,12 +5,11 @@ import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.executors.ScheduledExecutorFactory;
 import org.infinispan.factories.KnownComponentNames;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
@@ -38,8 +37,8 @@ public class ReplicationQueueTest extends MultipleCacheManagersTest {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
       globalConfiguration.setReplicationQueueScheduledExecutorFactoryClass(ReplQueueTestScheduledExecutorFactory.class.getName());
       globalConfiguration.setReplicationQueueScheduledExecutorProperties(ReplQueueTestScheduledExecutorFactory.myProps);
-      CacheManager first = TestCacheManagerFactory.createCacheManager(globalConfiguration);
-      CacheManager second = TestCacheManagerFactory.createCacheManager(globalConfiguration);
+      CacheContainer first = TestCacheManagerFactory.createCacheManager(globalConfiguration);
+      CacheContainer second = TestCacheManagerFactory.createCacheManager(globalConfiguration);
       registerCacheManager(first, second);
 
       Configuration config = getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC, true);

@@ -22,7 +22,7 @@
 package org.infinispan.server.websocket.handlers;
 
 import org.infinispan.Cache;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.server.websocket.OpHandler;
 import org.infinispan.websocket.MockChannel;
@@ -37,7 +37,7 @@ import org.json.JSONObject;
 public class MockClient {
 	
 	private String cacheName;
-	private CacheManager cacheManager;
+	private CacheContainer cacheContainer;
 	private Cache<Object, Object> cache;
 
 	private OpHandler putHandler = new PutHandler(); 
@@ -50,8 +50,8 @@ public class MockClient {
 		this.cacheName = cacheName;
 		this.ctx = new MockChannelHandlerContext(mockChannel);
 		
-		cacheManager = new DefaultCacheManager();
-		cache = cacheManager.getCache(cacheName);
+		cacheContainer = new DefaultCacheManager();
+		cache = cacheContainer.getCache(cacheName);
 	}
 	
 	public void put(String key, String value) {

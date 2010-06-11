@@ -2,7 +2,7 @@ package org.infinispan.tx;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -32,18 +32,18 @@ public class LargeTransactionTest extends MultipleCacheManagersTest {
       c.setSyncRollbackPhase(true);
       c.setUseLockStriping(false);
 
-      CacheManager manager = TestCacheManagerFactory.createClusteredCacheManager(c);
-      manager.start();
-      manager.getCache();
-      registerCacheManager(manager);
-      Cache cache1 = manager.getCache("TestCache");
+      CacheContainer container = TestCacheManagerFactory.createClusteredCacheManager(c);
+      container.start();
+      container.getCache();
+      registerCacheManager(container);
+      Cache cache1 = container.getCache("TestCache");
       assert cache1.getConfiguration().getCacheMode().equals(Configuration.CacheMode.REPL_SYNC);
       cache1.start();
 
-      manager = TestCacheManagerFactory.createClusteredCacheManager(c);
-      manager.start();
-      registerCacheManager(manager);
-      Cache cache2 = manager.getCache("TestCache");
+      container = TestCacheManagerFactory.createClusteredCacheManager(c);
+      container.start();
+      registerCacheManager(container);
+      Cache cache2 = container.getCache("TestCache");
       assert cache1.getConfiguration().getCacheMode().equals(Configuration.CacheMode.REPL_SYNC);
    }
 

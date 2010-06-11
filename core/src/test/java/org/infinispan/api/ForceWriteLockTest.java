@@ -5,7 +5,6 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ReadCommittedEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.manager.CacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;

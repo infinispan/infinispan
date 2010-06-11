@@ -25,7 +25,6 @@ package org.infinispan.eviction;
 import org.infinispan.config.Configuration;
 import org.infinispan.eviction.MarshalledValuesEvictionTest.MockMarshalledValueInterceptor;
 import org.infinispan.interceptors.MarshalledValueInterceptor;
-import org.infinispan.manager.CacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.MarshalledValueTest;
 import org.infinispan.marshall.Marshaller;

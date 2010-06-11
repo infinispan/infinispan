@@ -25,7 +25,6 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.TermQuery;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
-import org.infinispan.manager.CacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.QueryFactory;
@@ -34,14 +33,10 @@ import org.infinispan.query.helper.TestQueryHelperFactory;
 import org.infinispan.query.test.CustomKey;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.List;
-import java.util.Properties;
 
 import static org.infinispan.config.Configuration.CacheMode.LOCAL;
 

@@ -24,7 +24,7 @@ package org.infinispan.query.backend;
 import org.infinispan.Cache;
 import org.infinispan.CacheException;
 import org.infinispan.config.Configuration;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -45,7 +45,7 @@ import java.util.List;
 @Test(groups = "unit")
 public class QueryHelperTest {
    Configuration cfg;
-   List<CacheManager> cacheManagers;
+   List<CacheContainer> cacheContainers;
 
    @BeforeMethod
    public void setUp() {
@@ -53,17 +53,17 @@ public class QueryHelperTest {
       cfg.setIndexingEnabled(true);
       cfg.setIndexLocalOnly(true);
 
-      cacheManagers = new LinkedList<CacheManager>();
+      cacheContainers = new LinkedList<CacheContainer>();
    }
 
    @AfterMethod
    public void tearDown() {
-      TestingUtil.killCacheManagers(cacheManagers);
+      TestingUtil.killCacheManagers(cacheContainers);
    }
 
    private Cache<?, ?> createCache(Configuration c) {
-      CacheManager cm = TestCacheManagerFactory.createCacheManager(c);
-      cacheManagers.add(cm);
+      CacheContainer cm = TestCacheManagerFactory.createCacheManager(c);
+      cacheContainers.add(cm);
       return cm.getCache();
    }
 

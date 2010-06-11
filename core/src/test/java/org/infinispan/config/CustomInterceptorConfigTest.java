@@ -3,7 +3,7 @@ package org.infinispan.config;
 import org.infinispan.Cache;
 import org.infinispan.interceptors.InvocationContextInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
@@ -16,7 +16,7 @@ import java.io.InputStream;
 @Test(testName = "config.CustomInterceptorConfigTest", groups = "functional")
 public class CustomInterceptorConfigTest {
    Cache c;
-   CacheManager cm;
+   CacheContainer cm;
 
    public void testCustomInterceptors() throws IOException {
       String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +

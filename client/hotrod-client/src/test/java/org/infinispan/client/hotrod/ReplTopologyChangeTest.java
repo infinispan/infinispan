@@ -1,11 +1,9 @@
 package org.infinispan.client.hotrod;
 
-import org.infinispan.Cache;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.config.Configuration;
-import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -45,8 +43,8 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       config = getDefaultClusteredConfig(getCacheMode());
-      CacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(config);
-      CacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(config);
+      CacheContainer cm1 = TestCacheManagerFactory.createClusteredCacheManager(config);
+      CacheContainer cm2 = TestCacheManagerFactory.createClusteredCacheManager(config);
       registerCacheManager(cm1);
       registerCacheManager(cm2);
 
@@ -86,7 +84,7 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
 
    @Test(dependsOnMethods = "testTwoMembers")
    public void testAddNewServer() {
-      CacheManager cm3 = TestCacheManagerFactory.createClusteredCacheManager(config);
+      CacheContainer cm3 = TestCacheManagerFactory.createClusteredCacheManager(config);
       registerCacheManager(cm3);
       hotRodServer3 = TestHelper.startHotRodServer(manager(2));
       manager(2).getCache();

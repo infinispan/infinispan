@@ -1,6 +1,6 @@
 package org.infinispan.distribution.rehash;
 
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
@@ -15,8 +15,8 @@ public class ConcurrentOverlappingLeaveTest extends RehashLeaveTestBase {
       l1 = addressOf(c3);
       l2 = addressOf(c4);
 
-      CacheManager cm3 = c3.getCacheManager();
-      CacheManager cm4 = c4.getCacheManager();
+      CacheContainer cm3 = c3.getCacheManager();
+      CacheContainer cm4 = c4.getCacheManager();
 
       cacheManagers.removeAll(Arrays.asList(cm3, cm4));
       caches.removeAll(Arrays.asList(c3, c4));
