@@ -192,6 +192,8 @@ object Main extends Logging {
             case 'r' => props.setProperty(PROP_KEY_PROTOCOL, getopt.getOptarg)
             case 'i' => props.setProperty(PROP_KEY_IDLE_TIMEOUT, getopt.getOptarg)
             case 'n' => props.setProperty(PROP_KEY_TCP_NO_DELAY, getopt.getOptarg)
+            case 's' => props.setProperty(PROP_KEY_SEND_BUF_SIZE, getopt.getOptarg)
+            case 'e' => props.setProperty(PROP_KEY_RECV_BUF_SIZE, getopt.getOptarg)            
             case 'D' => {
                val arg = getopt.getOptarg
                var name = ""
