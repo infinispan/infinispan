@@ -30,7 +30,8 @@ object Main extends Logging {
    val PROP_KEY_TCP_NO_DELAY = "infinispan.server.tcp_no_delay"
    val PROP_KEY_SEND_BUF_SIZE = "infinispan.server.send_buf_size"
    val PROP_KEY_RECV_BUF_SIZE = "infinispan.server.recv_buf_size"
-   val PORT_DEFAULT = 11211
+   val PROP_KEY_PROXY_HOST = "infinispan.server.proxy_host"
+   val PROP_KEY_PROXY_PORT = "infinispan.server.proxy_port"
    val HOST_DEFAULT = "127.0.0.1"
    val MASTER_THREADS_DEFAULT = "0"
    val WORKER_THREADS_DEFAULT = "0"
@@ -150,6 +151,13 @@ object Main extends Logging {
       }
       props.setProperty(PROP_KEY_PORT, port.toString)
 
+      // If no proxy host given, external host defaults to configured host
+      val externalHost = props.getProperty(PROP_KEY_PROXY_HOST, props.getProperty(PROP_KEY_HOST))
+      props.setProperty(PROP_KEY_PROXY_HOST, externalHost)
+      // If no proxy port given, external port defaults to configured port
+      val externalPort = props.getProperty(PROP_KEY_PROXY_PORT, props.getProperty(PROP_KEY_PORT))
+      props.setProperty(PROP_KEY_PROXY_PORT, externalPort)
+
       val configFile = props.getProperty(PROP_KEY_CACHE_CONFIG)
       val cacheManager = if (configFile == null) new DefaultCacheManager else new DefaultCacheManager(configFile)
       addShutdownHook(new ShutdownHook(server, cacheManager))
@@ -171,7 +179,9 @@ object Main extends Logging {
          new LongOpt("idle_timeout", LongOpt.REQUIRED_ARGUMENT, null, 'i'),
          new LongOpt("tcp_no_delay", LongOpt.REQUIRED_ARGUMENT, null, 'n'),
          new LongOpt("send_buf_size", LongOpt.REQUIRED_ARGUMENT, null, 's'),
-         new LongOpt("recv_buf_size", LongOpt.REQUIRED_ARGUMENT, null, 'e')
+         new LongOpt("recv_buf_size", LongOpt.REQUIRED_ARGUMENT, null, 'e'),
+         new LongOpt("proxy_host", LongOpt.REQUIRED_ARGUMENT, null, 'o'),
+         new LongOpt("proxy_port", LongOpt.REQUIRED_ARGUMENT, null, 'x')
          )
       var getopt = new Getopt(programName, args, sopts, lopts)
       var code: Int = 0
@@ -194,6 +204,8 @@ object Main extends Logging {
             case 'n' => props.setProperty(PROP_KEY_TCP_NO_DELAY, getopt.getOptarg)
             case 's' => props.setProperty(PROP_KEY_SEND_BUF_SIZE, getopt.getOptarg)
             case 'e' => props.setProperty(PROP_KEY_RECV_BUF_SIZE, getopt.getOptarg)
+            case 'o' => props.setProperty(PROP_KEY_PROXY_HOST, getopt.getOptarg)
+            case 'x' => props.setProperty(PROP_KEY_PROXY_PORT, getopt.getOptarg)
             case 'D' => {
                val arg = getopt.getOptarg
                var name = ""
@@ -254,6 +266,10 @@ object Main extends Logging {
       println("    -s, --send_buf_size=<num>          Send buffer size (default: as defined by the OS).")
       println
       println("    -e, --recv_buf_size=<num>          Receive buffer size (default: as defined by the OS).")
+      println
+      println("    -o, --proxy_host=<host or ip>      Host address to expose in topology information sent to clients. If not present, it defaults to configured host. Servers that do not transmit topology information ignore this setting.")
+      println
+      println("    -x, --proxy_port=<num>             Port to expose in topology information sent to clients. If not present, it defaults to configured port. Servers that do not transmit topology information ignore this setting.")
       println
       println("    -D<name>[=<value>]                 Set a system property")
       println

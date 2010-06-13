@@ -27,25 +27,36 @@ object HotRodTestingUtil extends Logging {
    def startHotRodServer(manager: EmbeddedCacheManager): HotRodServer =
       startHotRodServer(manager, UniquePortThreadLocal.get.intValue)
 
+   def startHotRodServer(manager: EmbeddedCacheManager, proxyHost: String, proxyPort: Int): HotRodServer =
+      startHotRodServer(manager, UniquePortThreadLocal.get.intValue, 0, proxyHost, proxyPort)
+
    def startHotRodServer(manager: EmbeddedCacheManager, port: Int): HotRodServer =
       startHotRodServer(manager, port, 0)
 
-   def startHotRodServer(manager: EmbeddedCacheManager, port: Int, idleTimeout: Int): HotRodServer = {
+   def startHotRodServer(manager: EmbeddedCacheManager, port:Int, proxyHost: String, proxyPort: Int): HotRodServer =
+      startHotRodServer(manager, port, 0, proxyHost, proxyPort)
+
+   def startHotRodServer(manager: EmbeddedCacheManager, port: Int, idleTimeout: Int): HotRodServer =
+      startHotRodServer(manager, port, idleTimeout, host, port)
+
+   def startHotRodServer(manager: EmbeddedCacheManager, port: Int, idleTimeout: Int, proxyHost: String, proxyPort: Int): HotRodServer = {
       val server = new HotRodServer {
          import HotRodServer._
          override protected def defineTopologyCacheConfig(cacheManager: EmbeddedCacheManager) {
             cacheManager.defineConfiguration(TopologyCacheName, createTopologyCacheConfig)
          }
       }
-      server.start(getProperties(host, port, idleTimeout), manager)
+      server.start(getProperties(host, port, idleTimeout, proxyHost, proxyPort), manager)
       server
    }
 
-   private def getProperties(host: String, port: Int, idleTimeout: Int): Properties = {
+   private def getProperties(host: String, port: Int, idleTimeout: Int, proxyHost: String, proxyPort: Int): Properties = {
       val properties = new Properties
       properties.setProperty(PROP_KEY_HOST, host)
       properties.setProperty(PROP_KEY_PORT, port.toString)
       properties.setProperty(PROP_KEY_IDLE_TIMEOUT, idleTimeout.toString)
+      properties.setProperty(PROP_KEY_PROXY_HOST, proxyHost)
+      properties.setProperty(PROP_KEY_PROXY_PORT, proxyPort.toString)
       properties
    }
 
@@ -61,7 +72,7 @@ object HotRodTestingUtil extends Logging {
             // but has been evicted from JGroups cluster.
          }
       }
-      server.start(getProperties(host, port, 0), manager)
+      server.start(getProperties(host, port, 0, host, port), manager)
       server
    }
 
