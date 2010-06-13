@@ -166,7 +166,7 @@ object Main extends Logging {
 
    private def processCommandLine(args: Array[String]) {
       programName = System.getProperty("program.name", "startServer")
-      var sopts = "-:hD:Vp:l:m:t:c:r:i:n:s:e:"
+      var sopts = "-:hD:Vp:l:m:t:c:r:i:n:s:e:o:x:"
       var lopts = Array(
          new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h'),
          new LongOpt("version", LongOpt.NO_ARGUMENT, null, 'V'),
