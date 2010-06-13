@@ -14,6 +14,7 @@ import org.infinispan.{CacheException, Cache}
 import org.infinispan.remoting.transport.Address
 import org.infinispan.manager.EmbeddedCacheManager
 import java.util.{Properties, Random};
+import org.infinispan.server.core.Main._
 
 /**
  * // TODO: Document this
@@ -42,8 +43,11 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Logging {
 
       isClustered = cacheManager.getGlobalConfiguration.getTransportClass != null
       // If clustered, set up a cache for topology information
-      if (isClustered)
-         addSelfToTopologyView(getHost, getPort, cacheManager)
+      if (isClustered) {
+         val externalHost = properties.getProperty(PROP_KEY_PROXY_HOST, properties.getProperty(PROP_KEY_HOST))
+         val externalPort = properties.getProperty(PROP_KEY_PROXY_PORT, properties.getProperty(PROP_KEY_PORT)).toInt
+         addSelfToTopologyView(externalHost, externalPort, cacheManager)
+      }
    }
 
    private def addSelfToTopologyView(host: String, port: Int, cacheManager: EmbeddedCacheManager) {

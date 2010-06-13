@@ -54,7 +54,7 @@ class HotRodReplicationTest extends HotRodMultiNodeTest {
       assertSuccess(clients.tail.head.assertGet(m), v(m, "v2-"))
    }
 
-   def testPingWithTopologyAwareClient(m: Method) {
+   def testPingWithTopologyAwareClient {
       var resp = clients.head.ping
       assertStatus(resp.status, Success)
       assertEquals(resp.topologyResponse, None)
