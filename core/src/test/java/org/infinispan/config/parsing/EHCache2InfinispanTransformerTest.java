@@ -24,7 +24,6 @@ import static org.testng.Assert.assertEquals;
 @Test(groups = "functional", testName = "config.parsing.EHCache2InfinispanTransformerTest")
 public class EHCache2InfinispanTransformerTest extends AbstractInfinispanTest {
 
-   public static final String XSLT_FILE = "xslt/ehcache1x2infinispan4x.xslt";
    private static final String BASE_DIR = "configs/ehcache";
    ConfigFilesConvertor convertor = new ConfigFilesConvertor();
 
@@ -49,7 +48,7 @@ public class EHCache2InfinispanTransformerTest extends AbstractInfinispanTest {
          currentThread().setContextClassLoader(delegatingCl);
          String fileName = getFileName(ehCacheFile);
          ByteArrayOutputStream baos = new ByteArrayOutputStream();
-         convertor.parse(fileName, baos, XSLT_FILE);
+         convertor.parse(fileName, baos, ConfigFilesConvertor.TRANSFORMATIONS.get(ConfigFilesConvertor.EHCACHE_CACHE1X));
          dcm = (DefaultCacheManager) TestCacheManagerFactory.fromStream(new ByteArrayInputStream(baos.toByteArray()), true);
          Cache<Object,Object> defaultCache = dcm.getCache();
          defaultCache.put("key", "value");

@@ -44,7 +44,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static java.util.Collections.sort;
 
 /**
  * Class used for converting different configuration files to INFINISPAN format.
@@ -57,7 +65,14 @@ public class ConfigFilesConvertor {
    static final String JBOSS_CACHE3X = "JBossCache3x";
    static final String EHCACHE_CACHE1X = "Ehcache1x";
    static final String COHERENCE_35X = "Coherence35x";
-   static final String[] SUPPORTED_FORMATS = {JBOSS_CACHE3X, EHCACHE_CACHE1X, COHERENCE_35X};
+
+   static final Map<String, String> TRANSFORMATIONS = new HashMap<String, String>(4);
+
+   static {
+      TRANSFORMATIONS.put(JBOSS_CACHE3X, "xslt/jbc3x2infinispan4.xslt");
+      TRANSFORMATIONS.put(EHCACHE_CACHE1X, "xslt/ehcache1x2infinispan4x.xslt");
+      TRANSFORMATIONS.put(COHERENCE_35X, "xslt/coherence35x2infinispan4x.xslt");
+   }
 
    public void parse(InputStream is, OutputStream os, String xsltFile) throws Exception {
       InputStream xsltInStream = new FileLookup().lookupFile(xsltFile);
@@ -101,7 +116,7 @@ public class ConfigFilesConvertor {
 
    private static void help() {
       System.out.println("Usage:");
-      System.out.println("importConfig [-source <the file to be transformed>] [-destination <where to store resulting XML>] [-type <the type of the source, possible values being: " + Arrays.asList(SUPPORTED_FORMATS) + " >]");
+      System.out.println("importConfig [-source <the file to be transformed>] [-destination <where to store resulting XML>] [-type <the type of the source, possible values being: " + getSupportedFormats() + " >]");
    }
 
 
@@ -131,17 +146,14 @@ public class ConfigFilesConvertor {
       mustExist(destinationName, "destination");
       mustExist(type, "type");
 
-      List<String> stringList = Arrays.asList(SUPPORTED_FORMATS);
-      if (!stringList.contains(type)) {
-         System.err.println("Unsupported transformation type: " + type + ". Supported formats are: " + stringList);
+      if (!TRANSFORMATIONS.containsKey(type)) {
+         System.err.println("Unsupported transformation type: " + type + ". Supported formats are: " + getSupportedFormats());
       }
 
       if (type.equals(JBOSS_CACHE3X)) {
          transformFromJbossCache3x(sourceName, destinationName);
-      } else if (type.equals(EHCACHE_CACHE1X)) {
-         transformFromEhcache1x(sourceName, destinationName);
-      } else if (type.equals(COHERENCE_35X)) {
-         transformFromCoherence35x(sourceName, destinationName);
+      } else {
+         transformFromNonJBoss(sourceName, destinationName, TRANSFORMATIONS.get(type));
       }
 
       System.out.println("---");
@@ -149,7 +161,13 @@ public class ConfigFilesConvertor {
       System.out.println("---");
    }
 
-   private static void transformFromCoherence35x(String sourceName, String destinationName) throws Exception {
+   private static String getSupportedFormats() {
+      List<String> supported = new LinkedList<String>(TRANSFORMATIONS.keySet());
+      sort(supported);
+      return supported.toString();
+   }
+
+   private static void transformFromNonJBoss(String sourceName, String destinationName, String xslt) throws Exception {
       File oldConfig = new File(sourceName);
       if (!oldConfig.exists()) {
          System.err.println("File specified as input ('" + sourceName + ") does not exist.");
@@ -170,13 +188,12 @@ public class ConfigFilesConvertor {
          }
 
          fos = new FileOutputStream(destinationName);
-         convertor.parse(is, fos, "xslt/ehcache1x2infinispan4x.xslt");
+         convertor.parse(is, fos, xslt);
       } finally {
          Util.flushAndCloseStream(fos);
          Util.close(is);
       }
    }
-
 
    private static void mustExist(String sourceName, String what) {
       if (sourceName == null) {
@@ -229,34 +246,6 @@ public class ConfigFilesConvertor {
       //now this means that the generated file is basically empty, so delete ie
       if (jgroupsConfigFile.length() < 5) {
          jgroupsConfigFile.delete();
-      }
-   }
-
-   private static void transformFromEhcache1x(String sourceName, String destinationName) throws Exception {
-      File oldConfig = new File(sourceName);
-      if (!oldConfig.exists()) {
-         System.err.println("File specified as input ('" + sourceName + ") does not exist.");
-         System.exit(1);
-      }
-      ConfigFilesConvertor converter = new ConfigFilesConvertor();
-      FileInputStream is = null;
-      FileOutputStream fos = null;
-
-      try {
-
-         is = new FileInputStream(oldConfig);
-         File destination = new File(destinationName);
-         if (!destination.exists()) {
-            if (!destination.createNewFile()) {
-               System.err.println("Warn! Could not create file " + destination);
-            }
-         }
-
-         fos = new FileOutputStream(destinationName);
-         converter.parse(is, fos, "xslt/ehcache1x2infinispan4x.xslt");
-      } finally {
-         Util.flushAndCloseStream(fos);
-         Util.close(is);
       }
    }
 
