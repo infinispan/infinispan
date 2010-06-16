@@ -18,7 +18,6 @@ import java.io.File;
 @Test(groups = "functional", testName = "config.parsing.Coherence2InfinispanTransformerTest", enabled = false)
 public class Coherence2InfinispanTransformerTest extends AbstractInfinispanTest {
 
-   public static final String XSLT_FILE = "xslt/coherence35x2infinispan4x.xslt";
    private static final String BASE_DIR = "configs/coherence";
 
 
@@ -40,7 +39,7 @@ public class Coherence2InfinispanTransformerTest extends AbstractInfinispanTest 
          Thread.currentThread().setContextClassLoader(delegatingCl);
          String fileName = getFileName(coherenceFileName);
          ByteArrayOutputStream baos = new ByteArrayOutputStream();
-         convertor.parse(fileName, baos, XSLT_FILE);
+         convertor.parse(fileName, baos, ConfigFilesConvertor.TRANSFORMATIONS.get(ConfigFilesConvertor.COHERENCE_35X));
          dcm = TestCacheManagerFactory.fromStream(new ByteArrayInputStream(baos.toByteArray()), true);
          Cache<Object,Object> defaultCache = dcm.getCache();
          defaultCache.put("key", "value");
