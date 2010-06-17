@@ -169,9 +169,8 @@ public class RoundRobinBalancingIntegrationTest extends MultipleCacheManagersTes
          remoteCache.put("k6", "v2");
          remoteCache.put("k7", "v3");
          remoteCache.put("k8", "v4");
-         assert false : "exception expected as balancer is still redirecting to failed node";
-      } catch (TransportException e) {
-         //expected
+      } catch (Exception e) {
+         assert false : "exception should not happen even if the balancer redirects to failed node at the beggining";
       }
    }
 

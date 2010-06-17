@@ -2,9 +2,9 @@ package org.infinispan.client.hotrod.impl.protocol;
 
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
+import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.BinaryVersionedValue;
 import org.infinispan.client.hotrod.impl.VersionedOperationResponse;
-import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.util.logging.Log;
@@ -34,114 +34,147 @@ public class HotRodOperationsImpl implements HotRodOperations, HotRodConstants {
    }
 
    public byte[] get(byte[] key, Flag[] flags) {
-      Transport transport = transportFactory.getTransport(key);
-      try {
-         short status = sendKeyOperation(key, transport, GET_REQUEST, flags, GET_RESPONSE);
-         if (status == KEY_DOES_NOT_EXIST_STATUS) {
-            return null;
+      for (int i = 0; i < transportFactory.getTransportCount(); i++) {
+         try {
+            Transport transport = transportFactory.getTransport(key);
+            try {
+               short status = sendKeyOperation(key, transport, GET_REQUEST, flags, GET_RESPONSE);
+               if (status == KEY_DOES_NOT_EXIST_STATUS) {
+                  return null;
+               }
+               if (status == NO_ERROR_STATUS) {
+                  return transport.readArray();
+               }
+            } finally {
+               releaseTransport(transport);
+            }
+         } catch (TransportException te) {
+            logErrorAndThrowExceptionIfNeeded(i, te);
          }
-         if (status == NO_ERROR_STATUS) {
-            return transport.readArray();
-         }
-      } finally {
-         releaseTransport(transport);
       }
       throw new IllegalStateException("We should not reach here!");
    }
 
    public byte[] remove(byte[] key, Flag[] flags) {
-      Transport transport = transportFactory.getTransport(key);
-      try {
-         short status = sendKeyOperation(key, transport, REMOVE_REQUEST, flags, REMOVE_RESPONSE);
-         if (status == KEY_DOES_NOT_EXIST_STATUS) {
-            return null;
-         } else if (status == NO_ERROR_STATUS) {
-            return returnPossiblePrevValue(transport, flags);
+      for (int i = 0; i < transportFactory.getTransportCount(); i++) {
+         Transport transport = transportFactory.getTransport(key);
+         try {
+            short status = sendKeyOperation(key, transport, REMOVE_REQUEST, flags, REMOVE_RESPONSE);
+            if (status == KEY_DOES_NOT_EXIST_STATUS) {
+               return null;
+            } else if (status == NO_ERROR_STATUS) {
+               return returnPossiblePrevValue(transport, flags);
+            }
+         } catch (TransportException te) {
+            logErrorAndThrowExceptionIfNeeded(i, te);
+         }finally {
+            releaseTransport(transport);
          }
-      } finally {
-         releaseTransport(transport);
       }
       throw new IllegalStateException("We should not reach here!");
    }
 
    public boolean containsKey(byte[] key, Flag... flags) {
-      Transport transport = transportFactory.getTransport(key);
-      try {
-         short status = sendKeyOperation(key, transport, CONTAINS_KEY_REQUEST, flags, CONTAINS_KEY_RESPONSE);
-         if (status == KEY_DOES_NOT_EXIST_STATUS) {
-            return false;
-         } else if (status == NO_ERROR_STATUS) {
-            return true;
+      for (int i = 0; i < transportFactory.getTransportCount(); i++) {
+         Transport transport = transportFactory.getTransport(key);
+         try {
+            short status = sendKeyOperation(key, transport, CONTAINS_KEY_REQUEST, flags, CONTAINS_KEY_RESPONSE);
+            if (status == KEY_DOES_NOT_EXIST_STATUS) {
+               return false;
+            } else if (status == NO_ERROR_STATUS) {
+               return true;
+            }
+         } catch (TransportException te) {
+            logErrorAndThrowExceptionIfNeeded(i, te);
          }
-      } finally {
-         releaseTransport(transport);
+         finally {
+            releaseTransport(transport);
+         }
       }
       throw new IllegalStateException("We should not reach here!");
    }
 
    public BinaryVersionedValue getWithVersion(byte[] key, Flag... flags) {
-      Transport transport = transportFactory.getTransport(key);
-      try {
-         short status = sendKeyOperation(key, transport, GET_WITH_VERSION, flags, GET_WITH_VERSION_RESPONSE);
-         if (status == KEY_DOES_NOT_EXIST_STATUS) {
-            return null;
-         }
-         if (status == NO_ERROR_STATUS) {
-            long version = transport.readLong();
-            if (log.isTraceEnabled()) {
-               log.trace("Received version: " + version);
+      for (int i = 0; i < transportFactory.getTransportCount(); i++) {
+         Transport transport = transportFactory.getTransport(key);
+         try {
+            short status = sendKeyOperation(key, transport, GET_WITH_VERSION, flags, GET_WITH_VERSION_RESPONSE);
+            if (status == KEY_DOES_NOT_EXIST_STATUS) {
+               return null;
             }
-            byte[] value = transport.readArray();
-            return new BinaryVersionedValue(version, value);
+            if (status == NO_ERROR_STATUS) {
+               long version = transport.readLong();
+               if (log.isTraceEnabled()) {
+                  log.trace("Received version: " + version);
+               }
+               byte[] value = transport.readArray();
+               return new BinaryVersionedValue(version, value);
+            }
+         } catch (TransportException te) {
+           logErrorAndThrowExceptionIfNeeded(i, te); 
+         } finally {
+            releaseTransport(transport);
          }
-      } finally {
-         releaseTransport(transport);
       }
       throw new IllegalStateException("We should not reach here!");
    }
 
 
    public byte[] put(byte[] key, byte[] value, int lifespan, int maxIdle, Flag... flags) {
-      Transport transport = transportFactory.getTransport(key);
-      try {
-         short status = sendPutOperation(key, value, transport, PUT_REQUEST, PUT_RESPONSE, lifespan, maxIdle, flags);
-         if (status != NO_ERROR_STATUS) {
-            throw new InvalidResponseException("Unexpected response status: " + Integer.toHexString(status));
+      for (int i = 0; i < transportFactory.getTransportCount(); i++) {
+         Transport transport = transportFactory.getTransport(key);
+         try {
+            short status = sendPutOperation(key, value, transport, PUT_REQUEST, PUT_RESPONSE, lifespan, maxIdle, flags);
+            if (status != NO_ERROR_STATUS) {
+               throw new InvalidResponseException("Unexpected response status: " + Integer.toHexString(status));
+            }
+            return returnPossiblePrevValue(transport, flags);
+         } catch (TransportException te) {
+            logErrorAndThrowExceptionIfNeeded(i, te);
+         }finally {
+            releaseTransport(transport);
          }
-         return returnPossiblePrevValue(transport, flags);
-      } finally {
-         releaseTransport(transport);
       }
+      throw new IllegalStateException("This should not be reached!");
    }
 
    public byte[] putIfAbsent(byte[] key, byte[] value, int lifespan, int maxIdle, Flag... flags) {
-      Transport transport = transportFactory.getTransport(key);
-      try {
-         short status = sendPutOperation(key, value, transport, PUT_IF_ABSENT_REQUEST, PUT_IF_ABSENT_RESPONSE, lifespan, maxIdle, flags);
-         if (status == NO_ERROR_STATUS || status == NOT_PUT_REMOVED_REPLACED_STATUS) {
-            byte[] bytes = returnPossiblePrevValue(transport, flags);
-            if (log.isTraceEnabled()) {
-               log.trace("Returning from putIfAbsent: " + Arrays.toString(bytes));
+      for (int i = 0; i < transportFactory.getTransportCount(); i++) {
+         Transport transport = transportFactory.getTransport(key);
+         try {
+            short status = sendPutOperation(key, value, transport, PUT_IF_ABSENT_REQUEST, PUT_IF_ABSENT_RESPONSE, lifespan, maxIdle, flags);
+            if (status == NO_ERROR_STATUS || status == NOT_PUT_REMOVED_REPLACED_STATUS) {
+               byte[] bytes = returnPossiblePrevValue(transport, flags);
+               if (log.isTraceEnabled()) {
+                  log.trace("Returning from putIfAbsent: " + Arrays.toString(bytes));
+               }
+               return bytes;
             }
-            return bytes;
+         } catch (TransportException te) {
+            logErrorAndThrowExceptionIfNeeded(i, te);
          }
-      } finally {
-         releaseTransport(transport);
+         finally {
+            releaseTransport(transport);
+         }
       }
       throw new IllegalStateException("We should not reach here!");
    }
 
    public byte[] replace(byte[] key, byte[] value, int lifespan, int maxIdle, Flag... flags) {
-      Transport transport = transportFactory.getTransport(key);
-      try {
-         short status = sendPutOperation(key, value, transport, REPLACE_REQUEST, REPLACE_RESPONSE, lifespan, maxIdle, flags);
-         if (status == NO_ERROR_STATUS || status == NOT_PUT_REMOVED_REPLACED_STATUS) {
-            return returnPossiblePrevValue(transport, flags);
+      for (int i = 0; i < transportFactory.getTransportCount(); i++) {
+         Transport transport = transportFactory.getTransport(key);
+         try {
+            short status = sendPutOperation(key, value, transport, REPLACE_REQUEST, REPLACE_RESPONSE, lifespan, maxIdle, flags);
+            if (status == NO_ERROR_STATUS || status == NOT_PUT_REMOVED_REPLACED_STATUS) {
+               return returnPossiblePrevValue(transport, flags);
+            }
+         } catch (TransportException te) {
+            logErrorAndThrowExceptionIfNeeded(i, te);
+         } finally {
+            releaseTransport(transport);
          }
-      } finally {
-         releaseTransport(transport);
       }
-      throw new IllegalStateException("We should not reach here!");
+      throw new IllegalStateException(" should not reach here!");
    }
 
    /**
@@ -151,52 +184,68 @@ public class HotRodOperationsImpl implements HotRodOperations, HotRodConstants {
     * was sent, the response would be empty.
     */
    public VersionedOperationResponse replaceIfUnmodified(byte[] key, byte[] value, int lifespan, int maxIdle, long version, Flag... flags) {
-      Transport transport = transportFactory.getTransport(key);
-      try {
-         // 1) write header
-         long messageId = HotRodOperationsHelper.writeHeader(transport, REPLACE_IF_UNMODIFIED_REQUEST, cacheName, topologyId, flags);
+      for (int i = 0; i < transportFactory.getTransportCount(); i++) {
+         Transport transport = transportFactory.getTransport(key);
+         try {
+            // 1) write header
+            long messageId = HotRodOperationsHelper.writeHeader(transport, REPLACE_IF_UNMODIFIED_REQUEST, cacheName, topologyId, flags);
 
-         //2) write message body
-         transport.writeArray(key);
-         transport.writeVInt(lifespan);
-         transport.writeVInt(maxIdle);
-         transport.writeLong(version);
-         transport.writeArray(value);
-         return returnVersionedOperationResponse(transport, messageId, REPLACE_IF_UNMODIFIED_RESPONSE, flags);
-      } finally {
-         releaseTransport(transport);
+            //2) write message body
+            transport.writeArray(key);
+            transport.writeVInt(lifespan);
+            transport.writeVInt(maxIdle);
+            transport.writeLong(version);
+            transport.writeArray(value);
+            return returnVersionedOperationResponse(transport, messageId, REPLACE_IF_UNMODIFIED_RESPONSE, flags);
+         } catch (TransportException te) {
+            logErrorAndThrowExceptionIfNeeded(i, te);
+         }
+         finally {
+            releaseTransport(transport);
+         }
       }
+      throw new IllegalStateException(" should not reach here!");
    }
 
    /**
     * Request: [header][key length][key][entry_version]
     */
    public VersionedOperationResponse removeIfUnmodified(byte[] key, long version, Flag... flags) {
-      Transport transport = transportFactory.getTransport(key);
-      try {
-         // 1) write header
-         long messageId = HotRodOperationsHelper.writeHeader(transport, REMOVE_IF_UNMODIFIED_REQUEST, cacheName, topologyId, flags);
+      for (int i = 0; i < transportFactory.getTransportCount(); i++) {
+         Transport transport = transportFactory.getTransport(key);
+         try {
+            // 1) write header
+            long messageId = HotRodOperationsHelper.writeHeader(transport, REMOVE_IF_UNMODIFIED_REQUEST, cacheName, topologyId, flags);
 
-         //2) write message body
-         transport.writeArray(key);
-         transport.writeLong(version);
+            //2) write message body
+            transport.writeArray(key);
+            transport.writeLong(version);
 
-         //process response and return
-         return returnVersionedOperationResponse(transport, messageId, REMOVE_IF_UNMODIFIED_RESPONSE, flags);
+            //process response and return
+            return returnVersionedOperationResponse(transport, messageId, REMOVE_IF_UNMODIFIED_RESPONSE, flags);
 
-      } finally {
-         releaseTransport(transport);
+         } catch (TransportException te) {
+            logErrorAndThrowExceptionIfNeeded(i, te);
+         }
+         finally {
+            releaseTransport(transport);
+         }
       }
+      throw new IllegalStateException("Should not reach this point!");
    }
 
    public void clear(Flag... flags) {
-      Transport transport = transportFactory.getTransport();
-      try {
-         // 1) write header
-         long messageId = HotRodOperationsHelper.writeHeader(transport, CLEAR_REQUEST, cacheName, topologyId, flags);
-         HotRodOperationsHelper.readHeaderAndValidate(transport, messageId, CLEAR_RESPONSE, topologyId);
-      } finally {
-         releaseTransport(transport);
+      for (int i = 0; i < transportFactory.getTransportCount(); i++) {
+         Transport transport = transportFactory.getTransport();
+         try {
+            // 1) write header
+            long messageId = HotRodOperationsHelper.writeHeader(transport, CLEAR_REQUEST, cacheName, topologyId, flags);
+            HotRodOperationsHelper.readHeaderAndValidate(transport, messageId, CLEAR_RESPONSE, topologyId);
+         } catch (TransportException te) {
+            logErrorAndThrowExceptionIfNeeded(i, te);
+         } finally {
+            releaseTransport(transport);
+         }
       }
    }
 
@@ -294,5 +343,10 @@ public class HotRodOperationsImpl implements HotRodOperations, HotRodConstants {
       }
       byte[] prevValue = returnPossiblePrevValue(transport, flags);
       return new VersionedOperationResponse(prevValue, code);
+   }
+
+   private void logErrorAndThrowExceptionIfNeeded(int i, TransportException te) {
+      log.warn("Transport exception. Retry " + i + " out of " + transportFactory.getTransportCount(), te);
+      if (i == transportFactory.getTransportCount() - 1) throw te;
    }
 }

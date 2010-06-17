@@ -51,14 +51,34 @@ public class RoundRobinBalancingStrategy implements RequestBalancingStrategy {
    public InetSocketAddress nextServer() {
       readLock.lock();
       try {
-         int pos = index.getAndIncrement() % servers.length;
-         InetSocketAddress server = servers[pos];
-         if (log.isTraceEnabled()) {
-            log.trace("Returning server: " + server);
-         }
+         InetSocketAddress server = getServerByIndex(index.getAndIncrement());
          return server;
       } finally {
          readLock.unlock();
       }
+   }
+
+   /**
+    * Returns same value as {@link #nextServer()} without modifying indexes/state.
+    */
+   public InetSocketAddress dryRunNextServer() {
+      return getServerByIndex(index.get());
+   }
+
+   private InetSocketAddress getServerByIndex(int val) {
+      int pos = val % servers.length;
+      InetSocketAddress server = servers[pos];
+      if (log.isTraceEnabled()) {
+         log.trace("Returning server: " + server);
+      }
+      return server;
+   }
+
+   public InetSocketAddress[] getServers() {
+      return servers;
+   }
+
+   public int getNextPosition() {
+      return  index.get() % servers.length;
    }
 }

@@ -54,13 +54,11 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
       manager(0).getCache();
       manager(1).getCache();
 
-      TestingUtil.blockUntilViewReceived(manager(0).getCache(), 2, 10000);
-      TestingUtil.blockUntilCacheStatusAchieved(manager(0).getCache(), ComponentStatus.RUNNING, 10000);
-      TestingUtil.blockUntilCacheStatusAchieved(manager(1).getCache(), ComponentStatus.RUNNING, 10000);
+      waitForClusterToForm(2);
 
-      manager(0).getCache().put("k", "v");
-      manager(0).getCache().get("k").equals("v");
-      manager(1).getCache().get("k").equals("v");
+      manager(0).getCache().put("k_test", "v");
+      manager(0).getCache().get("k_test").equals("v");
+      manager(1).getCache().get("k_test").equals("v");
 
       log.info("Local replication test passed!");
 
@@ -89,10 +87,7 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
       hotRodServer3 = TestHelper.startHotRodServer(manager(2));
       manager(2).getCache();
 
-      TestingUtil.blockUntilViewsReceived(10000, true, manager(0), manager(1), manager(2));
-      TestingUtil.blockUntilCacheStatusAchieved(manager(0).getCache(), ComponentStatus.RUNNING, 10000);
-      TestingUtil.blockUntilCacheStatusAchieved(manager(1).getCache(), ComponentStatus.RUNNING, 10000);
-      TestingUtil.blockUntilCacheStatusAchieved(manager(2).getCache(), ComponentStatus.RUNNING, 10000);
+      waitForClusterToForm(3);
 
       try {
          expectTopologyChange(new InetSocketAddress("localhost", hotRodServer3.getPort()), true);
@@ -108,11 +103,11 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
    public void testDropServer() {
       hotRodServer3.stop();
       manager(2).stop();
-      TestingUtil.blockUntilViewsReceived(10000, true, manager(0), manager(1));
-      TestingUtil.blockUntilCacheStatusAchieved(manager(0).getCache(), ComponentStatus.RUNNING, 10000);
-      TestingUtil.blockUntilCacheStatusAchieved(manager(1).getCache(), ComponentStatus.RUNNING, 10000);
 
-      InetSocketAddress server3Address = new InetSocketAddress("localhost", hotRodServer3.getPort());
+      waitForClusterToForm(2);
+
+      InetSocketAddress server3Address = new InetSocketAddress("localhost", hotRodServer3.getPort());      
+
       try {
          expectTopologyChange(server3Address, false);
          assertEquals(2, tcpConnectionFactory.getServers().size());
@@ -125,15 +120,16 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
 
    private void expectTopologyChange(InetSocketAddress server1Address, boolean added) {
       for (int i = 0; i < 10; i++) {
-         try {
-            remoteCache.put("k" + i, "v" + i);
-         } catch (Exception e) {
-            if (added) {
-               throw new IllegalStateException(e);
-            } //else it is acceptable, as the transport hasn't changed
-         }
+         remoteCache.put("k" + i, "v" + i);         
          if (added == tcpConnectionFactory.getServers().contains(server1Address)) break;
       }
       assertEquals(server1Address + " not found", added, tcpConnectionFactory.getServers().contains(server1Address));
+   }
+   
+   protected void waitForClusterToForm(int memberCount) {
+      TestingUtil.blockUntilViewReceived(manager(0).getCache(), memberCount, 10000);
+      for (int i = 0; i < memberCount; i++) {
+         TestingUtil.blockUntilCacheStatusAchieved(manager(i).getCache(), ComponentStatus.RUNNING, 10000);
+      }
    }
 }

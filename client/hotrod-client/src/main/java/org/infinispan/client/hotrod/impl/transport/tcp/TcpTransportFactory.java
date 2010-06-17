@@ -181,4 +181,17 @@ public class TcpTransportFactory implements TransportFactory {
    public boolean isTcpNoDelay() {
       return tcpNoDelay;
    }
+
+   @Override
+   public int getTransportCount() {
+      if (connectionPool.getMaxActive() > 0) {
+         return connectionPool.getMaxActive() * servers.size();
+      } else {
+         return 10 * servers.size();
+      }
+   }
+
+   public RequestBalancingStrategy getBalancer() {
+      return balancer;
+   }
 }
