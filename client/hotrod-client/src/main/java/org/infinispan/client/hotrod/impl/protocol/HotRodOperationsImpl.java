@@ -346,7 +346,12 @@ public class HotRodOperationsImpl implements HotRodOperations, HotRodConstants {
    }
 
    private void logErrorAndThrowExceptionIfNeeded(int i, TransportException te) {
-      log.warn("Transport exception. Retry " + i + " out of " + transportFactory.getTransportCount(), te);
-      if (i == transportFactory.getTransportCount() - 1) throw te;
+      String message = "Transport exception. Retry " + i + " out of " + transportFactory.getTransportCount();
+      if (i == transportFactory.getTransportCount() - 1) {
+         log.warn(message, te);
+         throw te;
+      } else {
+         log.trace(message + ":" + te);
+      }
    }
 }
