@@ -15,7 +15,7 @@
    <description>A Lucene directory implementation based on Infinispan</description>
 
    <properties>
-      <version.lucene>2.9.2</version.lucene>
+      <version.lucene>2.9.3</version.lucene>
    </properties>
 
    <dependencies>
