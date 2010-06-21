@@ -53,9 +53,9 @@ import org.testng.annotations.Test;
 public class PerformanceCompareStressTest {
    
    /** Concurrent Threads in tests */
-   private static final int THREADS = 1;
+   private static final int THREADS = 10;
    
-   private static final long DURATION_MS = 100000;
+   private static final long DURATION_MS = 10000;
    
    private static final ClusteredCacheFactory cacheFactory = new ClusteredCacheFactory(CacheTestSupport.createTestConfiguration());
 
@@ -88,16 +88,17 @@ public class PerformanceCompareStressTest {
    private void testDirectory(Directory dir, String testLabel) throws InterruptedException, IOException {
       SharedState state = new SharedState(1000);
       CacheTestSupport.initializeDirectory(dir);
-      ExecutorService e = Executors.newFixedThreadPool(THREADS);
+      ExecutorService e = Executors.newFixedThreadPool(THREADS+1);
       for (int i=0; i<THREADS; i++) {
-         e.execute(new LuceneUserThread(dir, state));
+         e.execute(new LuceneReaderThread(dir, state));
       }
+      e.execute(new LuceneWriterThread(dir, state));
       e.shutdown();
       state.startWaitingThreads();
       Thread.sleep(DURATION_MS);
-      state.quit();
       long searchesCount = state.incrementIndexSearchesCount(0);
       long writerTaskCount = state.incrementIndexWriterTaskCount(0);
+      state.quit();
       e.awaitTermination(10, TimeUnit.SECONDS);
       System.out.println(
                "Test " + testLabel +" run in " + DURATION_MS + "ms:\n\tSearches: " + searchesCount + "\n\t" + "Writes: " + writerTaskCount);

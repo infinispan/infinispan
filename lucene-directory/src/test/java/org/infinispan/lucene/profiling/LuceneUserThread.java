@@ -22,34 +22,20 @@
 package org.infinispan.lucene.profiling;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
 
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.Field.Index;
-import org.apache.lucene.document.Field.Store;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
-import org.infinispan.lucene.testutils.LuceneSettings;
 
 /**
- * LuceneUserThread: does several activities on the index, including searching, adding to index and
- * deleting. It checks for some expected state in index, like known strings the index should contain
- * or should not contain at any time.
+ * LuceneUserThread: base class to perform activities on the index, as searching, adding to index and
+ * deleting.
  * 
  * @author Sanne Grinovero
  * @since 4.0
  */
-public class LuceneUserThread implements Runnable {
+public abstract class LuceneUserThread implements Runnable {
 
-   private final Directory directory;
-   private final SharedState state;
+   protected final Directory directory;
+   protected final SharedState state;
    
    LuceneUserThread(Directory dir, SharedState state) {
       this.directory = dir;
@@ -57,7 +43,7 @@ public class LuceneUserThread implements Runnable {
    }
 
    @Override
-   public void run() {
+   public final void run() {
       try {
          state.waitForStart();
       } catch (InterruptedException e1) {
@@ -73,41 +59,6 @@ public class LuceneUserThread implements Runnable {
       }
    }
 
-   private void testLoop() throws IOException {
-      addSomeStrings();
-      verifyStringsExistInIndex();
-   }
-
-   private void addSomeStrings() throws IOException {
-      Set<String> strings = new HashSet<String>();
-      state.stringsOutOfIndex.drainTo(strings, 5);
-      IndexWriter iwriter = LuceneSettings.openWriter(directory);
-      for (String term : strings) {
-         Document doc = new Document();
-         doc.add(new Field("main", term, Store.NO, Index.NOT_ANALYZED));
-         iwriter.addDocument(doc);
-      }
-      iwriter.commit();
-      iwriter.close();
-      state.stringsInIndex.addAll(strings);
-      state.incrementIndexWriterTaskCount(5);
-   }
-
-   private void verifyStringsExistInIndex() throws IOException {
-      // take ownership of some strings, so that no other thread will change status for them:
-      Set<String> strings = new HashSet<String>();
-      state.stringsInIndex.drainTo(strings, 50);
-      IndexSearcher searcher = new IndexSearcher(directory, true);
-      for (String term : strings) {
-         Query query = new TermQuery(new Term("main", term));
-         TopDocs docs = searcher.search(query, null, 1);
-         if (docs.totalHits != 1) {
-            throw new RuntimeException("String '" + term + "' should exist but was not found in index");
-         }
-      }
-      // put the strings back at their place:
-      state.stringsInIndex.addAll(strings);
-      state.incrementIndexSearchesCount(50);
-   }
+   protected abstract void testLoop() throws IOException;
 
 }
