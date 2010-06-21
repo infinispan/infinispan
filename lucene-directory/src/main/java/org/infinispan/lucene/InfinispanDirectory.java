@@ -30,7 +30,9 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.store.LockFactory;
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.context.Flag;
 import org.infinispan.lucene.locking.BaseLockFactory;
 import org.infinispan.util.concurrent.ConcurrentHashSet;
 import org.infinispan.util.logging.Log;
@@ -55,7 +57,7 @@ public class InfinispanDirectory extends Directory {
    // access type will be changed in the next Lucene version
    volatile boolean isOpen = true;
 
-   private final Cache<CacheKey, Object> cache;
+   private final AdvancedCache<CacheKey, Object> cache;
    // indexName is required when one common cache is used
    private final String indexName;
    // chunk size used in this directory, static filed not used as we want to have different chunk
@@ -65,7 +67,7 @@ public class InfinispanDirectory extends Directory {
    private final FileListCacheKey fileListCacheKey;
 
    public InfinispanDirectory(Cache<CacheKey, Object> cache, String indexName, LockFactory lf, int chunkSize) {
-      this.cache = cache;
+      this.cache = cache.getAdvancedCache();
       this.indexName = indexName;
       this.setLockFactory(lf);
       this.chunkSize = chunkSize;
@@ -103,7 +105,7 @@ public class InfinispanDirectory extends Directory {
     */
    public boolean fileExists(String name) throws IOException {
       checkIsOpen();
-      return cache.containsKey(new FileCacheKey(indexName, name));
+      return cache.withFlags(Flag.SKIP_LOCKING).containsKey(new FileCacheKey(indexName, name));
    }
 
    /**
@@ -161,6 +163,7 @@ public class InfinispanDirectory extends Directory {
     */
    public void renameFile(String from, String to) throws IOException {
       checkIsOpen();
+      cache.startBatch();
       // rename main file header
       CacheKey fromKey = new FileCacheKey(indexName, from);
       FileMetadata fileFrom = (FileMetadata) cache.remove(fromKey);
@@ -178,12 +181,14 @@ public class InfinispanDirectory extends Directory {
          if (ob == null) {
             break;
          }
+         cache.remove(fromChunkKey);
          ChunkCacheKey toChunkKey = new ChunkCacheKey(indexName, to, i);
          cache.put(toChunkKey, ob);
       } while (true);
       if (log.isTraceEnabled()) {
          log.trace("Renamed file from: {0} to: {1} in index {2}", from, to, indexName);
       }
+      cache.endBatch(true);
    }
 
    /**
@@ -218,7 +223,7 @@ public class InfinispanDirectory extends Directory {
 
    @SuppressWarnings("unchecked")
    private Set<String> getFileList() {
-      Set<String> fileList = (Set<String>) cache.get(fileListCacheKey);
+      Set<String> fileList = (Set<String>) cache.withFlags(Flag.SKIP_LOCKING).get(fileListCacheKey);
       if (fileList == null)
          fileList = new ConcurrentHashSet<String>();
       return fileList;
@@ -247,7 +252,7 @@ public class InfinispanDirectory extends Directory {
 
    private FileMetadata getFileMetadata(String fileName) {
       CacheKey key = new FileCacheKey(indexName, fileName);
-      return (FileMetadata) cache.get(key);
+      return (FileMetadata) cache.withFlags(Flag.SKIP_LOCKING).get(key);
    }
 
    @Override

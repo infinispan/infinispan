@@ -23,11 +23,11 @@ package org.infinispan.lucene;
 
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.Map;
 
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
-import org.infinispan.Cache;
+import org.infinispan.AdvancedCache;
+import org.infinispan.context.Flag;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -47,10 +47,16 @@ public class InfinispanIndexIO {
    // each Lucene index segment is splitted into parts with default size defined here
    public final static int DEFAULT_BUFFER_SIZE = 16 * 1024;
 
-   private static byte[] getChunkFromPosition(Map<CacheKey, Object> cache, FileCacheKey fileKey, int pos, int bufferSize) {
+   private static byte[] getChunkFromPosition(AdvancedCache<CacheKey, Object> cache, FileCacheKey fileKey, int pos, int bufferSize) {
       CacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), getChunkNumberFromPosition(pos,
                bufferSize));
-      return (byte[]) cache.get(key);
+      return (byte[]) cache.withFlags(Flag.SKIP_LOCKING).get(key);
+   }
+   
+   public static byte[] getChunkFromPosition(ConcurrentHashMap<CacheKey, Object> localCache, FileCacheKey fileKey, int pos, int bufferSize) {
+      CacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), getChunkNumberFromPosition(pos,
+               bufferSize));
+      return (byte[]) localCache.get(key);
    }
 
    private static int getPositionInBuffer(int pos, int bufferSize) {
@@ -70,20 +76,20 @@ public class InfinispanIndexIO {
 
       private final int bufferSize;
 
-      private Cache<CacheKey, Object> cache;
+      private final AdvancedCache<CacheKey, Object> cache;
+      private final FileMetadata file;
+      private final FileCacheKey fileKey;
       private ConcurrentHashMap<CacheKey, Object> localCache = new ConcurrentHashMap<CacheKey, Object>();
-      private FileMetadata file;
-      private FileCacheKey fileKey;
       private byte[] buffer;
       private int bufferPosition = 0;
       private int filePosition = 0;
       private int lastChunkNumberLoaded = -1;
 
-      public InfinispanIndexInput(Cache<CacheKey, Object> cache, FileCacheKey fileKey) throws IOException {
+      public InfinispanIndexInput(AdvancedCache<CacheKey, Object> cache, FileCacheKey fileKey) throws IOException {
          this(cache, fileKey, InfinispanIndexIO.DEFAULT_BUFFER_SIZE);
       }
 
-      public InfinispanIndexInput(Cache<CacheKey, Object> cache, FileCacheKey fileKey, int bufferSize) throws IOException {
+      public InfinispanIndexInput(AdvancedCache<CacheKey, Object> cache, FileCacheKey fileKey, int bufferSize) throws IOException {
          this.cache = cache;
          this.fileKey = fileKey;
          this.bufferSize = bufferSize;
@@ -111,18 +117,17 @@ public class InfinispanIndexIO {
          }
       }
 
-      private byte[] getChunkFromPosition(Cache<CacheKey, Object> cache, FileCacheKey fileKey, int pos, int bufferSize) {
-      	if(lastChunkNumberLoaded != getChunkNumberFromPosition(filePosition, bufferSize)) {
-	         Object object = InfinispanIndexIO.getChunkFromPosition(cache, fileKey, pos, bufferSize);
-	         if (object == null) {
-	            object = InfinispanIndexIO.getChunkFromPosition(localCache, fileKey, pos, bufferSize);
-	         }
-	         lastChunkNumberLoaded = getChunkNumberFromPosition(filePosition, bufferSize);
-	         return (byte[]) object;
-	      } else {
-	      	return buffer;
-	      }
-      	
+      private byte[] getChunkFromPosition(AdvancedCache<CacheKey, Object> cache, FileCacheKey fileKey, int pos, int bufferSize) {
+         if (lastChunkNumberLoaded != getChunkNumberFromPosition(filePosition, bufferSize)) {
+            Object object = InfinispanIndexIO.getChunkFromPosition(cache, fileKey, pos, bufferSize);
+            if (object == null) {
+               object = InfinispanIndexIO.getChunkFromPosition(localCache, fileKey, pos, bufferSize);
+            }
+            lastChunkNumberLoaded = getChunkNumberFromPosition(filePosition, bufferSize);
+            return (byte[]) object;
+         } else {
+            return buffer;
+         }
       }
 
       public byte readByte() throws IOException {
@@ -189,7 +194,7 @@ public class InfinispanIndexIO {
 
       private final int bufferSize;
 
-      private final Cache<CacheKey, Object> cache;
+      private final AdvancedCache<CacheKey, Object> cache;
       private final FileMetadata file;
       private final FileCacheKey fileKey;
 
@@ -198,7 +203,7 @@ public class InfinispanIndexIO {
       private int filePosition = 0;
       private int chunkNumber;
 
-      public InfinispanIndexOutput(Cache<CacheKey, Object> cache, FileCacheKey fileKey, int bufferSize, FileMetadata fileMetadata) throws IOException {
+      public InfinispanIndexOutput(AdvancedCache<CacheKey, Object> cache, FileCacheKey fileKey, int bufferSize, FileMetadata fileMetadata) throws IOException {
          this.cache = cache;
          this.fileKey = fileKey;
          this.bufferSize = bufferSize;
@@ -252,11 +257,16 @@ public class InfinispanIndexIO {
          // and create distinct key for it
          ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), chunkNumber);
          // size changed, apply change to file header
-         setFileLength();
+         file.touch();
+         if (file.getSize() < filePosition) {
+            file.setSize(filePosition);
+         }
+         cache.startBatch();
          // add chunk to cache
-         cache.put(key, buffer);
-         // override existing file header with new size and last time acess
-         cache.put(fileKey, file);
+         cache.withFlags(Flag.SKIP_REMOTE_LOOKUP).put(key, buffer);
+         // override existing file header with new size and last time access
+         cache.withFlags(Flag.SKIP_REMOTE_LOOKUP).put(fileKey, file);
+         cache.endBatch(true);
       }
 
       public void close() throws IOException {
@@ -267,6 +277,7 @@ public class InfinispanIndexIO {
          if (log.isDebugEnabled()) {
             log.debug("Closed IndexOutput for file:{0} in index: {1}", fileKey.getFileName(), fileKey.getIndexName());
          }
+         // cache.compact(); //TODO investigate about this
       }
 
       public long getFilePointer() {
@@ -289,11 +300,6 @@ public class InfinispanIndexIO {
          return file.getSize();
       }
 
-      protected void setFileLength() {
-         file.touch();
-         if (file.getSize() < filePosition) {
-            file.setSize(filePosition);
-         }
-      }
    }
+
 }
