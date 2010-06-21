@@ -96,7 +96,7 @@ public abstract class CacheTestSupport {
       // this is a write
       IndexWriter writer = null;
       try {
-         writer = LuceneSettings.openWriter(d);
+         writer = LuceneSettings.openWriter(d, 2000);
          log.info("IndexWriter was constructed");
 
          Document doc = new Document();
@@ -146,6 +146,7 @@ public abstract class CacheTestSupport {
    
    public static void initializeDirectory(Directory directory) throws IOException {
       IndexWriter iwriter = new IndexWriter(directory, LuceneSettings.analyzer, true, MaxFieldLength.UNLIMITED);
+      iwriter.setUseCompoundFile(false);
       iwriter.commit();
       iwriter.close();
       //reopen to check for index

@@ -52,7 +52,7 @@ public class LuceneWriterThread extends LuceneUserThread {
    protected void testLoop() throws IOException {
       Set<String> strings = new HashSet<String>();
       int numElements = state.stringsOutOfIndex.drainTo(strings, 5);
-      IndexWriter iwriter = LuceneSettings.openWriter(directory);
+      IndexWriter iwriter = LuceneSettings.openWriter(directory, 5000);
       for (String term : strings) {
          Document doc = new Document();
          doc.add(new Field("main", term, Store.NO, Index.NOT_ANALYZED));
