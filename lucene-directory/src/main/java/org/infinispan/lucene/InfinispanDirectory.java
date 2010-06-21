@@ -23,6 +23,7 @@ package org.infinispan.lucene;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Set;
 
 import org.apache.lucene.store.AlreadyClosedException;
@@ -94,7 +95,8 @@ public class InfinispanDirectory extends Directory {
    public String[] list() throws IOException {
       checkIsOpen();
       Set<String> filesList = getFileList();
-      return filesList.toArray(new String[filesList.size()]);
+      String[] array = filesList.toArray(new String[0]);
+      return array;
    }
 
    /**
