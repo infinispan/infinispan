@@ -21,12 +21,14 @@
  */
 package org.infinispan.lucene.profiling;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.RAMDirectory;
 import org.infinispan.Cache;
 import org.infinispan.lucene.CacheKey;
@@ -40,7 +42,7 @@ import org.testng.annotations.Test;
 
 /**
  * PerformanceCompareStressTest is useful to get an idea on relative performance between Infinispan
- * in local or clustered mode against a RAMDirectory.
+ * in local or clustered mode against a RAMDirectory or FSDirectory.
  * To be reliable set a long DURATION_MS.
  * This is not meant as a benchmark but used to detect regressions.
  * 
@@ -53,9 +55,9 @@ import org.testng.annotations.Test;
 public class PerformanceCompareStressTest {
    
    /** Concurrent Threads in tests */
-   private static final int THREADS = 10;
+   private static final int THREADS = 8;
    
-   private static final long DURATION_MS = 10000;
+   private static final long DURATION_MS = 100000;
    
    private static final ClusteredCacheFactory cacheFactory = new ClusteredCacheFactory(CacheTestSupport.createTestConfiguration());
 
@@ -63,6 +65,14 @@ public class PerformanceCompareStressTest {
    public void profileTestRAMDirectory() throws InterruptedException, IOException {
       RAMDirectory dir = new RAMDirectory();
       testDirectory(dir, "RAMDirectory");
+   }
+   
+   @Test(enabled = false)
+   public void profileTestFSDirectory() throws InterruptedException, IOException {
+      File indexDir = new File(new File("."), "tempindex");
+      indexDir.mkdirs();
+      FSDirectory dir = FSDirectory.open(indexDir);
+      testDirectory(dir, "FSDirectory");
    }
    
    @Test
@@ -86,7 +96,7 @@ public class PerformanceCompareStressTest {
    }
    
    private void testDirectory(Directory dir, String testLabel) throws InterruptedException, IOException {
-      SharedState state = new SharedState(1000);
+      SharedState state = new SharedState(200000);
       CacheTestSupport.initializeDirectory(dir);
       ExecutorService e = Executors.newFixedThreadPool(THREADS+1);
       for (int i=0; i<THREADS; i++) {

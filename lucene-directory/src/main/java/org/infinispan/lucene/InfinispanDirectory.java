@@ -23,7 +23,6 @@ package org.infinispan.lucene;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Set;
 
 import org.apache.lucene.store.AlreadyClosedException;
