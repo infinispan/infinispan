@@ -37,7 +37,6 @@ import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.lucene.testutils.LuceneSettings;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -63,14 +62,12 @@ public abstract class CacheTestSupport {
       c.setCacheMode(Configuration.CacheMode.DIST_SYNC);
       c.setSyncReplTimeout(10000);
       c.setLockAcquisitionTimeout(10000);
-      c.setUseLockStriping(false);
       c.setSyncCommitPhase(true);
       c.setL1CacheEnabled(true);
       c.setExposeJmxStatistics(false);
-      c.setUseEagerLocking(false);
       c.setSyncRollbackPhase(true);
-      c.setTransactionManagerLookupClass(JBossStandaloneJTAManagerLookup.class.getName());
-      c.setDeadlockDetectionSpinDuration( 10000 );
+      c.setEnableDeadlockDetection(false);
+      c.setInvocationBatchingEnabled(true);
       return c;
    }
 
@@ -141,6 +138,7 @@ public abstract class CacheTestSupport {
       cfg.setExposeJmxStatistics(false);
       cfg.setL1CacheEnabled(false);
       cfg.setWriteSkewCheck(false);
+      cfg.setInvocationBatchingEnabled(true);
       return TestCacheManagerFactory.createCacheManager(globalConfiguration, cfg, true);
    }
    
