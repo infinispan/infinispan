@@ -113,7 +113,9 @@ public class InfinispanDirectoryIOTest {
          //Now it reads some random byte and it compares to the expected byte 
          for (int i = 0; i < FILE_SIZE; i++) {
             if(seekPoint == i) {
-               assert bytesGenerator.nextByte() == indexInput.readByte();
+               byte expectedByte = bytesGenerator.nextByte();
+               byte actualByte = indexInput.readByte();
+               assert expectedByte == actualByte;
                seekPoint = indexInput.getFilePointer() + r.nextInt(10);
                indexInput.seek(seekPoint);
             } else {
