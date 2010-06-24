@@ -74,42 +74,30 @@ public class InfinispanIndexIO {
 
       private static final Log log = LogFactory.getLog(InfinispanIndexInput.class);
 
-      private final int bufferSize;
-
       private final AdvancedCache<CacheKey, Object> cache;
       private final FileMetadata file;
       private final FileCacheKey fileKey;
-      private ConcurrentHashMap<CacheKey, Object> localCache = new ConcurrentHashMap<CacheKey, Object>();
+      private final int chunkSize;
+
+      private int currentBufferSize;
       private byte[] buffer;
-      private int bufferPosition = 0;
-      private int filePosition = 0;
-      private int lastChunkNumberLoaded = -1;
+      private int bufferPosition;
+      private int currentLoadedChunk = -1;
 
       public InfinispanIndexInput(AdvancedCache<CacheKey, Object> cache, FileCacheKey fileKey) throws IOException {
          this(cache, fileKey, InfinispanIndexIO.DEFAULT_BUFFER_SIZE);
       }
 
-      public InfinispanIndexInput(AdvancedCache<CacheKey, Object> cache, FileCacheKey fileKey, int bufferSize) throws IOException {
+      public InfinispanIndexInput(AdvancedCache<CacheKey, Object> cache, FileCacheKey fileKey, int chunkSize) throws IOException {
          this.cache = cache;
          this.fileKey = fileKey;
-         this.bufferSize = bufferSize;
-         buffer = new byte[this.bufferSize];
+         this.chunkSize = chunkSize;
 
          // get file header from file
          this.file = (FileMetadata) cache.get(fileKey);
 
          if (file == null) {
-            throw new IOException("File [ " + fileKey.getFileName() + " ] for index [ " + fileKey.getIndexName()
-                     + " ] was not found");
-         }
-
-         // get records to local cache
-         int i = 0;
-         Object fileChunk;
-         ChunkCacheKey chunkKey = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), i);
-         while ((fileChunk = cache.get(chunkKey)) != null) {
-            localCache.put(chunkKey, fileChunk);
-            chunkKey = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), ++i);
+            throw new IOException("Error loading medatada for index file: " + fileKey);
          }
 
          if (log.isDebugEnabled()) {
@@ -117,72 +105,78 @@ public class InfinispanIndexIO {
          }
       }
 
-      private byte[] getChunkFromPosition(AdvancedCache<CacheKey, Object> cache, FileCacheKey fileKey, int pos, int bufferSize) {
-         if (lastChunkNumberLoaded != getChunkNumberFromPosition(filePosition, bufferSize)) {
-            Object object = InfinispanIndexIO.getChunkFromPosition(cache, fileKey, pos, bufferSize);
-            if (object == null) {
-               object = InfinispanIndexIO.getChunkFromPosition(localCache, fileKey, pos, bufferSize);
-            }
-            lastChunkNumberLoaded = getChunkNumberFromPosition(filePosition, bufferSize);
-            return (byte[]) object;
-         } else {
-            return buffer;
-         }
-      }
-
+      @Override
       public byte readByte() throws IOException {
-         buffer = getChunkFromPosition(cache, fileKey, filePosition, bufferSize);
-         if (buffer == null) {
-            throw new IOException("Chunk id = [ " + getChunkNumberFromPosition(filePosition, bufferSize)
-                     + " ] does not exist for file [ " + fileKey.getFileName() + " ] for index [ "
-                     + fileKey.getIndexName() + " ]");
+         if (bufferPosition >= currentBufferSize) {
+            nextChunk();
+            bufferPosition = 0;
          }
-
-         bufferPosition = getPositionInBuffer(filePosition++, bufferSize);
-         return buffer[bufferPosition];
-      }
-
+         return buffer[bufferPosition++];
+       }
+      
+      @Override
       public void readBytes(byte[] b, int offset, int len) throws IOException {
          int bytesToRead = len;
+         if (buffer == null) {
+            nextChunk();
+         }
          while (bytesToRead > 0) {
-            buffer = getChunkFromPosition(cache, fileKey, filePosition, bufferSize);
-            if (buffer == null) {
-               throw new IOException("Chunk id = [ " + getChunkNumberFromPosition(filePosition, bufferSize)
-                        + " ] does not exist for file [ " + fileKey.getFileName() + " ] for index [ "
-                        + fileKey.getIndexName() + " ], file position: [ " + filePosition + " ], file size: [ "
-                        + file.getSize() + " ]");
-            }
-            bufferPosition = getPositionInBuffer(filePosition, bufferSize);
-            int bytesToCopy = Math.min(buffer.length - bufferPosition, bytesToRead);
+            int bytesToCopy = Math.min(currentBufferSize - bufferPosition, bytesToRead);
             System.arraycopy(buffer, bufferPosition, b, offset, bytesToCopy);
             offset += bytesToCopy;
             bytesToRead -= bytesToCopy;
-            filePosition += bytesToCopy;
+            bufferPosition += bytesToCopy;
+            if (bufferPosition >= currentBufferSize && bytesToRead > 0) {
+               nextChunk();
+               bufferPosition = 0;
+            }
          }
       }
 
+      @Override
       public void close() throws IOException {
-         filePosition = 0;
+         currentBufferSize = 0;
          bufferPosition = 0;
-         lastChunkNumberLoaded = -1;
+         currentLoadedChunk = -1;
          buffer = null;
-         localCache = null;
          if (log.isDebugEnabled()) {
             log.debug("Closed IndexInput for file:{0} in index: {1}", fileKey.getFileName(), fileKey.getIndexName());
          }
       }
 
       public long getFilePointer() {
-         return filePosition;
+         return ((long)currentLoadedChunk) * chunkSize + bufferPosition;
       }
 
+      @Override
       public void seek(long pos) throws IOException {
-         filePosition = (int) pos;
+         bufferPosition = (int)( pos % chunkSize );
+         int targetChunk = (int) (pos / chunkSize);
+         if (targetChunk != currentLoadedChunk) {
+            currentLoadedChunk = targetChunk;
+            setBufferToCurrentChunk();
+         }
+      }
+      
+      private void nextChunk() throws IOException {
+         currentLoadedChunk++;
+         setBufferToCurrentChunk();
       }
 
+      private void setBufferToCurrentChunk() throws IOException {
+         CacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), currentLoadedChunk);
+         buffer = (byte[]) cache.get(key);
+         if (buffer == null) {
+            throw new IOException("Chunk value could not be found for key " + key);
+         }
+         currentBufferSize = buffer.length;
+      }
+
+      @Override
       public long length() {
          return file.getSize();
       }
+      
    }
 
    /**
