@@ -48,8 +48,12 @@ import org.infinispan.util.logging.LogFactory;
  * @author Sanne Grinovero
  * @see org.infinispan.lucene.locking.TransactionalLockFactory
  */
-// todo add support for ConcurrentMergeSheduler
+// TODO add support for ConcurrentMergeSheduler
 public class InfinispanDirectory extends Directory {
+   
+   // used as default chunk size if not provided in conf
+   // each Lucene index segment is splitted into parts with default size defined here
+   public final static int DEFAULT_BUFFER_SIZE = 16 * 1024;
 
    private static final Log log = LogFactory.getLog(InfinispanDirectory.class);
 
@@ -75,7 +79,7 @@ public class InfinispanDirectory extends Directory {
    }
 
    public InfinispanDirectory(Cache<CacheKey, Object> cache, String indexName, LockFactory lf) {
-      this(cache, indexName, lf, InfinispanIndexIO.DEFAULT_BUFFER_SIZE);
+      this(cache, indexName, lf, DEFAULT_BUFFER_SIZE);
    }
 
    public InfinispanDirectory(Cache<CacheKey, Object> cache, String indexName, int chunkSize) {
@@ -83,7 +87,7 @@ public class InfinispanDirectory extends Directory {
    }
 
    public InfinispanDirectory(Cache<CacheKey, Object> cache, String indexName) {
-      this(cache, indexName, new BaseLockFactory(cache, indexName), InfinispanIndexIO.DEFAULT_BUFFER_SIZE);
+      this(cache, indexName, new BaseLockFactory(cache, indexName), DEFAULT_BUFFER_SIZE);
    }
 
    public InfinispanDirectory(Cache<CacheKey, Object> cache) {
@@ -215,9 +219,9 @@ public class InfinispanDirectory extends Directory {
          Set<String> fileList = getFileList();
          fileList.add(name);
          cache.put(fileListCacheKey, fileList);
-         return new InfinispanIndexIO.InfinispanIndexOutput(cache, key, chunkSize, newFileMetadata);
+         return new InfinispanIndexOutput(cache, key, chunkSize, newFileMetadata);
       } else {
-         return new InfinispanIndexIO.InfinispanIndexOutput(cache, key, chunkSize, previous);
+         return new InfinispanIndexOutput(cache, key, chunkSize, previous);
       }
    }
 
@@ -234,7 +238,7 @@ public class InfinispanDirectory extends Directory {
     */
    public IndexInput openInput(String name) throws IOException {
       final FileCacheKey fileKey = new FileCacheKey(indexName, name);
-      return new InfinispanIndexIO.InfinispanIndexInput(cache, fileKey, chunkSize);
+      return new InfinispanIndexInput(cache, fileKey, chunkSize);
    }
 
    /**
