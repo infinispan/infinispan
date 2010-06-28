@@ -117,7 +117,7 @@ public class InfinispanIndexInput extends IndexInput {
       int targetChunk = (int) (pos / chunkSize);
       if (targetChunk != currentLoadedChunk) {
          currentLoadedChunk = targetChunk;
-         setBufferToCurrentChunk();
+         setBufferToCurrentChunkIfPossible();
       }
    }
    
@@ -133,6 +133,20 @@ public class InfinispanIndexInput extends IndexInput {
          throw new IOException("Chunk value could not be found for key " + key);
       }
       currentBufferSize = buffer.length;
+   }
+   
+   // Lucene might try seek(pos) using an illegal pos value
+   // RAMDirectory teaches to position the cursor to the end of previous chunk in this case
+   private void setBufferToCurrentChunkIfPossible() throws IOException {
+      CacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), currentLoadedChunk);
+      buffer = (byte[]) cache.get(key);
+      if (buffer == null) {
+         currentLoadedChunk--;
+         bufferPosition = chunkSize;
+      }
+      else {
+         currentBufferSize = buffer.length;
+      }
    }
 
    @Override
