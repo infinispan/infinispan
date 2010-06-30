@@ -5,7 +5,7 @@ import OperationStatus._
 import org.infinispan.server.core.transport.ChannelBuffers._
 import collection.mutable.ListBuffer
 import org.infinispan.manager.EmbeddedCacheManager
-import org.infinispan.{CacheException, Cache}
+import org.infinispan.Cache
 import org.infinispan.server.core.{CacheValue, Logging}
 import org.infinispan.util.ByteArrayKey
 
@@ -64,7 +64,7 @@ class HotRodEncoder(cacheManager: EmbeddedCacheManager) extends Encoder {
             case 2 | 3 => {
                val currentTopologyView = topologyCache.get("view")
                if (r.topologyId != currentTopologyView.topologyId) {
-                  val cache = getCache(r.cacheName)
+                  val cache = getCacheInstance(r.cacheName, cacheManager)
                   val config = cache.getConfiguration
                   if (r.clientIntel == 2 || !config.getCacheMode.isDistributed) {
                      TopologyAwareResponse(TopologyView(currentTopologyView.topologyId, currentTopologyView.members))
@@ -137,7 +137,7 @@ class HotRodEncoder(cacheManager: EmbeddedCacheManager) extends Encoder {
       buffer.writeUnsignedInt(h.view.members.size)
       var hashIdUpdateRequired = false
       // If we reached here, we know for sure that this is a cache configured with distribution
-      val consistentHash = getCache(r.cacheName).getAdvancedCache.getDistributionManager.getConsistentHash
+      val consistentHash = getCacheInstance(r.cacheName, cacheManager).getAdvancedCache.getDistributionManager.getConsistentHash
       val updateMembers = new ListBuffer[TopologyAddress]
       h.view.members.foreach{address =>
          buffer.writeString(address.host)
@@ -161,19 +161,6 @@ class HotRodEncoder(cacheManager: EmbeddedCacheManager) extends Encoder {
          val viewCopy = h.view.copy(members = updateMembers.toList)
          topologyCache.replace("view", h.view, viewCopy)
       }
-   }
-
-   private def getCache(cacheName: String): Cache[ByteArrayKey, CacheValue] = {
-      if (isTraceEnabled) trace("Cache was requested {0}", cacheName)
-      if (cacheName == TopologyCacheName)
-         throw new CacheException("Remote requests are not allowed to topology cache. Do no send remote requests to cache "
-               + TopologyCacheName)
-
-      if (!cacheName.isEmpty && !cacheManager.getCacheNames.contains(cacheName))
-         throw new CacheNotFoundException("Cache with name '" + cacheName + "' not found amongst the configured caches")
-
-      if (cacheName.isEmpty) cacheManager.getCache[ByteArrayKey, CacheValue]
-      else cacheManager.getCache(cacheName)
    }
 
 }
