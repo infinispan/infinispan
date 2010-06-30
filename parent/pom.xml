@@ -75,6 +75,7 @@
       </jboss.releases.repo.url>
       <jboss.snapshots.repo.url>https://repository.jboss.org/nexus/content/repositories/snapshots/
       </jboss.snapshots.repo.url>
+      <version.scala>2.8.0.RC7</version.scala>      
    </properties>
 
    <dependencies>
