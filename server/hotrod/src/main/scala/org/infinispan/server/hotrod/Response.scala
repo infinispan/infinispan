@@ -16,6 +16,7 @@ class Response(val messageId: Long, val cacheName: String, val clientIntel: Shor
          .append("messageId=").append(messageId)
          .append(", operation=").append(operation)
          .append(", status=").append(status)
+         .append(", cacheName=").append(cacheName)
          .append("}").toString
    }
 }
