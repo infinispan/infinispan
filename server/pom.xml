@@ -14,10 +14,6 @@
    <name>Parent pom for server modules</name>
    <packaging>pom</packaging>
 
-   <properties>
-      <version.scala>2.8.0.RC3</version.scala>
-   </properties>
-
    <dependencies>
       <dependency>
          <groupId>${project.groupId}</groupId>
