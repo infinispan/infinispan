@@ -19,7 +19,7 @@ import org.infinispan.util.ByteArrayKey
  */
 class HotRodDecoder(cacheManager: EmbeddedCacheManager) extends AbstractProtocolDecoder[ByteArrayKey, CacheValue] {
    import HotRodDecoder._
-   import HotRodServer.TopologyCacheName
+   import HotRodServer._
    
    type SuitableHeader = HotRodHeader
    type SuitableParameters = RequestParameters
@@ -75,8 +75,7 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager) extends AbstractProtocol
       if (!cacheName.isEmpty && !cacheManager.getCacheNames.contains(cacheName))
          throw new CacheNotFoundException("Cache with name '" + cacheName + "' not found amongst the configured caches")
 
-      if (cacheName.isEmpty) cacheManager.getCache[ByteArrayKey, CacheValue]
-      else cacheManager.getCache(cacheName)
+      getCacheInstance(cacheName, cacheManager)
    }
 
    override def readKey(h: HotRodHeader, b: ChannelBuffer): ByteArrayKey =

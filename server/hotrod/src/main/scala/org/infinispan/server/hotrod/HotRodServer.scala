@@ -1,7 +1,6 @@
 package org.infinispan.server.hotrod
 
 import org.infinispan.server.core.transport.{Decoder, Encoder}
-import org.infinispan.server.core.{Logging, AbstractProtocolServer}
 import org.infinispan.config.Configuration
 import org.infinispan.config.Configuration.CacheMode
 import org.infinispan.notifications.Listener
@@ -9,11 +8,12 @@ import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent
 import scala.collection.JavaConversions._
 import java.util.concurrent.TimeUnit._
-import org.infinispan.util.Util
 import org.infinispan.{CacheException, Cache}
 import org.infinispan.remoting.transport.Address
 import org.infinispan.manager.EmbeddedCacheManager
-import java.util.{Properties, Random};
+import java.util.{Properties, Random}
+import org.infinispan.server.core.{CacheValue, Logging, AbstractProtocolServer}
+import org.infinispan.util.{ByteArrayKey, Util};
 import org.infinispan.server.core.Main._
 
 /**
@@ -199,5 +199,10 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Logging {
 
 object HotRodServer {
    val TopologyCacheName = "___hotRodTopologyCache"
+
+   def getCacheInstance(cacheName: String, cacheManager: EmbeddedCacheManager): Cache[ByteArrayKey, CacheValue] = {
+      if (cacheName.isEmpty) cacheManager.getCache[ByteArrayKey, CacheValue]
+      else cacheManager.getCache(cacheName)
+   }   
 }
 
