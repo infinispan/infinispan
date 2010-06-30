@@ -174,7 +174,7 @@ object Decoder10 extends AbstractVersionedDecoder with Logging {
    }
 
    override def getOptimizedCache(h: HotRodHeader, c: Cache[ByteArrayKey, CacheValue]): Cache[ByteArrayKey, CacheValue] = {
-      if (c.getConfiguration.getCacheMode.isDistributed && h.flag == ForceReturnPreviousValue) {
+      if (c.getConfiguration.getCacheMode.isDistributed && h.flag != ForceReturnPreviousValue) {
          c.getAdvancedCache.withFlags(SKIP_REMOTE_LOOKUP)
       } else {
          c
