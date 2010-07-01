@@ -137,10 +137,10 @@ object ManagerInstance {
    var instance: EmbeddedCacheManager = null
 
    def getCache(name: String): Cache[String, Any] = {
-      if (name != DefaultCacheManager.DEFAULT_CACHE_NAME && !instance.getCacheNames.contains(name))
+      if (name != CacheContainer.DEFAULT_CACHE_NAME && !instance.getCacheNames.contains(name))
          throw new CacheNotFoundException("Cache with name '" + name + "' not found amongst the configured caches")
 
-      if (name == DefaultCacheManager.DEFAULT_CACHE_NAME) instance.getCache[String, Any]
+      if (name == CacheContainer.DEFAULT_CACHE_NAME) instance.getCache[String, Any]
       else instance.getCache(name)
    }
 

@@ -10,8 +10,7 @@ import java.io._
 import org.testng.annotations.Test
 import org.testng.Assert._
 import java.lang.reflect.Method
-import org.infinispan.manager.DefaultCacheManager
-
+import org.infinispan.manager.{CacheContainer, DefaultCacheManager}
 
 /**
  * This tests using the Apache HTTP commons client library - but you could use anything
@@ -25,7 +24,7 @@ import org.infinispan.manager.DefaultCacheManager
 @Test(groups = Array("functional"), testName = "rest.IntegrationTest")
 class IntegrationTest {
    val HOST = "http://localhost:8888/"
-   val cacheName = DefaultCacheManager.DEFAULT_CACHE_NAME
+   val cacheName = CacheContainer.DEFAULT_CACHE_NAME
    val fullPath = HOST + "rest/" + cacheName
    //val HOST = "http://localhost:8080/infinispan/"
 
@@ -221,9 +220,9 @@ class IntegrationTest {
 
       val obj = new MySer
       obj.name = "mic"
-      ManagerInstance getCache(DefaultCacheManager.DEFAULT_CACHE_NAME) put (m.getName, obj)
-      ManagerInstance getCache(DefaultCacheManager.DEFAULT_CACHE_NAME) put (m.getName + "2", "hola")
-      ManagerInstance getCache(DefaultCacheManager.DEFAULT_CACHE_NAME) put (m.getName + "3", new MyNonSer)
+      ManagerInstance getCache(CacheContainer.DEFAULT_CACHE_NAME) put (m.getName, obj)
+      ManagerInstance getCache(CacheContainer.DEFAULT_CACHE_NAME) put (m.getName + "2", "hola")
+      ManagerInstance getCache(CacheContainer.DEFAULT_CACHE_NAME) put (m.getName + "3", new MyNonSer)
 
       //check we can get it back as an object...
       val get = new GetMethod(fullPathKey);
@@ -269,7 +268,7 @@ class IntegrationTest {
       put.setRequestBody(new ByteArrayInputStream(bout.toByteArray))
       Client.call(put)
 
-      val x = ManagerInstance.getCache(DefaultCacheManager.DEFAULT_CACHE_NAME).get(m.getName).asInstanceOf[MySer]
+      val x = ManagerInstance.getCache(CacheContainer.DEFAULT_CACHE_NAME).get(m.getName).asInstanceOf[MySer]
       assertTrue(x.name == "mic")
    }
 
