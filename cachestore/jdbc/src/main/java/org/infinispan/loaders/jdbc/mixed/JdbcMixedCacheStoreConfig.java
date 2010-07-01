@@ -23,6 +23,7 @@ package org.infinispan.loaders.jdbc.mixed;
 
 import org.infinispan.loaders.AbstractCacheStoreConfig;
 import org.infinispan.loaders.LockSupportCacheStoreConfig;
+import org.infinispan.loaders.jdbc.AbstractJdbcCacheStoreConfig;
 import org.infinispan.loaders.jdbc.DatabaseType;
 import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.binary.JdbcBinaryCacheStoreConfig;
@@ -34,11 +35,10 @@ import org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStoreConfig;
  *
  * @author Mircea.Markus@jboss.com
  */
-public class JdbcMixedCacheStoreConfig extends AbstractCacheStoreConfig {
+public class JdbcMixedCacheStoreConfig extends AbstractJdbcCacheStoreConfig {
 
    private static final long serialVersionUID = -1343548133363285687L;
-   
-   private ConnectionFactoryConfig connectionFactoryConfig = new ConnectionFactoryConfig();
+
    private TableManipulation binaryTableManipulation = new TableManipulation();
    private TableManipulation stringsTableManipulation = new TableManipulation();
    private String key2StringMapper;
@@ -172,7 +172,7 @@ public class JdbcMixedCacheStoreConfig extends AbstractCacheStoreConfig {
       testImmutability("binaryTableManipulation");
       this.binaryTableManipulation.setTimestampColumnName(timestampColumnNameForBinary);
    }
-   
+
    public void setTimestampColumnTypeForBinary(String timestampColumnTypeForBinary) {
       this.binaryTableManipulation.setTimestampColumnType(timestampColumnTypeForBinary);
    }
@@ -181,50 +181,10 @@ public class JdbcMixedCacheStoreConfig extends AbstractCacheStoreConfig {
       testImmutability("binaryTableManipulation");
       this.binaryTableManipulation.setCreateTableOnStart(createTableOnStartForBinary);
    }
-   
+
    public void setDropTableOnExitForBinary(boolean dropTableOnExitForBinary) {
       testImmutability("binaryTableManipulation");
       this.binaryTableManipulation.setDropTableOnExit(dropTableOnExitForBinary);
-   }
-   
-   public void setDriverClass(String driverClass) {
-      testImmutability("connectionFactoryConfig");
-      this.connectionFactoryConfig.setDriverClass(driverClass);
-   }
-
-   public void setConnectionUrl(String connectionUrl) {
-      testImmutability("connectionFactoryConfig");
-      this.connectionFactoryConfig.setConnectionUrl(connectionUrl);
-   }
-
-   public void setUserName(String userName) {
-      testImmutability("connectionFactoryConfig");
-      this.connectionFactoryConfig.setUserName(userName);
-   }
-
-   public void setPassword(String password) {
-      testImmutability("connectionFactoryConfig");
-      this.connectionFactoryConfig.setPassword(password);
-   }
-
-   /**
-    * Name of the connection factory class.
-    *
-    * @see org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory
-    */
-   public void setConnectionFactoryClass(String connectionFactoryClass) {
-      testImmutability("connectionFactoryConfig");
-      this.connectionFactoryConfig.setConnectionFactoryClass(connectionFactoryClass);
-   }
-
-   public void setDatasourceJndiLocation(String location) {
-      testImmutability("datasourceJndiLocation");
-      this.connectionFactoryConfig.setDatasourceJndiLocation(location);
-   }
-
-
-   public ConnectionFactoryConfig getConnectionFactoryConfig() {
-      return connectionFactoryConfig;
    }
 
    public void setKey2StringMapperClass(String name) {
@@ -272,6 +232,7 @@ public class JdbcMixedCacheStoreConfig extends AbstractCacheStoreConfig {
    /**
     * Sets the database dialect.  Valid types are reflected in the DatabaseType enum.  If unspecified, will attempt to
     * "guess" appropriate dialect from the JDBC driver specified.
+    *
     * @param dbType
     */
    public void setDatabaseType(String dbType) {
@@ -282,7 +243,6 @@ public class JdbcMixedCacheStoreConfig extends AbstractCacheStoreConfig {
    @Override
    public JdbcMixedCacheStoreConfig clone() {
       JdbcMixedCacheStoreConfig dolly = (JdbcMixedCacheStoreConfig) super.clone();
-      dolly.connectionFactoryConfig = this.connectionFactoryConfig.clone();
       dolly.binaryTableManipulation = this.binaryTableManipulation.clone();
       dolly.stringsTableManipulation = this.stringsTableManipulation.clone();
       return dolly;
