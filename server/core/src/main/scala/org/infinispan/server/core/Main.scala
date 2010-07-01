@@ -9,7 +9,8 @@ import java.security.{PrivilegedAction, AccessController}
 import java.util.concurrent.{ThreadFactory, ExecutionException, Callable, Executors}
 import gnu.getopt.{Getopt, LongOpt}
 import org.infinispan.Version
-import org.infinispan.manager.{CacheManager, DefaultCacheManager}
+import org.infinispan.manager.{CacheContainer, DefaultCacheManager}
+import java.util.Properties
 import java.util.Properties
 
 /**
@@ -277,7 +278,7 @@ object Main extends Logging {
    }
 }
 
-private class ShutdownHook(server: ProtocolServer, cacheManager: CacheManager) extends Thread {
+private class ShutdownHook(server: ProtocolServer, cacheManager: CacheContainer) extends Thread {
    override def run {
       if (server != null) {
          System.out.println("Posting Shutdown Request to the server...")

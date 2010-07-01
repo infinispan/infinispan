@@ -107,7 +107,7 @@ public class DistributionManagerImpl implements DistributionManager {
    private InvocationContextContainer icc;
    @ManagedAttribute(description = "If true, the node has successfully joined the grid and is considered to hold state.  If false, the join process is still in progress.")
    @Metric(displayName = "Is join completed?", dataType = DataType.TRAIT)
-   volatile boolean joinComplete = false;
+   private volatile boolean joinComplete = false;
    Future<Void> joinFuture;
    final List<Address> leavers = new CopyOnWriteArrayList<Address>();
    volatile Future<Void> leaveTaskFuture;
@@ -131,10 +131,17 @@ public class DistributionManagerImpl implements DistributionManager {
 
    @Start(priority = 20)
    public void start() throws Exception {
+      if (log.isTraceEnabled()) {
+         log.trace("Starting distribution manager on " + getMyAddress());
+      }
       replCount = configuration.getNumOwners();
       listener = new ViewChangeListener();
       notifier.addListener(listener);
       join();
+   }
+
+   private Address getMyAddress() {
+      return rpcManager != null? rpcManager.getAddress(): null;
    }
 
    // To avoid blocking other components' start process, wait last, if necessary, for join to complete.
@@ -162,7 +169,7 @@ public class DistributionManagerImpl implements DistributionManager {
          JoinTask joinTask = new JoinTask(rpcManager, cf, configuration, dataContainer, this);
          joinFuture = rehashExecutor.submit(joinTask);
       } else {
-         joinComplete = true;
+         setJoinComplete(true);
       }
       startLatch.open();
    }
@@ -171,7 +178,7 @@ public class DistributionManagerImpl implements DistributionManager {
    public void stop() {
       notifier.removeListener(listener);
       rehashExecutor.shutdownNow();
-      joinComplete = false;
+      setJoinComplete(false);
    }
 
    public void rehash(List<Address> newMembers, List<Address> oldMembers) {
@@ -368,7 +375,10 @@ public class DistributionManagerImpl implements DistributionManager {
    public class ViewChangeListener {
       @ViewChanged
       public void handleViewChange(ViewChangedEvent e) {
-         boolean started = false;
+         if (log.isTraceEnabled()) {
+            log.trace("view change received. Needs to re-join? " + e.isNeedsToRejoin());
+         }
+         boolean started;
          // how long do we wait for a startup?
          if (e.isNeedsToRejoin()) {
             try {
@@ -414,6 +424,13 @@ public class DistributionManagerImpl implements DistributionManager {
 
    public boolean isJoinComplete() {
       return joinComplete;
+   }
+
+   public void setJoinComplete(boolean joinComplete) {
+      if (log.isTraceEnabled()) {
+         log.trace("Setting joinComplete to " + joinComplete + " for node " + rpcManager.getAddress());
+      }
+      this.joinComplete = joinComplete;
    }
 
    void drainLocalTransactionLog() {

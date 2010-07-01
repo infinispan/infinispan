@@ -31,8 +31,8 @@ public class GridStore implements IWebdavStore {
    private File root = null;
 
    public GridStore(File root) {
-      data = CacheManagerHolder.cacheManager.getCache(CacheManagerHolder.dataCacheName);
-      metadata = CacheManagerHolder.cacheManager.getCache(CacheManagerHolder.metadataCacheName);
+      data = CacheManagerHolder.cacheContainer.getCache(CacheManagerHolder.dataCacheName);
+      metadata = CacheManagerHolder.cacheContainer.getCache(CacheManagerHolder.metadataCacheName);
       
       try {
          data.start();

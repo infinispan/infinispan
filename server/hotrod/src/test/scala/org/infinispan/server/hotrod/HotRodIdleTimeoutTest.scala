@@ -5,7 +5,7 @@ import java.lang.reflect.Method
 import test.HotRodTestingUtil._
 import org.testng.Assert._
 import test.{HotRodClient, UniquePortThreadLocal}
-import org.infinispan.manager.{EmbeddedCacheManager, CacheManager}
+import org.infinispan.manager.{EmbeddedCacheManager, CacheContainer}
 
 /**
  * // TODO: Document this

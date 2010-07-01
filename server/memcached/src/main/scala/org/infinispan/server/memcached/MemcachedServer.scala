@@ -2,7 +2,7 @@ package org.infinispan.server.memcached
 
 import org.infinispan.server.core.AbstractProtocolServer
 import org.infinispan.server.core.transport.{Decoder, Encoder}
-import org.infinispan.manager.CacheManager
+import org.infinispan.manager.CacheContainer
 import java.util.concurrent.{Executors, ScheduledExecutorService}
 
 /**

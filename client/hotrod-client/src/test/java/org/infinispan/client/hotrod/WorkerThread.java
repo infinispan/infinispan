@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.Random;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -20,15 +21,17 @@ public class WorkerThread extends Thread {
    public static final String NULL = "_null_";
    public static final String PUT_SYNC = "_put_sync_";
    public static final String PUT_ASYNC = "_put_async_";
+   public static final String STRESS = "_stress_";
 
-   final RemoteCache<String, String> remoteCache;
+   final RemoteCache remoteCache;
    final BlockingQueue send = new ArrayBlockingQueue(1);
    final BlockingQueue receive = new ArrayBlockingQueue(1);
 
    volatile String key;
    volatile String value;
+   volatile boolean finished = false;
 
-   public WorkerThread(RemoteCache<String, String> remoteCache) {
+   public WorkerThread(RemoteCache remoteCache) {
       super("WorkerThread-" + WORKER_INDEX.getAndIncrement());
       this.remoteCache = remoteCache;
       start();
@@ -45,15 +48,36 @@ public class WorkerThread extends Thread {
                trace("exiting!");
                return;
             }
-            Object result = remoteCache.put(key, value);
-            trace("Added to the cache (" + key + "," + value + ") and returning " + result);
-            if (PUT_SYNC.equals(o)) {
-               receive.put(result == null ? NULL : result);
-               trace("Que now has: " + receive.peek());
+            if (PUT_SYNC.equals(o) || PUT_ASYNC.equals(o)) {
+               Object result = remoteCache.put(key, value);
+               trace("Added to the cache (" + key + "," + value + ") and returning " + result);
+               if (PUT_SYNC.equals(o)) {
+                  receive.put(result == null ? NULL : result);
+                  trace("Que now has: " + receive.peek());
+               }
+            }
+            if (STRESS.equals(o)) {
+               stress_();
             }
          } catch (InterruptedException e) {
             e.printStackTrace();
             throw new IllegalStateException(e);
+         } finally {
+            finished = true;
+         }
+      }
+   }
+
+   private void stress_() {
+      Random rnd = new Random();
+      while (!isInterrupted()) {
+         remoteCache.put(rnd.nextLong(), rnd.nextLong());
+         System.out.println(getName() + " Finished put.");
+         try {
+            Thread.sleep(50);
+         } catch (InterruptedException e) {
+            interrupted();
+            return;
          }
       }
    }
@@ -107,7 +131,26 @@ public class WorkerThread extends Thread {
       }
    }
 
+   public void stress() {
+      try {
+         send.put(STRESS);
+      } catch (InterruptedException e) {
+         e.printStackTrace();
+         throw new IllegalStateException(e);
+      }
+   }
+
    private void trace(String message) {
       log.trace("Worker: " + message);
+   }
+
+   public void waitToFinish() {
+      while (!finished) {
+         try {
+            Thread.sleep(200);
+         } catch (InterruptedException e) {
+            Thread.interrupted();
+         }
+      }
    }
 }

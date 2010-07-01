@@ -2,7 +2,7 @@ package org.infinispan.test;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
@@ -12,8 +12,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.IdentityHashMap;
 import java.util.List;
 
@@ -112,8 +110,8 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       }
    }
 
-   final protected void registerCacheManager(CacheManager... cacheManagers) {
-      for (CacheManager ecm : cacheManagers) {
+   final protected void registerCacheManager(CacheContainer... cacheContainers) {
+      for (CacheContainer ecm : cacheContainers) {
          this.cacheManagers.add((EmbeddedCacheManager) ecm);
       }
    }
@@ -199,6 +197,13 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       for (EmbeddedCacheManager cm : cacheManagers) {
          TestingUtil.killCaches(cm.getCache(cacheName));
       }
+   }
+
+   /**
+    * Returns the default cache from that manager.
+    */
+   protected Cache cache(int index) {
+      return manager(index).getCache();
    }
 
    /**

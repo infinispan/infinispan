@@ -87,7 +87,7 @@ public class ReplDeadlockDetectionTest extends MultipleCacheManagersTest {
       replicationLatch = new CountDownLatch(1);
       controlledRpcManager1.setReplicationLatch(replicationLatch);
       controlledRpcManager2.setReplicationLatch(replicationLatch);
-      log.trace("_________________________ Here is beggins");
+      log.trace("_________________________ Here it begins");
    }
 
    @AfterMethod
@@ -309,6 +309,11 @@ public class ReplDeadlockDetectionTest extends MultipleCacheManagersTest {
 
       public Address getCurrentStateTransferSource() {
          return realOne.getCurrentStateTransferSource();
+      }
+
+      @Override
+      public Address getAddress() {
+         return null;
       }
    }
 }

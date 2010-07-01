@@ -23,7 +23,7 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.loaders.CacheLoader;
 import org.infinispan.loaders.CacheLoaderManager;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.ReplicationQueue;
@@ -146,28 +146,28 @@ public class TestingUtil {
    /**
     * Version of blockUntilViewsReceived that uses varargsa and cache managers
     */
-   public static void blockUntilViewsReceived(long timeout, CacheManager... cacheManagers) {
-      blockUntilViewsReceived(timeout, true, cacheManagers);
+   public static void blockUntilViewsReceived(long timeout, CacheContainer... cacheContainers) {
+      blockUntilViewsReceived(timeout, true, cacheContainers);
    }
 
    /**
     * Waits for the given memebrs to be removed from the cluster. The difference between this and {@link
-    * #blockUntilViewsReceived(long, org.infinispan.manager.CacheManager...)} methods(s) is that it does not barf if
+    * #blockUntilViewsReceived(long, org.infinispan.manager.CacheContainer...)} methods(s) is that it does not barf if
     * more than expected memebers is in the cluster - this is because we expect to start with a grater number fo
     * memebers than we eventually expect. It will barf though, if the number of members is not the one expected but
     * only after the timeout expieres.
     */
-   public static void blockForMemberToFail(long timeout, CacheManager... cacheManagers) {
-      blockUntilViewsReceived(timeout, false, cacheManagers);
-      areCacheViewsComplete(true, cacheManagers);
+   public static void blockForMemberToFail(long timeout, CacheContainer... cacheContainers) {
+      blockUntilViewsReceived(timeout, false, cacheContainers);
+      areCacheViewsComplete(true, cacheContainers);
    }
 
-   public static void blockUntilViewsReceived(long timeout, boolean barfIfTooManyMembers, CacheManager... cacheManagers) {
+   public static void blockUntilViewsReceived(long timeout, boolean barfIfTooManyMembers, CacheContainer... cacheContainers) {
       long failTime = System.currentTimeMillis() + timeout;
 
       while (System.currentTimeMillis() < failTime) {
          sleepThread(100);
-         if (areCacheViewsComplete(barfIfTooManyMembers, cacheManagers)) {
+         if (areCacheViewsComplete(barfIfTooManyMembers, cacheContainers)) {
             return;
          }
       }
@@ -273,12 +273,12 @@ public class TestingUtil {
       return true;
    }
 
-   public static boolean areCacheViewsComplete(boolean barfIfTooManyMembers, CacheManager... cacheManagers) {
-      if (cacheManagers == null) throw new NullPointerException("Cache Manager array is null");
-      int memberCount = cacheManagers.length;
+   public static boolean areCacheViewsComplete(boolean barfIfTooManyMembers, CacheContainer... cacheContainers) {
+      if (cacheContainers == null) throw new NullPointerException("Cache Manager array is null");
+      int memberCount = cacheContainers.length;
 
       for (int i = 0; i < memberCount; i++) {
-         EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) cacheManagers[i];
+         EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) cacheContainers[i];
          if (!isCacheViewComplete(cacheManager.getMembers(), cacheManager.getAddress(), memberCount, barfIfTooManyMembers)) {
             return false;
          }
@@ -396,26 +396,26 @@ public class TestingUtil {
       f.delete();
    }
 
-   public static void killCacheManagers(CacheManager... cacheManagers) {
-      if (cacheManagers != null) {
-         for (CacheManager cm : cacheManagers) {
+   public static void killCacheManagers(CacheContainer... cacheContainers) {
+      if (cacheContainers != null) {
+         for (CacheContainer cm : cacheContainers) {
             if (cm != null) 
                cm.stop();
          }
       }
    }
 
-   public static void killCacheManagers(Collection<? extends CacheManager> cacheManagers) {
-      killCacheManagers(cacheManagers.toArray(new CacheManager[cacheManagers.size()]));
+   public static void killCacheManagers(Collection<? extends CacheContainer> cacheManagers) {
+      killCacheManagers(cacheManagers.toArray(new CacheContainer[cacheManagers.size()]));
    }
    
-   public static void clearContent(CacheManager cacheManager) {
-      if (cacheManager != null) {
-         Set<Cache> runningCaches = getRunningCaches(cacheManager);
+   public static void clearContent(CacheContainer cacheContainer) {
+      if (cacheContainer != null) {
+         Set<Cache> runningCaches = getRunningCaches(cacheContainer);
          for (Cache cache : runningCaches) {
             clearRunningTx(cache);
          }
-         if (!((EmbeddedCacheManager)cacheManager).getStatus().allowInvocations()) return;
+         if (!((EmbeddedCacheManager) cacheContainer).getStatus().allowInvocations()) return;
          for (Cache cache : runningCaches) {
             removeInMemoryData(cache);
             clearCacheLoader(cache);
@@ -425,8 +425,8 @@ public class TestingUtil {
       }
    }
    
-   protected static Set<Cache> getRunningCaches(CacheManager cacheManager) {
-      ConcurrentMap<String, Cache> caches = (ConcurrentMap<String, Cache>) TestingUtil.extractField(DefaultCacheManager.class, cacheManager, "caches");
+   protected static Set<Cache> getRunningCaches(CacheContainer cacheContainer) {
+      ConcurrentMap<String, Cache> caches = (ConcurrentMap<String, Cache>) TestingUtil.extractField(DefaultCacheManager.class, cacheContainer, "caches");
       if (caches == null) return Collections.emptySet();
       Set<Cache> result = new HashSet<Cache>();
       for (Cache cache : caches.values()) {
@@ -550,8 +550,8 @@ public class TestingUtil {
       return (ComponentRegistry) extractField(cache, "componentRegistry");
    }
 
-   public static GlobalComponentRegistry extractGlobalComponentRegistry(CacheManager cacheManager) {
-      return (GlobalComponentRegistry) extractField(cacheManager, "globalComponentRegistry");
+   public static GlobalComponentRegistry extractGlobalComponentRegistry(CacheContainer cacheContainer) {
+      return (GlobalComponentRegistry) extractField(cacheContainer, "globalComponentRegistry");
    }
 
    public static LockManager extractLockManager(Cache cache) {
@@ -683,8 +683,8 @@ public class TestingUtil {
    /**
     * Extracts a component of a given type from the cache's internal component registry
     */
-   public static <T> T extractGlobalComponent(CacheManager cacheManager, Class<T> componentType) {
-      GlobalComponentRegistry gcr = extractGlobalComponentRegistry(cacheManager);
+   public static <T> T extractGlobalComponent(CacheContainer cacheContainer, Class<T> componentType) {
+      GlobalComponentRegistry gcr = extractGlobalComponentRegistry(cacheContainer);
       return gcr.getComponent(componentType);
    }
 
@@ -712,14 +712,14 @@ public class TestingUtil {
    /**
     * Replaces a component in a running cache manager (global component registry)
     *
-    * @param cacheManager         cache in which to replace component
+    * @param cacheContainer         cache in which to replace component
     * @param componentType        component type of which to replace
     * @param replacementComponent new instance
     * @param rewire               if true, ComponentRegistry.rewire() is called after replacing.
     * @return the original component that was replaced
     */
-   public static <T> T replaceComponent(CacheManager cacheManager, Class<T> componentType, T replacementComponent, boolean rewire) {
-      GlobalComponentRegistry cr = extractGlobalComponentRegistry(cacheManager);
+   public static <T> T replaceComponent(CacheContainer cacheContainer, Class<T> componentType, T replacementComponent, boolean rewire) {
+      GlobalComponentRegistry cr = extractGlobalComponentRegistry(cacheContainer);
       T old = cr.getComponent(componentType);
       cr.registerComponent(replacementComponent, componentType);
       if (rewire) {

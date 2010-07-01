@@ -322,7 +322,7 @@ public class RpcManagerImpl implements RpcManager {
 
    @ManagedAttribute(description = "The network address associated with this instance")
    @Metric(displayName = "Network address", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
-   public String getAddress() {
+   public String getNodeAddress() {
       if (t == null || !isStatisticsEnabled()) return "N/A";
       Address address = t.getAddress();
       return address == null ? "N/A" : address.toString();
@@ -383,5 +383,9 @@ public class RpcManagerImpl implements RpcManager {
    // mainly for unit testing
    public void setTransport(Transport t) {
       this.t = t;
+   }@Override
+
+   public Address getAddress() {
+      return t != null ? t.getAddress() : null;
    }
 }

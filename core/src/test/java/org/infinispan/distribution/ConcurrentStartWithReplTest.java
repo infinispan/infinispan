@@ -3,26 +3,21 @@ package org.infinispan.distribution;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.AbstractInProcessFuture;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * Tests concurrent startup of replicated and distributed caches
@@ -143,7 +138,7 @@ public class ConcurrentStartWithReplTest extends AbstractInfinispanTest {
       }
    }
 
-   private Future<Cache<String, String>> startCache(final CacheManager cm, final String cacheName, boolean nonBlockingStartup) {
+   private Future<Cache<String, String>> startCache(final CacheContainer cm, final String cacheName, boolean nonBlockingStartup) {
       final Callable<Cache<String, String>> cacheCreator = new Callable<Cache<String, String>>() {
 
          @Override

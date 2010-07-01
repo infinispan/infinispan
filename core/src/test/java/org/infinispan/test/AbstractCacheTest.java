@@ -2,7 +2,7 @@ package org.infinispan.test;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.Log;
@@ -30,16 +30,16 @@ public class AbstractCacheTest extends AbstractInfinispanTest {
     * use TestingUtil.clearContent(cacheManager);
     */
    @Deprecated
-   public void clearContent(CacheManager cacheManager) {
-      TestingUtil.clearContent(cacheManager);
+   public void clearContent(CacheContainer cacheContainer) {
+      TestingUtil.clearContent(cacheContainer);
    }
 
    /**
     * use TestingUtil.getRunningCaches(cacheManager);
     */
    @Deprecated
-   protected Set<Cache> getRunningCaches(CacheManager cacheManager) {
-      return TestingUtil.getRunningCaches(cacheManager);
+   protected Set<Cache> getRunningCaches(CacheContainer cacheContainer) {
+      return TestingUtil.getRunningCaches(cacheContainer);
    }
 
    /**

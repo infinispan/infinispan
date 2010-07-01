@@ -35,7 +35,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.config.Configuration.CacheMode;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.lucene.testutils.LuceneSettings;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -53,7 +53,7 @@ public abstract class CacheTestSupport {
 
    private static final Log log = LogFactory.getLog(CacheTestSupport.class);
 
-   protected static CacheManager createTestCacheManager() {
+   protected static CacheContainer createTestCacheManager() {
       return TestCacheManagerFactory.createClusteredCacheManager( createTestConfiguration() );
    }
 
@@ -130,7 +130,7 @@ public abstract class CacheTestSupport {
       }
    }
 
-   public static CacheManager createLocalCacheManager() {
+   public static CacheContainer createLocalCacheManager() {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getNonClusteredDefault();
       Configuration cfg = new Configuration();
       cfg.setCacheMode(CacheMode.LOCAL);

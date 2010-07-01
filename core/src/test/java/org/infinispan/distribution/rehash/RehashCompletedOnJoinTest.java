@@ -3,7 +3,6 @@ package org.infinispan.distribution.rehash;
 import org.infinispan.Cache;
 import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.distribution.DistributionManager;
-import org.infinispan.manager.CacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.testng.annotations.Test;
 
@@ -39,7 +38,7 @@ public class RehashCompletedOnJoinTest extends BaseDistFunctionalTest {
       joinerManager.defineConfiguration(cacheName, configuration);
       Cache joiner = joinerManager.getCache(cacheName);
       DistributionManager dmi = joiner.getAdvancedCache().getDistributionManager();
-      assert dmi.isJoinComplete() == true;
+      assert dmi.isJoinComplete();
    }
 
 }

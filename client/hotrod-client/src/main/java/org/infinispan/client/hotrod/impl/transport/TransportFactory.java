@@ -32,4 +32,6 @@ public interface TransportFactory {
    Transport getTransport(byte[] key);
 
    boolean isTcpNoDelay();
+
+   int getTransportCount();
 }

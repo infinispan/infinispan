@@ -2,7 +2,7 @@ package org.infinispan.tx;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
@@ -14,7 +14,7 @@ import java.util.Arrays;
 @Test(groups = "functional", sequential = true, testName = "tx.TransactionsSpanningReplicatedCaches")
 public class TransactionsSpanningReplicatedCaches extends MultipleCacheManagersTest {
 
-   CacheManager cm1, cm2;
+   CacheContainer cm1, cm2;
 
    public TransactionsSpanningReplicatedCaches() {
       cleanup = CleanupPhase.AFTER_METHOD;

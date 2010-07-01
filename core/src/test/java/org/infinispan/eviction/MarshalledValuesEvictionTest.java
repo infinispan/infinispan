@@ -28,7 +28,6 @@ import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.MarshalledValueInterceptor;
-import org.infinispan.manager.CacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.MarshalledValue;
 import org.infinispan.marshall.MarshalledValueTest;

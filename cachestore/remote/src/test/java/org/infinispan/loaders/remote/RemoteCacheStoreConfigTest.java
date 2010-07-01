@@ -2,7 +2,7 @@ package org.infinispan.loaders.remote;
 
 import org.infinispan.Cache;
 import org.infinispan.loaders.CacheLoader;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -38,7 +38,7 @@ public class RemoteCacheStoreConfigTest {
    }
 
    public void simpleTest() throws IOException {
-      CacheManager cm = new DefaultCacheManager(CACHE_LOADER_CONFIG);
+      CacheContainer cm = new DefaultCacheManager(CACHE_LOADER_CONFIG);
       Cache<Object, Object> cache = cm.getCache();
       CacheLoader cacheLoader = TestingUtil.getCacheLoader(cache);
       assert cacheLoader != null;

@@ -207,4 +207,9 @@ public interface RpcManager {
     *         a null otherwise.
     */
    Address getCurrentStateTransferSource();
+
+   /**
+    * Returns the address associated with this RpcManager or null if not part of the cluster.
+    */
+   public Address getAddress();
 }

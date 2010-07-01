@@ -1,6 +1,6 @@
 package org.infinispan.demos.gridfs;
 
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -21,7 +21,7 @@ public class CacheManagerHolder extends HttpServlet {
    private static final String DATA_CACHE_NAME_PROPERTY = "infinispan.gridfs.cache.data";
    private static final String METADATA_CACHE_NAME_PROPERTY = "infinispan.gridfs.cache.metadata";
 
-   public static CacheManager cacheManager;
+   public static CacheContainer cacheContainer;
    public static String dataCacheName, metadataCacheName;
 
    @Override
@@ -29,13 +29,13 @@ public class CacheManagerHolder extends HttpServlet {
       super.init(cfg);
       String cfgFile = System.getProperty(CFG_PROPERTY, cfg.getInitParameter(CFG_PROPERTY));
       if (cfgFile == null)
-         cacheManager = new DefaultCacheManager();
+         cacheContainer = new DefaultCacheManager();
       else {
          try {
-            cacheManager = new DefaultCacheManager(cfgFile);
+            cacheContainer = new DefaultCacheManager(cfgFile);
          } catch (IOException e) {
             log.error("Unable to start cache manager with config file " + cfgFile + ".  Using DEFAULTS!");
-            cacheManager = new DefaultCacheManager();
+            cacheContainer = new DefaultCacheManager();
          }
       }
 

@@ -2,7 +2,7 @@ package org.infinispan.profiling;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -125,7 +125,7 @@ public class DeadlockDetectionPerformanceTest extends AbstractInfinispanTest {
 
    private void runDistributedTest() throws Exception {
       EmbeddedCacheManager cm = null;
-      List<CacheManager> managers = new ArrayList<CacheManager>();
+      List<CacheContainer> containers = new ArrayList<CacheContainer>();
       try {
          CountDownLatch startLatch = new CountDownLatch(1);
          List<ExecutorThread> executorThreads = new ArrayList<ExecutorThread>();
@@ -137,15 +137,15 @@ public class DeadlockDetectionPerformanceTest extends AbstractInfinispanTest {
             Cache distCache = cm.getCache("test");
             ExecutorThread executorThread = new ExecutorThread(startLatch, distCache);
             executorThreads.add(executorThread);
-            managers.add(cm);
+            containers.add(cm);
          }
-         TestingUtil.blockUntilViewsReceived(10000, managers.toArray(new CacheManager[managers.size()]));
+         TestingUtil.blockUntilViewsReceived(10000, containers.toArray(new CacheContainer[containers.size()]));
          startLatch.countDown();
          Thread.sleep(BENCHMARK_DURATION);
          joinThreadsAndPrintResult(executorThreads);
       } finally {
-         log.trace("About to kill cache managers: " + managers);
-         TestingUtil.killCacheManagers(managers);
+         log.trace("About to kill cache managers: " + containers);
+         TestingUtil.killCacheManagers(containers);
       }
    }
 

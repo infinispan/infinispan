@@ -3,7 +3,7 @@ package org.infinispan.loaders.remote;
 import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.loaders.BaseCacheStoreFunctionalTest;
 import org.infinispan.loaders.CacheStoreConfig;
-import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -27,7 +27,7 @@ public class RemoteCacheStoreFunctionalTest extends BaseCacheStoreFunctionalTest
       localCacheManager = TestCacheManagerFactory.createLocalCacheManager();
       hrServer = TestHelper.startHotRodServer(localCacheManager);
 
-      remoteCacheStoreConfig.setRemoteCacheName(DefaultCacheManager.DEFAULT_CACHE_NAME);
+      remoteCacheStoreConfig.setRemoteCacheName(CacheContainer.DEFAULT_CACHE_NAME);
       Properties properties = new Properties();
       properties.put("hotrod-servers", "localhost:"+ hrServer.getPort());
       remoteCacheStoreConfig.setHotRodClientProperties(properties);

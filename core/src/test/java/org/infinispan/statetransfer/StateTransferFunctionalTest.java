@@ -2,7 +2,7 @@ package org.infinispan.statetransfer;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -186,8 +186,8 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       TestingUtil.blockUntilViewsReceived(60000, cache1, cache2);
       verifyInitialData(cache2);
 
-      final CacheManager cm3 = createCacheManager();
-      final CacheManager cm4 = createCacheManager();
+      final CacheContainer cm3 = createCacheManager();
+      final CacheContainer cm4 = createCacheManager();
 
       Thread t1 = new Thread(new Runnable() {
          public void run() {

@@ -5,7 +5,7 @@ import org.infinispan.config.Configuration;
 import static org.infinispan.context.Flag.SKIP_LOCKING;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -23,7 +23,7 @@ public class AtomicMapFunctionalTest extends AbstractInfinispanTest {
    private static final Log log = LogFactory.getLog(AtomicMapFunctionalTest.class);
    Cache<String, Object> cache;
    TransactionManager tm;
-   private CacheManager cm;
+   private CacheContainer cm;
 
    @BeforeMethod
    @SuppressWarnings("unchecked")

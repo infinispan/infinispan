@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.channels.SocketChannel;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Transport implementation based on TCP.
@@ -22,10 +23,14 @@ import java.nio.channels.SocketChannel;
 @ThreadSafe
 public class TcpTransport extends AbstractTransport {
 
+   //needed for debugging
+   private static AtomicLong ID_COUNTER = new AtomicLong(0);
+
    private static Log log = LogFactory.getLog(TcpTransport.class);
 
    private final Socket socket;
    private final InetSocketAddress serverAddress;
+   private final long id = ID_COUNTER.incrementAndGet();
 
    public TcpTransport(InetSocketAddress serverAddress, TransportFactory transportFactory) {
       super(transportFactory);
@@ -179,6 +184,7 @@ public class TcpTransport extends AbstractTransport {
       return "TcpTransport{" +
             "socket=" + socket +
             ", serverAddress=" + serverAddress +
+            ", id =" + id +
             "} ";
    }
 
@@ -211,5 +217,9 @@ public class TcpTransport extends AbstractTransport {
       } catch (IOException e) {
          log.warn("Issues closing transport: " + this, e);
       }
+   }
+
+   public boolean isValid() {
+      return !socket.isClosed();
    }
 }

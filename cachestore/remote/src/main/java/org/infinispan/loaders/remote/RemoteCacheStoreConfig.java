@@ -2,7 +2,7 @@ package org.infinispan.loaders.remote;
 
 import org.infinispan.CacheException;
 import org.infinispan.loaders.AbstractCacheStoreConfig;
-import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.util.FileLookup;
 
 import java.io.IOException;
@@ -17,7 +17,7 @@ import java.util.Properties;
  * <li>HotRodClientPropertiesFile-the file that contains the configuration of hotrod client. See <a href="http://community.jboss.org/wiki/JavaHotRodclient">Hotrod Java Client</a>
  *     for more details on the hotrod client. 
  * <li>remoteCacheName-the name of the remote cache in the remote infinispan cluster, to which to connect to</li>
- * <li>UseDefaultRemoteCache-if set to true, the default remote cache will be used, as obtained by {@link org.infinispan.manager.CacheManager#getCache()}.
+ * <li>UseDefaultRemoteCache-if set to true, the default remote cache will be used, as obtained by {@link org.infinispan.manager.CacheContainer#getCache()}.
  * </ul>
  *
  * @author Mircea.Markus@jboss.com
@@ -43,12 +43,12 @@ public class RemoteCacheStoreConfig extends AbstractCacheStoreConfig {
 
    public void setUseDefaultRemoteCache(boolean useDefaultRemoteCache) {
       if (useDefaultRemoteCache) {
-         setRemoteCacheName(DefaultCacheManager.DEFAULT_CACHE_NAME);
+         setRemoteCacheName(CacheContainer.DEFAULT_CACHE_NAME);
       }
    }
 
    public boolean isUseDefaultRemoteCache() {
-      return DefaultCacheManager.DEFAULT_CACHE_NAME.equals(getRemoteCacheName());
+      return CacheContainer.DEFAULT_CACHE_NAME.equals(getRemoteCacheName());
    }
 
    @Override

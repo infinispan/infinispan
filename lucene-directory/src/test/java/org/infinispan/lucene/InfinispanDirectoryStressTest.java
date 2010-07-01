@@ -35,7 +35,7 @@ import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
 
 import org.infinispan.Cache;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -57,8 +57,8 @@ public class InfinispanDirectoryStressTest {
 
    public void testInfinispanDirectory() throws Exception {
       final int OPERATIONS = 100;
-      CacheManager cacheManager = CacheTestSupport.createTestCacheManager();
-      Cache<CacheKey, Object> cache = cacheManager.getCache();
+      CacheContainer cacheContainer = CacheTestSupport.createTestCacheManager();
+      Cache<CacheKey, Object> cache = cacheContainer.getCache();
       Directory directory = new InfinispanDirectory(cache, "indexName");
       CacheTestSupport.initializeDirectory(directory);
       File document = CacheTestSupport.createDummyDocToIndex("document.lucene", 10000);
@@ -76,7 +76,7 @@ public class InfinispanDirectoryStressTest {
       assert OPERATIONS == hits.totalHits;
 
       directory.close();
-      cacheManager.stop();
+      cacheContainer.stop();
    }
 
    public void testDirectoryWithMultipleThreads() throws Exception {

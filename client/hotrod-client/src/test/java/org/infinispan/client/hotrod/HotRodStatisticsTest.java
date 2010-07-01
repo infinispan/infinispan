@@ -1,6 +1,6 @@
 package org.infinispan.client.hotrod;
 
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.TestingUtil;
@@ -22,16 +22,16 @@ import static org.testng.AssertJUnit.assertTrue;
 public class HotRodStatisticsTest {
 
    private HotRodServer hotrodServer;
-   private CacheManager cacheManager;
+   private CacheContainer cacheContainer;
    private RemoteCacheManager rcm;
    private RemoteCache remoteCache;
    long startTime;
 
    @BeforeMethod
    protected void setup() throws Exception {
-      cacheManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(getClass().getSimpleName());
+      cacheContainer = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(getClass().getSimpleName());
 
-      hotrodServer = TestHelper.startHotRodServer((EmbeddedCacheManager) cacheManager);
+      hotrodServer = TestHelper.startHotRodServer((EmbeddedCacheManager) cacheContainer);
       startTime = System.currentTimeMillis();
       rcm = new RemoteCacheManager("localhost", hotrodServer.getPort());
       remoteCache = rcm.getCache();
@@ -39,7 +39,7 @@ public class HotRodStatisticsTest {
 
    @AfterMethod
    void tearDown() {
-      TestingUtil.killCacheManagers(cacheManager);
+      TestingUtil.killCacheManagers(cacheContainer);
       rcm.stop();
       hotrodServer.stop();
    }

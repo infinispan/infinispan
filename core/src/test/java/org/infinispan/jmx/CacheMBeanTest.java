@@ -30,8 +30,7 @@ import javax.management.ObjectName;
 
 import org.infinispan.CacheException;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.manager.CacheManager;
-import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -53,7 +52,7 @@ public class CacheMBeanTest extends SingleCacheManagerTest {
    }
    
    public void testStartStopManagedOperations() throws Exception {
-      ObjectName defaultOn = new ObjectName(JMX_DOMAIN + ":cache-name=" + DefaultCacheManager.DEFAULT_CACHE_NAME + "(local),jmx-resource=Cache");
+      ObjectName defaultOn = new ObjectName(JMX_DOMAIN + ":cache-name=" + CacheContainer.DEFAULT_CACHE_NAME + "(local),jmx-resource=Cache");
       ObjectName managerON = new ObjectName(JMX_DOMAIN + ":cache-name=[global],jmx-resource=CacheManager");
       server.invoke(managerON, "startCache", new Object[]{}, new String[]{});
       assert ComponentStatus.RUNNING.toString().equals(server.getAttribute(defaultOn, "CacheStatus"));
@@ -83,15 +82,15 @@ public class CacheMBeanTest extends SingleCacheManagerTest {
    
    public void testManagerStopRemovesCacheMBean(Method m) throws Exception {
       final String otherJmxDomain = JMX_DOMAIN + '.' + m.getName();
-      ObjectName defaultOn = new ObjectName(otherJmxDomain + ":cache-name=" + DefaultCacheManager.DEFAULT_CACHE_NAME + "(local),jmx-resource=Cache");
+      ObjectName defaultOn = new ObjectName(otherJmxDomain + ":cache-name=" + CacheContainer.DEFAULT_CACHE_NAME + "(local),jmx-resource=Cache");
       ObjectName galderOn = new ObjectName(otherJmxDomain + ":cache-name=galder(local),jmx-resource=Cache");
       ObjectName managerON = new ObjectName(otherJmxDomain + ":cache-name=[global],jmx-resource=CacheManager");
-      CacheManager otherManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(otherJmxDomain);
+      CacheContainer otherContainer = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(otherJmxDomain);
       server.invoke(managerON, "startCache", new Object[]{}, new String[]{});
       server.invoke(managerON, "startCache", new Object[]{"galder"}, new String[]{String.class.getName()});
       assert ComponentStatus.RUNNING.toString().equals(server.getAttribute(defaultOn, "CacheStatus"));
       assert ComponentStatus.RUNNING.toString().equals(server.getAttribute(galderOn, "CacheStatus"));
-      otherManager.stop();
+      otherContainer.stop();
       try {
          log.info(server.getMBeanInfo(managerON));
          assert false : "Failure expected, " + managerON + " shouldn't be registered in mbean server";
@@ -111,24 +110,24 @@ public class CacheMBeanTest extends SingleCacheManagerTest {
 
 
    public void testDuplicateJmxDomainOnlyCacheExposesJmxStatistics() throws Exception {
-      CacheManager otherManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(JMX_DOMAIN, false, true);
+      CacheContainer otherContainer = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(JMX_DOMAIN, false, true);
       try {
-         otherManager.getCache();
+         otherContainer.getCache();
          assert false : "Failure expected, " + JMX_DOMAIN + " is a duplicate!";
       } catch (CacheException e) {
          assert e.getCause().getCause() instanceof JmxDomainConflictException;
       } finally {
-         otherManager.stop();
+         otherContainer.stop();
       }
    }
 
    public void testMalformedCacheName(Method m) throws Exception {
       final String otherJmxDomain = JMX_DOMAIN + '.' + m.getName();
-      CacheManager otherManager = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(otherJmxDomain);
+      CacheContainer otherContainer = TestCacheManagerFactory.createCacheManagerEnforceJmxDomain(otherJmxDomain);
       try {
-         otherManager.getCache("persistence.unit:unitName=#helloworld.MyRegion");
+         otherContainer.getCache("persistence.unit:unitName=#helloworld.MyRegion");
       } finally {
-         otherManager.stop();
+         otherContainer.stop();
       }
    }
 }

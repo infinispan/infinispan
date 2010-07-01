@@ -5,7 +5,6 @@ import org.infinispan.CacheException;
 import org.infinispan.api.mvcc.LockAssert;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.manager.CacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;

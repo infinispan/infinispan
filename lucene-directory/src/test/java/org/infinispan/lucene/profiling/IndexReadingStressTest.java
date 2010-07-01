@@ -43,7 +43,7 @@ import org.infinispan.lucene.CacheTestSupport;
 import org.infinispan.lucene.InfinispanDirectory;
 import org.infinispan.lucene.testutils.ClusteredCacheFactory;
 import org.infinispan.lucene.testutils.LuceneSettings;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -55,30 +55,30 @@ import org.testng.annotations.Test;
  * changed during the searches.
  * To use it set a DURATION_MS as long as you can afford; choose thread number and terms number
  * according to your use case as they will affect the results.
- * 
+ *
  * @author Sanne Grinovero
  * @since 4.0
  */
 @Test(groups = "profiling", testName = "lucene.profiling.IndexReadingStressTest")
 public class IndexReadingStressTest {
-   
+
    /** Concurrent IndexSearchers used during tests */
    private static final int THREADS = 20;
-   
+
    /** Test duration **/
    private static final long DURATION_MS = 350000;
-   
+
    /** Number of Terms written in the index **/
    private static final int TERMS_NUMBER = 200000;
 
    private static final ClusteredCacheFactory cacheFactory = new ClusteredCacheFactory(CacheTestSupport.createTestConfiguration());
-   
+
    @Test
    public void profileTestRAMDirectory() throws InterruptedException, IOException {
       RAMDirectory dir = new RAMDirectory();
       testDirectory(dir, "RAMDirectory");
    }
-   
+
    @Test
    public void profileTestFSDirectory() throws InterruptedException, IOException {
       File indexDir = new File(new File("."), "tempindex");
@@ -86,7 +86,7 @@ public class IndexReadingStressTest {
       FSDirectory dir = FSDirectory.open(indexDir);
       testDirectory(dir, "FSDirectory");
    }
-   
+
    @Test
    public void profileTestInfinispanDirectory() throws InterruptedException, IOException {
       //theses default are not for performance settings but meant for problem detection:
@@ -94,10 +94,10 @@ public class IndexReadingStressTest {
       InfinispanDirectory dir = new InfinispanDirectory(cache, "iname");
       testDirectory(dir, "InfinispanClustered");
    }
-   
+
    @Test
    public void profileInfinispanLocalDirectory() throws InterruptedException, IOException {
-      CacheManager cacheManager = CacheTestSupport.createLocalCacheManager();
+      CacheContainer cacheManager = CacheTestSupport.createLocalCacheManager();
       try {
          Cache<CacheKey, Object> cache = cacheManager.getCache();
          InfinispanDirectory dir = new InfinispanDirectory(cache, "iname");
@@ -106,7 +106,7 @@ public class IndexReadingStressTest {
          cacheManager.stop();
       }
    }
-   
+
    private void testDirectory(Directory dir, String testLabel) throws InterruptedException, IOException {
       SharedState state = fillDirectory(dir);
       ExecutorService e = Executors.newFixedThreadPool(THREADS);
@@ -123,7 +123,7 @@ public class IndexReadingStressTest {
       System.out.println(
                "Test " + testLabel +" run in " + DURATION_MS + "ms:\n\tSearches: " + searchesCount + "\n\t" + "Writes: " + writerTaskCount);
    }
-   
+
    private SharedState fillDirectory(Directory directory) throws CorruptIndexException, LockObtainFailedException, IOException {
       CacheTestSupport.initializeDirectory(directory);
       SharedState state = new SharedState(0);

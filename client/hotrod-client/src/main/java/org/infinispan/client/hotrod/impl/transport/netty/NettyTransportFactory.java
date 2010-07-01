@@ -66,4 +66,9 @@ public class NettyTransportFactory implements TransportFactory {
    public boolean isTcpNoDelay() {
       return tcpNoDelay;
    }
+
+   @Override
+   public int getTransportCount() {
+      return 1;
+   }
 }

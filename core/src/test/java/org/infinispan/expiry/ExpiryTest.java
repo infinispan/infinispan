@@ -3,7 +3,7 @@ package org.infinispan.expiry;
 import org.infinispan.Cache;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -19,7 +19,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 @Test(groups = "functional", testName = "expiry.ExpiryTest")
 public class ExpiryTest extends AbstractInfinispanTest {
 
-   CacheManager cm;
+   CacheContainer cm;
 
    @BeforeMethod
    public void setUp() {

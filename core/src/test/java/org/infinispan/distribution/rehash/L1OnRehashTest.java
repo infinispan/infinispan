@@ -4,7 +4,6 @@ import org.infinispan.Cache;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.distribution.BaseDistFunctionalTest;
-import org.infinispan.manager.CacheManager;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;

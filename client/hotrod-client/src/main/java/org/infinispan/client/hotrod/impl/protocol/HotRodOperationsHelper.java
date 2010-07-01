@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @since 4.1
  */
 public class HotRodOperationsHelper {
-   static Log log = LogFactory.getLog(HotRodOperationsImpl.class);
+   static Log log = LogFactory.getLog(HotRodOperationsHelper.class);
    static final AtomicLong MSG_ID = new AtomicLong();
    final static byte CLIENT_INTELLIGENCE = HotRodConstants.CLIENT_INTELLIGENCE_HASH_DISTRIBUTION_AWARE;
 

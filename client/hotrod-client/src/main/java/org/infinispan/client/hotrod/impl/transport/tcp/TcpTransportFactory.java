@@ -98,12 +98,23 @@ public class TcpTransportFactory implements TransportFactory {
    @Override
    public void releaseTransport(Transport transport) {
       TcpTransport tcpTransport = (TcpTransport) transport;
-      try {
-         connectionPool.returnObject(tcpTransport.getServerAddress(), tcpTransport);
-      } catch (Exception e) {
-         log.warn("Could not release connection: " + tcpTransport, e);
-      } finally {
-         logConnectionInfo(tcpTransport.getServerAddress());
+      if (!tcpTransport.isValid()) {
+         try {
+            if (log.isTraceEnabled()) {
+               log.info("Dropping connection as it is no longer valid: " + tcpTransport);
+            }
+            connectionPool.invalidateObject(tcpTransport.getServerAddress(), tcpTransport);
+         } catch (Exception e) {
+            log.warn("Could not invalidate connection: " + tcpTransport, e);
+         }
+      } else {
+         try {
+            connectionPool.returnObject(tcpTransport.getServerAddress(), tcpTransport);
+         } catch (Exception e) {
+            log.warn("Could not release connection: " + tcpTransport, e);
+         } finally {
+            logConnectionInfo(tcpTransport.getServerAddress());
+         }
       }
    }
 
@@ -180,5 +191,21 @@ public class TcpTransportFactory implements TransportFactory {
 
    public boolean isTcpNoDelay() {
       return tcpNoDelay;
+   }
+
+   @Override
+   public int getTransportCount() {
+      if (Thread.currentThread().isInterrupted()) { 
+         return -1;
+      }
+      if (connectionPool.getMaxActive() > 0) {
+         return connectionPool.getMaxActive() * servers.size();
+      } else {
+         return 10 * servers.size();
+      }
+   }
+
+   public RequestBalancingStrategy getBalancer() {
+      return balancer;
    }
 }

@@ -85,7 +85,7 @@ public abstract class AbstractTransport implements Transport {
       if (!string.isEmpty()) {
          writeArray(string.getBytes(CHARSET));
       } else {
-         writeVInt(0);         
+         writeVInt(0);
       }
    }
 

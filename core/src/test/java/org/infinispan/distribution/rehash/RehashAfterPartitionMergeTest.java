@@ -2,9 +2,7 @@ package org.infinispan.distribution.rehash;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.distribution.BaseDistFunctionalTest;
-import org.infinispan.manager.CacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
@@ -12,22 +10,14 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.JGroupsConfigBuilder;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.jgroups.Channel;
 import org.jgroups.protocols.DISCARD;
 import org.jgroups.protocols.TP;
 import org.jgroups.stack.ProtocolStack;
 import org.testng.annotations.Test;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.infinispan.remoting.transport.jgroups.JGroupsTransport.CONFIGURATION_STRING;
-import static org.infinispan.test.fwk.TestCacheManagerFactory.amendMarshaller;
-import static org.infinispan.test.fwk.TestCacheManagerFactory.minimizeThreads;
 
 @Test(groups = "functional", testName =  "distribution.rehash.RehashAfterPartitionMergeTest")
 public class RehashAfterPartitionMergeTest extends MultipleCacheManagersTest {

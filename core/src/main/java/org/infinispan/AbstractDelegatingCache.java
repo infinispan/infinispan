@@ -2,7 +2,7 @@ package org.infinispan;
 
 import org.infinispan.config.Configuration;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.util.concurrent.NotifyingFuture;
 
 import java.util.Collection;
@@ -55,7 +55,7 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
       return cache.getVersion();
    }
 
-   public CacheManager getCacheManager() {
+   public CacheContainer getCacheManager() {
       return cache.getCacheManager();
    }
 

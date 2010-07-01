@@ -1,6 +1,6 @@
 package org.infinispan.server.memcached
 
-import org.infinispan.manager.CacheManager
+import org.infinispan.manager.CacheContainer
 import java.lang.reflect.Method
 import java.util.concurrent.TimeUnit
 import org.testng.Assert._

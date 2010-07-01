@@ -4,7 +4,7 @@ import static org.easymock.EasyMock.*;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -32,7 +32,7 @@ public class CacheNotifierTest extends AbstractInfinispanTest {
       Configuration c = new Configuration();
       c.setCacheMode(Configuration.CacheMode.LOCAL);
       c.setIsolationLevel(IsolationLevel.REPEATABLE_READ);
-      CacheManager cm = TestCacheManagerFactory.createCacheManager(c, true);
+      CacheContainer cm = TestCacheManagerFactory.createCacheManager(c, true);
 
       cache = cm.getCache();
       tm = TestingUtil.getTransactionManager(cache);

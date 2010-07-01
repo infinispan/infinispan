@@ -2,7 +2,7 @@ package org.infinispan.profiling;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.profiling.testinternals.FqnGenerator;
 import org.infinispan.profiling.testinternals.Generator;
 import org.infinispan.profiling.testinternals.TaskRunner;
@@ -52,7 +52,7 @@ public class TreeProfileTest {
    protected static final int WARMUP_LOOPS = 20000;
 
    protected static final boolean USE_SLEEP = false; // throttle generation a bit
-   private CacheManager cacheManager;
+   private CacheContainer cacheContainer;
 
 
    protected TreeCache cache;
@@ -66,15 +66,15 @@ public class TreeProfileTest {
       cfg.setConcurrencyLevel(2000);
       cfg.setLockAcquisitionTimeout(120000);
       cfg.setIsolationLevel(IsolationLevel.READ_COMMITTED);
-      cacheManager = TestCacheManagerFactory.createCacheManager(cfg);
-      Cache c = cacheManager.getCache();
+      cacheContainer = TestCacheManagerFactory.createCacheManager(cfg);
+      Cache c = cacheContainer.getCache();
       cache = new TreeCacheImpl(c);
    }
 
    @AfterMethod
    public void tearDown() {
       TreeTestingUtil.killTreeCaches(cache);
-      TestingUtil.killCacheManagers(cacheManager);
+      TestingUtil.killCacheManagers(cacheContainer);
    }
 
 

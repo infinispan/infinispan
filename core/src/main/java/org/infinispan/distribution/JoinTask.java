@@ -72,13 +72,15 @@ public class JoinTask extends RehashTask {
    protected void performRehash() throws Exception {
       long start = System.currentTimeMillis();
       boolean trace = log.isTraceEnabled();
-      if (log.isDebugEnabled()) log.debug("Commencing");
+      if (log.isDebugEnabled()) log.debug("Commencing rehash on node: " + getMyAddress() + ". Before start, dmi.joinComplete = " + dmi.isJoinComplete());
       TransactionLogger transactionLogger = dmi.getTransactionLogger();
       boolean unlocked = false;
       ConsistentHash chOld;
       ConsistentHash chNew;
       try {
-         dmi.joinComplete = false;
+         if (dmi.isJoinComplete()) {
+            throw new IllegalStateException("Join cannot be complete without rehash to finish (node " + getMyAddress() + " )");
+         }
          // 1.  Get chOld from coord.         
          chOld = retrieveOldCH(trace);
 
@@ -142,7 +144,7 @@ public class JoinTask extends RehashTask {
          throw new CacheException("Unexpected exception", e);
       } finally {
          if (!unlocked) transactionLogger.unlockAndDisable();
-         dmi.joinComplete = true;
+         dmi.setJoinComplete(true);
       }
    }
 
@@ -229,5 +231,9 @@ public class JoinTask extends RehashTask {
 
       if (!l.contains(plusOne)) l.add(plusOne);
       return l;
+   }
+
+   public Address getMyAddress() {
+      return rpcManager != null && rpcManager.getTransport() != null ? rpcManager.getTransport().getAddress() : null;
    }
 }

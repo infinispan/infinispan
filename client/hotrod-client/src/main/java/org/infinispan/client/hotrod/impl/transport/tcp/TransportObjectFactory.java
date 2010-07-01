@@ -65,6 +65,9 @@ public class TransportObjectFactory extends BaseKeyedPoolableObjectFactory {
 
    @Override
    public void destroyObject(Object key, Object obj) throws Exception {
+      if (log.isTraceEnabled()) {
+         log.trace("About to destroy tcp transport: "+ obj);
+      }
       TcpTransport transport = (TcpTransport) obj;
       transport.destroy();
    }

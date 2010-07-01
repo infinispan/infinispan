@@ -1,6 +1,6 @@
 package org.infinispan.server.memcached
 
-import org.infinispan.manager.{CacheManager}
+import org.infinispan.manager.{CacheContainer}
 import org.infinispan.server.core.Operation._
 import org.infinispan.server.memcached.MemcachedOperation._
 import org.infinispan.context.Flag

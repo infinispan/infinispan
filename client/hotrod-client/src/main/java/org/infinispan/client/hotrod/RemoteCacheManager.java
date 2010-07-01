@@ -1,7 +1,6 @@
 package org.infinispan.client.hotrod;
 
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
-import org.infinispan.client.hotrod.HotRodMarshaller;
 import org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory;
 import org.infinispan.client.hotrod.impl.protocol.HotRodOperations;
 import org.infinispan.client.hotrod.impl.protocol.HotRodOperationsImpl;
@@ -11,8 +10,7 @@ import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.impl.transport.VHelper;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.executors.ExecutorFactory;
-import org.infinispan.manager.CacheManager;
-import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -70,14 +68,14 @@ import java.util.concurrent.atomic.AtomicInteger;
  *  <li>maxActive - controls the maximum number of connections per server that are allocated (checked out to client threads, or idle in
  * the pool) at one time. When non-positive, there is no limit to the number of connections per server. When maxActive
  * is reached, the connection pool for that server is said to be exhausted. The default setting for this parameter is
- * 2.</li>
+ * -1, i.e. there is no limit.</li>
  * <li>maxTotal - sets a global limit on the number persistent connections that can be in circulation within the combined set of
  * servers. When non-positive, there is no limit to the total number of persistent connections in circulation. When
  * maxTotal is exceeded, all connections pools are exhausted. The default setting for this parameter is -1 (no limit).
  * </li>
  *
  * <li>maxIdle - controls the maximum number of idle persistent connections, per server, at any time. When negative, there is no limit
- * to the number of connections that may be idle per server. The default setting for this parameter is 2.</li>
+ * to the number of connections that may be idle per server. The default setting for this parameter is -1.</li>
  *
  * <li>
  *   whenExhaustedAction - specifies what happens when asking for a connection from a server's pool, and that pool is exhausted. Possible values:
@@ -97,7 +95,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * <ul>
  *  <li>timeBetweenEvictionRunsMillis - indicates how long the eviction thread should sleep before "runs" of examining idle
  *  connections. When non-positive, no eviction thread will be launched. The default setting for this parameter is
- *  300000(5 minutes) </li>
+ *  2 minutes </li>
  *   <li> minEvictableIdleTimeMillis - specifies the minimum amount of time that an connection may sit idle in the pool before it
  *   is eligible for eviction due to idle time. When non-positive, no connection will be dropped from the pool due to
  *   idle time alone. This setting has no effect unless timeBetweenEvictionRunsMillis > 0. The default setting for this
@@ -109,7 +107,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *   <li>minIdle - sets a target value for the minimum number of idle connections (per server) that should always be available.
  *   If this parameter is set to a positive number and timeBetweenEvictionRunsMillis > 0, each time the idle connection
  *   eviction thread runs, it will try to create enough idle instances so that there will be minIdle idle instances
- *   available for each server.  The default setting for this parameter is 0. </li>
+ *   available for each server.  The default setting for this parameter is 5 minutes. </li>
  * </ul>
  * </li>
  * <li>
@@ -126,7 +124,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public class RemoteCacheManager implements CacheManager {
+public class RemoteCacheManager implements CacheContainer {
 
    private static Log log = LogFactory.getLog(RemoteCacheManager.class);
 
@@ -187,7 +185,8 @@ public class RemoteCacheManager implements CacheManager {
 
    /**
     * Same as {@link #RemoteCacheManager(java.util.Properties)}, but it will try to lookup the config properties in the
-    * classpath, in a file named <tt>hotrod-client.properties</tt>.
+    * classpath, in a file named <tt>hotrod-client.properties</tt>. If no properties can be found in the classpath, the
+    * server tries to connect to "127.0.0.1:11311" in start.
     *
     * @param start weather or not to start the RemoteCacheManager
     * @throws HotRodClientException if such a file cannot be found in the classpath
@@ -286,6 +285,7 @@ public class RemoteCacheManager implements CacheManager {
    }
 
    public <K, V> RemoteCache<K, V> getCache(boolean forceReturnValue) {
+      //As per the HotRod protocol specification, the default cache is identified by an empty string
       return createRemoteCache("", forceReturnValue);
    }
 

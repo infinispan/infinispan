@@ -4,7 +4,7 @@ import static org.easymock.EasyMock.*;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
@@ -18,8 +18,6 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import java.util.List;
-import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 
 @Test(groups = "unit", testName = "notifications.cachemanagerlistener.CacheManagerNotifierTest")
@@ -94,12 +92,12 @@ public class CacheManagerNotifierTest extends AbstractInfinispanTest {
       CyclicBarrier barrier = new CyclicBarrier(2);
       GetCacheManagerCheckListener listener = new GetCacheManagerCheckListener(barrier);
       cmA.addListener(listener);
-      CacheManager cmB = TestCacheManagerFactory.createClusteredCacheManager();
+      CacheContainer cmB = TestCacheManagerFactory.createClusteredCacheManager();
       cmB.getCache();
       try {
          barrier.await();
          barrier.await();
-         assert listener.cacheManager != null;
+         assert listener.cacheContainer != null;
       } finally {
          TestingUtil.killCacheManagers(cmA, cmB);
       }
@@ -107,7 +105,7 @@ public class CacheManagerNotifierTest extends AbstractInfinispanTest {
 
    @Listener
    public class GetCacheManagerCheckListener {
-      CacheManager cacheManager;
+      CacheContainer cacheContainer;
       CyclicBarrier barrier;
       
       public GetCacheManagerCheckListener(CyclicBarrier barrier) {
@@ -117,7 +115,7 @@ public class CacheManagerNotifierTest extends AbstractInfinispanTest {
       @ViewChanged
       public void onViewChange(ViewChangedEvent e) throws Exception {
          barrier.await();
-         cacheManager = e.getCacheManager();
+         cacheContainer = e.getCacheManager();
          barrier.await();
       }
 

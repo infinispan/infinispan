@@ -3,7 +3,7 @@ package org.infinispan.api.mvcc;
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
 import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -28,7 +28,7 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
    private Log log = LogFactory.getLog(LockTestBase.class);
    protected boolean repeatableRead = true;
    protected boolean lockParentForChildInsertRemove = false;
-   private CacheManager cm;
+   private CacheContainer cm;
 
    protected class LockTestBaseTL {
       public Cache<String, String> cache;

@@ -1,7 +1,7 @@
 package org.infinispan.notifications;
 
 import org.infinispan.Cache;
-import org.infinispan.manager.CacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Test(groups = "functional", testName = "notifications.ConcurrentNotificationTest")
 public class ConcurrentNotificationTest extends AbstractInfinispanTest {
    Cache<String, String> cache;
-   CacheManager cm;
+   CacheContainer cm;
    CacheListener listener;
    Log log = LogFactory.getLog(ConcurrentNotificationTest.class);
 
