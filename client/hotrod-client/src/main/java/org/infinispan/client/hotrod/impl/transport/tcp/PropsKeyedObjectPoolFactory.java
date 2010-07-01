@@ -19,16 +19,16 @@ public class PropsKeyedObjectPoolFactory extends GenericKeyedObjectPoolFactory {
 
    public PropsKeyedObjectPoolFactory(KeyedPoolableObjectFactory factory, Properties props) {
       super(factory);
-      _maxActive = intProp(props, "maxActive", 2);
+      _maxActive = intProp(props, "maxActive", -1);
       _maxTotal = intProp(props, "maxTotal", -1);
-      _maxIdle = intProp(props, "maxIdle", 2);
+      _maxIdle = intProp(props, "maxIdle", -1);
       _whenExhaustedAction = (byte) intProp(props, "whenExhaustedAction", (int) GenericKeyedObjectPool.WHEN_EXHAUSTED_BLOCK);
       _testOnBorrow = booleanProp(props, "testOnBorrow", false);
       _testOnReturn = booleanProp(props, "testOnReturn", false);
-      _timeBetweenEvictionRunsMillis = intProp(props, "timeBetweenEvictionRunsMillis", 5 * 60 * 1000);
-      _minEvictableIdleTimeMillis = longProp(props, "minEvictableIdleTimeMillis", 30 * 60 * 1000);
+      _timeBetweenEvictionRunsMillis = intProp(props, "timeBetweenEvictionRunsMillis", 2 * 60 * 1000);
+      _minEvictableIdleTimeMillis = longProp(props, "minEvictableIdleTimeMillis", 5 * 60 * 1000);
       _testWhileIdle = booleanProp(props, "testWhileIdle", true);
-      _minIdle = intProp(props, "minIdle", 0);
+      _minIdle = intProp(props, "minIdle", 1);
       _lifo = booleanProp(props, "lifo", true);
    }
 
