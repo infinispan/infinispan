@@ -185,6 +185,8 @@ pageTracker._trackPageview();
          </build>
       </profile>
 
+      <!-- This profile is an scaled down version of the distribution profile which should only be used to speed up
+      testing of distribution zip files. It doesn't generate any documentation and only generates the -all.zip distribution -->
       <profile>
          <id>minimal-distribution</id>
          <activation>
