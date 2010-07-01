@@ -185,6 +185,54 @@ pageTracker._trackPageview();
          </build>
       </profile>
 
+      <!-- This profile is an scaled down version of the distribution profile which should only be used to speed up
+      testing of distribution zip files. It doesn't generate any documentation and only generates the -all.zip distribution -->
+      <profile>
+         <id>minimal-distribution</id>
+         <activation>
+            <activeByDefault>false</activeByDefault>
+         </activation>
+         <properties>
+            <maven.test.skip.exec>true</maven.test.skip.exec>
+         </properties>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-jar-plugin</artifactId>
+                  <executions>
+                     <execution>
+                        <id>build-test-jar</id>
+                        <phase>none</phase>
+                     </execution>
+                  </executions>
+               </plugin>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-assembly-plugin</artifactId>
+                  <version>2.2-beta-3</version>
+                  <executions>
+                     <execution>
+                        <id>assemble</id>
+                        <phase>package</phase>
+                        <goals>
+                           <goal>single</goal>
+                        </goals>
+                     </execution>
+                  </executions>
+                  <configuration>
+                     <descriptors>
+                        <descriptor>src/main/resources/assemblies/all.xml</descriptor>
+                     </descriptors>
+                     <finalName>${artifactId}-${project.version}</finalName>
+                     <outputDirectory>target/distribution</outputDirectory>
+                     <workDirectory>target/assembly/work</workDirectory>
+                  </configuration>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+
       <!-- TODO somehow combine this with the 'distribution' profile so all docs are built together -->
       <profile>
          <id>jmxdoc</id>

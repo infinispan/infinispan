@@ -112,6 +112,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Logging {
          if (isDebug) debug("Cluster member {0} was not filtered out of the current view {1}", address, currentView)
       } else {
          val newView = TopologyView(currentView.topologyId + 1, newMembers)
+         // TODO: Consider replace with 0 lock timeout and fail silently to avoid hold ups. Crash member detector can deal with any failures.
          val replaced = topologyCache.replace("view", currentView, newView)
          if (isDebug && !replaced) {
             debug("Attempt to update topology view failed due to a concurrent modification. " +

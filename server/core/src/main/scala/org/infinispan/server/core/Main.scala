@@ -11,7 +11,7 @@ import gnu.getopt.{Getopt, LongOpt}
 import org.infinispan.Version
 import org.infinispan.manager.{CacheContainer, DefaultCacheManager}
 import java.util.Properties
-import java.util.Properties
+import org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior
 
 /**
  * Main class for server startup.
@@ -278,11 +278,15 @@ object Main extends Logging {
    }
 }
 
-private class ShutdownHook(server: ProtocolServer, cacheManager: CacheContainer) extends Thread {
+private class ShutdownHook(server: ProtocolServer, cacheManager: CacheContainer) extends Thread with Logging {
    override def run {
       if (server != null) {
-         System.out.println("Posting Shutdown Request to the server...")
-         var f = Executors.newSingleThreadExecutor.submit(new Callable[Void] {
+         info("Posting Shutdown Request to the server...")
+         val tf = new ThreadFactory {
+            override def newThread(r: Runnable): Thread = new Thread(r, "StopThread")
+         }
+
+         var f = Executors.newSingleThreadExecutor(tf).submit(new Callable[Void] {
             override def call = {
                server.stop
                cacheManager.stop
