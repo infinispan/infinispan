@@ -39,6 +39,9 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    private volatile boolean forceReturnValue;
 
    public RemoteCacheImpl(RemoteCacheManager rcm, String name, boolean forceReturnValue) {
+      if (log.isTraceEnabled()) {
+         log.trace("Creating remote cache: " + name);
+      }
       this.name = name;
       this.forceReturnValue = forceReturnValue;
       this.remoteCacheManager = rcm;

@@ -22,8 +22,8 @@ import java.util.Map;
  */
 public abstract class HitsAwareCacheManagersTest extends MultipleCacheManagersTest {
 
-   Map<InetSocketAddress, CacheContainer> hrServ2CacheManager = new HashMap<InetSocketAddress, CacheContainer>();
-   Map<InetSocketAddress, HotRodServer> addr2hrServer = new HashMap<InetSocketAddress, HotRodServer>();
+   protected Map<InetSocketAddress, CacheContainer> hrServ2CacheManager = new HashMap<InetSocketAddress, CacheContainer>();
+   protected Map<InetSocketAddress, HotRodServer> addr2hrServer = new HashMap<InetSocketAddress, HotRodServer>();
 
    @BeforeMethod
    public void createBeforeMethod() throws Throwable {

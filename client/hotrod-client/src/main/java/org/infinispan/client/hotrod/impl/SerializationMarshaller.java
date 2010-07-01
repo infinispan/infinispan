@@ -14,6 +14,7 @@ import java.util.Arrays;
 
 /**
  * Default marshaller implementation based on object serialization.
+ * todo - the marshaller should only be when writing to the actual transport
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.1

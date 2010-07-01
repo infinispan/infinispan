@@ -15,6 +15,8 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.Util;
 import org.infinispan.util.concurrent.IsolationLevel;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
@@ -93,16 +95,21 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
     * This is a separate class because some tools try and run this method as a test 
     */
    public static class RehashWaiter {
+      private static Log log = LogFactory.getLog(RehashWaiter.class);
       public static void waitForInitRehashToComplete(Cache... caches) {
          int gracetime = 60000; // 60 seconds?
          long giveup = System.currentTimeMillis() + gracetime;
          for (Cache c : caches) {
             DistributionManagerImpl dmi = (DistributionManagerImpl) TestingUtil.extractComponent(c, DistributionManager.class);
-            while (!dmi.joinComplete) {
-               if (System.currentTimeMillis() > giveup)
-                  throw new RuntimeException("Timed out waiting for initial join sequence to complete!");
+            while (!dmi.isJoinComplete()) {
+               if (System.currentTimeMillis() > giveup) {
+                  String message = "Timed out waiting for initial join sequence to complete on node " + dmi.rpcManager.getAddress() + " !";
+                  log.error(message);
+                  throw new RuntimeException(message);
+               }
                LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
             }
+            log.trace("Node " + dmi.rpcManager.getAddress() + " finished rehash task.");
          }
       }
 
@@ -151,7 +158,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
          boolean allOK = true;
          for (Cache c : joiners) {
             DistributionManagerImpl dmi = (DistributionManagerImpl) getDistributionManager(c);
-            allOK &= dmi.joinComplete;
+            allOK &= dmi.isJoinComplete();
          }
          if (allOK) return;
          TestingUtil.sleepThread(100);

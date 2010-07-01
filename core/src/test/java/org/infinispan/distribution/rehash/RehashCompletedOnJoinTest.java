@@ -38,7 +38,7 @@ public class RehashCompletedOnJoinTest extends BaseDistFunctionalTest {
       joinerManager.defineConfiguration(cacheName, configuration);
       Cache joiner = joinerManager.getCache(cacheName);
       DistributionManager dmi = joiner.getAdvancedCache().getDistributionManager();
-      assert dmi.isJoinComplete() == true;
+      assert dmi.isJoinComplete();
    }
 
 }

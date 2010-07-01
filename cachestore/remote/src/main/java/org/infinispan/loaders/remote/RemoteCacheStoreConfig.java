@@ -2,7 +2,7 @@ package org.infinispan.loaders.remote;
 
 import org.infinispan.CacheException;
 import org.infinispan.loaders.AbstractCacheStoreConfig;
-import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.util.FileLookup;
 
 import java.io.IOException;
@@ -43,12 +43,12 @@ public class RemoteCacheStoreConfig extends AbstractCacheStoreConfig {
 
    public void setUseDefaultRemoteCache(boolean useDefaultRemoteCache) {
       if (useDefaultRemoteCache) {
-         setRemoteCacheName(DefaultCacheManager.DEFAULT_CACHE_NAME);
+         setRemoteCacheName(CacheContainer.DEFAULT_CACHE_NAME);
       }
    }
 
    public boolean isUseDefaultRemoteCache() {
-      return DefaultCacheManager.DEFAULT_CACHE_NAME.equals(getRemoteCacheName());
+      return CacheContainer.DEFAULT_CACHE_NAME.equals(getRemoteCacheName());
    }
 
    @Override

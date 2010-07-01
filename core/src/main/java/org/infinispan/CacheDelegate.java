@@ -53,7 +53,7 @@ import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.MarshalledValue;
 import org.infinispan.marshall.Marshaller;
@@ -368,7 +368,7 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
    @ManagedAttribute(description = "Returns the cache name")
    @Metric(displayName = "Cache name", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
    public String getCacheName() {
-      return getName().equals(DefaultCacheManager.DEFAULT_CACHE_NAME) ? "Default Cache" : getName();
+      return getName().equals(CacheContainer.DEFAULT_CACHE_NAME) ? "Default Cache" : getName();
    }
 
    public String getVersion() {

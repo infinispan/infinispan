@@ -27,6 +27,7 @@ import org.infinispan.CacheDelegate;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.jmx.CacheJmxRegistration;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.DefaultCacheManager;
 
 /**
@@ -68,7 +69,7 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
    }
 
    public Cache<K, V> createDefaultCache(Configuration configuration) throws ConfigurationException {
-      return createCache(configuration, null, DefaultCacheManager.DEFAULT_CACHE_NAME);
+      return createCache(configuration, null, CacheContainer.DEFAULT_CACHE_NAME);
    }
 
    protected AdvancedCache<K, V> createAndWire(Configuration configuration, GlobalComponentRegistry globalComponentRegistry, String cacheName) throws Exception {

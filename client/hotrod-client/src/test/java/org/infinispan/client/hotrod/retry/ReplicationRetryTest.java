@@ -1,5 +1,10 @@
-package org.infinispan.client.hotrod;
+package org.infinispan.client.hotrod.retry;
 
+import org.infinispan.client.hotrod.HitsAwareCacheManagersTest;
+import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.TestHelper;
+import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.config.Configuration;
@@ -20,69 +25,7 @@ import static org.testng.Assert.assertEquals;
  * @since 4.1
  */
 @Test (testName = "client.hotrod.ReplicationRetryTest", groups = "functional")
-public class ReplicationRetryTest extends HitsAwareCacheManagersTest {
-   HotRodServer hotRodServer1;
-   HotRodServer hotRodServer2;
-   HotRodServer hotRodServer3;
-
-   RemoteCache remoteCache;
-   private RemoteCacheManager remoteCacheManager;
-   private TcpTransportFactory tcpConnectionFactory;
-   private Configuration config;
-   private RoundRobinBalancingStrategy strategy;
-
-   public ReplicationRetryTest() {
-      cleanup = CleanupPhase.AFTER_METHOD;
-   }
-
-   @Override
-   protected void assertSupportedConfig() {
-   }
-
-   @Override
-   protected void createCacheManagers() throws Throwable {
-
-      assert cleanup == CleanupPhase.AFTER_METHOD;
-
-
-      config = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
-      CacheContainer cm1 = TestCacheManagerFactory.createClusteredCacheManager(config);
-      CacheContainer cm2 = TestCacheManagerFactory.createClusteredCacheManager(config);
-      CacheContainer cm3 = TestCacheManagerFactory.createClusteredCacheManager(config);
-      registerCacheManager(cm1);
-      registerCacheManager(cm2);
-      registerCacheManager(cm3);
-
-      hotRodServer1 = TestHelper.startHotRodServer(manager(0));
-      hrServ2CacheManager.put(getAddress(hotRodServer1), cm1);
-      hotRodServer2 = TestHelper.startHotRodServer(manager(1));
-      hrServ2CacheManager.put(getAddress(hotRodServer2), cm2);
-      hotRodServer3 = TestHelper.startHotRodServer(manager(2));
-      hrServ2CacheManager.put(getAddress(hotRodServer3), cm3);
-
-      manager(0).getCache();
-      manager(1).getCache();
-      manager(2).getCache();
-
-      TestingUtil.blockUntilViewReceived(manager(0).getCache(), 3, 10000);
-      TestingUtil.blockUntilCacheStatusAchieved(manager(0).getCache(), ComponentStatus.RUNNING, 10000);
-      TestingUtil.blockUntilCacheStatusAchieved(manager(1).getCache(), ComponentStatus.RUNNING, 10000);
-
-      Properties clientConfig = new Properties();
-      clientConfig.put("hotrod-servers", "localhost:" + hotRodServer2.getPort());
-      clientConfig.put("force-return-value", "true");
-      clientConfig.put("maxActive",1); //this ensures that only one server is active at a time
-
-      remoteCacheManager = new RemoteCacheManager(clientConfig);
-      remoteCache = remoteCacheManager.getCache();
-      tcpConnectionFactory = (TcpTransportFactory) TestingUtil.extractField(remoteCacheManager, "transportFactory");
-      strategy = (RoundRobinBalancingStrategy) tcpConnectionFactory.getBalancer();
-      addInterceptors();
-
-      assert super.cacheManagers.size() == 3;
-
-   }
-
+public class ReplicationRetryTest extends AbstractRetryTest {
 
    public void testGet() {
       validateSequenceAndStopServer();
@@ -185,5 +128,10 @@ public class ReplicationRetryTest extends HitsAwareCacheManagersTest {
       expectedServer = strategy.getServers()[strategy.getNextPosition()];
       HotRodServer toStop = addr2hrServer.get(expectedServer);
       toStop.stop();
+   }
+
+   @Override
+   protected Configuration getCacheConfig() {
+      return getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC);
    }
 }

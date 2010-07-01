@@ -285,6 +285,7 @@ public class RemoteCacheManager implements CacheContainer {
    }
 
    public <K, V> RemoteCache<K, V> getCache(boolean forceReturnValue) {
+      //As per the HotRod protocol specification, the default cache is identified by an empty string
       return createRemoteCache("", forceReturnValue);
    }
 

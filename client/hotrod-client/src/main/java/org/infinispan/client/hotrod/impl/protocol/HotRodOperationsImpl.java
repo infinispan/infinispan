@@ -36,7 +36,7 @@ public class HotRodOperationsImpl implements HotRodOperations, HotRodConstants {
    public byte[] get(byte[] key, Flag[] flags) {
       for (int i = 0; i < transportFactory.getTransportCount(); i++) {
          try {
-            Transport transport = transportFactory.getTransport(key);
+            Transport transport = getTransport(key, i == 0);
             try {
                short status = sendKeyOperation(key, transport, GET_REQUEST, flags, GET_RESPONSE);
                if (status == KEY_DOES_NOT_EXIST_STATUS) {
@@ -57,7 +57,7 @@ public class HotRodOperationsImpl implements HotRodOperations, HotRodConstants {
 
    public byte[] remove(byte[] key, Flag[] flags) {
       for (int i = 0; i < transportFactory.getTransportCount(); i++) {
-         Transport transport = transportFactory.getTransport(key);
+         Transport transport = getTransport(key, i == 0);
          try {
             short status = sendKeyOperation(key, transport, REMOVE_REQUEST, flags, REMOVE_RESPONSE);
             if (status == KEY_DOES_NOT_EXIST_STATUS) {
@@ -67,7 +67,7 @@ public class HotRodOperationsImpl implements HotRodOperations, HotRodConstants {
             }
          } catch (TransportException te) {
             logErrorAndThrowExceptionIfNeeded(i, te);
-         }finally {
+         } finally {
             releaseTransport(transport);
          }
       }
@@ -76,7 +76,7 @@ public class HotRodOperationsImpl implements HotRodOperations, HotRodConstants {
 
    public boolean containsKey(byte[] key, Flag... flags) {
       for (int i = 0; i < transportFactory.getTransportCount(); i++) {
-         Transport transport = transportFactory.getTransport(key);
+         Transport transport = getTransport(key, i == 0);
          try {
             short status = sendKeyOperation(key, transport, CONTAINS_KEY_REQUEST, flags, CONTAINS_KEY_RESPONSE);
             if (status == KEY_DOES_NOT_EXIST_STATUS) {
@@ -96,7 +96,7 @@ public class HotRodOperationsImpl implements HotRodOperations, HotRodConstants {
 
    public BinaryVersionedValue getWithVersion(byte[] key, Flag... flags) {
       for (int i = 0; i < transportFactory.getTransportCount(); i++) {
-         Transport transport = transportFactory.getTransport(key);
+         Transport transport = getTransport(key, i == 0);
          try {
             short status = sendKeyOperation(key, transport, GET_WITH_VERSION, flags, GET_WITH_VERSION_RESPONSE);
             if (status == KEY_DOES_NOT_EXIST_STATUS) {
@@ -111,7 +111,7 @@ public class HotRodOperationsImpl implements HotRodOperations, HotRodConstants {
                return new BinaryVersionedValue(version, value);
             }
          } catch (TransportException te) {
-           logErrorAndThrowExceptionIfNeeded(i, te); 
+            logErrorAndThrowExceptionIfNeeded(i, te);
          } finally {
             releaseTransport(transport);
          }
@@ -122,7 +122,7 @@ public class HotRodOperationsImpl implements HotRodOperations, HotRodConstants {
 
    public byte[] put(byte[] key, byte[] value, int lifespan, int maxIdle, Flag... flags) {
       for (int i = 0; i < transportFactory.getTransportCount(); i++) {
-         Transport transport = transportFactory.getTransport(key);
+         Transport transport = getTransport(key, i == 0);
          try {
             short status = sendPutOperation(key, value, transport, PUT_REQUEST, PUT_RESPONSE, lifespan, maxIdle, flags);
             if (status != NO_ERROR_STATUS) {
@@ -131,7 +131,7 @@ public class HotRodOperationsImpl implements HotRodOperations, HotRodConstants {
             return returnPossiblePrevValue(transport, flags);
          } catch (TransportException te) {
             logErrorAndThrowExceptionIfNeeded(i, te);
-         }finally {
+         } finally {
             releaseTransport(transport);
          }
       }
@@ -140,7 +140,7 @@ public class HotRodOperationsImpl implements HotRodOperations, HotRodConstants {
 
    public byte[] putIfAbsent(byte[] key, byte[] value, int lifespan, int maxIdle, Flag... flags) {
       for (int i = 0; i < transportFactory.getTransportCount(); i++) {
-         Transport transport = transportFactory.getTransport(key);
+         Transport transport = getTransport(key, i == 0);
          try {
             short status = sendPutOperation(key, value, transport, PUT_IF_ABSENT_REQUEST, PUT_IF_ABSENT_RESPONSE, lifespan, maxIdle, flags);
             if (status == NO_ERROR_STATUS || status == NOT_PUT_REMOVED_REPLACED_STATUS) {
@@ -162,7 +162,7 @@ public class HotRodOperationsImpl implements HotRodOperations, HotRodConstants {
 
    public byte[] replace(byte[] key, byte[] value, int lifespan, int maxIdle, Flag... flags) {
       for (int i = 0; i < transportFactory.getTransportCount(); i++) {
-         Transport transport = transportFactory.getTransport(key);
+         Transport transport = getTransport(key, i == 0);
          try {
             short status = sendPutOperation(key, value, transport, REPLACE_REQUEST, REPLACE_RESPONSE, lifespan, maxIdle, flags);
             if (status == NO_ERROR_STATUS || status == NOT_PUT_REMOVED_REPLACED_STATUS) {
@@ -185,7 +185,7 @@ public class HotRodOperationsImpl implements HotRodOperations, HotRodConstants {
     */
    public VersionedOperationResponse replaceIfUnmodified(byte[] key, byte[] value, int lifespan, int maxIdle, long version, Flag... flags) {
       for (int i = 0; i < transportFactory.getTransportCount(); i++) {
-         Transport transport = transportFactory.getTransport(key);
+         Transport transport = getTransport(key, i == 0);
          try {
             // 1) write header
             long messageId = HotRodOperationsHelper.writeHeader(transport, REPLACE_IF_UNMODIFIED_REQUEST, cacheName, topologyId, flags);
@@ -212,7 +212,7 @@ public class HotRodOperationsImpl implements HotRodOperations, HotRodConstants {
     */
    public VersionedOperationResponse removeIfUnmodified(byte[] key, long version, Flag... flags) {
       for (int i = 0; i < transportFactory.getTransportCount(); i++) {
-         Transport transport = transportFactory.getTransport(key);
+         Transport transport = getTransport(key, i == 0);
          try {
             // 1) write header
             long messageId = HotRodOperationsHelper.writeHeader(transport, REMOVE_IF_UNMODIFIED_REQUEST, cacheName, topologyId, flags);
@@ -352,6 +352,14 @@ public class HotRodOperationsImpl implements HotRodOperations, HotRodConstants {
          throw te;
       } else {
          log.trace(message + ":" + te);
+      }
+   }
+
+   private Transport getTransport(byte[] key, boolean hashAware) {
+      if (hashAware) {
+         return transportFactory.getTransport(key);
+      } else {
+         return transportFactory.getTransport();
       }
    }
 }

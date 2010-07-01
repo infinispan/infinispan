@@ -21,10 +21,10 @@ public class CacheManagerTest extends AbstractInfinispanTest {
 
       try {
          assert cm.getCache().getStatus() == ComponentStatus.RUNNING;
-         assert cm.getCache().getName().equals(DefaultCacheManager.DEFAULT_CACHE_NAME);
+         assert cm.getCache().getName().equals(CacheContainer.DEFAULT_CACHE_NAME);
 
          try {
-            cm.defineConfiguration(DefaultCacheManager.DEFAULT_CACHE_NAME, new Configuration());
+            cm.defineConfiguration(CacheContainer.DEFAULT_CACHE_NAME, new Configuration());
             assert false : "Should fail";
          }
          catch (IllegalArgumentException e) {
