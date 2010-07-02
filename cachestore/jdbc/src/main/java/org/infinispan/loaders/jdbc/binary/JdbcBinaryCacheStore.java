@@ -319,6 +319,7 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
                ByteBuffer byteBuffer = JdbcUtil.marshall(getMarshaller(), bucket);
                ps.setBinaryStream(1, byteBuffer.getStream(), byteBuffer.getLength());
                ps.setLong(2, bucket.timestampOfFirstEntryToExpire());
+               ps.setString(3, bucket.getBucketName());
                ps.addBatch();
                updateCount++;
                if (updateCount % batchSize == 0) {
@@ -332,6 +333,7 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
          }
          //flush the batch
          if (updateCount % batchSize != 0) {
+            if (log.isTraceEnabled()) log.trace("Flushing batch, update count is: " + updateCount);
             ps.executeBatch();
          }
          if (log.isTraceEnabled()) log.trace("Updated " + updateCount + " buckets.");
