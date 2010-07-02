@@ -222,4 +222,8 @@ public class TcpTransport extends AbstractTransport {
    public boolean isValid() {
       return !socket.isClosed();
    }
+
+   public long getId() {
+      return id;
+   }
 }
