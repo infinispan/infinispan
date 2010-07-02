@@ -2,8 +2,6 @@ package org.infinispan.loaders.remote;
 
 import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.config.Configuration;
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.loaders.BaseCacheStoreTest;
 import org.infinispan.loaders.CacheLoaderException;
@@ -11,8 +9,6 @@ import org.infinispan.loaders.CacheStore;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
 

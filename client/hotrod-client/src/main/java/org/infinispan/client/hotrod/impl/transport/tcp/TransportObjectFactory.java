@@ -19,6 +19,7 @@ public class TransportObjectFactory extends BaseKeyedPoolableObjectFactory {
    private static final Log log = LogFactory.getLog(TransportObjectFactory.class);
    private final TcpTransportFactory tcpTransportFactory;
    private final AtomicInteger topologyId;
+   private static final byte[] DEFAULT_CACHE_NAME_BYTES = new byte[]{};
 
    public TransportObjectFactory(TcpTransportFactory tcpTransportFactory, AtomicInteger topologyId) {
       this.tcpTransportFactory = tcpTransportFactory;
@@ -45,7 +46,7 @@ public class TransportObjectFactory extends BaseKeyedPoolableObjectFactory {
          if (log.isTraceEnabled()) {
             log.trace("About to validate(ping) connection to server " + key + ". TcpTransport is " + transport);
          }
-         long messageId = HotRodOperationsHelper.writeHeader(transport, HotRodConstants.PING_REQUEST, "", topologyId);
+         long messageId = HotRodOperationsHelper.writeHeader(transport, HotRodConstants.PING_REQUEST, DEFAULT_CACHE_NAME_BYTES, topologyId);
          short respStatus = HotRodOperationsHelper.readHeaderAndValidate(transport, messageId, HotRodConstants.PING_RESPONSE, topologyId);
          if (respStatus == HotRodConstants.NO_ERROR_STATUS) {
             if (log.isTraceEnabled())

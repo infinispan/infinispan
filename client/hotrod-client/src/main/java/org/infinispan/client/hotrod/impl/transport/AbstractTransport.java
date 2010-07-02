@@ -1,9 +1,8 @@
 package org.infinispan.client.hotrod.impl.transport;
 
+import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.nio.charset.Charset;
 
 /**
  * Support class for transport implementations.
@@ -15,8 +14,6 @@ public abstract class AbstractTransport implements Transport {
 
    private static Log log = LogFactory.getLog(AbstractTransport.class);
 
-   private static final Charset CHARSET = Charset.forName("UTF-8");
-   
    private final TransportFactory transportFactory;
 
    protected AbstractTransport(TransportFactory transportFactory) {
@@ -31,7 +28,7 @@ public abstract class AbstractTransport implements Transport {
    @Override
    public String readString() {
       byte[] strContent = readArray();
-      String readString = new String(strContent, CHARSET);
+      String readString = new String(strContent, HotRodConstants.STRING_CHARSET);
       if (log.isTraceEnabled()) {
          log.trace("Read string is: " + readString);
       }
@@ -83,7 +80,7 @@ public abstract class AbstractTransport implements Transport {
    @Override
    public void writeString(String string) {
       if (!string.isEmpty()) {
-         writeArray(string.getBytes(CHARSET));
+         writeArray(string.getBytes(HotRodConstants.STRING_CHARSET));
       } else {
          writeVInt(0);
       }

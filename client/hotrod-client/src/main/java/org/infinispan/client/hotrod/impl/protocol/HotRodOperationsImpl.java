@@ -23,12 +23,12 @@ public class HotRodOperationsImpl implements HotRodOperations, HotRodConstants {
 
    private static Log log = LogFactory.getLog(HotRodOperationsImpl.class);
 
-   private final String cacheName;
+   private final byte[] cacheName;
    private TransportFactory transportFactory;
    private final AtomicInteger topologyId;
 
    public HotRodOperationsImpl(String cacheName, TransportFactory transportFactory, AtomicInteger topologyId) {
-      this.cacheName = cacheName;
+      this.cacheName = cacheName.getBytes(STRING_CHARSET);
       this.transportFactory = transportFactory;
       this.topologyId = topologyId;
    }
