@@ -81,7 +81,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       }
    }
 
-   @AfterMethod
+   @AfterMethod (alwaysRun = false)
    public void assertNoLocksHeld() {
       //doesn't really make sense to add a subclass for this check only
       if (cs instanceof LockSupportCacheStore) {

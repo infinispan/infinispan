@@ -21,11 +21,14 @@
  */
 package org.infinispan.test.fwk;
 
+import com.mysql.jdbc.Driver;
+import org.infinispan.loaders.jdbc.DatabaseType;
 import org.infinispan.loaders.jdbc.JdbcUtil;
 import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.infinispan.loaders.jdbc.connectionfactory.PooledConnectionFactory;
+import org.infinispan.loaders.jdbc.connectionfactory.SimpleConnectionFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -47,17 +50,48 @@ public class UnitTestDatabaseManager {
    private static final ConnectionFactoryConfig realConfig = new ConnectionFactoryConfig();
 
    private static AtomicInteger userIndex = new AtomicInteger(0);
+   private static final String DB_TYPE = System.getProperty("infinispan.jdbc", "H2");
+   private static final String H2_DRIVER = org.h2.Driver.class.getName();
 
    static {
+      String driver = "";
+      DatabaseType dt = DatabaseType.H2;
       try {
-         Class.forName("org.h2.Driver");
+         if (!DB_TYPE.equalsIgnoreCase("H2")) {
+            if (DB_TYPE.equalsIgnoreCase("mysql")) {
+               driver = Driver.class.getName();
+               dt = DatabaseType.MYSQL;
+            } else {
+               driver = H2_DRIVER;
+            }
+         }
+         try {
+            Class.forName(driver);
+         } catch (ClassNotFoundException e) {
+            driver = H2_DRIVER;
+            Class.forName(H2_DRIVER);
+         }
       } catch (ClassNotFoundException e) {
          throw new RuntimeException(e);
       }
-      realConfig.setDriverClass("org.h2.Driver");
-      realConfig.setConnectionUrl("jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=-1");
-      realConfig.setConnectionFactoryClass(PooledConnectionFactory.class.getName());
-      realConfig.setUserName("sa");
+      configure(dt, driver, realConfig);
+   }
+
+   private static void configure(DatabaseType dt, String driver, ConnectionFactoryConfig cfg) {
+      cfg.setDriverClass(driver);
+      switch (dt) {
+         case H2:
+            cfg.setConnectionUrl("jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=-1");
+            cfg.setConnectionFactoryClass(PooledConnectionFactory.class.getName());
+            cfg.setUserName("sa");
+            break;
+         case MYSQL:
+            cfg.setConnectionUrl("jdbc:mysql://localhost/infinispan?user=ispn&password=ispn");
+            cfg.setConnectionFactoryClass(SimpleConnectionFactory.class.getName());
+            cfg.setUserName("ispn");
+            cfg.setPassword("ispn");
+            break;
+      }
    }
 
    public static ConnectionFactoryConfig getUniqueConnectionFactoryConfig() {
@@ -68,7 +102,6 @@ public class UnitTestDatabaseManager {
 
    public static void shutdownInMemoryDatabase(ConnectionFactoryConfig config) {
 
-      
 
 //      Connection conn = null;
 //      Statement st = null;
@@ -144,7 +177,7 @@ public class UnitTestDatabaseManager {
    public static TableManipulation buildDefaultTableManipulation() {
 
       return new TableManipulation("ID_COLUMN", "VARCHAR(255)", "ISPN_JDBC", "DATA_COLUMN",
-                                   "BLOB", "TIMESTAMP_COLUMN", "BIGINT");
+              "BLOB", "TIMESTAMP_COLUMN", "BIGINT");
 
    }
 

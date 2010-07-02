@@ -22,15 +22,22 @@
 package org.infinispan.loaders.jdbc.binary;
 
 import static org.easymock.classextension.EasyMock.*;
+
 import org.infinispan.CacheDelegate;
+import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.loaders.BaseCacheStoreTest;
+import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.Test;
+
+import java.io.Serializable;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tester class for {@link JdbcBinaryCacheStore}
@@ -77,4 +84,42 @@ public class JdbcBinaryCacheStoreTest extends BaseCacheStoreTest {
       jdbcBucketCacheStore.stop();
       verify(tableManipulation, connectionFactory);
    }
+
+   public void testPurgeExpiredAllCodepaths() throws CacheLoaderException {
+      FixedHashKey k1 = new FixedHashKey(1, "a");
+      FixedHashKey k2 = new FixedHashKey(1, "b");
+      cs.store(InternalEntryFactory.create(k1, "value"));
+      cs.store(InternalEntryFactory.create(k2, "value", 60000)); // will expire
+      for (int i = 0; i < 120; i++) {
+         cs.store(InternalEntryFactory.create(new FixedHashKey(i + 10, "non-exp k" + i), "value"));
+         cs.store(InternalEntryFactory.create(new FixedHashKey(i + 10, "exp k" + i), "value", 60000)); // will expire
+      }
+      assert cs.containsKey(k1);
+      assert cs.containsKey(k2);
+      TestingUtil.sleepThread(62000);
+      cs.purgeExpired();
+      assert cs.containsKey(k1);
+      assert !cs.containsKey(k2);
+   }
+
+   private static final class FixedHashKey implements Serializable {
+      String s;
+      int i;
+
+      private FixedHashKey(int i, String s) {
+         this.s = s;
+         this.i = i;
+      }
+
+      @Override
+      public int hashCode() {
+         return i;
+      }
+
+      @Override
+      public boolean equals(Object other) {
+         return other instanceof FixedHashKey && s.equals(((FixedHashKey) other).s);
+      }
+   }
+
 }
