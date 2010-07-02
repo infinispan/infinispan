@@ -24,13 +24,13 @@ public class HotRodOperationsHelper {
    static final AtomicLong MSG_ID = new AtomicLong();
    final static byte CLIENT_INTELLIGENCE = HotRodConstants.CLIENT_INTELLIGENCE_HASH_DISTRIBUTION_AWARE;
 
-   public static long writeHeader(Transport transport, short operationCode, String cacheName, AtomicInteger topologyId, Flag... flags) {
+   public static long writeHeader(Transport transport, short operationCode, byte[] cacheName, AtomicInteger topologyId, Flag... flags) {
       transport.writeByte(HotRodConstants.REQUEST_MAGIC);
       long messageId = MSG_ID.incrementAndGet();
       transport.writeVLong(messageId);
       transport.writeByte(HotRodConstants.HOTROD_VERSION);
       transport.writeByte(operationCode);
-      transport.writeString(cacheName);
+      transport.writeArray(cacheName);
 
       int flagInt = 0;
       if (flags != null) {

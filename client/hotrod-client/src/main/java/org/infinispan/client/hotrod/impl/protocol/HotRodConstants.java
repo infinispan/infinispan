@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.impl.protocol;
 
+import java.nio.charset.Charset;
+
 /**
  * Defines constants defined by Hotrod specifications.
  *
@@ -58,4 +60,5 @@ public interface HotRodConstants {
    public static final byte CLIENT_INTELLIGENCE_BASIC = 0x01;
    public static final byte CLIENT_INTELLIGENCE_TOPOLOGY_AWARE = 0x02;
    public static final byte CLIENT_INTELLIGENCE_HASH_DISTRIBUTION_AWARE = 0x03;
+   Charset STRING_CHARSET = Charset.forName("UTF-8");
 }
