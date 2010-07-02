@@ -208,4 +208,8 @@ public class TcpTransportFactory implements TransportFactory {
    public RequestBalancingStrategy getBalancer() {
       return balancer;
    }
+
+   public GenericKeyedObjectPool getConnectionPool() {
+      return connectionPool;
+   }
 }

@@ -107,7 +107,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *   <li>minIdle - sets a target value for the minimum number of idle connections (per server) that should always be available.
  *   If this parameter is set to a positive number and timeBetweenEvictionRunsMillis > 0, each time the idle connection
  *   eviction thread runs, it will try to create enough idle instances so that there will be minIdle idle instances
- *   available for each server.  The default setting for this parameter is 5 minutes. </li>
+ *   available for each server.  The default setting for this parameter is 1. </li>
  * </ul>
  * </li>
  * <li>
