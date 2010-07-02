@@ -50,12 +50,11 @@ import org.testng.annotations.Test;
 
 /**
  * This is a stress test meant to compare relative performance of RAMDirectory, FSDirectory,
- * Infinispan local Directory, clustered.
- * Focuses on Search performance; an index is built before the performance measurement is started and is not
- * changed during the searches.
- * To use it set a DURATION_MS as long as you can afford; choose thread number and terms number
- * according to your use case as they will affect the results.
- *
+ * Infinispan local Directory, clustered. Focuses on Search performance; an index is built before
+ * the performance measurement is started and is not changed during the searches. To use it set a
+ * DURATION_MS as long as you can afford; choose thread number and terms number according to your
+ * use case as they will affect the results.
+ * 
  * @author Sanne Grinovero
  * @since 4.0
  */
@@ -89,8 +88,8 @@ public class IndexReadingStressTest {
 
    @Test
    public void profileTestInfinispanDirectory() throws InterruptedException, IOException {
-      //theses default are not for performance settings but meant for problem detection:
-      Cache<CacheKey,Object> cache = cacheFactory.createClusteredCache();
+      // theses default are not for performance settings but meant for problem detection:
+      Cache<CacheKey, Object> cache = cacheFactory.createClusteredCache();
       InfinispanDirectory dir = new InfinispanDirectory(cache, "iname");
       testDirectory(dir, "InfinispanClustered");
    }
@@ -110,7 +109,7 @@ public class IndexReadingStressTest {
    private void testDirectory(Directory dir, String testLabel) throws InterruptedException, IOException {
       SharedState state = fillDirectory(dir);
       ExecutorService e = Executors.newFixedThreadPool(THREADS);
-      for (int i=0; i<THREADS; i++) {
+      for (int i = 0; i < THREADS; i++) {
          e.execute(new LuceneReaderThread(dir, state));
       }
       e.shutdown();
@@ -120,8 +119,8 @@ public class IndexReadingStressTest {
       long writerTaskCount = state.incrementIndexWriterTaskCount(0);
       state.quit();
       e.awaitTermination(10, TimeUnit.SECONDS);
-      System.out.println(
-               "Test " + testLabel +" run in " + DURATION_MS + "ms:\n\tSearches: " + searchesCount + "\n\t" + "Writes: " + writerTaskCount);
+      System.out.println("Test " + testLabel + " run in " + DURATION_MS + "ms:\n\tSearches: " + searchesCount + "\n\t" + "Writes: "
+               + writerTaskCount);
    }
 
    private SharedState fillDirectory(Directory directory) throws CorruptIndexException, LockObtainFailedException, IOException {
