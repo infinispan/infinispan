@@ -28,10 +28,15 @@ import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
 
+import junit.framework.Assert;
+
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 import org.infinispan.Cache;
 import org.infinispan.lucene.testutils.RepeatableLongByteSequence;
+import org.infinispan.manager.CacheContainer;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 /**
@@ -41,100 +46,85 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "lucene.InfinispanDirectoryIOTest")
 public class InfinispanDirectoryIOTest {
+   
+   private CacheContainer cacheManager;
+
+   @BeforeTest
+   public void prepareCacheManager() {
+      cacheManager = CacheTestSupport.createTestCacheManager();
+   }
+   
+   @AfterTest
+   public void killCacheManager() {
+      cacheManager.stop();
+   }
 
    @Test
    public void testReadWholeFile() throws IOException {
       final int BUFFER_SIZE = 64;
 
-      Cache<CacheKey, Object> cache = CacheTestSupport.createTestCacheManager().getCache();
+      Cache<CacheKey, Object> cache = cacheManager.getCache();
       InfinispanDirectory dir = new InfinispanDirectory(cache, "index", BUFFER_SIZE);
 
-      try {
-         final int SHORT_FILE_SIZE = 61;
-         assert BUFFER_SIZE > SHORT_FILE_SIZE;
-         createFileWithRepeatableContent(dir, "SingleChunk.txt", SHORT_FILE_SIZE);
-         assertReadByteWorkingCorrectly(dir, "SingleChunk.txt", SHORT_FILE_SIZE);
-         assertReadBytesWorkingCorrectly(dir, "SingleChunk.txt", SHORT_FILE_SIZE, 15);
+      final int SHORT_FILE_SIZE = 61;
+      assert BUFFER_SIZE > SHORT_FILE_SIZE;
+      createFileWithRepeatableContent(dir, "SingleChunk.txt", SHORT_FILE_SIZE);
+      assertReadByteWorkingCorrectly(dir, "SingleChunk.txt", SHORT_FILE_SIZE);
+      assertReadBytesWorkingCorrectly(dir, "SingleChunk.txt", SHORT_FILE_SIZE, 15);
 
-         final int VERY_BIG_FILE_SIZE = 10000;
-         assert BUFFER_SIZE < VERY_BIG_FILE_SIZE;
-         createFileWithRepeatableContent(dir, "MultipleChunks.txt", VERY_BIG_FILE_SIZE);
-         assertReadByteWorkingCorrectly(dir, "MultipleChunks.txt", VERY_BIG_FILE_SIZE);
-         assertReadBytesWorkingCorrectly(dir, "MultipleChunks.txt", VERY_BIG_FILE_SIZE, 33);
+      final int VERY_BIG_FILE_SIZE = 10000;
+      assert BUFFER_SIZE < VERY_BIG_FILE_SIZE;
+      createFileWithRepeatableContent(dir, "MultipleChunks.txt", VERY_BIG_FILE_SIZE);
+      assertReadByteWorkingCorrectly(dir, "MultipleChunks.txt", VERY_BIG_FILE_SIZE);
+      assertReadBytesWorkingCorrectly(dir, "MultipleChunks.txt", VERY_BIG_FILE_SIZE, 33);
 
-         final int LAST_CHUNK_COMPLETELY_FILLED_FILE_SIZE = 256;
-         assert (LAST_CHUNK_COMPLETELY_FILLED_FILE_SIZE % BUFFER_SIZE) == 0;
-         createFileWithRepeatableContent(dir, "LastChunkFilled.txt",
-                  LAST_CHUNK_COMPLETELY_FILLED_FILE_SIZE);
-         assertReadByteWorkingCorrectly(dir, "LastChunkFilled.txt",
-                  LAST_CHUNK_COMPLETELY_FILLED_FILE_SIZE);
-         assertReadBytesWorkingCorrectly(dir, "LastChunkFilled.txt",
-                  LAST_CHUNK_COMPLETELY_FILLED_FILE_SIZE, 11);
-         assert 4 == getChunksNumber(cache, "index", "LastChunkFilled.txt");
+      final int LAST_CHUNK_COMPLETELY_FILLED_FILE_SIZE = 256;
+      assert (LAST_CHUNK_COMPLETELY_FILLED_FILE_SIZE % BUFFER_SIZE) == 0;
+      createFileWithRepeatableContent(dir, "LastChunkFilled.txt", LAST_CHUNK_COMPLETELY_FILLED_FILE_SIZE);
+      assertReadByteWorkingCorrectly(dir, "LastChunkFilled.txt", LAST_CHUNK_COMPLETELY_FILLED_FILE_SIZE);
+      assertReadBytesWorkingCorrectly(dir, "LastChunkFilled.txt", LAST_CHUNK_COMPLETELY_FILLED_FILE_SIZE, 11);
+      assert 4 == getChunksNumber(cache, "index", "LastChunkFilled.txt");
 
-         final int LAST_CHUNK_WITH_LONELY_BYTE_FILE_SIZE = 257;
-         assert (LAST_CHUNK_WITH_LONELY_BYTE_FILE_SIZE % BUFFER_SIZE) == 1;
-         createFileWithRepeatableContent(dir, "LonelyByteInLastChunk.txt",
-                  LAST_CHUNK_WITH_LONELY_BYTE_FILE_SIZE);
-         assertReadByteWorkingCorrectly(dir, "LonelyByteInLastChunk.txt",
-                  LAST_CHUNK_WITH_LONELY_BYTE_FILE_SIZE);
-         assertReadBytesWorkingCorrectly(dir, "LonelyByteInLastChunk.txt",
-                  LAST_CHUNK_WITH_LONELY_BYTE_FILE_SIZE, 12);
-         assert 5 == getChunksNumber(cache, "index", "LonelyByteInLastChunk.txt");
-
-      } finally {
-         for (String fileName : dir.listAll()) {
-            dir.deleteFile(fileName);
-         }
-         cache.getCacheManager().stop();
-         dir.close();
-      }
+      final int LAST_CHUNK_WITH_LONELY_BYTE_FILE_SIZE = 257;
+      assert (LAST_CHUNK_WITH_LONELY_BYTE_FILE_SIZE % BUFFER_SIZE) == 1;
+      createFileWithRepeatableContent(dir, "LonelyByteInLastChunk.txt", LAST_CHUNK_WITH_LONELY_BYTE_FILE_SIZE);
+      assertReadByteWorkingCorrectly(dir, "LonelyByteInLastChunk.txt", LAST_CHUNK_WITH_LONELY_BYTE_FILE_SIZE);
+      assertReadBytesWorkingCorrectly(dir, "LonelyByteInLastChunk.txt", LAST_CHUNK_WITH_LONELY_BYTE_FILE_SIZE, 12);
+      assert 5 == getChunksNumber(cache, "index", "LonelyByteInLastChunk.txt");
    }
-
    
    @Test
    public void testReadRandomSampleFile() throws IOException {
       final int BUFFER_SIZE = 64;
 
-      Cache<CacheKey, Object> cache = CacheTestSupport.createTestCacheManager().getCache();
+      Cache<CacheKey, Object> cache = cacheManager.getCache();
       InfinispanDirectory dir = new InfinispanDirectory(cache, "index", BUFFER_SIZE);
 
-      try {
-         final int FILE_SIZE = 1000;
-         assert BUFFER_SIZE < FILE_SIZE;
-         createFileWithRepeatableContent(dir, "RandomSampleFile.txt", FILE_SIZE);
-         
-         IndexInput indexInput = dir.openInput("RandomSampleFile.txt");
-         assert indexInput.length() == FILE_SIZE;
-         RepeatableLongByteSequence bytesGenerator = new RepeatableLongByteSequence();
+      final int FILE_SIZE = 1000;
+      assert BUFFER_SIZE < FILE_SIZE;
+      createFileWithRepeatableContent(dir, "RandomSampleFile.txt", FILE_SIZE);
 
-         Random r = new Random();
-         long seekPoint = 0;
-         //Now it reads some random byte and it compares to the expected byte 
-         for (int i = 0; i < FILE_SIZE; i++) {
-            if(seekPoint == i) {
-               byte expectedByte = bytesGenerator.nextByte();
-               byte actualByte = indexInput.readByte();
-               assert expectedByte == actualByte;
-               seekPoint = indexInput.getFilePointer() + r.nextInt(10);
-               indexInput.seek(seekPoint);
-            } else {
-               bytesGenerator.nextByte();
-            }
-            
-         }
-         indexInput.close();
+      IndexInput indexInput = dir.openInput("RandomSampleFile.txt");
+      assert indexInput.length() == FILE_SIZE;
+      RepeatableLongByteSequence bytesGenerator = new RepeatableLongByteSequence();
 
-      } finally {
-         for (String fileName : dir.listAll()) {
-            dir.deleteFile(fileName);
+      Random r = new Random();
+      long seekPoint = 0;
+      // Now it reads some random byte and it compares to the expected byte
+      for (int i = 0; i < FILE_SIZE; i++) {
+         if (seekPoint == i) {
+            byte expectedByte = bytesGenerator.nextByte();
+            byte actualByte = indexInput.readByte();
+            assert expectedByte == actualByte;
+            seekPoint = indexInput.getFilePointer() + r.nextInt(10);
+            indexInput.seek(seekPoint);
+         } else {
+            bytesGenerator.nextByte();
          }
-         cache.getCacheManager().stop();
-         dir.close();
+
       }
+      indexInput.close();
    }
-
-   
    
    /**
     * Used to verify that IndexInput.readBytes method reads correctly the whole file content comparing the
@@ -247,7 +237,7 @@ public class InfinispanDirectoryIOTest {
    public void testReadChunks() throws Exception {
       final int BUFFER_SIZE = 64;
 
-      Cache<CacheKey, Object> cache = CacheTestSupport.createTestCacheManager().getCache();
+      Cache<CacheKey, Object> cache = cacheManager.getCache();
       InfinispanDirectory dir = new InfinispanDirectory(cache, "index", BUFFER_SIZE);
 
       // create file headers
@@ -385,15 +375,13 @@ public class InfinispanDirectoryIOTest {
 
       assert new String(baos.toByteArray()).equals(worldText);
 
-      cache.getCacheManager().stop();
       dir.close();
-
    }
 
    public void testWriteChunks() throws Exception {
       final int BUFFER_SIZE = 64;
 
-      Cache<CacheKey, Object> cache = CacheTestSupport.createTestCacheManager().getCache();
+      Cache<CacheKey, Object> cache = cacheManager.getCache();
       InfinispanDirectory dir = new InfinispanDirectory(cache, "index", BUFFER_SIZE);
 
       IndexOutput io = dir.createOutput("MyNewFile.txt");
@@ -425,12 +413,11 @@ public class InfinispanDirectoryIOTest {
 
       assert testText.equals(new String(chunk1) + new String(chunk2).trim());
 
-      cache.getCacheManager().stop();
       dir.close();
    }
 
    public void testWriteChunksDefaultChunks() throws Exception {
-      Cache<CacheKey, Object> cache = CacheTestSupport.createTestCacheManager().getCache();
+      Cache<CacheKey, Object> cache = cacheManager.getCache();
       InfinispanDirectory dir = new InfinispanDirectory(cache, "index");
 
       String testText = "This is some rubbish";
@@ -458,7 +445,6 @@ public class InfinispanDirectoryIOTest {
 
       assert testText.equals(new String(buf).trim());
 
-      cache.getCacheManager().stop();
       dir.close();
    }
 
