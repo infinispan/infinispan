@@ -66,7 +66,18 @@ public class InfinispanIndexOutput extends IndexOutput {
    
    private static byte[] getChunkFromPosition(AdvancedCache<CacheKey, Object> cache, FileCacheKey fileKey, int pos, int bufferSize) {
       CacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), getChunkNumberFromPosition(pos, bufferSize));
-      return (byte[]) cache.withFlags(Flag.SKIP_LOCKING).get(key);
+      byte[] readBuffer = (byte[]) cache.withFlags(Flag.SKIP_LOCKING).get(key);
+      if (readBuffer==null) {
+         return new byte[bufferSize];
+      }
+      else if (readBuffer.length==bufferSize) {
+         return readBuffer;
+      }
+      else {
+         byte[] newBuffer = new byte[bufferSize];
+         System.arraycopy(readBuffer, 0, newBuffer, 0, readBuffer.length);
+         return newBuffer;
+      }
    }
    
    private static int getPositionInBuffer(int pos, int bufferSize) {
@@ -80,9 +91,7 @@ public class InfinispanIndexOutput extends IndexOutput {
    private void newChunk() throws IOException {
       flush();// save data first
       // check if we have to create new chunk, or get already existing in cache for modification
-      if ((buffer = getChunkFromPosition(cache, fileKey, filePosition, bufferSize)) == null) {
-         buffer = new byte[bufferSize];
-      }
+      buffer = getChunkFromPosition(cache, fileKey, filePosition, bufferSize);
       bufferPosition = 0;
    }
 
@@ -97,7 +106,7 @@ public class InfinispanIndexOutput extends IndexOutput {
    public void writeBytes(byte[] b, int offset, int length) throws IOException {
       int writedBytes = 0;
       while (writedBytes < length) {
-         int pieceLength = Math.min(buffer.length - bufferPosition, length - writedBytes);
+         int pieceLength = Math.min(bufferSize - bufferPosition, length - writedBytes);
          System.arraycopy(b, offset + writedBytes, buffer, bufferPosition, pieceLength);
          bufferPosition += pieceLength;
          filePosition += pieceLength;
@@ -122,9 +131,17 @@ public class InfinispanIndexOutput extends IndexOutput {
       if (file.getSize() < filePosition) {
          file.setSize(filePosition);
       }
+      int newBufferSize = (int) (file.getSize() % bufferSize);
+      byte[] shortedBuffer;
+      if (newBufferSize != 0) {
+         shortedBuffer = new byte[newBufferSize];
+         System.arraycopy(buffer, 0, shortedBuffer, 0, newBufferSize);
+      } else {
+         shortedBuffer = buffer;
+      }
       cache.startBatch();
       // add chunk to cache
-      cache.withFlags(Flag.SKIP_REMOTE_LOOKUP).put(key, buffer);
+      cache.withFlags(Flag.SKIP_REMOTE_LOOKUP).put(key, shortedBuffer);
       // override existing file header with new size and last time access
       cache.withFlags(Flag.SKIP_REMOTE_LOOKUP).put(fileKey, file);
       cache.endBatch(true);
