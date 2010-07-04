@@ -75,6 +75,8 @@ public class SimpleLuceneTest extends MultipleCacheManagersTest {
       assertTextIsFoundInIds(dirB, "node", 1);
       dirA.close();
       dirB.close();
+      DirectoryIntegrityCheck.verifyDirectoryStructure(cache(0, "lucene"), "indexName");
+      DirectoryIntegrityCheck.verifyDirectoryStructure(cache(1, "lucene"), "indexName");
    }
    
    @Test(description="Verifies the caches can be reused after a Directory close")

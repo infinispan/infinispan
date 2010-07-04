@@ -35,6 +35,7 @@ import org.apache.lucene.store.IndexOutput;
 import org.infinispan.Cache;
 import org.infinispan.lucene.testutils.RepeatableLongByteSequence;
 import org.infinispan.manager.CacheContainer;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
@@ -57,6 +58,11 @@ public class InfinispanDirectoryIOTest {
    @AfterTest
    public void killCacheManager() {
       cacheManager.stop();
+   }
+   
+   @AfterMethod
+   public void clearCache() {
+      cacheManager.getCache().clear();
    }
 
    @Test
@@ -91,6 +97,9 @@ public class InfinispanDirectoryIOTest {
       assertReadByteWorkingCorrectly(dir, "LonelyByteInLastChunk.txt", LAST_CHUNK_WITH_LONELY_BYTE_FILE_SIZE);
       assertReadBytesWorkingCorrectly(dir, "LonelyByteInLastChunk.txt", LAST_CHUNK_WITH_LONELY_BYTE_FILE_SIZE, 12);
       assert 5 == getChunksNumber(cache, "index", "LonelyByteInLastChunk.txt");
+      
+      dir.close();
+      DirectoryIntegrityCheck.verifyDirectoryStructure(cache, "index");
    }
    
    @Test
@@ -124,6 +133,8 @@ public class InfinispanDirectoryIOTest {
 
       }
       indexInput.close();
+      dir.close();
+      DirectoryIntegrityCheck.verifyDirectoryStructure(cache, "index");
    }
    
    /**
@@ -376,6 +387,7 @@ public class InfinispanDirectoryIOTest {
       assert new String(baos.toByteArray()).equals(worldText);
 
       dir.close();
+      DirectoryIntegrityCheck.verifyDirectoryStructure(cache, "index");
    }
 
    public void testWriteChunks() throws Exception {
@@ -389,7 +401,7 @@ public class InfinispanDirectoryIOTest {
       io.writeByte((byte) 66);
       io.writeByte((byte) 69);
 
-      io.close();
+      io.flush();
 
       assert dir.fileExists("MyNewFile.txt");
       assert null != cache.get(new ChunkCacheKey("index", "MyNewFile.txt", 0));
@@ -414,14 +426,15 @@ public class InfinispanDirectoryIOTest {
       assert testText.equals(new String(chunk1) + new String(chunk2).trim());
 
       dir.close();
+      DirectoryIntegrityCheck.verifyDirectoryStructure(cache, "index");
    }
 
    public void testWriteChunksDefaultChunks() throws Exception {
       Cache<CacheKey, Object> cache = cacheManager.getCache();
       InfinispanDirectory dir = new InfinispanDirectory(cache, "index");
 
-      String testText = "This is some rubbish";
-      byte[] testTextAsBytes = testText.getBytes();
+      final String testText = "This is some rubbish";
+      final byte[] testTextAsBytes = testText.getBytes();
 
       IndexOutput io = dir.createOutput("MyNewFile.txt");
 
@@ -430,8 +443,12 @@ public class InfinispanDirectoryIOTest {
       io.writeByte((byte) 3);
       io.writeBytes(testTextAsBytes, testTextAsBytes.length);
       io.close();
+      DirectoryIntegrityCheck.verifyDirectoryStructure(cache, "index");
 
-      assert null != cache.get(new FileCacheKey("index", "MyNewFile.txt"));
+      FileCacheKey fileCacheKey = new FileCacheKey("index", "MyNewFile.txt");
+      assert null != cache.get(fileCacheKey);
+      FileMetadata metadata = (FileMetadata) cache.get(fileCacheKey);
+      Assert.assertEquals(testTextAsBytes.length + 3, metadata.getSize());
       assert null != cache.get(new ChunkCacheKey("index", "MyNewFile.txt", 0));
 
       // test contents by reading:
@@ -439,13 +456,14 @@ public class InfinispanDirectoryIOTest {
       assert ii.readByte() == 1;
       assert ii.readByte() == 2;
       assert ii.readByte() == 3;
-      byte[] buf = new byte[32];
+      byte[] buf = new byte[testTextAsBytes.length];
 
       ii.readBytes(buf, 0, testTextAsBytes.length);
 
       assert testText.equals(new String(buf).trim());
 
       dir.close();
+      DirectoryIntegrityCheck.verifyDirectoryStructure(cache, "index");
    }
 
 }
