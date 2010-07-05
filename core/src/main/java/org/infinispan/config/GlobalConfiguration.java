@@ -462,8 +462,8 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
       private static final long serialVersionUID = 7625606997888180254L;
 
       /**
-       * @configPropertyRef name="maxThreads",desc="Maximum number of threads for this executor."
-       * @configPropertyRef name="threadNamePrefix",desc="Thread name prefix for threads created by this executor."
+       * @configPropertyRef name="maxThreads",desc="Maximum number of threads for this executor. Default values can be found <a href=&quot;http://community.jboss.org/docs/DOC-15540&quot;>here</a>"
+       * @configPropertyRef name="threadNamePrefix",desc="Thread name prefix for threads created by this executor. Default values can be found <a href=&quot;http://community.jboss.org/docs/DOC-15540&quot;>here</a>"
        */
       @XmlElement(name = "properties")
       protected TypedProperties properties = EMPTY_PROPERTIES;
