@@ -6,6 +6,7 @@ We offer different distributions for download:
 * infinispan-X.Y.Z-all.ZIP
    * contains core jar + dependencies
    * additional optional modules + dependencies
+   * client/server modules
    * test classes
    * sample configurations
    * API documentation
@@ -18,18 +19,13 @@ We offer different distributions for download:
    * API documentation
    * GUI demo
 
-* infinispan-X.Y.Z-single_jar.ZIP
-   * contains a single jar containing infinispan-core and all optional modules + dependencies
-   * sample configurations
-   * API documentation
-
 * infinispan-X.Y.Z-src.ZIP
    * snapshot of the source code tree from subversion for this release
 
 Requirements
 ------------
 
-Infinispan needs a JDK 5.0 compliant Java virtual machine.  And nothing else.
+Infinispan needs a JDK 6 compliant Java virtual machine.
 
 Problems
 --------
