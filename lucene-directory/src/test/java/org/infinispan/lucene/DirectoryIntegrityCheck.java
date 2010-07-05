@@ -81,6 +81,15 @@ public class DirectoryIntegrityCheck {
          } else if (key instanceof FileListCacheKey) {
             fileListCacheKeyInstances++;
             Assert.assertEquals(1, fileListCacheKeyInstances);
+         } else if (key instanceof FileReadLockKey) {
+            FileReadLockKey readLockKey = (FileReadLockKey) key;
+            Assert.assertEquals(readLockKey.getIndexName(), indexName);
+            Assert.assertTrue(fileList.contains(readLockKey.getFileName()), readLockKey + " should not have existed");
+            Object value = cache.get(readLockKey);
+            Assert.assertNotNull(value);
+            Assert.assertTrue(value instanceof Integer);
+            int readLockCount = (Integer) value;
+            Assert.assertEquals(readLockCount, 1, " for FileReadLockKey " + readLockKey);
          } else {
             Assert.fail("an unexpected key was found in the cache having key type " + key.getClass() + " toString:" + key);
          }

@@ -143,22 +143,15 @@ public class InfinispanDirectory extends Directory {
     */
    public void deleteFile(String name) throws IOException {
       checkIsOpen();
-      FileCacheKey key = new FileCacheKey(indexName, name);
-      // remove main file
-      cache.remove(key);
       Set<String> fileList = getFileList();
-      fileList.remove(name);
-      cache.put(fileListCacheKey, fileList);
-      // and all of its chunks
-      int i = 0;
-      Object removed;
-      ChunkCacheKey chunkKey = new ChunkCacheKey(indexName, name, i);
-      do {
-         removed = cache.remove(chunkKey);
-         chunkKey = new ChunkCacheKey(indexName, name, ++i);
-      } while (removed != null);
+      boolean deleted = fileList.remove(name);
+      if (deleted) {
+         cache.put(fileListCacheKey, fileList);
+      }
+      FileReadLockKey fileReadLockKey = new FileReadLockKey(indexName, name);
+      InfinispanIndexInput.releaseReadLock(fileReadLockKey, cache);
       if (log.isDebugEnabled()) {
-         log.debug("Removed file: {0} from index: {1}", key.getFileName(), indexName);
+         log.debug("Removed file: {0} from index: {1}", name, indexName);
       }
    }
 
@@ -216,6 +209,8 @@ public class InfinispanDirectory extends Directory {
       FileMetadata previous = (FileMetadata) cache.putIfAbsent(key, newFileMetadata);
       if (previous == null) {
          // creating new file
+         FileReadLockKey readLockKey = new FileReadLockKey(indexName, name);
+         cache.put(readLockKey, Integer.valueOf(1));
          Set<String> fileList = getFileList();
          fileList.add(name);
          cache.put(fileListCacheKey, fileList);

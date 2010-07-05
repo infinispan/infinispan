@@ -33,9 +33,13 @@ import org.apache.lucene.store.RAMDirectory;
 import org.infinispan.Cache;
 import org.infinispan.lucene.CacheKey;
 import org.infinispan.lucene.CacheTestSupport;
+import org.infinispan.lucene.DirectoryIntegrityCheck;
 import org.infinispan.lucene.InfinispanDirectory;
 import org.infinispan.lucene.testutils.ClusteredCacheFactory;
 import org.infinispan.manager.CacheContainer;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -51,11 +55,15 @@ import org.testng.annotations.Test;
  * @author Sanne Grinovero
  * @since 4.0
  */
-@Test(groups = "profiling", testName = "lucene.profiling.PerformanceCompareStressTest")
+@Test(groups = "profiling", testName = "lucene.profiling.PerformanceCompareStressTest", sequential=true)
 public class PerformanceCompareStressTest {
    
+   private static final Log log = LogFactory.getLog(PerformanceCompareStressTest.class);
+   
    /** Concurrent Threads in tests */
-   private static final int THREADS = 8;
+   private static final int THREADS = 5;
+   
+   private static final String indexName = "iname";
    
    private static final long DURATION_MS = 100000;
    
@@ -79,8 +87,9 @@ public class PerformanceCompareStressTest {
    public void profileTestInfinispanDirectory() throws InterruptedException, IOException {
       //these default are not for performance settings but meant for problem detection:
       Cache<CacheKey,Object> cache = cacheFactory.createClusteredCache();
-      InfinispanDirectory dir = new InfinispanDirectory(cache, "iname");
+      InfinispanDirectory dir = new InfinispanDirectory(cache, indexName);
       testDirectory(dir, "InfinispanClustered");
+      DirectoryIntegrityCheck.verifyDirectoryStructure(cache, indexName);
    }
    
    @Test
@@ -88,8 +97,9 @@ public class PerformanceCompareStressTest {
       CacheContainer cacheContainer = CacheTestSupport.createLocalCacheManager();
       try {
          Cache<CacheKey, Object> cache = cacheContainer.getCache();
-         InfinispanDirectory dir = new InfinispanDirectory(cache, "iname");
+         InfinispanDirectory dir = new InfinispanDirectory(cache, indexName);
          testDirectory(dir, "InfinispanLocal");
+         DirectoryIntegrityCheck.verifyDirectoryStructure(cache, indexName);
       } finally {
          cacheContainer.stop();
       }
@@ -109,7 +119,8 @@ public class PerformanceCompareStressTest {
       long searchesCount = state.incrementIndexSearchesCount(0);
       long writerTaskCount = state.incrementIndexWriterTaskCount(0);
       state.quit();
-      e.awaitTermination(10, TimeUnit.SECONDS);
+      boolean terminatedCorrectly = e.awaitTermination(10, TimeUnit.SECONDS);
+      Assert.assertTrue(terminatedCorrectly);
       System.out.println(
                "Test " + testLabel +" run in " + DURATION_MS + "ms:\n\tSearches: " + searchesCount + "\n\t" + "Writes: " + writerTaskCount);
    }

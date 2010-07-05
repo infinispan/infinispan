@@ -32,7 +32,13 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.document.Field.Index;
 import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.index.CorruptIndexException;
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.LockObtainFailedException;
@@ -58,11 +64,11 @@ import org.testng.annotations.Test;
  * @author Sanne Grinovero
  * @since 4.0
  */
-@Test(groups = "profiling", testName = "lucene.profiling.IndexReadingStressTest")
+@Test(groups = "profiling", testName = "lucene.profiling.IndexReadingStressTest", sequential = true)
 public class IndexReadingStressTest {
 
    /** Concurrent IndexSearchers used during tests */
-   private static final int THREADS = 20;
+   private static final int THREADS = 5;
 
    /** Test duration **/
    private static final long DURATION_MS = 350000;
@@ -88,7 +94,7 @@ public class IndexReadingStressTest {
 
    @Test
    public void profileTestInfinispanDirectory() throws InterruptedException, IOException {
-      // theses default are not for performance settings but meant for problem detection:
+      // these defaults are not for performance settings but meant for problem detection:
       Cache<CacheKey, Object> cache = cacheFactory.createClusteredCache();
       InfinispanDirectory dir = new InfinispanDirectory(cache, "iname");
       testDirectory(dir, "InfinispanClustered");
@@ -110,7 +116,7 @@ public class IndexReadingStressTest {
       SharedState state = fillDirectory(dir);
       ExecutorService e = Executors.newFixedThreadPool(THREADS);
       for (int i = 0; i < THREADS; i++) {
-         e.execute(new LuceneReaderThread(dir, state));
+         e.execute(new IndependentLuceneReaderThread(dir, state, i, 1, TERMS_NUMBER));
       }
       e.shutdown();
       state.startWaitingThreads();
@@ -130,8 +136,14 @@ public class IndexReadingStressTest {
       for (int i = 0; i <= TERMS_NUMBER; i++) {
          Document doc = new Document();
          String term = String.valueOf(i);
-         state.addStringWrittenToIndex(term);
-         doc.add(new Field("main", term, Store.NO, Index.NOT_ANALYZED));
+         //For even values of i we add to "main" field
+         if (i % 2 == 0) {
+            doc.add(new Field("main", term, Store.NO, Index.NOT_ANALYZED));
+            state.addStringWrittenToIndex(term);
+         }
+         else {
+            doc.add(new Field("secondaryField", term, Store.NO, Index.NOT_ANALYZED));
+         }
          iwriter.addDocument(doc);
       }
       iwriter.commit();
@@ -148,5 +160,47 @@ public class IndexReadingStressTest {
    public static void afterTest() {
       cacheFactory.stop();
    }
+   
+   private static class IndependentLuceneReaderThread extends LuceneUserThread {
 
+      private final int startValue;
+      private final int increment;
+      private final int max;
+      private final IndexReader indexReader;
+      private final IndexSearcher searcher;
+
+      IndependentLuceneReaderThread(Directory dir, SharedState state, int startValue, int increment, int max) throws CorruptIndexException, IOException {
+         super(dir, state);
+         this.startValue = startValue;
+         this.increment = increment;
+         this.max = max;
+         indexReader = IndexReader.open(directory, true);
+         searcher = new IndexSearcher(indexReader);
+      }
+      
+      @Override
+      protected void testLoop() throws IOException {
+         Term t = new Term("main", "0");
+         for (int i = startValue; i <= max && state.needToQuit() == false; i += increment) {
+            Term termToQuery = t.createTerm(Integer.toString(i));
+            Query query = new TermQuery(termToQuery);
+            TopDocs docs = searcher.search(query, null, 1);
+            if (i % 2 == 0 && docs.totalHits != 1) {
+               //Even values should be found in the index
+               throw new RuntimeException("String '" + String.valueOf(i) + "' should exist but was not found in index");
+            } else if (i % 2 == 1 && docs.totalHits != 0) {
+               //Uneven values should not be found
+               throw new RuntimeException("String '" + String.valueOf(i) + "' should NOT exist but was found in index");
+            }
+            state.incrementIndexSearchesCount(1);
+         }
+      }
+
+      @Override
+      protected void cleanup() throws IOException {
+         indexReader.close();
+      }
+      
+   }
+      
 }

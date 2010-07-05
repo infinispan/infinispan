@@ -45,8 +45,8 @@ import org.apache.lucene.store.Directory;
  */
 public class LuceneReaderThread extends LuceneUserThread {
 
-   private IndexSearcher searcher;
-   private IndexReader indexReader;
+   protected IndexSearcher searcher;
+   protected IndexReader indexReader;
 
    LuceneReaderThread(Directory dir, SharedState state) {
       super(dir, state);
@@ -70,17 +70,27 @@ public class LuceneReaderThread extends LuceneUserThread {
       state.incrementIndexSearchesCount(numElements);
    }
 
-   private void refreshIndexReader() throws CorruptIndexException, IOException {
-      if (indexReader==null) {
+   protected void refreshIndexReader() throws CorruptIndexException, IOException {
+      if (indexReader == null) {
          indexReader = IndexReader.open(directory, true);
       }
       else {
+         IndexReader before = indexReader;
          indexReader = indexReader.reopen();
+         if (before != indexReader) {
+            before.close();
+         }
       }
-      if (searcher!=null) {
+      if (searcher != null) {
          searcher.close();
       }
-      searcher = new IndexSearcher(directory, true);
+      searcher = new IndexSearcher(indexReader);
+   }
+   
+   @Override
+   protected void cleanup() throws IOException {
+      if (indexReader != null)
+         indexReader.close();
    }
 
 }

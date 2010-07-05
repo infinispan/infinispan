@@ -45,7 +45,7 @@ import org.testng.annotations.Test;
  * @author Davide Di Somma
  * @author Sanne Grinovero
  */
-@Test(groups = "functional", testName = "lucene.InfinispanDirectoryIOTest")
+@Test(groups = "functional", testName = "lucene.InfinispanDirectoryIOTest", sequential = true)
 public class InfinispanDirectoryIOTest {
    
    private CacheContainer cacheManager;
@@ -410,6 +410,7 @@ public class InfinispanDirectoryIOTest {
       byte[] buf = new byte[9];
       IndexInput ii = dir.openInput("MyNewFile.txt");
       ii.readBytes(buf, 0, (int) ii.length());
+      ii.close();
 
       assert new String(new byte[] { 66, 69 }).equals(new String(buf).trim());
 
@@ -459,6 +460,7 @@ public class InfinispanDirectoryIOTest {
       byte[] buf = new byte[testTextAsBytes.length];
 
       ii.readBytes(buf, 0, testTextAsBytes.length);
+      ii.close();
 
       assert testText.equals(new String(buf).trim());
 

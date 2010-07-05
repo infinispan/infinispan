@@ -52,6 +52,7 @@ public class LuceneSettings {
       IndexWriter iwriter = new IndexWriter(directory, LuceneSettings.analyzer, false, MaxFieldLength.UNLIMITED);
       iwriter.setMergeScheduler(mergeScheduler);
       iwriter.setMaxMergeDocs(maxMergeDocs);
+      iwriter.setUseCompoundFile(false);
       return iwriter;
    }
 

@@ -21,10 +21,12 @@
  */
 package org.infinispan.lucene;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import org.apache.lucene.store.IndexInput;
 import org.infinispan.AdvancedCache;
+import org.infinispan.context.Flag;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -45,26 +47,123 @@ public class InfinispanIndexInput extends IndexInput {
    private final FileMetadata file;
    private final FileCacheKey fileKey;
    private final int chunkSize;
+   private final FileReadLockKey readLockKey;
 
    private int currentBufferSize;
    private byte[] buffer;
    private int bufferPosition;
    private int currentLoadedChunk = -1;
 
-   public InfinispanIndexInput(AdvancedCache<CacheKey, Object> cache, FileCacheKey fileKey, int chunkSize) throws IOException {
+   private boolean isClone;
+
+   public InfinispanIndexInput(AdvancedCache<CacheKey, Object> cache, FileCacheKey fileKey, int chunkSize) throws FileNotFoundException {
       this.cache = cache;
       this.fileKey = fileKey;
       this.chunkSize = chunkSize;
+      final String filename = fileKey.getFileName();
+      this.readLockKey = new FileReadLockKey(fileKey.getIndexName(), filename);
+      
+      boolean failure = true;
+      aquireReadLock();
+      try {
 
-      // get file header from file
-      this.file = (FileMetadata) cache.get(fileKey);
+         // get file header from file
+         this.file = (FileMetadata) cache.get(fileKey);
 
-      if (file == null) {
-         throw new IOException("Error loading medatada for index file: " + fileKey);
+         if (file == null) {
+            throw new FileNotFoundException("Error loading medatada for index file: " + fileKey);
+         }
+
+         if (log.isDebugEnabled()) {
+            log.debug("Opened new IndexInput for file:{0} in index: {1}", filename, fileKey.getIndexName());
+         }
+         failure = false;
+      } finally {
+         if (failure)
+            releaseReadLock();
       }
+   }
 
-      if (log.isDebugEnabled()) {
-         log.debug("Opened new IndexInput for file:{0} in index: {1}", fileKey.getFileName(), fileKey.getIndexName());
+   private void releaseReadLock() {
+      releaseReadLock(readLockKey, cache);
+   }
+   
+   /**
+    * Releases a read-lock for this file, so that if it was marked as deleted and
+    * no other {@link InfinispanIndexInput} instances are using it, then it will
+    * be effectively deleted.
+    * 
+    * @see #aquireReadLock()
+    * @see InfinispanDirectory#deleteFile(String)
+    * 
+    * @param readLockKey the key pointing to the reference counter value
+    * @param cache The cache containing the reference counter value
+    */
+   static void releaseReadLock(FileReadLockKey readLockKey, AdvancedCache<CacheKey, Object> cache) {
+      int newValue = 0;
+      // spinning as we currently don't mandate transactions, so no proper lock support available
+      boolean done = false;
+      while (done == false) {
+         Object lockValue = cache.get(readLockKey);
+         if (lockValue == null)
+            return; // no special locking for some core files
+         int refCount = (Integer) lockValue;
+         newValue = refCount - 1;
+         done = cache.replace(readLockKey, refCount, newValue);
+      }
+      if (newValue == 0) {
+         realFileDelete(readLockKey, cache);
+      }
+   }
+   
+   /**
+    * The {@link InfinispanDirectory#deleteFile(String)} is not deleting the elements from the cache
+    * but instead flagging the file as deletable.
+    * This method will really remove the elements from the cache; should be invoked only
+    * by {@link #releaseReadLock(FileReadLockKey, AdvancedCache)} after having verified that there
+    * are no users left in need to read these chunks.
+    * 
+    * @param readLockKey the key representing the values to be deleted
+    * @param cache the cache containing the elements to be deleted
+    */
+   static void realFileDelete(FileReadLockKey readLockKey, AdvancedCache<CacheKey, Object> cache) {
+      final String indexName = readLockKey.getIndexName();
+      final String filename = readLockKey.getFileName();
+      int i = 0;
+      Object removed;
+      ChunkCacheKey chunkKey = new ChunkCacheKey(indexName, filename, i);
+      do {
+         removed = cache.withFlags(Flag.SKIP_LOCKING).remove(chunkKey);
+         chunkKey = new ChunkCacheKey(indexName, filename, ++i);
+      } while (removed != null);
+      cache.startBatch();
+      cache.withFlags(Flag.SKIP_REMOTE_LOOKUP,Flag.SKIP_LOCKING).remove(readLockKey);
+      FileCacheKey key = new FileCacheKey(indexName, filename);
+      cache.withFlags(Flag.SKIP_REMOTE_LOOKUP,Flag.SKIP_LOCKING).remove(key);
+      cache.endBatch(true);
+   }
+
+   /**
+    * Acquires a readlock on all chunks for this file, to make sure chunks are not deleted while
+    * iterating on the group. This is needed to avoid an eager lock on all elements.
+    * 
+    * @see #releaseReadLock(FileReadLockKey, AdvancedCache)
+    */
+   private void aquireReadLock() throws FileNotFoundException {
+      // spinning as we currently don't mandate transactions, so no proper lock support is available
+      boolean done = false;
+      while (done == false) {
+         Object lockValue = cache.get(readLockKey);
+         if (lockValue == null)
+            return; // no special locking for some core files
+         int refCount = (Integer) lockValue;
+         if (refCount == 0) {
+            // too late: in case refCount==0 the delete process already triggered chunk deletion.
+            // safest reaction is to tell this file doesn't exist anymore.
+            throw new FileNotFoundException("segment file was deleted");
+         }
+         Integer newValue = Integer.valueOf(refCount + 1);
+         done = cache.replace(readLockKey, refCount, newValue);
       }
    }
 
@@ -102,18 +201,20 @@ public class InfinispanIndexInput extends IndexInput {
       bufferPosition = 0;
       currentLoadedChunk = -1;
       buffer = null;
+      if (isClone) return;
+      releaseReadLock();
       if (log.isDebugEnabled()) {
          log.debug("Closed IndexInput for file:{0} in index: {1}", fileKey.getFileName(), fileKey.getIndexName());
       }
    }
 
    public long getFilePointer() {
-      return ((long)currentLoadedChunk) * chunkSize + bufferPosition;
+      return ((long) currentLoadedChunk) * chunkSize + bufferPosition;
    }
 
    @Override
    public void seek(long pos) throws IOException {
-      bufferPosition = (int)( pos % chunkSize );
+      bufferPosition = (int) (pos % chunkSize);
       int targetChunk = (int) (pos / chunkSize);
       if (targetChunk != currentLoadedChunk) {
          currentLoadedChunk = targetChunk;
@@ -154,4 +255,14 @@ public class InfinispanIndexInput extends IndexInput {
       return file.getSize();
    }
    
+   @Override
+   public Object clone() {
+      InfinispanIndexInput clone = (InfinispanIndexInput)super.clone();
+      // reference counting doesn't work properly: need to use isClone
+      // as in other Directory implementations. Apparently not all clones
+      // are cleaned up, but the original is (especially .tis files)
+      clone.isClone = true; 
+      return clone;
+    }
+
 }
