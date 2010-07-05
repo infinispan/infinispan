@@ -218,6 +218,7 @@
                      <exclude>net.jcip:jcip-annotations</exclude>
                      <exclude>org.rhq.helpers:rhq-pluginAnnotations</exclude>
                      <exclude>javax.transaction:jta</exclude>
+                     <exclude>log4j:log4j</exclude>
                   </excludes>
                   <useTransitiveDependencies>true</useTransitiveDependencies>
                   <useTransitiveFiltering>true</useTransitiveFiltering>
