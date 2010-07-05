@@ -34,12 +34,6 @@
 
       <!-- required by Webdav-Servlet -->
       <dependency>
-         <groupId>log4j</groupId>
-         <artifactId>log4j</artifactId>
-         <version>1.2.14</version>
-      </dependency>
-
-      <dependency>
          <groupId>javax.servlet</groupId>
          <artifactId>servlet-api</artifactId>
          <version>${version.javax.servlet}</version>

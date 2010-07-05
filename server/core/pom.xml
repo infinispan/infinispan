@@ -17,7 +17,6 @@
    <properties>
       <version.netty>3.2.0.Final</version.netty>
       <version.gnu.getopt>1.0.13</version.gnu.getopt>
-      <version.apache.log4j>1.2.15</version.apache.log4j>
    </properties>
 
    <dependencies>

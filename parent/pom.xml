@@ -71,75 +71,84 @@
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
       <defaultTestGroup>functional,unit</defaultTestGroup>
       <testNGListener>org.infinispan.test.fwk.UnitTestTestNGListener</testNGListener>
-      <jboss.releases.repo.url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2/
-      </jboss.releases.repo.url>
-      <jboss.snapshots.repo.url>https://repository.jboss.org/nexus/content/repositories/snapshots/
-      </jboss.snapshots.repo.url>
-      <version.scala>2.8.0.RC7</version.scala>      
+      <jboss.releases.repo.url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2/</jboss.releases.repo.url>
+      <jboss.snapshots.repo.url>https://repository.jboss.org/nexus/content/repositories/snapshots/</jboss.snapshots.repo.url>
+
+      <!-- Versions for dependencies -->
+      <version.scala>2.8.0.RC7</version.scala>
+      <version.testng>5.11</version.testng>
+      <version.jcipannotations>1.0</version.jcipannotations>
+      <version.easymockclassext>2.4</version.easymockclassext>
+      <version.easymock>2.4</version.easymock>
+      <version.jbossjta>4.9.0.GA</version.jbossjta>
+      <version.jbossjts>4.9.0.GA</version.jbossjts>
+      <version.jbossts-common>4.6.1.GA</version.jbossts-common>
+      <version.commons-logging>1.1.1</version.commons-logging>
+      <version.log4j>1.2.16</version.log4j>
+      <version.xstream>1.3.1</version.xstream>
    </properties>
 
    <dependencies>
       <dependency>
          <groupId>org.testng</groupId>
          <artifactId>testng</artifactId>
-         <version>5.11</version>
+         <version>${version.testng}</version>
          <scope>test</scope>
          <classifier>jdk15</classifier>
       </dependency>
       <dependency>
          <groupId>net.jcip</groupId>
          <artifactId>jcip-annotations</artifactId>
-         <version>1.0</version>
+         <version>${version.jcipannotations}</version>
          <optional>true</optional>
       </dependency>
       <dependency>
          <groupId>org.easymock</groupId>
          <artifactId>easymockclassextension</artifactId>
-         <version>2.4</version>
+         <version>${version.easymockclassext}</version>
          <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>org.easymock</groupId>
          <artifactId>easymock</artifactId>
-         <version>2.4</version>
+         <version>${version.easymock}</version>
          <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>jboss.jbossts</groupId>
          <artifactId>jbossjta</artifactId>
-         <version>4.9.0.GA</version>
+         <version>${version.jbossjta}</version>
          <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>jboss.jbossts</groupId>
          <artifactId>jbossjts</artifactId>
-         <version>4.9.0.GA</version>
+         <version>${version.jbossjts}</version>
          <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>commons-logging</groupId>
          <artifactId>commons-logging</artifactId>
-         <version>1.1</version>
+         <version>${version.commons-logging}</version>
          <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>jboss.jbossts</groupId>
          <artifactId>jbossts-common</artifactId>
-         <version>4.6.1.GA</version>
+         <version>${version.jbossts-common}</version>
          <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>log4j</groupId>
          <artifactId>log4j</artifactId>
-         <version>1.2.14</version>
-         <scope>provided</scope>
+         <version>${version.log4j}</version>
       </dependency>
 
       <!-- used to serialize non-serializable objects for a dummy marshaller -->
       <dependency>
          <groupId>com.thoughtworks.xstream</groupId>
          <artifactId>xstream</artifactId>
-         <version>1.3.1</version>
+         <version>${version.xstream}</version>
          <scope>test</scope>
       </dependency>
    </dependencies>

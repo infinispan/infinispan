@@ -249,6 +249,7 @@
                      <exclude>org.infinispan:infinispan-core</exclude>
                      <exclude>org.infinispan:infinispan-server-rest</exclude>
                      <exclude>org.infinispan:infinispan-gridfs-webdav</exclude>
+                     <exclude>log4j:log4j</exclude>
                   </excludes>
                   <useTransitiveDependencies>true</useTransitiveDependencies>
                   <useTransitiveFiltering>true</useTransitiveFiltering>
