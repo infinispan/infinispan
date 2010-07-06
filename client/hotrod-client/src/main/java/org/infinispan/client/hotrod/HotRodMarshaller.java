@@ -16,7 +16,11 @@ public interface HotRodMarshaller {
 
    void init(Properties config);
 
-   byte[] marshallObject(Object toMarshall);
+   /**
+    * @param isKeyHint if true the object passed to the marshaller is a key. This info can be used to optimize the
+    * size of the allocated byte[].
+    */
+   byte[] marshallObject(Object toMarshall, boolean isKeyHint);
 
    Object readObject(byte[] bytes);
 }

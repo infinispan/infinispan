@@ -15,6 +15,14 @@ import java.util.Properties;
 
 /**
  * Default marshaller implementation based on object serialization.
+ * Supports two configuration elements:
+ * <ul>
+ *  <li>marshaller.default-array-size.key - the size of the {@link ExposedByteArrayOutputStream} that will be
+ *   created for marshalling keys</li>
+ *  <li> marshaller.default-array-size.value - the size of the {@link ExposedByteArrayOutputStream} that will be
+ *   created for marshalling values
+ *  </li>
+ * </ul>
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
@@ -23,25 +31,36 @@ public class SerializationMarshaller implements HotRodMarshaller {
 
    private static Log log = LogFactory.getLog(SerializationMarshaller.class);
 
-   private volatile int defaultArraySize = 128;
+   private volatile int defaultArraySizeForKey = 128;
+   private volatile int defaultArraySizeForValue = 256;
 
    @Override
    public void init(Properties config) {
-      if (config.contains("marshaller.default-array-size")) {
-         defaultArraySize = Integer.parseInt(config.getProperty("marshaller.default-array-size"));
+      if (config.contains("marshaller.default-array-size.key")) {
+         defaultArraySizeForKey = Integer.parseInt(config.getProperty("marshaller.default-array-size.key"));
       }
-      defaultArraySize = 128;
+      if (config.contains("marshaller.default-array-size.value")) {
+         defaultArraySizeForValue = Integer.parseInt(config.getProperty("marshaller.default-array-size.value"));
+      }
    }
 
    @Override
-   public byte[] marshallObject(Object toMarshall) {
-      ExposedByteArrayOutputStream result = new ExposedByteArrayOutputStream(defaultArraySize);
+   public byte[] marshallObject(Object toMarshall, boolean isKeyHint) {
+      ExposedByteArrayOutputStream result = getByteArray(isKeyHint);
       try {
          ObjectOutputStream oos = new ObjectOutputStream(result);
          oos.writeObject(toMarshall);
          return result.toByteArray();
       } catch (IOException e) {
          throw new HotRodClientException("Unexpected!", e);
+      }
+   }
+
+   private ExposedByteArrayOutputStream getByteArray(boolean keyHint) {
+      if (keyHint) {
+         return new ExposedByteArrayOutputStream(defaultArraySizeForKey);
+      } else {
+         return new ExposedByteArrayOutputStream(defaultArraySizeForValue);
       }
    }
 

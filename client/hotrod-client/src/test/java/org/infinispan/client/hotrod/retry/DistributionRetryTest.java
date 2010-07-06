@@ -115,7 +115,7 @@ public class DistributionRetryTest extends AbstractRetryTest {
       TcpTransportFactory tcpTp = (TcpTransportFactory) TestingUtil.extractField(remoteCacheManager, "transportFactory");
 
       SerializationMarshaller sm = new SerializationMarshaller();
-      TcpTransport transport = (TcpTransport) tcpTp.getTransport(sm.marshallObject(key));
+      TcpTransport transport = (TcpTransport) tcpTp.getTransport(sm.marshallObject(key, true));
       try {
       assertEquals(transport.getServerAddress(), new InetSocketAddress("localhost", hotRodServer2.getPort()));
       } finally {
@@ -136,7 +136,7 @@ public class DistributionRetryTest extends AbstractRetryTest {
       public Object getKey() {
          String result = String.valueOf(r.nextLong());
          SerializationMarshaller sm = new SerializationMarshaller();
-         return sm.marshallObject(result);
+         return sm.marshallObject(result, true);
       }
 
       static String getStringObject(byte[] bytes) {

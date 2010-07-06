@@ -187,8 +187,8 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
 
    private void assertCacheContains(Cache cache, String key, String value) {
       SerializationMarshaller marshaller = new SerializationMarshaller();
-      byte[] keyBytes = marshaller.marshallObject(key);
-      byte[] valueBytes = marshaller.marshallObject(value);
+      byte[] keyBytes = marshaller.marshallObject(key, true);
+      byte[] valueBytes = marshaller.marshallObject(value, false);
       ByteArrayKey cacheKey = new ByteArrayKey(keyBytes);
       CacheValue cacheValue = (CacheValue) cache.get(cacheKey);
       if (value == null) {

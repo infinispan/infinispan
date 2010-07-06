@@ -60,7 +60,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    @Override
    public boolean removeWithVersion(K key, long version) {
       assertRemoteCacheManagerIsStarted();
-      VersionedOperationResponse response = operations.removeIfUnmodified(obj2bytes(key), version, flags());
+      VersionedOperationResponse response = operations.removeIfUnmodified(obj2bytes(key, true), version, flags());
       return response.getCode().isUpdated();
    }
 
@@ -83,7 +83,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    @Override
    public boolean replaceWithVersion(K key, V newValue, long version, int lifespanSeconds, int maxIdleTimeSeconds) {
       assertRemoteCacheManagerIsStarted();
-      VersionedOperationResponse response = operations.replaceIfUnmodified(obj2bytes(key), obj2bytes(newValue), lifespanSeconds, maxIdleTimeSeconds, version, flags());
+      VersionedOperationResponse response = operations.replaceIfUnmodified(obj2bytes(key, true), obj2bytes(newValue, false), lifespanSeconds, maxIdleTimeSeconds, version, flags());
       return response.getCode().isUpdated();
    }
 
@@ -106,7 +106,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    @Override
    public VersionedValue<V> getVersioned(K key) {
       assertRemoteCacheManagerIsStarted();
-      BinaryVersionedValue value = operations.getWithVersion(obj2bytes(key), flags());
+      BinaryVersionedValue value = operations.getWithVersion(obj2bytes(key, true), flags());
       return binary2VersionedValue(value);
    }
 
@@ -164,7 +164,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       if (log.isTraceEnabled()) {
          log.trace("About to add (K,V): (" + key + ", " + value + ") lifespanSecs:" + lifespanSecs + ", maxIdleSecs:" + maxIdleSecs);
       }
-      byte[] result = operations.put(obj2bytes(key), obj2bytes(value), lifespanSecs, maxIdleSecs, flags());
+      byte[] result = operations.put(obj2bytes(key, true), obj2bytes(value, false), lifespanSecs, maxIdleSecs, flags());
       return (V) bytes2obj(result);
    }
 
@@ -174,7 +174,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       assertRemoteCacheManagerIsStarted();
       int lifespanSecs = toSeconds(lifespan, lifespanUnit);
       int maxIdleSecs = toSeconds(maxIdleTime, maxIdleTimeUnit);
-      byte[] bytes = operations.putIfAbsent(obj2bytes(key), obj2bytes(value), lifespanSecs, maxIdleSecs, flags());
+      byte[] bytes = operations.putIfAbsent(obj2bytes(key, true), obj2bytes(value, false), lifespanSecs, maxIdleSecs, flags());
       return (V) bytes2obj(bytes);
    }
 
@@ -183,7 +183,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       assertRemoteCacheManagerIsStarted();
       int lifespanSecs = toSeconds(lifespan, lifespanUnit);
       int maxIdleSecs = toSeconds(maxIdleTime, maxIdleTimeUnit);
-      byte[] bytes = operations.replace(obj2bytes(key), obj2bytes(value), lifespanSecs, maxIdleSecs, flags());
+      byte[] bytes = operations.replace(obj2bytes(key, true), obj2bytes(value, false), lifespanSecs, maxIdleSecs, flags());
       return (V) bytes2obj(bytes);
    }
 
@@ -270,20 +270,20 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    @Override
    public boolean containsKey(Object key) {
       assertRemoteCacheManagerIsStarted();
-      return operations.containsKey(obj2bytes(key), flags());
+      return operations.containsKey(obj2bytes(key, true), flags());
    }
 
    @Override
    public V get(Object key) {
       assertRemoteCacheManagerIsStarted();
-      byte[] bytes = operations.get(obj2bytes(key), flags());
+      byte[] bytes = operations.get(obj2bytes(key, true), flags());
       return (V) bytes2obj(bytes);
    }
 
    @Override
    public V remove(Object key) {
       assertRemoteCacheManagerIsStarted();
-      byte[] existingValue = operations.remove(obj2bytes(key), flags());
+      byte[] existingValue = operations.remove(obj2bytes(key, true), flags());
       return (V) bytes2obj(existingValue);
    }
 
@@ -323,8 +323,8 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       return flags;
    }
 
-   private byte[] obj2bytes(Object obj) {
-      return this.marshaller.marshallObject(obj);
+   private byte[] obj2bytes(Object obj, boolean isKey) {
+      return this.marshaller.marshallObject(obj, isKey);
    }
 
    private Object bytes2obj(byte[] bytes) {
