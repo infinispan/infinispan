@@ -210,8 +210,8 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
       ObjectName rpcManager2 = new ObjectName("RpcManagerMBeanTest2:cache-name=" + cachename + "(repl_sync),jmx-resource=RpcManager");
       String cm1Address = manager(0).getAddress().toString();
       String cm2Address = manager(1).getAddress().toString();
-      assert mBeanServer.getAttribute(rpcManager1, "Address").equals(cm1Address);
-      assert mBeanServer.getAttribute(rpcManager2, "Address").equals(cm2Address);
+      assert mBeanServer.getAttribute(rpcManager1, "NodeAddress").equals(cm1Address);
+      assert mBeanServer.getAttribute(rpcManager2, "NodeAddress").equals(cm2Address);
 
       String cm1Members = mBeanServer.getAttribute(rpcManager1, "Members").toString();
       assert cm1Members.contains(cm1Address);
