@@ -289,5 +289,5 @@ class MySer extends Serializable {
    /**These are needed for Jackson to Do Its Thing */
    def getName = name
 
-   def setName(s: String) r1875 through r1949= {name = s}
+   def setName(s: String) = {name = s}
 }
