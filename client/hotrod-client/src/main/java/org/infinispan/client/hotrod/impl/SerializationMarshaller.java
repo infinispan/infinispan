@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.impl;
 
 import org.infinispan.client.hotrod.HotRodMarshaller;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.io.ExposedByteArrayOutputStream;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -14,7 +15,6 @@ import java.util.Arrays;
 
 /**
  * Default marshaller implementation based on object serialization.
- * todo - the marshaller should only be when writing to the actual transport
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
@@ -25,7 +25,7 @@ public class SerializationMarshaller implements HotRodMarshaller {
 
    @Override
    public byte[] marshallObject(Object toMarshall) {
-      ByteArrayOutputStream result = new ByteArrayOutputStream(1000);
+      ExposedByteArrayOutputStream result = new ExposedByteArrayOutputStream(128);
       try {
          ObjectOutputStream oos = new ObjectOutputStream(result);
          oos.writeObject(toMarshall);
