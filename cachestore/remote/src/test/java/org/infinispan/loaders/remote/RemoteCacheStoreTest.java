@@ -47,7 +47,7 @@ public class RemoteCacheStoreTest extends BaseCacheStoreTest {
       return remoteCacheStore;
    }
 
-   @AfterTest
+   @AfterTest(alwaysRun = true)
    public void tearDown() {
       hrServer.stop();
       localCacheManager.stop();

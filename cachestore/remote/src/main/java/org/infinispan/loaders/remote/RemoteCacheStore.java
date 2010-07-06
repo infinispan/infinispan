@@ -8,6 +8,7 @@ import org.infinispan.loaders.AbstractCacheStore;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderMetadata;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -135,7 +136,10 @@ public class RemoteCacheStore extends AbstractCacheStore {
 
       if (marshaller == null) {throw new IllegalStateException("Null marshaller not allowed!");}
       remoteCacheManager = new RemoteCacheManager(new InternalCacheEntryMarshaller(marshaller), config.getHotRodClientProperties());
-      remoteCache = remoteCacheManager.getCache(config.getRemoteCacheName());
+      if (config.getRemoteCacheName().equals(CacheContainer.DEFAULT_CACHE_NAME))
+         remoteCache = remoteCacheManager.getCache();
+      else
+         remoteCache = remoteCacheManager.getCache(config.getRemoteCacheName());
    }
 
    @Override
