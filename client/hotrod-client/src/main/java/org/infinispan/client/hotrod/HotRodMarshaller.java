@@ -2,6 +2,8 @@ package org.infinispan.client.hotrod;
 
 import net.jcip.annotations.ThreadSafe;
 
+import java.util.Properties;
+
 /**
  * Used for un/marshalling objects sent between hotrod client and server (hotrod is a binary protocol).
  * A single instance of this class is shared by all threads, so this class needs to be thread safe.
@@ -11,6 +13,8 @@ import net.jcip.annotations.ThreadSafe;
  */
 @ThreadSafe 
 public interface HotRodMarshaller {
+
+   void init(Properties config);
 
    byte[] marshallObject(Object toMarshall);
 

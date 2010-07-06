@@ -7,11 +7,11 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Arrays;
+import java.util.Properties;
 
 /**
  * Default marshaller implementation based on object serialization.
@@ -23,9 +23,19 @@ public class SerializationMarshaller implements HotRodMarshaller {
 
    private static Log log = LogFactory.getLog(SerializationMarshaller.class);
 
+   private volatile int defaultArraySize = 128;
+
+   @Override
+   public void init(Properties config) {
+      if (config.contains("marshaller.default-array-size")) {
+         defaultArraySize = Integer.parseInt(config.getProperty("marshaller.default-array-size"));
+      }
+      defaultArraySize = 128;
+   }
+
    @Override
    public byte[] marshallObject(Object toMarshall) {
-      ExposedByteArrayOutputStream result = new ExposedByteArrayOutputStream(128);
+      ExposedByteArrayOutputStream result = new ExposedByteArrayOutputStream(defaultArraySize);
       try {
          ObjectOutputStream oos = new ObjectOutputStream(result);
          oos.writeObject(toMarshall);

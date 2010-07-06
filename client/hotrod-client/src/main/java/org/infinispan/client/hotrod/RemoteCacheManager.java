@@ -154,7 +154,7 @@ public class RemoteCacheManager implements CacheContainer {
     */
    public RemoteCacheManager(HotRodMarshaller hotRodMarshaller, Properties props, boolean start) {
       this(props);
-      this.hotRodMarshaller = hotRodMarshaller;
+      setHotRodMarshaller(hotRodMarshaller);
       if (log.isTraceEnabled()) {
          log.trace("Using explicitly set marshaller: " + hotRodMarshaller);
       }
@@ -305,7 +305,7 @@ public class RemoteCacheManager implements CacheContainer {
             hotrodMarshallerClass = SerializationMarshaller.class.getName();
             log.info("'marshaller' not specified, using " + hotrodMarshallerClass);
          }
-         hotRodMarshaller = (HotRodMarshaller) VHelper.newInstance(hotrodMarshallerClass); 
+         setHotRodMarshaller((HotRodMarshaller)VHelper.newInstance(hotrodMarshallerClass));
       }
 
       String asyncExecutorClass = DefaultAsyncExecutorFactory.class.getName();
@@ -396,4 +396,8 @@ public class RemoteCacheManager implements CacheContainer {
       return new String[]{t.nextToken(), t.nextToken()};
    }
 
+   private void setHotRodMarshaller(HotRodMarshaller hotRodMarshaller) {
+      this.hotRodMarshaller = hotRodMarshaller;
+      hotRodMarshaller.init(props);
+   }
 }
