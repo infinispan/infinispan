@@ -383,8 +383,9 @@ public class RpcManagerImpl implements RpcManager {
    // mainly for unit testing
    public void setTransport(Transport t) {
       this.t = t;
-   }@Override
+   }
 
+   @Override
    public Address getAddress() {
       return t != null ? t.getAddress() : null;
    }
