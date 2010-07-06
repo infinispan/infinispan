@@ -25,7 +25,7 @@
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-client-hotrod</artifactId>
          <version>${project.version}</version>
-         <classifier>tests</classifier>
+         <type>test-jar</type>
          <scope>test</scope>
       </dependency>
       <dependency>
