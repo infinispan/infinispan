@@ -1,10 +1,9 @@
-<?xml version="1.0"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version='1.0' encoding='UTF-8'?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
    <modelVersion>4.0.0</modelVersion>
    <groupId>org.infinispan</groupId>
    <artifactId>infinispan-parent</artifactId>
-   <version>5.0.0-SNAPSHOT</version>
+   <version>4.1.0.CR1</version>
    <name>Infinispan Common Parent</name>
    <description>Infinispan common parent POM module</description>
    <url>http://www.infinispan.org</url>
@@ -74,7 +73,7 @@
       <jboss.releases.repo.url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2/</jboss.releases.repo.url>
       <jboss.snapshots.repo.url>https://repository.jboss.org/nexus/content/repositories/snapshots/</jboss.snapshots.repo.url>
 
-      <!-- Versions for dependencies -->
+      
       <version.scala>2.8.0.RC7</version.scala>
       <version.testng>5.11</version.testng>
       <version.jcipannotations>1.0</version.jcipannotations>
@@ -144,7 +143,7 @@
          <version>${version.log4j}</version>
       </dependency>
 
-      <!-- used to serialize non-serializable objects for a dummy marshaller -->
+      
       <dependency>
          <groupId>com.thoughtworks.xstream</groupId>
          <artifactId>xstream</artifactId>
@@ -155,7 +154,7 @@
 
    <build>
       <plugins>
-         <!-- enforce java 1.6 and maven 2.1.0 -->
+         
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-enforcer-plugin</artifactId>
@@ -179,7 +178,7 @@
                </execution>
             </executions>
          </plugin>
-         <!-- by default, compile to JDK 1.6 compatibility (individual modules and/or user can override) -->
+         
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-compiler-plugin</artifactId>
@@ -200,7 +199,7 @@
             </configuration>
          </plugin>
 
-         <!-- ensure parallel test execution -->
+         
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
@@ -236,7 +235,7 @@
                </properties>
             </configuration>
          </plugin>
-         <!-- eclipse project file generation -->
+         
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-eclipse-plugin</artifactId>
@@ -246,7 +245,7 @@
                <buildOutputDirectory>${basedir}/eclipse-output</buildOutputDirectory>
             </configuration>
          </plugin>
-         <!-- IntelliJ project file generation -->
+         
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-idea-plugin</artifactId>
@@ -255,7 +254,7 @@
                <downloadSources>true</downloadSources>
             </configuration>
          </plugin>
-         <!-- Make sure we generate src jars too -->
+         
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-source-plugin</artifactId>
@@ -314,7 +313,7 @@
             <artifactId>maven-surefire-report-plugin</artifactId>
             <version>2.4.3-JBOSS</version>
          </plugin>
-         <!-- Findbugs report -->
+         
          <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>findbugs-maven-plugin</artifactId>
