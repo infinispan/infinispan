@@ -160,16 +160,8 @@ public class InfinispanDirectory extends Directory {
     */
    public void renameFile(String from, String to) throws IOException {
       checkIsOpen();
-      cache.startBatch();
-      // rename main file header
-      CacheKey fromKey = new FileCacheKey(indexName, from);
-      FileMetadata fileFrom = (FileMetadata) cache.remove(fromKey);
-      cache.put(new FileCacheKey(indexName, to), fileFrom);
-      Set<String> fileList = getFileList();
-      fileList.remove(from);
-      fileList.add(to);
-      cache.put(fileListCacheKey, fileList);
-      // rename also all chunks
+
+      // preparation: copy all chunks to new keys
       int i = -1;
       Object ob;
       do {
@@ -178,14 +170,28 @@ public class InfinispanDirectory extends Directory {
          if (ob == null) {
             break;
          }
-         cache.remove(fromChunkKey);
          ChunkCacheKey toChunkKey = new ChunkCacheKey(indexName, to, i);
-         cache.put(toChunkKey, ob);
+         cache.withFlags(Flag.SKIP_REMOTE_LOOKUP).put(toChunkKey, ob);
       } while (true);
+      
+      // rename metadata first
+      cache.startBatch();
+      CacheKey fromKey = new FileCacheKey(indexName, from);
+      FileMetadata metadata = (FileMetadata) cache.remove(fromKey);
+      cache.put(new FileCacheKey(indexName, to), metadata);
+      Set<String> fileList = getFileList();
+      fileList.remove(from);
+      fileList.add(to);
+      createRefCountForNewFile(to);
+      cache.put(fileListCacheKey, fileList);
+      cache.endBatch(true);
+      
+      // now trigger deletion of old file chunks:
+      FileReadLockKey fileFromReadLockKey = new FileReadLockKey(indexName, from);
+      InfinispanIndexInput.releaseReadLock(fileFromReadLockKey, cache);
       if (log.isTraceEnabled()) {
          log.trace("Renamed file from: {0} to: {1} in index {2}", from, to, indexName);
       }
-      cache.endBatch(true);
    }
 
    /**
@@ -209,8 +215,7 @@ public class InfinispanDirectory extends Directory {
       FileMetadata previous = (FileMetadata) cache.putIfAbsent(key, newFileMetadata);
       if (previous == null) {
          // creating new file
-         FileReadLockKey readLockKey = new FileReadLockKey(indexName, name);
-         cache.put(readLockKey, Integer.valueOf(1));
+         createRefCountForNewFile(name);
          Set<String> fileList = getFileList();
          fileList.add(name);
          cache.put(fileListCacheKey, fileList);
@@ -218,6 +223,11 @@ public class InfinispanDirectory extends Directory {
       } else {
          return new InfinispanIndexOutput(cache, key, chunkSize, previous);
       }
+   }
+
+   private void createRefCountForNewFile(String fileName) {
+      FileReadLockKey readLockKey = new FileReadLockKey(indexName, fileName);
+      cache.withFlags(Flag.SKIP_REMOTE_LOOKUP).put(readLockKey, Integer.valueOf(1));
    }
 
    @SuppressWarnings("unchecked")
