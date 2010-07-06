@@ -1,10 +1,12 @@
-<?xml version='1.0' encoding='UTF-8'?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
    <modelVersion>4.0.0</modelVersion>
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-cachestore-parent</artifactId>
-      <version>4.1.0.CR1</version>
+      <version>4.1.0-SNAPSHOT</version>
       <relativePath>../pom.xml</relativePath>
    </parent>
    <artifactId>infinispan-cachestore-jdbm</artifactId>
@@ -15,7 +17,7 @@
 
    <dependencies>
       <dependency>
-         
+         <!-- Contains fixes not officially released by JDBM group -->
          <groupId>org.apache.directory.server</groupId>
          <artifactId>apacheds-jdbm</artifactId>
          <version>1.5.4</version>

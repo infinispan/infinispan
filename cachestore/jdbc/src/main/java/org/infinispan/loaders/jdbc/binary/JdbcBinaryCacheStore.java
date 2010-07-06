@@ -334,7 +334,7 @@ public class JdbcBinaryCacheStore extends BucketBasedCacheStore {
          //flush the batch
          if (updateCount % batchSize != 0) {
             if (log.isTraceEnabled()) log.trace("Flushing batch, update count is: " + updateCount);
-            ps.executeBatch();
+            ps.executeBatch();            
          }
          if (log.isTraceEnabled()) log.trace("Updated " + updateCount + " buckets.");
       } catch (SQLException ex) {

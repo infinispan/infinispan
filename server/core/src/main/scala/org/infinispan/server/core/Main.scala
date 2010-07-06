@@ -161,6 +161,10 @@ object Main extends Logging {
 
       val configFile = props.getProperty(PROP_KEY_CACHE_CONFIG)
       val cacheManager = if (configFile == null) new DefaultCacheManager else new DefaultCacheManager(configFile)
+      // Servers need a shutdown hook to close down network layer, so there's no need for an extra shutdown hook.
+      // Removing Infinispan's hook also makes shutdown procedures for server and cache manager sequential, avoiding
+      // issues with having the JGroups channel disconnected before it's removed itself from the topology view.
+      cacheManager.getGlobalConfiguration.setShutdownHookBehavior(ShutdownHookBehavior.DONT_REGISTER)
       addShutdownHook(new ShutdownHook(server, cacheManager))
       server.start(props, cacheManager)
    }
@@ -279,6 +283,10 @@ object Main extends Logging {
 }
 
 private class ShutdownHook(server: ProtocolServer, cacheManager: CacheContainer) extends Thread with Logging {
+
+   // Constructor code inline
+   setName("ShutdownHookThread")
+
    override def run {
       if (server != null) {
          info("Posting Shutdown Request to the server...")
