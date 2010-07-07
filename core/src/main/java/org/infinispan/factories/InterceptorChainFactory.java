@@ -85,6 +85,10 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       else
          interceptorChain.appendIntereceptor(createInterceptor(TxInterceptor.class));
 
+      if (configuration.isUseEagerLocking() && configuration.isEnableDeadlockDetection()) {
+         throw new ConfigurationException("This is not supported yet: https://jira.jboss.org/browse/ISPN-518");
+      }
+
       if(configuration.isUseEagerLocking())
          interceptorChain.appendIntereceptor(createInterceptor(ImplicitEagerLockingInterceptor.class));
 
