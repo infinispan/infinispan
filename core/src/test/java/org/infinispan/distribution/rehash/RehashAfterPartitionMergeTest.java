@@ -19,7 +19,7 @@ import org.testng.annotations.Test;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@Test(groups = "functional", testName =  "distribution.rehash.RehashAfterPartitionMergeTest")
+@Test(groups = "functional", testName =  "distribution.rehash.RehashAfterPartitionMergeTest", enabled = false, description = "Need to revisit after https://jira.jboss.org/browse/ISPN-493")
 public class RehashAfterPartitionMergeTest extends MultipleCacheManagersTest {
 
    Cache<Object, Object> c1, c2;
