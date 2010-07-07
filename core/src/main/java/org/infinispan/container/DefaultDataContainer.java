@@ -166,6 +166,9 @@ public class DefaultDataContainer implements DataContainer {
             } else if (e != original) {
                // the entry has changed type, but still can expire!
                mortalEntries.put(k, e);
+            } else {
+               // we have the same instance.  So we need to reincarnate.
+               e.reincarnate();
             }
             successfulPut(e, false);
          } else {

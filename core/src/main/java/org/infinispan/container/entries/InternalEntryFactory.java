@@ -78,7 +78,8 @@ public class InternalEntryFactory {
             if (maxIdle < 0) {
                return new MortalCacheEntry(ice.getKey(), ice.getValue(), lifespan);
             } else {
-               return new TransientMortalCacheEntry(ice.getKey(), ice.getValue(), maxIdle, lifespan, System.currentTimeMillis(), ice.getCreated());
+               long ctm = System.currentTimeMillis();
+               return new TransientMortalCacheEntry(ice.getKey(), ice.getValue(), maxIdle, lifespan, ctm, ctm);
             }
          }
       } else if (ice instanceof MortalCacheEntry) {
@@ -93,7 +94,8 @@ public class InternalEntryFactory {
                ice.setLifespan(lifespan);
                return ice;
             } else {
-               return new TransientMortalCacheEntry(ice.getKey(), ice.getValue(), maxIdle, lifespan, System.currentTimeMillis(), ice.getCreated());
+               long ctm = System.currentTimeMillis();
+               return new TransientMortalCacheEntry(ice.getKey(), ice.getValue(), maxIdle, lifespan, ctm, ctm);
             }
          }
       } else if (ice instanceof TransientCacheEntry) {
@@ -108,7 +110,8 @@ public class InternalEntryFactory {
             if (maxIdle < 0) {
                return new MortalCacheEntry(ice.getKey(), ice.getValue(), lifespan);
             } else {
-               return new TransientMortalCacheEntry(ice.getKey(), ice.getValue(), maxIdle, lifespan, System.currentTimeMillis(), ice.getCreated());
+               long ctm = System.currentTimeMillis();
+               return new TransientMortalCacheEntry(ice.getKey(), ice.getValue(), maxIdle, lifespan, ctm, ctm);
             }
          }
       } else if (ice instanceof TransientMortalCacheEntry) {

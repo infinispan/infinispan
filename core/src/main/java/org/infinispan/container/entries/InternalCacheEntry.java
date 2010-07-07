@@ -54,6 +54,11 @@ public interface InternalCacheEntry extends CacheEntry, Cloneable {
    void touch();
 
    /**
+    * "Reincarnates" an entry.  Essentially, resets the 'created' timestamp of the entry to the current time.
+    */
+   void reincarnate();
+
+   /**
     * Creates a representation of this entry as an {@link org.infinispan.container.entries.InternalCacheValue}. The main
     * purpose of this is to provide a representation that does <i>not</i> have a reference to the key. This is useful in
     * situations where the key is already known or stored elsewhere, making serialization and deserialization more

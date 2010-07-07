@@ -57,7 +57,7 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       assert entry.getCreated() <= System.currentTimeMillis();
 
       dc.put("k", "v", 0, -1);
-
+      Thread.sleep(10);
       assert dc.get("k") == null;
       assert dc.size() == 0;
 
