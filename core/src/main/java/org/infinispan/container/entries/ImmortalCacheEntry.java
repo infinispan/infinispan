@@ -54,6 +54,10 @@ public class ImmortalCacheEntry extends AbstractInternalCacheEntry {
       // no-op
    }
 
+   public final void reincarnate() {
+      // no-op
+   }
+
    public InternalCacheValue toInternalCacheValue() {
       return cacheValue;
    }

@@ -504,6 +504,10 @@ public class Immutables {
          throw new UnsupportedOperationException();
       }
 
+      public void reincarnate() {
+         throw new UnsupportedOperationException();
+      }
+
       public void commit(DataContainer container) {
          throw new UnsupportedOperationException();
       }

@@ -41,6 +41,10 @@ public class TransientCacheEntry extends AbstractInternalCacheEntry {
       cacheValue.lastUsed = System.currentTimeMillis();
    }
 
+   public final void reincarnate() {
+      // no-op
+   }
+
    public final boolean canExpire() {
       return true;
    }
