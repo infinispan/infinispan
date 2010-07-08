@@ -40,11 +40,13 @@ def helpAndExit():
         
         Usage:
         
-            $ bin/release.py <version>
+            $ bin/release.py <version> <branch to tag from>
             
         E.g.,
         
-            $ bin/release.py 4.1.1.BETA1
+            $ bin/release.py 4.1.1.BETA1 <-- this will tag off trunk.
+            
+            $ bin/release.py 4.1.1.BETA1 branches/4.1.x <-- this will use the appropriate branch
             
         Please ensure you have edited bin/release.py to suit your ennvironment.
         There are configurable variables at the start of this file that is
@@ -60,8 +62,13 @@ def validateVersion(version):
     print "Invalid version '"+version+"'!\n"
     helpAndExit()
 
-def tagInSubversion(version, newVersion):
-  svn_conn.tag("%s/trunk" % settings[svn_base_key], newVersion, version)
+def tagInSubversion(version, newVersion, branch):
+  try:
+    svn_conn.tag("%s/%s" % (settings[svn_base_key], branch), newVersion, version)
+  except:
+    print "FATAL: Unable to tag.  Perhaps branch %s does not exist on Subversion URL %s." % (branch, settings[svn_base_key])
+    print "FATAL: Cannot continue!"
+    sys.exit(200)
 
 def getProjectVersionTag(tree):
   return tree.find("./{%s}version" % (maven_pom_xml_namespace))
@@ -237,7 +244,11 @@ def release():
   
   base_dir = os.getcwd()
   version = validateVersion(sys.argv[1])
-  print "Releasing Infinispan version " + version
+  branch = "trunk"
+  if len(sys.argv) > 2:
+    branch = sys.argv[2]
+    
+  print "Releasing Infinispan version %s from branch '%s'" + (version, branch)
   print "Please stand by!"
   
   ## Set up network interactive tools
@@ -255,7 +266,7 @@ def release():
   # Step 1: Tag in SVN
   newVersion = "%s/tags/%s" % (settings[svn_base_key], version)
   print "Step 1: Tagging trunk in SVN as %s" % newVersion    
-  tagInSubversion(version, newVersion)
+  tagInSubversion(version, newVersion, branch)
   print "Step 1: Complete"
   
   workingDir = settings[local_tags_dir_key] + "/" + version
