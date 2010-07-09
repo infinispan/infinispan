@@ -62,8 +62,11 @@ public class BatchingInterceptor extends CommandInterceptor {
       if (transactionManager.getTransaction() == null && (tx = batchContainer.getBatchTransaction()) != null) {
          try {
             transactionManager.resume(tx);
-            //this will make the call with a tx invocation context
-            return invokeNextInterceptor(icc.createInvocationContext(), command);
+            //If there's no ongoing tx then BatchingInterceptor creates one and then invokes next interceptor,
+            // so that all interceptors in the stack will be executed in a transactional context.
+            // This is where a new context (TxInvocationContext) is created, as the existing context is not transactional: NonTxInvocationContext.
+            InvocationContext txContext = icc.createInvocationContext();
+            return invokeNextInterceptor(txContext, command);
          } finally {
             if (transactionManager.getTransaction() != null && batchContainer.isSuspendTxAfterInvocation())
                transactionManager.suspend();
