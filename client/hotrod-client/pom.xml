@@ -11,7 +11,7 @@
    </parent>
 
    <properties>
-      <version.netty>3.2.0.Final</version.netty>
+      <version.netty>3.2.1.Final</version.netty>
    </properties>
 
    <artifactId>infinispan-client-hotrod</artifactId>
