@@ -58,6 +58,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
          // tests repeatedly queries changes
          configuration.setIsolationLevel(IsolationLevel.REPEATABLE_READ);
       }
+      configuration.setInvocationBatchingEnabled(batchingEnabled());
       configuration.setSyncReplTimeout(60, TimeUnit.SECONDS);
       configuration.setLockAcquisitionTimeout(45, TimeUnit.SECONDS);
       configuration.setL1CacheEnabled(l1CacheEnabled);
@@ -79,6 +80,10 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
 
       RehashWaiter.waitForInitRehashToComplete(caches.toArray(new Cache[INIT_CLUSTER_SIZE]));
 
+   }
+
+   protected boolean batchingEnabled() {
+      return false;
    }
 
    public static ConsistentHash createNewConsistentHash(List<Address> servers) {

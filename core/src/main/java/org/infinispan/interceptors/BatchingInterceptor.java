@@ -66,6 +66,7 @@ public class BatchingInterceptor extends CommandInterceptor {
             // so that all interceptors in the stack will be executed in a transactional context.
             // This is where a new context (TxInvocationContext) is created, as the existing context is not transactional: NonTxInvocationContext.
             InvocationContext txContext = icc.createInvocationContext();
+            txContext.setFlags(ctx.getFlags());
             return invokeNextInterceptor(txContext, command);
          } finally {
             if (transactionManager.getTransaction() != null && batchContainer.isSuspendTxAfterInvocation())
