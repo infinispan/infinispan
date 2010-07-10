@@ -18,6 +18,22 @@ public class DistSkipRemoteLookupTest extends BaseDistFunctionalTest {
 
       assertOwnershipAndNonOwnership(k1);
    }
+   
+   public void testSkipLookupOnGetWhileBatching() {
+      MagicKey k1 = new MagicKey(c1);
+      c1.put(k1, "batchingMagicValue-h1");
+
+      assertIsInContainerImmortal(c1, k1);
+      assertIsInContainerImmortal(c2, k1);
+      assertIsNotInL1(c3, k1);
+      assertIsNotInL1(c4, k1);
+
+      c4.startBatch();
+      assert c4.getAdvancedCache().withFlags(SKIP_REMOTE_LOOKUP).get(k1) == null;
+      c4.endBatch(true);
+
+      assertOwnershipAndNonOwnership(k1);
+   }
 
    public void testCorrectFunctionalityOnConditionalWrite() {
       MagicKey k1 = new MagicKey(c1);
@@ -48,5 +64,10 @@ public class DistSkipRemoteLookupTest extends BaseDistFunctionalTest {
       assert c4.getAdvancedCache().withFlags(SKIP_REMOTE_LOOKUP).put(k1, "new_val") == null;
       assert c3.get(k1).equals("new_val");
       assertOnAllCachesAndOwnership(k1, "new_val");
+   }
+   
+   @Override
+   protected boolean batchingEnabled() {
+      return true;
    }
 }
