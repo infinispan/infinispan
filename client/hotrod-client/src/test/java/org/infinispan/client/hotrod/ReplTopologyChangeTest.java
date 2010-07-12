@@ -8,6 +8,7 @@ import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -38,6 +39,14 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
    @AfterMethod
    @Override
    protected void clearContent() throws Throwable {
+   }
+
+   @AfterClass
+   @Override
+   protected void destroy() {
+      hotRodServer1.stop();
+      hotRodServer2.stop();
+      super.destroy();
    }
 
    @Override
@@ -127,7 +136,7 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
    }
    
    protected void waitForClusterToForm(int memberCount) {
-      TestingUtil.blockUntilViewReceived(manager(0).getCache(), memberCount, 10000);
+      TestingUtil.blockUntilViewReceived(manager(0).getCache(), memberCount, 30000);
       for (int i = 0; i < memberCount; i++) {
          TestingUtil.blockUntilCacheStatusAchieved(manager(i).getCache(), ComponentStatus.RUNNING, 10000);
       }

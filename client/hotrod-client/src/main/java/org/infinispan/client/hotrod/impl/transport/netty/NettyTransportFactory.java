@@ -72,8 +72,4 @@ public class NettyTransportFactory implements TransportFactory {
       return 1;
    }
 
-   @Override
-   public void ping() {
-      //ignoring
-   }
 }

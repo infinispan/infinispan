@@ -3,7 +3,6 @@ package org.infinispan.client.hotrod;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory;
 import org.infinispan.client.hotrod.impl.protocol.HotRodOperations;
-import org.infinispan.client.hotrod.impl.protocol.HotRodOperationsHelper;
 import org.infinispan.client.hotrod.impl.protocol.HotRodOperationsImpl;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.SerializationMarshaller;
@@ -329,18 +328,6 @@ public class RemoteCacheManager implements CacheContainer {
          }
       }
       started = true;
-      ping();
-   }
-
-   private void ping() {
-      String pingOnStartup = props.getProperty("ping-on-startup");
-      if (pingOnStartup != null && !Boolean.valueOf(pingOnStartup)) {
-         if (log.isTraceEnabled()) {
-            log.trace("Not pinging on startup as: 'ping-on-startup' = " + pingOnStartup);
-         }
-      } else {
-         transportFactory.ping();
-      }
    }
 
    @Override

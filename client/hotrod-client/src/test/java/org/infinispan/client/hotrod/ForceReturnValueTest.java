@@ -32,7 +32,7 @@ public class ForceReturnValueTest extends SingleCacheManagerTest {
    }
 
 
-   @AfterClass(enabled = true)
+   @AfterClass
    public void testDestroyRemoteCacheFactory() {
       remoteCacheManager.stop();
       hotrodServer.stop();

@@ -5,6 +5,7 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import static org.testng.AssertJUnit.assertEquals;
@@ -17,6 +18,11 @@ import static org.testng.AssertJUnit.assertEquals;
 public class HotRodServerStartStopTest extends MultipleCacheManagersTest {
    private HotRodServer hotRodServer1;
    private HotRodServer hotRodServer2;
+
+   @AfterMethod
+   @Override
+   protected void clearContent() throws Throwable {
+   }
 
    @Override
    protected void createCacheManagers() throws Throwable {

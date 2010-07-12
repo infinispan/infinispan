@@ -34,9 +34,10 @@ public class HotRodOperationsImpl implements HotRodOperations, HotRodConstants {
    }
 
    public byte[] get(byte[] key, Flag[] flags) {
-      for (int i = 0; i < transportFactory.getTransportCount(); i++) {
+      Transport transport = getTransport(key, true);
+      int retryCount = 0;
+      do {
          try {
-            Transport transport = getTransport(key, i == 0);
             try {
                short status = sendKeyOperation(key, transport, GET_REQUEST, flags, GET_RESPONSE);
                if (status == KEY_DOES_NOT_EXIST_STATUS) {
@@ -49,15 +50,20 @@ public class HotRodOperationsImpl implements HotRodOperations, HotRodConstants {
                releaseTransport(transport);
             }
          } catch (TransportException te) {
-            logErrorAndThrowExceptionIfNeeded(i, te);
+            logErrorAndThrowExceptionIfNeeded(retryCount, te);
          }
-      }
+         if (shouldRetry(retryCount)) {
+            transport = getTransport(key, false);
+         }
+         retryCount++;
+      } while (shouldRetry(retryCount));
       throw new IllegalStateException("We should not reach here!");
    }
 
    public byte[] remove(byte[] key, Flag[] flags) {
-      for (int i = 0; i < transportFactory.getTransportCount(); i++) {
-         Transport transport = getTransport(key, i == 0);
+      Transport transport = getTransport(key, true);
+      int retryCount = 0;
+      do {
          try {
             short status = sendKeyOperation(key, transport, REMOVE_REQUEST, flags, REMOVE_RESPONSE);
             if (status == KEY_DOES_NOT_EXIST_STATUS) {
@@ -66,17 +72,22 @@ public class HotRodOperationsImpl implements HotRodOperations, HotRodConstants {
                return returnPossiblePrevValue(transport, flags);
             }
          } catch (TransportException te) {
-            logErrorAndThrowExceptionIfNeeded(i, te);
+            logErrorAndThrowExceptionIfNeeded(retryCount, te);
          } finally {
             releaseTransport(transport);
          }
-      }
+         if (shouldRetry(retryCount)) {
+            transport = getTransport(key, false);
+         }
+         retryCount++;
+      } while (shouldRetry(retryCount));
       throw new IllegalStateException("We should not reach here!");
    }
 
    public boolean containsKey(byte[] key, Flag... flags) {
-      for (int i = 0; i < transportFactory.getTransportCount(); i++) {
-         Transport transport = getTransport(key, i == 0);
+      Transport transport = getTransport(key, true);
+      int retryCount = 0;
+      do {
          try {
             short status = sendKeyOperation(key, transport, CONTAINS_KEY_REQUEST, flags, CONTAINS_KEY_RESPONSE);
             if (status == KEY_DOES_NOT_EXIST_STATUS) {
@@ -85,18 +96,24 @@ public class HotRodOperationsImpl implements HotRodOperations, HotRodConstants {
                return true;
             }
          } catch (TransportException te) {
-            logErrorAndThrowExceptionIfNeeded(i, te);
+            logErrorAndThrowExceptionIfNeeded(retryCount, te);
          }
          finally {
             releaseTransport(transport);
          }
-      }
+         if (shouldRetry(retryCount)) {
+            transport = getTransport(key, false);
+         }
+         retryCount++;
+
+      } while (shouldRetry(retryCount));
       throw new IllegalStateException("We should not reach here!");
    }
 
    public BinaryVersionedValue getWithVersion(byte[] key, Flag... flags) {
-      for (int i = 0; i < transportFactory.getTransportCount(); i++) {
-         Transport transport = getTransport(key, i == 0);
+      Transport transport = getTransport(key, true);
+      int retryCount = 0;
+      do {
          try {
             short status = sendKeyOperation(key, transport, GET_WITH_VERSION, flags, GET_WITH_VERSION_RESPONSE);
             if (status == KEY_DOES_NOT_EXIST_STATUS) {
@@ -111,18 +128,23 @@ public class HotRodOperationsImpl implements HotRodOperations, HotRodConstants {
                return new BinaryVersionedValue(version, value);
             }
          } catch (TransportException te) {
-            logErrorAndThrowExceptionIfNeeded(i, te);
+            logErrorAndThrowExceptionIfNeeded(retryCount, te);
          } finally {
             releaseTransport(transport);
          }
-      }
+         if (shouldRetry(retryCount)) {
+            transport = getTransport(key, false);
+         }
+         retryCount++;
+      } while (shouldRetry(retryCount));
       throw new IllegalStateException("We should not reach here!");
    }
 
 
    public byte[] put(byte[] key, byte[] value, int lifespan, int maxIdle, Flag... flags) {
-      for (int i = 0; i < transportFactory.getTransportCount(); i++) {
-         Transport transport = getTransport(key, i == 0);
+      Transport transport = getTransport(key, true);
+      int retryCount = 0;
+      do {
          try {
             short status = sendPutOperation(key, value, transport, PUT_REQUEST, PUT_RESPONSE, lifespan, maxIdle, flags);
             if (status != NO_ERROR_STATUS) {
@@ -130,17 +152,22 @@ public class HotRodOperationsImpl implements HotRodOperations, HotRodConstants {
             }
             return returnPossiblePrevValue(transport, flags);
          } catch (TransportException te) {
-            logErrorAndThrowExceptionIfNeeded(i, te);
+            logErrorAndThrowExceptionIfNeeded(retryCount, te);
          } finally {
             releaseTransport(transport);
          }
-      }
-      throw new IllegalStateException("This should not be reached!");
+         if (shouldRetry(retryCount)) {
+            transport = getTransport(key, false);
+         }
+         retryCount++;
+      } while (shouldRetry(retryCount));
+      throw new IllegalStateException("We should not reach here!");
    }
 
    public byte[] putIfAbsent(byte[] key, byte[] value, int lifespan, int maxIdle, Flag... flags) {
-      for (int i = 0; i < transportFactory.getTransportCount(); i++) {
-         Transport transport = getTransport(key, i == 0);
+      Transport transport = getTransport(key, true);
+      int retryCount = 0;
+      do {
          try {
             short status = sendPutOperation(key, value, transport, PUT_IF_ABSENT_REQUEST, PUT_IF_ABSENT_RESPONSE, lifespan, maxIdle, flags);
             if (status == NO_ERROR_STATUS || status == NOT_PUT_REMOVED_REPLACED_STATUS) {
@@ -151,29 +178,38 @@ public class HotRodOperationsImpl implements HotRodOperations, HotRodConstants {
                return bytes;
             }
          } catch (TransportException te) {
-            logErrorAndThrowExceptionIfNeeded(i, te);
+            logErrorAndThrowExceptionIfNeeded(retryCount, te);
          }
          finally {
             releaseTransport(transport);
          }
-      }
+         if (shouldRetry(retryCount)) {
+            transport = getTransport(key, false);
+         }
+         retryCount++;
+      } while (shouldRetry(retryCount));
       throw new IllegalStateException("We should not reach here!");
    }
 
    public byte[] replace(byte[] key, byte[] value, int lifespan, int maxIdle, Flag... flags) {
-      for (int i = 0; i < transportFactory.getTransportCount(); i++) {
-         Transport transport = getTransport(key, i == 0);
+      Transport transport = getTransport(key, true);
+      int retryCount = 0;
+      do {
          try {
             short status = sendPutOperation(key, value, transport, REPLACE_REQUEST, REPLACE_RESPONSE, lifespan, maxIdle, flags);
             if (status == NO_ERROR_STATUS || status == NOT_PUT_REMOVED_REPLACED_STATUS) {
                return returnPossiblePrevValue(transport, flags);
             }
          } catch (TransportException te) {
-            logErrorAndThrowExceptionIfNeeded(i, te);
+            logErrorAndThrowExceptionIfNeeded(retryCount, te);
          } finally {
             releaseTransport(transport);
          }
-      }
+         if (shouldRetry(retryCount)) {
+            transport = getTransport(key, false);
+         }
+         retryCount++;
+      } while (shouldRetry(retryCount));
       throw new IllegalStateException(" should not reach here!");
    }
 
@@ -184,8 +220,9 @@ public class HotRodOperationsImpl implements HotRodOperations, HotRodConstants {
     * was sent, the response would be empty.
     */
    public VersionedOperationResponse replaceIfUnmodified(byte[] key, byte[] value, int lifespan, int maxIdle, long version, Flag... flags) {
-      for (int i = 0; i < transportFactory.getTransportCount(); i++) {
-         Transport transport = getTransport(key, i == 0);
+      Transport transport = getTransport(key, true);
+      int retryCount = 0;
+      do {
          try {
             // 1) write header
             long messageId = HotRodOperationsHelper.writeHeader(transport, REPLACE_IF_UNMODIFIED_REQUEST, cacheName, topologyId, flags);
@@ -198,12 +235,16 @@ public class HotRodOperationsImpl implements HotRodOperations, HotRodConstants {
             transport.writeArray(value);
             return returnVersionedOperationResponse(transport, messageId, REPLACE_IF_UNMODIFIED_RESPONSE, flags);
          } catch (TransportException te) {
-            logErrorAndThrowExceptionIfNeeded(i, te);
+            logErrorAndThrowExceptionIfNeeded(retryCount, te);
          }
          finally {
             releaseTransport(transport);
          }
-      }
+         if (shouldRetry(retryCount)) {
+            transport = getTransport(key, false);
+         }
+         retryCount++;
+      } while (shouldRetry(retryCount));
       throw new IllegalStateException(" should not reach here!");
    }
 
@@ -211,8 +252,9 @@ public class HotRodOperationsImpl implements HotRodOperations, HotRodConstants {
     * Request: [header][key length][key][entry_version]
     */
    public VersionedOperationResponse removeIfUnmodified(byte[] key, long version, Flag... flags) {
-      for (int i = 0; i < transportFactory.getTransportCount(); i++) {
-         Transport transport = getTransport(key, i == 0);
+      Transport transport = getTransport(key, true);
+      int retryCount = 0;
+      do {
          try {
             // 1) write header
             long messageId = HotRodOperationsHelper.writeHeader(transport, REMOVE_IF_UNMODIFIED_REQUEST, cacheName, topologyId, flags);
@@ -225,28 +267,38 @@ public class HotRodOperationsImpl implements HotRodOperations, HotRodConstants {
             return returnVersionedOperationResponse(transport, messageId, REMOVE_IF_UNMODIFIED_RESPONSE, flags);
 
          } catch (TransportException te) {
-            logErrorAndThrowExceptionIfNeeded(i, te);
+            logErrorAndThrowExceptionIfNeeded(retryCount, te);
          }
          finally {
             releaseTransport(transport);
          }
-      }
+         if (shouldRetry(retryCount)) {
+            transport = getTransport(key, false);
+         }
+         retryCount++;
+      } while (shouldRetry(retryCount));
       throw new IllegalStateException("Should not reach this point!");
    }
 
    public void clear(Flag... flags) {
-      for (int i = 0; i < transportFactory.getTransportCount(); i++) {
-         Transport transport = transportFactory.getTransport();
+      Transport transport = transportFactory.getTransport();
+      int retryCount = 0;
+      do {
          try {
             // 1) write header
             long messageId = HotRodOperationsHelper.writeHeader(transport, CLEAR_REQUEST, cacheName, topologyId, flags);
             HotRodOperationsHelper.readHeaderAndValidate(transport, messageId, CLEAR_RESPONSE, topologyId);
          } catch (TransportException te) {
-            logErrorAndThrowExceptionIfNeeded(i, te);
+            logErrorAndThrowExceptionIfNeeded(retryCount, te);
          } finally {
             releaseTransport(transport);
          }
-      }
+         if (shouldRetry(retryCount)) {
+            transport = transportFactory.getTransport();
+         }
+         retryCount++;
+
+      } while (shouldRetry(retryCount));
    }
 
    public Map<String, String> stats() {
@@ -347,7 +399,7 @@ public class HotRodOperationsImpl implements HotRodOperations, HotRodConstants {
 
    private void logErrorAndThrowExceptionIfNeeded(int i, TransportException te) {
       String message = "Transport exception. Retry " + i + " out of " + transportFactory.getTransportCount();
-      if (i == transportFactory.getTransportCount() - 1) {
+      if (i == transportFactory.getTransportCount() - 1 || transportFactory.getTransportCount() < 0) {
          log.warn(message, te);
          throw te;
       } else {
@@ -361,5 +413,9 @@ public class HotRodOperationsImpl implements HotRodOperations, HotRodConstants {
       } else {
          return transportFactory.getTransport();
       }
+   }
+   
+   private boolean shouldRetry(int retryCount) {
+      return retryCount < transportFactory.getTransportCount();
    }
 }

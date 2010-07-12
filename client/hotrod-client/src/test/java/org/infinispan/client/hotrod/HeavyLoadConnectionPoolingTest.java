@@ -7,6 +7,8 @@ import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
@@ -26,6 +28,11 @@ public class HeavyLoadConnectionPoolingTest extends SingleCacheManagerTest {
    private RemoteCache<Object, Object> remoteCache;
    private GenericKeyedObjectPool connectionPool;
 
+   @AfterMethod
+   @Override
+   protected void clearContent() {
+   }
+
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       cacheManager = TestCacheManagerFactory.createLocalCacheManager();
@@ -37,6 +44,7 @@ public class HeavyLoadConnectionPoolingTest extends SingleCacheManagerTest {
       hotrodClientConf.put("hotrod-servers", "localhost:"+hotRodServer.getPort());
       hotrodClientConf.put("timeBetweenEvictionRunsMillis", "3000");
       hotrodClientConf.put("minEvictableIdleTimeMillis", "1000");
+      hotrodClientConf.put("ping-on-startup", "1000");
       remoteCacheManager = new RemoteCacheManager(hotrodClientConf);
       remoteCache = remoteCacheManager.getCache();
 
@@ -44,6 +52,14 @@ public class HeavyLoadConnectionPoolingTest extends SingleCacheManagerTest {
       connectionPool = (GenericKeyedObjectPool) TestingUtil.extractField(tcpConnectionFactory, "connectionPool");
 
       return cacheManager;
+   }
+
+   @AfterClass
+   @Override
+   protected void destroyAfterClass() {
+      super.destroyAfterClass();
+      remoteCacheManager.stop();
+      hotRodServer.stop();
    }
 
    public void testHeavyLoad() throws InterruptedException {
@@ -65,7 +81,7 @@ public class HeavyLoadConnectionPoolingTest extends SingleCacheManagerTest {
       }
       //now wait for the idle thread to wake up and clean them
       for (int i = 0; i < 50; i++) {
-         System.out.println("connectionPool = " + connectionPool.getNumActive());
+//         System.out.println("connectionPool = " + connectionPool.getNumActive());
          if (connectionPool.getNumIdle() == 1) break;
          Thread.sleep(1000);
       }

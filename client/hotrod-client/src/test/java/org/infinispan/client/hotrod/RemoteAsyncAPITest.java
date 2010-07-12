@@ -5,6 +5,7 @@ import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.NotifyingFuture;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 import java.util.Collections;
@@ -35,6 +36,14 @@ public class RemoteAsyncAPITest extends SingleCacheManagerTest {
       rcm = new RemoteCacheManager(props);
       c = rcm.getCache(true);
       return cm;
+   }
+
+   @AfterClass
+   @Override
+   protected void destroyAfterClass() {
+      super.destroyAfterClass();
+      rcm.stop();
+      hotrodServer.stop();
    }
 
    public void testAsyncPut() throws Exception {

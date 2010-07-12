@@ -6,6 +6,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
 
@@ -36,7 +37,18 @@ public class CacheManagerNotStartedTest extends SingleCacheManagerTest {
    @AfterTest(alwaysRun = true)
    public void release() {
       if (cacheManager != null) cacheManager.stop();
-      if (hotrodServer != null) hotrodServer.stop();      
+      if (hotrodServer != null) hotrodServer.stop();
+   }
+
+   @AfterClass
+   @Override
+   protected void destroyAfterClass() {
+      super.destroyAfterClass();
+      try {
+         remoteCacheManager.stop();
+      } catch (Exception e) {
+         e.printStackTrace();
+      }
    }
 
    public void testGetCacheOperations() {
