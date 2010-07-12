@@ -5,6 +5,8 @@ import org.apache.commons.pool.impl.GenericKeyedObjectPool;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashFactory;
+import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
+import org.infinispan.client.hotrod.impl.protocol.HotRodOperationsHelper;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.impl.transport.VHelper;
@@ -38,9 +40,11 @@ public class TcpTransportFactory implements TransportFactory {
    private volatile ConsistentHash consistentHash;
    private volatile boolean tcpNoDelay;
    private final ConsistentHashFactory hashFactory = new ConsistentHashFactory();
+   private volatile AtomicInteger topologyId;
 
    @Override
    public void start(Properties props, Collection<InetSocketAddress> staticConfiguredServers, AtomicInteger topologyId) {
+      this.topologyId = topologyId;
       hashFactory.init(props);
       servers = staticConfiguredServers;
       String balancerClass = props.getProperty("request-balancing-strategy", RoundRobinBalancingStrategy.class.getName());
@@ -202,6 +206,16 @@ public class TcpTransportFactory implements TransportFactory {
          return connectionPool.getMaxActive() * servers.size();
       } else {
          return 10 * servers.size();
+      }
+   }
+
+   @Override
+   public void ping() {
+      Transport transport = getTransport();
+      try {
+         HotRodOperationsHelper.ping(transport, topologyId);
+      } finally {
+         releaseTransport(transport);
       }
    }
 

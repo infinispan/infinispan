@@ -71,4 +71,9 @@ public class NettyTransportFactory implements TransportFactory {
    public int getTransportCount() {
       return 1;
    }
+
+   @Override
+   public void ping() {
+      //ignoring
+   }
 }
