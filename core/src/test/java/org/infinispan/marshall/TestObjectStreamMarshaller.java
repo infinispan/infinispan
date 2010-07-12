@@ -2,6 +2,7 @@ package org.infinispan.marshall;
 
 import com.thoughtworks.xstream.XStream;
 import org.infinispan.io.ByteBuffer;
+import org.infinispan.io.ExposedByteArrayOutputStream;
 import org.infinispan.util.Util;
 
 import java.io.ByteArrayInputStream;
@@ -20,7 +21,7 @@ import java.io.OutputStream;
  *
  * @author Manik Surtani
  */
-public class TestObjectStreamMarshaller extends AbstractMarshaller {
+public class TestObjectStreamMarshaller extends AbstractStreamingMarshaller {
    XStream xs = new XStream();
    boolean debugXml = false;
 
@@ -75,8 +76,8 @@ public class TestObjectStreamMarshaller extends AbstractMarshaller {
       return objectFromByteBuffer(newBytes);
    }
 
-   public byte[] objectToByteBuffer(Object obj) throws IOException {
-      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+   public byte[] objectToByteBuffer(Object obj, int estimatedSize) throws IOException {
+      ExposedByteArrayOutputStream baos = new ExposedByteArrayOutputStream(estimatedSize);
       ObjectOutputStream oos = new ObjectOutputStream(baos);
       objectToObjectStream(obj, oos);
       oos.flush();

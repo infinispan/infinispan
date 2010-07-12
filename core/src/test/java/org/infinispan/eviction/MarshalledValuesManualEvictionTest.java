@@ -27,7 +27,7 @@ import org.infinispan.eviction.MarshalledValuesEvictionTest.MockMarshalledValueI
 import org.infinispan.interceptors.MarshalledValueInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.MarshalledValueTest;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -43,7 +43,7 @@ public class MarshalledValuesManualEvictionTest extends SingleCacheManagerTest {
       cfg.setUseLazyDeserialization(true);
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(cfg);
       cache = cm.getCache();
-      Marshaller marshaller = TestingUtil.extractComponent(cache, Marshaller.class);
+      StreamingMarshaller marshaller = TestingUtil.extractComponent(cache, StreamingMarshaller.class);
       MockMarshalledValueInterceptor interceptor = new MockMarshalledValueInterceptor(marshaller);
       assert TestingUtil.replaceInterceptor(cache, interceptor, MarshalledValueInterceptor.class);
       return cm;

@@ -1,9 +1,10 @@
 package org.infinispan.client.hotrod;
 
 import org.infinispan.Cache;
-import org.infinispan.client.hotrod.impl.SerializationMarshaller;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.Marshaller;
+import org.infinispan.marshall.jboss.JBossMarshaller;
 import org.infinispan.server.core.CacheValue;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -14,6 +15,7 @@ import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Properties;
 
@@ -72,7 +74,7 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
       hotrodServer.stop();
    }
 
-   public void testPut() {
+   public void testPut() throws IOException {
       assert null == remoteCache.put("aKey", "aValue");
       assertCacheContains(cache, "aKey", "aValue");
       assert null == defaultRemote.put("otherKey", "otherValue");
@@ -83,7 +85,7 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
       assert defaultRemote.get("otherKey").equals("otherValue");
    }
 
-   public void testRemove() {
+   public void testRemove() throws IOException {
       assert null == remoteCache.put("aKey", "aValue");
       assertCacheContains(cache, "aKey", "aValue");
 
@@ -185,10 +187,10 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
       assert cache.isEmpty();
    }
 
-   private void assertCacheContains(Cache cache, String key, String value) {
-      SerializationMarshaller marshaller = new SerializationMarshaller();
-      byte[] keyBytes = marshaller.marshallObject(key, true);
-      byte[] valueBytes = marshaller.marshallObject(value, false);
+   private void assertCacheContains(Cache cache, String key, String value) throws IOException {
+      Marshaller marshaller = new JBossMarshaller();
+      byte[] keyBytes = marshaller.objectToByteBuffer(key, 64);
+      byte[] valueBytes = marshaller.objectToByteBuffer(value, 64);
       ByteArrayKey cacheKey = new ByteArrayKey(keyBytes);
       CacheValue cacheValue = (CacheValue) cache.get(cacheKey);
       if (value == null) {

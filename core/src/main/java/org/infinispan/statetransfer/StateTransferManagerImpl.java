@@ -42,7 +42,7 @@ import org.infinispan.io.UnclosableObjectOutputStream;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
@@ -73,7 +73,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
    DataContainer dataContainer;
    CacheLoaderManager clm;
    CacheStore cs;
-   Marshaller marshaller;
+   StreamingMarshaller marshaller;
    TransactionLog transactionLog;
    InvocationContextContainer invocationContextContainer;
    InterceptorChain interceptorChain;
@@ -90,7 +90,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
    @Inject
    @SuppressWarnings("unchecked")
    public void injectDependencies(RpcManager rpcManager, AdvancedCache cache, Configuration configuration,
-                                  DataContainer dataContainer, CacheLoaderManager clm, Marshaller marshaller,
+                                  DataContainer dataContainer, CacheLoaderManager clm, StreamingMarshaller marshaller,
                                   TransactionLog transactionLog, InterceptorChain interceptorChain, InvocationContextContainer invocationContextContainer,
                                   CommandsFactory commandsFactory, TransactionTable txTable) {
       this.rpcManager = rpcManager;

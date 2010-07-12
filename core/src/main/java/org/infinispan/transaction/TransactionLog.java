@@ -26,7 +26,7 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.Marshallable;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -153,7 +153,7 @@ public class TransactionLog {
       return entries.size();
    }
 
-   public void writeCommitLog(Marshaller marshaller, ObjectOutput out) throws Exception {
+   public void writeCommitLog(StreamingMarshaller marshaller, ObjectOutput out) throws Exception {
       List<LogEntry> buffer = new ArrayList<LogEntry>(10);
 
       while (entries.drainTo(buffer, 10) > 0) {
@@ -164,7 +164,7 @@ public class TransactionLog {
       }
    }
 
-   public void writePendingPrepares(Marshaller marshaller, ObjectOutput out) throws Exception {
+   public void writePendingPrepares(StreamingMarshaller marshaller, ObjectOutput out) throws Exception {
       if (log.isTraceEnabled()) log.trace("Writing {0} pending prepares to the stream", pendingPrepares.size());
       for (PrepareCommand entry : pendingPrepares.values()) marshaller.objectToObjectStream(entry, out);
    }

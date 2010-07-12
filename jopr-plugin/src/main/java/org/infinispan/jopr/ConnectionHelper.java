@@ -90,8 +90,7 @@ public class ConnectionHelper {
             PropertySimple serverUrl = pluginConfig
                   .getSimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY);
 
-            connectionSettings.initializeConnectionType((ConnectionTypeDescriptor) Util.getInstance(
-                  connectionTypeDescriptorClass));
+            connectionSettings.initializeConnectionType((ConnectionTypeDescriptor) Util.getInstance(connectionTypeDescriptorClass));
             // if not provided use the default serverUrl
             if (null != serverUrl) {
                connectionSettings.setServerUrl(serverUrl.getStringValue());

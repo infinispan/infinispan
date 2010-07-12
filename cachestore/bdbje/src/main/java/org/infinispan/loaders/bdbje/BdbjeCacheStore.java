@@ -21,7 +21,7 @@ import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderMetadata;
 import org.infinispan.loaders.modifications.Modification;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ReflectionUtil;
 import org.infinispan.util.logging.Log;
@@ -90,12 +90,12 @@ public class BdbjeCacheStore extends AbstractCacheStore {
     * @see BdbjeCacheStoreConfig
     */
    @Override
-   public void init(CacheLoaderConfig config, Cache cache, Marshaller m) throws CacheLoaderException {
+   public void init(CacheLoaderConfig config, Cache cache, StreamingMarshaller m) throws CacheLoaderException {
       BdbjeCacheStoreConfig cfg = (BdbjeCacheStoreConfig) config;
       init(cfg, new BdbjeResourceFactory(cfg), cache, m);
    }
 
-   void init(BdbjeCacheStoreConfig cfg, BdbjeResourceFactory factory, Cache cache, Marshaller m) throws CacheLoaderException {
+   void init(BdbjeCacheStoreConfig cfg, BdbjeResourceFactory factory, Cache cache, StreamingMarshaller m) throws CacheLoaderException {
       if (trace) log.trace("initializing BdbjeCacheStore");
       printLicense();
       super.init(cfg, cache, m);

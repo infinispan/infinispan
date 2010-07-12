@@ -10,15 +10,12 @@ import org.infinispan.loaders.modifications.Clear;
 import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.GlobalTransactionFactory;
 import org.infinispan.util.Util;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -29,7 +26,6 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -38,7 +34,6 @@ import java.util.Random;
 import java.util.Set;
 
 import static java.util.Collections.emptySet;
-import static java.util.Collections.singleton;
 
 /**
  * This is a base class containing various unit tests for each and every different CacheStore implementations. 
@@ -102,7 +97,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
    /**
     * @return a mock marshaller for use with the cache store impls
     */
-   protected Marshaller getMarshaller() {
+   protected StreamingMarshaller getMarshaller() {
       return new TestObjectStreamMarshaller(false);
    }
 
@@ -519,7 +514,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       cs.store(InternalEntryFactory.create("k2", "v2"));
       cs.store(InternalEntryFactory.create("k3", "v3"));
 
-      Marshaller marshaller = getMarshaller();
+      StreamingMarshaller marshaller = getMarshaller();
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       ObjectOutput oo = marshaller.startObjectOutput(out, false);
       try {
@@ -554,7 +549,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       cs.store(InternalEntryFactory.create("k2", "v2"));
       cs.store(InternalEntryFactory.create("k3", "v3"));
 
-      Marshaller marshaller = getMarshaller();
+      StreamingMarshaller marshaller = getMarshaller();
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       byte[] dummyStartBytes = {1, 2, 3, 4, 5, 6, 7, 8};
       byte[] dummyEndBytes = {8, 7, 6, 5, 4, 3, 2, 1};

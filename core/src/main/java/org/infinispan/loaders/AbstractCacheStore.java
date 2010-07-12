@@ -4,7 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
@@ -38,7 +38,7 @@ public abstract class AbstractCacheStore extends AbstractCacheLoader implements 
    private static final AtomicInteger THREAD_COUNTER = new AtomicInteger(0);
    protected boolean multiThreadedPurge = false;
 
-   public void init(CacheLoaderConfig config, Cache<?, ?> cache, Marshaller m) throws CacheLoaderException{
+   public void init(CacheLoaderConfig config, Cache<?, ?> cache, StreamingMarshaller m) throws CacheLoaderException{
       super.init(config, cache, m);
       this.config = (AbstractCacheStoreConfig) config;
    }
@@ -156,7 +156,7 @@ public abstract class AbstractCacheStore extends AbstractCacheLoader implements 
       }
    }
 
-   protected Marshaller getMarshaller() {
+   protected StreamingMarshaller getMarshaller() {
       return marshaller;
    }
 }

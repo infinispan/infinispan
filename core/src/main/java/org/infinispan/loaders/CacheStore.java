@@ -28,7 +28,7 @@ public interface CacheStore extends CacheLoader {
    /**
     * Writes contents of the stream to the store.  Implementations should expect that the stream contains data in an
     * implementation-specific format, typically generated using {@link #toStream(java.io.ObjectOutput)}.  While not a
-    * requirement, it is recommended that implementations make use of the {@link org.infinispan.marshall.Marshaller}
+    * requirement, it is recommended that implementations make use of the {@link org.infinispan.marshall.StreamingMarshaller}
     * when dealing with the stream to make use of efficient marshalling.
     * <p/>
     * It is imperative that implementations <b><i>do not</i></b> close the stream after finishing with it.
@@ -52,7 +52,7 @@ public interface CacheStore extends CacheLoader {
     * implementation. Typically read and parsed by {@link #fromStream(java.io.ObjectInput)}.
     * <p/>
     * While not a requirement, it is recommended that implementations make use of the {@link
-    * org.infinispan.marshall.Marshaller} when dealing with the stream to make use of efficient marshalling.
+    * org.infinispan.marshall.StreamingMarshaller} when dealing with the stream to make use of efficient marshalling.
     * <p/>
     * It is imperative that implementations <b><i>do not</i></b> flush or close the stream after finishing with it.
     * <p/>

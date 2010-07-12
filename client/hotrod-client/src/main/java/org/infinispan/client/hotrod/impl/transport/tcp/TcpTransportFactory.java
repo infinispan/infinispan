@@ -7,7 +7,8 @@ import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashFactory;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
-import org.infinispan.client.hotrod.impl.transport.VHelper;
+
+import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -45,7 +46,7 @@ public class TcpTransportFactory implements TransportFactory {
       String pingOnStartup = props.getProperty("ping-on-startup");
       servers = staticConfiguredServers;
       String balancerClass = props.getProperty("request-balancing-strategy", RoundRobinBalancingStrategy.class.getName());
-      balancer = (RequestBalancingStrategy) VHelper.newInstance(balancerClass);
+      balancer = (RequestBalancingStrategy) Util.getInstance(balancerClass);
       tcpNoDelay = Boolean.valueOf(props.getProperty("tcp-no-delay", "true"));
       if (log.isDebugEnabled()) log.debug("TCP no delay flag value is: {0}", tcpNoDelay);
       boolean skipPingOnStartup = pingOnStartup != null && !Boolean.valueOf(pingOnStartup);

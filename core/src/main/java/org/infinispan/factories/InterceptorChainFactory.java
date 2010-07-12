@@ -42,10 +42,10 @@ import java.util.List;
 @DefaultFactoryFor(classes = InterceptorChain.class)
 public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
-   public CommandInterceptor createInterceptor(Class<? extends CommandInterceptor> clazz) throws IllegalAccessException, InstantiationException {
+   public CommandInterceptor createInterceptor(Class<? extends CommandInterceptor> clazz) {
       CommandInterceptor chainedInterceptor = componentRegistry.getComponent(clazz);
       if (chainedInterceptor == null) {
-         chainedInterceptor = clazz.newInstance();
+         chainedInterceptor = Util.getInstance(clazz);
          try {
             componentRegistry.registerComponent(chainedInterceptor, clazz);
          }
@@ -146,17 +146,17 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
    }
 
    @SuppressWarnings("unchecked")
-   private Class<? extends CommandInterceptor> getCustomInterceptorType(CustomInterceptorConfig cfg) throws ClassNotFoundException {
+   private Class<? extends CommandInterceptor> getCustomInterceptorType(CustomInterceptorConfig cfg) {
       if (cfg.getInterceptor() != null) return cfg.getInterceptor().getClass();
       return Util.loadClass(cfg.getClassName());
    }
 
-   private CommandInterceptor getOrCreateCustomInterceptor(CustomInterceptorConfig cfg) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+   private CommandInterceptor getOrCreateCustomInterceptor(CustomInterceptorConfig cfg) {
       if (cfg.getInterceptor() != null) return cfg.getInterceptor();
       return (CommandInterceptor) Util.getInstance(cfg.getClassName());
    }
 
-   private void buildCustomInterceptors(InterceptorChain interceptorChain, List<CustomInterceptorConfig> customInterceptors) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
+   private void buildCustomInterceptors(InterceptorChain interceptorChain, List<CustomInterceptorConfig> customInterceptors) {
 
       for (CustomInterceptorConfig config : customInterceptors) {
          if (interceptorChain.containsInterceptorType(getCustomInterceptorType(config))) continue;

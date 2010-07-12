@@ -38,11 +38,7 @@ public abstract class ConnectionFactory {
     * name.
     */
    public static ConnectionFactory getConnectionFactory(String connectionFactoryClass) throws CacheLoaderException {
-      try {
-         return (ConnectionFactory) Util.getInstance(connectionFactoryClass);
-      } catch (Exception e) {
-         throw new CacheLoaderException(e);
-      }
+      return (ConnectionFactory) Util.getInstance(connectionFactoryClass);
    }
 
    /**

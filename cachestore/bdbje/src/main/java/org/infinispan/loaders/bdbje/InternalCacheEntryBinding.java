@@ -4,14 +4,14 @@ import com.sleepycat.bind.EntryBinding;
 import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.util.RuntimeExceptionWrapper;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.marshall.StreamingMarshaller;
 
 import java.io.IOException;
 
 class InternalCacheEntryBinding implements EntryBinding<InternalCacheEntry> {
-   Marshaller m;
+   StreamingMarshaller m;
 
-   InternalCacheEntryBinding(Marshaller m) {
+   InternalCacheEntryBinding(StreamingMarshaller m) {
       this.m = m;
    }
 

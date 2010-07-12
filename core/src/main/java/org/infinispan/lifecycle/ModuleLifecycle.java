@@ -27,7 +27,7 @@ import org.infinispan.factories.GlobalComponentRegistry;
 /**
  * ModuleLifecycle is an internal API hook for delegating lifecycle events to Infinispan sub-modules.
  * <p>
- * For example, the 'tree' module needs to register specific types with the Marshaller. The 'query'
+ * For example, the 'tree' module needs to register specific types with the StreamingMarshaller. The 'query'
  * module needs to register an interceptor with the Cache if the Cache has enabled querying etc etc.
  * <p />
  * To use this hook, you would need to implement this interface (or extend {@link AbstractModuleLifecycle})

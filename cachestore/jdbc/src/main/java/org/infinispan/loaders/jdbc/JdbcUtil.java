@@ -23,7 +23,7 @@ package org.infinispan.loaders.jdbc;
 
 import org.infinispan.io.ByteBuffer;
 import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -73,7 +73,7 @@ public class JdbcUtil {
       }
    }
 
-   public static ByteBuffer marshall(Marshaller marshaller, Object bucket) throws CacheLoaderException {
+   public static ByteBuffer marshall(StreamingMarshaller marshaller, Object bucket) throws CacheLoaderException {
       try {
          return marshaller.objectToBuffer(bucket);
       } catch (IOException e) {
@@ -83,7 +83,7 @@ public class JdbcUtil {
       }
    }
 
-   public static Object unmarshall(Marshaller marshaller, InputStream inputStream) throws CacheLoaderException {
+   public static Object unmarshall(StreamingMarshaller marshaller, InputStream inputStream) throws CacheLoaderException {
       try {
          return marshaller.objectFromInputStream(inputStream);
       } catch (IOException e) {

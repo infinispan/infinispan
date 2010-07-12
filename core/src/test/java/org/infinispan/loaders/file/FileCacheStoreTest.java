@@ -8,11 +8,10 @@ import org.infinispan.loaders.BaseCacheStoreTest;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.bucket.Bucket;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -97,7 +96,7 @@ public class FileCacheStoreTest extends BaseCacheStoreTest {
    public void testToStream() throws Exception {
       cs.store(InternalEntryFactory.create("k1", "v1", -1, -1));
 
-      Marshaller marshaller = getMarshaller();
+      StreamingMarshaller marshaller = getMarshaller();
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       ObjectOutput oo = marshaller.startObjectOutput(out, false);
       try {
@@ -126,7 +125,7 @@ public class FileCacheStoreTest extends BaseCacheStoreTest {
       cs.store(InternalEntryFactory.create(k1, v1));
       cs.store(InternalEntryFactory.create(k2, v2));
 
-      Marshaller marshaller = getMarshaller();
+      StreamingMarshaller marshaller = getMarshaller();
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       ObjectOutput oo = marshaller.startObjectOutput(out, false);
       try {

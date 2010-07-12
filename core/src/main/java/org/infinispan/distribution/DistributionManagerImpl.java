@@ -141,10 +141,11 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    private Address getMyAddress() {
-      return rpcManager != null? rpcManager.getAddress(): null;
+      return rpcManager != null ? rpcManager.getAddress() : null;
    }
 
    // To avoid blocking other components' start process, wait last, if necessary, for join to complete.
+
    @Start(priority = 1000)
    public void waitForJoinToComplete() throws Throwable {
       if (joinFuture != null) {
@@ -196,7 +197,7 @@ public class DistributionManagerImpl implements DistributionManager {
          boolean willReceiveLeaverState = willReceiveLeaverState(leaver);
          boolean willSendLeaverState = willSendLeaverState(leaver);
          List<Address> stateProviders = holdersOfLeaversState(newMembers, leaver);
-        
+
          try {
             if (!(consistentHash instanceof UnionConsistentHash)) oldConsistentHash = consistentHash;
             else oldConsistentHash = ((UnionConsistentHash) consistentHash).newCH;
@@ -204,20 +205,20 @@ public class DistributionManagerImpl implements DistributionManager {
          } catch (Exception e) {
             log.fatal("Unable to process leaver!!", e);
             throw new CacheException(e);
-         }       
+         }
 
          if (willReceiveLeaverState || willSendLeaverState) {
             log.info("I {0} am participating in rehash", rpcManager.getTransport().getAddress());
             transactionLogger.enable();
 
             if (leaveTaskFuture != null
-                     && (!leaveTaskFuture.isCancelled() || !leaveTaskFuture.isDone())) {
+                    && (!leaveTaskFuture.isCancelled() || !leaveTaskFuture.isDone())) {
                leaveTaskFuture.cancel(true);
             }
 
             leavers.add(leaver);
             InvertedLeaveTask task = new InvertedLeaveTask(this, rpcManager, configuration, cf,
-                     dataContainer, leavers, stateProviders, willReceiveLeaverState);
+                    dataContainer, leavers, stateProviders, willReceiveLeaverState);
             leaveTaskFuture = rehashExecutor.submit(task);
          } else {
             log.info("Not in same subspace, so ignoring leave event");
@@ -229,18 +230,18 @@ public class DistributionManagerImpl implements DistributionManager {
       ConsistentHash ch = consistentHash instanceof UnionConsistentHash ? oldConsistentHash : consistentHash;
       return ch.isAdjacent(leaver, self);
    }
-   
-    List<Address> holdersOfLeaversState(List<Address> members, Address leaver) {
-        ConsistentHash ch = consistentHash instanceof UnionConsistentHash ? oldConsistentHash: consistentHash;
-        Set<Address> holders = new HashSet<Address>();
-        for (Address address : members) {
-           
-            if (ch.isAdjacent(leaver, address)) {
-                holders.add(address);
-            }
-        }
-        return new ArrayList<Address>(holders);
-    }
+
+   List<Address> holdersOfLeaversState(List<Address> members, Address leaver) {
+      ConsistentHash ch = consistentHash instanceof UnionConsistentHash ? oldConsistentHash : consistentHash;
+      Set<Address> holders = new HashSet<Address>();
+      for (Address address : members) {
+
+         if (ch.isAdjacent(leaver, address)) {
+            holders.add(address);
+         }
+      }
+      return new ArrayList<Address>(holders);
+   }
 
    boolean willReceiveLeaverState(Address leaver) {
       ConsistentHash ch = consistentHash instanceof UnionConsistentHash ? oldConsistentHash : consistentHash;
@@ -345,11 +346,7 @@ public class DistributionManagerImpl implements DistributionManager {
          rehashInProgress = true;
 
          ConsistentHash chNew;
-         try {
-            chNew = (ConsistentHash) Util.getInstance(configuration.getConsistentHashClass());
-         } catch (Exception e) {
-            throw new CacheException("Unable to create instance of " + configuration.getConsistentHashClass(), e);
-         }
+         chNew = (ConsistentHash) Util.getInstance(configuration.getConsistentHashClass());
          List<Address> newAddresses = new LinkedList<Address>(chOld.getCaches());
          newAddresses.add(joiner);
          chNew.setCaches(newAddresses);

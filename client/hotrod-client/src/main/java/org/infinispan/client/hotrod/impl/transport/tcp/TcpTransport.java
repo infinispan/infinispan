@@ -4,7 +4,7 @@ import net.jcip.annotations.ThreadSafe;
 import org.infinispan.client.hotrod.impl.transport.AbstractTransport;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
-import org.infinispan.client.hotrod.impl.transport.VHelper;
+import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -13,6 +13,8 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static org.infinispan.io.UnsignedNumeric.*;
 
 /**
  * Transport implementation based on TCP.
@@ -27,6 +29,7 @@ public class TcpTransport extends AbstractTransport {
    private static AtomicLong ID_COUNTER = new AtomicLong(0);
 
    private static Log log = LogFactory.getLog(TcpTransport.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private final Socket socket;
    private final InetSocketAddress serverAddress;
@@ -48,10 +51,7 @@ public class TcpTransport extends AbstractTransport {
 
    public void writeVInt(int vInt) {
       try {
-         VHelper.writeVInt(vInt, socket.getOutputStream());
-         if (log.isTraceEnabled())
-            log.trace("VInt wrote " + vInt);
-         
+         writeUnsignedInt(socket.getOutputStream(), vInt);
       } catch (IOException e) {
          throw new TransportException(e);
       }
@@ -59,10 +59,7 @@ public class TcpTransport extends AbstractTransport {
 
    public void writeVLong(long l) {
       try {
-         VHelper.writeVLong(l, socket.getOutputStream());
-         if (log.isTraceEnabled())
-            log.trace("VLong wrote " + l);        
-
+         writeUnsignedLong(socket.getOutputStream(), l);
       } catch (IOException e) {
          throw new TransportException(e);
       }
@@ -70,10 +67,7 @@ public class TcpTransport extends AbstractTransport {
 
    public long readVLong() {
       try {
-         long result = VHelper.readVLong(socket.getInputStream());
-         if (log.isTraceEnabled())
-            log.trace("VLong read " + result);
-         return result;
+         return readUnsignedLong(socket.getInputStream());
       } catch (IOException e) {
          throw new TransportException(e);
       }
@@ -81,10 +75,7 @@ public class TcpTransport extends AbstractTransport {
 
    public int readVInt() {
       try {
-         int result = VHelper.readVInt(socket.getInputStream());
-         if (log.isTraceEnabled())
-            log.trace("VInt read " + result);
-         return result;
+         return readUnsignedInt(socket.getInputStream());
       } catch (IOException e) {
          throw new TransportException(e);
       }
@@ -93,7 +84,7 @@ public class TcpTransport extends AbstractTransport {
    protected void writeBytes(byte[] toAppend) {
       try {
          socket.getOutputStream().write(toAppend);
-         if (log.isTraceEnabled())
+         if (trace)
             log.trace("Wrote " + toAppend.length + " bytes");
       } catch (IOException e) {
          throw new TransportException("Problems writing data to stream", e);
@@ -104,7 +95,7 @@ public class TcpTransport extends AbstractTransport {
    public void writeByte(short toWrite) {
       try {
          socket.getOutputStream().write(toWrite);
-         if (log.isTraceEnabled())
+         if (trace)
             log.trace("Wrote byte " + toWrite);
 
       } catch (IOException e) {
@@ -115,7 +106,7 @@ public class TcpTransport extends AbstractTransport {
    public void flush() {
       try {
          socket.getOutputStream().flush();
-         if (log.isTraceEnabled())
+         if (trace)
             log.trace("Flushed socket: " + socket);
 
       } catch (IOException e) {
@@ -152,7 +143,7 @@ public class TcpTransport extends AbstractTransport {
          int read;
          try {
             int len = size - offset;
-            if (log.isTraceEnabled()) {
+            if (trace) {
                log.trace("Offset: " + offset + ", len=" + len + ", size=" + size);
             }
             read = socket.getInputStream().read(result, offset, len);
@@ -169,23 +160,23 @@ public class TcpTransport extends AbstractTransport {
             if (offset > result.length) throw new IllegalStateException("Assertion!");
          }
       } while (!done);
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.trace("Successfully read array with size: " + size);
       }
       return result;
    }
-   
+
    public InetSocketAddress getServerAddress() {
-     return serverAddress;
+      return serverAddress;
    }
 
    @Override
    public String toString() {
       return "TcpTransport{" +
-            "socket=" + socket +
-            ", serverAddress=" + serverAddress +
-            ", id =" + id +
-            "} ";
+              "socket=" + socket +
+              ", serverAddress=" + serverAddress +
+              ", id =" + id +
+              "} ";
    }
 
    @Override
@@ -211,7 +202,7 @@ public class TcpTransport extends AbstractTransport {
    public void destroy() {
       try {
          socket.close();
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.trace("Successfully closed socket: " + socket);
          }
       } catch (IOException e) {

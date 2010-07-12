@@ -56,9 +56,9 @@ public class MarshalledValue {
    volatile private int cachedHashCode = 0;
    // by default equals() will test on the instance rather than the byte array if conversion is required.
    private transient boolean equalityPreferenceForInstance = true;
-   private final Marshaller marshaller;
+   private final StreamingMarshaller marshaller;
 
-   public MarshalledValue(Object instance, boolean equalityPreferenceForInstance, Marshaller marshaller) throws NotSerializableException {
+   public MarshalledValue(Object instance, boolean equalityPreferenceForInstance, StreamingMarshaller marshaller) throws NotSerializableException {
       if (instance == null) throw new NullPointerException("Null values cannot be wrapped as MarshalledValues!");
 
       if (instance instanceof Serializable)
@@ -69,7 +69,7 @@ public class MarshalledValue {
       this.marshaller = marshaller;
    }
 
-   public MarshalledValue(byte[] raw, int cachedHashCode, Marshaller marshaller) {
+   public MarshalledValue(byte[] raw, int cachedHashCode, StreamingMarshaller marshaller) {
       init(raw, cachedHashCode);
       this.marshaller = marshaller;
    }
@@ -107,7 +107,7 @@ public class MarshalledValue {
    public synchronized void deserialize() {
       if (instance == null) {
          try {
-            // Marshaller underneath deals with making sure the right classloader is set.
+            // StreamingMarshaller underneath deals with making sure the right classloader is set.
             instance = marshaller.objectFromByteBuffer(raw);
          }
          catch (Exception e) {
@@ -232,9 +232,9 @@ public class MarshalledValue {
    }
    
    public static class Externalizer implements org.infinispan.marshall.Externalizer {
-      private Marshaller marshaller;
+      private StreamingMarshaller marshaller;
       
-      public void inject(Marshaller marshaller) {
+      public void inject(StreamingMarshaller marshaller) {
          this.marshaller = marshaller;
       }
       

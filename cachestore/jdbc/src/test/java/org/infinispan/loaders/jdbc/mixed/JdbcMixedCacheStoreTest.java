@@ -33,7 +33,7 @@ import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.infinispan.loaders.jdbc.stringbased.DefaultKey2StringMapper;
 import org.infinispan.loaders.jdbc.stringbased.Person;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.AfterMethod;
@@ -133,7 +133,7 @@ public class JdbcMixedCacheStoreTest {
       cacheStore.store(InternalEntryFactory.create(MIRCEA, "value1"));
       cacheStore.store(InternalEntryFactory.create(MANIK, "value2"));
       assertRowCounts(2, 2);
-      Marshaller marshaller = getMarshaller();
+      StreamingMarshaller marshaller = getMarshaller();
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       ObjectOutput oo = marshaller.startObjectOutput(out, false);
       try {
@@ -225,7 +225,7 @@ public class JdbcMixedCacheStoreTest {
       assert value == rowCount : "Expected " + rowCount + " rows, actual value is " + value;
    }
 
-   protected Marshaller getMarshaller() {
+   protected StreamingMarshaller getMarshaller() {
       return new TestObjectStreamMarshaller(false);
    }
 }

@@ -1,13 +1,15 @@
 package org.infinispan.client.hotrod.impl.transport.netty;
 
 import org.infinispan.client.hotrod.exceptions.TransportException;
-import org.infinispan.client.hotrod.impl.transport.VHelper;
+
+import org.infinispan.io.UnsignedNumeric;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.handler.codec.oneone.OneToOneEncoder;
 
+import static org.infinispan.io.UnsignedNumeric.*;
 import static org.jboss.netty.buffer.ChannelBuffers.*;
 
 /**
@@ -16,8 +18,6 @@ import static org.jboss.netty.buffer.ChannelBuffers.*;
  */
 public class HotRodClientEncoder extends OneToOneEncoder {
 
-   private OutputStreamAdapter osa = new OutputStreamAdapter();
-
    @Override
    protected Object encode(ChannelHandlerContext ctx, Channel channel, Object msg) throws Exception {
       if (msg instanceof byte[]) {
@@ -25,12 +25,12 @@ public class HotRodClientEncoder extends OneToOneEncoder {
       } else if (msg instanceof Integer) {
          int intMsg = (Integer) msg;
          ChannelBuffer buffer = getBuffer(channel);
-         VHelper.writeVInt(intMsg, osa);
+         writeUnsignedInt(buffer.toByteBuffer(), intMsg);
          return buffer;
       } else if (msg instanceof Long) {
          ChannelBuffer buffer = getBuffer(channel);
          long longMsg = (Long) msg;
-         VHelper.writeVLong(longMsg, osa);
+         writeUnsignedLong(buffer.toByteBuffer(), longMsg);
          return buffer;
       } else if (msg instanceof Short) {
          ChannelBuffer buffer = getBuffer(channel);
@@ -44,8 +44,6 @@ public class HotRodClientEncoder extends OneToOneEncoder {
 
 
    private ChannelBuffer getBuffer(Channel channel) {
-      ChannelBuffer buffer = ChannelBuffers.dynamicBuffer(channel.getConfig().getBufferFactory());
-      osa.setBuffer(buffer);
-      return buffer;
+      return ChannelBuffers.dynamicBuffer(channel.getConfig().getBufferFactory());
    }
 }

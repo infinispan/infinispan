@@ -15,7 +15,7 @@ import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.loaders.bucket.BucketBasedCacheStore;
 import org.infinispan.loaders.modifications.Modification;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jboss.util.stream.Streams;
@@ -98,13 +98,13 @@ public class CloudCacheStore extends BucketBasedCacheStore {
    }
 
    @Override
-   public void init(CacheLoaderConfig cfg, Cache<?, ?> cache, Marshaller m)
+   public void init(CacheLoaderConfig cfg, Cache<?, ?> cache, StreamingMarshaller m)
          throws CacheLoaderException {
       this.cfg = (CloudCacheStoreConfig) cfg;
       init(cfg, cache, m, null, null, null, true);
    }
 
-   public void init(CacheLoaderConfig cfg, Cache<?, ?> cache, Marshaller m, BlobStoreContext ctx,
+   public void init(CacheLoaderConfig cfg, Cache<?, ?> cache, StreamingMarshaller m, BlobStoreContext ctx,
                     BlobStore blobStore, AsyncBlobStore asyncBlobStore, boolean constructInternalBlobstores)
          throws CacheLoaderException {
       super.init(cfg, cache, m);

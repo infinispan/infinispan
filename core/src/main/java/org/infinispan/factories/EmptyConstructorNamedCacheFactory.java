@@ -24,13 +24,12 @@ package org.infinispan.factories;
 
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.config.ConfigurationException;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.InvocationContextContainerImpl;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.loaders.CacheLoaderManager;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.VersionAwareMarshaller;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.transaction.TransactionLog;
@@ -44,30 +43,25 @@ import org.infinispan.container.EntryFactory;
  * @since 4.0
  */
 @DefaultFactoryFor(classes = {CacheNotifier.class, EntryFactory.class, CommandsFactory.class,
-                              CacheLoaderManager.class, InvocationContextContainer.class,
-                              BatchContainer.class, TransactionLog.class, EvictionManager.class, InvocationContextContainer.class})
+        CacheLoaderManager.class, InvocationContextContainer.class,
+        BatchContainer.class, TransactionLog.class, EvictionManager.class, InvocationContextContainer.class})
 public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
    @Override
    public <T> T construct(Class<T> componentType) {
-      try {
-         if (componentType.isInterface()) {
-            Class componentImpl;
-            if (componentType.equals(Marshaller.class)) {
-               VersionAwareMarshaller versionAwareMarshaller = Util.getInstance(VersionAwareMarshaller.class);
-               return componentType.cast(versionAwareMarshaller);
-            } else if (componentType.equals(InvocationContextContainer.class)) {
-               componentImpl = InvocationContextContainerImpl.class;
-            } else {
-               // add an "Impl" to the end of the class name and try again
-               componentImpl = Util.loadClass(componentType.getName() + "Impl");
-            }
-            return componentType.cast(Util.getInstance(componentImpl));
+      if (componentType.isInterface()) {
+         Class componentImpl;
+         if (componentType.equals(StreamingMarshaller.class)) {
+            VersionAwareMarshaller versionAwareMarshaller = Util.getInstance(VersionAwareMarshaller.class);
+            return componentType.cast(versionAwareMarshaller);
+         } else if (componentType.equals(InvocationContextContainer.class)) {
+            componentImpl = InvocationContextContainerImpl.class;
          } else {
-            return Util.getInstance(componentType);
+            // add an "Impl" to the end of the class name and try again
+            componentImpl = Util.loadClass(componentType.getName() + "Impl");
          }
-      }
-      catch (Exception e) {
-         throw new ConfigurationException("Unable to create component " + componentType, e);
+         return componentType.cast(Util.getInstance(componentImpl));
+      } else {
+         return Util.getInstance(componentType);
       }
    }
 }

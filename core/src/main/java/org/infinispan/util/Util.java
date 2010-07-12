@@ -21,9 +21,10 @@
  */
 package org.infinispan.util;
 
+import org.infinispan.config.ConfigurationException;
+
 import java.io.Closeable;
 import java.io.InputStream;
-import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
@@ -49,13 +50,30 @@ public final class Util {
    /**
     * Loads the specified class using this class's classloader, or, if it is <code>null</code> (i.e. this class was
     * loaded by the bootstrap classloader), the system classloader. <p/> If loadtime instrumentation via
-    * GenerateInstrumentedClassLoader is used, this class may be loaded by the bootstrap classloader. </p>
+    * GenerateInstrumentedClassLoader is used, this class may be loaded by the bootstrap classloader. <p/>
+    * If the class is not found, the {@link ClassNotFoundException} is wrapped as a {@link ConfigurationException} and
+    * is re-thrown.
+    *
+    * @param classname name of the class to load
+    * @return the class
+    */
+   public static Class loadClass(String classname) {
+      try {
+         return loadClassStrict(classname);
+      } catch (Exception e) {
+         throw new ConfigurationException("Unable to instantiate class " + classname, e);
+      }
+   }
+
+   /**
+    * Similar to {@link #loadClass(String)} except that any {@link ClassNotFoundException}s experienced is propagated
+    * to the caller.
     *
     * @param classname name of the class to load
     * @return the class
     * @throws ClassNotFoundException
     */
-   public static Class loadClass(String classname) throws ClassNotFoundException {
+   public static Class loadClassStrict(String classname) throws ClassNotFoundException {
       ClassLoader cl = Thread.currentThread().getContextClassLoader();
       if (cl == null)
          cl = ClassLoader.getSystemClassLoader();
@@ -70,8 +88,36 @@ public final class Util {
       return null;
    }
 
+   /**
+    * Instantiates a class by first attempting a static <i>factory method</i> named <tt>getInstance()</tt> on the class
+    * and then falling back to an empty constructor.
+    * <p/>
+    * Any exceptions encountered are wrapped in a {@link ConfigurationException} and rethrown.
+    *
+    * @param clazz class to instantiate
+    * @return an instance of the class
+    */
    @SuppressWarnings("unchecked")
-   public static <T> T getInstance(Class<T> clazz) throws IllegalAccessException, InstantiationException {
+   public static <T> T getInstance(Class<T> clazz) {
+      try {
+         return getInstanceStrict(clazz);
+      } catch (IllegalAccessException iae) {
+         throw new ConfigurationException("Unable to instantiate class " + clazz.getName(), iae);
+      } catch (InstantiationException ie) {
+         throw new ConfigurationException("Unable to instantiate class " + clazz.getName(), ie);
+      }
+   }
+
+   /**
+    * Similar to {@link #getInstance(Class)} except that exceptions are propagated to the caller.
+    *
+    * @param clazz class to instantiate
+    * @return an instance of the class
+    * @throws IllegalAccessException
+    * @throws InstantiationException
+    */
+   @SuppressWarnings("unchecked")
+   public static <T> T getInstanceStrict(Class<T> clazz) throws IllegalAccessException, InstantiationException {
       // first look for a getInstance() constructor
       T instance = null;
       try {
@@ -82,16 +128,45 @@ public final class Util {
          // no factory method or factory method failed.  Try a constructor.
          instance = null;
       }
-      if (instance == null) instance = clazz.newInstance();
-      return instance;
+      if (instance == null) {
+         instance = clazz.newInstance();
+      }
+      return instance == null ? null : instance;
    }
 
+   /**
+    * Instantiates a class based on the class name provided.  Instatiation is attempted via an appropriate, static
+    * factory method named <tt>getInstance()</tt> first, and failing the existence of an appropriate factory, falls
+    * back to an empty constructor.
+    * <p />
+    * Any exceptions encountered loading and instantiating the class is wrapped in a {@link ConfigurationException}.
+    *
+    * @param classname class to instantiate
+    * @return an instance of classname
+    */
    @SuppressWarnings("unchecked")
-   public static Object getInstance(String classname) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
+   public static Object getInstance(String classname) {
       if (classname == null) throw new IllegalArgumentException("Cannot load null class!");
       Class clazz = loadClass(classname);
       return getInstance(clazz);
    }
+
+   /**
+    * Similar to {@link #getInstance(String)} except that exceptions are propagated to the caller.
+    *
+    * @param classname class to instantiate
+    * @return an instance of classname
+    * @throws ClassNotFoundException
+    * @throws InstantiationException
+    * @throws IllegalAccessException
+    */
+   @SuppressWarnings("unchecked")
+   public static Object getInstanceStrict(String classname) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+      if (classname == null) throw new IllegalArgumentException("Cannot load null class!");
+      Class clazz = loadClassStrict(classname);
+      return getInstanceStrict(clazz);
+   }
+
 
    /**
     * Prevent instantiation

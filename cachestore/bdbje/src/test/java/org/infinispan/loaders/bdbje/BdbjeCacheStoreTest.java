@@ -16,7 +16,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.modifications.Store;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.GlobalTransactionFactory;
@@ -88,12 +88,12 @@ public class BdbjeCacheStoreTest {
       }
 
       @Override
-      public StoredMap createStoredMapViewOfDatabase(Database database, StoredClassCatalog classCatalog, Marshaller m) throws DatabaseException {
+      public StoredMap createStoredMapViewOfDatabase(Database database, StoredClassCatalog classCatalog, StreamingMarshaller m) throws DatabaseException {
          return cacheMap;
       }
 
       @Override
-      public StoredSortedMap<Long, Object> createStoredSortedMapForKeyExpiry(Database database, StoredClassCatalog classCatalog, Marshaller marshaller) throws DatabaseException {
+      public StoredSortedMap<Long, Object> createStoredSortedMapForKeyExpiry(Database database, StoredClassCatalog classCatalog, StreamingMarshaller marshaller) throws DatabaseException {
          return expiryMap;
       }
 

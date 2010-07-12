@@ -22,16 +22,10 @@ import org.infinispan.util.Util;
 @Scope(Scopes.GLOBAL)
 public class EmptyConstructorFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
    public <T> T construct(Class<T> componentType) {
-      try {
-         if (componentType.isInterface()) { 
-            return componentType.cast(Util.getInstance(componentType.getName() + "Impl"));
-         } else {
-            return Util.getInstance(componentType);
-         }
+      if (componentType.isInterface()) {
+         return componentType.cast(Util.getInstance(componentType.getName() + "Impl"));
+      } else {
+         return Util.getInstance(componentType);
       }
-      catch (Exception e) {
-         throw new ConfigurationException("Unable to create component " + componentType, e);
-      }
-
    }
 }

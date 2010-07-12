@@ -30,7 +30,7 @@ import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.AfterMethod;
@@ -163,7 +163,7 @@ public class JdbcStringBasedCacheStoreTest2 {
       return store.getConnectionFactory();
    }
    
-   protected Marshaller getMarshaller() {
+   protected StreamingMarshaller getMarshaller() {
       return new TestObjectStreamMarshaller(false);
    }
 }

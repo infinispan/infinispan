@@ -24,7 +24,7 @@ package org.infinispan.loaders.jdbc;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -51,10 +51,10 @@ public abstract class DataManipulationHelper {
 
    private ConnectionFactory connectionFactory;
    private TableManipulation tableManipulation;
-   protected Marshaller marshaller;
+   protected StreamingMarshaller marshaller;
 
 
-   public DataManipulationHelper(ConnectionFactory connectionFactory, TableManipulation tableManipulation, Marshaller marshaller) {
+   public DataManipulationHelper(ConnectionFactory connectionFactory, TableManipulation tableManipulation, StreamingMarshaller marshaller) {
       this.connectionFactory = connectionFactory;
       this.tableManipulation = tableManipulation;
       this.marshaller = marshaller;

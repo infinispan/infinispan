@@ -27,7 +27,7 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.config.parsing.XmlConfigHelper;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.InboundInvocationHandler;
 import org.infinispan.remoting.ReplicationException;
@@ -68,7 +68,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Properties;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -112,7 +111,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
    protected GlobalConfiguration c;
    protected TypedProperties props;
    protected InboundInvocationHandler inboundInvocationHandler;
-   protected Marshaller marshaller;
+   protected StreamingMarshaller marshaller;
    protected ExecutorService asyncExecutor;
    protected CacheManagerNotifier notifier;
    final ConcurrentMap<String, StateTransferMonitor> stateTransfersInProgress = new ConcurrentHashMap<String, StateTransferMonitor>();
@@ -137,7 +136,7 @@ public class JGroupsTransport implements Transport, ExtendedMembershipListener, 
    // Lifecycle and setup stuff
    // ------------------------------------------------------------------------------------------------------------------
 
-   public void initialize(GlobalConfiguration c, Marshaller marshaller, ExecutorService asyncExecutor,
+   public void initialize(GlobalConfiguration c, StreamingMarshaller marshaller, ExecutorService asyncExecutor,
                           InboundInvocationHandler inboundInvocationHandler, CacheManagerNotifier notifier) {
       this.c = c;
       this.marshaller = marshaller;

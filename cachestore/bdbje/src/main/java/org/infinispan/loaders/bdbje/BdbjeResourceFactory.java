@@ -10,8 +10,7 @@ import com.sleepycat.je.*;
 import com.sleepycat.util.ExceptionUnwrapper;
 import org.infinispan.CacheException;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -94,7 +93,7 @@ public class BdbjeResourceFactory {
      * @throws com.sleepycat.je.DatabaseException
      *          if the StoredMap cannot be opened.
      */
-    public StoredMap<Object, InternalCacheEntry> createStoredMapViewOfDatabase(Database database, StoredClassCatalog classCatalog, Marshaller m) throws DatabaseException {
+    public StoredMap<Object, InternalCacheEntry> createStoredMapViewOfDatabase(Database database, StoredClassCatalog classCatalog, StreamingMarshaller m) throws DatabaseException {
         EntryBinding<Object> storedEntryKeyBinding =
                 new SerialBinding<Object>(classCatalog, Object.class);
         EntryBinding<InternalCacheEntry> storedEntryValueBinding = new InternalCacheEntryBinding(m);
@@ -116,7 +115,7 @@ public class BdbjeResourceFactory {
      * @throws com.sleepycat.je.DatabaseException
      *          if the StoredMap cannot be opened.
      */
-    public StoredSortedMap<Long, Object> createStoredSortedMapForKeyExpiry(Database database, StoredClassCatalog classCatalog, Marshaller marshaller) throws DatabaseException {
+    public StoredSortedMap<Long, Object> createStoredSortedMapForKeyExpiry(Database database, StoredClassCatalog classCatalog, StreamingMarshaller marshaller) throws DatabaseException {
         EntryBinding<Long> expiryKeyBinding =
                 new SerialBinding<Long>(classCatalog, Long.class);
         EntryBinding<Object> expiryValueBinding =

@@ -15,7 +15,7 @@ public class LogFactory {
    static {
       boolean available;
       try {
-         Util.loadClass("org.apache.log4j.Logger");
+         Util.loadClassStrict("org.apache.log4j.Logger");
          available = true;
       }
       catch (ClassNotFoundException cnfe) {

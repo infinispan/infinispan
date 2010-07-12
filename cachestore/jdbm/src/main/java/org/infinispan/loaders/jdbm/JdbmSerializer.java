@@ -2,12 +2,12 @@ package org.infinispan.loaders.jdbm;
 
 import java.io.IOException;
 
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.marshall.StreamingMarshaller;
 
 import jdbm.helper.Serializer;
 
 /**
- * Uses the configured (runtime) {@link Marshaller} of the cache.
+ * Uses the configured (runtime) {@link org.infinispan.marshall.StreamingMarshaller} of the cache.
  * This Serializer is thus not really serializiable.
  * 
  * @author Elias Ross
@@ -15,12 +15,12 @@ import jdbm.helper.Serializer;
 @SuppressWarnings("serial")
 public class JdbmSerializer implements Serializer {
     
-    private transient Marshaller marshaller;
+    private transient StreamingMarshaller marshaller;
 
     /**
      * Constructs a new JdbmSerializer.
      */
-    public JdbmSerializer(Marshaller marshaller) {
+    public JdbmSerializer(StreamingMarshaller marshaller) {
         if (marshaller == null)
             throw new NullPointerException("marshaller");
         this.marshaller = marshaller;

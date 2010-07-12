@@ -21,6 +21,7 @@
  */
 package org.infinispan.marshall;
 
+import net.jcip.annotations.ThreadSafe;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.io.ByteBuffer;
@@ -32,33 +33,20 @@ import java.io.ObjectOutput;
 import java.io.OutputStream;
 
 /**
- * A marshaller is a class that is able to marshall and unmarshall objects efficiently.
+ * A specialization of {@link Marshaller} that supports streams.
  * <p/>
- * The reason why this is implemented specially in Infinispan rather than resorting to Java serialization or even the
- * more efficient JBoss serialization is that a lot of efficiency can be gained when a majority of the serialization
- * that occurs has to do with a small set of known types such as {@link org.infinispan.transaction.GlobalTransaction} or
- * {@link org.infinispan.commands.ReplicableCommand}, and class type information can be replaced with simple magic
- * numbers.
- * <p/>
- * Unknown types (typically user data) falls back to JBoss serialization.
- * <p/>
- * In addition, using a marshaller allows adding additional data to the byte stream, such as context class loader
- * information on which class loader to use to deserialize the object stream, or versioning information to allow streams
- * to interoperate between different versions of Infinispan (see {@link VersionAwareMarshaller}
- * <p/>
- * This interface is used to marshall {@link org.infinispan.commands.ReplicableCommand}s, their parameters and their
- * response values.
- * <p/>
- * The interface is also used by the {@link org.infinispan.loaders.CacheStore} framework to efficiently serialize data
- * to be persisted, as well as the {@link org.infinispan.statetransfer.StateTransferManager} when serializing the cache
- * for transferring state en-masse.
+ * A single instance of any implementation is shared by multiple threads, so implementations <i>need</i> to be threadsafe,
+ * and preferably immutable.
  *
- * @author <a href="mailto://manik@jboss.org">Manik Surtani</a>
+ * @author Manik Surtani
  * @author Galder Zamarreño
  * @since 4.0
+ *
+ * @see Marshaller
  */
 @Scope(Scopes.GLOBAL)
-public interface Marshaller {
+@ThreadSafe
+public interface StreamingMarshaller extends Marshaller {
 
    /**
     * <p>Create and open an ObjectOutput instance for the given output stream. This method should be used for opening data 
@@ -70,13 +58,13 @@ public interface Marshaller {
     * 
     * <p>To potentially speed up calling startObjectOutput multiple times in a non-reentrant way, i.e. 
     * startObjectOutput/finishObjectOutput...startObjectOutput/finishObjectOutput...etc, which is is the most common case, the 
-    * Marshaller implementation could potentially use some mechanisms to speed up this startObjectOutput call. 
+    * StreamingMarshaller implementation could potentially use some mechanisms to speed up this startObjectOutput call.
     *  
     * <p>On the other hand, when a call is reentrant, i.e. startObjectOutput/startObjectOutput(reentrant)...finishObjectOutput/finishObjectOutput, 
-    * the Marshaller implementation might treat it differently. An example of reentrancy would be marshalling of {@link MarshalledValue}. 
+    * the StreamingMarshaller implementation might treat it differently. An example of reentrancy would be marshalling of {@link MarshalledValue}.
     * When sending or storing a MarshalledValue, a call to startObjectOutput() would occur so that the stream is open and 
     * following, a 2nd call could occur so that MarshalledValue's raw byte array version is calculated and sent accross. 
-    * This enables lazy deserialization on the receiver side which is performance gain. The Marshaller implementation could decide 
+    * This enables lazy deserialization on the receiver side which is performance gain. The StreamingMarshaller implementation could decide
     * that it needs a separate ObjectOutput or similar for the 2nd call since it's aim is only to get the raw byte array version 
     * and the close finish with it.</p>
     *
@@ -113,7 +101,7 @@ public interface Marshaller {
     * 
     * <p>To potentially speed up calling startObjectInput multiple times in a non-reentrant way, i.e. 
     * startObjectInput/finishObjectInput...startObjectInput/finishObjectInput...etc, which is is the most common case, the 
-    * Marshaller implementation could potentially use some mechanisms to speed up this startObjectInput call.</p> 
+    * StreamingMarshaller implementation could potentially use some mechanisms to speed up this startObjectInput call.</p> 
     *  
     * @param is input stream
     * @param isReentrant whether the call is reentrant or not. 
@@ -146,12 +134,6 @@ public interface Marshaller {
     * @throws Exception
     */
    ByteBuffer objectToBuffer(Object o) throws IOException;
-
-   Object objectFromByteBuffer(byte[] buf, int offset, int length) throws IOException, ClassNotFoundException;
-
-   byte[] objectToByteBuffer(Object obj) throws IOException;
-
-   Object objectFromByteBuffer(byte[] buf) throws IOException, ClassNotFoundException;
 
    Object objectFromInputStream(InputStream is) throws IOException, ClassNotFoundException;
 }
