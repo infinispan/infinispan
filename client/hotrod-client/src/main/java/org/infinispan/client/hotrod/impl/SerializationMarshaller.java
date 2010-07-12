@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.impl;
 import org.infinispan.client.hotrod.HotRodMarshaller;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.io.ExposedByteArrayOutputStream;
+import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -70,7 +71,7 @@ public class SerializationMarshaller implements HotRodMarshaller {
          ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(bytes));
          Object o = ois.readObject();
          if (log.isTraceEnabled()) {
-            log.trace("Unmarshalled bytes: " + Arrays.toString(bytes) + " and returning object: " + o);
+            log.trace("Unmarshalled bytes: " + Util.printArray(bytes, false) + " and returning object: " + o);
          }
          return o;
       } catch (Exception e) {

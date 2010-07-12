@@ -7,10 +7,10 @@ import org.infinispan.client.hotrod.impl.BinaryVersionedValue;
 import org.infinispan.client.hotrod.impl.VersionedOperationResponse;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -173,7 +173,7 @@ public class HotRodOperationsImpl implements HotRodOperations, HotRodConstants {
             if (status == NO_ERROR_STATUS || status == NOT_PUT_REMOVED_REPLACED_STATUS) {
                byte[] bytes = returnPossiblePrevValue(transport, flags);
                if (log.isTraceEnabled()) {
-                  log.trace("Returning from putIfAbsent: " + Arrays.toString(bytes));
+                  log.trace("Returning from putIfAbsent: " + Util.printArray(bytes, false));
                }
                return bytes;
             }
@@ -365,7 +365,7 @@ public class HotRodOperationsImpl implements HotRodOperations, HotRodConstants {
    private byte[] returnPossiblePrevValue(Transport transport, Flag[] flags) {
       if (hasForceReturn(flags)) {
          byte[] bytes = transport.readArray();
-         if (log.isTraceEnabled()) log.trace("Previous value bytes is: " + Arrays.toString(bytes));
+         if (log.isTraceEnabled()) log.trace("Previous value bytes is: " + Util.printArray(bytes, false));
          //0-length response means null
          return bytes.length == 0 ? null : bytes;
       } else {

@@ -243,6 +243,7 @@ public final class Util {
    }
 
    public static String printArray(byte[] array, boolean withHash) {
+      if (array == null) return "null";
       StringBuilder sb = new StringBuilder();
       sb.append("ByteArray{size=").append(array.length);
       if (withHash)
