@@ -122,6 +122,7 @@ public class TestCacheManagerFactory {
     */
    public static EmbeddedCacheManager createClusteredCacheManager(Configuration defaultCacheConfig) {
       GlobalConfiguration globalConfiguration = GlobalConfiguration.getClusteredDefault();
+      globalConfiguration.setTransportNodeName(perThreadCacheManagers.get().getNextCacheName());
       amendMarshaller(globalConfiguration);
       minimizeThreads(globalConfiguration);
       Properties newTransportProps = new Properties();
@@ -302,6 +303,16 @@ public class TestCacheManagerFactory {
             }
          }
          cacheManagers.clear();
+      }
+
+      public String getNextCacheName() {
+         int index = cacheManagers.keySet().size();
+         char name = (char) ((int)'A' + index);
+         StringBuffer result = new StringBuffer(5);
+         for (int i = 0; i < 5; i++) {
+            result.append(name);
+         }
+         return result.toString();
       }
 
       public void add(String methodName, DefaultCacheManager cm) {
