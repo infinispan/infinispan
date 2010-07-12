@@ -6,6 +6,11 @@
 # This particular script tests that it's reading from one of the clustered servers correctly
 #
 
+__author__    = "Galder Zamarreno"
+__version__ = "Infinispan 4.1"
+__copyright__ = "Copyright (C) 2010 Red Hat Middleware LLC"
+__license__   = "LGPL"
+
 import memcache
 import time
 
