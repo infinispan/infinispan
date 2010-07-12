@@ -54,18 +54,26 @@ public class PingOnStartupTest extends MultipleCacheManagersTest {
       }
    }
 
-   public void testTopologyFetched() {
+   public void testTopologyFetched() throws Exception {
       Properties props = new Properties();
       props.put("hotrod-servers", "localhost:" + hotRodServer2.getPort() + ";localhost:" + hotRodServer2.getPort());
       props.put("ping-on-startup", "true");
+      props.put("timeBetweenEvictionRunsMillis", "500");
       RemoteCacheManager remoteCacheManager = new RemoteCacheManager(props);
 
       TcpTransportFactory tcpConnectionFactory = (TcpTransportFactory) TestingUtil.extractField(remoteCacheManager, "transportFactory");
-      try {
-         assertEquals(2, tcpConnectionFactory.getServers().size());
-      } finally {
-         remoteCacheManager.stop();
+      for (int i = 0; i < 10; i++) {
+         try {
+            if (tcpConnectionFactory.getServers().size() == 1) {
+               Thread.sleep(1000);
+            } else {
+               break;
+            }
+         } finally {
+            remoteCacheManager.stop();
+         }
       }
+      assertEquals(2, tcpConnectionFactory.getServers().size());
    }
 
    public void testTopologyNotFetched() {

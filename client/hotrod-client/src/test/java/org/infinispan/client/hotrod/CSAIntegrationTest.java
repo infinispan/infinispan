@@ -13,6 +13,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.util.ByteArrayKey;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -89,6 +90,13 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
       remoteCache = remoteCacheManager.getCache();
 
       tcpConnectionFactory = (TcpTransportFactory) TestingUtil.extractField(remoteCacheManager, "transportFactory");
+   }
+
+   @AfterClass
+   @Override
+   protected void destroy() {
+      super.destroy();
+      remoteCacheManager.stop();
    }
 
    public void testHashInfoRetrieved() throws InterruptedException {

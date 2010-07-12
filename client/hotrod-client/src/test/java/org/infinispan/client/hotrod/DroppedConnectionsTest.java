@@ -33,7 +33,7 @@ public class DroppedConnectionsTest extends SingleCacheManagerTest {
       hotRodServer = TestHelper.startHotRodServer(cacheManager);
       Properties hrClientConfig = new Properties();
       hrClientConfig.put("testWhileIdle", "false");
-      hrClientConfig.put("minIdle","2");
+      hrClientConfig.put("minIdle","1");
       hrClientConfig.put("maxIdle","2");
       hrClientConfig.put("maxActive","2");
       hrClientConfig.put("hotrod-servers", "127.0.0.1:" + hotRodServer.getPort());

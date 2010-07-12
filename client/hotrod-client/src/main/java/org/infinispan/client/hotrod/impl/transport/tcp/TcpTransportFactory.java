@@ -5,8 +5,6 @@ import org.apache.commons.pool.impl.GenericKeyedObjectPool;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashFactory;
-import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
-import org.infinispan.client.hotrod.impl.protocol.HotRodOperationsHelper;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.impl.transport.VHelper;
@@ -40,20 +38,32 @@ public class TcpTransportFactory implements TransportFactory {
    private volatile ConsistentHash consistentHash;
    private volatile boolean tcpNoDelay;
    private final ConsistentHashFactory hashFactory = new ConsistentHashFactory();
-   private volatile AtomicInteger topologyId;
 
    @Override
    public void start(Properties props, Collection<InetSocketAddress> staticConfiguredServers, AtomicInteger topologyId) {
-      this.topologyId = topologyId;
       hashFactory.init(props);
+      String pingOnStartup = props.getProperty("ping-on-startup");
       servers = staticConfiguredServers;
       String balancerClass = props.getProperty("request-balancing-strategy", RoundRobinBalancingStrategy.class.getName());
       balancer = (RequestBalancingStrategy) VHelper.newInstance(balancerClass);
       tcpNoDelay = Boolean.valueOf(props.getProperty("tcp-no-delay", "true"));
       if (log.isDebugEnabled()) log.debug("TCP no delay flag value is: {0}", tcpNoDelay);
-      PropsKeyedObjectPoolFactory poolFactory = new PropsKeyedObjectPoolFactory(new TransportObjectFactory(this, topologyId), props);
-      connectionPool = (GenericKeyedObjectPool) poolFactory.createPool();
+      boolean skipPingOnStartup = pingOnStartup != null && !Boolean.valueOf(pingOnStartup);
+      log.trace("'ping-on-startup' set to " + !skipPingOnStartup);
+      PropsKeyedObjectPoolFactory poolFactory = new PropsKeyedObjectPoolFactory(new TransportObjectFactory(this, topologyId, !skipPingOnStartup), props);
+      createAndPreparePool(staticConfiguredServers, poolFactory);
       balancer.setServers(servers);
+   }
+
+   /**
+    * This will makes sure that, when the evictor thread kicks in the minIdle is set. We don't want to do this is the caller's thread,
+    * as this is the user.
+    */
+   private void createAndPreparePool(Collection<InetSocketAddress> staticConfiguredServers, PropsKeyedObjectPoolFactory poolFactory) {
+      connectionPool = (GenericKeyedObjectPool) poolFactory.createPool();
+      for (InetSocketAddress addr: staticConfiguredServers) {
+         connectionPool.preparePool(addr, false);
+      }
    }
 
    @Override
@@ -206,16 +216,6 @@ public class TcpTransportFactory implements TransportFactory {
          return connectionPool.getMaxActive() * servers.size();
       } else {
          return 10 * servers.size();
-      }
-   }
-
-   @Override
-   public void ping() {
-      Transport transport = getTransport();
-      try {
-         HotRodOperationsHelper.ping(transport, topologyId);
-      } finally {
-         releaseTransport(transport);
       }
    }
 

@@ -72,7 +72,6 @@ public class WorkerThread extends Thread {
       Random rnd = new Random();
       while (!isInterrupted()) {
          remoteCache.put(rnd.nextLong(), rnd.nextLong());
-         System.out.println(getName() + " Finished put.");
          try {
             Thread.sleep(50);
          } catch (InterruptedException e) {

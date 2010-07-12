@@ -17,10 +17,13 @@ public class TransportObjectFactory extends BaseKeyedPoolableObjectFactory {
    private static final Log log = LogFactory.getLog(TransportObjectFactory.class);
    private final TcpTransportFactory tcpTransportFactory;
    private final AtomicInteger topologyId;
+   private final boolean pingOnStartup;
+   private volatile boolean firstPingExecuted = false;
 
-   public TransportObjectFactory(TcpTransportFactory tcpTransportFactory, AtomicInteger topologyId) {
+   public TransportObjectFactory(TcpTransportFactory tcpTransportFactory, AtomicInteger topologyId, boolean pingOnStartup) {
       this.tcpTransportFactory = tcpTransportFactory;
       this.topologyId = topologyId;
+      this.pingOnStartup = pingOnStartup;
    }
 
    @Override
@@ -29,6 +32,15 @@ public class TransportObjectFactory extends BaseKeyedPoolableObjectFactory {
       TcpTransport tcpTransport = new TcpTransport(serverAddress, tcpTransportFactory);
       if (log.isTraceEnabled()) {
          log.trace("Created tcp transport: " + tcpTransport);
+      }
+      if (pingOnStartup && !firstPingExecuted) {
+         log.trace("Executing first ping!");
+         firstPingExecuted = true;
+         try {
+            HotRodOperationsHelper.ping(tcpTransport, topologyId);
+         } catch (Exception e) {
+            log.trace("Ignoring ping request failure during ping on startup: " + e.getMessage());
+         }
       }
       return tcpTransport;
    }

@@ -34,6 +34,4 @@ public interface TransportFactory {
    boolean isTcpNoDelay();
 
    int getTransportCount();
-
-   void ping();
 }
