@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory;
 import org.infinispan.client.hotrod.impl.protocol.HotRodOperations;
+import org.infinispan.client.hotrod.impl.protocol.HotRodOperationsHelper;
 import org.infinispan.client.hotrod.impl.protocol.HotRodOperationsImpl;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.SerializationMarshaller;
@@ -61,7 +62,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  * </li>
  *  <li>
  * tcp-no-delay - TCP no delay flag switch. Defaults to true.
- * </li>
+    * </li>
+ *  <li>
+ * ping-on-startup - if true, a ping request is sent to a back end server in order to fetch cluster's topology. True by default.
+    </li>
  * <br/>
  * <i>below is connection pooling config</i>:
  * <p/>
@@ -132,7 +136,7 @@ public class RemoteCacheManager implements CacheContainer {
 
    public static final String CONF_HOTROD_SERVERS = "hotrod-servers";
 
-   public static final String OVERRIDE_HOTROD_SERVERS = "infinispan.hotrod-client.servers-default";
+   public static final String OVERRIDE_HOTROD_SERVERS = "infinispan.hotrod.client.servers";
 
 
    private Properties props;
@@ -148,7 +152,7 @@ public class RemoteCacheManager implements CacheContainer {
    /**
     * Builds a remote cache manager that relies on the provided {@link org.infinispan.client.hotrod.HotRodMarshaller} for marshalling
     * keys and values to be send over to the remote infinispan cluster.
-    * @param hotRodMarshaller marshaller implementatin to be used
+    * @param hotRodMarshaller marshaller implementation to be used. This will overwrite the marshaller from the properties (if any).
     * @param props other properties
     * @param start weather or not to start the manager on return from the constructor.
     */
@@ -325,6 +329,18 @@ public class RemoteCacheManager implements CacheContainer {
          }
       }
       started = true;
+      ping();
+   }
+
+   private void ping() {
+      String pingOnStartup = props.getProperty("ping-on-startup");
+      if (pingOnStartup != null && !Boolean.valueOf(pingOnStartup)) {
+         if (log.isTraceEnabled()) {
+            log.trace("Not pinging on startup as: 'ping-on-startup' = " + pingOnStartup);
+         }
+      } else {
+         transportFactory.ping();
+      }
    }
 
    @Override

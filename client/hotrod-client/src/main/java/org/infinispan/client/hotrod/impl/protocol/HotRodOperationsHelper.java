@@ -24,6 +24,8 @@ public class HotRodOperationsHelper {
    static final AtomicLong MSG_ID = new AtomicLong();
    final static byte CLIENT_INTELLIGENCE = HotRodConstants.CLIENT_INTELLIGENCE_HASH_DISTRIBUTION_AWARE;
 
+   public static final byte[] DEFAULT_CACHE_NAME_BYTES = new byte[]{};
+
    public static long writeHeader(Transport transport, short operationCode, byte[] cacheName, AtomicInteger topologyId, Flag... flags) {
       transport.writeByte(HotRodConstants.REQUEST_MAGIC);
       long messageId = MSG_ID.incrementAndGet();
@@ -156,6 +158,26 @@ public class HotRodOperationsHelper {
          default: {
             throw new IllegalStateException("Unknown status: " + Integer.toHexString(status));
          }
+      }
+   }
+
+   public static boolean ping(Transport transport, AtomicInteger topologyId) {
+      try {
+         long messageId = HotRodOperationsHelper.writeHeader(transport, HotRodConstants.PING_REQUEST, DEFAULT_CACHE_NAME_BYTES, topologyId);
+         short respStatus = HotRodOperationsHelper.readHeaderAndValidate(transport, messageId, HotRodConstants.PING_RESPONSE, topologyId);
+         if (respStatus == HotRodConstants.NO_ERROR_STATUS) {
+            if (log.isTraceEnabled())
+               log.trace("Successfully validated transport: " + transport);
+            return true;
+         } else {
+            if (log.isTraceEnabled())
+               log.trace("Unknown response status: " + respStatus);
+            return false;
+         }
+      } catch (Exception e) {
+         if (log.isTraceEnabled())
+            log.trace("Failed to validate transport: " + transport, e);
+         return false;
       }
    }
 }
