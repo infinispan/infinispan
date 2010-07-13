@@ -35,7 +35,7 @@ import org.infinispan.util.logging.LogFactory;
 
 /**
  * Parent class for top level JMX component registration.
- * 
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */
@@ -44,31 +44,26 @@ public abstract class AbstractJmxRegistration {
    String jmxDomain;
    MBeanServer mBeanServer;
    GlobalConfiguration globalConfig;
-   
+
    protected abstract ComponentsJmxRegistration buildRegistrar(Set<AbstractComponentRegistry.Component> components);
-   
+
    protected void registerMBeans(Set<AbstractComponentRegistry.Component> components, GlobalConfiguration globalConfig) {
       mBeanServer = getMBeanServer(globalConfig);
       ComponentsJmxRegistration registrar = buildRegistrar(components);
       registrar.registerMBeans();
    }
-   
+
    protected void unregisterMBeans(Set<AbstractComponentRegistry.Component> components) {
       ComponentsJmxRegistration registrar = buildRegistrar(components);
       registrar.unregisterMBeans();
    }
-   
+
    protected MBeanServer getMBeanServer(GlobalConfiguration configuration) {
       String serverLookup = configuration.getMBeanServerLookup();
-      try {
-         MBeanServerLookup lookup = (MBeanServerLookup) Util.getInstance(serverLookup);
-         return lookup.getMBeanServer();
-      } catch (Exception e) {
-         log.error("Could not instantiate MBeanServerLookup('" + serverLookup + "')", e);
-         throw new CacheException(e);
-      }
+      MBeanServerLookup lookup = (MBeanServerLookup) Util.getInstance(serverLookup);
+      return lookup.getMBeanServer();
    }
-   
+
    protected String getJmxDomain(String jmxDomain, MBeanServer mBeanServer) {
       String[] registeredDomains = mBeanServer.getDomains();
       int index = 2;

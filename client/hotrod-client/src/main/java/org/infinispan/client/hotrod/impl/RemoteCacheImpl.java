@@ -1,19 +1,21 @@
 package org.infinispan.client.hotrod.impl;
 
 import org.infinispan.client.hotrod.Flag;
-import org.infinispan.client.hotrod.HotRodMarshaller;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.ServerStatistics;
 import org.infinispan.client.hotrod.Version;
 import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.client.hotrod.exceptions.RemoteCacheManagerNotStartedException;
+import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.async.NotifyingFutureImpl;
 import org.infinispan.client.hotrod.impl.protocol.HotRodOperations;
+import org.infinispan.marshall.Marshaller;
 import org.infinispan.util.concurrent.NotifyingFuture;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -32,11 +34,13 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
 
    private ThreadLocal<Flag[]> flagsMap = new ThreadLocal<Flag[]>();
    private HotRodOperations operations;
-   private HotRodMarshaller marshaller;
+   private Marshaller marshaller;
    private final String name;
    private final RemoteCacheManager remoteCacheManager;
    private volatile ExecutorService executorService;
    private volatile boolean forceReturnValue;
+   private int estimateKeySize;
+   private int estimateValueSize;
 
    public RemoteCacheImpl(RemoteCacheManager rcm, String name, boolean forceReturnValue) {
       if (log.isTraceEnabled()) {
@@ -47,14 +51,24 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       this.remoteCacheManager = rcm;
    }
 
-   public void init(HotRodOperations operations, HotRodMarshaller marshaller, ExecutorService executorService) {
+   public void init(HotRodOperations operations, Marshaller marshaller, ExecutorService executorService, int estimateKeySize, int estimateValueSize) {
       this.operations = operations;
       this.marshaller = marshaller;
       this.executorService = executorService;
+      this.estimateKeySize = estimateKeySize;
+      this.estimateValueSize = estimateValueSize;
    }
 
    public RemoteCacheManager getRemoteCacheManager() {
       return remoteCacheManager;
+   }
+
+   private byte[] obj2bytes(Object o, boolean isKey) {
+      try {
+         return marshaller.objectToByteBuffer(o, isKey ? estimateKeySize : estimateValueSize);
+      } catch (IOException ioe) {
+         throw new TransportException("Unable to marshall object of type [" + o.getClass().getName() + "]", ioe);
+      }
    }
 
    @Override
@@ -323,15 +337,13 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       return flags;
    }
 
-   private byte[] obj2bytes(Object obj, boolean isKey) {
-      return this.marshaller.marshallObject(obj, isKey);
-   }
-
    private Object bytes2obj(byte[] bytes) {
-      if (bytes == null) {
-         return null;
+      if (bytes == null) return null;
+      try {
+         return marshaller.objectFromByteBuffer(bytes);
+      } catch (Exception e) {
+         throw new TransportException("Unable to unmarshall byte stream", e);
       }
-      return this.marshaller.readObject(bytes);
    }
 
    private VersionedValue<V> binary2VersionedValue(BinaryVersionedValue value) {

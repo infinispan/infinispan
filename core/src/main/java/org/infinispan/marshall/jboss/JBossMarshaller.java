@@ -25,7 +25,8 @@ import org.infinispan.CacheException;
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.io.ByteBuffer;
 import org.infinispan.io.ExposedByteArrayOutputStream;
-import org.infinispan.marshall.AbstractMarshaller;
+import org.infinispan.marshall.AbstractStreamingMarshaller;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -48,12 +49,18 @@ import java.lang.reflect.Method;
 import java.net.URL;
 
 /**
- * JBossMarshaller.
+ * The reason why this is implemented specially in Infinispan rather than resorting to Java serialization or even the
+ * more efficient JBoss serialization is that a lot of efficiency can be gained when a majority of the serialization
+ * that occurs has to do with a small set of known types such as {@link org.infinispan.transaction.GlobalTransaction} or
+ * {@link org.infinispan.commands.ReplicableCommand}, and class type information can be replaced with simple magic
+ * numbers.
+ * <p/>
+ * Unknown types (typically user data) falls back to JBoss serialization.
  *
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class JBossMarshaller extends AbstractMarshaller {
+public class JBossMarshaller extends AbstractStreamingMarshaller {
    private static final Log log = LogFactory.getLog(JBossMarshaller.class);
    private static final String DEFAULT_MARSHALLER_FACTORY = "org.jboss.marshalling.river.RiverMarshallerFactory";
    private ClassLoader defaultCl;
@@ -62,7 +69,7 @@ public class JBossMarshaller extends AbstractMarshaller {
    private ConstantObjectTable objectTable;
 
    /**
-    * Marshaller thread local. JBossMarshaller is a singleton shared by all caches (global component), so no urgent need
+    * StreamingMarshaller thread local. JBossMarshaller is a singleton shared by all caches (global component), so no urgent need
     * for static here. JBMAR clears pretty much any state during finish(), so no urgent need to clear the thread local
     * since it shouldn't be leaking.
     */
@@ -93,14 +100,10 @@ public class JBossMarshaller extends AbstractMarshaller {
       }
    };
 
-   public void start(ClassLoader defaultCl, RemoteCommandsFactory cmdFactory, org.infinispan.marshall.Marshaller ispnMarshaller) {
+   public void start(ClassLoader defaultCl, RemoteCommandsFactory cmdFactory, StreamingMarshaller ispnMarshaller) {
       if (log.isDebugEnabled()) log.debug("Using JBoss Marshalling");
       this.defaultCl = defaultCl;
-      try {
-         factory = (MarshallerFactory) Util.getInstance(DEFAULT_MARSHALLER_FACTORY);
-      } catch (Exception e) {
-         throw new CacheException("Unable to load JBoss Marshalling marshaller factory " + DEFAULT_MARSHALLER_FACTORY, e);
-      }
+      factory = (MarshallerFactory) Util.getInstance(DEFAULT_MARSHALLER_FACTORY);
 
       objectTable = createCustomObjectTable(cmdFactory, ispnMarshaller);
       configuration = new MarshallingConfiguration();
@@ -118,15 +121,19 @@ public class JBossMarshaller extends AbstractMarshaller {
       if (objectTable != null) objectTable.stop();
    }
 
-   public byte[] objectToByteBuffer(Object obj) throws IOException {
-      ByteBuffer b = objectToBuffer(obj);
+   public byte[] objectToByteBuffer(Object obj, int estimatedSize) throws IOException {
+      ByteBuffer b = objectToBuffer(obj, estimatedSize);
       byte[] bytes = new byte[b.getLength()];
       System.arraycopy(b.getBuf(), b.getOffset(), bytes, 0, b.getLength());
       return bytes;
    }
 
    public ByteBuffer objectToBuffer(Object o) throws IOException {
-      ExposedByteArrayOutputStream baos = new ExposedByteArrayOutputStream(128);
+      return objectToBuffer(o, DEFAULT_BUF_SIZE);
+   }
+
+   private ByteBuffer objectToBuffer(Object o, int estimatedSize) throws IOException {
+      ExposedByteArrayOutputStream baos = new ExposedByteArrayOutputStream(estimatedSize);
       ObjectOutput marshaller = startObjectOutput(baos, false);
       try {
          objectToObjectStream(o, marshaller);
@@ -174,7 +181,7 @@ public class JBossMarshaller extends AbstractMarshaller {
    }
 
    public Object objectFromByteBuffer(byte[] buf, int offset, int length) throws IOException,
-                                                                                 ClassNotFoundException {
+           ClassNotFoundException {
       ByteArrayInputStream is = new ByteArrayInputStream(buf, offset, length);
       ObjectInput unmarshaller = startObjectInput(is, false);
       Object o = null;
@@ -208,7 +215,7 @@ public class JBossMarshaller extends AbstractMarshaller {
       return in.readObject();
    }
 
-   private ConstantObjectTable createCustomObjectTable(RemoteCommandsFactory cmdFactory, org.infinispan.marshall.Marshaller ispnMarshaller) {
+   private ConstantObjectTable createCustomObjectTable(RemoteCommandsFactory cmdFactory, StreamingMarshaller ispnMarshaller) {
       ConstantObjectTable objectTable = new ConstantObjectTable();
       objectTable.start(cmdFactory, ispnMarshaller);
       return objectTable;
@@ -263,7 +270,8 @@ public class JBossMarshaller extends AbstractMarshaller {
                Object[] args = EMPTY_OBJECTS;
                urls = (URL[]) getURLs.invoke(cl, args);
             }
-         } catch (Exception ignore) {}
+         } catch (Exception ignore) {
+         }
          return urls;
       }
 

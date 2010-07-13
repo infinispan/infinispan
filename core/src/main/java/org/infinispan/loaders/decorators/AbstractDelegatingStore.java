@@ -1,6 +1,7 @@
 package org.infinispan.loaders.decorators;
 
 import org.infinispan.Cache;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.CacheLoaderConfig;
@@ -8,7 +9,6 @@ import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.CacheStoreConfig;
 import org.infinispan.loaders.modifications.Modification;
-import org.infinispan.marshall.Marshaller;
 
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -78,7 +78,7 @@ public class AbstractDelegatingStore implements CacheStore {
       delegate.prepare(list, tx, isOnePhase);
    }
 
-   public void init(CacheLoaderConfig config, Cache<?, ?> cache, Marshaller m) throws CacheLoaderException {
+   public void init(CacheLoaderConfig config, Cache<?, ?> cache, StreamingMarshaller m) throws CacheLoaderException {
       delegate.init(config, cache, m);
    }
 

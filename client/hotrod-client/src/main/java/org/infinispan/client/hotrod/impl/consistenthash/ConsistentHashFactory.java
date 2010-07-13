@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod.impl.consistenthash;
 
-import org.infinispan.client.hotrod.impl.transport.VHelper;
+
+import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -12,13 +13,13 @@ import java.util.Properties;
 /**
  * Factory for {@link org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash} function. It will try to look
  * into the configuration for consistent hash definitions as follows:
- *   consistent-hash.[version]=[fully qualified class implementing ConsistentHash]
+ * consistent-hash.[version]=[fully qualified class implementing ConsistentHash]
  * e.g.
  * consistent-hash.1=org.infinispan.client.hotrod.impl.consistenthash.ConsitentHashV1
  * <p/>
- *  If no CH function is defined for a certain version, then it will be defaulted to "org.infinispan.client.hotrod.impl.ConsistentHashV[version]".
+ * If no CH function is defined for a certain version, then it will be defaulted to "org.infinispan.client.hotrod.impl.ConsistentHashV[version]".
  * E.g. if the server indicates that in use CH is version 1, and it is not defined within the configuration, it will be defaulted to
- * org.infinispan.client.hotrod.impl.ConsistentHashV1. 
+ * org.infinispan.client.hotrod.impl.ConsistentHashV1.
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
@@ -51,13 +52,7 @@ public class ConsistentHashFactory {
          hashFunctionClass = ConsistentHashFactory.class.getPackage().getName() + ".ConsistentHashV" + version;
          if (log.isTraceEnabled()) log.trace("Trying to use default value: " + hashFunctionClass);
       }
-      ConsistentHash consistentHash = null;
-      try {
-         consistentHash = (ConsistentHash) VHelper.newInstance(hashFunctionClass);
-      } catch (RuntimeException re) {
-         log.warn("Could not instantiate consistent hash for version " + version + ": " + hashFunctionClass, re);
-      }
-      return consistentHash;
+      return (ConsistentHash) Util.getInstance(hashFunctionClass);
    }
 
    public Map<Integer, String> getVersion2ConsistentHash() {

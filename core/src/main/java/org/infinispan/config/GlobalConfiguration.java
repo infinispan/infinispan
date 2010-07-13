@@ -670,7 +670,7 @@ public class GlobalConfiguration extends AbstractConfigurationBean {
 
       /**
        * @configRef desc="Fully qualified name of the marshaller to use. It must implement
-       * org.infinispan.marshall.Marshaller."
+       * org.infinispan.marshall.StreamingMarshaller."
        */
       protected String marshallerClass = VersionAwareMarshaller.class.getName(); // the default
 

@@ -34,7 +34,9 @@ import org.infinispan.util.Util;
  */
 public class JdbcStringBasedCacheStoreConfig extends AbstractNonDelegatingJdbcCacheStoreConfig {
 
-   /** The serialVersionUID */
+   /**
+    * The serialVersionUID
+    */
    private static final long serialVersionUID = 8835350707132331983L;
 
    private Key2StringMapper key2StringMapper;
@@ -72,11 +74,7 @@ public class JdbcStringBasedCacheStoreConfig extends AbstractNonDelegatingJdbcCa
     */
    public void setKey2StringMapperClass(String className) {
       testImmutability("key2StringMapper");
-      try {
-         key2StringMapper = (Key2StringMapper) Util.getInstance(className);
-      } catch (Exception e) {
-         throw new IllegalArgumentException("Could not load Key2StringMapper :'" + className + "'", e);
-      }
+      key2StringMapper = (Key2StringMapper) Util.getInstance(className);
    }
 
    /**
@@ -94,5 +92,5 @@ public class JdbcStringBasedCacheStoreConfig extends AbstractNonDelegatingJdbcCa
       JdbcStringBasedCacheStoreConfig result = (JdbcStringBasedCacheStoreConfig) super.clone();
       result.key2StringMapper = key2StringMapper;
       return result;
-   }   
+   }
 }

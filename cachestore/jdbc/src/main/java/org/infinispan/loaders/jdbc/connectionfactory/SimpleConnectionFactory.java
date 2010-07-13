@@ -78,17 +78,8 @@ public class SimpleConnectionFactory extends ConnectionFactory {
    }
 
    private void loadDriver(String driverClass) throws CacheLoaderException {
-      try {
-         if (log.isTraceEnabled()) {
-            log.trace("Attempting to load driver " + driverClass);
-         }
-         Util.getInstance(driverClass);
-      }
-      catch (Throwable th) {
-         String message = "Failed loading driver with class: '" + driverClass + "'";
-         log.error(message, th);
-         throw new CacheLoaderException(message, th);
-      }
+      if (log.isTraceEnabled()) log.trace("Attempting to load driver " + driverClass);
+      Util.getInstance(driverClass);
    }
 
    public String getConnectionUrl() {
@@ -106,8 +97,8 @@ public class SimpleConnectionFactory extends ConnectionFactory {
    @Override
    public String toString() {
       return "SimpleConnectionFactory{" +
-            "connectionUrl='" + connectionUrl + '\'' +
-            ", userName='" + userName + '\'' +
-            "} " + super.toString();
+              "connectionUrl='" + connectionUrl + '\'' +
+              ", userName='" + userName + '\'' +
+              "} " + super.toString();
    }
 }

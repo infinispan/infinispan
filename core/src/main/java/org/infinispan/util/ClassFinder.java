@@ -124,7 +124,7 @@ public class ClassFinder {
             String clazz = null;
             try {
                clazz = toClassName(cf.getAbsolutePath());
-               claz = Util.loadClass(clazz);
+               claz = Util.loadClassStrict(clazz);
                classes.add(claz);
             } catch (NoClassDefFoundError ncdfe) {
                log.warn(cf.getAbsolutePath() + " has reference to a class "
@@ -150,7 +150,7 @@ public class ClassFinder {
                   String clazz = null;
                   try {
                      clazz = toClassName(entry.getName());
-                     claz = Util.loadClass(clazz);
+                     claz = Util.loadClassStrict(clazz);
                      classes.add(claz);
                   } catch (NoClassDefFoundError ncdfe) {
                      log.warn(entry.getName() + " has reference to a class " + ncdfe.getMessage()

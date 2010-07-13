@@ -34,7 +34,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.marshall.MarshalledValue;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.util.Immutables;
 
 import java.io.IOException;
@@ -62,10 +62,10 @@ import java.util.Set;
  * @since 4.0
  */
 public class MarshalledValueInterceptor extends CommandInterceptor {
-   private Marshaller marshaller;
+   private StreamingMarshaller marshaller;
    
    @Inject
-   protected void injectMarshaller(Marshaller marshaller) {
+   protected void injectMarshaller(StreamingMarshaller marshaller) {
       this.marshaller = marshaller;
    }
    

@@ -2,7 +2,7 @@ package org.infinispan.loaders;
 
 import org.infinispan.Cache;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.util.concurrent.locks.StripedLock;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -34,7 +34,7 @@ public abstract class LockSupportCacheStore extends AbstractCacheStore {
    private long globalLockTimeoutMillis;
    private LockSupportCacheStoreConfig config;
 
-   public void init(CacheLoaderConfig config, Cache<?, ?> cache, Marshaller m) throws CacheLoaderException {
+   public void init(CacheLoaderConfig config, Cache<?, ?> cache, StreamingMarshaller m) throws CacheLoaderException {
       super.init(config, cache, m);
       this.config = (LockSupportCacheStoreConfig) config;
    }

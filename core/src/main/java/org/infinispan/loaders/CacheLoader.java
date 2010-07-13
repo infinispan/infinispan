@@ -2,7 +2,7 @@ package org.infinispan.loaders;
 
 import org.infinispan.Cache;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.marshall.StreamingMarshaller;
 
 import java.util.Set;
 
@@ -23,7 +23,7 @@ public interface CacheLoader {
     *               selecting where refer to state in storage, for example, a different database table name.
     * @param m      marshaller to use when loading state from a stream, if supported by the implementation.
     */
-   void init(CacheLoaderConfig config, Cache<?, ?> cache, Marshaller m) throws CacheLoaderException;
+   void init(CacheLoaderConfig config, Cache<?, ?> cache, StreamingMarshaller m) throws CacheLoaderException;
 
    /**
     * Loads an entry mapped to by a given key.  Should return null if the entry does not exist.  Expired entries are not

@@ -14,7 +14,7 @@ import org.infinispan.loaders.modifications.Prepare;
 import org.infinispan.loaders.modifications.PurgeExpired;
 import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.locks.containers.ReentrantPerEntryLockContainer;
 import org.infinispan.util.logging.Log;
@@ -93,7 +93,7 @@ public class AsyncStore extends AbstractDelegatingStore {
    }
 
    @Override
-   public void init(CacheLoaderConfig config, Cache<?, ?> cache, Marshaller m) throws CacheLoaderException {
+   public void init(CacheLoaderConfig config, Cache<?, ?> cache, StreamingMarshaller m) throws CacheLoaderException {
       super.init(config, cache, m);
       concurrencyLevel = cache == null || cache.getConfiguration() == null ? 16 : cache.getConfiguration().getConcurrencyLevel();
       lockContainer = new ReleaseAllLockContainer(concurrencyLevel);

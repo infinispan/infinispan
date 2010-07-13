@@ -1,12 +1,15 @@
 package org.infinispan.client.hotrod.impl.transport.netty;
 
 import org.infinispan.client.hotrod.exceptions.TransportException;
-import org.infinispan.client.hotrod.impl.transport.VHelper;
+
+import org.infinispan.io.UnsignedNumeric;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.handler.codec.frame.FrameDecoder;
+
+import java.io.IOException;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -15,7 +18,6 @@ import org.jboss.netty.handler.codec.frame.FrameDecoder;
 public class HotRodClientDecoder extends FrameDecoder {
 
    private final ChannelBuffer buffer = ChannelBuffers.dynamicBuffer();
-   private final InputStreamAdapter isa = new InputStreamAdapter(buffer);
 
    @Override
    protected Object decode(ChannelHandlerContext ctx, Channel channel, ChannelBuffer buffer) throws Exception {
@@ -29,11 +31,19 @@ public class HotRodClientDecoder extends FrameDecoder {
    }
 
    public long readVLong() {
-      return VHelper.readVLong(isa);
+      try {
+         return UnsignedNumeric.readUnsignedLong(buffer.toByteBuffer());
+      } catch (IOException e) {
+         throw new RuntimeException("Unable to read unsigned long", e);
+      }
    }
 
    public int readVInt() {
-      return VHelper.readVInt(isa);
+      try {
+         return UnsignedNumeric.readUnsignedInt(buffer.toByteBuffer());
+      } catch (IOException e) {
+         throw new RuntimeException("Unable to read unsigned int", e);
+      }
    }
 
    public void fillBuffer(byte[] bufferToFill) {

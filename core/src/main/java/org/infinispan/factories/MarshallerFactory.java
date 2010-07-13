@@ -23,23 +23,19 @@ package org.infinispan.factories;
 
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.util.Util;
 
 /**
  * MarshallerFactory.
- * 
+ *
  * @author <a href="mailto:galder.zamarreno@jboss.com">Galder Zamarreno</a>
  * @since 4.0
  */
-@DefaultFactoryFor(classes = Marshaller.class)
-public class MarshallerFactory extends EmptyConstructorFactory implements AutoInstantiableFactory {   
+@DefaultFactoryFor(classes = StreamingMarshaller.class)
+public class MarshallerFactory extends EmptyConstructorFactory implements AutoInstantiableFactory {
    @Override
    public <T> T construct(Class<T> componentType) {
-      try {
-         return componentType.cast(Util.getInstance(globalConfiguration.getMarshallerClass()));
-      } catch (Exception e) {
-         throw new ConfigurationException("Unable to create component " + componentType, e);
-      }
+      return componentType.cast(Util.getInstance(globalConfiguration.getMarshallerClass()));
    }
 }

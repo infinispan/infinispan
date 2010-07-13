@@ -59,6 +59,7 @@ import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.marshall.Externalizer;
 import org.infinispan.marshall.Marshallable;
 import org.infinispan.marshall.MarshalledValue;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.exts.ArrayListExternalizer;
 import org.infinispan.marshall.exts.LinkedListExternalizer;
 import org.infinispan.marshall.exts.MapExternalizer;
@@ -130,7 +131,7 @@ public class ConstantObjectTable implements ObjectTable {
       MARSHALLABLES.add(ExceptionResponse.class.getName());
       MARSHALLABLES.add(RequestIgnoredResponse.class.getName());
       MARSHALLABLES.add(UnsuccessfulResponse.class.getName());
-      MARSHALLABLES.add(UnsureResponse.class.getName());      
+      MARSHALLABLES.add(UnsureResponse.class.getName());
 
       MARSHALLABLES.add(StateTransferControlCommand.class.getName());
       MARSHALLABLES.add(ClusteredGetCommand.class.getName());
@@ -188,42 +189,35 @@ public class ConstantObjectTable implements ObjectTable {
     */
    private final Map<Integer, ExternalizerAdapter> readers = new HashMap<Integer, ExternalizerAdapter>();
 
-   public void start(RemoteCommandsFactory cmdFactory, org.infinispan.marshall.Marshaller ispnMarshaller) {
+   public void start(RemoteCommandsFactory cmdFactory, StreamingMarshaller ispnMarshaller) {
       HashSet<Integer> ids = new HashSet<Integer>();
 
       for (Map.Entry<String, String> entry : JDK_EXTERNALIZERS.entrySet()) {
          try {
-            Class clazz = Util.loadClass(entry.getKey());
+            Class clazz = Util.loadClassStrict(entry.getKey());
             Externalizer ext = null;
-            try {
-               ext = (Externalizer) Util.getInstance(entry.getValue());
-            } catch (Exception e) {
-               throw new CacheException("Could not instantiate entry: " + entry, e);
-            }
+            ext = (Externalizer) Util.getInstanceStrict(entry.getValue());
             Marshallable marshallable = ReflectionUtil.getAnnotation(ext.getClass(), Marshallable.class);
             int id = marshallable.id();
             ids.add(id);
             ExternalizerAdapter adapter = new ExternalizerAdapter(id, ext);
             writers.put(clazz, adapter);
             readers.put(id, adapter);
-         } catch (ClassNotFoundException e) {
-            if (log.isDebugEnabled())
+         } catch (Exception e) {
+            if (log.isDebugEnabled()) {
                log.debug("Unable to load class {0}", e.getMessage());
+            }
          }
       }
 
       for (String marshallableClass : MARSHALLABLES) {
          try {
-            Class clazz = Util.loadClass(marshallableClass);
+            Class clazz = Util.loadClassStrict(marshallableClass);
             Marshallable marshallable = ReflectionUtil.getAnnotation(clazz, Marshallable.class);
             if (marshallable != null && !marshallable.externalizer().equals(Externalizer.class)) {
                int id = marshallable.id();
                Externalizer ext = null;
-               try {
-                  ext = Util.getInstance(marshallable.externalizer());
-               } catch (Exception e) {
-                  throw new CacheException("Could not instantiate the externalizer: " + marshallable.externalizer(), e);
-               }
+               ext = Util.getInstance(marshallable.externalizer());
                if (!ids.add(id))
                   throw new CacheException("Duplicate id found! id=" + id + " in " + ext.getClass().getName() + " is shared by another marshallable class.");
                if (ext instanceof ReplicableCommandExternalizer) {

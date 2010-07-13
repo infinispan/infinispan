@@ -48,7 +48,7 @@ import java.io.OutputStream;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class VersionAwareMarshaller extends AbstractMarshaller {
+public class VersionAwareMarshaller extends AbstractStreamingMarshaller {
    private static final Log log = LogFactory.getLog(VersionAwareMarshaller.class);
    private boolean trace = log.isTraceEnabled();
 
@@ -85,21 +85,26 @@ public class VersionAwareMarshaller extends AbstractMarshaller {
       return CUSTOM_MARSHALLER;
    }
 
-   public ByteBuffer objectToBuffer(Object obj) throws IOException {
-      ExposedByteArrayOutputStream baos = new ExposedByteArrayOutputStream(128);
+   private ByteBuffer objectToBuffer(Object obj, int estimatedSize) throws IOException {
+      ExposedByteArrayOutputStream baos = new ExposedByteArrayOutputStream(estimatedSize);
       ObjectOutput out = startObjectOutput(baos, false);
       try {
          defaultMarshaller.objectToObjectStream(obj, out);
-      } catch(NotSerializableException nse) {
+      } catch (
+              java.io.NotSerializableException nse) {
          if (log.isTraceEnabled()) log.trace("Object is not serializable", nse);
          throw new org.infinispan.marshall.NotSerializableException(nse.getMessage(), nse.getCause());
-      } catch(IOException ioe) {
+      } catch (IOException ioe) {
          if (log.isTraceEnabled()) log.trace("Exception while marshalling object", ioe);
          throw ioe;
       } finally {
          finishObjectOutput(out);
       }
       return new ByteBuffer(baos.getRawBuffer(), 0, baos.size());
+   }
+
+   public ByteBuffer objectToBuffer(Object obj) throws IOException {
+      return objectToBuffer(obj, DEFAULT_BUF_SIZE);
    }
 
    public Object objectFromByteBuffer(byte[] bytes, int offset, int len) throws IOException, ClassNotFoundException {
@@ -172,8 +177,8 @@ public class VersionAwareMarshaller extends AbstractMarshaller {
       return defaultMarshaller.objectFromObjectStream(in);
    }
 
-   public byte[] objectToByteBuffer(Object obj) throws IOException {
-      ByteBuffer b = objectToBuffer(obj);
+   public byte[] objectToByteBuffer(Object obj, int estimatedSize) throws IOException {
+      ByteBuffer b = objectToBuffer(obj, estimatedSize);
       byte[] bytes = new byte[b.getLength()];
       System.arraycopy(b.getBuf(), b.getOffset(), bytes, 0, b.getLength());
       return bytes;

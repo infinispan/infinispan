@@ -10,7 +10,7 @@ import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.lifecycle.Lifecycle;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.InboundInvocationHandler;
 import org.infinispan.remoting.responses.Response;
@@ -44,7 +44,7 @@ public interface Transport extends Lifecycle {
     * @param notifier      notifier to use
     */
    @Inject
-   void initialize(GlobalConfiguration c, Marshaller marshaller,
+   void initialize(GlobalConfiguration c, StreamingMarshaller marshaller,
                    @ComponentName(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncExecutor,
                    InboundInvocationHandler handler, CacheManagerNotifier notifier);
 

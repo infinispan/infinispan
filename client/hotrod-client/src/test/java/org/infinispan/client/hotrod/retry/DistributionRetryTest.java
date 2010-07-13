@@ -5,15 +5,17 @@ import org.infinispan.affinity.KeyAffinityService;
 import org.infinispan.affinity.KeyAffinityServiceFactory;
 import org.infinispan.affinity.KeyGenerator;
 import org.infinispan.client.hotrod.VersionedValue;
-import org.infinispan.client.hotrod.impl.SerializationMarshaller;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransport;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.config.Configuration;
 import org.infinispan.distribution.BaseDistFunctionalTest;
+import org.infinispan.marshall.Marshaller;
+import org.infinispan.marshall.jboss.JBossMarshaller;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Random;
 import java.util.concurrent.Executors;
@@ -40,7 +42,7 @@ public class DistributionRetryTest extends AbstractRetryTest {
       BaseDistFunctionalTest.RehashWaiter.waitForInitRehashToComplete(cache(0), cache(1), cache(2));
    }
 
-   public void testGet() {
+   public void testGet() throws ClassNotFoundException, IOException {
       log.info("Starting actual test");
       Object key = generateKeyAndShutdownServer();
       //now make sure that next call won't fail
@@ -48,60 +50,60 @@ public class DistributionRetryTest extends AbstractRetryTest {
       assertEquals(remoteCache.get(key), "v");
    }
 
-   public void testPut() {
+   public void testPut() throws ClassNotFoundException, IOException {
       Object key = generateKeyAndShutdownServer();
       log.info("Here it starts");
       assertEquals(remoteCache.put(key, "v0"), "v");
    }
 
-   public void testRemove() {
+   public void testRemove() throws ClassNotFoundException, IOException {
       Object key = generateKeyAndShutdownServer();
       assertEquals("v", remoteCache.remove(key));
    }
 
-   public void testContains() {
+   public void testContains() throws ClassNotFoundException, IOException {
       Object key = generateKeyAndShutdownServer();
       resetStats();
       assertEquals(true, remoteCache.containsKey(key));
    }
 
-   public void testGetWithVersion() {
+   public void testGetWithVersion() throws ClassNotFoundException, IOException {
       Object key = generateKeyAndShutdownServer();
       resetStats();
       VersionedValue value = remoteCache.getVersioned(key);
       assertEquals("v", value.getValue());
    }
 
-   public void testPutIfAbsent() {
+   public void testPutIfAbsent() throws ClassNotFoundException, IOException {
       Object key = generateKeyAndShutdownServer();
       assertEquals(null, remoteCache.putIfAbsent("noSuchKey", "someValue"));
       assertEquals("someValue", remoteCache.get("noSuchKey"));
    }
 
-   public void testReplace() {
+   public void testReplace() throws ClassNotFoundException, IOException {
       Object key = generateKeyAndShutdownServer();
       assertEquals("v", remoteCache.replace(key, "v2"));
    }
 
-   public void testReplaceIfUnmodified() {
+   public void testReplaceIfUnmodified() throws ClassNotFoundException, IOException {
       Object key = generateKeyAndShutdownServer();
       assertEquals(false, remoteCache.replaceWithVersion(key, "v2", 12));
    }
 
-   public void testRemoveIfUnmodified() {
+   public void testRemoveIfUnmodified() throws ClassNotFoundException, IOException {
       Object key = generateKeyAndShutdownServer();
       resetStats();
       assertEquals(false, remoteCache.removeWithVersion(key, 12));
    }
 
-   public void testClear() {
+   public void testClear() throws ClassNotFoundException, IOException {
       Object key = generateKeyAndShutdownServer();
       resetStats();
       remoteCache.clear();
       assertEquals(false, remoteCache.containsKey(key));
    }
 
-   private Object generateKeyAndShutdownServer() {
+   private Object generateKeyAndShutdownServer() throws IOException, ClassNotFoundException {
       resetStats();
       Cache<Object,Object> cache = manager(1).getCache();
       KeyAffinityService kaf = KeyAffinityServiceFactory.newKeyAffinityService(cache, Executors.newSingleThreadExecutor(), new ByteKeyGenerator(), 2, true);
@@ -114,8 +116,8 @@ public class DistributionRetryTest extends AbstractRetryTest {
       assertOnlyServerHit(getAddress(hotRodServer2));
       TcpTransportFactory tcpTp = (TcpTransportFactory) TestingUtil.extractField(remoteCacheManager, "transportFactory");
 
-      SerializationMarshaller sm = new SerializationMarshaller();
-      TcpTransport transport = (TcpTransport) tcpTp.getTransport(sm.marshallObject(key, true));
+      Marshaller sm = new JBossMarshaller();
+      TcpTransport transport = (TcpTransport) tcpTp.getTransport(sm.objectToByteBuffer(key, 64));
       try {
       assertEquals(transport.getServerAddress(), new InetSocketAddress("localhost", hotRodServer2.getPort()));
       } finally {
@@ -135,13 +137,17 @@ public class DistributionRetryTest extends AbstractRetryTest {
       @Override
       public Object getKey() {
          String result = String.valueOf(r.nextLong());
-         SerializationMarshaller sm = new SerializationMarshaller();
-         return sm.marshallObject(result, true);
+         Marshaller sm = new JBossMarshaller();
+         try {
+            return sm.objectToByteBuffer(result, 64);
+         } catch (IOException e) {
+            throw new RuntimeException(e);
+         }
       }
 
-      static String getStringObject(byte[] bytes) {
-         SerializationMarshaller sm = new SerializationMarshaller();
-         return (String) sm.readObject(bytes);
+      static String getStringObject(byte[] bytes) throws ClassNotFoundException, IOException {
+         Marshaller sm = new JBossMarshaller();
+         return (String) sm.objectFromByteBuffer(bytes);
       }
    }
 

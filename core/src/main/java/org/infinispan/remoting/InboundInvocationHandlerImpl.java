@@ -9,7 +9,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.manager.NamedCacheNotFoundException;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.RequestIgnoredResponse;
 import org.infinispan.remoting.responses.Response;
@@ -33,10 +33,10 @@ import java.io.OutputStream;
 public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
    GlobalComponentRegistry gcr;
    private static final Log log = LogFactory.getLog(InboundInvocationHandlerImpl.class);
-   private Marshaller marshaller;
+   private StreamingMarshaller marshaller;
 
    @Inject
-   public void inject(GlobalComponentRegistry gcr, Marshaller marshaller) {
+   public void inject(GlobalComponentRegistry gcr, StreamingMarshaller marshaller) {
       this.gcr = gcr;
       this.marshaller = marshaller;
    }

@@ -20,7 +20,7 @@ import org.infinispan.loaders.CacheLoaderMetadata;
 import org.infinispan.loaders.modifications.Modification;
 import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -76,7 +76,7 @@ public class JdbmCacheStore extends AbstractCacheStore {
    }
 
    @Override
-   public void init(CacheLoaderConfig clc, Cache cache, Marshaller m) throws CacheLoaderException {
+   public void init(CacheLoaderConfig clc, Cache cache, StreamingMarshaller m) throws CacheLoaderException {
       super.init(clc, cache, m);
       this.config = (JdbmCacheStoreConfig) clc;
    }

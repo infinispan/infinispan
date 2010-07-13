@@ -32,7 +32,7 @@ import org.infinispan.loaders.jdbc.binary.JdbcBinaryCacheStore;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.marshall.StreamingMarshaller;
 
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -72,7 +72,7 @@ public class JdbcMixedCacheStore extends AbstractCacheStore {
    private ConnectionFactory sharedConnectionFactory;
 
    @Override
-   public void init(CacheLoaderConfig config, Cache cache, Marshaller m) throws CacheLoaderException {
+   public void init(CacheLoaderConfig config, Cache cache, StreamingMarshaller m) throws CacheLoaderException {
       super.init(config, cache, m);
       this.config = (JdbcMixedCacheStoreConfig) config;
       binaryCacheStore.init(this.config.getBinaryCacheStoreConfig(), cache, m);

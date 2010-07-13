@@ -1,7 +1,7 @@
 package org.infinispan.loaders;
 
 import org.infinispan.Cache;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.marshall.StreamingMarshaller;
 
 /**
  * An abstract {@link org.infinispan.loaders.CacheLoader} that holds common implementations for some methods
@@ -12,7 +12,7 @@ import org.infinispan.marshall.Marshaller;
  */
 public abstract class AbstractCacheLoader implements CacheLoader {
 
-   protected volatile Marshaller marshaller;
+   protected volatile StreamingMarshaller marshaller;
    protected volatile Cache cache;
 
    /**
@@ -24,7 +24,7 @@ public abstract class AbstractCacheLoader implements CacheLoader {
    }
 
    @Override
-   public void init(CacheLoaderConfig config, Cache<?, ?> cache, Marshaller m) throws CacheLoaderException {
+   public void init(CacheLoaderConfig config, Cache<?, ?> cache, StreamingMarshaller m) throws CacheLoaderException {
       this.marshaller = m;
       if (config == null) throw new IllegalStateException("Null config!!!");
       this.cache = cache;

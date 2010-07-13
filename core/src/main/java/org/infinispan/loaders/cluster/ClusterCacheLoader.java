@@ -11,7 +11,7 @@ import org.infinispan.loaders.AbstractCacheLoader;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderMetadata;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.remoting.responses.ClusteredGetResponseValidityFilter;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -22,7 +22,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -43,7 +42,7 @@ public class ClusterCacheLoader extends AbstractCacheLoader {
    private RpcManager rpcManager;
    private AdvancedCache cache;
 
-   public void init(CacheLoaderConfig config, Cache cache, Marshaller m) {
+   public void init(CacheLoaderConfig config, Cache cache, StreamingMarshaller m) {
       this.config = (ClusterCacheLoaderConfig) config;
       this.cache = cache.getAdvancedCache();
       rpcManager = this.cache.getRpcManager();

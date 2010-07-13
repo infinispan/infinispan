@@ -18,7 +18,7 @@ import org.infinispan.loaders.decorators.ChainingCacheStore;
 import org.infinispan.loaders.decorators.ReadOnlyStore;
 import org.infinispan.loaders.decorators.SingletonStore;
 import org.infinispan.loaders.decorators.SingletonStoreConfig;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.util.ReflectionUtil;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
@@ -33,12 +33,12 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
    Configuration configuration;
    CacheLoaderManagerConfig clmConfig;
    Cache<Object, Object> cache;
-   Marshaller m;
+   StreamingMarshaller m;
    CacheLoader loader;
    private static final Log log = LogFactory.getLog(CacheLoaderManagerImpl.class);
 
    @Inject
-   public void inject(Cache cache, Marshaller marshaller, Configuration configuration) {
+   public void inject(Cache cache, StreamingMarshaller marshaller, Configuration configuration) {
       this.cache = cache;
       this.m = marshaller;
       this.configuration = configuration;

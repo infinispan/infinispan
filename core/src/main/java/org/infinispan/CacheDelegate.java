@@ -56,7 +56,7 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.MarshalledValue;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.responses.ResponseGenerator;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -104,7 +104,7 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
    protected ComponentRegistry componentRegistry;
    protected TransactionManager transactionManager;
    protected RpcManager rpcManager;
-   protected Marshaller marshaller;
+   protected StreamingMarshaller marshaller;
    private String name;
    private EvictionManager evictionManager;
    private DataContainer dataContainer;
@@ -132,7 +132,7 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
                                   TransactionManager transactionManager,
                                   BatchContainer batchContainer,
                                   RpcManager rpcManager, DataContainer dataContainer,
-                                  Marshaller marshaller, ResponseGenerator responseGenerator,
+                                  StreamingMarshaller marshaller, ResponseGenerator responseGenerator,
                                   DistributionManager distributionManager,
                                   EmbeddedCacheManager cacheManager, StateTransferManager stateTransferManager) {
       this.commandsFactory = commandsFactory;

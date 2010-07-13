@@ -8,7 +8,7 @@ import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderMetadata;
 import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.loaders.bucket.BucketBasedCacheStore;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -41,7 +41,7 @@ public class FileCacheStore extends BucketBasedCacheStore {
    }
 
    @Override
-   public void init(CacheLoaderConfig config, Cache cache, Marshaller m) throws CacheLoaderException {
+   public void init(CacheLoaderConfig config, Cache cache, StreamingMarshaller m) throws CacheLoaderException {
       super.init(config, cache, m);
       this.config = (FileCacheStoreConfig) config;
    }

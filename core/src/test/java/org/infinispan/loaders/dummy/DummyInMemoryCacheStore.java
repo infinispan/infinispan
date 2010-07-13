@@ -6,15 +6,13 @@ import org.infinispan.loaders.AbstractCacheStore;
 import org.infinispan.loaders.AbstractCacheStoreConfig;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.CacheLoaderMetadata;
-import org.infinispan.marshall.Marshaller;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.AbstractSet;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -77,7 +75,7 @@ public class DummyInMemoryCacheStore extends AbstractCacheStore {
       }
    }
 
-   public void init(CacheLoaderConfig config, Cache cache, Marshaller m) throws CacheLoaderException {
+   public void init(CacheLoaderConfig config, Cache cache, StreamingMarshaller m) throws CacheLoaderException {
       super.init(config, cache, m);
       this.config = (Cfg) config;
       if (marshaller == null) marshaller = new TestObjectStreamMarshaller();

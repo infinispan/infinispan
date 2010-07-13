@@ -113,7 +113,7 @@ public class ModuleProperties extends Properties {
       for (Map.Entry<String, ModuleProperties> m : p.entrySet()) {
          try {
             String lifecycleClassName = m.getValue().getLifecycleClassName();
-            Class<?> loadClass = Util.loadClass(lifecycleClassName);
+            Class<?> loadClass = Util.loadClassStrict(lifecycleClassName);
             Object proxy = Proxies.newCatchThrowableProxy((ModuleLifecycle) loadClass.newInstance());
             ModuleLifecycle ml = (ModuleLifecycle) proxy;
             lifecycles.add(ml);

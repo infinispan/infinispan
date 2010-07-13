@@ -8,10 +8,7 @@ import org.infinispan.io.UnclosableObjectOutputStream;
 import org.infinispan.loaders.BaseCacheStoreTest;
 import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheStore;
-import org.infinispan.marshall.Marshaller;
-import org.jclouds.blobstore.BlobStoreContext;
-import org.jclouds.blobstore.BlobStoreContextBuilder;
-import org.jclouds.blobstore.TransientBlobStoreContextBuilder;
+import org.infinispan.marshall.StreamingMarshaller;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -99,7 +96,7 @@ public class CloudCacheStoreTest extends BaseCacheStoreTest {
       cs.store(InternalEntryFactory.create("k2", "v2", -1, -1));
       cs.store(InternalEntryFactory.create("k3", "v3", -1, -1));
 
-      Marshaller marshaller = getMarshaller();
+      StreamingMarshaller marshaller = getMarshaller();
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       ObjectOutput oo = marshaller.startObjectOutput(out, false);
       try {
@@ -169,7 +166,7 @@ public class CloudCacheStoreTest extends BaseCacheStoreTest {
       cs.store(InternalEntryFactory.create("k2", "v2", -1, -1));
       cs.store(InternalEntryFactory.create("k3", "v3", -1, -1));
 
-      Marshaller marshaller = getMarshaller();
+      StreamingMarshaller marshaller = getMarshaller();
       ByteArrayOutputStream out = new ByteArrayOutputStream();
       byte[] dummyStartBytes = {1, 2, 3, 4, 5, 6, 7, 8};
       byte[] dummyEndBytes = {8, 7, 6, 5, 4, 3, 2, 1};

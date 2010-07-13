@@ -26,7 +26,6 @@ import org.infinispan.CacheException;
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.Marshallable;
-import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.VersionAwareMarshaller;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.transaction.xa.GlobalTransactionFactory;
@@ -39,7 +38,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 /**
- * Test the behaviour of JBoss Marshalling based {@link Marshaller} implementation 
+ * Test the behaviour of JBoss Marshalling based {@link org.infinispan.marshall.StreamingMarshaller} implementation
  * which is {@link JBossMarshaller}}. This class should contain methods that exercise
  * logic in this particular implementation.
  */
