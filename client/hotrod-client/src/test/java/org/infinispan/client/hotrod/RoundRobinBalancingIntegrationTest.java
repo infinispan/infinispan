@@ -1,7 +1,6 @@
 package org.infinispan.client.hotrod;
 
 import org.infinispan.Cache;
-import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -75,7 +74,7 @@ public class RoundRobinBalancingIntegrationTest extends MultipleCacheManagersTes
       hotRodServer4.stop();
    }
 
-   public void testRoundRubinLoadBalancing() {
+   public void testRoundRobinLoadBalancing() {
       remoteCache.put("k1", "v1");
       remoteCache.put("k2", "v2");
       remoteCache.put("k3", "v3");
@@ -100,7 +99,7 @@ public class RoundRobinBalancingIntegrationTest extends MultipleCacheManagersTes
       assertEquals(3, c3.size());
    }
 
-   @Test(dependsOnMethods = "testRoundRubinLoadBalancing")
+   @Test(dependsOnMethods = "testRoundRobinLoadBalancing")
    public void testAddNewHotrodServer() {
       c4 = TestCacheManagerFactory.createLocalCacheManager().getCache();
       hotRodServer4 = TestHelper.startHotRodServer((EmbeddedCacheManager) c4.getCacheManager());

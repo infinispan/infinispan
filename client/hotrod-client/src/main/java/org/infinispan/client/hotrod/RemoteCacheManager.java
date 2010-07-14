@@ -12,7 +12,7 @@ import org.infinispan.config.ConfigurationException;
 import org.infinispan.executors.ExecutorFactory;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.marshall.Marshaller;
-import org.infinispan.marshall.jboss.JBossMarshaller;
+import org.infinispan.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.util.TypedProperties;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
@@ -315,7 +315,7 @@ public class RemoteCacheManager implements CacheContainer {
       if (marshaller == null) {
          String marshaller = props.getProperty("marshaller");
          if (marshaller == null) {
-            marshaller = JBossMarshaller.class.getName();
+            marshaller = GenericJBossMarshaller.class.getName();
             log.info("'marshaller' not specified, using " + marshaller);
          }
          setMarshaller((Marshaller) getInstance(marshaller));
