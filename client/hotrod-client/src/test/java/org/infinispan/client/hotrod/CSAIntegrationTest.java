@@ -8,6 +8,8 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheContainer;
+import org.infinispan.marshall.Marshaller;
+import org.infinispan.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.ByteArrayKey;
@@ -15,6 +17,8 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -44,6 +48,18 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
    private TcpTransportFactory tcpConnectionFactory;
 
    private static Log log = LogFactory.getLog(CSAIntegrationTest.class);
+
+   private Marshaller m;
+
+   @BeforeTest
+   public void createMarshaller() {
+      m = new GenericJBossMarshaller();
+   }
+
+   @AfterTest   
+   public void destroyMarshaller() {
+      m = null;
+   }
 
    @AfterMethod
    @Override
@@ -140,7 +156,7 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
          keys.add(key);
          String keyStr = new String(key);
          remoteCache.put(keyStr, "value");
-         byte[] keyBytes = toBytes(keyStr);
+         byte[] keyBytes = m.objectToByteBuffer(keyStr);
          TcpTransport transport = (TcpTransport) tcpConnectionFactory.getTransport(keyBytes);
          assertCacheContainsKey(transport.getServerAddress(), keyBytes);
          tcpConnectionFactory.releaseTransport(transport);
@@ -152,7 +168,7 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
          resetStats();
          String keyStr = new String(key);
          assert remoteCache.get(keyStr).equals("value");
-         byte[] keyBytes = toBytes(keyStr);
+         byte[] keyBytes = m.objectToByteBuffer(keyStr);
          TcpTransport transport = (TcpTransport) tcpConnectionFactory.getTransport(keyBytes);
          assertOnlyServerHit(transport.getServerAddress());
          tcpConnectionFactory.releaseTransport(transport);
@@ -164,13 +180,6 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
       Cache<Object, Object> cache = cacheContainer.getCache();
       DataContainer dataContainer = cache.getAdvancedCache().getDataContainer();
       assert dataContainer.keySet().contains(new ByteArrayKey(keyBytes));
-   }
-
-   private byte[] toBytes(String keyStr) throws IOException {
-      ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-      ObjectOutputStream oos = new ObjectOutputStream(byteArrayOutputStream);
-      oos.writeObject(keyStr);
-      return byteArrayOutputStream.toByteArray();
    }
 
    private byte[] generateKey(int i) {

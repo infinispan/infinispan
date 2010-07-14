@@ -125,15 +125,5 @@ public interface StreamingMarshaller extends Marshaller {
     */
    Object objectFromObjectStream(ObjectInput in) throws IOException, ClassNotFoundException;
 
-   /**
-    * A method that returns an instance of {@link org.infinispan.io.ByteBuffer}, which allows direct access to the byte
-    * array with minimal array copying
-    *
-    * @param o object to marshall
-    * @return a ByteBuffer
-    * @throws Exception
-    */
-   ByteBuffer objectToBuffer(Object o) throws IOException;
-
    Object objectFromInputStream(InputStream is) throws IOException, ClassNotFoundException;
 }
