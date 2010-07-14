@@ -10,10 +10,6 @@
       <relativePath>../../parent/pom.xml</relativePath>
    </parent>
 
-   <properties>
-      <version.netty>3.2.1.Final</version.netty>
-   </properties>
-
    <artifactId>infinispan-client-hotrod</artifactId>
    <name>Infinispan Client Hotrod Module</name>
    <description>Infinispan client hotrod module</description>
@@ -47,13 +43,6 @@
          <version>${project.version}</version>
          <type>test-jar</type>
          <scope>test</scope>
-      </dependency>
-
-      <dependency>
-         <groupId>org.jboss.netty</groupId>
-         <artifactId>netty</artifactId>
-         <version>${version.netty}</version>
-         <scope>compile</scope>
       </dependency>
 
       <dependency>

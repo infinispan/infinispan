@@ -2,19 +2,15 @@ package org.infinispan.client.hotrod;
 
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory;
-import org.infinispan.client.hotrod.impl.protocol.HotRodOperations;
-import org.infinispan.client.hotrod.impl.protocol.HotRodOperationsImpl;
+import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
-
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
-import org.infinispan.config.ConfigurationException;
 import org.infinispan.executors.ExecutorFactory;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.util.TypedProperties;
-import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -30,7 +26,6 @@ import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
-
 import static org.infinispan.util.Util.getInstance;
 
 /**
@@ -144,7 +139,12 @@ public class RemoteCacheManager implements CacheContainer {
    public static final String OVERRIDE_HOTROD_SERVERS = "infinispan.hotrod.client.servers";
 
    private static final String KEY_SIZE = "marshaller.default-array-size.key";
+
    private static final String VALUE_SIZE = "marshaller.default-array-size.value";
+
+   private static final int DEFAULT_KEY_SIZE = 64;
+   private static final int DEFAULT_VALUE_SIZE = 512;
+
 
    private TypedProperties props;
    private TransportFactory transportFactory;
@@ -154,8 +154,6 @@ public class RemoteCacheManager implements CacheContainer {
    private ExecutorService asyncExecutorService;
    private final Map<String, RemoteCacheImpl> cacheName2RemoteCache = new HashMap<String, RemoteCacheImpl>();
    private AtomicInteger topologyId = new AtomicInteger();
-   private static final int DEFAULT_KEY_SIZE = 64;
-   private static final int DEFAULT_VALUE_SIZE = 512;
 
 
    /**
@@ -175,10 +173,10 @@ public class RemoteCacheManager implements CacheContainer {
    }
 
    /**
-    * Same as {@link org.infinispan.client.hotrod.RemoteCacheManager#RemoteCacheManager(HotRodMarshaller, java.util.Properties, boolean)} with start = true.
+    * Same as {@link org.infinispan.client.hotrod.RemoteCacheManager#RemoteCacheManager(Marshaller, java.util.Properties, boolean)} with start = true.
     */
-   public RemoteCacheManager(Marshaller marshaller, Properties props) {
-      this(marshaller, props, false);
+   public RemoteCacheManager(Marshaller hotRodMarshaller, Properties props) {
+      this(hotRodMarshaller, props, false);
    }
 
    /**
@@ -325,8 +323,7 @@ public class RemoteCacheManager implements CacheContainer {
       if (props.contains("asyn-executor-factory")) {
          asyncExecutorClass = props.getProperty("asyn-executor-factory");
       }
-      ExecutorFactory executorFactory = null;
-      executorFactory = (ExecutorFactory) getInstance(asyncExecutorClass);
+      ExecutorFactory executorFactory = (ExecutorFactory) getInstance(asyncExecutorClass);
       asyncExecutorService = executorFactory.getExecutor(props);
 
 
@@ -343,7 +340,9 @@ public class RemoteCacheManager implements CacheContainer {
 
    @Override
    public void stop() {
-      transportFactory.destroy();
+      if (isStarted()) {
+         transportFactory.destroy();
+      }
       started = false;
    }
 
@@ -363,10 +362,8 @@ public class RemoteCacheManager implements CacheContainer {
    private <K, V> RemoteCache<K, V> createRemoteCache(String cacheName, boolean forceReturnValue) {
       synchronized (cacheName2RemoteCache) {
          if (!cacheName2RemoteCache.containsKey(cacheName)) {
-            RemoteCacheImpl<K, V> result = new RemoteCacheImpl<K, V>(this, cacheName, forceReturnValue);
-            if (isStarted()) {
-               startRemoteCache(result);
-            }
+            RemoteCacheImpl<K, V> result = new RemoteCacheImpl<K, V>(this, cacheName);
+            startRemoteCache(result);
             cacheName2RemoteCache.put(cacheName, result);
             return result;
          } else {
@@ -376,9 +373,8 @@ public class RemoteCacheManager implements CacheContainer {
    }
 
    private <K, V> void startRemoteCache(RemoteCacheImpl<K, V> result) {
-      HotRodOperations hotRodOperations = new HotRodOperationsImpl(result.getName(), transportFactory, topologyId);
-      result.init(hotRodOperations, marshaller, asyncExecutorService,
-              props.getIntProperty(KEY_SIZE, DEFAULT_KEY_SIZE),
+      OperationsFactory operationsFactory = new OperationsFactory(transportFactory, result.getName(), topologyId, forceReturnValueDefault);
+      result.init(marshaller, asyncExecutorService, operationsFactory, props.getIntProperty(KEY_SIZE, DEFAULT_KEY_SIZE),
               props.getIntProperty(VALUE_SIZE, DEFAULT_VALUE_SIZE));
    }
 

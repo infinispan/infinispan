@@ -31,8 +31,12 @@ public class RemoteCacheManagerTest extends SingleCacheManagerTest {
 
    @AfterTest(alwaysRun = true)
    public void release() {
-      if (cacheManager != null) cacheManager.stop();
-      if (hotrodServer != null) hotrodServer.stop();
+      try {
+         if (cacheManager != null) cacheManager.stop();
+         if (hotrodServer != null) hotrodServer.stop();
+      } catch (Exception e) {
+         e.printStackTrace();
+      }
       if (prevValue != null) {
          System.setProperty(RemoteCacheManager.OVERRIDE_HOTROD_SERVERS, prevValue);
       } else {

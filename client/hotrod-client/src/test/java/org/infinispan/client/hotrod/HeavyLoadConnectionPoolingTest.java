@@ -76,7 +76,7 @@ public class HeavyLoadConnectionPoolingTest extends SingleCacheManagerTest {
       }
 
       for (WorkerThread wt: workers) {
-         wt.interrupt();
+         wt.stopWorker();
          wt.waitToFinish();
       }
       //now wait for the idle thread to wake up and clean them

@@ -41,11 +41,19 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
    protected void clearContent() throws Throwable {
    }
 
-   @AfterClass
+   @AfterClass (alwaysRun = true)
    @Override
    protected void destroy() {
+      try {
       hotRodServer1.stop();
+      } catch (Exception e) {
+         e.printStackTrace();
+      }
+      try {
       hotRodServer2.stop();
+      } catch (Exception e) {
+         e.printStackTrace();
+      }
       super.destroy();
    }
 
@@ -112,6 +120,7 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
    public void testDropServer() {
       hotRodServer3.stop();
       manager(2).stop();
+      log.trace("Just stopped server 2");
 
       waitForClusterToForm(2);
 
@@ -138,7 +147,7 @@ public class ReplTopologyChangeTest extends MultipleCacheManagersTest {
    protected void waitForClusterToForm(int memberCount) {
       TestingUtil.blockUntilViewReceived(manager(0).getCache(), memberCount, 30000);
       for (int i = 0; i < memberCount; i++) {
-         TestingUtil.blockUntilCacheStatusAchieved(manager(i).getCache(), ComponentStatus.RUNNING, 10000);
+         TestingUtil.blockUntilCacheStatusAchieved(manager(i).getCache(), ComponentStatus.RUNNING, 30000);
       }
    }
 }

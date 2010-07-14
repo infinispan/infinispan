@@ -1,9 +1,11 @@
-package org.infinispan.client.hotrod.impl.protocol;
+package org.infinispan.client.hotrod.impl.operations;
 
+import net.jcip.annotations.Immutable;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.HotRodTimeoutException;
 import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
+import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -14,19 +16,35 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Helper class for factorizing common parts of read/write operations.
+ * Generic hotrod operation. It is aware of {@link org.infinispan.client.hotrod.Flag}s and it is targeted against a
+ * cache name. This base class encapsulates the knowledge of writing and reading a header, as described in the
+ * <a href="http://community.jboss.org/wiki/HotRodProtocol">Hot Rod protocol specification</a>
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public class HotRodOperationsHelper {
-   static Log log = LogFactory.getLog(HotRodOperationsHelper.class);
+@Immutable
+public abstract class HotRodOperation implements HotRodConstants {
+
    static final AtomicLong MSG_ID = new AtomicLong();
-   final static byte CLIENT_INTELLIGENCE = HotRodConstants.CLIENT_INTELLIGENCE_HASH_DISTRIBUTION_AWARE;
 
-   public static final byte[] DEFAULT_CACHE_NAME_BYTES = new byte[]{};
+   private static Log log = LogFactory.getLog(HotRodOperation.class);
 
-   public static long writeHeader(Transport transport, short operationCode, byte[] cacheName, AtomicInteger topologyId, Flag... flags) {
+   protected final Flag[] flags;
+
+   protected final byte[] cacheName;
+
+   protected final AtomicInteger topologyId;
+
+   protected HotRodOperation(Flag[] flags, byte[] cacheName, AtomicInteger topologyId) {
+      this.flags = flags;
+      this.cacheName = cacheName;
+      this.topologyId = topologyId;
+   }
+
+   public abstract Object execute();
+
+   protected final long writeHeader(Transport transport, short operationCode) {
       transport.writeByte(HotRodConstants.REQUEST_MAGIC);
       long messageId = MSG_ID.incrementAndGet();
       transport.writeVLong(messageId);
@@ -41,7 +59,7 @@ public class HotRodOperationsHelper {
          }
       }
       transport.writeVInt(flagInt);
-      transport.writeByte(CLIENT_INTELLIGENCE);
+      transport.writeByte(CLIENT_INTELLIGENCE_HASH_DISTRIBUTION_AWARE);
       transport.writeVInt(topologyId.get());
       if (log.isTraceEnabled()) {
          log.trace("wrote header for message " + messageId + ". Operation code: " + operationCode + ". Flags: " + Integer.toHexString(flagInt));
@@ -52,7 +70,7 @@ public class HotRodOperationsHelper {
    /**
     * Magic	| Message Id | Op code | Status | Topology Change Marker
     */
-   public static short readHeaderAndValidate(Transport transport, long messageId, short opRespCode, AtomicInteger topologyId) {
+   protected short readHeaderAndValidate(Transport transport, long messageId, short opRespCode) {
       short magic = transport.readByte();
       if (magic != HotRodConstants.RESPONSE_MAGIC) {
          String message = "Invalid magic number. Expected " + Integer.toHexString(HotRodConstants.RESPONSE_MAGIC) + " and received " + Integer.toHexString(magic);
@@ -88,7 +106,41 @@ public class HotRodOperationsHelper {
       return status;
    }
 
-   static void readNewTopologyAndHash(Transport transport, AtomicInteger topologyId) {
+   protected void checkForErrorsInResponseStatus(short status, long messageId, Transport transport) {
+      if (log.isTraceEnabled()) {
+         log.trace("Received operation status: " + status);
+      }
+      switch ((int) status) {
+         case HotRodConstants.INVALID_MAGIC_OR_MESSAGE_ID_STATUS:
+         case HotRodConstants.REQUEST_PARSING_ERROR_STATUS:
+         case HotRodConstants.UNKNOWN_COMMAND_STATUS:
+         case HotRodConstants.SERVER_ERROR_STATUS:
+         case HotRodConstants.UNKNOWN_VERSION_STATUS: {
+            String msgFromServer = transport.readString();
+            if (log.isWarnEnabled()) {
+               log.warn("Error status received from the server:" + msgFromServer + " for message id " + messageId);
+            }
+            throw new HotRodClientException(msgFromServer, messageId, status);
+         }
+         case HotRodConstants.COMMAND_TIMEOUT_STATUS: {
+            if (log.isTraceEnabled()) {
+               log.trace("timeout message received from the server");
+            }
+            throw new HotRodTimeoutException();
+         }
+         case HotRodConstants.NO_ERROR_STATUS:
+         case HotRodConstants.KEY_DOES_NOT_EXIST_STATUS:
+         case HotRodConstants.NOT_PUT_REMOVED_REPLACED_STATUS: {
+            //don't do anything, these are correct responses
+            break;
+         }
+         default: {
+            throw new IllegalStateException("Unknown status: " + Integer.toHexString(status));
+         }
+      }
+   }
+
+   private void readNewTopologyAndHash(Transport transport, AtomicInteger topologyId) {
       int newTopologyId = transport.readVInt();
       topologyId.set(newTopologyId);
       int numKeyOwners = transport.readUnsignedShort();
@@ -124,60 +176,6 @@ public class HotRodOperationsHelper {
             log.trace("Not using a consistent hash function (hash function version == 0).");
       } else {
          transport.getTransportFactory().updateHashFunction(servers2HashCode, numKeyOwners, hashFunctionVersion, hashSpace);
-      }
-   }
-
-   static void checkForErrorsInResponseStatus(short status, long messageId, Transport transport) {
-      if (log.isTraceEnabled()) {
-         log.trace("Received operation status: " + status);
-      }
-      switch ((int) status) {
-         case HotRodConstants.INVALID_MAGIC_OR_MESSAGE_ID_STATUS:
-         case HotRodConstants.REQUEST_PARSING_ERROR_STATUS:
-         case HotRodConstants.UNKNOWN_COMMAND_STATUS:
-         case HotRodConstants.SERVER_ERROR_STATUS:
-         case HotRodConstants.UNKNOWN_VERSION_STATUS: {
-            String msgFromServer = transport.readString();
-            if (log.isWarnEnabled()) {
-               log.warn("Error status received from the server:" + msgFromServer + " for message id " + messageId);
-            }
-            throw new HotRodClientException(msgFromServer, messageId, status);
-         }
-         case HotRodConstants.COMMAND_TIMEOUT_STATUS: {
-            if (log.isTraceEnabled()) {
-               log.trace("timeout message received from the server");
-            }
-            throw new HotRodTimeoutException();
-         }
-         case HotRodConstants.NO_ERROR_STATUS:
-         case HotRodConstants.KEY_DOES_NOT_EXIST_STATUS:
-         case HotRodConstants.NOT_PUT_REMOVED_REPLACED_STATUS: {
-            //don't do anything, these are correct responses
-            break;
-         }
-         default: {
-            throw new IllegalStateException("Unknown status: " + Integer.toHexString(status));
-         }
-      }
-   }
-
-   public static boolean ping(Transport transport, AtomicInteger topologyId) {
-      try {
-         long messageId = HotRodOperationsHelper.writeHeader(transport, HotRodConstants.PING_REQUEST, DEFAULT_CACHE_NAME_BYTES, topologyId);
-         short respStatus = HotRodOperationsHelper.readHeaderAndValidate(transport, messageId, HotRodConstants.PING_RESPONSE, topologyId);
-         if (respStatus == HotRodConstants.NO_ERROR_STATUS) {
-            if (log.isTraceEnabled())
-               log.trace("Successfully validated transport: " + transport);
-            return true;
-         } else {
-            if (log.isTraceEnabled())
-               log.trace("Unknown response status: " + respStatus);
-            return false;
-         }
-      } catch (Exception e) {
-         if (log.isTraceEnabled())
-            log.trace("Failed to validate transport: " + transport, e);
-         return false;
       }
    }
 }

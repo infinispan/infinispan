@@ -30,6 +30,7 @@ public class WorkerThread extends Thread {
    volatile String key;
    volatile String value;
    volatile boolean finished = false;
+   volatile boolean stopWorker = false;
 
    public WorkerThread(RemoteCache remoteCache) {
       super("WorkerThread-" + WORKER_INDEX.getAndIncrement());
@@ -70,7 +71,7 @@ public class WorkerThread extends Thread {
 
    private void stress_() {
       Random rnd = new Random();
-      while (!isInterrupted()) {
+      while (!stopWorker) {
          remoteCache.put(rnd.nextLong(), rnd.nextLong());
          try {
             Thread.sleep(50);
@@ -151,5 +152,9 @@ public class WorkerThread extends Thread {
             Thread.interrupted();
          }
       }
+   }
+
+   public void stopWorker() {
+      this.stopWorker = true;
    }
 }
