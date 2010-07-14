@@ -1,7 +1,7 @@
 package org.infinispan.client.hotrod.impl.transport.tcp;
 
 import org.apache.commons.pool.BaseKeyedPoolableObjectFactory;
-import org.infinispan.client.hotrod.impl.protocol.HotRodOperationsHelper;
+import org.infinispan.client.hotrod.impl.operations.PingOperation;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -37,12 +37,17 @@ public class TransportObjectFactory extends BaseKeyedPoolableObjectFactory {
          log.trace("Executing first ping!");
          firstPingExecuted = true;
          try {
-            HotRodOperationsHelper.ping(tcpTransport, topologyId);
+            ping(tcpTransport, topologyId);
          } catch (Exception e) {
             log.trace("Ignoring ping request failure during ping on startup: " + e.getMessage());
          }
       }
       return tcpTransport;
+   }
+
+   private boolean ping(TcpTransport tcpTransport, AtomicInteger topologyId) {
+      PingOperation po = new PingOperation(null, topologyId, tcpTransport);
+      return (Boolean)po.execute();
    }
 
    /**
@@ -54,7 +59,7 @@ public class TransportObjectFactory extends BaseKeyedPoolableObjectFactory {
       if (log.isTraceEnabled()) {
          log.trace("About to validate(ping) connection to server " + key + ". TcpTransport is " + transport);
       }
-      return HotRodOperationsHelper.ping(transport, topologyId);
+      return ping(transport, topologyId);
    }
 
    @Override

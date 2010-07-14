@@ -28,7 +28,7 @@ public abstract class AbstractTransport implements Transport {
    @Override
    public String readString() {
       byte[] strContent = readArray();
-      String readString = new String(strContent, HotRodConstants.STRING_CHARSET);
+      String readString = new String(strContent, HotRodConstants.HOTROD_STRING_CHARSET);
       if (log.isTraceEnabled()) {
          log.trace("Read string is: " + readString);
       }
@@ -80,7 +80,7 @@ public abstract class AbstractTransport implements Transport {
    @Override
    public void writeString(String string) {
       if (!string.isEmpty()) {
-         writeArray(string.getBytes(HotRodConstants.STRING_CHARSET));
+         writeArray(string.getBytes(HotRodConstants.HOTROD_STRING_CHARSET));
       } else {
          writeVInt(0);
       }

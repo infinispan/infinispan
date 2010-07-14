@@ -56,7 +56,6 @@ import java.util.concurrent.TimeUnit;
  */
 public interface RemoteCache<K, V> extends Cache<K, V> {
 
-
    /**
     * Removes the given entry only if its version matches the supplied version. A typical use case looks like this:
     * <pre>
