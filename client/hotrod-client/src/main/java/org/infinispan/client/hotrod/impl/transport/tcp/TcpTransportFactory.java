@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.impl.transport.tcp;
 import net.jcip.annotations.ThreadSafe;
 import org.apache.commons.pool.impl.GenericKeyedObjectPool;
 import org.infinispan.client.hotrod.exceptions.TransportException;
+import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashFactory;
 import org.infinispan.client.hotrod.impl.transport.Transport;
@@ -41,17 +42,14 @@ public class TcpTransportFactory implements TransportFactory {
    private final ConsistentHashFactory hashFactory = new ConsistentHashFactory();
 
    @Override
-   public void start(Properties props, Collection<InetSocketAddress> staticConfiguredServers, AtomicInteger topologyId) {
-      hashFactory.init(props);
-      String pingOnStartup = props.getProperty("ping-on-startup");
+   public void start(ConfigurationProperties cfg, Collection<InetSocketAddress> staticConfiguredServers, AtomicInteger topologyId) {
+      hashFactory.init(cfg);
+      boolean pingOnStartup = cfg.getPingOnStartup();
       servers = staticConfiguredServers;
-      String balancerClass = props.getProperty("request-balancing-strategy", RoundRobinBalancingStrategy.class.getName());
+      String balancerClass = cfg.getRequestBalancingStrategy();
       balancer = (RequestBalancingStrategy) Util.getInstance(balancerClass);
-      tcpNoDelay = Boolean.valueOf(props.getProperty("tcp-no-delay", "true"));
-      if (log.isDebugEnabled()) log.debug("TCP no delay flag value is: {0}", tcpNoDelay);
-      boolean skipPingOnStartup = pingOnStartup != null && !Boolean.valueOf(pingOnStartup);
-      log.trace("'ping-on-startup' set to " + !skipPingOnStartup);
-      PropsKeyedObjectPoolFactory poolFactory = new PropsKeyedObjectPoolFactory(new TransportObjectFactory(this, topologyId, !skipPingOnStartup), props);
+      tcpNoDelay = cfg.getTcpNoDelay();
+      PropsKeyedObjectPoolFactory poolFactory = new PropsKeyedObjectPoolFactory(new TransportObjectFactory(this, topologyId, pingOnStartup), cfg.getProperties());
       createAndPreparePool(staticConfiguredServers, poolFactory);
       balancer.setServers(servers);
    }

@@ -78,38 +78,38 @@ public class WebSocketServer extends AbstractProtocolServer {
    }
 
    @Override
-   public void start(Properties properties, EmbeddedCacheManager cacheManager) {
-      if (properties == null)
-         properties = new Properties();
+   public void start(Properties p, EmbeddedCacheManager cacheManager) {
+      Properties properties = p == null ? new Properties() : p;
+      super.start(properties, cacheManager, 8181);
+   }
 
-      String host = properties.getProperty("infinispan.server.host", "127.0.0.1");
-      int port = Integer.parseInt(properties.getProperty("infinispan.server.port", "8181"));
-      int masterThreads = Integer.parseInt(properties.getProperty("infinispan.server.master_threads"));
-      int workerThreads = Integer.parseInt(properties.getProperty("infinispan.server.worker_threads"));
-
-      InetSocketAddress address = new InetSocketAddress(host, port);
-
+   @Override
+   public void startTransport(InetSocketAddress address, int idleTimeout, boolean tcpNoDelay, int sendBufSize, int recvBufSize) {
       Executor masterExecutor =
-         masterThreads == 0 ?
+         masterThreads() == 0 ?
             Executors.newCachedThreadPool() :
-            Executors.newFixedThreadPool(masterThreads);
+            Executors.newFixedThreadPool(masterThreads());
       Executor workerExecutor =
-         workerThreads == 0 ?
+         workerThreads() == 0 ?
             Executors.newCachedThreadPool():
-            Executors.newFixedThreadPool(workerThreads);
+            Executors.newFixedThreadPool(workerThreads());
 
       NioServerSocketChannelFactory factory =
-         workerThreads == 0 ?
+         workerThreads() == 0 ?
             new NioServerSocketChannelFactory(masterExecutor, workerExecutor) :
-            new NioServerSocketChannelFactory(masterExecutor, workerExecutor, workerThreads);
+            new NioServerSocketChannelFactory(masterExecutor, workerExecutor, workerThreads());
 
       // Configure the server.
       ServerBootstrap bootstrap = new ServerBootstrap(factory);
 
       // Set up the event pipeline factory.
-      bootstrap.setPipelineFactory(new WebSocketServerPipelineFactory(cacheManager));
+      bootstrap.setPipelineFactory(new WebSocketServerPipelineFactory(cacheManager()));
 
       // Bind and start to accept incoming connections.
+      bootstrap.setOption("child.tcpNoDelay", tcpNoDelay);
+      if (sendBufSize > 0) bootstrap.setOption("child.sendBufferSize", sendBufSize);
+      if (recvBufSize > 0) bootstrap.setOption("receiveBufferSize", recvBufSize);
+
       bootstrap.bind(address);
    }
 

@@ -89,7 +89,6 @@ public class JdbcMixedCacheStoreTest {
    @AfterTest
    public void destroyStore() throws CacheLoaderException {
       cacheStore.stop();
-      UnitTestDatabaseManager.shutdownInMemoryDatabase(cfc);
    }
 
    public void testMixedStore() throws Exception {

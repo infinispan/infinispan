@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod;
 
+import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashFactory;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV1;
@@ -19,9 +20,9 @@ public class ConsistentHashFactoryTest {
    public void testPropertyCorrectlyRead() {
       Properties propos = new Properties();
       String value = "org.infinispan.client.hotrod.impl.consistenthash.SomeCustomConsitentHashV1";
-      propos.put("consistent-hash.1", value);
+      propos.put(ConfigurationProperties.HASH_FUNCTION_PREFIX + ".1", value);
       ConsistentHashFactory chf = new ConsistentHashFactory();
-      chf.init(propos);
+      chf.init(new ConfigurationProperties(propos));
       String s = chf.getVersion2ConsistentHash().get(1);
       assert s != null;
       assert value.equals(s);

@@ -29,7 +29,7 @@ public class RemoteCacheStoreFunctionalTest extends BaseCacheStoreFunctionalTest
 
       remoteCacheStoreConfig.setRemoteCacheName(CacheContainer.DEFAULT_CACHE_NAME);
       Properties properties = new Properties();
-      properties.put("hotrod-servers", "localhost:"+ hrServer.getPort());
+      properties.put("infinispan.client.hotrod.server_list", "localhost:"+ hrServer.getPort());
       remoteCacheStoreConfig.setHotRodClientProperties(properties);
 
       return remoteCacheStoreConfig;

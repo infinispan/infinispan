@@ -211,8 +211,8 @@
                <forkMode>none</forkMode>
                <systemProperties>
                   <property>
-                     <name>protocol.stack</name>
-                     <value>${protocol.stack}</value>
+                     <name>infinispan.test.jgroups.protocol</name>
+                     <value>${infinispan.test.jgroups.protocol}</value>
                   </property>
                   <property>
                      <name>bind.address</name>
@@ -223,8 +223,8 @@
                      <value>true</value>
                   </property>
                   <property>
-                     <name>infinispan.marshaller.class</name>
-                     <value>${marshaller.class}</value>
+                     <name>infinispan.test.marshaller.class</name>
+                     <value>${infinispan.test.marshaller.class}</value>
                   </property>
                </systemProperties>
                <trimStackTrace>false</trimStackTrace>
@@ -377,14 +377,14 @@
          </activation>
          <properties>
             <defaultTestGroup>functional,unit</defaultTestGroup>
-            <protocol.stack>tcp</protocol.stack>
+            <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
          </properties>
       </profile>
       <profile>
          <id>test-functional</id>
          <properties>
             <defaultTestGroup>functional</defaultTestGroup>
-            <protocol.stack>tcp</protocol.stack>
+            <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
          </properties>
       </profile>
       <profile>
@@ -409,7 +409,7 @@
          <id>debug-tests</id>
          <properties>
             <testNGListener>org.infinispan.test.fwk.DebuggingUnitTestNGListener</testNGListener>
-            <protocol.stack>tcp</protocol.stack>
+            <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
          </properties>
       </profile>
    </profiles>

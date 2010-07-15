@@ -19,13 +19,11 @@ public class RemoteCacheManagerTest extends SingleCacheManagerTest {
 
    EmbeddedCacheManager cacheManager = null;
    HotRodServer hotrodServer = null;
-   private String prevValue;
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       cacheManager = TestCacheManagerFactory.createLocalCacheManager();
       hotrodServer = TestHelper.startHotRodServer(cacheManager);
-      prevValue = System.setProperty(RemoteCacheManager.OVERRIDE_HOTROD_SERVERS, "localhost:" + hotrodServer.getPort());
       return cacheManager;
    }
 
@@ -36,11 +34,6 @@ public class RemoteCacheManagerTest extends SingleCacheManagerTest {
          if (hotrodServer != null) hotrodServer.stop();
       } catch (Exception e) {
          e.printStackTrace();
-      }
-      if (prevValue != null) {
-         System.setProperty(RemoteCacheManager.OVERRIDE_HOTROD_SERVERS, prevValue);
-      } else {
-         System.getProperties().remove(RemoteCacheManager.OVERRIDE_HOTROD_SERVERS);
       }
    }
 

@@ -1,6 +1,9 @@
 package org.infinispan.client.hotrod.impl.async;
 
+import com.sun.corba.se.impl.orb.ORBConfiguratorImpl;
+import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.executors.ExecutorFactory;
+import org.infinispan.util.TypedProperties;
 
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
@@ -12,19 +15,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Default implementation for {@link org.infinispan.executors.ExecutorFactory} based on an {@link ThreadPoolExecutor}.
- * Accepts following configuration parameters:
- * <ul>
- *  <li> - default-executor-factory.poolSize = the fixed size fo the pool</li>
- *  <li> - default-executor-factory.queueSize = The size of the {@link LinkedBlockingQueue} backing up the executor</li>
- * </ul>
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
 public class DefaultAsyncExecutorFactory implements ExecutorFactory {
-   public static final String THREAD_NAME = "Hotrod-client-async-pool";
+   public static final String THREAD_NAME = "HotRod-client-async-pool";
    public static final AtomicInteger counter = new AtomicInteger(0);
-   private int poolSize = 1;
+   private int poolSize = 10;
    private int queueSize = 100000;
 
    @Override
@@ -45,11 +43,8 @@ public class DefaultAsyncExecutorFactory implements ExecutorFactory {
    }
 
    private void readParams(Properties props) {
-      if (props.contains("default-executor-factory.poolSize")) {
-         poolSize = Integer.parseInt(props.getProperty("default-executor-factory.poolSize"));
-      }
-      if (props.contains("default-executor-factory.queueSize")) {
-         queueSize = Integer.parseInt("default-executor-factory.queueSize");
-      }
+      TypedProperties tp = TypedProperties.toTypedProperties(props);
+      poolSize = tp.getIntProperty(ConfigurationProperties.DEFAULT_EXECUTOR_FACTORY_POOL_SIZE, 10);
+      queueSize = tp.getIntProperty(ConfigurationProperties.DEFAULT_EXECUTOR_FACTORY_QUEUE_SIZE, 100000);
    }
 }

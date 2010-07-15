@@ -14,12 +14,12 @@ import java.util.Properties
  * @since 4.1
  */
 abstract class AbstractProtocolServer(threadNamePrefix: String) extends ProtocolServer {
-   private var host: String = _
-   private var port: Int = _
-   private var masterThreads: Int = _
-   private var workerThreads: Int = _
-   private var transport: Transport = _
-   private var cacheManager: EmbeddedCacheManager = _
+   protected var host: String = _
+   protected var port: Int = _
+   protected var masterThreads: Int = _
+   protected var workerThreads: Int = _
+   protected var transport: Transport = _
+   protected var cacheManager: EmbeddedCacheManager = _
 
    def start(properties: Properties, cacheManager: EmbeddedCacheManager, defaultPort: Int) {
       this.host = properties.getProperty(PROP_KEY_HOST, HOST_DEFAULT)
@@ -62,6 +62,10 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
       // Start default cache
       startDefaultCache
       val address =  new InetSocketAddress(host, port)
+      startTransport(address, idleTimeout, tcpNoDelay, sendBufSize, recvBufSize)
+   }
+
+   def startTransport(address: InetSocketAddress, idleTimeout: Int, tcpNoDelay: Boolean, sendBufSize: Int, recvBufSize: Int) {
       val encoder = getEncoder
       val nettyEncoder = if (encoder != null) new EncoderAdapter(encoder) else null
       transport = new NettyTransport(this, nettyEncoder, address, masterThreads, workerThreads, idleTimeout,

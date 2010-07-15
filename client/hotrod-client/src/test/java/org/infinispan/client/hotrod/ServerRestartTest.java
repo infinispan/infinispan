@@ -38,7 +38,7 @@ public class ServerRestartTest extends SingleCacheManagerTest {
       log.info("Started server on port: " + hotrodServer.getPort());
 
       Properties config = new Properties();
-      config.put("hotrod-servers", "127.0.0.1:" + hotrodServer.getPort());
+      config.put("infinispan.client.hotrod.server_list", "127.0.0.1:" + hotrodServer.getPort());
       config.put("timeBetweenEvictionRunsMillis", "2000");      
       remoteCacheManager = new RemoteCacheManager(config);
       defaultRemote = remoteCacheManager.getCache();

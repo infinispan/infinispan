@@ -8,6 +8,7 @@ import org.infinispan.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
+import org.infinispan.util.LegacyKeySupportSystemProperties;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -31,7 +32,7 @@ public class TestCacheManagerFactory {
 
    private static AtomicInteger jmxDomainPostfix = new AtomicInteger();
 
-   public static final String MARSHALLER = System.getProperties().getProperty("infinispan.marshaller.class");
+   public static final String MARSHALLER = LegacyKeySupportSystemProperties.getProperty("infinispan.test.marshaller.class", "infinispan.marshaller.class");
    private static Log log = LogFactory.getLog(TestCacheManagerFactory.class);
 
    private static ThreadLocal<PerThreadCacheManagers> perThreadCacheManagers = new ThreadLocal<PerThreadCacheManagers>() {

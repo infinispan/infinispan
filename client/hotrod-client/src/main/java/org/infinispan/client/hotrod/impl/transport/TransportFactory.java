@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.impl.transport;
 
+import org.infinispan.client.hotrod.impl.ConfigurationProperties;
+
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -15,13 +17,11 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public interface TransportFactory {
 
-   public static final String CONF_HOTROD_SERVERS = "hotrod-servers";
-
    public Transport getTransport();
 
    public void releaseTransport(Transport transport);
 
-   void start(Properties props, Collection<InetSocketAddress> staticConfiguredServers, AtomicInteger topologyId);
+   void start(ConfigurationProperties props, Collection<InetSocketAddress> staticConfiguredServers, AtomicInteger topologyId);
 
    void updateServers(Collection<InetSocketAddress> newServers);
 

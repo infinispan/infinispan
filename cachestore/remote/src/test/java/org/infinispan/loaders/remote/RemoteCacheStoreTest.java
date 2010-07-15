@@ -37,7 +37,7 @@ public class RemoteCacheStoreTest extends BaseCacheStoreTest {
       configuration.setEvictionStrategy(EvictionStrategy.UNORDERED);
       hrServer = TestHelper.startHotRodServer(localCacheManager);
       Properties properties = new Properties();
-      properties.put("hotrod-servers", "localhost:" + hrServer.getPort());
+      properties.put("infinispan.client.hotrod.server_list", "localhost:" + hrServer.getPort());
       remoteCacheStoreConfig.setHotRodClientProperties(properties);
 
       RemoteCacheStore remoteCacheStore = new RemoteCacheStore();

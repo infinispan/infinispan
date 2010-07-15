@@ -47,12 +47,12 @@ public class CloudCacheStoreIntegrationTest extends BaseCacheStoreTest {
    private String secretKey;
    private String service;
 
-   private static final String sysUsername = System.getProperty("infinispan.jclouds.username");
-   private static final String sysPassword = System.getProperty("infinispan.jclouds.password");
-   private static final String sysService = System.getProperty("infinispan.jclouds.service");
+   private static final String sysUsername = System.getProperty("infinispan.test.jclouds.username");
+   private static final String sysPassword = System.getProperty("infinispan.test.jclouds.password");
+   private static final String sysService = System.getProperty("infinispan.test.jclouds.service");
 
    @BeforeTest
-   @Parameters({"infinispan.jclouds.username", "infinispan.jclouds.password", "infinispan.jclouds.service"})
+   @Parameters({"infinispan.test.jclouds.username", "infinispan.test.jclouds.password", "infinispan.test.jclouds.service"})
    protected void setUpClient(@Optional String JcloudsUsername,
                               @Optional String JcloudsPassword,
                               @Optional String JcloudsService) throws Exception {

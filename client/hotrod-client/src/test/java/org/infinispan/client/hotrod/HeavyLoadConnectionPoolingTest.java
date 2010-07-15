@@ -41,10 +41,10 @@ public class HeavyLoadConnectionPoolingTest extends SingleCacheManagerTest {
       hotRodServer = TestHelper.startHotRodServer(cacheManager);
 
       Properties hotrodClientConf = new Properties();
-      hotrodClientConf.put("hotrod-servers", "localhost:"+hotRodServer.getPort());
+      hotrodClientConf.put("infinispan.client.hotrod.server_list", "localhost:"+hotRodServer.getPort());
       hotrodClientConf.put("timeBetweenEvictionRunsMillis", "3000");
       hotrodClientConf.put("minEvictableIdleTimeMillis", "1000");
-      hotrodClientConf.put("ping-on-startup", "1000");
+      hotrodClientConf.put("infinispan.client.hotrod.ping_on_startup", "true");
       remoteCacheManager = new RemoteCacheManager(hotrodClientConf);
       remoteCache = remoteCacheManager.getCache();
 

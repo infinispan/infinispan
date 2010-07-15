@@ -1,16 +1,14 @@
 package org.infinispan.client.hotrod;
 
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
-import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.executors.ExecutorFactory;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.marshall.Marshaller;
-import org.infinispan.marshall.jboss.GenericJBossMarshaller;
-import org.infinispan.util.TypedProperties;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -18,14 +16,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.URL;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
-import java.util.StringTokenizer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
+
 import static org.infinispan.util.Util.getInstance;
 
 /**
@@ -45,48 +42,49 @@ import static org.infinispan.util.Util.getInstance;
  * <p/>
  * <b>Configuration:</b>
  * <p/>
- * The cache manager is configured through a {@link java.util.Properties} object passed to the C-tor (there are also
- * "simplified" constructors that rely on default values). Bellow is the list of supported configuration elements:
- * <ul>
- * <li>
- * hotrod-servers - the initial list of hotrod servers to connect to, specified in the following format: host1:port1;host2:port2...
- * At least one host:port must be specified.
- * </li>
- * <li>
- * request-balancing-strategy - for replicated (vs distributed) hotrod server clusters, the client balances requests to the
- * servers according to this strategy. Defaults to {@link org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy}
- * </li>
- * <li>
- * force-return-value - weather or not to implicitly {@link org.infinispan.client.hotrod.Flag#FORCE_RETURN_VALUE} for all calls.
- * Defaults to false.
- * </li>
- * <li>
- * tcp-no-delay - TCP no delay flag switch. Defaults to true.
- * </li>
- *  <li>
- * ping-on-startup - if true, a ping request is sent to a back end server in order to fetch cluster's topology. True by default.
- * </li>
- * <br/>
- * <i>below is connection pooling config</i>:
+ * The cache manager is configured through a {@link java.util.Properties} object passed to the constructor (there are also
+ * "simplified" constructors that rely on default values).
  * <p/>
- * <li>maxActive - controls the maximum number of connections per server that are allocated (checked out to client threads, or idle in
+ * Below is the list of supported configuration elements:
+ * <ul>
+ * <li><tt>infinispan.client.hotrod.request_balancing_strategy</tt>, default = org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy.  For replicated (vs distributed) hotrod server clusters, the client balances requests to the
+ * servers according to this strategy.</li>
+ * <li><tt>infinispan.client.hotrod.server_list</tt>, default = 127.0.0.1:11311.  This is the initial list of hotrod servers to connect to, specified in the following format: host1:port1;host2:port2...
+ * At least one host:port must be specified.</li>
+ * <li><tt>infinispan.client.hotrod.force_return_values</tt>, default = false.  Whether or not to implicitly {@link org.infinispan.client.hotrod.Flag#FORCE_RETURN_VALUE} for all calls.</li>
+ * <li><tt>infinispan.client.hotrod.tcp_no_delay</tt>, default = true.  Affects TCP NODELAY on the TCP stack.</li>
+ * <li><tt>infinispan.client.hotrod.ping_on_startup</tt>, default = true.  If true, a ping request is sent to a back end server in order to fetch cluster's topology.</li>
+ * <li><tt>infinispan.client.hotrod.transport_factory</tt>, default = org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory - controls which transport to use.  Currently only the TcpTransport is supported.</li>
+ * <li><tt>infinispan.client.hotrod.marshaller</tt>, default = org.infinispan.marshall.jboss.GenericJBossMarshaller.  Allows you to specify a custom {@link org.infinispan.marshall.Marshaller} implementation to serialize and deserialize user objects.</li>
+ * <li><tt>infinispan.client.hotrod.async_executor_factory</tt>, default = org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory.  Allows you to specify a custom asynchroous executor for async calls.</li>
+ * <li><tt>infinispan.client.hotrod.default_executor_factory.pool_size</tt>, default = 10.  If the default executor is used, this configures the number of threads to initialize the executor with.</li>
+ * <li><tt>infinispan.client.hotrod.default_executor_factory.queue_size</tt>, default = 100000.  If the default executor is used, this configures the queue size to initialize the executor with.</li>
+ * <li><tt>infinispan.client.hotrod.hash_function_impl.1</tt>, default = org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV1.  This specifies the version of the hash function and consistent hash algorithm in use, and is closely tied with the HotRod server version used.</li>
+ * <li><tt>infinispan.client.hotrod.key_size_estimate</tt>, default = 64.  This hint allows sizing of byte buffers when serializing and deserializing keys, to minimize array resizing.</li>
+ * <li><tt>infinispan.client.hotrod.value_size_estimate</tt>, default = 512.  This hint allows sizing of byte buffers when serializing and deserializing values, to minimize array resizing.</li>
+ * </ul>
+ * <br/>
+ * <i>The following properties are related to connection pooling</i>:
+ * <p/>
+ * <ul>
+ * <li><tt>maxActive</tt> - controls the maximum number of connections per server that are allocated (checked out to client threads, or idle in
  * the pool) at one time. When non-positive, there is no limit to the number of connections per server. When maxActive
  * is reached, the connection pool for that server is said to be exhausted. The default setting for this parameter is
  * -1, i.e. there is no limit.</li>
- * <li>maxTotal - sets a global limit on the number persistent connections that can be in circulation within the combined set of
+ * <li><tt>maxTotal</tt> - sets a global limit on the number persistent connections that can be in circulation within the combined set of
  * servers. When non-positive, there is no limit to the total number of persistent connections in circulation. When
  * maxTotal is exceeded, all connections pools are exhausted. The default setting for this parameter is -1 (no limit).
  * </li>
  * <p/>
- * <li>maxIdle - controls the maximum number of idle persistent connections, per server, at any time. When negative, there is no limit
+ * <li><tt>maxIdle</tt> - controls the maximum number of idle persistent connections, per server, at any time. When negative, there is no limit
  * to the number of connections that may be idle per server. The default setting for this parameter is -1.</li>
  * <p/>
  * <li>
- * whenExhaustedAction - specifies what happens when asking for a connection from a server's pool, and that pool is exhausted. Possible values:
+ * <tt>whenExhaustedAction</tt> - specifies what happens when asking for a connection from a server's pool, and that pool is exhausted. Possible values:
  * <ul>
- * <li> 0 - an exception will be thrown to the calling user</li>
- * <li> 1 - the caller will block (invoke waits until a new or idle connections is available.
- * <li> 2 - a new persistent connection will be created and and returned (essentially making maxActive meaningless.) </li>
+ * <li> <tt>0</tt> - an exception will be thrown to the calling user</li>
+ * <li> <tt>1</tt> - the caller will block (invoke waits until a new or idle connections is available.
+ * <li> <tt>2</tt> - a new persistent connection will be created and and returned (essentially making maxActive meaningless.) </li>
  * </ul>
  * The default whenExhaustedAction setting is 1.
  * </li>
@@ -97,33 +95,25 @@ import static org.infinispan.util.Util.getInstance;
  * eviction" thread, which runs asynchronously. The idle object evictor does not lock the pool
  * throughout its execution.  The idle connection eviction thread may be configured using the following attributes:
  * <ul>
- * <li>timeBetweenEvictionRunsMillis - indicates how long the eviction thread should sleep before "runs" of examining idle
+ * <li><tt>timeBetweenEvictionRunsMillis</tt> - indicates how long the eviction thread should sleep before "runs" of examining idle
  * connections. When non-positive, no eviction thread will be launched. The default setting for this parameter is
  * 2 minutes </li>
- * <li> minEvictableIdleTimeMillis - specifies the minimum amount of time that an connection may sit idle in the pool before it
+ * <li> <tt>minEvictableIdleTimeMillis</tt> - specifies the minimum amount of time that an connection may sit idle in the pool before it
  * is eligible for eviction due to idle time. When non-positive, no connection will be dropped from the pool due to
  * idle time alone. This setting has no effect unless timeBetweenEvictionRunsMillis > 0. The default setting for this
  * parameter is 1800000(30 minutes). </li>
- * <li> testWhileIdle - indicates whether or not idle connections should be validated by sending an TCP packet to the server,
+ * <li> <tt>testWhileIdle</tt> - indicates whether or not idle connections should be validated by sending an TCP packet to the server,
  * during idle connection eviction runs.  Connections that fail to validate will be dropped from the pool. This setting
  * has no effect unless timeBetweenEvictionRunsMillis > 0.  The default setting for this parameter is true.
  * </li>
- * <li>minIdle - sets a target value for the minimum number of idle connections (per server) that should always be available.
+ * <li><tt>minIdle</tt> - sets a target value for the minimum number of idle connections (per server) that should always be available.
  * If this parameter is set to a positive number and timeBetweenEvictionRunsMillis > 0, each time the idle connection
  * eviction thread runs, it will try to create enough idle instances so that there will be minIdle idle instances
  * available for each server.  The default setting for this parameter is 1. </li>
  * </ul>
  * </li>
  * <li>
- * async-executor-factory - the ExecutorFactory that will hold the thread pool used for async calls. It must implement
- * {@link org.infinispan.executors.ExecutorFactory}. If not specified, defaults to {@link DefaultAsyncExecutorFactory} </li>
- * <li>default-executor-factory.poolSize - used as a configuration for {@link DefaultAsyncExecutorFactory}, and defined the number
- * of threads to keep in the pool. If not specified defaults to 1. </li>
- * <li> default-executor-factory.queueSize - queue to use for holding async requests before they are executed. Defaults
- * to 100000</li>
- * <li>
- * consistent-hash.[version] - see {@link org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashFactory}
- * <ul>
+ * </ul>
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
@@ -134,19 +124,7 @@ public class RemoteCacheManager implements CacheContainer {
 
    public static final String HOTROD_CLIENT_PROPERTIES = "hotrod-client.properties";
 
-   public static final String CONF_HOTROD_SERVERS = "hotrod-servers";
-
-   public static final String OVERRIDE_HOTROD_SERVERS = "infinispan.hotrod.client.servers";
-
-   private static final String KEY_SIZE = "marshaller.default-array-size.key";
-
-   private static final String VALUE_SIZE = "marshaller.default-array-size.value";
-
-   private static final int DEFAULT_KEY_SIZE = 64;
-   private static final int DEFAULT_VALUE_SIZE = 512;
-
-
-   private TypedProperties props;
+   private ConfigurationProperties config;
    private TransportFactory transportFactory;
    private Marshaller marshaller;
    private boolean started = false;
@@ -173,17 +151,17 @@ public class RemoteCacheManager implements CacheContainer {
    }
 
    /**
-    * Same as {@link org.infinispan.client.hotrod.RemoteCacheManager#RemoteCacheManager(Marshaller, java.util.Properties, boolean)} with start = true.
+    * Same as {@link #RemoteCacheManager(Marshaller, java.util.Properties, boolean)} with start = true.
     */
-   public RemoteCacheManager(Marshaller hotRodMarshaller, Properties props) {
-      this(hotRodMarshaller, props, false);
+   public RemoteCacheManager(Marshaller marshaller, Properties props) {
+      this(marshaller, props, true);
    }
 
    /**
     * Build a cache manager based on supplied properties.
     */
    public RemoteCacheManager(Properties props, boolean start) {
-      this.props = TypedProperties.toTypedProperties(props);
+      this.config = new ConfigurationProperties(props);
       if (start) start();
    }
 
@@ -207,7 +185,7 @@ public class RemoteCacheManager implements CacheContainer {
       InputStream stream = loader.getResourceAsStream(HOTROD_CLIENT_PROPERTIES);
       if (stream == null) {
          log.warn("Could not find '" + HOTROD_CLIENT_PROPERTIES + "' file in classpath, using defaults.");
-         props = new TypedProperties();
+         config = new ConfigurationProperties();
       } else {
          loadFromStream(stream);
       }
@@ -227,8 +205,7 @@ public class RemoteCacheManager implements CacheContainer {
     * @param start weather or not to start the RemoteCacheManager.
     */
    public RemoteCacheManager(String host, int port, boolean start) {
-      props = new TypedProperties();
-      props.put(TransportFactory.CONF_HOTROD_SERVERS, host + ":" + port);
+      config = new ConfigurationProperties(host + ":" + port);
       if (start) start();
    }
 
@@ -244,8 +221,7 @@ public class RemoteCacheManager implements CacheContainer {
     * server.
     */
    public RemoteCacheManager(String servers, boolean start) {
-      props = new TypedProperties();
-      props.put(TransportFactory.CONF_HOTROD_SERVERS, servers);
+      config = new ConfigurationProperties(servers);
       if (start) start();
    }
 
@@ -302,34 +278,21 @@ public class RemoteCacheManager implements CacheContainer {
 
    @Override
    public void start() {
-      String factory = props.getProperty("transport-factory");
-      if (factory == null) {
-         factory = TcpTransportFactory.class.getName();
-         log.info("'transport-factory' factory not specified, using " + factory);
-      }
+      String factory = config.getTransportFactory();
       transportFactory = (TransportFactory) getInstance(factory);
-      String servers = props.getProperty(CONF_HOTROD_SERVERS);
-      transportFactory.start(props, getStaticConfiguredServers(servers), topologyId);
+      Collection<InetSocketAddress> servers = config.getServerList();
+      transportFactory.start(config, servers, topologyId);
       if (marshaller == null) {
-         String marshaller = props.getProperty("marshaller");
-         if (marshaller == null) {
-            marshaller = GenericJBossMarshaller.class.getName();
-            log.info("'marshaller' not specified, using " + marshaller);
-         }
-         setMarshaller((Marshaller) getInstance(marshaller));
+         String marshallerName = config.getMarshaller();
+         setMarshaller((Marshaller) getInstance(marshallerName));
       }
 
-      String asyncExecutorClass = DefaultAsyncExecutorFactory.class.getName();
-      if (props.contains("asyn-executor-factory")) {
-         asyncExecutorClass = props.getProperty("asyn-executor-factory");
-      }
+      String asyncExecutorClass = config.getAsyncExecutorFactory();
       ExecutorFactory executorFactory = (ExecutorFactory) getInstance(asyncExecutorClass);
-      asyncExecutorService = executorFactory.getExecutor(props);
+      asyncExecutorService = executorFactory.getExecutor(config.getProperties());
 
+      forceReturnValueDefault = config.getForceReturnValues();
 
-      if (props.get("force-return-value") != null && props.get("force-return-value").equals("true")) {
-         forceReturnValueDefault = true;
-      }
       synchronized (cacheName2RemoteCache) {
          for (RemoteCacheImpl remoteCache : cacheName2RemoteCache.values()) {
             startRemoteCache(remoteCache);
@@ -351,12 +314,13 @@ public class RemoteCacheManager implements CacheContainer {
    }
 
    private void loadFromStream(InputStream stream) {
-      props = new TypedProperties();
+      Properties properties = new Properties();
       try {
-         props.load(stream);
+         properties.load(stream);
       } catch (IOException e) {
          throw new HotRodClientException("Issues configuring from client hotrod-client.properties", e);
       }
+      config = new ConfigurationProperties(properties);
    }
 
    private <K, V> RemoteCache<K, V> createRemoteCache(String cacheName, boolean forceReturnValue) {
@@ -374,38 +338,7 @@ public class RemoteCacheManager implements CacheContainer {
 
    private <K, V> void startRemoteCache(RemoteCacheImpl<K, V> result) {
       OperationsFactory operationsFactory = new OperationsFactory(transportFactory, result.getName(), topologyId, forceReturnValueDefault);
-      result.init(marshaller, asyncExecutorService, operationsFactory, props.getIntProperty(KEY_SIZE, DEFAULT_KEY_SIZE),
-              props.getIntProperty(VALUE_SIZE, DEFAULT_VALUE_SIZE));
-   }
-
-   private Set<InetSocketAddress> getStaticConfiguredServers(String servers) {
-      Set<InetSocketAddress> serverAddresses = new HashSet<InetSocketAddress>();
-      if (servers == null) {
-         servers = System.getProperty(OVERRIDE_HOTROD_SERVERS);
-         if (servers != null) {
-            log.info("Overwriting default server properties (-D" + OVERRIDE_HOTROD_SERVERS + ") with " + servers);
-         } else {
-            servers = "127.0.0.1:11311";
-         }
-         log.info("'hotrod-servers' property not specified in config, using " + servers);
-      }
-      StringTokenizer tokenizer = new StringTokenizer(servers, ";");
-      while (tokenizer.hasMoreTokens()) {
-         String server = tokenizer.nextToken();
-         String[] serverDef = tokenizeServer(server);
-         String serverHost = serverDef[0];
-         int serverPort = Integer.parseInt(serverDef[1]);
-         serverAddresses.add(new InetSocketAddress(serverHost, serverPort));
-      }
-      if (serverAddresses.isEmpty()) {
-         throw new IllegalStateException("No hot-rod servers specified!");
-      }
-      return serverAddresses;
-   }
-
-   private String[] tokenizeServer(String server) {
-      StringTokenizer t = new StringTokenizer(server, ":");
-      return new String[]{t.nextToken(), t.nextToken()};
+      result.init(marshaller, asyncExecutorService, operationsFactory, config.getKeySizeEstimate(), config.getValueSizeEstimate());
    }
 
    private void setMarshaller(Marshaller marshaller) {

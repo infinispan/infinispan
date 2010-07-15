@@ -50,7 +50,7 @@ public class UnitTestDatabaseManager {
    private static final ConnectionFactoryConfig realConfig = new ConnectionFactoryConfig();
 
    private static AtomicInteger userIndex = new AtomicInteger(0);
-   private static final String DB_TYPE = System.getProperty("infinispan.jdbc", "H2");
+   private static final String DB_TYPE = System.getProperty("infinispan.test.jdbc.db", "H2");
    private static final String H2_DRIVER = org.h2.Driver.class.getName();
 
    static {
@@ -98,38 +98,6 @@ public class UnitTestDatabaseManager {
       synchronized (realConfig) {
          return returnBasedOnDifferentInstance();
       }
-   }
-
-   public static void shutdownInMemoryDatabase(ConnectionFactoryConfig config) {
-
-
-//      Connection conn = null;
-//      Statement st = null;
-//      try {
-//         String shutDownConnection = getShutdownUrl(config);
-//         String url = config.getConnectionUrl();
-//         assert url != null;
-//         try {
-//            conn = DriverManager.getConnection(shutDownConnection);
-//         } catch (SQLException e) {
-//            //expected
-//         }
-////         st = conn.createStatement();
-////         st.execute("SHUTDOWN");
-//      }
-//      catch (Throwable e) {
-//         throw new IllegalStateException(e);
-//      }
-//      finally {
-////         try {
-//////            conn.close();
-//////            st.close();
-////         }
-////         catch (SQLException e) {
-////            e.printStackTrace();
-////         }
-//      }
-
    }
 
    public static String getDatabaseName(Properties prop) {

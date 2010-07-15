@@ -17,7 +17,7 @@ public class CacheManagerHolder extends HttpServlet {
 
    private static final Log log = LogFactory.getLog(CacheManagerHolder.class);
 
-   private static final String CFG_PROPERTY = "infinispan.gridfs.cfg";
+   private static final String CFG_PROPERTY = "infinispan.config";
    private static final String DATA_CACHE_NAME_PROPERTY = "infinispan.gridfs.cache.data";
    private static final String METADATA_CACHE_NAME_PROPERTY = "infinispan.gridfs.cache.metadata";
 
@@ -27,7 +27,7 @@ public class CacheManagerHolder extends HttpServlet {
    @Override
    public void init(ServletConfig cfg) throws ServletException {
       super.init(cfg);
-      String cfgFile = System.getProperty(CFG_PROPERTY, cfg.getInitParameter(CFG_PROPERTY));
+      String cfgFile = cfg.getInitParameter(CFG_PROPERTY);
       if (cfgFile == null)
          cacheContainer = new DefaultCacheManager();
       else {
@@ -39,7 +39,7 @@ public class CacheManagerHolder extends HttpServlet {
          }
       }
 
-      dataCacheName = System.getProperty(DATA_CACHE_NAME_PROPERTY, cfg.getInitParameter(DATA_CACHE_NAME_PROPERTY));
-      metadataCacheName = System.getProperty(METADATA_CACHE_NAME_PROPERTY, cfg.getInitParameter(METADATA_CACHE_NAME_PROPERTY));
+      dataCacheName = cfg.getInitParameter(DATA_CACHE_NAME_PROPERTY);
+      metadataCacheName = cfg.getInitParameter(METADATA_CACHE_NAME_PROPERTY);
    }
 }

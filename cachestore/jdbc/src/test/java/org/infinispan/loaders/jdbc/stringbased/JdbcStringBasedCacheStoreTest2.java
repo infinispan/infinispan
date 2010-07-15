@@ -80,7 +80,6 @@ public class JdbcStringBasedCacheStoreTest2 {
    @AfterTest
    public void destroyStore() throws CacheLoaderException {
       cacheStore.stop();
-      UnitTestDatabaseManager.shutdownInMemoryDatabase(cfc);
    }
 
    /**

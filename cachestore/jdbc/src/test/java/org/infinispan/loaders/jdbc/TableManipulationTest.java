@@ -58,7 +58,6 @@ public class TableManipulationTest {
    @AfterTest
    public void closeConnection() throws SQLException {
       connection.close();
-      UnitTestDatabaseManager.shutdownInMemoryDatabase(cfg);
    }
 
    public void testInsufficientConfigParams() throws Exception {

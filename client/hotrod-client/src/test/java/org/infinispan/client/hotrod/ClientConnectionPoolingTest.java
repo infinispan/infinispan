@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod;
 
 import org.apache.commons.pool.impl.GenericKeyedObjectPool;
 import org.infinispan.Cache;
+import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
@@ -67,7 +68,7 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
 
       String servers = TestHelper.getServersString(hotRodServer1, hotRodServer2);
       Properties hotrodClientConf = new Properties();
-      hotrodClientConf.put(RemoteCacheManager.CONF_HOTROD_SERVERS, servers);
+      hotrodClientConf.put(ConfigurationProperties.SERVER_LIST, servers);
       hotrodClientConf.put("maxActive", 2);
       hotrodClientConf.put("maxTotal", 8);
       hotrodClientConf.put("maxIdle", 6);
@@ -79,7 +80,7 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
       hotrodClientConf.put("testWhileIdle", "true");
       hotrodClientConf.put("minIdle", "-5");
       hotrodClientConf.put("lifo", "true");
-      hotrodClientConf.put("ping-on-startup", "false");
+      hotrodClientConf.put("infinispan.client.hotrod.ping_on_startup", "false");
 
       remoteCacheManager = new RemoteCacheManager(hotrodClientConf);
       remoteCache = remoteCacheManager.getCache();
