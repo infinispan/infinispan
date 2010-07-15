@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod;
 
+import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -19,11 +20,13 @@ public class RemoteCacheManagerTest extends SingleCacheManagerTest {
 
    EmbeddedCacheManager cacheManager = null;
    HotRodServer hotrodServer = null;
+   int port;
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       cacheManager = TestCacheManagerFactory.createLocalCacheManager();
       hotrodServer = TestHelper.startHotRodServer(cacheManager);
+      port = hotrodServer.getPort();
       return cacheManager;
    }
 
@@ -49,34 +52,31 @@ public class RemoteCacheManagerTest extends SingleCacheManagerTest {
       remoteCacheManager.start();
       remoteCacheManager.stop();
    }
-
-   public void testUrlConstructor() throws Exception {
-      URL resource = Thread.currentThread().getContextClassLoader().getResource("empty-config.properties");
-      assert resource != null;
-      RemoteCacheManager remoteCacheManager = new RemoteCacheManager(resource);
-      assertWorks(remoteCacheManager);
-      remoteCacheManager.stop();
-   }
    
    public void testUrlAndBooleanConstructor() throws Exception {
       URL resource = Thread.currentThread().getContextClassLoader().getResource("empty-config.properties");
       assert resource != null;
       RemoteCacheManager remoteCacheManager = new RemoteCacheManager(resource, false);
       assert !remoteCacheManager.isStarted();
+      remoteCacheManager.config.getProperties().setProperty(ConfigurationProperties.SERVER_LIST, "127.0.0.1:" + port);
       remoteCacheManager.start();
       assertWorks(remoteCacheManager);
       remoteCacheManager.stop();
    }
 
    public void testPropertiesConstructor() {
-      RemoteCacheManager remoteCacheManager = new RemoteCacheManager(new Properties());
+      Properties p = new Properties();
+      p.setProperty(ConfigurationProperties.SERVER_LIST, "127.0.0.1:" + port);
+      RemoteCacheManager remoteCacheManager = new RemoteCacheManager(p);
       assert remoteCacheManager.isStarted();
       assertWorks(remoteCacheManager);
       remoteCacheManager.stop();
    }
 
    public void testPropertiesAndBooleanConstructor() {
-      RemoteCacheManager remoteCacheManager = new RemoteCacheManager(new Properties(), false);
+      Properties p = new Properties();
+      p.setProperty(ConfigurationProperties.SERVER_LIST, "127.0.0.1:" + port);
+      RemoteCacheManager remoteCacheManager = new RemoteCacheManager(p, false);
       assert !remoteCacheManager.isStarted();
       remoteCacheManager.start();
       assertWorks(remoteCacheManager);
