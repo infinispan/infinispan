@@ -67,6 +67,6 @@ trait MemcachedTestingUtil {
 }
 
 object UniquePortThreadLocal extends ThreadLocal[Int] {
-   private val uniqueAddr = new AtomicInteger(11211)
+   private val uniqueAddr = new AtomicInteger(12211)
    override def initialValue: Int = uniqueAddr.getAndAdd(100)
 }

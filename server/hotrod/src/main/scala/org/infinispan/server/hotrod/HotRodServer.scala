@@ -35,8 +35,10 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Logging {
 
    override def getDecoder: Decoder = new HotRodDecoder(getCacheManager)
 
-   override def start(properties: Properties, cacheManager: EmbeddedCacheManager) {
-      super.start(properties, cacheManager)
+   override def start(p: Properties, cacheManager: EmbeddedCacheManager) {
+      val properties = if (p == null) new Properties else p
+      super.start(properties, cacheManager, 11311)
+      
       // Start defined caches to avoid issues with lazily started caches
       for (cacheName <- asIterator(cacheManager.getCacheNames.iterator))
          cacheManager.getCache(cacheName)
@@ -44,8 +46,8 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Logging {
       isClustered = cacheManager.getGlobalConfiguration.getTransportClass != null
       // If clustered, set up a cache for topology information
       if (isClustered) {
-         val externalHost = properties.getProperty(PROP_KEY_PROXY_HOST, properties.getProperty(PROP_KEY_HOST))
-         val externalPort = properties.getProperty(PROP_KEY_PROXY_PORT, properties.getProperty(PROP_KEY_PORT)).toInt
+         val externalHost = properties.getProperty(PROP_KEY_PROXY_HOST, getHost)
+         val externalPort = properties.getProperty(PROP_KEY_PROXY_PORT, getPort.toString).toInt
          addSelfToTopologyView(externalHost, externalPort, cacheManager)
       }
    }

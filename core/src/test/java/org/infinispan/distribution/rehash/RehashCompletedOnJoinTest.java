@@ -14,9 +14,9 @@ import java.util.List;
  * // TODO: Document this
  *
  * @author Galder Zamarreño
- * @since // TODO
+ * @since 4.1
  */
-@Test(groups = "functional", testName = "distribution.rehash.WorkDuringJoinTest")
+@Test(groups = "functional", testName = "distribution.rehash.RehashCompletedOnJoinTest")
 public class RehashCompletedOnJoinTest extends BaseDistFunctionalTest {
 
    public RehashCompletedOnJoinTest() {
