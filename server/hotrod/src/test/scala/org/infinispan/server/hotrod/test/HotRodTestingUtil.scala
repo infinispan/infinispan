@@ -174,6 +174,6 @@ object HotRodTestingUtil extends Logging {
 } 
 
 object UniquePortThreadLocal extends ThreadLocal[Int] {
-   private val uniqueAddr = new AtomicInteger(11311)
+   private val uniqueAddr = new AtomicInteger(12311)
    override def initialValue: Int = uniqueAddr.getAndAdd(100)
 }

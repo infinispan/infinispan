@@ -10,8 +10,8 @@ import org.infinispan.test.AbstractCacheTest._
 
 /**
  * // TODO: Document this
- * @author Galder Zamarre�o
- * @since // TODO
+ * @author Galder Zamarreño
+ * @since 4.1
  */
 @Test(groups = Array("functional"), testName = "server.hotrod.HotRodProxyTest")
 class HotRodProxyTest extends HotRodMultiNodeTest {

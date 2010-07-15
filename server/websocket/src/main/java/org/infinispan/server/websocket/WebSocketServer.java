@@ -79,8 +79,11 @@ public class WebSocketServer extends AbstractProtocolServer {
 
    @Override
    public void start(Properties properties, EmbeddedCacheManager cacheManager) {
-      String host = properties.getProperty("infinispan.server.host");
-      int port = Integer.parseInt(properties.getProperty("infinispan.server.port"));
+      if (properties == null)
+         properties = new Properties();
+
+      String host = properties.getProperty("infinispan.server.host", "127.0.0.1");
+      int port = Integer.parseInt(properties.getProperty("infinispan.server.port", "8181"));
       int masterThreads = Integer.parseInt(properties.getProperty("infinispan.server.master_threads"));
       int workerThreads = Integer.parseInt(properties.getProperty("infinispan.server.worker_threads"));
 

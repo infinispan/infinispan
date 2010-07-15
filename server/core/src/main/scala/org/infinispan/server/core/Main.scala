@@ -46,18 +46,7 @@ object Main extends Logging {
     * information to get the server up and running. Use System
     * properties for defaults.
     */
-   private val props: Properties = {
-      // Set default properties
-      val properties = new Properties(System.getProperties)
-      properties.setProperty(PROP_KEY_HOST, HOST_DEFAULT)
-      properties.setProperty(PROP_KEY_MASTER_THREADS, MASTER_THREADS_DEFAULT)
-      properties.setProperty(PROP_KEY_WORKER_THREADS, WORKER_THREADS_DEFAULT)
-      properties.setProperty(PROP_KEY_IDLE_TIMEOUT, IDLE_TIMEOUT_DEFAULT)
-      properties.setProperty(PROP_KEY_TCP_NO_DELAY, TCP_NO_DELAY_DEFAULT)
-      properties.setProperty(PROP_KEY_SEND_BUF_SIZE, SEND_BUF_SIZE_DEFAULT)
-      properties.setProperty(PROP_KEY_RECV_BUF_SIZE, RECV_BUF_SIZE_DEFAULT)
-      properties
-   }
+   private val props: Properties = new Properties(System.getProperties)
    
    private var programName: String = _
    private var server: ProtocolServer = _
@@ -92,45 +81,12 @@ object Main extends Logging {
       // First process the command line to pickup custom props/settings
       processCommandLine(args)
 
-      val properties = new Properties
-
-      val masterThreads = props.getProperty(PROP_KEY_MASTER_THREADS).toInt
-      if (masterThreads < 0)
-         throw new IllegalArgumentException("Master threads can't be lower than 0: " + masterThreads)
-      
-      val workerThreads = props.getProperty(PROP_KEY_WORKER_THREADS).toInt
-      if (workerThreads < 0)
-         throw new IllegalArgumentException("Worker threads can't be lower than 0: " + masterThreads)
-
       var protocol = props.getProperty(PROP_KEY_PROTOCOL)
       if (protocol == null) {
          System.err.println("ERROR: Please indicate protocol to run with -r parameter")
          showAndExit
       }
       
-      val idleTimeout = props.getProperty(PROP_KEY_IDLE_TIMEOUT).toInt
-      if (idleTimeout < -1)
-         throw new IllegalArgumentException("Idle timeout can't be lower than -1: " + idleTimeout)
-
-      val tcpNoDelay = props.getProperty(PROP_KEY_TCP_NO_DELAY)
-      try {
-         tcpNoDelay.toBoolean
-      } catch {
-         case n: NumberFormatException => {
-            throw new IllegalArgumentException("TCP no delay flag switch must be a boolean: " + tcpNoDelay)
-         }
-      }
-
-      val sendBufSize = props.getProperty(PROP_KEY_SEND_BUF_SIZE).toInt
-      if (sendBufSize < 0) {
-         throw new IllegalArgumentException("Send buffer size can't be lower than 0: " + sendBufSize)
-      }
-
-      val recvBufSize = props.getProperty(PROP_KEY_SEND_BUF_SIZE).toInt
-      if (recvBufSize < 0) {
-         throw new IllegalArgumentException("Send buffer size can't be lower than 0: " + sendBufSize)
-      }
-
       // TODO: move class name and protocol number to a resource file under the corresponding project
       val clazz = protocol match {
          case "memcached" => "org.infinispan.server.memcached.MemcachedServer"
@@ -139,28 +95,9 @@ object Main extends Logging {
       }
       val server = Util.getInstance(clazz).asInstanceOf[ProtocolServer]
 
-      val port = {
-         if (props.getProperty(PROP_KEY_PORT) == null) {
-            protocol match {
-               case "memcached" => 11211
-               case "hotrod" => 11311
-               case "websocket" => 8181
-            }
-         } else {
-            props.getProperty(PROP_KEY_PORT).toInt
-         }
-      }
-      props.setProperty(PROP_KEY_PORT, port.toString)
-
-      // If no proxy host given, external host defaults to configured host
-      val externalHost = props.getProperty(PROP_KEY_PROXY_HOST, props.getProperty(PROP_KEY_HOST))
-      props.setProperty(PROP_KEY_PROXY_HOST, externalHost)
-      // If no proxy port given, external port defaults to configured port
-      val externalPort = props.getProperty(PROP_KEY_PROXY_PORT, props.getProperty(PROP_KEY_PORT))
-      props.setProperty(PROP_KEY_PROXY_PORT, externalPort)
-
       val configFile = props.getProperty(PROP_KEY_CACHE_CONFIG)
       val cacheManager = if (configFile == null) new DefaultCacheManager else new DefaultCacheManager(configFile)
+      // Servers need a shutdown hook to close down network layer, so there's no need for an extra shutdown hook.
       addShutdownHook(new ShutdownHook(server, cacheManager))
       server.start(props, cacheManager)
    }
