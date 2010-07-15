@@ -124,7 +124,7 @@ public class RemoteCacheManager implements CacheContainer {
 
    public static final String HOTROD_CLIENT_PROPERTIES = "hotrod-client.properties";
 
-   private ConfigurationProperties config;
+   ConfigurationProperties config;
    private TransportFactory transportFactory;
    private Marshaller marshaller;
    private boolean started = false;
@@ -257,7 +257,6 @@ public class RemoteCacheManager implements CacheContainer {
    public RemoteCacheManager(URL config) {
       this(config, true);
    }
-
 
    public <K, V> RemoteCache<K, V> getCache(String cacheName) {
       return getCache(cacheName, forceReturnValueDefault);
