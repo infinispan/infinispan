@@ -13,19 +13,10 @@
       <servlet-name>InitServlet</servlet-name>
       <servlet-class>org.infinispan.demos.gridfs.CacheManagerHolder</servlet-class>
 
-      <!--
-         All of the values below can be overridden using JVM system properties.
-         E.g.,
-
-            -Dinfinispan.gridfs.cache.data=some_other_cache
-
-         would override the data cache used to 'some_other_cache' as defined in your configuration XML.
-         -->
-      
       <!-- specify your cache configuration file -->
       <init-param>
-         <param-name>infinispan.gridfs.cfg</param-name>
-         <param-value>default.xml</param-value>
+         <param-name>infinispan.configuration</param-name>
+         <param-value>infinispan.xml</param-value>
       </init-param>
 
       <!-- specify your data cache name, as defined in your configuration file -->
@@ -108,32 +99,6 @@
       <servlet-name>webdav</servlet-name>
       <url-pattern>/*</url-pattern>
    </servlet-mapping>
-
-   <!-- ================ Security Constraints for Testing =============== -->
-
-   <!--
-       <security-constraint>
-       <web-resource-collection>
-       <web-resource-name>The Entire Web Application</web-resource-name>
-       <url-pattern>/*</url-pattern>
-       </web-resource-collection>
-       <auth-constraint>
-       <role-name>webdav</role-name>
-       </auth-constraint>
-       </security-constraint>
-
-       <login-config>
-       <auth-method>BASIC</auth-method>
-       <realm-name>Tomcat Supported Realm</realm-name>
-       </login-config>
-
-       <security-role>
-       <description>
-       An example role defined in "conf/tomcat-users.xml"
-       </description>
-       <role-name>webdav</role-name>
-       </security-role>
-    -->
 
    <welcome-file-list>
       <welcome-file />

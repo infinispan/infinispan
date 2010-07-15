@@ -3,7 +3,7 @@ package org.infinispan.rest
 
 import org.apache.commons.httpclient.{HttpClient, HttpMethodBase}
 import org.jboss.resteasy.plugins.server.servlet.{ResteasyBootstrap, HttpServletDispatcher}
-import org.mortbay.jetty.servlet.Context
+import org.mortbay.jetty.servlet.{ServletHolder, ServletHandler, Context}
 
 /**
  * 
@@ -19,8 +19,10 @@ object ServerInstance {
     val ctx = new Context(server, "/", Context.SESSIONS)
     ctx.setInitParams(params)
     ctx.addEventListener(new ResteasyBootstrap)
-    ctx.addEventListener(new StartupListener)
     ctx.addServlet(classOf[HttpServletDispatcher], "/rest/*")
+    val sh = new ServletHolder(classOf[StartupListener])
+    sh setInitOrder 1
+    ctx.addServlet(sh, "/listener/*")
     server.setStopAtShutdown(true)
     server.start
     server

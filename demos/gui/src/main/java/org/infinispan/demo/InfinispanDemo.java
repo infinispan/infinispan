@@ -13,6 +13,7 @@ import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.LegacyKeySupportSystemProperties;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -85,7 +86,7 @@ public class InfinispanDemo {
    private CachedDataTableModel cachedDataTableModel;
 
    public static void main(String[] args) {
-      String cfgFileName = System.getProperty("infinispan.demo.cfg", "config-samples/gui-demo-cache-config.xml");
+      String cfgFileName = LegacyKeySupportSystemProperties.getProperty("infinispan.configuration", "infinispan.demo.cfg", "config-samples/gui-demo-cache-config.xml");
       frame = new JFrame("Infinispan GUI Demo (STOPPED)");
       frame.setContentPane(new InfinispanDemo(cfgFileName).panel1);
       frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

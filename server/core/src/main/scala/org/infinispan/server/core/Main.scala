@@ -3,7 +3,6 @@ package org.infinispan.server.core
 import scala.collection.JavaConversions._
 import scala.collection.mutable
 import scala.collection.immutable
-import org.infinispan.util.Util
 import java.io.IOException
 import java.security.{PrivilegedAction, AccessController}
 import java.util.concurrent.{ThreadFactory, ExecutionException, Callable, Executors}
@@ -12,6 +11,7 @@ import org.infinispan.Version
 import org.infinispan.manager.{CacheContainer, DefaultCacheManager}
 import java.util.Properties
 import org.infinispan.config.GlobalConfiguration.ShutdownHookBehavior
+import org.infinispan.util.{TypedProperties, Util}
 
 /**
  * Main class for server startup.
@@ -46,9 +46,8 @@ object Main extends Logging {
     * information to get the server up and running. Use System
     * properties for defaults.
     */
-   private val props: Properties = new Properties(System.getProperties)
+   private val props: Properties = new TypedProperties(System.getProperties)
    
-   private var programName: String = _
    private var server: ProtocolServer = _
 
    def main(args: Array[String]) {
@@ -81,12 +80,45 @@ object Main extends Logging {
       // First process the command line to pickup custom props/settings
       processCommandLine(args)
 
+      val properties = new Properties
+
+      val masterThreads = props.getProperty(PROP_KEY_MASTER_THREADS).toInt
+      if (masterThreads < 0)
+         throw new IllegalArgumentException("Master threads can't be lower than 0: " + masterThreads)
+      
+      val workerThreads = props.getProperty(PROP_KEY_WORKER_THREADS).toInt
+      if (workerThreads < 0)
+         throw new IllegalArgumentException("Worker threads can't be lower than 0: " + masterThreads)
+
       var protocol = props.getProperty(PROP_KEY_PROTOCOL)
       if (protocol == null) {
          System.err.println("ERROR: Please indicate protocol to run with -r parameter")
          showAndExit
       }
       
+      val idleTimeout = props.getProperty(PROP_KEY_IDLE_TIMEOUT).toInt
+      if (idleTimeout < -1)
+         throw new IllegalArgumentException("Idle timeout can't be lower than -1: " + idleTimeout)
+
+      val tcpNoDelay = props.getProperty(PROP_KEY_TCP_NO_DELAY)
+      try {
+         tcpNoDelay.toBoolean
+      } catch {
+         case n: NumberFormatException => {
+            throw new IllegalArgumentException("TCP no delay flag switch must be a boolean: " + tcpNoDelay)
+         }
+      }
+
+      val sendBufSize = props.getProperty(PROP_KEY_SEND_BUF_SIZE).toInt
+      if (sendBufSize < 0) {
+         throw new IllegalArgumentException("Send buffer size can't be lower than 0: " + sendBufSize)
+      }
+
+      val recvBufSize = props.getProperty(PROP_KEY_SEND_BUF_SIZE).toInt
+      if (recvBufSize < 0) {
+         throw new IllegalArgumentException("Send buffer size can't be lower than 0: " + sendBufSize)
+      }
+
       // TODO: move class name and protocol number to a resource file under the corresponding project
       val clazz = protocol match {
          case "memcached" => "org.infinispan.server.memcached.MemcachedServer"
@@ -95,15 +127,33 @@ object Main extends Logging {
       }
       val server = Util.getInstance(clazz).asInstanceOf[ProtocolServer]
 
+      val port = {
+         if (props.getProperty(PROP_KEY_PORT) == null) {
+            protocol match {
+               case "memcached" => 11211
+               case "hotrod" => 11311
+               case "websocket" => 8181
+            }
+         } else {
+            props.getProperty(PROP_KEY_PORT).toInt
+         }
+      }
+      props.setProperty(PROP_KEY_PORT, port.toString)
+
+      // If no proxy host given, external host defaults to configured host
+      val externalHost = props.getProperty(PROP_KEY_PROXY_HOST, props.getProperty(PROP_KEY_HOST))
+      props.setProperty(PROP_KEY_PROXY_HOST, externalHost)
+      // If no proxy port given, external port defaults to configured port
+      val externalPort = props.getProperty(PROP_KEY_PROXY_PORT, props.getProperty(PROP_KEY_PORT))
+      props.setProperty(PROP_KEY_PROXY_PORT, externalPort)
+
       val configFile = props.getProperty(PROP_KEY_CACHE_CONFIG)
       val cacheManager = if (configFile == null) new DefaultCacheManager else new DefaultCacheManager(configFile)
-      // Servers need a shutdown hook to close down network layer, so there's no need for an extra shutdown hook.
       addShutdownHook(new ShutdownHook(server, cacheManager))
       server.start(props, cacheManager)
    }
 
    private def processCommandLine(args: Array[String]) {
-      programName = System.getProperty("program.name", "startServer")
       var sopts = "-:hD:Vp:l:m:t:c:r:i:n:s:e:o:x:"
       var lopts = Array(
          new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h'),
@@ -121,12 +171,12 @@ object Main extends Logging {
          new LongOpt("proxy_host", LongOpt.REQUIRED_ARGUMENT, null, 'o'),
          new LongOpt("proxy_port", LongOpt.REQUIRED_ARGUMENT, null, 'x')
          )
-      var getopt = new Getopt(programName, args, sopts, lopts)
+      var getopt = new Getopt("startServer", args, sopts, lopts)
       var code: Int = 0
       while ((({code = getopt.getopt; code})) != -1) {
          code match {
             case ':' | '?' => System.exit(1)
-            case 1 => System.err.println(programName + ": unused non-option argument: " + getopt.getOptarg)
+            case 1 => System.err.println("startServer: unused non-option argument: " + getopt.getOptarg)
             case 'h' => showAndExit
             case 'V' => {
                Version.printFullVersionInformation
@@ -173,7 +223,7 @@ object Main extends Logging {
    }
 
    private def showAndExit {
-      println("usage: " + programName + " [options]")
+      println("usage: startServer [options]")
       println
       println("options:")
       println("    -h, --help                         Show this help message")

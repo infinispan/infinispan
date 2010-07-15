@@ -23,6 +23,7 @@ package org.infinispan.test.fwk;
 
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
+import org.infinispan.util.LegacyKeySupportSystemProperties;
 
 import javax.transaction.TransactionManager;
 import javax.transaction.UserTransaction;
@@ -43,7 +44,7 @@ public class TransactionSetup {
       TransactionManager getManager();
    }
 
-   public static final String JTA = System.getProperty("infinispan.tm");
+   public static final String JTA = LegacyKeySupportSystemProperties.getProperty("infinispan.test.jta.tm", "infinispan.tm");
    public static final String JBOSS_TM = "jbosstm";
 
    private static Operations operations;

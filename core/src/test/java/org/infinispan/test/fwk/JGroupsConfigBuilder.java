@@ -2,6 +2,7 @@ package org.infinispan.test.fwk;
 
 import org.infinispan.config.parsing.JGroupsStackParser;
 import org.infinispan.config.parsing.XmlConfigHelper;
+import org.infinispan.util.LegacyKeySupportSystemProperties;
 import org.jgroups.util.Util;
 import org.w3c.dom.Element;
 
@@ -66,7 +67,7 @@ public class JGroupsConfigBuilder {
    private static final Pattern UDP_MCAST_PORT = Pattern.compile("mcast_port=[^;]*");
 
    static {
-      JGROUPS_STACK = System.getProperties().getProperty("protocol.stack", "tcp");
+      JGROUPS_STACK = LegacyKeySupportSystemProperties.getProperty("infinispan.test.jgroups.protocol", "protocol.stack", "tcp");
       System.out.println("Transport protocol stack used = " + JGROUPS_STACK);
 
       try {

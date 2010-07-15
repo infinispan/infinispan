@@ -120,7 +120,7 @@
                 </constraints>
                 <properties>
                   <font size="12" style="2"/>
-                  <text value="Note that you can specify a configuration file to use by passing in -Dinfinispan.demo.cfg=file:/path/to/config.xml"/>
+                  <text value="Note that you can specify a configuration file to use by passing in -Dinfinispan.configuration=file:/path/to/config.xml"/>
                 </properties>
               </component>
             </children>

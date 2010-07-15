@@ -1,16 +1,14 @@
 package org.infinispan.client.hotrod;
 
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
-import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.executors.ExecutorFactory;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.marshall.Marshaller;
-import org.infinispan.marshall.jboss.GenericJBossMarshaller;
-import org.infinispan.util.TypedProperties;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -18,12 +16,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.URL;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
-import java.util.StringTokenizer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import static org.infinispan.util.Util.getInstance;
@@ -134,19 +130,7 @@ public class RemoteCacheManager implements CacheContainer {
 
    public static final String HOTROD_CLIENT_PROPERTIES = "hotrod-client.properties";
 
-   public static final String CONF_HOTROD_SERVERS = "hotrod-servers";
-
-   public static final String OVERRIDE_HOTROD_SERVERS = "infinispan.hotrod.client.servers";
-
-   private static final String KEY_SIZE = "marshaller.default-array-size.key";
-
-   private static final String VALUE_SIZE = "marshaller.default-array-size.value";
-
-   private static final int DEFAULT_KEY_SIZE = 64;
-   private static final int DEFAULT_VALUE_SIZE = 512;
-
-
-   private TypedProperties props;
+   private ConfigurationProperties config;
    private TransportFactory transportFactory;
    private Marshaller marshaller;
    private boolean started = false;
@@ -175,15 +159,15 @@ public class RemoteCacheManager implements CacheContainer {
    /**
     * Same as {@link org.infinispan.client.hotrod.RemoteCacheManager#RemoteCacheManager(Marshaller, java.util.Properties, boolean)} with start = true.
     */
-   public RemoteCacheManager(Marshaller hotRodMarshaller, Properties props) {
-      this(hotRodMarshaller, props, false);
+   public RemoteCacheManager(Marshaller marshaller, Properties props) {
+      this(marshaller, props, false);
    }
 
    /**
     * Build a cache manager based on supplied properties.
     */
    public RemoteCacheManager(Properties props, boolean start) {
-      this.props = TypedProperties.toTypedProperties(props);
+      this.config = new ConfigurationProperties(props);
       if (start) start();
    }
 
@@ -207,7 +191,7 @@ public class RemoteCacheManager implements CacheContainer {
       InputStream stream = loader.getResourceAsStream(HOTROD_CLIENT_PROPERTIES);
       if (stream == null) {
          log.warn("Could not find '" + HOTROD_CLIENT_PROPERTIES + "' file in classpath, using defaults.");
-         props = new TypedProperties();
+         config = new ConfigurationProperties();
       } else {
          loadFromStream(stream);
       }
@@ -227,8 +211,7 @@ public class RemoteCacheManager implements CacheContainer {
     * @param start weather or not to start the RemoteCacheManager.
     */
    public RemoteCacheManager(String host, int port, boolean start) {
-      props = new TypedProperties();
-      props.put(TransportFactory.CONF_HOTROD_SERVERS, host + ":" + port);
+      config = new ConfigurationProperties(host + ":" + port);
       if (start) start();
    }
 
@@ -244,8 +227,7 @@ public class RemoteCacheManager implements CacheContainer {
     * server.
     */
    public RemoteCacheManager(String servers, boolean start) {
-      props = new TypedProperties();
-      props.put(TransportFactory.CONF_HOTROD_SERVERS, servers);
+      config = new ConfigurationProperties(servers);
       if (start) start();
    }
 
@@ -302,34 +284,21 @@ public class RemoteCacheManager implements CacheContainer {
 
    @Override
    public void start() {
-      String factory = props.getProperty("transport-factory");
-      if (factory == null) {
-         factory = TcpTransportFactory.class.getName();
-         log.info("'transport-factory' factory not specified, using " + factory);
-      }
+      String factory = config.getTransportFactory();
       transportFactory = (TransportFactory) getInstance(factory);
-      String servers = props.getProperty(CONF_HOTROD_SERVERS);
-      transportFactory.start(props, getStaticConfiguredServers(servers), topologyId);
+      Collection<InetSocketAddress> servers = config.getServerList();
+      transportFactory.start(config, servers, topologyId);
       if (marshaller == null) {
-         String marshaller = props.getProperty("marshaller");
-         if (marshaller == null) {
-            marshaller = GenericJBossMarshaller.class.getName();
-            log.info("'marshaller' not specified, using " + marshaller);
-         }
-         setMarshaller((Marshaller) getInstance(marshaller));
+         String marshallerName = config.getMarshaller();
+         setMarshaller((Marshaller) getInstance(marshallerName));
       }
 
-      String asyncExecutorClass = DefaultAsyncExecutorFactory.class.getName();
-      if (props.contains("asyn-executor-factory")) {
-         asyncExecutorClass = props.getProperty("asyn-executor-factory");
-      }
+      String asyncExecutorClass = config.getAsyncExecutorFactory();
       ExecutorFactory executorFactory = (ExecutorFactory) getInstance(asyncExecutorClass);
-      asyncExecutorService = executorFactory.getExecutor(props);
+      asyncExecutorService = executorFactory.getExecutor(config.getProperties());
 
+      forceReturnValueDefault = config.getForceReturnValues();
 
-      if (props.get("force-return-value") != null && props.get("force-return-value").equals("true")) {
-         forceReturnValueDefault = true;
-      }
       synchronized (cacheName2RemoteCache) {
          for (RemoteCacheImpl remoteCache : cacheName2RemoteCache.values()) {
             startRemoteCache(remoteCache);
@@ -351,12 +320,13 @@ public class RemoteCacheManager implements CacheContainer {
    }
 
    private void loadFromStream(InputStream stream) {
-      props = new TypedProperties();
+      Properties properties = new Properties();
       try {
-         props.load(stream);
+         properties.load(stream);
       } catch (IOException e) {
          throw new HotRodClientException("Issues configuring from client hotrod-client.properties", e);
       }
+      config = new ConfigurationProperties(properties);
    }
 
    private <K, V> RemoteCache<K, V> createRemoteCache(String cacheName, boolean forceReturnValue) {
@@ -374,38 +344,7 @@ public class RemoteCacheManager implements CacheContainer {
 
    private <K, V> void startRemoteCache(RemoteCacheImpl<K, V> result) {
       OperationsFactory operationsFactory = new OperationsFactory(transportFactory, result.getName(), topologyId, forceReturnValueDefault);
-      result.init(marshaller, asyncExecutorService, operationsFactory, props.getIntProperty(KEY_SIZE, DEFAULT_KEY_SIZE),
-              props.getIntProperty(VALUE_SIZE, DEFAULT_VALUE_SIZE));
-   }
-
-   private Set<InetSocketAddress> getStaticConfiguredServers(String servers) {
-      Set<InetSocketAddress> serverAddresses = new HashSet<InetSocketAddress>();
-      if (servers == null) {
-         servers = System.getProperty(OVERRIDE_HOTROD_SERVERS);
-         if (servers != null) {
-            log.info("Overwriting default server properties (-D" + OVERRIDE_HOTROD_SERVERS + ") with " + servers);
-         } else {
-            servers = "127.0.0.1:11311";
-         }
-         log.info("'hotrod-servers' property not specified in config, using " + servers);
-      }
-      StringTokenizer tokenizer = new StringTokenizer(servers, ";");
-      while (tokenizer.hasMoreTokens()) {
-         String server = tokenizer.nextToken();
-         String[] serverDef = tokenizeServer(server);
-         String serverHost = serverDef[0];
-         int serverPort = Integer.parseInt(serverDef[1]);
-         serverAddresses.add(new InetSocketAddress(serverHost, serverPort));
-      }
-      if (serverAddresses.isEmpty()) {
-         throw new IllegalStateException("No hot-rod servers specified!");
-      }
-      return serverAddresses;
-   }
-
-   private String[] tokenizeServer(String server) {
-      StringTokenizer t = new StringTokenizer(server, ":");
-      return new String[]{t.nextToken(), t.nextToken()};
+      result.init(marshaller, asyncExecutorService, operationsFactory, config.getKeySizeEstimate(), config.getValueSizeEstimate());
    }
 
    private void setMarshaller(Marshaller marshaller) {

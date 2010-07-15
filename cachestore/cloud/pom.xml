@@ -90,16 +90,16 @@
                <parallel>false</parallel>
                <systemProperties>
                   <property>
-                     <name>infinispan.jclouds.username</name>
-                     <value>${infinispan.jclouds.username}</value>
+                     <name>infinispan.test.jclouds.username</name>
+                     <value>${infinispan.test.jclouds.username}</value>
                   </property>
                   <property>
-                     <name>infinispan.jclouds.password</name>
-                     <value>${infinispan.jclouds.password}</value>
+                     <name>infinispan.test.jclouds.password</name>
+                     <value>${infinispan.test.jclouds.password}</value>
                   </property>
                   <property>
-                     <name>infinispan.jclouds.service</name>
-                     <value>${infinispan.jclouds.service}</value>
+                     <name>infinispan.test.jclouds.service</name>
+                     <value>${infinispan.test.jclouds.service}</value>
                   </property>
                </systemProperties>
             </configuration>
