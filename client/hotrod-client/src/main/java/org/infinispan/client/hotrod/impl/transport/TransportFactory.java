@@ -17,8 +17,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public interface TransportFactory {
 
-   public static final String CONF_HOTROD_SERVERS = "hotrod-servers";
-
    public Transport getTransport();
 
    public void releaseTransport(Transport transport);

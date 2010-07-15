@@ -63,7 +63,7 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
 
    protected RemoteCacheManager getRemoteCacheManager() {
       Properties config = new Properties();
-      config.put("hotrod-servers", "127.0.0.1:" + hotrodServer.getPort());
+      config.put("infinispan.client.hotrod.server_list", "127.0.0.1:" + hotrodServer.getPort());
       return new RemoteCacheManager(config);
    }
 

@@ -36,7 +36,7 @@ public class DroppedConnectionsTest extends SingleCacheManagerTest {
       hrClientConfig.put("minIdle","1");
       hrClientConfig.put("maxIdle","2");
       hrClientConfig.put("maxActive","2");
-      hrClientConfig.put("hotrod-servers", "127.0.0.1:" + hotRodServer.getPort());
+      hrClientConfig.put("infinispan.client.hotrod.server_list", "127.0.0.1:" + hotRodServer.getPort());
       remoteCacheManager = new RemoteCacheManager(hrClientConfig);
       rc = remoteCacheManager.getCache();
       transportFactory = (TcpTransportFactory) TestingUtil.extractField(remoteCacheManager, "transportFactory");

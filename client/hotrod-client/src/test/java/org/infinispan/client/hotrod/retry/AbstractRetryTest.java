@@ -68,8 +68,8 @@ public abstract class AbstractRetryTest extends HitsAwareCacheManagersTest {
       waitForClusterToForm();
 
       Properties clientConfig = new Properties();
-      clientConfig.put("hotrod-servers", "localhost:" + hotRodServer2.getPort());
-      clientConfig.put("force-return-value", "true");
+      clientConfig.put("infinispan.client.hotrod.server_list", "localhost:" + hotRodServer2.getPort());
+      clientConfig.put("infinispan.client.hotrod.force_return_values", "true");
       clientConfig.put("maxActive",1); //this ensures that only one server is active at a time
 
       remoteCacheManager = new RemoteCacheManager(clientConfig);

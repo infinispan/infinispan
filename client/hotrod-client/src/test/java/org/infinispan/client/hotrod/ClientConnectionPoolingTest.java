@@ -80,7 +80,7 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
       hotrodClientConf.put("testWhileIdle", "true");
       hotrodClientConf.put("minIdle", "-5");
       hotrodClientConf.put("lifo", "true");
-      hotrodClientConf.put("ping-on-startup", "false");
+      hotrodClientConf.put("infinispan.client.hotrod.ping_on_startup", "false");
 
       remoteCacheManager = new RemoteCacheManager(hotrodClientConf);
       remoteCache = remoteCacheManager.getCache();

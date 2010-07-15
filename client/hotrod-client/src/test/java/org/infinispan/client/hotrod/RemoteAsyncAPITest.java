@@ -30,8 +30,8 @@ public class RemoteAsyncAPITest extends SingleCacheManagerTest {
       cache = cm.getCache();
       hotrodServer = TestHelper.startHotRodServer(cm);
       Properties props = new Properties();
-      props.put("hotrod-servers", "127.0.0.1:" + hotrodServer.getPort());
-      props.put("force-return-value","true");
+      props.put("infinispan.client.hotrod.server_list", "127.0.0.1:" + hotrodServer.getPort());
+      props.put("infinispan.client.hotrod.force_return_values","true");
       props.put("testOnBorrow", "false");
       rcm = new RemoteCacheManager(props);
       c = rcm.getCache(true);

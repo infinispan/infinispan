@@ -56,8 +56,8 @@ public class PingOnStartupTest extends MultipleCacheManagersTest {
 
    public void testTopologyFetched() throws Exception {
       Properties props = new Properties();
-      props.put("hotrod-servers", "localhost:" + hotRodServer2.getPort() + ";localhost:" + hotRodServer2.getPort());
-      props.put("ping-on-startup", "true");
+      props.put("infinispan.client.hotrod.server_list", "localhost:" + hotRodServer2.getPort() + ";localhost:" + hotRodServer2.getPort());
+      props.put("infinispan.client.hotrod.ping_on_startup", "true");
       props.put("timeBetweenEvictionRunsMillis", "500");
       RemoteCacheManager remoteCacheManager = new RemoteCacheManager(props);
 
@@ -78,8 +78,8 @@ public class PingOnStartupTest extends MultipleCacheManagersTest {
 
    public void testTopologyNotFetched() {
       Properties props = new Properties();
-      props.put("hotrod-servers", "localhost:" + hotRodServer2.getPort() + ";localhost:" + hotRodServer2.getPort());
-      props.put("ping-on-startup", "false");
+      props.put("infinispan.client.hotrod.server_list", "localhost:" + hotRodServer2.getPort() + ";localhost:" + hotRodServer2.getPort());
+      props.put("infinispan.client.hotrod.ping_on_startup", "false");
       RemoteCacheManager remoteCacheManager = new RemoteCacheManager(props);
 
       TcpTransportFactory tcpConnectionFactory = (TcpTransportFactory) TestingUtil.extractField(remoteCacheManager, "transportFactory");

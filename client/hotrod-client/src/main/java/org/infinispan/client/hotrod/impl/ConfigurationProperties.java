@@ -33,13 +33,15 @@ public class ConfigurationProperties {
    public static final String VALUE_SIZE_ESTIMATE = "infinispan.client.hotrod.value_size_estimate";
    public static final String FORCE_RETURN_VALUES = "infinispan.client.hotrod.force_return_values";
    public static final String HASH_FUNCTION_PREFIX = "infinispan.client.hotrod.hash_function_impl";
-
+   public static final String DEFAULT_EXECUTOR_FACTORY_QUEUE_SIZE ="infinispan.client.hotrod.default_executor_factory.queue_size";
+   
    // defaults
 
    private static final int DEFAULT_KEY_SIZE = 64;
    private static final int DEFAULT_VALUE_SIZE = 512;
 
    private final TypedProperties props;
+
 
    public ConfigurationProperties() {
       this.props = new TypedProperties();

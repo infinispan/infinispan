@@ -100,8 +100,8 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
 
       //Important: this only connects to one of the two servers!
       Properties props = new Properties();
-      props.put("hotrod-servers", "localhost:" + hotRodServer2.getPort() + ";localhost:" + hotRodServer2.getPort());
-      props.put("ping-on-startup", "false");
+      props.put("infinispan.client.hotrod.server_list", "localhost:" + hotRodServer2.getPort() + ";localhost:" + hotRodServer2.getPort());
+      props.put("infinispan.client.hotrod.ping_on_startup", "false");
       remoteCacheManager = new RemoteCacheManager(props);
       remoteCache = remoteCacheManager.getCache();
 
