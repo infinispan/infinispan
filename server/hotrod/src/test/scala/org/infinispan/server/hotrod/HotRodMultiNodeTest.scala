@@ -36,10 +36,13 @@ abstract class HotRodMultiNodeTest extends MultipleCacheManagersTest {
 
    @AfterClass(alwaysRun = true)
    override def destroy {
-      log.debug("Test finished, close Hot Rod server", null)
-      hotRodClients.foreach(_.stop)
-      hotRodServers.foreach(_.stop)
-      super.destroy // Stop the caches last so that at stoppage time topology cache can be updated properly
+      try {
+         log.debug("Test finished, close Hot Rod server", null)
+         hotRodClients.foreach(_.stop)
+         hotRodServers.foreach(_.stop)
+      } finally {
+         super.destroy // Stop the caches last so that at stoppage time topology cache can be updated properly
+      }
    }
 
    @AfterMethod(alwaysRun=true)
