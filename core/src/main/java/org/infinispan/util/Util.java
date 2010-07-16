@@ -37,7 +37,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
 /**
- * General utility methods used throughout the JBC code base.
+ * General utility methods used throughout the Infinispan code base.
  *
  * @author <a href="brian.stansberry@jboss.com">Brian Stansberry</a>
  * @author Galder Zamarreño
