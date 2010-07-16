@@ -25,7 +25,7 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
 
    def start(properties: Properties, cacheManager: EmbeddedCacheManager, defaultPort: Int) {
       val typedProps = TypedProperties.toTypedProperties(properties)
-      val toStart = typedProps.getBooleanProperty("enabled", false)
+      val toStart = typedProps.getBooleanProperty("enabled", true)
 
       if (toStart) {
          this.host = typedProps.getProperty(PROP_KEY_HOST, HOST_DEFAULT)
