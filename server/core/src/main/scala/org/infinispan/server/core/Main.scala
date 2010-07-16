@@ -34,12 +34,12 @@ object Main extends Logging {
    val PROP_KEY_PROXY_HOST = "infinispan.server.proxy_host"
    val PROP_KEY_PROXY_PORT = "infinispan.server.proxy_port"
    val HOST_DEFAULT = "127.0.0.1"
-   val MASTER_THREADS_DEFAULT = "0"
-   val WORKER_THREADS_DEFAULT = "0"
-   val IDLE_TIMEOUT_DEFAULT = "-1"
-   val TCP_NO_DELAY_DEFAULT = "true"
-   val SEND_BUF_SIZE_DEFAULT = "0"
-   val RECV_BUF_SIZE_DEFAULT = "0"
+   val MASTER_THREADS_DEFAULT = 0
+   val WORKER_THREADS_DEFAULT = 0
+   val IDLE_TIMEOUT_DEFAULT = -1
+   val TCP_NO_DELAY_DEFAULT = true
+   val SEND_BUF_SIZE_DEFAULT = 0
+   val RECV_BUF_SIZE_DEFAULT = 0
 
    /**
     * Server properties.  This object holds all of the required

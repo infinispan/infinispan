@@ -20,7 +20,14 @@ trait ProtocolServer {
    def start(properties: Properties, cacheManager: EmbeddedCacheManager)
 
    /**
-    * Stops the server
+    * Overloaded method that starts the server by using a properties file. This is particularly useful if trying to
+    * start the cache through a beans.xml file or similar.
+    */
+   def start(propertiesFileName: String, cacheManager: EmbeddedCacheManager)
+
+
+   /**
+    *  Stops the server
     */
    def stop
 
