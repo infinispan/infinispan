@@ -7,6 +7,8 @@ import org.infinispan.server.core.VersionGenerator._
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.server.core.Main._
 import java.util.Properties
+import org.infinispan.util.Util
+import org.infinispan.util.logging.Log
 
 /**
  * // TODO: Document this
@@ -31,7 +33,7 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
       this.workerThreads = properties.getProperty(PROP_KEY_WORKER_THREADS, WORKER_THREADS_DEFAULT).toInt
       if (workerThreads < 0)
          throw new IllegalArgumentException("Worker threads can't be lower than 0: " + masterThreads)
-      
+
       this.cacheManager = cacheManager
       val idleTimeout = properties.getProperty(PROP_KEY_IDLE_TIMEOUT, IDLE_TIMEOUT_DEFAULT).toInt
       if (idleTimeout < -1)
@@ -39,19 +41,19 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
 
       val tcpNoDelayString = properties.getProperty(PROP_KEY_TCP_NO_DELAY, TCP_NO_DELAY_DEFAULT)
       val tcpNoDelay =
-         try {
-            tcpNoDelayString.toBoolean
-         } catch {
-            case n: NumberFormatException => {
-               throw new IllegalArgumentException("TCP no delay flag switch must be a boolean: " + tcpNoDelayString)
-            }
+      try {
+         tcpNoDelayString.toBoolean
+      } catch {
+         case n: NumberFormatException => {
+            throw new IllegalArgumentException("TCP no delay flag switch must be a boolean: " + tcpNoDelayString)
          }
+      }
 
       val sendBufSize = properties.getProperty(PROP_KEY_SEND_BUF_SIZE, SEND_BUF_SIZE_DEFAULT).toInt
       if (sendBufSize < 0) {
          throw new IllegalArgumentException("Send buffer size can't be lower than 0: " + sendBufSize)
       }
-      
+
       val recvBufSize = properties.getProperty(PROP_KEY_RECV_BUF_SIZE, RECV_BUF_SIZE_DEFAULT).toInt
       if (recvBufSize < 0) {
          throw new IllegalArgumentException("Send buffer size can't be lower than 0: " + sendBufSize)
@@ -61,7 +63,7 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
       cacheManager.addListener(getRankCalculatorListener)
       // Start default cache
       startDefaultCache
-      val address =  new InetSocketAddress(host, port)
+      val address = new InetSocketAddress(host, port)
       startTransport(address, idleTimeout, tcpNoDelay, sendBufSize, recvBufSize)
    }
 
@@ -71,6 +73,19 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
       transport = new NettyTransport(this, nettyEncoder, address, masterThreads, workerThreads, idleTimeout,
          threadNamePrefix, tcpNoDelay, sendBufSize, recvBufSize)
       transport.start
+   }
+
+
+   def start(propertiesFileName: String, cacheManager: EmbeddedCacheManager) {
+      val propsObject = new Properties()
+      val stream = Util.loadResourceAsStream(propertiesFileName)
+      propsObject.load(stream)
+
+      if (propsObject.getProperty("isEnabled").equals("true")) {
+         start(propsObject, cacheManager)
+      }
+
+
    }
 
    override def stop {
