@@ -103,7 +103,7 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager) extends AbstractProtocol
       null // Unsupported
 
    override def handleCustomRequest(h: HotRodHeader, b: ChannelBuffer, cache: Cache[ByteArrayKey, CacheValue]): AnyRef = {
-      h.decoder.handleCustomRequest(h, b, cache)
+      val result = h.decoder.handleCustomRequest(h, b, cache)
       if (isTrace) trace("About to return: " + result)
       result
    }
