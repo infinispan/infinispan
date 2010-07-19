@@ -27,6 +27,9 @@ import java.util.Scanner;
 
 import org.apache.lucene.queryParser.ParseException;
 import org.apache.lucene.search.Query;
+import org.infinispan.Cache;
+import org.infinispan.lucene.InfinispanDirectory;
+import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -39,12 +42,24 @@ import org.infinispan.remoting.transport.Address;
  */
 public class DemoDriver implements Runnable {
    
-   private final DemoActions actions = new DemoActions();
+   private final DemoActions actions;
+
+   public DemoDriver(InfinispanDirectory infinispanDirectory) {
+      actions = new DemoActions(infinispanDirectory);
+   }
 
    public static void main(String[] args) throws IOException {
-      DemoDriver driver = new DemoDriver();
-      driver.run();
-      DirectoryFactory.close();
+      DefaultCacheManager cacheManager = new DefaultCacheManager("config-samples/lucene-demo-cache-config.xml");
+      cacheManager.start();
+      try {
+         Cache cache = cacheManager.getCache();
+         InfinispanDirectory directory = new InfinispanDirectory(cache);
+         DemoDriver driver = new DemoDriver(directory);
+         driver.run();
+      }
+      finally {
+         cacheManager.stop();
+      }
    }
 
    private void doQuery(Scanner scanner) throws IOException {

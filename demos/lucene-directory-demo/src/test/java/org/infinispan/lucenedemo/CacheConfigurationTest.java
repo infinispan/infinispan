@@ -26,8 +26,10 @@ import java.util.List;
 
 import org.apache.lucene.queryParser.ParseException;
 import org.apache.lucene.search.Query;
+import org.infinispan.Cache;
+import org.infinispan.lucene.CacheKey;
 import org.infinispan.lucene.InfinispanDirectory;
-import org.infinispan.lucenedemo.DirectoryFactory;
+import org.infinispan.manager.DefaultCacheManager;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -41,40 +43,44 @@ import org.testng.annotations.Test;
 @Test
 public class CacheConfigurationTest {
    
-   private InfinispanDirectory cacheForIndex1;
-   private InfinispanDirectory cacheForIndex2;
-   private InfinispanDirectory cacheForIndex3;
+   private DefaultCacheManager cacheManager1;
+   private DefaultCacheManager cacheManager2;
+   private InfinispanDirectory directoryNodeOne;
+   private InfinispanDirectory directoryNodeTwo;
 
    @BeforeClass
-   public void init() {
-      cacheForIndex1 = DirectoryFactory.getIndex("firstIndex");
-      cacheForIndex2 = DirectoryFactory.getIndex("firstIndex");
-      cacheForIndex3 = DirectoryFactory.getIndex("secondIndex");
+   public void init() throws IOException {
+      cacheManager1 = new DefaultCacheManager("config-samples/lucene-demo-cache-config.xml");
+      cacheManager1.start();
+      Cache<CacheKey, Object> cache1 = cacheManager1.getCache();
+      cache1.clear();
+      directoryNodeOne = new InfinispanDirectory(cache1);
+      cacheManager2 = new DefaultCacheManager("config-samples/lucene-demo-cache-config.xml");
+      cacheManager2.start();
+      Cache<CacheKey, Object> cache2 = cacheManager2.getCache();
+      cache2.clear();
+      directoryNodeTwo = new InfinispanDirectory(cache2);
    }
    
    @AfterClass
-   public void cleanup() {
-      DirectoryFactory.close();
+   public void cleanup() throws IOException {
+      directoryNodeOne.close();
+      directoryNodeTwo.close();
+      cacheManager1.stop();
+      cacheManager2.stop();
    }
 
    @Test
-   public void testCorrectCacheInstances() {
-      assert cacheForIndex1 != null;
-      assert cacheForIndex1 == cacheForIndex2;
-      assert cacheForIndex1 != cacheForIndex3;
-   }
-   
-   @Test
    public void inserting() throws IOException, ParseException {
-      DemoActions node1 = new DemoActions(cacheForIndex1);
-      DemoActions node2 = new DemoActions(cacheForIndex2);
+      DemoActions node1 = new DemoActions(directoryNodeOne);
+      DemoActions node2 = new DemoActions(directoryNodeTwo);
       node1.addNewDocument("hello?");
-      assert node1.listAllDocuments().size()==1;
+      assert node1.listAllDocuments().size() == 1;
       node1.addNewDocument("anybody there?");
-      assert node2.listAllDocuments().size()==2;
+      assert node2.listAllDocuments().size() == 2;
       Query query = node1.parseQuery("hello world");
       List<String> valuesMatchingQuery = node2.listStoredValuesMatchingQuery(query);
-      assert valuesMatchingQuery.size()==1;
+      assert valuesMatchingQuery.size() == 1;
       assert valuesMatchingQuery.get(0).equals("hello?");
    }
 
