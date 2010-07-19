@@ -36,9 +36,9 @@ import java.util.Set;
 import static java.util.Collections.emptySet;
 
 /**
- * This is a base class containing various unit tests for each and every different CacheStore implementations. 
- * If you need to add Cache/CacheManager tests that need to be run for each cache store/loader implementation,
- * then use BaseCacheStoreFunctionalTest. 
+ * This is a base class containing various unit tests for each and every different CacheStore implementations. If you
+ * need to add Cache/CacheManager tests that need to be run for each cache store/loader implementation, then use
+ * BaseCacheStoreFunctionalTest.
  */
 @SuppressWarnings("unchecked")
 // this needs to be here for the test to run in an IDE
@@ -50,8 +50,6 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
    protected CacheStore cs;
 
    protected GlobalTransactionFactory gtf = new GlobalTransactionFactory();
-
-   protected volatile boolean supportsLoadAll = true;
 
    @BeforeMethod
    public void setUp() throws Exception {
@@ -76,7 +74,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       }
    }
 
-   @AfterMethod (alwaysRun = false)
+   @AfterMethod(alwaysRun = false)
    public void assertNoLocksHeld() {
       //doesn't really make sense to add a subclass for this check only
       if (cs instanceof LockSupportCacheStore) {
@@ -113,7 +111,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       assert cs.containsKey("k");
    }
 
-   public void testLoadAndStoreWithLifespan() throws InterruptedException, CacheLoaderException {
+   public void testLoadAndStoreWithLifespan() throws Exception {
       assert !cs.containsKey("k");
 
       long lifespan = 120000;
@@ -123,10 +121,8 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       assert cs.containsKey("k");
       InternalCacheEntry ice = cs.load("k");
       assertCorrectExpiry(ice, "v", lifespan, -1, false);
-      if (supportsLoadAll) {
-         ice = cs.loadAll().iterator().next();
-         assertCorrectExpiry(ice, "v", lifespan, -1, false);
-      }
+      ice = cs.loadAll().iterator().next();
+      assertCorrectExpiry(ice, "v", lifespan, -1, false);
 
       lifespan = 1;
       se = InternalEntryFactory.create("k", "v", lifespan);
@@ -134,11 +130,9 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       Thread.sleep(100);
       purgeExpired();
       assert se.isExpired();
-      assert cs.load("k") == null;
+      assertEventuallyExpires("k");
       assert !cs.containsKey("k");
-      if (supportsLoadAll) {
-         assert cs.loadAll().isEmpty();
-      }
+      assert cs.loadAll().isEmpty();
    }
 
    private void assertCorrectExpiry(InternalCacheEntry ice, String value, long lifespan, long maxIdle, boolean expired) {
@@ -152,7 +146,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
    }
 
 
-   public void testLoadAndStoreWithIdle() throws InterruptedException, CacheLoaderException {
+   public void testLoadAndStoreWithIdle() throws Exception {
       assert !cs.containsKey("k");
 
       long idle = 120000;
@@ -162,10 +156,8 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       assert cs.containsKey("k");
       InternalCacheEntry ice = cs.load("k");
       assertCorrectExpiry(ice, "v", -1, idle, false);
-      if (supportsLoadAll) {
-         ice = cs.loadAll().iterator().next();
-         assertCorrectExpiry(ice, "v", -1, idle, false);
-      }
+      ice = cs.loadAll().iterator().next();
+      assertCorrectExpiry(ice, "v", -1, idle, false);
 
       idle = 1;
       se = InternalEntryFactory.create("k", "v", -1, idle);
@@ -173,18 +165,20 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       Thread.sleep(100);
       purgeExpired();
       assert se.isExpired();
-      assert cs.load("k") == null;
+      assertEventuallyExpires("k");
       assert !cs.containsKey("k");
-      if (supportsLoadAll) {
-         assert cs.loadAll().isEmpty();
-      }
+      assert cs.loadAll().isEmpty();
+   }
+
+   protected void assertEventuallyExpires(String key) throws Exception {
+      assert cs.load(key) == null;
    }
 
    protected void purgeExpired() throws CacheLoaderException {
       cs.purgeExpired();
    }
 
-   public void testLoadAndStoreWithLifespanAndIdle() throws InterruptedException, CacheLoaderException {
+   public void testLoadAndStoreWithLifespanAndIdle() throws Exception {
       assert !cs.containsKey("k");
 
       long lifespan = 200000;
@@ -195,10 +189,8 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       assert cs.containsKey("k");
       InternalCacheEntry ice = cs.load("k");
       assertCorrectExpiry(ice, "v", lifespan, idle, false);
-      if (supportsLoadAll) {
-         ice = cs.loadAll().iterator().next();
-         assertCorrectExpiry(ice, "v", lifespan, idle, false);
-      }
+      ice = cs.loadAll().iterator().next();
+      assertCorrectExpiry(ice, "v", lifespan, idle, false);
 
       idle = 1;
       se = InternalEntryFactory.create("k", "v", lifespan, idle);
@@ -206,11 +198,9 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       Thread.sleep(100);
       purgeExpired();
       assert se.isExpired();
-      assert cs.load("k") == null;
+      assertEventuallyExpires("k");
       assert !cs.containsKey("k");
-      if (supportsLoadAll) {
-         assert cs.loadAll().isEmpty();
-      }
+      assert cs.loadAll().isEmpty();
    }
 
    public void testStopStartDoesNotNukeValues() throws InterruptedException, CacheLoaderException {
@@ -522,13 +512,13 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       } finally {
          marshaller.finishObjectOutput(oo);
          out.close();
-         cs.clear();         
+         cs.clear();
       }
 
       ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
       ObjectInput oi = marshaller.startObjectInput(in, false);
       try {
-         cs.fromStream(new UnclosableObjectInputStream(oi));         
+         cs.fromStream(new UnclosableObjectInputStream(oi));
       } finally {
          marshaller.finishObjectInput(oi);
          in.close();
@@ -562,7 +552,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       } finally {
          marshaller.finishObjectOutput(oo);
          out.close();
-         cs.clear();         
+         cs.clear();
       }
 
       // first pop the start bytes
@@ -572,17 +562,17 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
       try {
          int bytesRead = oi.read(dummy, 0, 8);
          assert bytesRead == 8;
-         for (int i = 1; i < 9; i++) assert dummy[i - 1] == i : "Start byte stream corrupted!";      
+         for (int i = 1; i < 9; i++) assert dummy[i - 1] == i : "Start byte stream corrupted!";
          cs.fromStream(new UnclosableObjectInputStream(oi));
          bytesRead = oi.read(dummy, 0, 8);
          assert bytesRead == 8;
-         for (int i = 8; i > 0; i--) assert dummy[8 - i] == i : "Start byte stream corrupted!";                  
+         for (int i = 8; i > 0; i--) assert dummy[8 - i] == i : "Start byte stream corrupted!";
       } finally {
          marshaller.finishObjectInput(oi);
          in.close();
       }
-      
-      Set<InternalCacheEntry> set = cs.loadAll(); 
+
+      Set<InternalCacheEntry> set = cs.loadAll();
       assert set.size() == 3;
       Set expected = new HashSet();
       expected.add("k1");
@@ -637,9 +627,7 @@ public abstract class BaseCacheStoreTest extends AbstractInfinispanTest {
                int randomInt = r.nextInt(10);
                InternalCacheEntry se = cs.load(keys[randomInt]);
                assert se == null || se.getValue().equals(values[randomInt]);
-               if (supportsLoadAll) {
-                  cs.loadAll();
-               }
+               cs.loadAll();
             } catch (Exception e) {
                exceptions.add(e);
             }
