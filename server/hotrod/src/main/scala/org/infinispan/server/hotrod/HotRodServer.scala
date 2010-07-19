@@ -37,7 +37,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Logging {
 
    override def start(p: Properties, cacheManager: EmbeddedCacheManager) {
       val properties = if (p == null) new Properties else p
-      super.start(properties, cacheManager, 11311)
+      super.start(properties, cacheManager)
       
       // Start defined caches to avoid issues with lazily started caches
       for (cacheName <- asIterator(cacheManager.getCacheNames.iterator))
