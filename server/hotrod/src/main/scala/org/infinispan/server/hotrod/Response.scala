@@ -2,7 +2,9 @@ package org.infinispan.server.hotrod
 
 import OperationStatus._
 import OperationResponse._
-import org.infinispan.util.Util
+import org.infinispan.Cache
+import org.infinispan.server.core.CacheValue
+import org.infinispan.util.{ByteArrayKey, Util}
 
 /**
  * // TODO: Document this
@@ -49,6 +51,19 @@ class GetResponse(override val messageId: Long, override val cacheName: String, 
          .append(", status=").append(status)
          .append(", data=").append(if (data == None) "null" else Util.printArray(data.get, true))
          .append("}").toString
+   }
+}
+class BulkGetResponse(override val messageId: Long, override val cacheName: String, override val clientIntel: Short,
+                  override val operation: OperationResponse, override val status: OperationStatus,
+                  override val topologyId: Int,
+                  val cache: Cache[ByteArrayKey, CacheValue], val count: Int)
+      extends Response(messageId, cacheName, clientIntel, operation, status, topologyId) {
+   override def toString = {
+      new StringBuilder().append("BulkGetResponse").append("{")
+         .append("messageId=").append(messageId)
+         .append(", operation=").append(operation)
+         .append(", status=").append(status)
+         .append(", data=").append("}").toString
    }
 }
 

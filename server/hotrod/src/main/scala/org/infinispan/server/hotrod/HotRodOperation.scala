@@ -14,5 +14,6 @@ object HotRodOperation extends Enumeration(20) {
    val ClearRequest = Value
    val QuitRequest = Value
    val PingRequest = Value
+   val BulkGetRequest = Value
 
 }
