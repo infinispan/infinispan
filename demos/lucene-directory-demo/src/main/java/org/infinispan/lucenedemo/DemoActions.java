@@ -41,6 +41,7 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.util.Version;
 import org.infinispan.lucene.InfinispanDirectory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
@@ -58,13 +59,9 @@ public class DemoActions {
    private static final String MAIN_FIELD = "myField";
 
    /** The Analyzer used in all methods **/
-   private static final Analyzer analyzer = new StandardAnalyzer();
+   private static final Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_29);
 
    private InfinispanDirectory index;
-   
-   public DemoActions() {
-      index = DirectoryFactory.getIndex("index");
-   }
    
    public DemoActions(InfinispanDirectory index) {
       this.index = index;
@@ -76,7 +73,7 @@ public class DemoActions {
     */
    public List<String> listStoredValuesMatchingQuery(Query query) {
       try {
-         IndexSearcher searcher = new IndexSearcher(index);
+         IndexSearcher searcher = new IndexSearcher(index, true);
          TopDocs topDocs = searcher.search(query, null, 100);// demo limited to 100 documents!
          ScoreDoc[] scoreDocs = topDocs.scoreDocs;
          List<String> list = new ArrayList<String>();
@@ -126,7 +123,7 @@ public class DemoActions {
     * @throws ParseException 
     */
    public Query parseQuery(String queryLine) throws ParseException {
-      QueryParser parser = new QueryParser(MAIN_FIELD, analyzer);
+      QueryParser parser = new QueryParser(Version.LUCENE_29, MAIN_FIELD, analyzer);
       return parser.parse(queryLine);
    }
 
