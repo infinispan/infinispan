@@ -149,7 +149,7 @@ object Decoder10 extends AbstractVersionedDecoder with Logging {
          case BulkGetRequest => {
             val count = buffer.readUnsignedInt
             if (isTraceEnabled) trace("About to create bulk response, count = " + count)
-            new BulkGetResponse(h.messageId, h.cacheName, h.clientIntel, BulkGetResponse, Success, h.topologyId, cache, count)
+            new BulkGetResponse(h.messageId, h.cacheName, h.clientIntel, BulkGetResponse, Success, h.topologyId, count)
          }
       }
    }

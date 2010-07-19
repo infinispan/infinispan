@@ -8,8 +8,7 @@ import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.Cache
 import org.infinispan.server.core.{CacheValue, Logging}
 import org.infinispan.util.ByteArrayKey
-import java.util.Iterator
-import org.infinispan.container.entries.{InternalCacheValue, InternalCacheEntry}
+import scala.collection.JavaConversions._
 
 /**
  * // TODO: Document this
@@ -53,22 +52,18 @@ class HotRodEncoder(cacheManager: EmbeddedCacheManager) extends Encoder {
             }
          }
          case g: BulkGetResponse => {
-            if (isTrace) trace("About to repond to bulk get request: ")
+            if (isTrace) trace("About to respond to bulk get request")
             if (g.status == Success) {
-               val dataContainer = g.cache.getAdvancedCache().getDataContainer()
-               var iterator: Iterator[InternalCacheEntry] = dataContainer.iterator()
-               val count = g.count
-               var written:Int = 0;
-               if (isTrace) trace("About to write (max) " + count + " messages to the client. Is written <= count ?" + (written <= count))
-               while (iterator.hasNext() && ((written < count) || (count == 0)) ) {
-                  if (isTrace) trace("About to write message number " + written)
+               val cache: Cache[ByteArrayKey, CacheValue] = getCacheInstance(g.cacheName, cacheManager)
+               var iterator = asIterator(cache.entrySet.iterator)
+               if (g.count != 0) {
+                  if (isTrace) trace("About to write (max) {0} messages to the client", g.count)
+                  iterator = iterator.take(g.count)
+               }
+               for (entry <- iterator) {
                   buffer.writeByte(1) //not done
-                  written = written + 1
-                  var ice: InternalCacheEntry = iterator.next()
-                  val key:ByteArrayKey = ice.getKey().asInstanceOf[ByteArrayKey]
-                  buffer.writeRangedBytes(key.getData)
-                  val cacheValue : CacheValue = ice.getValue().asInstanceOf[CacheValue]
-                  buffer.writeRangedBytes(cacheValue.data)
+                  buffer.writeRangedBytes(entry.getKey.getData)
+                  buffer.writeRangedBytes(entry.getValue.data)
                }
                buffer.writeByte(0)
             }

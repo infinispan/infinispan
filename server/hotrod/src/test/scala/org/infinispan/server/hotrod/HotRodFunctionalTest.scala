@@ -9,7 +9,7 @@ import org.infinispan.manager.DefaultCacheManager
 import org.infinispan.server.core.CacheValue
 import org.infinispan.server.hotrod.OperationStatus._
 import org.infinispan.server.hotrod.test._
-import org.infinispan.util.ByteArrayKey
+import org.infinispan.util.{Util, ByteArrayKey}
 
 /**
  * Hot Rod server functional test.
@@ -356,5 +356,30 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
       assertStatus(resp.status, Success)
       assertEquals(resp.topologyResponse, None)
    }
-   
+
+   def testBulkGet(m: Method) {
+      var size = 100
+      for (i <- 0 until size) {
+         val status = client.put(k(m, i + "k-") , 0, 0, v(m, i + "v-")).status
+         assertStatus(status, Success)
+      }
+      var resp = client.bulkGet
+      assertStatus(resp.status, Success)
+      var bulkData = resp.bulkData
+      assertEquals(size, bulkData.size)
+      for (i <- 0 until size)
+         assertTrue(Arrays.equals(bulkData.get(new ByteArrayKey(k(m, i + "k-"))).get, v(m, i + "v-")))
+
+      size = 50
+      resp = client.bulkGet(size)
+      assertStatus(resp.status, Success)
+      bulkData = resp.bulkData
+      assertEquals(size, bulkData.size)
+      for (i <- 0 until size) {
+         val key = new ByteArrayKey(k(m, i + "k-"))
+         if (bulkData.contains(key)) {
+            assertTrue(Arrays.equals(bulkData.get(key).get, v(m, i + "v-")))            
+         }
+      }
+   }
 }
