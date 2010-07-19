@@ -102,8 +102,12 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager) extends AbstractProtocol
    override def createMultiGetResponse(h: HotRodHeader, pairs: Map[ByteArrayKey, CacheValue]): AnyRef =
       null // Unsupported
 
-   override def handleCustomRequest(h: HotRodHeader, b: ChannelBuffer, cache: Cache[ByteArrayKey, CacheValue]): AnyRef =
+   override def handleCustomRequest(h: HotRodHeader, b: ChannelBuffer, cache: Cache[ByteArrayKey, CacheValue]): AnyRef = {
       h.decoder.handleCustomRequest(h, b, cache)
+      if (isTrace) trace("About to return: " + result)
+      result
+   }
+
 
    override def createStatsResponse(h: HotRodHeader, stats: Stats): AnyRef =
       h.decoder.createStatsResponse(h, stats)

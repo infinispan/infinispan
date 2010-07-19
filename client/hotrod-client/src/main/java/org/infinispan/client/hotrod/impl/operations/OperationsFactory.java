@@ -80,6 +80,10 @@ public class OperationsFactory implements HotRodConstants {
       return new ClearOperation(transportFactory, cacheNameBytes, topologyId, flags());
    }
 
+   public BulkGetOperation newBulkGetOperation(int size) {
+      return new BulkGetOperation(transportFactory, cacheNameBytes, topologyId, flags(), size);
+   }
+
    private Flag[] flags() {
       Flag[] flags = this.flagsMap.get();
       this.flagsMap.remove();

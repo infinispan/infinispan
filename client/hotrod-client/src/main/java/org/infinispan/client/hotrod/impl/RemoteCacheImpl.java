@@ -16,6 +16,8 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -279,7 +281,30 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       byte[] keyBytes = obj2bytes(key, true);
       GetOperation gco = operationsFactory.newGetKeyOperation(keyBytes);
       byte[] bytes = (byte[]) gco.execute();
-      return (V) bytes2obj(bytes);
+      V result = (V) bytes2obj(bytes);
+      if (log.isTraceEnabled()) {
+         log.trace("For key(" + key + ") returning " + result);
+      }
+      return result;
+   }
+
+   @Override
+   public Map<K, V> getBulk() {
+      return getBulk(0);
+   }
+
+   @Override
+   public Map<K, V> getBulk(int size) {
+      assertRemoteCacheManagerIsStarted();
+      BulkGetOperation op = operationsFactory.newBulkGetOperation(size);
+      Map<byte[], byte[]> result = (Map) op.execute();
+      Map<K,V> toReturn = new HashMap<K,V>();
+      for (Map.Entry<byte[], byte[]> entry : result.entrySet()) {
+         V value = (V) bytes2obj(entry.getValue());
+         K key = (K) bytes2obj(entry.getKey());
+         toReturn.put(key, value);
+      }
+      return Collections.unmodifiableMap(toReturn);
    }
 
    @Override

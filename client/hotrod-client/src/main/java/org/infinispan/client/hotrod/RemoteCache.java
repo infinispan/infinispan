@@ -14,42 +14,41 @@ import java.util.concurrent.TimeUnit;
  * Provides remote reference to a Hot Rod server/cluster. It implements {@link org.infinispan.Cache}, but given its
  * nature (remote) some operations are not supported. All these unsupported operations are being overridden within this
  * interface and documented as such.
- * <p>
+ * <p/>
  * <b>New operations</b>: besides the operations inherited from {@link org.infinispan.Cache}, RemoteCache also adds new
  * operations to optimize/reduce network traffic: e.g. versioned put operation.
- * <p>
+ * <p/>
  * <b>Concurrency</b>: implementors of this interface will support multi-threaded access, similar to the way {@link
  * org.infinispan.Cache} supports it.
- * <p>
- * <b>Return values</b>: previously existing values for certain {@link java.util.Map} operations are not returned,
- * null is returned instead. E.g. {@link java.util.Map#put(Object, Object)} returns the previous value
- * associated to the supplied key. In case of RemoteCache, this returns null.
- * <p>
- * <b>Synthetic operations</b>: aggregate operations are being implemented based on other Hot Rod operations.
- * E.g. all the {@link java.util.Map#putAll(java.util.Map)} is implemented through multiple individual puts. This means
- * that the these operations are not atomic and that they are costly, e.g. as the number of network round-trips is not
- * one, but the size of the added map. All these synthetic operations are documented as such.
- * <p>
- * <b>changing default behavior through {@link org.infinispan.client.hotrod.Flag}s</b>: it is possible to change de default cache behaviour by using
- * flags on an per invocation basis.
- * E.g.
+ * <p/>
+ * <b>Return values</b>: previously existing values for certain {@link java.util.Map} operations are not returned, null
+ * is returned instead. E.g. {@link java.util.Map#put(Object, Object)} returns the previous value associated to the
+ * supplied key. In case of RemoteCache, this returns null.
+ * <p/>
+ * <b>Synthetic operations</b>: aggregate operations are being implemented based on other Hot Rod operations. E.g. all
+ * the {@link java.util.Map#putAll(java.util.Map)} is implemented through multiple individual puts. This means that the
+ * these operations are not atomic and that they are costly, e.g. as the number of network round-trips is not one, but
+ * the size of the added map. All these synthetic operations are documented as such.
+ * <p/>
+ * <b>changing default behavior through {@link org.infinispan.client.hotrod.Flag}s</b>: it is possible to change de
+ * default cache behaviour by using flags on an per invocation basis. E.g.
  * <pre>
  *      RemoteCache cache = getRemoteCache();
  *      Object value = cache.withFlags(Flag.FORCE_RETURN_VALUE).get(aKey);
  * </pre>
- * In the previous example, using {@link org.infinispan.client.hotrod.Flag#FORCE_RETURN_VALUE} will make the client to also return previously
- * existing value associated with <tt>aKey</tt>. If this flag would not be present, Infinispan would return (by default)
- * <tt>null</tt>. This is in order to avoid fetching a possibly large object from the remote server, which might not be
- * needed. The flags as set by the {@link org.infinispan.client.hotrod.RemoteCache#withFlags(Flag...)} operation only apply for the very next
- * operation executed <b>by the same thread</b> on the RemoteCache.
- * <p>
- * <b><a href="http://community.jboss.org/wiki/Eviction">Eviction and expiration</a></b>:
- * Unlike local {@link org.infinispan.Cache} cache, which allows specifying time values with any granularity (as defined by {@link TimeUnit}),
- * HotRod only supports seconds as time units. If a different time unit is used instead, HotRod will transparently convert it to
- * seconds, using {@link java.util.concurrent.TimeUnit#toSeconds(long)} method. This might result in loss of precision for
- * values specified as nanos or milliseconds. <br/>
- * Another fundamental difference is in the case of lifespan (naturally does NOT apply for max idle): If number of seconds is bigger than 30 days,
- * this number of seconds is treated as UNIX time and so, represents the number of seconds since 1/1/1970. <br/>
+ * In the previous example, using {@link org.infinispan.client.hotrod.Flag#FORCE_RETURN_VALUE} will make the client to
+ * also return previously existing value associated with <tt>aKey</tt>. If this flag would not be present, Infinispan
+ * would return (by default) <tt>null</tt>. This is in order to avoid fetching a possibly large object from the remote
+ * server, which might not be needed. The flags as set by the {@link org.infinispan.client.hotrod.RemoteCache#withFlags(Flag...)}
+ * operation only apply for the very next operation executed <b>by the same thread</b> on the RemoteCache.
+ * <p/>
+ * <b><a href="http://community.jboss.org/wiki/Eviction">Eviction and expiration</a></b>: Unlike local {@link
+ * org.infinispan.Cache} cache, which allows specifying time values with any granularity (as defined by {@link
+ * TimeUnit}), HotRod only supports seconds as time units. If a different time unit is used instead, HotRod will
+ * transparently convert it to seconds, using {@link java.util.concurrent.TimeUnit#toSeconds(long)} method. This might
+ * result in loss of precision for values specified as nanos or milliseconds. <br/> Another fundamental difference is in
+ * the case of lifespan (naturally does NOT apply for max idle): If number of seconds is bigger than 30 days, this
+ * number of seconds is treated as UNIX time and so, represents the number of seconds since 1/1/1970. <br/>
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
@@ -63,7 +62,8 @@ public interface RemoteCache<K, V> extends Cache<K, V> {
     * //some processing
     * remoteCache.removeWithVersion(key, ve.getVersion();
     * </pre>
-    * Lat call (removeWithVersion) will make sure that the entry will only be removed if it hasn't been changed in between.
+    * Lat call (removeWithVersion) will make sure that the entry will only be removed if it hasn't been changed in
+    * between.
     *
     * @return true if the entry has been removed
     * @see VersionedValue
@@ -77,8 +77,8 @@ public interface RemoteCache<K, V> extends Cache<K, V> {
    NotifyingFuture<Boolean> removeWithVersionAsync(K key, long version);
 
    /**
-    * Removes the given value only if its version matches the supplied version. See {@link #removeWithVersion(Object, long)} for a
-    * sample usage.
+    * Removes the given value only if its version matches the supplied version. See {@link #removeWithVersion(Object,
+    * long)} for a sample usage.
     *
     * @return true if the method has been replaced
     * @see #getVersioned(Object)
@@ -249,8 +249,7 @@ public interface RemoteCache<K, V> extends Cache<K, V> {
    NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue);
 
    /**
-    * This operation is not supported. Consider using {@link #replaceAsync(K,V,long,int)}
-    * instead.
+    * This operation is not supported. Consider using {@link #replaceAsync(K,V,long,int)} instead.
     *
     * @throws UnsupportedOperationException
     */
@@ -339,10 +338,25 @@ public interface RemoteCache<K, V> extends Cache<K, V> {
 
    public ServerStatistics stats();
 
-   RemoteCache<K,V> withFlags(Flag... flags);
+   RemoteCache<K, V> withFlags(Flag... flags);
 
    /**
     * Returns the {@link org.infinispan.client.hotrod.RemoteCacheManager} that created this cache.
     */
    public RemoteCacheManager getRemoteCacheManager();
+
+   /**
+    * Bulk get operations, returns all the entries within the remote cache.
+    *
+    * @return the returned values depend on the configuration of the back-end infinispan servers. Read <a
+    *         href="http://community.jboss.org/wiki/HotRodBulkGet-Design#Server_side">this</a> for more details. The
+    *         returned Map is unmodifiable.
+    */
+   public Map<K, V> getBulk();
+
+   /**
+    * Same as {@link #getBulk()}, but limits the returned set of values to the specified size. No ordering is guaranteed, and there is no
+    * guarantee that "size" elements are returned( e.g. if the number of elements in the back-end server is smaller that "size")
+    */
+   public Map<K, V> getBulk(int size);
 }

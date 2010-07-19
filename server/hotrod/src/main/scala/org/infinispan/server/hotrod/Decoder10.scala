@@ -40,6 +40,7 @@ object Decoder10 extends AbstractVersionedDecoder with Logging {
          case 0x13 => ClearRequest
          case 0x15 => StatsRequest
          case 0x17 => PingRequest
+         case 0x19 => BulkGetRequest
          case _ => throw new UnknownOperationException("Unknown operation: " + streamOp)
       }
       if (isTraceEnabled) trace("Operation code: {0} has been matched to {1}", streamOp, op)
@@ -145,6 +146,11 @@ object Decoder10 extends AbstractVersionedDecoder with Logging {
             new Response(h.messageId, h.cacheName, h.clientIntel, ClearResponse, Success, h.topologyId)
          }
          case PingRequest => new Response(h.messageId, h.cacheName, h.clientIntel, PingResponse, Success, h.topologyId)
+         case BulkGetRequest => {
+            val count = buffer.readUnsignedInt
+            if (isTraceEnabled) trace("About to create bulk response, count = " + count)
+            new BulkGetResponse(h.messageId, h.cacheName, h.clientIntel, BulkGetResponse, Success, h.topologyId, cache, count)
+         }
       }
    }
 
@@ -195,6 +201,7 @@ object Decoder10 extends AbstractVersionedDecoder with Logging {
          case ClearRequest => ClearResponse
          case StatsRequest => StatsResponse
          case PingRequest => PingResponse
+         case BulkGetRequest => BulkGetResponse
       }
    }
 
@@ -214,6 +221,7 @@ object OperationResponse extends Enumeration {
    val ClearResponse = Value(0x14)
    val StatsResponse = Value(0x16)
    val PingResponse = Value(0x18)
+   val BulkGetResponse = Value(0x20)
    val ErrorResponse = Value(0x50)
 }
 
