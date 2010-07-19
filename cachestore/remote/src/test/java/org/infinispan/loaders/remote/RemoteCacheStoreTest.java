@@ -30,7 +30,7 @@ public class RemoteCacheStoreTest extends BaseCacheStoreTest {
       RemoteCacheStoreConfig remoteCacheStoreConfig = new RemoteCacheStoreConfig();
       remoteCacheStoreConfig.setUseDefaultRemoteCache(true);
       assert remoteCacheStoreConfig.isUseDefaultRemoteCache();
-      
+
       localCacheManager = TestCacheManagerFactory.createLocalCacheManager();
       Configuration configuration = localCacheManager.getDefaultConfiguration();
       configuration.setEvictionWakeUpInterval(10);
@@ -43,7 +43,6 @@ public class RemoteCacheStoreTest extends BaseCacheStoreTest {
       RemoteCacheStore remoteCacheStore = new RemoteCacheStore();
       remoteCacheStore.init(remoteCacheStoreConfig, getCache(), getMarshaller());
       remoteCacheStore.start();
-      super.supportsLoadAll = false;
       return remoteCacheStore;
    }
 
@@ -54,42 +53,28 @@ public class RemoteCacheStoreTest extends BaseCacheStoreTest {
    }
 
    @Override
-   public void testLoadKeys() throws CacheLoaderException {
-      //not applicable as relies on loadAll
+   protected void assertEventuallyExpires(String key) throws Exception {
+      for (int i = 0; i < 10; i++) {
+         if (cs.load("k") == null) break;
+         Thread.sleep(1000);
+      }
+      assert cs.load("k") == null;
    }
 
    @Override
-   protected void purgeExpired() throws CacheLoaderException {
-      localCacheManager.getCache().clear();
-   }
-
-   @Override
-   public void testPreload() throws CacheLoaderException {
-      //not applicable as relies on loadAll
-   }
-
-   @Override
-   public void testPreloadWithMaxSize() throws CacheLoaderException {
-      //not applicable as relies on loadAll
-   }
-
    protected void sleepForStopStartTest() throws InterruptedException {
       Thread.sleep(3000);
    }
 
-
    @Override
-   public void testStoreAndRemoveAll() throws CacheLoaderException {
-      //not applicable as relies on loadAll
+   protected void purgeExpired() throws CacheLoaderException {
+      localCacheManager.getCache().getAdvancedCache().getEvictionManager().processEviction();
    }
 
+   /**
+    * This is not supported, see assertion in {@link RemoteCacheStore#loadAllKeys(java.util.Set)}
+    */
    @Override
-   public void testStreamingAPI() throws IOException, ClassNotFoundException, CacheLoaderException {
-      //not applicable as relies on loadAll
-   }
-
-   @Override
-   public void testStreamingAPIReusingStreams() throws IOException, ClassNotFoundException, CacheLoaderException {
-      //not applicable as relies on loadAll
+   public void testLoadKeys() throws CacheLoaderException {
    }
 }

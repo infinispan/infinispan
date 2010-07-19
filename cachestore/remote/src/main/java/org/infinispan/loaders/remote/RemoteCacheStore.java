@@ -2,8 +2,10 @@ package org.infinispan.loaders.remote;
 
 import net.jcip.annotations.ThreadSafe;
 import org.infinispan.Cache;
+import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.loaders.AbstractCacheStore;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
@@ -13,8 +15,11 @@ import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -30,10 +35,9 @@ import java.util.concurrent.TimeUnit;
  * very costly operation as well). Purging takes place at the remote end (infinispan cluster).
  * <p/>
  *
+ * @author Mircea.Markus@jboss.com
  * @see org.infinispan.loaders.remote.RemoteCacheStoreConfig
  * @see <a href="http://community.jboss.org/wiki/JavaHotRodclient">Hotrod Java Client</a>
- *
- * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
 @ThreadSafe
@@ -44,13 +48,13 @@ public class RemoteCacheStore extends AbstractCacheStore {
 
    private volatile RemoteCacheStoreConfig config;
    private volatile RemoteCacheManager remoteCacheManager;
-   private volatile Cache<Object, InternalCacheEntry> remoteCache;
+   private volatile RemoteCache remoteCache;
    private static final String LIFESPAN = "lifespan";
    private static final String MAXIDLE = "maxidle";
 
    @Override
    public InternalCacheEntry load(Object key) throws CacheLoaderException {
-      return remoteCache.get(key);
+      return (InternalCacheEntry) remoteCache.get(key);
    }
 
    @Override
@@ -61,6 +65,11 @@ public class RemoteCacheStore extends AbstractCacheStore {
    }
 
    @Override
+   public boolean containsKey(Object key) throws CacheLoaderException {
+      return remoteCache.containsKey(key);
+   }
+
+   @Override
    public void store(InternalCacheEntry entry) throws CacheLoaderException {
       if (log.isTraceEnabled()) {
          log.trace("Adding entry: " + entry);
@@ -68,25 +77,25 @@ public class RemoteCacheStore extends AbstractCacheStore {
       remoteCache.put(entry.getKey(), entry, toSeconds(entry.getLifespan(), entry, LIFESPAN), TimeUnit.SECONDS, toSeconds(entry.getMaxIdle(), entry, MAXIDLE), TimeUnit.SECONDS);
    }
 
-   private long toSeconds(long millis, InternalCacheEntry entry, String desc) {
-      if (millis > 0 && millis < 1000) {
-         if (log.isTraceEnabled()) {
-            log.trace("Adjusting " + desc + " time for (k,v): (" + entry.getKey() + ", " + entry.getValue() + ") from "
-                  + millis + " millis to 1 sec, as milliseconds are not supported by HotRod");
-         }
-         return 1;
-      }
-      return TimeUnit.MILLISECONDS.toSeconds(millis);
-   }
-
    @Override
    public void fromStream(ObjectInput inputStream) throws CacheLoaderException {
-      fail();
+      Map result;
+      try {
+         result = (Map<Object, InternalCacheEntry>) marshaller.objectFromObjectStream(inputStream);
+         remoteCache.putAll(result);
+      } catch (Exception e) {
+         throw new CacheLoaderException("Exception while reading data", e);
+      }
    }
 
    @Override
    public void toStream(ObjectOutput outputStream) throws CacheLoaderException {
-      fail();
+      Map map = remoteCache.getBulk();
+      try {
+         marshaller.objectToObjectStream(map, outputStream);
+      } catch (IOException e) {
+         throw new CacheLoaderException("Exception while serializing remote data to stream", e);
+      }
    }
 
    @Override
@@ -101,24 +110,18 @@ public class RemoteCacheStore extends AbstractCacheStore {
 
    @Override
    public Set<InternalCacheEntry> loadAll() throws CacheLoaderException {
-      fail();
-      return null;
+      Map map = remoteCache.getBulk();
+      return convertToInternalCacheEntries(map);
    }
 
    @Override
    public Set<InternalCacheEntry> load(int numEntries) throws CacheLoaderException {
-      fail();
-      return null;
+      return convertToInternalCacheEntries(remoteCache.getBulk(numEntries));
    }
 
    @Override
    public Set<Object> loadAllKeys(Set<Object> keysToExclude) throws CacheLoaderException {
-      fail();
-      return null;
-   }
-
-   private void fail() throws CacheLoaderException {
-      String message = "RemoteCacheStore can only run in shared mode and it doesn't support preload!";
+      String message = "RemoteCacheStore can only run in shared mode! This method shouldn't be called in shared mode";
       log.error(message);
       throw new CacheLoaderException(message);
    }
@@ -150,5 +153,25 @@ public class RemoteCacheStore extends AbstractCacheStore {
    @Override
    public Class<? extends CacheLoaderConfig> getConfigurationClass() {
       return RemoteCacheStoreConfig.class;
+   }
+
+   private long toSeconds(long millis, InternalCacheEntry entry, String desc) {
+      if (millis > 0 && millis < 1000) {
+         if (log.isTraceEnabled()) {
+            log.trace("Adjusting " + desc + " time for (k,v): (" + entry.getKey() + ", " + entry.getValue() + ") from "
+                  + millis + " millis to 1 sec, as milliseconds are not supported by HotRod");
+         }
+         return 1;
+      }
+      return TimeUnit.MILLISECONDS.toSeconds(millis);
+   }
+
+   private Set<InternalCacheEntry> convertToInternalCacheEntries(Map map) {
+      Set<InternalCacheEntry> result = new HashSet<InternalCacheEntry>(map.size());
+      Set<Map.Entry> set = map.entrySet();
+      for (Map.Entry e : set) {
+         result.add((InternalCacheEntry) e.getValue());
+      }
+      return result;
    }
 }
