@@ -381,12 +381,22 @@ public class AsyncStore extends AbstractDelegatingStore {
          }
       }
 
-      boolean put(ConcurrentMap<Object, Modification> mods) {
+      boolean put(ConcurrentMap<Object, Modification> mods) throws InterruptedException {
          try {
             AsyncStore.this.applyModificationsSync(mods);
             return true;
          } catch (Exception e) {
-            if (log.isDebugEnabled()) log.debug("Failed to process async modifications", e);
+            boolean isDebug = log.isDebugEnabled();
+            if (isDebug) log.debug("Failed to process async modifications", e);
+            Throwable cause = e;
+            while (cause != null) {
+                if (cause instanceof InterruptedException) {
+                    // 3rd party code may have cleared the thread interrupt status
+                    if (isDebug) log.debug("Rethrowing InterruptedException");
+                    throw (InterruptedException) cause;
+                }
+                cause = cause.getCause();
+            }
             return false;
          }
       }
