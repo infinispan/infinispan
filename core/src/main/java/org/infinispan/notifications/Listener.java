@@ -154,53 +154,39 @@ import java.lang.annotation.Target;
  * <p/>
  * <pre>
  *    &#064;Listener
- *    public class TxGuaranteedListener
+ *    public class EventHandler
  *    {
- *       private class TxEventQueue
+ *       private ConcurrentMap&lt;GlobalTransaction, Queue&lt;Event&gt;&gt; map = new ConcurrentHashMap&lt;GlobalTransaction, Queue&lt;Event&gt;&gt;();
+ *
+ *       &#064;TransactionRegistered
+ *       public void startTransaction(TransactionRegisteredEvent event)
  *       {
- *          private ConcurrentMap&lt;Transaction, Queue&lt;Event&gt;&gt; map = new ConcurrentHashMap&lt;Transaction,
- * Queue&lt;Event&gt;&gt;();
- * <p/>
- *          public void offer(Event event)
- *          {
- *             Queue&lt;Event&gt; queue = getQueue(event.getContext().getTransaction());
- *             queue.offer(event);
- *          }
- * <p/>
- *          private Queue&lt;Event&gt; getQueue(Transaction transaction)
- *          {
- *             Queue&lt;Event&gt; queue = map.get(transaction);
- *             if (queue == null)
- *             {
- *                queue = new ConcurrentLinkedQueue&lt;Event&gt;();
- *                map.putIfAbsent(transaction, queue);
- *             }
- * <p/>
- *             return queue;
- *          }
- * <p/>
- *          public Queue&lt;Event&gt; takeAll(Transaction transaction)
- *          {
- *             return map.remove(transaction);
- *          }
+ *          map.put(event.getGlobalTransaction(), new ConcurrentLinkedQueue&lt;Event&gt;());
  *       }
- * <p/>
- *       private TxEventQueue events = new TxEventQueue();
- * <p/>
- *       &#064;CacheEntryModified
+ * 
  *       &#064;CacheEntryCreated
+ *       &#064;CacheEntryModified
  *       &#064;CacheEntryRemoved
- *       public void handle(Event event)
+ *       public void addEvent(TransactionalEvent event)
  *       {
- *          events.offer(event);
+ *          map.get(event.getGlobalTransaction()).add(event);
  *       }
- * <p/>
+ *  
  *       &#064;TransactionCompleted
- *       public void handleTx(TransactionCompletedEvent event)
+ *       public void endTransaction(TransactionCompletedEvent event)
  *       {
- *          Queue&lt;Event&gt; completed = events.takeAll(event.getTransaction());
- *          if (completed != null &amp;&amp; event.isSuccessful())
- *             System.out.println("Comitted events = " + completed);
+ *          Queue&lt;Event&gt; events = map.get(event.getGlobalTransaction());
+ *          map.remove(event.getGlobalTransaction());
+ *    
+ *          System.out.println("Ended transaction " + event.getGlobalTransaction().getId());
+ *    
+ *          if(event.isTransactionSuccessful())
+ *          {
+ *             for(Event e : events)
+ *             {
+ *                System.out.println("Event " + e);
+ *             }
+ *          }
  *       }
  *    }
  * </pre>
