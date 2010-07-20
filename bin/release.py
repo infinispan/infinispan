@@ -248,7 +248,7 @@ def release():
   if len(sys.argv) > 2:
     branch = sys.argv[2]
     
-  print "Releasing Infinispan version %s from branch '%s'" + (version, branch)
+  print "Releasing Infinispan version %s from branch '%s'" % (version, branch)
   print "Please stand by!"
   
   ## Set up network interactive tools
