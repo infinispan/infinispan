@@ -245,6 +245,7 @@ private class Encoder extends OneToOneEncoder {
             buffer.writeUnsignedInt(op.flags) // flags
             buffer.writeByte(op.clientIntel) // client intelligence
             buffer.writeUnsignedInt(op.topologyId) // topology id
+            buffer.writeRangedBytes(new Array[Byte](0))
             if (op.code != 0x13 && op.code != 0x15 && op.code != 0x17 && op.code != 0x19) { // if it's a key based op...
                buffer.writeRangedBytes(op.key) // key length + key
                if (op.value != null) {

@@ -52,6 +52,8 @@ object Decoder10 extends AbstractVersionedDecoder with Logging {
       }
       val clientIntelligence = buffer.readUnsignedByte
       val topologyId = buffer.readUnsignedInt
+      //todo use these once transaction support is added
+      val txId = buffer.readRangedBytes
       new HotRodHeader(op, messageId, cacheName, flag, clientIntelligence, topologyId, this)
    }
 
