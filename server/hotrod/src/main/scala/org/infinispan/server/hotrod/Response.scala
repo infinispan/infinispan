@@ -55,8 +55,7 @@ class GetResponse(override val messageId: Long, override val cacheName: String, 
 }
 class BulkGetResponse(override val messageId: Long, override val cacheName: String, override val clientIntel: Short,
                   override val operation: OperationResponse, override val status: OperationStatus,
-                  override val topologyId: Int,
-                  val cache: Cache[ByteArrayKey, CacheValue], val count: Int)
+                  override val topologyId: Int, val count: Int)
       extends Response(messageId, cacheName, clientIntel, operation, status, topologyId) {
    override def toString = {
       new StringBuilder().append("BulkGetResponse").append("{")
