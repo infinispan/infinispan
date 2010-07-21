@@ -120,6 +120,7 @@ public abstract class AbstractLocalQueryTest extends SingleCacheManagerTest {
 
       found = cacheQuery.list();
 
+      System.out.println("Found size is: - " + found.size());
       assert found.size() == 1;
       assert found.get(0).equals(person1);
    }
@@ -169,13 +170,33 @@ public abstract class AbstractLocalQueryTest extends SingleCacheManagerTest {
       cacheQuery = new QueryFactory(cache, qh).getQuery(luceneQuery);
       found = cacheQuery.list();
 
-      System.out.println("found is: - " + found);
       assert found.size() == 1;
       assert found.contains(person2);
       assert !found.contains(person3) : "The search should not return person3";
+   }
 
+   public void testUpdated() throws ParseException{
+      queryParser = new QueryParser("name", new StandardAnalyzer());
+
+      luceneQuery = queryParser.parse("Goat");
+      cacheQuery = new QueryFactory(cache, qh).getQuery(luceneQuery);
+      found = cacheQuery.list();
+
+      assert found.size() == 2 : "Size of list should be 2";
+      assert found.contains(person2) : "The search should have person2";
+
+      cache.put(key2, person1);
+
+      luceneQuery = queryParser.parse("Goat");
+      cacheQuery = new QueryFactory(cache, qh).getQuery(luceneQuery);
+      found = cacheQuery.list();
+      
+      assert found.size() == 1 : "Size of list should be 1";
+      assert !found.contains(person2) : "Person 2 should not be found now";
+      assert !found.contains(person1) : "Person 1 should not be found because it does not meet the search criteria";
 
    }
+
 
    public void testSetSort() throws ParseException {
       person2.setAge(35);
