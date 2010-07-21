@@ -92,7 +92,7 @@ public class QueryInterceptor extends CommandInterceptor {
          // Updated entry so we are going to update the indexes and not add them.
          if(entry.isChanged()){
             System.out.println("Entry is changed");            
-            updateIndexes((value), extractValue(key));
+            updateIndexes(extractValue(value), extractValue(key));
          }
 
       }
