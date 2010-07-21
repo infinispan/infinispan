@@ -28,6 +28,7 @@ import org.infinispan.commands.read.ValuesCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
@@ -177,6 +178,28 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
          copy.add(newEntry);
       }
       return Immutables.immutableSetWrap(copy);
+   }
+
+   @Override
+   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+      MarshalledValue key = null, newValue = null, oldValue = null;
+      if (!MarshalledValue.isTypeExcluded(command.getKey().getClass())) {
+         key = createMarshalledValue(command.getKey(), ctx);
+         command.setKey(key);
+      }
+      if (!MarshalledValue.isTypeExcluded(command.getNewValue().getClass())) {
+         newValue = createMarshalledValue(command.getNewValue(), ctx);
+         command.setNewValue(newValue);
+      }
+      if (command.getOldValue() != null && !MarshalledValue.isTypeExcluded(command.getOldValue().getClass())) {
+         oldValue = createMarshalledValue(command.getOldValue(), ctx);
+         command.setOldValue(oldValue);
+      }
+      Object retVal = invokeNextInterceptor(ctx, command);
+      compact(key);
+      compact(newValue);
+      compact(oldValue);
+      return processRetVal(retVal);
    }
 
    private Object compactAndProcessRetVal(Set<MarshalledValue> marshalledValues, Object retVal)

@@ -166,7 +166,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
    /**
     *
-    * will be removed, please use {@link org.infinispan.manager.CacheContainer#getGlobalConfiguration()}
+    * will be removed, please use {@link org.infinispan.manager.EmbeddedCacheManager#getGlobalConfiguration()}
     */
    @Deprecated
    public GlobalConfiguration getGlobalConfiguration() {

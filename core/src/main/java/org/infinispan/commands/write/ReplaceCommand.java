@@ -31,6 +31,7 @@ import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
 
 /**
  * @author Mircea.Markus@jboss.com
+ * @author Galder Zamarreño
  * @since 4.0
  */
 @Marshallable(externalizer = ReplicableCommandExternalizer.class, id = Ids.REPLACE_COMMAND)
@@ -149,6 +150,22 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
 
    public long getMaxIdleTimeMillis() {
       return maxIdleTimeMillis;
+   }
+
+   public Object getOldValue() {
+      return oldValue;
+   }
+
+   public void setOldValue(Object oldValue) {
+      this.oldValue = oldValue;
+   }
+
+   public Object getNewValue() {
+      return newValue;
+   }
+
+   public void setNewValue(Object newValue) {
+      this.newValue = newValue;
    }
 
    @Override
