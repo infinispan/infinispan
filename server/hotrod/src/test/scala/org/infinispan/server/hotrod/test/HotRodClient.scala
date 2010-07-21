@@ -35,7 +35,7 @@ import org.infinispan.util.{ByteArrayKey, Util}
  * @since 4.1
  */
 class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeoutSeconds: Int) extends Logging {
-   val idToOp = new ConcurrentHashMap[Long, Op]
+   val idToOp = new ConcurrentHashMap[Long, Op]    
 
    private lazy val ch: Channel = {
       val factory = new NioClientSocketChannelFactory(Executors.newCachedThreadPool, Executors.newCachedThreadPool)
@@ -50,7 +50,7 @@ class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeout
       assertTrue(connectFuture.isSuccess)
       ch
    }
-
+   
    def stop = ch.disconnect
 
    def put(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte]): TestResponse =
@@ -90,12 +90,12 @@ class HotRodClient(host: String, port: Int, defaultCacheName: String, rspTimeout
 
    def putIfAbsent(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte], flags: Int): TestResponse =
       execute(0xA0, 0x05, defaultCacheName, k, lifespan, maxIdle, v, 0, flags)
-
+   
    def replace(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte]): TestResponse =
       execute(0xA0, 0x07, defaultCacheName, k, lifespan, maxIdle, v, 0, 1 ,0)
 
    def replace(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte], flags: Int): TestResponse =
-      execute(0xA0, 0x07, defaultCacheName, k, lifespan, maxIdle, v, 0, flags)
+      execute(0xA0, 0x07, defaultCacheName, k, lifespan, maxIdle, v, 0, flags)   
 
    def replaceIfUnmodified(k: Array[Byte], lifespan: Int, maxIdle: Int, v: Array[Byte], version: Long): TestResponse =
       execute(0xA0, 0x09, defaultCacheName, k, lifespan, maxIdle, v, version, 1 ,0)
@@ -245,6 +245,7 @@ private class Encoder extends OneToOneEncoder {
             buffer.writeUnsignedInt(op.flags) // flags
             buffer.writeByte(op.clientIntel) // client intelligence
             buffer.writeUnsignedInt(op.topologyId) // topology id
+            buffer.writeRangedBytes(new Array[Byte](0))
             if (op.code != 0x13 && op.code != 0x15 && op.code != 0x17 && op.code != 0x19) { // if it's a key based op...
                buffer.writeRangedBytes(op.key) // key length + key
                if (op.value != null) {
