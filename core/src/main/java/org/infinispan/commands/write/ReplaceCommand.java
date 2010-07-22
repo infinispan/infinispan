@@ -63,8 +63,9 @@ public class ReplaceCommand extends AbstractDataWriteCommand {
       MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
       if (e != null) {
          if (ctx.isOriginLocal()) {
-            if (e.isNull()) return returnValue(null, false);
-
+            //ISPN-514
+            if (e.isNull() || e.getValue() == null) return returnValue(null, false);    
+            
             if (oldValue == null || oldValue.equals(e.getValue())) {
                Object old = e.setValue(newValue);
                e.setLifespan(lifespanMillis);
