@@ -84,6 +84,32 @@ public class SyncReplImplicitLockingTest extends MultipleCacheManagersTest {
       assertNoLocks(cache2);
       cache1.clear();cache2.clear();
    }
+   
+	public void testReplaceNonExistentKey() throws Exception {
+		assertClusterSize("Should only be 2  caches in the cluster!!!", 2);
+		Cache cache1 = cache(0, "replication.SyncReplImplicitLockingTest");
+		Cache cache2 = cache(1, "replication.SyncReplImplicitLockingTest");
+
+		TransactionManager mgr = TestingUtil.getTransactionManager(cache1);
+		mgr.begin();
+
+		// do a replace on empty key
+		// https://jira.jboss.org/browse/ISPN-514
+		Object old = cache1.replace(k, "blah");
+
+		boolean replaced = cache1.replace(k, "Vladimir", "Blagojevic");
+		assert !replaced;
+
+		assertNull("Should be null", cache1.get(k));
+		assertNull("Should be null", cache2.get(k));
+
+		mgr.commit();
+
+		assertNoLocks(cache1);
+		assertNoLocks(cache2);
+		cache1.clear();
+		cache2.clear();
+	}  
 
    private void concurrentLockingHelper(final boolean sameNode, final boolean useTx)
          throws Exception {
