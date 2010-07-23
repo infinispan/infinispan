@@ -35,6 +35,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.marshall.MarshalledValue;
+import org.infinispan.util.logging.Log;
 
 import javax.transaction.TransactionManager;
 import java.io.Serializable;
@@ -81,17 +82,17 @@ public class QueryInterceptor extends CommandInterceptor {
          // otherwise we need to be updating the indexes as opposed to simply adding to the indexes.
          Object key = command.getKey();
          Object value = command.getValue();
-         System.out.println("Key, value pairing is: - " + key + " + " + value);
+         if(log.isDebugEnabled()) log.debug("Key, value pairing is: - " + key + " + " + value);
          CacheEntry entry = ctx.lookupEntry(key);
 
          // New entry so we will add it to the indexes.
          if(entry.isCreated()) {
-            System.out.println("Entry is created");
+            if(log.isDebugEnabled()) log.debug("Entry is created");
             addToIndexes(extractValue(value), extractValue(key));
          }
-         // Updated entry so we are going to update the indexes and not add them.
-         if(entry.isChanged()){
-            System.out.println("Entry is changed");            
+         else{
+            // This means that the entry is just modified so we need to update the indexes and not add to them.
+            if(log.isDebugEnabled()) log.debug("Entry is changed");
             updateIndexes(extractValue(value), extractValue(key));
          }
 
@@ -144,6 +145,8 @@ public class QueryInterceptor extends CommandInterceptor {
 
    @Override
    public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+
+      // This method is called when somebody calls a cache.clear() and we will need to wipe everything in the indexes.
       Object returnValue = invokeNextInterceptor(ctx, command);
 
       if (shouldModifyIndexes(ctx)) {
