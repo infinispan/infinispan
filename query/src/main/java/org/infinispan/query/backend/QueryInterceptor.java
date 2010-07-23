@@ -30,10 +30,12 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.marshall.MarshalledValue;
+import org.infinispan.util.logging.Log;
 
 import javax.transaction.TransactionManager;
 import java.io.Serializable;
@@ -75,9 +77,26 @@ public class QueryInterceptor extends CommandInterceptor {
       // do the actual put first.
       Object toReturn = invokeNextInterceptor(ctx, command);
 
-      if (shouldModifyIndexes(ctx))
-         addToIndexes(extractValue(command.getValue()), extractValue(command.getKey()));
+      if (shouldModifyIndexes(ctx)) {
+         // First making a check to see if the key is already in the cache or not. If it isn't we can add the key no problem,
+         // otherwise we need to be updating the indexes as opposed to simply adding to the indexes.
+         Object key = command.getKey();
+         Object value = command.getValue();
+         if(log.isDebugEnabled()) log.debug("Key, value pairing is: - " + key + " + " + value);
+         CacheEntry entry = ctx.lookupEntry(key);
 
+         // New entry so we will add it to the indexes.
+         if(entry.isCreated()) {
+            if(log.isDebugEnabled()) log.debug("Entry is created");
+            addToIndexes(extractValue(value), extractValue(key));
+         }
+         else{
+            // This means that the entry is just modified so we need to update the indexes and not add to them.
+            if(log.isDebugEnabled()) log.debug("Entry is changed");
+            updateIndexes(extractValue(value), extractValue(key));
+         }
+
+      }
       return toReturn;
    }
 
@@ -126,6 +145,8 @@ public class QueryInterceptor extends CommandInterceptor {
 
    @Override
    public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+
+      // This method is called when somebody calls a cache.clear() and we will need to wipe everything in the indexes.
       Object returnValue = invokeNextInterceptor(ctx, command);
 
       if (shouldModifyIndexes(ctx)) {
@@ -144,6 +165,7 @@ public class QueryInterceptor extends CommandInterceptor {
 
 
    // Method that will be called when data needs to be added into Lucene.
+
    protected void addToIndexes(Object value, Object key) {
       if (trace) log.trace("Adding to indexes for key [{0}] and value [{0}]", key, value);
 
@@ -157,6 +179,7 @@ public class QueryInterceptor extends CommandInterceptor {
 
 
    // Method that will be called when data needs to be removed from Lucene.
+
    protected void removeFromIndexes(Object value, Object key) {
 
       // The key here is the String representation of the key that is stored in the cache.
@@ -165,6 +188,16 @@ public class QueryInterceptor extends CommandInterceptor {
       if (value == null) throw new NullPointerException("Cannot handle a null value!");
       TransactionContext transactionContext = new TransactionalEventTransactionContext(transactionManager);
       searchFactory.getWorker().performWork(new Work<Object>(value, keyToString(key), WorkType.DELETE), transactionContext);
+   }
+
+   protected void updateIndexes(Object value, Object key){
+      // The key here is the String representation of the key that is stored in the cache.
+      // The key is going to be the documentID for Lucene.
+      // The object parameter is the actual value that needs to be removed from lucene.
+      if (value == null) throw new NullPointerException("Cannot handle a null value!");
+      TransactionContext transactionContext = new TransactionalEventTransactionContext(transactionManager);
+      searchFactory.getWorker().performWork(new Work<Object>(value, keyToString(key), WorkType.UPDATE), transactionContext);
+
    }
 
    private Object extractValue(Object wrappedValue) {
