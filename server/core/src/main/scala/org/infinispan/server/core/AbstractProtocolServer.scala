@@ -25,6 +25,7 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
 
    def start(properties: Properties, cacheManager: EmbeddedCacheManager, defaultPort: Int) {
       val typedProps = TypedProperties.toTypedProperties(properties)
+      // Enabled added to make it easy to enable/disable endpoints in JBoss MC based beans for EDG
       val toStart = typedProps.getBooleanProperty("enabled", true)
 
       if (toStart) {
