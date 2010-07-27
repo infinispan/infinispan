@@ -128,8 +128,9 @@ public class DefaultDataContainer implements DataContainer {
       InternalCacheEntry e = peek(k);
       if (e != null) {
          if (e.isExpired()) {
-            mortalEntries.remove(k);
-            numEntries.getAndDecrement();
+            if (mortalEntries.remove(k) != null) {
+               numEntries.getAndDecrement();               
+            }
             e = null;
          } else {
             e.touch();
@@ -187,8 +188,9 @@ public class DefaultDataContainer implements DataContainer {
    public boolean containsKey(Object k) {
       InternalCacheEntry ice = peek(k);
       if (ice != null && ice.isExpired()) {
-         mortalEntries.remove(k);
-         numEntries.getAndDecrement();
+         if (mortalEntries.remove(k) != null) {
+            numEntries.getAndDecrement();            
+         }
          ice = null;
       }
       return ice != null;
