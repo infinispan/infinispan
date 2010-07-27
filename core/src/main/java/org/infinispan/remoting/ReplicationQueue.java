@@ -105,7 +105,7 @@ public class ReplicationQueue {
    /**
     * Stops the asynchronous flush queue.
     */
-   @Stop
+   @Stop(priority = 9) // Stop before transport
    public synchronized void stop() {
       if (scheduledExecutor != null) {
          scheduledExecutor.shutdownNow();
