@@ -15,11 +15,6 @@
    <name>Infinispan GUI Demo</name>
    <description>Infinispan - GUI Demo</description>
 
-   <properties>
-      <version.jgoodies.forms>1.0.5</version.jgoodies.forms>
-      <version.com.intellij.forms_rt>6.0.5</version.com.intellij.forms_rt>
-   </properties>
-
    <dependencies>
       <dependency>
          <groupId>${project.groupId}</groupId>

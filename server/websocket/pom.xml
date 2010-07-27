@@ -24,7 +24,7 @@
       <dependency>
          <groupId>org.json</groupId>
          <artifactId>json</artifactId>
-         <version>20090211</version>
+         <version>${version.json}</version>
       </dependency>
 
    </dependencies>
