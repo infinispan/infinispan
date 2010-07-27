@@ -82,7 +82,6 @@ public class QueryInterceptor extends CommandInterceptor {
          // otherwise we need to be updating the indexes as opposed to simply adding to the indexes.
          Object key = command.getKey();
          Object value = command.getValue();
-         if(log.isDebugEnabled()) log.debug("Key, value pairing is: - " + key + " + " + value);
          CacheEntry entry = ctx.lookupEntry(key);
 
          // New entry so we will add it to the indexes.
