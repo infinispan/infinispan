@@ -23,7 +23,7 @@
       <dependency>
          <groupId>org.hibernate</groupId>
          <artifactId>hibernate-search</artifactId>
-         <version>3.2.0.Final</version>
+         <version>${version.hibernate.search}</version>
       </dependency>
 
       <dependency>
@@ -37,14 +37,14 @@
       <dependency>
          <groupId>org.slf4j</groupId>
          <artifactId>slf4j-api</artifactId>
-         <version>1.5.8</version>
+         <version>${version.slf4j}</version>
          <scope>test</scope>
       </dependency>
 
       <dependency>
          <groupId>org.slf4j</groupId>
          <artifactId>slf4j-log4j12</artifactId>
-         <version>1.5.8</version>
+         <version>${version.slf4j}</version>
          <scope>test</scope>
       </dependency>
 

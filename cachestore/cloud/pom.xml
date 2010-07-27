@@ -14,8 +14,7 @@
    <description>Infinispan CloudCacheStore module</description>
 
    <properties>
-      <test.src.dir>src/test/java</test.src.dir>
-      <version.jclouds>1.0-beta-6</version.jclouds>
+      <test.src.dir>src/test/java</test.src.dir>      
    </properties>
 
    <dependencies>
@@ -61,19 +60,19 @@
       <dependency>
          <groupId>org.apache.commons</groupId>
          <artifactId>commons-compress</artifactId>
-         <version>1.0</version>
+         <version>${version.commons.compress}</version>
       </dependency>
 
       <dependency>
          <groupId>com.google.guava</groupId>
          <artifactId>guava-collections</artifactId>
-         <version>r03</version>
+         <version>${version.guava}</version>
       </dependency>
 
       <dependency>
          <groupId>com.google.guava</groupId>
          <artifactId>guava-base</artifactId>
-         <version>r03</version>
+         <version>${version.guava}</version>
       </dependency>
       
    </dependencies>

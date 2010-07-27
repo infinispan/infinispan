@@ -15,12 +15,6 @@
    <name>Infinispan Tools</name>
    <description>Infinispan - Tools for project</description>
 
-   <properties>
-      <version.rhq.plugingen>1.4.0.B01</version.rhq.plugingen>
-      <version.xsom>20081112</version.xsom>
-      <version.commons.logging>1.1</version.commons.logging>
-   </properties>
-
    <dependencies>
       <dependency>
          <groupId>${project.groupId}</groupId>

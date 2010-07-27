@@ -15,15 +15,6 @@
    <name>Infinispan Core</name>
    <description>Infinispan core module</description>
 
-   <properties>
-      <version.jboss.common.core>2.2.14.GA</version.jboss.common.core>
-      <version.jboss.marshalling>1.2.1.GA</version.jboss.marshalling>
-      <version.jgroups>2.10.0.GA</version.jgroups>
-      <version.jta>1.0.1.GA</version.jta>
-      <version.org.jboss.naming>5.0.3.GA</version.org.jboss.naming>
-      <version.rhq.pluginAnnotations>1.4.0.B01</version.rhq.pluginAnnotations>
-   </properties>
-
    <dependencies>
       <dependency>
          <groupId>org.jgroups</groupId>
@@ -83,7 +74,7 @@
          <groupId>org.apache.commons</groupId>
          <artifactId>commons-math</artifactId>
          <scope>test</scope>
-         <version>2.0</version>
+         <version>${version.commons.math}</version>
       </dependency>
 
    </dependencies>

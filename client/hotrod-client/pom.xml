@@ -48,7 +48,7 @@
       <dependency>
          <groupId>commons-pool</groupId>
          <artifactId>commons-pool</artifactId>
-         <version>1.5.4</version>
+         <version>${version.commons.pool}</version>
       </dependency>
 
       <dependency>

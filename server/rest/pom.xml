@@ -55,16 +55,6 @@
 
    </build>
 
-   <properties>
-      <version.resteasy>2.0-beta-2</version.resteasy>
-      <version.jackson>1.4.1</version.jackson>
-      <version.xtream>1.3.1</version.xtream>
-      <version.javax.servlet>2.5</version.javax.servlet>
-      <version.jetty>6.1.15</version.jetty>
-      <version.commons.httpclient>3.1</version.commons.httpclient>
-      <version.slf4j>1.5.8</version.slf4j>
-   </properties>
-
    <dependencies>
       <dependency>
          <groupId>org.jboss.resteasy</groupId>
@@ -81,7 +71,7 @@
       <dependency>
          <groupId>com.thoughtworks.xstream</groupId>
          <artifactId>xstream</artifactId>
-         <version>${version.xtream}</version>
+         <version>${version.xstream}</version>
       </dependency>
 
       <dependency>

@@ -20,7 +20,7 @@
          <!-- Contains fixes not officially released by JDBM group -->
          <groupId>org.apache.directory.server</groupId>
          <artifactId>apacheds-jdbm</artifactId>
-         <version>1.5.4</version>
+         <version>${version.apacheds.jdbm}</version>
          <exclusions>
             <exclusion>
                <groupId>org.apache.directory.shared</groupId>

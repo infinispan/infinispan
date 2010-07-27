@@ -14,11 +14,6 @@
    <name>Infinispan GridFileSystem WebDAV interface</name>
    <description>WebDAV interface for Infinispan's GridFileSystem, packaged as a WAR file for deployment in a servlet container</description>
 
-   <properties>
-      <version.javax.servlet>2.5</version.javax.servlet>
-      <version.webdav.servlet>2.0</version.webdav.servlet>
-   </properties>
-
    <dependencies>
       <dependency>
          <groupId>${project.groupId}</groupId>
@@ -32,6 +27,7 @@
          <version>${version.webdav.servlet}</version>
       </dependency>
 
+      <!-- required by Webdav-Servlet -->
       <dependency>
          <groupId>javax.servlet</groupId>
          <artifactId>servlet-api</artifactId>
