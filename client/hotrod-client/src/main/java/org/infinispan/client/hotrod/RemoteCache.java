@@ -30,11 +30,11 @@ import java.util.concurrent.TimeUnit;
  * these operations are not atomic and that they are costly, e.g. as the number of network round-trips is not one, but
  * the size of the added map. All these synthetic operations are documented as such.
  * <p/>
- * <b>changing default behavior through {@link org.infinispan.client.hotrod.Flag}s</b>: it is possible to change de
+ * <b>changing default behavior through {@link org.infinispan.client.hotrod.Flag}s</b>: it is possible to change the
  * default cache behaviour by using flags on an per invocation basis. E.g.
  * <pre>
  *      RemoteCache cache = getRemoteCache();
- *      Object value = cache.withFlags(Flag.FORCE_RETURN_VALUE).get(aKey);
+ *      Object oldValue = cache.withFlags(Flag.FORCE_RETURN_VALUE).put(aKey, aValue);
  * </pre>
  * In the previous example, using {@link org.infinispan.client.hotrod.Flag#FORCE_RETURN_VALUE} will make the client to
  * also return previously existing value associated with <tt>aKey</tt>. If this flag would not be present, Infinispan
@@ -225,7 +225,7 @@ public interface RemoteCache<K, V> extends Cache<K, V> {
    boolean replace(K key, V oldValue, V newValue);
 
    /**
-    * This operation is not supported. Consider using {@link #replace(K,V,long,int)} instead.
+    * This operation is not supported. Consider using {@link #replaceWithVersion(Object, Object, long, int)} instead.
     *
     * @throws UnsupportedOperationException
     */
@@ -233,7 +233,7 @@ public interface RemoteCache<K, V> extends Cache<K, V> {
    boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit unit);
 
    /**
-    * This operation is not supported. Consider using {@link #replace(K,V,long,int,int)} instead.
+    * This operation is not supported. Consider using {@link #replaceWithVersion(Object, Object, long, int, int)}  instead.
     *
     * @throws UnsupportedOperationException
     */
@@ -249,7 +249,7 @@ public interface RemoteCache<K, V> extends Cache<K, V> {
    NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue);
 
    /**
-    * This operation is not supported. Consider using {@link #replaceAsync(K,V,long,int)} instead.
+    * This operation is not supported. Consider using {@link #replaceWithVersion(Object, Object, long, int)} instead.
     *
     * @throws UnsupportedOperationException
     */
@@ -257,7 +257,7 @@ public interface RemoteCache<K, V> extends Cache<K, V> {
    NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit unit);
 
    /**
-    * This operation is not supported. Consider using {@link #replaceAsync(K,V,long,int,int)} instead.
+    * This operation is not supported. Consider using {@link #replaceWithVersion(Object, Object, long, int, int)}  instead.
     *
     * @throws UnsupportedOperationException
     */
@@ -336,14 +336,25 @@ public interface RemoteCache<K, V> extends Cache<K, V> {
    @Override
    void putAll(Map<? extends K, ? extends V> m);
 
-   public ServerStatistics stats();
+   ServerStatistics stats();
 
+   /**
+    * Applies one or more {@link Flag}s to the scope of a single invocation.  See the {@link Flag} enumeration to for
+    * information on available flags.
+    * <p />
+    * Sample usage:
+    * <pre>
+    *    remoteCache.withFlags(Flag.FORCE_RETURN_VALUE).put("hello", "world");
+    * </pre>
+    * @param flags
+    * @return the current RemoteCache instance to continue running operations on.
+    */
    RemoteCache<K, V> withFlags(Flag... flags);
 
    /**
     * Returns the {@link org.infinispan.client.hotrod.RemoteCacheManager} that created this cache.
     */
-   public RemoteCacheManager getRemoteCacheManager();
+   RemoteCacheManager getRemoteCacheManager();
 
    /**
     * Bulk get operations, returns all the entries within the remote cache.
@@ -352,11 +363,11 @@ public interface RemoteCache<K, V> extends Cache<K, V> {
     *         href="http://community.jboss.org/wiki/HotRodBulkGet-Design#Server_side">this</a> for more details. The
     *         returned Map is unmodifiable.
     */
-   public Map<K, V> getBulk();
+   Map<K, V> getBulk();
 
    /**
     * Same as {@link #getBulk()}, but limits the returned set of values to the specified size. No ordering is guaranteed, and there is no
     * guarantee that "size" elements are returned( e.g. if the number of elements in the back-end server is smaller that "size")
     */
-   public Map<K, V> getBulk(int size);
+   Map<K, V> getBulk(int size);
 }
