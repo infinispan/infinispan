@@ -25,6 +25,7 @@ object VersionGenerator {
       if (isClustered && versionPrefix.get == 0)
          throw new IllegalStateException("If clustered, Version prefix cannot be 0. Rank calculator probably not in use.")
       val counter = versionCounter.incrementAndGet
+      // Version counter occupies the least significant 4 bytes of the version
       if (isClustered) versionPrefix.get | counter else counter
    }
 
@@ -49,7 +50,10 @@ object VersionGenerator {
 
       private[core] def calculateRank(address: Address, members: Iterable[Address], viewId: Long): Long = {
          val rank: Long = findAddressRank(address, members, 1)
+         // Version is composed of: <view id (2 bytes)><rank (2 bytes)><version counter (4 bytes)>
+         // View id and rank form the prefix which is updated on a view change.
          val newVersionPrefix = (viewId << 48) | (rank << 32)
+         // TODO: Deal with compareAndSet failures?
          versionPrefix.compareAndSet(versionPrefix.get, newVersionPrefix)
          versionPrefix.get
       }

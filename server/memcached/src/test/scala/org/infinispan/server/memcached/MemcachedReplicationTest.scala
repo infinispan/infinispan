@@ -11,7 +11,8 @@ import net.spy.memcached.{CASResponse, MemcachedClient}
 import org.infinispan.test.AbstractCacheTest._
 
 /**
- * // TODO: Document this
+ * Tests replicated Infinispan Memcached servers.
+ *
  * @author Galder Zamarreño
  * @since 4.1
  */

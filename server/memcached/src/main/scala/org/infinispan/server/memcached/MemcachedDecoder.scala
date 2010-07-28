@@ -18,7 +18,8 @@ import collection.mutable.{HashMap, ListBuffer}
 import scala.collection.immutable
 
 /**
- * // TODO: Document this
+ * A Memcached protocol specific decoder
+ *
  * @author Galder Zamarreño
  * @since 4.1
  */
@@ -364,15 +365,6 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
       sb.setLength(0)
       buffer
    }
-
-//   override def start {
-//      scheduler = Executors.newScheduledThreadPool(1)
-//      cache = createCache
-//   }
-//
-//   override def stop {
-//      scheduler.shutdown
-//   }
 
    private def createValue(data: Array[Byte], nextVersion: Long, flags: Int): MemcachedValue = {
       new MemcachedValue(data, nextVersion, flags)

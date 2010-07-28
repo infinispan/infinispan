@@ -7,7 +7,8 @@ import java.util.Random
 import java.io.{ObjectOutputStream, ByteArrayOutputStream}
 
 /**
- * // TODO: Document this
+ * Abstract class to help marshalling tests in different server modules.
+ * 
  * @author Galder Zamarreño
  * @since 4.1
  */

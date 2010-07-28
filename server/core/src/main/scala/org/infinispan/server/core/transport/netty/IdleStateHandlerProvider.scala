@@ -2,8 +2,10 @@ package org.infinispan.server.core.transport
 
 import org.jboss.netty.handler.timeout.{IdleStateEvent, IdleStateAwareChannelHandler}
 import org.jboss.netty.channel.{ChannelHandlerContext => NettyChannelHandlerContext}
+
 /**
- * // TODO: Document this
+ * A Netty channel handler that allows idle channels to be closed.
+ *
  * @author Galder Zamarreño
  * @since 4.1
  */

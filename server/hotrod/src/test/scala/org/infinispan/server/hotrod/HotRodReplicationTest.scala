@@ -10,7 +10,8 @@ import org.infinispan.test.TestingUtil
 import org.infinispan.test.AbstractCacheTest._
 
 /**
- * // TODO: Document this
+ * Tests Hot Rod instances configured with replication.
+ *
  * @author Galder Zamarreño
  * @since 4.1
  */

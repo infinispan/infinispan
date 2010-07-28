@@ -5,7 +5,8 @@ import org.infinispan.server.core.transport.{VLong, VInt, ChannelBuffer}
 import org.infinispan.server.core.Logging
 
 /**
- * // TODO: Document this
+ * Channel buffer adapter for a Netty buffer.
+ *
  * @author Galder Zamarreño
  * @since 4.1
  */
@@ -49,9 +50,6 @@ class ChannelBufferAdapter(buffer: NettyChannelBuffer) extends ChannelBuffer {
    override def writeByte(value: Byte) = buffer.writeByte(value)
    override def writeBytes(src: Array[Byte]) = buffer.writeBytes(src)
 
-   /**
-    * Writes the length of the byte array and transfers the specified source array's data to this buffer
-   */
    override def writeRangedBytes(src: Array[Byte]) {
       writeUnsignedInt(src.length)
       writeBytes(src)
@@ -61,9 +59,6 @@ class ChannelBufferAdapter(buffer: NettyChannelBuffer) extends ChannelBuffer {
    override def writeUnsignedShort(i: Int) = buffer.writeShort(i)
    override def writerIndex: Int = buffer.writerIndex
 
-   /**
-    * Writes the length of the String followed by the String itself. This methods expects String not to be null.
-    */
    override def writeString(msg: String) = writeRangedBytes(msg.getBytes())
    override def writeLong(l: Long) = buffer.writeLong(l)
    override def writeInt(i: Int) = buffer.writeInt(i)

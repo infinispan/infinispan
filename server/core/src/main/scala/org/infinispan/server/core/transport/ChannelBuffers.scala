@@ -3,7 +3,8 @@ package org.infinispan.server.core.transport
 import netty.ChannelBuffersAdapter
 
 /**
- * // TODO: Document this
+ * A factory class used to create buffer instances.
+ *
  * @author Galder Zamarreño
  * @since 4.1
  */

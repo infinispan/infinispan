@@ -4,7 +4,8 @@ import org.infinispan.server.core.transport.{ChannelBuffer}
 import org.jboss.netty.buffer.{ChannelBuffers => NettyChannelBuffers}
 
 /**
- * // TODO: Document this
+ * A channel buffers factory adapter for Netty buffers.
+ *
  * @author Galder Zamarreño
  * @since 4.1
  */

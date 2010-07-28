@@ -11,11 +11,11 @@ import org.infinispan.util.ByteArrayKey
 import scala.collection.JavaConversions._
 
 /**
- * // TODO: Document this
+ * Hot Rod specific encoder.
+ *
  * @author Galder Zamarreño
- * @since
+ * @since 4.1
  */
-
 class HotRodEncoder(cacheManager: EmbeddedCacheManager) extends Encoder {
    import HotRodEncoder._
    import HotRodServer._
@@ -61,11 +61,11 @@ class HotRodEncoder(cacheManager: EmbeddedCacheManager) extends Encoder {
                   iterator = iterator.take(g.count)
                }
                for (entry <- iterator) {
-                  buffer.writeByte(1) //not done
+                  buffer.writeByte(1) // Not done
                   buffer.writeRangedBytes(entry.getKey.getData)
                   buffer.writeRangedBytes(entry.getValue.data)
                }
-               buffer.writeByte(0)
+               buffer.writeByte(0) // Done
             }
          }
          case g: GetResponse => if (g.status == Success) buffer.writeRangedBytes(g.data.get)

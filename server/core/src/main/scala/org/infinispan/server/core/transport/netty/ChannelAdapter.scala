@@ -4,7 +4,8 @@ import org.jboss.netty.channel.{Channel => NettyChannel}
 import org.infinispan.server.core.transport.{ChannelBuffer, ChannelFuture, Channel}
 
 /**
- * // TODO: Document this
+ * Transport channel implementation for Netty transport.
+ *
  * @author Galder Zamarreño
  * @since 4.1
  */

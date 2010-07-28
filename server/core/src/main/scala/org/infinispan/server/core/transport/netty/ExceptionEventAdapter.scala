@@ -4,7 +4,8 @@ import org.infinispan.server.core.transport.ExceptionEvent
 import org.jboss.netty.channel.{ExceptionEvent => NettyExceptionEvent}
 
 /**
- * // TODO: Document this
+ * An exception event adapter for Netty.
+ * 
  * @author Galder Zamarreño
  * @since 4.1
  */

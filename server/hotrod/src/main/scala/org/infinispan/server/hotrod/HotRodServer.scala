@@ -17,7 +17,9 @@ import org.infinispan.util.{ByteArrayKey, Util};
 import org.infinispan.server.core.Main._
 
 /**
- * // TODO: Document this
+ * Hot Rod server, in charge of defining its encoder/decoder and, if clustered, update the topology information
+ * on startup and shutdown.
+ *
  * @author Galder Zamarreño
  * @since 4.1
  */

@@ -3,12 +3,13 @@ package org.infinispan.server.memcached
 import org.infinispan.server.core.transport.ChannelBuffer
 
 /**
- * // TODO: Document this
+ * Memcached text protocol utilities.
+ *
  * @author Galder Zamarreño
- * @since
+ * @since 4.1
  */
-// todo: refactor name once old code has been removed?
 trait TextProtocolUtil {
+   // todo: refactor name once old code has been removed?
 
    val CRLF = "\r\n"
    val CRLFBytes = "\r\n".getBytes

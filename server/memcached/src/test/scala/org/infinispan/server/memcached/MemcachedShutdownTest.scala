@@ -6,7 +6,8 @@ import org.testng.annotations.Test
 import org.testng.Assert._
 
 /**
- * // TODO: Document this
+ * Tests that Infinispan Memcached server can shutdown even if client does not close connection.
+ *
  * @author Galder Zamarreño
  * @since 4.1
  */

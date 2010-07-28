@@ -5,7 +5,8 @@ import java.lang.reflect.Method
 import org.jboss.netty.channel.ChannelFuture
 
 /**
- * // TODO: Document this
+ * Tests that Hot Rod server can shutdown even if client dies not close connection.
+ *
  * @author Galder Zamarreño
  * @since 4.1
  */

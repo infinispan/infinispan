@@ -12,7 +12,8 @@ import org.infinispan.server.core.{ProtocolServer, Logging}
 import org.jboss.netty.util.{ThreadNameDeterminer, ThreadRenamingRunnable}
 
 /**
- * // TODO: Document this
+ * A Netty based transport.
+ * 
  * @author Galder Zamarreño
  * @since 4.1
  */
@@ -62,6 +63,7 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
                else if (proposedThreadName contains "server boss") "ServerMaster-"
                else if (proposedThreadName contains "client worker") "ClientWorker-"
                else "ClientMaster-"
+            // Set thread name to be: <prefix><ServerWorker-|ServerMaster-|ClientWorker-|ClientMaster-><number>
             val name = threadNamePrefix + typeInFix + proposedThreadName.substring(index + 1, proposedThreadName.length)
             if (isTraceEnabled)
                trace("Thread name will be {0}, with current thread name being {1} and proposed name being '{2}'",
@@ -71,11 +73,11 @@ class NettyTransport(server: ProtocolServer, encoder: ChannelDownstreamHandler,
       })
       val bootstrap = new ServerBootstrap(factory)
       bootstrap.setPipelineFactory(pipeline)
-      bootstrap.setOption("child.tcpNoDelay", tcpNoDelay)
+      bootstrap.setOption("child.tcpNoDelay", tcpNoDelay) // Sets server side tcpNoDelay
       if (sendBufSize > 0)
-         bootstrap.setOption("child.sendBufferSize", sendBufSize)
+         bootstrap.setOption("child.sendBufferSize", sendBufSize) // Sets server side send buffer
       if (recvBufSize > 0)
-         bootstrap.setOption("receiveBufferSize", recvBufSize)
+         bootstrap.setOption("receiveBufferSize", recvBufSize) // Sets server side receive buffer
 
       val ch = bootstrap.bind(address)
       serverChannels.add(ch)

@@ -3,7 +3,8 @@ package org.infinispan.server.core.transport
 import java.util.concurrent.TimeUnit
 
 /**
- * // TODO: Document this
+ * A channel future representing the result of a channel operation.
+ *
  * @author Galder Zamarreño
  * @since 4.1
  */

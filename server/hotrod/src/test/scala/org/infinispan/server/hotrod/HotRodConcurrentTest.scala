@@ -6,7 +6,8 @@ import test.HotRodClient
 import org.testng.annotations.Test
 
 /**
- * // TODO: Document this
+ * Tests that Hot Rod servers can be concurrently accessed and modified.
+ *
  * @author Galder Zamarreño
  * @since 4.1
  */

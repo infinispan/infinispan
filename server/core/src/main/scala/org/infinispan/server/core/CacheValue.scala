@@ -6,7 +6,10 @@ import org.infinispan.marshall.Marshallable
 import java.util.Arrays
 
 /**
- * // TODO: Document this
+ * Represents the value part of a key/value pair stored in a protocol cache. With each value, a version is stored
+ * which allows for conditional operations to be executed remotely in a efficient way. For more detailed info on
+ * conditional operations, check <a href="http://community.jboss.org/docs/DOC-15604">this document</a>.
+ *
  * @author Galder Zamarreño
  * @since 4.1
  */
@@ -47,7 +50,7 @@ object CacheValue {
 
       override def readObject(input: ObjectInput): AnyRef = {
          val data = new Array[Byte](input.readInt())
-         input.readFully(data)
+         input.readFully(data) // Must be readFully, otherwise partial arrays can be read under load!
          val version = input.readLong
          new CacheValue(data, version)
       }

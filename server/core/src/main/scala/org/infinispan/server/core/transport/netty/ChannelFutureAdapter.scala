@@ -5,7 +5,8 @@ import org.infinispan.server.core.transport.{Channel, ChannelFuture}
 import java.util.concurrent.TimeUnit
 
 /**
- * // TODO: Document this
+ * A channel future adapter for Netty channel futures.
+ *
  * @author Galder Zamarreño
  * @since 4.1
  */

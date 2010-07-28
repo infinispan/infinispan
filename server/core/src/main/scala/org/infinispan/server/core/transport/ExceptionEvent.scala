@@ -1,7 +1,8 @@
 package org.infinispan.server.core.transport
 
 /**
- * // TODO: Document this
+ * An exception event.
+ * 
  * @author Galder Zamarreño
  * @since 4.1
  */
