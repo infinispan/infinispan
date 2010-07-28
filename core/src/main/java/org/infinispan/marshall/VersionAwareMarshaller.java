@@ -188,4 +188,9 @@ public class VersionAwareMarshaller extends AbstractStreamingMarshaller {
    public Object objectFromByteBuffer(byte[] buf) throws IOException, ClassNotFoundException {
       return objectFromByteBuffer(buf, 0, buf.length);
    }
+
+   @Override
+   public boolean isMarshallable(Object o) {
+      return defaultMarshaller.isMarshallable(o);
+   }
 }

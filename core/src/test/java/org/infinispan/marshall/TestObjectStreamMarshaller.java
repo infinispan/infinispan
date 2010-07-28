@@ -5,15 +5,7 @@ import org.infinispan.io.ByteBuffer;
 import org.infinispan.io.ExposedByteArrayOutputStream;
 import org.infinispan.util.Util;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
+import java.io.*;
 
 /**
  * A dummy marshaller impl that uses object streams converted via XStream as current JBoss Marshalling implementation
@@ -88,6 +80,11 @@ public class TestObjectStreamMarshaller extends AbstractStreamingMarshaller {
 
    public Object objectFromByteBuffer(byte[] buf) throws IOException, ClassNotFoundException {
       return objectFromObjectStream(new ObjectInputStream(new ByteArrayInputStream(buf)));
+   }
+
+   @Override
+   public boolean isMarshallable(Object o) {
+      return (o instanceof Serializable || o instanceof Externalizable);
    }
 
    private void debug(String s) {
