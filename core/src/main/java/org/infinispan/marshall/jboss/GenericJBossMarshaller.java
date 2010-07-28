@@ -17,11 +17,13 @@ import org.jboss.marshalling.Unmarshaller;
 import org.jboss.marshalling.reflect.SunReflectiveCreator;
 
 import java.io.ByteArrayInputStream;
+import java.io.Externalizable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.OutputStream;
+import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.net.URL;
 
@@ -195,6 +197,11 @@ public class GenericJBossMarshaller implements Marshaller {
 
    public byte[] objectToByteBuffer(Object o) throws IOException {
       return objectToByteBuffer(o, DEFAULT_BUF_SIZE);
+   }
+
+   @Override
+   public boolean isMarshallable(Object o) {
+      return (o instanceof Serializable || o instanceof Externalizable);
    }
 
    protected static class DebuggingExceptionListener implements ExceptionListener {

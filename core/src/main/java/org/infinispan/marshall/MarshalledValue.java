@@ -61,10 +61,11 @@ public class MarshalledValue {
    public MarshalledValue(Object instance, boolean equalityPreferenceForInstance, StreamingMarshaller marshaller) throws NotSerializableException {
       if (instance == null) throw new NullPointerException("Null values cannot be wrapped as MarshalledValues!");
 
-      if (instance instanceof Serializable)
+      if (marshaller.isMarshallable(instance))
          this.instance = instance;
       else
-         throw new NotSerializableException("Marshalled values can only wrap Objects that are serializable!  Instance of " + instance.getClass() + " won't Serialize.");
+         throw new NotSerializableException("Marshalled values can only wrap Objects that can be serialized or marshalled!  Instance of " 
+               + instance.getClass() + " won't serialize or marshall.");
       this.equalityPreferenceForInstance = equalityPreferenceForInstance;
       this.marshaller = marshaller;
    }

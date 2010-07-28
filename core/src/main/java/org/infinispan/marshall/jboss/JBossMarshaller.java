@@ -26,7 +26,9 @@ import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.io.ByteBuffer;
 import org.infinispan.io.ExposedByteArrayOutputStream;
 import org.infinispan.marshall.AbstractStreamingMarshaller;
+import org.infinispan.marshall.Marshallable;
 import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.util.ReflectionUtil;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -54,7 +56,7 @@ import java.net.URL;
  * <p />
  * The reason why this is implemented specially in Infinispan rather than resorting to Java serialization or even the
  * more efficient JBoss serialization is that a lot of efficiency can be gained when a majority of the serialization
- * that occurs has to do with a small set of known types such as {@link org.infinispan.transaction.GlobalTransaction} or
+ * that occurs has to do with a small set of known types such as {@link org.infinispan.transaction.xa.GlobalTransaction} or
  * {@link org.infinispan.commands.ReplicableCommand}, and class type information can be replaced with simple magic
  * numbers.
  * <p/>
@@ -77,6 +79,11 @@ public class JBossMarshaller extends GenericJBossMarshaller implements Streaming
       // Do not leak classloader when cache is stopped.
       defaultCl = null;
       if (objectTable != null) objectTable.stop();
+   }
+
+   @Override
+   public boolean isMarshallable(Object o) {
+      return super.isMarshallable(o) || ReflectionUtil.isAnnotationPresent(o.getClass(), Marshallable.class);
    }
 
    private ConstantObjectTable createCustomObjectTable(RemoteCommandsFactory cmdFactory, StreamingMarshaller ispnMarshaller) {

@@ -77,5 +77,13 @@ public interface Marshaller {
     * @throws Exception
     */
    ByteBuffer objectToBuffer(Object o) throws IOException;
+
+   /**
+    * A method that checks whether the given object is marshallable as per the rules of this marshaller.
+    * 
+    * @param o object to verify whether it's marshallable or not
+    * @return true if the object is marshallable, otherwise false
+    */
+   boolean isMarshallable(Object o);
 }
 
