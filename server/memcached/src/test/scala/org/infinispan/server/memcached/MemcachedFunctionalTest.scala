@@ -1,6 +1,5 @@
 package org.infinispan.server.memcached
 
-import org.infinispan.manager.CacheContainer
 import java.lang.reflect.Method
 import java.util.concurrent.TimeUnit
 import org.testng.Assert._
@@ -10,9 +9,10 @@ import org.infinispan.test.TestingUtil
 import org.infinispan.Version
 
 /**
- * // TODO: Document this
+ * Tests Memcached protocol functionality against Infinispan Memcached server.
+ *
  * @author Galder Zamarreño
- * @since
+ * @since 4.1
  */
 @Test(groups = Array("functional"), testName = "server.memcached.MemcachedFunctionalTest")
 class MemcachedFunctionalTest extends MemcachedSingleNodeTest {

@@ -230,6 +230,7 @@ private class ShutdownHook(server: ProtocolServer, cacheManager: CacheContainer)
 
          var f = Executors.newSingleThreadExecutor(tf).submit(new Callable[Void] {
             override def call = {
+               // Stop server first so that no new requests are allowed
                server.stop
                cacheManager.stop
                null

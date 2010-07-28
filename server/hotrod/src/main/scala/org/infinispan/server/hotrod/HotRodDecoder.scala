@@ -4,7 +4,7 @@ import org.infinispan.stats.Stats
 import org.infinispan.server.core._
 import transport._
 import OperationStatus._
-import org.infinispan.manager.{DefaultCacheManager, EmbeddedCacheManager}
+import org.infinispan.manager.EmbeddedCacheManager
 import java.io.StreamCorruptedException
 import org.infinispan.server.hotrod.ProtocolFlag._
 import org.infinispan.server.hotrod.OperationResponse._
@@ -13,7 +13,9 @@ import org.infinispan.{CacheException, Cache}
 import org.infinispan.util.ByteArrayKey
 
 /**
- * // TODO: Document this
+ * Top level Hot Rod decoder that after figuring out the version, delegates the rest of the reading to the
+ * corresponding versioned decoder.
+ *
  * @author Galder Zamarreño
  * @since 4.1
  */
@@ -107,7 +109,6 @@ class HotRodDecoder(cacheManager: EmbeddedCacheManager) extends AbstractProtocol
       if (isTrace) trace("About to return: " + result)
       result
    }
-
 
    override def createStatsResponse(h: HotRodHeader, stats: Stats): AnyRef =
       h.decoder.createStatsResponse(h, stats)

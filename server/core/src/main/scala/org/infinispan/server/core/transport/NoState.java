@@ -24,7 +24,7 @@
 package org.infinispan.server.core.transport;
 
 /**
- * // TODO: Document this
+ * A simple enumeration marker that signals the lack of state choices.
  *
  * @author Galder Zamarreño
  */

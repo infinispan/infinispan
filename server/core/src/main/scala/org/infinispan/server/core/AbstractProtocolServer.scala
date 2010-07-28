@@ -11,7 +11,8 @@ import org.infinispan.util.logging.Log
 import org.infinispan.util.{TypedProperties, Util}
 
 /**
- * // TODO: Document this
+ * A common protocol server dealing with common property parameter validation and assignment and transport lifecycle.
+ *
  * @author Galder Zamarreño
  * @since 4.1
  */
@@ -29,6 +30,7 @@ abstract class AbstractProtocolServer(threadNamePrefix: String) extends Protocol
       val toStart = typedProps.getBooleanProperty("enabled", true)
 
       if (toStart) {
+         // By doing parameter validation here, both programmatic and command line clients benefit from it.
          this.host = typedProps.getProperty(PROP_KEY_HOST, HOST_DEFAULT)
          this.port = typedProps.getIntProperty(PROP_KEY_PORT, defaultPort)
          this.masterThreads = typedProps.getIntProperty(PROP_KEY_MASTER_THREADS, MASTER_THREADS_DEFAULT)

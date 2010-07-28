@@ -1,11 +1,11 @@
 package org.infinispan.server.hotrod
 
 /**
- * // TODO: Document this
+ * Hot Rod specific operations. Enumeration starts at a number other that 0 not to clash with common operations.
+ *
  * @author Galder Zamarreño
- * @since
+ * @since 4.1
  */
-
 object HotRodOperation extends Enumeration(20) {
    type HotRodOperation = Value
 

@@ -12,7 +12,8 @@ import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.util.ByteArrayKey
 
 /**
- * // TODO: Document this
+ * Base test class for single node Hot Rod tests.
+ *
  * @author Galder Zamarreño
  * @since 4.1
  */

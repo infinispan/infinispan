@@ -4,7 +4,8 @@ import org.testng.annotations.Test
 import org.testng.Assert._
 
 /**
- * // TODO: Document this
+ * Marshalling test for server core classes.
+ *
  * @author Galder Zamarreño
  * @since 4.1
  */

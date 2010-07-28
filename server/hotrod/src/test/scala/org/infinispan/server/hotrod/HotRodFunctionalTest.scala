@@ -14,13 +14,6 @@ import org.infinispan.util.{Util, ByteArrayKey}
 /**
  * Hot Rod server functional test.
  *
- * Note: It appears that optional parameters in annotations result in compiler errors.
- * This has been solved in Scala 2.8.0.Beta1, so use that compiler,
- * otherwise this class won't compile.
- * https://lampsvn.epfl.ch/trac/scala/ticket/1810
- *
- * Keep an eye on that for @Test and @AfterClass annotations
- *
  * @author Galder Zamarreño
  * @since 4.1
  */

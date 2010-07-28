@@ -25,7 +25,8 @@ import org.infinispan.test.TestingUtil
 import org.infinispan.util.{ByteArrayKey, Util}
 
 /**
- * A very simply Hot Rod client for testing purpouses
+ * A very simply Hot Rod client for testing purpouses. It's a quick and dirty client implementation done for testing
+ * purpouses. As a result, it might not be very readable, particularly for readers not used to scala.
  *
  * Reasons why this should not really be a trait:
  * Storing var instances in a trait cause issues with TestNG, see:

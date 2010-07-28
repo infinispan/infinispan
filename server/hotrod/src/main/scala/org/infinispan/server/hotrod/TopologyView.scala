@@ -4,7 +4,8 @@ import org.infinispan.marshall.Marshallable
 import java.io.{ObjectInput, ObjectOutput}
 
 /**
- * // TODO: Document this
+ * A Hot Rod server topology view.
+ *
  * @author Galder Zamarreño
  * @since 4.1
  */

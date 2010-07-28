@@ -10,9 +10,10 @@ import org.infinispan.test.TestingUtil
 import org.infinispan.manager.EmbeddedCacheManager
 
 /**
- * // TODO: Document this
+ * Tests stats command for Infinispan Memcached server.
+ *
  * @author Galder Zamarreño
- * @since
+ * @since 4.1
  */
 @Test(groups = Array("functional"), testName = "server.memcached.MemcachedStatsTest")
 class MemcachedStatsTest extends MemcachedSingleNodeTest {

@@ -9,7 +9,8 @@ import org.infinispan.config.Configuration
 import org.infinispan.test.AbstractCacheTest._
 
 /**
- * // TODO: Document this
+ * Tests Hot Rod instances that are behind a proxy.
+ *
  * @author Galder Zamarreño
  * @since 4.1
  */

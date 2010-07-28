@@ -5,10 +5,11 @@ import java.lang.reflect.Method
 import test.HotRodTestingUtil._
 import org.testng.Assert._
 import test.{HotRodClient, UniquePortThreadLocal}
-import org.infinispan.manager.{EmbeddedCacheManager, CacheContainer}
+import org.infinispan.manager.EmbeddedCacheManager
 
 /**
- * // TODO: Document this
+ * Tests idle timeout logic in Hot Rod.
+ *
  * @author Galder Zamarreño
  * @since 4.1
  */

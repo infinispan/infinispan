@@ -6,9 +6,10 @@ import java.io.{ObjectOutput, ObjectInput}
 import org.infinispan.marshall.Marshallable
 
 /**
- * // TODO: Document this
+ * Memcached value part of key/value pair containing flags on top the common byte array and version.
+ *
  * @author Galder Zamarreño
- * @since
+ * @since 4.1
  */
 // TODO: putting Ids.MEMCACHED_CACHE_VALUE fails compilation in 2.8 - https://lampsvn.epfl.ch/trac/scala/ticket/2764
 @Marshallable(externalizer = classOf[MemcachedValue.Externalizer], id = 56)

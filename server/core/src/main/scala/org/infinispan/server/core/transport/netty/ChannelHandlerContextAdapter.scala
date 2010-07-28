@@ -1,10 +1,11 @@
 package org.infinispan.server.core.transport.netty
 
 import org.jboss.netty.channel.{ChannelHandlerContext => NettyChannelHandlerContext}
-import org.infinispan.server.core.transport.{ChannelBuffers, Channel, ChannelHandlerContext}
+import org.infinispan.server.core.transport.{Channel, ChannelHandlerContext}
 
 /**
- * // TODO: Document this
+ * A channel handler context adapter for Netty.
+ *
  * @author Galder Zamarreño
  * @since 4.1
  */

@@ -2,12 +2,14 @@ package org.infinispan.server.memcached
 
 import org.infinispan.server.core.AbstractProtocolServer
 import org.infinispan.server.core.transport.{Decoder, Encoder}
-import java.util.concurrent.{Executors, ScheduledExecutorService}
-import org.infinispan.manager.{EmbeddedCacheManager, CacheContainer}
+import java.util.concurrent.Executors
+import org.infinispan.manager.EmbeddedCacheManager
 import java.util.Properties
 
 /**
- * // TODO: Document this
+ * Memcached server defining its decoder/encoder settings. In fact, Memcached does not use an encoder since there's
+ * no really common headers between protocol operations.
+ *
  * @author Galder Zamarreño
  * @since 4.1
  */

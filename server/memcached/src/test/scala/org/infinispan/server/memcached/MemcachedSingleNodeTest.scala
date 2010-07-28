@@ -8,7 +8,8 @@ import org.testng.annotations.{Test, AfterClass}
 import org.infinispan.manager.EmbeddedCacheManager
 
 /**
- * // TODO: Document this
+ * Base class for single node tests.
+ * 
  * @author Galder Zamarreño
  * @since 4.1
  */

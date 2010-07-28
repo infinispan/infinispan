@@ -2,10 +2,7 @@ package org.infinispan.server.core
 
 import org.infinispan.Cache
 import Operation._
-import scala.collection.mutable.HashMap
-import scala.collection.immutable
 import java.util.concurrent.atomic.AtomicInteger
-import scala.collection.JavaConversions._
 import java.util.concurrent.TimeUnit
 import org.infinispan.stats.Stats
 import org.infinispan.server.core.VersionGenerator._
@@ -15,7 +12,8 @@ import transport.ChannelBuffers._
 import org.infinispan.util.Util
 
 /**
- * // TODO: Document this
+ * Common abstract decoder for Memcached and Hot Rod protocols.
+ *
  * @author Galder Zamarreño
  * @since 4.1
  */

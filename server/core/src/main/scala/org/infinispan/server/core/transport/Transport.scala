@@ -3,7 +3,8 @@ package org.infinispan.server.core.transport
 import java.net.SocketAddress
 
 /**
- * // TODO: Document this
+ * A transport.
+ *
  * @author Galder Zamarreño
  * @since 4.1
  */

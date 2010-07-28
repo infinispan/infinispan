@@ -14,7 +14,8 @@ import org.infinispan.server.core.Main._
 import java.util.{Properties, Arrays}
 
 /**
- * // TODO: Document this
+ * Test utils for Hot Rod tests.
+ * 
  * @author Galder Zamarreño
  * @since 4.1
  */

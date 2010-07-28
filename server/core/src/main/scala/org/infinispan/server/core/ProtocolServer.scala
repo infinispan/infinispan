@@ -25,7 +25,6 @@ trait ProtocolServer {
     */
    def start(propertiesFileName: String, cacheManager: EmbeddedCacheManager)
 
-
    /**
     *  Stops the server
     */

@@ -8,7 +8,8 @@ import org.testng.Assert._
 import org.infinispan.manager.EmbeddedCacheManager
 
 /**
- * // TODO: Document this
+ * Tests stats operation against a Hot Rod server.
+ * 
  * @author Galder Zamarreño
  * @since 4.1
  */

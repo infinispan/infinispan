@@ -2,12 +2,11 @@ package org.infinispan.server.hotrod
 
 import OperationStatus._
 import OperationResponse._
-import org.infinispan.Cache
-import org.infinispan.server.core.CacheValue
-import org.infinispan.util.{ByteArrayKey, Util}
+import org.infinispan.util.Util
 
 /**
- * // TODO: Document this
+ * A basic responses. The rest of this file contains other response types.
+ *
  * @author Galder Zamarreño
  * @since 4.1
  */

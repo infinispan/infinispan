@@ -1,11 +1,11 @@
 package org.infinispan.server.hotrod
 
 /**
- * // TODO: Document this
+ * Hot Rod operation possible status outcomes.
+ *
  * @author Galder Zamarreño
  * @since 4.1
  */
-
 object OperationStatus extends Enumeration {
    type OperationStatus = Value
 

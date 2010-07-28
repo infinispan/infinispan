@@ -7,7 +7,8 @@ import org.infinispan.server.core.AbstractMarshallingTest
 import org.infinispan.util.ByteArrayKey
 
 /**
- * // TODO: Document this
+ * Tests marshalling of Hot Rod classes.
+ *
  * @author Galder Zamarreño
  * @since 4.1
  */

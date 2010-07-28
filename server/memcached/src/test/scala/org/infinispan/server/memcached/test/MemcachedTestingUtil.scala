@@ -11,7 +11,8 @@ import java.util.{Properties, Arrays}
 import org.infinispan.server.core.Main._
 
 /**
- * // TODO: Document this
+ * Utils for Memcached tests.
+ * 
  * @author Galder Zamarreño
  * @since 4.1
  */

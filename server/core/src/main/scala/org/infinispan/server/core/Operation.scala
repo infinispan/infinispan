@@ -1,7 +1,8 @@
 package org.infinispan.server.core
 
 /**
- * // TODO: Document this
+ * Common set of operations for Memcached and Hot Rod protocols.
+ *
  * @author Galder Zamarreño
  * @since 4.1
  */

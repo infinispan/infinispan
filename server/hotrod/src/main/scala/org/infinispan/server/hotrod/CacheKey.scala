@@ -5,12 +5,12 @@ import java.util.Arrays
 import org.infinispan.marshall.Marshallable
 import java.io.{ObjectInput, ObjectOutput}
 import org.infinispan.server.core.Logging
-import org.infinispan.util.hash.MurmurHash2
 
 /**
- * // TODO: Document this
+ * Represents the key part of a key/value pair stored in the underlying Hot Rod cache.
+ *
  * @author Galder Zamarreño
- * @since
+ * @since 4.1
  */
 // TODO: putting Ids.HOTROD_CACHE_KEY fails compilation in 2.8 - https://lampsvn.epfl.ch/trac/scala/ticket/2764
 @Marshallable(externalizer = classOf[CacheKey.Externalizer], id = 57)
@@ -27,7 +27,6 @@ final class CacheKey(val data: Array[Byte]) {
 
    override def hashCode: Int = {
       41 + Arrays.hashCode(data)
-//      MurmurHash2.hash(data)
    }
 
    override def toString = {

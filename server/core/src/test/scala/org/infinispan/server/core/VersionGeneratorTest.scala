@@ -6,7 +6,8 @@ import org.testng.Assert._
 import org.infinispan.server.core.VersionGenerator._
 
 /**
- * // TODO: Document this
+ * Version generator test
+ * 
  * @author Galder Zamarreño
  * @since 4.1
  */

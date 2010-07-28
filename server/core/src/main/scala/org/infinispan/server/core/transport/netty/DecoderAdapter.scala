@@ -6,7 +6,8 @@ import org.infinispan.server.core.transport._
 import org.jboss.netty.channel.{ChannelStateEvent, ExceptionEvent => NettyExceptionEvent, ChannelHandlerContext => NettyChannelHandlerContext, Channel => NettyChannel}
 
 /**
- * // TODO: Document this
+ * A protocol decoder for Netty.
+ *
  * @author Galder Zamarreño
  * @since 4.1
  */
