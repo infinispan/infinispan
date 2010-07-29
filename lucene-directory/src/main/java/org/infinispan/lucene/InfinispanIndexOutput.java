@@ -49,9 +49,9 @@ public class InfinispanIndexOutput extends IndexOutput {
    private final FileCacheKey fileKey;
 
    private byte[] buffer;
-   private int bufferPosition = 0;
-   private int filePosition = 0;
-   private int chunkNumber;
+   private int positionInBuffer = 0;
+   private long filePosition = 0;
+   private int currentChunkNumber = 0;
 
    public InfinispanIndexOutput(AdvancedCache<CacheKey, Object> cache, FileCacheKey fileKey, int bufferSize, FileMetadata fileMetadata) throws IOException {
       this.cache = cache;
@@ -64,26 +64,28 @@ public class InfinispanIndexOutput extends IndexOutput {
       }
    }
    
-   private static byte[] getChunkFromPosition(AdvancedCache<CacheKey, Object> cache, FileCacheKey fileKey, int pos, int bufferSize) {
-      CacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), getChunkNumberFromPosition(pos, bufferSize));
+   private static byte[] getChunkById(AdvancedCache<CacheKey, Object> cache, FileCacheKey fileKey, int  chunkNumber) {
+      CacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), chunkNumber);
       return (byte[]) cache.withFlags(Flag.SKIP_LOCKING).get(key);
    }
+
    
-   private static int getPositionInBuffer(int pos, int bufferSize) {
-      return (pos % bufferSize);
+   private static int getPositionInBuffer(long pos, int bufferSize) {
+      return (int) (pos % bufferSize);
    }
 
-   private static int getChunkNumberFromPosition(int pos, int bufferSize) {
-      return ((pos) / (bufferSize));
+   private static int getChunkNumberFromPosition(long pos, int bufferSize) {
+      return (int) ((pos) / (bufferSize));
    }
 
    private void newChunk() throws IOException {
       flush();// save data first
       // check if we have to create new chunk, or get already existing in cache for modification
-      if ((buffer = getChunkFromPosition(cache, fileKey, filePosition, bufferSize)) == null) {
+      currentChunkNumber++;
+      if ((buffer = getChunkById(cache, fileKey, currentChunkNumber)) == null) {
          buffer = new byte[bufferSize];
       }
-      bufferPosition = 0;
+      positionInBuffer = 0;
    }
 
    @Override
@@ -91,7 +93,7 @@ public class InfinispanIndexOutput extends IndexOutput {
       if (isNewChunkNeeded()) {
          newChunk();
       }
-      buffer[bufferPosition++] = b;
+      buffer[positionInBuffer++] = b;
       filePosition++;
    }
 
@@ -99,9 +101,9 @@ public class InfinispanIndexOutput extends IndexOutput {
    public void writeBytes(byte[] b, int offset, int length) throws IOException {
       int writtenBytes = 0;
       while (writtenBytes < length) {
-         int pieceLength = Math.min(buffer.length - bufferPosition, length - writtenBytes);
-         System.arraycopy(b, offset + writtenBytes, buffer, bufferPosition, pieceLength);
-         bufferPosition += pieceLength;
+         int pieceLength = Math.min(buffer.length - positionInBuffer, length - writtenBytes);
+         System.arraycopy(b, offset + writtenBytes, buffer, positionInBuffer, pieceLength);
+         positionInBuffer += pieceLength;
          filePosition += pieceLength;
          writtenBytes += pieceLength;
          if (isNewChunkNeeded()) {
@@ -111,20 +113,16 @@ public class InfinispanIndexOutput extends IndexOutput {
    }
 
    private boolean isNewChunkNeeded() {
-      return (bufferPosition == buffer.length);
+      return (positionInBuffer == buffer.length);
    }
 
    @Override
    public void flush() throws IOException {
-      // select right chunkNumber
-      chunkNumber = getChunkNumberFromPosition(filePosition - 1, bufferSize);
-      // and create distinct key for it
-      ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), chunkNumber);
+      // create key for the current chunk
+      ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), currentChunkNumber);
       // size changed, apply change to file header
       file.touch();
-      if (file.getSize() < filePosition) {
-         file.setSize(filePosition);
-      }
+      resizeFileIfNeeded();
       cache.startBatch();
       // add chunk to cache
       cache.withFlags(Flag.SKIP_REMOTE_LOOKUP).put(key, buffer);
@@ -133,10 +131,16 @@ public class InfinispanIndexOutput extends IndexOutput {
       cache.endBatch(true);
    }
 
+   private void resizeFileIfNeeded() {
+      if (file.getSize() < filePosition) {
+         file.setSize(filePosition);
+      }
+   }
+
    @Override
    public void close() throws IOException {
       flush();
-      bufferPosition = 0;
+      positionInBuffer = 0;
       filePosition = 0;
       buffer = null;
       if (log.isDebugEnabled()) {
@@ -152,13 +156,19 @@ public class InfinispanIndexOutput extends IndexOutput {
 
    @Override
    public void seek(long pos) throws IOException {
-      flush();
+      int requestedChunkNumber = getChunkNumberFromPosition(pos, bufferSize);
       if (pos > file.getSize()) {
-         throw new IOException(fileKey.getFileName() + ": seeking past of the file");
+         resizeFileIfNeeded();
+         if (pos > file.getSize()) // check again, might be fixed by the resize
+            throw new IOException(fileKey.getFileName() + ": seeking past of the file");
       }
-      buffer = getChunkFromPosition(cache, fileKey, (int) pos, bufferSize);
-      bufferPosition = getPositionInBuffer((int) pos, bufferSize);
-      filePosition = (int) pos;
+      if (requestedChunkNumber != currentChunkNumber) {
+         flush();
+         buffer = getChunkById(cache, fileKey, requestedChunkNumber);
+         currentChunkNumber = requestedChunkNumber;
+      }
+      positionInBuffer = getPositionInBuffer(pos, bufferSize);
+      filePosition = pos;
    }
 
    @Override
