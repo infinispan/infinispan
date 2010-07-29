@@ -28,9 +28,16 @@ import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.Transport;
+import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.jgroups.Channel;
+import org.jgroups.protocols.DELAY;
+import org.jgroups.protocols.DISCARD;
+import org.jgroups.protocols.TP;
+import org.jgroups.stack.ProtocolStack;
 
 import javax.transaction.TransactionManager;
 import java.io.File;
@@ -766,6 +773,26 @@ public class TestingUtil {
          values.add(entry.getValue());
       }
       return values;
+   }
+   
+   public static DISCARD getDiscardForCache(Cache<?, ?> c) throws Exception {
+      JGroupsTransport jgt = (JGroupsTransport) TestingUtil.extractComponent(c, Transport.class);
+      Channel ch = jgt.getChannel();
+      ProtocolStack ps = ch.getProtocolStack();
+      DISCARD discard = new DISCARD();
+      ps.insertProtocol(discard, ProtocolStack.ABOVE, TP.class);
+      return discard;
+   }
+   
+   public static DELAY setDelayForCache(Cache<?, ?> c, int in_delay, int out_delay) throws Exception {
+      JGroupsTransport jgt = (JGroupsTransport) TestingUtil.extractComponent(c, Transport.class);
+      Channel ch = jgt.getChannel();
+      ProtocolStack ps = ch.getProtocolStack();
+      DELAY delay = new DELAY();
+      delay.setInDelay(in_delay);
+      delay.setOutDelay(out_delay);
+      ps.insertProtocol(delay, ProtocolStack.ABOVE, TP.class);
+      return delay;
    }
 
    /**
