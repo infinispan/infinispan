@@ -6,14 +6,9 @@ import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
-import org.infinispan.remoting.transport.Transport;
-import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.jgroups.Channel;
 import org.jgroups.protocols.DISCARD;
-import org.jgroups.protocols.TP;
-import org.jgroups.stack.ProtocolStack;
 import org.testng.annotations.Test;
 
 import java.util.List;
@@ -32,17 +27,8 @@ public class RehashAfterPartitionMergeTest extends MultipleCacheManagersTest {
 
       c1 = caches.get(0);
       c2 = caches.get(1);
-      d1 = getDiscardForCache(c1);
-      d2 = getDiscardForCache(c2);
-   }
-
-   private DISCARD getDiscardForCache(Cache<?, ?> c) throws Exception {
-      JGroupsTransport jgt = (JGroupsTransport) TestingUtil.extractComponent(c, Transport.class);
-      Channel ch = jgt.getChannel();
-      ProtocolStack ps = ch.getProtocolStack();
-      DISCARD discard = new DISCARD();
-      ps.insertProtocol(discard, ProtocolStack.ABOVE, TP.class);
-      return discard;
+      d1 = TestingUtil.getDiscardForCache(c1);
+      d2 = TestingUtil.getDiscardForCache(c2);
    }
 
    public void testCachePartition() {
