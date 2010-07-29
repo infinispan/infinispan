@@ -68,7 +68,7 @@ public class InfinispanIndexInput extends IndexInput {
       try {
 
          // get file header from file
-         this.file = (FileMetadata) cache.get(fileKey);
+         this.file = (FileMetadata) cache.withFlags(Flag.SKIP_LOCKING).get(fileKey);
 
          if (file == null) {
             throw new FileNotFoundException("Error loading medatada for index file: " + fileKey);
@@ -137,9 +137,9 @@ public class InfinispanIndexInput extends IndexInput {
          chunkKey = new ChunkCacheKey(indexName, filename, ++i);
       } while (removed != null);
       cache.startBatch();
-      cache.withFlags(Flag.SKIP_REMOTE_LOOKUP,Flag.SKIP_LOCKING).remove(readLockKey);
+      cache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_LOCKING).remove(readLockKey);
       FileCacheKey key = new FileCacheKey(indexName, filename);
-      cache.withFlags(Flag.SKIP_REMOTE_LOOKUP,Flag.SKIP_LOCKING).remove(key);
+      cache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_LOCKING).remove(key);
       cache.endBatch(true);
    }
 
@@ -153,7 +153,7 @@ public class InfinispanIndexInput extends IndexInput {
       // spinning as we currently don't mandate transactions, so no proper lock support is available
       boolean done = false;
       while (done == false) {
-         Object lockValue = cache.get(readLockKey);
+         Object lockValue = cache.withFlags(Flag.SKIP_LOCKING).get(readLockKey);
          if (lockValue == null)
             return; // no special locking for some core files
          int refCount = (Integer) lockValue;
@@ -229,7 +229,7 @@ public class InfinispanIndexInput extends IndexInput {
 
    private void setBufferToCurrentChunk() throws IOException {
       CacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), currentLoadedChunk);
-      buffer = (byte[]) cache.get(key);
+      buffer = (byte[]) cache.withFlags(Flag.SKIP_LOCKING).get(key);
       if (buffer == null) {
          throw new IOException("Chunk value could not be found for key " + key);
       }
@@ -240,7 +240,7 @@ public class InfinispanIndexInput extends IndexInput {
    // RAMDirectory teaches to position the cursor to the end of previous chunk in this case
    private void setBufferToCurrentChunkIfPossible() throws IOException {
       CacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), currentLoadedChunk);
-      buffer = (byte[]) cache.get(key);
+      buffer = (byte[]) cache.withFlags(Flag.SKIP_LOCKING).get(key);
       if (buffer == null) {
          currentLoadedChunk--;
          bufferPosition = chunkSize;

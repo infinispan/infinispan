@@ -86,6 +86,7 @@ public class InfinispanIndexOutput extends IndexOutput {
       bufferPosition = 0;
    }
 
+   @Override
    public void writeByte(byte b) throws IOException {
       if (isNewChunkNeeded()) {
          newChunk();
@@ -94,14 +95,15 @@ public class InfinispanIndexOutput extends IndexOutput {
       filePosition++;
    }
 
+   @Override
    public void writeBytes(byte[] b, int offset, int length) throws IOException {
-      int writedBytes = 0;
-      while (writedBytes < length) {
-         int pieceLength = Math.min(buffer.length - bufferPosition, length - writedBytes);
-         System.arraycopy(b, offset + writedBytes, buffer, bufferPosition, pieceLength);
+      int writtenBytes = 0;
+      while (writtenBytes < length) {
+         int pieceLength = Math.min(buffer.length - bufferPosition, length - writtenBytes);
+         System.arraycopy(b, offset + writtenBytes, buffer, bufferPosition, pieceLength);
          bufferPosition += pieceLength;
          filePosition += pieceLength;
-         writedBytes += pieceLength;
+         writtenBytes += pieceLength;
          if (isNewChunkNeeded()) {
             newChunk();
          }
@@ -112,6 +114,7 @@ public class InfinispanIndexOutput extends IndexOutput {
       return (bufferPosition == buffer.length);
    }
 
+   @Override
    public void flush() throws IOException {
       // select right chunkNumber
       chunkNumber = getChunkNumberFromPosition(filePosition - 1, bufferSize);
@@ -130,6 +133,7 @@ public class InfinispanIndexOutput extends IndexOutput {
       cache.endBatch(true);
    }
 
+   @Override
    public void close() throws IOException {
       flush();
       bufferPosition = 0;
@@ -141,10 +145,12 @@ public class InfinispanIndexOutput extends IndexOutput {
       // cache.compact(); //TODO investigate about this
    }
 
+   @Override
    public long getFilePointer() {
       return filePosition;
    }
 
+   @Override
    public void seek(long pos) throws IOException {
       flush();
       if (pos > file.getSize()) {
@@ -155,6 +161,7 @@ public class InfinispanIndexOutput extends IndexOutput {
       filePosition = (int) pos;
    }
 
+   @Override
    public long length() throws IOException {
       return file.getSize();
    }
