@@ -35,63 +35,88 @@ import org.infinispan.lucene.CacheKey;
 import org.infinispan.lucene.CacheTestSupport;
 import org.infinispan.lucene.DirectoryIntegrityCheck;
 import org.infinispan.lucene.InfinispanDirectory;
-import org.infinispan.lucene.testutils.ClusteredCacheFactory;
 import org.infinispan.manager.CacheContainer;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
  * PerformanceCompareStressTest is useful to get an idea on relative performance between Infinispan
- * in local or clustered mode against a RAMDirectory or FSDirectory.
- * To be reliable set a long DURATION_MS.
- * This is not meant as a benchmark but used to detect regressions.
+ * in local or clustered mode against a RAMDirectory or FSDirectory. To be reliable set a long
+ * DURATION_MS and a number of threads similar to the use case you're interested in: results might
+ * vary on the number of threads because of the lock differences. This is not meant as a benchmark
+ * but used to detect regressions.
  * 
- * This requires Lucene > 2.9.1 or Lucene > 3.0.0 because of https://issues.apache.org/jira/browse/LUCENE-2095
+ * This requires Lucene > 2.9.1 or Lucene > 3.0.0 because of
+ * https://issues.apache.org/jira/browse/LUCENE-2095
  * 
  * @author Sanne Grinovero
  * @since 4.0
  */
-@Test(groups = "profiling", testName = "lucene.profiling.PerformanceCompareStressTest", sequential=true)
+@Test(groups = "profiling", testName = "lucene.profiling.PerformanceCompareStressTest", sequential = true)
 public class PerformanceCompareStressTest {
-   
-   private static final Log log = LogFactory.getLog(PerformanceCompareStressTest.class);
-   
+
+   /**
+    * The number of terms in the dictionary used as source of terms by the IndexWriter to produce
+    * new documents
+    */
+   private static final int DICTIONARY_SIZE = 800 * 1000;
+
    /** Concurrent Threads in tests */
-   private static final int THREADS = 5;
-   
-   private static final String indexName = "iname";
-   
-   private static final long DURATION_MS = 100000;
-   
-   private static final ClusteredCacheFactory cacheFactory = new ClusteredCacheFactory(CacheTestSupport.createTestConfiguration());
+   private static final int READER_THREADS = 5;
+   private static final int WRITER_THREADS = 2;
+
+   private static final String indexName = "tempIndexName";
+
+   private static final long DURATION_MS = 60 * 60 * 1000;
+
+   private Cache<CacheKey, Object> cache;
+
+   private EmbeddedCacheManager cacheFactory;
 
    @Test
    public void profileTestRAMDirectory() throws InterruptedException, IOException {
       RAMDirectory dir = new RAMDirectory();
       testDirectory(dir, "RAMDirectory");
    }
-   
-   @Test(enabled = false)
+
+   @Test
    public void profileTestFSDirectory() throws InterruptedException, IOException {
-      File indexDir = new File(new File("."), "tempindex");
-      indexDir.mkdirs();
+      File indexDir = new File(new File("."), indexName);
+      boolean directoriesCreated = indexDir.mkdirs();
+      assert directoriesCreated : "couldn't create directory for FSDirectory test";
       FSDirectory dir = FSDirectory.open(indexDir);
       testDirectory(dir, "FSDirectory");
    }
    
    @Test
-   public void profileTestInfinispanDirectory() throws InterruptedException, IOException {
-      //these default are not for performance settings but meant for problem detection:
-      Cache<CacheKey,Object> cache = cacheFactory.createClusteredCache();
+   public void profileTestInfinispanDirectoryWithNetworkDelayZero() throws Exception {
+      // TestingUtil.setDelayForCache(cache, 0, 0);
       InfinispanDirectory dir = new InfinispanDirectory(cache, indexName);
-      testDirectory(dir, "InfinispanClustered");
+      testDirectory(dir, "InfinispanClustered-delayedIO:0");
       DirectoryIntegrityCheck.verifyDirectoryStructure(cache, indexName);
    }
-   
+
+   @Test
+   public void profileTestInfinispanDirectoryWithNetworkDelay4() throws Exception {
+      TestingUtil.setDelayForCache(cache, 0, 4);
+      InfinispanDirectory dir = new InfinispanDirectory(cache, indexName);
+      testDirectory(dir, "InfinispanClustered-delayedIO:4");
+      DirectoryIntegrityCheck.verifyDirectoryStructure(cache, indexName);
+   }
+
+   @Test
+   public void profileTestInfinispanDirectoryWithHighNetworkDelay40() throws Exception {
+      TestingUtil.setDelayForCache(cache, 0, 40);
+      InfinispanDirectory dir = new InfinispanDirectory(cache, indexName);
+      testDirectory(dir, "InfinispanClustered-delayedIO:40");
+      DirectoryIntegrityCheck.verifyDirectoryStructure(cache, indexName);
+   }
+
    @Test
    public void profileInfinispanLocalDirectory() throws InterruptedException, IOException {
       CacheContainer cacheContainer = CacheTestSupport.createLocalCacheManager();
@@ -104,15 +129,17 @@ public class PerformanceCompareStressTest {
          cacheContainer.stop();
       }
    }
-   
+
    private void testDirectory(Directory dir, String testLabel) throws InterruptedException, IOException {
-      SharedState state = new SharedState(200000);
+      SharedState state = new SharedState(DICTIONARY_SIZE);
       CacheTestSupport.initializeDirectory(dir);
-      ExecutorService e = Executors.newFixedThreadPool(THREADS+1);
-      for (int i=0; i<THREADS; i++) {
+      ExecutorService e = Executors.newFixedThreadPool(READER_THREADS + 1);
+      for (int i = 0; i < READER_THREADS; i++) {
          e.execute(new LuceneReaderThread(dir, state));
       }
-      e.execute(new LuceneWriterThread(dir, state));
+      for (int i = 0; i < WRITER_THREADS; i++) {
+         e.execute(new LuceneWriterThread(dir, state));
+      }
       e.shutdown();
       state.startWaitingThreads();
       Thread.sleep(DURATION_MS);
@@ -121,18 +148,23 @@ public class PerformanceCompareStressTest {
       state.quit();
       boolean terminatedCorrectly = e.awaitTermination(10, TimeUnit.SECONDS);
       Assert.assertTrue(terminatedCorrectly);
-      System.out.println(
-               "Test " + testLabel +" run in " + DURATION_MS + "ms:\n\tSearches: " + searchesCount + "\n\t" + "Writes: " + writerTaskCount);
-   }
-   
-   @BeforeClass
-   public static void beforeTest() {
-      cacheFactory.start();
+      System.out.println("Test " + testLabel + " run in " + DURATION_MS + "ms:\n\tSearches: " + searchesCount + "\n\t" + "Writes: "
+               + writerTaskCount);
    }
 
-   @AfterClass
-   public static void afterTest() {
-      cacheFactory.stop();
+   @BeforeMethod
+   public void beforeTest() {
+      cacheFactory = TestCacheManagerFactory.createClusteredCacheManager(CacheTestSupport.createTestConfiguration());
+      cacheFactory.start();
+      cache = cacheFactory.getCache();
+      cache.clear();
+   }
+
+   @AfterMethod
+   public void afterTest() {
+      TestingUtil.killCaches(cache);
+      TestingUtil.killCacheManagers(cacheFactory);
+      TestingUtil.recursiveFileRemove(indexName);
    }
 
 }
