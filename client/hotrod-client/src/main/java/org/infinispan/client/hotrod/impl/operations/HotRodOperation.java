@@ -35,7 +35,10 @@ public abstract class HotRodOperation implements HotRodConstants {
    protected final byte[] cacheName;
 
    protected final AtomicInteger topologyId;
-   private static final byte[] NO_TX = new byte[]{};
+   
+   private static final byte NO_TX = 0;
+   private static final byte XA_TX = 1;
+
 
    protected HotRodOperation(Flag[] flags, byte[] cacheName, AtomicInteger topologyId) {
       this.flags = flags;
@@ -63,7 +66,7 @@ public abstract class HotRodOperation implements HotRodConstants {
       transport.writeByte(CLIENT_INTELLIGENCE_HASH_DISTRIBUTION_AWARE);
       transport.writeVInt(topologyId.get());
       //todo change once TX support is added
-      transport.writeArray(NO_TX);
+      transport.writeByte(NO_TX);
       if (log.isTraceEnabled()) {
          log.trace("wrote header for message " + messageId + ". Operation code: " + operationCode + ". Flags: " + Integer.toHexString(flagInt));
       }

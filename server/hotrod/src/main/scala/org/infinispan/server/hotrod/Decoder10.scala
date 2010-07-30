@@ -53,7 +53,9 @@ object Decoder10 extends AbstractVersionedDecoder with Logging {
       val clientIntelligence = buffer.readUnsignedByte
       val topologyId = buffer.readUnsignedInt
       //todo use these once transaction support is added
-      val txId = buffer.readRangedBytes
+      val txId = buffer.readByte
+      if (txId != 0) throw new UnsupportedOperationException("Transaction types other than 0 (NO_TX) is not supported at this stage.  Saw TX_ID of " + txId)
+
       new HotRodHeader(op, messageId, cacheName, flag, clientIntelligence, topologyId, this)
    }
 
