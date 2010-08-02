@@ -225,7 +225,7 @@ object OperationResponse extends Enumeration {
    val ClearResponse = Value(0x14)
    val StatsResponse = Value(0x16)
    val PingResponse = Value(0x18)
-   val BulkGetResponse = Value(0x20)
+   val BulkGetResponse = Value(0x1A)
    val ErrorResponse = Value(0x50)
 }
 

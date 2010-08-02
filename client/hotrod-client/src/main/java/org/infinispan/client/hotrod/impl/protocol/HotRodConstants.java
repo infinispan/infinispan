@@ -44,7 +44,7 @@ public interface HotRodConstants {
    static final byte CLEAR_RESPONSE = 0x14;
    static final byte STATS_RESPONSE = 0x16;
    static final byte PING_RESPONSE = 0x18;
-   static final byte BULK_GET_RESPONSE = 0x20;
+   static final byte BULK_GET_RESPONSE = 0x1A;
    static final byte ERROR_RESPONSE = 0x50;
 
    //response status
