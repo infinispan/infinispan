@@ -38,6 +38,8 @@ import org.infinispan.util.logging.LogFactory;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -59,7 +61,7 @@ public class ReplicationQueue {
    /**
     * Holds the replication jobs.
     */
-   private final List<ReplicableCommand> elements = new LinkedList<ReplicableCommand>();
+   private final BlockingQueue<ReplicableCommand> elements = new LinkedBlockingQueue<ReplicableCommand>();
 
    /**
     * For periodical replication
@@ -87,7 +89,7 @@ public class ReplicationQueue {
     * Starts the asynchronous flush queue.
     */
    @Start
-   public synchronized void start() {
+   public void start() {
       long interval = configuration.getReplQueueInterval();
       log.trace("Starting replication queue, with interval {0} and maxElements {1}", interval, maxElements);
       this.maxElements = configuration.getReplQueueMaxElements();
@@ -106,7 +108,7 @@ public class ReplicationQueue {
     * Stops the asynchronous flush queue.
     */
    @Stop(priority = 9) // Stop before transport
-   public synchronized void stop() {
+   public void stop() {
       if (scheduledExecutor != null) {
          scheduledExecutor.shutdownNow();
       }
@@ -120,10 +122,11 @@ public class ReplicationQueue {
    public void add(ReplicableCommand job) {
       if (job == null)
          throw new NullPointerException("job is null");
-      synchronized (elements) {
-         elements.add(job);
-         if (elements.size() >= maxElements)
-            flush();
+      try {
+         elements.put(job);
+         if (elements.size() >= maxElements) flush();
+      } catch (InterruptedException ie) {
+         Thread.interrupted();
       }
    }
 
@@ -131,12 +134,9 @@ public class ReplicationQueue {
     * Flushes existing method calls.
     */
    public void flush() {
-      List<ReplicableCommand> toReplicate;
-      synchronized (elements) {
-         if (log.isTraceEnabled()) log.trace("flush(): flushing repl queue (num elements={0})", elements.size());
-         toReplicate = new ArrayList<ReplicableCommand>(elements);
-         elements.clear();
-      }
+      List<ReplicableCommand> toReplicate = new LinkedList<ReplicableCommand>();
+      elements.drainTo(toReplicate);
+      if (log.isTraceEnabled()) log.trace("flush(): flushing repl queue (num elements={0})", toReplicate.size());
 
       int toReplicateSize = toReplicate.size();
       if (toReplicateSize > 0) {
