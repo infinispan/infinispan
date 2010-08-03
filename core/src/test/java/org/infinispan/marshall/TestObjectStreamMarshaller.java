@@ -24,30 +24,36 @@ public class TestObjectStreamMarshaller extends AbstractStreamingMarshaller {
    public TestObjectStreamMarshaller() {
    }
 
+   @Override
    public ObjectOutput startObjectOutput(OutputStream os, boolean isReentrant) throws IOException {
       return new ObjectOutputStream(os);
    }
 
+   @Override
    public void finishObjectOutput(ObjectOutput oo) {
       Util.flushAndCloseOutput(oo);
    }
 
+   @Override
    public void objectToObjectStream(Object obj, ObjectOutput out) throws IOException {
       String xml = xs.toXML(obj);
       debug("Writing: \n" + xml);
       out.writeObject(xml);
    }
 
+   @Override
    public Object objectFromObjectStream(ObjectInput in) throws IOException, ClassNotFoundException {
       String xml = (String) in.readObject();
       debug("Reading: \n" + xml);
       return xs.fromXML(xml);
    }
 
+   @Override
    public ObjectInput startObjectInput(InputStream is, boolean isReentrant) throws IOException {
       return new ObjectInputStream(is);
    }
 
+   @Override
    public void finishObjectInput(ObjectInput oi) {
       if (oi != null) {
          try {
@@ -57,28 +63,22 @@ public class TestObjectStreamMarshaller extends AbstractStreamingMarshaller {
       }
    }
 
-   public ByteBuffer objectToBuffer(Object o) throws IOException {
-      byte[] b = objectToByteBuffer(o);
-      return new ByteBuffer(b, 0, b.length);
-   }
-
-   public Object objectFromByteBuffer(byte[] buf, int offset, int length) throws IOException, ClassNotFoundException {
-      byte[] newBytes = new byte[length];
-      System.arraycopy(buf, offset, newBytes, 0, length);
-      return objectFromByteBuffer(newBytes);
-   }
-
-   public byte[] objectToByteBuffer(Object obj, int estimatedSize) throws IOException {
+   @Override
+   protected ByteBuffer objectToBuffer(Object o, int estimatedSize) throws IOException {
       ExposedByteArrayOutputStream baos = new ExposedByteArrayOutputStream(estimatedSize);
       ObjectOutputStream oos = new ObjectOutputStream(baos);
-      objectToObjectStream(obj, oos);
+      objectToObjectStream(o, oos);
       oos.flush();
       oos.close();
       baos.close();
-      return baos.toByteArray();
+      byte[] b = baos.toByteArray();
+      return new ByteBuffer(b, 0, b.length);
    }
 
-   public Object objectFromByteBuffer(byte[] buf) throws IOException, ClassNotFoundException {
+   @Override
+   public Object objectFromByteBuffer(byte[] buf, int offset, int length) throws IOException, ClassNotFoundException {
+      byte[] newBytes = new byte[length];
+      System.arraycopy(buf, offset, newBytes, 0, length);
       return objectFromObjectStream(new ObjectInputStream(new ByteArrayInputStream(buf)));
    }
 

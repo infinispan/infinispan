@@ -3,6 +3,7 @@ package org.infinispan.marshall.jboss;
 import org.infinispan.CacheException;
 import org.infinispan.io.ByteBuffer;
 import org.infinispan.io.ExposedByteArrayOutputStream;
+import org.infinispan.marshall.AbstractMarshaller;
 import org.infinispan.marshall.Marshaller;
 import org.infinispan.util.Util;
 import org.infinispan.util.logging.Log;
@@ -36,9 +37,8 @@ import java.net.URL;
  * @version 4.1
  * @see http://www.jboss.org/jbossmarshalling
  */
-public class GenericJBossMarshaller implements Marshaller {
+public class GenericJBossMarshaller extends AbstractMarshaller {
 
-   protected static final int DEFAULT_BUF_SIZE = 512;
    protected static final Log log = LogFactory.getLog(JBossMarshaller.class);
    protected static final String DEFAULT_MARSHALLER_FACTORY = "org.jboss.marshalling.river.RiverMarshallerFactory";
    protected ClassLoader defaultCl = this.getClass().getClassLoader();
@@ -89,18 +89,6 @@ public class GenericJBossMarshaller implements Marshaller {
       }
    };
 
-
-   public byte[] objectToByteBuffer(Object obj, int estimatedSize) throws IOException {
-      ByteBuffer b = objectToBuffer(obj, estimatedSize);
-      byte[] bytes = new byte[b.getLength()];
-      System.arraycopy(b.getBuf(), b.getOffset(), bytes, 0, b.getLength());
-      return bytes;
-   }
-
-   public ByteBuffer objectToBuffer(Object o) throws IOException {
-      return objectToBuffer(o, DEFAULT_BUF_SIZE);
-   }
-
    public void objectToObjectStream(Object obj, ObjectOutput out) throws IOException {
       ClassLoader toUse = defaultCl;
       Thread current = Thread.currentThread();
@@ -116,7 +104,8 @@ public class GenericJBossMarshaller implements Marshaller {
       }
    }
 
-   private ByteBuffer objectToBuffer(Object o, int estimatedSize) throws IOException {
+   @Override
+   protected ByteBuffer objectToBuffer(Object o, int estimatedSize) throws IOException {
       ExposedByteArrayOutputStream baos = new ExposedByteArrayOutputStream(estimatedSize);
       ObjectOutput marshaller = startObjectOutput(baos, false);
       try {
@@ -145,11 +134,7 @@ public class GenericJBossMarshaller implements Marshaller {
       }
    }
 
-
-   public Object objectFromByteBuffer(byte[] buf) throws IOException, ClassNotFoundException {
-      return objectFromByteBuffer(buf, 0, buf.length);
-   }
-
+   @Override
    public Object objectFromByteBuffer(byte[] buf, int offset, int length) throws IOException,
            ClassNotFoundException {
       ByteArrayInputStream is = new ByteArrayInputStream(buf, offset, length);
@@ -185,20 +170,6 @@ public class GenericJBossMarshaller implements Marshaller {
       }
    }
 
-   public Object objectFromInputStream(InputStream inputStream) throws IOException, ClassNotFoundException {
-      // TODO: available() call commented until https://issues.apache.org/jira/browse/HTTPCORE-199 httpcore-nio issue is fixed.
-      // int len = inputStream.available();
-      ExposedByteArrayOutputStream bytes = new ExposedByteArrayOutputStream(DEFAULT_BUF_SIZE);
-      byte[] buf = new byte[Math.min(DEFAULT_BUF_SIZE, 1024)];
-      int bytesRead;
-      while ((bytesRead = inputStream.read(buf, 0, buf.length)) != -1) bytes.write(buf, 0, bytesRead);
-      return objectFromByteBuffer(bytes.getRawBuffer(), 0, bytes.size());
-   }
-
-   public byte[] objectToByteBuffer(Object o) throws IOException {
-      return objectToByteBuffer(o, DEFAULT_BUF_SIZE);
-   }
-
    @Override
    public boolean isMarshallable(Object o) {
       return (o instanceof Serializable || o instanceof Externalizable);
@@ -209,12 +180,14 @@ public class GenericJBossMarshaller implements Marshaller {
       private static final Class[] EMPTY_CLASSES = {};
       private static final Object[] EMPTY_OBJECTS = {};
 
+      @Override
       public void handleMarshallingException(Throwable problem, Object subject) {
          if (log.isDebugEnabled()) {
             TraceInformation.addUserInformation(problem, "toString = " + subject.toString());
          }
       }
 
+      @Override
       public void handleUnmarshallingException(Throwable problem, Class<?> subjectClass) {
          if (log.isDebugEnabled()) {
             StringBuilder builder = new StringBuilder();
@@ -239,6 +212,7 @@ public class GenericJBossMarshaller implements Marshaller {
          }
       }
 
+      @Override
       public void handleUnmarshallingException(Throwable problem) {
          // no-op
       }
