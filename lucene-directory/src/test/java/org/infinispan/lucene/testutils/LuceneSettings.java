@@ -45,15 +45,18 @@ public class LuceneSettings {
    
    private static final MergeScheduler mergeScheduler = new SerialMergeScheduler();
    
-   /**
-    * Until ISPN-307 it's mandatory to set the MergeScheduler to a SerialMergeScheduler when opening an IndexWriter
-    */
-   public static IndexWriter openWriter(Directory directory, int maxMergeDocs) throws CorruptIndexException, LockObtainFailedException, IOException {
+   public static IndexWriter openWriter(Directory directory, int maxMergeDocs, boolean useSerialMerger) throws CorruptIndexException, LockObtainFailedException, IOException {
       IndexWriter iwriter = new IndexWriter(directory, LuceneSettings.analyzer, false, MaxFieldLength.UNLIMITED);
-      iwriter.setMergeScheduler(mergeScheduler);
+      if (useSerialMerger) {
+         iwriter.setMergeScheduler(mergeScheduler);
+      }
       iwriter.setMaxMergeDocs(maxMergeDocs);
       iwriter.setUseCompoundFile(false);
       return iwriter;
+   }
+   
+   public static IndexWriter openWriter(Directory directory, int maxMergeDocs) throws CorruptIndexException, LockObtainFailedException, IOException {
+      return openWriter(directory, maxMergeDocs, false);
    }
 
 }
