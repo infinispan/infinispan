@@ -107,7 +107,6 @@
       <version.jstl>1.2</version.jstl>
       <version.jta>1.0.1.GA</version.jta>
       <version.log4j>1.2.16</version.log4j>
-      <version.lucene>2.9.3</version.lucene>
       <version.mysql.driver>5.1.9</version.mysql.driver>
       <version.netty>3.2.1.Final</version.netty>
       <version.org.jboss.naming>5.0.3.GA</version.org.jboss.naming>
@@ -446,6 +445,27 @@
          <properties>
             <testNGListener>org.infinispan.test.fwk.DebuggingUnitTestNGListener</testNGListener>
             <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
+         </properties>
+      </profile>
+      <profile>
+         <!-- Used to start the tests using the latest stable version of Lucene, use: -->
+         <!-- mvn clean test -P useLatestLuceneVersion,test-functional -->
+         <id>useLatestLuceneVersion</id>
+         <activation>
+            <activeByDefault>false</activeByDefault>
+         </activation>
+         <properties>
+            <version.lucene>3.0.2</version.lucene>
+         </properties>
+      </profile>
+      <profile>
+         <!-- define the Lucene version used in release package, and as reference target -->
+         <id>useReferenceLuceneVersion</id>
+         <activation>
+            <activeByDefault>true</activeByDefault>
+         </activation>
+         <properties>
+            <version.lucene>2.9.3</version.lucene>
          </properties>
       </profile>
    </profiles>
