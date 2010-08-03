@@ -243,7 +243,16 @@ public class InfinispanDirectory extends Directory {
     */
    public IndexInput openInput(String name) throws IOException {
       final FileCacheKey fileKey = new FileCacheKey(indexName, name);
-      return new InfinispanIndexInput(cache, fileKey, chunkSize);
+      FileMetadata fileMetadata = (FileMetadata) cache.withFlags(Flag.SKIP_LOCKING).get(fileKey);
+      if (fileMetadata == null) {
+         throw new FileNotFoundException("Error loading medatada for index file: " + fileKey);
+      }
+      else if (fileMetadata.getSize() <= chunkSize) {
+         return new SingleChunkIndexInput(cache, fileKey, fileMetadata);
+      }
+      else {
+         return new InfinispanIndexInput(cache, fileKey, chunkSize, fileMetadata);
+      }
    }
 
    /**
