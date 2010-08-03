@@ -11,10 +11,9 @@ import java.io.*;
  * @author Manik Surtani
  * @since 4.0
  */
-public abstract class AbstractStreamingMarshaller implements StreamingMarshaller {
+public abstract class AbstractStreamingMarshaller extends AbstractMarshaller implements StreamingMarshaller {
 
-   protected static final int DEFAULT_BUF_SIZE = 512;
-
+   @Override
    public Object objectFromInputStream(InputStream inputStream) throws IOException, ClassNotFoundException {
       // TODO: available() call commented until https://issues.apache.org/jira/browse/HTTPCORE-199 httpcore-nio issue is fixed. 
       // int len = inputStream.available();
@@ -25,7 +24,4 @@ public abstract class AbstractStreamingMarshaller implements StreamingMarshaller
       return objectFromByteBuffer(bytes.getRawBuffer(), 0, bytes.size());
    }
 
-   public byte[] objectToByteBuffer(Object o) throws IOException {
-      return objectToByteBuffer(o, DEFAULT_BUF_SIZE);
-   }
 }

@@ -34,7 +34,6 @@ import org.infinispan.util.logging.LogFactory;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.NotSerializableException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.OutputStream;
@@ -85,13 +84,13 @@ public class VersionAwareMarshaller extends AbstractStreamingMarshaller {
       return CUSTOM_MARSHALLER;
    }
 
-   private ByteBuffer objectToBuffer(Object obj, int estimatedSize) throws IOException {
+   @Override
+   protected ByteBuffer objectToBuffer(Object obj, int estimatedSize) throws IOException {
       ExposedByteArrayOutputStream baos = new ExposedByteArrayOutputStream(estimatedSize);
       ObjectOutput out = startObjectOutput(baos, false);
       try {
          defaultMarshaller.objectToObjectStream(obj, out);
-      } catch (
-              java.io.NotSerializableException nse) {
+      } catch (java.io.NotSerializableException nse) {
          if (log.isTraceEnabled()) log.trace("Object is not serializable", nse);
          throw new org.infinispan.marshall.NotSerializableException(nse.getMessage(), nse.getCause());
       } catch (IOException ioe) {
@@ -103,10 +102,7 @@ public class VersionAwareMarshaller extends AbstractStreamingMarshaller {
       return new ByteBuffer(baos.getRawBuffer(), 0, baos.size());
    }
 
-   public ByteBuffer objectToBuffer(Object obj) throws IOException {
-      return objectToBuffer(obj, DEFAULT_BUF_SIZE);
-   }
-
+   @Override
    public Object objectFromByteBuffer(byte[] bytes, int offset, int len) throws IOException, ClassNotFoundException {
       ByteArrayInputStream is = new ByteArrayInputStream(bytes, offset, len);
       ObjectInput in = startObjectInput(is, false);
@@ -119,6 +115,7 @@ public class VersionAwareMarshaller extends AbstractStreamingMarshaller {
       return o;
    }
 
+   @Override
    public ObjectOutput startObjectOutput(OutputStream os, boolean isReentrant) throws IOException {
       ObjectOutput out = defaultMarshaller.startObjectOutput(os, isReentrant);
       try {
@@ -132,10 +129,12 @@ public class VersionAwareMarshaller extends AbstractStreamingMarshaller {
       return out;
    }
 
+   @Override
    public void finishObjectOutput(ObjectOutput oo) {
       defaultMarshaller.finishObjectOutput(oo);
    }
 
+   @Override
    public void objectToObjectStream(Object obj, ObjectOutput out) throws IOException {
       /* No need to write version here. Clients should either be calling either:
        * - startObjectOutput() -> objectToObjectStream() -> finishObjectOutput()  
@@ -147,6 +146,7 @@ public class VersionAwareMarshaller extends AbstractStreamingMarshaller {
       defaultMarshaller.objectToObjectStream(obj, out);
    }
 
+   @Override   
    public ObjectInput startObjectInput(InputStream is, boolean isReentrant) throws IOException {
       ObjectInput in = defaultMarshaller.startObjectInput(is, isReentrant);
       int versionId;
@@ -162,10 +162,12 @@ public class VersionAwareMarshaller extends AbstractStreamingMarshaller {
       return in;
    }
 
+   @Override
    public void finishObjectInput(ObjectInput oi) {
       defaultMarshaller.finishObjectInput(oi);
    }
 
+   @Override   
    public Object objectFromObjectStream(ObjectInput in) throws IOException, ClassNotFoundException {
       /* No need to read version here. Clients should either be calling either:
        * - startObjectInput() -> objectFromObjectStream() -> finishObjectInput()
@@ -175,17 +177,6 @@ public class VersionAwareMarshaller extends AbstractStreamingMarshaller {
        * First option is preferred when multiple objects are gonna be written.
        */
       return defaultMarshaller.objectFromObjectStream(in);
-   }
-
-   public byte[] objectToByteBuffer(Object obj, int estimatedSize) throws IOException {
-      ByteBuffer b = objectToBuffer(obj, estimatedSize);
-      byte[] bytes = new byte[b.getLength()];
-      System.arraycopy(b.getBuf(), b.getOffset(), bytes, 0, b.getLength());
-      return bytes;
-   }
-
-   public Object objectFromByteBuffer(byte[] buf) throws IOException, ClassNotFoundException {
-      return objectFromByteBuffer(buf, 0, buf.length);
    }
 
    @Override
