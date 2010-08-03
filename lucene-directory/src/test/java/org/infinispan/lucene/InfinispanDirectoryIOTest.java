@@ -69,6 +69,70 @@ public class InfinispanDirectoryIOTest {
    }
 
    @Test
+   public void testWriteUsingSeekMethod() throws IOException {
+      final int BUFFER_SIZE = 64;
+      
+      Cache<CacheKey, Object> cache = cacheManager.getCache();
+      InfinispanDirectory dir = new InfinispanDirectory(cache, INDEXNAME, BUFFER_SIZE);
+      
+      String fileName = "SomeText.txt";
+      IndexOutput io = dir.createOutput(fileName);
+      RepeatableLongByteSequence bytesGenerator = new RepeatableLongByteSequence();
+      //It writes repeatable text
+      int REPEATABLE_BUFFER_SIZE = 1501;
+      for (int i = 0; i < REPEATABLE_BUFFER_SIZE; i++) {
+         io.writeByte(bytesGenerator.nextByte());
+      }
+      io.flush();
+      
+      //Text to write on file with repeatable text
+      String someText = "This is some text";
+      byte[] someTextAsBytes = someText.getBytes();
+      //4 points in random order where writing someText: at begin of file, at end of file, within a single chunk,
+      //between 2 chunks
+      int[] pointers = {0, 635, REPEATABLE_BUFFER_SIZE, 135};
+      
+      for(int i=0; i < pointers.length; i++) {
+         io.seek(pointers[i]);
+         io.writeBytes(someTextAsBytes, someTextAsBytes.length);
+      }
+      
+      io.close();
+      bytesGenerator.reset();
+      final long finalSize = REPEATABLE_BUFFER_SIZE + someTextAsBytes.length;
+      assert io.length() == finalSize;
+      
+      int indexPointer = 0;
+      Arrays.sort(pointers);
+      byte[] buffer = null;
+      int chunkIndex = 0;
+      //now testing the stream is equal to the produced repeatable but including the edits at pointed positions
+      for (int i = 0; i < REPEATABLE_BUFFER_SIZE + someTextAsBytes.length; i++) {
+         if(i % BUFFER_SIZE == 0) {
+            buffer = (byte[])cache.get(new ChunkCacheKey(INDEXNAME, fileName, chunkIndex++));
+         }
+         
+         byte predictableByte = bytesGenerator.nextByte();
+         if(i < pointers[indexPointer]) {
+            //Assert predictable text
+            Assert.assertEquals(predictableByte, buffer[i % BUFFER_SIZE]);
+         } else if(pointers[indexPointer] <= i && i < pointers[indexPointer] + someTextAsBytes.length){
+            //Assert someText 
+            Assert.assertEquals(someTextAsBytes[i - pointers[indexPointer]], buffer[i % BUFFER_SIZE]);
+         }
+         
+         if(i == pointers[indexPointer] + someTextAsBytes.length) {
+            //Change pointer
+            indexPointer++;
+         }
+      }
+         
+      dir.close();
+      DirectoryIntegrityCheck.verifyDirectoryStructure(cache, INDEXNAME);
+   }
+   
+
+   @Test
    public void testReadWholeFile() throws IOException {
       final int BUFFER_SIZE = 64;
 
@@ -438,6 +502,7 @@ public class InfinispanDirectoryIOTest {
       DirectoryIntegrityCheck.verifyDirectoryStructure(cache, INDEXNAME);
    }
 
+   @Test
    public void testWriteChunksDefaultChunks() throws Exception {
       Cache<CacheKey, Object> cache = cacheManager.getCache();
       InfinispanDirectory dir = new InfinispanDirectory(cache, INDEXNAME);

@@ -70,6 +70,13 @@ public class RepeatableLongByteSequence {
          buffer[i] = nextByte();
       }
    }
+   
+   public void reset() {
+      lastUsedValue = -1;
+      currentMax = (byte) 1;
+      currentMin = (byte) -1;
+      rising = true;
+   }
 
    @Test(description="To verify the RepeatableLongByteSequence meets the requirement of producing "
       + "always the same values when using the single nextByte()")
