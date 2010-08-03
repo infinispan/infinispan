@@ -56,31 +56,16 @@ public class InfinispanIndexInput extends IndexInput {
 
    private boolean isClone;
 
-   public InfinispanIndexInput(AdvancedCache<CacheKey, Object> cache, FileCacheKey fileKey, int chunkSize) throws FileNotFoundException {
+   public InfinispanIndexInput(AdvancedCache<CacheKey, Object> cache, FileCacheKey fileKey, int chunkSize, FileMetadata fileMetadata) throws FileNotFoundException {
       this.cache = cache;
       this.fileKey = fileKey;
       this.chunkSize = chunkSize;
+      this.file = fileMetadata;
       final String filename = fileKey.getFileName();
       this.readLockKey = new FileReadLockKey(fileKey.getIndexName(), filename);
-      
-      boolean failure = true;
       aquireReadLock();
-      try {
-
-         // get file header from file
-         this.file = (FileMetadata) cache.withFlags(Flag.SKIP_LOCKING).get(fileKey);
-
-         if (file == null) {
-            throw new FileNotFoundException("Error loading medatada for index file: " + fileKey);
-         }
-
-         if (log.isDebugEnabled()) {
-            log.debug("Opened new IndexInput for file:{0} in index: {1}", filename, fileKey.getIndexName());
-         }
-         failure = false;
-      } finally {
-         if (failure)
-            releaseReadLock();
+      if (log.isDebugEnabled()) {
+         log.debug("Opened new IndexInput for file:{0} in index: {1}", filename, fileKey.getIndexName());
       }
    }
 
