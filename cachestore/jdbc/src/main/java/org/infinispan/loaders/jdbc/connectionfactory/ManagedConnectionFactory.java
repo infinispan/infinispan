@@ -99,8 +99,9 @@ public class ManagedConnectionFactory extends ConnectionFactory {
    }
 
    public void releaseConnection(Connection conn) {
-      try {
-         conn.close();
+      try {         
+         if (conn != null) // Could be null if getConnection failed
+            conn.close();
       } catch (SQLException e) {
          log.warn("Issues while closing connection " + conn, e);
       }
