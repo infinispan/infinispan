@@ -103,7 +103,7 @@ public class PerformanceCompareStressTest {
 
    @Test
    public void profileTestInfinispanDirectoryWithNetworkDelay4() throws Exception {
-      TestingUtil.setDelayForCache(cache, 0, 4);
+      TestingUtil.setDelayForCache(cache, 4, 4);
       InfinispanDirectory dir = new InfinispanDirectory(cache, indexName);
       testDirectory(dir, "InfinispanClustered-delayedIO:4");
       DirectoryIntegrityCheck.verifyDirectoryStructure(cache, indexName);
@@ -111,7 +111,7 @@ public class PerformanceCompareStressTest {
 
    @Test
    public void profileTestInfinispanDirectoryWithHighNetworkDelay40() throws Exception {
-      TestingUtil.setDelayForCache(cache, 0, 40);
+      TestingUtil.setDelayForCache(cache, 40, 40);
       InfinispanDirectory dir = new InfinispanDirectory(cache, indexName);
       testDirectory(dir, "InfinispanClustered-delayedIO:40");
       DirectoryIntegrityCheck.verifyDirectoryStructure(cache, indexName);
