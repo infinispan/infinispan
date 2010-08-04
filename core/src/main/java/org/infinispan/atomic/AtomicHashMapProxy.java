@@ -37,9 +37,21 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * A layer of indirection around an {@link AtomicHashMap} to provide reader consistency
+ * A layer of indirection around an {@link AtomicHashMap} to provide consistency and isolation for concurrent readers
+ * while writes may also be going on.  The techniques used in this implementation are very similar to the lock-free
+ * reader MVCC model used in the {@link org.infinispan.container.entries.MVCCEntry} implementations for the core data
+ * container, which closely follow software transactional memory approaches to dealing with concurrency.
+ * <br /><br />
+ * Implementations of this class are rarely created on their own; {@link AtomicHashMap#getProxy(org.infinispan.Cache, Object, org.infinispan.batch.BatchContainer, org.infinispan.context.InvocationContextContainer)}
+ * should be used to retrieve an instance of this proxy.
+ * <br /><br />
+ * Typically proxies are only created by the {@link AtomicMapLookup} helper, and would not be created by end-user code
+ * directly.
  *
- * @author Manik Surtani (<a href="mailto:manik AT jboss DOT org">manik AT jboss DOT org</a>)
+ * @author Manik Surtani
+ * @param <K> the type of keys maintained by this map
+ * @param <V> the type of mapped values
+ * @see AtomicHashMap
  * @since 4.0
  */
 public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements AtomicMap<K, V> {
@@ -49,7 +61,7 @@ public class AtomicHashMapProxy<K, V> extends AutoBatchSupport implements Atomic
    Cache cache;
    InvocationContextContainer icc;
 
-   public AtomicHashMapProxy(Cache cache, Object deltaMapKey, BatchContainer batchContainer, InvocationContextContainer icc) {
+   AtomicHashMapProxy(Cache cache, Object deltaMapKey, BatchContainer batchContainer, InvocationContextContainer icc) {
       this.cache = cache;
       this.deltaMapKey = deltaMapKey;
       this.batchContainer = batchContainer;

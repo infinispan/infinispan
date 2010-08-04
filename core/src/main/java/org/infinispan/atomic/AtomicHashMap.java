@@ -28,6 +28,7 @@ import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.marshall.Ids;
 import org.infinispan.marshall.Marshallable;
 import org.infinispan.util.FastCopyHashMap;
+import org.infinispan.atomic.AtomicMapLookup;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -37,13 +38,23 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Note that for replication to work properly, this class <b><i>requires</i></b> that all writes take place within the
- * scope of an ongoing transaction or batch.
+ * The default implementation of {@link AtomicMap}.  Note that this map cannot be constructed directly, and callers
+ * should obtain references to AtomicHashMaps via the {@link AtomicMapLookup} helper.  This helper will ensure proper
+ * concurrent construction and registration of AtomicMaps in Infinispan's data container.  E.g.:
+ * <br /><br />
+ * <code>
+ *    AtomicMap&lt;String, Integer&gt; map = AtomicMapLookup.getAtomicMap(cache, "my_atomic_map_key");
+ * </code>
+ * <br /><br />
+ * Note that for replication to work properly, AtomicHashMap updates <b><i>must always</i></b> take place within the
+ * scope of an ongoing JTA transaction or batch (see {@link Cache#startBatch()}).
  * <p/>
  *
  * @author (various)
- * @param <K>
- * @param <V>
+ * @param <K> the type of keys maintained by this map
+ * @param <V> the type of mapped values
+ * @see AtomicMap
+ * @see AtomicMapLookup
  * @since 4.0
  */
 @NotThreadSafe
@@ -56,7 +67,7 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
 
    /**
     * Construction only allowed through this factory method.  This factory is intended for use internally by the
-    * CacheDelegate.  User code should use {@link org.infinispan.atomic.AtomicMapLookup#getAtomicMap(Cache, Object)}.
+    * CacheDelegate.  User code should use {@link AtomicMapLookup#getAtomicMap(Cache, Object)}.
     */
    public static AtomicHashMap newInstance(Cache cache, Object cacheKey) {
       AtomicHashMap value = new AtomicHashMap();
@@ -141,7 +152,11 @@ public class AtomicHashMap<K, V> implements AtomicMap<K, V>, DeltaAware, Cloneab
       delegate.clear();
    }
 
-   public AtomicMap<K, V> getProxy(Cache cache, Object mapKey,
+   /**
+    * Builds a thread-safe proxy for this instance so that concurrent reads are isolated from writes.
+    * @return an instance of AtomicHashMapProxy
+    */
+   AtomicMap<K, V> getProxy(Cache cache, Object mapKey,
                              BatchContainer batchContainer, InvocationContextContainer icc) {
       // construct the proxy lazily
       if (proxy == null)  // DCL is OK here since proxy is volatile (and we live in a post-JDK 5 world)
