@@ -21,6 +21,7 @@
  */
 package org.infinispan.interceptors;
 
+import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
@@ -32,6 +33,7 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.marshall.MarshalledValue;
@@ -48,10 +50,12 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import static org.infinispan.marshall.MarshalledValue.isTypeExcluded;
+
 /**
  * Interceptor that handles the wrapping and unwrapping of cached data using {@link
- * org.infinispan.marshall.MarshalledValue}s. Known "excluded" types are not wrapped/unwrapped, which at this time include
- * {@link String}, Java primitives and their Object wrappers, as well as arrays of excluded types.
+ * org.infinispan.marshall.MarshalledValue}s. Known "excluded" types are not wrapped/unwrapped, which at this time
+ * include {@link String}, Java primitives and their Object wrappers, as well as arrays of excluded types.
  * <p/>
  * The {@link org.infinispan.marshall.MarshalledValue} wrapper handles lazy deserialization from byte array
  * representations.
@@ -64,12 +68,30 @@ import java.util.Set;
  */
 public class MarshalledValueInterceptor extends CommandInterceptor {
    private StreamingMarshaller marshaller;
-   
+
    @Inject
    protected void injectMarshaller(StreamingMarshaller marshaller) {
       this.marshaller = marshaller;
    }
-   
+
+   @Override
+   public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
+      if (command.multipleKeys()) {
+         Collection<Object> rawKeys = command.getKeys();
+         Map<Object, Object> keyToMarshalledKeyMapping = new HashMap<Object, Object>(rawKeys.size());
+         for (Object k : rawKeys) {
+            if (!isTypeExcluded(k.getClass())) keyToMarshalledKeyMapping.put(k, createMarshalledValue(k, ctx));
+         }
+
+         if (!keyToMarshalledKeyMapping.isEmpty()) command.replaceKeys(keyToMarshalledKeyMapping);
+      } else {
+         Object key = command.getSingleKey();
+         if (!isTypeExcluded(key.getClass())) command.replaceKey(key, createMarshalledValue(key, ctx));
+      }
+
+      return invokeNextInterceptor(ctx, command);
+   }
+
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       Set<MarshalledValue> marshalledValues = new HashSet<MarshalledValue>();
@@ -83,11 +105,11 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       MarshalledValue key = null;
       MarshalledValue value = null;
-      if (!MarshalledValue.isTypeExcluded(command.getKey().getClass())) {
+      if (!isTypeExcluded(command.getKey().getClass())) {
          key = createMarshalledValue(command.getKey(), ctx);
          command.setKey(key);
       }
-      if (!MarshalledValue.isTypeExcluded(command.getValue().getClass())) {
+      if (!isTypeExcluded(command.getValue().getClass())) {
          value = createMarshalledValue(command.getValue(), ctx);
          command.setValue(value);
       }
@@ -100,7 +122,7 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       MarshalledValue value = null;
-      if (!MarshalledValue.isTypeExcluded(command.getKey().getClass())) {
+      if (!isTypeExcluded(command.getKey().getClass())) {
          value = createMarshalledValue(command.getKey(), ctx);
          command.setKey(value);
       }
@@ -108,11 +130,11 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
       compact(value);
       return processRetVal(retVal);
    }
-   
+
    @Override
    public Object visitEvictCommand(InvocationContext ctx, org.infinispan.commands.write.EvictCommand command) throws Throwable {
       MarshalledValue value = null;
-      if (!MarshalledValue.isTypeExcluded(command.getKey().getClass())) {
+      if (!isTypeExcluded(command.getKey().getClass())) {
          value = createMarshalledValue(command.getKey(), ctx);
          command.setKey(value);
       }
@@ -124,7 +146,7 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       MarshalledValue mv = null;
-      if (!MarshalledValue.isTypeExcluded(command.getKey().getClass())) {
+      if (!isTypeExcluded(command.getKey().getClass())) {
          mv = createMarshalledValue(command.getKey(), ctx);
          command.setKey(mv);
          compact(mv);
@@ -133,7 +155,7 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
       compact(mv);
       return processRetVal(retVal);
    }
-   
+
    @Override
    public Object visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
       Set keys = (Set) invokeNextInterceptor(ctx, command);
@@ -141,7 +163,7 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
       for (Object key : keys) {
          if (key instanceof MarshalledValue) {
             key = ((MarshalledValue) key).get();
-         } 
+         }
          copy.add(key);
       }
       return Immutables.immutableSetWrap(copy);
@@ -150,7 +172,7 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
    @Override
    public Object visitValuesCommand(InvocationContext ctx, ValuesCommand command) throws Throwable {
       Collection values = (Collection) invokeNextInterceptor(ctx, command);
-      Collection copy = new ArrayList();  
+      Collection copy = new ArrayList();
       for (Object value : values) {
          if (value instanceof MarshalledValue) {
             value = ((MarshalledValue) value).get();
@@ -159,7 +181,7 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
       }
       return Immutables.immutableCollectionWrap(copy);
    }
-   
+
    @Override
    public Object visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
       Set<InternalCacheEntry> entries = (Set<InternalCacheEntry>) invokeNextInterceptor(ctx, command);
@@ -173,8 +195,8 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
          if (value instanceof MarshalledValue) {
             value = ((MarshalledValue) value).get();
          }
-         InternalCacheEntry newEntry = Immutables.immutableInternalCacheEntry(InternalEntryFactory.create(key, value, 
-                  entry.getCreated(), entry.getLifespan(), entry.getLastUsed(), entry.getMaxIdle()));
+         InternalCacheEntry newEntry = Immutables.immutableInternalCacheEntry(InternalEntryFactory.create(key, value,
+                 entry.getCreated(), entry.getLifespan(), entry.getLastUsed(), entry.getMaxIdle()));
          copy.add(newEntry);
       }
       return Immutables.immutableSetWrap(copy);
@@ -183,15 +205,15 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       MarshalledValue key = null, newValue = null, oldValue = null;
-      if (!MarshalledValue.isTypeExcluded(command.getKey().getClass())) {
+      if (!isTypeExcluded(command.getKey().getClass())) {
          key = createMarshalledValue(command.getKey(), ctx);
          command.setKey(key);
       }
-      if (!MarshalledValue.isTypeExcluded(command.getNewValue().getClass())) {
+      if (!isTypeExcluded(command.getNewValue().getClass())) {
          newValue = createMarshalledValue(command.getNewValue(), ctx);
          command.setNewValue(newValue);
       }
-      if (command.getOldValue() != null && !MarshalledValue.isTypeExcluded(command.getOldValue().getClass())) {
+      if (command.getOldValue() != null && !isTypeExcluded(command.getOldValue().getClass())) {
          oldValue = createMarshalledValue(command.getOldValue(), ctx);
          command.setOldValue(oldValue);
       }
@@ -203,7 +225,7 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
    }
 
    private Object compactAndProcessRetVal(Set<MarshalledValue> marshalledValues, Object retVal)
-         throws IOException, ClassNotFoundException {
+           throws IOException, ClassNotFoundException {
       if (trace) log.trace("Compacting MarshalledValues created");
       for (MarshalledValue mv : marshalledValues) compact(mv);
       return processRetVal(retVal);
@@ -233,8 +255,8 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
       for (Map.Entry me : m.entrySet()) {
          Object key = me.getKey();
          Object value = me.getValue();
-         Object newKey = (key == null || MarshalledValue.isTypeExcluded(key.getClass())) ? key : createMarshalledValue(key, ctx);
-         Object newValue = (value == null || MarshalledValue.isTypeExcluded(value.getClass())) ? value : createMarshalledValue(value, ctx);
+         Object newKey = (key == null || isTypeExcluded(key.getClass())) ? key : createMarshalledValue(key, ctx);
+         Object newValue = (value == null || isTypeExcluded(value.getClass())) ? value : createMarshalledValue(value, ctx);
          if (newKey instanceof MarshalledValue) marshalledValues.add((MarshalledValue) newKey);
          if (newValue instanceof MarshalledValue) marshalledValues.add((MarshalledValue) newValue);
          copy.put(newKey, newValue);

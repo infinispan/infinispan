@@ -31,8 +31,13 @@ import org.infinispan.marshall.Marshallable;
 import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.RemoteTransaction;
+import org.infinispan.util.Util;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * LockControlCommand is a command that enables distributed locking across infinispan nodes.
@@ -46,19 +51,30 @@ import java.util.Collection;
 @Marshallable(externalizer = ReplicableCommandExternalizer.class, id = Ids.LOCK_CONTROL_COMMAND)
 public class LockControlCommand extends AbstractTransactionBoundaryCommand {
    public static final int COMMAND_ID = 3;
-   private Collection keys;
+   private Set<Object> keys;
+   private Object singleKey;
    private boolean implicit = false;
 
    public LockControlCommand() {
    }
 
-   public LockControlCommand(Collection keys, String cacheName) {
+   public LockControlCommand(Collection<Object> keys, String cacheName) {
       this(keys, cacheName, false);
    }
 
-   public LockControlCommand(Collection keys, String cacheName, boolean implicit) {
+   public LockControlCommand(Collection<Object> keys, String cacheName, boolean implicit) {
       this.cacheName = cacheName;
-      this.keys = keys;
+      this.keys = null;
+      this.singleKey = null;
+      if (keys != null && !keys.isEmpty()) {
+         if (keys.size() == 1) {
+            for (Object k: keys) this.singleKey = k;
+         } else {
+            // defensive copy
+            this.keys = new HashSet<Object>(keys);
+         }
+
+      }
       this.implicit = implicit;
    }
 
@@ -66,8 +82,46 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
       globalTx = gtx;
    }
 
-   public Collection getKeys() {
+   public Set<Object> getKeys() {
+      if (keys == null) {
+         if (singleKey == null)
+            return Collections.emptySet();
+         else
+            return Collections.singleton(singleKey);
+      }
+
       return keys;
+   }
+
+   public void replaceKey(Object oldKey, Object replacement) {
+      if (singleKey != null && singleKey.equals(oldKey)) {
+         singleKey = replacement;
+      } else {
+         if (keys != null) {
+            if (keys.remove(oldKey)) keys.add(replacement);
+         }
+      }
+   }
+
+   public void replaceKeys(Map<Object, Object> replacements) {
+      for (Map.Entry<Object, Object> e: replacements.entrySet()) replaceKey(e.getKey(), e.getValue());
+   }
+
+   public boolean multipleKeys() {
+      return keys != null && keys.size() > 1;
+   }
+
+   public Object getSingleKey() {
+      if (singleKey == null) {
+         if (keys != null) {
+            for (Object sk: keys) return sk;
+            return null;
+         } else {
+            return null;
+         }
+      } else {
+         return singleKey;
+      }
    }
 
    public boolean isImplicit() {
@@ -104,15 +158,35 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
    }
 
    public Object[] getParameters() {
-      return new Object[]{globalTx, cacheName, keys};
+      if (keys == null || keys.isEmpty()) {
+         if (singleKey == null)
+            return new Object[]{globalTx, cacheName, (byte) 1};
+         else
+            return new Object[]{globalTx, cacheName, (byte) 2, singleKey};
+      }
+      return new Object[]{globalTx, cacheName, (byte) 3, keys};
    }
 
+   @SuppressWarnings("unchecked")
    public void setParameters(int commandId, Object[] args) {
       if (commandId != COMMAND_ID)
          throw new IllegalStateException("Unusupported command id:" + commandId);
       globalTx = (GlobalTransaction) args[0];
       cacheName = (String) args[1];
-      keys = (Collection) args[2];
+
+      keys = null;
+      singleKey = null;
+      byte mode = (Byte) args[2];
+      switch (mode) {
+         case 1:
+            break; // do nothing
+         case 2:
+            singleKey = args[3];
+            break;
+         case 3:
+            keys = (Set<Object>) args[3];
+            break;
+      }
    }
 
    public boolean equals(Object o) {
@@ -124,12 +198,13 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
       LockControlCommand that = (LockControlCommand) o;
       if (!super.equals(that))
          return false;
-      return keys.equals(that.getKeys());
+      return keys.equals(that.keys) && Util.safeEquals(singleKey, that.singleKey);
    }
 
    public int hashCode() {
       int result = super.hashCode();
-      return 31 * result + (keys != null ? keys.hashCode() : 0);
+      result = 31 * result + (keys != null ? keys.hashCode() : 0);
+      return 31 * result + (singleKey != null ? singleKey.hashCode() : 0);
    }
 
    @Override
@@ -138,6 +213,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand {
             "gtx=" + globalTx +
             ", cacheName='" + cacheName +
             ", implicit='" + implicit +
-            ", keys=" + keys + '}';
+            ", keys=" + keys +
+            ", singleKey=" + singleKey + '}';
    }
 }
