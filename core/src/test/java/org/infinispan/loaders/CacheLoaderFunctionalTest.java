@@ -1,5 +1,6 @@
 package org.infinispan.loaders;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import static org.infinispan.api.mvcc.LockAssert.assertNoLocks;
 import org.infinispan.config.CacheLoaderManagerConfig;
@@ -7,6 +8,7 @@ import org.infinispan.config.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.context.Flag;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -20,6 +22,7 @@ import org.testng.annotations.Test;
 
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
+import java.lang.reflect.Method;
 import java.util.Collections;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -421,5 +424,12 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       assertInCacheAndNotInStore("k1", "k2");
       assert "v1".equals(cache.get("k1"));
       assert "v2".equals(cache.get("k2"));
+   }
+
+   public void testSkipLocking(Method m) {
+      String name = m.getName();
+      AdvancedCache advancedCache = cache.getAdvancedCache();
+      advancedCache.put("k-" + name, "v-" + name);
+      advancedCache.withFlags(Flag.SKIP_LOCKING).put("k-" + name, "v2-" + name);
    }
 }
