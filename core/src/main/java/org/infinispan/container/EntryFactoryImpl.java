@@ -118,7 +118,7 @@ public class EntryFactoryImpl implements EntryFactory {
       {
          if (trace) log.trace("Exists in context.");
          // acquire lock if needed
-         if (alreadyLocked || acquireLock(ctx, key)) {
+         if (alreadyLocked || ctx.hasFlag(Flag.SKIP_LOCKING) || acquireLock(ctx, key)) {
 
             if (cacheEntry instanceof MVCCEntry && (!forRemoval || !(cacheEntry instanceof NullMarkerEntry))) {
                mvccEntry = (MVCCEntry) cacheEntry;
