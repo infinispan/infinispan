@@ -69,11 +69,15 @@ public class SingleChunkIndexInput extends IndexInput {
 
    @Override
    public byte readByte() throws IOException {
+      if (bufferPosition >= buffer.length) {
+         throw new IOException("Read past EOF");
+      }
       return buffer[bufferPosition++];
    }
 
    @Override
    public void readBytes(byte[] b, int offset, int len) throws IOException {
+      len = Math.min(len, buffer.length - bufferPosition);
       System.arraycopy(buffer, bufferPosition, b, offset, len);
       bufferPosition+=len;
    }
