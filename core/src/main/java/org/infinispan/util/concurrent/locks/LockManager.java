@@ -109,4 +109,10 @@ public interface LockManager {
     * Cleanups the locks within the given context.
     */
    void releaseLocks(InvocationContext ctx);
+
+   /**
+    * Retrieves the number of locks currently held.
+    * @return an integer
+    */
+   int getNumberOfLocksHeld();
 }

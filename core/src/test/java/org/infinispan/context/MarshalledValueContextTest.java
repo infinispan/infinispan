@@ -12,6 +12,8 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
+import org.infinispan.util.concurrent.locks.LockManager;
+import org.infinispan.util.concurrent.locks.containers.LockContainer;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
@@ -45,19 +47,23 @@ public class MarshalledValueContextTest extends SingleCacheManagerTest {
       c.getAdvancedCache().lock(new Key("k"));
 
       InvocationContextContainer icc = TestingUtil.extractComponent(c, InvocationContextContainer.class);
+
+      LockManager lockManager = TestingUtil.extractComponent(c, LockManager.class);
       InvocationContext ctx = icc.getInvocationContext();
 
       assert ctx instanceof LocalTxInvocationContext;
 
       assert ctx.getLookedUpEntries().size() == 1 : "Looked up key should now be in the transactional invocation context";
+      assert lockManager.getNumberOfLocksHeld() == 1 : "Only one lock should be held";
 
       c.put(new Key("k"), "v2");
 
       assert ctx.getLookedUpEntries().size() == 1 : "Still should only be one entry in the context";
+      assert lockManager.getNumberOfLocksHeld() == 1 : "Only one lock should be held";
 
       tm.commit();
 
-      assert ctx.getLookedUpEntries().size() == 0 : "Context should be cleared of looked up keys";
+      assert lockManager.getNumberOfLocksHeld() == 0 : "No locks should be held anymore";
 
       assert "v2".equals(c.get(new Key("k")));
    }
