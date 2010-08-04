@@ -9,9 +9,12 @@ import java.util.Map;
 import static org.infinispan.util.Immutables.immutableMapWrap;
 
 /**
- * A helper that locates atomic maps within a given cache.  This should be the <b>only</b> way AtomicMaps are created/retrieved.
+ * A helper that locates or safely constructs and registers atomic maps with a given cache.  This should be the
+ * <b>only</b> way AtomicMaps are created/retrieved, to prevent concurrent creation, registration and possibly
+ * overwriting of such a map within the cache.
  *
  * @author Manik Surtani
+ * @see AtomicMap
  * @since 4.0
  */
 public class AtomicMapLookup {
@@ -37,7 +40,7 @@ public class AtomicMapLookup {
     *
     * @param cache underlying cache
     * @param key key under which the atomic map exists
-    * @param createIfAbsent if true, a new atomic map is created if one did not exist.
+    * @param createIfAbsent if true, a new atomic map is created if one doesn't exist; otherwise null is returned if the map didn't exist.
     * @param <MK> key param of the cache
     * @param <K> key param of the AtomicMap
     * @param <V> value param of the AtomicMap

@@ -22,14 +22,16 @@
 package org.infinispan.atomic;
 
 /**
- * Represents changes made to a {@link DeltaAware} implementation.  Should be efficiently externalizable.
+ * Represents changes made to a {@link DeltaAware} implementation.  Implementations should be efficiently
+ * {@link java.io.Externalizable} rather than just {@link java.io.Serializable}.
  *
- * @author Manik Surtani (<a href="mailto:manik AT jboss DOT org">manik AT jboss DOT org</a>)
+ * @see DeltaAware
+ * @author Manik Surtani
  * @since 4.0
  */
 public interface Delta {
    /**
-    * Merge the current set of deltas with a given {@link DeltaAware} instance, and return a coherent and complete
+    * Merge the current Delta instance with a given {@link DeltaAware} instance, and return a coherent and complete
     * {@link DeltaAware} instance.  Implementations should be able to deal with null values passed in, or values of a
     * different type from the expected DeltaAware instance.  Usually the approach would be to ignore what is passed in,
     * create a new instance of the DeltaAware implementation that the current Delta implementation is written for, apply
