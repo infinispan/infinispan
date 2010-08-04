@@ -89,7 +89,7 @@
       <version.gnu.getopt>1.0.13</version.gnu.getopt>
       <version.guava>r03</version.guava>
       <version.h2.driver>1.1.117</version.h2.driver>
-      <version.hibernate.search>3.2.0.Final</version.hibernate.search>
+      <version.hibernate.search>3.2.1.Final</version.hibernate.search>
       <version.jackson>1.4.1</version.jackson>
       <version.javax.persistence>1.0</version.javax.persistence>
       <version.javax.servlet>2.5</version.javax.servlet>
