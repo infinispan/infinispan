@@ -75,7 +75,7 @@ public class VersionAwareMarshaller extends AbstractStreamingMarshaller {
       defaultMarshaller.start(loader, remoteCommandsFactory, this);
    }
 
-   @Stop
+   @Stop(priority = 11) // Stop after transport to avoid send/receive and marshaller not being ready
    public void stop() {
       defaultMarshaller.stop();
    }
