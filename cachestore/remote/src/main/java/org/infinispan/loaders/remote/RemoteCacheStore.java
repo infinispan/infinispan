@@ -26,12 +26,10 @@ import java.util.concurrent.TimeUnit;
 /**
  * Cache store that delegates the call to a infinispan cluster. Communication between this cache store and the remote
  * cluster is achieved through the java HotRod client: this assures fault tolerance and smart dispatching of calls to
- * the nodes that have the highest chance of containing the given key.
+ * the nodes that have the highest chance of containing the given key. This cache store supports both preloading
+ * and <b>fetchPersistentState</b>.
  * <p/>
- * Due to certain HotRod constraints, this cache store does not support preload and also cannot be used for provide
- * state. Setting <b>fetchPersistentState</b> is not allowed.
- * <p/>
- * Purging elements is also not possible, as HotRod does not support the fetching of all remote keys (this would be a
+ * Purging elements is not possible, as HotRod does not support the fetching of all remote keys (this would be a
  * very costly operation as well). Purging takes place at the remote end (infinispan cluster).
  * <p/>
  *
