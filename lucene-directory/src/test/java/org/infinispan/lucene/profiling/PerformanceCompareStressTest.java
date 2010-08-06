@@ -81,7 +81,7 @@ public class PerformanceCompareStressTest {
    @Test
    public void profileTestRAMDirectory() throws InterruptedException, IOException {
       RAMDirectory dir = new RAMDirectory();
-      testDirectory(dir, "RAMDirectory");
+      stressTestDirectory(dir, "RAMDirectory");
    }
 
    @Test
@@ -90,14 +90,14 @@ public class PerformanceCompareStressTest {
       boolean directoriesCreated = indexDir.mkdirs();
       assert directoriesCreated : "couldn't create directory for FSDirectory test";
       FSDirectory dir = FSDirectory.open(indexDir);
-      testDirectory(dir, "FSDirectory");
+      stressTestDirectory(dir, "FSDirectory");
    }
    
    @Test
    public void profileTestInfinispanDirectoryWithNetworkDelayZero() throws Exception {
       // TestingUtil.setDelayForCache(cache, 0, 0);
       InfinispanDirectory dir = new InfinispanDirectory(cache, indexName);
-      testDirectory(dir, "InfinispanClustered-delayedIO:0");
+      stressTestDirectory(dir, "InfinispanClustered-delayedIO:0");
       DirectoryIntegrityCheck.verifyDirectoryStructure(cache, indexName);
    }
 
@@ -105,7 +105,7 @@ public class PerformanceCompareStressTest {
    public void profileTestInfinispanDirectoryWithNetworkDelay4() throws Exception {
       TestingUtil.setDelayForCache(cache, 4, 4);
       InfinispanDirectory dir = new InfinispanDirectory(cache, indexName);
-      testDirectory(dir, "InfinispanClustered-delayedIO:4");
+      stressTestDirectory(dir, "InfinispanClustered-delayedIO:4");
       DirectoryIntegrityCheck.verifyDirectoryStructure(cache, indexName);
    }
 
@@ -113,7 +113,7 @@ public class PerformanceCompareStressTest {
    public void profileTestInfinispanDirectoryWithHighNetworkDelay40() throws Exception {
       TestingUtil.setDelayForCache(cache, 40, 40);
       InfinispanDirectory dir = new InfinispanDirectory(cache, indexName);
-      testDirectory(dir, "InfinispanClustered-delayedIO:40");
+      stressTestDirectory(dir, "InfinispanClustered-delayedIO:40");
       DirectoryIntegrityCheck.verifyDirectoryStructure(cache, indexName);
    }
 
@@ -123,14 +123,14 @@ public class PerformanceCompareStressTest {
       try {
          Cache<CacheKey, Object> cache = cacheContainer.getCache();
          InfinispanDirectory dir = new InfinispanDirectory(cache, indexName);
-         testDirectory(dir, "InfinispanLocal");
+         stressTestDirectory(dir, "InfinispanLocal");
          DirectoryIntegrityCheck.verifyDirectoryStructure(cache, indexName);
       } finally {
          cacheContainer.stop();
       }
    }
 
-   private void testDirectory(Directory dir, String testLabel) throws InterruptedException, IOException {
+   public static void stressTestDirectory(Directory dir, String testLabel) throws InterruptedException, IOException {
       SharedState state = new SharedState(DICTIONARY_SIZE);
       CacheTestSupport.initializeDirectory(dir);
       ExecutorService e = Executors.newFixedThreadPool(READER_THREADS + 1);
@@ -146,7 +146,7 @@ public class PerformanceCompareStressTest {
       long searchesCount = state.incrementIndexSearchesCount(0);
       long writerTaskCount = state.incrementIndexWriterTaskCount(0);
       state.quit();
-      boolean terminatedCorrectly = e.awaitTermination(10, TimeUnit.SECONDS);
+      boolean terminatedCorrectly = e.awaitTermination(20, TimeUnit.SECONDS);
       Assert.assertTrue(terminatedCorrectly);
       System.out.println("Test " + testLabel + " run in " + DURATION_MS + "ms:\n\tSearches: " + searchesCount + "\n\t" + "Writes: "
                + writerTaskCount);
