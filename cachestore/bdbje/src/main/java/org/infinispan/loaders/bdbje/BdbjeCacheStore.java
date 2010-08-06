@@ -576,14 +576,14 @@ public class BdbjeCacheStore extends AbstractCacheStore {
    public void printLicense() {
       String license = "\n*************************************************************************************\n" +
             "Berkeley DB Java Edition version: " + JEVersion.CURRENT_VERSION.toString() + "\n" +
-            "JBoss Cache can use Berkeley DB Java Edition from Oracle \n" +
+            "Infinispan can use Berkeley DB Java Edition from Oracle \n" +
             "(http://www.oracle.com/database/berkeley-db/je/index.html)\n" +
             "for persistent, reliable and transaction-protected data storage.\n" +
-            "If you choose to use Berkeley DB Java Edition with JBoss Cache, you must comply with the terms\n" +
+            "If you choose to use Berkeley DB Java Edition with Infinispan, you must comply with the terms\n" +
             "of Oracle's public license, included in the file LICENSE.txt.\n" +
             "If you prefer not to release the source code for your own application in order to comply\n" +
             "with the Oracle public license, you may purchase a different license for use of\n" +
-            "Berkeley DB Java Edition with JBoss Cache.\n" +
+            "Berkeley DB Java Edition with Infinispan.\n" +
             "See http://www.oracle.com/database/berkeley-db/je/index.html for pricing and license terms\n" +
             "*************************************************************************************";
       System.out.println(license);
