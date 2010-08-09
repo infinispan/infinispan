@@ -28,14 +28,36 @@
       </dependency>
 
       <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-cachestore-jdbc</artifactId>
+         <version>${project.version}</version>
+         <optional>true</optional>
+      </dependency>
+
+      <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-core</artifactId>
          <version>${project.version}</version>
          <type>test-jar</type>
          <scope>test</scope>
       </dependency>
+      
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-cachestore-jdbc</artifactId>
+         <version>${project.version}</version>
+         <type>test-jar</type>
+         <scope>test</scope>
+      </dependency>
+      
+      <dependency>
+         <groupId>com.h2database</groupId>
+         <artifactId>h2</artifactId>
+         <version>${version.h2.driver}</version>
+         <scope>test</scope>
+      </dependency>
    </dependencies>
-   
+
    <build>
       <plugins>
          <plugin>
