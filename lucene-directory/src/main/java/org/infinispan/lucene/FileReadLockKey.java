@@ -32,7 +32,7 @@ import java.io.Serializable;
  * @author Sanne Grinovero
  * @since 4.0
  */
-final class FileReadLockKey implements Serializable, CacheKey {
+final class FileReadLockKey implements Serializable {
 
    /** The serialVersionUID */
    private static final long serialVersionUID = 7789410500198851940L;

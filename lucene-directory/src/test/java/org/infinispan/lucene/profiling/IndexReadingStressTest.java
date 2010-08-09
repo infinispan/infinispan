@@ -44,12 +44,12 @@ import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.LockObtainFailedException;
 import org.apache.lucene.store.RAMDirectory;
 import org.infinispan.Cache;
-import org.infinispan.lucene.CacheKey;
 import org.infinispan.lucene.CacheTestSupport;
 import org.infinispan.lucene.InfinispanDirectory;
 import org.infinispan.lucene.testutils.ClusteredCacheFactory;
 import org.infinispan.lucene.testutils.LuceneSettings;
 import org.infinispan.manager.CacheContainer;
+import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -75,6 +75,8 @@ public class IndexReadingStressTest {
 
    /** Number of Terms written in the index **/
    private static final int TERMS_NUMBER = 200000;
+   
+   private static final String indexName = "tempIndexName";
 
    private static final ClusteredCacheFactory cacheFactory = new ClusteredCacheFactory(CacheTestSupport.createTestConfiguration());
 
@@ -86,8 +88,9 @@ public class IndexReadingStressTest {
 
    @Test
    public void profileTestFSDirectory() throws InterruptedException, IOException {
-      File indexDir = new File(new File("."), "tempindex");
-      indexDir.mkdirs();
+      File indexDir = new File(new File("."), indexName);
+      boolean directoriesCreated = indexDir.mkdirs();
+      assert directoriesCreated : "couldn't create directory for FSDirectory test";
       FSDirectory dir = FSDirectory.open(indexDir);
       testDirectory(dir, "FSDirectory");
    }
@@ -95,7 +98,7 @@ public class IndexReadingStressTest {
    @Test
    public void profileTestInfinispanDirectory() throws InterruptedException, IOException {
       // these defaults are not for performance settings but meant for problem detection:
-      Cache<CacheKey, Object> cache = cacheFactory.createClusteredCache();
+      Cache cache = cacheFactory.createClusteredCache();
       InfinispanDirectory dir = new InfinispanDirectory(cache, "iname");
       testDirectory(dir, "InfinispanClustered");
    }
@@ -104,7 +107,7 @@ public class IndexReadingStressTest {
    public void profileInfinispanLocalDirectory() throws InterruptedException, IOException {
       CacheContainer cacheManager = CacheTestSupport.createLocalCacheManager();
       try {
-         Cache<CacheKey, Object> cache = cacheManager.getCache();
+         Cache cache = cacheManager.getCache();
          InfinispanDirectory dir = new InfinispanDirectory(cache, "iname");
          testDirectory(dir, "InfinispanLocal");
       } finally {
@@ -159,6 +162,7 @@ public class IndexReadingStressTest {
    @AfterClass
    public static void afterTest() {
       cacheFactory.stop();
+      TestingUtil.recursiveFileRemove(indexName);
    }
    
    private static class IndependentLuceneReaderThread extends LuceneUserThread {

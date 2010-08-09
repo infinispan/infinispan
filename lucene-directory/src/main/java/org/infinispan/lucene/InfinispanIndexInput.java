@@ -43,7 +43,7 @@ public class InfinispanIndexInput extends IndexInput {
 
    private static final Log log = LogFactory.getLog(InfinispanIndexInput.class);
 
-   private final AdvancedCache<CacheKey, Object> cache;
+   private final AdvancedCache cache;
    private final FileMetadata file;
    private final FileCacheKey fileKey;
    private final int chunkSize;
@@ -56,7 +56,7 @@ public class InfinispanIndexInput extends IndexInput {
 
    private boolean isClone;
 
-   public InfinispanIndexInput(AdvancedCache<CacheKey, Object> cache, FileCacheKey fileKey, int chunkSize, FileMetadata fileMetadata) throws FileNotFoundException {
+   public InfinispanIndexInput(AdvancedCache cache, FileCacheKey fileKey, int chunkSize, FileMetadata fileMetadata) throws FileNotFoundException {
       this.cache = cache;
       this.fileKey = fileKey;
       this.chunkSize = chunkSize;
@@ -84,7 +84,7 @@ public class InfinispanIndexInput extends IndexInput {
     * @param readLockKey the key pointing to the reference counter value
     * @param cache The cache containing the reference counter value
     */
-   static void releaseReadLock(FileReadLockKey readLockKey, AdvancedCache<CacheKey, Object> cache) {
+   static void releaseReadLock(FileReadLockKey readLockKey, AdvancedCache cache) {
       int newValue = 0;
       // spinning as we currently don't mandate transactions, so no proper lock support available
       boolean done = false;
@@ -111,7 +111,7 @@ public class InfinispanIndexInput extends IndexInput {
     * @param readLockKey the key representing the values to be deleted
     * @param cache the cache containing the elements to be deleted
     */
-   static void realFileDelete(FileReadLockKey readLockKey, AdvancedCache<CacheKey, Object> cache) {
+   static void realFileDelete(FileReadLockKey readLockKey, AdvancedCache cache) {
       final String indexName = readLockKey.getIndexName();
       final String filename = readLockKey.getFileName();
       int i = 0;
@@ -213,7 +213,7 @@ public class InfinispanIndexInput extends IndexInput {
    }
 
    private void setBufferToCurrentChunk() throws IOException {
-      CacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), currentLoadedChunk);
+      ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), currentLoadedChunk);
       buffer = (byte[]) cache.withFlags(Flag.SKIP_LOCKING).get(key);
       if (buffer == null) {
          throw new IOException("Chunk value could not be found for key " + key);
@@ -224,7 +224,7 @@ public class InfinispanIndexInput extends IndexInput {
    // Lucene might try seek(pos) using an illegal pos value
    // RAMDirectory teaches to position the cursor to the end of previous chunk in this case
    private void setBufferToCurrentChunkIfPossible() throws IOException {
-      CacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), currentLoadedChunk);
+      ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), currentLoadedChunk);
       buffer = (byte[]) cache.withFlags(Flag.SKIP_LOCKING).get(key);
       if (buffer == null) {
          currentLoadedChunk--;

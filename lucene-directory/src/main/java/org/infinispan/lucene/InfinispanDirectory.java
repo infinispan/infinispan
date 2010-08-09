@@ -48,7 +48,6 @@ import org.infinispan.util.logging.LogFactory;
  * @author Sanne Grinovero
  * @see org.infinispan.lucene.locking.TransactionalLockFactory
  */
-// TODO add support for ConcurrentMergeSheduler
 public class InfinispanDirectory extends Directory {
    
    // used as default chunk size if not provided in conf
@@ -61,7 +60,7 @@ public class InfinispanDirectory extends Directory {
    // access type will be changed in the next Lucene version
    volatile boolean isOpen = true;
 
-   private final AdvancedCache<CacheKey, Object> cache;
+   private final AdvancedCache cache;
    // indexName is required when one common cache is used
    private final String indexName;
    // chunk size used in this directory, static filed not used as we want to have different chunk
@@ -70,7 +69,7 @@ public class InfinispanDirectory extends Directory {
 
    private final FileListCacheKey fileListCacheKey;
 
-   public InfinispanDirectory(Cache<CacheKey, Object> cache, String indexName, LockFactory lf, int chunkSize) {
+   public InfinispanDirectory(Cache cache, String indexName, LockFactory lf, int chunkSize) {
       this.cache = cache.getAdvancedCache();
       this.indexName = indexName;
       this.setLockFactory(lf);
@@ -78,19 +77,19 @@ public class InfinispanDirectory extends Directory {
       this.fileListCacheKey = new FileListCacheKey(indexName);
    }
 
-   public InfinispanDirectory(Cache<CacheKey, Object> cache, String indexName, LockFactory lf) {
+   public InfinispanDirectory(Cache cache, String indexName, LockFactory lf) {
       this(cache, indexName, lf, DEFAULT_BUFFER_SIZE);
    }
 
-   public InfinispanDirectory(Cache<CacheKey, Object> cache, String indexName, int chunkSize) {
+   public InfinispanDirectory(Cache cache, String indexName, int chunkSize) {
       this(cache, indexName, new BaseLockFactory(cache, indexName), chunkSize);
    }
 
-   public InfinispanDirectory(Cache<CacheKey, Object> cache, String indexName) {
+   public InfinispanDirectory(Cache cache, String indexName) {
       this(cache, indexName, new BaseLockFactory(cache, indexName), DEFAULT_BUFFER_SIZE);
    }
 
-   public InfinispanDirectory(Cache<CacheKey, Object> cache) {
+   public InfinispanDirectory(Cache cache) {
       this(cache, "");
    }
 
@@ -129,7 +128,7 @@ public class InfinispanDirectory extends Directory {
     */
    public void touchFile(String fileName) throws IOException {
       checkIsOpen();
-      CacheKey key = new FileCacheKey(indexName, fileName);
+      FileCacheKey key = new FileCacheKey(indexName, fileName);
       FileMetadata file = (FileMetadata) cache.get(key);
       if (file == null) {
          throw new FileNotFoundException(fileName);
@@ -176,7 +175,7 @@ public class InfinispanDirectory extends Directory {
       
       // rename metadata first
       cache.startBatch();
-      CacheKey fromKey = new FileCacheKey(indexName, from);
+      FileCacheKey fromKey = new FileCacheKey(indexName, from);
       FileMetadata metadata = (FileMetadata) cache.remove(fromKey);
       cache.put(new FileCacheKey(indexName, to), metadata);
       Set<String> fileList = getFileList();
@@ -227,7 +226,7 @@ public class InfinispanDirectory extends Directory {
 
    private void createRefCountForNewFile(String fileName) {
       FileReadLockKey readLockKey = new FileReadLockKey(indexName, fileName);
-      cache.withFlags(Flag.SKIP_REMOTE_LOOKUP).put(readLockKey, Integer.valueOf(1));
+      cache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_STORE).put(readLockKey, Integer.valueOf(1));
    }
 
    @SuppressWarnings("unchecked")
@@ -269,7 +268,7 @@ public class InfinispanDirectory extends Directory {
    }
 
    private FileMetadata getFileMetadata(String fileName) {
-      CacheKey key = new FileCacheKey(indexName, fileName);
+      FileCacheKey key = new FileCacheKey(indexName, fileName);
       return (FileMetadata) cache.withFlags(Flag.SKIP_LOCKING).get(key);
    }
 
@@ -278,7 +277,7 @@ public class InfinispanDirectory extends Directory {
       return "InfinispanDirectory{" + "indexName='" + indexName + '\'' + '}';
    }
 
-   public Cache<CacheKey, Object> getCache() {
+   public Cache getCache() {
       return cache;
    }
 

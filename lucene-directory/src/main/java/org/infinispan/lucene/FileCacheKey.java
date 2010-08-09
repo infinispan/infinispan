@@ -30,34 +30,19 @@ import java.io.Serializable;
  * @author Lukasz Moren
  * @author Sanne Grinovero
  */
-public final class FileCacheKey implements Serializable, CacheKey {
+public final class FileCacheKey implements Serializable {
 
    /** The serialVersionUID */
    private static final long serialVersionUID = -228474937509042691L;
    
-   private final boolean isLockKey;
    private final String indexName;
    private final String fileName;
    private final int hashCode;
 
    public FileCacheKey(String indexName, String fileName) {
-      this(indexName, fileName, false);
-   }
-
-   public FileCacheKey(String indexName, String fileName, boolean isLockKey) {
       this.indexName = indexName;
       this.fileName = fileName;
-      this.isLockKey = isLockKey;
       this.hashCode = generatedHashCode();
-   }
-   
-   /**
-    * Get the isLockKey.
-    * 
-    * @return the isLockKey.
-    */
-   public boolean isLockKey() {
-      return isLockKey;
    }
 
    /**
@@ -88,7 +73,6 @@ public final class FileCacheKey implements Serializable, CacheKey {
       int result = 1;
       result = prime * result + ((fileName == null) ? 0 : fileName.hashCode());
       result = prime * result + ((indexName == null) ? 0 : indexName.hashCode());
-      result = prime * result + (isLockKey ? 1231 : 1237);
       return result;
    }
 
@@ -111,14 +95,12 @@ public final class FileCacheKey implements Serializable, CacheKey {
             return false;
       } else if (!indexName.equals(other.indexName))
          return false;
-      if (isLockKey != other.isLockKey)
-         return false;
       return true;
    }
    
    @Override
    public String toString() {
-      return "FileCacheKey{fileName='" + fileName + "', indexName='" + indexName + "', isLockKey=" + isLockKey + '}';
+      return "FileCacheKey{fileName='" + fileName + "', indexName='" + indexName + '}';
    }
 
 }

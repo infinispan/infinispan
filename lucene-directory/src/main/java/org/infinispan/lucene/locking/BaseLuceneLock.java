@@ -27,7 +27,6 @@ import org.apache.lucene.store.Lock;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.context.Flag;
-import org.infinispan.lucene.CacheKey;
 import org.infinispan.lucene.FileCacheKey;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -46,16 +45,16 @@ class BaseLuceneLock extends Lock {
    private static final Log log = LogFactory.getLog(BaseLuceneLock.class);
    private static final Flag[] lockFlags = new Flag[]{Flag.SKIP_CACHE_STORE};
 
-   private final AdvancedCache<CacheKey, Object> cache;
+   private final AdvancedCache cache;
    private final String lockName;
    private final String indexName;
    private final FileCacheKey keyOfLock;
 
-   BaseLuceneLock(Cache<CacheKey, Object> cache, String indexName, String lockName) {
+   BaseLuceneLock(Cache cache, String indexName, String lockName) {
       this.cache = cache.getAdvancedCache();
       this.lockName = lockName;
       this.indexName = indexName;
-      this.keyOfLock = new FileCacheKey(indexName, lockName, true);
+      this.keyOfLock = new FileCacheKey(indexName, lockName);
    }
 
    /**

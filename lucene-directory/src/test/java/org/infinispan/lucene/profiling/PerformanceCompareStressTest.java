@@ -31,7 +31,6 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.RAMDirectory;
 import org.infinispan.Cache;
-import org.infinispan.lucene.CacheKey;
 import org.infinispan.lucene.CacheTestSupport;
 import org.infinispan.lucene.DirectoryIntegrityCheck;
 import org.infinispan.lucene.InfinispanDirectory;
@@ -68,13 +67,13 @@ public class PerformanceCompareStressTest {
 
    /** Concurrent Threads in tests */
    private static final int READER_THREADS = 5;
-   private static final int WRITER_THREADS = 2;
+   private static final int WRITER_THREADS = 1;
 
    private static final String indexName = "tempIndexName";
 
    private static final long DURATION_MS = 60 * 60 * 1000;
 
-   private Cache<CacheKey, Object> cache;
+   private Cache cache;
 
    private EmbeddedCacheManager cacheFactory;
 
@@ -121,7 +120,7 @@ public class PerformanceCompareStressTest {
    public void profileInfinispanLocalDirectory() throws InterruptedException, IOException {
       CacheContainer cacheContainer = CacheTestSupport.createLocalCacheManager();
       try {
-         Cache<CacheKey, Object> cache = cacheContainer.getCache();
+         Cache cache = cacheContainer.getCache();
          InfinispanDirectory dir = new InfinispanDirectory(cache, indexName);
          stressTestDirectory(dir, "InfinispanLocal");
          DirectoryIntegrityCheck.verifyDirectoryStructure(cache, indexName);
@@ -133,7 +132,7 @@ public class PerformanceCompareStressTest {
    public static void stressTestDirectory(Directory dir, String testLabel) throws InterruptedException, IOException {
       SharedState state = new SharedState(DICTIONARY_SIZE);
       CacheTestSupport.initializeDirectory(dir);
-      ExecutorService e = Executors.newFixedThreadPool(READER_THREADS + 1);
+      ExecutorService e = Executors.newFixedThreadPool(READER_THREADS + WRITER_THREADS);
       for (int i = 0; i < READER_THREADS; i++) {
          e.execute(new LuceneReaderThread(dir, state));
       }

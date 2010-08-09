@@ -28,7 +28,10 @@ import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriter.MaxFieldLength;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.LockObtainFailedException;
 import org.infinispan.config.Configuration;
@@ -44,7 +47,10 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
 
 /**
  * Contains general utilities used by other tests
@@ -150,6 +156,63 @@ public abstract class CacheTestSupport {
       //reopen to check for index
       IndexSearcher searcher = new IndexSearcher(directory, true);
       searcher.close();
+   }
+   
+   /**
+    * Used in test to remove all documents containing some term
+    * 
+    * @param dir The Directory containing the Index to verify
+    * @param string
+    */
+   public static void removeByTerm(Directory dir, String term) throws IOException {
+      IndexWriter iw = new IndexWriter(dir, LuceneSettings.analyzer, IndexWriter.MaxFieldLength.UNLIMITED);
+      iw.deleteDocuments(new Term("body", term));
+      iw.commit();
+      iw.close();
+   }
+
+   /**
+    * Used in test to verify an Index
+    * 
+    * @param dir The Directory containing the Index to verify
+    * @param term a single Term (after analysis) to be searched for
+    * @param validDocumentIds The list of document identifiers which should contain the searched-for term
+    * @throws IOException
+    */
+   public static void assertTextIsFoundInIds(Directory dir, String term, Integer... validDocumentIds) throws IOException {
+      int expectedResults = validDocumentIds.length;
+      Set<Integer> expectedDocumendIds = new HashSet<Integer>(Arrays.asList(validDocumentIds));
+      IndexSearcher searcher = new IndexSearcher(dir,true);
+      Query query = new TermQuery(new Term("body", term));
+      TopDocs docs = searcher.search(query, null, expectedResults + 1);
+      assert docs.totalHits == expectedResults;
+      for (ScoreDoc scoreDoc : docs.scoreDocs) {
+         int docId = scoreDoc.doc;
+         Document document = searcher.doc(docId);
+         String idString = document.get("id");
+         assert idString != null;
+         Integer idFoundElement = Integer.valueOf(idString);
+         assert expectedDocumendIds.contains(idFoundElement);
+      }
+      searcher.close();
+   }
+
+   /**
+    * Used in test to add a new Document to an Index; two fields are created: id and body 
+    * 
+    * @param dir The Directory containing the Index to modify
+    * @param id a sequential number to identify this document (id field)
+    * @param text Some text to add to the body field
+    * @throws IOException
+    */
+   public static void writeTextToIndex(Directory dir, int id, String text) throws IOException {
+      IndexWriter iw = new IndexWriter(dir, LuceneSettings.analyzer, IndexWriter.MaxFieldLength.UNLIMITED);
+      Document doc = new Document();
+      doc.add(new Field("id", String.valueOf(id), Field.Store.YES, Field.Index.NOT_ANALYZED));
+      doc.add(new Field("body", text, Field.Store.NO, Field.Index.ANALYZED));
+      iw.addDocument(doc);
+      iw.commit();
+      iw.close();
    }
 
 }

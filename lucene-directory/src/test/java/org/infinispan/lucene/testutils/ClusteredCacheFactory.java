@@ -31,7 +31,6 @@ import net.jcip.annotations.ThreadSafe;
 
 import org.infinispan.Cache;
 import org.infinispan.config.Configuration;
-import org.infinispan.lucene.CacheKey;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -48,7 +47,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 public class ClusteredCacheFactory {
 
    private final BlockingQueue<Configuration> requests = new SynchronousQueue<Configuration>();
-   private final BlockingQueue<Cache<CacheKey, Object>> results = new SynchronousQueue<Cache<CacheKey, Object>>();
+   private final BlockingQueue<Cache> results = new SynchronousQueue<Cache>();
    private final ExecutorService executor = Executors.newSingleThreadExecutor();
    private final Configuration cfg;
    
@@ -68,7 +67,7 @@ public class ClusteredCacheFactory {
     * Create a cache using default configuration 
     * @throws InterruptedException if interrupted while waiting for the cache construction
     */
-   public synchronized Cache<CacheKey, Object> createClusteredCache() throws InterruptedException {
+   public synchronized Cache createClusteredCache() throws InterruptedException {
       if (!started)
          throw new IllegalStateException("was not started");
       if (stopped)
@@ -77,8 +76,8 @@ public class ClusteredCacheFactory {
       return results.take();
    }
    
-   public Cache<CacheKey, Object> createClusteredCacheWaitingForNodesView(int expectedGroupSize) throws InterruptedException {
-      Cache<CacheKey, Object> cache = createClusteredCache();
+   public Cache createClusteredCacheWaitingForNodesView(int expectedGroupSize) throws InterruptedException {
+      Cache cache = createClusteredCache();
       TestingUtil.blockUntilViewReceived(cache, expectedGroupSize, 10000, false);
       return cache;
    }
@@ -109,7 +108,7 @@ public class ClusteredCacheFactory {
             try {
                Configuration configuration = requests.take();
                CacheContainer cacheContainer = TestCacheManagerFactory.createClusteredCacheManager(configuration);
-               Cache<CacheKey, Object> cache = cacheContainer.getCache();
+               Cache cache = cacheContainer.getCache();
                results.put(cache);
             } catch (InterruptedException e) {
                return;
