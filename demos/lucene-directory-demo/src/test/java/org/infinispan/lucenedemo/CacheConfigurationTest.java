@@ -27,7 +27,6 @@ import java.util.List;
 import org.apache.lucene.queryParser.ParseException;
 import org.apache.lucene.search.Query;
 import org.infinispan.Cache;
-import org.infinispan.lucene.CacheKey;
 import org.infinispan.lucene.InfinispanDirectory;
 import org.infinispan.manager.DefaultCacheManager;
 import org.testng.annotations.AfterClass;
@@ -52,12 +51,12 @@ public class CacheConfigurationTest {
    public void init() throws IOException {
       cacheManager1 = new DefaultCacheManager("config-samples/lucene-demo-cache-config.xml");
       cacheManager1.start();
-      Cache<CacheKey, Object> cache1 = cacheManager1.getCache();
+      Cache cache1 = cacheManager1.getCache();
       cache1.clear();
       directoryNodeOne = new InfinispanDirectory(cache1);
       cacheManager2 = new DefaultCacheManager("config-samples/lucene-demo-cache-config.xml");
       cacheManager2.start();
-      Cache<CacheKey, Object> cache2 = cacheManager2.getCache();
+      Cache cache2 = cacheManager2.getCache();
       cache2.clear();
       directoryNodeTwo = new InfinispanDirectory(cache2);
    }
