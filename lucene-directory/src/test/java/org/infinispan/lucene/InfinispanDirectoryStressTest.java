@@ -58,7 +58,7 @@ public class InfinispanDirectoryStressTest {
    public void testInfinispanDirectory() throws Exception {
       final int OPERATIONS = 100;
       CacheContainer cacheContainer = CacheTestSupport.createTestCacheManager();
-      Cache<CacheKey, Object> cache = cacheContainer.getCache();
+      Cache cache = cacheContainer.getCache();
       Directory directory = new InfinispanDirectory(cache, "indexName");
       CacheTestSupport.initializeDirectory(directory);
       File document = CacheTestSupport.createDummyDocToIndex("document.lucene", 10000);
@@ -82,12 +82,12 @@ public class InfinispanDirectoryStressTest {
    public void testDirectoryWithMultipleThreads() throws Exception {
       final CountDownLatch latch = new CountDownLatch(1);
       List<InfinispanDirectoryThread> threads = new ArrayList<InfinispanDirectoryThread>();
-      Cache<CacheKey, Object> cache = CacheTestSupport.createTestCacheManager().getCache();
+      Cache cache = CacheTestSupport.createTestCacheManager().getCache();
       Directory directory1 = new InfinispanDirectory(cache, "indexName");
       CacheTestSupport.initializeDirectory(directory1);
 
       // second cache joins after index creation: tests proper configuration
-      Cache<CacheKey, Object> cache2 = CacheTestSupport.createTestCacheManager().getCache(); // dummy cache, to force replication
+      Cache cache2 = CacheTestSupport.createTestCacheManager().getCache(); // dummy cache, to force replication
       Directory directory2 = new InfinispanDirectory(cache2, "indexName");
       Thread.sleep(3000);
 

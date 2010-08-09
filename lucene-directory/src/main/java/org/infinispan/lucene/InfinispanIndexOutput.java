@@ -44,7 +44,7 @@ public class InfinispanIndexOutput extends IndexOutput {
 
    private final int bufferSize;
 
-   private final AdvancedCache<CacheKey, Object> cache;
+   private final AdvancedCache cache;
    private final FileMetadata file;
    private final FileCacheKey fileKey;
 
@@ -53,7 +53,7 @@ public class InfinispanIndexOutput extends IndexOutput {
    private long filePosition = 0;
    private int currentChunkNumber = 0;
 
-   public InfinispanIndexOutput(AdvancedCache<CacheKey, Object> cache, FileCacheKey fileKey, int bufferSize, FileMetadata fileMetadata) throws IOException {
+   public InfinispanIndexOutput(AdvancedCache cache, FileCacheKey fileKey, int bufferSize, FileMetadata fileMetadata) throws IOException {
       this.cache = cache;
       this.fileKey = fileKey;
       this.bufferSize = bufferSize;
@@ -64,8 +64,8 @@ public class InfinispanIndexOutput extends IndexOutput {
       }
    }
    
-   private static byte[] getChunkById(AdvancedCache<CacheKey, Object> cache, FileCacheKey fileKey, int chunkNumber, int bufferSize) {
-      CacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), chunkNumber);
+   private static byte[] getChunkById(AdvancedCache cache, FileCacheKey fileKey, int chunkNumber, int bufferSize) {
+      ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), chunkNumber);
       byte[] readBuffer = (byte[]) cache.withFlags(Flag.SKIP_LOCKING).get(key);
       if (readBuffer==null) {
          return new byte[bufferSize];

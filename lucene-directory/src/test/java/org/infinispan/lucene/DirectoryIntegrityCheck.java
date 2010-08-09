@@ -24,7 +24,6 @@ package org.infinispan.lucene;
 import java.util.Set;
 
 import org.infinispan.Cache;
-import org.infinispan.lucene.CacheKey;
 import org.infinispan.lucene.ChunkCacheKey;
 import org.infinispan.lucene.FileCacheKey;
 import org.infinispan.lucene.FileListCacheKey;
@@ -51,7 +50,7 @@ public class DirectoryIntegrityCheck {
     * @param indexName
     *           The name of the unique index stored in the cache
     */
-   public static void verifyDirectoryStructure(Cache<CacheKey, Object> cache, String indexName) {
+   public static void verifyDirectoryStructure(Cache cache, String indexName) {
       Set<String> fileList = (Set<String>) cache.get(new FileListCacheKey(indexName));
       Assert.assertNotNull(fileList);
       int fileListCacheKeyInstances = 0;
@@ -69,7 +68,6 @@ public class DirectoryIntegrityCheck {
          } else if (key instanceof FileCacheKey) {
             FileCacheKey fileCacheKey = (FileCacheKey) key;
             Assert.assertEquals(fileCacheKey.getIndexName(), indexName);
-            Assert.assertFalse(fileCacheKey.isLockKey());
             Assert.assertTrue(fileList.contains(fileCacheKey.getFileName()), fileCacheKey + " should not have existed");
             Object value = cache.get(fileCacheKey);
             Assert.assertNotNull(value);
@@ -105,7 +103,7 @@ public class DirectoryIntegrityCheck {
     *           the cache storing the chunks
     * @return the total size adding all found chunks up
     */
-   public static long deepCountFileSize(FileCacheKey fileCacheKey, Cache<CacheKey, Object> cache) {
+   public static long deepCountFileSize(FileCacheKey fileCacheKey, Cache cache) {
       String indexName = fileCacheKey.getIndexName();
       String fileName = fileCacheKey.getFileName();
       long accumulator = 0;
