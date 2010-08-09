@@ -88,13 +88,20 @@ public class InfinispanIndexInput extends IndexInput {
       int newValue = 0;
       // spinning as we currently don't mandate transactions, so no proper lock support available
       boolean done = false;
+      Object lockValue = cache.withFlags(Flag.SKIP_LOCKING, Flag.SKIP_CACHE_STORE).get(readLockKey);
       while (done == false) {
-         Object lockValue = cache.get(readLockKey);
-         if (lockValue == null)
-            return; // no special locking for some core files
-         int refCount = (Integer) lockValue;
-         newValue = refCount - 1;
-         done = cache.replace(readLockKey, refCount, newValue);
+         if (lockValue == null) {
+            lockValue = cache.withFlags(Flag.SKIP_CACHE_STORE).putIfAbsent(readLockKey, Integer.valueOf(0));
+            done = (null == lockValue);
+         }
+         else {
+            int refCount = (Integer) lockValue;
+            newValue = refCount - 1;
+            done = cache.withFlags(Flag.SKIP_CACHE_STORE).replace(readLockKey, refCount, newValue);
+            if (!done) {
+               lockValue = cache.withFlags(Flag.SKIP_LOCKING, Flag.SKIP_CACHE_STORE).get(readLockKey);
+            }
+         }
       }
       if (newValue == 0) {
          realFileDelete(readLockKey, cache);
@@ -121,9 +128,9 @@ public class InfinispanIndexInput extends IndexInput {
          removed = cache.withFlags(Flag.SKIP_LOCKING).remove(chunkKey);
          chunkKey = new ChunkCacheKey(indexName, filename, ++i);
       } while (removed != null);
-      cache.startBatch();
-      cache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_LOCKING).remove(readLockKey);
       FileCacheKey key = new FileCacheKey(indexName, filename);
+      cache.startBatch();
+      cache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_LOCKING, Flag.SKIP_CACHE_STORE).remove(readLockKey);
       cache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_LOCKING).remove(key);
       cache.endBatch(true);
    }
@@ -137,18 +144,26 @@ public class InfinispanIndexInput extends IndexInput {
    private void aquireReadLock() throws FileNotFoundException {
       // spinning as we currently don't mandate transactions, so no proper lock support is available
       boolean done = false;
+      Object lockValue = cache.withFlags(Flag.SKIP_LOCKING, Flag.SKIP_CACHE_STORE).get(readLockKey);
       while (done == false) {
-         Object lockValue = cache.withFlags(Flag.SKIP_LOCKING).get(readLockKey);
-         if (lockValue == null)
-            return; // no special locking for some core files
-         int refCount = (Integer) lockValue;
-         if (refCount == 0) {
-            // too late: in case refCount==0 the delete process already triggered chunk deletion.
-            // safest reaction is to tell this file doesn't exist anymore.
-            throw new FileNotFoundException("segment file was deleted");
+         if (lockValue != null) {
+            int refCount = (Integer) lockValue;
+            if (refCount == 0) {
+               // too late: in case refCount==0 the delete process already triggered chunk deletion.
+               // safest reaction is to tell this file doesn't exist anymore.
+               throw new FileNotFoundException("segment file was deleted");
+            }
+            Integer newValue = Integer.valueOf(refCount + 1);
+            done = cache.withFlags(Flag.SKIP_CACHE_STORE).replace(readLockKey, refCount, newValue);
+            if (!done) {
+               lockValue = cache.withFlags(Flag.SKIP_LOCKING, Flag.SKIP_CACHE_STORE).get(readLockKey);
+            }
+         } else {
+            // readLocks are not stored, so if there's no value assume it's ==1, which means
+            // existing file, not deleted, nobody else owning a read lock
+            lockValue = cache.withFlags(Flag.SKIP_CACHE_STORE).putIfAbsent(readLockKey, Integer.valueOf(2));
+            done = (null == lockValue);
          }
-         Integer newValue = Integer.valueOf(refCount + 1);
-         done = cache.replace(readLockKey, refCount, newValue);
       }
    }
 
