@@ -31,6 +31,7 @@ import org.infinispan.container.EntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -111,6 +112,10 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    }
 
    private boolean loadIfNeeded(InvocationContext ctx, Object key) throws Throwable {
+      // in case SKIP_CACHE_STORE flag was enabled the operation is skipped
+      if (ctx.hasFlag(Flag.SKIP_CACHE_STORE)) {
+         return false;
+      }
       // first check if the container contains the key we need.  Try and load this into the context.
       CacheEntry e = entryFactory.wrapEntryForReading(ctx, key);
       if (e == null || e.isNull()) {
