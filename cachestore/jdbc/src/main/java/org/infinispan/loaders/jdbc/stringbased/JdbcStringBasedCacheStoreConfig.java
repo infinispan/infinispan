@@ -59,7 +59,7 @@ public class JdbcStringBasedCacheStoreConfig extends AbstractNonDelegatingJdbcCa
    public Key2StringMapper getKey2StringMapper() {
       if (key2StringMapper == null) {
          try {
-            key2StringMapper = DefaultKey2StringMapper.class.newInstance();
+            key2StringMapper = DefaultTwoWayKey2StringMapper.class.newInstance();
          } catch (Exception e) {
             throw new IllegalStateException("This should never happen", e);
          }
@@ -68,7 +68,7 @@ public class JdbcStringBasedCacheStoreConfig extends AbstractNonDelegatingJdbcCa
    }
 
    /**
-    * Name of the class implementing Key2StringMapper. The default value is {@link org.infinispan.loaders.jdbc.stringbased.DefaultKey2StringMapper}
+    * Name of the class implementing Key2StringMapper. The default value is {@link org.infinispan.loaders.jdbc.stringbased.DefaultTwoWayKey2StringMapper}
     *
     * @see org.infinispan.loaders.jdbc.stringbased.Key2StringMapper
     */
@@ -92,5 +92,12 @@ public class JdbcStringBasedCacheStoreConfig extends AbstractNonDelegatingJdbcCa
       JdbcStringBasedCacheStoreConfig result = (JdbcStringBasedCacheStoreConfig) super.clone();
       result.key2StringMapper = key2StringMapper;
       return result;
+   }
+
+   @Override
+   public String toString() {
+      return "JdbcStringBasedCacheStoreConfig{" +
+            "key2StringMapper=" + key2StringMapper +
+            "} " + super.toString();
    }
 }

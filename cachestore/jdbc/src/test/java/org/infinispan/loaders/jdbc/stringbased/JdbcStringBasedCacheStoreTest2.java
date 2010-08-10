@@ -61,7 +61,7 @@ public class JdbcStringBasedCacheStoreTest2 {
       tableManipulation = UnitTestDatabaseManager.buildDefaultTableManipulation();
       cfc = UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
       JdbcStringBasedCacheStoreConfig config = new JdbcStringBasedCacheStoreConfig(cfc, tableManipulation);
-      config.setKey2StringMapperClass(PersonKey2StringMapper.class.getName());
+      config.setKey2StringMapperClass(TwoWayKey2StringMapper.class.getName());
       config.setPurgeSynchronously(true);
       cacheStore = new JdbcStringBasedCacheStore();
       Cache<?, ?> mockCache = EasyMock.createNiceMock(Cache.class);

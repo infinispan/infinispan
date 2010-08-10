@@ -48,6 +48,14 @@
       <priority value="INFO"/>
    </category>
 
+   <category name="org.infinispan.loaders">
+      <priority value="TRACE"/>
+   </category>
+
+   <category name="org.infinispan.loaders.jdbc.connectionfactory.PooledConnectionFactory">
+      <priority value="WARN"/>
+   </category>
+
    <category name="com.mchange">
       <priority value="TRACE"/>
    </category>

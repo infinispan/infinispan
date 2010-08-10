@@ -22,7 +22,7 @@
 package org.infinispan.loaders.jdbc.mixed;
 
 import org.infinispan.loaders.LockSupportCacheStoreConfig;
-import org.infinispan.loaders.jdbc.stringbased.PersonKey2StringMapper;
+import org.infinispan.loaders.jdbc.stringbased.DefaultTwoWayKey2StringMapper;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -83,8 +83,8 @@ public class JdbcMixedCacheStoreConfigTest {
    }
 
    public void testKey2StringMapper() {
-      config.setKey2StringMapperClass(PersonKey2StringMapper.class.getName());
-      assert config.getStringCacheStoreConfig().getKey2StringMapper().getClass().equals(PersonKey2StringMapper.class);
+      config.setKey2StringMapperClass(DefaultTwoWayKey2StringMapper.class.getName());
+      assert config.getStringCacheStoreConfig().getKey2StringMapper().getClass().equals(DefaultTwoWayKey2StringMapper.class);
    }
 
    public void testConcurrencyLevel() {

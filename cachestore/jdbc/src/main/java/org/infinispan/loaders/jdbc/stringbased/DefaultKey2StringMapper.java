@@ -26,21 +26,21 @@ package org.infinispan.loaders.jdbc.stringbased;
  * primitive wrappers(e.g. Integer, Long etc).
  *
  * @author Mircea.Markus@jboss.com
+ * @deprecated since 4.1 when {@link org.infinispan.loaders.jdbc.stringbased.DefaultTwoWayKey2StringMapper}
+ * which is a replacement this implementation. 
  */
-public class DefaultKey2StringMapper implements Key2StringMapper {
+public class DefaultKey2StringMapper implements TwoWayKey2StringMapper {
 
    /**
     * Returns true if this is an primitive wrapper, false otherwise.
     */
    public boolean isSupportedType(Class key) {
-      return key == String.class ||
-            key == Short.class ||
-            key == Byte.class ||
-            key == Long.class ||
-            key == Integer.class ||
-            key == Double.class ||
-            key == Float.class ||
-            key == Boolean.class;
+      return DefaultTwoWayKey2StringMapper.isPrimitive(key);
+   }
+
+   @Override
+   public Object getKeyMapping(String key) {
+      return null;
    }
 
    /**
@@ -52,4 +52,5 @@ public class DefaultKey2StringMapper implements Key2StringMapper {
       }
       return key.toString();
    }
+
 }

@@ -84,7 +84,7 @@ public class PooledConnectionFactory extends ConnectionFactory {
       try {
          DataSources.destroy(pooledDataSource);
          if (log.isTraceEnabled()) {
-            log.debug("Sucessfully stopped PooledConnectionFactory.");
+            log.debug("Successfully stopped PooledConnectionFactory.");
          }
       }
       catch (SQLException sqle) {
@@ -95,16 +95,9 @@ public class PooledConnectionFactory extends ConnectionFactory {
    @Override
    public Connection getConnection() throws CacheLoaderException {
       try {
-         if (log.isTraceEnabled()) {
-            log.trace("DataSource before checkout (NumBusyConnectionsAllUsers) : " + pooledDataSource.getNumBusyConnectionsAllUsers());
-            log.trace("DataSource before checkout (NumConnectionsAllUsers) : " + pooledDataSource.getNumConnectionsAllUsers());
-         }
+         logBefore(true);
          Connection connection = pooledDataSource.getConnection();
-         if (log.isTraceEnabled()) {
-            log.trace("DataSource after checkout (NumBusyConnectionsAllUsers) : " + pooledDataSource.getNumBusyConnectionsAllUsers());
-            log.trace("DataSource after checkout (NumConnectionsAllUsers) : " + pooledDataSource.getNumConnectionsAllUsers());
-            log.trace("Connection checked out: " + connection);
-         }
+         logAfter(connection, true);
          return connection;
       } catch (SQLException e) {
          throw new CacheLoaderException("Failed obtaining connection from PooledDataSource", e);
@@ -113,12 +106,35 @@ public class PooledConnectionFactory extends ConnectionFactory {
 
    @Override
    public void releaseConnection(Connection conn) {
+      logBefore(false);
       JdbcUtil.safeClose(conn);
+      logAfter(conn, false);
    }
 
    public ComboPooledDataSource getPooledDataSource() {
       return pooledDataSource;
    }
 
+   private void logBefore(boolean checkout) {
+      if (log.isTraceEnabled()) {
+         String operation = checkout ? "checkout" : "release";
+         try {
+            log.trace("DataSource before " + operation + " (NumBusyConnectionsAllUsers) : " + pooledDataSource.getNumBusyConnectionsAllUsers() + ", (NumConnectionsAllUsers) : " + pooledDataSource.getNumConnectionsAllUsers());
+         } catch (SQLException e) {                                                                                                                
+            log.warn("Unexpected", e);
+         }
+      }
+   }
 
+   private void logAfter(Connection connection, boolean checkout)  {
+      if (log.isTraceEnabled()) {
+         String operation = checkout ? "checkout" : "release";
+         try {
+            log.trace("DataSource after " + operation + " (NumBusyConnectionsAllUsers) : " + pooledDataSource.getNumBusyConnectionsAllUsers() + ", (NumConnectionsAllUsers) : " + pooledDataSource.getNumConnectionsAllUsers());
+         } catch (SQLException e) {
+            log.warn("Unexpected", e);
+         }
+         log.trace("Connection " + operation + " : " + connection);
+      }
+   }
 }

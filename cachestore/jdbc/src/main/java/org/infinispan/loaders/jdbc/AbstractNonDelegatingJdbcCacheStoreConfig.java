@@ -161,4 +161,14 @@ public abstract class AbstractNonDelegatingJdbcCacheStoreConfig extends Abstract
       result.tableManipulation = tableManipulation.clone();
       return result;
    }
+
+   @Override
+   public String toString() {
+      return "AbstractNonDelegatingJdbcCacheStoreConfig{" +
+            "lockConcurrencyLevel=" + lockConcurrencyLevel +
+            ", lockAcquistionTimeout=" + lockAcquistionTimeout +
+            ", tableManipulation=" + tableManipulation +
+            ", manageConnectionFactory=" + manageConnectionFactory +
+            "} " + super.toString();
+   }
 }
