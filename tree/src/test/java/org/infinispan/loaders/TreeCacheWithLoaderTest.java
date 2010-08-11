@@ -1,5 +1,6 @@
 package org.infinispan.loaders;
 
+import org.infinispan.atomic.AtomicMap;
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
@@ -39,12 +40,14 @@ public class TreeCacheWithLoaderTest extends SingleCacheManagerTest {
       assert "value".equals(cache.get("/a/b/c", "key"));
 
       assert store.containsKey(new NodeKey(Fqn.fromString("/a/b/c"), NodeKey.Type.DATA));
+      assert "value".equals(((AtomicMap) store.load(new NodeKey(Fqn.fromString("/a/b/c"), NodeKey.Type.DATA)).getValue()).get("key"));
       assert store.containsKey(new NodeKey(Fqn.fromString("/a/b/c"), NodeKey.Type.STRUCTURE));
 
       cache.stop();
       cache.start();
       assert "value".equals(cache.get("/a/b/c", "key"));
       assert store.containsKey(new NodeKey(Fqn.fromString("/a/b/c"), NodeKey.Type.DATA));
+      assert "value".equals(((AtomicMap) store.load(new NodeKey(Fqn.fromString("/a/b/c"), NodeKey.Type.DATA)).getValue()).get("key"));
       assert store.containsKey(new NodeKey(Fqn.fromString("/a/b/c"), NodeKey.Type.STRUCTURE));
    }
 
@@ -52,6 +55,7 @@ public class TreeCacheWithLoaderTest extends SingleCacheManagerTest {
       cache.put(Fqn.ROOT, "key", "value");
       assert "value".equals(cache.get(Fqn.ROOT, "key"));
       assert store.containsKey(new NodeKey(Fqn.ROOT, NodeKey.Type.DATA));
+      assert "value".equals(((AtomicMap) store.load(new NodeKey(Fqn.ROOT, NodeKey.Type.DATA)).getValue()).get("key"));
       assert store.containsKey(new NodeKey(Fqn.ROOT, NodeKey.Type.STRUCTURE));
 
       cache.stop();
@@ -59,6 +63,7 @@ public class TreeCacheWithLoaderTest extends SingleCacheManagerTest {
       assert "value".equals(cache.get(Fqn.ROOT, "key"));
 
       assert store.containsKey(new NodeKey(Fqn.ROOT, NodeKey.Type.DATA));
+      assert "value".equals(((AtomicMap) store.load(new NodeKey(Fqn.ROOT, NodeKey.Type.DATA)).getValue()).get("key"));
       assert store.containsKey(new NodeKey(Fqn.ROOT, NodeKey.Type.STRUCTURE));
    }
 
