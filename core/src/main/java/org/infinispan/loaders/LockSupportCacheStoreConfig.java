@@ -39,4 +39,12 @@ public class LockSupportCacheStoreConfig extends AbstractCacheStoreConfig {
       testImmutability("lockAcquistionTimeout");
       this.lockAcquistionTimeout = lockAcquistionTimeout;
    }
+
+   @Override
+   public String toString() {
+      return "LockSupportCacheStoreConfig{" +
+            "lockConcurrencyLevel=" + lockConcurrencyLevel +
+            ", lockAcquistionTimeout=" + lockAcquistionTimeout +
+            "} " + super.toString();
+   }
 }

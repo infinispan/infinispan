@@ -33,6 +33,8 @@ import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore;
 import org.infinispan.marshall.StreamingMarshaller;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -65,6 +67,8 @@ import java.util.Set;
  */
 @CacheLoaderMetadata(configurationClass = JdbcMixedCacheStoreConfig.class)
 public class JdbcMixedCacheStore extends AbstractCacheStore {
+
+   private static Log log = LogFactory.getLog(JdbcMixedCacheStore.class);
 
    private JdbcMixedCacheStoreConfig config;
    private JdbcBinaryCacheStore binaryCacheStore = new JdbcBinaryCacheStore();
@@ -112,6 +116,10 @@ public class JdbcMixedCacheStore extends AbstractCacheStore {
    public Set<InternalCacheEntry> loadAll() throws CacheLoaderException {
       Set<InternalCacheEntry> fromBuckets = binaryCacheStore.loadAll();
       Set<InternalCacheEntry> fromStrings = stringBasedCacheStore.loadAll();
+      if (log.isTraceEnabled()) {
+         log.trace("Loaded from bucket: " + fromBuckets);
+         log.trace("Loaded from string: " + fromStrings);
+      }
       fromBuckets.addAll(fromStrings);
       return fromBuckets;
    }

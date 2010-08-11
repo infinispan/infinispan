@@ -67,4 +67,11 @@ public abstract class AbstractJdbcCacheStoreConfig extends LockSupportCacheStore
       result.connectionFactoryConfig = connectionFactoryConfig.clone();
       return result;
    }
+
+   @Override
+   public String toString() {
+      return "AbstractJdbcCacheStoreConfig{" +
+            "connectionFactoryConfig=" + connectionFactoryConfig +
+            "} " + super.toString();
+   }
 }

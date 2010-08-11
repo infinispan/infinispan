@@ -32,6 +32,7 @@ import org.infinispan.loaders.jdbc.TableManipulation;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactory;
 import org.infinispan.loaders.jdbc.connectionfactory.ConnectionFactoryConfig;
 import org.infinispan.loaders.jdbc.stringbased.DefaultKey2StringMapper;
+import org.infinispan.loaders.jdbc.stringbased.DefaultTwoWayKey2StringMapper;
 import org.infinispan.loaders.jdbc.stringbased.Person;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
@@ -73,7 +74,7 @@ public class JdbcMixedCacheStoreTest {
       JdbcMixedCacheStoreConfig cacheStoreConfig = new JdbcMixedCacheStoreConfig(cfc, binaryTm, stringsTm);
       cacheStoreConfig.setPurgeSynchronously(true);
 
-      cacheStoreConfig.setKey2StringMapperClass(DefaultKey2StringMapper.class.getName());
+      cacheStoreConfig.setKey2StringMapperClass(DefaultTwoWayKey2StringMapper.class.getName());
       cacheStore = new JdbcMixedCacheStore();
       cacheStore.init(cacheStoreConfig, new CacheDelegate("aName"), getMarshaller());
       cacheStore.start();
@@ -140,14 +141,14 @@ public class JdbcMixedCacheStoreTest {
       } finally {
          marshaller.finishObjectOutput(oo);
          out.close();
-         cacheStore.clear();         
+         cacheStore.clear();
       }
       assertRowCounts(0, 0);
-      
+
       ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
       ObjectInput oi = marshaller.startObjectInput(in, false);
       try {
-         cacheStore.fromStream(new UnclosableObjectInputStream(oi));         
+         cacheStore.fromStream(new UnclosableObjectInputStream(oi));
       } finally {
          marshaller.finishObjectInput(oi);
          in.close();
@@ -170,7 +171,7 @@ public class JdbcMixedCacheStoreTest {
       cacheStore.store(forth);
       assertRowCounts(2, 2);
       Set<InternalCacheEntry> entries = cacheStore.loadAll();
-      assert entries.size() == 4;
+      assert entries.size() == 4 : "Expected 4 and got: " + entries;
       assert entries.contains(first);
       assert entries.contains(second);
       assert entries.contains(third);

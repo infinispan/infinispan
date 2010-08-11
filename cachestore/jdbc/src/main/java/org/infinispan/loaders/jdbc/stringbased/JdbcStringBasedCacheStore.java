@@ -22,6 +22,7 @@
 package org.infinispan.loaders.jdbc.stringbased;
 
 import org.infinispan.Cache;
+import org.infinispan.config.Configuration;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.io.ByteBuffer;
@@ -62,10 +63,20 @@ import java.util.Set;
  * {@link org.infinispan.loaders.jdbc.binary.JdbcBinaryCacheStore}} whenever it is possible, as is has a better performance.
  * One scenario in which this is not possible to use it though, is when you can't write an {@link Key2StringMapper}} to map the
  * keys to to string objects (e.g. when you don't have control over the types of the keys, for whatever reason).
+ * <p/>
+ * <b>Preload</b>.In order to support preload functionality the store needs to read the string keys from the database and transform them
+ * into the corresponding key objects. {@link org.infinispan.loaders.jdbc.stringbased.Key2StringMapper} only supports
+ * key to string transformation(one way); in order to be able to use preload one needs to specify an
+ * {@link org.infinispan.loaders.jdbc.stringbased.TwoWayKey2StringMapper}, which extends {@link org.infinispan.loaders.jdbc.stringbased.Key2StringMapper} and
+ * allows bidirectional transformation.
+ * <p/>
+ * <b>Rehashing</b>. When a node leaves/joins, Infinispan moves around persistent state as part of rehashing process.
+ * For this it needs access to the underlaying key objects, so if distribution is used, the mapper needs to be an
+ * {@link org.infinispan.loaders.jdbc.stringbased.TwoWayKey2StringMapper} otherwise the cache won't start (same constraint as with preloading).
  *
  * @author Mircea.Markus@jboss.com
  * @see Key2StringMapper
- * @see DefaultKey2StringMapper
+ * @see DefaultTwoWayKey2StringMapper
  */
 @CacheLoaderMetadata(configurationClass = JdbcStringBasedCacheStoreConfig.class)
 public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
@@ -95,11 +106,19 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
       super.start();
       if (config.isManageConnectionFactory()) {
          String connectionFactoryClass = config.getConnectionFactoryConfig().getConnectionFactoryClass();
+         if (log.isTraceEnabled()) log.trace("Using managed connection factory: " + connectionFactoryClass);
          ConnectionFactory connectionFactory = ConnectionFactory.getConnectionFactory(connectionFactoryClass);
          connectionFactory.start(config.getConnectionFactoryConfig());
          doConnectionFactoryInitialization(connectionFactory);
       }
       this.key2StringMapper = config.getKey2StringMapper();
+      if (log.isTraceEnabled()) log.trace("Using key2StringMapper: " + key2StringMapper.getClass().getName());
+      if (isUsingPreload()) {
+         enforceTwoWayMapper("preload");
+      } 
+      if (isDistributed()) {
+         enforceTwoWayMapper("distribution/rehashing");
+      }
       dmHelper = new DataManipulationHelper(connectionFactory, tableManipulation, marshaller) {
 
          @Override
@@ -111,31 +130,34 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
          public void loadAllProcess(ResultSet rs, Set<InternalCacheEntry> result) throws SQLException, CacheLoaderException {
             InputStream inputStream = rs.getBinaryStream(1);
             InternalCacheValue icv = (InternalCacheValue) JdbcUtil.unmarshall(getMarshaller(), inputStream);
-            Object key = rs.getObject(2);
+            String keyStr = rs.getString(2);
+            Object key = ((TwoWayKey2StringMapper) key2StringMapper).getKeyMapping(keyStr);
             result.add(icv.toInternalCacheEntry(key));
          }
 
          @Override
          public void loadAllKeysProcess(ResultSet rs, Set<Object> keys, Set<Object> keysToExclude) throws SQLException, CacheLoaderException {
-            Object k = rs.getObject(1);
-            if (includeKey(k, keysToExclude)) keys.add(k);
+            String keyStr = rs.getString(1);
+            Object key = ((TwoWayKey2StringMapper) key2StringMapper).getKeyMapping(keyStr);
+            if (includeKey(key, keysToExclude)) {
+               keys.add(key);
+            }
          }
 
          @Override
          public void toStreamProcess(ResultSet rs, InputStream is, ObjectOutput objectOutput) throws CacheLoaderException, SQLException, IOException {
             InternalCacheValue icv = (InternalCacheValue) JdbcUtil.unmarshall(getMarshaller(), is);
-            Object key = rs.getObject(2);
+            String key = rs.getString(2);//key is a string
             marshaller.objectToObjectStream(icv.toInternalCacheEntry(key), objectOutput);
          }
 
          public boolean fromStreamProcess(Object objFromStream, PreparedStatement ps, ObjectInput objectInput) throws SQLException, CacheLoaderException {
             if (objFromStream instanceof InternalCacheEntry) {
                InternalCacheEntry se = (InternalCacheEntry) objFromStream;
-               String key = key2StringMapper.getStringMapping(se.getKey());
                ByteBuffer buffer = JdbcUtil.marshall(getMarshaller(), se.toInternalCacheValue());
                ps.setBinaryStream(1, buffer.getStream(), buffer.getLength());
                ps.setLong(2, se.getExpiryTime());
-               ps.setString(3, key);
+               ps.setString(3, (String) se.getKey());
                return true;
             } else {
                return false;
@@ -148,6 +170,7 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
    public void stop() throws CacheLoaderException {
       tableManipulation.stop();
       if (config.isManageConnectionFactory()) {
+         if (log.isTraceEnabled()) log.trace("Stopping mananged connection factory: " + connectionFactory);
          connectionFactory.stop();
       }
    }
@@ -260,7 +283,6 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
       }
    }
 
-
    @Override
    protected InternalCacheEntry loadLockSafe(Object key, String lockingKey) throws CacheLoaderException {
       Connection conn = null;
@@ -296,6 +318,7 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
       }
    }
 
+
    public Class<? extends CacheLoaderConfig> getConfigurationClass() {
       return JdbcStringBasedCacheStoreConfig.class;
    }
@@ -328,5 +351,24 @@ public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
 
    public TableManipulation getTableManipulation() {
       return tableManipulation;
+   }
+
+   private void enforceTwoWayMapper(String where) throws CacheLoaderException {
+      if (!(key2StringMapper instanceof TwoWayKey2StringMapper)) {
+         String message = "In order for JdbcStringBasedCacheStore to support " + where + ", the Key2StringMapper " +
+               "needs to implement TwoWayKey2StringMapper. You should either make " + key2StringMapper.getClass().getName() +
+               " implement TwoWayKey2StringMapper or disable " + where + ". See [https://jira.jboss.org/browse/ISPN-579] for more details.";
+         log.error(message);
+         throw new CacheLoaderException(message);
+      }
+   }
+
+   public boolean isUsingPreload() {
+      return cache.getConfiguration() != null && cache.getConfiguration().getCacheLoaderManagerConfig() != null &&
+            cache.getConfiguration().getCacheLoaderManagerConfig().isPreload();
+   }
+
+   public boolean isDistributed() {
+      return cache.getConfiguration() != null && cache.getConfiguration().getCacheMode().isDistributed();
    }
 }

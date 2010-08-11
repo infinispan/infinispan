@@ -44,7 +44,8 @@ public class JdbcStringBasedCacheStoreTest extends BaseCacheStoreTest {
       TableManipulation tm = UnitTestDatabaseManager.buildDefaultTableManipulation();
       JdbcStringBasedCacheStoreConfig config = new JdbcStringBasedCacheStoreConfig(connectionFactoryConfig, tm);
       JdbcStringBasedCacheStore stringBasedCacheStore = new JdbcStringBasedCacheStore();
-      stringBasedCacheStore.init(config, new CacheDelegate("aName"), getMarshaller());
+      CacheDelegate cache = new CacheDelegate("aName");
+      stringBasedCacheStore.init(config, cache, getMarshaller());
       stringBasedCacheStore.start();
       return stringBasedCacheStore;
    }
