@@ -14,6 +14,12 @@ import org.infinispan.tree.TreeCache;
 import org.infinispan.tree.TreeCacheImpl;
 import org.testng.annotations.Test;
 
+import java.util.Map;
+
+import static org.infinispan.tree.Fqn.ROOT;
+import static org.infinispan.tree.NodeKey.Type.DATA;
+import static org.infinispan.tree.NodeKey.Type.STRUCTURE;
+
 @Test(groups = "functional", testName = "loaders.TreeCacheWithLoaderTest")
 public class TreeCacheWithLoaderTest extends SingleCacheManagerTest {
 
@@ -39,32 +45,37 @@ public class TreeCacheWithLoaderTest extends SingleCacheManagerTest {
       cache.put("/a/b/c", "key", "value");
       assert "value".equals(cache.get("/a/b/c", "key"));
 
-      assert store.containsKey(new NodeKey(Fqn.fromString("/a/b/c"), NodeKey.Type.DATA));
-      assert "value".equals(((AtomicMap) store.load(new NodeKey(Fqn.fromString("/a/b/c"), NodeKey.Type.DATA)).getValue()).get("key"));
-      assert store.containsKey(new NodeKey(Fqn.fromString("/a/b/c"), NodeKey.Type.STRUCTURE));
+      assert store.containsKey(new NodeKey(Fqn.fromString("/a/b/c"), DATA));
+      assert "value".equals(nodeContentsInCacheStore(store, Fqn.fromString("/a/b/c")).get("key"));
+      assert store.containsKey(new NodeKey(Fqn.fromString("/a/b/c"), STRUCTURE));
 
       cache.stop();
       cache.start();
       assert "value".equals(cache.get("/a/b/c", "key"));
-      assert store.containsKey(new NodeKey(Fqn.fromString("/a/b/c"), NodeKey.Type.DATA));
-      assert "value".equals(((AtomicMap) store.load(new NodeKey(Fqn.fromString("/a/b/c"), NodeKey.Type.DATA)).getValue()).get("key"));
-      assert store.containsKey(new NodeKey(Fqn.fromString("/a/b/c"), NodeKey.Type.STRUCTURE));
+      assert store.containsKey(new NodeKey(Fqn.fromString("/a/b/c"), DATA));
+      assert "value".equals(nodeContentsInCacheStore(store, Fqn.fromString("/a/b/c")).get("key"));
+      assert store.containsKey(new NodeKey(Fqn.fromString("/a/b/c"), STRUCTURE));
    }
 
    public void testRootNodePersistence() throws CacheLoaderException {
-      cache.put(Fqn.ROOT, "key", "value");
-      assert "value".equals(cache.get(Fqn.ROOT, "key"));
-      assert store.containsKey(new NodeKey(Fqn.ROOT, NodeKey.Type.DATA));
-      assert "value".equals(((AtomicMap) store.load(new NodeKey(Fqn.ROOT, NodeKey.Type.DATA)).getValue()).get("key"));
-      assert store.containsKey(new NodeKey(Fqn.ROOT, NodeKey.Type.STRUCTURE));
+      cache.put(ROOT, "key", "value");
+      assert "value".equals(cache.get(ROOT, "key"));
+      assert store.containsKey(new NodeKey(ROOT, DATA));
+      assert "value".equals(nodeContentsInCacheStore(store, ROOT).get("key"));
+      assert store.containsKey(new NodeKey(ROOT, STRUCTURE));
 
       cache.stop();
       cache.start();
-      assert "value".equals(cache.get(Fqn.ROOT, "key"));
+      assert "value".equals(cache.get(ROOT, "key"));
 
-      assert store.containsKey(new NodeKey(Fqn.ROOT, NodeKey.Type.DATA));
-      assert "value".equals(((AtomicMap) store.load(new NodeKey(Fqn.ROOT, NodeKey.Type.DATA)).getValue()).get("key"));
-      assert store.containsKey(new NodeKey(Fqn.ROOT, NodeKey.Type.STRUCTURE));
+      assert store.containsKey(new NodeKey(ROOT, DATA));
+      assert "value".equals(nodeContentsInCacheStore(store, ROOT).get("key"));
+      assert store.containsKey(new NodeKey(ROOT, STRUCTURE));
+   }
+
+   @SuppressWarnings("unchecked")
+   private Map<String, String> nodeContentsInCacheStore(CacheStore cs, Fqn fqn) throws CacheLoaderException {
+      return (Map<String, String>) cs.load(new NodeKey(fqn, DATA)).getValue();
    }
 
 }
