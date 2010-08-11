@@ -45,6 +45,7 @@ import org.testng.annotations.Test;
  * @author Sanne Grinovero
  * @since 4.1
  */
+@Test(groups = "profiling", testName = "lucene.profiling.CacheStoreStressTest", sequential = true)
 public class CacheStoreStressTest extends SingleCacheManagerTest {
    
    private final ConnectionFactoryConfig connectionFactoryConfig = UnitTestDatabaseManager.getUniqueConnectionFactoryConfig();
