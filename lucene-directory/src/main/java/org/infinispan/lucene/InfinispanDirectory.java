@@ -174,16 +174,15 @@ public class InfinispanDirectory extends Directory {
       } while (true);
       
       // rename metadata first
-      cache.startBatch();
+      boolean batching = cache.startBatch();
       FileCacheKey fromKey = new FileCacheKey(indexName, from);
       FileMetadata metadata = (FileMetadata) cache.remove(fromKey);
       cache.put(new FileCacheKey(indexName, to), metadata);
       Set<String> fileList = getFileList();
       fileList.remove(from);
       fileList.add(to);
-      createRefCountForNewFile(to);
       cache.put(fileListCacheKey, fileList);
-      cache.endBatch(true);
+      if (batching) cache.endBatch(true);
       
       // now trigger deletion of old file chunks:
       FileReadLockKey fileFromReadLockKey = new FileReadLockKey(indexName, from);
@@ -214,7 +213,6 @@ public class InfinispanDirectory extends Directory {
       FileMetadata previous = (FileMetadata) cache.putIfAbsent(key, newFileMetadata);
       if (previous == null) {
          // creating new file
-         createRefCountForNewFile(name);
          Set<String> fileList = getFileList();
          fileList.add(name);
          cache.put(fileListCacheKey, fileList);
@@ -222,11 +220,6 @@ public class InfinispanDirectory extends Directory {
       } else {
          return new InfinispanIndexOutput(cache, key, chunkSize, previous);
       }
-   }
-
-   private void createRefCountForNewFile(String fileName) {
-      FileReadLockKey readLockKey = new FileReadLockKey(indexName, fileName);
-      cache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_CACHE_STORE).put(readLockKey, Integer.valueOf(1));
    }
 
    @SuppressWarnings("unchecked")

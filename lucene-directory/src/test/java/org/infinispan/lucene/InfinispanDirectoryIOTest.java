@@ -78,18 +78,18 @@ public class InfinispanDirectoryIOTest {
       IndexOutput io = dir.createOutput(fileName);
       RepeatableLongByteSequence bytesGenerator = new RepeatableLongByteSequence();
       //It writes repeatable text
-      int REPEATABLE_BUFFER_SIZE = 1501;
+      final int REPEATABLE_BUFFER_SIZE = 1501;
       for (int i = 0; i < REPEATABLE_BUFFER_SIZE; i++) {
          io.writeByte(bytesGenerator.nextByte());
       }
       io.flush();
       
       //Text to write on file with repeatable text
-      String someText = "This is some text";
-      byte[] someTextAsBytes = someText.getBytes();
+      final String someText = "This is some text";
+      final byte[] someTextAsBytes = someText.getBytes();
       //4 points in random order where writing someText: at begin of file, at end of file, within a single chunk,
       //between 2 chunks
-      int[] pointers = {0, 635, REPEATABLE_BUFFER_SIZE, 135};
+      final int[] pointers = {0, 635, REPEATABLE_BUFFER_SIZE, 135};
       
       for(int i=0; i < pointers.length; i++) {
          io.seek(pointers[i]);
@@ -104,23 +104,23 @@ public class InfinispanDirectoryIOTest {
       int indexPointer = 0;
       Arrays.sort(pointers);
       byte[] buffer = null;
-      int chunkIndex = 0;
+      int chunkIndex = -1;
       //now testing the stream is equal to the produced repeatable but including the edits at pointed positions
       for (int i = 0; i < REPEATABLE_BUFFER_SIZE + someTextAsBytes.length; i++) {
-         if(i % BUFFER_SIZE == 0) {
-            buffer = (byte[])cache.get(new ChunkCacheKey(INDEXNAME, fileName, chunkIndex++));
+         if (i % BUFFER_SIZE == 0) {
+            buffer = (byte[]) cache.get(new ChunkCacheKey(INDEXNAME, fileName, ++chunkIndex));
          }
          
          byte predictableByte = bytesGenerator.nextByte();
-         if(i < pointers[indexPointer]) {
+         if (i < pointers[indexPointer]) {
             //Assert predictable text
             Assert.assertEquals(predictableByte, buffer[i % BUFFER_SIZE]);
-         } else if(pointers[indexPointer] <= i && i < pointers[indexPointer] + someTextAsBytes.length){
+         } else if (pointers[indexPointer] <= i && i < pointers[indexPointer] + someTextAsBytes.length) {
             //Assert someText 
             Assert.assertEquals(someTextAsBytes[i - pointers[indexPointer]], buffer[i % BUFFER_SIZE]);
          }
          
-         if(i == pointers[indexPointer] + someTextAsBytes.length) {
+         if (i == pointers[indexPointer] + someTextAsBytes.length) {
             //Change pointer
             indexPointer++;
          }
@@ -473,6 +473,7 @@ public class InfinispanDirectoryIOTest {
       io.writeByte((byte) 69);
 
       io.flush();
+      io.close();
 
       assert dir.fileExists("MyNewFile.txt");
       assert null != cache.get(new ChunkCacheKey(INDEXNAME, "MyNewFile.txt", 0));
@@ -486,6 +487,7 @@ public class InfinispanDirectoryIOTest {
       assert new String(new byte[] { 66, 69 }).equals(new String(buf).trim());
 
       String testText = "This is some rubbish again that will span more than one chunk - one hopes.  Who knows, maybe even three or four chunks.";
+      io = dir.createOutput("MyNewFile.txt");
       io.seek(0);
       io.writeBytes(testText.getBytes(), 0, testText.length());
       io.close();

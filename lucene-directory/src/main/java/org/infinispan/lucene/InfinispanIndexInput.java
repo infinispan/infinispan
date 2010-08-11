@@ -48,6 +48,7 @@ public class InfinispanIndexInput extends IndexInput {
    private final FileCacheKey fileKey;
    private final int chunkSize;
    private final FileReadLockKey readLockKey;
+   private final boolean trace;
 
    private int currentBufferSize;
    private byte[] buffer;
@@ -64,8 +65,9 @@ public class InfinispanIndexInput extends IndexInput {
       final String filename = fileKey.getFileName();
       this.readLockKey = new FileReadLockKey(fileKey.getIndexName(), filename);
       aquireReadLock();
-      if (log.isDebugEnabled()) {
-         log.debug("Opened new IndexInput for file:{0} in index: {1}", filename, fileKey.getIndexName());
+      trace = log.isTraceEnabled();
+      if (trace) {
+         log.trace("Opened new IndexInput for file:{0} in index: {1}", filename, fileKey.getIndexName());
       }
    }
 
@@ -129,10 +131,10 @@ public class InfinispanIndexInput extends IndexInput {
          chunkKey = new ChunkCacheKey(indexName, filename, ++i);
       } while (removed != null);
       FileCacheKey key = new FileCacheKey(indexName, filename);
-      cache.startBatch();
+//      boolean batch = cache.startBatch(); //FIXME when enabling batch, org.infinispan.lucene.profiling.CacheStoreStressTest fails to remove the readLockKey
       cache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_LOCKING, Flag.SKIP_CACHE_STORE).remove(readLockKey);
       cache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_LOCKING).remove(key);
-      cache.endBatch(true);
+//      if (batch) cache.endBatch(true);
    }
 
    /**
@@ -203,8 +205,8 @@ public class InfinispanIndexInput extends IndexInput {
       buffer = null;
       if (isClone) return;
       releaseReadLock();
-      if (log.isDebugEnabled()) {
-         log.debug("Closed IndexInput for file:{0} in index: {1}", fileKey.getFileName(), fileKey.getIndexName());
+      if (trace) {
+         log.trace("Closed IndexInput for file:{0} in index: {1}", fileKey.getFileName(), fileKey.getIndexName());
       }
    }
 
