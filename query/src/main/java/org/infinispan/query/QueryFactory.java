@@ -45,14 +45,17 @@ public class QueryFactory {
       searchFactory = qh.getSearchFactory();
    }
 
+
    /**
-    * This is a simple method that will just return a {@link CacheQuery}
+    * This is a simple method that will just return a {@link CacheQuery}, filtered according to a set of classes passed
+    * in.  If no classes are passed in, it is assumed that no type filtering is performed.
     *
     * @param luceneQuery - {@link org.apache.lucene.search.Query}
-    * @return the query result
+    * @param classes - only return results of type that matches this list of acceptable types
+    * @return the query object which can be used to iterate through results
     */
-   public CacheQuery getQuery(Query luceneQuery) {
-      return new CacheQueryImpl(luceneQuery, searchFactory, cache);
+   public CacheQuery getQuery(Query luceneQuery, Class<?>... classes) {
+      return new CacheQueryImpl(luceneQuery, searchFactory, cache, classes);
    }
 
    /**

@@ -35,11 +35,14 @@ import org.infinispan.query.CacheQuery;
 import org.infinispan.query.QueryFactory;
 import org.infinispan.query.QueryIterator;
 import org.infinispan.query.backend.QueryHelper;
+import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.testng.annotations.AfterMethod;
 
 import java.util.List;
+
+import static java.util.Arrays.asList;
 
 public abstract class AbstractLocalQueryTest extends SingleCacheManagerTest {
    protected Person person1;
@@ -48,6 +51,7 @@ public abstract class AbstractLocalQueryTest extends SingleCacheManagerTest {
    protected Person person4;
    protected Person person5;
    protected Person person6;
+   protected AnotherGrassEater anotherGrassEater;
    protected QueryParser queryParser;
    protected Query luceneQuery;
    protected CacheQuery cacheQuery;
@@ -55,8 +59,9 @@ public abstract class AbstractLocalQueryTest extends SingleCacheManagerTest {
    protected String key1 = "Navin";
    protected String key2 = "BigGoat";
    protected String key3 = "MiniGoat";
+   protected String anotherGrassEaterKey = "anotherGrassEaterKey";
 
-   protected Cache<Object, Person> cache;
+   protected Cache<Object, Object> cache;
    protected QueryHelper qh;
 
    @AfterMethod(alwaysRun = true)
@@ -274,15 +279,37 @@ public abstract class AbstractLocalQueryTest extends SingleCacheManagerTest {
       queries[1] = new TermQuery(navin);
 
       luceneQuery = queries[0].combine(queries);
+//      luceneQuery = new TermQuery(goat).combine(new Query[]{new TermQuery(navin)});
       cacheQuery = new QueryFactory(cache, qh).getQuery(luceneQuery);
 
       // We know that we've got all 3 hits.
-      assert cacheQuery.getResultSize() == 3;
+      System.out.println("****** Res " + cacheQuery.list());
+      assert cacheQuery.getResultSize() == 3 : "Expected 3, got " + cacheQuery.getResultSize();
 
       cache.clear();
 
       cacheQuery = new QueryFactory(cache, qh).getQuery(luceneQuery);
 
       assert cacheQuery.getResultSize() == 0;
+   }
+
+   public void testTypeFiltering() throws ParseException {
+      queryParser = new QueryParser("blurb", new StandardAnalyzer());
+      luceneQuery = queryParser.parse("grass");
+      cacheQuery = new QueryFactory(cache, qh).getQuery(luceneQuery);
+
+      found = cacheQuery.list();
+
+      assert found.size() == 2;
+      assert found.containsAll(asList(person2, anotherGrassEater));
+
+      queryParser = new QueryParser("blurb", new StandardAnalyzer());
+      luceneQuery = queryParser.parse("grass");
+      cacheQuery = new QueryFactory(cache, qh).getQuery(luceneQuery, AnotherGrassEater.class);
+
+      found = cacheQuery.list();
+
+      assert found.size() == 1;
+      assert found.get(0).equals(anotherGrassEater);
    }
 }

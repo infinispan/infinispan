@@ -33,7 +33,7 @@ import org.testng.annotations.Test;
  */
 
 
-@Test(groups="functional")
+@Test(groups="functional", testName = "query.blackbox.MarshalledValueQueryTest")
 public class MarshalledValueQueryTest extends LocalCacheTest {
    @Override
    protected void enhanceConfig(Configuration c) {
