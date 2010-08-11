@@ -24,6 +24,7 @@ package org.infinispan.query.blackbox;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.helper.TestQueryHelperFactory;
+import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.BeforeMethod;
@@ -55,7 +56,7 @@ public class LocalCacheTest extends AbstractLocalQueryTest {
    public void setUp() throws Exception {
       cache = cacheManager.getCache();
 
-      qh = TestQueryHelperFactory.createTestQueryHelperInstance(cache, Person.class);
+      qh = TestQueryHelperFactory.createTestQueryHelperInstance(cache, Person.class, AnotherGrassEater.class);
 
       person1 = new Person();
       person1.setName("Navin Surtani");
@@ -73,11 +74,11 @@ public class LocalCacheTest extends AbstractLocalQueryTest {
       person5.setName("Smelly Cat");
       person5.setBlurb("Eats fish");
 
-      //Put the 3 created objects in the cache.
+      anotherGrassEater = new AnotherGrassEater("Another grass-eater", "Eats grass");
+
       cache.put(key1, person1);
       cache.put(key2, person2);
       cache.put(key3, person3);
-                  
-
+      cache.put(anotherGrassEaterKey, anotherGrassEater);
    }
 }

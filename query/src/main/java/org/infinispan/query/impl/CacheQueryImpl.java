@@ -91,8 +91,11 @@ public class CacheQueryImpl implements CacheQuery {
       this.luceneQuery = luceneQuery;
       this.cache = cache;
       this.searchFactory = searchFactory;
-      this.targetedEntities = this.searchFactory.getIndexedTypesPolymorphic(classes);
-
+      if (classes == null || classes.length == 0) {
+         this.targetedEntities = this.searchFactory.getIndexedTypesPolymorphic(new Class[]{});
+      } else {
+         this.targetedEntities = this.searchFactory.getIndexedTypesPolymorphic(classes);
+      }
    }
 
 
