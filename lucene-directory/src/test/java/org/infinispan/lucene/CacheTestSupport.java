@@ -214,5 +214,23 @@ public abstract class CacheTestSupport {
       iw.commit();
       iw.close();
    }
-
+   
+   /**
+    * Useful tool to debug the Lucene invocations into the directory;
+    * it prints a thread dump to standard output of only seven lines
+    * from the invoker.
+    * 
+    * @param initialLine The label to print as first line of the stack
+    */
+   public static void dumpMicroStack(String initialLine) {
+      StackTraceElement[] stackTraceElements = Thread.getAllStackTraces().get(Thread.currentThread());
+      StringBuilder sb = new StringBuilder(initialLine);
+      for (int i = 3; i < 10; i++) {
+         sb.append("\n\t");
+         sb.append(stackTraceElements[i]);
+      }
+      sb.append("\n");
+      System.out.println(sb.toString());
+   }
+   
 }

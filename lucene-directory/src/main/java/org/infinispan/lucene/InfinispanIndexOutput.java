@@ -33,6 +33,7 @@ import org.infinispan.util.logging.LogFactory;
  * Responsible for writing to a <code>Directory</code>
  * 
  * @since 4.0
+ * @author Sanne Grinovero
  * @author Lukasz Moren
  * @author Davide Di Somma
  * @see org.apache.lucene.store.Directory
@@ -47,11 +48,14 @@ public class InfinispanIndexOutput extends IndexOutput {
    private final AdvancedCache cache;
    private final FileMetadata file;
    private final FileCacheKey fileKey;
+   private final boolean trace;
 
    private byte[] buffer;
    private int positionInBuffer = 0;
    private long filePosition = 0;
    private int currentChunkNumber = 0;
+
+   private boolean transactionRunning = false;
 
    public InfinispanIndexOutput(AdvancedCache cache, FileCacheKey fileKey, int bufferSize, FileMetadata fileMetadata) throws IOException {
       this.cache = cache;
@@ -59,8 +63,9 @@ public class InfinispanIndexOutput extends IndexOutput {
       this.bufferSize = bufferSize;
       this.buffer = new byte[this.bufferSize];
       this.file = fileMetadata;
-      if (log.isDebugEnabled()) {
-         log.debug("Opened new IndexOutput for file:{0} in index: {1}", fileKey.getFileName(), fileKey.getIndexName());
+      trace = log.isTraceEnabled();
+      if (trace) {
+         log.trace("Opened new IndexOutput for file:{0} in index: {1}", fileKey.getFileName(), fileKey.getIndexName());
       }
    }
    
@@ -80,7 +85,6 @@ public class InfinispanIndexOutput extends IndexOutput {
       }
    }
 
-   
    private static int getPositionInBuffer(long pos, int bufferSize) {
       return (int) (pos % bufferSize);
    }
@@ -90,7 +94,7 @@ public class InfinispanIndexOutput extends IndexOutput {
    }
 
    private void newChunk() throws IOException {
-      flush();// save data first
+      doFlush();// save data first
       currentChunkNumber++;
       // check if we have to create new chunk, or get already existing in cache for modification
       buffer = getChunkById(cache, fileKey, currentChunkNumber, bufferSize);
@@ -127,6 +131,15 @@ public class InfinispanIndexOutput extends IndexOutput {
 
    @Override
    public void flush() throws IOException {
+      //flush is invoked by Lucene directly only in the before-commit phase,
+      //so that's what we begin here:
+      if ( ! transactionRunning) {
+         transactionRunning = cache.startBatch();
+      }
+      doFlush();
+   }
+
+   public void doFlush() throws IOException {
       // create key for the current chunk
       ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), currentChunkNumber);
       // size changed, apply change to file header
@@ -143,12 +156,15 @@ public class InfinispanIndexOutput extends IndexOutput {
             System.arraycopy(buffer, 0, bufferToFlush, 0, newBufferSize);
          }
       }
-      cache.startBatch();
+      boolean microbatch = false;
+      if ( ! transactionRunning) {
+         microbatch = cache.startBatch();
+      }
       // add chunk to cache
       cache.withFlags(Flag.SKIP_REMOTE_LOOKUP).put(key, bufferToFlush);
       // override existing file header with new size and last time access
       cache.withFlags(Flag.SKIP_REMOTE_LOOKUP).put(fileKey, file);
-      cache.endBatch(true);
+      if (microbatch) cache.endBatch(true);
    }
 
    private void resizeFileIfNeeded() {
@@ -159,14 +175,18 @@ public class InfinispanIndexOutput extends IndexOutput {
 
    @Override
    public void close() throws IOException {
-      flush();
+      doFlush();
+      if (transactionRunning) {
+         //commit
+         cache.endBatch(true);
+         transactionRunning = false;
+      }
       positionInBuffer = 0;
       filePosition = 0;
       buffer = null;
-      if (log.isDebugEnabled()) {
-         log.debug("Closed IndexOutput for file:{0} in index: {1}", fileKey.getFileName(), fileKey.getIndexName());
+      if (trace) {
+         log.trace("Closed IndexOutput for file:{0} in index: {1}", fileKey.getFileName(), fileKey.getIndexName());
       }
-      // cache.compact(); //TODO investigate about this
    }
 
    @Override
@@ -183,7 +203,7 @@ public class InfinispanIndexOutput extends IndexOutput {
             throw new IOException(fileKey.getFileName() + ": seeking past of the file");
       }
       if (requestedChunkNumber != currentChunkNumber) {
-         flush();
+         doFlush();
          buffer = getChunkById(cache, fileKey, requestedChunkNumber, bufferSize);
          currentChunkNumber = requestedChunkNumber;
       }
@@ -201,4 +221,5 @@ public class InfinispanIndexOutput extends IndexOutput {
       int lastChunkNumber = (int) (file.getSize() / bufferSize);
       return currentChunkNumber == lastChunkNumber;
    }
+   
 }

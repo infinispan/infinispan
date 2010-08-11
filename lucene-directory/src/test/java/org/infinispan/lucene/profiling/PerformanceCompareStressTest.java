@@ -129,6 +129,7 @@ public class PerformanceCompareStressTest {
       }
    }
 
+   @Test(enabled=false)//to prevent invocations from some versions of TestNG
    public static void stressTestDirectory(Directory dir, String testLabel) throws InterruptedException, IOException {
       SharedState state = new SharedState(DICTIONARY_SIZE);
       CacheTestSupport.initializeDirectory(dir);
