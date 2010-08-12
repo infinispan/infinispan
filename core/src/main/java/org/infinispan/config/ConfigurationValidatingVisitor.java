@@ -22,6 +22,7 @@
 package org.infinispan.config;
 
 import org.infinispan.config.GlobalConfiguration.TransportType;
+import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.loaders.decorators.SingletonStoreConfig;
 
 /**
@@ -33,14 +34,52 @@ import org.infinispan.loaders.decorators.SingletonStoreConfig;
  */
 public class ConfigurationValidatingVisitor extends AbstractConfigurationBeanVisitor {
    private TransportType tt = null;
+   private CacheLoaderManagerConfig clmc = null;
+   private Configuration.EvictionType eviction = null;
 
    @Override
    public void visitSingletonStoreConfig(SingletonStoreConfig ssc) {
-      if (tt == null) throw new ConfigurationException("Singleton store configured without transport being configured");
+      if (tt == null && ssc.isSingletonStoreEnabled()) throw new ConfigurationException("Singleton store configured without transport being configured");
    }
 
    @Override
    public void visitTransportType(TransportType tt) {
       this.tt = tt;
+   }
+   
+   @Override
+   public void visitEvictionType(Configuration.EvictionType bean) {
+      this.eviction = bean;
+      if (this.eviction != null && this.clmc != null) checkEvictionPassivationSettings();
+      super.visitEvictionType(bean);
+   }
+
+   @Override
+   public void visitCacheLoaderManagerConfig(CacheLoaderManagerConfig bean) {
+      this.clmc = bean;
+      if (this.eviction != null && this.clmc != null) checkEvictionPassivationSettings();
+      super.visitCacheLoaderManagerConfig(bean);
+   }
+
+   @Override
+   public void visitConfiguration(Configuration bean) {
+      checkEagerLockingAndDld(bean);
+   }
+
+   private void checkEagerLockingAndDld(Configuration bean) {
+      boolean isEagerLocking = bean.isUseEagerLocking();
+      checkEagerLockingAndDld(bean, isEagerLocking);
+   }
+
+   public static void checkEagerLockingAndDld(Configuration bean, boolean eagerLocking) {
+      boolean isDealLockDetection = bean.isEnableDeadlockDetection();
+      if (isDealLockDetection && eagerLocking) {
+         throw new ConfigurationException("Deadlock detection cannot be used with eager locking until ISPN-596 is fixed. See https://jira.jboss.org/browse/ISPN-596");
+      }
+   }
+
+   private void checkEvictionPassivationSettings() {
+      if (eviction != null && clmc != null && clmc.isPassivation() && eviction.strategy == EvictionStrategy.LIRS)
+         throw new ConfigurationException("Eviction strategy LIRS cannot be used with passivation until ISPN-598 is fixed.  See https://jira.jboss.org/browse/ISPN-598");
    }
 }

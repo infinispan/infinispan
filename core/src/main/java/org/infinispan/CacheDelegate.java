@@ -37,6 +37,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
+import org.infinispan.config.ConfigurationValidatingVisitor;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
@@ -286,6 +287,8 @@ public class CacheDelegate<K, V> extends CacheSupport<K,V> implements AdvancedCa
 
    public void lock(K key) {
       assertKeyNotNull(key);
+      //this will be removed with https://jira.jboss.org/browse/ISPN-598 
+      ConfigurationValidatingVisitor.checkEagerLockingAndDld(config, true);
       lock(Collections.singletonList(key));
    }
 
