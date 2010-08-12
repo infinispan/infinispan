@@ -22,6 +22,7 @@
 package org.infinispan.config;
 
 import org.infinispan.config.GlobalConfiguration.TransportType;
+import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.loaders.decorators.SingletonStoreConfig;
 
 /**
@@ -33,6 +34,8 @@ import org.infinispan.loaders.decorators.SingletonStoreConfig;
  */
 public class ConfigurationValidatingVisitor extends AbstractConfigurationBeanVisitor {
    private TransportType tt = null;
+   private CacheLoaderManagerConfig clmc = null;
+   private Configuration.EvictionType eviction = null;
 
    @Override
    public void visitSingletonStoreConfig(SingletonStoreConfig ssc) {
@@ -42,5 +45,24 @@ public class ConfigurationValidatingVisitor extends AbstractConfigurationBeanVis
    @Override
    public void visitTransportType(TransportType tt) {
       this.tt = tt;
+   }
+   
+   @Override
+   public void visitEvictionType(Configuration.EvictionType bean) {
+      this.eviction = bean;
+      if (this.eviction != null && this.clmc != null) checkEvictionPassivationSettings();
+      super.visitEvictionType(bean);
+   }
+
+   @Override
+   public void visitCacheLoaderManagerConfig(CacheLoaderManagerConfig bean) {
+      this.clmc = bean;
+      if (this.eviction != null && this.clmc != null) checkEvictionPassivationSettings();
+      super.visitCacheLoaderManagerConfig(bean);
+   }
+
+   private void checkEvictionPassivationSettings() {
+      if (eviction != null && clmc != null && clmc.isPassivation() && eviction.strategy == EvictionStrategy.LIRS)
+         throw new ConfigurationException("Eviction strategy LIRS cannot be used with passivation until ISPN-598 is fixed.  See https://jira.jboss.org/browse/ISPN-598");
    }
 }

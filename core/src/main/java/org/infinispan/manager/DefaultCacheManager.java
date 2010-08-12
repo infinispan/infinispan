@@ -24,6 +24,7 @@ package org.infinispan.manager;
 import org.infinispan.Cache;
 import org.infinispan.Version;
 import org.infinispan.config.Configuration;
+import org.infinispan.config.ConfigurationBeanVisitor;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.config.ConfigurationValidatingVisitor;
 import org.infinispan.config.GlobalConfiguration;
@@ -195,7 +196,9 @@ public class DefaultCacheManager implements EmbeddedCacheManager, CacheManager {
                               boolean start) {
       this.globalConfiguration = globalConfiguration == null ? new GlobalConfiguration() : globalConfiguration
             .clone();
+      this.globalConfiguration.accept(new ConfigurationValidatingVisitor());
       this.defaultConfiguration = defaultConfiguration == null ? new Configuration() : defaultConfiguration.clone();
+      this.defaultConfiguration.accept(new ConfigurationValidatingVisitor());
       globalComponentRegistry = new GlobalComponentRegistry(this.globalConfiguration, this);
       if (start)
          start();

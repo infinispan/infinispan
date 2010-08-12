@@ -70,11 +70,9 @@ public class DefaultDataContainer implements DataContainer {
 
       // translate eviction policy and strategy
       switch (policy) {
+         case PIGGYBACK:
          case DEFAULT:
             evictionListener = new DefaultEvictionListener();
-            break;
-         case PIGGYBACK:
-            evictionListener = new PiggybackEvictionListener();
             break;
          default:
             throw new IllegalArgumentException("No such eviction thread policy " + strategy);
@@ -107,15 +105,9 @@ public class DefaultDataContainer implements DataContainer {
 
    public static DataContainer boundedDataContainer(int concurrencyLevel, int maxEntries, EvictionStrategy strategy, EvictionThreadPolicy policy) {
       return new DefaultDataContainer(concurrencyLevel, maxEntries, strategy, policy) {
-
          @Override
          public int size() {
             return immortalEntries.size() + mortalEntries.size();
-         }
-
-         @Override
-         public Set<InternalCacheEntry> getEvictionCandidates() {
-            return evictionListener.getEvicted();
          }
       };
    }
@@ -252,7 +244,6 @@ public class DefaultDataContainer implements DataContainer {
    }
 
    private class DefaultEvictionListener implements EvictionListener<Object, InternalCacheEntry> {
-      final List<InternalCacheEntry> evicted = Collections.synchronizedList(new LinkedList<InternalCacheEntry>());
       private final Log log = LogFactory.getLog(DefaultEvictionListener.class);
 
       @Override
@@ -264,26 +255,6 @@ public class DefaultDataContainer implements DataContainer {
             log.warn("Unable to passivate entry under {0}", key, e);
          }
          notifier.notifyCacheEntryEvicted(key, false, null);
-      }
-
-      public Set<InternalCacheEntry> getEvicted() {
-         Set<InternalCacheEntry> result = Collections.emptySet();
-         synchronized (evicted) {
-            try {
-               result = new HashSet<InternalCacheEntry>(evicted);
-            } finally {
-               evicted.clear();
-            }
-         }
-         return result;
-      }
-   }
-
-   private class PiggybackEvictionListener extends DefaultEvictionListener {
-
-      @Override
-      public Set<InternalCacheEntry> getEvicted() {
-         return Collections.emptySet();
       }
    }
 
