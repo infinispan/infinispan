@@ -61,6 +61,23 @@ public class ConfigurationValidatingVisitor extends AbstractConfigurationBeanVis
       super.visitCacheLoaderManagerConfig(bean);
    }
 
+   @Override
+   public void visitConfiguration(Configuration bean) {
+      checkEagerLockingAndDld(bean);
+   }
+
+   private void checkEagerLockingAndDld(Configuration bean) {
+      boolean isEagerLocking = bean.isUseEagerLocking();
+      checkEagerLockingAndDld(bean, isEagerLocking);
+   }
+
+   public static void checkEagerLockingAndDld(Configuration bean, boolean eagerLocking) {
+      boolean isDealLockDetection = bean.isEnableDeadlockDetection();
+      if (isDealLockDetection && eagerLocking) {
+         throw new ConfigurationException("Deadlock detection cannot be used with eager locking until ISPN-596 is fixed. See https://jira.jboss.org/browse/ISPN-596");
+      }
+   }
+
    private void checkEvictionPassivationSettings() {
       if (eviction != null && clmc != null && clmc.isPassivation() && eviction.strategy == EvictionStrategy.LIRS)
          throw new ConfigurationException("Eviction strategy LIRS cannot be used with passivation until ISPN-598 is fixed.  See https://jira.jboss.org/browse/ISPN-598");
