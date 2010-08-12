@@ -58,10 +58,7 @@ final class FileListCacheKey implements Serializable {
    }
 
    private int generatedHashCode() {
-      final int prime = 31;
-      int result = 1;
-      result = prime * result + ((indexName == null) ? 0 : indexName.hashCode());
-      return result;
+      return 31 + indexName.hashCode();
    }
 
    @Override
@@ -73,17 +70,16 @@ final class FileListCacheKey implements Serializable {
       if (FileListCacheKey.class != obj.getClass())
          return false;
       FileListCacheKey other = (FileListCacheKey) obj;
-      if (indexName == null) {
-         if (other.indexName != null)
-            return false;
-      } else if (!indexName.equals(other.indexName))
-         return false;
-      return true;
+      return indexName.equals(other.indexName);
    }
    
+   /**
+    * Changing the encoding could break backwards compatibility
+    * @see LuceneKey2StringMapper#getKeyMapping(String)
+    */
    @Override
    public String toString() {
-      return "FileListCacheKey{indexName='" + indexName + "'}";
+      return "*|" + indexName;
    }
    
 }

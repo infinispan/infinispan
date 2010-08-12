@@ -64,7 +64,7 @@ public class CacheStoreStressTest extends SingleCacheManagerTest {
       JdbcStringBasedCacheStoreConfig jdbcStoreConfiguration = new JdbcStringBasedCacheStoreConfig(connectionFactoryConfig, tm);
       jdbcStoreConfiguration.setKey2StringMapperClass(LuceneKey2StringMapper.class.getName());
       CacheLoaderManagerConfig loaderManagerConfig = configuration.getCacheLoaderManagerConfig();
-      loaderManagerConfig.setPreload(false); // TODO change after ISPN-579
+      loaderManagerConfig.setPreload(true);
       loaderManagerConfig.addCacheLoaderConfig(jdbcStoreConfiguration);
    }
 

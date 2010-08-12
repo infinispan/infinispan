@@ -77,8 +77,7 @@ final class FileReadLockKey implements Serializable {
    private int generateHashCode() {
       final int prime = 31;
       int result = prime + fileName.hashCode();
-      result = prime * result + indexName.hashCode();
-      return result;
+      return prime * result + indexName.hashCode();
    }
 
    @Override
@@ -92,14 +91,12 @@ final class FileReadLockKey implements Serializable {
       FileReadLockKey other = (FileReadLockKey) obj;
       if (!fileName.equals(other.fileName))
          return false;
-      if (!indexName.equals(other.indexName))
-         return false;
-      return true;
+      return indexName.equals(other.indexName);
    }
 
    @Override
    public String toString() {
-      return "FileReadLockKey{fileName=" + fileName + ", indexName=" + indexName + "} ";
+      return fileName + "|RL|"+ indexName;
    }
 
 }

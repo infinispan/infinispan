@@ -41,6 +41,8 @@ final class ChunkCacheKey implements Serializable {
    private final int hashCode;
 
    public ChunkCacheKey(String indexName, String fileName, int chunkId) {
+      if (fileName == null)
+         throw new IllegalArgumentException("filename must not be null");
       this.indexName = indexName;
       this.fileName = fileName;
       this.chunkId = chunkId;
@@ -81,11 +83,9 @@ final class ChunkCacheKey implements Serializable {
 
    private int generatedHashCode() {
       final int prime = 31;
-      int result = 1;
-      result = prime * result + chunkId;
-      result = prime * result + ((fileName == null) ? 0 : fileName.hashCode());
-      result = prime * result + ((indexName == null) ? 0 : indexName.hashCode());
-      return result;
+      int result = prime + chunkId;
+      result = prime * result + fileName.hashCode();
+      return prime * result + indexName.hashCode();
    }
 
    @Override
@@ -99,22 +99,18 @@ final class ChunkCacheKey implements Serializable {
       ChunkCacheKey other = (ChunkCacheKey) obj;
       if (chunkId != other.chunkId)
          return false;
-      if (fileName == null) {
-         if (other.fileName != null)
-            return false;
-      } else if (!fileName.equals(other.fileName))
+      if (!fileName.equals(other.fileName))
          return false;
-      if (indexName == null) {
-         if (other.indexName != null)
-            return false;
-      } else if (!indexName.equals(other.indexName))
-         return false;
-      return true;
+      return indexName.equals(other.indexName);
    }
 
+   /**
+    * Changing the encoding could break backwards compatibility
+    * @see LuceneKey2StringMapper#getKeyMapping(String)
+    */
    @Override
    public String toString() {
-      return "ChunkCacheKey{chunkId=" + chunkId + ", fileName=" + fileName + ", indexName=" + indexName + "} ";
+      return fileName + "|" + chunkId + "|" + indexName;
    }
    
 }
