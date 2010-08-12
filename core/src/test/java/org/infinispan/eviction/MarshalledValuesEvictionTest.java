@@ -38,7 +38,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.jgroups.util.Util;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "eviction.MarshalledValuesEvictionTest")
+@Test(groups = "functional", testName = "eviction.MarshalledValuesEvictionTest", enabled = false, description = "Is this test even valid?  Evictions don't go thru the marshalled value interceptor when initiated form the data container!")
 public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
    
    private static final int CACHE_SIZE=128;

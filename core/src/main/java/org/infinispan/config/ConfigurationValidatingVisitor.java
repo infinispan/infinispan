@@ -46,7 +46,7 @@ public class ConfigurationValidatingVisitor extends AbstractConfigurationBeanVis
    public void visitTransportType(TransportType tt) {
       this.tt = tt;
    }
-   
+
    @Override
    public void visitEvictionType(Configuration.EvictionType bean) {
       this.eviction = bean;

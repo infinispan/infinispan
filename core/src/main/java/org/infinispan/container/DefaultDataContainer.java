@@ -21,11 +21,19 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
+import org.infinispan.eviction.PassivationManager;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
+import org.infinispan.interceptors.PassivationInterceptor;
+import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.loaders.CacheLoaderManager;
+import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.Immutables;
 import org.infinispan.util.concurrent.BoundedConcurrentHashMap;
 import org.infinispan.util.concurrent.BoundedConcurrentHashMap.Eviction;
 import org.infinispan.util.concurrent.BoundedConcurrentHashMap.EvictionListener;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Simple data container that does not order entries for eviction, implemented using two ConcurrentHashMaps, one for
@@ -46,9 +54,10 @@ public class DefaultDataContainer implements DataContainer {
    final ConcurrentMap<Object, InternalCacheEntry> mortalEntries;
    final AtomicInteger numEntries = new AtomicInteger(0);
    final InternalEntryFactory entryFactory;
-   final DefaultEvictionListener evictionListener; 
+   final DefaultEvictionListener evictionListener;
    protected Cache<Object, Object> cache;
-
+   private PassivationManager passivator;
+   private CacheNotifier notifier;
 
    protected DefaultDataContainer(int concurrencyLevel) {
       immortalEntries = new ConcurrentHashMap<Object, InternalCacheEntry>(128, 0.75f, concurrencyLevel);
@@ -56,30 +65,28 @@ public class DefaultDataContainer implements DataContainer {
       entryFactory = new InternalEntryFactory();
       evictionListener = null;
    }
-   
+
    protected DefaultDataContainer(int concurrencyLevel, int maxEntries, EvictionStrategy strategy, EvictionThreadPolicy policy) {
-      
+
       // translate eviction policy and strategy
       switch (policy) {
+         case PIGGYBACK:
          case DEFAULT:
             evictionListener = new DefaultEvictionListener();
-            break;
-         case PIGGYBACK:
-            evictionListener = new PiggybackEvictionListener();
             break;
          default:
             throw new IllegalArgumentException("No such eviction thread policy " + strategy);
       }
-      
+
       Eviction eviction;
       switch (strategy) {
          case FIFO:
-         case UNORDERED:   
+         case UNORDERED:
          case LRU:
-            eviction = Eviction.LRU;            
+            eviction = Eviction.LRU;
             break;
          case LIRS:
-            eviction = Eviction.LIRS;            
+            eviction = Eviction.LIRS;
             break;
          default:
             throw new IllegalArgumentException("No such eviction strategy " + strategy);
@@ -88,31 +95,27 @@ public class DefaultDataContainer implements DataContainer {
       mortalEntries = new ConcurrentHashMap<Object, InternalCacheEntry>(64, 0.75f, concurrencyLevel);
       entryFactory = new InternalEntryFactory();
    }
-   
-   @Inject
-   public void initialize(Cache<Object, Object> cache) {      
-      this.cache = cache;    
-   }
-   
-   public static DataContainer boundedDataContainer(int concurrencyLevel, int maxEntries, EvictionStrategy strategy, EvictionThreadPolicy policy) {
-      return new DefaultDataContainer(concurrencyLevel, maxEntries, strategy,policy) {
 
+   @Inject
+   public void initialize(Cache<Object, Object> cache, PassivationManager passivator, CacheNotifier notifier) {
+      this.cache = cache;
+      this.passivator = passivator;
+      this.notifier = notifier;
+   }
+
+   public static DataContainer boundedDataContainer(int concurrencyLevel, int maxEntries, EvictionStrategy strategy, EvictionThreadPolicy policy) {
+      return new DefaultDataContainer(concurrencyLevel, maxEntries, strategy, policy) {
          @Override
          public int size() {
             return immortalEntries.size() + mortalEntries.size();
          }
-
-         @Override
-         public Set<InternalCacheEntry> getEvictionCandidates() {
-            return evictionListener.getEvicted();
-         }
       };
    }
-   
+
    public static DataContainer unBoundedDataContainer(int concurrencyLevel) {
-      return new DefaultDataContainer(concurrencyLevel) ;
+      return new DefaultDataContainer(concurrencyLevel);
    }
-   
+
    @Override
    public Set<InternalCacheEntry> getEvictionCandidates() {
       return Collections.emptySet();
@@ -129,7 +132,7 @@ public class DefaultDataContainer implements DataContainer {
       if (e != null) {
          if (e.isExpired()) {
             if (mortalEntries.remove(k) != null) {
-               numEntries.getAndDecrement();               
+               numEntries.getAndDecrement();
             }
             e = null;
          } else {
@@ -189,7 +192,7 @@ public class DefaultDataContainer implements DataContainer {
       InternalCacheEntry ice = peek(k);
       if (ice != null && ice.isExpired()) {
          if (mortalEntries.remove(k) != null) {
-            numEntries.getAndDecrement();            
+            numEntries.getAndDecrement();
          }
          ice = null;
       }
@@ -239,37 +242,19 @@ public class DefaultDataContainer implements DataContainer {
    public Iterator<InternalCacheEntry> iterator() {
       return new EntryIterator(immortalEntries.values().iterator(), mortalEntries.values().iterator());
    }
-   
-   private class DefaultEvictionListener implements EvictionListener<Object, InternalCacheEntry>{
-      final List <InternalCacheEntry> evicted = Collections.synchronizedList(new LinkedList<InternalCacheEntry>());
+
+   private class DefaultEvictionListener implements EvictionListener<Object, InternalCacheEntry> {
+      private final Log log = LogFactory.getLog(DefaultEvictionListener.class);
 
       @Override
       public void evicted(Object key, InternalCacheEntry value) {
-         evicted.add(value);
-      }   
-      
-      public Set<InternalCacheEntry> getEvicted() {
-         Set<InternalCacheEntry> result = Collections.emptySet();
-         synchronized (evicted) {
-            try {
-               result = new HashSet<InternalCacheEntry>(evicted);
-            } finally {
-               evicted.clear();
-            }
+         notifier.notifyCacheEntryEvicted(key, true, null);
+         try {
+            passivator.passivate(key, value, null);
+         } catch (CacheLoaderException e) {
+            log.warn("Unable to passivate entry under {0}", key, e);
          }
-         return result;
-      }
-   }
-   
-   private class PiggybackEvictionListener extends  DefaultEvictionListener{
-      
-      @Override
-      public void evicted(Object key, InternalCacheEntry value) {
-         cache.getAdvancedCache().evict(key);
-      }  
-      
-      public Set<InternalCacheEntry> getEvicted() {
-         return Collections.emptySet();
+         notifier.notifyCacheEntryEvicted(key, false, null);
       }
    }
 
