@@ -27,6 +27,7 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.InvocationContextContainerImpl;
 import org.infinispan.eviction.EvictionManager;
+import org.infinispan.eviction.PassivationManager;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.marshall.StreamingMarshaller;
@@ -43,7 +44,7 @@ import org.infinispan.container.EntryFactory;
  * @since 4.0
  */
 @DefaultFactoryFor(classes = {CacheNotifier.class, EntryFactory.class, CommandsFactory.class,
-        CacheLoaderManager.class, InvocationContextContainer.class,
+        CacheLoaderManager.class, InvocationContextContainer.class, PassivationManager.class,
         BatchContainer.class, TransactionLog.class, EvictionManager.class, InvocationContextContainer.class})
 public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
    @Override

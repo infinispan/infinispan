@@ -264,7 +264,7 @@ public class CacheNotifierImpl extends AbstractListenerImpl implements CacheNoti
    }
 
    private void setTx(InvocationContext ctx, EventImpl e) {
-      if (ctx.isInTxScope()) {
+      if (ctx != null && ctx.isInTxScope()) {
          GlobalTransaction tx = ((TxInvocationContext) ctx).getGlobalTransaction();
          e.setTransactionId(tx);
       }
