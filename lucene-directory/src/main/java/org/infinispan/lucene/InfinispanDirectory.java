@@ -70,6 +70,14 @@ public class InfinispanDirectory extends Directory {
    private final FileListCacheKey fileListCacheKey;
 
    public InfinispanDirectory(Cache cache, String indexName, LockFactory lf, int chunkSize) {
+      if (cache == null)
+         throw new IllegalArgumentException("Cache must not be null");
+      if (indexName == null)
+         throw new IllegalArgumentException("index name must not be null");
+      if (lf == null)
+         throw new IllegalArgumentException("LockFactory must not be null");
+      if (chunkSize<=0)
+         throw new IllegalArgumentException("chunkSize must be a non-null positive integer");
       this.cache = cache.getAdvancedCache();
       this.indexName = indexName;
       this.setLockFactory(lf);
