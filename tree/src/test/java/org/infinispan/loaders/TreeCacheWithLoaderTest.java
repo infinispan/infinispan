@@ -73,6 +73,15 @@ public class TreeCacheWithLoaderTest extends SingleCacheManagerTest {
       assert store.containsKey(new NodeKey(ROOT, STRUCTURE));
    }
 
+   public void testDuplicatePersistence() throws CacheLoaderException {
+      cache.put(Fqn.fromElements("a", "b"), "k", "v");
+      assert "v".equals(cache.get(Fqn.fromElements("a", "b"), "k"));
+      cache.stop();
+      cache.start();
+      cache.put(Fqn.fromElements("a", "b"), "k", "v");
+      assert "v".equals(cache.get(Fqn.fromElements("a", "b"), "k"));
+   }
+
    @SuppressWarnings("unchecked")
    private Map<String, String> nodeContentsInCacheStore(CacheStore cs, Fqn fqn) throws CacheLoaderException {
       return (Map<String, String>) cs.load(new NodeKey(fqn, DATA)).getValue();
