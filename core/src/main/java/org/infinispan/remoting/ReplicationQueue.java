@@ -144,7 +144,7 @@ public class ReplicationQueue {
             log.trace("Flushing {0} elements", toReplicateSize);
             MultipleRpcCommand multipleRpcCommand = commandsFactory.buildReplicateCommand(toReplicate);
             // send to all live caches in the cluster
-            rpcManager.invokeRemotely(null, multipleRpcCommand, ResponseMode.ASYNCHRONOUS, configuration.getSyncReplTimeout());
+            rpcManager.invokeRemotely(null, multipleRpcCommand, ResponseMode.getAsyncResponseMode(configuration), configuration.getSyncReplTimeout());
          }
          catch (Throwable t) {
             log.error("failed replicating " + toReplicate.size() + " elements in replication queue", t);
