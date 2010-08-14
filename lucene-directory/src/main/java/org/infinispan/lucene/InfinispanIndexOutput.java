@@ -48,21 +48,24 @@ public class InfinispanIndexOutput extends IndexOutput {
    private final AdvancedCache cache;
    private final FileMetadata file;
    private final FileCacheKey fileKey;
+   private final FileListOperations fileOps;
    private final boolean trace;
 
    private byte[] buffer;
    private int positionInBuffer = 0;
    private long filePosition = 0;
    private int currentChunkNumber = 0;
+   private boolean needsAddingToFileList = true;
 
    private boolean transactionRunning = false;
 
-   public InfinispanIndexOutput(AdvancedCache cache, FileCacheKey fileKey, int bufferSize, FileMetadata fileMetadata) throws IOException {
+   public InfinispanIndexOutput(AdvancedCache cache, FileCacheKey fileKey, int bufferSize, FileListOperations fileList) throws IOException {
       this.cache = cache;
       this.fileKey = fileKey;
       this.bufferSize = bufferSize;
+      this.fileOps = fileList;
       this.buffer = new byte[this.bufferSize];
-      this.file = fileMetadata;
+      this.file = new FileMetadata();
       trace = log.isTraceEnabled();
       if (trace) {
          log.trace("Opened new IndexOutput for file:{0} in index: {1}", fileKey.getFileName(), fileKey.getIndexName());
@@ -75,7 +78,7 @@ public class InfinispanIndexOutput extends IndexOutput {
       if (readBuffer==null) {
          return new byte[bufferSize];
       }
-      else if (readBuffer.length==bufferSize) {
+      else if (readBuffer.length == bufferSize) {
          return readBuffer;
       }
       else {
@@ -145,9 +148,6 @@ public class InfinispanIndexOutput extends IndexOutput {
       // size changed, apply change to file header
       file.touch();
       resizeFileIfNeeded();
-      if (file.getSize() < filePosition) {
-         file.setSize(filePosition);
-      }
       byte[] bufferToFlush = buffer;
       if (isWritingOnLastChunk()) {
          int newBufferSize = (int) (file.getSize() % bufferSize);
@@ -157,14 +157,23 @@ public class InfinispanIndexOutput extends IndexOutput {
          }
       }
       boolean microbatch = false;
+      // we don't want to spawn a nested transaction, just to write in batch:
       if ( ! transactionRunning) {
          microbatch = cache.startBatch();
       }
       // add chunk to cache
-      cache.withFlags(Flag.SKIP_REMOTE_LOOKUP).put(key, bufferToFlush);
+      cache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_LOCKING).put(key, bufferToFlush);
       // override existing file header with new size and last time access
-      cache.withFlags(Flag.SKIP_REMOTE_LOOKUP).put(fileKey, file);
+      cache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_LOCKING).put(fileKey, file);
+      registerToFileListIfNeeded();
       if (microbatch) cache.endBatch(true);
+   }
+
+   private void registerToFileListIfNeeded() {
+      if (needsAddingToFileList) {
+         fileOps.addFileName(this.fileKey.getFileName());
+         needsAddingToFileList = false;
+      }
    }
 
    private void resizeFileIfNeeded() {
@@ -215,7 +224,6 @@ public class InfinispanIndexOutput extends IndexOutput {
    public long length() throws IOException {
       return file.getSize();
    }
-
    
    private boolean isWritingOnLastChunk() {
       int lastChunkNumber = (int) (file.getSize() / bufferSize);

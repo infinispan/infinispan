@@ -97,7 +97,7 @@ public class PerformanceCompareStressTest {
       // TestingUtil.setDelayForCache(cache, 0, 0);
       InfinispanDirectory dir = new InfinispanDirectory(cache, indexName);
       stressTestDirectory(dir, "InfinispanClustered-delayedIO:0");
-      DirectoryIntegrityCheck.verifyDirectoryStructure(cache, indexName);
+      verifyDirectoryState();
    }
 
    @Test
@@ -105,7 +105,7 @@ public class PerformanceCompareStressTest {
       TestingUtil.setDelayForCache(cache, 4, 4);
       InfinispanDirectory dir = new InfinispanDirectory(cache, indexName);
       stressTestDirectory(dir, "InfinispanClustered-delayedIO:4");
-      DirectoryIntegrityCheck.verifyDirectoryStructure(cache, indexName);
+      verifyDirectoryState();
    }
 
    @Test
@@ -113,17 +113,17 @@ public class PerformanceCompareStressTest {
       TestingUtil.setDelayForCache(cache, 40, 40);
       InfinispanDirectory dir = new InfinispanDirectory(cache, indexName);
       stressTestDirectory(dir, "InfinispanClustered-delayedIO:40");
-      DirectoryIntegrityCheck.verifyDirectoryStructure(cache, indexName);
+      verifyDirectoryState();
    }
 
    @Test
    public void profileInfinispanLocalDirectory() throws InterruptedException, IOException {
       CacheContainer cacheContainer = CacheTestSupport.createLocalCacheManager();
       try {
-         Cache cache = cacheContainer.getCache();
+         cache = cacheContainer.getCache();
          InfinispanDirectory dir = new InfinispanDirectory(cache, indexName);
          stressTestDirectory(dir, "InfinispanLocal");
-         DirectoryIntegrityCheck.verifyDirectoryStructure(cache, indexName);
+         verifyDirectoryState();
       } finally {
          cacheContainer.stop();
       }
@@ -165,6 +165,10 @@ public class PerformanceCompareStressTest {
       TestingUtil.killCaches(cache);
       TestingUtil.killCacheManagers(cacheFactory);
       TestingUtil.recursiveFileRemove(indexName);
+   }
+   
+   private void verifyDirectoryState() {
+      DirectoryIntegrityCheck.verifyDirectoryStructure(cache, indexName, true);
    }
 
 }

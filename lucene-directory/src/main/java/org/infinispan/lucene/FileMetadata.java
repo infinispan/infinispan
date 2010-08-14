@@ -31,7 +31,7 @@ import java.io.Serializable;
  * @author Lukasz Moren
  * @see org.infinispan.lucene.FileCacheKey
  */
-final class FileMetadata implements Serializable {
+public final class FileMetadata implements Serializable {
 
    /** The serialVersionUID */
    private static final long serialVersionUID = -2605615719808221213L;
