@@ -51,6 +51,10 @@ public class DirectoryIntegrityCheck {
     *           The name of the unique index stored in the cache
     */
    public static void verifyDirectoryStructure(Cache cache, String indexName) {
+      verifyDirectoryStructure(cache, indexName, false);
+   }
+
+   public static void verifyDirectoryStructure(Cache cache, String indexName, boolean wasAStressTest) {
       Set<String> fileList = (Set<String>) cache.get(new FileListCacheKey(indexName));
       Assert.assertNotNull(fileList);
       int fileListCacheKeyInstances = 0;
@@ -59,7 +63,10 @@ public class DirectoryIntegrityCheck {
             ChunkCacheKey existingChunkKey = (ChunkCacheKey) key;
             String filename = existingChunkKey.getFileName();
             Assert.assertEquals(existingChunkKey.getIndexName(), indexName);
-            Assert.assertTrue(fileList.contains(filename));
+            // the chunk must either match an entry in fileList or have a pending readLock:
+//            if (fileList.contains(filename) == false) {
+//               verifyReadlockExists(cache, indexName, filename);
+//            }
             Object value = cache.get(existingChunkKey);
             Assert.assertNotNull(value);
             Assert.assertTrue(value instanceof byte[]);
@@ -68,7 +75,12 @@ public class DirectoryIntegrityCheck {
          } else if (key instanceof FileCacheKey) {
             FileCacheKey fileCacheKey = (FileCacheKey) key;
             Assert.assertEquals(fileCacheKey.getIndexName(), indexName);
-            Assert.assertTrue(fileList.contains(fileCacheKey.getFileName()), fileCacheKey + " should not have existed");
+            String filename = fileCacheKey.getFileName();
+//            if (fileList.contains(filename) == false) {
+//               // if the file is not registered, assert that a readlock prevented it from being
+//               // deleted:
+//               verifyReadlockExists(cache, indexName, filename);
+//            }
             Object value = cache.get(fileCacheKey);
             Assert.assertNotNull(value);
             Assert.assertTrue(value instanceof FileMetadata);
@@ -76,22 +88,34 @@ public class DirectoryIntegrityCheck {
             long totalFileSize = metadata.getSize();
             long actualFileSize = deepCountFileSize(fileCacheKey, cache);
             Assert.assertEquals(actualFileSize, totalFileSize);
+            Assert.assertTrue(fileList.contains(fileCacheKey.getFileName()), fileCacheKey + " should not have existed");
          } else if (key instanceof FileListCacheKey) {
             fileListCacheKeyInstances++;
             Assert.assertEquals(1, fileListCacheKeyInstances);
          } else if (key instanceof FileReadLockKey) {
             FileReadLockKey readLockKey = (FileReadLockKey) key;
             Assert.assertEquals(readLockKey.getIndexName(), indexName);
-            Assert.assertTrue(fileList.contains(readLockKey.getFileName()), readLockKey + " should not have existed");
             Object value = cache.get(readLockKey);
-            Assert.assertNotNull(value);
-            Assert.assertTrue(value instanceof Integer);
-            int readLockCount = (Integer) value;
-            Assert.assertEquals(readLockCount, 1, " for FileReadLockKey " + readLockKey);
+            // we verify that a ReadLock exists only for existing files
+            Assert.assertTrue(cache.get(new FileCacheKey(indexName, readLockKey.getFileName())) != null, key + " left over from deleted "
+                     + readLockKey.getFileName());
+            Assert.assertTrue(cache.get(new ChunkCacheKey(indexName, readLockKey.getFileName(), 0)) != null);
+            Assert.assertTrue(fileList.contains(readLockKey.getFileName()), "readlock still exists but the file was deleted: "
+                     + readLockKey);
+            Assert.assertTrue(value == null || value.equals(1));
          } else {
             Assert.fail("an unexpected key was found in the cache having key type " + key.getClass() + " toString:" + key);
          }
       }
+   }
+
+   private static void verifyReadlockExists(Cache cache, String indexName, String filename) {
+      FileReadLockKey readLockKey = new FileReadLockKey(indexName, filename);
+      Object readLockValue = cache.get(readLockKey);
+      Assert.assertNotNull(readLockValue);
+      Assert.assertTrue(readLockValue instanceof Integer);
+      int v = (Integer) readLockValue;
+      Assert.assertTrue(v > 1, "readlock exists for unregistered file of unexpected value: " + v + " for file: " + filename);
    }
 
    /**
@@ -115,6 +139,45 @@ public class DirectoryIntegrityCheck {
          } else {
             accumulator += buffer.length;
          }
+      }
+   }
+   
+   public static void assertFileNotExists(Cache cache, String indexName, String fileName) {
+      Set<String> fileList = (Set<String>) cache.get(new FileListCacheKey(indexName));
+      Assert.assertNotNull(fileList);
+      Assert.assertFalse(fileList.contains(fileName));
+      Assert.assertNull(cache.get(new FileCacheKey(indexName, fileName)), "metadata found for deleted file");
+      for (int i = 0; i < 10; i++) {
+         ChunkCacheKey key = new ChunkCacheKey(indexName, fileName, i);
+         Assert.assertNull(cache.get(key), "a chunk was found for a deleted file: " + key);
+      }
+   }
+
+   /**
+    * Verified the file exists and has a specified value for readLock;
+    * Consider that null should be interpreted as value 1;
+    */
+   public static void assertFileExistsHavingRLCount(Cache cache, String fileName, String indexName, int expectedReadcount, int chunkSize, boolean expectRegisteredInFat) {
+      Set<String> fileList = (Set<String>) cache.get(new FileListCacheKey(indexName));
+      Assert.assertNotNull(fileList);
+      Assert.assertTrue(fileList.contains(fileName) == expectRegisteredInFat);
+      FileMetadata metadata = (FileMetadata) cache.get(new FileCacheKey(indexName, fileName));
+      Assert.assertNotNull(metadata);
+      long totalFileSize = metadata.getSize();
+      int chunkNumbers = (int)(totalFileSize / chunkSize);
+      for (int i = 0; i < chunkNumbers; i++) {
+         Assert.assertNotNull(cache.get(new ChunkCacheKey(indexName, fileName, i)));
+      }
+      FileReadLockKey readLockKey = new FileReadLockKey(indexName,fileName);
+      Object value = cache.get(readLockKey);
+      if (expectedReadcount == 1) {
+         Assert.assertTrue(value == null || Integer.valueOf(1).equals(value), "readlock value is " + value);
+      }
+      else {
+         Assert.assertNotNull(value);
+         Assert.assertTrue(value instanceof Integer);
+         int v = (Integer)value;
+         Assert.assertEquals(v, expectedReadcount);
       }
    }
 

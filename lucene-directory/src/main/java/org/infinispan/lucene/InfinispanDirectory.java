@@ -34,24 +34,49 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.context.Flag;
 import org.infinispan.lucene.locking.BaseLockFactory;
-import org.infinispan.util.concurrent.ConcurrentHashSet;
+import org.infinispan.lucene.readlocks.DistributedSegmentReadLocker;
+import org.infinispan.lucene.readlocks.SegmentReadLocker;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * Implementation that uses Infinispan to store Lucene indices.
- * 
- * Directory locking is assured with {@link org.infinispan.lucene.locking.TransactionalSharedLuceneLock}
+ * An implementation of Lucene's {@link org.apache.lucene.store.Directory} which uses Infinispan to store Lucene indices.
+ * As the RAMDirectory the data is stored in memory, but provides some additional flexibility:
+ * <p><b>Passivation, LRU or LIRS</b> Bigger indexes can be configured to passivate cleverly selected chunks of data to a cache store.
+ * This can be a local filesystem, a network filesystem, a database or custom cloud stores like S3. See Infinispan's core documentation for a full list of available implementations, or {@link org.infinispan.loaders.CacheStore} to implement more.</p>
+ * <p><b>Non-volatile memory</b> The contents of the index can be stored in it's entirety in such a store, so that on shutdown or crash of the system data is not lost.
+ * A copy of the index will be copied to the store in sync or async depending on configuration; In case you enable
+ * Infinispan's clustering even in case of async the segments are always duplicated synchronosly to other nodes, so you can
+ * benefit from good reliability even while choosing the asynchronous mode to write the index to the slowest store implementations.</p>
+ * <p><b>Real-time change propagation</b> All changes done on a node are propagated at low latency to other nodes of the cluster; this was designed especially for
+ * interactive usage of Lucene, so that after an IndexWriter commits on one node new IndexReaders opened on any node of the cluster
+ * will be able to deliver updated search results.</p>
+ * <p><b>Distributed heap</b> Infinispan acts as a shared heap for the purpose of total memory consumption, so you can avoid hitting the slower disks even
+ * if the total size of the index can't fit in the memory of a single node: network is faster than disks, especially if the index
+ * is bigger than the memory available to cache it.</p>
+ * <p><b>Distributed locking</b>
+ * As default Lucene Directory implementations a global lock needs to protect the index from having more than an IndexWriter open; in case of a
+ * replicated or distributed index you need to enable a cluster-wide {@link org.apache.lucene.store.LockFactory}.
+ * This implementation uses by default {@link org.infinispan.lucene.locking.BaseLockFactory}; in case you want to apply changes during a JTA transaction
+ * see also {@link org.infinispan.lucene.locking.TransactionalLockFactory}.
+ * </p>
+ * <p><b>Combined store patterns</b> It's possible to combine different stores and passivation policies, so that each nodes shares the index changes
+ * quickly to other nodes, offloads less frequently used data to a per-node local filesystem, and the cluster also coordinates to keeps a safe copy on a shared store.</p>
  * 
  * @since 4.0
- * @author Lukasz Moren
  * @author Sanne Grinovero
+ * @author Lukasz Moren
+ * @see org.apache.lucene.store.Directory
+ * @see org.apache.lucene.store.LockFactory
+ * @see org.infinispan.lucene.locking.BaseLockFactory
  * @see org.infinispan.lucene.locking.TransactionalLockFactory
  */
 public class InfinispanDirectory extends Directory {
    
-   // used as default chunk size if not provided in conf
-   // each Lucene index segment is splitted into parts with default size defined here
+   /**
+    * used as default chunk size, can be overriden at construction time
+    * each Lucene index segment is splitted into parts with default size defined here
+    */
    public final static int DEFAULT_BUFFER_SIZE = 16 * 1024;
 
    private static final Log log = LogFactory.getLog(InfinispanDirectory.class);
@@ -67,34 +92,47 @@ public class InfinispanDirectory extends Directory {
    // size per dir
    private final int chunkSize;
 
-   private final FileListCacheKey fileListCacheKey;
+   private final FileListOperations fileOps;
+   private final SegmentReadLocker readLocks;
 
-   public InfinispanDirectory(Cache cache, String indexName, LockFactory lf, int chunkSize) {
+   public InfinispanDirectory(Cache cache, String indexName, LockFactory lf, int chunkSize, SegmentReadLocker readLocker) {
       if (cache == null)
          throw new IllegalArgumentException("Cache must not be null");
       if (indexName == null)
          throw new IllegalArgumentException("index name must not be null");
       if (lf == null)
          throw new IllegalArgumentException("LockFactory must not be null");
-      if (chunkSize<=0)
-         throw new IllegalArgumentException("chunkSize must be a non-null positive integer");
+      if (readLocker == null)
+         throw new IllegalArgumentException("SegmentReadLocker must not be null");
+      if (chunkSize <= 0)
+         throw new IllegalArgumentException("chunkSize must be a positive integer");
       this.cache = cache.getAdvancedCache();
       this.indexName = indexName;
       this.setLockFactory(lf);
       this.chunkSize = chunkSize;
-      this.fileListCacheKey = new FileListCacheKey(indexName);
+      this.fileOps = new FileListOperations(this.cache, indexName);
+      this.readLocks = readLocker;
+   }
+   
+   public InfinispanDirectory(Cache cache, String indexName, LockFactory lf, int chunkSize) {
+      this(cache, indexName, lf, chunkSize,
+               new DistributedSegmentReadLocker(cache, indexName, chunkSize));
    }
 
+   public InfinispanDirectory(Cache cache, String indexName, int chunkSize, SegmentReadLocker readLocker) {
+      this(cache, indexName, makeDefaultLockFactory(cache, indexName), chunkSize, readLocker);
+   }
+   
    public InfinispanDirectory(Cache cache, String indexName, LockFactory lf) {
       this(cache, indexName, lf, DEFAULT_BUFFER_SIZE);
    }
 
    public InfinispanDirectory(Cache cache, String indexName, int chunkSize) {
-      this(cache, indexName, new BaseLockFactory(cache, indexName), chunkSize);
+      this(cache, indexName, makeDefaultLockFactory(cache, indexName), chunkSize);
    }
 
    public InfinispanDirectory(Cache cache, String indexName) {
-      this(cache, indexName, new BaseLockFactory(cache, indexName), DEFAULT_BUFFER_SIZE);
+      this(cache, indexName, makeDefaultLockFactory(cache, indexName), DEFAULT_BUFFER_SIZE);
    }
 
    public InfinispanDirectory(Cache cache) {
@@ -106,7 +144,7 @@ public class InfinispanDirectory extends Directory {
     */
    public String[] list() throws IOException {
       checkIsOpen();
-      Set<String> filesList = getFileList();
+      Set<String> filesList = fileOps.getFileList();
       String[] array = filesList.toArray(new String[0]);
       return array;
    }
@@ -116,7 +154,7 @@ public class InfinispanDirectory extends Directory {
     */
    public boolean fileExists(String name) throws IOException {
       checkIsOpen();
-      return cache.withFlags(Flag.SKIP_LOCKING).containsKey(new FileCacheKey(indexName, name));
+      return fileOps.getFileList().contains(name);
    }
 
    /**
@@ -124,11 +162,7 @@ public class InfinispanDirectory extends Directory {
     */
    public long fileModified(String name) throws IOException {
       checkIsOpen();
-      FileMetadata file = getFileMetadata(name);
-      if (file == null) {
-         throw new FileNotFoundException(name);
-      }
-      return file.getLastModified();
+      return fileOps.getFileMetadata(name).getLastModified();
    }
 
    /**
@@ -150,13 +184,8 @@ public class InfinispanDirectory extends Directory {
     */
    public void deleteFile(String name) throws IOException {
       checkIsOpen();
-      Set<String> fileList = getFileList();
-      boolean deleted = fileList.remove(name);
-      if (deleted) {
-         cache.put(fileListCacheKey, fileList);
-      }
-      FileReadLockKey fileReadLockKey = new FileReadLockKey(indexName, name);
-      InfinispanIndexInput.releaseReadLock(fileReadLockKey, cache);
+      fileOps.deleteFileName(name);
+      readLocks.deleteOrReleaseReadLock(name);
       if (log.isDebugEnabled()) {
          log.debug("Removed file: {0} from index: {1}", name, indexName);
       }
@@ -184,17 +213,13 @@ public class InfinispanDirectory extends Directory {
       // rename metadata first
       boolean batching = cache.startBatch();
       FileCacheKey fromKey = new FileCacheKey(indexName, from);
-      FileMetadata metadata = (FileMetadata) cache.remove(fromKey);
+      FileMetadata metadata = (FileMetadata) cache.withFlags(Flag.SKIP_LOCKING).get(fromKey);
       cache.put(new FileCacheKey(indexName, to), metadata);
-      Set<String> fileList = getFileList();
-      fileList.remove(from);
-      fileList.add(to);
-      cache.put(fileListCacheKey, fileList);
+      fileOps.removeAndAdd(from, to);
       if (batching) cache.endBatch(true);
       
       // now trigger deletion of old file chunks:
-      FileReadLockKey fileFromReadLockKey = new FileReadLockKey(indexName, from);
-      InfinispanIndexInput.releaseReadLock(fileFromReadLockKey, cache);
+      readLocks.deleteOrReleaseReadLock(from);
       if (log.isTraceEnabled()) {
          log.trace("Renamed file from: {0} to: {1} in index {2}", from, to, indexName);
       }
@@ -205,11 +230,7 @@ public class InfinispanDirectory extends Directory {
     */
    public long fileLength(String name) throws IOException {
       checkIsOpen();
-      final FileMetadata file = getFileMetadata(name);
-      if (file == null) {
-         throw new FileNotFoundException(name);
-      }
-      return file.getSize();
+      return fileOps.getFileMetadata(name).getSize();
    }
 
    /**
@@ -217,25 +238,8 @@ public class InfinispanDirectory extends Directory {
     */
    public IndexOutput createOutput(String name) throws IOException {
       final FileCacheKey key = new FileCacheKey(indexName, name);
-      FileMetadata newFileMetadata = new FileMetadata();
-      FileMetadata previous = (FileMetadata) cache.putIfAbsent(key, newFileMetadata);
-      if (previous == null) {
-         // creating new file
-         Set<String> fileList = getFileList();
-         fileList.add(name);
-         cache.put(fileListCacheKey, fileList);
-         return new InfinispanIndexOutput(cache, key, chunkSize, newFileMetadata);
-      } else {
-         return new InfinispanIndexOutput(cache, key, chunkSize, previous);
-      }
-   }
-
-   @SuppressWarnings("unchecked")
-   private Set<String> getFileList() {
-      Set<String> fileList = (Set<String>) cache.withFlags(Flag.SKIP_LOCKING).get(fileListCacheKey);
-      if (fileList == null)
-         fileList = new ConcurrentHashSet<String>();
-      return fileList;
+      // creating new file, metadata is added on flush() or close() of IndexOutPut
+      return new InfinispanIndexOutput(cache, key, chunkSize, fileOps);
    }
 
    /**
@@ -248,10 +252,16 @@ public class InfinispanDirectory extends Directory {
          throw new FileNotFoundException("Error loading medatada for index file: " + fileKey);
       }
       else if (fileMetadata.getSize() <= chunkSize) {
+         //files smaller than chunkSize don't need a readLock
          return new SingleChunkIndexInput(cache, fileKey, fileMetadata);
       }
       else {
-         return new InfinispanIndexInput(cache, fileKey, chunkSize, fileMetadata);
+         boolean locked = readLocks.aquireReadLock(name);
+         if (!locked) {
+            // safest reaction is to tell this file doesn't exist anymore.
+            throw new FileNotFoundException("Error loading medatada for index file: " + fileKey);
+         }
+         return new InfinispanIndexInput(cache, fileKey, chunkSize, fileMetadata, readLocks);
       }
    }
 
@@ -268,11 +278,6 @@ public class InfinispanDirectory extends Directory {
       }
    }
 
-   private FileMetadata getFileMetadata(String fileName) {
-      FileCacheKey key = new FileCacheKey(indexName, fileName);
-      return (FileMetadata) cache.withFlags(Flag.SKIP_LOCKING).get(key);
-   }
-
    @Override
    public String toString() {
       return "InfinispanDirectory{" + "indexName='" + indexName + '\'' + '}';
@@ -285,6 +290,10 @@ public class InfinispanDirectory extends Directory {
    /** new name for list() in Lucene 3.0 **/
    public String[] listAll() throws IOException {
       return list();
+   }
+   
+   private static LockFactory makeDefaultLockFactory(Cache cache, String indexName) {
+      return new BaseLockFactory(cache, indexName);
    }
    
 }

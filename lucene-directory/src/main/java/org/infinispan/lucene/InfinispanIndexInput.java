@@ -27,6 +27,7 @@ import java.io.IOException;
 import org.apache.lucene.store.IndexInput;
 import org.infinispan.AdvancedCache;
 import org.infinispan.context.Flag;
+import org.infinispan.lucene.readlocks.SegmentReadLocker;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -47,8 +48,9 @@ public class InfinispanIndexInput extends IndexInput {
    private final FileMetadata file;
    private final FileCacheKey fileKey;
    private final int chunkSize;
-   private final FileReadLockKey readLockKey;
+   private final SegmentReadLocker readLocks;
    private final boolean trace;
+   private final String filename;
 
    private int currentBufferSize;
    private byte[] buffer;
@@ -57,115 +59,16 @@ public class InfinispanIndexInput extends IndexInput {
 
    private boolean isClone;
 
-   public InfinispanIndexInput(AdvancedCache cache, FileCacheKey fileKey, int chunkSize, FileMetadata fileMetadata) throws FileNotFoundException {
+   public InfinispanIndexInput(AdvancedCache cache, FileCacheKey fileKey, int chunkSize, FileMetadata fileMetadata, SegmentReadLocker readLocks) throws FileNotFoundException {
       this.cache = cache;
       this.fileKey = fileKey;
       this.chunkSize = chunkSize;
       this.file = fileMetadata;
-      final String filename = fileKey.getFileName();
-      this.readLockKey = new FileReadLockKey(fileKey.getIndexName(), filename);
-      aquireReadLock();
+      this.readLocks = readLocks;
+      this.filename = fileKey.getFileName();
       trace = log.isTraceEnabled();
       if (trace) {
          log.trace("Opened new IndexInput for file:{0} in index: {1}", filename, fileKey.getIndexName());
-      }
-   }
-
-   private void releaseReadLock() {
-      releaseReadLock(readLockKey, cache);
-   }
-   
-   /**
-    * Releases a read-lock for this file, so that if it was marked as deleted and
-    * no other {@link InfinispanIndexInput} instances are using it, then it will
-    * be effectively deleted.
-    * 
-    * @see #aquireReadLock()
-    * @see InfinispanDirectory#deleteFile(String)
-    * 
-    * @param readLockKey the key pointing to the reference counter value
-    * @param cache The cache containing the reference counter value
-    */
-   static void releaseReadLock(FileReadLockKey readLockKey, AdvancedCache cache) {
-      int newValue = 0;
-      // spinning as we currently don't mandate transactions, so no proper lock support available
-      boolean done = false;
-      Object lockValue = cache.withFlags(Flag.SKIP_LOCKING, Flag.SKIP_CACHE_STORE).get(readLockKey);
-      while (done == false) {
-         if (lockValue == null) {
-            lockValue = cache.withFlags(Flag.SKIP_CACHE_STORE).putIfAbsent(readLockKey, Integer.valueOf(0));
-            done = (null == lockValue);
-         }
-         else {
-            int refCount = (Integer) lockValue;
-            newValue = refCount - 1;
-            done = cache.withFlags(Flag.SKIP_CACHE_STORE).replace(readLockKey, refCount, newValue);
-            if (!done) {
-               lockValue = cache.withFlags(Flag.SKIP_LOCKING, Flag.SKIP_CACHE_STORE).get(readLockKey);
-            }
-         }
-      }
-      if (newValue == 0) {
-         realFileDelete(readLockKey, cache);
-      }
-   }
-   
-   /**
-    * The {@link InfinispanDirectory#deleteFile(String)} is not deleting the elements from the cache
-    * but instead flagging the file as deletable.
-    * This method will really remove the elements from the cache; should be invoked only
-    * by {@link #releaseReadLock(FileReadLockKey, AdvancedCache)} after having verified that there
-    * are no users left in need to read these chunks.
-    * 
-    * @param readLockKey the key representing the values to be deleted
-    * @param cache the cache containing the elements to be deleted
-    */
-   static void realFileDelete(FileReadLockKey readLockKey, AdvancedCache cache) {
-      final String indexName = readLockKey.getIndexName();
-      final String filename = readLockKey.getFileName();
-      int i = 0;
-      Object removed;
-      ChunkCacheKey chunkKey = new ChunkCacheKey(indexName, filename, i);
-      do {
-         removed = cache.withFlags(Flag.SKIP_LOCKING).remove(chunkKey);
-         chunkKey = new ChunkCacheKey(indexName, filename, ++i);
-      } while (removed != null);
-      FileCacheKey key = new FileCacheKey(indexName, filename);
-//      boolean batch = cache.startBatch(); //FIXME when enabling batch, org.infinispan.lucene.profiling.CacheStoreStressTest fails to remove the readLockKey
-      cache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_LOCKING, Flag.SKIP_CACHE_STORE).remove(readLockKey);
-      cache.withFlags(Flag.SKIP_REMOTE_LOOKUP, Flag.SKIP_LOCKING).remove(key);
-//      if (batch) cache.endBatch(true);
-   }
-
-   /**
-    * Acquires a readlock on all chunks for this file, to make sure chunks are not deleted while
-    * iterating on the group. This is needed to avoid an eager lock on all elements.
-    * 
-    * @see #releaseReadLock(FileReadLockKey, AdvancedCache)
-    */
-   private void aquireReadLock() throws FileNotFoundException {
-      // spinning as we currently don't mandate transactions, so no proper lock support is available
-      boolean done = false;
-      Object lockValue = cache.withFlags(Flag.SKIP_LOCKING, Flag.SKIP_CACHE_STORE).get(readLockKey);
-      while (done == false) {
-         if (lockValue != null) {
-            int refCount = (Integer) lockValue;
-            if (refCount == 0) {
-               // too late: in case refCount==0 the delete process already triggered chunk deletion.
-               // safest reaction is to tell this file doesn't exist anymore.
-               throw new FileNotFoundException("segment file was deleted");
-            }
-            Integer newValue = Integer.valueOf(refCount + 1);
-            done = cache.withFlags(Flag.SKIP_CACHE_STORE).replace(readLockKey, refCount, newValue);
-            if (!done) {
-               lockValue = cache.withFlags(Flag.SKIP_LOCKING, Flag.SKIP_CACHE_STORE).get(readLockKey);
-            }
-         } else {
-            // readLocks are not stored, so if there's no value assume it's ==1, which means
-            // existing file, not deleted, nobody else owning a read lock
-            lockValue = cache.withFlags(Flag.SKIP_CACHE_STORE).putIfAbsent(readLockKey, Integer.valueOf(2));
-            done = (null == lockValue);
-         }
       }
    }
 
@@ -204,9 +107,9 @@ public class InfinispanIndexInput extends IndexInput {
       currentLoadedChunk = -1;
       buffer = null;
       if (isClone) return;
-      releaseReadLock();
+      readLocks.deleteOrReleaseReadLock(filename);
       if (trace) {
-         log.trace("Closed IndexInput for file:{0} in index: {1}", fileKey.getFileName(), fileKey.getIndexName());
+         log.trace("Closed IndexInput for file:{0} in index: {1}", filename, fileKey.getIndexName());
       }
    }
 
@@ -230,7 +133,7 @@ public class InfinispanIndexInput extends IndexInput {
    }
 
    private void setBufferToCurrentChunk() throws IOException {
-      ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), currentLoadedChunk);
+      ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), filename, currentLoadedChunk);
       buffer = (byte[]) cache.withFlags(Flag.SKIP_LOCKING).get(key);
       if (buffer == null) {
          throw new IOException("Chunk value could not be found for key " + key);
@@ -241,7 +144,7 @@ public class InfinispanIndexInput extends IndexInput {
    // Lucene might try seek(pos) using an illegal pos value
    // RAMDirectory teaches to position the cursor to the end of previous chunk in this case
    private void setBufferToCurrentChunkIfPossible() throws IOException {
-      ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), fileKey.getFileName(), currentLoadedChunk);
+      ChunkCacheKey key = new ChunkCacheKey(fileKey.getIndexName(), filename, currentLoadedChunk);
       buffer = (byte[]) cache.withFlags(Flag.SKIP_LOCKING).get(key);
       if (buffer == null) {
          currentLoadedChunk--;

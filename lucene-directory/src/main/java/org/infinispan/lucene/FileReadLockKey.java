@@ -32,7 +32,7 @@ import java.io.Serializable;
  * @author Sanne Grinovero
  * @since 4.0
  */
-final class FileReadLockKey implements Serializable {
+public final class FileReadLockKey implements Serializable {
 
    /** The serialVersionUID */
    private static final long serialVersionUID = 7789410500198851940L;
@@ -41,7 +41,7 @@ final class FileReadLockKey implements Serializable {
    private final String fileName;
    private final int hashCode;
 
-   FileReadLockKey(String indexName, String fileName) {
+   public FileReadLockKey(String indexName, String fileName) {
       if (indexName == null)
          throw new IllegalArgumentException("indexName shall not be null");
       if (fileName == null)
