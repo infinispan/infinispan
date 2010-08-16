@@ -432,4 +432,19 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       advancedCache.put("k-" + name, "v-" + name);
       advancedCache.withFlags(Flag.SKIP_LOCKING).put("k-" + name, "v2-" + name);
    }
+
+   public void testDuplicatePersistence(Method m) throws Exception {
+      String key = "k-" + m.getName();
+      String value = "v-" + m.getName();
+      cache.put(key, value);
+      assert value.equals(cache.get(key));
+      cache.stop();
+      cache.start();
+      tm.begin();
+      cache.containsKey(key); // Necessary call to force locks being acquired in advance
+      cache.getAdvancedCache().withFlags(Flag.FORCE_WRITE_LOCK).get(key);
+      cache.put(key, value);
+      tm.commit();
+      assert value.equals(cache.get(key));
+   }
 }

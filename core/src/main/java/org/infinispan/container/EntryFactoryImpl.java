@@ -117,7 +117,7 @@ public class EntryFactoryImpl implements EntryFactory {
       if (cacheEntry != null) // exists in context!  Just acquire lock if needed, and wrap.
       {
          if (trace) log.trace("Exists in context.");
-         // acquire lock if needed
+         // Acquire lock if needed. Add necessary check for skip locking in advance in order to avoid marshalled value issues
          if (alreadyLocked || ctx.hasFlag(Flag.SKIP_LOCKING) || acquireLock(ctx, key)) {
 
             if (cacheEntry instanceof MVCCEntry && (!forRemoval || !(cacheEntry instanceof NullMarkerEntry))) {
@@ -131,6 +131,11 @@ public class EntryFactoryImpl implements EntryFactory {
 
             // create a copy of the underlying entry
             mvccEntry.copyForUpdate(container, writeSkewCheck);
+         } else if (ctx.hasFlag(Flag.FORCE_WRITE_LOCK)) {
+            // If lock was already held and force write lock is on, just wrap
+            if (cacheEntry instanceof MVCCEntry && (!forRemoval || !(cacheEntry instanceof NullMarkerEntry))) {
+               mvccEntry = (MVCCEntry) cacheEntry;
+            }
          }
 
          if (cacheEntry.isRemoved() && createIfAbsent && undeleteIfNeeded) {
