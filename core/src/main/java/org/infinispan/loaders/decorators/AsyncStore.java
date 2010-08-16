@@ -276,12 +276,17 @@ public class AsyncStore extends AbstractDelegatingStore {
       }
    }
 
-   private void awaitNotEmpty() throws InterruptedException {
+   private void awaitNotEmptyOrStopped() throws InterruptedException {
       lock.lockInterruptibly();
       try {
          try {
-            while (count.get() == 0)
+            while (count.get() == 0) {
+               if (stopped.get()) {
+                  notEmpty.signal();
+                  return;
+               }
                notEmpty.await();
+            }
          } catch (InterruptedException ie) {
             notEmpty.signal(); // propagate to a non-interrupted thread
             throw ie;
@@ -307,7 +312,7 @@ public class AsyncStore extends AbstractDelegatingStore {
       private final Set<Object> lockedKeys = new HashSet<Object>();
 
       public void run() {
-         while (!Thread.interrupted()) {
+         while (!Thread.interrupted() && !stopped.get()) {
             try {
                run0();
             }
@@ -356,7 +361,7 @@ public class AsyncStore extends AbstractDelegatingStore {
          try {
             int size = swap.size();
             if (swap.isEmpty()) {
-               awaitNotEmpty();
+               awaitNotEmptyOrStopped();
             } else {
                decrementAndGet(size);
 
