@@ -118,6 +118,12 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
       this.index = index;
       this.after = after;
       this.before = before;
+      overriddenConfigurationElements.add("interceptor");
+      overriddenConfigurationElements.add("isFirst");
+      overriddenConfigurationElements.add("isLast");
+      overriddenConfigurationElements.add("index");
+      overriddenConfigurationElements.add("after");
+      overriddenConfigurationElements.add("before");
    }
 
    /**
@@ -136,8 +142,20 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
       isFirst = first;
       isLast = last;
       this.index = index;
-      this.after = after == null ? null : after.getName();
-      this.before = before == null ? null : before.getName();
+      overriddenConfigurationElements.add("interceptor");
+      overriddenConfigurationElements.add("isFirst");
+      overriddenConfigurationElements.add("isLast");
+      overriddenConfigurationElements.add("index");
+
+      if (after != null) {
+         this.after = after.getName();
+         overriddenConfigurationElements.add("after");
+      }
+
+      if (before != null) {
+         this.before = before.getName();
+         overriddenConfigurationElements.add("before");
+      }
    }
 
    /**
@@ -147,6 +165,7 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
     */
    public CustomInterceptorConfig(CommandInterceptor interceptor) {
       this.interceptor = interceptor;
+      overriddenConfigurationElements.add("interceptor");
    }
    
    public Properties getProperties() {
@@ -155,6 +174,7 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
    
    public void setProperties(Properties properties) {
       this.properties = toTypedProperties(properties);
+      testImmutability("properties");
    }
 
    public Position getPosition() {
@@ -163,6 +183,7 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
 
    public void setPosition(Position position) {
       this.position = position;
+      testImmutability("position");
    }
 
    public String getClassName() {
@@ -171,6 +192,7 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
 
    public void setClassName(String className) {
       this.className = className;
+      testImmutability("className");
    }
 
    /**
@@ -248,6 +270,7 @@ public class CustomInterceptorConfig extends AbstractNamedCacheConfigurationBean
     * Returns a the interceptor that we want to add to the chain.
     */
    public void setInterceptor(CommandInterceptor interceptor) {
+      testImmutability("interceptor");
       this.interceptor = interceptor;
    }
 

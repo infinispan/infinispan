@@ -758,8 +758,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
     * @see #getCustomInterceptors()
     */
    public void setCustomInterceptors(List<CustomInterceptorConfig> customInterceptors) {
-      testImmutability("customInterceptors");
-      this.customInterceptors.customInterceptors = customInterceptors;
+      this.customInterceptors.setCustomInterceptors(customInterceptors);
    }  
 
    public void assertValid() throws ConfigurationException {
@@ -1923,6 +1922,11 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @Override
       public int hashCode() {
          return customInterceptors != null ? customInterceptors.hashCode() : 0;
+      }
+
+      public void setCustomInterceptors(List<CustomInterceptorConfig> customInterceptors) {
+         testImmutability("customInterceptors");
+         this.customInterceptors = customInterceptors;
       }
    }
    
