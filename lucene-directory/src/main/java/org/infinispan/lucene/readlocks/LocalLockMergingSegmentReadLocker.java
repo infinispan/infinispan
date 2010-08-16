@@ -41,15 +41,19 @@ public class LocalLockMergingSegmentReadLocker implements SegmentReadLocker {
    private final DistributedSegmentReadLocker delegate;
 
    /**
-    * Create a new ReadLockContainer.
+    * Create a new LocalLockMergingSegmentReadLocker for specified cache and index name.
     * 
     * @param cache
     * @param indexName
     */
-   public LocalLockMergingSegmentReadLocker(Cache cache, String indexName, int chunkSize) {
-      this.delegate = new DistributedSegmentReadLocker(cache, indexName, chunkSize);
+   public LocalLockMergingSegmentReadLocker(Cache cache, String indexName) {
+      this.delegate = new DistributedSegmentReadLocker(cache, indexName);
    }
 
+   /**
+    * {@inheritDoc}
+    */
+   @Override
    public boolean aquireReadLock(String name) {
       LocalReadLock localReadLock = getLocalLockByName(name);
       boolean aquired = localReadLock.aquire();
@@ -73,6 +77,10 @@ public class LocalLockMergingSegmentReadLocker implements SegmentReadLocker {
       return localReadLock;
    }
 
+   /**
+    * {@inheritDoc}
+    */
+   @Override
    public void deleteOrReleaseReadLock(String name) {
       getLocalLockByName(name).release();
    }

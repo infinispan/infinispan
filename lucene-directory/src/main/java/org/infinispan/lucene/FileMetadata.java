@@ -34,10 +34,11 @@ import java.io.Serializable;
 public final class FileMetadata implements Serializable {
 
    /** The serialVersionUID */
-   private static final long serialVersionUID = -2605615719808221213L;
+   private static final long serialVersionUID = -7150923427362644166L;
    
    private long lastModified;
    private long size = 0;
+   private int bufferSize;
 
    public FileMetadata() {
       touch();
@@ -63,6 +64,23 @@ public final class FileMetadata implements Serializable {
       this.size = size;
    }
 
+   public void setBufferSize(int bufferSize) {
+      this.bufferSize = bufferSize;
+   }
+
+   public int getBufferSize() {
+      return bufferSize;
+   }
+
+   public int getNumberOfChunks() {
+      if (size % bufferSize == 0) {
+         return (int) size / bufferSize;
+      }
+      else {
+         return (int) (size / bufferSize) + 1;
+      }
+   }
+
    @Override
    public boolean equals(Object o) {
       if (this == o) {
@@ -72,7 +90,7 @@ public final class FileMetadata implements Serializable {
          return false;
       }
       FileMetadata metadata = (FileMetadata) o;
-      return lastModified == metadata.lastModified && size == metadata.size;
+      return lastModified == metadata.lastModified && size == metadata.size && bufferSize == metadata.bufferSize;
    }
 
    @Override
