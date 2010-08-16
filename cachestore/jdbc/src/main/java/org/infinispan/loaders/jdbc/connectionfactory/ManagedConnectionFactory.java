@@ -89,7 +89,7 @@ public class ManagedConnectionFactory extends ConnectionFactory {
          connection = dataSource.getConnection();
       } catch (SQLException e) {
          log.error(e);
-         throw new CacheLoaderException(e);
+         throw new CacheLoaderException("This might be related to https://jira.jboss.org/browse/ISPN-604", e);
       }
       if (trace) {
          log.trace("Connection checked out: " + connection);
