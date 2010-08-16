@@ -104,9 +104,9 @@ public class BatchContainer {
                transactionManager.resume(bd.tx);
 
             if (success)
-               bd.tx.commit();
+               transactionManager.commit();
             else
-               bd.tx.rollback();
+               transactionManager.rollback();
          }
          catch (Exception e) {
             throw new CacheException("Unable to end batch", e);
