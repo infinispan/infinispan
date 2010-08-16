@@ -76,7 +76,7 @@ public class LocalLockMergingSegmentReadLockerTest extends DistributedSegmentRea
    @Override
    Directory createDirectory(Cache cache) {
       return new InfinispanDirectory(cache, INDEX_NAME, CHUNK_SIZE,
-               new LocalLockMergingSegmentReadLocker(cache, INDEX_NAME, CHUNK_SIZE));
+               new LocalLockMergingSegmentReadLocker(cache, INDEX_NAME));
    }
 
 }

@@ -45,12 +45,12 @@ public class InfinispanIndexInput extends IndexInput {
    private static final Log log = LogFactory.getLog(InfinispanIndexInput.class);
 
    private final AdvancedCache cache;
-   private final FileMetadata file;
    private final FileCacheKey fileKey;
    private final int chunkSize;
    private final SegmentReadLocker readLocks;
    private final boolean trace;
    private final String filename;
+   private final long fileLength;
 
    private int currentBufferSize;
    private byte[] buffer;
@@ -59,11 +59,11 @@ public class InfinispanIndexInput extends IndexInput {
 
    private boolean isClone;
 
-   public InfinispanIndexInput(AdvancedCache cache, FileCacheKey fileKey, int chunkSize, FileMetadata fileMetadata, SegmentReadLocker readLocks) throws FileNotFoundException {
+   public InfinispanIndexInput(AdvancedCache cache, FileCacheKey fileKey, FileMetadata fileMetadata, SegmentReadLocker readLocks) throws FileNotFoundException {
       this.cache = cache;
       this.fileKey = fileKey;
-      this.chunkSize = chunkSize;
-      this.file = fileMetadata;
+      this.chunkSize = fileMetadata.getBufferSize();
+      this.fileLength = fileMetadata.getSize();
       this.readLocks = readLocks;
       this.filename = fileKey.getFileName();
       trace = log.isTraceEnabled();
@@ -157,7 +157,7 @@ public class InfinispanIndexInput extends IndexInput {
 
    @Override
    public long length() {
-      return file.getSize();
+      return this.fileLength;
    }
    
    @Override

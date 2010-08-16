@@ -112,7 +112,7 @@ public class DistributedSegmentReadLockerTest extends MultipleCacheManagersTest 
    
    Directory createDirectory(Cache cache) {
       return new InfinispanDirectory(cache, INDEX_NAME, CHUNK_SIZE,
-               new DistributedSegmentReadLocker(cache, INDEX_NAME, CHUNK_SIZE));
+               new DistributedSegmentReadLocker(cache, INDEX_NAME));
    }
 
    void verifyBoth(Cache cache0, Cache cache1) {

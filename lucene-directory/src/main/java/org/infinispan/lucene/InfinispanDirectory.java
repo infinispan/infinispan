@@ -96,14 +96,10 @@ public class InfinispanDirectory extends Directory {
    private final SegmentReadLocker readLocks;
 
    public InfinispanDirectory(Cache cache, String indexName, LockFactory lf, int chunkSize, SegmentReadLocker readLocker) {
-      if (cache == null)
-         throw new IllegalArgumentException("Cache must not be null");
-      if (indexName == null)
-         throw new IllegalArgumentException("index name must not be null");
-      if (lf == null)
-         throw new IllegalArgumentException("LockFactory must not be null");
-      if (readLocker == null)
-         throw new IllegalArgumentException("SegmentReadLocker must not be null");
+      checkNotNull(cache, "cache");
+      checkNotNull(indexName, "indexName");
+      checkNotNull(lf, "LockFactory");
+      checkNotNull(readLocker, "SegmentReadLocker");
       if (chunkSize <= 0)
          throw new IllegalArgumentException("chunkSize must be a positive integer");
       this.cache = cache.getAdvancedCache();
@@ -116,7 +112,7 @@ public class InfinispanDirectory extends Directory {
    
    public InfinispanDirectory(Cache cache, String indexName, LockFactory lf, int chunkSize) {
       this(cache, indexName, lf, chunkSize,
-               new DistributedSegmentReadLocker(cache, indexName, chunkSize));
+               new DistributedSegmentReadLocker(cache, indexName));
    }
 
    public InfinispanDirectory(Cache cache, String indexName, int chunkSize, SegmentReadLocker readLocker) {
@@ -251,7 +247,7 @@ public class InfinispanDirectory extends Directory {
       if (fileMetadata == null) {
          throw new FileNotFoundException("Error loading medatada for index file: " + fileKey);
       }
-      else if (fileMetadata.getSize() <= chunkSize) {
+      else if (fileMetadata.getSize() <= fileMetadata.getBufferSize()) {
          //files smaller than chunkSize don't need a readLock
          return new SingleChunkIndexInput(cache, fileKey, fileMetadata);
       }
@@ -261,7 +257,7 @@ public class InfinispanDirectory extends Directory {
             // safest reaction is to tell this file doesn't exist anymore.
             throw new FileNotFoundException("Error loading medatada for index file: " + fileKey);
          }
-         return new InfinispanIndexInput(cache, fileKey, chunkSize, fileMetadata, readLocks);
+         return new InfinispanIndexInput(cache, fileKey, fileMetadata, readLocks);
       }
    }
 
@@ -293,7 +289,14 @@ public class InfinispanDirectory extends Directory {
    }
    
    private static LockFactory makeDefaultLockFactory(Cache cache, String indexName) {
+      checkNotNull(cache, "cache");
+      checkNotNull(indexName, "indexName");
       return new BaseLockFactory(cache, indexName);
+   }
+   
+   private static void checkNotNull(Object v, String objectname) {
+      if (v == null)
+         throw new IllegalArgumentException(objectname + " must not be null");
    }
    
 }

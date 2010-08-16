@@ -47,16 +47,12 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
    
    private final AdvancedCache cache;
    private final String indexName;
-   private final int chunkSize;
    
-   public DistributedSegmentReadLocker(Cache cache, String indexName, int chunkSize) {
+   public DistributedSegmentReadLocker(Cache cache, String indexName) {
       if (cache == null)
          throw new IllegalArgumentException("Cache must not be null");
       if (indexName == null)
          throw new IllegalArgumentException("index name must not be null");
-      if (chunkSize <= 0)
-         throw new IllegalArgumentException("chunkSize must be a non-null positive integer");
-      this.chunkSize = chunkSize;
       this.indexName = indexName;
       this.cache = cache.getAdvancedCache();
    }
@@ -93,7 +89,7 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
          }
       }
       if (newValue == 0) {
-         realFileDelete(readLockKey, cache, chunkSize);
+         realFileDelete(readLockKey, cache);
       }
    }
    
@@ -157,14 +153,13 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
     * @param readLockKey the key representing the values to be deleted
     * @param cache the cache containing the elements to be deleted
     */
-   static void realFileDelete(FileReadLockKey readLockKey, AdvancedCache cache, int chunkSize) {
+   static void realFileDelete(FileReadLockKey readLockKey, AdvancedCache cache) {
       final String indexName = readLockKey.getIndexName();
       final String filename = readLockKey.getFileName();
       FileCacheKey key = new FileCacheKey(indexName, filename);
       boolean batch = cache.startBatch();
       FileMetadata file = (FileMetadata) cache.withFlags(Flag.SKIP_LOCKING).remove(key);
-      int numChunks = (int) (file.getSize() / chunkSize);
-      for (int i = 0; i <= numChunks; i++) {
+      for (int i = 0; i < file.getNumberOfChunks(); i++) {
          ChunkCacheKey chunkKey = new ChunkCacheKey(indexName, filename, i);
          cache.withFlags(Flag.SKIP_REMOTE_LOOKUP).removeAsync(chunkKey);  
       }

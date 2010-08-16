@@ -44,7 +44,6 @@ public class InfinispanIndexOutput extends IndexOutput {
    private static final Log log = LogFactory.getLog(InfinispanIndexOutput.class);
 
    private final int bufferSize;
-
    private final AdvancedCache cache;
    private final FileMetadata file;
    private final FileCacheKey fileKey;
@@ -66,6 +65,7 @@ public class InfinispanIndexOutput extends IndexOutput {
       this.fileOps = fileList;
       this.buffer = new byte[this.bufferSize];
       this.file = new FileMetadata();
+      this.file.setBufferSize(bufferSize);
       trace = log.isTraceEnabled();
       if (trace) {
          log.trace("Opened new IndexOutput for file:{0} in index: {1}", fileKey.getFileName(), fileKey.getIndexName());
