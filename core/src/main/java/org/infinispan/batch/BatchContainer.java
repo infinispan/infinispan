@@ -66,6 +66,7 @@ public class BatchContainer {
             transactionManager.begin();
             bd.nestedInvocationCount = 1;
             bd.suspendTxAfterInvocation = !autoBatch;
+            bd.thread = Thread.currentThread();
 
             // do not suspend if this is from an AutoBatch!
             if (autoBatch)
@@ -103,10 +104,7 @@ public class BatchContainer {
             if ((existingTx == null && !autoBatch) || !bd.tx.equals(existingTx))
                transactionManager.resume(bd.tx);
 
-            if (success)
-               transactionManager.commit();
-            else
-               transactionManager.rollback();
+            resolveTransaction(bd, success);
          }
          catch (Exception e) {
             throw new CacheException("Unable to end batch", e);
@@ -125,6 +123,21 @@ public class BatchContainer {
       }
    }
 
+   private void resolveTransaction(BatchDetails bd, boolean success) throws Exception {
+      Thread currentThread = Thread.currentThread();
+      if (bd.thread.equals(currentThread)) {
+         if (success)
+            transactionManager.commit();
+         else
+            transactionManager.rollback();
+      } else {
+         if (success)
+            bd.tx.commit();
+         else
+            bd.tx.rollback();
+      }
+   }
+
    public Transaction getBatchTransaction() {
       return batchDetailsTl.get().tx;
    }
@@ -137,5 +150,6 @@ public class BatchContainer {
       int nestedInvocationCount;
       boolean suspendTxAfterInvocation;
       Transaction tx;
+      Thread thread;
    }
 }
