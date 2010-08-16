@@ -84,7 +84,7 @@ public class CacheStoreInterceptor extends JmxStatsCommandInterceptor {
    public CacheStoreInterceptor() {
       log = LogFactory.getLog(getClass());
       trace = log.isTraceEnabled();
-   }
+   }          
 
    @Inject
    protected void init(CacheLoaderManager loaderManager) {
