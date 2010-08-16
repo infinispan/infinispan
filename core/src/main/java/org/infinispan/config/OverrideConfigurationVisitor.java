@@ -85,6 +85,7 @@ public class OverrideConfigurationVisitor extends AbstractConfigurationBeanVisit
       overrideFields(transactionType, override.transactionType);
       overrideFields(unsafeType, override.unsafeType);
       overrideFields(indexingType, override.indexingType);
+      overrideFields(customInterceptorsType, override.customInterceptorsType);      
    }
 
    private void overrideFields(AbstractConfigurationBean bean, AbstractConfigurationBean overrides) {
