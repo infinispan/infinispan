@@ -15,8 +15,7 @@ import java.util.concurrent.locks.*;
 import java.util.*;
 import java.io.Serializable;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+
 
 /**
  * A hash table supporting full concurrency of retrievals and
@@ -304,8 +303,10 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
         * 
         * @param e
         *            accessed entry in Segment
+        * 
+        * @return non null set of evicted entries.           
         */
-       void onEntryMiss(HashEntry<K, V> e);
+       Set<HashEntry<K, V>> onEntryMiss(HashEntry<K, V> e);
 
        /**
         * Invoked to notify EvictionPolicy implementation that an entry in Segment has been
@@ -370,7 +371,8 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
        }
 
        @Override
-       public void onEntryMiss(HashEntry<K, V> e) {
+       public Set<HashEntry<K, V>> onEntryMiss(HashEntry<K, V> e) {
+          return Collections.emptySet();
        }
 
        @Override
@@ -433,8 +435,9 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
        }
 
        @Override
-       public void onEntryMiss(HashEntry<K, V> e) {
+       public Set<HashEntry<K, V>> onEntryMiss(HashEntry<K, V> e) {
            lruQueue.addFirst(e);
+           return Collections.emptySet();
        }
 
        /*
@@ -560,8 +563,9 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
        }
 
        @Override
-       public void onEntryMiss(HashEntry<K, V> e) {
+       public Set<HashEntry<K, V>> onEntryMiss(HashEntry<K, V> e) {
            // initialization
+          Set<HashEntry<K, V>> evicted = Collections.emptySet();
            if (currentLIRSize + 1 < lirSizeLimit) {
                currentLIRSize++;
                e.transitionToLIRResident();
@@ -576,19 +580,19 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
 
                    stack.put(e.hashCode(), e);
 
+                   evicted = new HashSet<HashEntry<K, V>>();
                    if (inStack) {
-                       e.transitionToLIRResident();
-                       Set<HashEntry<K, V>> evicted = new HashSet<HashEntry<K, V>>();
-                       switchBottomostLIRtoHIRAndPrune(evicted);
-                       removeFromSegment(evicted);
+                       e.transitionToLIRResident();                       
+                       switchBottomostLIRtoHIRAndPrune(evicted);                       
                    } else {                        
                        queue.addLast(e);
-                   }
-
+                       evicted.add(first);
+                   }                   
                    // evict from segment
-                   segment.remove(first.key, first.hash, null);
+                   removeFromSegment(evicted);
                }
            }
+           return evicted;
        }
 
        private void removeFromSegment(Set<HashEntry<K, V>> evicted) {
@@ -962,7 +966,13 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
                       // add a new entry
                       tab[index] = new HashEntry<K, V>(key, hash, first, value);
                       // notify a miss
-                      eviction.onEntryMiss(tab[index]);
+                      Set<HashEntry<K, V>> newlyEvicted = eviction.onEntryMiss(tab[index]);
+                      if (!newlyEvicted.isEmpty()) {
+                         if (evicted != null)
+                            evicted.addAll(newlyEvicted);
+                         else
+                            evicted = newlyEvicted;
+                      }                      
                   } else {
                       tab[index] = new HashEntry<K, V>(key, hash, first, value);
                   }
