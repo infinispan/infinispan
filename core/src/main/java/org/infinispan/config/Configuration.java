@@ -1160,8 +1160,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
        *             wakeup time in milliseconds." */
       protected Long replQueueInterval=5000L;
 
-      /** @configRef desc="If true, asynchronous marshalling is enabled which means that caller can return even quicker." */
-      protected Boolean asyncMarshalling=true;
+      /** @configRef desc="If true, asynchronous marshalling is enabled which means that caller can return even
+       *             quicker, but it can suffer from reordering of operations. You can find more information
+       *             <a href=&quot;http://community.jboss.org/docs/DOC-15725&quot;>here</a>" */
+      protected Boolean asyncMarshalling=false;
 
       private AsyncType(boolean readFromXml) {
          super();
