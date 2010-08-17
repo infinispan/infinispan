@@ -190,7 +190,7 @@ public class DistributionInterceptor extends BaseRpcInterceptor {
    @Override
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
       if (ctx.isOriginLocal())
-         rpcManager.invokeRemotely(dm.getAffectedNodes(ctx.getAffectedKeys()), command, true, true);
+         rpcManager.invokeRemotely(dm.getAffectedNodes(command.getKeys()), command, true, true);
       return invokeNextInterceptor(ctx, command);
    }
 
