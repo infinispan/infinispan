@@ -41,17 +41,25 @@ import java.util.concurrent.TimeUnit;
  * <p/>
  * Introduce lock() API methods https://jira.jboss.org/jira/browse/ISPN-48
  *
- * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
- * @author <a href="mailto:vblagoje@redhat.com">Vladimir Blagojevic (vblagoje@redhat.com)</a>
+ * @author Manik Surtani
+ * @author Vladimir Blagojevic
  */
 @Test(groups = "functional", testName = "replication.SyncReplLockingTest")
 public class SyncReplLockingTest extends MultipleCacheManagersTest {
    String k = "key", v = "value";
 
+   public SyncReplLockingTest() {
+      cleanup = CleanupPhase.AFTER_METHOD;
+   }
+
+   protected Configuration.CacheMode getCacheMode() {
+      return Configuration.CacheMode.REPL_SYNC;
+   }
+
    protected void createCacheManagers() throws Throwable {
-      Configuration replSync = getDefaultClusteredConfig(Configuration.CacheMode.REPL_SYNC, true);
-      replSync.setLockAcquisitionTimeout(500);
-      createClusteredCaches(2, "replSync", replSync);
+      Configuration cfg = getDefaultClusteredConfig(getCacheMode(), true);
+      cfg.setLockAcquisitionTimeout(500);
+      createClusteredCaches(2, "testcache", cfg);
    }
 
    public void testLocksReleasedWithoutExplicitUnlock() throws Exception {
@@ -73,8 +81,8 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
 
 
    public void testLocksReleasedWithNoMods() throws Exception {
-      Cache cache1 = cache(0, "replSync");
-      Cache cache2 = cache(1, "replSync");
+      Cache cache1 = cache(0, "testcache");
+      Cache cache2 = cache(1, "testcache");
       assertClusterSize("Should only be 2  caches in the cluster!!!", 2);
 
       assertNull("Should be null", cache1.get(k));
@@ -99,8 +107,8 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
    }
    
    public void testReplaceNonExistentKey() throws Exception {
-      Cache cache1 = cache(0, "replSync");
-      Cache cache2 = cache(1, "replSync");
+      Cache cache1 = cache(0, "testcache");
+      Cache cache2 = cache(1, "testcache");
       assertClusterSize("Should only be 2  caches in the cluster!!!", 2);
      
       TransactionManager mgr = TestingUtil.getTransactionManager(cache1);
@@ -130,8 +138,8 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
    
    private void concurrentLockingHelper(final boolean sameNode, final boolean useTx)
          throws Exception {
-      final Cache cache1 = cache(0, "replSync");
-      final Cache cache2 = cache(1, "replSync");
+      final Cache cache1 = cache(0, "testcache");
+      final Cache cache2 = cache(1, "testcache");
       assertClusterSize("Should only be 2  caches in the cluster!!!", 2);
 
       assertNull("Should be null", cache1.get(k));
@@ -174,7 +182,7 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
       t.start();
 
       // wait till the put in thread t times out
-      assert latch.await(1, TimeUnit.SECONDS) : "Concurrent put didn't time out!";
+      assert latch.await(10, TimeUnit.SECONDS) : "Concurrent put didn't time out!";
 
       cache1.put(k, name);
       mgr.commit();
@@ -191,8 +199,8 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
    private void locksReleasedWithoutExplicitUnlockHelper(boolean lockPriorToPut, boolean useCommit)
          throws Exception {
       
-      Cache cache1 = cache(0, "replSync");
-      Cache cache2 = cache(1, "replSync");
+      Cache cache1 = cache(0, "testcache");
+      Cache cache2 = cache(1, "testcache");
       
       assertClusterSize("Should only be 2  caches in the cluster!!!", 2);
 
