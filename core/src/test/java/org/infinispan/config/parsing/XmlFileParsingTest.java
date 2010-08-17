@@ -146,7 +146,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
       assert c.getCacheMode() == Configuration.CacheMode.REPL_ASYNC;
       assert c.isUseReplQueue();
-      assert c.isUseAsyncMarshalling();
+      assert !c.isUseAsyncMarshalling();
       assert !c.isFetchInMemoryState();
 
       c = namedCaches.get("txSyncRepl");
@@ -262,7 +262,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assert c.isUseReplQueue();
       assert c.getReplQueueInterval() == 1234;
       assert c.getReplQueueMaxElements() == 100;
-      assert c.isUseAsyncMarshalling();
+      assert !c.isUseAsyncMarshalling();
       assert !c.isFetchInMemoryState();
       assert c.getLockAcquisitionTimeout() == 1000;
       assert c.getIsolationLevel() == IsolationLevel.READ_COMMITTED;

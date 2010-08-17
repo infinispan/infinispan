@@ -7,12 +7,12 @@ import org.apache.commons.math.stat.inference.TestUtils;
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.loaders.bucket.Bucket;
 import org.infinispan.loaders.decorators.AsyncStoreConfig;
-import org.infinispan.loaders.file.FileCacheStore;
+import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
 import org.infinispan.loaders.file.FileCacheStoreConfig;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
@@ -35,14 +35,13 @@ public class FlushingAsyncStoreTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       Configuration config = getDefaultStandaloneConfig(false);
-      FileCacheStoreConfig fcsConfig = new FileCacheStoreConfig();
-      fcsConfig.setCacheLoaderClassName(SlowFileCacheStore.class.getName());
+      CacheStoreConfig slowCacheStoreConfig = new SlowCacheStoreConfig();
       AsyncStoreConfig storeConfig = new AsyncStoreConfig();
       storeConfig.setEnabled(true);
       storeConfig.setThreadPoolSize(1);
-      fcsConfig.setAsyncStoreConfig(storeConfig);
+      slowCacheStoreConfig.setAsyncStoreConfig(storeConfig);
       CacheLoaderManagerConfig clmConfig = new CacheLoaderManagerConfig();
-      clmConfig.getCacheLoaderConfigs().add(fcsConfig);
+      clmConfig.getCacheLoaderConfigs().add(slowCacheStoreConfig);
       config.setCacheLoaderManagerConfig(clmConfig);
       return TestCacheManagerFactory.createCacheManager(config);
    }
@@ -67,30 +66,21 @@ public class FlushingAsyncStoreTest extends SingleCacheManagerTest {
       TestUtils a; 
    }
 
-   public static class SlowFileCacheStore extends FileCacheStore {
+   public static class SlowCacheStoreConfig extends DummyInMemoryCacheStore.Cfg {
+      public SlowCacheStoreConfig() {
+         setCacheLoaderClassName(SlowCacheStore.class.getName());
+      }
+   }
+
+   public static class SlowCacheStore extends DummyInMemoryCacheStore {
       private void insertDelay() {
-         try {
-            Thread.sleep(1000);
-         } catch (InterruptedException e) {
-         }
+         TestingUtil.sleepThread(100);
       }
 
       @Override
-      protected void insertBucket(Bucket bucket) throws CacheLoaderException {
+      public void store(InternalCacheEntry ed) {
          insertDelay();
-         super.insertBucket(bucket);
-      }
-
-      @Override
-      protected boolean removeLockSafe(Object key, String lockingKey) throws CacheLoaderException {
-         insertDelay();
-         return super.removeLockSafe(key, lockingKey);
-      }
-
-      @Override
-      protected void storeLockSafe(InternalCacheEntry entry, String lockingKey) throws CacheLoaderException {
-         insertDelay();
-         super.storeLockSafe(entry, lockingKey);
+         super.store(ed);
       }
    }
 }
