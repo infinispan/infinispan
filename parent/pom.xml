@@ -334,6 +334,9 @@
                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
                         </manifest>
                      </archive>
+                     <excludes>
+                        <excludes>**/jbossts-properties.xml</excludes>
+                     </excludes>
                   </configuration>
                </execution>
             </executions>
