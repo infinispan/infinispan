@@ -132,6 +132,7 @@ public class SyncReplTest extends MultipleCacheManagersTest {
       List<Response> emptyResponses = Collections.emptyList();
       try {
          Configuration asyncCache = getDefaultClusteredConfig(Configuration.CacheMode.REPL_ASYNC);
+         asyncCache.setUseAsyncMarshalling(true);
          defineConfigurationOnAllManagers("asyncCache", asyncCache);
          Cache asyncCache1 = manager(0).getCache("asyncCache");
 

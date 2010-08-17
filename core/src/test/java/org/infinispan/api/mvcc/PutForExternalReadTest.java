@@ -98,7 +98,7 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
          // specify what we expectWithTx called on the mock Rpc Manager.  For params we don't care about, just use ANYTHING.
          // setting the mock object to expectWithTx the "sync" param to be false.
          expect(mockTransport.invokeRemotely((List<Address>) anyObject(), (CacheRpcCommand) anyObject(),
-                                             eq(ResponseMode.ASYNCHRONOUS), anyLong(), anyBoolean(), (ResponseFilter) isNull(), anyBoolean())).andReturn(null);
+                                             eq(ResponseMode.ASYNCHRONOUS_WITH_SYNC_MARSHALLING), anyLong(), anyBoolean(), (ResponseFilter) isNull(), anyBoolean())).andReturn(null);
 
          replay(mockAddress1, mockAddress2, mockTransport);
 
