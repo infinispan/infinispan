@@ -4,11 +4,7 @@ import java.util.AbstractCollection;
 import java.util.AbstractSet;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -16,24 +12,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import net.jcip.annotations.ThreadSafe;
 
-import org.infinispan.Cache;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalEntryFactory;
+import org.infinispan.eviction.EvictionManager;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
-import org.infinispan.eviction.PassivationManager;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
-import org.infinispan.interceptors.PassivationInterceptor;
-import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.CacheLoaderManager;
-import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.Immutables;
 import org.infinispan.util.concurrent.BoundedConcurrentHashMap;
 import org.infinispan.util.concurrent.BoundedConcurrentHashMap.Eviction;
 import org.infinispan.util.concurrent.BoundedConcurrentHashMap.EvictionListener;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Simple data container that does not order entries for eviction, implemented using two ConcurrentHashMaps, one for
@@ -54,10 +42,8 @@ public class DefaultDataContainer implements DataContainer {
    final ConcurrentMap<Object, InternalCacheEntry> mortalEntries;
    final AtomicInteger numEntries = new AtomicInteger(0);
    final InternalEntryFactory entryFactory;
-   final DefaultEvictionListener evictionListener;
-   protected Cache<Object, Object> cache;
-   private PassivationManager passivator;
-   private CacheNotifier notifier;
+   final DefaultEvictionListener evictionListener;   
+   private EvictionManager evictionManager;   
 
    protected DefaultDataContainer(int concurrencyLevel) {
       immortalEntries = new ConcurrentHashMap<Object, InternalCacheEntry>(128, 0.75f, concurrencyLevel);
@@ -97,10 +83,8 @@ public class DefaultDataContainer implements DataContainer {
    }
 
    @Inject
-   public void initialize(Cache<Object, Object> cache, PassivationManager passivator, CacheNotifier notifier) {
-      this.cache = cache;
-      this.passivator = passivator;
-      this.notifier = notifier;
+   public void initialize(EvictionManager evictionManager) {
+      this.evictionManager = evictionManager;     
    }
 
    public static DataContainer boundedDataContainer(int concurrencyLevel, int maxEntries, EvictionStrategy strategy, EvictionThreadPolicy policy) {
@@ -114,11 +98,6 @@ public class DefaultDataContainer implements DataContainer {
 
    public static DataContainer unBoundedDataContainer(int concurrencyLevel) {
       return new DefaultDataContainer(concurrencyLevel);
-   }
-
-   @Override
-   public Set<InternalCacheEntry> getEvictionCandidates() {
-      return Collections.emptySet();
    }
 
    public InternalCacheEntry peek(Object key) {
@@ -243,19 +222,16 @@ public class DefaultDataContainer implements DataContainer {
       return new EntryIterator(immortalEntries.values().iterator(), mortalEntries.values().iterator());
    }
 
-   private class DefaultEvictionListener implements EvictionListener<Object, InternalCacheEntry> {
-      private final Log log = LogFactory.getLog(DefaultEvictionListener.class);
-
+   private class DefaultEvictionListener implements EvictionListener<Object, InternalCacheEntry> {      
       @Override
-      public void evicted(Object key, InternalCacheEntry value) {
-         notifier.notifyCacheEntryEvicted(key, true, null);
-         try {
-            passivator.passivate(key, value, null);
-         } catch (CacheLoaderException e) {
-            log.warn("Unable to passivate entry under {0}", key, e);
-         }
-         notifier.notifyCacheEntryEvicted(key, false, null);
+      public void preEvict(Object key) {
+         evictionManager.preEvict(key);
       }
+      
+      @Override
+      public void postEvict(Object key, InternalCacheEntry value) {
+         evictionManager.postEvict(key, value);
+      }      
    }
 
    private class KeySet extends AbstractSet<Object> {

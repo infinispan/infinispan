@@ -48,20 +48,6 @@ public class ConfigurationValidatingVisitor extends AbstractConfigurationBeanVis
    }
 
    @Override
-   public void visitEvictionType(Configuration.EvictionType bean) {
-      this.eviction = bean;
-      if (this.eviction != null && this.clmc != null) checkEvictionPassivationSettings();
-      super.visitEvictionType(bean);
-   }
-
-   @Override
-   public void visitCacheLoaderManagerConfig(CacheLoaderManagerConfig bean) {
-      this.clmc = bean;
-      if (this.eviction != null && this.clmc != null) checkEvictionPassivationSettings();
-      super.visitCacheLoaderManagerConfig(bean);
-   }
-
-   @Override
    public void visitConfiguration(Configuration bean) {
       checkEagerLockingAndDld(bean);
    }
@@ -76,10 +62,5 @@ public class ConfigurationValidatingVisitor extends AbstractConfigurationBeanVis
       if (isDealLockDetection && eagerLocking) {
          throw new ConfigurationException("Deadlock detection cannot be used with eager locking until ISPN-596 is fixed. See https://jira.jboss.org/browse/ISPN-596");
       }
-   }
-
-   private void checkEvictionPassivationSettings() {
-      if (eviction != null && clmc != null && clmc.isPassivation() && eviction.strategy == EvictionStrategy.LIRS)
-         throw new ConfigurationException("Eviction strategy LIRS cannot be used with passivation until ISPN-598 is fixed.  See https://jira.jboss.org/browse/ISPN-598");
    }
 }

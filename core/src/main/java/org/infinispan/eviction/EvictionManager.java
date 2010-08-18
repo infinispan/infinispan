@@ -1,6 +1,8 @@
 package org.infinispan.eviction;
 
 import net.jcip.annotations.ThreadSafe;
+
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 
@@ -31,4 +33,8 @@ public interface EvictionManager {
     * @return true if eviction is enabled, false otherwise
     */
    boolean isEnabled();
+   
+   void preEvict(Object key);
+   
+   void postEvict(Object key, InternalCacheEntry value);
 }

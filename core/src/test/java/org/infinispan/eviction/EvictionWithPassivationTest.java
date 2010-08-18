@@ -42,7 +42,7 @@ public class EvictionWithPassivationTest extends SingleCacheManagerTest {
       runTest(EvictionThreadPolicy.PIGGYBACK, EvictionStrategy.LRU);
    }
 
-   @Test (enabled = false, description = "See ISPN-598")
+   
    public void testPiggybackLIRS() {
       runTest(EvictionThreadPolicy.PIGGYBACK, EvictionStrategy.LIRS);
    }
@@ -59,7 +59,7 @@ public class EvictionWithPassivationTest extends SingleCacheManagerTest {
       runTest(EvictionThreadPolicy.DEFAULT, EvictionStrategy.LRU);
    }
 
-   @Test (enabled = false, description = "See ISPN-598")
+   
    public void testDefaultLIRS() {
       runTest(EvictionThreadPolicy.DEFAULT, EvictionStrategy.LIRS);
    }

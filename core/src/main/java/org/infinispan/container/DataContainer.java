@@ -127,13 +127,4 @@ public interface DataContainer extends Iterable<InternalCacheEntry> {
     * Purges entries that have passed their expiry time
     */
    void purgeExpired();
-   
-   
-   /**
-    * Returns a set of eviction candidates. Containers not supporting eviction should return an
-    * empty set.
-    * 
-    * @return a set of entries that should be evicted from this container.
-    */
-   Set<InternalCacheEntry> getEvictionCandidates();
 }
