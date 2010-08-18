@@ -5,6 +5,7 @@ import static org.infinispan.remoting.rpc.ResponseMode.SYNCHRONOUS;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.concurrent.Future;
 
 import org.infinispan.CacheException;
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.control.RehashControlCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.WriteCommand;
@@ -214,5 +216,100 @@ public class InvertedLeaveTask extends RehashTask {
    @Override
    protected Log getLog() {
       return log;
+   }
+}
+
+abstract class StateMap<S> {
+   List<Address> leavers;
+   ConsistentHash oldCH, newCH;
+   int replCount;
+   Map<Address, S> state = new HashMap<Address, S>();
+   protected static final Log log = LogFactory.getLog(InvertedLeaveTask.class);
+
+   StateMap(List<Address> leavers, ConsistentHash oldCH, ConsistentHash newCH, int replCount) {
+      this.leavers = leavers;
+      this.oldCH = oldCH;
+      this.newCH = newCH;
+      this.replCount = replCount;
+   }
+
+   Map<Address, S> getState() {
+      return state;
+   }
+}
+
+/**
+ * A state map that aggregates {@link ReplicableCommand}s according to recipient affected.
+ *
+ * @param <T> type of replicable command to aggregate
+ */
+abstract class CommandAggregatingStateMap<T extends ReplicableCommand> extends StateMap<List<T>> {
+   Set<Object> keysHandled = new HashSet<Object>();
+
+   CommandAggregatingStateMap(List<Address> leavers, ConsistentHash oldCH, ConsistentHash newCH, int replCount) {
+      super(leavers, oldCH, newCH, replCount);
+   }
+
+   // if only Java had duck-typing!
+   abstract Set<Object> getAffectedKeys(T payload);
+
+   /**
+    * Only add state to state map if old_owner_list for key contains a leaver, and the position of the leaver in the old
+    * owner list
+    *
+    * @param payload payload to consider when adding to the aggregate state
+    */
+   void addState(T payload) {
+      for (Object key : getAffectedKeys(payload)) {
+         for (Address leaver : leavers) {
+            List<Address> owners = oldCH.locate(key, replCount);
+            int leaverIndex = owners.indexOf(leaver);
+            if (leaverIndex > -1) {
+               // add to state map!
+               List<Address> newOwners = newCH.locate(key, replCount);
+               newOwners.removeAll(owners);
+               if (!newOwners.isEmpty()) {
+                  for (Address no : newOwners) {
+                     List<T> s = state.get(no);
+                     if (s == null) {
+                        s = new LinkedList<T>();
+                        state.put(no, s);
+                     }
+                     s.add(payload);
+                  }
+               }
+            }
+         }
+      }
+   }
+}
+
+/**
+ * Specific version of the CommandAggregatingStateMap that aggregates PrepareCommands, used to flush pending prepares
+ * to nodes during a leave.
+ */
+class PendingPreparesMap extends CommandAggregatingStateMap<PrepareCommand> {
+   PendingPreparesMap(List<Address> leavers, ConsistentHash oldCH, ConsistentHash newCH, int replCount) {
+      super(leavers, oldCH, newCH, replCount);
+   }
+
+   @Override
+   Set<Object> getAffectedKeys(PrepareCommand payload) {
+      return payload.getAffectedKeys();
+   }
+}
+
+/**
+ * Specific version of the CommandAggregatingStateMap that aggregates PrepareCommands, used to flush writes
+ * made while state was being transferred to nodes during a leave. 
+ */
+class TransactionLogMap extends CommandAggregatingStateMap<WriteCommand> {
+   TransactionLogMap(List<Address> leavers, ConsistentHash oldCH, ConsistentHash newCH, int replCount) {
+      super(leavers, oldCH, newCH, replCount);
+   }
+
+   @Override
+   Set<Object> getAffectedKeys(WriteCommand payload) {
+      return payload.getAffectedKeys();
    }
 }
