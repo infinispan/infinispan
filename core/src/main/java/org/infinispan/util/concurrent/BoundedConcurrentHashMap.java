@@ -274,13 +274,18 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
    }
    
    public interface EvictionListener<K, V> {
-       void evicted(K key, V value);
+       void preEvict(K key);
+       void postEvict(K key, V value);
    }
    
-   static class NullEvictionListener<K,V> implements EvictionListener<K, V>{
-       @Override
-       public void evicted(K key, V value) {            
-       }        
+   static class NullEvictionListener<K, V> implements EvictionListener<K, V> {
+      @Override
+      public void postEvict(K key, V value) {
+      }
+
+      @Override
+      public void preEvict(K key) {
+      }
    }
 
    public interface EvictionPolicy<K, V> {
@@ -421,12 +426,13 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
                }
                while (isOverflow()) {
                    HashEntry<K, V> first = lruQueue.getLast();
+                   segment.getEvictionListener().preEvict(first.key);
                    segment.remove(first.key, first.hash, null);
                    evicted.add(first);
-               }
+               }              
            } finally {
-               accessQueue.clear();
-           }
+               accessQueue.clear();               
+           }          
            return evicted;
        }
 
@@ -595,8 +601,9 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
            return evicted;
        }
 
-       private void removeFromSegment(Set<HashEntry<K, V>> evicted) {
+       private void removeFromSegment(Set<HashEntry<K, V>> evicted) {          
            for (HashEntry<K, V> e : evicted) {
+               segment.getEvictionListener().preEvict(e.key);
                segment.remove(e.key, e.hash, null);
            }
        }
@@ -756,6 +763,10 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
         static final <K,V> Segment<K,V>[] newArray(int i) {
             return new Segment[i];
         }
+        
+        EvictionListener<K, V> getEvictionListener() {
+           return evictionListener;
+        }
 
         /**
          * Sets table to new HashEntry array.
@@ -816,8 +827,8 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
                        Set<HashEntry<K, V>> evicted = attemptEviction(false);
                        // piggyback listener invocation on callers thread outside lock
                        if (evicted != null) {
-                           for (HashEntry<K, V> he : evicted) {
-                               evictionListener.evicted(he.key, he.value);
+                           for (HashEntry<K, V> he : evicted) {                               
+                               evictionListener.postEvict(he.key, he.value);
                            }
                        }
                    }
@@ -895,8 +906,8 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
                unlock();
                // piggyback listener invocation on callers thread outside lock   
                if (evicted != null) {
-                   for (HashEntry<K, V> he : evicted) {
-                       evictionListener.evicted(he.key, he.value);
+                   for (HashEntry<K, V> he : evicted) {                       
+                       evictionListener.postEvict(he.key, he.value);
                    }
                }
            }
@@ -923,8 +934,8 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
                unlock();
                // piggyback listener invocation on callers thread outside lock
                if(evicted != null) {
-                   for (HashEntry<K, V> he : evicted) {
-                       evictionListener.evicted(he.key, he.value);
+                   for (HashEntry<K, V> he : evicted) {                       
+                       evictionListener.postEvict(he.key, he.value);
                    }                
                }
            }
@@ -982,8 +993,8 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
               unlock();
               // piggyback listener invocation on callers thread outside lock
               if(evicted != null) {
-                  for (HashEntry<K, V> he : evicted) {
-                      evictionListener.evicted(he.key, he.value);
+                  for (HashEntry<K, V> he : evicted) {                      
+                      evictionListener.postEvict(he.key, he.value);
                   }                
               }
           }

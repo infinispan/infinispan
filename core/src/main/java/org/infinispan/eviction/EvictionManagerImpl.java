@@ -1,29 +1,33 @@
 package org.infinispan.eviction;
 
-import net.jcip.annotations.ThreadSafe;
-import org.infinispan.AdvancedCache;
-import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
-import org.infinispan.container.DataContainer;
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.factories.KnownComponentNames;
-import org.infinispan.factories.annotations.ComponentName;
-import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
-import org.infinispan.factories.annotations.Stop;
-import org.infinispan.loaders.CacheLoaderManager;
-import org.infinispan.loaders.CacheStore;
-import org.infinispan.util.Util;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
-import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import static org.infinispan.context.Flag.FAIL_SILENTLY;
+import net.jcip.annotations.ThreadSafe;
+
+import org.infinispan.config.Configuration;
+import org.infinispan.container.DataContainer;
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.context.Flag;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.annotations.ComponentName;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.annotations.Stop;
+import org.infinispan.loaders.CacheLoaderException;
+import org.infinispan.loaders.CacheLoaderManager;
+import org.infinispan.loaders.CacheStore;
+import org.infinispan.marshall.MarshalledValue;
+import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.util.Util;
+import org.infinispan.util.concurrent.TimeoutException;
+import org.infinispan.util.concurrent.locks.LockManager;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 @ThreadSafe
 public class EvictionManagerImpl implements EvictionManager {
@@ -32,24 +36,33 @@ public class EvictionManagerImpl implements EvictionManager {
    ScheduledFuture <?> evictionTask;
 
    // components to be injected
-   ScheduledExecutorService executor;
-   Configuration configuration;
-   Cache<Object, Object> cache;
-   CacheLoaderManager cacheLoaderManager;
-   DataContainer dataContainer;
-   CacheStore cacheStore;
-   boolean enabled;
-   int maxEntries;
+   private ScheduledExecutorService executor;
+   private Configuration configuration;
+   private CacheLoaderManager cacheLoaderManager;
+   private DataContainer dataContainer;
+   private CacheStore cacheStore;
+   private CacheNotifier cacheNotifier;
+   private LockManager lockManager;
+   private PassivationManager passivator;
+   private InvocationContextContainer ctxContainer;
+   
+   
+   private boolean enabled;   
    volatile CountDownLatch startLatch = new CountDownLatch(1);
 
    @Inject
    public void initialize(@ComponentName(KnownComponentNames.EVICTION_SCHEDULED_EXECUTOR) ScheduledExecutorService executor,
-                          Configuration configuration, Cache<Object, Object> cache, DataContainer dataContainer, CacheLoaderManager cacheLoaderManager) {
+            Configuration configuration, DataContainer dataContainer,
+            CacheLoaderManager cacheLoaderManager, CacheNotifier cacheNotifier,
+            LockManager lockManager, PassivationManager passivator, InvocationContextContainer ctxContainer) {
       this.executor = executor;
       this.configuration = configuration;
-      this.cache = cache;
       this.dataContainer = dataContainer;
       this.cacheLoaderManager = cacheLoaderManager;
+      this.cacheNotifier = cacheNotifier;
+      this.lockManager = lockManager;
+      this.passivator = passivator;
+      this.ctxContainer = ctxContainer;
    }
 
    @Start(priority = 55)
@@ -57,8 +70,7 @@ public class EvictionManagerImpl implements EvictionManager {
    public void start() {
       // first check if eviction is enabled!
       enabled = configuration.getEvictionStrategy() != EvictionStrategy.NONE;
-      if (enabled) {
-         maxEntries = configuration.getEvictionMaxEntries();
+      if (enabled) {        
          if (cacheLoaderManager != null && cacheLoaderManager.isEnabled())
             cacheStore = cacheLoaderManager.getCacheStore();
          // Set up the eviction timer task
@@ -106,31 +118,7 @@ public class EvictionManagerImpl implements EvictionManager {
          } catch (Exception e) {
             log.warn("Caught exception purging cache store!", e);
          }
-      }
-
-      // finally iterate through data container if too big
-      Set<InternalCacheEntry> evictionCandidates = dataContainer.getEvictionCandidates();
-      if(!evictionCandidates.isEmpty()) {      
-         AdvancedCache<Object, Object> ac = cache.getAdvancedCache();
-         if (trace) {
-            log.trace("Evicting data container entries");
-            start = System.currentTimeMillis();
-         } 
-         for (InternalCacheEntry entry : evictionCandidates) {
-            Object k = entry.getKey();
-            try {                
-                  if (trace) log.trace("Attempting to evict key [{0}]", k);
-                  ac.withFlags(FAIL_SILENTLY).evict(k);
-               }
-            catch (Exception e) {
-               log.warn("Caught exception when iterating through data container.  Current entry is under key [{0}]", e, k);
-            }
-         }               
-         if (trace)
-            log.trace("Eviction process completed in {0}", Util.prettyPrintTime(System.currentTimeMillis() - start));
-      } else {
-         if (trace) log.trace("Data container is smaller than or equal to the maxEntries; not doing anything");
-      }
+      }    
    }
 
    public boolean isEnabled() {
@@ -148,4 +136,83 @@ public class EvictionManagerImpl implements EvictionManager {
          processEviction();
       }
    }
+   
+   @Override
+   public void preEvict(Object key) {
+      try {
+         acquireLock(getInvocationContext(), key);
+      } catch (Exception e) {
+         log.warn("Could not acquire lock for eviction of {0}", key, e);
+      }
+      cacheNotifier.notifyCacheEntryEvicted(key, true, null);
+   }
+
+   @Override
+   public void postEvict(Object key, InternalCacheEntry value) {
+      try {
+         passivator.passivate(key, value, null);
+      } catch (CacheLoaderException e) {
+         log.warn("Unable to passivate entry under {0}", key, e);
+      }
+      cacheNotifier.notifyCacheEntryEvicted(key, false, null);
+      releaseLock(key);
+   }
+   
+   private InvocationContext getInvocationContext(){
+      return ctxContainer.getInvocationContext();
+   }
+   
+   /**
+    * Attempts to lock an entry if the lock isn't already held in the current scope, and records the lock in the
+    * context.
+    *
+    * @param ctx context
+    * @param key Key to lock
+    * @return true if a lock was needed and acquired, false if it didn't need to acquire the lock (i.e., lock was
+    *         already held)
+    * @throws InterruptedException if interrupted
+    * @throws org.infinispan.util.concurrent.TimeoutException
+    *                              if we are unable to acquire the lock after a specified timeout.
+    */
+   private boolean acquireLock(InvocationContext ctx, Object key) throws InterruptedException, TimeoutException {
+      // don't EVER use lockManager.isLocked() since with lock striping it may be the case that we hold the relevant
+      // lock which may be shared with another key that we have a lock for already.
+      // nothing wrong, just means that we fail to record the lock.  And that is a problem.
+      // Better to check our records and lock again if necessary.
+
+      boolean shouldSkipLocking = ctx.hasFlag(Flag.SKIP_LOCKING);
+
+      if (!ctx.hasLockedKey(key) && !shouldSkipLocking) {
+         if (lockManager.lockAndRecord(key, ctx)) {
+            return true;
+         } else {
+            Object owner = lockManager.getOwner(key);
+            // if lock cannot be acquired, expose the key itself, not the marshalled value
+            if (key instanceof MarshalledValue) {
+               key = ((MarshalledValue) key).get();
+            }
+            throw new TimeoutException("Unable to acquire lock after [" + Util.prettyPrintTime(getLockAcquisitionTimeout(ctx)) + "] on key [" + key + "] for requestor [" +
+                  ctx.getLockOwner() + "]! Lock held by [" + owner + "]");
+         }
+      } else {
+         if (trace) {
+            if (shouldSkipLocking)
+               log.trace("SKIP_LOCKING flag used!");
+            else
+               log.trace("Already own lock for entry");
+         }
+      }
+
+      return false;
+   }
+   
+   public final void releaseLock(Object key) {
+      lockManager.unlock(key);
+   }
+   
+   private long getLockAcquisitionTimeout(InvocationContext ctx) {
+      return ctx.hasFlag(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT) ?
+            0 : configuration.getLockAcquisitionTimeout();
+   }
+
 }
