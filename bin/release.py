@@ -265,7 +265,7 @@ def release():
   ## Release order:
   # Step 1: Tag in SVN
   newVersion = "%s/tags/%s" % (settings[svn_base_key], version)
-  print "Step 1: Tagging trunk in SVN as %s" % newVersion    
+  print "Step 1: Tagging %s in SVN as %s" % (branch, newVersion)    
   tagInSubversion(version, newVersion, branch)
   print "Step 1: Complete"
   
