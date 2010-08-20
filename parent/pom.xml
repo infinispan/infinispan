@@ -94,7 +94,7 @@
       <version.javax.persistence>1.0</version.javax.persistence>
       <version.javax.servlet>2.5</version.javax.servlet>
       <version.jboss.common.core>2.2.14.GA</version.jboss.common.core>
-      <version.jboss.marshalling>1.2.2.GA</version.jboss.marshalling>
+      <version.jboss.marshalling>1.2.3.GA</version.jboss.marshalling>
       <version.jbossjta>4.9.0.GA</version.jbossjta>
       <version.jbossjts>4.9.0.GA</version.jbossjts>
       <version.jbossts-common>4.6.1.GA</version.jbossts-common>
