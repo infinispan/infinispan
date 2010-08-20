@@ -377,9 +377,9 @@ class MemcachedDecoder(cache: Cache[String, MemcachedValue], scheduler: Schedule
 
    private def buildGetResponseHeader(k: String, v: MemcachedValue, op: Enumeration#Value): String = {
       val sb = new StringBuilder
-      sb.append("VALUE ").append(k).append(" ").append(v.flags).append(" ").append(v.data.length).append(" ")
+      sb.append("VALUE ").append(k).append(" ").append(v.flags).append(" ").append(v.data.length)
       if (op == GetWithVersionRequest)
-         sb.append(v.version).append(" ")   
+         sb.append(" ").append(v.version)
       sb.append(CRLF)
       sb.toString
    }
