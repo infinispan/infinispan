@@ -84,7 +84,8 @@ public class WebSocketServer extends AbstractProtocolServer {
    }
 
    @Override
-   public void startTransport(InetSocketAddress address, int idleTimeout, boolean tcpNoDelay, int sendBufSize, int recvBufSize) {
+   public void startTransport(int idleTimeout, boolean tcpNoDelay, int sendBufSize, int recvBufSize) {
+      InetSocketAddress address = new InetSocketAddress(getHost(), getPort());
       Executor masterExecutor =
          masterThreads() == 0 ?
             Executors.newCachedThreadPool() :
