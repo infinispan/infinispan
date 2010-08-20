@@ -3,6 +3,7 @@ package org.infinispan.util;
 import org.infinispan.config.TypedPropertiesAdapter;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.jboss.util.StringPropertyReplacer;
 
 import javax.xml.bind.annotation.XmlType;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
@@ -55,10 +56,17 @@ public class TypedProperties extends Properties {
    }
 
    public int getIntProperty(String key, int defaultValue) {
+      return getIntProperty(key, defaultValue, false);
+   }
+
+   public int getIntProperty(String key, int defaultValue, boolean doStringReplace) {
       String value = getProperty(key);
       if (value == null) return defaultValue;
       value = value.trim();
       if (value.length() == 0) return defaultValue;
+
+      if (doStringReplace)
+         value = StringPropertyReplacer.replaceProperties(value);
 
       try {
          return Integer.parseInt(value);
@@ -70,10 +78,17 @@ public class TypedProperties extends Properties {
    }
 
    public long getLongProperty(String key, long defaultValue) {
+      return getLongProperty(key, defaultValue, false);
+   }
+
+   public long getLongProperty(String key, long defaultValue, boolean doStringReplace) {
       String value = getProperty(key);
       if (value == null) return defaultValue;
       value = value.trim();
       if (value.length() == 0) return defaultValue;
+
+      if (doStringReplace)
+         value = StringPropertyReplacer.replaceProperties(value);
 
       try {
          return Long.parseLong(value);
@@ -85,10 +100,17 @@ public class TypedProperties extends Properties {
    }
 
    public boolean getBooleanProperty(String key, boolean defaultValue) {
+      return getBooleanProperty(key, defaultValue, false);
+   }
+
+   public boolean getBooleanProperty(String key, boolean defaultValue, boolean doStringReplace) {
       String value = getProperty(key);
       if (value == null) return defaultValue;
       value = value.trim();
       if (value.length() == 0) return defaultValue;
+
+      if (doStringReplace)
+         value = StringPropertyReplacer.replaceProperties(value);
 
       try {
          return Boolean.parseBoolean(value);
@@ -97,5 +119,21 @@ public class TypedProperties extends Properties {
          log.warn("Unable to convert string property [" + value + "] to a boolean!  Using default value of " + defaultValue);
          return defaultValue;
       }
+   }
+
+   /**
+    * Get the property associated with the key, optionally applying string property replacement as defined in
+    * {@link StringPropertyReplacer#replaceProperties} to the result.
+    *
+    * @param   key               the hashtable key.
+    * @param   defaultValue      a default value.
+    * @param   doStringReplace   boolean indicating whether to apply string property replacement
+    * @return  the value in this property list with the specified key valu after optionally being inspected for String property replacement
+    */
+   public String getProperty(String key, String defaultValue, boolean doStringReplace) {
+      if (doStringReplace)
+         return StringPropertyReplacer.replaceProperties(getProperty(key, defaultValue));
+      else
+         return getProperty(key, defaultValue);
    }
 }
