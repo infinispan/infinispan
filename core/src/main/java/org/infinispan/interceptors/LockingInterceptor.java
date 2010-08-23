@@ -193,12 +193,14 @@ public class LockingInterceptor extends CommandInterceptor {
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      try {
-         entryFactory.wrapEntryForWriting(ctx, command.getKey(), true, false, false, false, !command.isPutIfAbsent());
-         return invokeNextInterceptor(ctx, command);
-      } finally {
-         doAfterCall(ctx);
+      Object key = command.getKey();
+      Object value = command.getValue();
+      if (key instanceof HRKey) {
+         ctx.setFlags(Flag.SKIP_CACHE_STORE);
+         command.setKey(unwrapp(key));
+         command.setValue(unwrapp(value));
       }
+      return invokeNextInterceptor(ctx, command);
    }
 
    @Override
