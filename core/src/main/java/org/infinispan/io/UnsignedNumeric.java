@@ -5,7 +5,6 @@ import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.OutputStream;
-import java.nio.Buffer;
 
 /**
  * Helper to read and write unsigned numerics

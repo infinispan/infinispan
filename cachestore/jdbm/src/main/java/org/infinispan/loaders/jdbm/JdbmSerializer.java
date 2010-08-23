@@ -8,7 +8,7 @@ import jdbm.helper.Serializer;
 
 /**
  * Uses the configured (runtime) {@link org.infinispan.marshall.StreamingMarshaller} of the cache.
- * This Serializer is thus not really serializiable.
+ * This Serializer is thus not really serializable.
  * 
  * @author Elias Ross
  */

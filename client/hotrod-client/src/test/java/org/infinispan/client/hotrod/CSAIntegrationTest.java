@@ -21,9 +21,6 @@ import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,7 +44,7 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
    private RemoteCache<Object, Object> remoteCache;
    private TcpTransportFactory tcpConnectionFactory;
 
-   private static Log log = LogFactory.getLog(CSAIntegrationTest.class);
+   private static final Log log = LogFactory.getLog(CSAIntegrationTest.class);
 
    private Marshaller m;
 

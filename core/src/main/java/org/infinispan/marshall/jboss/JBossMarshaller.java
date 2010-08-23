@@ -21,34 +21,14 @@
  */
 package org.infinispan.marshall.jboss;
 
-import org.infinispan.CacheException;
 import org.infinispan.commands.RemoteCommandsFactory;
-import org.infinispan.io.ByteBuffer;
 import org.infinispan.io.ExposedByteArrayOutputStream;
-import org.infinispan.marshall.AbstractStreamingMarshaller;
 import org.infinispan.marshall.Marshallable;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.util.ReflectionUtil;
-import org.infinispan.util.Util;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-import org.jboss.marshalling.ContextClassResolver;
-import org.jboss.marshalling.ExceptionListener;
-import org.jboss.marshalling.MarshallerFactory;
-import org.jboss.marshalling.Marshalling;
-import org.jboss.marshalling.MarshallingConfiguration;
-import org.jboss.marshalling.TraceInformation;
-import org.jboss.marshalling.Unmarshaller;
-import org.jboss.marshalling.reflect.SunReflectiveCreator;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.io.OutputStream;
-import java.lang.reflect.Method;
-import java.net.URL;
 
 /**
  * A specialized form of the {@link GenericJBossMarshaller}, making use of a custom object table for types internal to

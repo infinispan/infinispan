@@ -2,7 +2,6 @@ package org.infinispan.client.hotrod.impl.consistenthash;
 
 import java.net.InetSocketAddress;
 import java.util.LinkedHashMap;
-import java.util.Map;
 
 /**
  * Abstraction for the used consistent hash.

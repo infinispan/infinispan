@@ -35,13 +35,13 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 /**
- * Contains common methods used by jdbc CacheStores.
+ * Contains common methods used by JDBC CacheStores.
  *
  * @author Mircea.Markus@jboss.com
  */
 public class JdbcUtil {
 
-   private static Log log = LogFactory.getLog(JdbcUtil.class);
+   private static final Log log = LogFactory.getLog(JdbcUtil.class);
 
    public static void safeClose(Statement ps) {
       if (ps != null) {

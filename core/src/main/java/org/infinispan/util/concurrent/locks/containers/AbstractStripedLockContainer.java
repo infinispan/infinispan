@@ -22,7 +22,6 @@
 package org.infinispan.util.concurrent.locks.containers;
 
 import net.jcip.annotations.ThreadSafe;
-import org.infinispan.util.Util;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;

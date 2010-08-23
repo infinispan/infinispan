@@ -5,8 +5,6 @@ import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**

@@ -9,7 +9,6 @@ import com.sleepycat.je.LockConflictException;
 import com.sleepycat.je.Transaction;
 import com.sleepycat.je.TransactionConfig;
 import com.sleepycat.util.ExceptionUnwrapper;
-import org.infinispan.loaders.CacheLoaderException;
 
 /**
  * Adapted version of {@link TransactionRunner}, which allows us to prepare a transaction without committing it.<p/> The

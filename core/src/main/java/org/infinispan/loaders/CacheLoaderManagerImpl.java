@@ -116,9 +116,12 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
    public void preload() {
       if (loader != null) {
          if (clmConfig.isPreload()) {
-            log.debug("Preloading transient state from cache loader {0}", loader);
-            long start = 0, stop = 0, total = 0;
-            if (log.isDebugEnabled()) start = System.currentTimeMillis();
+            long start = 0;
+            boolean debugTiming = log.isDebugEnabled();
+            if (debugTiming) {
+               start = System.currentTimeMillis();
+               log.debug("Preloading transient state from cache loader {0}", loader);
+            }
             Set<InternalCacheEntry> state;
             try {
                state = loadState();
@@ -129,9 +132,10 @@ public class CacheLoaderManagerImpl implements CacheLoaderManager {
             for (InternalCacheEntry e : state)
                cache.getAdvancedCache().withFlags(SKIP_CACHE_STATUS_CHECK, CACHE_MODE_LOCAL).put(e.getKey(), e.getValue(), e.getLifespan(), MILLISECONDS, e.getMaxIdle(), MILLISECONDS);
 
-            if (log.isDebugEnabled()) stop = System.currentTimeMillis();
-            if (log.isDebugEnabled()) total = stop - start;
-            log.debug("Preloaded {0} keys in {1} milliseconds", state.size(), total);
+            if (debugTiming) {
+               long stop = System.currentTimeMillis();
+               log.debug("Preloaded {0} keys in {1} milliseconds", state.size(), stop - start);
+            }
          }
       }
    }

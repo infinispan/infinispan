@@ -1,11 +1,9 @@
 package org.infinispan.factories;
 
 import org.infinispan.commands.RemoteCommandsFactory;
-import org.infinispan.config.ConfigurationException;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.InboundInvocationHandler;
 import org.infinispan.transaction.xa.GlobalTransactionFactory;
 import org.infinispan.transaction.xa.TransactionTable;

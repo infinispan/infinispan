@@ -21,7 +21,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 @ThreadSafe
 public class RoundRobinBalancingStrategy implements RequestBalancingStrategy {
 
-   private static Log log = LogFactory.getLog(RoundRobinBalancingStrategy.class);
+   private static final Log log = LogFactory.getLog(RoundRobinBalancingStrategy.class);
 
    private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
    private final Lock readLock = readWriteLock.readLock();

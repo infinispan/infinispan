@@ -33,7 +33,7 @@ public class TestCacheManagerFactory {
    private static AtomicInteger jmxDomainPostfix = new AtomicInteger();
 
    public static final String MARSHALLER = LegacyKeySupportSystemProperties.getProperty("infinispan.test.marshaller.class", "infinispan.marshaller.class");
-   private static Log log = LogFactory.getLog(TestCacheManagerFactory.class);
+   private static final Log log = LogFactory.getLog(TestCacheManagerFactory.class);
 
    private static ThreadLocal<PerThreadCacheManagers> perThreadCacheManagers = new ThreadLocal<PerThreadCacheManagers>() {
       @Override

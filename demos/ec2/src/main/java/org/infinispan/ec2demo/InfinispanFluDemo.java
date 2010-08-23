@@ -14,12 +14,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 /**
- * 
- */
-
-/**
  * @author noconnor@redhat.com
- * 
  */
 public class InfinispanFluDemo {
 
@@ -78,7 +73,7 @@ public class InfinispanFluDemo {
 
 			} else {
 				try {
-					Thread.currentThread().sleep(2000);
+					Thread.sleep(2000);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}

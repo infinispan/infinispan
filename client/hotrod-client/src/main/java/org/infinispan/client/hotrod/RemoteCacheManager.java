@@ -2,7 +2,6 @@ package org.infinispan.client.hotrod;
 
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
-import org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
@@ -28,12 +27,12 @@ import static org.infinispan.util.Util.getInstance;
 /**
  * Factory for {@link org.infinispan.client.hotrod.RemoteCache}s. <p/> <p> <b>Lifecycle:</b> </p> In order to be able to
  * use an {@link org.infinispan.client.hotrod.RemoteCache}, the {@link org.infinispan.client.hotrod.RemoteCacheManager}
- * must be started first: beside other things, this instantiates connections to Hotrod server(s). Starting the {@link
+ * must be started first: beside other things, this instantiates connections to Hot Rod server(s). Starting the {@link
  * org.infinispan.client.hotrod.RemoteCacheManager} can be done either at creation by passing start==true to constructor
  * or by using a constructor that does that for you (see C-tor documentation); or after construction by calling {@link
  * #start()}.
  * <p/>
- * This is an "expensive" object, as it manages a set of persistent TCP connections to the hotrod servers. It is recommended
+ * This is an "expensive" object, as it manages a set of persistent TCP connections to the Hot Rod servers. It is recommended
  * to only have one instance of this per JVM, and to cache it between calls to the server (i.e. remoteCache
  * operations).
  * <p/>
@@ -47,9 +46,9 @@ import static org.infinispan.util.Util.getInstance;
  * <p/>
  * Below is the list of supported configuration elements:
  * <ul>
- * <li><tt>infinispan.client.hotrod.request_balancing_strategy</tt>, default = org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy.  For replicated (vs distributed) hotrod server clusters, the client balances requests to the
+ * <li><tt>infinispan.client.hotrod.request_balancing_strategy</tt>, default = org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy.  For replicated (vs distributed) Hot Rod server clusters, the client balances requests to the
  * servers according to this strategy.</li>
- * <li><tt>infinispan.client.hotrod.server_list</tt>, default = 127.0.0.1:11311.  This is the initial list of hotrod servers to connect to, specified in the following format: host1:port1;host2:port2...
+ * <li><tt>infinispan.client.hotrod.server_list</tt>, default = 127.0.0.1:11311.  This is the initial list of Hot Rod servers to connect to, specified in the following format: host1:port1;host2:port2...
  * At least one host:port must be specified.</li>
  * <li><tt>infinispan.client.hotrod.force_return_values</tt>, default = false.  Whether or not to implicitly {@link org.infinispan.client.hotrod.Flag#FORCE_RETURN_VALUE} for all calls.</li>
  * <li><tt>infinispan.client.hotrod.tcp_no_delay</tt>, default = true.  Affects TCP NODELAY on the TCP stack.</li>
@@ -84,7 +83,7 @@ import static org.infinispan.util.Util.getInstance;
  * <ul>
  * <li> <tt>0</tt> - an exception will be thrown to the calling user</li>
  * <li> <tt>1</tt> - the caller will block (invoke waits until a new or idle connections is available.
- * <li> <tt>2</tt> - a new persistent connection will be created and and returned (essentially making maxActive meaningless.) </li>
+ * <li> <tt>2</tt> - a new persistent connection will be created and returned (essentially making maxActive meaningless.) </li>
  * </ul>
  * The default whenExhaustedAction setting is 1.
  * </li>
@@ -120,7 +119,7 @@ import static org.infinispan.util.Util.getInstance;
  */
 public class RemoteCacheManager implements CacheContainer {
 
-   private static Log log = LogFactory.getLog(RemoteCacheManager.class);
+   private static final Log log = LogFactory.getLog(RemoteCacheManager.class);
 
    public static final String HOTROD_CLIENT_PROPERTIES = "hotrod-client.properties";
 
@@ -200,7 +199,7 @@ public class RemoteCacheManager implements CacheContainer {
    }
 
    /**
-    * Creates a remote cache manager aware of the hotrod server listening at host:port.
+    * Creates a remote cache manager aware of the Hot Rod server listening at host:port.
     *
     * @param start weather or not to start the RemoteCacheManager.
     */

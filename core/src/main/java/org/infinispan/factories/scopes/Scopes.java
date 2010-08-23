@@ -2,7 +2,7 @@ package org.infinispan.factories.scopes;
 
 /**
  * The different scopes that can be declared for a component in the cache system.  If components are not bounded to a
- * specific scope explicity, then it defaults to the {@link #NAMED_CACHE} scope.
+ * specific scope explicitly, then it defaults to the {@link #NAMED_CACHE} scope.
  *
  * @author Manik Surtani
  * @see Scope

@@ -5,7 +5,6 @@ import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.InternalEntryFactory;
 import org.infinispan.loaders.AbstractCacheStore;
 import org.infinispan.loaders.CacheLoaderConfig;
 import org.infinispan.loaders.CacheLoaderException;
@@ -42,7 +41,7 @@ import java.util.concurrent.TimeUnit;
 @CacheLoaderMetadata(configurationClass = RemoteCacheStoreConfig.class)
 public class RemoteCacheStore extends AbstractCacheStore {
 
-   private static Log log = LogFactory.getLog(RemoteCacheStore.class);
+   private static final Log log = LogFactory.getLog(RemoteCacheStore.class);
 
    private volatile RemoteCacheStoreConfig config;
    private volatile RemoteCacheManager remoteCacheManager;

@@ -18,7 +18,7 @@ import java.util.concurrent.CountDownLatch;
  */
 public final class PerCacheExecutorThread extends Thread {
 
-   private static Log log = LogFactory.getLog(PerCacheExecutorThread.class);
+   private static final Log log = LogFactory.getLog(PerCacheExecutorThread.class);
 
    private Cache<Object, Object> cache;
    private BlockingQueue<Object> toExecute = new ArrayBlockingQueue<Object>(1);

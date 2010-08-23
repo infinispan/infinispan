@@ -21,7 +21,6 @@
  */
 package org.infinispan.commands.read;
 
-import org.infinispan.commands.LocalCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.DataContainer;

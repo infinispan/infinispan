@@ -37,7 +37,6 @@ import org.infinispan.test.fwk.UnitTestDatabaseManager;
 import org.testng.annotations.Test;
 
 import java.io.Serializable;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Tester class for {@link JdbcBinaryCacheStore}

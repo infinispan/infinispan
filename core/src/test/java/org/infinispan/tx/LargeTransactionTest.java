@@ -19,7 +19,7 @@ import javax.transaction.TransactionManager;
  */
 @Test(testName = "tx.LargeTransactionTest", groups = "functional")
 public class LargeTransactionTest extends MultipleCacheManagersTest {
-   private static Log log = LogFactory.getLog(LargeTransactionTest.class);
+   private static final Log log = LogFactory.getLog(LargeTransactionTest.class);
 
    protected void createCacheManagers() throws Throwable {
 

@@ -1,9 +1,7 @@
 package org.infinispan.loaders.jdbc;
 
-import java.util.Arrays;
-
 /**
- * Supported database dialects for the Jdbc cache stores
+ * Supported database dialects for the JDBC cache stores
  *
  * @author Manik Surtani
  * @since 4.1

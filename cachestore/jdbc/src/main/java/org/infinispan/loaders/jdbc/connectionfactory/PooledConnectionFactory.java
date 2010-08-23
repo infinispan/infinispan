@@ -45,7 +45,7 @@ import java.util.Properties;
  */
 public class PooledConnectionFactory extends ConnectionFactory {
 
-   private static Log log = LogFactory.getLog(PooledConnectionFactory.class);
+   private static final Log log = LogFactory.getLog(PooledConnectionFactory.class);
    private ComboPooledDataSource pooledDataSource;
 
    @Override

@@ -1,7 +1,6 @@
 package org.infinispan.interceptors;
 
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 

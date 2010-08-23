@@ -10,17 +10,9 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- *
- */
-
-/**
  * @author noconnor@redhat.com
  */
 public class Nucleotide_Protein_Parser {
-
-   public Nucleotide_Protein_Parser() {
-
-   }
 
    @SuppressWarnings("unchecked")
    public List<Nucleotide_Protein_Element> parseFile(String fileName) throws IOException, SAXException {

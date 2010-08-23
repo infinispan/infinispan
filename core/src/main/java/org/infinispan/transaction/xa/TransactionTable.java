@@ -41,7 +41,7 @@ import java.util.concurrent.RejectedExecutionException;
  */
 public class TransactionTable {
 
-   private static Log log = LogFactory.getLog(TransactionTable.class);
+   private static final Log log = LogFactory.getLog(TransactionTable.class);
    private static boolean trace = log.isTraceEnabled();
 
    private final Map<Transaction, TransactionXaAdapter> localTransactions = new HashMap<Transaction, TransactionXaAdapter>();

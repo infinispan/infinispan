@@ -47,7 +47,7 @@ import java.util.Set;
  */
 public abstract class DataManipulationHelper {
 
-   private static Log log = LogFactory.getLog(DataManipulationHelper.class);
+   private static final Log log = LogFactory.getLog(DataManipulationHelper.class);
 
    private ConnectionFactory connectionFactory;
    private TableManipulation tableManipulation;

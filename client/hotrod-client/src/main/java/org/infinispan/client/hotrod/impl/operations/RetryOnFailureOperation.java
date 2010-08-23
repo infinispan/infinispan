@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Immutable
 public abstract class RetryOnFailureOperation extends HotRodOperation {
 
-   private static Log log = LogFactory.getLog(RetryOnFailureOperation.class);
+   private static final Log log = LogFactory.getLog(RetryOnFailureOperation.class);
 
    protected final TransportFactory transportFactory;
 

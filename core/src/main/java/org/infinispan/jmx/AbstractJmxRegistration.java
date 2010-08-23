@@ -26,12 +26,9 @@ import java.util.Set;
 
 import javax.management.MBeanServer;
 
-import org.infinispan.CacheException;
 import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.factories.AbstractComponentRegistry;
 import org.infinispan.util.Util;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * Parent class for top level JMX component registration.
@@ -40,7 +37,6 @@ import org.infinispan.util.logging.LogFactory;
  * @since 4.0
  */
 public abstract class AbstractJmxRegistration {
-   private static final Log log = LogFactory.getLog(AbstractJmxRegistration.class);
    String jmxDomain;
    MBeanServer mBeanServer;
    GlobalConfiguration globalConfig;

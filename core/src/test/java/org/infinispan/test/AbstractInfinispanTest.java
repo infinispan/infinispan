@@ -24,7 +24,6 @@ package org.infinispan.test;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterTest;
 
 /**

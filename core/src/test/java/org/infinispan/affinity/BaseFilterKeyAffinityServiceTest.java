@@ -7,7 +7,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.testng.annotations.Test;
 
 import java.util.List;
 import java.util.Map;
@@ -21,7 +20,7 @@ import static org.testng.AssertJUnit.assertEquals;
  */
 public abstract class BaseFilterKeyAffinityServiceTest extends BaseKeyAffinityServiceTest {
 
-   private static Log log = LogFactory.getLog(BaseFilterKeyAffinityServiceTest.class);
+   private static final Log log = LogFactory.getLog(BaseFilterKeyAffinityServiceTest.class);
 
    protected EmbeddedCacheManager cacheManager;
 

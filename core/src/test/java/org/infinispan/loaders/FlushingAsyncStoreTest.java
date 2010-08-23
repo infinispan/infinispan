@@ -9,7 +9,6 @@ import org.infinispan.config.Configuration;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.decorators.AsyncStoreConfig;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
-import org.infinispan.loaders.file.FileCacheStoreConfig;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;

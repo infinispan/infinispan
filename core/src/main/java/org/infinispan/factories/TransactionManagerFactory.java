@@ -21,7 +21,6 @@
  */
 package org.infinispan.factories;
 
-import org.infinispan.config.ConfigurationException;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.transaction.tm.BatchModeTransactionManager;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;

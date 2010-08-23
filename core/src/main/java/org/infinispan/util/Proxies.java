@@ -22,8 +22,6 @@
 package org.infinispan.util;
 
 import java.lang.reflect.Method;
-import java.util.HashSet;
-import java.util.Set;
 
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;

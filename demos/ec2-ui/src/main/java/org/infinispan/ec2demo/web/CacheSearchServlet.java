@@ -24,7 +24,7 @@ import java.util.Map;
  * Servlet implementation class CacheSearchServlet
  */
 public class CacheSearchServlet extends HttpServlet {
-	private Log myLogger = LogFactory.getLog(CacheSearchServlet.class);
+	private static final Log log = LogFactory.getLog(CacheSearchServlet.class);
 	private static final long serialVersionUID = 1L;
 	private Cache<String, Influenza_N_P_CR_Element> influenzaCache;
 	private Cache<String, Nucleotide_Protein_Element> proteinCache;
@@ -59,7 +59,7 @@ public class CacheSearchServlet extends HttpServlet {
 		Influenza_N_P_CR_Element myRec = influenzaCache.get(searchGBAN);
 		
 		if (myRec != null) {
-			myLogger.trace("Searching nucleiodCache for " + myRec.getGanNucleoid());
+			log.trace("Searching nucleiodCache for " + myRec.getGanNucleoid());
 			Nucleotide_Protein_Element nucldet = nucleiodCache.get(myRec.getGanNucleoid());			
 			request.setAttribute("Nucleotide", nucldet);
 
@@ -67,7 +67,7 @@ public class CacheSearchServlet extends HttpServlet {
 			Map<String, String> myProt = myRec.getProtein_Data();
 			Map<String, String> myMap = new HashMap<String, String>();
 			for (String x : myProt.keySet()) {
-				myLogger.trace("Searching proteinCache for " + x);
+				log.trace("Searching proteinCache for " + x);
 				Nucleotide_Protein_Element myProtdet = proteinCache.get(x);
 				String protein_CR = myProt.get(x);		
 				myMap.put(myProtdet.getGenbankAccessionNumber(), protein_CR);

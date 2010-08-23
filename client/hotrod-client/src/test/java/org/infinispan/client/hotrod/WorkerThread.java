@@ -16,7 +16,7 @@ public class WorkerThread extends Thread {
 
    private static final AtomicInteger WORKER_INDEX = new AtomicInteger();
 
-   private static Log log = LogFactory.getLog(WorkerThread.class);
+   private static final Log log = LogFactory.getLog(WorkerThread.class);
 
    public static final String NULL = "_null_";
    public static final String PUT_SYNC = "_put_sync_";

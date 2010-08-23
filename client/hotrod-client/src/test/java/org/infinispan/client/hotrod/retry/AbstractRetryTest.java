@@ -1,7 +1,6 @@
 package org.infinispan.client.hotrod.retry;
 
 import org.infinispan.client.hotrod.HitsAwareCacheManagersTest;
-import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;

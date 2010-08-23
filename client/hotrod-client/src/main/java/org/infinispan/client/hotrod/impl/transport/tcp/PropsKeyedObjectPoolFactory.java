@@ -15,7 +15,7 @@ import java.util.Properties;
 public class PropsKeyedObjectPoolFactory extends GenericKeyedObjectPoolFactory {
 
 
-   private static Log log = LogFactory.getLog(PropsKeyedObjectPoolFactory.class);
+   private static final Log log = LogFactory.getLog(PropsKeyedObjectPoolFactory.class);
 
    public PropsKeyedObjectPoolFactory(KeyedPoolableObjectFactory factory, Properties props) {
       super(factory);

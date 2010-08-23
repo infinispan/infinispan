@@ -1,10 +1,7 @@
 package org.infinispan.affinity;
 
-import junit.framework.Assert;
-import org.infinispan.Cache;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
 import java.util.Collections;

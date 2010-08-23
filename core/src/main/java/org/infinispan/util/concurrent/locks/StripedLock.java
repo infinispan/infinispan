@@ -48,7 +48,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 @ThreadSafe
 public class StripedLock {
 
-   private static Log log = LogFactory.getLog(StripedLock.class);
+   private static final Log log = LogFactory.getLog(StripedLock.class);
 
    private static final int DEFAULT_CONCURRENCY = 20;
    private final int lockSegmentMask;

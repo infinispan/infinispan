@@ -17,7 +17,6 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 
-import static org.easymock.EasyMock.expect;
 import static org.testng.Assert.assertEquals;
 import org.testng.annotations.Test;
 

@@ -12,7 +12,6 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
 
-import java.io.IOException;
 import java.util.Properties;
 
 /**

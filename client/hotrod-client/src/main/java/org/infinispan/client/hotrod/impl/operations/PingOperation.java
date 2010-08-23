@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Immutable
 public class PingOperation extends HotRodOperation {
 
-   private static Log log = LogFactory.getLog(PingOperation.class);
+   private static final Log log = LogFactory.getLog(PingOperation.class);
 
    private final Transport transport;
 

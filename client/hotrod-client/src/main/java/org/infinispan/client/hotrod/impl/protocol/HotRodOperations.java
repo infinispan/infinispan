@@ -8,7 +8,7 @@ import org.infinispan.client.hotrod.impl.VersionedOperationResponse;
 import java.util.Map;
 
 /**
- * Defines the hotrod operations as described in the protocol spec: http://community.jboss.org/wiki/HotRodProtocol
+ * Defines the Hot Rod operations as described in the protocol spec: http://community.jboss.org/wiki/HotRodProtocol
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.1

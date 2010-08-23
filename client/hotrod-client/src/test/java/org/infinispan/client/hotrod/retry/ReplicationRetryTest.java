@@ -1,25 +1,14 @@
 package org.infinispan.client.hotrod.retry;
 
-import org.infinispan.client.hotrod.HitsAwareCacheManagersTest;
-import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.TestHelper;
-import org.infinispan.client.hotrod.VersionedValue;
-import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
-import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
-import org.infinispan.config.Configuration;
-import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.manager.CacheContainer;
-import org.infinispan.server.hotrod.HotRodServer;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.Test;
+import static org.testng.Assert.assertEquals;
 
 import java.net.InetSocketAddress;
 import java.util.Map;
-import java.util.Properties;
 
-import static org.testng.Assert.assertEquals;
+import org.infinispan.client.hotrod.VersionedValue;
+import org.infinispan.config.Configuration;
+import org.infinispan.server.hotrod.HotRodServer;
+import org.testng.annotations.Test;
 
 /**
  * @author Mircea.Markus@jboss.com

@@ -1,7 +1,5 @@
 package org.infinispan.util.concurrent;
 
-import java.util.concurrent.ExecutionException;
-
 /**
  * An abstract NotifyingFuture that has "completed"
  *

@@ -9,7 +9,6 @@ import org.infinispan.util.logging.LogFactory;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.HASH_FUNCTION_PREFIX;
 
@@ -29,7 +28,7 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.HASH_FUN
  */
 public class ConsistentHashFactory {
 
-   private static Log log = LogFactory.getLog(ConsistentHashFactory.class);
+   private static final Log log = LogFactory.getLog(ConsistentHashFactory.class);
 
    private final Map<Integer, String> version2ConsistentHash = new HashMap<Integer, String>();
 

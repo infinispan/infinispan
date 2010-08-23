@@ -22,7 +22,6 @@ import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * This acts both as an local {@link org.infinispan.transaction.xa.CacheTransaction} and implementor of an {@link
@@ -33,7 +32,7 @@ import java.util.Map;
  */
 public class TransactionXaAdapter implements CacheTransaction, XAResource {
 
-   private static Log log = LogFactory.getLog(TransactionXaAdapter.class);
+   private static final Log log = LogFactory.getLog(TransactionXaAdapter.class);
    private static boolean trace = log.isTraceEnabled();
 
    private int txTimeout;
