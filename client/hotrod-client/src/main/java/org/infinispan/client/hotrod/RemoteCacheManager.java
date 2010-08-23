@@ -143,7 +143,7 @@ public class RemoteCacheManager implements CacheContainer {
     * @param start      weather or not to start the manager on return from the constructor.
     */
    public RemoteCacheManager(Marshaller marshaller, Properties props, boolean start) {
-      this(props);
+      this(props, start);
       setMarshaller(marshaller);
       if (log.isTraceEnabled())
          log.trace("Using explicitly set marshaller type: " + marshaller.getClass().getName());
