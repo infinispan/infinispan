@@ -55,10 +55,6 @@
    <category name="org.infinispan.jmx">
       <priority value="WARN"/>
    </category>
-   
-   <category name="org.infinispan.loaders">
-      <priority value="TRACE"/>
-   </category>
 
    <category name="org.infinispan.factories">
       <priority value="WARN"/>
