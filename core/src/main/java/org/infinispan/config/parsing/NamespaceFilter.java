@@ -9,7 +9,7 @@ import org.xml.sax.helpers.XMLFilterImpl;
  */
 public class NamespaceFilter extends XMLFilterImpl {
 
-   private static final String NAMESPACE = "urn:infinispan:config:4.0";
+   public static final String ISPN_NS = "urn:infinispan:config:4.1";
 
    //State variable
    private boolean addedNamespace = false;
@@ -25,14 +25,14 @@ public class NamespaceFilter extends XMLFilterImpl {
    public void startElement(String arg0, String arg1, String arg2,
                             Attributes arg3) throws SAXException {
 
-      super.startElement(this.NAMESPACE, arg1, arg2, arg3);
+      super.startElement(this.ISPN_NS, arg1, arg2, arg3);
    }
 
    @Override
    public void endElement(String arg0, String arg1, String arg2)
            throws SAXException {
 
-      super.endElement(this.NAMESPACE, arg1, arg2);
+      super.endElement(this.ISPN_NS, arg1, arg2);
    }
 
    @Override
@@ -45,7 +45,7 @@ public class NamespaceFilter extends XMLFilterImpl {
 
       if (!this.addedNamespace) {
          //We should add namespace since it is set and has not yet been done.
-         super.startPrefixMapping("", this.NAMESPACE);
+         super.startPrefixMapping("", this.ISPN_NS);
 
          //Make sure we dont do it twice
          this.addedNamespace = true;
