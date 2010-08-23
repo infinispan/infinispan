@@ -40,7 +40,7 @@ import java.util.Set;
 /**
  * The interceptor that handles distribution of entries across a cluster, as well as transparent lookup
  *
- * @author manik
+ * @author Manik Surtani
  * @since 4.0
  */
 public class DistributionInterceptor extends BaseRpcInterceptor {

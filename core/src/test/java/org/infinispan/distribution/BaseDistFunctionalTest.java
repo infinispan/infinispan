@@ -100,7 +100,7 @@ public abstract class BaseDistFunctionalTest extends MultipleCacheManagersTest {
     * This is a separate class because some tools try and run this method as a test 
     */
    public static class RehashWaiter {
-      private static Log log = LogFactory.getLog(RehashWaiter.class);
+      private static final Log log = LogFactory.getLog(RehashWaiter.class);
       public static void waitForInitRehashToComplete(Cache... caches) {
          int gracetime = 60000; // 60 seconds?
          long giveup = System.currentTimeMillis() + gracetime;

@@ -22,7 +22,6 @@
 package org.infinispan.interceptors;
 
 
-import org.infinispan.CacheException;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;

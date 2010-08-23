@@ -30,7 +30,7 @@ import static org.testng.Assert.assertNull;
 @Test (testName = "client.hotrod.HotRodClientIntegrationTest", groups = "functional" )
 public class HotRodIntegrationTest extends SingleCacheManagerTest {
 
-   private static Log log = LogFactory.getLog(HotRodIntegrationTest.class);
+   private static final Log log = LogFactory.getLog(HotRodIntegrationTest.class);
 
    private static final String CACHE_NAME = "replSync";
    private Cache cache;

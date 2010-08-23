@@ -40,7 +40,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public abstract class AbstractTransactionBoundaryCommand implements TransactionBoundaryCommand {
 
-   private static Log log = LogFactory.getLog(AbstractTransactionBoundaryCommand.class);
+   private static final Log log = LogFactory.getLog(AbstractTransactionBoundaryCommand.class);
    private static boolean trace = log.isTraceEnabled();
 
    protected GlobalTransaction globalTx;

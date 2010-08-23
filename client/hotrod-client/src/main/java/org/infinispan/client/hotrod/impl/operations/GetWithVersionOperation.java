@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Immutable
 public class GetWithVersionOperation extends AbstractKeyOperation {
 
-   private static Log log = LogFactory.getLog(GetWithVersionOperation.class);
+   private static final Log log = LogFactory.getLog(GetWithVersionOperation.class);
 
    public GetWithVersionOperation(TransportFactory transportFactory, byte[] key, byte[] cacheName,
                                   AtomicInteger topologyId, Flag[] flags) {

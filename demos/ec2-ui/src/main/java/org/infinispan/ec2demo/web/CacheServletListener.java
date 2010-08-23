@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.infinispan.ec2demo.web;
 
 import org.infinispan.ec2demo.CacheBuilder;

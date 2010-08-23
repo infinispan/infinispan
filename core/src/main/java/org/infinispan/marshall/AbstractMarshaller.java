@@ -7,7 +7,7 @@ import java.io.IOException;
 /**
  * Abstract Marshaller implementation containing shared implementations.
  *
- * @author Galder Zamarre�o
+ * @author Galder Zamarreño
  * @since 4.1
  */
 public abstract class AbstractMarshaller implements Marshaller {

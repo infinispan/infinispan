@@ -36,7 +36,7 @@ import java.util.concurrent.TimeoutException;
  * SingletonStore is a simply facade to a real CacheStore implementation. It always delegates reads to the real
  * CacheStore.
  * <p/>
- * Writes are delegated <i>only if,/i> this SingletonStore is currently the cordinator. This avoids having all stores in
+ * Writes are delegated <i>only if</i> this SingletonStore is currently the coordinator. This avoids having all stores in
  * a cluster writing the same data to the same underlying store. Although not incorrect (e.g. a DB will just discard
  * additional INSERTs for the same key, and throw an exception), this will avoid a lot of redundant work.
  * <p/>

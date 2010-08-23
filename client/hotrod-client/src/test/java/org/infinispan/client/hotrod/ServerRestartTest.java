@@ -9,8 +9,6 @@ import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -20,7 +18,7 @@ import java.util.Properties;
 @Test
 public class ServerRestartTest extends SingleCacheManagerTest {
 
-   private static Log log = LogFactory.getLog(HotRodIntegrationTest.class);
+   private static final Log log = LogFactory.getLog(HotRodIntegrationTest.class);
 
    RemoteCache defaultRemote;
    private RemoteCacheManager remoteCacheManager;

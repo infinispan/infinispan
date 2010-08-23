@@ -18,7 +18,7 @@ import static org.infinispan.util.hash.MurmurHash2.hash;
  */
 public class ConsistentHashV1 implements ConsistentHash {
 
-   private static Log log = LogFactory.getLog(ConsistentHashV1.class);
+   private static final Log log = LogFactory.getLog(ConsistentHashV1.class);
    
    private final SortedMap<Integer, InetSocketAddress> positions = new TreeMap<Integer, InetSocketAddress>();
 

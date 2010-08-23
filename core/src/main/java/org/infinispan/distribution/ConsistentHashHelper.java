@@ -1,7 +1,6 @@
 package org.infinispan.distribution;
 
 import org.infinispan.config.Configuration;
-import org.infinispan.config.ConfigurationException;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.Util;
 

@@ -2,8 +2,6 @@ package org.infinispan.util.hash;
 
 import org.infinispan.util.ByteArrayKey;
 
-import java.util.Random;
-
 /**
  * An implementation of Austin Appleby's MurmurHash2.0 algorithm, as documented on <a href="http://sites.google.com/site/murmurhash/">his website</a>.
  * <p />

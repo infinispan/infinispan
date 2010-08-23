@@ -12,6 +12,7 @@ import java.io.Serializable;
 @ProvidedId(bridge = @FieldBridge(impl = StringBridge.class))
 @Indexed(index = "anotherclass")
 public class AnotherGrassEater implements Serializable {
+   private static final long serialVersionUID = -5685487467005726138L;
    @Field(store = Store.YES)
    private String name;
    @Field(store = Store.YES)

@@ -24,7 +24,6 @@ package org.infinispan.marshall;
 import net.jcip.annotations.ThreadSafe;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.io.ByteBuffer;
 
 import java.io.IOException;
 import java.io.InputStream;

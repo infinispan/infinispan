@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Immutable
 public abstract class AbstractKeyOperation extends RetryOnFailureOperation {
 
-   private static Log log = LogFactory.getLog(AbstractKeyOperation.class);
+   private static final Log log = LogFactory.getLog(AbstractKeyOperation.class);
 
    protected final byte[] key;
 

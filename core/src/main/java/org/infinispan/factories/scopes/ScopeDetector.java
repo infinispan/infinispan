@@ -3,7 +3,7 @@ package org.infinispan.factories.scopes;
 import org.infinispan.util.ReflectionUtil;
 
 /**
- * Retrieves the declated scope of a component
+ * Retrieves the declared scope of a component
  *
  * @author Manik Surtani
  * @since 4.0

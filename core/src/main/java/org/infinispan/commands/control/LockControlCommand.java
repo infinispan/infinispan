@@ -45,7 +45,6 @@ import java.util.Set;
  * For more details refer to: https://jira.jboss.org/jira/browse/ISPN-70 https://jira.jboss.org/jira/browse/ISPN-48
  *
  * @author Vladimir Blagojevic (<a href="mailto:vblagoje@redhat.com">vblagoje@redhat.com</a>)
- * @param
  * @since 4.0
  */
 @Marshallable(externalizer = ReplicableCommandExternalizer.class, id = Ids.LOCK_CONTROL_COMMAND)

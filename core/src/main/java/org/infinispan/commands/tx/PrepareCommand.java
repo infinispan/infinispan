@@ -52,7 +52,7 @@ import java.util.HashSet;
 @Marshallable(externalizer = ReplicableCommandExternalizer.class, id = Ids.PREPARE_COMMAND)
 public class PrepareCommand extends AbstractTransactionBoundaryCommand {
 
-   private static Log log = LogFactory.getLog(PrepareCommand.class);
+   private static final Log log = LogFactory.getLog(PrepareCommand.class);
    private boolean trace = log.isTraceEnabled();
 
    public static final byte COMMAND_ID = 12;

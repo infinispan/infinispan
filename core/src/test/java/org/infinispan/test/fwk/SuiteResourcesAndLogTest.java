@@ -15,7 +15,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "test.testng.SuiteResourcesAndLogTest", alwaysRun=true)
 public class SuiteResourcesAndLogTest {
 
-   private static Log log = LogFactory.getLog(SuiteResourcesAndLogTest.class);
+   private static final Log log = LogFactory.getLog(SuiteResourcesAndLogTest.class);
 
    @BeforeSuite
    @AfterSuite

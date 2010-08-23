@@ -33,7 +33,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 public class TreeStructureSupport extends AutoBatchSupport {
-   private static Log log = LogFactory.getLog(TreeStructureSupport.class);
+   private static final Log log = LogFactory.getLog(TreeStructureSupport.class);
 
    protected final Cache<NodeKey, AtomicMap<?, ?>> cache;
    protected final InvocationContextContainer icc;

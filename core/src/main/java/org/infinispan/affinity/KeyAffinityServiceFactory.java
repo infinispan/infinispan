@@ -1,15 +1,11 @@
 package org.infinispan.affinity;
 
 import org.infinispan.Cache;
-import org.infinispan.executors.ExecutorFactory;
 import org.infinispan.remoting.transport.Address;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Properties;
 import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * Factory for {@link org.infinispan.affinity.KeyAffinityService}.

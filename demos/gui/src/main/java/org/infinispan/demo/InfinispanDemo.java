@@ -46,7 +46,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Manik Surtani
  */
 public class InfinispanDemo {
-   private static Log log = LogFactory.getLog(InfinispanDemo.class);
+   private static final Log log = LogFactory.getLog(InfinispanDemo.class);
    private static JFrame frame;
    private JTabbedPane mainPane;
    private JPanel panel1;

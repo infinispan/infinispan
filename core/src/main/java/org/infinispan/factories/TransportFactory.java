@@ -1,6 +1,5 @@
 package org.infinispan.factories;
 
-import org.infinispan.CacheException;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.Util;

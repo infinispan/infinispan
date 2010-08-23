@@ -18,7 +18,7 @@ import javax.xml.bind.annotation.XmlAttribute;
  * and Java element types they annotate with utmost understanding and care.
  *
  * @author Mircea.Markus@jboss.com
- * @autor Vladimir Blagojevic
+ * @author Vladimir Blagojevic
  * @since 4.0
  * 
  */

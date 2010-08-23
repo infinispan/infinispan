@@ -12,7 +12,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public abstract class AbstractTransport implements Transport {
 
-   private static Log log = LogFactory.getLog(AbstractTransport.class);
+   private static final Log log = LogFactory.getLog(AbstractTransport.class);
 
    private final TransportFactory transportFactory;
 

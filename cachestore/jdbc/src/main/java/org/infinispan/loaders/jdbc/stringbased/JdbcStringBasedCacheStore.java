@@ -22,7 +22,6 @@
 package org.infinispan.loaders.jdbc.stringbased;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.io.ByteBuffer;
@@ -81,7 +80,7 @@ import java.util.Set;
 @CacheLoaderMetadata(configurationClass = JdbcStringBasedCacheStoreConfig.class)
 public class JdbcStringBasedCacheStore extends LockSupportCacheStore {
 
-   private static Log log = LogFactory.getLog(JdbcStringBasedCacheStore.class);
+   private static final Log log = LogFactory.getLog(JdbcStringBasedCacheStore.class);
 
    /**
     * delimits the stream for stream transfer operations

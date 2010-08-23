@@ -38,7 +38,7 @@ public class KeyAffinityServiceImpl implements KeyAffinityService {
 
    private final float THRESHOLD = 0.5f;
    
-   private static Log log = LogFactory.getLog(KeyAffinityServiceImpl.class);
+   private static final Log log = LogFactory.getLog(KeyAffinityServiceImpl.class);
 
    private final Set<Address> filter;
 

@@ -1,7 +1,6 @@
 package org.infinispan.lock;
 
 import org.infinispan.Cache;
-import org.infinispan.CacheException;
 import org.infinispan.config.Configuration;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.manager.EmbeddedCacheManager;

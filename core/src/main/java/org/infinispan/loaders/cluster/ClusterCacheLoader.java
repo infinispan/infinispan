@@ -36,7 +36,7 @@ import static java.util.Collections.emptySet;
  */
 @CacheLoaderMetadata(configurationClass = ClusterCacheLoaderConfig.class)
 public class ClusterCacheLoader extends AbstractCacheLoader {
-   private static Log log = LogFactory.getLog(ClusterCacheLoader.class);
+   private static final Log log = LogFactory.getLog(ClusterCacheLoader.class);
 
    private ClusterCacheLoaderConfig config;
    private RpcManager rpcManager;

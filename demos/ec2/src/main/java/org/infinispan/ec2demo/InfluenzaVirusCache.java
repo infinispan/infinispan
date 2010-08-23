@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.infinispan.ec2demo;
 
 import org.infinispan.Cache;
@@ -14,7 +11,7 @@ import java.io.IOException;
  * 
  */
 public class InfluenzaVirusCache {
-	private static final Log myLogger = LogFactory.getLog(InfluenzaVirusCache.class);
+	private static final Log log = LogFactory.getLog(InfluenzaVirusCache.class);
 	private Cache<String, Influenza_N_P_CR_Element> myCache;
 
 	public InfluenzaVirusCache(CacheBuilder cacheManger) throws IOException {
@@ -26,7 +23,7 @@ public class InfluenzaVirusCache {
 			return;
 		String myKey = value.getGanNucleoid();
 		if ((myKey == null) || (myKey.isEmpty())) {
-			myLogger.error("Invalid record " + value);
+			log.error("Invalid record " + value);
 		} else {
 			myCache.put(myKey, value);
 		}

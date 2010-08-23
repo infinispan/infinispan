@@ -125,7 +125,7 @@ public class DistributionRetryTest extends AbstractRetryTest {
       }
       
 
-      log.info("About to stop hotrod server 2");
+      log.info("About to stop Hot Rod server 2");
       hotRodServer2.stop();
 
 

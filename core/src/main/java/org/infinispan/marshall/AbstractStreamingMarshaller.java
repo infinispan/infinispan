@@ -1,6 +1,5 @@
 package org.infinispan.marshall;
 
-import org.infinispan.io.ByteBuffer;
 import org.infinispan.io.ExposedByteArrayOutputStream;
 
 import java.io.*;

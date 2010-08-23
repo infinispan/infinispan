@@ -43,7 +43,7 @@ import java.util.Locale;
  */
 public class TableManipulation implements Cloneable {
 
-   private static Log log = LogFactory.getLog(TableManipulation.class);
+   private static final Log log = LogFactory.getLog(TableManipulation.class);
 
    public static final int DEFAULT_FETCH_SIZE = 100;
 

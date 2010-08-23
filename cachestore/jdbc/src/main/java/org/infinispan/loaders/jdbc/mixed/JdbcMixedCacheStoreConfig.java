@@ -21,7 +21,6 @@
  */
 package org.infinispan.loaders.jdbc.mixed;
 
-import org.infinispan.loaders.AbstractCacheStoreConfig;
 import org.infinispan.loaders.LockSupportCacheStoreConfig;
 import org.infinispan.loaders.jdbc.AbstractJdbcCacheStoreConfig;
 import org.infinispan.loaders.jdbc.DatabaseType;

@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
 
-   private static Log log = LogFactory.getLog(RemoteCacheImpl.class);
+   private static final Log log = LogFactory.getLog(RemoteCacheImpl.class);
 
    private Marshaller marshaller;
    private final String name;

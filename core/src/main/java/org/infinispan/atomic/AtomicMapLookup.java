@@ -1,7 +1,6 @@
 package org.infinispan.atomic;
 
 import org.infinispan.Cache;
-import org.infinispan.util.Immutables;
 
 import java.util.Collections;
 import java.util.Map;

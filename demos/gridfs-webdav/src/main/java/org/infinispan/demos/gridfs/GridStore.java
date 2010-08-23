@@ -21,7 +21,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Bela Ban
  */
 public class GridStore implements IWebdavStore {
-   private static Log log = LogFactory.getLog(GridStore.class);
+   private static final Log log = LogFactory.getLog(GridStore.class);
    private static int BUF_SIZE = 65536;
    private final Cache<String, byte[]> data;
    private final Cache<String, GridFile.Metadata> metadata;

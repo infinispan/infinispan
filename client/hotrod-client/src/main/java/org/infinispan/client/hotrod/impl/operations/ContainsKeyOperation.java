@@ -8,7 +8,7 @@ import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Implemets "containsKey" operation as described in <a href="http://community.jboss.org/wiki/HotRodProtocol">Hot Rod protocol specification</a>.
+ * Implements "containsKey" operation as described in <a href="http://community.jboss.org/wiki/HotRodProtocol">Hot Rod protocol specification</a>.
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.1

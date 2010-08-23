@@ -24,7 +24,6 @@ package org.infinispan.manager;
 import org.infinispan.Cache;
 import org.infinispan.Version;
 import org.infinispan.config.Configuration;
-import org.infinispan.config.ConfigurationBeanVisitor;
 import org.infinispan.config.ConfigurationException;
 import org.infinispan.config.ConfigurationValidatingVisitor;
 import org.infinispan.config.GlobalConfiguration;

@@ -1,6 +1,5 @@
 package org.infinispan.client.hotrod.impl.async;
 
-import com.sun.corba.se.impl.orb.ORBConfiguratorImpl;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.executors.ExecutorFactory;
 import org.infinispan.util.TypedProperties;

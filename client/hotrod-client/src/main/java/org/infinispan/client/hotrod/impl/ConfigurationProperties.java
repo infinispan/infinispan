@@ -9,13 +9,11 @@ import org.infinispan.util.TypedProperties;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Properties;
 import java.util.Set;
-import java.util.StringTokenizer;
 
 /**
- * Encpasulate all config properties here
+ * Encapsulate all config properties here
  *
  * @author Manik Surtani
  * @version 4.1

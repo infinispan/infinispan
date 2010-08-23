@@ -21,7 +21,6 @@
  */
 package org.infinispan.commands.read;
 
-import org.infinispan.commands.LocalCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.DataContainer;
@@ -38,7 +37,6 @@ import java.util.Collection;
  */
 public class ValuesCommand extends AbstractLocalCommand implements VisitableCommand {
    private final DataContainer container;
-   private static final Object[] EMPTY_ARRAY = new Object[0];
 
    public ValuesCommand(DataContainer container) {
       this.container = container;
