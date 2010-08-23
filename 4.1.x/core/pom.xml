@@ -1,0 +1,109 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+   <modelVersion>4.0.0</modelVersion>
+
+   <parent>
+      <groupId>org.infinispan</groupId>
+      <artifactId>infinispan-parent</artifactId>
+      <version>4.1.0-SNAPSHOT</version>
+      <relativePath>../parent/pom.xml</relativePath>
+   </parent>
+
+   <artifactId>infinispan-core</artifactId>
+   <name>Infinispan Core</name>
+   <description>Infinispan core module</description>
+
+   <dependencies>
+      <dependency>
+         <groupId>org.jgroups</groupId>
+         <artifactId>jgroups</artifactId>
+         <version>${version.jgroups}</version>
+      </dependency>
+
+      <!--
+         For the JTA 1.1 API; consuming projects can safely
+         exclude this and replace with any valid source of this API, such as a Java EE app server. 
+         -->
+      <dependency>
+         <groupId>org.jboss.javaee</groupId>
+         <artifactId>jboss-transaction-api</artifactId>
+         <version>${version.jta}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.jboss.marshalling</groupId>
+         <artifactId>river</artifactId>
+         <version>${version.jboss.marshalling}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.jboss</groupId>
+         <artifactId>jboss-common-core</artifactId>
+         <version>${version.jboss.common.core}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.jboss.marshalling</groupId>
+         <artifactId>marshalling-api</artifactId>
+         <version>${version.jboss.marshalling}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.rhq.helpers</groupId>
+         <artifactId>rhq-pluginAnnotations</artifactId>
+         <version>${version.rhq.pluginAnnotations}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.jboss.naming</groupId>
+         <artifactId>jnp-client</artifactId>
+         <scope>test</scope>
+         <version>${version.org.jboss.naming}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.jboss.naming</groupId>
+         <artifactId>jnpserver</artifactId>
+         <scope>test</scope>
+         <version>${version.org.jboss.naming}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.apache.commons</groupId>
+         <artifactId>commons-math</artifactId>
+         <scope>test</scope>
+         <version>${version.commons.math}</version>
+      </dependency>
+
+   </dependencies>
+   <build>
+      <plugins>
+         <!--
+        Generates XML schema for Infinispan configuration files
+        Run with mvn exec:java
+        For more details see:
+        http://mojo.codehaus.org/exec-maven-plugin/usage.html -->
+         <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <version>1.1</version>
+            <executions>
+               <execution>
+                  <phase>process-classes</phase>
+                  <goals>
+                     <goal>java</goal>
+                  </goals>
+               </execution>
+            </executions>
+            <configuration>
+               <mainClass>org.infinispan.util.JaxbSchemaGenerator</mainClass>
+               <arguments>
+                  <argument>${basedir}/target/classes/schema</argument>
+               </arguments>
+            </configuration>
+         </plugin>
+      </plugins>
+   </build>
+</project>
