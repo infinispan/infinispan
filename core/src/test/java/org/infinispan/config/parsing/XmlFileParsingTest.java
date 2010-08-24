@@ -24,6 +24,7 @@ import java.util.Map;
 
 import static org.infinispan.test.TestingUtil.INFINISPAN_END_TAG;
 import static org.infinispan.test.TestingUtil.INFINISPAN_START_TAG;
+import static org.infinispan.test.TestingUtil.INFINISPAN_START_TAG_40;
 import static org.infinispan.test.TestingUtil.INFINISPAN_START_TAG_NO_SCHEMA;
 
 @Test(groups = "unit", testName = "config.parsing.XmlFileParsingTest")
@@ -60,6 +61,38 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       InputStream is = new ByteArrayInputStream(config.getBytes());
       InfinispanConfiguration c = InfinispanConfiguration.newInfinispanConfiguration(is);
       GlobalConfiguration gc = c.parseGlobalConfiguration();
+      assert gc.getTransportClass().equals(JGroupsTransport.class.getName());
+      assert gc.getClusterName().equals("demoCluster");
+
+      Configuration def = c.parseDefaultConfiguration();
+      assert def.getCacheMode() == Configuration.CacheMode.REPL_SYNC;
+
+      Map<String, Configuration> named = c.parseNamedConfigurations();
+      assert named != null;
+      assert named.isEmpty();
+   }
+   
+   public void testBackwardCompatibleInputCacheConfiguration() throws Exception {
+      
+      //read 4.0 configuration file against 4.1 schema
+      String config = INFINISPAN_START_TAG_40 +
+            "   <global>\n" +
+            "      <transport clusterName=\"demoCluster\"/>\n" +
+            "   </global>\n" +
+            "\n" +
+            "   <default>\n" +
+            "      <clustering mode=\"replication\">\n" +
+            "      </clustering>\n" +
+            "   </default>\n" +
+            TestingUtil.INFINISPAN_END_TAG;
+
+      String schemaFileName = "schema/infinispan-config-" + Version.getMajorVersion() + ".xsd";
+      
+      InputStream is = new ByteArrayInputStream(config.getBytes());      
+      InfinispanConfiguration c = InfinispanConfiguration.newInfinispanConfiguration(is,
+               InfinispanConfiguration.findSchemaInputStream(schemaFileName));
+      GlobalConfiguration gc = c.parseGlobalConfiguration();
+      
       assert gc.getTransportClass().equals(JGroupsTransport.class.getName());
       assert gc.getClusterName().equals("demoCluster");
 
