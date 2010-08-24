@@ -31,6 +31,10 @@ import org.infinispan.lucene.InfinispanDirectory;
  * invoked when the stream is closed.</p>
  * <p>The same {@link #deleteOrReleaseReadLock(String)} is invoked when a file is deleted, so if this invocation is not balancing
  * a lock acquire this implementation must delete all segment chunks and the associated metadata.</p>
+ * <p>Note that if you can use and tune the {@link org.apache.lucene.index.LogByteSizeMergePolicy} you could avoid the need
+ * for readlocks by setting a maximum segment size to equal the chunk size used by the InfinispanDirectory; readlocks
+ * will be skipped automatically when not needed, so it's advisable to still configure an appropriate SegmentReadLocker
+ * for the cases you might want to tune the chunk size.</p>
  * 
  * @author Sanne Grinovero
  * @since 4.1
