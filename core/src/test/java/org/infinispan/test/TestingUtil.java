@@ -63,8 +63,12 @@ public class TestingUtil {
    public static final String TEST_PATH = "target" + separator + "tempFiles";
    public static final String INFINISPAN_START_TAG = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<infinispan\n" +
          "      xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-         "      xsi:schemaLocation=\"urn:infinispan:config:4.0 http://www.infinispan.org/schemas/infinispan-config-4.0.xsd\"\n" +
-         "      xmlns=\"urn:infinispan:config:4.0\">";
+         "      xsi:schemaLocation=\"urn:infinispan:config:4.1 http://www.infinispan.org/schemas/infinispan-config-4.1.xsd\"\n" +
+         "      xmlns=\"urn:infinispan:config:4.1\">";
+   public static final String INFINISPAN_START_TAG_40 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<infinispan\n" +
+   "      xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+   "      xsi:schemaLocation=\"urn:infinispan:config:4.0 http://www.infinispan.org/schemas/infinispan-config-4.0.xsd\"\n" +
+   "      xmlns=\"urn:infinispan:config:4.0\">";
    public static final String INFINISPAN_END_TAG="</infinispan>";
    public static final String INFINISPAN_START_TAG_NO_SCHEMA="<infinispan>";
 
