@@ -1,9 +1,8 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2010, Red Hat, Inc. and/or its affiliates, and
- * individual contributors as indicated by the @author tags. See the
- * copyright.txt file in the distribution for a full listing of
- * individual contributors.
+ * Copyright 2009, Red Hat Middleware LLC, and individual contributors
+ * as indicated by the @author tags. See the copyright.txt file in the
+ * distribution for a full listing of individual contributors.
  *
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
@@ -22,50 +21,59 @@
  */
 package org.infinispan.loaders.modifications;
 
-import org.infinispan.transaction.xa.GlobalTransaction;
+import java.util.List;
 
 /**
- * Commit.
+ * ModificationsList contains a List<Modification>
  * 
- * @author Galder Zamarreño
- * @since 4.0
+ * @author Sanne Grinovero
+ * @since 4.1
  */
-public class Commit implements Modification {
-   final GlobalTransaction tx;
+public class ModificationsList implements Modification {
+   
+   private final List<? extends Modification> list;
 
-   public Commit(GlobalTransaction tx) {
-      this.tx = tx;
-   }
-
-   public GlobalTransaction getTx() {
-      return tx;
+   public ModificationsList(List<? extends Modification> list) {
+      this.list = list;
    }
 
    @Override
    public Type getType() {
-      return Type.COMMIT;
+      return Modification.Type.LIST;
+   }
+
+   public List<? extends Modification> getList() {
+      return list;
    }
 
    @Override
    public int hashCode() {
-      int result = 17;
-      result = 31 * result + tx.hashCode();
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + ((list == null) ? 0 : list.hashCode());
       return result;
    }
 
    @Override
    public boolean equals(Object obj) {
-      if (obj == this)
+      if (this == obj)
          return true;
-      if (!(obj instanceof Commit))
+      if (obj == null)
          return false;
-      Commit other = (Commit) obj;
-      return tx.equals(other.tx);
+      if (getClass() != obj.getClass())
+         return false;
+      ModificationsList other = (ModificationsList) obj;
+      if (list == null) {
+         if (other.list != null)
+            return false;
+      } else if (!list.equals(other.list))
+         return false;
+      return true;
    }
    
    @Override
    public String toString() {
-      return "Commit: " + tx;
+      return "ModificationsList: [" + list + "]";
    }
 
 }

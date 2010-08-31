@@ -45,6 +45,7 @@ public class UnnnecessaryLoadingTest extends SingleCacheManagerTest {
       return cm;
    }
 
+   @Test
    public void testRepeatedLoads() throws CacheLoaderException {
       CacheLoaderManager clm = TestingUtil.extractComponent(cache, CacheLoaderManager.class);
       ChainingCacheStore ccs = (ChainingCacheStore) clm.getCacheLoader();
@@ -66,6 +67,7 @@ public class UnnnecessaryLoadingTest extends SingleCacheManagerTest {
       assert countingCS.numContains == 0 : "Expected 0, was " + countingCS.numContains;
    }
 
+   @Test
    public void testSkipCacheFlagUsage() throws CacheLoaderException {
       CacheLoaderManager clm = TestingUtil.extractComponent(cache, CacheLoaderManager.class);
       ChainingCacheStore ccs = (ChainingCacheStore) clm.getCacheLoader();

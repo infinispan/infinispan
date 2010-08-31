@@ -373,10 +373,16 @@ public class TestingUtil {
     * @param sleeptime number of ms to sleep
     */
    public static void sleepThread(long sleeptime) {
+      sleepThread(sleeptime, null);
+   }
+   
+   public static void sleepThread(long sleeptime, String messageOnInterrupt) {
       try {
          Thread.sleep(sleeptime);
       }
       catch (InterruptedException ie) {
+         if (messageOnInterrupt != null)
+            log.error(messageOnInterrupt);
       }
    }
 
