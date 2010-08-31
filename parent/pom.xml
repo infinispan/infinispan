@@ -108,7 +108,7 @@
       <version.jta>1.0.1.GA</version.jta>
       <version.log4j>1.2.16</version.log4j>
       <version.mysql.driver>5.1.9</version.mysql.driver>
-      <version.netty>3.2.1.Final</version.netty>
+      <version.netty>3.2.2.Final</version.netty>
       <version.org.jboss.naming>5.0.3.GA</version.org.jboss.naming>
       <version.resteasy>2.0-beta-2</version.resteasy>
       <version.rhq.pluginAnnotations>1.4.0.B01</version.rhq.pluginAnnotations>
