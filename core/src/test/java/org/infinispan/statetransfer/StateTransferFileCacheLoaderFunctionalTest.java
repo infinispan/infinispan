@@ -73,10 +73,10 @@ public class StateTransferFileCacheLoaderFunctionalTest extends MultipleCacheMan
    @BeforeTest
    @Parameters({"basedir"})
    protected void setUpTempDir(@Optional(value = "/tmp") String basedir) {
-      tmpDirectory1 = basedir + TestingUtil.TEST_PATH + File.separator + "1" + File.separator + getClass().getSimpleName();
-      tmpDirectory2 = basedir + TestingUtil.TEST_PATH + File.separator + "2" + File.separator + getClass().getSimpleName();
-      tmpDirectory3 = basedir + TestingUtil.TEST_PATH + File.separator + "3" + File.separator + getClass().getSimpleName();
-      tmpDirectory4 = basedir + TestingUtil.TEST_PATH + File.separator + "4" + File.separator + getClass().getSimpleName();
+      tmpDirectory1 = basedir + File.separator + TestingUtil.TEST_PATH + File.separator + "1" + File.separator + getClass().getSimpleName();
+      tmpDirectory2 = basedir + File.separator + TestingUtil.TEST_PATH + File.separator + "2" + File.separator + getClass().getSimpleName();
+      tmpDirectory3 = basedir + File.separator + TestingUtil.TEST_PATH + File.separator + "3" + File.separator + getClass().getSimpleName();
+      tmpDirectory4 = basedir + File.separator + TestingUtil.TEST_PATH + File.separator + "4" + File.separator + getClass().getSimpleName();
    }
 
    @AfterMethod(alwaysRun = true)

@@ -8,7 +8,6 @@ import org.infinispan.loaders.CacheStore;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
 import org.infinispan.loaders.modifications.Clear;
 import org.infinispan.loaders.modifications.Modification;
-import org.infinispan.loaders.modifications.Prepare;
 import org.infinispan.loaders.modifications.Remove;
 import org.infinispan.loaders.modifications.Store;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -37,7 +36,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
 
-@Test(groups = "unit", testName = "loaders.decorators.AsyncTest")
+@Test(groups = "unit", testName = "loaders.decorators.AsyncTest", sequential=true)
 public class AsyncTest extends AbstractInfinispanTest {
    private static final Log log = LogFactory.getLog(AsyncTest.class);
    AsyncStore store;
@@ -52,7 +51,7 @@ public class AsyncTest extends AbstractInfinispanTest {
       asyncConfig = new AsyncStoreConfig();
       asyncConfig.setThreadPoolSize(10);
       store = new AsyncStore(underlying, asyncConfig);
-      dummyCfg = new DummyInMemoryCacheStore.Cfg();
+      dummyCfg = new DummyInMemoryCacheStore.Cfg("AsyncStoreTests",false);
       dummyCfg.setStore(AsyncTest.class.getName());
       store.init(dummyCfg, null, null);
       store.start();
@@ -64,6 +63,7 @@ public class AsyncTest extends AbstractInfinispanTest {
       if (store != null) store.stop();
    }
 
+   @Test(timeOut=10000)
    public void testPutRemove() throws Exception {
       final int number = 1000;
       String key = "testPutRemove-k-";
@@ -72,6 +72,7 @@ public class AsyncTest extends AbstractInfinispanTest {
       doTestRemove(number, key);
    }
 
+   @Test(timeOut=10000)
    public void testPutClearPut() throws Exception {
       final int number = 1000;
       String key = "testPutClearPut-k-";
@@ -80,10 +81,10 @@ public class AsyncTest extends AbstractInfinispanTest {
       doTestClear(number, key);
       value = "testPutClearPut-v[2]-";
       doTestPut(number, key, value);
-
       doTestRemove(number, key);
    }
 
+   @Test(timeOut=10000)
    public void testMultiplePutsOnSameKey() throws Exception {
       final int number = 1000;
       String key = "testMultiplePutsOnSameKey-k";
@@ -92,6 +93,7 @@ public class AsyncTest extends AbstractInfinispanTest {
       doTestSameKeyRemove(key);
    }
 
+   @Test(timeOut=10000)
    public void testRestrictionOnAddingToAsyncQueue() throws Exception {
       store.remove("blah");
 
@@ -174,10 +176,8 @@ public class AsyncTest extends AbstractInfinispanTest {
          mods.add(new Remove(k1));
          GlobalTransaction tx = gtf.newGlobalTransaction(null, false);
          store.prepare(mods, tx, false);
-         barrier.await(5, TimeUnit.SECONDS);
 
-         assert 1 == localMods.size();
-         assert localMods.entrySet().iterator().next().getKey() instanceof Prepare;
+         assert 0 == localMods.size();
          assert !store.containsKey(k1);
          assert !store.containsKey(k2);
 
@@ -185,6 +185,8 @@ public class AsyncTest extends AbstractInfinispanTest {
          barrier.await(5, TimeUnit.SECONDS);
          assert store.load(k2).getValue().equals(v2);
          assert !store.containsKey(k1);
+         assert 2 == localMods.size();
+         assert new Remove(k1).equals(localMods.get(k1));
       } finally {
          store.delegate.clear();
          store.stop();
@@ -246,12 +248,12 @@ public class AsyncTest extends AbstractInfinispanTest {
          mods.add(new Remove(k1));
          GlobalTransaction tx = gtf.newGlobalTransaction(null, false);
          store.prepare(mods, tx, false);
-         barrier.await(5, TimeUnit.SECONDS);
+         Thread.sleep(200); //verify that work is not performed until commit
          assert 0 == storeCount.get();
          assert 0 == removeCount.get();
          assert 0 == clearCount.get();
          store.commit(tx);
-         barrier.await(5, TimeUnit.SECONDS);
+         barrier.await(5, TimeUnit.SECONDS); //modifications applied all at once
          assert 1 == storeCount.get() : "Store count was " + storeCount.get();
          assert 1 == removeCount.get();
          assert 0 == clearCount.get();
@@ -267,14 +269,14 @@ public class AsyncTest extends AbstractInfinispanTest {
          mods.add(new Remove(k2));
          tx = gtf.newGlobalTransaction(null, false);
          store.prepare(mods, tx, false);
-         barrier.await(5, TimeUnit.SECONDS);
+         Thread.sleep(200); //verify that work is not performed until commit
          assert 0 == storeCount.get();
          assert 0 == removeCount.get();
          assert 0 == clearCount.get();
          store.commit(tx);
          barrier.await(5, TimeUnit.SECONDS);
          assert 0 == storeCount.get() : "Store count was " + storeCount.get();
-         assert 0 == removeCount.get();
+         assert 1 == removeCount.get();
          assert 1 == clearCount.get();
 
          storeCount.set(0);
@@ -288,7 +290,7 @@ public class AsyncTest extends AbstractInfinispanTest {
          mods.add(new Store(InternalEntryFactory.create(k3, v3)));         
          tx = gtf.newGlobalTransaction(null, false);
          store.prepare(mods, tx, false);
-         barrier.await(5, TimeUnit.SECONDS);
+         Thread.sleep(200);
          assert 0 == storeCount.get();
          assert 0 == removeCount.get();
          assert 0 == clearCount.get();
@@ -306,14 +308,14 @@ public class AsyncTest extends AbstractInfinispanTest {
          mods.add(new Remove(k1));
          tx = gtf.newGlobalTransaction(null, false);
          store.prepare(mods, tx, false);
-         barrier.await(5, TimeUnit.SECONDS);
+         Thread.sleep(200);
          assert 0 == storeCount.get();
          assert 0 == removeCount.get();
          assert 0 == clearCount.get();
          store.commit(tx);
          barrier.await(5, TimeUnit.SECONDS);
          assert 0 == storeCount.get() : "Store count was " + storeCount.get();
-         assert 0 == removeCount.get();
+         assert 1 == removeCount.get();
          assert 1 == clearCount.get();
 
          storeCount.set(0);
@@ -324,7 +326,7 @@ public class AsyncTest extends AbstractInfinispanTest {
          mods.add(new Store(InternalEntryFactory.create(k1, v1)));         
          tx = gtf.newGlobalTransaction(null, false);
          store.prepare(mods, tx, false);
-         barrier.await(5, TimeUnit.SECONDS);
+         Thread.sleep(200);
          assert 0 == storeCount.get();
          assert 0 == removeCount.get();
          assert 0 == clearCount.get();
@@ -341,9 +343,13 @@ public class AsyncTest extends AbstractInfinispanTest {
    }
 
    private void doTestPut(int number, String key, String value) throws Exception {
-      for (int i = 0; i < number; i++) store.store(InternalEntryFactory.create(key + i, value + i));
+      for (int i = 0; i < number; i++) {
+         InternalCacheEntry cacheEntry = InternalEntryFactory.create(key + i, value + i);
+         store.store(cacheEntry);
+      }
 
-      TestingUtil.sleepRandom(1000);
+      store.stop();
+      store.start();
 
       InternalCacheEntry[] entries = new InternalCacheEntry[number];
       for (int i = 0; i < number; i++) {
@@ -360,7 +366,7 @@ public class AsyncTest extends AbstractInfinispanTest {
                if (entry != null) {
                   assert entry.getValue().equals(value + i);
                } else {
-                  TestingUtil.sleepRandom(1000);
+                  TestingUtil.sleepThread(20, "still waiting for key to appear: " + key + i);
                }
             }
          }
@@ -368,14 +374,16 @@ public class AsyncTest extends AbstractInfinispanTest {
    }
 
    private void doTestSameKeyPut(int number, String key, String value) throws Exception {
-      for (int i = 0; i < number; i++)
+      for (int i = 0; i < number; i++) {
          store.store(InternalEntryFactory.create(key, value + i));
+      }
 
-      TestingUtil.sleepThread(5000);
+      store.stop();
+      store.start();
       InternalCacheEntry entry;
       boolean success = false;
       for (int i = 0; i < 120; i++) {
-         TestingUtil.sleepRandom(1000);
+         TestingUtil.sleepThread(20);
          entry = store.load(key);
          success = entry.getValue().equals(value + (number - 1));
          if (success) break;
@@ -386,7 +394,8 @@ public class AsyncTest extends AbstractInfinispanTest {
    private void doTestRemove(int number, String key) throws Exception {
       for (int i = 0; i < number; i++) store.remove(key + i);
 
-      TestingUtil.sleepRandom(1000);
+      store.stop();//makes sure the store is flushed
+      store.start();
 
       InternalCacheEntry[] entries = new InternalCacheEntry[number];
       for (int i = 0; i < number; i++) {
@@ -396,8 +405,7 @@ public class AsyncTest extends AbstractInfinispanTest {
       for (int i = 0; i < number; i++) {
          InternalCacheEntry entry = entries[i];
          while (entry != null) {
-            log.info("Entry still not null {0}", entry);
-            TestingUtil.sleepRandom(1000);
+            TestingUtil.sleepThread(20, "still waiting for key to be removed: " + key + i);
             entry = store.load(key + i);
          }
       }
@@ -407,14 +415,15 @@ public class AsyncTest extends AbstractInfinispanTest {
       store.remove(key);
       InternalCacheEntry entry;
       do {
-         TestingUtil.sleepRandom(1000);
+         TestingUtil.sleepThread(20, "still waiting for key to be removed: " + key);
          entry = store.load(key);
       } while (entry != null);
    }
 
    private void doTestClear(int number, String key) throws Exception {
       store.clear();
-      TestingUtil.sleepRandom(1000);
+      store.stop();
+      store.start();
 
       InternalCacheEntry[] entries = new InternalCacheEntry[number];
       for (int i = 0; i < number; i++) {
@@ -424,8 +433,7 @@ public class AsyncTest extends AbstractInfinispanTest {
       for (int i = 0; i < number; i++) {
          InternalCacheEntry entry = entries[i];
          while (entry != null) {
-            log.info("Entry still not null {0}", entry);
-            TestingUtil.sleepRandom(1000);
+            TestingUtil.sleepThread(20, "still waiting for key to be removed: " + key + i);
             entry = store.load(key + i);
          }
       }
