@@ -52,9 +52,14 @@ class FileListOperations {
     */
    Set<String> getFileList() {
       Set<String> fileList = (Set<String>) cache.withFlags(Flag.SKIP_LOCKING).get(fileListCacheKey);
-      if (fileList == null)
+      if (fileList == null) {
          fileList = new ConcurrentHashSet<String>();
-      return fileList;
+         Set<String> prev = (Set<String>) cache.putIfAbsent(fileListCacheKey, fileList);
+         return prev == null ? fileList : prev;
+      }
+      else {
+         return fileList;
+      }
    }
 
    /**
@@ -83,15 +88,11 @@ class FileListOperations {
    
    /**
     * @param fileName
-    * @return the FileMetadata associated with the fileName
-    * @throws FileNotFoundException if the metadata was not found
+    * @return the FileMetadata associated with the fileName, or null if the file wasn't found.
     */
    FileMetadata getFileMetadata(String fileName) throws FileNotFoundException {
       FileCacheKey key = new FileCacheKey(indexName, fileName);
       FileMetadata metadata = (FileMetadata) cache.withFlags(Flag.SKIP_LOCKING).get(key);
-      if (metadata == null) {
-         throw new FileNotFoundException(fileName);
-      }
       return metadata;
    }
 
