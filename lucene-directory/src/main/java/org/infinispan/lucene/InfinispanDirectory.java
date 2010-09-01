@@ -158,7 +158,13 @@ public class InfinispanDirectory extends Directory {
     */
    public long fileModified(String name) throws IOException {
       checkIsOpen();
-      return fileOps.getFileMetadata(name).getLastModified();
+      FileMetadata fileMetadata = fileOps.getFileMetadata(name);
+      if (fileMetadata == null) {
+         return 0L;
+      }
+      else {
+         return fileMetadata.getLastModified();
+      }
    }
 
    /**
@@ -166,13 +172,15 @@ public class InfinispanDirectory extends Directory {
     */
    public void touchFile(String fileName) throws IOException {
       checkIsOpen();
-      FileCacheKey key = new FileCacheKey(indexName, fileName);
-      FileMetadata file = (FileMetadata) cache.get(key);
+      FileMetadata file = fileOps.getFileMetadata(fileName);
       if (file == null) {
-         throw new FileNotFoundException(fileName);
+         return;
       }
-      file.touch();
-      cache.put(key, file);
+      else {
+         FileCacheKey key = new FileCacheKey(indexName, fileName);
+         file.touch();
+         cache.put(key, file);
+      }
    }
 
    /**
@@ -226,7 +234,13 @@ public class InfinispanDirectory extends Directory {
     */
    public long fileLength(String name) throws IOException {
       checkIsOpen();
-      return fileOps.getFileMetadata(name).getSize();
+      FileMetadata fileMetadata = fileOps.getFileMetadata(name);
+      if (fileMetadata == null) {
+         return 0L;//as in FSDirectory (RAMDirectory throws an exception instead)
+      }
+      else {
+         return fileMetadata.getSize();
+      }
    }
 
    /**
