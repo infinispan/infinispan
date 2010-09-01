@@ -11,19 +11,16 @@ require 'net/http'
 http = Net::HTTP.new('localhost', 8080)
 
 #Create new entry
-http.post('/infinispan/rest/MyData/MyKey', 'DATA HERE', {"Content-Type" => "text/plain"})
+http.post('/infinispan-server-rest/rest/___defaultcache/MyKey', 'DATA HERE', {"Content-Type" => "text/plain"})
 
 #get it back
-puts http.get('/infinispan/rest/MyData/MyKey').body
+puts http.get('/infinispan-server-rest/rest/___defaultcache/MyKey').body
 
 #use PUT to overwrite
-http.put('/infinispan/rest/MyData/MyKey', 'MORE DATA', {"Content-Type" => "text/plain"})
+http.put('/infinispan-server-rest/rest/___defaultcache/MyKey', 'MORE DATA', {"Content-Type" => "text/plain"})
 
 #and remove...
-http.delete('/infinispan/rest/MyData/MyKey')
-
-#Create binary data like this... just the same...
-http.put('/infinispan/rest/MyImages/Image.png', File.read('/Users/michaelneale/logo.png'), {"Content-Type" => "image/png"})
+http.delete('/infinispan-server-rest/rest/___defaultcache/MyKey')
 
 
 #and if you want to do json...
@@ -32,10 +29,10 @@ require 'json'
 
 #now for fun, lets do some JSON !
 data = {:name => "michael", :age => 42 }
-http.put('/infinispan/rest/Users/data/0', data.to_json, {"Content-Type" => "application/json"})
+http.put('/infinispan-server-rest/rest/___defaultcache/MyKey', data.to_json, {"Content-Type" => "application/json"})
 puts "OK !"
 
-## For more information on usagse see http://www.jboss.org/community/wiki/InfinispanRESTserver
+## For more information on usagse see http://community.jboss.org/wiki/InfinispanRESTserver
 
 
 
