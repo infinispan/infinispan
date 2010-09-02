@@ -149,29 +149,18 @@ public abstract class BaseInvalidationTest extends MultipleCacheManagersTest {
          replListener(cache2).expect(InvalidateCommand.class);
          mgr1.commit();
          if (isSync) {
-            fail("Ought to have failed!");
+            assert false: "isSync should be false";
          } else {
-            assert true : "Ought to have succeeded";
             replListener(cache2).waitForRpc();
          }
-      }
-      catch (RollbackException roll) {
-         if (isSync)
-            assertTrue("Ought to have failed!", true);
-         else
-            fail("Ought to have succeeded!");
+      } catch (RollbackException roll) {
+         assert isSync : "isSync should be true";
       }
 
       mgr2.resume(tx2);
-      try {
-         replListener(cache1).expect(InvalidateCommand.class);
-         mgr2.commit();
-         if (!isSync) replListener(cache1).waitForRpc();
-         assertTrue("Ought to have succeeded!", true);
-      }
-      catch (RollbackException roll) {
-         fail("Ought to have succeeded!");
-      }
+      replListener(cache1).expect(InvalidateCommand.class);
+      mgr2.commit();
+      if (!isSync) replListener(cache1).waitForRpc();
 
       LockManager lm1 = TestingUtil.extractComponent(cache1, LockManager.class);
       LockManager lm2 = TestingUtil.extractComponent(cache2, LockManager.class);
