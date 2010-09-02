@@ -156,6 +156,14 @@ public class TestCacheManagerFactory {
       return newDefaultCacheManager(configuration, new Configuration(), enforceJmxDomain);
    }
 
+   public static EmbeddedCacheManager createCacheManager(Configuration.CacheMode mode, boolean indexing) {
+      GlobalConfiguration gc = mode.isClustered() ? GlobalConfiguration.getClusteredDefault() : GlobalConfiguration.getNonClusteredDefault();
+      Configuration c = new Configuration();
+      if (indexing) c.setIndexingEnabled(true);
+      c.setCacheMode(mode);
+      return createCacheManager(gc, c);
+   }
+
    /**
     * Creates a local cache manager and amends so that it won't conflict (e.g. jmx) with other managers whilst running
     * tests in parallel.  This is a non-transactional cache manager.
