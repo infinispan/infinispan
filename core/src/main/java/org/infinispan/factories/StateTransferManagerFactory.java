@@ -34,7 +34,7 @@ import org.infinispan.statetransfer.StateTransferManager;
 @DefaultFactoryFor(classes = StateTransferManager.class)
 public class StateTransferManagerFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
    public <T> T construct(Class<T> componentType) {
-      if (configuration.getCacheMode().isClustered() && configuration.isStateTransferEnabled())
+      if (configuration.getCacheMode().isClustered() && !configuration.getCacheMode().isDistributed())
          return componentType.cast(new StateTransferManagerImpl());
       else
          return null;

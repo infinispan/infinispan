@@ -114,17 +114,19 @@ public class StateTransferManagerImpl implements StateTransferManager {
       transientState = configuration.isFetchInMemoryState();
       persistentState = cs != null && clm.isEnabled() && clm.isFetchPersistentState() && !clm.isShared();
 
-      long startTime = 0;
-      if (log.isDebugEnabled()) {
-         log.debug("Initiating state transfer process");
-         startTime = System.currentTimeMillis();
-      }
+      if (transientState || persistentState) {
+         long startTime = 0;
+            if (log.isDebugEnabled()) {
+            log.debug("Initiating state transfer process");
+            startTime = System.currentTimeMillis();
+         }
 
-      rpcManager.retrieveState(cache.getName(), configuration.getStateRetrievalTimeout());
+         rpcManager.retrieveState(cache.getName(), configuration.getStateRetrievalTimeout());
 
-      if (log.isDebugEnabled()) {
-         long duration = System.currentTimeMillis() - startTime;
-         log.debug("State transfer process completed in {0}", Util.prettyPrintTime(duration));
+         if (log.isDebugEnabled()) {
+            long duration = System.currentTimeMillis() - startTime;
+            log.debug("State transfer process completed in {0}", Util.prettyPrintTime(duration));
+         }
       }
    }
 
@@ -141,8 +143,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
       ObjectOutput oo = null;
       boolean txLogActivated = false;
       try {
-         boolean canProvideState = (transientState || persistentState)
-               && (txLogActivated = transactionLog.activate());
+         boolean canProvideState = (txLogActivated = transactionLog.activate());
          if (log.isDebugEnabled()) log.debug("Generating state.  Can provide? {0}", canProvideState);
          oo = marshaller.startObjectOutput(out, false);
 
@@ -152,7 +153,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
          if (canProvideState) {
             delimit(oo);
-            if (transientState) generateInMemoryState(oo);
+            generateInMemoryState(oo); // always provide in-memory state if requested.  ISPN-610.
             delimit(oo);
             if (persistentState) generatePersistentState(oo);
             delimit(oo);
