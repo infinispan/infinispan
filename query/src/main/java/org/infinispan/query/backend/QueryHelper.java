@@ -30,6 +30,7 @@ import org.infinispan.CacheException;
 import org.infinispan.config.Configuration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.InterceptorChainFactory;
+import org.infinispan.interceptors.DistLockingInterceptor;
 import org.infinispan.interceptors.LockingInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.util.logging.Log;
@@ -129,11 +130,11 @@ public class QueryHelper {
          try {
             if (cfg.isIndexLocalOnly()) {
                // Add a LocalQueryInterceptor to the chain
-               initComponents(LocalQueryInterceptor.class);
+               initComponents(cfg, LocalQueryInterceptor.class);
             } else {
                // We're indexing data even if it comes from other sources
                // Add in a QueryInterceptor to the chain
-               initComponents(QueryInterceptor.class);
+               initComponents(cfg, QueryInterceptor.class);
             }
          } catch (Exception e) {
             throw new CacheException("Unable to add interceptor", e);
@@ -176,7 +177,7 @@ public class QueryHelper {
    // Private method that adds the interceptor from the classname parameter.
 
 
-   private void initComponents(Class<? extends QueryInterceptor> interceptorClass)
+   private void initComponents(Configuration cfg, Class<? extends QueryInterceptor> interceptorClass)
          throws IllegalAccessException, InstantiationException {
 
       // get the component registry and then register the searchFactory.
@@ -189,8 +190,10 @@ public class QueryHelper {
       CommandInterceptor inter = icf.createInterceptor(interceptorClass);
       cr.registerComponent(inter, QueryInterceptor.class);
 
-      cache.getAdvancedCache().addInterceptorAfter(inter, LockingInterceptor.class);
-
+      cache.getAdvancedCache().addInterceptorAfter(inter,
+              cfg.getCacheMode().isDistributed() ?
+                      DistLockingInterceptor.class :
+                      LockingInterceptor.class);
    }
 
    //This is to check that both the @ProvidedId is present and the the @DocumentId is not present. This is because
