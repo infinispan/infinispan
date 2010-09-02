@@ -26,11 +26,9 @@ import java.util.Properties;
 /**
  * Configuration component that encapsulates the global configuration.
  * <p/>
+ * A default instance of this bean takes default values for each attribute.  Please see the individual setters for
+ * details of what these defaults are.
  * <p/>
- * Note that class GlobalConfiguration contains JAXB annotations. These annotations determine how XML configuration
- * files are read into instances of configuration class hierarchy as well as they provide meta data for configuration
- * file XML schema generation. Please modify these annotations and Java element types they annotate with utmost
- * understanding and care.
  *
  * @author Manik Surtani
  * @author Vladimir Blagojevic
@@ -41,6 +39,12 @@ import java.util.Properties;
  * @see <a href="../../../config.html#ce_infinispan_global">Configuration reference</a>
  * 
  */
+
+// Note that class GlobalConfiguration contains JAXB annotations. These annotations determine how XML configuration
+// files are read into instances of configuration class hierarchy as well as they provide meta data for configuration
+// file XML schema generation. Please modify these annotations and Java element types they annotate with utmost
+// understanding and care.
+
 @SurvivesRestarts
 @Scope(Scopes.GLOBAL)
 @XmlAccessorType(XmlAccessType.FIELD)

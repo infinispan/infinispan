@@ -50,13 +50,11 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 
 /**
  * Encapsulates the configuration of a Cache.
- * 
  * <p>
- * Note that class Configuration contains JAXB annotations. These annotations determine how XML
- * configuration files are read into instances of configuration class hierarchy as well as they
- * provide meta data for configuration file XML schema generation. Please modify these annotations
- * and Java element types they annotate with utmost understanding and care.
- * 
+ * A default instance of this bean takes default values for each attribute.  Please see the individual setters for
+ * details of what these defaults are.
+ * </p>
+ *
  * @configRef name="default",desc="Configures the default cache which can be retrieved via CacheManager.getCache().
  *                                 These default settings are also used as a starting point when configuring namedCaches,
  *                                 since the default settings are inherited by any named cache."
@@ -72,6 +70,13 @@ import static java.util.concurrent.TimeUnit.MINUTES;
  * 
  * @see <a href="../../../config.html#ce_infinispan_default">Configuration reference</a>
  */
+
+//Note that class Configuration contains JAXB annotations. These annotations determine how XML
+//configuration files are read into instances of configuration class hierarchy as well as they
+//provide meta data for configuration file XML schema generation. Please modify these annotations
+//and Java element types they annotate with utmost understanding and care.
+
+
 @SurvivesRestarts
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(propOrder={})
