@@ -83,7 +83,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
    private static final boolean trace = log.isTraceEnabled();
    private static final Byte DELIMITER = (byte) 123;
 
-   boolean transientState, persistentState;
+   boolean transientState, persistentState, alwaysProvideTransientState;
    volatile boolean needToUnblockRPC = false;
    volatile Address stateSender;
 
@@ -112,6 +112,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
       log.trace("Data container is {0}", System.identityHashCode(dataContainer));
       cs = clm == null ? null : clm.getCacheStore();
       transientState = configuration.isFetchInMemoryState();
+      alwaysProvideTransientState = configuration.isAlwaysProvideInMemoryState();
       persistentState = cs != null && clm.isEnabled() && clm.isFetchPersistentState() && !clm.isShared();
 
       if (transientState || persistentState) {
@@ -153,7 +154,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
          if (canProvideState) {
             delimit(oo);
-            generateInMemoryState(oo); // always provide in-memory state if requested.  ISPN-610.
+            if (transientState || alwaysProvideTransientState) generateInMemoryState(oo); // always provide in-memory state if requested.  ISPN-610.
             delimit(oo);
             if (persistentState) generatePersistentState(oo);
             delimit(oo);
