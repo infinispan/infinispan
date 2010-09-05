@@ -60,11 +60,4 @@ public interface InvocationContext extends EntryLookup, FlagContainer, Cloneable
 
    InvocationContext clone();
 
-   /**
-    * Retrieves a set of keys added to the context within the scope of the current ivocation up to the current point
-    * in time.  This is usually all of the keys added to the context, unless transactions are used in which case it is
-    * a subset of all the keys added to the context.
-    * @return a Set of keys, which may be an empty set.
-    */
-   Set<Object> getKeysAddedInCurrentInvocation();
 }

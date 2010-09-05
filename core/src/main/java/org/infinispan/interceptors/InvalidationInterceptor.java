@@ -52,6 +52,7 @@ import org.rhq.helpers.pluginAnnotations.agent.Parameter;
 
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
+import java.sql.ResultSet;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -70,6 +71,7 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * @author Manik Surtani
  * @author Galder Zamarreño
+ * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
 @MBean(objectName = "Invalidation", description = "Component responsible for invalidating entries on remote caches when entries are written to locally.")
@@ -164,12 +166,6 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
             }
             catch (Throwable t) {
                log.warn("Unable to broadcast evicts as a part of the prepare phase.  Rolling back.", t);
-               try {
-                  tx.setRollbackOnly();
-               }
-               catch (SystemException se) {
-                  throw new RuntimeException("setting tx rollback failed ", se);
-               }
                if (t instanceof RuntimeException)
                   throw (RuntimeException) t;
                else
@@ -196,6 +192,12 @@ public class InvalidationInterceptor extends BaseRpcInterceptor {
       @Override
       public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
          result.add(command.getKey());
+         return null;
+      }
+
+      @Override
+      public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+         result.addAll(command.getAffectedKeys());
          return null;
       }
    }

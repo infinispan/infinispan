@@ -270,7 +270,7 @@ public abstract class LockTestBase extends AbstractInfinispanTest {
       catch (TimeoutException expected) {
 //         expected.printStackTrace();  // for debugging
       }
-      tm.commit();
+      tm.rollback();
       tm.resume(t1);
       tm.commit();
       assertNoLocks();

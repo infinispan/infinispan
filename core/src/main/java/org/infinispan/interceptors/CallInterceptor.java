@@ -37,6 +37,7 @@ import org.infinispan.interceptors.base.CommandInterceptor;
  * transaction.
  *
  * @author Bela Ban
+ * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
 public class CallInterceptor extends CommandInterceptor {
@@ -67,19 +68,6 @@ public class CallInterceptor extends CommandInterceptor {
    @Override
    final public Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
       if (trace) log.trace("Executing command: " + command + ".");
-      Object retval;
-      try {
-         retval = command.perform(ctx);
-      }
-      catch (Throwable t) {
-         if (ctx.isInTxScope()) {
-            TxInvocationContext txContext = (TxInvocationContext) ctx;
-            if (txContext.isValidRunningTx()) {
-               txContext.getRunningTransaction().setRollbackOnly();
-            }
-         }
-         throw t;
-      }
-      return retval;
+      return command.perform(ctx);
    }
 }

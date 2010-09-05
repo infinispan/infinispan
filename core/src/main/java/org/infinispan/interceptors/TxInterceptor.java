@@ -1,5 +1,6 @@
 package org.infinispan.interceptors;
 
+import org.infinispan.CacheException;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -112,19 +113,11 @@ public class TxInterceptor extends CommandInterceptor {
 
    @Override
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
-      return enlistReadAndInvokeNext(ctx, command);
-   }
-
-   /**
-    * Designed to be overridden.  Returns a VisitableCommand fit for replaying locally, based on the modification passed
-    * in.  If a null value is returned, this means that the command should not be replayed.
-    *
-    * @param modification modification in a prepare call
-    * @return a VisitableCommand representing this modification, fit for replaying, or null if the command should not be
-    *         replayed.
-    */
-   protected VisitableCommand getCommandToReplay(VisitableCommand modification) {
-      return modification;
+      try {
+         return enlistReadAndInvokeNext(ctx, command);
+      } catch (Throwable t) {
+         return markTxForRollbackAndRethrow(ctx, t);
+      }
    }
 
    @Override
@@ -180,7 +173,8 @@ public class TxInterceptor extends CommandInterceptor {
          if (localModeNotForced(ctx)) shouldAddMod = true;
          localTxContext.setXaCache(xaAdapter);
       }
-      Object rv = invokeNextInterceptor(ctx, command);
+      Object rv;
+      rv = invokeNextAndRollbackTxOnFailure(ctx, command);
       if (!ctx.isInTxScope())
          transactionLog.logNoTxWrite(command);
       if (command.isSuccessful() && shouldAddMod) xaAdapter.addModification(command);
@@ -246,5 +240,49 @@ public class TxInterceptor extends CommandInterceptor {
    @Metric(displayName = "Rollbacks", measurementType = MeasurementType.TRENDSUP, displayType = DisplayType.SUMMARY)
    public long getRollbacks() {
       return rollbacks.get();
+   }
+
+   /**
+    * Designed to be overridden.  Returns a VisitableCommand fit for replaying locally, based on the modification passed
+    * in.  If a null value is returned, this means that the command should not be replayed.
+    *
+    * @param modification modification in a prepare call
+    * @return a VisitableCommand representing this modification, fit for replaying, or null if the command should not be
+    *         replayed.
+    */
+   protected VisitableCommand getCommandToReplay(VisitableCommand modification) {
+      return modification;
+   }
+
+   private Object markTxForRollbackAndRethrow(InvocationContext ctx, Throwable te) throws Throwable {
+      if (ctx.isOriginLocal() && ctx.isInTxScope()) {
+         Transaction transaction = tm.getTransaction();
+         if (transaction != null && isValidRunningTx(transaction)) {
+            transaction.setRollbackOnly();
+         }
+      }
+      throw te;
+   }
+
+   private Object invokeNextAndRollbackTxOnFailure(InvocationContext ctx, WriteCommand command) throws Throwable {
+      Object rv;
+      try {
+         rv = invokeNextInterceptor(ctx, command);
+      } catch (Throwable te) {
+         markTxForRollbackAndRethrow(ctx, te);
+         throw new IllegalStateException("This should not be reached");
+      }
+      return rv;
+   }
+
+   public boolean isValidRunningTx(Transaction tx) throws Exception {
+      int status;
+      try {
+         status = tx.getStatus();
+      }
+      catch (SystemException e) {
+         throw new CacheException("Unexpected!", e);
+      }
+      return status == Status.STATUS_ACTIVE || status == Status.STATUS_PREPARING;
    }
 }

@@ -30,6 +30,7 @@ import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
+import org.infinispan.transaction.xa.TransactionTable;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -826,5 +827,9 @@ public class TestingUtil {
 
    public static Object v(Method method) {
       return v(method, "");
+   }
+
+   public static TransactionTable getTransactionTable(Cache<Object, Object> cache) {
+      return cache.getAdvancedCache().getComponentRegistry().getComponent(TransactionTable.class);
    }
 }

@@ -57,13 +57,11 @@ public class LocalTxInvocationContext extends AbstractTxInvocationContext {
    }
 
    public void putLookedUpEntry(Object key, CacheEntry e) {
-      keyAddedInCurrentInvocation(key);
       xaAdapter.putLookedUpEntry(key, e);
    }
 
    public void putLookedUpEntries(Map<Object, CacheEntry> lookedUpEntries) {
       for (Map.Entry<Object, CacheEntry> ce: lookedUpEntries.entrySet()) {
-         keyAddedInCurrentInvocation(ce.getKey());
          xaAdapter.putLookedUpEntry(ce.getKey(), ce.getValue());
       }
    }
