@@ -68,7 +68,7 @@ import java.util.Set;
 @CacheLoaderMetadata(configurationClass = JdbcMixedCacheStoreConfig.class)
 public class JdbcMixedCacheStore extends AbstractCacheStore {
 
-   private static Log log = LogFactory.getLog(JdbcMixedCacheStore.class);
+   private static final Log log = LogFactory.getLog(JdbcMixedCacheStore.class);
 
    private JdbcMixedCacheStoreConfig config;
    private JdbcBinaryCacheStore binaryCacheStore = new JdbcBinaryCacheStore();

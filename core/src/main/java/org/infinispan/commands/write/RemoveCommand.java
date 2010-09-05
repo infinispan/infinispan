@@ -40,7 +40,6 @@ import org.infinispan.util.logging.LogFactory;
 @Marshallable(externalizer = ReplicableCommandExternalizer.class, id = Ids.REMOVE_COMMAND)
 public class RemoveCommand extends AbstractDataWriteCommand {
    private static final Log log = LogFactory.getLog(RemoveCommand.class);
-   private static final boolean trace = log.isTraceEnabled();
    public static final byte COMMAND_ID = 10;
    protected CacheNotifier notifier;
    boolean successful = true;

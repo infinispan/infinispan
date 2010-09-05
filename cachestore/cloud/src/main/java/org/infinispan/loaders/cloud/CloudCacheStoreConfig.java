@@ -21,7 +21,7 @@ import org.infinispan.loaders.LockSupportCacheStoreConfig;
  * <li><tt>requestTimeout</tt> - A timeout to use when communicating with the cloud storage
  * provider, in milliseconds. Defaults to 10000.</li>
  * <li><tt>lazyPurgingOnly</tt> - If enabled, then expired entries are only purged on access,
- * lazily, rather than by using the periodic eviction thread. Defaults to <tt>true</tt>.</li>
+ * lazily, rather than by using the periodic eviction thread. Defaults to <tt>false</tt>.</li>
  * <li><tt>cloudService</tt> - The cloud service to use. Supported values are <tt>s3</tt> (Amazon
  * AWS), <tt>cloudfiles</tt> (Rackspace Cloud), <tt>azureblob</tt> (Microsoft Azure), and
  * <tt>atmos</tt> (Atmos Online Storage Service).</li>
@@ -45,8 +45,7 @@ public class CloudCacheStoreConfig extends LockSupportCacheStoreConfig {
    private String proxyHost;
    private String proxyPort;
    private long requestTimeout = 10000;
-   // TODO Once ISPN-334 is closed, consider setting this to false by default.
-   private boolean lazyPurgingOnly = true;
+   private boolean lazyPurgingOnly = false;
    private String cloudService;
    private int maxConnections = 10000;
    private boolean secure = true;

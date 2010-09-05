@@ -80,5 +80,16 @@ public class Prepare implements Modification {
       result = 31 * result + (isOnePhase ? 1 : 0);
       return result;
    }
+   
+   @Override
+   public String toString() {
+      StringBuilder sb = new StringBuilder();
+      sb.append("Prepare:");
+      sb.append(tx);
+      sb.append(" isOnePhase:");
+      sb.append(String.valueOf(isOnePhase));
+      sb.append(";[").append(list).append("]");
+      return sb.toString();
+   }
 
 }

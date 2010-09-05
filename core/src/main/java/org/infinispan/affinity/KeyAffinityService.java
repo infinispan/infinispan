@@ -3,8 +3,6 @@ package org.infinispan.affinity;
 import org.infinispan.lifecycle.Lifecycle;
 import org.infinispan.remoting.transport.Address;
 
-import java.util.concurrent.Executor;
-
 /**
  * Defines a service that generates keys to be mapped to specific nodes in a distributed(vs. replicated) cluster.
  * The service is instantiated through through one of the factory methods from {@link org.infinispan.affinity.KeyAffinityServiceFactory}.

@@ -1,7 +1,6 @@
 package org.infinispan.client.hotrod.impl.operations;
 
 import org.infinispan.client.hotrod.Flag;
-import org.infinispan.client.hotrod.impl.VersionedOperationResponse;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 

@@ -1,18 +1,7 @@
 package org.infinispan.manager;
 
 import org.infinispan.Cache;
-import org.infinispan.config.Configuration;
-import org.infinispan.config.GlobalConfiguration;
-import org.infinispan.factories.annotations.SurvivesRestarts;
-import org.infinispan.factories.scopes.Scope;
-import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.Lifecycle;
-import org.infinispan.notifications.Listenable;
-import org.infinispan.remoting.transport.Address;
-
-import java.util.List;
-import java.util.Set;
 
 /**
  * A <tt>CacheContainer</tt> is the primary mechanism for retrieving a {@link org.infinispan.Cache} instance, and is often

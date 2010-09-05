@@ -6,7 +6,6 @@ import org.infinispan.config.GlobalConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.statetransfer.StateTransferFunctionalTest.*;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -18,13 +17,11 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.lang.reflect.Method;
 import java.util.Properties;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * State transfer and replication queue test veryfying that the interaction between them two works in fine.
+ * State transfer and replication queue test verifying that the interaction between them two works in fine.
  *
  * @author Galder Zamarreño
  * @since 4.1

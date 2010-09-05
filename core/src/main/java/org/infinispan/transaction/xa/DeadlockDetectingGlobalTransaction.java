@@ -20,7 +20,7 @@ import java.util.Set;
 @Marshallable(externalizer = DeadlockDetectingGlobalTransaction.Externalizer.class, id = Ids.DEADLOCK_DETECTING_GLOBAL_TRANSACTION)
 public class DeadlockDetectingGlobalTransaction extends GlobalTransaction {
 
-   private static Log log = LogFactory.getLog(DeadlockDetectingGlobalTransaction.class);
+   private static final Log log = LogFactory.getLog(DeadlockDetectingGlobalTransaction.class);
 
    public static final boolean trace = log.isTraceEnabled();
 

@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.infinispan.ec2demo;
 
 import java.io.Serializable;

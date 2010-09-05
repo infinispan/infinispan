@@ -1,7 +1,7 @@
 package org.infinispan.client.hotrod.exceptions;
 
 /**
- * Indicates a communication exception with the hotrod server: e.g. TCP connection is broken while reading a response
+ * Indicates a communication exception with the Hot Rod server: e.g. TCP connection is broken while reading a response
  * from the server.
  *
  * @author Mircea.Markus@jboss.com

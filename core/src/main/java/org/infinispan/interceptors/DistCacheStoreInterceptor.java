@@ -39,7 +39,7 @@ import java.util.Map;
 
 /**
  * Cache store interceptor specific for the distribution cache mode. Put operations has been modified in such way that
- * if they put operation is the result of an L1 put, storing in the cache store is ignore. This is done so that inmortal
+ * if they put operation is the result of an L1 put, storing in the cache store is ignore. This is done so that immortal
  * entries that get converted into mortal ones when putting into L1 don't get propagated to the cache store.
  * <p/>
  * Secondly, in a replicated environment where a shared cache store is used, the node in which the cache operation is

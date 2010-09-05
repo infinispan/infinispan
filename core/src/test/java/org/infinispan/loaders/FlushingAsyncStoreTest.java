@@ -3,18 +3,15 @@ package org.infinispan.loaders;
 import java.io.IOException;
 import java.sql.SQLException;
 
-import org.apache.commons.math.stat.inference.TestUtils;
 import org.infinispan.config.CacheLoaderManagerConfig;
 import org.infinispan.config.Configuration;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.loaders.decorators.AsyncStoreConfig;
 import org.infinispan.loaders.dummy.DummyInMemoryCacheStore;
-import org.infinispan.loaders.file.FileCacheStoreConfig;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 /**
@@ -46,7 +43,7 @@ public class FlushingAsyncStoreTest extends SingleCacheManagerTest {
       return TestCacheManagerFactory.createCacheManager(config);
    }
 
-   @Test (timeOut = 10000)
+   @Test(timeOut = 10000)
    public void writeOnStorage() throws IOException, ClassNotFoundException, SQLException, InterruptedException {
       cache = cacheManager.getCache("AsyncStoreInMemory");
       cache.put("key1", "value");
@@ -61,11 +58,6 @@ public class FlushingAsyncStoreTest extends SingleCacheManagerTest {
       assert "value".equals(cache.get("key1"));
    }
    
-   @AfterClass
-   public void removeStore(){
-      TestUtils a; 
-   }
-
    public static class SlowCacheStoreConfig extends DummyInMemoryCacheStore.Cfg {
       public SlowCacheStoreConfig() {
          setCacheLoaderClassName(SlowCacheStore.class.getName());

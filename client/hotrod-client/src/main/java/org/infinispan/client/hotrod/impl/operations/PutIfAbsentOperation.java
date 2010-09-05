@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Immutable
 public class PutIfAbsentOperation extends AbstractKeyValueOperation {
 
-   private static Log log = LogFactory.getLog(PutIfAbsentOperation.class);
+   private static final Log log = LogFactory.getLog(PutIfAbsentOperation.class);
 
    public PutIfAbsentOperation(TransportFactory transportFactory, byte[] key, byte[] cacheName, AtomicInteger topologyId,
                                Flag[] flags, byte[] value, int lifespan, int maxIdle) {

@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Generic hotrod operation. It is aware of {@link org.infinispan.client.hotrod.Flag}s and it is targeted against a
+ * Generic Hot Rod operation. It is aware of {@link org.infinispan.client.hotrod.Flag}s and it is targeted against a
  * cache name. This base class encapsulates the knowledge of writing and reading a header, as described in the
  * <a href="http://community.jboss.org/wiki/HotRodProtocol">Hot Rod protocol specification</a>
  *
@@ -28,7 +28,7 @@ public abstract class HotRodOperation implements HotRodConstants {
 
    static final AtomicLong MSG_ID = new AtomicLong();
 
-   private static Log log = LogFactory.getLog(HotRodOperation.class);
+   private static final Log log = LogFactory.getLog(HotRodOperation.class);
 
    protected final Flag[] flags;
 

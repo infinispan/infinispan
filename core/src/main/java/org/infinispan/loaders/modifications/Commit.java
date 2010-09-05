@@ -62,5 +62,10 @@ public class Commit implements Modification {
       Commit other = (Commit) obj;
       return tx.equals(other.tx);
    }
+   
+   @Override
+   public String toString() {
+      return "Commit: " + tx;
+   }
 
 }

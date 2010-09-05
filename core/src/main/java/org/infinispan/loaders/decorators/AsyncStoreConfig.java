@@ -42,6 +42,11 @@ public class AsyncStoreConfig extends AbstractNamedCacheConfigurationBean {
    @Dynamic
    protected Long flushLockTimeout = 5000L;
 
+   /** @configRef desc="Timeout to stop the cache store. When the store is stopped it's possible that some modifications still need to be applied;
+    *             you likely want to set a very large timeout to make sure to not loose data." */
+   @Dynamic
+   protected Long shutdownTimeout = 7200L;
+
    @XmlAttribute
    public Boolean isEnabled() {
       return enabled;
@@ -70,7 +75,17 @@ public class AsyncStoreConfig extends AbstractNamedCacheConfigurationBean {
    public void setFlushLockTimeout(Long stateLockTimeout) {
       testImmutability("flushLockTimeout");
       this.flushLockTimeout = stateLockTimeout;
-   }   
+   }
+
+   @XmlAttribute
+   public Long getShutdownTimeout() {
+      return shutdownTimeout;
+   }
+
+   public void setShutdownTimeout(Long shutdownTimeout) {
+      testImmutability("shutdownTimeout");
+      this.shutdownTimeout = shutdownTimeout;
+   }
 
    @Override
    public AsyncStoreConfig clone() {

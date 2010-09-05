@@ -4,7 +4,6 @@ import net.jcip.annotations.ThreadSafe;
 import org.infinispan.client.hotrod.impl.transport.AbstractTransport;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
-import org.infinispan.io.UnsignedNumeric;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -28,7 +27,7 @@ public class TcpTransport extends AbstractTransport {
    //needed for debugging
    private static AtomicLong ID_COUNTER = new AtomicLong(0);
 
-   private static Log log = LogFactory.getLog(TcpTransport.class);
+   private static final Log log = LogFactory.getLog(TcpTransport.class);
    private static final boolean trace = log.isTraceEnabled();
 
    private final Socket socket;

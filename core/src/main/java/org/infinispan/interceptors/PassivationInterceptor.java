@@ -1,26 +1,17 @@
 package org.infinispan.interceptors;
 
 import org.infinispan.commands.write.EvictCommand;
-import org.infinispan.config.ConfigurationException;
 import org.infinispan.container.DataContainer;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.JmxStatsCommandInterceptor;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
-import org.infinispan.loaders.CacheLoaderException;
-import org.infinispan.loaders.CacheLoaderManager;
-import org.infinispan.loaders.CacheStore;
-import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
 import org.rhq.helpers.pluginAnnotations.agent.Metric;
 import org.rhq.helpers.pluginAnnotations.agent.Operation;
-
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Writes evicted entries back to the store on the way in through the CacheStore

@@ -21,7 +21,6 @@
  */
 package org.infinispan.context;
 
-import java.util.Collections;
 import java.util.Set;
 
 /**

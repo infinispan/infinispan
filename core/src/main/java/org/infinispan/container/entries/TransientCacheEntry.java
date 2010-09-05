@@ -8,10 +8,8 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-import static java.lang.Math.min;
-
 /**
- * A cache entry that is transient, i.e., it can be considered expired afer a period of not being used.
+ * A cache entry that is transient, i.e., it can be considered expired after a period of not being used.
  *
  * @author Manik Surtani
  * @since 4.0

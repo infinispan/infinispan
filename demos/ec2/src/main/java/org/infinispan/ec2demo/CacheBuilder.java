@@ -1,6 +1,3 @@
-/**
- *
- */
 package org.infinispan.ec2demo;
 
 import java.io.IOException;
@@ -8,15 +5,12 @@ import java.io.IOException;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 /**
  * @author noconnor@redhat.com
  */
 public class CacheBuilder {
 	private EmbeddedCacheManager cache_manager;
-	private static final Log myLogger = LogFactory.getLog(CacheBuilder.class);
 
 	public CacheBuilder(String inConfigFile) throws IOException {
 		

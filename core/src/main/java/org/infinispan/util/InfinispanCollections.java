@@ -19,12 +19,12 @@ public class InfinispanCollections {
 
    @SuppressWarnings("unchecked")
    public static <T> ReversibleOrderedSet<T> emptyReversibleOrderedSet() {
-      return (ReversibleOrderedSet<T>) EMPTY_ROS;
+      return EMPTY_ROS;
    }
 
    @SuppressWarnings("unchecked")
    public static <K, V> BidirectionalMap<K, V> emptyBidirectionalMap() {
-      return (BidirectionalMap<K, V>) EMPTY_BIDI_MAP;
+      return EMPTY_BIDI_MAP;
    }
 
    private static final class EmptyReversibleOrderedSet extends AbstractSet implements ReversibleOrderedSet {

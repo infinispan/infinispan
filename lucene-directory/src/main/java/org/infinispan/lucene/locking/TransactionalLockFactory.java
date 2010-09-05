@@ -36,14 +36,14 @@ import java.io.IOException;
  * <p>Factory for locks obtained in <code>InfinispanDirectory</code>,
  * this factory produces instances of <code>TransactionalSharedLuceneLock</code>.</p>
  * <p>Usually Lucene acquires the lock when creating an IndexWriter and releases it
- * when closing it; this is open-close is mapped to transactions as begin-commit,
- * so all changes are going to be effective at IndexWriter close and could need
- * much memory until it's committed.
+ * when closing it; these open-close operations are mapped to transactions as begin-commit,
+ * so all changes are going to be effective at IndexWriter close.
  * The advantage is that a transaction rollback will be able to undo all changes
- * applied to the index.</p>
+ * applied to the index, but this requires enough memory to hold all the changes until
+ * the commit.</p>
  * <p>Using a TransactionalSharedLuceneLock is not compatible with Lucene's
  * default MergeScheduler: use an in-thread implementation like SerialMergeScheduler
- * <code>iwriter.setMergeScheduler( new SerialMergeScheduler() );</code></p>
+ * <code>indexWriter.setMergeScheduler( new SerialMergeScheduler() );</code></p>
  * 
  * @since 4.0
  * @author Sanne Grinovero

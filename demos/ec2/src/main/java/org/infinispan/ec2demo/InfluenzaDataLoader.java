@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.infinispan.ec2demo;
 
 import com.martiansoftware.jsap.JSAPResult;
@@ -28,7 +25,7 @@ public class InfluenzaDataLoader {
 	private Nucleotide_Protein_Parser npParser;
 	private Influenza_Parser iParser;
 
-	private static final Log myLogger = LogFactory.getLog(InfluenzaDataLoader.class);
+	private static final Log log = LogFactory.getLog(InfluenzaDataLoader.class);
 
 	public void createCache(String configFile) throws IOException {
 		String cfgFileName = LegacyKeySupportSystemProperties.getProperty("infinispan.configuration", "infinispan.demo.cfg");		
@@ -65,7 +62,7 @@ public class InfluenzaDataLoader {
 			System.out.println("Parsing files....");
 
 			if (config.getString("ifile") != null) {
-				myLogger.info("Parsing Influenza data");
+				log.info("Parsing Influenza data");
 				List<Influenza_N_P_CR_Element> iList = iParser.parseFile(config.getString("ifile"));
 
 				boolean rQuery = config.getBoolean("randomquery");
@@ -81,7 +78,7 @@ public class InfluenzaDataLoader {
 						this.searchCache(curreElem.getGanNucleoid());
 
 						try {
-							Thread.currentThread().sleep(1000);
+							Thread.sleep(1000);
 						} catch (InterruptedException ex) {
 							// do nothing, yea I know its naughty...
 						}
@@ -110,7 +107,7 @@ public class InfluenzaDataLoader {
 			}
 
 			if (config.getString("pfile") != null) {
-				myLogger.info("Parsing Protein data");
+				log.info("Parsing Protein data");
 				List<Nucleotide_Protein_Element> npList = npParser.parseFile(config.getString("pfile"));
 				System.out.println("About to load " + npList.size() + " protein elements into ProteinCache");
 				int loopCount = 0;
@@ -133,7 +130,7 @@ public class InfluenzaDataLoader {
 			}
 
 			if (config.getString("nfile") != null) {
-				myLogger.info("Parsing Nucleotide data");
+				log.info("Parsing Nucleotide data");
 				List<Nucleotide_Protein_Element> npList = npParser.parseFile(config.getString("nfile"));
 				System.out.println("About to load " + npList.size() + " nucleotide elements into NucleiodCache");
 				int loopCount = 0;
@@ -162,14 +159,14 @@ public class InfluenzaDataLoader {
 	}
 
 	public void searchCache(String inGBAN) {
-		myLogger.trace("Searching influenzaCache for " + inGBAN);
+		log.trace("Searching influenzaCache for " + inGBAN);
 		// Find the virus details
 		Influenza_N_P_CR_Element myRec = influenzaCache.get(inGBAN);
 
 		if (myRec != null) {
 			System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
 			System.out.println("Virus Details->" + myRec);
-			myLogger.trace("Searching nucleiodCache for " + myRec.getGanNucleoid());
+			log.trace("Searching nucleiodCache for " + myRec.getGanNucleoid());
 			Nucleotide_Protein_Element nucldet = nucleiodCache.get(myRec.getGanNucleoid());
 			System.out.println("Nucleotide details->" + nucldet);
 
@@ -177,7 +174,7 @@ public class InfluenzaDataLoader {
 			Map<String, String> myProt = myRec.getProtein_Data();
 			for (String x : myProt.keySet()) {
 				System.out.println("=========================================================================");
-				myLogger.trace("Searching proteinCache for " + x);
+				log.trace("Searching proteinCache for " + x);
 				Nucleotide_Protein_Element myProtdet = proteinCache.get(x);
 				System.out.println("Protein->" + myProtdet);
 				String protein_CR = myProt.get(x);
@@ -185,7 +182,7 @@ public class InfluenzaDataLoader {
 			}
 			System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
 		} else {
-			myLogger.trace("No virus data found for " + inGBAN);
+			log.trace("No virus data found for " + inGBAN);
 			System.out.println("No virus data found for " + inGBAN);
 		}
 	}

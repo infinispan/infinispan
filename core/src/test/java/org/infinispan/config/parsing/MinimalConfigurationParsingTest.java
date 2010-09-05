@@ -1,7 +1,6 @@
 package org.infinispan.config.parsing;
 
 import org.infinispan.config.InfinispanConfiguration;
-import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;

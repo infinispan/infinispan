@@ -44,7 +44,7 @@ import org.infinispan.util.logging.LogFactory;
  * @since 4.0
  */
 public class KeyTransformationHandler {
-   private static Log log = LogFactory.getLog(KeyTransformationHandler.class);
+   private static final Log log = LogFactory.getLog(KeyTransformationHandler.class);
 
    public static Object stringToKey(String s) {
       char type = s.charAt(0);

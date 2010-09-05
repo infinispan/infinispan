@@ -1,7 +1,5 @@
 package org.infinispan.loaders.jdbc;
 
-import org.infinispan.loaders.LockSupportCacheStoreConfig;
-
 /**
  * An abstract configuration for JDBC cache stores which have support for locking.
  *

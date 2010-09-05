@@ -89,7 +89,7 @@ public class TransactionLog {
       }
    }
 
-   private static Log log = LogFactory.getLog(TransactionLog.class);
+   private static final Log log = LogFactory.getLog(TransactionLog.class);
 
    public void logPrepare(PrepareCommand command) {
       pendingPrepares.put(command.getGlobalTransaction(), command);

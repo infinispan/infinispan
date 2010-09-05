@@ -79,7 +79,6 @@ public class TableManipulationTest {
          assert false : "missing config param, exception expected";
       } catch (CacheLoaderException e) {
          other.setDataColumnType("VARCHAR(255)");
-         assert true : "We do not expect a failure here";
       }
 
       other.createTable(mockConnection);
@@ -90,7 +89,6 @@ public class TableManipulationTest {
          assert false : "missing config param, exception expected";
       } catch (CacheLoaderException e) {
          other.setIdColumnName("abc");
-         assert true : "We do not expect a failure here";
       }
 
       other.createTable(mockConnection);
@@ -101,7 +99,6 @@ public class TableManipulationTest {
          assert false : "missing config param, exception expected";
       } catch (CacheLoaderException e) {
          other.setDataColumnName("abc");
-         assert true : "We do not expect a failure here";
       }
 
       other.createTable(mockConnection);
@@ -112,7 +109,6 @@ public class TableManipulationTest {
          assert false : "missing config param, exception expected";
       } catch (CacheLoaderException e) {
          other.setDataColumnName("abc");
-         assert true : "We do not expect a failure here";
       }
 
       other.createTable(mockConnection);
@@ -123,7 +119,6 @@ public class TableManipulationTest {
          assert false : "missing config param, exception expected";
       } catch (CacheLoaderException e) {
          other.setDataColumnName("timestamp");
-         assert true : "We do not expect a failure here";
       }
 
       other.setTimestampColumnType(null);
@@ -132,7 +127,6 @@ public class TableManipulationTest {
          assert false : "missing config param, exception expected";
       } catch (CacheLoaderException e) {
          other.setIdColumnType("BIGINT");
-         assert true : "We do not expect a failure here";
       }
    }
 

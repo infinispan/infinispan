@@ -32,9 +32,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 /**
- * Holds the logic of looking up a file, in the following sequence: <ol> <li> try to load it with the curent thread's
+ * Holds the logic of looking up a file, in the following sequence: <ol> <li> try to load it with the current thread's
  * context ClassLoader</li> <li> if fails, the system ClassLoader</li> <li> if fails, try to load it as a file from the
- * disck </li> </ol>
+ * disk </li> </ol>
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.0

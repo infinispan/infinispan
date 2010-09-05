@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public abstract class AbstractCacheStore extends AbstractCacheLoader implements CacheStore {
 
-   private static Log log = LogFactory.getLog(AbstractCacheStore.class);
+   private static final Log log = LogFactory.getLog(AbstractCacheStore.class);
 
    private Map<GlobalTransaction, List<? extends Modification>> transactions;
    private AbstractCacheStoreConfig config;

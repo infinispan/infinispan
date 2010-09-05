@@ -45,7 +45,7 @@ import java.util.concurrent.CountDownLatch;
 @Test(groups = "profiling", enabled = true, testName = "profiling.DeadlockDetectionPerformanceTest")
 public class DeadlockDetectionPerformanceTest extends AbstractInfinispanTest {
 
-   private static Log log = LogFactory.getLog(DeadlockDetectionPerformanceTest.class);
+   private static final Log log = LogFactory.getLog(DeadlockDetectionPerformanceTest.class);
 
    public static final int KEY_POOL_SIZE = 10;
 

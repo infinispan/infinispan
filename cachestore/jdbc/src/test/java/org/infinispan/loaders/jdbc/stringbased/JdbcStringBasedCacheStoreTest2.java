@@ -83,7 +83,7 @@ public class JdbcStringBasedCacheStoreTest2 {
    }
 
    /**
-    * When trying to perists an unsupported object an exception is expected.
+    * When trying to persist an unsupported object an exception is expected.
     */
    public void persistUnsupportedObject() throws Exception {
       try {

@@ -3,7 +3,7 @@ package org.infinispan.client.hotrod.impl.protocol;
 import java.nio.charset.Charset;
 
 /**
- * Defines constants defined by Hotrod specifications.
+ * Defines constants defined by Hot Rod specifications.
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.1

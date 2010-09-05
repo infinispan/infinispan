@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.infinispan.ec2demo;
 
 import java.io.IOException;
@@ -12,7 +9,7 @@ import org.infinispan.Cache;
  * 
  */
 public class NucleotideCache {
-	Logger myLogger = Logger.getLogger(NucleotideCache.class);
+	private static final Logger log = Logger.getLogger(NucleotideCache.class);
 	private Cache<String, Nucleotide_Protein_Element> myCache;
 
 	public NucleotideCache(CacheBuilder cacheManger) throws IOException {
@@ -24,7 +21,7 @@ public class NucleotideCache {
 			return;
 		String myKey = value.getGenbankAccessionNumber();
 		if ((myKey == null) || (myKey.isEmpty())) {
-			myLogger.error("Invalid record " + value);
+			log.error("Invalid record " + value);
 		} else {
 			myCache.put(value.getGenbankAccessionNumber(), value);
 		}

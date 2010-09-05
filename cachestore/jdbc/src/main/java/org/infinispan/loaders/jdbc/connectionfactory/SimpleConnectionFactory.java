@@ -38,7 +38,7 @@ import java.sql.SQLException;
  */
 public class SimpleConnectionFactory extends ConnectionFactory {
 
-   private static Log log = LogFactory.getLog(SimpleConnectionFactory.class);
+   private static final Log log = LogFactory.getLog(SimpleConnectionFactory.class);
 
    private String connectionUrl;
    private String userName;

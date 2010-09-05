@@ -3,8 +3,6 @@ package org.infinispan.util;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.Properties;
-
 /**
  * A wrapper around system properties that supports legacy keys
  *

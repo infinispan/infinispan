@@ -1,9 +1,7 @@
 package org.infinispan.distribution;
 
 import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
-import org.infinispan.profiling.testinternals.Generator;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.Util;
 import org.infinispan.util.hash.MurmurHash2;
 import org.testng.annotations.Test;
 

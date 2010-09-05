@@ -50,13 +50,11 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 
 /**
  * Encapsulates the configuration of a Cache.
- * 
  * <p>
- * Note that class Configuration contains JAXB annotations. These annotations determine how XML
- * configuration files are read into instances of configuration class hierarchy as well as they
- * provide meta data for configuration file XML schema generation. Please modify these annotations
- * and Java element types they annotate with utmost understanding and care.
- * 
+ * A default instance of this bean takes default values for each attribute.  Please see the individual setters for
+ * details of what these defaults are.
+ * </p>
+ *
  * @configRef name="default",desc="Configures the default cache which can be retrieved via CacheManager.getCache().
  *                                 These default settings are also used as a starting point when configuring namedCaches,
  *                                 since the default settings are inherited by any named cache."
@@ -72,6 +70,13 @@ import static java.util.concurrent.TimeUnit.MINUTES;
  * 
  * @see <a href="../../../config.html#ce_infinispan_default">Configuration reference</a>
  */
+
+//Note that class Configuration contains JAXB annotations. These annotations determine how XML
+//configuration files are read into instances of configuration class hierarchy as well as they
+//provide meta data for configuration file XML schema generation. Please modify these annotations
+//and Java element types they annotate with utmost understanding and care.
+
+
 @SurvivesRestarts
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(propOrder={})
@@ -278,6 +283,10 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
 
    public void setFetchInMemoryState(boolean fetchInMemoryState) {
       this.clustering.stateRetrieval.setFetchInMemoryState(fetchInMemoryState);
+   }
+
+   public void setAlwaysProvideInMemoryState(boolean alwaysProvideInMemoryState) {
+      this.clustering.stateRetrieval.setAlwaysProvideInMemoryState(alwaysProvideInMemoryState);
    }
 
    public void setLockAcquisitionTimeout(long lockAcquisitionTimeout) {
@@ -552,6 +561,11 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       return clustering.stateRetrieval.fetchInMemoryState;
    }
 
+   public boolean isAlwaysProvideInMemoryState() {
+      return clustering.stateRetrieval.alwaysProvideInMemoryState;
+   }
+
+
    public long getLockAcquisitionTimeout() {
       return locking.lockAcquisitionTimeout;
    }
@@ -773,7 +787,7 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
    public boolean isOnePhaseCommit() {
       return !getCacheMode().isSynchronous();
    }
-   
+
    /**
     * 
     * @configRef name="transaction",desc="Defines transactional (JTA) characteristics of the cache."
@@ -1392,6 +1406,12 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       @Dynamic
       protected Boolean fetchInMemoryState = false;
 
+      /**
+       * @configRef desc="If true, this will allow the cache to provide in-memory state to a neighbor, even if the
+       *                  cache is not configured to fetch state from its neighbors (fetchInMemoryState is false).
+       */
+      protected Boolean alwaysProvideInMemoryState = false;
+
       /** @configRef desc="This is the maximum amount of time - in milliseconds - to wait for state from neighboring 
        *             caches, before throwing an exception and aborting startup. " */
       @Dynamic      
@@ -1410,6 +1430,12 @@ public class Configuration extends AbstractNamedCacheConfigurationBean {
       public void setFetchInMemoryState(Boolean fetchInMemoryState) {
          testImmutability("fetchInMemoryState");
          this.fetchInMemoryState = fetchInMemoryState;
+      }
+
+      @XmlAttribute
+      public void setAlwaysProvideInMemoryState(Boolean alwaysProvideInMemoryState) {
+         testImmutability("alwaysProvideInMemoryState");
+         this.alwaysProvideInMemoryState = alwaysProvideInMemoryState;
       }
 
       @XmlAttribute

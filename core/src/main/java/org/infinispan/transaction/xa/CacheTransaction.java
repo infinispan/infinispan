@@ -5,7 +5,6 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.util.BidirectionalMap;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Defines the state a infinispan transaction should have.

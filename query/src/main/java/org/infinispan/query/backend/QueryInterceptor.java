@@ -35,7 +35,6 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.marshall.MarshalledValue;
-import org.infinispan.util.logging.Log;
 
 import javax.transaction.TransactionManager;
 import java.io.Serializable;

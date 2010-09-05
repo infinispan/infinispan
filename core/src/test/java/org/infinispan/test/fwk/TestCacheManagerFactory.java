@@ -33,7 +33,7 @@ public class TestCacheManagerFactory {
    private static AtomicInteger jmxDomainPostfix = new AtomicInteger();
 
    public static final String MARSHALLER = LegacyKeySupportSystemProperties.getProperty("infinispan.test.marshaller.class", "infinispan.marshaller.class");
-   private static Log log = LogFactory.getLog(TestCacheManagerFactory.class);
+   private static final Log log = LogFactory.getLog(TestCacheManagerFactory.class);
 
    private static ThreadLocal<PerThreadCacheManagers> perThreadCacheManagers = new ThreadLocal<PerThreadCacheManagers>() {
       @Override
@@ -154,6 +154,14 @@ public class TestCacheManagerFactory {
       minimizeThreads(configuration);
       amendTransport(configuration);
       return newDefaultCacheManager(configuration, new Configuration(), enforceJmxDomain);
+   }
+
+   public static EmbeddedCacheManager createCacheManager(Configuration.CacheMode mode, boolean indexing) {
+      GlobalConfiguration gc = mode.isClustered() ? GlobalConfiguration.getClusteredDefault() : GlobalConfiguration.getNonClusteredDefault();
+      Configuration c = new Configuration();
+      if (indexing) c.setIndexingEnabled(true);
+      c.setCacheMode(mode);
+      return createCacheManager(gc, c);
    }
 
    /**

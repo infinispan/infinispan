@@ -43,7 +43,7 @@ import java.util.Locale;
  */
 public class TableManipulation implements Cloneable {
 
-   private static Log log = LogFactory.getLog(TableManipulation.class);
+   private static final Log log = LogFactory.getLog(TableManipulation.class);
 
    public static final int DEFAULT_FETCH_SIZE = 100;
 
@@ -179,7 +179,7 @@ public class TableManipulation implements Cloneable {
          statement = conn.createStatement();
          statement.executeUpdate(sql);
       } catch (SQLException e) {
-         log.error("Error while creating table", e);
+         log.error("Error while creating table; used DDL statement: '" + sql + "'", e);
          throw new CacheLoaderException(e);
       } finally {
          JdbcUtil.safeClose(statement);

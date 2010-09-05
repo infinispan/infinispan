@@ -21,7 +21,6 @@
  */
 package org.infinispan.factories;
 
-import org.infinispan.config.ConfigurationException;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.marshall.StreamingMarshaller;
 import org.infinispan.util.Util;

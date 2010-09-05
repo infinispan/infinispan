@@ -22,7 +22,6 @@
 package org.infinispan.config;
 
 import org.infinispan.config.GlobalConfiguration.TransportType;
-import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.loaders.decorators.SingletonStoreConfig;
 
 /**

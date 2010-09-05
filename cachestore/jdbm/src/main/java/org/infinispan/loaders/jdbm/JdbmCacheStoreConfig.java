@@ -2,7 +2,6 @@ package org.infinispan.loaders.jdbm;
 
 import java.util.Comparator;
 
-import org.infinispan.CacheException;
 import org.infinispan.config.Dynamic;
 import org.infinispan.loaders.LockSupportCacheStoreConfig;
 import org.infinispan.util.Util;

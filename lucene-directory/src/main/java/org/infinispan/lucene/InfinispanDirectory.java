@@ -40,7 +40,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * An implementation of Lucene's {@link org.apache.lucene.store.Directory} which uses Infinispan to store Lucene indices.
+ * An implementation of Lucene's {@link org.apache.lucene.store.Directory} which uses Infinispan to store Lucene indexes.
  * As the RAMDirectory the data is stored in memory, but provides some additional flexibility:
  * <p><b>Passivation, LRU or LIRS</b> Bigger indexes can be configured to passivate cleverly selected chunks of data to a cache store.
  * This can be a local filesystem, a network filesystem, a database or custom cloud stores like S3. See Infinispan's core documentation for a full list of available implementations, or {@link org.infinispan.loaders.CacheStore} to implement more.</p>
@@ -74,8 +74,8 @@ import org.infinispan.util.logging.LogFactory;
 public class InfinispanDirectory extends Directory {
    
    /**
-    * used as default chunk size, can be overriden at construction time
-    * each Lucene index segment is splitted into parts with default size defined here
+    * Used as default chunk size, can be overriden at construction time.
+    * Each Lucene index segment is splitted into parts with default size defined here
     */
    public final static int DEFAULT_BUFFER_SIZE = 16 * 1024;
 
@@ -158,7 +158,13 @@ public class InfinispanDirectory extends Directory {
     */
    public long fileModified(String name) throws IOException {
       checkIsOpen();
-      return fileOps.getFileMetadata(name).getLastModified();
+      FileMetadata fileMetadata = fileOps.getFileMetadata(name);
+      if (fileMetadata == null) {
+         return 0L;
+      }
+      else {
+         return fileMetadata.getLastModified();
+      }
    }
 
    /**
@@ -166,13 +172,15 @@ public class InfinispanDirectory extends Directory {
     */
    public void touchFile(String fileName) throws IOException {
       checkIsOpen();
-      FileCacheKey key = new FileCacheKey(indexName, fileName);
-      FileMetadata file = (FileMetadata) cache.get(key);
+      FileMetadata file = fileOps.getFileMetadata(fileName);
       if (file == null) {
-         throw new FileNotFoundException(fileName);
+         return;
       }
-      file.touch();
-      cache.put(key, file);
+      else {
+         FileCacheKey key = new FileCacheKey(indexName, fileName);
+         file.touch();
+         cache.put(key, file);
+      }
    }
 
    /**
@@ -226,7 +234,13 @@ public class InfinispanDirectory extends Directory {
     */
    public long fileLength(String name) throws IOException {
       checkIsOpen();
-      return fileOps.getFileMetadata(name).getSize();
+      FileMetadata fileMetadata = fileOps.getFileMetadata(name);
+      if (fileMetadata == null) {
+         return 0L;//as in FSDirectory (RAMDirectory throws an exception instead)
+      }
+      else {
+         return fileMetadata.getSize();
+      }
    }
 
    /**
